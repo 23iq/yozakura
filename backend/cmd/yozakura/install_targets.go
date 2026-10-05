@@ -70,7 +70,7 @@ func hyprConfBlock() string {
 }
 
 func hyprLuaBlock() string {
-	return blockMarker("--") + "\nloadfile(os.getenv(\"HOME\") .. \"" + dataRel() + "hyprland.lua\")()\n\n-- OVERRIDES\n" + overridesNote("--", "source") + "\n"
+	return blockMarker("--") + "\n" + luaLoadLine() + "\n\n-- OVERRIDES\n" + overridesNote("--", "source") + "\n"
 }
 
 // simpleTarget describes a compositor whose integration is a single
@@ -102,6 +102,7 @@ func installHyprland() {
 
 	upgradeLegacyBlock(luaPath)
 	upgradeLegacyBlock(confPath)
+	repairHyprlandEntry(home, currentExecutable())
 	if fileExists(luaPath) || !fileExists(confPath) {
 		appendBlock(luaPath, blockMarker("--"), hyprLuaBlock())
 	} else {
@@ -117,7 +118,7 @@ func removeHyprland() {
 	if isHomeManagerManaged(luaPath) || isHomeManagerManaged(confPath) {
 		return
 	}
-	reportErr(removeBlock(luaPath, blockMarker("--"), strings.Split(hyprLuaBlock(), "\n")[1]))
+	reportErr(removeBlock(luaPath, blockMarker("--"), luaLoadLine(), legacyLuaLoadLine()))
 	reportErr(removeBlock(confPath, blockMarker("#"), strings.Split(hyprConfBlock(), "\n")[1]))
 }
 

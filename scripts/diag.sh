@@ -62,6 +62,7 @@ show() { [[ -f "$1" ]] && grep -n "$2" "$1" | head -"${3:-10}"; }
   hyprctl configerrors 2>&1 | head -15
 
   section "generated autostart"
+  ls -la "$DATA"/hyprland* 2>&1
   for f in hyprland.conf hyprland.lua hyprland.yozd.conf hyprland.yozd.lua; do
     show "$DATA/$f" "exec" 4 | sed "s|^|$f:|"
   done

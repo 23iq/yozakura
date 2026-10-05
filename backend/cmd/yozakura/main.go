@@ -352,6 +352,10 @@ func runShell() {
 	// executable the backend supervises (next to this binary first).
 	os.Setenv(paths.DaemonBinEnv, paths.DaemonBinary())
 
+	if home, err := os.UserHomeDir(); err == nil {
+		repairHyprlandEntry(home, currentExecutable())
+	}
+
 	runDetached("pkill -f 'dunst|mako|swaync'")
 	runDetached("pkill -f 'easyeffects.*gapplication-service' ; nohup easyeffects --gapplication-service >/dev/null 2>&1 &")
 
