@@ -100,6 +100,8 @@
   "binds.action.window.resize-drag": "Изменить размер окна (мышью)",
   "binds.action.window.resize": "Изменить размер окна",
   "binds.action.window.toggle-float": "Плавающий режим",
+  "binds.action.window.fullscreen": "Полноэкранный режим",
+  "binds.action.window.maximize": "Развернуть окно",
   "binds.action.scrolling.focus": "Фокус",
   "binds.action.scrolling.move-window": "Переместить окно (scrolling)",
   "binds.action.monocle.focus": "Переключить фокус по кругу",

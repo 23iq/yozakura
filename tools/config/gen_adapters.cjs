@@ -135,6 +135,8 @@ function keybindsAdapter(core, appId) {
         `${IND}// Core binds switched off in the editor ("launcher", "system.tools").`,
         `${IND}property list<string> disabled: []`,
         `${IND}property list<var> custom: CustomBindDefaults.binds()`,
+        `${IND}// One-shot binds.json migrations already applied (KeybindsFile).`,
+        `${IND}property list<string> migrations: []`,
         '}',
         '',
     ].join('\n');

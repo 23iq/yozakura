@@ -85,6 +85,22 @@ func TestGenerateKeybindsMapsDispatchers(t *testing.T) {
 	}
 }
 
+func TestGenerateKeybindsFullscreenModes(t *testing.T) {
+	g := &Generator{}
+	out := g.GenerateKeybinds(ipc.ConfigKeybinds{
+		Custom: []ipc.Keybind{
+			{Modifiers: []string{"SUPER"}, Key: "F", Dispatcher: "fullscreen", Argument: "1", Enabled: true},
+			{Modifiers: []string{"SUPER", "ALT"}, Key: "F", Dispatcher: "fullscreen", Argument: "0", Enabled: true},
+		},
+	})
+	if !strings.Contains(out, "SUPER,F,togglemaximizescreen\n") && !strings.Contains(out, "SUPER,F,togglemaximizescreen ") {
+		t.Fatalf("expected maximize on SUPER+F, got: %s", out)
+	}
+	if strings.Contains(out, "togglefullscreen,0") || !strings.Contains(out, ",F,togglefullscreen") {
+		t.Fatalf("expected argless togglefullscreen, got: %s", out)
+	}
+}
+
 func TestGenerateKeybindsSkipsDisabled(t *testing.T) {
 	g := &Generator{}
 	out := g.GenerateKeybinds(ipc.ConfigKeybinds{

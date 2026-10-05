@@ -5,6 +5,7 @@ import qs.modules.globals
 import qs.config.adapters
 import "KeybindActions.js" as KeybindActions
 import "CoreBinds.js" as CoreBinds
+import "CustomBindDefaults.js" as CustomBindDefaults
 import "../modules/globals/BrandActions.js" as BrandActions
 
 // binds.json (<app dir>/binds.json): the shell's core binds, the disabled
@@ -207,6 +208,16 @@ Scope {
                     delete current.yozakura.system[key].flags;
                     needsUpdate = true;
                 }
+            }
+
+            // New default custom binds reach existing files once per id.
+            const migrations = Array.isArray(current.migrations) ? current.migrations : [];
+            if (migrations.indexOf("window-fullscreen") === -1) {
+                const added = KeybindActions.addNewDefaults(current.custom, CustomBindDefaults.binds(), ["window.fullscreen", "window.maximize"]);
+                if (added.changed)
+                    current.custom = added.binds;
+                current.migrations = migrations.concat(["window-fullscreen"]);
+                needsUpdate = true;
             }
 
             if (current.custom && current.custom.length > 0) {

@@ -275,12 +275,11 @@ func dispatcherToLua(dispatcher, arg string) string {
 	case "togglefloating":
 		return "hl.dsp.window.float({ action = \"toggle\" })"
 	case "fullscreen":
+		// Hyprland: 0 = fullscreen toggle, 1 = maximize toggle.
 		if arg == "1" {
-			return "hl.dsp.window.fullscreen({ action = \"set\" })"
-		} else if arg == "0" {
-			return "hl.dsp.window.fullscreen({ action = \"unset\" })"
+			return "hl.dsp.window.fullscreen({ mode = \"maximized\", action = \"toggle\" })"
 		}
-		return "hl.dsp.window.fullscreen()"
+		return "hl.dsp.window.fullscreen({ mode = \"fullscreen\", action = \"toggle\" })"
 	case "movefocus":
 		// In monocle, the spatial direction is meaningless (only one
 		// window is visible at a time). Cycle through the window stack

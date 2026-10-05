@@ -314,3 +314,24 @@ test('core binds know when they differ from the default', () => {
     const off = Model.buildRows(data([], { disabled: ['tmux'] }));
     assert.ok(Model.isCoreModified(off.find(r => r.uid === 'core:tmux')));
 });
+
+test('fullscreen: Super+F maximizes, Super+Alt+F goes fullscreen', () => {
+    const byCombo = {};
+    for (const b of Actions.normalizeCustomBinds(CustomDefaults.binds()).binds) byCombo[Keys.comboId(b.keys[0].modifiers, b.keys[0].key)] = b.actions[0];
+    eq(byCombo[Keys.comboId(['SUPER'], 'F')].id, 'window.maximize');
+    eq(byCombo[Keys.comboId(['SUPER', 'ALT'], 'F')].id, 'window.fullscreen');
+    eq(Actions.actionFromLegacy('fullscreen', '1', '').id, 'window.maximize');
+    eq(Actions.actionFromLegacy('fullscreen', '0', '').id, 'window.fullscreen');
+});
+
+test('addNewDefaults appends missing defaults on free combos only', () => {
+    const ids = ['window.fullscreen', 'window.maximize'];
+    const close = { name: 'Close', keys: [{ modifiers: ['SUPER'], key: 'Q' }], actions: [{ id: 'window.close', args: {}, layouts: [] }], enabled: true };
+    const r = Actions.addNewDefaults([close], CustomDefaults.binds(), ids);
+    eq(r.changed, true);
+    eq(r.binds.map(b => b.actions[0].id), ['window.close', 'window.maximize', 'window.fullscreen']);
+    // Already bound action, or a taken combo: nothing is added.
+    eq(Actions.addNewDefaults(r.binds, CustomDefaults.binds(), ids).changed, false);
+    const onF = { name: 'Mine', keys: [{ modifiers: ['SUPER'], key: 'f' }], actions: [{ id: 'window.close', args: {}, layouts: [] }], enabled: true };
+    eq(Actions.addNewDefaults([onF], CustomDefaults.binds(), ids).binds.map(b => b.actions[0].id), ['window.close', 'window.fullscreen']);
+});

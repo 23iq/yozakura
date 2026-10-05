@@ -188,4 +188,6 @@ JsonAdapter {
     // Core binds switched off in the editor ("launcher", "system.tools").
     property list<string> disabled: []
     property list<var> custom: CustomBindDefaults.binds()
+    // One-shot binds.json migrations already applied (KeybindsFile).
+    property list<string> migrations: []
 }

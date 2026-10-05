@@ -1,5 +1,6 @@
 .pragma library
 .import "../modules/globals/BrandActions.js" as BrandActions
+.import "../modules/keybinds/KeyNames.js" as KeyNames
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj || {}));
@@ -75,6 +76,8 @@ var ACTION_CATALOG = [
         return String(args.delta || "").trim();
     } },
     { id: "window.toggle-float", label: "Toggle Floating", category: "Window", group: "windows", dispatcher: "togglefloating", argument: "" },
+    { id: "window.fullscreen", label: "Toggle Fullscreen", category: "Window", group: "windows", dispatcher: "fullscreen", argument: "0" },
+    { id: "window.maximize", label: "Toggle Maximize", category: "Window", group: "windows", dispatcher: "fullscreen", argument: "1" },
 
     { id: "workspace.switch", label: "Switch Workspace", category: "Workspace", group: "workspaces", dispatcher: "workspace", args: [{ key: "index", label: "Workspace", placeholder: "1", defaultValue: "1" }], argumentBuilder: function (args) {
         return String(args.index || "").trim();
@@ -317,6 +320,7 @@ function actionFromLegacy(dispatcher, argument, flags) {
     if (dispatcher === "movefocus") return { id: "window.focus", args: { direction: arg } };
     if (dispatcher === "resizeactive") return { id: "window.resize", args: { delta: arg } };
     if (dispatcher === "togglefloating") return { id: "window.toggle-float", args: {} };
+    if (dispatcher === "fullscreen") return arg === "1" ? { id: "window.maximize", args: {} } : { id: "window.fullscreen", args: {} };
     if (dispatcher === "layoutmsg") {
         if (arg.startsWith("focus ")) return { id: "scrolling.focus", args: { direction: arg.split(" ")[1] } };
         if (arg.startsWith("movewindowto ")) return { id: "scrolling.move-window", args: { direction: arg.split(" ")[1] } };
@@ -417,4 +421,30 @@ function normalizeCustomBinds(binds) {
 
 function migrateLegacyCustomBinds(binds) {
     return normalizeCustomBinds(binds).binds;
+}
+
+// Default custom binds added after a binds.json was created: appends each
+// default for one of actionIds that the user has no bind for and whose combo
+// is still free. KeybindsFile runs it once per migration id, so a bind the
+// user deletes later stays deleted.
+function addNewDefaults(custom, defaults, actionIds) {
+    const current = normalizeCustomBinds(custom || []).binds;
+    const used = {};
+    const taken = {};
+    for (const b of current) {
+        for (const a of b.actions)
+            used[a.id] = true;
+        if (b.enabled)
+            for (const k of b.keys)
+                taken[KeyNames.comboId(k.modifiers || [], k.key)] = true;
+    }
+    const added = normalizeCustomBinds(defaults).binds.filter(function (d) {
+        const id = d.actions[0].id;
+        if (actionIds.indexOf(id) === -1 || used[id])
+            return false;
+        return !d.keys.some(function (k) {
+            return taken[KeyNames.comboId(k.modifiers, k.key)];
+        });
+    });
+    return { changed: added.length > 0, binds: current.concat(added) };
 }

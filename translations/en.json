@@ -100,6 +100,8 @@
   "binds.action.window.resize-drag": "Resize window (drag)",
   "binds.action.window.resize": "Resize window",
   "binds.action.window.toggle-float": "Toggle floating",
+  "binds.action.window.fullscreen": "Toggle fullscreen",
+  "binds.action.window.maximize": "Toggle maximize",
   "binds.action.scrolling.focus": "Focus",
   "binds.action.scrolling.move-window": "Move window (scrolling)",
   "binds.action.monocle.focus": "Cycle focus",

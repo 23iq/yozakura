@@ -10,6 +10,8 @@ var ROWS = [
     ["Close Window", ["SUPER"], "Q", "killactive", ""],
     ["Terminal", ["SUPER"], "T", "exec", BrandActions.appId + " run terminal"],
     ["Toggle Floating", ["SUPER"], "SPACE", "togglefloating", ""],
+    ["Toggle Maximize", ["SUPER"], "F", "fullscreen", "1"],
+    ["Toggle Fullscreen", ["SUPER", "ALT"], "F", "fullscreen", "0"],
     ["Workspace 1", ["SUPER"], "1", "workspace", "1"],
     ["Workspace 2", ["SUPER"], "2", "workspace", "2"],
     ["Workspace 3", ["SUPER"], "3", "workspace", "3"],

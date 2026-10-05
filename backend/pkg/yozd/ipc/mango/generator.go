@@ -225,6 +225,13 @@ func (g *Generator) GenerateKeybinds(config ipc.ConfigKeybinds) string {
 		mods := formatMangoModifiers(kb.Modifiers)
 		dispatcher := mangoMapDispatcher(kb.Dispatcher)
 		arg := ipc.ResolveBindArgument(kb)
+		if dispatcher == "togglefullscreen" {
+			// Hyprland: 0 = fullscreen toggle, 1 = maximize toggle.
+			if strings.TrimSpace(arg) == "1" {
+				dispatcher = "togglemaximizescreen"
+			}
+			arg = ""
+		}
 
 		key := strings.ToUpper(kb.Key)
 		flags := strings.ToLower(kb.Flags)

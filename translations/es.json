@@ -96,6 +96,8 @@
   "binds.action.window.resize-drag": "Redimensionar ventana (arrastrar)",
   "binds.action.window.resize": "Redimensionar ventana",
   "binds.action.window.toggle-float": "Alternar flotante",
+  "binds.action.window.fullscreen": "Alternar pantalla completa",
+  "binds.action.window.maximize": "Alternar maximizar",
   "binds.action.scrolling.focus": "Enfocar",
   "binds.action.scrolling.move-window": "Mover ventana (scrolling)",
   "binds.action.monocle.focus": "Rotar foco",

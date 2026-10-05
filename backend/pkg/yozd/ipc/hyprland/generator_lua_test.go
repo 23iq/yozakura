@@ -232,3 +232,16 @@ func TestLuaSilentMoveDoesNotFollow(t *testing.T) {
 		t.Fatalf("got %s, want %s", got, want)
 	}
 }
+
+func TestLuaFullscreenTogglesByMode(t *testing.T) {
+	cases := map[string]string{
+		"0": `hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" })`,
+		"1": `hl.dsp.window.fullscreen({ mode = "maximized", action = "toggle" })`,
+		"":  `hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" })`,
+	}
+	for arg, want := range cases {
+		if got := dispatcherToLua("fullscreen", arg); got != want {
+			t.Fatalf("arg %q: got %s, want %s", arg, got, want)
+		}
+	}
+}

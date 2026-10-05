@@ -79,6 +79,8 @@ var catalog = []ActionSpec{
 	{ID: "window.resize-drag", Label: "Resize Window (Drag)", Category: "Window", Dispatcher: "resizewindow", Argument: "", Flags: "m"},
 	{ID: "window.resize", Label: "Resize Window", Category: "Window", Dispatcher: "resizeactive", Args: []ActionArg{{Key: "delta", Label: "Delta", Placeholder: "50 0", DefaultValue: "50 0"}}, ArgumentFn: func(args map[string]any) string { return strings.TrimSpace(stringArg(args, "delta")) }},
 	{ID: "window.toggle-float", Label: "Toggle Floating", Category: "Window", Dispatcher: "togglefloating", Argument: ""},
+	{ID: "window.fullscreen", Label: "Toggle Fullscreen", Category: "Window", Dispatcher: "fullscreen", Argument: "0"},
+	{ID: "window.maximize", Label: "Toggle Maximize", Category: "Window", Dispatcher: "fullscreen", Argument: "1"},
 
 	{ID: "workspace.switch", Label: "Switch Workspace", Category: "Workspace", Dispatcher: "workspace", Args: []ActionArg{{Key: "index", Label: "Workspace", Placeholder: "1", DefaultValue: "1"}}, ArgumentFn: func(args map[string]any) string { return strings.TrimSpace(stringArg(args, "index")) }},
 	{ID: "workspace.switch-relative", Label: "Switch Workspace (Relative)", Category: "Workspace", Dispatcher: "workspace", Args: []ActionArg{{Key: "offset", Label: "Offset", Placeholder: "+1 / -1", DefaultValue: "+1"}}, ArgumentFn: func(args map[string]any) string { return formatOffset(stringArg(args, "offset")) }},
@@ -244,6 +246,11 @@ func ActionFromLegacy(dispatcher, argument, flags string) Action {
 		return Action{ID: "window.resize", Args: map[string]any{"delta": arg}}
 	case "togglefloating":
 		return Action{ID: "window.toggle-float", Args: map[string]any{}}
+	case "fullscreen":
+		if arg == "1" {
+			return Action{ID: "window.maximize", Args: map[string]any{}}
+		}
+		return Action{ID: "window.fullscreen", Args: map[string]any{}}
 	case "layoutmsg":
 		parts := strings.SplitN(arg, " ", 2)
 		head := ""
