@@ -210,7 +210,13 @@ class Harness:
             if ref.startswith(("qrc:", "file:", "image:", "http")) or ref.startswith("/"):
                 continue
             p = (here / ref).resolve()
-            if not p.is_file() or p in self._copied or REPO not in p.parents:
+            # Arbitrary string literals are probed as paths; a long prose
+            # string raises ENAMETOOLONG on Python < 3.14 instead of False.
+            try:
+                is_file = p.is_file()
+            except OSError:
+                continue
+            if not is_file or p in self._copied or REPO not in p.parents:
                 continue
             dst = (target_dir / os.path.relpath(p, here)).resolve()
             if self.root not in dst.parents:

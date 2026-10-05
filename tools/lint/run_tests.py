@@ -26,7 +26,10 @@ def run_js() -> int:
     if not node:
         skip("test-js: node not found")
         return 0
-    r = subprocess.run([node, "--test", "tests/"], cwd=REPO, capture_output=True, text=True)
+    # Explicit file list: a bare directory argument is only expanded by
+    # node >= 23; older LTS releases (CI's node 22) try to load it as a module.
+    files = sorted(str(p.relative_to(REPO)) for p in (REPO / "tests").glob("*.test.cjs"))
+    r = subprocess.run([node, "--test", *files], cwd=REPO, capture_output=True, text=True)
     summary = [ln for ln in r.stdout.splitlines() if ln.startswith(("ℹ tests", "ℹ pass", "ℹ fail"))]
     if r.returncode:
         print(_tail(r.stdout + r.stderr, 60))

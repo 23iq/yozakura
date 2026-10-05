@@ -197,6 +197,9 @@ Optional pre-commit hook (parse + format on staged files + audit errors, ~1s):
 User-local tool installs (no sudo): `uv tool install ruff`, `uv tool install shellcheck-py`,
 `go install honnef.co/go/tools/cmd/staticcheck@latest`. qmllint/qmlformat come from Qt 6
 (`/usr/lib/qt6/bin`; `/usr/bin/qmllint` on Arch is the Qt 5 one and is ignored).
+Override with `QMLLINT`/`QMLFORMAT`; `QMLLINT_IMPORT_PATH` adds QML import dirs (CI uses
+PySide6's bundled tools plus Quickshell's QML module from the pinned Arch package, see
+`.github/workflows/check.yml`; keep its Qt/Quickshell pins equal to the baseline toolchain).
 
 ## COMMANDS
 ```bash

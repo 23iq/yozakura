@@ -51,8 +51,15 @@ def _is_noise(rule: str, message: str) -> bool:
     return any(rule == rid and rx.search(message) for rid, rx in _NOISE)
 
 
+# Extra QML import dirs (os.pathsep-separated), for toolchains whose Qt has no
+# Quickshell module installed next to it (CI: PySide6's qmllint + Quickshell's
+# QML type metadata unpacked elsewhere).
+_IMPORT_PATH = [d for d in os.environ.get("QMLLINT_IMPORT_PATH", "").split(os.pathsep) if d]
+
+
 def _lint_one(qmllint: str, tree: Path, rel: str, extra: list[str]) -> list[dict]:
-    r = subprocess.run([qmllint, "-I", str(tree), *extra, "--json", "-", rel],
+    imports = [a for d in _IMPORT_PATH for a in ("-I", d)]
+    r = subprocess.run([qmllint, "-I", str(tree), *imports, *extra, "--json", "-", rel],
                        cwd=qmltree.ROOT, capture_output=True, text=True)
     try:
         data = json.loads(r.stdout)

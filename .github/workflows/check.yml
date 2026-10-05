@@ -4,13 +4,23 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# Toolchain pins. Keep these in step with the dev machine (Arch): the qmllint
+# and qmlformat baselines in tools/lint/baselines were recorded with Qt 6.11.2
+# and Quickshell 0.3.1, and findings differ across Qt / Quickshell releases.
+env:
+  PYSIDE6_VERSION: "6.11.2"
+  QUICKSHELL_PKG: quickshell-0.3.1-1-x86_64.pkg.tar.zst
+  RUFF_VERSION: "0.16.10"
+  STATICCHECK_VERSION: v0.8.1
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,6 +29,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
 
       - uses: actions/setup-node@v4
         with:
@@ -27,17 +38,66 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
+          cache: pip
+          cache-dependency-path: .github/workflows/check.yml
 
-      - name: Tools
+      # PySide6's xcb platform plugin (GL tests run under a private Xvfb) and
+      # QtMultimedia need these system libraries; ffmpeg is used by tests to
+      # synthesise wallpapers.
+      - name: System packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y shellcheck xvfb libegl1 libxkbcommon-x11-0 libxcb-cursor0
-          python -m pip install PySide6 ruff
-          go install honnef.co/go/tools/cmd/staticcheck@latest
+          sudo apt-get install -y --no-install-recommends \
+            shellcheck xvfb ffmpeg zstd \
+            libegl1 libgl1 libgl1-mesa-dri libfontconfig1 libfreetype6 libdbus-1-3 \
+            libglib2.0-0t64 libpulse0 libx11-6 libx11-xcb1 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libxcb1 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0 \
+            libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xkb1
 
-      # Missing optional tools (e.g. Qt 6 qmllint/qmlformat) are reported as
-      # SKIP by the gate, never as failures.
+      # PySide6 wheels ship qmllint/qmlformat built from the same Qt release.
+      - name: Python tools (PySide6, ruff)
+        run: |
+          python -m pip install "PySide6==${PYSIDE6_VERSION}" "ruff==${RUFF_VERSION}"
+          qt_dir=$(python -c 'import os, PySide6; print(os.path.dirname(PySide6.__file__))')
+          echo "QMLLINT=${qt_dir}/qmllint" >> "$GITHUB_ENV"
+          echo "QMLFORMAT=${qt_dir}/qmlformat" >> "$GITHUB_ENV"
+          "${qt_dir}/qmllint" --version
+          "${qt_dir}/qmlformat" --version
+
+      # qmllint needs Quickshell's QML type metadata (qmldir + qmltypes); take
+      # it from the pinned Arch package rather than building Quickshell.
+      - name: Cache Quickshell QML module
+        id: qs-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/quickshell-qml
+          key: quickshell-qml-${{ env.QUICKSHELL_PKG }}
+
+      - name: Fetch Quickshell QML module
+        if: steps.qs-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.cache/quickshell-qml
+          curl -fsSL --retry 3 -o /tmp/qs.pkg.tar.zst \
+            "https://archive.archlinux.org/packages/q/quickshell/${QUICKSHELL_PKG}"
+          tar --zstd -xf /tmp/qs.pkg.tar.zst -C ~/.cache/quickshell-qml usr/lib/qt6/qml/Quickshell
+
+      - name: Quickshell import path
+        run: echo "QMLLINT_IMPORT_PATH=$HOME/.cache/quickshell-qml/usr/lib/qt6/qml" >> "$GITHUB_ENV"
+
+      - name: staticcheck
+        run: go install "honnef.co/go/tools/cmd/staticcheck@${STATICCHECK_VERSION}"
+
+      # Missing optional tools are reported as SKIP by the gate; CI provides
+      # every tool, so a SKIP here means the toolchain setup above broke.
       - name: make check
         env:
           BASE: origin/main
-        run: make check
+        run: |
+          set -o pipefail
+          make check 2>&1 | tee /tmp/check.log
+          if grep -q '\[skip\]' /tmp/check.log; then
+            echo "::error::make check skipped a gate; a CI tool is missing"
+            exit 1
+          fi
