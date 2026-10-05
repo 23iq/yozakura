@@ -34,6 +34,10 @@ func TestRepairHyprlandEntryGuardsLoadfile(t *testing.T) {
 		t.Fatalf("conf bootstrap stub missing: %v %s", err, conf)
 	}
 
+	if b, err := os.ReadFile(filepath.Join(home, ".local/share/yozakura/hyprland.yozd.conf")); err != nil || !strings.Contains(string(b), "exec-once = /opt/bin/yozakura") {
+		t.Fatalf("daemon conf stub missing: %v %s", err, b)
+	}
+
 	// Idempotent, and never overwrites generated files.
 	os.WriteFile(filepath.Join(home, ".local/share/yozakura/hyprland.lua"), []byte("generated"), 0o644)
 	repairHyprlandEntry(home, "/opt/bin/yozakura")

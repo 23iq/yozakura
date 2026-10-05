@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/fsutil"
 	"yozakura/backend/pkg/yozd/ipc"
 	"yozakura/backend/pkg/yozd/ipc/hyprland"
 	"yozakura/backend/pkg/yozd/ipc/mango"
@@ -103,7 +104,7 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
 
-	if err := os.WriteFile(configPath, []byte(fullConfig.String()), 0644); err != nil {
+	if err := fsutil.WriteFile(configPath, []byte(fullConfig.String()), 0o644); err != nil {
 		return fmt.Errorf("failed to write config to %s: %w", configPath, err)
 	}
 	fmt.Printf("Config written to: %s\n", configPath)
@@ -131,7 +132,7 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 		luaConfig.WriteString(luaLayers)
 
 		luaPath := h.paths.alt
-		if err := os.WriteFile(luaPath, []byte(luaConfig.String()), 0644); err != nil {
+		if err := fsutil.WriteFile(luaPath, []byte(luaConfig.String()), 0o644); err != nil {
 			return fmt.Errorf("failed to write Lua config to %s: %w", luaPath, err)
 		}
 		fmt.Printf("Lua config written to: %s\n", luaPath)

@@ -178,3 +178,14 @@ func TestServiceWriteEmitsEntryFilesBeforeToml(t *testing.T) {
 		t.Error("no overlay: backend must not write hyprland.lua")
 	}
 }
+
+func TestRenderHyprlandLuaStartsShellWithoutBase(t *testing.T) {
+	old := shellBinary
+	shellBinary = func() string { return "/opt/bin/yozakura" }
+	defer func() { shellBinary = old }()
+	out := RenderHyprlandLua(map[string]any{}, "/data/"+DaemonHyprlandTarget)
+	want := "if base then\n    base()\nelse\n    hl.on(\"hyprland.start\", function()\n        hl.exec_cmd(\"/opt/bin/yozakura\")\n    end)\nend\n"
+	if !strings.Contains(out, want) {
+		t.Fatalf("missing fallback autostart:\n%s", out)
+	}
+}

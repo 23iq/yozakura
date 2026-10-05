@@ -64,6 +64,9 @@ func repairHyprlandEntry(home, bin string) {
 	stubs := map[string]string{
 		"hyprland.lua":  fmt.Sprintf("-- %s\nhl.on(\"hyprland.start\", function()\n    hl.exec_cmd(%q)\nend)\n", note, bin),
 		"hyprland.conf": fmt.Sprintf("# %s\nexec-once = %s\n", note, bin),
+		// The hyprlang entry sources the daemon's output unconditionally,
+		// so a missing one would leave the session without autostart.
+		"hyprland." + brand.Daemon + ".conf": fmt.Sprintf("# %s\nexec-once = %s\n", note, bin),
 	}
 	for name, body := range stubs {
 		path := filepath.Join(dataDir, name)
