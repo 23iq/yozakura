@@ -55,6 +55,16 @@ from PySide6.QtCore import QObject, QUrl, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlComponent, QQmlEngine, QQmlExpression  # noqa: E402
 
+# Load libQt6Multimedia on the main thread now. Otherwise the QML type loader
+# thread dlopens it on the first `import QtMultimedia`, and its static init
+# logs (e.g. "Couldn't load pipewire-0.3 library" on hosts without PipeWire).
+# A Python message handler then needs the GIL, which the main thread holds
+# inside the blocking setSource()/evaluate() that started the load: deadlock.
+try:
+    import PySide6.QtMultimedia  # noqa: E402,F401
+except ImportError:
+    pass
+
 REPO = Path(__file__).resolve().parents[2]
 
 _REL_IMPORT = re.compile(r'^\s*\.?import\s+"([^"]+)"', re.M)

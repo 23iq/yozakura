@@ -30,12 +30,14 @@ def run_js() -> int:
     # node >= 23; older LTS releases (CI's node 22) try to load it as a module.
     files = sorted(str(p.relative_to(REPO)) for p in (REPO / "tests").glob("*.test.cjs"))
     r = subprocess.run([node, "--test", *files], cwd=REPO, capture_output=True, text=True)
-    summary = [ln for ln in r.stdout.splitlines() if ln.startswith(("ℹ tests", "ℹ pass", "ℹ fail"))]
+    # Spec reporter ("ℹ tests 3") on a TTY / newer node, TAP ("# tests 3") otherwise.
+    summary = [ln[2:] for ln in r.stdout.splitlines() if ln.startswith(("ℹ tests", "ℹ pass", "ℹ fail",
+                                                                          "# tests", "# pass", "# fail"))]
     if r.returncode:
         print(_tail(r.stdout + r.stderr, 60))
         fail("test-js: node --test failed")
         return 1
-    ok("test-js: " + ", ".join(s.lstrip("ℹ ").strip() for s in summary))
+    ok("test-js: " + ", ".join(s.strip() for s in summary))
     return 0
 
 
