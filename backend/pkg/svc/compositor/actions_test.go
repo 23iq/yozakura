@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"yozakura/backend/pkg/brand"
 )
 
 func TestResolveActionCatalogEntry(t *testing.T) {
@@ -273,5 +275,32 @@ func TestKeybindsAcceptLegacyRoot(t *testing.T) {
 	}
 	if err := json.Unmarshal([]byte(`{"yozakura": {"launcher": {"key": "A"}}, "ambxst": {"launcher": {"key": "B"}}}`), &kb); err != nil || kb.Yozakura["launcher"].Key != "A" {
 		t.Fatalf("current root must win: %+v %v", kb, err)
+	}
+}
+
+func TestAppsLaunchRendersLaunchCommand(t *testing.T) {
+	cases := map[string]string{
+		"firefox":            brand.Command("launch", "firefox"),
+		"org.gnome.Nautilus": brand.Command("launch", "org.gnome.Nautilus"),
+		" kitty.desktop ":    brand.Command("launch", "kitty"),
+		"odd name":           brand.Command("launch", "'odd name'"),
+		"it's; rm -rf ~":     brand.Command("launch", `'it'\''s; rm -rf ~'`),
+		"":                   "",
+	}
+	for app, want := range cases {
+		got := ResolveAction(Action{ID: "apps.launch", Args: map[string]any{"app": app}})
+		if got == nil || got.Dispatcher != "exec" || got.Argument != want || got.Flags != "" {
+			t.Errorf("apps.launch %q: got %+v, want exec %q", app, got, want)
+		}
+	}
+}
+
+func TestAppsLaunchFromLegacyExec(t *testing.T) {
+	got := ActionFromLegacy("exec", brand.Command("launch", "firefox"), "")
+	if got.ID != "apps.launch" || stringArg(got.Args, "app") != "firefox" {
+		t.Fatalf("legacy launch exec: got %+v", got)
+	}
+	if got := ActionFromLegacy("exec", brand.Command("launch", "'odd name'"), ""); got.ID != "command.run" {
+		t.Fatalf("quoted launch stays a command: got %+v", got)
 	}
 }

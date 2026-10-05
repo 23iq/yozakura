@@ -68,6 +68,8 @@ func main() {
 			os.Exit(runCmd(args[1:], os.Stdout, os.Stderr))
 		case "special", "specials":
 			os.Exit(runSpecial(args[1:], os.Stdout, os.Stderr))
+		case "launch":
+			os.Exit(runLaunch(args[1:], defaultLaunchEnv(), os.Stderr))
 		}
 	}
 
@@ -553,6 +555,7 @@ Commands:
     toggle <command>                 Toggle a shell feature (e.g. bar)
     cmd [list | <command> [arg]]     Run a launcher command ("dnd", "glass 0.6",
                                      "preset <name>"; {bin} cmd list)
+    launch <desktop-id>              Start an installed app like the launcher does
     onboarding                       Open the welcome / setup wizard again
     reload                           Restart {name}
     quit                             Stop {name}

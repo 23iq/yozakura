@@ -298,6 +298,13 @@ f=~/.config/yozakura/binds.json; cp "$f" "$f.bak"
 jq '.yozakura.assistant.key = "I"' "$f.bak" > "$f"
 ```
 
+To open an installed app use the action `{"id": "apps.launch", "args":
+{"app": "<desktop id>"}}` (e.g. `firefox`, `org.gnome.Nautilus`, the file name
+without `.desktop`): it renders to `yozakura launch <id>`, which starts the app
+exactly like the launcher (`gio launch <file>`), instead of a `command.run`
+with a shell command. Two binds may share a combo (Hyprland runs both); the
+settings page marks them as conflicts but never blocks or overwrites one.
+
 Defaults (only for a new `binds.json`; an existing file keeps its combos):
 Super+Q closes the window, Super+T opens the terminal (`general.terminal`,
 action `yozakura.terminal` / `yozakura run terminal`), Super+Alt+T opens

@@ -2,6 +2,7 @@ package compositor
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"yozakura/backend/pkg/brand"
 )
@@ -136,6 +137,8 @@ var catalog = []ActionSpec{
 	{ID: "system.dpms-on", Label: "Display On", Category: "System", Dispatcher: "exec", Argument: brand.DaemonCommand("monitor", "set-dpms", "0", "1"), Flags: "l"},
 
 	{ID: "command.run", Label: "Run Command", Category: "Custom", Dispatcher: "exec", Args: []ActionArg{{Key: "command", Label: "Command", Placeholder: "command to run", DefaultValue: ""}}, ArgumentFn: func(args map[string]any) string { return strings.TrimSpace(stringArg(args, "command")) }},
+
+	{ID: "apps.launch", Label: "Open App", Category: "Apps", Dispatcher: "exec", Args: []ActionArg{{Key: "app", Label: "App", Placeholder: "firefox", DefaultValue: ""}}, ArgumentFn: func(args map[string]any) string { return LaunchCommand(stringArg(args, "app")) }},
 
 	{ID: "legacy.dispatcher", Label: "Legacy Dispatcher", Category: "Advanced", Dispatcher: "", Args: []ActionArg{
 		{Key: "dispatcher", Label: "Dispatcher", Placeholder: "dispatcher", DefaultValue: ""},
@@ -281,6 +284,9 @@ func ActionFromLegacy(dispatcher, argument, flags string) Action {
 			return Action{ID: "scrolling.move-column-workspace", Args: map[string]any{"index": rest}}
 		}
 	case "exec":
+		if id, ok := strings.CutPrefix(arg, brand.Command("launch")+" "); ok && plainWord.MatchString(id) {
+			return Action{ID: "apps.launch", Args: map[string]any{"app": id}}
+		}
 		switch {
 		case arg == "playerctl play-pause" && flags == "l":
 			return Action{ID: "media.play-pause-locked", Args: map[string]any{}}
@@ -386,6 +392,28 @@ func DescribeAction(action Action) string {
 }
 
 // --- helpers ---
+
+// plainWord is a shell word that needs no quoting (desktop ids).
+var plainWord = regexp.MustCompile(`^[A-Za-z0-9._+@-]+$`)
+
+// shellWord quotes s for sh unless it is a plain word.
+func shellWord(s string) string {
+	if plainWord.MatchString(s) {
+		return s
+	}
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// LaunchCommand is the exec line of an "apps.launch" bind: `<app> launch
+// <desktop id>` (cmd/yozakura/cmds_launch.go starts it like the launcher).
+// Empty for no app.
+func LaunchCommand(app string) string {
+	id := strings.TrimSuffix(strings.TrimSpace(app), ".desktop")
+	if id == "" {
+		return ""
+	}
+	return brand.Command("launch", shellWord(id))
+}
 
 func stringArg(args map[string]any, key string) string {
 	if args == nil {

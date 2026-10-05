@@ -21,6 +21,25 @@ function formatOffset(value) {
     return num >= 0 ? "+" + num : String(num);
 }
 
+// One shell word: plain desktop ids stay as they are, anything else is
+// single-quoted (Hyprland runs exec arguments through sh).
+function shellWord(value) {
+    const s = String(value);
+    return /^[A-Za-z0-9._+@-]+$/.test(s) ? s : "'" + s.replace(/'/g, "'\\''") + "'";
+}
+
+// Desktop id of an "apps.launch" action ("firefox", no ".desktop").
+function appIdOf(action) {
+    const raw = action && action.args ? action.args.app : "";
+    return String(raw || "").trim().replace(/\.desktop$/, "");
+}
+
+// `<app> launch <desktop id>`: the CLI starts it like the launcher does.
+function launchCommand(app) {
+    const id = String(app || "").trim().replace(/\.desktop$/, "");
+    return id ? BrandActions.command("launch", shellWord(id)) : "";
+}
+
 function directionToLetter(direction) {
     const dir = String(direction || "").toLowerCase();
     if (dir === "up" || dir === "u") return "u";
@@ -155,6 +174,12 @@ var ACTION_CATALOG = [
         return String(args.command || "").trim();
     } },
 
+    // An installed app by desktop id (the launcher's index, AppSearch); the
+    // settings editor picks it from a list. Rendered as `<app> launch <id>`.
+    { id: "apps.launch", label: "Open App", category: "Apps", group: "apps", dispatcher: "exec", args: [{ key: "app", label: "App", placeholder: "firefox", defaultValue: "", kind: "app" }], argumentBuilder: function (args) {
+        return launchCommand(args.app);
+    } },
+
     { id: "legacy.dispatcher", label: "Legacy Dispatcher", category: "Advanced", group: "apps", dispatcher: "", args: [
         { key: "dispatcher", label: "Dispatcher", placeholder: "dispatcher", defaultValue: "" },
         { key: "argument", label: "Argument", placeholder: "argument", defaultValue: "" },
@@ -208,6 +233,7 @@ function getActionFields(actionId) {
         key: field.key,
         label: field.label,
         placeholder: field.placeholder || "",
+        kind: field.kind || "text",
         defaultValue: field.defaultValue !== undefined ? field.defaultValue : ""
     }));
 }
@@ -294,6 +320,8 @@ function actionFromLegacy(dispatcher, argument, flags) {
         const id = BrandActions.action(run[3]);
         if (ACTION_INDEX[id]) return { id: id, args: {} };
     }
+    const launch = /^(\S+) launch ([A-Za-z0-9._+@-]+)$/.exec(arg);
+    if (dispatcher === "exec" && launch && launch[1] === BrandActions.appId) return { id: "apps.launch", args: { app: launch[2] } };
     if (dispatcher === "killactive") return { id: "window.close", args: {} };
     if (dispatcher === "workspace") {
         if (arg.startsWith("e")) {

@@ -2,6 +2,7 @@ package specials
 
 import (
 	"bufio"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -136,4 +137,36 @@ func readEntry(path, id string) (Entry, bool) {
 		}
 	}
 	return e, e.Exec != ""
+}
+
+// File is the installed .desktop file of a desktop id (first dir wins).
+// Files in subdirectories have ids joined with "-" (desktop entry spec:
+// <dir>/kde/foo.desktop is "kde-foo").
+func File(dirs []string, id string) (string, bool) {
+	id = strings.TrimSuffix(id, ".desktop")
+	if id == "" || strings.ContainsAny(id, "/\x00") {
+		return "", false
+	}
+	for _, d := range dirs {
+		p := filepath.Join(d, id+".desktop")
+		if st, err := os.Stat(p); err == nil && !st.IsDir() {
+			return p, true
+		}
+		found := ""
+		_ = filepath.WalkDir(d, func(path string, de fs.DirEntry, err error) error {
+			if err != nil || found != "" || de.IsDir() || !strings.HasSuffix(path, ".desktop") {
+				return nil
+			}
+			rel, _ := filepath.Rel(d, strings.TrimSuffix(path, ".desktop"))
+			if strings.ReplaceAll(rel, string(filepath.Separator), "-") == id {
+				found = path
+				return filepath.SkipAll
+			}
+			return nil
+		})
+		if found != "" {
+			return found, true
+		}
+	}
+	return "", false
 }
