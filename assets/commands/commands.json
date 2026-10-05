@@ -1,0 +1,155 @@
+{
+    "_doc": "Shell command registry: launcher '>' commands, `yozakura cmd`, MCP shell_command. One entry per command. run: {ui: <ui.run command>} | {toggle: <ui.toggle target>} | {cli: [args after the app binary]} | {config: <catalog key>, map?: {arg: value}}. '{arg}' in ui/cli is replaced by the argument. arg.kind: none (omit arg) | enum (values) | number (min/max) | preset (preset name). title/description are translation keys.",
+    "version": 1,
+    "commands": [
+        {
+            "id": "dnd",
+            "icon": "bellSlash",
+            "title": "launcher.cmd.dnd",
+            "description": "launcher.cmd.dnd.desc",
+            "keywords": "do not disturb silent mute notifications quiet focus",
+            "run": {"ui": "dnd-toggle"}
+        },
+        {
+            "id": "preset",
+            "icon": "magicWand",
+            "title": "launcher.cmd.preset",
+            "description": "launcher.cmd.preset.desc",
+            "keywords": "preset theme layout look style apply switch",
+            "arg": {"kind": "preset", "required": true},
+            "run": {"cli": ["preset", "apply", "{arg}"]}
+        },
+        {
+            "id": "wallpaper",
+            "icon": "image",
+            "title": "launcher.cmd.wallpaper",
+            "description": "launcher.cmd.wallpaper.desc",
+            "keywords": "wallpaper background random shuffle next previous",
+            "arg": {"kind": "enum", "values": ["random", "next", "previous"], "default": "random"},
+            "run": {"ui": "wallpaper-{arg}"}
+        },
+        {
+            "id": "glass",
+            "icon": "drop",
+            "title": "launcher.cmd.glass",
+            "description": "launcher.cmd.glass.desc",
+            "keywords": "glass glassiness transparency blur frosted opacity",
+            "arg": {"kind": "number", "min": 0, "max": 1, "step": 0.05, "required": true},
+            "run": {"config": "theme.glass.amount"}
+        },
+        {
+            "id": "roundness",
+            "icon": "frameCorners",
+            "title": "launcher.cmd.roundness",
+            "description": "launcher.cmd.roundness.desc",
+            "keywords": "roundness radius corners rounded square",
+            "arg": {"kind": "number", "min": 0, "max": 24, "step": 1, "required": true},
+            "run": {"config": "theme.roundness"}
+        },
+        {
+            "id": "theme",
+            "icon": "circleHalf",
+            "title": "launcher.cmd.theme",
+            "description": "launcher.cmd.theme.desc",
+            "keywords": "theme light dark mode appearance day night",
+            "arg": {"kind": "enum", "values": ["light", "dark"], "required": true},
+            "run": {"config": "theme.lightMode", "map": {"light": true, "dark": false}}
+        },
+        {
+            "id": "keybinds",
+            "icon": "keyboard",
+            "title": "launcher.cmd.keybinds",
+            "description": "launcher.cmd.keybinds.desc",
+            "keywords": "keybinds shortcuts cheatsheet hotkeys keys help",
+            "run": {"ui": "keybinds"}
+        },
+        {
+            "id": "settings",
+            "icon": "gear",
+            "title": "launcher.cmd.settings",
+            "description": "launcher.cmd.settings.desc",
+            "keywords": "settings preferences config options control",
+            "run": {"ui": "config"}
+        },
+        {
+            "id": "assistant",
+            "icon": "sparkle",
+            "title": "launcher.cmd.assistant",
+            "description": "launcher.cmd.assistant.desc",
+            "keywords": "ai assistant chat sidebar agent",
+            "run": {"ui": "assistant"}
+        },
+        {
+            "id": "terminal",
+            "icon": "terminal",
+            "title": "launcher.cmd.terminal",
+            "description": "launcher.cmd.terminal.desc",
+            "keywords": "terminal console shell command line tty",
+            "run": {"ui": "terminal"}
+        },
+        {
+            "id": "screenshot",
+            "icon": "screenshots",
+            "title": "launcher.cmd.screenshot",
+            "description": "launcher.cmd.screenshot.desc",
+            "keywords": "screenshot capture screen grab print",
+            "run": {"ui": "screenshot"}
+        },
+        {
+            "id": "record",
+            "icon": "recordScreen",
+            "title": "launcher.cmd.record",
+            "description": "launcher.cmd.record.desc",
+            "keywords": "record screen recording video capture",
+            "run": {"ui": "screenrecord"}
+        },
+        {
+            "id": "overview",
+            "icon": "overview",
+            "title": "launcher.cmd.overview",
+            "description": "launcher.cmd.overview.desc",
+            "keywords": "overview workspaces expose mission control windows",
+            "run": {"ui": "overview"}
+        },
+        {
+            "id": "bar",
+            "icon": "sidebarSimple",
+            "title": "launcher.cmd.bar",
+            "description": "launcher.cmd.bar.desc",
+            "keywords": "bar panel pin hide show toggle",
+            "run": {"toggle": "bar"}
+        },
+        {
+            "id": "lock",
+            "icon": "lock",
+            "title": "launcher.cmd.lock",
+            "description": "launcher.cmd.lock.desc",
+            "keywords": "lock screen lockscreen away",
+            "run": {"ui": "lockscreen"}
+        },
+        {
+            "id": "power",
+            "icon": "power",
+            "title": "launcher.cmd.power",
+            "description": "launcher.cmd.power.desc",
+            "keywords": "power menu shutdown reboot logout suspend",
+            "run": {"ui": "powermenu"}
+        },
+        {
+            "id": "onboarding",
+            "icon": "seal",
+            "title": "launcher.cmd.onboarding",
+            "description": "launcher.cmd.onboarding.desc",
+            "keywords": "onboarding welcome setup wizard tour first run",
+            "run": {"ui": "onboarding"}
+        },
+        {
+            "id": "reload",
+            "icon": "arrowsClockwise",
+            "title": "launcher.cmd.reload",
+            "description": "launcher.cmd.reload.desc",
+            "keywords": "reload restart refresh shell",
+            "run": {"cli": ["reload"]}
+        }
+    ]
+}

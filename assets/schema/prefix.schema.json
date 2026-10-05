@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:prefix",
+  "title": "prefix",
+  "description": "Launcher prefixes that switch the launcher into a mode (type the prefix, then a space or your query).",
+  "type": "object",
+  "x-file": "config/prefix.json",
+  "properties": {
+    "clipboard": {
+      "title": "Clipboard",
+      "type": "string",
+      "default": "cc",
+      "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
+      "x-settings": {
+        "category": "system",
+        "section": "prefixes",
+        "label": "system.prefixes.clipboard",
+        "control": "text",
+        "keywords": "launcher prefix shortcut clipboard"
+      }
+    },
+    "emoji": {
+      "title": "Emoji",
+      "type": "string",
+      "default": "ee",
+      "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
+      "x-settings": {
+        "category": "system",
+        "section": "prefixes",
+        "label": "system.prefixes.emoji",
+        "control": "text",
+        "keywords": "launcher prefix shortcut emoji"
+      }
+    },
+    "tmux": {
+      "title": "Tmux",
+      "type": "string",
+      "default": "tt",
+      "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
+      "x-settings": {
+        "category": "system",
+        "section": "prefixes",
+        "label": "system.prefixes.tmux",
+        "control": "text",
+        "keywords": "launcher prefix shortcut tmux"
+      }
+    },
+    "wallpapers": {
+      "title": "Wallpapers",
+      "type": "string",
+      "default": "ww",
+      "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
+      "x-settings": {
+        "category": "system",
+        "section": "prefixes",
+        "label": "system.prefixes.wallpapers",
+        "control": "text",
+        "keywords": "launcher prefix shortcut wallpapers"
+      }
+    },
+    "notes": {
+      "title": "Notes",
+      "type": "string",
+      "default": "nn",
+      "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
+      "x-settings": {
+        "category": "system",
+        "section": "prefixes",
+        "label": "system.prefixes.notes",
+        "control": "text",
+        "keywords": "launcher prefix shortcut notes"
+      }
+    },
+    "calculator": {
+      "title": "Calculator",
+      "type": "string",
+      "default": "=",
+      "x-settings": {
+        "category": "launcher",
+        "section": "providers",
+        "label": "prefs.launcher.providers",
+        "entry": "launcher.providers",
+        "entryTitle": "Search providers",
+        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+      },
+      "description": "Prefix that shows only calculator, unit and currency results (e.g. \"= 5 kg in lb\")."
+    },
+    "commands": {
+      "title": "Commands",
+      "type": "string",
+      "default": ">",
+      "x-settings": {
+        "category": "launcher",
+        "section": "providers",
+        "label": "prefs.launcher.providers",
+        "entry": "launcher.providers",
+        "entryTitle": "Search providers",
+        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+      },
+      "description": "Prefix for shell commands from assets/commands/commands.json (e.g. \"> preset Neon Tokyo\", \"> dnd\")."
+    },
+    "files": {
+      "title": "Files",
+      "type": "string",
+      "default": "ff",
+      "x-settings": {
+        "category": "launcher",
+        "section": "providers",
+        "label": "prefs.launcher.providers",
+        "entry": "launcher.providers",
+        "entryTitle": "Search providers",
+        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+      },
+      "description": "Prefix for file search in the home directory (fd or plocate)."
+    },
+    "ai": {
+      "title": "Ai",
+      "type": "string",
+      "default": "?",
+      "x-settings": {
+        "category": "launcher",
+        "section": "providers",
+        "label": "prefs.launcher.providers",
+        "entry": "launcher.providers",
+        "entryTitle": "Search providers",
+        "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+      },
+      "description": "Prefix that sends the query to the AI quick ask."
+    },
+    "launcher": {
+      "title": "Launcher",
+      "type": "object",
+      "properties": {
+        "order": {
+          "title": "Order",
+          "type": "array",
+          "default": [
+            "calculator",
+            "commands",
+            "apps",
+            "specials",
+            "wallpapers",
+            "files",
+            "ai"
+          ],
+          "items": {
+            "enum": [
+              "calculator",
+              "commands",
+              "apps",
+              "specials",
+              "wallpapers",
+              "files",
+              "ai"
+            ]
+          },
+          "x-settings": {
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+          },
+          "description": "Order of result groups when no prefix is typed (provider ids).",
+          "uniqueItems": true
+        },
+        "disabled": {
+          "title": "Disabled",
+          "type": "array",
+          "default": [],
+          "x-settings": {
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+          },
+          "description": "Launcher providers (and prefix tabs) that are turned off.",
+          "items": {
+            "enum": [
+              "calculator",
+              "commands",
+              "apps",
+              "specials",
+              "wallpapers",
+              "files",
+              "ai",
+              "clipboard",
+              "emoji",
+              "tmux",
+              "notes"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "aiOnTab": {
+          "title": "Tab asks AI",
+          "type": "boolean",
+          "default": true,
+          "description": "Press Tab to send the current search to the AI quick ask",
+          "x-settings": {
+            "category": "launcher",
+            "section": "behavior",
+            "label": "prefs.launcher.ai_on_tab",
+            "control": "toggle",
+            "keywords": "tab ai ask assistant quick"
+          }
+        },
+        "filesInMixed": {
+          "title": "Files in normal searches",
+          "type": "boolean",
+          "default": true,
+          "description": "Show a few file matches without the files prefix (3+ characters)",
+          "x-settings": {
+            "category": "launcher",
+            "section": "behavior",
+            "label": "prefs.launcher.files_in_mixed",
+            "control": "toggle",
+            "keywords": "files search results mixed home"
+          }
+        },
+        "fileBackend": {
+          "title": "File search tool",
+          "type": "string",
+          "default": "auto",
+          "description": "fd searches live; plocate uses its database (fast, may lag behind)",
+          "x-settings": {
+            "category": "launcher",
+            "section": "behavior",
+            "label": "prefs.launcher.file_backend",
+            "control": "selector",
+            "keywords": "fd plocate locate find search tool"
+          },
+          "enum": [
+            "auto",
+            "fd",
+            "plocate"
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "fd": "fd",
+            "plocate": "plocate"
+          }
+        },
+        "fileMaxResults": {
+          "title": "File results",
+          "type": "number",
+          "default": 30,
+          "description": "Maximum results after the files prefix",
+          "x-settings": {
+            "category": "launcher",
+            "section": "behavior",
+            "label": "prefs.launcher.file_max",
+            "control": "slider",
+            "step": 5,
+            "keywords": "files results limit count",
+            "min": 5,
+            "max": 100
+          },
+          "minimum": 5,
+          "maximum": 200
+        },
+        "fileExcludes": {
+          "title": "File excludes",
+          "type": "array",
+          "default": [
+            ".git",
+            "node_modules",
+            ".cache",
+            ".local/share/Trash",
+            "target",
+            "__pycache__",
+            ".venv"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Path segments excluded from file search."
+        },
+        "currencyRefreshHours": {
+          "title": "Currency rates refresh",
+          "type": "number",
+          "default": 12,
+          "description": "Rates are cached and work offline; refreshed when older than this",
+          "x-settings": {
+            "category": "launcher",
+            "section": "behavior",
+            "label": "prefs.launcher.currency_refresh",
+            "control": "slider",
+            "step": 1,
+            "unit": "h",
+            "keywords": "currency rates exchange refresh offline cache",
+            "min": 1,
+            "max": 72
+          },
+          "minimum": 1,
+          "maximum": 168,
+          "x-unit": "h"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

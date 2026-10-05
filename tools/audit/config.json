@@ -1,0 +1,106 @@
+{
+ "deadCode": {
+  "entryPoints": [
+   "shell.qml",
+   "assets/sddm/yozakura/Main.qml",
+   "config/meta/Meta.js"
+  ],
+  "scope": [
+   "modules/",
+   "config/"
+  ],
+  "ignore": {
+   "config/meta/AdapterTypes.js": "QML types of config keys, read by tools/config/gen_adapters.cjs (node), not by QML"
+  }
+ },
+ "configKeys": {
+  "allow": {},
+  "allowUnknownUse": {}
+ },
+ "snapshotKeys": {
+  "notSnapshotted": {
+   "theme.sr*.label": "constant display name of a variant, not user-editable"
+  },
+  "ignoreDomains": []
+ },
+ "translations": {
+  "reference": "en",
+  "nonTranslationFiles": [
+   "languages"
+  ],
+  "ignorePrefixes": [
+   "_meta."
+  ],
+  "allowMissing": {},
+  "allowUnused": {},
+  "keyDataFiles": [
+   "assets/commands/commands.json"
+  ]
+ },
+ "monoliths": {
+  "maxLines": 800,
+  "exclude": [
+   "backend/vendor/",
+   "backend/internal/proto/",
+   "assets/",
+   "backend/pkg/yozd/ipc/wayland/"
+  ]
+ },
+ "brandLiterals": [
+  {
+   "_comment": "The legacy name may only appear in legal files, the README credits line, migration and legacy-compat code. Everything else derives the identity from backend/pkg/brand, modules/globals/Brand*, scripts/lib/brand.*.",
+   "pattern": "ambxst",
+   "ignoreCase": true,
+   "ignoreLines": {},
+   "allow": {
+    "backend/pkg/brand/*": "the identity itself (legacy id for compatibility)",
+    "modules/globals/BrandActions.js": "the identity itself (legacy id for compatibility)",
+    "scripts/lib/brand.*": "the identity itself (legacy id for compatibility)",
+    "tests/brand-actions.test.cjs": "legacy action id fixtures",
+    "tests/theme-generators.test.py": "legacy app theme fixtures",
+    "backend/pkg/migrate/*": "migration from the legacy install",
+    "backend/cmd/yozakura/main.go": "migration entry point",
+    "backend/cmd/yozakura/legacy*.go": "refuses to start next to a running legacy session",
+    "backend/cmd/yozakura/install_targets_test.go": "legacy compositor block upgrade fixtures",
+    "backend/pkg/mods/manifest.go": "legacy manifest compatibility key",
+    "backend/pkg/mods/*_test.go": "legacy manifest fixtures and third-party repo URLs",
+    "backend/pkg/svc/compositor/actions.go": "legacy action ids resolve",
+    "backend/pkg/svc/compositor/actions_test.go": "legacy action id fixtures",
+    "config/KeybindsFile.qml": "binds.json legacy root migration",
+    "modules/services/ai/ChatStore.qml": "compatibility with older binaries' chatlist output",
+    "docs/mods/*": "legacy manifest file name and key, still read",
+    "install.sh": "legacy env var fallback, migration note",
+    "scripts/install-sddm-theme.sh": "removes a previous legacy SDDM theme install",
+    "README.md": "the credits line",
+    "NOTICE": "upstream copyright and modification statement (license)",
+    "AGENTS.md": "the one-line project history",
+    "docs/upstream/*": "upstream license and trademark terms, kept for reference",
+    "tools/audit/config.json": "this allowlist"
+   }
+  },
+  {
+   "_comment": "The external compositor daemon yozd replaced may only be named in legal files, the README (credits and install notes), the migration of its files, the identity (legacy-bind compatibility) and the installer that removes it.",
+   "pattern": "axctl",
+   "ignoreCase": true,
+   "ignoreLines": {},
+   "allow": {
+    "NOTICE": "derivation and copyright statement (license)",
+    "README.md": "the credits line",
+    "backend/pkg/migrate/*": "migration of the legacy daemon's files",
+    "backend/pkg/brand/*": "the identity itself (legacy daemon name for old bind command lines)",
+    "modules/globals/BrandActions.js": "the identity itself (legacy daemon name for old bind command lines)",
+    "install.sh": "removes the legacy daemon binary on upgrade",
+    "docs/upstream/*": "upstream license and trademark terms, kept for reference",
+    "tools/audit/config.json": "this allowlist"
+   }
+  }
+ ],
+ "shellInjection": {
+  "_comment": "Data reaches child processes as argv, never as code: no createQmlObject source and no sh -c script built with + / ${} / .arg() / .join(). Allow entries are '<file>::<substring of the flagged expression>' -> reason.",
+  "allow": {
+   "config/KeybindActions.js::BrandActions.appId": "compositor bind command line; the only spliced value is the constant app id",
+   "config/CustomBindDefaults.js::BrandActions.appId": "compositor bind command line; the only spliced value is the constant app id",
+   "modules/widgets/dashboard/wallpapers/WallpaperFolders.js::names.map": "find predicates built from the constant EXTENSIONS list; the folders are passed as \"$@\""
+  }
+ }
+}

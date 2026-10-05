@@ -1,0 +1,9 @@
+{
+  "author": "Yozakura",
+  "authorUrl": "",
+  "description": "Paper screens: four corner tabs on a thin double-lined frame, warm paper in light mode and dark wood in dark mode (it follows your mode), underline workspaces.",
+  "follows": [
+    "theme.lightMode",
+    "theme.oledMode"
+  ]
+}

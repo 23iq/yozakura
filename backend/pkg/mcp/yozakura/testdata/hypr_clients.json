@@ -1,0 +1,5 @@
+[
+  {"address":"0xaaa","mapped":true,"hidden":false,"at":[10,20],"size":[800,600],"workspace":{"id":2,"name":"2"},"floating":false,"monitor":0,"class":"firefox","title":"Docs — Mozilla Firefox","pid":100,"fullscreen":0,"focusHistoryID":1},
+  {"address":"0xbbb","mapped":true,"hidden":false,"at":[0,0],"size":[1920,1080],"workspace":{"id":3,"name":"3"},"floating":true,"monitor":1,"class":"kitty","title":"nvim","pid":101,"fullscreen":2,"focusHistoryID":0},
+  {"address":"0xccc","mapped":false,"at":[0,0],"size":[0,0],"workspace":{"id":-1,"name":""},"class":"ghost","title":"","focusHistoryID":5}
+]

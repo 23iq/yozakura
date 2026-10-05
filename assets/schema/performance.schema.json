@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:performance",
+  "title": "performance",
+  "description": "Performance switches for costly effects.",
+  "type": "object",
+  "x-file": "config/performance.json",
+  "properties": {
+    "blurTransition": {
+      "title": "Blur Transition",
+      "type": "boolean",
+      "default": true,
+      "description": "Animated blur when opening panels",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "performance.blur_transition",
+        "control": "toggle",
+        "keywords": "blur transition animation panels"
+      }
+    },
+    "windowPreview": {
+      "title": "Window Preview",
+      "type": "boolean",
+      "default": true,
+      "description": "Show window thumbnails in overview",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "performance.window_preview",
+        "control": "toggle",
+        "keywords": "window preview thumbnails overview dock"
+      }
+    },
+    "wavyLine": {
+      "title": "Wavy Line",
+      "type": "boolean",
+      "default": true,
+      "description": "Animated wavy line effect",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "performance.wavy_line",
+        "control": "toggle",
+        "keywords": "wavy line progress media animation"
+      }
+    },
+    "rotateCoverArt": {
+      "title": "Rotate Cover Art",
+      "type": "boolean",
+      "default": true,
+      "description": "Spin the album art like a vinyl disc while music plays.",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "performance.rotate_cover",
+        "control": "toggle",
+        "keywords": "cover art album vinyl rotation spin"
+      }
+    },
+    "pauseWallpaperOnFullscreen": {
+      "title": "Pause Wallpaper on Fullscreen",
+      "type": "boolean",
+      "default": true,
+      "description": "Pause video wallpapers while a fullscreen window covers the monitor",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.pause_wallpaper_fullscreen",
+        "control": "toggle",
+        "keywords": "video wallpaper fullscreen game pause"
+      }
+    },
+    "pauseWallpaperWhenCovered": {
+      "title": "Pause Wallpaper When Covered",
+      "type": "boolean",
+      "default": true,
+      "description": "Pause video wallpapers while windows cover every pixel of the monitor (no gaps, e.g. monocle)",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.pause_wallpaper_covered",
+        "control": "toggle",
+        "keywords": "video wallpaper covered tiled windows gaps monocle pause"
+      }
+    },
+    "dashboardPersistTabs": {
+      "title": "Persist Dashboard Tabs",
+      "type": "boolean",
+      "default": false,
+      "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "performance.dashboard_persist",
+        "control": "toggle",
+        "keywords": "dashboard tabs keep loaded memory"
+      }
+    },
+    "dashboardMaxPersistentTabs": {
+      "title": "Tabs kept loaded",
+      "type": "number",
+      "default": 2,
+      "description": "Most dashboard tabs kept in memory at once.",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "prefs.sys.dashboard_max_tabs",
+        "control": "number",
+        "keywords": "dashboard tabs memory limit",
+        "visibleWhen": {
+          "key": "performance.dashboardPersistTabs",
+          "equals": true
+        },
+        "min": 1,
+        "max": 10
+      },
+      "minimum": 1,
+      "maximum": 10
+    }
+  },
+  "additionalProperties": false
+}

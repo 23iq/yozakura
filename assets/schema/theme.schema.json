@@ -1,0 +1,4334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:theme",
+  "title": "theme",
+  "description": "Look of the whole shell: light/dark/OLED mode, fonts, roundness, animation speed, shadows and the surface variants (sr*: background, popup, bar, pane, focus, primary, ...) every container is drawn with.",
+  "type": "object",
+  "x-file": "config/theme.json",
+  "properties": {
+    "oledMode": {
+      "title": "Oled mode",
+      "type": "boolean",
+      "default": false,
+      "x-settings": {
+        "category": "appearance",
+        "section": "mode",
+        "label": "prefs.appearance.mode",
+        "entry": "theme.mode",
+        "entryTitle": "Mode",
+        "keywords": "dark light oled amoled black night day"
+      },
+      "description": "Pure black backgrounds (dark mode only); good for OLED panels."
+    },
+    "lightMode": {
+      "title": "Light mode",
+      "type": "boolean",
+      "default": false,
+      "x-settings": {
+        "category": "appearance",
+        "section": "mode",
+        "label": "prefs.appearance.mode",
+        "entry": "theme.mode",
+        "entryTitle": "Mode",
+        "keywords": "dark light oled amoled black night day"
+      },
+      "description": "Use the light variant of the generated palette."
+    },
+    "roundness": {
+      "title": "Roundness",
+      "type": "number",
+      "default": 16,
+      "description": "Corner radius of panels, buttons and islands.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "shape",
+        "label": "settings.theme.roundness",
+        "control": "slider",
+        "preview": "RoundnessPreview",
+        "step": 1,
+        "unit": "px",
+        "keywords": "radius corners rounded square shape",
+        "min": 0,
+        "max": 20
+      },
+      "minimum": 0,
+      "maximum": 24,
+      "x-unit": "px"
+    },
+    "font": {
+      "title": "UI Font",
+      "type": "string",
+      "default": "Roboto Condensed",
+      "description": "Used for all text in the shell.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "typography",
+        "label": "settings.theme.ui_font",
+        "control": "font",
+        "keywords": "font typeface family text size typography"
+      },
+      "format": "font-family"
+    },
+    "fontSize": {
+      "title": "Font size",
+      "type": "number",
+      "default": 14,
+      "x-settings": {
+        "category": "appearance",
+        "section": "typography",
+        "label": "settings.theme.ui_font",
+        "entry": "theme.font",
+        "entryTitle": "UI Font",
+        "keywords": "font typeface family text size typography"
+      },
+      "description": "Base UI font size; other sizes scale from it.",
+      "minimum": 8,
+      "maximum": 32,
+      "x-unit": "px"
+    },
+    "monoFont": {
+      "title": "Mono Font",
+      "type": "string",
+      "default": "Iosevka Nerd Font Mono",
+      "description": "Used for code, paths and the terminal theme.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "typography",
+        "label": "settings.theme.mono_font",
+        "control": "font",
+        "keywords": "monospace code terminal font typeface"
+      },
+      "format": "font-family"
+    },
+    "monoFontSize": {
+      "title": "Mono font size",
+      "type": "number",
+      "default": 14,
+      "x-settings": {
+        "category": "appearance",
+        "section": "typography",
+        "label": "settings.theme.mono_font",
+        "entry": "theme.monoFont",
+        "entryTitle": "Mono Font",
+        "keywords": "monospace code terminal font typeface"
+      },
+      "description": "Monospace font size.",
+      "minimum": 8,
+      "maximum": 32,
+      "x-unit": "px"
+    },
+    "tintIcons": {
+      "title": "Tint Icons",
+      "type": "boolean",
+      "default": false,
+      "description": "Recolor app icons with the palette.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "palette",
+        "label": "settings.theme.tint_icons",
+        "control": "toggle",
+        "keywords": "icons monochrome tint color"
+      }
+    },
+    "enableCorners": {
+      "title": "Enable Corners",
+      "type": "boolean",
+      "default": true,
+      "description": "Round the corners of the screen.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "shape",
+        "label": "settings.theme.enable_corners",
+        "control": "toggle",
+        "keywords": "screen corners rounded display edges"
+      }
+    },
+    "animDuration": {
+      "title": "Animation",
+      "type": "number",
+      "default": 300,
+      "description": "Speed of every animation. Off disables them.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "motion",
+        "label": "settings.theme.animation",
+        "control": "slider",
+        "preview": "MotionPreview",
+        "step": 25,
+        "unit": "ms",
+        "keywords": "animation speed duration fast slow motion reduce",
+        "min": 0,
+        "max": 1000,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Off"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 2000,
+      "x-unit": "ms"
+    },
+    "paletteTransitionDuration": {
+      "title": "Color Fade",
+      "type": "number",
+      "default": 600,
+      "description": "How long colors blend when the palette changes.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "motion",
+        "label": "settings.theme.palette_transition",
+        "control": "slider",
+        "preview": "PaletteFadePreview",
+        "step": 50,
+        "unit": "ms",
+        "keywords": "palette colors crossfade fade wallpaper change transition",
+        "min": 0,
+        "max": 1500,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Instant"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 5000,
+      "x-unit": "ms"
+    },
+    "shadowOpacity": {
+      "title": "Shadow opacity",
+      "type": "number",
+      "default": 0.5,
+      "description": "Opacity of the shadow under shell surfaces.",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "shadowColor": {
+      "title": "Shadow color",
+      "type": "string",
+      "default": "shadow",
+      "description": "Shadow color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+      "format": "color"
+    },
+    "shadowXOffset": {
+      "title": "Shadow xoffset",
+      "type": "number",
+      "default": 0,
+      "description": "Horizontal shadow offset.",
+      "minimum": -50,
+      "maximum": 50,
+      "x-unit": "px"
+    },
+    "shadowYOffset": {
+      "title": "Shadow yoffset",
+      "type": "number",
+      "default": 0,
+      "description": "Vertical shadow offset.",
+      "minimum": -50,
+      "maximum": 50,
+      "x-unit": "px"
+    },
+    "shadowBlur": {
+      "title": "Shadow blur",
+      "type": "number",
+      "default": 1,
+      "description": "Shadow softness (0 = hard, 1 = soft).",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "terminalOpacity": {
+      "title": "Background opacity",
+      "type": "number",
+      "default": -1,
+      "description": "Kitty's background opacity before glass. From preset follows the preset's background surface.",
+      "x-settings": {
+        "category": "terminal",
+        "section": "kitty",
+        "label": "prefs.term.opacity",
+        "control": "slider",
+        "step": 0.01,
+        "keywords": "kitty terminal opacity transparency background alpha",
+        "enabledWhen": {
+          "key": "apps.theming.kitty",
+          "equals": true
+        },
+        "min": 0,
+        "max": 1,
+        "specialValues": [
+          {
+            "value": -1,
+            "label": "From preset"
+          }
+        ]
+      },
+      "minimum": -1,
+      "maximum": 1
+    },
+    "surfaceEffect": {
+      "title": "Effect",
+      "type": "string",
+      "default": "none",
+      "description": "A signature texture on the shell's own surfaces (bar, notch, launcher, popups, settings). App windows are never touched.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "effects",
+        "label": "prefs.effects.effect",
+        "control": "custom",
+        "component": "SurfaceEffectCards",
+        "keywords": "surface effect texture crt scanlines retro phosphor vignette ink sumi-e paper grain brush"
+      },
+      "enum": [
+        "none",
+        "crt",
+        "ink"
+      ]
+    },
+    "surfaceEffectOptions": {
+      "title": "Surface effect options",
+      "type": "object",
+      "description": "Options of the surface effect (each effect reads the ones it uses).",
+      "properties": {
+        "intensity": {
+          "title": "Intensity",
+          "type": "number",
+          "default": 0.5,
+          "description": "How strong the effect is. Lowered automatically when text would become hard to read.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.effects.intensity",
+            "control": "slider",
+            "step": 0.05,
+            "keywords": "effect intensity strength amount",
+            "visibleWhen": {
+              "key": "theme.surfaceEffect",
+              "notEquals": "none"
+            },
+            "min": 0,
+            "max": 1
+          },
+          "minimum": 0,
+          "maximum": 1
+        },
+        "flicker": {
+          "title": "Power-on flicker",
+          "type": "boolean",
+          "default": true,
+          "description": "A short phosphor flicker when a surface appears (off when animations are off).",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.effects.flicker",
+            "control": "toggle",
+            "keywords": "crt flicker power on phosphor",
+            "visibleWhen": {
+              "key": "theme.surfaceEffect",
+              "equals": "crt"
+            }
+          }
+        },
+        "grain": {
+          "title": "Paper grain",
+          "type": "number",
+          "default": 0.6,
+          "description": "Rice-paper texture; full on light surfaces, faint on dark ones.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.effects.grain",
+            "control": "slider",
+            "step": 0.05,
+            "keywords": "ink paper grain texture rice paper",
+            "visibleWhen": {
+              "key": "theme.surfaceEffect",
+              "equals": "ink"
+            },
+            "min": 0,
+            "max": 1
+          },
+          "minimum": 0,
+          "maximum": 1
+        },
+        "brushHighlights": {
+          "title": "Brush-stroke highlights",
+          "type": "boolean",
+          "default": true,
+          "description": "Paint selections, focus and active pills as ink brush strokes.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.effects.brush_highlights",
+            "control": "toggle",
+            "keywords": "ink brush stroke highlight selection focus sumi-e",
+            "visibleWhen": {
+              "key": "theme.surfaceEffect",
+              "equals": "ink"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "glass": {
+      "title": "Glass",
+      "type": "object",
+      "description": "Glass system (modules/theme/GlassModel.js): one master amount makes every surface more or less glassy; -1 anywhere means inherit/auto.",
+      "properties": {
+        "enabled": {
+          "title": "Glass effect",
+          "type": "boolean",
+          "default": true,
+          "description": "Translucent, blurred surfaces across the shell, windows and terminal. Off makes everything solid.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "glass",
+            "label": "prefs.glass.enabled",
+            "control": "toggle",
+            "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque"
+          }
+        },
+        "amount": {
+          "title": "Glassiness",
+          "type": "number",
+          "default": -1,
+          "description": "One slider for everything: 0% is solid, 50% tasteful frosted glass, 100% very glassy. Text always stays readable (WCAG 4.5:1 on any wallpaper).",
+          "x-settings": {
+            "category": "appearance",
+            "section": "glass",
+            "label": "prefs.glass.amount",
+            "control": "custom",
+            "component": "GlassAmountEditor",
+            "preview": "GlassPreview",
+            "keywords": "glass amount glassiness blur transparency translucent frosted more less slider",
+            "visibleWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            }
+          },
+          "x-specialValues": [
+            {
+              "value": -1,
+              "label": "Auto"
+            }
+          ],
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "enum": [
+                -1
+              ]
+            }
+          ],
+          "x-range": {
+            "min": 0,
+            "max": 1
+          }
+        },
+        "referenceAmount": {
+          "title": "Reference amount",
+          "type": "number",
+          "default": -1,
+          "description": "Amount at which the preset shows its designed values; -1 = derived from the preset's sr*/terminal opacities.",
+          "x-specialValues": [
+            {
+              "value": -1,
+              "label": "Auto"
+            }
+          ],
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            {
+              "enum": [
+                -1
+              ]
+            }
+          ],
+          "x-range": {
+            "min": 0,
+            "max": 1
+          }
+        },
+        "tintRole": {
+          "title": "Tint color",
+          "type": "string",
+          "default": "primary",
+          "description": "Palette role used to tint the glass.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "glassAdvanced",
+            "label": "prefs.glass.tint_role",
+            "control": "selector",
+            "keywords": "glass tint color role accent",
+            "visibleWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            }
+          },
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary",
+            "surfaceBright"
+          ],
+          "x-enumLabels": {
+            "primary": "Primary",
+            "secondary": "Secondary",
+            "tertiary": "Tertiary",
+            "surfaceBright": "Surface"
+          }
+        },
+        "highlightRole": {
+          "title": "Highlight color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Palette role of the top-edge highlight.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "glassAdvanced",
+            "label": "prefs.glass.highlight_role",
+            "control": "selector",
+            "keywords": "glass highlight edge color role",
+            "visibleWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            }
+          },
+          "enum": [
+            "overBackground",
+            "primary",
+            "outline",
+            "surfaceBright"
+          ],
+          "x-enumLabels": {
+            "overBackground": "Text",
+            "primary": "Primary",
+            "outline": "Outline",
+            "surfaceBright": "Surface"
+          }
+        },
+        "advanced": {
+          "title": "Advanced",
+          "type": "object",
+          "description": "Advanced overrides of single glass properties; -1 = follow the master amount.",
+          "properties": {
+            "opacity": {
+              "title": "Surface opacity",
+              "type": "number",
+              "default": -1,
+              "description": "Fixed opacity for every glass surface instead of the curve (still clamped for legibility).",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.opacity",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass opacity transparency translucent alpha see-through",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0.2,
+                "max": 1,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.2,
+                  "maximum": 1
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0.2,
+                "max": 1
+              }
+            },
+            "blurSize": {
+              "title": "Blur size",
+              "type": "number",
+              "default": -1,
+              "description": "Compositor blur radius behind windows and shell surfaces.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.blur_size",
+                "control": "slider",
+                "step": 1,
+                "keywords": "glass blur size radius frosted",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 40,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 40
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0,
+                "max": 40
+              }
+            },
+            "blurPasses": {
+              "title": "Blur passes",
+              "type": "number",
+              "default": -1,
+              "description": "More passes give a smoother, stronger blur (costs GPU).",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.blur_passes",
+                "control": "slider",
+                "step": 1,
+                "keywords": "glass blur passes quality strength",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 1,
+                "max": 8,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 8
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 1,
+                "max": 8
+              }
+            },
+            "vibrancy": {
+              "title": "Vibrancy",
+              "type": "number",
+              "default": -1,
+              "description": "Saturation boost of the colors seen through the glass.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.vibrancy",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass vibrancy saturation color pop",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 1,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0,
+                "max": 1
+              }
+            },
+            "noise": {
+              "title": "Noise",
+              "type": "number",
+              "default": -1,
+              "description": "Fine grain on the blur, avoids banding.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.noise",
+                "control": "slider",
+                "step": 0.005,
+                "keywords": "glass noise grain texture",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 0.2,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.2
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0,
+                "max": 0.2
+              }
+            },
+            "contrast": {
+              "title": "Backdrop contrast",
+              "type": "number",
+              "default": -1,
+              "description": "Contrast of the blurred backdrop.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.contrast",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass contrast backdrop",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0.5,
+                "max": 2,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 2
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0.5,
+                "max": 2
+              }
+            },
+            "brightness": {
+              "title": "Backdrop brightness",
+              "type": "number",
+              "default": -1,
+              "description": "Dims (dark themes) or lifts (light themes) the blurred backdrop.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.brightness",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass brightness backdrop dim",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0.5,
+                "max": 2,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0.5,
+                  "maximum": 2
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0.5,
+                "max": 2
+              }
+            },
+            "tintStrength": {
+              "title": "Tint",
+              "type": "number",
+              "default": -1,
+              "description": "How much the palette tint color washes over glass surfaces.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.tint_strength",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass tint color accent wash",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 0.6,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.6
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0,
+                "max": 0.6
+              }
+            },
+            "borderHighlight": {
+              "title": "Edge highlight",
+              "type": "number",
+              "default": -1,
+              "description": "A thin light line along the top edge of glass panels.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.border_highlight",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass highlight edge rim light line border shine",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 1,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0,
+                "max": 1
+              }
+            },
+            "shadowSoftness": {
+              "title": "Shadow softness",
+              "type": "number",
+              "default": -1,
+              "description": "Wider, softer shadows under glass surfaces and windows.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "glassAdvanced",
+                "label": "prefs.glass.shadow_softness",
+                "control": "slider",
+                "step": 0.01,
+                "keywords": "glass shadow soft blur depth",
+                "visibleWhen": {
+                  "key": "theme.glass.enabled",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 1,
+                "specialValues": [
+                  {
+                    "value": -1,
+                    "label": "Auto"
+                  }
+                ]
+              },
+              "x-specialValues": [
+                {
+                  "value": -1,
+                  "label": "Auto"
+                }
+              ],
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                {
+                  "enum": [
+                    -1
+                  ]
+                }
+              ],
+              "x-range": {
+                "min": 0,
+                "max": 1
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "surfaces": {
+          "title": "Surfaces",
+          "type": "object",
+          "description": "Per-surface glass amounts; -1 = the master amount.",
+          "properties": {
+            "windows": {
+              "title": "Windows",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                },
+                "activeOpacity": {
+                  "title": "Focused window opacity",
+                  "type": "number",
+                  "default": -1,
+                  "description": "Whole-window opacity of the focused window. Auto keeps it opaque so app text stays readable.",
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.active_opacity",
+                    "control": "slider",
+                    "step": 0.01,
+                    "keywords": "glass window opacity active focused transparent",
+                    "visibleWhen": {
+                      "key": "theme.glass.enabled",
+                      "equals": true
+                    },
+                    "min": 0.3,
+                    "max": 1,
+                    "specialValues": [
+                      {
+                        "value": -1,
+                        "label": "Auto"
+                      }
+                    ]
+                  },
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0.3,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0.3,
+                    "max": 1
+                  }
+                },
+                "inactiveOpacity": {
+                  "title": "Unfocused window opacity",
+                  "type": "number",
+                  "default": -1,
+                  "description": "Whole-window opacity of unfocused windows. Auto keeps them opaque.",
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.inactive_opacity",
+                    "control": "slider",
+                    "step": 0.01,
+                    "keywords": "glass window opacity inactive unfocused transparent",
+                    "visibleWhen": {
+                      "key": "theme.glass.enabled",
+                      "equals": true
+                    },
+                    "min": 0.3,
+                    "max": 1,
+                    "specialValues": [
+                      {
+                        "value": -1,
+                        "label": "Auto"
+                      }
+                    ]
+                  },
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0.3,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0.3,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "terminal": {
+              "title": "Terminal",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "popups": {
+              "title": "Popups",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "bar": {
+              "title": "Bar",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "notch": {
+              "title": "Notch",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "dock": {
+              "title": "Dock",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "sidebars": {
+              "title": "Sidebars",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "lockscreen": {
+              "title": "Lockscreen",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "settings": {
+              "title": "Settings",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "widgets": {
+              "title": "Widgets",
+              "type": "object",
+              "description": "Glass overrides of this surface.",
+              "properties": {
+                "amount": {
+                  "title": "Amount",
+                  "type": "number",
+                  "default": -1,
+                  "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
+                  "x-specialValues": [
+                    {
+                      "value": -1,
+                      "label": "Auto"
+                    }
+                  ],
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    {
+                      "enum": [
+                        -1
+                      ]
+                    }
+                  ],
+                  "x-range": {
+                    "min": 0,
+                    "max": 1
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "srBg": {
+      "title": "Sr bg",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Background",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "background",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surface",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "background",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srPopup": {
+      "title": "Sr popup",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Popup",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "background",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surface",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "background",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            2
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srInternalBg": {
+      "title": "Sr internal bg",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Internal BG",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "background",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surface",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "background",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srBarBg": {
+      "title": "Sr bar bg",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Bar BG",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "surfaceDim",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surface",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "surfaceDim",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 0,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srFrame": {
+      "title": "Sr frame",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Frame",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "inheritBg": {
+          "title": "Inherit bg",
+          "type": "boolean",
+          "default": true,
+          "description": "Paint the screen frame with the srBg variant instead of its own settings."
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "background",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surface",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "background",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srPane": {
+      "title": "Sr pane",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Pane",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "surface",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surfaceBright",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "surface",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srCommon": {
+      "title": "Sr common",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Common",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "surface",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "background",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "surface",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srFocus": {
+      "title": "Sr focus",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Focus",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "surfaceBright",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "surfaceVariant",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "surfaceBright",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "surfaceBright",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overBackground",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srPrimary": {
+      "title": "Sr primary",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Primary",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "primary",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "overPrimaryContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "primary",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "primary",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overPrimary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srPrimaryFocus": {
+      "title": "Sr primary focus",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Primary Focus",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overPrimaryContainer",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "primary",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overPrimaryContainer",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overBackground",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overPrimary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srOverPrimary": {
+      "title": "Sr over primary",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Over Primary",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overPrimary",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "primaryContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overPrimary",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overPrimary",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "primary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srSecondary": {
+      "title": "Sr secondary",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Secondary",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "secondary",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "overSecondaryContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "secondary",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "secondary",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overSecondary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srSecondaryFocus": {
+      "title": "Sr secondary focus",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Secondary Focus",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overSecondaryContainer",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "secondary",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overSecondaryContainer",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overBackground",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overSecondary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srOverSecondary": {
+      "title": "Sr over secondary",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Over Secondary",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overSecondary",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "secondaryContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overSecondary",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overSecondary",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "secondary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srTertiary": {
+      "title": "Sr tertiary",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Tertiary",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "tertiary",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "overTertiaryContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "tertiary",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "tertiary",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overTertiary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srTertiaryFocus": {
+      "title": "Sr tertiary focus",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Tertiary Focus",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overTertiaryContainer",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "tertiary",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overTertiaryContainer",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overBackground",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overTertiary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srOverTertiary": {
+      "title": "Sr over tertiary",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Over Tertiary",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overTertiary",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "tertiaryContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overTertiary",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overTertiary",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "tertiary",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srError": {
+      "title": "Sr error",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Error",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "error",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "overErrorContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "error",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "error",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overError",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srErrorFocus": {
+      "title": "Sr error focus",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Error Focus",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overBackground",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "error",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overErrorContainer",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overBackground",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "overError",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "srOverError": {
+      "title": "Sr over error",
+      "type": "object",
+      "description": "Surface variant: how containers of this kind are painted (gradient, border, content color, opacity).",
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string",
+          "default": "Over Error",
+          "description": "Display name of the variant (not user-editable).",
+          "readOnly": true
+        },
+        "gradient": {
+          "title": "Gradient",
+          "type": "array",
+          "default": [
+            [
+              "overError",
+              0
+            ]
+          ],
+          "items": {
+            "type": "array"
+          },
+          "description": "Gradient stops as [[colorSpec, position 0..1], ...]; a single stop is a flat color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "gradient"
+        },
+        "gradientType": {
+          "title": "Gradient type",
+          "type": "string",
+          "default": "linear",
+          "description": "How the gradient is drawn.",
+          "enum": [
+            "linear",
+            "radial",
+            "halftone"
+          ]
+        },
+        "gradientAngle": {
+          "title": "Gradient angle",
+          "type": "number",
+          "default": 0,
+          "description": "Angle of a linear gradient.",
+          "minimum": 0,
+          "maximum": 360,
+          "x-unit": "deg"
+        },
+        "gradientCenterX": {
+          "title": "Gradient center x",
+          "type": "number",
+          "default": 0.5,
+          "description": "Horizontal center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "gradientCenterY": {
+          "title": "Gradient center y",
+          "type": "number",
+          "default": 0.5,
+          "description": "Vertical center of a radial gradient (0..1).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotMin": {
+          "title": "Halftone dot min",
+          "type": "number",
+          "default": 0,
+          "description": "Smallest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneDotMax": {
+          "title": "Halftone dot max",
+          "type": "number",
+          "default": 2,
+          "description": "Largest dot of the halftone pattern.",
+          "minimum": 0,
+          "maximum": 20,
+          "x-unit": "px"
+        },
+        "halftoneStart": {
+          "title": "Halftone start",
+          "type": "number",
+          "default": 0,
+          "description": "Where the halftone ramp starts (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneEnd": {
+          "title": "Halftone end",
+          "type": "number",
+          "default": 1,
+          "description": "Where the halftone ramp ends (0..1 across the surface).",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "halftoneDotColor": {
+          "title": "Halftone dot color",
+          "type": "string",
+          "default": "errorContainer",
+          "description": "Halftone dot color. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "halftoneBackgroundColor": {
+          "title": "Halftone background color",
+          "type": "string",
+          "default": "overError",
+          "description": "Color behind the halftone dots. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "border": {
+          "title": "Border",
+          "type": "array",
+          "default": [
+            "overError",
+            0
+          ],
+          "description": "Border as [colorSpec, width px]; width 0 hides it. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "border"
+        },
+        "itemColor": {
+          "title": "Item color",
+          "type": "string",
+          "default": "error",
+          "description": "Color of text and icons drawn on this surface. Color spec: a palette role (e.g. \"primary\", \"surface\", \"overBackground\"), \"#rrggbb\"/\"#aarrggbb\", or either with an alpha suffix (\"surface@0.5\").",
+          "format": "color"
+        },
+        "opacity": {
+          "title": "Opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Surface opacity (lower = more see-through).",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

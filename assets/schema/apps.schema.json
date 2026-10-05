@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:apps",
+  "title": "apps",
+  "description": "External app theming: one switch per app the palette is written to (modules/theme/AppThemes.js), and the kitty font written next to its colors.",
+  "type": "object",
+  "x-file": "config/apps.json",
+  "properties": {
+    "theming": {
+      "title": "Theming",
+      "type": "object",
+      "properties": {
+        "gtk": {
+          "title": "Gtk",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "qt": {
+          "title": "Qt",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "kitty": {
+          "title": "Kitty",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "discord": {
+          "title": "Discord",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "spicetify": {
+          "title": "Spicetify",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "telegram": {
+          "title": "Telegram",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "firefox": {
+          "title": "Firefox",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "papirus": {
+          "title": "Papirus",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "nvim": {
+          "title": "Nvim",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        },
+        "sddm": {
+          "title": "Sddm",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "terminal",
+            "section": "theming",
+            "label": "prefs.term.theming",
+            "entry": "apps.theming",
+            "entryTitle": "Theme these apps",
+            "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+          },
+          "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+        }
+      },
+      "additionalProperties": false
+    },
+    "kitty": {
+      "title": "Kitty",
+      "type": "object",
+      "properties": {
+        "font": {
+          "title": "Font",
+          "type": "string",
+          "default": "",
+          "description": "Written next to kitty's colors and applied live. Leave empty to keep the font from your kitty.conf.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "kitty",
+            "label": "prefs.term.kitty_font",
+            "control": "font",
+            "keywords": "kitty font family size monospace terminal",
+            "enabledWhen": {
+              "key": "apps.theming.kitty",
+              "equals": true
+            }
+          },
+          "format": "font-family"
+        },
+        "fontSize": {
+          "title": "Font size",
+          "type": "number",
+          "default": 11,
+          "x-settings": {
+            "category": "terminal",
+            "section": "kitty",
+            "label": "prefs.term.kitty_font",
+            "entry": "apps.kitty.font",
+            "entryTitle": "Font",
+            "keywords": "kitty font family size monospace terminal"
+          },
+          "description": "Kitty font size, used with kitty.font.",
+          "minimum": 4,
+          "maximum": 72,
+          "x-unit": "pt"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

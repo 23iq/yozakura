@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:overview",
+  "title": "overview",
+  "description": "Workspace overview (mission control) grid.",
+  "type": "object",
+  "x-file": "config/overview.json",
+  "properties": {
+    "rows": {
+      "title": "Rows",
+      "type": "number",
+      "default": 2,
+      "description": "Workspace rows in the overview.",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "columns": {
+      "title": "Columns",
+      "type": "number",
+      "default": 5,
+      "description": "Workspace columns in the overview.",
+      "minimum": 1,
+      "maximum": 10
+    },
+    "scale": {
+      "title": "Scale",
+      "type": "number",
+      "default": 0.15,
+      "description": "Size of workspace previews relative to the screen.",
+      "minimum": 0.05,
+      "maximum": 0.5
+    },
+    "workspaceSpacing": {
+      "title": "Workspace spacing",
+      "type": "number",
+      "default": 8,
+      "description": "Gap between workspace previews.",
+      "minimum": 0,
+      "maximum": 64,
+      "x-unit": "px"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,325 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:system",
+  "title": "system",
+  "description": "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro timer and clipboard storage.",
+  "type": "object",
+  "x-file": "config/system.json",
+  "properties": {
+    "disks": {
+      "title": "Monitored Disks",
+      "type": "array",
+      "default": [
+        "/"
+      ],
+      "items": {
+        "type": "string",
+        "format": "path"
+      },
+      "description": "Mount points shown in the system metrics.",
+      "x-settings": {
+        "category": "system",
+        "section": "storage",
+        "label": "system.resources.disks_title",
+        "control": "list",
+        "keywords": "disks mount points storage metrics usage home root"
+      }
+    },
+    "language": {
+      "title": "Language",
+      "type": "string",
+      "default": "auto",
+      "description": "Language of the whole shell. Auto follows your system locale.",
+      "x-settings": {
+        "category": "system",
+        "section": "language",
+        "label": "settings.system.language",
+        "control": "custom",
+        "component": "LanguagePicker",
+        "keywords": "language locale translation i18n english spanish russian auto"
+      }
+    },
+    "updateServiceEnabled": {
+      "title": "Update Service",
+      "type": "boolean",
+      "default": true,
+      "description": "Look for new releases in the background (about once an hour) and notify you.",
+      "x-settings": {
+        "category": "updates",
+        "section": "updates",
+        "label": "shell.system.update_service",
+        "control": "toggle",
+        "keywords": "updates check background notify new version"
+      }
+    },
+    "idle": {
+      "title": "Idle",
+      "type": "object",
+      "description": "Idle handling (hypridle-like): lock/sleep commands and timed listeners.",
+      "properties": {
+        "general": {
+          "title": "General",
+          "type": "object",
+          "properties": {
+            "lock_cmd": {
+              "title": "Lock Command",
+              "type": "string",
+              "default": "yozakura lock",
+              "description": "Runs when the session locks (loginctl lock-session, idle listeners).",
+              "x-settings": {
+                "category": "system",
+                "section": "idle",
+                "label": "settings.system.lock_command",
+                "control": "text",
+                "keywords": "lock screen command idle"
+              },
+              "format": "command"
+            },
+            "before_sleep_cmd": {
+              "title": "Before Sleep",
+              "type": "string",
+              "default": "loginctl lock-session",
+              "description": "Runs right before the computer suspends, usually to lock the screen.",
+              "x-settings": {
+                "category": "system",
+                "section": "power",
+                "label": "settings.system.before_sleep",
+                "control": "text",
+                "keywords": "suspend sleep before lock command power"
+              },
+              "format": "command"
+            },
+            "after_sleep_cmd": {
+              "title": "After Sleep",
+              "type": "string",
+              "default": "yozakura screen on",
+              "description": "Runs when the computer wakes up, e.g. to turn the screens back on.",
+              "x-settings": {
+                "category": "system",
+                "section": "power",
+                "label": "settings.system.after_sleep",
+                "control": "text",
+                "keywords": "resume wake after sleep command power screen on"
+              },
+              "format": "command"
+            }
+          },
+          "additionalProperties": false
+        },
+        "listeners": {
+          "title": "Listeners",
+          "type": "array",
+          "default": [
+            {
+              "timeout": 150,
+              "onTimeout": "yozakura brightness 10 -s",
+              "onResume": "yozakura brightness -r"
+            },
+            {
+              "timeout": 300,
+              "onTimeout": "loginctl lock-session"
+            },
+            {
+              "timeout": 330,
+              "onTimeout": "yozakura screen off",
+              "onResume": "yozakura screen on"
+            },
+            {
+              "timeout": 1800,
+              "onTimeout": "yozakura suspend"
+            }
+          ],
+          "items": {
+            "type": "object"
+          },
+          "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
+          "x-settings": {
+            "category": "system",
+            "section": "idle",
+            "label": "idle.listeners",
+            "control": "list",
+            "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ocr": {
+      "title": "Ocr",
+      "type": "object",
+      "properties": {
+        "eng": {
+          "title": "Eng",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "spa": {
+          "title": "Spa",
+          "type": "boolean",
+          "default": true,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "lat": {
+          "title": "Lat",
+          "type": "boolean",
+          "default": false,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "jpn": {
+          "title": "Jpn",
+          "type": "boolean",
+          "default": false,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "chi_sim": {
+          "title": "Chi sim",
+          "type": "boolean",
+          "default": false,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "chi_tra": {
+          "title": "Chi tra",
+          "type": "boolean",
+          "default": false,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "kor": {
+          "title": "Kor",
+          "type": "boolean",
+          "default": false,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        },
+        "rus": {
+          "title": "Rus",
+          "type": "boolean",
+          "default": false,
+          "x-settings": {
+            "category": "updates",
+            "section": "ocr",
+            "label": "shell.system.ocr_languages",
+            "entry": "system.ocr",
+            "entryTitle": "OCR Languages",
+            "keywords": "ocr text recognition tesseract languages english spanish latin japanese chinese korean russian"
+          },
+          "description": "Enable this OCR (tesseract) language."
+        }
+      },
+      "additionalProperties": false
+    },
+    "pomodoro": {
+      "title": "Pomodoro",
+      "type": "object",
+      "properties": {
+        "workTime": {
+          "title": "Work time",
+          "type": "number",
+          "default": 1500,
+          "description": "Pomodoro work period.",
+          "minimum": 60,
+          "maximum": 14400,
+          "x-unit": "s"
+        },
+        "restTime": {
+          "title": "Rest time",
+          "type": "number",
+          "default": 300,
+          "description": "Pomodoro rest period.",
+          "minimum": 60,
+          "maximum": 7200,
+          "x-unit": "s"
+        },
+        "autoStart": {
+          "title": "Auto start",
+          "type": "boolean",
+          "default": false,
+          "description": "Start the next pomodoro period automatically."
+        },
+        "syncSpotify": {
+          "title": "Sync spotify",
+          "type": "boolean",
+          "default": false,
+          "description": "Pause/resume Spotify with the pomodoro periods."
+        }
+      },
+      "additionalProperties": false
+    },
+    "clipboard": {
+      "title": "Clipboard",
+      "type": "object",
+      "properties": {
+        "tmpfs": {
+          "title": "Keep clipboard history in RAM",
+          "type": "boolean",
+          "default": false,
+          "description": "Unpinned history lives in /tmp and is wiped on reboot. Pinned items always stay on disk.",
+          "x-settings": {
+            "category": "system",
+            "section": "storage",
+            "label": "prefs.sys.clipboard_tmpfs",
+            "control": "toggle",
+            "keywords": "clipboard history tmp tmpfs ram memory reboot privacy"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,1111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:compositor",
+  "title": "compositor",
+  "description": "Window manager appearance applied to the compositor: borders, gaps, rounding, layout, window shadows, blur, dimming, motion profile (animations) and the music-reactive border.",
+  "type": "object",
+  "x-file": "config/compositor.json",
+  "properties": {
+    "activeBorderColor": {
+      "title": "Focused border",
+      "type": "array",
+      "default": [
+        "primary"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Palette colors of the focused window's border; add stops for a gradient. Follows your wallpaper's palette.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.active_border",
+        "control": "color-role",
+        "keywords": "active focused border color gradient role palette alpha",
+        "visibleWhen": {
+          "key": "compositor.syncBorderColor",
+          "equals": false
+        }
+      }
+    },
+    "borderAngle": {
+      "title": "Gradient angle",
+      "type": "number",
+      "default": 45,
+      "description": "Direction of the focused border gradient.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.border_angle",
+        "control": "slider",
+        "step": 5,
+        "unit": "deg",
+        "keywords": "gradient angle rotation border",
+        "min": 0,
+        "max": 360
+      },
+      "minimum": 0,
+      "maximum": 360,
+      "x-unit": "deg"
+    },
+    "inactiveBorderColor": {
+      "title": "Unfocused border",
+      "type": "array",
+      "default": [
+        "surface"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Palette colors of the other windows' borders.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.inactive_border",
+        "control": "color-role",
+        "keywords": "inactive unfocused border color gradient role palette alpha"
+      }
+    },
+    "inactiveBorderAngle": {
+      "title": "Unfocused gradient angle",
+      "type": "number",
+      "default": 45,
+      "description": "Direction of the unfocused border gradient.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.inactive_border_angle",
+        "control": "slider",
+        "step": 5,
+        "unit": "deg",
+        "keywords": "gradient angle inactive border",
+        "min": 0,
+        "max": 360
+      },
+      "minimum": 0,
+      "maximum": 360,
+      "x-unit": "deg"
+    },
+    "borderSize": {
+      "title": "Border width",
+      "type": "number",
+      "default": 2,
+      "description": "Width of the window border.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.border_size",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "border width thickness stroke",
+        "visibleWhen": {
+          "key": "compositor.syncBorderWidth",
+          "equals": false
+        },
+        "min": 0,
+        "max": 20
+      },
+      "minimum": 0,
+      "maximum": 20,
+      "x-unit": "px"
+    },
+    "rounding": {
+      "title": "Corner radius",
+      "type": "number",
+      "default": 16,
+      "description": "Radius of window corners.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shape",
+        "label": "prefs.windows.rounding",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "rounding radius corners round",
+        "visibleWhen": {
+          "key": "compositor.syncRoundness",
+          "equals": false
+        },
+        "min": 0,
+        "max": 40
+      },
+      "minimum": 0,
+      "maximum": 40,
+      "x-unit": "px"
+    },
+    "syncRoundness": {
+      "title": "Match shell roundness",
+      "type": "boolean",
+      "default": true,
+      "description": "Round window corners like the rest of the shell (Appearance › Shape).",
+      "x-settings": {
+        "category": "windows",
+        "section": "shape",
+        "label": "prefs.windows.sync_rounding",
+        "control": "toggle",
+        "keywords": "sync rounding roundness corners shell theme"
+      }
+    },
+    "syncBorderWidth": {
+      "title": "Match shell border width",
+      "type": "boolean",
+      "default": false,
+      "description": "Use the shell's border width for windows.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.sync_border_width",
+        "control": "toggle",
+        "keywords": "sync border width shell"
+      }
+    },
+    "syncBorderColor": {
+      "title": "Match shell accent",
+      "type": "boolean",
+      "default": false,
+      "description": "Color the focused window's border with the shell's border color.",
+      "x-settings": {
+        "category": "windows",
+        "section": "borders",
+        "label": "prefs.windows.sync_border_color",
+        "control": "toggle",
+        "keywords": "sync border color accent shell"
+      }
+    },
+    "syncShadowOpacity": {
+      "title": "Match shell shadow opacity",
+      "type": "boolean",
+      "default": false,
+      "description": "Use the shell's shadow opacity for windows.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadows",
+        "label": "prefs.windows.sync_shadow_opacity",
+        "control": "toggle",
+        "keywords": "sync shadow opacity theme",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        }
+      }
+    },
+    "syncShadowColor": {
+      "title": "Match shell shadow color",
+      "type": "boolean",
+      "default": false,
+      "description": "Use the shell's shadow color for windows.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadows",
+        "label": "prefs.windows.sync_shadow_color",
+        "control": "toggle",
+        "keywords": "sync shadow color theme",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        }
+      }
+    },
+    "gapsIn": {
+      "title": "Gaps between windows",
+      "type": "number",
+      "default": 2,
+      "description": "Space around each window toward its neighbours (applied on both sides).",
+      "x-settings": {
+        "category": "windows",
+        "section": "layout",
+        "label": "prefs.windows.gaps_in",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "gaps inner spacing between windows padding",
+        "min": 0,
+        "max": 50
+      },
+      "minimum": 0,
+      "maximum": 50,
+      "x-unit": "px"
+    },
+    "gapsOut": {
+      "title": "Gaps to screen edges",
+      "type": "number",
+      "default": 4,
+      "description": "Space between windows and the edges of the screen.",
+      "x-settings": {
+        "category": "windows",
+        "section": "layout",
+        "label": "prefs.windows.gaps_out",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "gaps outer margin screen edges padding",
+        "min": 0,
+        "max": 100
+      },
+      "minimum": 0,
+      "maximum": 100,
+      "x-unit": "px"
+    },
+    "smartGaps": {
+      "title": "Smart gaps",
+      "type": "boolean",
+      "default": false,
+      "description": "No gaps when a workspace shows a single tiled window.",
+      "x-settings": {
+        "category": "windows",
+        "section": "layout",
+        "label": "prefs.windows.smart_gaps",
+        "control": "toggle",
+        "keywords": "smart gaps single window no gaps lone fullscreen-like"
+      }
+    },
+    "dimInactive": {
+      "title": "Dim unfocused windows",
+      "type": "boolean",
+      "default": false,
+      "description": "Darken every window except the focused one.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shape",
+        "label": "prefs.windows.dim_inactive",
+        "control": "toggle",
+        "keywords": "dim inactive unfocused darken focus"
+      }
+    },
+    "dimStrength": {
+      "title": "Dim strength",
+      "type": "number",
+      "default": 0.1,
+      "description": "How dark unfocused windows get.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shape",
+        "label": "prefs.windows.dim_strength",
+        "control": "slider",
+        "step": 0.01,
+        "keywords": "dim strength amount darken",
+        "visibleWhen": {
+          "key": "compositor.dimInactive",
+          "equals": true
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "layout": {
+      "title": "Tiling layout",
+      "type": "string",
+      "default": "dwindle",
+      "description": "How windows are arranged. The preview shows two windows over your wallpaper, drawn exactly as the compositor will.",
+      "x-settings": {
+        "category": "windows",
+        "section": "layout",
+        "label": "prefs.windows.layout",
+        "control": "selector",
+        "preview": "WindowsPreview",
+        "keywords": "layout tiling dwindle master scrolling preview windows"
+      },
+      "enum": [
+        "dwindle",
+        "master",
+        "scrolling"
+      ],
+      "x-enumLabels": {
+        "dwindle": "Dwindle",
+        "master": "Master",
+        "scrolling": "Scrolling"
+      }
+    },
+    "shadowEnabled": {
+      "title": "Window shadows",
+      "type": "boolean",
+      "default": true,
+      "description": "Soft shadows under windows.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadows",
+        "label": "prefs.windows.shadows",
+        "control": "toggle",
+        "keywords": "shadow drop shadows glow"
+      }
+    },
+    "shadowRange": {
+      "title": "Shadow size",
+      "type": "number",
+      "default": 8,
+      "description": "How far the shadow spreads.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadows",
+        "label": "prefs.windows.shadow_range",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "shadow size range blur radius softness",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 100
+      },
+      "minimum": 0,
+      "maximum": 100,
+      "x-unit": "px"
+    },
+    "shadowRenderPower": {
+      "title": "Shadow falloff",
+      "type": "number",
+      "default": 3,
+      "description": "Higher values fade the shadow faster (1–4).",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadowsAdvanced",
+        "label": "prefs.windows.shadow_power",
+        "control": "slider",
+        "step": 1,
+        "keywords": "shadow falloff power render",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        },
+        "min": 1,
+        "max": 4
+      },
+      "minimum": 1,
+      "maximum": 4
+    },
+    "shadowSharp": {
+      "title": "Sharp shadows",
+      "type": "boolean",
+      "default": false,
+      "description": "Hard-edged shadows instead of soft ones.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadowsAdvanced",
+        "label": "prefs.windows.shadow_sharp",
+        "control": "toggle",
+        "keywords": "shadow sharp hard edge",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        }
+      }
+    },
+    "shadowIgnoreWindow": {
+      "title": "Shadow ignore window",
+      "type": "boolean",
+      "default": true,
+      "description": "Do not draw the shadow behind the window itself."
+    },
+    "shadowColor": {
+      "title": "Shadow color",
+      "type": "string",
+      "default": "shadow",
+      "description": "Palette color of the focused window's shadow (a bright role makes a glow).",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadows",
+        "label": "prefs.windows.shadow_color",
+        "control": "color-role",
+        "keywords": "shadow color glow focused role palette",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "compositor.shadowEnabled",
+              "equals": true
+            },
+            {
+              "key": "compositor.syncShadowColor",
+              "equals": false
+            }
+          ]
+        }
+      },
+      "format": "color"
+    },
+    "shadowColorInactive": {
+      "title": "Unfocused shadow color",
+      "type": "string",
+      "default": "shadow",
+      "description": "Palette color of the other windows' shadows.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadowsAdvanced",
+        "label": "prefs.windows.shadow_color_inactive",
+        "control": "color-role",
+        "keywords": "shadow color inactive unfocused",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        }
+      },
+      "format": "color"
+    },
+    "shadowOpacity": {
+      "title": "Shadow opacity",
+      "type": "number",
+      "default": 0.5,
+      "description": "How strong window shadows are.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadows",
+        "label": "prefs.windows.shadow_opacity",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "shadow opacity darkness alpha",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "compositor.shadowEnabled",
+              "equals": true
+            },
+            {
+              "key": "compositor.syncShadowOpacity",
+              "equals": false
+            }
+          ]
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "shadowOffset": {
+      "title": "Shadow offset",
+      "type": "string",
+      "default": "0 0",
+      "description": "Shift as \"x y\" in pixels, e.g. \"0 6\" for a shadow below.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadowsAdvanced",
+        "label": "prefs.windows.shadow_offset",
+        "control": "text",
+        "keywords": "shadow offset position x y move",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        }
+      },
+      "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$"
+    },
+    "shadowScale": {
+      "title": "Shadow scale",
+      "type": "number",
+      "default": 1,
+      "description": "Shrinks the shadow relative to the window.",
+      "x-settings": {
+        "category": "windows",
+        "section": "shadowsAdvanced",
+        "label": "prefs.windows.shadow_scale",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "shadow scale size",
+        "visibleWhen": {
+          "key": "compositor.shadowEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "blurEnabled": {
+      "title": "Blur behind windows",
+      "type": "boolean",
+      "default": true,
+      "description": "Frosted blur behind translucent windows and shell surfaces.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blur",
+        "label": "prefs.windows.blur",
+        "control": "toggle",
+        "keywords": "blur frosted glass transparency behind windows"
+      }
+    },
+    "blurSize": {
+      "title": "Blur size",
+      "type": "number",
+      "default": 4,
+      "description": "Radius of the blur.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blur",
+        "label": "prefs.windows.blur_size",
+        "control": "slider",
+        "step": 1,
+        "keywords": "blur size radius amount",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 20
+      },
+      "minimum": 0,
+      "maximum": 20
+    },
+    "blurPasses": {
+      "title": "Blur passes",
+      "type": "number",
+      "default": 2,
+      "description": "More passes are smoother and cost more GPU.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blur",
+        "label": "prefs.windows.blur_passes",
+        "control": "slider",
+        "step": 1,
+        "keywords": "blur passes quality iterations",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 1,
+        "max": 10
+      },
+      "minimum": 0,
+      "maximum": 10
+    },
+    "blurIgnoreOpacity": {
+      "title": "Ignore window opacity",
+      "type": "boolean",
+      "default": true,
+      "description": "Blur at full strength whatever the window's opacity.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_ignore_opacity",
+        "control": "toggle",
+        "keywords": "blur ignore opacity",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurExplicitIgnoreAlpha": {
+      "title": "Skip nearly transparent pixels",
+      "type": "boolean",
+      "default": false,
+      "description": "Do not blur behind pixels below the threshold.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_ignore_alpha",
+        "control": "toggle",
+        "keywords": "blur ignore alpha threshold transparent pixels",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurIgnoreAlphaValue": {
+      "title": "Alpha threshold",
+      "type": "number",
+      "default": 0.2,
+      "description": "Pixels more transparent than this are not blurred.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_ignore_alpha_value",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur alpha threshold",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            {
+              "key": "compositor.blurExplicitIgnoreAlpha",
+              "equals": true
+            }
+          ]
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "blurNewOptimizations": {
+      "title": "Blur optimizations",
+      "type": "boolean",
+      "default": true,
+      "description": "Faster blur; turn off only if you see artifacts.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_new_optimizations",
+        "control": "toggle",
+        "keywords": "blur optimizations performance",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurXray": {
+      "title": "X-ray",
+      "type": "boolean",
+      "default": false,
+      "description": "Floating windows blur only the wallpaper, not the windows under them.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blur",
+        "label": "prefs.windows.blur_xray",
+        "control": "toggle",
+        "keywords": "blur xray see through wallpaper floating",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurNoise": {
+      "title": "Noise",
+      "type": "number",
+      "default": 0,
+      "description": "Grain added to the blur (hides banding).",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_noise",
+        "control": "slider",
+        "step": 0.005,
+        "keywords": "blur noise grain",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 0.2
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "blurContrast": {
+      "title": "Contrast",
+      "type": "number",
+      "default": 1,
+      "description": "Contrast of the blurred background.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_contrast",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur contrast",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 2
+      },
+      "minimum": 0,
+      "maximum": 2
+    },
+    "blurBrightness": {
+      "title": "Brightness",
+      "type": "number",
+      "default": 1,
+      "description": "Brightness of the blurred background.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_brightness",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur brightness light",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 2
+      },
+      "minimum": 0,
+      "maximum": 2
+    },
+    "blurVibrancy": {
+      "title": "Vibrancy",
+      "type": "number",
+      "default": 0,
+      "description": "Boosts the colors seen through the blur.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blur",
+        "label": "prefs.windows.blur_vibrancy",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur vibrancy saturation color",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "blurVibrancyDarkness": {
+      "title": "Vibrancy on dark colors",
+      "type": "number",
+      "default": 0,
+      "description": "How much vibrancy also boosts dark colors.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_vibrancy_darkness",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur vibrancy darkness dark colors",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "blurSpecial": {
+      "title": "Blur special workspaces",
+      "type": "boolean",
+      "default": true,
+      "description": "Blur behind the special (scratchpad) workspace.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_special",
+        "control": "toggle",
+        "keywords": "blur special workspace scratchpad",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurPopups": {
+      "title": "Blur popups",
+      "type": "boolean",
+      "default": false,
+      "description": "Blur behind app popups and menus.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blur",
+        "label": "prefs.windows.blur_popups",
+        "control": "toggle",
+        "keywords": "blur popups menus context",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurPopupsIgnorealpha": {
+      "title": "Popup alpha threshold",
+      "type": "number",
+      "default": 0.2,
+      "description": "Popup pixels more transparent than this are not blurred.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_popups_ignorealpha",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur popups alpha threshold",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            {
+              "key": "compositor.blurPopups",
+              "equals": true
+            }
+          ]
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "blurInputMethods": {
+      "title": "Blur input-method popups",
+      "type": "boolean",
+      "default": false,
+      "description": "Blur behind input-method (IME) candidate windows.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_input_methods",
+        "control": "toggle",
+        "keywords": "blur input method ime popup",
+        "visibleWhen": {
+          "key": "compositor.blurEnabled",
+          "equals": true
+        }
+      }
+    },
+    "blurInputMethodsIgnorealpha": {
+      "title": "Input-method alpha threshold",
+      "type": "number",
+      "default": 0.2,
+      "description": "Input-method pixels more transparent than this are not blurred.",
+      "x-settings": {
+        "category": "windows",
+        "section": "blurAdvanced",
+        "label": "prefs.windows.blur_input_methods_ignorealpha",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "blur input method alpha threshold",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            {
+              "key": "compositor.blurInputMethods",
+              "equals": true
+            }
+          ]
+        },
+        "min": 0,
+        "max": 1
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "motionProfile": {
+      "title": "Motion profile",
+      "type": "string",
+      "default": "smooth",
+      "description": "How windows, workspaces and the shell animate. Each card plays the profile's real curves.",
+      "x-settings": {
+        "category": "windows",
+        "section": "motion",
+        "label": "prefs.motion.profile",
+        "control": "custom",
+        "component": "MotionProfileCards",
+        "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed"
+      },
+      "enum": [
+        "smooth",
+        "springs",
+        "snappy",
+        "gentle",
+        "stepped",
+        "sakura",
+        "off"
+      ]
+    },
+    "motionDurationScale": {
+      "title": "Speed",
+      "type": "number",
+      "default": 1,
+      "description": "Multiplies every animation duration of the profile (below 1 is faster).",
+      "x-settings": {
+        "category": "windows",
+        "section": "motion",
+        "label": "prefs.motion.duration_scale",
+        "control": "slider",
+        "step": 0.05,
+        "unit": "×",
+        "keywords": "animation speed duration slower faster scale",
+        "visibleWhen": {
+          "key": "compositor.motionProfile",
+          "notEquals": "off"
+        },
+        "min": 0.25,
+        "max": 3
+      },
+      "minimum": 0.25,
+      "maximum": 3
+    },
+    "motionWorkspaceStyle": {
+      "title": "Workspace switch",
+      "type": "string",
+      "default": "auto",
+      "description": "Animation when switching workspaces. Slides follow the bar's direction.",
+      "x-settings": {
+        "category": "windows",
+        "section": "motion",
+        "label": "prefs.motion.workspace_style",
+        "control": "selector",
+        "keywords": "workspace switch animation slide fade",
+        "visibleWhen": {
+          "key": "compositor.motionProfile",
+          "notEquals": "off"
+        }
+      },
+      "enum": [
+        "auto",
+        "slide",
+        "slidefade",
+        "fade"
+      ],
+      "x-enumLabels": {
+        "auto": "Profile",
+        "slide": "Slide",
+        "slidefade": "Slide + fade",
+        "fade": "Fade"
+      }
+    },
+    "motionBorderLoop": {
+      "title": "Rotating border gradient",
+      "type": "string",
+      "default": "auto",
+      "description": "Slowly rotates gradient borders in a loop.",
+      "x-settings": {
+        "category": "windows",
+        "section": "motion",
+        "label": "prefs.motion.border_loop",
+        "control": "selector",
+        "keywords": "border gradient rotate loop spin animation",
+        "visibleWhen": {
+          "key": "compositor.motionProfile",
+          "notEquals": "off"
+        }
+      },
+      "enum": [
+        "auto",
+        "on",
+        "off"
+      ],
+      "x-enumLabels": {
+        "auto": "Profile",
+        "on": "On",
+        "off": "Off"
+      }
+    },
+    "motionBorderLoopSpeed": {
+      "title": "Rotation period",
+      "type": "number",
+      "default": 0,
+      "description": "Higher is slower (100 is the slowest).",
+      "x-settings": {
+        "category": "windows",
+        "section": "motion",
+        "label": "prefs.motion.border_loop_speed",
+        "control": "slider",
+        "step": 1,
+        "keywords": "border loop speed rotation period",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "compositor.motionProfile",
+              "notEquals": "off"
+            },
+            {
+              "key": "compositor.motionBorderLoop",
+              "notEquals": "off"
+            }
+          ]
+        },
+        "min": 0,
+        "max": 100,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Profile"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 100,
+      "x-specialValues": [
+        {
+          "value": 0,
+          "label": "Profile"
+        }
+      ]
+    },
+    "motionShell": {
+      "title": "Shell follows the profile",
+      "type": "boolean",
+      "default": true,
+      "description": "The profile also sets the speed and easing of the shell's own animations.",
+      "x-settings": {
+        "category": "windows",
+        "section": "motion",
+        "label": "prefs.motion.shell",
+        "control": "toggle",
+        "keywords": "shell animations speed easing follow profile"
+      }
+    },
+    "motionOverrides": {
+      "title": "Motion overrides",
+      "type": "object",
+      "description": "Per-animation overrides on top of the profile: {node: {enabled, speed, curve, style}} where node is a Hyprland animation (windowsIn, windowsOut, windowsMove, layersIn, layersOut, fadeIn, fadeOut, border, borderangle, workspaces, specialWorkspace, ...; children inherit from parents), speed is in Hyprland units (1 = 100 ms), curve is a curve name of the profile or [x0, y0, x1, y1], style e.g. \"popin 80%\".",
+      "properties": {},
+      "additionalProperties": false
+    },
+    "borderPulse": {
+      "title": "Border pulse",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Pulse with the music",
+          "type": "boolean",
+          "default": false,
+          "description": "While music plays, the focused border and its glow breathe with the beat. Costs nothing when nothing plays.",
+          "x-settings": {
+            "category": "windows",
+            "section": "borders",
+            "label": "prefs.windows.border_pulse",
+            "control": "toggle",
+            "keywords": "music reactive border pulse beat audio cava visualizer neon glow"
+          }
+        },
+        "source": {
+          "title": "Source",
+          "type": "string",
+          "default": "cava",
+          "description": "Audio source of the border pulse.",
+          "enum": [
+            "cava"
+          ]
+        },
+        "intensity": {
+          "title": "Pulse intensity",
+          "type": "number",
+          "default": 0.6,
+          "description": "How much the border dims between beats.",
+          "x-settings": {
+            "category": "windows",
+            "section": "borders",
+            "label": "prefs.windows.border_pulse_intensity",
+            "control": "slider",
+            "step": 0.05,
+            "keywords": "pulse intensity strength music border",
+            "visibleWhen": {
+              "key": "compositor.borderPulse.enabled",
+              "equals": true
+            },
+            "min": 0,
+            "max": 1
+          },
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

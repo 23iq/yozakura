@@ -1,0 +1,399 @@
+{
+ "_comment": "hyprctl animations -j with ~/.config/hypr/custom/sakura.lua loaded after the generated config (Hyprland 0.56.2). Reference for the sakura motion profile.",
+ "animations": [
+  {
+   "name": "__internal_fadeCTM",
+   "overridden": true,
+   "bezier": "linear",
+   "enabled": true,
+   "speed": 5.0,
+   "style": ""
+  },
+  {
+   "name": "border",
+   "overridden": true,
+   "bezier": "sakuraEase",
+   "enabled": true,
+   "speed": 6.0,
+   "style": ""
+  },
+  {
+   "name": "borderangle",
+   "overridden": true,
+   "bezier": "sakuraLinear",
+   "enabled": true,
+   "speed": 100.0,
+   "style": "loop"
+  },
+  {
+   "name": "fade",
+   "overridden": true,
+   "bezier": "myBezier",
+   "enabled": true,
+   "speed": 2.5,
+   "style": ""
+  },
+  {
+   "name": "fadeDim",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadeDpms",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadeGlow",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadeIn",
+   "overridden": true,
+   "bezier": "sakuraEase",
+   "enabled": true,
+   "speed": 3.0,
+   "style": ""
+  },
+  {
+   "name": "fadeLayers",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadeLayersIn",
+   "overridden": true,
+   "bezier": "menu_decel",
+   "enabled": true,
+   "speed": 0.5,
+   "style": ""
+  },
+  {
+   "name": "fadeLayersOut",
+   "overridden": true,
+   "bezier": "stall",
+   "enabled": true,
+   "speed": 2.7,
+   "style": ""
+  },
+  {
+   "name": "fadeOut",
+   "overridden": true,
+   "bezier": "emphasizedDecel",
+   "enabled": true,
+   "speed": 2.0,
+   "style": ""
+  },
+  {
+   "name": "fadePopups",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadePopupsIn",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadePopupsOut",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadeShadow",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "fadeSwitch",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "global",
+   "overridden": true,
+   "bezier": "default",
+   "enabled": true,
+   "speed": 8.0,
+   "style": ""
+  },
+  {
+   "name": "glowangle",
+   "overridden": true,
+   "bezier": "default",
+   "enabled": false,
+   "speed": 1.0,
+   "style": ""
+  },
+  {
+   "name": "layers",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "layersIn",
+   "overridden": true,
+   "bezier": "emphasizedDecel",
+   "enabled": true,
+   "speed": 2.7,
+   "style": "popin 93%"
+  },
+  {
+   "name": "layersOut",
+   "overridden": true,
+   "bezier": "menu_accel",
+   "enabled": true,
+   "speed": 2.4,
+   "style": "popin 94%"
+  },
+  {
+   "name": "monitorAdded",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "shadowangle",
+   "overridden": true,
+   "bezier": "default",
+   "enabled": false,
+   "speed": 1.0,
+   "style": ""
+  },
+  {
+   "name": "specialWorkspace",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "specialWorkspaceIn",
+   "overridden": true,
+   "bezier": "emphasizedDecel",
+   "enabled": true,
+   "speed": 2.8,
+   "style": "slidevert"
+  },
+  {
+   "name": "specialWorkspaceOut",
+   "overridden": true,
+   "bezier": "emphasizedAccel",
+   "enabled": true,
+   "speed": 1.2,
+   "style": "slidevert"
+  },
+  {
+   "name": "windows",
+   "overridden": true,
+   "bezier": "myBezier",
+   "enabled": true,
+   "speed": 2.5,
+   "style": "popin 80%"
+  },
+  {
+   "name": "windowsIn",
+   "overridden": true,
+   "bezier": "sakuraOvershoot",
+   "enabled": true,
+   "speed": 4.0,
+   "style": "popin 85%"
+  },
+  {
+   "name": "windowsMove",
+   "overridden": true,
+   "bezier": "sakuraOvershoot",
+   "enabled": true,
+   "speed": 4.0,
+   "style": ""
+  },
+  {
+   "name": "windowsOut",
+   "overridden": true,
+   "bezier": "sakuraSmoothOut",
+   "enabled": true,
+   "speed": 3.0,
+   "style": "popin 85%"
+  },
+  {
+   "name": "workspaces",
+   "overridden": true,
+   "bezier": "myBezier",
+   "enabled": true,
+   "speed": 2.5,
+   "style": "slidefade 20%"
+  },
+  {
+   "name": "workspacesIn",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "workspacesOut",
+   "overridden": false,
+   "bezier": "",
+   "enabled": true,
+   "speed": 0.0,
+   "style": ""
+  },
+  {
+   "name": "zoomFactor",
+   "overridden": true,
+   "bezier": "standardDecel",
+   "enabled": true,
+   "speed": 3.0,
+   "style": ""
+  }
+ ],
+ "curves": [
+  {
+   "name": "default",
+   "X0": 0.0,
+   "Y0": 0.75,
+   "X1": 0.15,
+   "Y1": 1.0
+  },
+  {
+   "name": "emphasizedAccel",
+   "X0": 0.3,
+   "Y0": 0.0,
+   "X1": 0.8,
+   "Y1": 0.15
+  },
+  {
+   "name": "emphasizedDecel",
+   "X0": 0.05,
+   "Y0": 0.7,
+   "X1": 0.1,
+   "Y1": 1.0
+  },
+  {
+   "name": "expressiveDefaultSpatial",
+   "X0": 0.38,
+   "Y0": 1.21,
+   "X1": 0.22,
+   "Y1": 1.0
+  },
+  {
+   "name": "expressiveFastSpatial",
+   "X0": 0.42,
+   "Y0": 1.67,
+   "X1": 0.21,
+   "Y1": 0.9
+  },
+  {
+   "name": "expressiveSlowSpatial",
+   "X0": 0.39,
+   "Y0": 1.29,
+   "X1": 0.35,
+   "Y1": 0.98
+  },
+  {
+   "name": "linear",
+   "X0": 0.0,
+   "Y0": 0.0,
+   "X1": 1.0,
+   "Y1": 1.0
+  },
+  {
+   "name": "menu_accel",
+   "X0": 0.52,
+   "Y0": 0.03,
+   "X1": 0.72,
+   "Y1": 0.08
+  },
+  {
+   "name": "menu_decel",
+   "X0": 0.1,
+   "Y0": 1.0,
+   "X1": 0.0,
+   "Y1": 1.0
+  },
+  {
+   "name": "myBezier",
+   "X0": 0.4,
+   "Y0": 0.0,
+   "X1": 0.2,
+   "Y1": 1.0
+  },
+  {
+   "name": "sakuraEase",
+   "X0": 0.25,
+   "Y0": 0.1,
+   "X1": 0.25,
+   "Y1": 1.0
+  },
+  {
+   "name": "sakuraLinear",
+   "X0": 0.0,
+   "Y0": 0.0,
+   "X1": 1.0,
+   "Y1": 1.0
+  },
+  {
+   "name": "sakuraOvershoot",
+   "X0": 0.05,
+   "Y0": 0.9,
+   "X1": 0.1,
+   "Y1": 1.08
+  },
+  {
+   "name": "sakuraSmoothOut",
+   "X0": 0.36,
+   "Y0": 0.0,
+   "X1": 0.66,
+   "Y1": -0.56
+  },
+  {
+   "name": "stall",
+   "X0": 1.0,
+   "Y0": -0.1,
+   "X1": 0.7,
+   "Y1": 0.85
+  },
+  {
+   "name": "standardDecel",
+   "X0": 0.0,
+   "Y0": 0.0,
+   "X1": 0.0,
+   "Y1": 1.0
+  }
+ ]
+}

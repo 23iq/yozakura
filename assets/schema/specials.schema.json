@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:specials",
+  "title": "specials",
+  "description": "Special workspaces (Hyprland scratchpads): a name, icon, accent, a toggle bind and a send-window bind, and the apps each one opens. Global like the keybinds: presets never carry or change them.",
+  "type": "object",
+  "x-file": "config/specials.json",
+  "properties": {
+    "enabled": {
+      "title": "Special workspaces",
+      "type": "boolean",
+      "default": true,
+      "description": "Their keys, window rules, app launching and preload. Off keeps the list but does nothing.",
+      "x-settings": {
+        "category": "specials",
+        "section": "behaviour",
+        "label": "prefs.specials.enabled",
+        "control": "toggle",
+        "keywords": "on off disable binds rules launch"
+      }
+    },
+    "launchTimeout": {
+      "title": "Wait for a launched app",
+      "type": "number",
+      "default": 20000,
+      "description": "How long an app may take to show its window; it is never launched twice meanwhile.",
+      "x-settings": {
+        "category": "specials",
+        "section": "behaviour",
+        "label": "prefs.specials.launch_timeout",
+        "control": "slider",
+        "step": 1000,
+        "unit": "ms",
+        "keywords": "launch wait slow app double",
+        "visibleWhen": {
+          "key": "specials.enabled",
+          "equals": true
+        },
+        "min": 2000,
+        "max": 60000
+      },
+      "minimum": 1000,
+      "maximum": 120000,
+      "x-unit": "ms"
+    },
+    "preloadDelay": {
+      "title": "Preload delay",
+      "type": "number",
+      "default": 4000,
+      "description": "Wait after login before preloading apps.",
+      "x-settings": {
+        "category": "specials",
+        "section": "behaviour",
+        "label": "prefs.specials.preload_delay",
+        "control": "slider",
+        "step": 500,
+        "unit": "ms",
+        "keywords": "login startup preload delay",
+        "visibleWhen": {
+          "key": "specials.enabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 30000
+      },
+      "minimum": 0,
+      "maximum": 60000,
+      "x-unit": "ms"
+    },
+    "workspaces": {
+      "title": "Special workspaces",
+      "type": "array",
+      "default": [],
+      "description": "Each has a name, icon, accent, a toggle key, a key that sends the active window there, and apps that open in it. They are global like your keybinds: switching presets never changes them.",
+      "x-settings": {
+        "category": "specials",
+        "section": "list",
+        "label": "prefs.specials.list",
+        "control": "custom",
+        "component": "SpecialsEditor",
+        "keywords": "add special workspace template chat music dev notes custom bind toggle send window apps class command rule"
+      },
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable id (never changes on rename)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name; the Hyprland name (special:<name>) is derived from it safely."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icons glyph name (modules/theme/Icons.qml)."
+          },
+          "accent": {
+            "enum": [
+              "primary",
+              "secondary",
+              "tertiary",
+              "error",
+              "red",
+              "yellow",
+              "green",
+              "cyan",
+              "blue",
+              "magenta"
+            ]
+          },
+          "toggle": {
+            "type": "object",
+            "properties": {
+              "modifiers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "key": {
+                "type": "string"
+              }
+            }
+          },
+          "send": {
+            "type": "object",
+            "properties": {
+              "modifiers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "key": {
+                "type": "string"
+              }
+            }
+          },
+          "preload": {
+            "type": "boolean",
+            "description": "Launch its apps hidden in the special at login."
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Desktop entry id (e.g. org.telegram.desktop)."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "icon": {
+                  "type": "string"
+                },
+                "match": {
+                  "type": "string",
+                  "description": "Window class (regex, case-insensitive, anchored)."
+                },
+                "command": {
+                  "type": "string",
+                  "description": "Launch command."
+                },
+                "ifRunning": {
+                  "enum": [
+                    "nothing",
+                    "move"
+                  ]
+                },
+                "rule": {
+                  "type": "boolean",
+                  "description": "Window rule: windows of this app always open in the special."
+                }
+              },
+              "required": [
+                "match"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      }
+    }
+  },
+  "additionalProperties": false
+}

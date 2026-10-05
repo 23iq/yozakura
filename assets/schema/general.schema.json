@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:general",
+  "title": "general",
+  "description": "General integration: the terminal used to run commands.",
+  "type": "object",
+  "x-file": "config/general.json",
+  "properties": {
+    "terminal": {
+      "title": "Terminal",
+      "type": "string",
+      "default": "kitty",
+      "description": "Yozakura uses your terminal to launch the tmux manager and show update progress.",
+      "x-settings": {
+        "category": "terminal",
+        "section": "terminal",
+        "label": "system.terminal.title",
+        "control": "text",
+        "keywords": "terminal emulator kitty foot alacritty wezterm ghostty"
+      }
+    },
+    "terminalAdvanced": {
+      "title": "Advanced options",
+      "type": "boolean",
+      "default": false,
+      "description": "Use a custom command template for terminals that do not accept the standard `-e` flag",
+      "x-settings": {
+        "category": "terminal",
+        "section": "terminal",
+        "label": "system.terminal.advanced",
+        "control": "toggle",
+        "keywords": "terminal advanced custom command template"
+      }
+    },
+    "terminalCommand": {
+      "title": "Open with",
+      "type": "string",
+      "default": "$TERMINAL -e $COMMAND",
+      "description": "$TERMINAL is replaced by the terminal above, $COMMAND by what the shell runs. Examples: \"gnome-terminal -- $COMMAND\", \"konsole -e $COMMAND\".",
+      "x-settings": {
+        "category": "terminal",
+        "section": "terminal",
+        "label": "system.terminal.open_with",
+        "control": "text",
+        "keywords": "terminal command template $TERMINAL $COMMAND gnome-terminal konsole",
+        "visibleWhen": {
+          "key": "general.terminalAdvanced",
+          "equals": true
+        }
+      },
+      "format": "command"
+    },
+    "onboardingDone": {
+      "title": "Onboarding done",
+      "type": "boolean",
+      "default": false,
+      "description": "The first-run setup wizard was finished or skipped. Set to false (or run `onboarding`) to show it again."
+    }
+  },
+  "additionalProperties": false
+}

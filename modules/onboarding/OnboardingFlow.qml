@@ -1,0 +1,248 @@
+import QtQuick
+import qs.modules.theme
+import qs.modules.components
+import qs.modules.services
+import qs.modules.globals
+import qs.config
+import "OnboardingSteps.js" as Steps
+
+// The wizard card: brand + progress header, the current step (registry:
+// OnboardingSteps.js) sliding in, and the Back / Continue footer. Hosted
+// full-screen by OnboardingWindow; tests and renders load it directly.
+Item {
+    id: root
+
+    readonly property alias wizard: wizardState
+    // false while the window steps aside for a keybind-tour panel.
+    property bool shown: true
+
+    signal closeRequested
+
+    focus: true
+
+    OnboardingState {
+        id: wizardState
+        onFinished: root.closeRequested()
+    }
+
+    Component.onCompleted: {
+        wizardState.initialPreset = PresetsService.activePreset || "";
+        wizardState.detect();
+    }
+
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Escape) {
+            wizardState.finish();
+            event.accepted = true;
+        } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !(event.modifiers & Qt.ShiftModifier)) {
+            wizardState.next();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Left && (event.modifiers & Qt.AltModifier)) {
+            wizardState.back();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Right && (event.modifiers & Qt.AltModifier)) {
+            wizardState.next();
+            event.accepted = true;
+        }
+    }
+
+    readonly property int gutter: Math.round(Styling.fontSize(0) * 2.2)
+
+    StyledRect {
+        id: card
+        objectName: "onboardingCard"
+        variant: "popup"
+        glassSurface: "popups"
+        enableShadow: true
+        anchors.centerIn: parent
+        width: Math.min(1120, parent.width - Math.max(48, parent.width * 0.1))
+        height: Math.min(780, parent.height - Math.max(48, parent.height * 0.1))
+        radius: Styling.radius(10)
+        opacity: root.shown ? 1 : 0
+        scale: root.shown ? 1 : 0.96
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on scale {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Easing.OutCubic
+            }
+        }
+
+        // ---- header: brand, progress, skip ------------------------------
+        Item {
+            id: header
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: root.gutter
+            height: Math.round(Styling.fontSize(0) * 2.4)
+
+            Row {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+                SakuraLogo {
+                    size: Math.round(Styling.fontSize(0) * 1.6)
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Brand.displayName
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(0)
+                    font.weight: Font.Bold
+                    color: Colors.overBackground
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: I18n.t("onboarding.setup")
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(0)
+                    color: Colors.overSurfaceVariant
+                }
+            }
+
+            ProgressDots {
+                objectName: "onboardingDots"
+                anchors.centerIn: parent
+                count: wizardState.count
+                current: wizardState.index
+                onPicked: i => wizardState.go(i)
+            }
+
+            NavButton {
+                objectName: "onboardingSkipAll"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                visible: !wizardState.isLast
+                kind: "ghost"
+                text: I18n.t("onboarding.skip_setup")
+                onClicked: wizardState.finish()
+            }
+        }
+
+        // ---- current step ------------------------------------------------
+        Item {
+            id: stage
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: header.bottom
+            anchors.bottom: footer.top
+            anchors.leftMargin: root.gutter * 1.6
+            anchors.rightMargin: root.gutter * 1.6
+            anchors.topMargin: root.gutter
+            anchors.bottomMargin: root.gutter * 0.6
+            clip: true
+
+            StepScaffold {
+                id: scaffold
+                width: parent.width
+                height: parent.height
+                step: wizardState.step
+                transform: Translate {
+                    id: slide
+                }
+
+                Loader {
+                    id: stepLoader
+                    objectName: "stepLoader"
+                    anchors.fill: parent
+                    focus: true
+                }
+            }
+
+            ParallelAnimation {
+                id: enter
+                NumberAnimation {
+                    target: slide
+                    property: "x"
+                    from: wizardState.direction * 48
+                    to: 0
+                    duration: Config.animDuration * 1.4
+                    easing.type: Easing.OutCubic
+                }
+                NumberAnimation {
+                    target: scaffold
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: Config.animDuration * 1.4
+                    easing.type: Easing.OutCubic
+                }
+            }
+        }
+
+        // ---- footer: back / continue --------------------------------------
+        Item {
+            id: footer
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: root.gutter
+            height: next.implicitHeight
+
+            Text {
+                anchors.left: parent.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: I18n.t("onboarding.step_of", wizardState.index + 1, wizardState.count)
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                color: Colors.outline
+            }
+
+            Row {
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 10
+                NavButton {
+                    objectName: "onboardingBack"
+                    visible: !wizardState.isFirst
+                    kind: "ghost"
+                    icon: "caretLeft"
+                    text: I18n.t("onboarding.back")
+                    onClicked: wizardState.back()
+                }
+                NavButton {
+                    id: next
+                    objectName: "onboardingNext"
+                    kind: "filled"
+                    trailingIcon: wizardState.isLast ? "" : "caretRight"
+                    icon: wizardState.isLast ? "checkCircle" : ""
+                    text: wizardState.isFirst ? I18n.t("onboarding.get_started") : (wizardState.isLast ? I18n.t("onboarding.finish") : I18n.t("onboarding.continue"))
+                    onClicked: wizardState.next()
+                }
+            }
+        }
+    }
+
+    function loadStep() {
+        stepLoader.setSource(Qt.resolvedUrl(wizardState.step.component), {
+            "wizard": wizardState
+        });
+        if (Config.animDuration > 0)
+            enter.restart();
+        root.forceActiveFocus();
+    }
+
+    Connections {
+        target: wizardState
+        function onIndexChanged() {
+            root.loadStep();
+        }
+    }
+    Component.onDestruction: wizardState.cancelVoiceSetup()
+
+    Timer {
+        // first step once the card exists
+        interval: 0
+        running: true
+        onTriggered: root.loadStep()
+    }
+}

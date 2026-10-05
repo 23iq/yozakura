@@ -1,0 +1,652 @@
+{
+"classic-top-frame0-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-top-frame0-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-top-frame0-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-top-frame0-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-top-frame1-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-top-frame1-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-top-frame1-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-top-frame1-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-bottom-frame0-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-bottom-frame0-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-bottom-frame0-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-bottom-frame0-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-bottom-frame1-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-bottom-frame1-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-bottom-frame1-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-bottom-frame1-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-left-frame0-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-left-frame0-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-left-frame0-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-left-frame0-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-left-frame1-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-left-frame1-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-left-frame1-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-left-frame1-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-right-frame0-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-right-frame0-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-right-frame0-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-right-frame0-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-right-frame1-r0-light": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-right-frame1-r0-oled": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"classic-right-frame1-r24-light": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"classic-right-frame1-r24-oled": {
+"bar.layout.style": "classic",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-top-frame0-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-top-frame0-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-top-frame0-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-top-frame0-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-top-frame1-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-top-frame1-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-top-frame1-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-top-frame1-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-bottom-frame0-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-bottom-frame0-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-bottom-frame0-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-bottom-frame0-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-bottom-frame1-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-bottom-frame1-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-bottom-frame1-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-bottom-frame1-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "bottom",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-left-frame0-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-left-frame0-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-left-frame0-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-left-frame0-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-left-frame1-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-left-frame1-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-left-frame1-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-left-frame1-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "left",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-right-frame0-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-right-frame0-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-right-frame0-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-right-frame0-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": false,
+"bar.containBar": false,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-right-frame1-r0-light": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-right-frame1-r0-oled": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 0,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"islands-right-frame1-r24-light": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": true,
+"theme.oledMode": false,
+"dock.enabled": true
+},
+"islands-right-frame1-r24-oled": {
+"bar.layout.style": "islands",
+"bar.position": "right",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 24,
+"theme.lightMode": false,
+"theme.oledMode": true,
+"dock.enabled": true
+},
+"bench": {
+"bar.layout.style": "classic",
+"bar.position": "top",
+"bar.frameEnabled": true,
+"bar.containBar": true,
+"theme.roundness": 16,
+"theme.lightMode": false,
+"theme.oledMode": false,
+"dock.enabled": true
+}
+}

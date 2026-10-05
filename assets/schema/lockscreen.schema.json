@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:lockscreen",
+  "title": "lockscreen",
+  "description": "Lock screen (and the SDDM login theme that mirrors it): style, tone, layout and media.",
+  "type": "object",
+  "x-file": "config/lockscreen.json",
+  "properties": {
+    "position": {
+      "title": "Password field",
+      "type": "string",
+      "default": "bottom",
+      "description": "Edge of the screen for the password field and media card.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "layout",
+        "label": "prefs.lockscreen.position",
+        "control": "selector",
+        "keywords": "lock screen password position top bottom edge"
+      },
+      "enum": [
+        "top",
+        "bottom"
+      ],
+      "x-enumLabels": {
+        "top": "Top",
+        "bottom": "Bottom"
+      }
+    },
+    "style": {
+      "title": "Lock screen style",
+      "type": "string",
+      "default": "glass",
+      "description": "Live previews with your wallpaper and palette. The SDDM login screen follows the same style.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "style",
+        "label": "prefs.lockscreen.style",
+        "control": "custom",
+        "component": "LockStyleGallery",
+        "keywords": "lock screen style look glass paper sumi-e terminal crt aurora glacier neon tokyo poster koyo"
+      },
+      "enum": [
+        "glass",
+        "paper",
+        "terminal",
+        "aurora",
+        "neon",
+        "poster"
+      ]
+    },
+    "tone": {
+      "title": "Tone",
+      "type": "string",
+      "default": "style",
+      "description": "Light or dark version of the style. Styles that only have one keep it.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "style",
+        "label": "prefs.lockscreen.tone",
+        "control": "selector",
+        "keywords": "lock screen light dark tone mode theme"
+      },
+      "enum": [
+        "style",
+        "theme",
+        "light",
+        "dark"
+      ],
+      "x-enumLabels": {
+        "style": "Style's own",
+        "theme": "Follow theme",
+        "light": "Light",
+        "dark": "Dark"
+      }
+    },
+    "blur": {
+      "title": "Wallpaper blur",
+      "type": "number",
+      "default": -1,
+      "description": "How much the wallpaper behind the lock screen is softened.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "layout",
+        "label": "prefs.lockscreen.blur",
+        "control": "slider",
+        "step": 0.05,
+        "keywords": "lock screen wallpaper blur soft background",
+        "min": 0,
+        "max": 1,
+        "specialValues": [
+          {
+            "value": -1,
+            "label": "Style's own"
+          },
+          {
+            "value": 0,
+            "label": "Off"
+          }
+        ]
+      },
+      "minimum": -1,
+      "maximum": 1
+    },
+    "showMedia": {
+      "title": "Now playing",
+      "type": "boolean",
+      "default": true,
+      "description": "A media card with controls while music plays.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "media",
+        "label": "prefs.lockscreen.show_media",
+        "control": "toggle",
+        "keywords": "lock screen media music player now playing"
+      }
+    },
+    "showVisualizer": {
+      "title": "Audio visualizer",
+      "type": "boolean",
+      "default": true,
+      "description": "Spectrum bars in the media card (uses cava while playing).",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "media",
+        "label": "prefs.lockscreen.show_visualizer",
+        "control": "toggle",
+        "keywords": "lock screen audio visualizer cava bars spectrum",
+        "enabledWhen": {
+          "key": "lockscreen.showMedia",
+          "equals": true
+        }
+      }
+    },
+    "showStatus": {
+      "title": "Status strip",
+      "type": "boolean",
+      "default": true,
+      "description": "Your name, network and battery along the edge.",
+      "x-settings": {
+        "category": "lockscreen",
+        "section": "layout",
+        "label": "prefs.lockscreen.show_status",
+        "control": "toggle",
+        "keywords": "lock screen status user network wifi battery"
+      }
+    }
+  },
+  "additionalProperties": false
+}

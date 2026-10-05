@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:dock",
+  "title": "dock",
+  "description": "App dock: pinned and running apps, its style (default/floating/integrated into the bar), edge, size and auto-hide.",
+  "type": "object",
+  "x-file": "config/dock.json",
+  "properties": {
+    "enabled": {
+      "title": "Enabled",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the dock."
+    },
+    "theme": {
+      "title": "Theme",
+      "type": "string",
+      "default": "default",
+      "description": "Dock style; integrated puts the apps inside the bar.",
+      "enum": [
+        "default",
+        "floating",
+        "integrated"
+      ]
+    },
+    "position": {
+      "title": "Position",
+      "type": "string",
+      "default": "bottom",
+      "description": "Screen edge of the dock.",
+      "enum": [
+        "top",
+        "bottom",
+        "left",
+        "right"
+      ]
+    },
+    "height": {
+      "title": "Height",
+      "type": "number",
+      "default": 48,
+      "description": "Dock thickness.",
+      "minimum": 24,
+      "maximum": 128,
+      "x-unit": "px"
+    },
+    "iconSize": {
+      "title": "Icon size",
+      "type": "number",
+      "default": 24,
+      "description": "App icon size.",
+      "minimum": 12,
+      "maximum": 96,
+      "x-unit": "px"
+    },
+    "spacing": {
+      "title": "Spacing",
+      "type": "number",
+      "default": 4,
+      "description": "Space between icons.",
+      "minimum": 0,
+      "maximum": 32,
+      "x-unit": "px"
+    },
+    "margin": {
+      "title": "Margin",
+      "type": "number",
+      "default": 4,
+      "description": "Distance from the screen edge.",
+      "minimum": 0,
+      "maximum": 64,
+      "x-unit": "px"
+    },
+    "hoverRegionHeight": {
+      "title": "Hover region height",
+      "type": "number",
+      "default": 16,
+      "description": "Size of the edge strip that reveals the hidden dock.",
+      "minimum": 0,
+      "maximum": 64,
+      "x-unit": "px"
+    },
+    "pinnedOnStartup": {
+      "title": "Pinned on startup",
+      "type": "boolean",
+      "default": false,
+      "description": "Dock starts pinned (always visible)."
+    },
+    "hoverToReveal": {
+      "title": "Hover to reveal",
+      "type": "boolean",
+      "default": true,
+      "description": "Reveal the hidden dock when the pointer touches its edge."
+    },
+    "availableOnFullscreen": {
+      "title": "Available on fullscreen",
+      "type": "boolean",
+      "default": false,
+      "description": "Allow revealing the dock over fullscreen windows."
+    },
+    "showRunningIndicators": {
+      "title": "Show running indicators",
+      "type": "boolean",
+      "default": true,
+      "description": "Dots under running apps."
+    },
+    "showPinButton": {
+      "title": "Show pin button",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the pin (keep visible) button."
+    },
+    "showOverviewButton": {
+      "title": "Show overview button",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the workspace overview button."
+    },
+    "ignoredAppRegexes": {
+      "title": "Ignored app regexes",
+      "type": "array",
+      "default": [
+        "quickshell.*",
+        "xdg-desktop-portal.*"
+      ],
+      "items": {
+        "type": "string",
+        "format": "regex"
+      },
+      "description": "App ids matching these regexes never appear in the dock."
+    },
+    "screenList": {
+      "title": "Screen list",
+      "type": "array",
+      "default": [],
+      "description": "Monitor names to show the dock on; empty = every monitor.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "keepHidden": {
+      "title": "Keep hidden",
+      "type": "boolean",
+      "default": false,
+      "description": "Keep the dock hidden until revealed."
+    },
+    "magnification": {
+      "title": "Magnification",
+      "type": "boolean",
+      "default": false,
+      "description": "Magnify dock icons under the pointer (dock-style panels)."
+    },
+    "magnificationScale": {
+      "title": "Magnification scale",
+      "type": "number",
+      "default": 1.6,
+      "description": "Size of the icon under the pointer when magnifying.",
+      "minimum": 1,
+      "maximum": 2.5
+    },
+    "launchBounce": {
+      "title": "Launch bounce",
+      "type": "boolean",
+      "default": false,
+      "description": "Bounce a dock icon while its app launches."
+    }
+  },
+  "additionalProperties": false
+}

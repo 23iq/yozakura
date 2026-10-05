@@ -1,0 +1,453 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:desktop",
+  "title": "desktop",
+  "description": "Desktop layer: icons, widgets, wallpaper folders and transition, and the depth clock drawn behind the wallpaper subject.",
+  "type": "object",
+  "x-file": "config/desktop.json",
+  "properties": {
+    "enabled": {
+      "title": "Desktop icons",
+      "type": "boolean",
+      "default": false,
+      "description": "Show the files of your Desktop folder.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "icons",
+        "label": "prefs.desktop.icons",
+        "control": "toggle",
+        "keywords": "desktop icons files show hide"
+      }
+    },
+    "iconSize": {
+      "title": "Icon size",
+      "type": "number",
+      "default": 40,
+      "description": "Size of desktop icons.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "icons",
+        "label": "prefs.desktop.icon_size",
+        "control": "slider",
+        "step": 4,
+        "unit": "px",
+        "keywords": "icon size width height pixels",
+        "visibleWhen": {
+          "key": "desktop.enabled",
+          "equals": true
+        },
+        "min": 16,
+        "max": 128
+      },
+      "minimum": 16,
+      "maximum": 128,
+      "x-unit": "px"
+    },
+    "spacingVertical": {
+      "title": "Spacing",
+      "type": "number",
+      "default": 16,
+      "description": "Vertical space between icons.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "icons",
+        "label": "prefs.desktop.icon_spacing",
+        "control": "slider",
+        "step": 2,
+        "unit": "px",
+        "keywords": "icon spacing vertical gap rows",
+        "visibleWhen": {
+          "key": "desktop.enabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 64
+      },
+      "minimum": 0,
+      "maximum": 64,
+      "x-unit": "px"
+    },
+    "textColor": {
+      "title": "Label colour",
+      "type": "string",
+      "default": "overBackground",
+      "description": "Colour of the icon names.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "icons",
+        "label": "prefs.desktop.icon_text",
+        "control": "custom",
+        "component": "ColorRoleSwatches",
+        "keywords": "icon label text colour color font",
+        "visibleWhen": {
+          "key": "desktop.enabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        "overBackground",
+        "background",
+        "primary",
+        "secondary",
+        "tertiary"
+      ],
+      "x-enumLabels": {
+        "overBackground": "Text",
+        "background": "Background",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary"
+      },
+      "format": "color"
+    },
+    "blurWallpaperOnOverview": {
+      "title": "Blur wallpaper in overview",
+      "type": "boolean",
+      "default": true,
+      "description": "Blurs the wallpaper behind niri's workspace overview.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "overview",
+        "label": "prefs.desktop.overview_blur",
+        "control": "toggle",
+        "keywords": "overview blur wallpaper niri workspaces"
+      }
+    },
+    "wallpaperTransition": {
+      "title": "Transition style",
+      "type": "string",
+      "default": "grow",
+      "description": "How one wallpaper turns into the next.",
+      "x-settings": {
+        "category": "wallpapers",
+        "section": "transition",
+        "label": "prefs.wall.transition",
+        "control": "selector",
+        "preview": "TransitionPreview",
+        "keywords": "transition animation grow wipe dissolve fade random shader effect"
+      },
+      "enum": [
+        "grow",
+        "wipe",
+        "dissolve",
+        "fade",
+        "random",
+        "none"
+      ],
+      "x-enumLabels": {
+        "grow": "Grow",
+        "wipe": "Wipe",
+        "dissolve": "Dissolve",
+        "fade": "Fade",
+        "random": "Random",
+        "none": "None"
+      }
+    },
+    "wallpaperTransitionDuration": {
+      "title": "Transition duration",
+      "type": "number",
+      "default": 800,
+      "description": "Length of the wallpaper transition.",
+      "x-settings": {
+        "category": "wallpapers",
+        "section": "transition",
+        "label": "prefs.wall.transition_duration",
+        "control": "slider",
+        "step": 50,
+        "unit": "ms",
+        "keywords": "transition duration speed time",
+        "visibleWhen": {
+          "key": "desktop.wallpaperTransition",
+          "notEquals": "none"
+        },
+        "min": 100,
+        "max": 3000
+      },
+      "minimum": 0,
+      "maximum": 5000,
+      "x-unit": "ms"
+    },
+    "wallpaperFolders": {
+      "title": "Wallpaper folders",
+      "type": "array",
+      "default": [],
+      "description": "Images and videos are collected from all of them, including subfolders.",
+      "x-settings": {
+        "category": "wallpapers",
+        "section": "folders",
+        "label": "prefs.wall.folders",
+        "control": "custom",
+        "component": "FolderList",
+        "keywords": "folder directory path location library add remove multiple"
+      },
+      "items": {
+        "type": "string"
+      },
+      "x-local": true
+    },
+    "depthClock": {
+      "title": "Depth clock",
+      "type": "boolean",
+      "default": false,
+      "description": "A large clock that sits behind the subject of your wallpaper.",
+      "x-settings": {
+        "category": "wallpapers",
+        "section": "more",
+        "label": "prefs.wall.depth_clock",
+        "control": "custom",
+        "component": "DepthClockLink",
+        "keywords": "depth clock subject behind wallpaper widget"
+      }
+    },
+    "depthClockStyle": {
+      "title": "Style",
+      "type": "string",
+      "default": "yozakura",
+      "description": "Each style shown on your current wallpaper.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "clock",
+        "label": "prefs.desktop.depth_clock_style",
+        "control": "custom",
+        "component": "ClockStyleGallery",
+        "keywords": "clock style yozakura poster kanji mincho look gallery",
+        "visibleWhen": {
+          "key": "desktop.depthClock",
+          "equals": true
+        }
+      },
+      "enum": [
+        "yozakura",
+        "poster"
+      ]
+    },
+    "depthClockPosition": {
+      "title": "Position",
+      "type": "string",
+      "default": "auto",
+      "description": "Auto picks the side where the subject leaves the time readable.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "clock",
+        "label": "prefs.desktop.depth_clock_position",
+        "control": "selector",
+        "keywords": "clock side left right auto placement",
+        "visibleWhen": {
+          "key": "desktop.depthClock",
+          "equals": true
+        }
+      },
+      "enum": [
+        "auto",
+        "left",
+        "right"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "left": "Left",
+        "right": "Right"
+      }
+    },
+    "depthClockVideo": {
+      "title": "On video wallpapers",
+      "type": "boolean",
+      "default": true,
+      "description": "Builds a matte so the clock goes behind the moving subject too.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "clock",
+        "label": "prefs.desktop.depth_clock_video",
+        "control": "toggle",
+        "preview": "DepthMatteStatus",
+        "keywords": "clock video animated live matte moving subject",
+        "visibleWhen": {
+          "key": "desktop.depthClock",
+          "equals": true
+        }
+      }
+    },
+    "depthClockInk": {
+      "title": "Colour",
+      "type": "string",
+      "default": "auto",
+      "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "clock",
+        "label": "prefs.desktop.depth_clock_ink",
+        "control": "custom",
+        "component": "ColorRoleSwatches",
+        "keywords": "clock colour color ink palette role accent",
+        "visibleWhen": {
+          "key": "desktop.depthClock",
+          "equals": true
+        }
+      },
+      "enum": [
+        "auto",
+        "primary",
+        "secondary",
+        "tertiary",
+        "primaryFixed",
+        "secondaryFixed",
+        "tertiaryFixed",
+        "overBackground",
+        "background"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary",
+        "primaryFixed": "Soft primary",
+        "secondaryFixed": "Soft secondary",
+        "tertiaryFixed": "Soft tertiary",
+        "overBackground": "Text",
+        "background": "Background"
+      }
+    },
+    "widgetsEnabled": {
+      "title": "Desktop widgets",
+      "type": "boolean",
+      "default": true,
+      "description": "Show widgets on the desktop. They pause while windows cover them.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "widgets",
+        "label": "prefs.desktop.widgets_enabled",
+        "control": "toggle",
+        "keywords": "widgets desktop show hide"
+      }
+    },
+    "widgets": {
+      "title": "Your widgets",
+      "type": "array",
+      "default": [],
+      "description": "Add widgets, then drag and resize them on the desktop (right click on the desktop or the Edit Desktop Widgets shortcut).",
+      "x-settings": {
+        "category": "desktop",
+        "section": "widgets",
+        "label": "prefs.desktop.widgets",
+        "control": "custom",
+        "component": "DesktopWidgetsEditor",
+        "keywords": "widgets add remove media music calendar events system cpu ram gpu network note sticky weather arrange edit drag",
+        "visibleWhen": {
+          "key": "desktop.widgetsEnabled",
+          "equals": true
+        }
+      },
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "x",
+          "y",
+          "w",
+          "h"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "media",
+              "calendar",
+              "system",
+              "note",
+              "weather"
+            ]
+          },
+          "monitor": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "h": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "options": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "widgetGrid": {
+      "title": "Snap grid",
+      "type": "number",
+      "default": 24,
+      "description": "Widgets snap to this grid while you move or resize them.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "widgets",
+        "label": "prefs.desktop.widget_grid",
+        "control": "slider",
+        "step": 4,
+        "unit": "px",
+        "keywords": "snap grid align spacing move resize",
+        "visibleWhen": {
+          "key": "desktop.widgetsEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 96,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Off"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 128,
+      "x-unit": "px"
+    },
+    "widgetVariant": {
+      "title": "Widget surface",
+      "type": "string",
+      "default": "pane",
+      "description": "Which shell surface style widgets use; glass amount: Appearance > Glass.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "widgets",
+        "label": "prefs.desktop.widget_variant",
+        "control": "selector",
+        "keywords": "widget style surface glass background card pane",
+        "visibleWhen": {
+          "key": "desktop.widgetsEnabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        "pane",
+        "common",
+        "popup",
+        "internalbg",
+        "bg"
+      ],
+      "x-enumLabels": {
+        "pane": "Pane",
+        "common": "Card",
+        "popup": "Popup",
+        "internalbg": "Inset",
+        "bg": "Background"
+      }
+    }
+  },
+  "additionalProperties": false
+}

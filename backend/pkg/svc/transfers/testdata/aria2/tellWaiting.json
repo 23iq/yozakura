@@ -1,0 +1,4 @@
+{"id":"2","jsonrpc":"2.0","result":[
+ {"completedLength":"10","dir":"/home/user/Downloads","downloadSpeed":"0","files":[{"path":"/home/user/Downloads/later.zip","uris":[]}],"gid":"eeee4444ffff5555","status":"paused","totalLength":"100"},
+ {"completedLength":"0","dir":"/home/user/Downloads","downloadSpeed":"0","files":[{"path":"/home/user/Downloads/queued.zip","uris":[]}],"gid":"1111aaaa2222bbbb","status":"waiting","totalLength":"100"}
+]}

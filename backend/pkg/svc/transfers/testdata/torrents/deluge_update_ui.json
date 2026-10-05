@@ -1,0 +1,4 @@
+{"result":{"connected":true,"stats":{"upload_rate":0,"download_rate":3355443,"num_connections":42},"filters":{},"torrents":{
+ "5a6b7c8d":{"name":"ubuntu-26.04-desktop-amd64.iso","total_wanted":6442450944,"total_done":1610612736,"download_payload_rate":3355443,"state":"Downloading","eta":1440,"save_path":"/home/user/Downloads","progress":25.0,"time_added":1790960000.5},
+ "9e0f1a2b":{"name":"finished","total_wanted":100,"total_done":100,"download_payload_rate":0,"state":"Seeding","eta":0,"save_path":"/home/user/Downloads","progress":100.0,"time_added":1790950000.0}
+}},"error":null,"id":2}

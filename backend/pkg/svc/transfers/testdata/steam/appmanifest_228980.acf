@@ -1,0 +1,27 @@
+"AppState"
+{
+	"appid"		"228980"
+	"Universe"		"1"
+	"name"		"Steamworks Common Redistributables"
+	"StateFlags"		"4"
+	"installdir"		"Steamworks Shared"
+	"SizeOnDisk"		"229620261"
+	"BytesToDownload"		"1033312"
+	"BytesDownloaded"		"1033312"
+	"BytesToStage"		"9123384"
+	"BytesStaged"		"9123384"
+	"InstalledDepots"
+	{
+		"228983"
+		{
+			"manifest"		"8124929965194586177"
+			"size"		"174639474"
+		}
+	}
+	"UserConfig"
+	{
+	}
+	"MountedConfig"
+	{
+	}
+}

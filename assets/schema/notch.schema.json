@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:notch",
+  "title": "notch",
+  "description": "The notch (dynamic island): style, edge, hover/click expansion, media preview and what it shows when idle.",
+  "type": "object",
+  "x-file": "config/notch.json",
+  "properties": {
+    "theme": {
+      "title": "Style",
+      "type": "string",
+      "default": "default",
+      "description": "Attached to the screen edge, or a floating island.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "prefs.notch.theme",
+        "control": "selector",
+        "keywords": "notch style island attached floating"
+      },
+      "enum": [
+        "default",
+        "island"
+      ],
+      "x-enumLabels": {
+        "default": "Default",
+        "island": "Island"
+      }
+    },
+    "position": {
+      "title": "Position",
+      "type": "string",
+      "default": "top",
+      "description": "The screen edge the notch sits on.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "prefs.notch.position",
+        "control": "selector",
+        "keywords": "notch position top bottom edge"
+      },
+      "enum": [
+        "top",
+        "bottom"
+      ],
+      "x-enumLabels": {
+        "top": "Top",
+        "bottom": "Bottom"
+      }
+    },
+    "hoverRegionHeight": {
+      "title": "Reveal area",
+      "type": "number",
+      "default": 8,
+      "description": "Height of the edge area that reveals a hidden notch.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "prefs.notch.hover_region",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "hover region trigger area reveal",
+        "visibleWhen": {
+          "key": "notch.keepHidden",
+          "equals": true
+        },
+        "min": 0,
+        "max": 40
+      },
+      "minimum": 0,
+      "maximum": 40,
+      "x-unit": "px"
+    },
+    "keepHidden": {
+      "title": "Keep Hidden",
+      "type": "boolean",
+      "default": false,
+      "description": "Hide the notch until the pointer reaches it.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "shell.notch.keep_hidden",
+        "control": "toggle",
+        "keywords": "hide notch autohide"
+      }
+    },
+    "noMediaDisplay": {
+      "title": "No Media Display",
+      "type": "string",
+      "default": "userHost",
+      "description": "What the notch shows when nothing is playing.",
+      "x-settings": {
+        "category": "notch",
+        "section": "media",
+        "label": "shell.no_media_display",
+        "control": "selector",
+        "keywords": "idle text user host compositor custom nothing playing"
+      },
+      "enum": [
+        "userHost",
+        "compositor",
+        "custom"
+      ],
+      "x-enumLabels": {
+        "userHost": "User@Host",
+        "compositor": "Compositor",
+        "custom": "Custom"
+      }
+    },
+    "customText": {
+      "title": "Custom Text",
+      "type": "string",
+      "default": "Yozakura",
+      "description": "Text shown in the idle notch.",
+      "x-settings": {
+        "category": "notch",
+        "section": "media",
+        "label": "shell.notch.custom_text",
+        "control": "text",
+        "keywords": "custom text label idle",
+        "visibleWhen": {
+          "key": "notch.noMediaDisplay",
+          "equals": "custom"
+        }
+      }
+    },
+    "disableHoverExpansion": {
+      "title": "Disable Hover Expansion",
+      "type": "boolean",
+      "default": true,
+      "description": "Don't grow the notch into a media preview on hover.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "shell.notch.disable_hover_expansion",
+        "control": "toggle",
+        "keywords": "hover expand grow media preview"
+      }
+    },
+    "hoverExpandDelay": {
+      "title": "Hover expand delay",
+      "type": "number",
+      "default": 90,
+      "description": "Hover time before the notch expands.",
+      "minimum": 0,
+      "maximum": 2000,
+      "x-unit": "ms"
+    },
+    "hoverCollapseDelay": {
+      "title": "Hover collapse delay",
+      "type": "number",
+      "default": 200,
+      "description": "Delay before the expanded notch collapses after the pointer leaves.",
+      "minimum": 0,
+      "maximum": 2000,
+      "x-unit": "ms"
+    },
+    "expandOn": {
+      "title": "Open Panels On",
+      "type": "string",
+      "default": "hover",
+      "description": "Open media, activities and download panels on hover or only on click.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "shell.notch.expand_on",
+        "control": "selector",
+        "keywords": "notch panel expand open hover click activities media downloads"
+      },
+      "enum": [
+        "hover",
+        "click"
+      ],
+      "x-enumLabels": {
+        "hover": "Hover",
+        "click": "Click"
+      }
+    },
+    "expandedMediaWidth": {
+      "title": "Expanded media width",
+      "type": "number",
+      "default": 440,
+      "description": "Width of the expanded media card.",
+      "minimum": 200,
+      "maximum": 1200,
+      "x-unit": "px"
+    },
+    "mediaAnimationDuration": {
+      "title": "Media animation duration",
+      "type": "number",
+      "default": 160,
+      "description": "Media card expand/collapse animation duration.",
+      "minimum": 0,
+      "maximum": 2000,
+      "x-unit": "ms"
+    },
+    "expandedArtworkSize": {
+      "title": "Expanded artwork size",
+      "type": "number",
+      "default": 64,
+      "description": "Album art size in the expanded media card.",
+      "minimum": 16,
+      "maximum": 256,
+      "x-unit": "px"
+    },
+    "microphoneNoticeDuration": {
+      "title": "Microphone notice duration",
+      "type": "number",
+      "default": 1800,
+      "description": "How long the microphone mute/unmute notice stays.",
+      "minimum": 0,
+      "maximum": 10000,
+      "x-unit": "ms"
+    },
+    "visualizer": {
+      "title": "Audio Visualizer",
+      "type": "boolean",
+      "default": true,
+      "description": "Audio bars next to the playing media.",
+      "x-settings": {
+        "category": "notch",
+        "section": "media",
+        "label": "shell.notch.visualizer",
+        "control": "toggle",
+        "keywords": "audio visualizer cava bars music"
+      }
+    }
+  },
+  "additionalProperties": false
+}

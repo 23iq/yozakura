@@ -1,0 +1,10 @@
+# ACP: session/load fails; the adapter creates a new session.
+<
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":1,"agentCapabilities":{"loadSession":true,"promptCapabilities":{"image":false}}}}
+<
+{"jsonrpc":"2.0","id":2,"error":{"code":-32002,"message":"session not found"}}
+<
+{"jsonrpc":"2.0","id":3,"result":{"sessionId":"ses_new"}}
+<
+{"jsonrpc":"2.0","id":4,"result":{"stopReason":"end_turn"}}
+=hold

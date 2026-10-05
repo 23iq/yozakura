@@ -1,0 +1,96 @@
+package main
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"yozakura/backend/pkg/migrate"
+)
+
+func TestUpgradeLegacyBlockInPlace(t *testing.T) {
+	dir := t.TempDir()
+	lua := filepath.Join(dir, "hyprland.lua")
+	orig := "hl.config({})\n" +
+		"-- Ambxst\n" +
+		"loadfile(os.getenv(\"HOME\") .. \"/.local/share/ambxst/hyprland.lua\")()\n\n" +
+		"-- OVERRIDES\n" +
+		"-- Down here you can write or source anything that you want to override from Ambxst's settings.\n" +
+		"-- the old path /.local/share/ambxst/ in a comment stays\n" +
+		"loadfile(os.getenv(\"HOME\") .. \"/.config/hypr/custom/sakura.lua\")()\n"
+	os.WriteFile(lua, []byte(orig), 0o644)
+
+	changed, err := migrate.UpgradeLegacyBlock(lua)
+	if err != nil || !changed {
+		t.Fatalf("changed=%v err=%v", changed, err)
+	}
+	got, _ := os.ReadFile(lua)
+	want := "hl.config({})\n" +
+		"-- Yozakura\n" +
+		"loadfile(os.getenv(\"HOME\") .. \"/.local/share/yozakura/hyprland.lua\")()\n\n" +
+		"-- OVERRIDES\n" +
+		"-- Down here you can write or source anything that you want to override from Yozakura's settings.\n" +
+		"-- the old path /.local/share/ambxst/ in a comment stays\n" +
+		"loadfile(os.getenv(\"HOME\") .. \"/.config/hypr/custom/sakura.lua\")()\n"
+	if string(got) != want {
+		t.Fatalf("upgrade:\n%s\nwant:\n%s", got, want)
+	}
+	backup, err := os.ReadFile(lua + ".pre-yozakura")
+	if err != nil || string(backup) != orig {
+		t.Fatalf("backup missing or wrong: %v", err)
+	}
+	// Idempotent: nothing left to upgrade, install sees the new marker.
+	if changed, _ := migrate.UpgradeLegacyBlock(lua); changed {
+		t.Fatal("second run must be a no-op")
+	}
+	if !containsLine(string(got), blockMarker("--")) {
+		t.Fatal("new marker not detected")
+	}
+}
+
+func TestRemoveBlockDropsIncludeLine(t *testing.T) {
+	dir := t.TempDir()
+	lua := filepath.Join(dir, "hyprland.lua")
+	os.WriteFile(lua, []byte("a = 1\n\n"+hyprLuaBlock()+"\nb = 2\n"), 0o644)
+	removeBlock(lua, blockMarker("--"), strings.Split(hyprLuaBlock(), "\n")[1])
+	got, _ := os.ReadFile(lua)
+	if strings.Contains(string(got), "loadfile") || strings.Contains(string(got), "Yozakura") {
+		t.Fatalf("block not removed:\n%s", got)
+	}
+	if !strings.Contains(string(got), "a = 1") || !strings.Contains(string(got), "b = 2") {
+		t.Fatalf("user lines lost:\n%s", got)
+	}
+}
+
+func TestRemoveBlockKeepsLongLinesAndBacksUp(t *testing.T) {
+	dir := t.TempDir()
+	real := filepath.Join(dir, "dotfiles", "hyprland.lua")
+	os.MkdirAll(filepath.Dir(real), 0o755)
+	long := "x = \"" + strings.Repeat("y", 200*1024) + "\""
+	orig := "a = 1\n" + long + "\n\n" + hyprLuaBlock() + "\nb = 2\n"
+	os.WriteFile(real, []byte(orig), 0o600)
+	lua := filepath.Join(dir, "hyprland.lua")
+	os.Symlink(real, lua)
+
+	if err := removeBlock(lua, blockMarker("--"), strings.Split(hyprLuaBlock(), "\n")[1]); err != nil {
+		t.Fatal(err)
+	}
+	got, _ := os.ReadFile(real)
+	if !strings.Contains(string(got), long) || !strings.Contains(string(got), "b = 2") {
+		t.Fatalf("a line over 64KB truncated the file (%d bytes left)", len(got))
+	}
+	if strings.Contains(string(got), "loadfile") {
+		t.Fatal("block not removed")
+	}
+	if st, _ := os.Lstat(lua); st.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("a symlinked compositor config must stay a symlink")
+	}
+	if st, _ := os.Stat(real); st.Mode().Perm() != 0o600 {
+		t.Fatalf("mode changed: %v", st.Mode())
+	}
+	bak, err := os.ReadFile(lua + ".bak")
+	if err != nil || string(bak) != orig {
+		t.Fatalf("no .bak with the original content: %v", err)
+	}
+}

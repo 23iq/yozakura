@@ -1,0 +1,15 @@
+{
+  "activeBorderColor": [
+    "overBackground"
+  ],
+  "inactiveBorderColor": [
+    "outlineVariant@0.8"
+  ],
+  "borderSize": 1,
+  "rounding": 2,
+  "gapsIn": 6,
+  "gapsOut": 14,
+  "shadowOpacity": 0.15,
+  "blurEnabled": false,
+  "motionProfile": "gentle"
+}

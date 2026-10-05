@@ -1,0 +1,47 @@
+[
+  {
+    "id": "layout",
+    "domains": [
+      "bar",
+      "notch",
+      "dock",
+      "overview",
+      "workspaces"
+    ],
+    "category": "bar"
+  },
+  {
+    "id": "colors",
+    "domains": [
+      "theme",
+      "wallpaper"
+    ],
+    "category": "appearance"
+  },
+  {
+    "id": "windows",
+    "domains": [
+      "compositor",
+      "performance"
+    ],
+    "keys": [
+      "theme.animDuration",
+      "theme.paletteTransitionDuration"
+    ],
+    "category": "windows"
+  },
+  {
+    "id": "desktop",
+    "domains": [
+      "desktop"
+    ],
+    "category": "desktop"
+  },
+  {
+    "id": "lockscreen",
+    "domains": [
+      "lockscreen"
+    ],
+    "category": "lockscreen"
+  }
+]

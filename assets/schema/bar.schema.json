@@ -1,0 +1,889 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:bar",
+  "title": "bar",
+  "description": "The bar (panel): style (classic/islands), module layout, screen edge, frame, clock, auto-hide and live activities.",
+  "type": "object",
+  "x-file": "config/bar.json",
+  "properties": {
+    "position": {
+      "title": "Position",
+      "type": "string",
+      "default": "top",
+      "description": "The screen edge the bar sits on.",
+      "x-settings": {
+        "category": "bar",
+        "section": "placement",
+        "label": "prefs.bar.position",
+        "control": "custom",
+        "component": "BarPositionPicker",
+        "keywords": "position edge top bottom left right vertical horizontal",
+        "visibleWhen": {
+          "key": "bar.panels",
+          "empty": true
+        }
+      },
+      "enum": [
+        "top",
+        "bottom",
+        "left",
+        "right"
+      ]
+    },
+    "launcherIcon": {
+      "title": "Launcher icon",
+      "type": "string",
+      "default": "",
+      "description": "Launcher button icon (icon name or image path); empty uses the app logo.",
+      "format": "icon"
+    },
+    "launcherIconTint": {
+      "title": "Launcher icon tint",
+      "type": "boolean",
+      "default": true,
+      "description": "Tint the launcher icon with the palette."
+    },
+    "launcherIconFullTint": {
+      "title": "Launcher icon full tint",
+      "type": "boolean",
+      "default": true,
+      "description": "Tint the launcher icon fully (flat color) instead of a soft overlay."
+    },
+    "launcherIconSize": {
+      "title": "Launcher icon size",
+      "type": "number",
+      "default": 24,
+      "description": "Launcher icon size.",
+      "minimum": 8,
+      "maximum": 64,
+      "x-unit": "px"
+    },
+    "pillStyle": {
+      "title": "Pill style",
+      "type": "string",
+      "default": "default",
+      "description": "Shape of the module pills (squished = half radius).",
+      "enum": [
+        "default",
+        "squished"
+      ]
+    },
+    "screenList": {
+      "title": "Screen list",
+      "type": "array",
+      "default": [],
+      "description": "Monitor names to show the bar on; empty = every monitor.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "enableFirefoxPlayer": {
+      "title": "Enable firefox player",
+      "type": "boolean",
+      "default": false,
+      "description": "Show Firefox as a media player (MPRIS); off hides it."
+    },
+    "barColor": {
+      "title": "Bar color",
+      "type": "array",
+      "default": [
+        [
+          "surface",
+          0
+        ]
+      ],
+      "items": {
+        "type": "array"
+      },
+      "description": "Bar background gradient stops [[colorSpec, position], ...].",
+      "format": "gradient"
+    },
+    "frameEnabled": {
+      "title": "Screen frame",
+      "type": "boolean",
+      "default": false,
+      "description": "A border around the whole screen, joined to the bar.",
+      "x-settings": {
+        "category": "bar",
+        "section": "placement",
+        "label": "prefs.bar.frame",
+        "control": "toggle",
+        "keywords": "frame border screen edge outline"
+      }
+    },
+    "frameThickness": {
+      "title": "Frame thickness",
+      "type": "number",
+      "default": 6,
+      "description": "Width of the frame on the other edges.",
+      "x-settings": {
+        "category": "bar",
+        "section": "placement",
+        "label": "prefs.bar.frame_thickness",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "frame thickness width border size",
+        "visibleWhen": {
+          "key": "bar.frameEnabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 40
+      },
+      "minimum": 0,
+      "maximum": 40,
+      "x-unit": "px"
+    },
+    "pinnedOnStartup": {
+      "title": "Visible at startup",
+      "type": "boolean",
+      "default": true,
+      "description": "Start with the bar pinned instead of hidden.",
+      "x-settings": {
+        "category": "bar",
+        "section": "autohide",
+        "label": "prefs.bar.pinned",
+        "control": "toggle",
+        "keywords": "pin autohide hide show startup visible"
+      }
+    },
+    "hoverToReveal": {
+      "title": "Reveal on hover",
+      "type": "boolean",
+      "default": true,
+      "description": "Show a hidden bar when the pointer touches its edge.",
+      "x-settings": {
+        "category": "bar",
+        "section": "autohide",
+        "label": "prefs.bar.hover_reveal",
+        "control": "toggle",
+        "keywords": "hover reveal mouse edge autohide"
+      }
+    },
+    "hoverRegionHeight": {
+      "title": "Hover region height",
+      "type": "number",
+      "default": 8,
+      "description": "Size of the invisible edge strip that reveals the hidden bar.",
+      "minimum": 0,
+      "maximum": 40,
+      "x-unit": "px"
+    },
+    "showPinButton": {
+      "title": "Pin button",
+      "type": "boolean",
+      "default": true,
+      "description": "A button on the bar to pin or unpin it.",
+      "x-settings": {
+        "category": "bar",
+        "section": "autohide",
+        "label": "prefs.bar.pin_button",
+        "control": "toggle",
+        "keywords": "pin button unpin"
+      }
+    },
+    "availableOnFullscreen": {
+      "title": "Over fullscreen apps",
+      "type": "boolean",
+      "default": false,
+      "description": "Keep the bar reachable when a window is fullscreen.",
+      "x-settings": {
+        "category": "bar",
+        "section": "autohide",
+        "label": "prefs.bar.fullscreen",
+        "control": "toggle",
+        "keywords": "fullscreen game video overlay"
+      }
+    },
+    "use12hFormat": {
+      "title": "12-hour clock",
+      "type": "boolean",
+      "default": false,
+      "description": "Use AM/PM instead of 24-hour time.",
+      "x-settings": {
+        "category": "bar",
+        "section": "clock",
+        "label": "prefs.bar.clock_12h",
+        "control": "toggle",
+        "keywords": "clock 12h am pm 24h time format"
+      }
+    },
+    "containBar": {
+      "title": "Bar inside the frame",
+      "type": "boolean",
+      "default": false,
+      "description": "Draw the bar inside the frame instead of over it.",
+      "x-settings": {
+        "category": "bar",
+        "section": "placement",
+        "label": "prefs.bar.contain_bar",
+        "control": "toggle",
+        "keywords": "frame contain inside bar",
+        "visibleWhen": {
+          "key": "bar.frameEnabled",
+          "equals": true
+        }
+      }
+    },
+    "keepBarShadow": {
+      "title": "Keep bar shadow",
+      "type": "boolean",
+      "default": false,
+      "description": "Keep the bar shadow when it is contained in the frame."
+    },
+    "keepBarBorder": {
+      "title": "Keep bar border",
+      "type": "boolean",
+      "default": false,
+      "description": "Keep the bar border when it is contained in the frame."
+    },
+    "clockShowDate": {
+      "title": "Show date",
+      "type": "boolean",
+      "default": false,
+      "description": "Add the weekday and day next to the time.",
+      "x-settings": {
+        "category": "bar",
+        "section": "clock",
+        "label": "prefs.bar.clock_date",
+        "control": "toggle",
+        "preview": "ClockPreview",
+        "keywords": "clock date day month time"
+      }
+    },
+    "compact": {
+      "title": "Compact",
+      "type": "boolean",
+      "default": false,
+      "description": "A slimmer bar and notch.",
+      "x-settings": {
+        "category": "bar",
+        "section": "style",
+        "label": "prefs.bar.compact",
+        "control": "toggle",
+        "keywords": "compact dense slim thin small height"
+      }
+    },
+    "activities": {
+      "title": "Live Activities",
+      "type": "object",
+      "description": "Recording, privacy, timers and download progress shown as islands next to the notch.",
+      "x-settings": {
+        "category": "notch",
+        "section": "activities",
+        "label": "shell.activities",
+        "control": "custom",
+        "component": "ActivitiesEditor",
+        "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+      },
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean",
+          "default": true,
+          "description": "Show live activities at all."
+        },
+        "presentation": {
+          "title": "Presentation",
+          "type": "string",
+          "default": "notch",
+          "description": "Where activities appear: inside the notch, as bar islands, or nowhere.",
+          "enum": [
+            "notch",
+            "islands",
+            "off"
+          ]
+        },
+        "maxVisible": {
+          "title": "Max visible",
+          "type": "number",
+          "default": 4,
+          "description": "Most activities shown at once.",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "sources": {
+          "title": "Sources",
+          "type": "object",
+          "properties": {
+            "recording": {
+              "title": "Recording",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "privacy": {
+              "title": "Privacy",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "timers": {
+              "title": "Timers",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "notificationProgress": {
+              "title": "Notification progress",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "jobView": {
+              "title": "Job view",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "browserDownloads": {
+              "title": "Browser downloads",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "steam": {
+              "title": "Steam",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "terminal": {
+              "title": "Terminal",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "fileOps": {
+              "title": "File ops",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "packages": {
+              "title": "Packages",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "torrents": {
+              "title": "Torrents",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "aria2": {
+              "title": "Aria2",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "syncthing": {
+              "title": "Syncthing",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "launchers": {
+              "title": "Launchers",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            }
+          },
+          "additionalProperties": false
+        },
+        "downloads": {
+          "title": "Downloads",
+          "type": "object",
+          "properties": {
+            "aggregate": {
+              "title": "Aggregate",
+              "type": "boolean",
+              "default": true,
+              "description": "Merge concurrent downloads into one activity."
+            },
+            "showSpeed": {
+              "title": "Show speed",
+              "type": "boolean",
+              "default": true,
+              "description": "Show transfer speed on download activities."
+            },
+            "endpoints": {
+              "title": "Endpoints",
+              "type": "object",
+              "description": "RPC/web endpoints of the download clients (machine specific, never in presets).",
+              "x-local": true,
+              "properties": {
+                "qbittorrent": {
+                  "title": "Qbittorrent",
+                  "type": "string",
+                  "default": "http://127.0.0.1:8080",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "transmission": {
+                  "title": "Transmission",
+                  "type": "string",
+                  "default": "http://127.0.0.1:9091/transmission/rpc",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "deluge": {
+                  "title": "Deluge",
+                  "type": "string",
+                  "default": "http://127.0.0.1:8112/json",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "aria2": {
+                  "title": "Aria2",
+                  "type": "string",
+                  "default": "http://127.0.0.1:6800/jsonrpc",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "syncthing": {
+                  "title": "Syncthing",
+                  "type": "string",
+                  "default": "",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                }
+              },
+              "additionalProperties": false
+            },
+            "secrets": {
+              "title": "Secrets",
+              "type": "object",
+              "description": "Passwords/tokens of the download clients' RPC (never in presets).",
+              "x-local": true,
+              "properties": {
+                "qbittorrent": {
+                  "title": "Qbittorrent",
+                  "type": "string",
+                  "default": "",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                },
+                "transmission": {
+                  "title": "Transmission",
+                  "type": "string",
+                  "default": "",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                },
+                "deluge": {
+                  "title": "Deluge",
+                  "type": "string",
+                  "default": "deluge",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                },
+                "aria2": {
+                  "title": "Aria2",
+                  "type": "string",
+                  "default": "",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "layout": {
+      "title": "Layout",
+      "type": "object",
+      "description": "Bar layout: style and the ordered module ids of each group.",
+      "properties": {
+        "style": {
+          "title": "Bar style",
+          "type": "string",
+          "default": "classic",
+          "description": "One continuous bar, or floating islands around the notch.",
+          "x-settings": {
+            "category": "bar",
+            "section": "style",
+            "label": "prefs.bar.style",
+            "control": "custom",
+            "component": "BarStyleCards",
+            "keywords": "classic islands floating pills style look",
+            "visibleWhen": {
+              "key": "bar.panels",
+              "empty": true
+            }
+          },
+          "enum": [
+            "classic",
+            "islands",
+            "menubar",
+            "statusline",
+            "ribbon",
+            "rail",
+            "corners",
+            "dock"
+          ]
+        },
+        "left": {
+          "title": "Left",
+          "type": "array",
+          "default": [
+            "launcher",
+            "workspaces",
+            "layoutSelector",
+            "pin"
+          ],
+          "items": {
+            "enum": [
+              "launcher",
+              "workspaces",
+              "workspaceTags",
+              "layoutSelector",
+              "pin",
+              "windowTitle",
+              "appMenu",
+              "taskbar",
+              "downloads",
+              "workspacePreviews",
+              "presets",
+              "tools",
+              "systray",
+              "systemStats",
+              "weather",
+              "worldClocks",
+              "controls",
+              "battery",
+              "clock",
+              "power"
+            ]
+          },
+          "x-settings": {
+            "category": "bar",
+            "section": "layout",
+            "label": "prefs.bar.layout",
+            "entry": "bar.layout.modules",
+            "entryTitle": "Layout",
+            "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
+          },
+          "description": "Modules at the start (left/top), in order.",
+          "uniqueItems": true
+        },
+        "right": {
+          "title": "Right",
+          "type": "array",
+          "default": [
+            "presets",
+            "tools",
+            "systray",
+            "controls",
+            "battery",
+            "clock",
+            "power"
+          ],
+          "items": {
+            "enum": [
+              "launcher",
+              "workspaces",
+              "workspaceTags",
+              "layoutSelector",
+              "pin",
+              "windowTitle",
+              "appMenu",
+              "taskbar",
+              "downloads",
+              "workspacePreviews",
+              "presets",
+              "tools",
+              "systray",
+              "systemStats",
+              "weather",
+              "worldClocks",
+              "controls",
+              "battery",
+              "clock",
+              "power"
+            ]
+          },
+          "x-settings": {
+            "category": "bar",
+            "section": "layout",
+            "label": "prefs.bar.layout",
+            "entry": "bar.layout.modules",
+            "entryTitle": "Layout",
+            "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
+          },
+          "description": "Modules at the end (right/bottom), in order.",
+          "uniqueItems": true
+        },
+        "drawer": {
+          "title": "Drawer",
+          "type": "array",
+          "default": [],
+          "x-settings": {
+            "category": "bar",
+            "section": "layout",
+            "label": "prefs.bar.layout",
+            "entry": "bar.layout.modules",
+            "entryTitle": "Layout",
+            "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
+          },
+          "description": "Modules tucked into the overflow drawer.",
+          "items": {
+            "enum": [
+              "launcher",
+              "workspaces",
+              "workspaceTags",
+              "layoutSelector",
+              "pin",
+              "windowTitle",
+              "appMenu",
+              "taskbar",
+              "downloads",
+              "workspacePreviews",
+              "presets",
+              "tools",
+              "systray",
+              "systemStats",
+              "weather",
+              "worldClocks",
+              "controls",
+              "battery",
+              "clock",
+              "power"
+            ]
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "panels": {
+      "title": "Panels",
+      "type": "array",
+      "default": [],
+      "x-settings": {
+        "category": "bar",
+        "section": "panels",
+        "label": "prefs.bar.panels",
+        "entry": "bar.panels.editor",
+        "entryTitle": "Panel layout",
+        "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
+      },
+      "description": "Bar panels (empty = the single bar from position/layout/screenList). Each item: {id, edge: top|bottom|left|right, style: classic|islands|menubar|statusline|ribbon|rail|corners|dock, groups: {start, center, end, drawer, gapStart, gapEnd: [module ids]}, align: fill|center|start|end, size (module px, 0 = style), thickness (px, 0 = auto), margin (px, -1 = style), flat (bool), autohide: auto|always|never, reserve (bool), screens ([] = all; names, primary, secondary), enabled, options: {surface: bg|bar|none}}. See modules/bar/panels/PanelLayout.js.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "moduleOptions": {
+      "title": "Module options",
+      "type": "object",
+      "description": "Options of bar modules, shared by every panel showing them.",
+      "properties": {
+        "windowTitle": {
+          "title": "Window title",
+          "type": "object",
+          "properties": {
+            "show": {
+              "title": "Show",
+              "type": "string",
+              "default": "both",
+              "description": "Window title module: app name, window title or both.",
+              "enum": [
+                "both",
+                "app",
+                "title"
+              ]
+            },
+            "showIcon": {
+              "title": "Show icon",
+              "type": "boolean",
+              "default": true,
+              "description": "Window title module: show the app icon."
+            },
+            "maxWidth": {
+              "title": "Max width",
+              "type": "number",
+              "default": 420,
+              "description": "Window title module: widest the title may get.",
+              "minimum": 80,
+              "maximum": 2000,
+              "x-unit": "px"
+            }
+          },
+          "additionalProperties": false
+        },
+        "taskbar": {
+          "title": "Taskbar",
+          "type": "object",
+          "properties": {
+            "showPinned": {
+              "title": "Show pinned",
+              "type": "boolean",
+              "default": true,
+              "description": "Taskbar: show pinned apps that are not running."
+            },
+            "showLabels": {
+              "title": "Show labels",
+              "type": "boolean",
+              "default": false,
+              "description": "Taskbar (not in docks): show app names next to icons."
+            },
+            "indicator": {
+              "title": "Indicator",
+              "type": "string",
+              "default": "dot",
+              "description": "Taskbar: running-app indicator.",
+              "enum": [
+                "dot"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "systemStats": {
+          "title": "System stats",
+          "type": "object",
+          "properties": {
+            "items": {
+              "title": "Items",
+              "type": "array",
+              "default": [
+                "cpu",
+                "ram",
+                "gpuTemp",
+                "net"
+              ],
+              "items": {
+                "enum": [
+                  "cpu",
+                  "ram",
+                  "gpu",
+                  "cpuTemp",
+                  "gpuTemp",
+                  "net"
+                ]
+              },
+              "description": "System stats module: metrics shown, in order.",
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "weather": {
+          "title": "Weather",
+          "type": "object",
+          "properties": {
+            "showDescription": {
+              "title": "Show description",
+              "type": "boolean",
+              "default": true,
+              "description": "Weather module: show the condition text."
+            }
+          },
+          "additionalProperties": false
+        },
+        "clock": {
+          "title": "Clock",
+          "type": "object",
+          "properties": {
+            "showWeather": {
+              "title": "Show weather",
+              "type": "boolean",
+              "default": true,
+              "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
+            }
+          },
+          "additionalProperties": false
+        },
+        "worldClocks": {
+          "title": "World clocks",
+          "type": "object",
+          "properties": {
+            "zones": {
+              "title": "Zones",
+              "type": "array",
+              "default": [
+                {
+                  "label": "Tokyo",
+                  "zone": "Asia/Tokyo"
+                },
+                {
+                  "label": "London",
+                  "zone": "Europe/London"
+                },
+                {
+                  "label": "New York",
+                  "zone": "America/New_York"
+                }
+              ],
+              "items": {
+                "type": "object"
+              },
+              "description": "World clocks: [{label, zone}] with IANA zone names (e.g. Asia/Tokyo)."
+            }
+          },
+          "additionalProperties": false
+        },
+        "workspaceTags": {
+          "title": "Workspace tags",
+          "type": "object",
+          "properties": {
+            "brackets": {
+              "title": "Brackets",
+              "type": "boolean",
+              "default": true,
+              "description": "Workspace tags: draw [1][2][3] brackets."
+            }
+          },
+          "additionalProperties": false
+        },
+        "downloads": {
+          "title": "Downloads",
+          "type": "object",
+          "properties": {
+            "folder": {
+              "title": "Folder",
+              "type": "string",
+              "default": "",
+              "description": "Downloads stack: folder (empty = ~/Downloads).",
+              "format": "path",
+              "x-local": true
+            },
+            "count": {
+              "title": "Count",
+              "type": "number",
+              "default": 8,
+              "description": "Downloads stack: recent files fanned out.",
+              "minimum": 1,
+              "maximum": 12
+            }
+          },
+          "additionalProperties": false
+        },
+        "workspacePreviews": {
+          "title": "Workspace previews",
+          "type": "object",
+          "properties": {
+            "count": {
+              "title": "Count",
+              "type": "number",
+              "default": 4,
+              "description": "Workspace previews: miniatures shown.",
+              "minimum": 1,
+              "maximum": 10
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

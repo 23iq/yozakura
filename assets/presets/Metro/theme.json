@@ -1,0 +1,65 @@
+{
+  "oledMode": false,
+  "lightMode": false,
+  "roundness": 4,
+  "font": "Oswald",
+  "fontSize": 14,
+  "monoFont": "JetBrains Mono",
+  "animDuration": 220,
+  "paletteTransitionDuration": 450,
+  "shadowOpacity": 0.45,
+  "terminalOpacity": 0.95,
+  "glass": {
+    "enabled": false
+  },
+  "srBg": {
+    "label": "Background",
+    "gradient": [
+      [
+        "background",
+        0.0
+      ]
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 0,
+    "gradientCenterX": 0.5,
+    "gradientCenterY": 0.5,
+    "halftoneDotMin": 0,
+    "halftoneDotMax": 2,
+    "halftoneStart": 0,
+    "halftoneEnd": 1,
+    "halftoneDotColor": "surface",
+    "halftoneBackgroundColor": "background",
+    "border": [
+      "surfaceBright",
+      0
+    ],
+    "itemColor": "overBackground",
+    "opacity": 1
+  },
+  "srPrimary": {
+    "label": "Primary",
+    "gradient": [
+      [
+        "primary",
+        0.0
+      ]
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 0,
+    "gradientCenterX": 0.5,
+    "gradientCenterY": 0.5,
+    "halftoneDotMin": 0,
+    "halftoneDotMax": 2,
+    "halftoneStart": 0,
+    "halftoneEnd": 1,
+    "halftoneDotColor": "overPrimaryContainer",
+    "halftoneBackgroundColor": "primary",
+    "border": [
+      "primary",
+      0
+    ],
+    "itemColor": "overPrimary",
+    "opacity": 1
+  }
+}

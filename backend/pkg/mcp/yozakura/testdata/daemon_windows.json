@@ -1,0 +1,4 @@
+[
+  {"app_id":"firefox","id":"0x1","is_floating":false,"is_focused":false,"is_fullscreen":false,"is_hidden":false,"metadata":{"height":600,"monitor_id":"0","pinned":false,"width":800,"x":10,"y":20},"title":"Docs","workspace_id":"2"},
+  {"app_id":"kitty","id":"0x2","is_floating":true,"is_focused":true,"is_fullscreen":false,"is_hidden":false,"metadata":{"height":500,"monitor_id":"0","pinned":false,"width":700,"x":30,"y":40},"title":"nvim","workspace_id":"3"}
+]

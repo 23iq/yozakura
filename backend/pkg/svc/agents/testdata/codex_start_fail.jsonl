@@ -1,0 +1,7 @@
+# Codex app-server: thread/start fails; the session must not hang in "running".
+<
+<
+<
+{"id":1,"result":{"userAgent":"x"}}
+{"id":2,"error":{"code":-32603,"message":"not logged in"}}
+=hold

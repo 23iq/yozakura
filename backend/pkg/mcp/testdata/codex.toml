@@ -1,0 +1,45 @@
+# Synthetic Codex config for importer tests
+model = "some-model"
+approval_policy = "on-request"
+
+[profiles.fast]
+model = "fast-model"
+
+[mcp_servers.filesystem]   # same name as Claude's: must be reported as duplicate
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem"]
+
+[mcp_servers.search]
+command = "/usr/bin/search-mcp"
+args = [
+  "--index", 'C:\literal\path',  # comment inside array
+  "--threads", "4",
+]
+startup_timeout_sec = 120
+tool_timeout_sec = 3.5
+enabled = true
+
+[mcp_servers.search.env]
+SEARCH_KEY = "k-123"
+"QUOTED.KEY" = "v\u00e9"
+
+[mcp_servers.off]
+command = "off-mcp"
+enabled = false
+env = { A = "1", B = "two" }
+
+[mcp_servers.docs]
+url = "https://developers.example.com/mcp"
+http_headers = { "X-Team" = "core" }
+bearer_token_env_var = "YZ_TEST_TOKEN"
+
+[mcp_servers."dotted.name"]
+command = """
+multi"""
+args = []
+
+[[hooks.items]]
+name = "one"
+
+[[hooks.items]]
+name = "two"

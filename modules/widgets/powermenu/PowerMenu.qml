@@ -1,0 +1,72 @@
+import QtQuick
+import qs.modules.components
+import qs.modules.services
+import qs.modules.theme
+import Quickshell.Io
+import qs.modules.globals
+
+ActionGrid {
+    id: root
+
+    signal itemSelected
+
+    layout: "row"
+    buttonSize: 48
+    iconSize: 20
+    spacing: 8
+
+    Process {
+        id: actionProcess
+        running: false
+    }
+
+    Component.onCompleted: {
+        root.forceActiveFocus();
+    }
+
+    actions: [
+        {
+            icon: Icons.lock,
+            tooltip: I18n.t("powermenu.lock_session"),
+            command: "loginctl lock-session"
+        },
+        {
+            icon: Icons.suspend,
+            tooltip: I18n.t("powermenu.suspend"),
+            command: "systemctl suspend"
+        },
+        {
+            icon: Icons.hibernate,
+            tooltip: I18n.t("powermenu.hibernate"),
+            command: "systemctl hibernate"
+        },
+        {
+            icon: Icons.logout,
+            tooltip: I18n.t("powermenu.exit_session"),
+            argv: Brand.daemonArgs(["system", "exit"])
+        },
+        {
+            icon: Icons.reboot,
+            tooltip: I18n.t("powermenu.reboot"),
+            command: "systemctl reboot"
+        },
+        {
+            icon: Icons.shutdown,
+            tooltip: I18n.t("powermenu.power_off"),
+            command: "systemctl poweroff"
+        }
+    ]
+
+    onActionTriggered: action => {
+        console.log("Action triggered:", action.command);
+        if (action.argv) {
+            actionProcess.command = action.argv;
+            actionProcess.running = true;
+        } else if (action.command) {
+            actionProcess.command = ["/bin/bash", "-c", action.command];
+            console.log("Starting process with command:", actionProcess.command);
+            actionProcess.running = true;
+        }
+        root.itemSelected();
+    }
+}

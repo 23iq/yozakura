@@ -1,0 +1,47 @@
+{
+  "frameEnabled": true,
+  "frameThickness": 10,
+  "containBar": false,
+  "clockShowDate": true,
+  "moduleOptions": {
+    "systemStats": {
+      "items": [
+        "cpu",
+        "ram",
+        "net"
+      ]
+    }
+  },
+  "panels": [
+    {
+      "id": "top",
+      "edge": "top",
+      "style": "corners",
+      "groups": {
+        "start": [
+          "launcher",
+          "workspaces"
+        ],
+        "end": [
+          "clock"
+        ]
+      }
+    },
+    {
+      "id": "bottom",
+      "edge": "bottom",
+      "style": "corners",
+      "groups": {
+        "start": [
+          "systemStats"
+        ],
+        "end": [
+          "systray",
+          "controls",
+          "battery",
+          "power"
+        ]
+      }
+    }
+  ]
+}

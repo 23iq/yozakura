@@ -1,0 +1,43 @@
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck xvfb libegl1 libxkbcommon-x11-0 libxcb-cursor0
+          python -m pip install PySide6 ruff
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      # Missing optional tools (e.g. Qt 6 qmllint/qmlformat) are reported as
+      # SKIP by the gate, never as failures.
+      - name: make check
+        env:
+          BASE: origin/main
+        run: make check

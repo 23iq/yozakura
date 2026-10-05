@@ -1,0 +1,373 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:notifications",
+  "title": "notifications",
+  "description": "Notification popups: presentation (notch-born toasts or corner toasts, auto = by the preset's bar style), corner, screens, timeout, stacking, grouping, history size, sound, per-app rules and Do Not Disturb (manual + schedule).",
+  "type": "object",
+  "x-file": "config/notifications.json",
+  "properties": {
+    "presentation": {
+      "title": "Style",
+      "type": "string",
+      "default": "auto",
+      "description": "Notch: toasts are born from the notch and grow with its shape. Corner: classic toasts. Auto follows the bar style of the preset (islands → notch, taskbars → corner).",
+      "x-settings": {
+        "category": "notifications",
+        "section": "presentation",
+        "label": "prefs.notif.presentation",
+        "control": "selector",
+        "keywords": "notch toast corner popup island style presentation where"
+      },
+      "enum": [
+        "auto",
+        "notch",
+        "corner"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "notch": "Notch",
+        "corner": "Corner"
+      }
+    },
+    "position": {
+      "title": "Corner",
+      "type": "string",
+      "default": "auto",
+      "description": "Where corner toasts stack. Auto sits on the bar's side.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "presentation",
+        "label": "prefs.notif.position",
+        "control": "selector",
+        "keywords": "corner position top bottom left right center",
+        "visibleWhen": {
+          "key": "notifications.presentation",
+          "notEquals": "notch"
+        }
+      },
+      "enum": [
+        "auto",
+        "top-left",
+        "top",
+        "top-right",
+        "bottom-left",
+        "bottom",
+        "bottom-right"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "top-left": "Top left",
+        "top": "Top",
+        "top-right": "Top right",
+        "bottom-left": "Bottom left",
+        "bottom": "Bottom",
+        "bottom-right": "Bottom right"
+      }
+    },
+    "screens": {
+      "title": "Screens",
+      "type": "array",
+      "default": [],
+      "description": "Monitors that show notifications.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "presentation",
+        "label": "prefs.notif.screens",
+        "control": "screens",
+        "keywords": "monitor screen display multi-monitor where"
+      },
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "timeout": {
+      "title": "Show for",
+      "type": "number",
+      "default": 5000,
+      "description": "How long a toast stays when the app does not choose. Hovering keeps it.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "behaviour",
+        "label": "prefs.notif.timeout",
+        "control": "slider",
+        "step": 500,
+        "unit": "ms",
+        "keywords": "timeout duration seconds hide dismiss expire",
+        "min": 0,
+        "max": 30000,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Until dismissed"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 120000,
+      "x-unit": "ms"
+    },
+    "maxVisible": {
+      "title": "At most on screen",
+      "type": "number",
+      "default": 3,
+      "description": "Older toasts slip into the history when more arrive.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "behaviour",
+        "label": "prefs.notif.max_visible",
+        "control": "number",
+        "keywords": "maximum visible stack count limit",
+        "min": 1,
+        "max": 10
+      },
+      "minimum": 1,
+      "maximum": 10
+    },
+    "groupByApp": {
+      "title": "Group by app",
+      "type": "boolean",
+      "default": true,
+      "description": "One toast and one history card per app instead of one per notification.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "behaviour",
+        "label": "prefs.notif.group",
+        "control": "toggle",
+        "keywords": "group grouping stack app same application"
+      }
+    },
+    "historySize": {
+      "title": "History size",
+      "type": "number",
+      "default": 100,
+      "description": "Notifications kept in the dashboard after they hide.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "behaviour",
+        "label": "prefs.notif.history",
+        "control": "number",
+        "step": 10,
+        "keywords": "history size keep remember stored count dashboard",
+        "min": 0,
+        "max": 500,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Don't keep"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "sound": {
+      "title": "Sound",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Play a sound",
+          "type": "boolean",
+          "default": false,
+          "description": "A short chime when a toast appears (never during Do Not Disturb).",
+          "x-settings": {
+            "category": "notifications",
+            "section": "sound",
+            "label": "prefs.notif.sound",
+            "control": "toggle",
+            "keywords": "sound chime beep audio play"
+          }
+        },
+        "file": {
+          "title": "Sound file",
+          "type": "string",
+          "default": "",
+          "description": "Any file pw-play or paplay can play. Empty uses the built-in tone.",
+          "x-settings": {
+            "category": "notifications",
+            "section": "sound",
+            "label": "prefs.notif.sound_file",
+            "control": "path",
+            "keywords": "sound file custom wav ogg chime",
+            "visibleWhen": {
+              "key": "notifications.sound.enabled",
+              "equals": true
+            }
+          },
+          "format": "path"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rules": {
+      "title": "Rules",
+      "type": "array",
+      "default": [],
+      "description": "Match an app by name or desktop id (* is a wildcard). Mute keeps it in history only; priority stays until dismissed and passes Do Not Disturb; always show passes Do Not Disturb; sound off never chimes.",
+      "x-settings": {
+        "category": "notifications",
+        "section": "rules",
+        "label": "prefs.notif.rules",
+        "control": "list",
+        "keywords": "rules per app mute priority always show sound off silence block discord spotify"
+      },
+      "items": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "description": "App name or desktop id, case-insensitive; * is a wildcard."
+          },
+          "action": {
+            "enum": [
+              "mute",
+              "priority",
+              "alwaysShow",
+              "soundOff"
+            ]
+          }
+        },
+        "required": [
+          "app",
+          "action"
+        ]
+      }
+    },
+    "dnd": {
+      "title": "Dnd",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Do Not Disturb",
+          "type": "boolean",
+          "default": false,
+          "description": "Hide toasts and sounds; everything still lands in the history.",
+          "x-settings": {
+            "category": "notifications",
+            "section": "dnd",
+            "label": "prefs.notif.dnd",
+            "control": "toggle",
+            "keywords": "do not disturb dnd silence quiet focus mute all"
+          }
+        },
+        "allowCritical": {
+          "title": "Let critical ones through",
+          "type": "boolean",
+          "default": true,
+          "description": "Critical notifications (low battery, alarms) still show during Do Not Disturb.",
+          "x-settings": {
+            "category": "notifications",
+            "section": "dnd",
+            "label": "prefs.notif.dnd_critical",
+            "control": "toggle",
+            "keywords": "critical urgent battery alarm bypass dnd"
+          }
+        },
+        "schedule": {
+          "title": "Schedule",
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "title": "Schedule",
+              "type": "boolean",
+              "default": false,
+              "description": "Turn Do Not Disturb on automatically every day in a time window.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "dnd",
+                "label": "prefs.notif.schedule",
+                "control": "toggle",
+                "keywords": "schedule night quiet hours automatic dnd time"
+              }
+            },
+            "from": {
+              "title": "From",
+              "type": "string",
+              "default": "22:00",
+              "description": "Start time, 24-hour HH:MM.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "dnd",
+                "label": "prefs.notif.schedule_from",
+                "control": "text",
+                "keywords": "start begin from time hour",
+                "visibleWhen": {
+                  "key": "notifications.dnd.schedule.enabled",
+                  "equals": true
+                }
+              },
+              "pattern": "^([01]?\\d|2[0-3]):[0-5]\\d$"
+            },
+            "to": {
+              "title": "Until",
+              "type": "string",
+              "default": "07:00",
+              "description": "End time; earlier than the start means the next morning.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "dnd",
+                "label": "prefs.notif.schedule_to",
+                "control": "text",
+                "keywords": "end until to time hour",
+                "visibleWhen": {
+                  "key": "notifications.dnd.schedule.enabled",
+                  "equals": true
+                }
+              },
+              "pattern": "^([01]?\\d|2[0-3]):[0-5]\\d$"
+            },
+            "days": {
+              "title": "Days",
+              "type": "array",
+              "default": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6
+              ],
+              "items": {
+                "enum": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6,
+                  0
+                ]
+              },
+              "description": "Days the window starts on.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "dnd",
+                "label": "prefs.notif.schedule_days",
+                "control": "multiselect",
+                "keywords": "days week weekdays weekend monday sunday",
+                "visibleWhen": {
+                  "key": "notifications.dnd.schedule.enabled",
+                  "equals": true
+                }
+              },
+              "uniqueItems": true,
+              "x-itemLabels": {
+                "0": "Sun",
+                "1": "Mon",
+                "2": "Tue",
+                "3": "Wed",
+                "4": "Thu",
+                "5": "Fri",
+                "6": "Sat"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

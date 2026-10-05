@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:weather",
+  "title": "weather",
+  "description": "Weather widget.",
+  "type": "object",
+  "x-file": "config/weather.json",
+  "properties": {
+    "location": {
+      "title": "Location",
+      "type": "string",
+      "default": "",
+      "description": "City name or \"lat,lon\". Leave empty to detect it from your IP.",
+      "x-settings": {
+        "category": "system",
+        "section": "weather",
+        "label": "weather.location",
+        "control": "text",
+        "keywords": "weather city country place location gps coordinates"
+      }
+    },
+    "unit": {
+      "title": "Temperature Unit",
+      "type": "string",
+      "default": "C",
+      "description": "Unit used by the weather widgets.",
+      "x-settings": {
+        "category": "system",
+        "section": "weather",
+        "label": "settings.system.temperature_unit",
+        "control": "selector",
+        "keywords": "temperature unit celsius fahrenheit"
+      },
+      "enum": [
+        "C",
+        "F"
+      ],
+      "x-enumLabels": {
+        "C": "Celsius",
+        "F": "Fahrenheit"
+      }
+    }
+  },
+  "additionalProperties": false
+}

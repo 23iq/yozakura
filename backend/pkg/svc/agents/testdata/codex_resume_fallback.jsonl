@@ -1,0 +1,12 @@
+# Codex app-server: thread/resume fails (thread gone); the adapter starts a new thread.
+<
+<
+<
+{"id":1,"result":{"userAgent":"x"}}
+{"id":2,"error":{"code":-32600,"message":"no rollout found for thread id old"}}
+<
+{"id":3,"result":{"thread":{"id":"new-thread"}}}
+<
+{"id":4,"result":{"turn":{"id":"t1"}}}
+{"method":"turn/completed","params":{"turn":{"id":"t1","status":"completed"}}}
+=hold

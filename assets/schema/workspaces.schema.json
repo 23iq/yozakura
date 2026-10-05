@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:workspaces",
+  "title": "workspaces",
+  "description": "Workspace indicator in the bar: count, numbers, numeral style, app icons and special workspaces.",
+  "type": "object",
+  "x-file": "config/workspaces.json",
+  "properties": {
+    "shown": {
+      "title": "Workspaces shown",
+      "type": "number",
+      "default": 10,
+      "description": "How many workspace slots the bar shows.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_shown",
+        "control": "slider",
+        "step": 1,
+        "keywords": "workspaces count number visible desktops",
+        "min": 1,
+        "max": 20
+      },
+      "minimum": 1,
+      "maximum": 20
+    },
+    "showAppIcons": {
+      "title": "App icons",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the icons of the windows on each workspace.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_app_icons",
+        "control": "toggle",
+        "keywords": "workspace app icons windows applications"
+      }
+    },
+    "alwaysShowNumbers": {
+      "title": "Numbers on empty workspaces",
+      "type": "boolean",
+      "default": false,
+      "description": "Also number workspaces without windows.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_always_numbers",
+        "control": "toggle",
+        "keywords": "workspace numbers always empty",
+        "visibleWhen": {
+          "key": "workspaces.showNumbers",
+          "equals": true
+        }
+      }
+    },
+    "showNumbers": {
+      "title": "Show numbers",
+      "type": "boolean",
+      "default": false,
+      "description": "Label workspaces with their number.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_show_numbers",
+        "control": "toggle",
+        "keywords": "workspace numbers labels index"
+      }
+    },
+    "dynamic": {
+      "title": "Dynamic",
+      "type": "boolean",
+      "default": false,
+      "description": "Only show workspaces that are in use.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_dynamic",
+        "control": "toggle",
+        "keywords": "dynamic workspaces occupied auto"
+      }
+    },
+    "showSpecialWorkspace": {
+      "title": "Show special workspace",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the special (scratchpad) workspace indicator."
+    },
+    "specialWorkspaceAnimationDuration": {
+      "title": "Special workspace animation duration",
+      "type": "number",
+      "default": 100,
+      "description": "Animation of the special workspace indicator.",
+      "minimum": 0,
+      "maximum": 2000,
+      "x-unit": "ms"
+    },
+    "specialWorkspaceFont": {
+      "title": "Special workspace font",
+      "type": "string",
+      "default": "",
+      "description": "Font of the special workspace name (empty = UI font).",
+      "format": "font-family"
+    },
+    "numeralStyle": {
+      "title": "Numerals",
+      "type": "string",
+      "default": "arabic",
+      "description": "How workspace numbers are written.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_numerals",
+        "control": "custom",
+        "component": "NumeralCards",
+        "keywords": "numerals kanji japanese roman arabic numbers workspaces"
+      },
+      "enum": [
+        "arabic",
+        "kanji",
+        "roman"
+      ]
+    },
+    "numeralFont": {
+      "title": "Numeral font",
+      "type": "string",
+      "default": "",
+      "description": "Font for workspace numerals (empty = picked automatically for the numeral style).",
+      "format": "font-family"
+    },
+    "indicatorStyle": {
+      "title": "Active indicator",
+      "type": "string",
+      "default": "pill",
+      "description": "Shape that marks the active workspace.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_indicator",
+        "control": "custom",
+        "component": "IndicatorStyleChips",
+        "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink"
+      },
+      "enum": [
+        "pill",
+        "underline",
+        "dot",
+        "brush",
+        "bracket"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

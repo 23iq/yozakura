@@ -1,0 +1,26 @@
+<configuration version="37">
+    <folder id="abcde-12345" label="Photos" path="/home/user/Photos" type="sendreceive" rescanIntervalS="3600" fsWatcherEnabled="true" fsWatcherDelayS="10" ignorePerms="false" autoNormalize="true">
+        <filesystemType>basic</filesystemType>
+        <device id="AAAAAAA-BBBBBBB-CCCCCCC-DDDDDDD-EEEEEEE-FFFFFFF-GGGGGGG-HHHHHHH" introducedBy="">
+            <encryptionPassword></encryptionPassword>
+        </device>
+        <paused>false</paused>
+    </folder>
+    <folder id="docs-1" label="" path="/home/user/Documents" type="sendreceive">
+        <paused>false</paused>
+    </folder>
+    <folder id="old" label="Archive" path="/home/user/Archive" type="receiveonly">
+        <paused>true</paused>
+    </folder>
+    <device id="AAAAAAA-BBBBBBB-CCCCCCC-DDDDDDD-EEEEEEE-FFFFFFF-GGGGGGG-HHHHHHH" name="phone" compression="metadata" introducer="false">
+        <address>dynamic</address>
+    </device>
+    <gui enabled="true" tls="false" debugging="false" sendBasicAuthPrompt="false">
+        <address>0.0.0.0:8384</address>
+        <apikey>p4Ss9kLmN3xYzA1bC2dE3fG4hI5jK6lM</apikey>
+        <theme>default</theme>
+    </gui>
+    <options>
+        <listenAddress>default</listenAddress>
+    </options>
+</configuration>

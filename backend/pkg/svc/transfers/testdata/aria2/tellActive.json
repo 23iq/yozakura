@@ -1,0 +1,5 @@
+{"id":"1","jsonrpc":"2.0","result":[
+ {"completedLength":"104857600","dir":"/home/user/Downloads","downloadSpeed":"2097152","files":[{"completedLength":"104857600","index":"1","length":"1073741824","path":"/home/user/Downloads/linux-6.18.tar.xz","selected":"true","uris":[{"status":"used","uri":"https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.tar.xz"}]}],"gid":"2089b05ecca3d829","status":"active","totalLength":"1073741824"},
+ {"completedLength":"0","dir":"/home/user/Downloads","downloadSpeed":"0","files":[{"path":"","uris":[{"status":"used","uri":"https://example.org/files/big.iso?token=abc"}]}],"gid":"aaaa0000bbbb1111","status":"active","totalLength":"0"},
+ {"bittorrent":{"info":{"name":"debian-13.1.0-amd64-DVD-1.iso"},"mode":"single"},"completedLength":"500","dir":"/srv/torrents","downloadSpeed":"10","files":[{"path":"/srv/torrents/debian-13.1.0-amd64-DVD-1.iso","uris":[]}],"gid":"cccc2222dddd3333","status":"active","totalLength":"1000"}
+]}

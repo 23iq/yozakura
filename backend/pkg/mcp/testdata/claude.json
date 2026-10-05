@@ -1,0 +1,28 @@
+{
+  "numStartups": 12,
+  "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+      "env": {"DEBUG": "1"}
+    },
+    "remote-docs": {
+      "type": "http",
+      "url": "https://docs.example.com/mcp?token=secret",
+      "headers": {"Authorization": "Bearer abc"}
+    },
+    "legacy": {"type": "sse", "url": "https://legacy.example.com/sse"}
+  },
+  "projects": {
+    "/home/user/proj-b": {
+      "allowedTools": [],
+      "mcpServers": {
+        "db": {"command": "db-mcp", "args": ["--ro"]}
+      }
+    },
+    "/home/user/proj-a": {
+      "mcpServers": {}
+    }
+  }
+}

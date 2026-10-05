@@ -1,0 +1,14 @@
+[
+    {"in": "Telegram", "out": "Telegram"},
+    {"in": "  My Chat  ", "out": "My-Chat"},
+    {"in": "a,b:c[d]", "out": "a-b-c-d"},
+    {"in": "Разработка", "out": "Разработка"},
+    {"in": "$(rm -rf ~)", "out": "rm-rf"},
+    {"in": "...dots...", "out": "dots"},
+    {"in": "tab\there", "out": "tab-here"},
+    {"in": "---", "out": ""},
+    {"in": "", "out": ""},
+    {"in": "日本語 チャット", "out": "日本語-チャット"},
+    {"in": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "out": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"},
+    {"in": "a+b=c@d", "out": "a-b-c-d"}
+]

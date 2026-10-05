@@ -1,0 +1,11 @@
+{
+  // JSONC overrides (merged after opencode.json)
+  "mcp": {
+    "local-tool": { "enabled": false, }, /* disable it */
+    "web": {
+      "type": "remote",
+      "url": "https://web.example.com/mcp", // remote server
+      "headers": { "X-Key": "http://not-a-comment" },
+    },
+  },
+}

@@ -1,0 +1,13 @@
+# Python lint for scripts/ and tests/ (run via `make lint-py`).
+# Bug-focused rule set: pyflakes, syntax errors, bugbear, pylint errors/warnings.
+line-length = 120
+target-version = "py311"
+extend-exclude = ["backend/vendor", ".cache"]
+
+[lint]
+select = ["E9", "F", "B", "PLE", "PLW", "S602", "S604"]
+ignore = [
+    "PLW0603", # `global` statements are fine in small scripts
+    "PLW2901", # loop variable reassignment
+    "PLW1510", # subprocess.run without check=: callers inspect returncode explicitly
+]

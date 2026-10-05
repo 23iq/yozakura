@@ -1,0 +1,667 @@
+{
+ "_comment": "Generated from config/motion/MotionSpec.js (tests/motion-profiles.test.cjs keeps it fresh: run with UPDATE_FIXTURES=1 to rewrite). The Go renderer must produce the same Lua as the live eval.",
+ "sakura": {
+  "spec": {
+   "profile": "sakura",
+   "enabled": true,
+   "curves": [
+    {
+     "name": "sakuraOvershoot",
+     "type": "bezier",
+     "points": [
+      [
+       0.05,
+       0.9
+      ],
+      [
+       0.1,
+       1.08
+      ]
+     ]
+    },
+    {
+     "name": "sakuraSmoothOut",
+     "type": "bezier",
+     "points": [
+      [
+       0.36,
+       0
+      ],
+      [
+       0.66,
+       -0.56
+      ]
+     ]
+    },
+    {
+     "name": "sakuraEase",
+     "type": "bezier",
+     "points": [
+      [
+       0.25,
+       0.1
+      ],
+      [
+       0.25,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "sakuraLinear",
+     "type": "bezier",
+     "points": [
+      [
+       0,
+       0
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "sakuraStandard",
+     "type": "bezier",
+     "points": [
+      [
+       0.4,
+       0
+      ],
+      [
+       0.2,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "sakuraDecel",
+     "type": "bezier",
+     "points": [
+      [
+       0.05,
+       0.7
+      ],
+      [
+       0.1,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "sakuraAccel",
+     "type": "bezier",
+     "points": [
+      [
+       0.3,
+       0
+      ],
+      [
+       0.8,
+       0.15
+      ]
+     ]
+    },
+    {
+     "name": "sakuraMenuDecel",
+     "type": "bezier",
+     "points": [
+      [
+       0.1,
+       1
+      ],
+      [
+       0,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "sakuraMenuAccel",
+     "type": "bezier",
+     "points": [
+      [
+       0.52,
+       0.03
+      ],
+      [
+       0.72,
+       0.08
+      ]
+     ]
+    },
+    {
+     "name": "sakuraStall",
+     "type": "bezier",
+     "points": [
+      [
+       1,
+       -0.1
+      ],
+      [
+       0.7,
+       0.85
+      ]
+     ]
+    }
+   ],
+   "animations": [
+    {
+     "leaf": "windows",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": "popin 80%"
+    },
+    {
+     "leaf": "windowsIn",
+     "enabled": true,
+     "speed": 4,
+     "curve": "sakuraOvershoot",
+     "kind": "bezier",
+     "style": "popin 85%"
+    },
+    {
+     "leaf": "windowsOut",
+     "enabled": true,
+     "speed": 3,
+     "curve": "sakuraSmoothOut",
+     "kind": "bezier",
+     "style": "popin 85%"
+    },
+    {
+     "leaf": "windowsMove",
+     "enabled": true,
+     "speed": 4,
+     "curve": "sakuraOvershoot",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "layers",
+     "enabled": true,
+     "speed": 8,
+     "curve": "default",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "layersIn",
+     "enabled": true,
+     "speed": 2.7,
+     "curve": "sakuraDecel",
+     "kind": "bezier",
+     "style": "popin 93%"
+    },
+    {
+     "leaf": "layersOut",
+     "enabled": true,
+     "speed": 2.4,
+     "curve": "sakuraMenuAccel",
+     "kind": "bezier",
+     "style": "popin 94%"
+    },
+    {
+     "leaf": "fade",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeIn",
+     "enabled": true,
+     "speed": 3,
+     "curve": "sakuraEase",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeOut",
+     "enabled": true,
+     "speed": 2,
+     "curve": "sakuraDecel",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeSwitch",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeShadow",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeDim",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeLayers",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeLayersIn",
+     "enabled": true,
+     "speed": 0.5,
+     "curve": "sakuraMenuDecel",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeLayersOut",
+     "enabled": true,
+     "speed": 2.7,
+     "curve": "sakuraStall",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadePopups",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadePopupsIn",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadePopupsOut",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "border",
+     "enabled": true,
+     "speed": 6,
+     "curve": "sakuraEase",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "borderangle",
+     "enabled": true,
+     "speed": 100,
+     "curve": "sakuraLinear",
+     "kind": "bezier",
+     "style": "loop"
+    },
+    {
+     "leaf": "workspaces",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": "slidefade 20%"
+    },
+    {
+     "leaf": "workspacesIn",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": "slidefade 20%"
+    },
+    {
+     "leaf": "workspacesOut",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": "slidefade 20%"
+    },
+    {
+     "leaf": "specialWorkspace",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "sakuraStandard",
+     "kind": "bezier",
+     "style": "slidefade 20%"
+    },
+    {
+     "leaf": "specialWorkspaceIn",
+     "enabled": true,
+     "speed": 2.8,
+     "curve": "sakuraDecel",
+     "kind": "bezier",
+     "style": "slidevert"
+    },
+    {
+     "leaf": "specialWorkspaceOut",
+     "enabled": true,
+     "speed": 1.2,
+     "curve": "sakuraAccel",
+     "kind": "bezier",
+     "style": "slidevert"
+    }
+   ],
+   "shell": {
+    "scale": 1,
+    "easing": "OutCubic"
+   }
+  },
+  "lua": "pcall(hl.config, { animations = { enabled = true } }) pcall(function() hl.curve(\"sakuraOvershoot\", { type = \"bezier\", points = { {0.05, 0.9}, {0.1, 1.08} } }) end) pcall(function() hl.curve(\"sakuraSmoothOut\", { type = \"bezier\", points = { {0.36, 0}, {0.66, -0.56} } }) end) pcall(function() hl.curve(\"sakuraEase\", { type = \"bezier\", points = { {0.25, 0.1}, {0.25, 1} } }) end) pcall(function() hl.curve(\"sakuraLinear\", { type = \"bezier\", points = { {0, 0}, {1, 1} } }) end) pcall(function() hl.curve(\"sakuraStandard\", { type = \"bezier\", points = { {0.4, 0}, {0.2, 1} } }) end) pcall(function() hl.curve(\"sakuraDecel\", { type = \"bezier\", points = { {0.05, 0.7}, {0.1, 1} } }) end) pcall(function() hl.curve(\"sakuraAccel\", { type = \"bezier\", points = { {0.3, 0}, {0.8, 0.15} } }) end) pcall(function() hl.curve(\"sakuraMenuDecel\", { type = \"bezier\", points = { {0.1, 1}, {0, 1} } }) end) pcall(function() hl.curve(\"sakuraMenuAccel\", { type = \"bezier\", points = { {0.52, 0.03}, {0.72, 0.08} } }) end) pcall(function() hl.curve(\"sakuraStall\", { type = \"bezier\", points = { {1, -0.1}, {0.7, 0.85} } }) end) pcall(function() hl.animation({ leaf = \"windows\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\", style = \"popin 80%\" }) end) pcall(function() hl.animation({ leaf = \"windowsIn\", enabled = true, speed = 4, bezier = \"sakuraOvershoot\", style = \"popin 85%\" }) end) pcall(function() hl.animation({ leaf = \"windowsOut\", enabled = true, speed = 3, bezier = \"sakuraSmoothOut\", style = \"popin 85%\" }) end) pcall(function() hl.animation({ leaf = \"windowsMove\", enabled = true, speed = 4, bezier = \"sakuraOvershoot\" }) end) pcall(function() hl.animation({ leaf = \"layers\", enabled = true, speed = 8, bezier = \"default\" }) end) pcall(function() hl.animation({ leaf = \"layersIn\", enabled = true, speed = 2.7, bezier = \"sakuraDecel\", style = \"popin 93%\" }) end) pcall(function() hl.animation({ leaf = \"layersOut\", enabled = true, speed = 2.4, bezier = \"sakuraMenuAccel\", style = \"popin 94%\" }) end) pcall(function() hl.animation({ leaf = \"fade\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadeIn\", enabled = true, speed = 3, bezier = \"sakuraEase\" }) end) pcall(function() hl.animation({ leaf = \"fadeOut\", enabled = true, speed = 2, bezier = \"sakuraDecel\" }) end) pcall(function() hl.animation({ leaf = \"fadeSwitch\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadeShadow\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadeDim\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadeLayers\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadeLayersIn\", enabled = true, speed = 0.5, bezier = \"sakuraMenuDecel\" }) end) pcall(function() hl.animation({ leaf = \"fadeLayersOut\", enabled = true, speed = 2.7, bezier = \"sakuraStall\" }) end) pcall(function() hl.animation({ leaf = \"fadePopups\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadePopupsIn\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"fadePopupsOut\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\" }) end) pcall(function() hl.animation({ leaf = \"border\", enabled = true, speed = 6, bezier = \"sakuraEase\" }) end) pcall(function() hl.animation({ leaf = \"borderangle\", enabled = true, speed = 100, bezier = \"sakuraLinear\", style = \"loop\" }) end) pcall(function() hl.animation({ leaf = \"workspaces\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\", style = \"slidefade 20%\" }) end) pcall(function() hl.animation({ leaf = \"workspacesIn\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\", style = \"slidefade 20%\" }) end) pcall(function() hl.animation({ leaf = \"workspacesOut\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\", style = \"slidefade 20%\" }) end) pcall(function() hl.animation({ leaf = \"specialWorkspace\", enabled = true, speed = 2.5, bezier = \"sakuraStandard\", style = \"slidefade 20%\" }) end) pcall(function() hl.animation({ leaf = \"specialWorkspaceIn\", enabled = true, speed = 2.8, bezier = \"sakuraDecel\", style = \"slidevert\" }) end) pcall(function() hl.animation({ leaf = \"specialWorkspaceOut\", enabled = true, speed = 1.2, bezier = \"sakuraAccel\", style = \"slidevert\" }) end)"
+ },
+ "springs": {
+  "spec": {
+   "profile": "springs",
+   "enabled": true,
+   "curves": [
+    {
+     "name": "springsBounce",
+     "type": "spring",
+     "mass": 1,
+     "stiffness": 200,
+     "dampening": 18,
+     "points": [
+      [
+       0.34,
+       1.56
+      ],
+      [
+       0.64,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "springsSettle",
+     "type": "spring",
+     "mass": 1,
+     "stiffness": 240,
+     "dampening": 28,
+     "points": [
+      [
+       0.22,
+       1
+      ],
+      [
+       0.36,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "springsExit",
+     "type": "bezier",
+     "points": [
+      [
+       0.4,
+       0
+      ],
+      [
+       1,
+       1
+      ]
+     ]
+    },
+    {
+     "name": "springsQuick",
+     "type": "bezier",
+     "points": [
+      [
+       0.15,
+       0
+      ],
+      [
+       0.1,
+       1
+      ]
+     ]
+    }
+   ],
+   "animations": [
+    {
+     "leaf": "windows",
+     "enabled": true,
+     "speed": 4.5,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "popin 80%"
+    },
+    {
+     "leaf": "windowsIn",
+     "enabled": true,
+     "speed": 4.5,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "popin 80%"
+    },
+    {
+     "leaf": "windowsOut",
+     "enabled": true,
+     "speed": 1.6,
+     "curve": "springsExit",
+     "kind": "bezier",
+     "style": "popin 85%"
+    },
+    {
+     "leaf": "windowsMove",
+     "enabled": true,
+     "speed": 4.5,
+     "curve": "springsSettle",
+     "kind": "spring",
+     "style": ""
+    },
+    {
+     "leaf": "layers",
+     "enabled": true,
+     "speed": 3.8,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "popin 90%"
+    },
+    {
+     "leaf": "layersIn",
+     "enabled": true,
+     "speed": 3.8,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "popin 90%"
+    },
+    {
+     "leaf": "layersOut",
+     "enabled": true,
+     "speed": 1.4,
+     "curve": "springsExit",
+     "kind": "bezier",
+     "style": "fade"
+    },
+    {
+     "leaf": "fade",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeIn",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeOut",
+     "enabled": true,
+     "speed": 1.6,
+     "curve": "springsExit",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeSwitch",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeShadow",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeDim",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeLayers",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeLayersIn",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadeLayersOut",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadePopups",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadePopupsIn",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "fadePopupsOut",
+     "enabled": true,
+     "speed": 2.5,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "border",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsQuick",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "borderangle",
+     "enabled": true,
+     "speed": 8,
+     "curve": "default",
+     "kind": "bezier",
+     "style": ""
+    },
+    {
+     "leaf": "workspaces",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsSettle",
+     "kind": "spring",
+     "style": "slide"
+    },
+    {
+     "leaf": "workspacesIn",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsSettle",
+     "kind": "spring",
+     "style": "slide"
+    },
+    {
+     "leaf": "workspacesOut",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsSettle",
+     "kind": "spring",
+     "style": "slide"
+    },
+    {
+     "leaf": "specialWorkspace",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "slidevert"
+    },
+    {
+     "leaf": "specialWorkspaceIn",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "slidevert"
+    },
+    {
+     "leaf": "specialWorkspaceOut",
+     "enabled": true,
+     "speed": 4,
+     "curve": "springsBounce",
+     "kind": "spring",
+     "style": "slidevert"
+    }
+   ],
+   "shell": {
+    "scale": 1.1,
+    "easing": "OutBack"
+   }
+  },
+  "lua": "pcall(hl.config, { animations = { enabled = true } }) pcall(function() hl.curve(\"springsBounce\", { type = \"spring\", mass = 1, stiffness = 200, dampening = 18 }) end) pcall(function() hl.curve(\"springsSettle\", { type = \"spring\", mass = 1, stiffness = 240, dampening = 28 }) end) pcall(function() hl.curve(\"springsExit\", { type = \"bezier\", points = { {0.4, 0}, {1, 1} } }) end) pcall(function() hl.curve(\"springsQuick\", { type = \"bezier\", points = { {0.15, 0}, {0.1, 1} } }) end) pcall(function() hl.animation({ leaf = \"windows\", enabled = true, speed = 4.5, spring = \"springsBounce\", style = \"popin 80%\" }) end) pcall(function() hl.animation({ leaf = \"windowsIn\", enabled = true, speed = 4.5, spring = \"springsBounce\", style = \"popin 80%\" }) end) pcall(function() hl.animation({ leaf = \"windowsOut\", enabled = true, speed = 1.6, bezier = \"springsExit\", style = \"popin 85%\" }) end) pcall(function() hl.animation({ leaf = \"windowsMove\", enabled = true, speed = 4.5, spring = \"springsSettle\" }) end) pcall(function() hl.animation({ leaf = \"layers\", enabled = true, speed = 3.8, spring = \"springsBounce\", style = \"popin 90%\" }) end) pcall(function() hl.animation({ leaf = \"layersIn\", enabled = true, speed = 3.8, spring = \"springsBounce\", style = \"popin 90%\" }) end) pcall(function() hl.animation({ leaf = \"layersOut\", enabled = true, speed = 1.4, bezier = \"springsExit\", style = \"fade\" }) end) pcall(function() hl.animation({ leaf = \"fade\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeIn\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeOut\", enabled = true, speed = 1.6, bezier = \"springsExit\" }) end) pcall(function() hl.animation({ leaf = \"fadeSwitch\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeShadow\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeDim\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeLayers\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeLayersIn\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadeLayersOut\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadePopups\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadePopupsIn\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"fadePopupsOut\", enabled = true, speed = 2.5, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"border\", enabled = true, speed = 4, bezier = \"springsQuick\" }) end) pcall(function() hl.animation({ leaf = \"borderangle\", enabled = true, speed = 8, bezier = \"default\" }) end) pcall(function() hl.animation({ leaf = \"workspaces\", enabled = true, speed = 4, spring = \"springsSettle\", style = \"slide\" }) end) pcall(function() hl.animation({ leaf = \"workspacesIn\", enabled = true, speed = 4, spring = \"springsSettle\", style = \"slide\" }) end) pcall(function() hl.animation({ leaf = \"workspacesOut\", enabled = true, speed = 4, spring = \"springsSettle\", style = \"slide\" }) end) pcall(function() hl.animation({ leaf = \"specialWorkspace\", enabled = true, speed = 4, spring = \"springsBounce\", style = \"slidevert\" }) end) pcall(function() hl.animation({ leaf = \"specialWorkspaceIn\", enabled = true, speed = 4, spring = \"springsBounce\", style = \"slidevert\" }) end) pcall(function() hl.animation({ leaf = \"specialWorkspaceOut\", enabled = true, speed = 4, spring = \"springsBounce\", style = \"slidevert\" }) end)"
+ }
+}

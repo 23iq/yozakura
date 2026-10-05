@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Fast pre-commit gate (a few seconds): parse + format check on staged files,
+# plus the audit's hard failures (config schema, translations).
+# The full gate is `make check`; run it before pushing / declaring work done.
+#
+# Install (opt-in, not done automatically):
+#   ln -sf ../../tools/hooks/pre-commit "$(git rev-parse --git-path hooks)/pre-commit"
+# or for every worktree of this clone:
+#   git config core.hooksPath tools/hooks
+# Bypass once with `git commit --no-verify` (then run `make check` yourself).
+#
+# Note: files are checked as they are in the working tree, not the index.
+set -u
+
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+py=${PY:-python3}
+
+mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACM -- '*.qml' '*.js' | grep -v '^backend/')
+rc=0
+
+if [ ${#staged[@]} -gt 0 ]; then
+    "$py" tools/lint/qmllint.py --parse "${staged[@]}" || rc=1
+fi
+"$py" tools/lint/fmt_check.py --staged || rc=1
+if ! audit=$("$py" tools/audit/audit.py --quiet --only config-keys,translations 2>&1); then
+    printf '%s\n' "$audit"
+    rc=1
+fi
+
+if [ "$rc" -ne 0 ]; then
+    echo "pre-commit: blocked. Fix the issues above (or commit with --no-verify and run 'make check')." >&2
+fi
+exit "$rc"

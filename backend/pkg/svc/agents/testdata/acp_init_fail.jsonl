@@ -1,0 +1,4 @@
+# ACP: initialize fails; the session must not hang in "running".
+<
+{"jsonrpc":"2.0","id":1,"error":{"code":-32603,"message":"auth required"}}
+=hold

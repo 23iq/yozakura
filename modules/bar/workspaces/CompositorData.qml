@@ -1,0 +1,172 @@
+pragma Singleton
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+import Quickshell.Hyprland
+import "SpecialWorkspaces.js" as SpecialWorkspaces
+import qs.config
+import Quickshell.Wayland
+import qs.modules.services
+
+Singleton {
+    id: root
+    property var specialWorkspaceNames: ({})
+    property bool specialRefreshPending: false
+
+    function refreshSpecialWorkspaces() {
+        // Also tracked for the special workspaces feature (SpecialsService
+        // launches a special's apps when it opens), indicator or not.
+        const specials = Config.specialsReady && Config.specials.enabled && Config.specials.workspaces.length > 0;
+        if (YozdService.compositorName !== "hyprland" || !(Config.workspaces.showSpecialWorkspace || specials)) {
+            root.specialWorkspaceNames = {};
+            return;
+        }
+        if (specialMonitorProcess.running) {
+            root.specialRefreshPending = true;
+            return;
+        }
+        specialMonitorProcess.running = true;
+    }
+
+    // yozd's normalized monitor state omits specialWorkspace. Use Hyprland's
+    // monitor snapshot and refresh on its events, including empty scratchpads.
+    Process {
+        id: specialMonitorProcess
+        command: ["hyprctl", "-j", "monitors"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                try {
+                    root.specialWorkspaceNames = SpecialWorkspaces.namesFromMonitors(JSON.parse(text));
+                } catch (error) {
+                    root.specialWorkspaceNames = {};
+                    console.warn("Cannot read special workspaces:", error);
+                }
+            }
+        }
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) root.specialWorkspaceNames = {};
+            if (root.specialRefreshPending) {
+                root.specialRefreshPending = false;
+                specialRefreshTimer.restart();
+            }
+        }
+    }
+
+    Timer {
+        id: specialRefreshTimer
+        interval: 30
+        onTriggered: root.refreshSpecialWorkspaces()
+    }
+
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name === "fullscreen" || event.name === "configreloaded")
+                Hyprland.refreshToplevels();
+            if (["activespecial", "activespecialv2", "monitoradded", "monitoraddedv2",
+                 "monitorremoved", "configreloaded"].includes(event.name))
+                specialRefreshTimer.restart();
+        }
+    }
+
+    Connections {
+        target: YozdService
+        function onCompositorNameChanged() { specialRefreshTimer.restart(); }
+    }
+
+    Connections {
+        target: Config.workspaces
+        function onShowSpecialWorkspaceChanged() { specialRefreshTimer.restart(); }
+    }
+
+    Connections {
+        target: Config.specials
+        function onEnabledChanged() { specialRefreshTimer.restart(); }
+        function onWorkspacesChanged() { specialRefreshTimer.restart(); }
+    }
+
+    property var windowList: []
+    property var addresses: []
+    property var windowByAddress: ({})
+    property var monitors: []
+    property var workspaceOccupationMap: ({})
+    property var workspaceWindowsMap: ({})
+
+    function updateWindowList() {
+        // No-op: state is now pushed inline via yozd subscribe events
+    }
+
+    // Monitor-scoped fullscreen check. Only windows on the given monitor's
+    // active workspace count, so fullscreen state never propagates to
+    // other screens.
+    function monitorHasFullscreen(mon) {
+        if (!mon || !mon.activeWorkspace)
+            return false;
+        const wsId = mon.activeWorkspace.id;
+        // yozd reports maximized Hyprland windows as fullscreen too. Read
+        // the native mode so maximizing keeps the shell visible.
+        if (YozdService.compositorName === "hyprland") {
+            const toplevels = Hyprland.toplevels.values;
+            for (let i = 0; i < toplevels.length; i++) {
+                const win = toplevels[i].lastIpcObject;
+                if (win && win.monitor === mon.id && win.workspace
+                        && win.workspace.id === wsId && (win.fullscreen & 2) !== 0)
+                    return true;
+            }
+            return false;
+        }
+        const wins = root.windowList;
+        for (let i = 0; i < wins.length; i++) {
+            if (wins[i].monitor === mon.id && wins[i].fullscreen && wins[i].workspace.id === wsId)
+                return true;
+        }
+        return false;
+    }
+
+    function updateMaps() {
+        let occupationMap = {}
+        let windowsMap = {}
+        for (var i = 0; i < root.windowList.length; ++i) {
+            var win = root.windowList[i]
+            let wsId = win.workspace.id
+            occupationMap[wsId] = true
+            if (!windowsMap[wsId]) {
+                windowsMap[wsId] = []
+            }
+            windowsMap[wsId].push(win)
+        }
+        root.workspaceOccupationMap = occupationMap
+        root.workspaceWindowsMap = windowsMap
+    }
+
+    Component.onCompleted: {
+        updateWindowList()
+        specialRefreshTimer.restart()
+    }
+
+    Connections {
+        target: YozdService.clients
+
+        function onValuesChanged() {
+            root.windowList = YozdService.clients.values
+            let tempWinByAddress = {}
+            for (var i = 0; i < root.windowList.length; ++i) {
+                var win = root.windowList[i]
+                tempWinByAddress[win.address] = win
+            }
+            root.windowByAddress = tempWinByAddress
+            root.addresses = root.windowList.map((win) => win.address)
+            updateMaps()
+        }
+    }
+
+    Connections {
+        target: YozdService.monitors
+
+        function onValuesChanged() {
+            root.monitors = YozdService.monitors.values
+        }
+    }
+}

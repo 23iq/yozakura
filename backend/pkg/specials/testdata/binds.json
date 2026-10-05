@@ -1,0 +1,14 @@
+{
+  "yozakura": {
+    "dashboard": {"modifiers": ["SUPER", "CTRL"], "key": "D", "action": {"id": "yozakura.dashboard", "args": {}}},
+    "launcher": {"modifiers": ["SUPER"], "key": "D", "action": {"id": "yozakura.launcher", "args": {}}},
+    "system": {
+      "tools": {"modifiers": ["SUPER"], "key": "S", "action": {"id": "yozakura.tools", "args": {}}}
+    }
+  },
+  "disabled": ["launcher"],
+  "custom": [
+    {"name": "Close Window", "enabled": true, "keys": [{"modifiers": ["SUPER"], "key": "C"}], "actions": [{"id": "window.close", "args": {}}]},
+    {"name": "Off", "enabled": false, "keys": [{"modifiers": ["SUPER", "ALT"], "key": "S"}], "actions": [{"id": "window.close", "args": {}}]}
+  ]
+}

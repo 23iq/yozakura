@@ -1,0 +1,12 @@
+[SddmGreeterTheme]
+Name=Yozakura
+Description=Yozakura lockscreen look for SDDM, synced with the current wallpaper and matugen palette
+Author=Yozakura
+License=AGPL-3.0
+Type=sddm-theme
+Version=1.0
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=yozakura
+Theme-API=2.0
+QtVersion=6

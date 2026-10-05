@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Discord
+Exec=/usr/bin/discord --url -- %u
+Icon=discord
+StartupWMClass=discord
+
+[Desktop Action new]
+Name=New Window
+Exec=/usr/bin/discord --new

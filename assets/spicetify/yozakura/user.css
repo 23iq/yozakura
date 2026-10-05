@@ -1,0 +1,85 @@
+/*
+ * Yozakura spicetify theme.
+ * Colors come from color.ini, which Yozakura regenerates from the Material
+ * palette on every wallpaper / color change (see SpicetifyGenerator.qml).
+ * theme.js hot-reloads colors.css, so no Spotify restart is needed.
+ */
+
+:root {
+    --yozakura-radius: 12px;
+}
+
+/* Smooth color transitions so live palette swaps feel intentional. */
+body,
+.Root__top-container,
+.Root__main-view,
+.Root__nav-bar,
+.Root__now-playing-bar,
+.main-trackList-trackListRow,
+.main-card-card,
+button {
+    transition: background-color 300ms ease, color 300ms ease !important;
+}
+
+/* Accent: primary for play buttons, progress and volume fills. */
+.encore-bright-accent-set,
+.main-playButton-PlayButton .ButtonInner-sc-14ud5tc-0,
+.x-progressBar-fillColor,
+.progress-bar__fg {
+    background-color: var(--spice-button-active) !important;
+    color: var(--spice-on-primary) !important;
+}
+
+.progress-bar {
+    --fg-color: var(--spice-button) !important;
+    --bg-color: rgba(var(--spice-rgb-subtext), 0.3) !important;
+}
+
+/* Hover state of rows / cards uses the Material state-layer idea. */
+.main-trackList-trackListRow:hover,
+.main-card-card:hover {
+    background-color: var(--spice-highlight) !important;
+}
+
+.main-trackList-selected,
+.main-trackList-trackListRow[aria-selected="true"] {
+    background-color: var(--spice-primary-container) !important;
+}
+
+.main-trackList-selected *,
+.main-trackList-trackListRow[aria-selected="true"] * {
+    color: var(--spice-on-primary-container) !important;
+}
+
+/* Rounded panels and cards. */
+.Root__nav-bar,
+.Root__main-view,
+.Root__right-sidebar,
+.main-card-card,
+.main-contextMenu-menu {
+    border-radius: var(--yozakura-radius) !important;
+}
+
+/* Context menu and tooltips on elevated surfaces. */
+.main-contextMenu-menu {
+    background-color: var(--spice-card) !important;
+    border: 1px solid var(--spice-outline-variant) !important;
+}
+
+/* Drop Spotify's playlist header gradients for a flat, palette-only look. */
+.main-entityHeader-backgroundColor,
+.main-actionBarBackground-background,
+.main-home-homeHeader {
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+.main-topBar-background {
+    background-color: var(--spice-main) !important;
+}
+
+/* Scrollbars. */
+.os-scrollbar-handle {
+    background: var(--spice-button-disabled) !important;
+    border-radius: 8px !important;
+}

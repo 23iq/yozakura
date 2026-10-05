@@ -1,0 +1,67 @@
+package ipc
+
+import "fmt"
+
+type Compositor interface {
+	ListWindows() ([]Window, error)
+	ActiveWindow() (string, error)
+	FocusWindow(id string) error
+	FocusDir(direction string) error
+	CloseWindow(id string) error
+	MoveWindow(id string, direction string) error
+	ResizeWindow(id string, width, height int) error
+	ToggleFloating(id string) error
+	SetFullscreen(id string, state bool) error
+	SetMaximized(id string, state bool) error
+	PinWindow(id string, state bool) error
+
+	ToggleGroup(id string) error
+	GroupNav(direction string) error
+	SetLayoutProperty(id string, key, value string) error
+
+	MoveWindowPixel(id string, x, y int) error
+
+	ListWorkspaces() ([]Workspace, error)
+	ActiveWorkspace() (*Workspace, error)
+	SwitchWorkspace(id string) error
+	MoveToWorkspace(windowID, workspaceID string) error
+	MoveToWorkspaceSilent(windowID, workspaceID string) error
+	ToggleSpecialWorkspace(name string) error
+	ToggleOverview() error
+
+	ListMonitors() ([]Monitor, error)
+	FocusMonitor(id string) error
+	MoveToMonitor(windowID, monitorID string) error
+	SetDpms(monitorID string, on bool) error
+
+	SetLayout(name string) error
+	ListLayouts() ([]Layout, error)
+
+	GetConfig(key string) (interface{}, error)
+	SetConfig(key string, value interface{}) error
+	BatchConfig(configs map[string]interface{}) error
+	BatchKeybinds(jsonPayload string) error
+	RawBatch(command string) error
+	ReloadConfig() error
+	GetAnimations() (interface{}, error)
+	GetCursorPosition() (int, int, error)
+
+	BindKey(mods, key, command string) error
+	UnbindKey(mods, key string) error
+
+	Execute(command string) error
+	// ExecuteIn runs a command whose windows open on a workspace, e.g.
+	// "special:Telegram silent" (ErrNotSupported without workspace rules)
+	ExecuteIn(command, workspace string) error
+	Exit() error
+
+	SwitchKeyboardLayout(action string) error
+	SetKeyboardLayouts(layouts string, variants string) error
+
+	Subscribe() (<-chan Event, error)
+	GetCapabilities() (Capabilities, error)
+}
+
+var (
+	ErrNotSupported = fmt.Errorf("feature not supported on this compositor")
+)

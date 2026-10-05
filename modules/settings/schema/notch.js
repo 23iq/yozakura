@@ -1,0 +1,161 @@
+.pragma library
+
+// Notch & Activities: the dynamic island and live activities. Entry format:
+// see modules/settings/AGENTS.md.
+
+var category = {
+    "id": "notch",
+    "icon": "dotsThree",
+    "title": "prefs.cat.notch",
+    "description": "prefs.cat.notch.desc",
+    "keywords": "notch island dynamic activities visualizer media panels",
+    "sections": [
+        {
+            "id": "notch",
+            "title": "prefs.notch.section.notch",
+            "entries": [
+                {
+                    "key": "notch.theme",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "default",
+                            "label": "common.default"
+                        },
+                        {
+                            "value": "island",
+                            "label": "shell.dock.island"
+                        }
+                    ],
+                    "label": "prefs.notch.theme",
+                    "description": "prefs.notch.theme.desc",
+                    "keywords": "notch style island attached floating"
+                },
+                {
+                    "key": "notch.position",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "top",
+                            "label": "common.top",
+                            "icon": "arrowUp"
+                        },
+                        {
+                            "value": "bottom",
+                            "label": "common.bottom",
+                            "icon": "arrowDown"
+                        }
+                    ],
+                    "label": "prefs.notch.position",
+                    "description": "prefs.notch.position.desc",
+                    "keywords": "notch position top bottom edge"
+                },
+                {
+                    "key": "notch.expandOn",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "hover",
+                            "label": "shell.notch.expand_on_hover"
+                        },
+                        {
+                            "value": "click",
+                            "label": "shell.notch.expand_on_click"
+                        }
+                    ],
+                    "label": "shell.notch.expand_on",
+                    "description": "prefs.notch.expand_on.desc",
+                    "keywords": "notch panel expand open hover click activities media downloads"
+                },
+                {
+                    "key": "notch.disableHoverExpansion",
+                    "type": "toggle",
+                    "label": "shell.notch.disable_hover_expansion",
+                    "description": "prefs.notch.hover_expansion.desc",
+                    "keywords": "hover expand grow media preview"
+                },
+                {
+                    "key": "notch.keepHidden",
+                    "type": "toggle",
+                    "label": "shell.notch.keep_hidden",
+                    "description": "prefs.notch.keep_hidden.desc",
+                    "keywords": "hide notch autohide"
+                },
+                {
+                    "key": "notch.hoverRegionHeight",
+                    "type": "slider",
+                    "min": 0,
+                    "max": 40,
+                    "step": 1,
+                    "unit": "px",
+                    "visibleWhen": {
+                        "key": "notch.keepHidden",
+                        "equals": true
+                    },
+                    "label": "prefs.notch.hover_region",
+                    "description": "prefs.notch.hover_region.desc",
+                    "keywords": "hover region trigger area reveal"
+                }
+            ]
+        },
+        {
+            "id": "media",
+            "title": "prefs.notch.section.media",
+            "entries": [
+                {
+                    "key": "notch.visualizer",
+                    "type": "toggle",
+                    "label": "shell.notch.visualizer",
+                    "description": "prefs.notch.visualizer.desc",
+                    "keywords": "audio visualizer cava bars music"
+                },
+                {
+                    "key": "notch.noMediaDisplay",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "userHost",
+                            "label": "shell.notch.user_host"
+                        },
+                        {
+                            "value": "compositor",
+                            "label": "shell.notch.compositor"
+                        },
+                        {
+                            "value": "custom",
+                            "label": "theme.custom"
+                        }
+                    ],
+                    "label": "shell.no_media_display",
+                    "description": "prefs.notch.idle.desc",
+                    "keywords": "idle text user host compositor custom nothing playing"
+                },
+                {
+                    "key": "notch.customText",
+                    "type": "text",
+                    "visibleWhen": {
+                        "key": "notch.noMediaDisplay",
+                        "equals": "custom"
+                    },
+                    "label": "shell.notch.custom_text",
+                    "description": "prefs.notch.custom_text.desc",
+                    "keywords": "custom text label idle"
+                }
+            ]
+        },
+        {
+            "id": "activities",
+            "title": "prefs.notch.section.activities",
+            "entries": [
+                {
+                    "key": "bar.activities",
+                    "type": "custom",
+                    "component": "ActivitiesEditor",
+                    "label": "shell.activities",
+                    "description": "prefs.notch.activities.desc",
+                    "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+                }
+            ]
+        }
+    ]
+};

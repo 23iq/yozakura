@@ -1,0 +1,422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:voice",
+  "title": "voice",
+  "description": "Voice input (local whisper.cpp): model, language, push-to-talk/toggle activation, voice activity detection and how dictated text is typed.",
+  "type": "object",
+  "x-file": "config/voice.json",
+  "properties": {
+    "enabled": {
+      "title": "Enable voice input",
+      "type": "boolean",
+      "default": true,
+      "description": "Push-to-talk to the AI and dictation into any window, recognized on this computer.",
+      "x-settings": {
+        "category": "voice",
+        "section": "voice",
+        "label": "voice.settings.enabled",
+        "control": "toggle",
+        "keywords": "voice enable disable microphone"
+      }
+    },
+    "model": {
+      "title": "Model",
+      "type": "string",
+      "default": "large-v3-turbo-q5_0",
+      "description": "q5 is lighter and faster, q8 slightly more accurate.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.model",
+        "control": "selector",
+        "keywords": "whisper model large turbo quantization q5 q8 accuracy",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        "large-v3-turbo-q5_0",
+        "large-v3-turbo-q8_0"
+      ],
+      "x-enumLabels": {
+        "large-v3-turbo-q5_0": "Turbo q5",
+        "large-v3-turbo-q8_0": "Turbo q8"
+      }
+    },
+    "language": {
+      "title": "Language",
+      "type": "string",
+      "default": "auto",
+      "description": "Language you speak. Auto detects it every time.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.language",
+        "control": "selector",
+        "keywords": "speech recognition language auto detect english russian japanese",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        "auto",
+        "en",
+        "ru",
+        "ja",
+        "es",
+        "de",
+        "fr",
+        "uk",
+        "zh",
+        "ko"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "en": "English",
+        "ru": "Russian",
+        "ja": "Japanese",
+        "es": "Spanish",
+        "de": "German",
+        "fr": "French",
+        "uk": "Ukrainian",
+        "zh": "Chinese",
+        "ko": "Korean"
+      }
+    },
+    "activation": {
+      "title": "Activation",
+      "type": "string",
+      "default": "push-to-talk",
+      "description": "Hold the key while you talk, or tap once to start and once to stop.",
+      "x-settings": {
+        "category": "voice",
+        "section": "voice",
+        "label": "voice.settings.activation",
+        "control": "selector",
+        "keywords": "push to talk hold toggle hands free activation",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        "push-to-talk",
+        "toggle"
+      ],
+      "x-enumLabels": {
+        "push-to-talk": "Hold to talk",
+        "toggle": "Toggle"
+      }
+    },
+    "useGpu": {
+      "title": "Use GPU",
+      "type": "boolean",
+      "default": true,
+      "description": "Much faster when a supported GPU is available.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.use_gpu",
+        "control": "toggle",
+        "keywords": "gpu cuda vulkan rocm acceleration",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      }
+    },
+    "maxSeconds": {
+      "title": "Maximum length",
+      "type": "number",
+      "default": 60,
+      "description": "Longest single recording.",
+      "x-settings": {
+        "category": "voice",
+        "section": "limits",
+        "label": "voice.settings.max_seconds",
+        "control": "number",
+        "step": 5,
+        "unit": "s",
+        "keywords": "maximum recording length duration",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        },
+        "min": 5,
+        "max": 600,
+        "specialValues": []
+      },
+      "minimum": 5,
+      "maximum": 600,
+      "x-unit": "s"
+    },
+    "idleTimeout": {
+      "title": "Unload model after",
+      "type": "number",
+      "default": 300,
+      "description": "Free the GPU memory when voice input is not used for this long.",
+      "x-settings": {
+        "category": "voice",
+        "section": "limits",
+        "label": "voice.settings.idle_timeout",
+        "control": "number",
+        "step": 60,
+        "unit": "s",
+        "keywords": "unload model gpu memory vram idle",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 86400,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Never"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 3600,
+      "x-unit": "s"
+    },
+    "vadAutoStop": {
+      "title": "Stop when I stop talking",
+      "type": "boolean",
+      "default": true,
+      "description": "In toggle mode, stop listening by itself after a pause.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.vad_auto_stop",
+        "control": "toggle",
+        "keywords": "vad silence pause auto stop",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      }
+    },
+    "vadSilenceMs": {
+      "title": "Pause before stopping",
+      "type": "number",
+      "default": 1200,
+      "description": "How long a pause ends the recording.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.vad_silence",
+        "control": "slider",
+        "step": 100,
+        "unit": "ms",
+        "keywords": "vad silence pause stop delay",
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "voice.enabled",
+              "equals": true
+            },
+            {
+              "key": "voice.vadAutoStop",
+              "equals": true
+            }
+          ]
+        },
+        "min": 300,
+        "max": 5000
+      },
+      "minimum": 200,
+      "maximum": 10000,
+      "x-unit": "ms"
+    },
+    "vadSensitivity": {
+      "title": "Speech detection sensitivity",
+      "type": "number",
+      "default": 0.5,
+      "description": "Higher picks up quieter speech, lower ignores more background noise.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.vad_sensitivity",
+        "control": "selector",
+        "keywords": "vad sensitivity speech detection noise",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        0.2,
+        0.5,
+        0.8
+      ],
+      "x-enumLabels": {
+        "0.2": "Low",
+        "0.5": "Medium",
+        "0.8": "High"
+      },
+      "minimum": 0,
+      "maximum": 1
+    },
+    "noSpeechTimeout": {
+      "title": "Give up after silence",
+      "type": "number",
+      "default": 8,
+      "description": "Stop when nothing is said for this long.",
+      "x-settings": {
+        "category": "voice",
+        "section": "limits",
+        "label": "voice.settings.no_speech_timeout",
+        "control": "number",
+        "step": 1,
+        "unit": "s",
+        "keywords": "no speech silence give up timeout",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 60,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Never"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 60,
+      "x-unit": "s"
+    },
+    "serverVad": {
+      "title": "Trim silence before transcribing",
+      "type": "boolean",
+      "default": true,
+      "description": "Cut silence before recognition for faster, cleaner results.",
+      "x-settings": {
+        "category": "voice",
+        "section": "recognition",
+        "label": "voice.settings.server_vad",
+        "control": "toggle",
+        "keywords": "vad trim silence server",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      }
+    },
+    "typingMethod": {
+      "title": "Dictation typing",
+      "type": "string",
+      "default": "auto",
+      "description": "How dictated text reaches the focused window.",
+      "x-settings": {
+        "category": "voice",
+        "section": "dictation",
+        "label": "voice.settings.typing_method",
+        "control": "selector",
+        "keywords": "dictation wtype ydotool clipboard type paste",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      },
+      "enum": [
+        "auto",
+        "wtype",
+        "ydotool",
+        "clipboard"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "wtype": "wtype",
+        "ydotool": "ydotool",
+        "clipboard": "Clipboard"
+      }
+    },
+    "punctuation": {
+      "title": "Keep punctuation and capitals",
+      "type": "boolean",
+      "default": true,
+      "description": "Keep the punctuation and capitals whisper adds.",
+      "x-settings": {
+        "category": "voice",
+        "section": "dictation",
+        "label": "voice.settings.punctuation",
+        "control": "toggle",
+        "keywords": "dictation punctuation capital letters",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      }
+    },
+    "trailingSpace": {
+      "title": "Add a space after dictation",
+      "type": "boolean",
+      "default": true,
+      "description": "Add a space after each dictated phrase so the next one does not stick to it.",
+      "x-settings": {
+        "category": "voice",
+        "section": "dictation",
+        "label": "voice.settings.trailing_space",
+        "control": "toggle",
+        "keywords": "dictation trailing space",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      }
+    },
+    "aiAutoSend": {
+      "title": "Send to the AI immediately",
+      "type": "boolean",
+      "default": false,
+      "description": "Send voice questions to the AI without reviewing them first.",
+      "x-settings": {
+        "category": "voice",
+        "section": "dictation",
+        "label": "voice.settings.ai_auto_send",
+        "control": "toggle",
+        "keywords": "assistant ai voice send immediately",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        }
+      }
+    },
+    "previewMs": {
+      "title": "Show transcript for",
+      "type": "number",
+      "default": 500,
+      "description": "How long the transcript stays on screen after dictation.",
+      "x-settings": {
+        "category": "voice",
+        "section": "dictation",
+        "label": "voice.settings.preview",
+        "control": "slider",
+        "step": 100,
+        "unit": "ms",
+        "keywords": "transcript preview show duration",
+        "enabledWhen": {
+          "key": "voice.enabled",
+          "equals": true
+        },
+        "min": 0,
+        "max": 5000,
+        "specialValues": [
+          {
+            "value": 0,
+            "label": "Off"
+          }
+        ]
+      },
+      "minimum": 0,
+      "maximum": 5000,
+      "x-unit": "ms"
+    }
+  },
+  "additionalProperties": false
+}

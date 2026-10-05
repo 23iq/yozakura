@@ -1,0 +1,125 @@
+{
+  "oledMode": false,
+  "lightMode": false,
+  "roundness": 20,
+  "font": "Nunito",
+  "fontSize": 14,
+  "monoFont": "JetBrains Mono",
+  "animDuration": 340,
+  "paletteTransitionDuration": 1000,
+  "shadowOpacity": 0.5,
+  "terminalOpacity": 0.94,
+  "glass": {
+    "enabled": true,
+    "amount": 0.25,
+    "tintRole": "tertiary"
+  },
+  "srBg": {
+    "label": "Background",
+    "gradient": [
+      [
+        "surfaceContainerLow",
+        0.0
+      ],
+      [
+        "surfaceContainerLow",
+        0.35
+      ],
+      [
+        "tertiaryContainer",
+        1.0
+      ]
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 90,
+    "gradientCenterX": 0.5,
+    "gradientCenterY": 0.5,
+    "halftoneDotMin": 0,
+    "halftoneDotMax": 2,
+    "halftoneStart": 0,
+    "halftoneEnd": 1,
+    "halftoneDotColor": "surface",
+    "halftoneBackgroundColor": "background",
+    "border": [
+      "tertiary@0.3",
+      1
+    ],
+    "itemColor": "overBackground",
+    "opacity": 1
+  },
+  "srPopup": {
+    "label": "Popup",
+    "gradient": [
+      [
+        "surfaceContainerLow",
+        0.0
+      ]
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 0,
+    "gradientCenterX": 0.5,
+    "gradientCenterY": 0.5,
+    "halftoneDotMin": 0,
+    "halftoneDotMax": 2,
+    "halftoneStart": 0,
+    "halftoneEnd": 1,
+    "halftoneDotColor": "surface",
+    "halftoneBackgroundColor": "background",
+    "border": [
+      "tertiary@0.35",
+      1
+    ],
+    "itemColor": "overBackground",
+    "opacity": 1
+  },
+  "srPrimary": {
+    "label": "Primary",
+    "gradient": [
+      [
+        "tertiary",
+        0.0
+      ]
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 0,
+    "gradientCenterX": 0.5,
+    "gradientCenterY": 0.5,
+    "halftoneDotMin": 0,
+    "halftoneDotMax": 2,
+    "halftoneStart": 0,
+    "halftoneEnd": 1,
+    "halftoneDotColor": "overPrimaryContainer",
+    "halftoneBackgroundColor": "primary",
+    "border": [
+      "tertiary",
+      0
+    ],
+    "itemColor": "overTertiary",
+    "opacity": 1
+  },
+  "srFocus": {
+    "label": "Focus",
+    "gradient": [
+      [
+        "surfaceContainerHighest",
+        0.0
+      ]
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 0,
+    "gradientCenterX": 0.5,
+    "gradientCenterY": 0.5,
+    "halftoneDotMin": 0,
+    "halftoneDotMax": 2,
+    "halftoneStart": 0,
+    "halftoneEnd": 1,
+    "halftoneDotColor": "surfaceVariant",
+    "halftoneBackgroundColor": "surfaceBright",
+    "border": [
+      "surfaceBright",
+      0
+    ],
+    "itemColor": "overBackground",
+    "opacity": 1
+  }
+}

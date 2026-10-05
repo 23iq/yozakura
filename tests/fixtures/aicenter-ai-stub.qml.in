@@ -1,0 +1,250 @@
+pragma Singleton
+import QtQuick
+import "ai"
+import "ai/AgentTimeline.js" as Timeline
+
+// Test stand-in for modules/services/Ai.qml: real ChatSession and
+// AgentTimeline, scripted conversations, no processes or network.
+QtObject {
+    id: root
+
+    property string mode: "chat"
+    property bool initialized: true
+    readonly property var currentModel: models[1]
+    readonly property var quickModel: models[2]
+    readonly property bool busy: chat.busy
+    property var models: [
+        {
+            id: "agent:claude",
+            name: "Claude Code",
+            model: "claude",
+            provider: "agent",
+            kind: "agent",
+            agent: "claude",
+            icon: "",
+            description: "2.1.289",
+            available: true
+        },
+        {
+            id: "anthropic:claude-sonnet-4-5",
+            name: "Claude Sonnet 4.5",
+            model: "claude-sonnet-4-5",
+            provider: "anthropic",
+            kind: "api",
+            icon: "",
+            description: "Anthropic",
+            available: true
+        },
+        {
+            id: "ollama:qwen3.5:9b",
+            name: "qwen3.5:9b",
+            model: "qwen3.5:9b",
+            provider: "ollama",
+            kind: "local",
+            icon: "",
+            description: "9.7B · Q4_K_M",
+            available: true
+        },
+        {
+            id: "gemini:gemini-2.5-flash",
+            name: "Gemini 2.5 Flash",
+            model: "gemini-2.5-flash",
+            provider: "gemini",
+            kind: "api",
+            icon: "",
+            description: "Google",
+            available: true
+        }
+    ]
+    property QtObject catalog: QtObject {
+        property var apiModels: root.models.slice(1)
+        property bool fetching: false
+        function refresh() {
+        }
+    }
+
+    property ChatSession chat: ChatSession {
+        persist: false
+    }
+    property ChatSession shellChat: ChatSession {
+        persist: false
+        mode: "shell"
+    }
+    property ChatSession quick: ChatSession {
+        persist: false
+        mode: "quick"
+    }
+
+    property QtObject store: QtObject {
+        property var chats: [
+            {
+                id: "1",
+                title: "Firefox PiP window rule",
+                pinned: true,
+                mode: "chat",
+                updated: Date.now() - 120000,
+                preview: "Use a windowrule matching the title…",
+                search: ""
+            },
+            {
+                id: "2",
+                title: "Switch to a light theme",
+                pinned: false,
+                mode: "shell",
+                updated: Date.now() - 7200000,
+                preview: "Applied the Sumi-e preset.",
+                search: ""
+            }
+        ]
+        function refresh() {
+        }
+        function load(id) {
+        }
+        function setPinned(id, p) {
+        }
+        function remove(id) {
+        }
+    }
+
+    property QtObject mcp: QtObject {
+        property var allTools: [
+            {
+                server: "yozakura",
+                name: "windows_list"
+            },
+            {
+                server: "yozakura",
+                name: "config_set"
+            }
+        ]
+        property var servers: []
+        function isEnabled(n) {
+            return true;
+        }
+        function serverTools(n, cb) {
+            cb([], "");
+        }
+        function refresh() {
+        }
+    }
+
+    property QtObject context: QtObject {
+        function grab(kind, cb) {
+            cb(null);
+        }
+        function pickDirectory(start, cb) {
+            cb("");
+        }
+    }
+
+    property QtObject agents: QtObject {
+        id: agentsObj
+        property var agents: [
+            {
+                id: "claude",
+                label: "Claude Code",
+                available: true,
+                version: "2.1.289"
+            },
+            {
+                id: "codex",
+                label: "Codex",
+                available: true,
+                version: "0.160.0"
+            },
+            {
+                id: "opencode",
+                label: "OpenCode",
+                available: true,
+                version: "2.0.21"
+            }
+        ]
+        property var sessions: [
+            {
+                id: "s1",
+                agent: "claude",
+                cwd: "/home/user/src/yozakura",
+                title: "Fix notch hover flicker",
+                status: "waiting",
+                pinned: false,
+                yolo: false,
+                mode: "agent",
+                updated: Date.now() - 30000,
+                lastText: ""
+            }
+        ]
+        property string activeId: "s1"
+        readonly property var active: sessions.find(s => s.id === activeId) || null
+        property int timelineRevision: 0
+        property var _tl: ({})
+        property Component lm: Component {
+            ListModel {}
+        }
+        function timeline(id) {
+            if (!_tl[id]) {
+                const tl = {
+                    state: Timeline.newState(),
+                    model: lm.createObject(agentsObj)
+                };
+                _tl[id] = tl;
+            }
+            return _tl[id];
+        }
+        function feed(id, events) {
+            const tl = timeline(id);
+            for (let i = 0; i < events.length; i++) {
+                const ev = Object.assign({
+                    seq: tl.state.lastSeq + 1,
+                    session: id
+                }, events[i]);
+                const r = Timeline.apply(tl.state, ev);
+                for (const op of r.ops) {
+                    if (op.op === "append")
+                        tl.model.append(op.block);
+                    else
+                        for (const k in op.fields)
+                            tl.model.setProperty(op.index, k, op.fields[k]);
+                }
+            }
+            timelineRevision++;
+        }
+        property var responses: []
+        function respond(id, req, decision) {
+            responses = responses.concat([req + ":" + decision]);
+        }
+        function cancel(id) {
+        }
+        function update(id, f) {
+        }
+        function remove(id) {
+        }
+        function refresh() {
+        }
+    }
+
+    signal modelSelectionRequested
+    signal focusComposerRequested
+
+    function _ensureInit() {
+    }
+    function setMode(m) {
+        mode = m;
+    }
+    function setModel(id) {
+    }
+    function newConversation() {
+    }
+    function send(text, atts) {
+        chat.append({
+            role: "user",
+            content: text,
+            attachments: atts
+        });
+    }
+    function stop() {
+    }
+    function continueInSidebar() {
+    }
+    function askQuick(t, a) {
+    }
+}

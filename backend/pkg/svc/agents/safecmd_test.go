@@ -1,0 +1,395 @@
+package agents
+
+import "testing"
+
+// Commands that must never be auto-approved as "read". Every entry either
+// writes, executes something else, or cannot be proven read-only.
+var unsafeCommands = []string{
+	// Reviewer findings.
+	"ls & rm -rf ~",
+	"ls &rm -rf ~",
+	"fd . -x rm {}",
+	"fd . -X rm",
+	"fd . --exec rm",
+	"fd . --exec-batch rm",
+	"rg --pre bash x",
+	"rg --pre=bash x",
+	"rg --pre-glob '*' x",
+	"rg -z x",
+	"sort -o FILE in",
+	"sort -oFILE in",
+	"sort --output=FILE in",
+	"sort --output FILE in",
+	"sort -no FILE in",
+	"sort --compress-program=sh in",
+	"uniq in out",
+	"tree -o out",
+	"tree -oout",
+	"tree -R -H x",
+	"find . -fls out",
+	"find . -fprint out",
+	"find . -fprint0 out",
+	"find . -fprintf out x",
+	"find . -exec rm {} ;",
+	"find . -exec rm {} \\;",
+	"find . -execdir rm {} +",
+	"find . -delete",
+	"find . -name x -delete",
+	"find . -ok rm {} ;",
+	"find . -okdir rm {} ;",
+	"git diff --output=x",
+	"git diff --output x",
+	"git log --output=x",
+	"git diff --ext-diff",
+	"git branch -f main HEAD~1",
+	"git branch --force main",
+	"git branch newbranch",
+	"git branch -D main",
+	"git branch -d main",
+	"git branch -m a b",
+	"git branch -M a b",
+	"git branch --delete main",
+	"git branch -u origin/x",
+	"git branch --set-upstream-to=origin/x",
+	"git branch --edit-description",
+	"git remote remove origin",
+	"git remote rm origin",
+	"git remote add x y",
+	"git remote set-url origin x",
+	"git remote rename a b",
+	"git remote prune origin",
+	"git remote update",
+	"git remote show origin",
+	"git tag v1",
+	"git tag -d v1",
+	"git tag -a v1 -m x",
+	"git tag -f v1",
+	"git -c core.pager=sh log",
+	"git -c alias.x=!sh x",
+	"git --exec-path=/tmp status",
+	"git --exec-path /tmp status",
+	"git -C /tmp status",
+	"git --git-dir=/tmp/x status",
+	"git --work-tree=/tmp status",
+	"git --config-env=core.pager=X log",
+	"git config core.pager sh",
+	"git config --global alias.x '!sh'",
+	"git push",
+	"git commit -m x",
+	"git checkout .",
+	"git reset --hard",
+	"git stash",
+	"git clean -fdx",
+	"git add .",
+	"git rm x",
+	"git status; rm -rf ~",
+	// Shell operators and expansions.
+	"ls; rm -rf ~",
+	"ls && rm -rf ~",
+	"ls || rm -rf ~",
+	"ls | sh",
+	"ls | bash",
+	"ls | xargs rm",
+	"cat x | tee y",
+	"ls |& cat",
+	"echo $(rm -rf ~)",
+	"echo `rm -rf ~`",
+	"echo \"$(rm -rf ~)\"",
+	"echo \"`rm -rf ~`\"",
+	"echo $HOME",
+	"echo ${HOME}",
+	"echo $'\\x41'",
+	"ls > out",
+	"ls >> out",
+	"ls >out",
+	"ls 2>out",
+	"ls &>out",
+	"ls >| out",
+	"cat < in",
+	"cat <in",
+	"cat <<< 'x'",
+	"cat <<EOF\nx\nEOF",
+	"cat <(rm -rf ~)",
+	"diff <(ls) >(rm x)",
+	"ls\nrm -rf ~",
+	"ls\rrm -rf ~",
+	"(rm -rf ~)",
+	"{ rm -rf ~; }",
+	"ls; ",
+	";ls",
+	"ls ;; ls",
+	"! ls",
+	"ls #comment",
+	"cat *",
+	"sort *",
+	"sort ?.txt",
+	"sort [a-z]",
+	"cat {a,b}",
+	"ls \\\nrm",
+	"ls 'unterminated",
+	"ls \"unterminated",
+	"echo \\",
+	// Env prefixes and wrappers.
+	"FOO=1 rm -rf ~",
+	"FOO=1 ls",
+	"LD_PRELOAD=/tmp/x.so ls",
+	"PAGER=sh git log",
+	"env rm -rf ~",
+	"env ls",
+	"env -i ls",
+	"nice rm -rf ~",
+	"nice ls",
+	"timeout 5 rm -rf ~",
+	"timeout 5 ls",
+	"sudo ls",
+	"sudo rm -rf /",
+	"doas ls",
+	"nohup ls",
+	"xargs rm",
+	"xargs -a list rm",
+	"command rm x",
+	"builtin cd /",
+	"exec rm x",
+	"eval 'rm x'",
+	"source x.sh",
+	". x.sh",
+	"time rm x",
+	"watch rm x",
+	"stdbuf -o0 rm x",
+	// Interpreters and editors.
+	"bash -c 'rm -rf ~'",
+	"sh x.sh",
+	"python -c 'import os'",
+	"node -e 'x'",
+	"perl -e 'x'",
+	"awk 'BEGIN{system(\"rm x\")}'",
+	"sed -i s/a/b/ f",
+	"sed 's/a/b/e' f",
+	"vim f",
+	"rm -rf ~",
+	"mv a b",
+	"cp a b",
+	"touch x",
+	"mkdir x",
+	"chmod +x f",
+	"tee f",
+	"dd if=a of=b",
+	"curl http://x",
+	"wget http://x",
+	"make",
+	"npm test",
+	// Pagers with shell escapes.
+	"less '+!rm -rf ~' f",
+	"less +!sh f",
+	"less -o log f",
+	"less -k keys f",
+	"less --lesskey-src=x f",
+	"more '+!sh' f",
+	"more +/x f",
+	// Other per-program flags that write or execute.
+	"head -c 5 -o x",
+	"tail -f log",
+	"tail --follow log",
+	"date -s 2020-01-01",
+	"date --set=x",
+	"date 0101",
+	"file -C -m magic",
+	"jq -f prog.jq --rawfile x",
+	"wc --files0-from=list",
+	"du --files0-from=list",
+	"grep --devices=read x",
+	"stat --unknown-flag x",
+	"ls --unknown-flag",
+	"cut --output-delimiter",
+	"diff a b c",
+	"diff -u a b --to-file",
+	"echo hi | tee out",
+	"type -x",
+	"which -x ls",
+	"uname -x",
+	"./ls",
+	// GNU/git long-option abbreviations are never accepted.
+	"sort --out=x in",
+	"sort --outp x in",
+	"git log --out=x",
+	"git diff --outp=x",
+	"rg --pr bash x",
+	"fd --exec-b rm",
+	"tree --fromfile x",
+	"ls -I",
+	"git branch --merged main newbranch",
+	"git tag --contains HEAD v9",
+	"git status --porcelain; touch x",
+	"git",
+	"git --no-pager",
+	"git log --exec=x",
+	"find . -newer x -exec rm {} +",
+	"find -delete",
+	"find . -printf",
+	"grep -r x . --include",
+	"jq --arg x",
+	"echo ok | sh -c cat",
+	"/tmp/ls",
+	"bin/cat x",
+	"bash -c 'ls' x",
+	"bash -c 'ls; rm x'",
+	"bash -lc \"ls\" ; rm x",
+	"",
+	"   ",
+}
+
+// Commands an agent runs constantly that should still be auto-approved.
+var safeCommands = []string{
+	"ls",
+	"ls -la",
+	"ls -la src/",
+	"ls -lah --color=auto",
+	"/usr/bin/ls -l",
+	"cat a.txt",
+	"cat -n 'file with spaces.txt'",
+	"cat \"quoted.txt\"",
+	"head -n 20 a.go",
+	"head -20 a.go",
+	"tail -n +5 a.go",
+	"wc -l a b c",
+	"grep -rn TODO .",
+	"grep -rn 'func main' --include='*.go' .",
+	"grep -E 'a|b' x",
+	"rg -n foo",
+	"rg -n 'foo bar' -g '*.qml' modules/",
+	"rg --files",
+	"rg -l TODO -t go",
+	"fd -e go",
+	"fd -t f 'x' src",
+	"pwd",
+	"echo hello world",
+	"echo 'a;b|c&d>e'",
+	"which go",
+	"file a.png",
+	"stat -c %s a",
+	"tree -L 2",
+	"tree -a -I node_modules",
+	"du -sh .",
+	"df -h",
+	"whoami",
+	"date",
+	"date +%Y-%m-%d",
+	"uname -a",
+	"basename /a/b",
+	"dirname /a/b",
+	"realpath x",
+	"readlink -f x",
+	"sort -n x",
+	"sort -k 2 -t , x",
+	"uniq -c",
+	"uniq -c in",
+	"cut -d: -f1 /etc/passwd",
+	"diff -u a b",
+	"less f",
+	"true",
+	"nl x",
+	"jq .name package.json",
+	"jq -r '.a | .b' x.json",
+	"type ls",
+	"find . -name '*.go'",
+	"find . -type f -name '*.qml' -maxdepth 3",
+	"find . -name x -o -name y",
+	"find . '(' -name a -o -name b ')' -print",
+	"find src -type d -not -path '*/node_modules/*'",
+	"git status",
+	"git status --short",
+	"git log --oneline -n 10",
+	"git log --oneline -20",
+	"git log -p -- file.go",
+	"git log --format='%h %s' --since=2.weeks",
+	"git diff",
+	"git diff HEAD~1 -- a.go",
+	"git diff --stat",
+	"git diff --cached",
+	"git show HEAD",
+	"git show --stat HEAD~2",
+	"git branch",
+	"git branch -a",
+	"git branch -vv",
+	"git branch --show-current",
+	"git branch --list 'feat/*'",
+	"git rev-parse --show-toplevel",
+	"git rev-parse --abbrev-ref HEAD",
+	"git ls-files",
+	"git blame -L 10,20 a.go",
+	"git describe --tags",
+	"git shortlog -sn",
+	"git remote",
+	"git remote -v",
+	"git remote get-url origin",
+	"git tag",
+	"git tag -l 'v*'",
+	"git --no-pager log -1",
+	"git status && git diff HEAD",
+	"cat a | grep b | wc -l",
+	"ls; pwd",
+	"ls || true",
+	"git log --oneline | head -5",
+	`/usr/bin/bash -lc "ls -la"`,
+	`bash -lc 'git status'`,
+}
+
+func TestIsSafeCommandRejectsUnsafe(t *testing.T) {
+	for _, c := range unsafeCommands {
+		if IsSafeCommand(c) {
+			t.Errorf("IsSafeCommand(%q) = true, want false", c)
+		}
+	}
+}
+
+func TestIsSafeCommandAcceptsCommonReads(t *testing.T) {
+	for _, c := range safeCommands {
+		if !IsSafeCommand(c) {
+			t.Errorf("IsSafeCommand(%q) = false, want true", c)
+		}
+	}
+}
+
+func TestCodexActionsDoNotOverrideClassifier(t *testing.T) {
+	read := []map[string]any{{"type": "read"}}
+	if got := commandCategory("ls & rm -rf ~", read); got != CatExec {
+		t.Errorf("codex read actions on an unsafe command = %s, want exec", got)
+	}
+	if got := commandCategory("cat a.txt", read); got != CatRead {
+		t.Errorf("safe read = %s", got)
+	}
+	if got := commandCategory("cat a.txt", []map[string]any{{"type": "unknown"}}); got != CatExec {
+		t.Errorf("non-read action = %s", got)
+	}
+}
+
+// sinkFor returns a live adapter sink for a fresh session (no process).
+func sinkFor(t *testing.T) (*session, *sessionSink, *bus) {
+	t.Helper()
+	m, b, f := newTestManager(t, "claude_write_bash.jsonl")
+	meta, err := m.Create(CreateParams{Agent: "claude", Cwd: f.dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	m.mu.Lock()
+	s := m.sessions[meta.ID]
+	m.mu.Unlock()
+	return s, &sessionSink{s: s, gen: s.gen}, b
+}
+
+func TestAutoApprovedReadsAreReported(t *testing.T) {
+	s, sink, b := sinkFor(t)
+	var got string
+	sink.Permission(PermissionRequest{ID: "r1", Tool: "Bash", Title: "$ ls", Category: CatRead,
+		Input: map[string]any{"command": "ls"}}, func(d string) { got = d })
+	s.m.mu.Lock()
+	s.flushLocked()
+	s.m.mu.Unlock()
+	if got != DecisionAllow {
+		t.Fatalf("decision = %q", got)
+	}
+	res := b.kinds(KindPermissionResolved)
+	if len(res) != 1 || res[0].ID != "r1" || res[0].Decision != DecisionAuto || res[0].Category != CatRead {
+		t.Errorf("auto-approved read not reported: %+v", res)
+	}
+}

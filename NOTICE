@@ -1,0 +1,27 @@
+Yozakura
+Copyright (C) 2026 23iq
+
+This program is a modified version of Ambxst.
+Ambxst - Copyright (C) 2025-2026 Adriano Tisera (Axenide) and contributors.
+https://github.com/Axenide/Ambxst
+
+The compositor daemon yozd (backend/cmd/yozd, backend/pkg/yozd) is derived
+from axctl by Axenide, AGPL-3.0.
+axctl - Copyright (C) 2026 Adriano Tisera (Axenide) and contributors.
+https://github.com/Axenide/axctl (imported at commit 2578636)
+
+All are free software licensed under the GNU Affero General Public License,
+version 3 (see LICENSE). Yozakura is maintained independently and is not
+affiliated with or endorsed by the original project; its name and logo are
+not used for this work (terms kept in docs/upstream/).
+
+Modified by 23iq, 2026: renamed (binary, paths, IPC, environment variables,
+action ids, themes, logo) with a copying first-start migration; presets,
+bar layouts and islands, depth clock, wallpaper transitions, app theming,
+lockscreen and SDDM theme, settings v2, voice input, AI center with MCP, and
+more. See the git history for the complete list of changes.
+
+Modified by 23iq, 2026 (yozd): imported into this repository as the yozd
+binary and packages; renamed (binary, socket, config file, env vars, log
+prefixes, generated file names); shell keybind group key renamed with
+legacy input still accepted.

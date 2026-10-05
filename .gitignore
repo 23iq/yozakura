@@ -1,0 +1,16 @@
+.qmlls.ini
+.ruff_cache/
+scripts/__pycache__
+.sisyphus
+result
+/yozakura
+/yozd
+
+# Keep Go package sources visible when a global ignore file excludes pkg/.
+!/backend/pkg/
+backend/cmd/yozakura/yozakura
+backend/yozakura
+backend/yozd
+backend/cmd/yozd/yozd
+/.cache/
+__pycache__/

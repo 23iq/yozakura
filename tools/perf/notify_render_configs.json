@@ -1,0 +1,37 @@
+{
+"notch-classic-top": {
+"bar.layout.style": "classic", "bar.position": "top", "notch.position": "top", "theme.roundness": 16, "theme.lightMode": false, "theme.oledMode": false,
+"notifications.presentation": "auto", "notifications.timeout": 0,
+"notify": [{"summary": "Mika", "body": "Dinner at eight? I booked the place with the lanterns.", "appName": "Signal"}],
+"captureAt": [60, 140, 240]
+},
+"notch-islands-light": {
+"bar.layout.style": "islands", "bar.position": "top", "notch.position": "top", "theme.roundness": 24, "theme.lightMode": true, "theme.oledMode": false,
+"notifications.presentation": "auto", "notifications.timeout": 0,
+"notify": [{"summary": "Download complete", "body": "sakura-night-4k.mp4 (1.2 GB)", "appName": "Firefox"}]
+},
+"notch-bottom-r0": {
+"bar.layout.style": "classic", "bar.position": "bottom", "notch.position": "bottom", "theme.roundness": 0, "theme.lightMode": false, "theme.oledMode": true,
+"notifications.presentation": "notch", "notifications.timeout": 0,
+"notify": [{"summary": "Build finished", "body": "make check: all green", "appName": "kitty"}]
+},
+"corner-taskbar-bottom": {
+"bar.layout.style": "classic", "bar.position": "bottom", "notch.position": "top", "theme.roundness": 16, "theme.lightMode": false, "theme.oledMode": false,
+"notifications.presentation": "auto", "notifications.position": "auto", "notifications.timeout": 0,
+"notify": [{"summary": "Mika", "body": "Dinner at eight?", "appName": "Signal"},
+           {"summary": "Update available", "body": "Yozakura 1.4 is out.", "appName": "Updates"},
+           {"summary": "Battery low", "body": "10% remaining", "appName": "Power", "urgency": "critical"}],
+"captureAt": [80, 200]
+},
+"corner-top-left-frame": {
+"bar.layout.style": "classic", "bar.position": "left", "bar.frameEnabled": true, "notch.position": "top", "theme.roundness": 8, "theme.lightMode": true, "theme.oledMode": false,
+"notifications.presentation": "corner", "notifications.position": "top-left", "notifications.timeout": 0,
+"notify": [{"summary": "Calendar", "body": "Stand-up in 10 minutes", "appName": "Calendar"},
+           {"summary": "Mika", "body": "On my way", "appName": "Signal"}]
+},
+"corner-top-center-islands": {
+"bar.layout.style": "islands", "bar.position": "top", "bar.frameEnabled": false, "notch.position": "top", "theme.roundness": 24, "theme.lightMode": false, "theme.oledMode": false,
+"notifications.presentation": "corner", "notifications.position": "top", "notifications.timeout": 0,
+"notify": [{"summary": "Screenshot saved", "body": "~/Pictures/Screenshots/2026-10-05.png", "appName": "Screenshot"}]
+}
+}

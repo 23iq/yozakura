@@ -1,0 +1,870 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:ai",
+  "title": "ai",
+  "description": "AI center: chat models, CLI agents (Claude Code, Codex, OpenCode), shell control over MCP, quick ask, selection actions, prompts and automations.",
+  "type": "object",
+  "x-file": "config/ai.json",
+  "properties": {
+    "enabled": {
+      "title": "Enable the AI center",
+      "type": "boolean",
+      "default": true,
+      "description": "Sidebar, quick ask and how answers are shown.",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.enable_center",
+        "control": "toggle",
+        "keywords": "ai assistant enable sidebar"
+      }
+    },
+    "systemPrompt": {
+      "title": "System prompt",
+      "type": "string",
+      "default": "You are a helpful assistant running on a Linux system. You have access to some tools to control the system.",
+      "description": "Sent with every chat conversation.",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.system_prompt",
+        "control": "text",
+        "keywords": "system prompt instructions persona"
+      }
+    },
+    "tool": {
+      "title": "Tool",
+      "type": "string",
+      "default": "none",
+      "description": "Legacy tool selection of the old assistant (kept for compatibility)."
+    },
+    "extraModels": {
+      "title": "Extra models",
+      "type": "array",
+      "default": [],
+      "description": "Extra chat models added to the model picker."
+    },
+    "defaultModel": {
+      "title": "Default model",
+      "type": "string",
+      "default": "gemini-2.0-flash",
+      "description": "Chat model used by default (id from the model picker)."
+    },
+    "sidebarWidth": {
+      "title": "Sidebar width",
+      "type": "number",
+      "default": 400,
+      "description": "Width of the AI sidebar.",
+      "minimum": 240,
+      "maximum": 1200,
+      "x-unit": "px"
+    },
+    "sidebarPosition": {
+      "title": "Sidebar position",
+      "type": "string",
+      "default": "right",
+      "description": "Screen side of the AI sidebar.",
+      "enum": [
+        "left",
+        "right"
+      ]
+    },
+    "sidebarPinnedOnStartup": {
+      "title": "Sidebar pinned on startup",
+      "type": "boolean",
+      "default": false,
+      "description": "Open the AI sidebar pinned at startup."
+    },
+    "wideWidth": {
+      "title": "Wide layout width",
+      "type": "number",
+      "default": 1040,
+      "description": "Width of the wide layout (agent conversation + changes).",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.wide_width",
+        "control": "number",
+        "unit": "px",
+        "keywords": "wide layout width agent",
+        "min": 600,
+        "max": 2400
+      },
+      "minimum": 600,
+      "maximum": 2400
+    },
+    "defaultMode": {
+      "title": "Opens in",
+      "type": "string",
+      "default": "chat",
+      "description": "Mode the sidebar opens in.",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.default_mode",
+        "control": "selector",
+        "keywords": "mode chat agent shell default"
+      },
+      "enum": [
+        "chat",
+        "agent",
+        "shell"
+      ],
+      "x-enumLabels": {
+        "chat": "Chat",
+        "agent": "Agent",
+        "shell": "Shell"
+      }
+    },
+    "showThinking": {
+      "title": "Show model thinking",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the reasoning stream of models that expose it (collapsed when done).",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.show_thinking",
+        "control": "toggle",
+        "keywords": "thinking reasoning thought"
+      }
+    },
+    "chatTools": {
+      "title": "Give chat models the MCP tools",
+      "type": "boolean",
+      "default": true,
+      "description": "API and local models that support tool calling can use the enabled MCP servers. Writes still ask first.",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.chat_tools",
+        "control": "toggle",
+        "keywords": "tools mcp function calling"
+      }
+    },
+    "maxToolRounds": {
+      "title": "Max tool rounds per answer",
+      "type": "number",
+      "default": 8,
+      "description": "Stops runaway tool loops in chat mode.",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.max_tool_rounds",
+        "control": "number",
+        "keywords": "tool rounds loop limit",
+        "min": 1,
+        "max": 30
+      },
+      "minimum": 1,
+      "maximum": 30
+    },
+    "unloadAfterMinutes": {
+      "title": "Free memory after the sidebar is closed for",
+      "type": "number",
+      "default": 10,
+      "description": "The sidebar is unloaded after being closed this long; conversations stay.",
+      "x-settings": {
+        "category": "ai",
+        "section": "center",
+        "label": "ai.unload_after",
+        "control": "number",
+        "unit": "min",
+        "keywords": "memory unload idle performance",
+        "min": 1,
+        "max": 240
+      },
+      "minimum": 1,
+      "maximum": 240
+    },
+    "agents": {
+      "title": "Agents",
+      "type": "object",
+      "description": "CLI coding agents run by the backend session manager.",
+      "properties": {
+        "defaultAgent": {
+          "title": "Default agent",
+          "type": "string",
+          "default": "claude",
+          "description": "Agent id used for new agent sessions (claude, codex, opencode)."
+        },
+        "defaultCwd": {
+          "title": "Default cwd",
+          "type": "string",
+          "default": "",
+          "description": "Working directory for new agent sessions (empty = home).",
+          "format": "path"
+        },
+        "recentDirs": {
+          "title": "Recent dirs",
+          "type": "array",
+          "default": [],
+          "description": "Recently used agent working directories (maintained automatically).",
+          "items": {
+            "type": "string"
+          }
+        },
+        "autoApprove": {
+          "title": "Auto approve",
+          "type": "array",
+          "default": [
+            "read"
+          ],
+          "items": {
+            "enum": [
+              "read",
+              "write",
+              "exec",
+              "network",
+              "mcp",
+              "other"
+            ]
+          },
+          "x-settings": {
+            "category": "ai",
+            "section": "agents",
+            "label": "ai.settings_agents",
+            "entry": "ai.agents.list",
+            "entryTitle": "CLI agents",
+            "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+          },
+          "description": "Tool-call categories approved without asking (default: read).",
+          "uniqueItems": true
+        },
+        "claude": {
+          "title": "Claude",
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "title": "Enabled",
+              "type": "boolean",
+              "default": true,
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Offer this agent."
+            },
+            "binary": {
+              "title": "Binary",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Agent executable (empty = look it up in PATH).",
+              "format": "path"
+            },
+            "model": {
+              "title": "Model",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Model passed to the agent (empty = the agent's default)."
+            },
+            "yolo": {
+              "title": "Yolo",
+              "type": "boolean",
+              "default": false,
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Approve every tool call of this agent without asking (dangerous)."
+            },
+            "extraArgs": {
+              "title": "Extra args",
+              "type": "array",
+              "default": [],
+              "description": "Extra command-line arguments for the agent.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "codex": {
+          "title": "Codex",
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "title": "Enabled",
+              "type": "boolean",
+              "default": true,
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Offer this agent."
+            },
+            "binary": {
+              "title": "Binary",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Agent executable (empty = look it up in PATH).",
+              "format": "path"
+            },
+            "model": {
+              "title": "Model",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Model passed to the agent (empty = the agent's default)."
+            },
+            "yolo": {
+              "title": "Yolo",
+              "type": "boolean",
+              "default": false,
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Approve every tool call of this agent without asking (dangerous)."
+            },
+            "extraArgs": {
+              "title": "Extra args",
+              "type": "array",
+              "default": [],
+              "description": "Extra command-line arguments for the agent.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "opencode": {
+          "title": "Opencode",
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "title": "Enabled",
+              "type": "boolean",
+              "default": true,
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Offer this agent."
+            },
+            "binary": {
+              "title": "Binary",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Agent executable (empty = look it up in PATH).",
+              "format": "path"
+            },
+            "model": {
+              "title": "Model",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Model passed to the agent (empty = the agent's default)."
+            },
+            "yolo": {
+              "title": "Yolo",
+              "type": "boolean",
+              "default": false,
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Approve every tool call of this agent without asking (dangerous)."
+            },
+            "extraArgs": {
+              "title": "Extra args",
+              "type": "array",
+              "default": [],
+              "description": "Extra command-line arguments for the agent.",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "mcp": {
+      "title": "Mcp",
+      "type": "object",
+      "properties": {
+        "yozakura": {
+          "title": "Built-in yozakura server (desktop control)",
+          "type": "boolean",
+          "default": true,
+          "description": "Desktop control tools (config, presets, wallpaper, windows, notifications, clipboard, screenshots, media, do not disturb) via `yozakura mcp`.",
+          "x-settings": {
+            "category": "ai",
+            "section": "mcp",
+            "label": "ai.mcp_yozakura",
+            "control": "toggle",
+            "keywords": "mcp yozakura desktop control tools"
+          }
+        },
+        "importClaude": {
+          "title": "Import servers from Claude Code",
+          "type": "boolean",
+          "default": true,
+          "description": "Pass these servers to agents and chat models; each can be turned off below.",
+          "x-settings": {
+            "category": "ai",
+            "section": "mcp",
+            "label": "ai.mcp_import_claude",
+            "control": "toggle",
+            "keywords": "mcp import claude"
+          }
+        },
+        "importCodex": {
+          "title": "Import servers from Codex",
+          "type": "boolean",
+          "default": true,
+          "description": "Pass these servers to agents and chat models; each can be turned off below.",
+          "x-settings": {
+            "category": "ai",
+            "section": "mcp",
+            "label": "ai.mcp_import_codex",
+            "control": "toggle",
+            "keywords": "mcp import codex"
+          }
+        },
+        "importOpencode": {
+          "title": "Import servers from OpenCode",
+          "type": "boolean",
+          "default": true,
+          "description": "Pass these servers to agents and chat models; each can be turned off below.",
+          "x-settings": {
+            "category": "ai",
+            "section": "mcp",
+            "label": "ai.mcp_import_opencode",
+            "control": "toggle",
+            "keywords": "mcp import opencode"
+          }
+        },
+        "disabled": {
+          "title": "Disabled",
+          "type": "array",
+          "default": [],
+          "x-settings": {
+            "category": "ai",
+            "section": "mcp",
+            "label": "prefs.ai.mcp_servers",
+            "entry": "ai.mcp.servers",
+            "entryTitle": "Servers",
+            "keywords": "mcp servers tools enable disable"
+          },
+          "description": "Names of imported MCP servers that are turned off.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "shell": {
+      "title": "Shell",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Shell control",
+          "type": "boolean",
+          "default": true,
+          "description": "Let models change the desktop through the yozakura tools; voice commands use it too.",
+          "x-settings": {
+            "category": "ai",
+            "section": "shell",
+            "label": "prefs.ai.shell_enabled",
+            "control": "toggle",
+            "keywords": "shell control desktop voice commands"
+          }
+        },
+        "target": {
+          "title": "Shell control runs on",
+          "type": "string",
+          "default": "",
+          "description": "Empty = the current chat model; agent:claude, agent:codex or agent:opencode to use a CLI agent.",
+          "x-settings": {
+            "category": "ai",
+            "section": "shell",
+            "label": "prefs.ai.shell_target",
+            "control": "text",
+            "keywords": "shell control model agent target"
+          }
+        },
+        "systemPrompt": {
+          "title": "System prompt",
+          "type": "string",
+          "default": "You control the user's Yozakura desktop shell through the yozakura MCP tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb). Inspect state with the read-only tools first, then make the smallest change that fulfils the request and say what you changed in one sentence.",
+          "description": "Instructions for shell-control conversations.",
+          "x-settings": {
+            "category": "ai",
+            "section": "shell",
+            "label": "ai.system_prompt",
+            "control": "text",
+            "keywords": "shell control prompt"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "quickAsk": {
+      "title": "Quick ask",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Quick ask in the notch",
+          "type": "boolean",
+          "default": true,
+          "description": "Bind “AI Quick Ask” to ask from the notch without opening the sidebar.",
+          "x-settings": {
+            "category": "ai",
+            "section": "quickask",
+            "label": "ai.quick_enabled",
+            "control": "toggle",
+            "keywords": "quick ask notch"
+          }
+        },
+        "model": {
+          "title": "Quick ask model",
+          "type": "string",
+          "default": "",
+          "description": "Model id (e.g. ollama:qwen3.5:9b); empty = current model",
+          "x-settings": {
+            "category": "ai",
+            "section": "quickask",
+            "label": "ai.quick_model",
+            "control": "text",
+            "keywords": "quick ask model"
+          }
+        },
+        "width": {
+          "title": "Quick ask width",
+          "type": "number",
+          "default": 560,
+          "description": "Width of the card under the notch.",
+          "x-settings": {
+            "category": "ai",
+            "section": "quickask",
+            "label": "prefs.ai.quick_width",
+            "control": "number",
+            "unit": "px",
+            "keywords": "quick ask width",
+            "min": 380,
+            "max": 1200
+          },
+          "minimum": 380,
+          "maximum": 1200
+        }
+      },
+      "additionalProperties": false
+    },
+    "selection": {
+      "title": "Selection",
+      "type": "object",
+      "description": "Actions on the selected text (translate, explain, ...).",
+      "properties": {
+        "enabled": {
+          "title": "Selection actions popup",
+          "type": "boolean",
+          "default": true,
+          "description": "Bind “AI Selection Actions” to act on the selected text from any app.",
+          "x-settings": {
+            "category": "ai",
+            "section": "selection",
+            "label": "ai.selection_enabled",
+            "control": "toggle",
+            "keywords": "selection actions popup translate rewrite explain"
+          }
+        },
+        "language": {
+          "title": "Translate to",
+          "type": "string",
+          "default": "English",
+          "description": "Target language of the Translate action ({language}).",
+          "x-settings": {
+            "category": "ai",
+            "section": "selection",
+            "label": "ai.translate_to",
+            "control": "text",
+            "keywords": "translate language"
+          }
+        },
+        "output": {
+          "title": "Default result",
+          "type": "string",
+          "default": "replace",
+          "description": "Where results go when an action does not choose.",
+          "x-settings": {
+            "category": "ai",
+            "section": "selection",
+            "label": "ai.selection_output",
+            "control": "selector",
+            "keywords": "replace clipboard sidebar output"
+          },
+          "enum": [
+            "replace",
+            "clipboard",
+            "sidebar"
+          ],
+          "x-enumLabels": {
+            "replace": "Replace selection",
+            "clipboard": "Clipboard",
+            "sidebar": "Sidebar"
+          }
+        },
+        "actions": {
+          "title": "Actions",
+          "type": "array",
+          "default": [
+            {
+              "id": "translate",
+              "label": "",
+              "icon": "translate",
+              "output": "",
+              "prompt": "Translate the text below to {language}. If it already is {language}, translate it to Spanish. Reply with the translation only, keeping formatting.\n\n{selection}"
+            },
+            {
+              "id": "explain",
+              "label": "",
+              "icon": "lightbulb",
+              "output": "sidebar",
+              "prompt": "Explain the following clearly and briefly:\n\n{selection}"
+            },
+            {
+              "id": "rewrite",
+              "label": "",
+              "icon": "magicWand",
+              "output": "",
+              "prompt": "Rewrite the text below to be clearer and more natural, same language and meaning. Reply with the rewritten text only.\n\n{selection}"
+            },
+            {
+              "id": "fix",
+              "label": "",
+              "icon": "bug",
+              "output": "",
+              "prompt": "Fix bugs and obvious mistakes in this code. Reply with the corrected code only, no fences, no commentary.\n\n{selection}"
+            },
+            {
+              "id": "summarize",
+              "label": "",
+              "icon": "list",
+              "output": "sidebar",
+              "prompt": "Summarize in 3 bullet points:\n\n{selection}"
+            }
+          ],
+          "items": {
+            "type": "object"
+          },
+          "x-settings": {
+            "category": "ai",
+            "section": "selection",
+            "label": "ai.prompt_library",
+            "entry": "ai.prompts.lists",
+            "entryTitle": "Prompt library",
+            "keywords": "prompt library templates variables selection actions"
+          },
+          "description": "Selection actions: [{id, label, icon, output, prompt}]."
+        }
+      },
+      "additionalProperties": false
+    },
+    "prompts": {
+      "title": "Prompts",
+      "type": "array",
+      "default": [
+        {
+          "id": "briefing",
+          "name": "Morning briefing",
+          "prompt": "Today is {date}. Give me a short, upbeat morning briefing: a focus suggestion for the day and one tip about my Linux desktop.",
+          "output": "notify"
+        },
+        {
+          "id": "explain-error",
+          "name": "Explain error",
+          "prompt": "Explain this error and how to fix it, briefly:\n\n{clipboard}",
+          "output": "sidebar"
+        },
+        {
+          "id": "commit-msg",
+          "name": "Commit message",
+          "prompt": "Write a conventional commit message for this diff:\n\n{clipboard}",
+          "output": "clipboard"
+        }
+      ],
+      "items": {
+        "type": "object"
+      },
+      "x-settings": {
+        "category": "ai",
+        "section": "selection",
+        "label": "ai.prompt_library",
+        "entry": "ai.prompts.lists",
+        "entryTitle": "Prompt library",
+        "keywords": "prompt library templates variables selection actions"
+      },
+      "description": "Prompt library: [{id, name, prompt}] ({date} and similar placeholders are expanded)."
+    },
+    "automations": {
+      "title": "Automations",
+      "type": "array",
+      "default": [
+        {
+          "id": "morning",
+          "name": "Morning briefing",
+          "enabled": false,
+          "trigger": {
+            "type": "login",
+            "cron": "",
+            "pattern": "",
+            "kinds": []
+          },
+          "prompt": "Today is {date}. Give me a short, upbeat morning briefing: a focus suggestion for the day and one tip about my Linux desktop.",
+          "model": "",
+          "output": "notify",
+          "offer": false
+        },
+        {
+          "id": "stacktrace",
+          "name": "Explain copied errors",
+          "enabled": false,
+          "trigger": {
+            "type": "clipboard",
+            "cron": "",
+            "pattern": "(Traceback \\(most recent call last\\)|Exception in thread|panic: |error\\[E\\d+\\]|at .+\\(.+:\\d+:\\d+\\)|Segmentation fault)",
+            "kinds": []
+          },
+          "prompt": "Explain this error and how to fix it, briefly:\n\n{clipboard}",
+          "model": "",
+          "output": "sidebar",
+          "offer": true
+        },
+        {
+          "id": "download-done",
+          "name": "Summarize finished downloads",
+          "enabled": false,
+          "trigger": {
+            "type": "transfer",
+            "cron": "",
+            "pattern": "",
+            "kinds": [
+              "download"
+            ]
+          },
+          "prompt": "A download just finished: {input}. In one sentence, tell me what it probably is and what to do next.",
+          "model": "",
+          "output": "notify",
+          "offer": false
+        },
+        {
+          "id": "screenshot-ocr",
+          "name": "Describe screenshots",
+          "enabled": false,
+          "trigger": {
+            "type": "screenshot",
+            "cron": "",
+            "pattern": "",
+            "kinds": []
+          },
+          "prompt": "Describe this screenshot in one short paragraph.",
+          "model": "",
+          "output": "notify",
+          "offer": true
+        }
+      ],
+      "items": {
+        "type": "object"
+      },
+      "x-settings": {
+        "category": "ai",
+        "section": "automations",
+        "label": "ai.settings_automations",
+        "entry": "ai.automations.list",
+        "entryTitle": "Automations",
+        "keywords": "automation schedule cron trigger clipboard screenshot login briefing download"
+      },
+      "description": "Automations: [{id, name, enabled, trigger: {type, ...}, prompt}] run by the AI center."
+    },
+    "voice": {
+      "title": "Voice",
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean",
+          "default": true,
+          "description": "Allow voice input into the AI center."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

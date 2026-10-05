@@ -1,0 +1,33 @@
+{
+  "frameEnabled": true,
+  "frameThickness": 8,
+  "containBar": true,
+  "clockShowDate": true,
+  "launcherIconSize": 18,
+  "panels": [
+    {
+      "id": "main",
+      "edge": "top",
+      "style": "islands",
+      "groups": {
+        "start": [
+          "launcher",
+          "workspaces"
+        ],
+        "end": [
+          "controls",
+          "battery",
+          "clock"
+        ],
+        "drawer": [
+          "systray",
+          "tools",
+          "presets",
+          "layoutSelector",
+          "pin",
+          "power"
+        ]
+      }
+    }
+  ]
+}

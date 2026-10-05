@@ -1,0 +1,22 @@
+{
+  "activeBorderColor": [
+    "primary"
+  ],
+  "inactiveBorderColor": [
+    "surfaceBright@0.5"
+  ],
+  "borderSize": 2,
+  "rounding": 6,
+  "gapsIn": 4,
+  "gapsOut": 8,
+  "shadowColor": "primary",
+  "shadowOpacity": 0.45,
+  "shadowRange": 16,
+  "blurEnabled": true,
+  "motionProfile": "snappy",
+  "borderPulse": {
+    "enabled": true,
+    "source": "cava",
+    "intensity": 0.75
+  }
+}
