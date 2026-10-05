@@ -245,3 +245,52 @@ func TestLuaFullscreenTogglesByMode(t *testing.T) {
 		}
 	}
 }
+
+// A workspace switch must close the special workspace open on the monitor
+// (otherwise the regular workspace changes behind the still-visible
+// special). Hyprland's changeworkspace honours
+// binds:hide_special_on_workspace_change, which defaults to false, so the
+// keybinds section always turns it on, whatever binds are configured.
+func TestGenerateKeybindsLuaHidesSpecialOnWorkspaceChange(t *testing.T) {
+	const opt = "hl.config({ binds = { hide_special_on_workspace_change = true } })"
+	cases := []struct {
+		name string
+		cfg  ipc.ConfigKeybinds
+	}{
+		{"empty", ipc.ConfigKeybinds{}},
+		{"custom binds", ipc.ConfigKeybinds{Custom: []ipc.Keybind{
+			{Modifiers: []string{"SUPER"}, Key: "2", Dispatcher: "workspace", Argument: "2", Enabled: true},
+			{Modifiers: []string{"SUPER"}, Key: "S", Dispatcher: "togglespecialworkspace", Argument: "Telegram", Enabled: true},
+		}}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			out := NewLuaGenerator().GenerateKeybindsLua(tc.cfg)
+			if n := strings.Count(out, opt); n != 1 {
+				t.Fatalf("want the option exactly once, got %d in:\n%s", n, out)
+			}
+		})
+	}
+}
+
+// Switching and moving keep their plain dispatchers: the option above does
+// the hiding inside changeworkspace, and window moves out of a special
+// (movetoworkspace / silent) must not open or toggle any special.
+func TestDispatcherToLuaWorkspaceSwitchAndMove(t *testing.T) {
+	cases := []struct {
+		dispatcher, arg, want string
+	}{
+		{"workspace", "2", `hl.dsp.focus({ workspace = "2" })`},
+		{"workspace", "r+1", `hl.dsp.focus({ workspace = "r+1" })`},
+		{"workspace", "e-1", `hl.dsp.focus({ workspace = "e-1" })`},
+		{"movetoworkspace", "3", `hl.dsp.window.move({ workspace = "3" })`},
+		{"movetoworkspacesilent", "3", `hl.dsp.window.move({ workspace = "3", follow = false })`},
+		{"movetoworkspacesilent", "special:Telegram", `hl.dsp.window.move({ workspace = "special:Telegram", follow = false })`},
+		{"togglespecialworkspace", "Telegram", `hl.dsp.workspace.toggle_special("Telegram")`},
+	}
+	for _, tc := range cases {
+		if got := dispatcherToLua(tc.dispatcher, tc.arg); got != tc.want {
+			t.Errorf("dispatcherToLua(%q, %q) = %q, want %q", tc.dispatcher, tc.arg, got, tc.want)
+		}
+	}
+}

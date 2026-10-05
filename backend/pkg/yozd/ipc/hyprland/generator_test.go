@@ -58,3 +58,14 @@ func TestGenerateWindowRulesWorkspace(t *testing.T) {
 		t.Fatalf("unexpected rules:\n%s", out)
 	}
 }
+
+func TestGenerateKeybindsHidesSpecialOnWorkspaceChange(t *testing.T) {
+	for _, cfg := range []ipc.ConfigKeybinds{{}, {Custom: []ipc.Keybind{
+		{Modifiers: []string{"SUPER"}, Key: "2", Dispatcher: "workspace", Argument: "2", Enabled: true},
+	}}} {
+		out := NewGenerator().GenerateKeybinds(cfg)
+		if n := strings.Count(out, "binds {\n    hide_special_on_workspace_change = true\n}"); n != 1 {
+			t.Fatalf("want the binds block exactly once, got %d in:\n%s", n, out)
+		}
+	}
+}
