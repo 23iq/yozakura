@@ -8,10 +8,13 @@ import qs.modules.keybinds
 import qs.config
 import qs.modules.settings
 import "../Ui.js" as Ui
+import "keybinds"
 
-// Keybinds toolbar: search across all groups, add a bind (opens it on
-// "Open app"), reload from disk, the conflict chip (click: show only the
-// conflicting binds) and the cheatsheet shortcut.
+// Keybinds toolbar: search across all groups (names, actions, apps, keys
+// like "super e": BindModel.filterRows), add a bind (KeybindAddDialog:
+// keys, then the action; it lands in its action's group), reload from
+// disk, the conflict chip (click: show only the conflicting binds), the
+// cheatsheet shortcut and the empty state of a search.
 ColumnLayout {
     id: root
 
@@ -52,7 +55,7 @@ ColumnLayout {
                 anchors.left: searchIcon.right
                 anchors.leftMargin: 10
                 anchors.right: parent.right
-                anchors.rightMargin: 14
+                anchors.rightMargin: 36
                 anchors.verticalCenter: parent.verticalCenter
                 text: KeybindsStore.editorQuery
                 font.family: Config.theme.font
@@ -71,6 +74,30 @@ ColumnLayout {
                     color: Colors.outline
                 }
             }
+
+            // Clear the search
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: 12
+                anchors.verticalCenter: parent.verticalCenter
+                visible: search.text !== ""
+                text: Icons.cancel
+                font.family: Icons.font
+                font.pixelSize: Styling.fontSize(-1)
+                color: Colors.overSurfaceVariant
+                MouseArea {
+                    anchors.fill: parent
+                    anchors.margins: -6
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: KeybindsStore.editorQuery = ""
+                }
+            }
+
+            // Modal: lives in the window's overlay, not in this layout.
+            KeybindAddDialog {
+                id: addDialog
+                onSaved: uid => KeybindsStore.expandedUid = ""
+            }
         }
 
         PillButton {
@@ -78,11 +105,7 @@ ColumnLayout {
             icon: "plus"
             kind: "filled"
             text: I18n.t("binds.add_keybind")
-            onClicked: {
-                KeybindsStore.editorQuery = "";
-                KeybindsStore.conflictFilter = false;
-                KeybindsStore.expandedUid = KeybindsStore.addCustom("apps.launch");
-            }
+            onClicked: addDialog.open()
         }
 
         PillButton {
@@ -163,6 +186,60 @@ ColumnLayout {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: KeybindsStore.conflictFilter = !KeybindsStore.conflictFilter
             }
+        }
+    }
+
+    // Search results: how many, or nothing found.
+    Text {
+        objectName: "keybindsMatchCount"
+        Layout.fillWidth: true
+        visible: KeybindsStore.filtering && KeybindsStore.visibleAll.length > 0
+        text: I18n.t("binds.match_count", KeybindsStore.visibleAll.length)
+        font.family: Config.theme.font
+        font.pixelSize: Styling.fontSize(-2)
+        color: Colors.overSurfaceVariant
+    }
+
+    ColumnLayout {
+        objectName: "keybindsEmpty"
+        Layout.fillWidth: true
+        Layout.topMargin: 8
+        Layout.bottomMargin: 8
+        visible: KeybindsStore.filtering && KeybindsStore.visibleAll.length === 0
+        spacing: 6
+
+        Text {
+            Layout.alignment: Qt.AlignHCenter
+            text: Icons.magnifyingGlass
+            font.family: Icons.font
+            font.pixelSize: Styling.fontSize(8)
+            color: Colors.outline
+        }
+        Text {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            text: KeybindsStore.editorQuery.trim() !== "" ? I18n.t("binds.no_matches_for", KeybindsStore.editorQuery.trim()) : I18n.t("binds.no_matches")
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(0)
+            font.weight: Font.DemiBold
+            color: Colors.overBackground
+        }
+        Text {
+            Layout.fillWidth: true
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            text: I18n.t("binds.no_matches_hint")
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: Colors.overSurfaceVariant
+        }
+        PillButton {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.topMargin: 4
+            icon: "plus"
+            text: I18n.t("binds.add_keybind")
+            onClicked: addDialog.open()
         }
     }
 

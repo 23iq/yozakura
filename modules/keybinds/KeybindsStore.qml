@@ -50,10 +50,37 @@ Singleton {
     property string expandedUid: ""
     // Only conflicting rows (the toolbar's conflict chip).
     property bool conflictFilter: false
-    // Rows the group cards show: search, then the conflict filter.
-    function visibleRows(groupId) {
-        const all = BindModel.filterRows(root.rows.filter(r => r.group === groupId), root.editorQuery, root.tr);
+    // Rows the editor shows: search (over every group at once, so a key
+    // query like "super e" means the same in each card), then the conflict
+    // filter.
+    readonly property var visibleAll: {
+        const all = BindModel.filterRows(root.rows, root.editorQuery, root.tr);
         return root.conflictFilter ? all.filter(r => !!root.conflicts[r.uid]) : all;
+    }
+    readonly property bool filtering: root.editorQuery.trim() !== "" || root.conflictFilter
+    function visibleRows(groupId) {
+        return root.visibleAll.filter(r => r.group === groupId);
+    }
+
+    // A row just added or moved to another group: its card scrolls to it
+    // and it flashes (KeybindRow) for a moment.
+    property string highlightUid: ""
+    signal revealRequested(string uid)
+    function reveal(uid) {
+        const r = root.row(uid);
+        if (!r)
+            return;
+        if (root.visibleAll.indexOf(r) === -1) {
+            root.editorQuery = "";
+            root.conflictFilter = false;
+        }
+        root.highlightUid = uid;
+        unhighlight.restart();
+        root.revealRequested(uid);
+    }
+    property Timer unhighlight: Timer {
+        interval: 1800
+        onTriggered: root.highlightUid = ""
     }
 
     // Installed app by desktop id: {name, icon}, or null.
@@ -214,11 +241,15 @@ Singleton {
         }
     }
 
-    // actions: [{id, args, layouts}] (core binds keep the first one).
+    // actions: [{id, args, layouts}] (core binds keep the first one). A
+    // bind whose action now belongs to another group moves there: the
+    // editor follows it.
     function setActions(uid, actions) {
         const r = root.row(uid);
         if (!r || !actions.length || r.kind === "special")
             return;
+        if (BindModel.bindGroup(actions) !== r.group)
+            Qt.callLater(root.reveal, uid);
         if (r.kind === "core") {
             const obj = root._coreObject(r.path);
             if (!obj)
@@ -288,6 +319,15 @@ Singleton {
         return "custom:" + (Array.from(root._custom()).length - 1);
     }
 
+    // Saves a finished bind (the add dialog) and shows it in its group;
+    // returns its uid. A taken combo is kept as is: both binds stay.
+    function addBind(name, keys, actions) {
+        root._setCustomList(BindModel.withAddedCustom(root._custom(), BindModel.customBind(name, keys, actions, true)));
+        const uid = "custom:" + (Array.from(root._custom()).length - 1);
+        root.reveal(uid);
+        return uid;
+    }
+
     function remove(uid) {
         const r = root.row(uid);
         if (r && r.kind === "custom") {
@@ -309,8 +349,10 @@ Singleton {
         root.editRequested(uid);
     }
 
-    function actionGroup(id) {
-        return KeybindActions.groupOf(id);
+    // Group of an action id, or of a whole action (a command or raw
+    // dispatcher goes where what it runs belongs).
+    function actionGroup(action) {
+        return typeof action === "string" ? KeybindActions.groupOf(action) : BindModel.actionGroup(action);
     }
 
     // Catalog actions for the picker; `withHidden` adds the raw dispatcher

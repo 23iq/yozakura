@@ -10,10 +10,11 @@ import qs.config
 import "../../Ui.js" as Ui
 import "../../../keybinds/BindModel.js" as BindModel
 
-// Action field: shows the current action; opens an inline, searchable list
-// of every catalog action (KeybindActions.js) grouped like the cheatsheet,
-// including "Run command" and "Open app". Typing also lists matching
-// installed apps first: picking one is "Open app" with that app.
+// Action field: shows the current action ("Choose an action" while there is
+// none); opens an inline, searchable list of every catalog action
+// (KeybindActions.js) grouped like the cheatsheet, including "Run command"
+// and "Open app". Typing also lists matching installed apps first: picking
+// one is "Open app" with that app. Matching: BindModel.pickerOptions.
 Column {
     id: root
 
@@ -28,10 +29,8 @@ Column {
 
     readonly property var options: {
         KeybindsStore.revision;
-        const all = KeybindsStore.actionOptions(root.withHidden);
-        const q = query.trim().toLowerCase();
-        const hits = q === "" ? all : all.filter(o => (o.text + " " + o.label + " " + o.id + " " + I18n.t(BindModel.group(o.group).title)).toLowerCase().indexOf(q) !== -1);
-        const apps = q === "" ? [] : AppSearch.fuzzyQuery(query.trim()).slice(0, 5).map(a => ({
+        const q = query.trim();
+        const apps = q === "" ? [] : AppSearch.fuzzyQuery(q).slice(0, 5).map(a => ({
                     "id": "apps.launch",
                     "app": a.id,
                     "icon": a.icon || "",
@@ -40,7 +39,7 @@ Column {
                 }));
         // Apps first, then grouped in display order, keeping the catalog
         // order inside a group.
-        return apps.concat(BindModel.GROUPS.reduce((acc, g) => acc.concat(hits.filter(o => o.group === g.id)), []));
+        return BindModel.pickerOptions(KeybindsStore.actionOptions(root.withHidden), apps, q, KeybindsStore.tr);
     }
 
     spacing: 6
@@ -53,12 +52,19 @@ Column {
     }
 
     function toggle() {
-        open = !open;
-        if (open) {
-            query = "";
-            filter.text = "";
-            filter.forceActiveFocus();
-        }
+        if (open)
+            open = false;
+        else
+            openList();
+    }
+
+    // Opens the list with an empty search, ready to type.
+    function openList() {
+        open = true;
+        query = "";
+        filter.text = "";
+        list.currentIndex = 0;
+        filter.forceActiveFocus();
     }
 
     Item {
@@ -80,7 +86,7 @@ Column {
             anchors.left: parent.left
             anchors.leftMargin: 14
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons[BindModel.group(KeybindsStore.actionGroup(root.actionId)).icon] ?? ""
+            text: root.actionId === "" ? Icons.magnifyingGlass : (Icons[BindModel.group(KeybindsStore.actionGroup(root.actionId)).icon] ?? "")
             font.family: Icons.font
             font.pixelSize: Styling.fontSize(-1)
             color: Colors.primary
@@ -91,11 +97,11 @@ Column {
             anchors.right: caret.left
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-            text: BindModel.actionLabel(root.actionId, KeybindsStore.tr)
+            text: root.actionId === "" ? I18n.t("binds.choose_action") : BindModel.actionLabel(root.actionId, KeybindsStore.tr)
             elide: Text.ElideRight
             font.family: Config.theme.font
             font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overBackground
+            color: root.actionId === "" ? Colors.outline : Colors.overBackground
         }
         Text {
             id: caret
@@ -168,6 +174,20 @@ Column {
             }
         }
 
+        Text {
+            objectName: "actionNone"
+            anchors.horizontalCenter: parent.horizontalCenter
+            y: filter.y + filter.height + 24
+            width: parent.width - 28
+            visible: root.options.length === 0
+            horizontalAlignment: Text.AlignHCenter
+            wrapMode: Text.Wrap
+            text: I18n.t("binds.action_none", root.query.trim())
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: Colors.overSurfaceVariant
+        }
+
         ListView {
             id: list
             anchors.top: filter.bottom
@@ -199,6 +219,7 @@ Column {
                 id: option
                 required property var modelData
                 required property int index
+                objectName: "actionOption:" + (modelData.app !== undefined ? "app:" + modelData.app : modelData.id)
                 width: list.width
                 height: 32
 

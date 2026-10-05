@@ -41,6 +41,11 @@ ColumnLayout {
         }, patch));
     }
 
+    // Opens the action list, ready to type (the add dialog's step 2).
+    function openPicker() {
+        picker.openList();
+    }
+
     function setArg(key, value) {
         const args = Object.assign({}, root.action.args || {});
         args[key] = value;
@@ -54,6 +59,7 @@ ColumnLayout {
         spacing: 8
 
         ActionPicker {
+            id: picker
             Layout.fillWidth: true
             actionId: root.action.id
             withHidden: root.withHidden

@@ -132,19 +132,19 @@ var ACTION_CATALOG = [
     { id: "scrolling.move-window", label: "Move Window", category: "Window", group: "windows", dispatcher: "movewindow", args: [{ key: "direction", label: "Direction", placeholder: "up/down/left/right", defaultValue: "left" }], argumentBuilder: function (args) {
         return directionToLetter(args.direction);
     } },
-    { id: "monocle.focus", label: "Cycle Focus", category: "Monocle Layout", group: "windows", dispatcher: "cyclenext", args: [{ key: "direction", label: "Direction", placeholder: "up/right = next, down/left = prev", defaultValue: "next" }], argumentBuilder: function (args) {
+    { id: "monocle.focus", label: "Cycle Focus", category: "Monocle Layout", group: "layout", dispatcher: "cyclenext", args: [{ key: "direction", label: "Direction", placeholder: "up/right = next, down/left = prev", defaultValue: "next" }], argumentBuilder: function (args) {
         return (args.direction === "d" || args.direction === "l") ? "cycleprev" : "cyclenext";
     } },
-    { id: "monocle.move-window", label: "Cycle Window", category: "Monocle Layout", group: "windows", dispatcher: "cyclenext", args: [{ key: "direction", label: "Direction", placeholder: "up/right = next, down/left = prev", defaultValue: "next" }], argumentBuilder: function (args) {
+    { id: "monocle.move-window", label: "Cycle Window", category: "Monocle Layout", group: "layout", dispatcher: "cyclenext", args: [{ key: "direction", label: "Direction", placeholder: "up/right = next, down/left = prev", defaultValue: "next" }], argumentBuilder: function (args) {
         return (args.direction === "d" || args.direction === "l") ? "cycleprev" : "cyclenext";
     } },
-    { id: "scrolling.resize-column", label: "Resize Column", category: "Scrolling Layout", group: "windows", dispatcher: "layoutmsg", args: [{ key: "delta", label: "Delta", placeholder: "+0.1 / -0.1", defaultValue: "+0.1" }], argumentBuilder: function (args) {
+    { id: "scrolling.resize-column", label: "Resize Column", category: "Scrolling Layout", group: "layout", dispatcher: "layoutmsg", args: [{ key: "delta", label: "Delta", placeholder: "+0.1 / -0.1", defaultValue: "+0.1" }], argumentBuilder: function (args) {
         return "colresize " + String(args.delta || "").trim();
     } },
-    { id: "scrolling.promote", label: "Promote Column", category: "Scrolling Layout", group: "windows", dispatcher: "layoutmsg", argument: "promote" },
-    { id: "scrolling.toggle-fit", label: "Toggle Fit", category: "Scrolling Layout", group: "windows", dispatcher: "layoutmsg", argument: "togglefit" },
-    { id: "scrolling.toggle-full-column", label: "Toggle Full Column", category: "Scrolling Layout", group: "windows", dispatcher: "layoutmsg", argument: "colresize +conf" },
-    { id: "scrolling.swap-column", label: "Swap Column", category: "Scrolling Layout", group: "windows", dispatcher: "layoutmsg", args: [{ key: "direction", label: "Direction", placeholder: "left/right", defaultValue: "left" }], argumentBuilder: function (args) {
+    { id: "scrolling.promote", label: "Promote Column", category: "Scrolling Layout", group: "layout", dispatcher: "layoutmsg", argument: "promote" },
+    { id: "scrolling.toggle-fit", label: "Toggle Fit", category: "Scrolling Layout", group: "layout", dispatcher: "layoutmsg", argument: "togglefit" },
+    { id: "scrolling.toggle-full-column", label: "Toggle Full Column", category: "Scrolling Layout", group: "layout", dispatcher: "layoutmsg", argument: "colresize +conf" },
+    { id: "scrolling.swap-column", label: "Swap Column", category: "Scrolling Layout", group: "layout", dispatcher: "layoutmsg", args: [{ key: "direction", label: "Direction", placeholder: "left/right", defaultValue: "left" }], argumentBuilder: function (args) {
         return "swapcol " + directionToLetter(args.direction);
     } },
     { id: "scrolling.move-column-workspace", label: "Move Column to Workspace", category: "Scrolling Layout", group: "workspaces", dispatcher: "layoutmsg", args: [{ key: "index", label: "Workspace", placeholder: "1", defaultValue: "1" }], argumentBuilder: function (args) {
@@ -161,8 +161,8 @@ var ACTION_CATALOG = [
     { id: "audio.volume-down", label: "Volume Down", category: "Audio", group: "media", dispatcher: "exec", argument: "wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 10%-", flags: "le" },
     { id: "audio.mute-toggle", label: "Mute Audio", category: "Audio", group: "media", dispatcher: "exec", argument: "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle", flags: "le" },
 
-    { id: "brightness.up", label: "Brightness Up", category: "Brightness", group: "media", dispatcher: "exec", argument: "sh -c 'echo brightness-up > \"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/" + BrandActions.appId + "_ipc.pipe\"'", flags: "le" },
-    { id: "brightness.down", label: "Brightness Down", category: "Brightness", group: "media", dispatcher: "exec", argument: "sh -c 'echo brightness-down > \"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/" + BrandActions.appId + "_ipc.pipe\"'", flags: "le" },
+    { id: "brightness.up", label: "Brightness Up", category: "Brightness", group: "system", dispatcher: "exec", argument: "sh -c 'echo brightness-up > \"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/" + BrandActions.appId + "_ipc.pipe\"'", flags: "le" },
+    { id: "brightness.down", label: "Brightness Down", category: "Brightness", group: "system", dispatcher: "exec", argument: "sh -c 'echo brightness-down > \"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/" + BrandActions.appId + "_ipc.pipe\"'", flags: "le" },
 
     { id: "system.calculator", label: "Calculator", category: "System", group: "system", dispatcher: "exec", argument: "notify-send \"Soon\"" },
     { id: "system.lock", label: "Lock Session", category: "System", group: "system", dispatcher: "exec", argument: "loginctl lock-session" },
@@ -180,7 +180,7 @@ var ACTION_CATALOG = [
         return launchCommand(args.app);
     } },
 
-    { id: "legacy.dispatcher", label: "Legacy Dispatcher", category: "Advanced", group: "apps", dispatcher: "", args: [
+    { id: "legacy.dispatcher", label: "Legacy Dispatcher", category: "Advanced", group: "other", dispatcher: "", args: [
         { key: "dispatcher", label: "Dispatcher", placeholder: "dispatcher", defaultValue: "" },
         { key: "argument", label: "Argument", placeholder: "argument", defaultValue: "" },
         { key: "flags", label: "Flags", placeholder: "flags", defaultValue: "" }
@@ -215,7 +215,9 @@ function labelKey(id) {
     return "binds.action." + norm;
 }
 
-// Cheatsheet/editor group of an action ("apps" for unknown ids).
+// Catalog group of an action id ("apps" for unknown ids). A bind's group
+// also looks at the arguments (a command or raw dispatcher): see
+// BindModel.actionGroup.
 function groupOf(id) {
     const entry = getActionById(id);
     return entry && entry.group ? entry.group : "apps";

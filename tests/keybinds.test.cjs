@@ -395,3 +395,105 @@ test('conflicts never drop a bind: both stay with their own combo', () => {
     const c = Model.findConflicts(Model.buildRows(data(moved)), []);
     eq(Object.keys(c).sort(), ['custom:0', 'custom:1']);
 });
+
+// --- Groups follow the action ----------------------------------------------------
+
+test('groups: apps first, layout controls and raw dispatchers have their own', () => {
+    eq(Model.GROUPS.map(g => g.id), ['apps', 'windows', 'layout', 'workspaces', 'shell', 'ai', 'screenshots', 'media', 'system', 'other']);
+    for (const id of ['scrolling.promote', 'scrolling.resize-column', 'monocle.focus'])
+        assert.strictEqual(Actions.groupOf(id), 'layout', id);
+    assert.strictEqual(Actions.groupOf('brightness.up'), 'system');
+    assert.strictEqual(Actions.groupOf('window.fullscreen'), 'windows');
+    assert.strictEqual(Actions.groupOf('legacy.dispatcher'), 'other');
+});
+
+test('a command or raw dispatcher is grouped by what it runs', () => {
+    const run = command => Model.actionGroup({ id: 'command.run', args: { command } });
+    const raw = (dispatcher, argument) => Model.actionGroup({ id: 'legacy.dispatcher', args: { dispatcher, argument: argument || '', flags: '' } });
+    assert.strictEqual(run(`${app} run config`), 'shell', 'the settings panel command');
+    assert.strictEqual(run(`${app} run screenshot`), 'screenshots', 'a catalog command keeps its group');
+    assert.strictEqual(run(`${app} reload`), 'shell');
+    assert.strictEqual(run(`${app} launch firefox`), 'apps');
+    assert.strictEqual(run(Actions.getActionById('brightness.up').argument), 'system');
+    assert.strictEqual(run('wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle'), 'media');
+    assert.strictEqual(run("~/bin/launch_first_available.sh 'pavucontrol-qt' 'pavucontrol'"), 'media');
+    assert.strictEqual(run('grim -g "$(slurp)" - | wl-copy'), 'screenshots');
+    assert.strictEqual(run('loginctl lock-session'), 'system');
+    assert.strictEqual(run("~/bin/launch_first_available.sh 'firefox' 'brave'"), 'apps');
+    assert.strictEqual(run(''), 'apps');
+    assert.strictEqual(raw('layoutmsg', 'center'), 'layout');
+    assert.strictEqual(raw('movetoworkspace', '3'), 'workspaces');
+    assert.strictEqual(raw('pin'), 'windows');
+    assert.strictEqual(raw('exec', 'playerctl next'), 'media');
+    assert.strictEqual(raw('somethingnew'), 'other');
+    // rows take their first action's group, wherever they were added
+    const rows = Model.buildRows(data([
+        { name: 'Center', keys: [{ modifiers: ['SUPER'], key: 'C' }], actions: [{ id: 'legacy.dispatcher', args: { dispatcher: 'layoutmsg', argument: 'center', flags: '' } }], enabled: true },
+        cmd('Mic', ['SUPER', 'ALT'], 'M', { actions: [{ id: 'command.run', args: { command: 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle' }, layouts: [] }] }),
+        cmd('Power', ['CTRL', 'ALT'], 'Delete', { actions: [{ id: 'command.run', args: { command: `${app} run powermenu` }, layouts: [] }] }),
+    ]));
+    eq(rows.slice(-3).map(r => r.group), ['layout', 'media', 'shell']);
+});
+
+// --- Search ------------------------------------------------------------------------
+
+test('search: key combos, names, actions and apps', () => {
+    const lookup = id => (id === 'firefox' ? { name: 'Firefox', icon: 'firefox' } : null);
+    const rows = Model.withApps(Model.buildRows(data([
+        appBind('firefox', ['SUPER'], 'B'),
+        cmd('Files', ['SUPER'], 'E'),
+        cmd('Files (shifted)', ['SUPER', 'SHIFT'], 'E'),
+        cmd('Terminal', ['CTRL', 'ALT'], 'T'),
+    ])), lookup);
+    const uids = q => Model.filterRows(rows, q).map(r => r.uid);
+    // "super e" is exactly Super+E, however it is typed
+    eq(uids('super e'), ['custom:1']);
+    eq(uids('Super + E'), ['custom:1']);
+    eq(uids('win+e'), ['custom:1']);
+    eq(uids('ctrl alt t'), ['custom:3']);
+    eq(uids('alt ctrl t'), ['custom:3'], 'modifier order does not matter');
+    // only modifiers: every bind using them
+    assert.ok(uids('super shift').includes('custom:2'));
+    assert.ok(!uids('super shift').includes('custom:1'));
+    // no exact combo: binds with more modifiers
+    eq(uids('shift e'), ['custom:2']);
+    // a "key query" without hits falls back to text ("control" is a modifier name)
+    eq(uids('control center'), []);
+    // names, action labels, app names and ids
+    eq(uids('firefox'), ['custom:0']);
+    eq(uids('fire'), ['custom:0']);
+    assert.ok(uids('screenshot').includes('core:system.screenshot'));
+    assert.ok(uids('open app').includes('custom:0'));
+    // a one or two letter word matches the start of a word, not any letter
+    assert.ok(!uids('e').includes('core:dashboard'), 'not every bind with an "e" in it');
+    assert.ok(uids('e').includes('custom:1'), 'the E key');
+    eq(uids('   '), rows.map(r => r.uid));
+});
+
+test('action picker: apps first, then actions by group, every word matches', () => {
+    const opts = Actions.getActionOptions().map(o => Object.assign({}, o, { text: o.label }));
+    const apps = [{ id: 'apps.launch', app: 'firefox', text: 'Open Firefox', group: '_apps' }];
+    const all = Model.pickerOptions(opts, apps, '');
+    assert.strictEqual(all.length, opts.length, 'no query: every action, no apps');
+    assert.strictEqual(all[0].group, 'apps', 'apps group first');
+    const order = Model.GROUPS.map(g => g.id);
+    const idx = all.map(o => order.indexOf(o.group));
+    eq(idx, idx.slice().sort((a, b) => a - b), 'in GROUPS order');
+    const fs = Model.pickerOptions(opts, [], 'fullscreen');
+    eq(fs.map(o => o.id), ['window.fullscreen']);
+    eq(Model.pickerOptions(opts, apps, 'firefox').map(o => o.app || o.id), ['firefox']);
+    assert.ok(Model.pickerOptions(opts, [], 'toggle float').some(o => o.id === 'window.toggle-float'));
+    assert.ok(!Model.pickerOptions(opts, [], 'switch').some(o => o.id === 'legacy.dispatcher'), 'raw dispatcher is hidden');
+});
+
+test('a new bind needs keys, an action and its fields before saving', () => {
+    const k = [{ modifiers: ['SUPER'], key: 'B' }];
+    assert.strictEqual(Model.missingPart([{ modifiers: ['SUPER'], key: '' }], []), 'keys');
+    assert.strictEqual(Model.missingPart(k, []), 'action');
+    assert.strictEqual(Model.missingPart(k, [{ id: 'apps.launch', args: { app: '' } }]), 'app');
+    assert.strictEqual(Model.missingPart(k, [{ id: 'command.run', args: { command: '  ' } }]), 'command');
+    assert.strictEqual(Model.missingPart(k, [{ id: 'apps.launch', args: { app: 'firefox' } }]), '');
+    assert.strictEqual(Model.missingPart(k, [{ id: 'window.close', args: {} }]), '');
+    assert.strictEqual(Model.missingPart(k, [{ id: 'workspace.switch', args: Actions.defaultArgs('workspace.switch') }]), '');
+    assert.strictEqual(Model.missingPart(k, [{ id: 'legacy.dispatcher', args: { dispatcher: 'pin', argument: '', flags: '' } }]), '');
+});

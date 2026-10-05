@@ -1,7 +1,8 @@
 """Keybinds UI, offscreen: keycap rendering, the settings editor (enable,
-record incl. Super, chips, mouse, conflicts kept + filter, add/remove,
-reset, "Open app" with the app picker, Advanced) and the cheatsheet panel
-(search, edit, Esc). Real modules/components,
+record incl. Super, chips, mouse, conflicts kept + filter, the add dialog
+(keys, action search, app picker, group by action, Esc/Cancel), remove,
+reset, Advanced, search + empty state) and the cheatsheet panel (search,
+edit, Esc). Real modules/components,
 modules/keybinds and modules/settings files on tests/lib/settings_env.py.
 """
 import json
@@ -270,20 +271,46 @@ check(ev("KeybindsStore.row('custom:0').group") == "windows", "row moves to its 
 ev('KeybindsStore.setName("custom:0", "Close it")')
 check(ev(f"{adapter}.custom[0].name") == "Close it", "description saved")
 
-# add: a new bind opens on "Open app" with the app list; picking an app
-# stores its desktop id and the row shows the app's name
+# add: a modal dialog, nothing is written before Save. Step 1 records the
+# keys, step 2 picks the action ("Open app" shows the app list).
 add = find("keybindsAdd")
+dialog = find("keybindAddDialog")
 h.eval(add, "clicked()")
-check(ev(f"{adapter}.custom.length") == 3, "add creates a custom bind")
-check(ev("KeybindsStore.expandedUid") == "custom:2", "new bind opens")
-check(ev(f"{adapter}.custom[2].actions[0].id") == "apps.launch", "a new bind opens an app")
 QTest.qWait(300)
-option = find("appOption:discord")
-check(option is not None and h.eval(option, "visible"), "the app list is open on a new bind")
+check(h.eval(dialog, "opened") is True, "Add opens the dialog")
+check(ev(f"{adapter}.custom.length") == 2, "nothing is added before Save")
+body = find("keybindAddBody")
+check(body is not None and h.eval(body, "visible"), "the dialog is shown in the window overlay")
+dpad = ev('w.findItem("keyCapture", w.findItem("keybindAddBody"))')
+check(h.eval(dpad, "parent.recording") is True, "the dialog starts recording right away")
+check(h.eval(dialog, "missing") == "keys", "keys come first")
+key(dpad, Qt.Key_B, Qt.MetaModifier, "b")
+QTest.qWait(100)
+draft_keys = h.eval(dialog, "JSON.stringify(keys)")
+check(draft_keys == '[{"modifiers":["SUPER"],"key":"B"}]', f"recorded Super+B: {draft_keys}")
+check(h.eval(dialog, "missing") == "action", "then the action")
+dpicker = ev('w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, w.findItem("keybindAddBody"))[0]')
+check(h.eval(dpicker, "open") is True, "the action list opens after the keys")
+check(h.eval(dpicker, "options[0].group") == "apps", "apps and commands come first")
+h.eval(dpicker, "choose(options.find(o => o.id === 'apps.launch' && o.app === undefined))")
+QTest.qWait(300)
+check(h.eval(dialog, "missing") == "app", "Open app needs an app")
+check(h.eval(find("keybindAddSave"), "enabled") is False, "Save waits for it")
+option = ev('w.findItem("appOption:discord", w.findItem("keybindAddBody"))')
+check(option is not None and h.eval(option, "visible"), "the app list is open")
 h.eval(option, "children[3].clicked(null)")
+check(h.eval(dialog, "missing") == "", "ready to save")
+check("Apps" in h.eval(find("keybindAddStatus"), "text"), f"says where it goes: {h.eval(find('keybindAddStatus'), 'text')}")
+uid = h.eval(dialog, "save()")
+QTest.qWait(200)
+check(uid == "custom:2" and h.eval(dialog, "opened") is False, "Save adds it and closes")
 check(ev(f"JSON.stringify({adapter}.custom[2].actions[0].args)") == '{"app":"discord"}', "picked app saved by id")
+check(ev(f"JSON.stringify({adapter}.custom[2].keys)") == '[{"modifiers":["SUPER"],"key":"B"}]', "keys saved")
 check(ev("KeybindsStore.title(KeybindsStore.row('custom:2'))") == "Discord", "the row shows the app name")
 check(ev("KeybindsStore.row('custom:2').group") == "apps", "app binds are in the apps group")
+check(ev("KeybindsStore.highlightUid") == "custom:2", "the new bind is highlighted")
+check(find("keybindRow:custom:2") is not None, "and listed")
+ev('KeybindsStore.expandedUid = "custom:2"')
 # the action picker finds apps by name too
 QTest.qWait(200)
 picker = ev('w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, w.findItem("keybindRow:custom:2"))[0]')
@@ -306,11 +333,70 @@ check(h.eval(picker, "options.map(o => o.id).join()") == "legacy.dispatcher", "A
 ev('KeybindsStore.remove("custom:2")')
 check(ev(f"{adapter}.custom.length") == 2, "remove deletes it")
 
-# toolbar search filters the group cards
+# the dialog: the group follows the action (a window action lands in
+# Windows), a taken combo is marked and kept, Return saves
+h.eval(add, "clicked()")
+QTest.qWait(300)
+dpad = ev('w.findItem("keyCapture", w.findItem("keybindAddBody"))')
+key(dpad, Qt.Key_Return, Qt.MetaModifier)
+QTest.qWait(100)
+clash = ev('w.findItem("clashNote", w.findItem("keybindAddBody"))')
+check(h.eval(clash, "visible") is True and "kept" in h.eval(clash, "text"),
+      f"the dialog marks the taken combo and keeps both ({h.eval(clash, 'text')})")
+dpicker = ev('w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, w.findItem("keybindAddBody"))[0]')
+h.eval(ev('w.findItem("actionFilter", w.findItem("keybindAddBody"))'), 'text = "fullscreen"')
+h.eval(dpicker, 'query = "fullscreen"')
+check(h.eval(dpicker, "options[0].id") == "window.fullscreen", "typing an action name finds it")
+h.eval(dpicker, "choose(options[0])")
+QTest.qWait(50)
+check(h.eval(dialog, "groupId") == "windows", "a window action goes to Windows")
+QGuiApplication.sendEvent(body, QKeyEvent(QEvent.KeyPress, Qt.Key_Return, Qt.NoModifier, "\r"))
+QTest.qWait(200)
+check(h.eval(dialog, "opened") is False and ev(f"{adapter}.custom.length") == 3, "Return saves")
+check(ev("KeybindsStore.row('custom:2').group") == "windows", "listed under its action's group, not where Add is")
+check(ev(f"{adapter}.custom[0].keys[0].key") == "Return" and ev(f"{adapter}.custom[2].keys[0].key") == "Return",
+      "the other bind keeps its combo")
+check(ev("KeybindsStore.conflictsOf('custom:2').length") > 0, "both are marked as a conflict")
+row2 = find("keybindRow:custom:2")
+check(row2 is not None and h.eval(row2, "highlighted") is True, "the new row flashes in its group")
+ev('KeybindsStore.remove("custom:2")')
+
+# cancel / Esc drops the draft and gives the compositor its binds back
+h.eval(add, "clicked()")
+QTest.qWait(300)
+dpad = ev('w.findItem("keyCapture", w.findItem("keybindAddBody"))')
+check(ev("KeybindsStore.recorders") == 1, "recording holds the compositor binds")
+key(dpad, Qt.Key_Escape)
+QTest.qWait(50)
+check(ev("KeybindsStore.recorders") == 0, "Esc stops recording first")
+check(h.eval(dialog, "opened") is True, "the dialog stays open")
+QGuiApplication.sendEvent(body, QKeyEvent(QEvent.KeyPress, Qt.Key_Escape, Qt.NoModifier))
+QTest.qWait(200)
+check(h.eval(dialog, "opened") is False and ev(f"{adapter}.custom.length") == 2, "Esc again cancels, nothing added")
+h.eval(add, "clicked()")
+QTest.qWait(300)
+key(ev('w.findItem("keyCapture", w.findItem("keybindAddBody"))'), Qt.Key_K, Qt.MetaModifier, "k")
+h.eval(dialog, "cancel()")
+QTest.qWait(200)
+check(ev(f"{adapter}.custom.length") == 2 and ev("KeybindsStore.recorders") == 0, "Cancel discards")
+
+# toolbar search filters the group cards: names, keys, empty state
 ev('KeybindsStore.editorQuery = "close it"')
 QTest.qWait(100)
 check(find("keybindRow:custom:0") is not None and find("keybindRow:core:launcher") is None, "editor search filters")
+check(h.eval(find("settingsSection:shell"), "visible") is False, "groups without matches are hidden")
+check(h.eval(find("keybindsMatchCount"), "visible") is True, "the number of matches is shown")
+ev('KeybindsStore.editorQuery = "super return"')
+QTest.qWait(100)
+check(find("keybindRow:custom:0") is not None and ev("KeybindsStore.visibleAll.length") == 1, "a key query finds the combo")
+ev('KeybindsStore.editorQuery = "zzzz"')
+QTest.qWait(100)
+check(h.eval(find("keybindsEmpty"), "visible") is True, "empty state when nothing matches")
+check(h.eval(find("settingsSection:windows"), "visible") is False, "no empty cards")
 ev('KeybindsStore.editorQuery = ""')
+QTest.qWait(100)
+check(h.eval(find("settingsSection:windows"), "visible") is True and h.eval(find("keybindsEmpty"), "visible") is False,
+      "clearing the search shows everything again")
 
 # cheatsheet "edit" opens the row in the editor
 ev('KeybindsStore.expandedUid = ""')

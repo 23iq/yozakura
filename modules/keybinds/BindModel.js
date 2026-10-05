@@ -2,6 +2,7 @@
 .import "../../config/KeybindActions.js" as Actions
 .import "../../config/CoreBinds.js" as CoreBinds
 .import "KeyNames.js" as KeyNames
+.import "../globals/BrandActions.js" as BrandActions
 
 // binds.json as a flat list of rows for the cheatsheet and the editor:
 // grouping, search, conflict detection and the pure edits of the custom
@@ -13,17 +14,21 @@
 //       enabled, name, group} (special: + specialId, role "toggle"|"send")
 
 // Groups in display order. `title`/`desc` are translation keys, `icon` an
-// Icons property. Adding a group = one entry (+ translations); actions pick
-// theirs with `group` in KeybindActions.js.
+// Icons property. A bind's group always follows its (first) action
+// (actionGroup): catalog actions pick theirs with `group` in
+// KeybindActions.js, commands and raw dispatchers by what they run.
+// Adding a group = one entry (+ translations).
 var GROUPS = [
+    { "id": "apps", "icon": "apps", "title": "binds.group.apps", "desc": "binds.group.apps.desc" },
     { "id": "windows", "icon": "appWindow", "title": "binds.group.windows", "desc": "binds.group.windows.desc" },
+    { "id": "layout", "icon": "columns", "title": "binds.group.layout", "desc": "binds.group.layout.desc" },
     { "id": "workspaces", "icon": "squaresFour", "title": "binds.group.workspaces", "desc": "binds.group.workspaces.desc" },
     { "id": "shell", "icon": "widgets", "title": "binds.group.shell", "desc": "binds.group.shell.desc" },
     { "id": "ai", "icon": "sparkle", "title": "binds.group.ai", "desc": "binds.group.ai.desc" },
-    { "id": "media", "icon": "musicNotes", "title": "binds.group.media", "desc": "binds.group.media.desc" },
     { "id": "screenshots", "icon": "camera", "title": "binds.group.screenshots", "desc": "binds.group.screenshots.desc" },
-    { "id": "system", "icon": "lock", "title": "binds.group.system", "desc": "binds.group.system.desc" },
-    { "id": "apps", "icon": "terminalWindow", "title": "binds.group.apps", "desc": "binds.group.apps.desc" }
+    { "id": "media", "icon": "musicNotes", "title": "binds.group.media", "desc": "binds.group.media.desc" },
+    { "id": "system", "icon": "monitor", "title": "binds.group.system", "desc": "binds.group.system.desc" },
+    { "id": "other", "icon": "code", "title": "binds.group.other", "desc": "binds.group.other.desc" }
 ];
 
 var LAYOUTS = ["dwindle", "master", "scrolling"];
@@ -34,6 +39,91 @@ function group(id) {
             return GROUPS[i];
     }
     return GROUPS[GROUPS.length - 1];
+}
+
+// --- Group of an action ------------------------------------------------------
+
+// Commands by what they start (first match wins); the rest open apps.
+var COMMAND_GROUPS = [
+    [/\b(playerctl|wpctl|pactl|pamixer|amixer|pavucontrol(-qt)?|easyeffects|helvum|qpwgraph)\b/, "media"],
+    [/\b(grim|slurp|grimblast|hyprshot|flameshot|satty|swappy|wf-recorder|gpu-screen-recorder|obs)\b/, "screenshots"],
+    [/\b(brightnessctl|light|loginctl|systemctl|hyprlock|swaylock|hypridle|poweroff|reboot|shutdown|suspend)\b/, "system"]
+];
+
+// Hyprland dispatchers -> group (raw "legacy.dispatcher" binds).
+var DISPATCHER_GROUPS = {
+    "layoutmsg": "layout", "pseudo": "layout", "togglesplit": "layout", "swapsplit": "layout",
+    "workspace": "workspaces", "movetoworkspace": "workspaces", "movetoworkspacesilent": "workspaces",
+    "togglespecialworkspace": "workspaces", "focusworkspaceoncurrentmonitor": "workspaces",
+    "movecurrentworkspacetomonitor": "workspaces", "moveworkspacetomonitor": "workspaces",
+    "swapactiveworkspaces": "workspaces", "renameworkspace": "workspaces", "focusmonitor": "workspaces",
+    "killactive": "windows", "forcekillactive": "windows", "closewindow": "windows", "movefocus": "windows",
+    "movewindow": "windows", "swapwindow": "windows", "resizeactive": "windows", "resizewindowpixel": "windows",
+    "movewindowpixel": "windows", "moveactive": "windows", "fullscreen": "windows", "fullscreenstate": "windows",
+    "togglefloating": "windows", "setfloating": "windows", "settiled": "windows", "pin": "windows",
+    "centerwindow": "windows", "focuswindow": "windows", "cyclenext": "windows", "swapnext": "windows",
+    "bringactivetotop": "windows", "alterzorder": "windows", "togglegroup": "windows",
+    "changegroupactive": "windows", "moveintogroup": "windows", "moveoutofgroup": "windows",
+    "lockgroups": "windows", "lockactivegroup": "windows", "focusurgentorlast": "windows",
+    "focuscurrentorlast": "windows", "tagwindow": "windows", "setprop": "windows",
+    "dpms": "system", "exit": "system", "forcerendererreload": "system"
+};
+
+// Catalog actions run by this exact command line (e.g. a "Run command"
+// bind of `<app> run config` is the settings shortcut).
+var EXEC_INDEX = null;
+
+function execIndex() {
+    if (EXEC_INDEX)
+        return EXEC_INDEX;
+    EXEC_INDEX = {};
+    Actions.ACTION_CATALOG.forEach(function (a) {
+        if (a.dispatcher === "exec" && a.argument && !a.args && EXEC_INDEX[a.argument] === undefined)
+            EXEC_INDEX[a.argument] = a.group;
+    });
+    return EXEC_INDEX;
+}
+
+function commandGroup(command) {
+    var cmd = String(command || "").trim();
+    if (cmd === "")
+        return "apps";
+    var known = execIndex()[cmd];
+    if (known)
+        return known;
+    var first = cmd.split(/\s+/)[0].replace(/^.*\//, "");
+    if (first === BrandActions.appId || first === BrandActions.legacyAppId)
+        return /^\S+ launch /.test(cmd) ? "apps" : "shell";
+    for (var i = 0; i < COMMAND_GROUPS.length; i++) {
+        if (COMMAND_GROUPS[i][0].test(cmd))
+            return COMMAND_GROUPS[i][1];
+    }
+    return "apps";
+}
+
+function dispatcherGroup(args) {
+    var d = String((args && args.dispatcher) || "").trim().toLowerCase();
+    if (d === "exec" || d === "execr")
+        return commandGroup(args.argument);
+    return DISPATCHER_GROUPS[d] || "other";
+}
+
+// Group of one action: the catalog's, except "Run command" and raw
+// dispatchers, grouped by what they run.
+function actionGroup(action) {
+    if (!action || !action.id)
+        return "apps";
+    var id = BrandActions.normalizeAction(action.id);
+    if (id === "command.run")
+        return commandGroup(action.args && action.args.command);
+    if (id === "legacy.dispatcher")
+        return dispatcherGroup(action.args);
+    return Actions.groupOf(id);
+}
+
+// A bind's group: its first action's.
+function bindGroup(actions) {
+    return actions && actions.length ? actionGroup(actions[0]) : "apps";
 }
 
 function plain(v) {
@@ -80,7 +170,7 @@ function buildRows(data) {
             "actions": [action],
             "enabled": disabled.indexOf(p) === -1,
             "name": "",
-            "group": Actions.groupOf(action.id)
+            "group": actionGroup(action)
         });
     });
     var custom = (data && data.custom) || [];
@@ -97,7 +187,7 @@ function buildRows(data) {
             "actions": actions,
             "enabled": c.enabled !== false,
             "name": c.name || "",
-            "group": actions.length ? Actions.groupOf(actions[0].id) : "apps"
+            "group": bindGroup(actions)
         });
     }
     // Special workspace binds (kind "special", built by
@@ -214,6 +304,9 @@ function searchText(row, tr) {
         parts.push(a.id);
         if (a.appName)
             parts.push(a.appName);
+        if (a.id === "apps.launch")
+            parts.push(Actions.appIdOf(a));
+        parts.push(actionLabel(a.id, tr));
         var entry = Actions.getActionById(a.id);
         if (entry)
             parts.push(entry.label);
@@ -221,19 +314,108 @@ function searchText(row, tr) {
     return parts.join(" ").toLowerCase();
 }
 
-// Every whitespace-separated token of `query` must match.
-function filterRows(rows, query, tr) {
-    var tokens = String(query || "").toLowerCase().split(/\s+/).filter(function (t) {
+// Query tokens: whitespace or "+" separated, lower case ("Super + E",
+// "super+e" and "super e" are the same).
+function queryTokens(query) {
+    return String(query || "").toLowerCase().split(/[\s+]+/).filter(function (t) {
         return t !== "";
     });
+}
+
+// A query that names keys ("super e", "ctrl alt t", "super shift"):
+// {mods, key} (key "" = any key with those modifiers), else null. It needs
+// a modifier and at most one other word.
+function comboQuery(query) {
+    var mods = [];
+    var rest = [];
+    queryTokens(query).forEach(function (t) {
+        var m = t.toUpperCase();
+        if (KeyNames.MOD_ALIASES[m] !== undefined)
+            mods.push(KeyNames.normalizeMod(m));
+        else
+            rest.push(t);
+    });
+    if (!mods.length || rest.length > 1)
+        return null;
+    return {
+        "mods": KeyNames.normalizeMods(mods),
+        "key": rest.length ? rest[0] : ""
+    };
+}
+
+// A combo of the row has every queried modifier (`exact`: no other one)
+// and the queried key.
+function matchesCombo(row, q, exact) {
+    var wantKey = q.key ? KeyNames.comboId([], q.key) : "";
+    return row.keys.some(function (k) {
+        var mods = KeyNames.normalizeMods(k.modifiers);
+        if (exact && mods.join("+") !== q.mods.join("+"))
+            return false;
+        if (!q.mods.every(function (m) {
+            return mods.indexOf(m) !== -1;
+        }))
+            return false;
+        return wantKey === "" || KeyNames.comboId([], k.key) === wantKey;
+    });
+}
+
+// A word: a substring match from 3 letters on, shorter ones match the
+// start of a word ("e" finds "E" and "Emoji", not every "e").
+function matchesText(hay, token) {
+    if (token.length >= 3)
+        return hay.indexOf(token) !== -1;
+    var re = new RegExp("(^|[^a-z0-9\u00c0-\uffff])" + token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    return re.test(hay);
+}
+
+// Search: a key query finds the binds on those keys: "super e" is
+// Super+E (or, when nothing uses exactly that, Super+Shift+E...), "super"
+// every Super bind. Anything else, or a key query without hits ("control
+// center"), needs every word in the title, action, app, group or keys text.
+function filterRows(rows, query, tr) {
+    var tokens = queryTokens(query);
     if (!tokens.length)
         return rows;
+    var combo = comboQuery(query);
+    if (combo) {
+        var exact = combo.key !== "";
+        var hits = rows.filter(function (r) {
+            return matchesCombo(r, combo, exact);
+        });
+        if (!hits.length && exact)
+            hits = rows.filter(function (r) {
+                return matchesCombo(r, combo, false);
+            });
+        if (hits.length)
+            return hits;
+    }
     return rows.filter(function (r) {
         var hay = searchText(r, tr);
         return tokens.every(function (t) {
-            return hay.indexOf(t) !== -1;
+            return matchesText(hay, t);
         });
     });
+}
+
+// Action picker: catalog `options` ({id, label, category, group, text})
+// matching every word of `query` (text, label, id, category or group
+// title), in GROUPS order, after `apps` (installed apps the caller found
+// for the query, shown first as "Open <app>").
+function pickerOptions(options, apps, query, tr) {
+    var tokens = queryTokens(query);
+    var hits = options.filter(function (o) {
+        if (!tokens.length)
+            return true;
+        var hay = [o.text || "", o.label || "", o.id, o.category || "", tr ? tr(group(o.group).title) : o.group].join(" ").toLowerCase();
+        return tokens.every(function (t) {
+            return matchesText(hay, t);
+        });
+    });
+    return (tokens.length ? (apps || []) : []).concat(GROUPS.reduce(function (acc, g) {
+        return acc.concat(hits.filter(function (o) {
+            return o.group === g.id;
+        }));
+    }, []));
 }
 
 // Cheatsheet view: rows with the same title and actions (e.g. "Focus Up"
@@ -499,6 +681,29 @@ function newCustom(actionId) {
             "args": Actions.defaultArgs(id),
             "layouts": []
         }], true);
+}
+
+// What a new bind still needs before it can be saved: "keys", "action",
+// the key of an empty argument field (the app, the command...) or "".
+function missingPart(keys, actions) {
+    if (!keys || !keys.length || keys.some(function (k) {
+        return !k || !String(k.key || "").trim();
+    }))
+        return "keys";
+    if (!actions || !actions.length || !actions[0].id)
+        return "action";
+    for (var i = 0; i < actions.length; i++) {
+        var args = actions[i].args || {};
+        // A raw dispatcher may run without an argument or flags.
+        var fields = Actions.getActionFields(actions[i].id).filter(function (f) {
+            return actions[i].id !== "legacy.dispatcher" || f.key === "dispatcher";
+        });
+        for (var j = 0; j < fields.length; j++) {
+            if (!String(args[fields[j].key] === undefined || args[fields[j].key] === null ? "" : args[fields[j].key]).trim())
+                return fields[j].key;
+        }
+    }
+    return "";
 }
 
 function customList(list) {

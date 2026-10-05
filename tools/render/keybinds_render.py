@@ -7,7 +7,8 @@ Uses your real config, binds.json, palette and wallpaper (see
 settings_render.py) and, when Hyprland runs, the compositor's own binds
 (`hyprctl binds -j`, read-only) for conflict detection. Writes
 <out>/cheatsheet[-search]-<mode>.png and
-<out>/editor[-expanded|-record|-app|-advanced|-conflict]-<mode>.png.
+<out>/editor[-expanded|-record|-added|-search|-search-empty|-advanced|-conflict]-<mode>.png
+and <out>/dialog-{keys,search,ready}-<mode>.png (the add dialog).
 """
 from __future__ import annotations
 
@@ -85,6 +86,13 @@ Window {{
         for (var i = 0; i < kids.length; i++) {{ var f = findItem(name, kids[i]); if (f) return f; }}
         return null;
     }}
+    function findAll(test, from, out) {{
+        out = out || [];
+        var item = from || w.contentItem;
+        if (test(item)) out.push(item);
+        for (var i = 0; i < item.children.length; i++) findAll(test, item.children[i], out);
+        return out;
+    }}
     Image {{ anchors.fill: parent; source: {json.dumps(("file://" + wall) if wall else "")}; fillMode: Image.PreserveAspectCrop }}
     Item {{
         anchors.fill: parent
@@ -132,23 +140,50 @@ Window {{
             h.eval(shell, 'KeybindsStore.expandedUid = "core:system.screenshot"')
             h.eval(recorder, "parent.start(); parent.chipMods = ['SUPER', 'SHIFT']")
             shot("editor-record", 900)
-        # A new bind: "Open app" with the app list open, then Advanced.
-        uid = h.eval(shell, 'KeybindsStore.addCustom("apps.launch")')
-        h.eval(shell, f'KeybindsStore.expandedUid = "{uid}"')
-        h.eval(shell, 'SettingsStore.navigate("input", "apps", "binds.apps")')
-        QTest.qWait(400)
-        pad = h.eval(win, f'w.findItem("keyCapture", w.findItem("keybindRow:{uid}"))')
-        if pad is not None:
-            h.eval(pad, "parent.cancel()")
-        # bring the open app list into view
-        h.eval(win, f"(function(){{ var p = w.findItem('keybindRow:{uid}'); "
-                    "while (p && p.contentY === undefined) p = p.parent; if (p) p.contentY += 300 })()")
-        shot("editor-app", 900)
-        adv = h.eval(win, f'w.findItem("keybindAdvanced", w.findItem("keybindRow:{uid}"))')
-        if adv is not None:
-            h.eval(adv, "clicked()")
+        # The add dialog: recording, then the action search (apps + actions),
+        # then ready to save; after Save the list shows the bind flashing in
+        # its action's group.
+        h.eval(shell, 'KeybindsStore.expandedUid = ""')
+        dialog = h.eval(win, 'w.findItem("keybindAddDialog")')
+        h.eval(dialog, "open()")
+        QTest.qWait(300)
+        dpad = h.eval(win, 'w.findItem("keyCapture", w.findItem("keybindAddBody"))')
+        h.eval(dpad, "parent.chipMods = ['SUPER']")
+        shot("dialog-keys", 700)
+        h.eval(dpad, "parent.commit(['SUPER'], 'B')")
+        QTest.qWait(200)
+        picker = h.eval(win, 'w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, '
+                             'w.findItem("keybindAddBody"))[0]')
+        h.eval(win, 'w.findItem("actionFilter", w.findItem("keybindAddBody")).text = "tele"')
+        h.eval(picker, 'query = "tele"')
+        shot("dialog-search", 700)
+        h.eval(win, 'w.findItem("actionFilter", w.findItem("keybindAddBody")).text = "fullscreen"')
+        h.eval(picker, 'query = "fullscreen"')
+        h.eval(picker, "choose(options[0])")
+        shot("dialog-ready", 700)
+        uid = h.eval(dialog, "save()")
+        shot("editor-added", 900)
+        if uid:
+            h.eval(shell, f'KeybindsStore.remove("{uid}")')
+        # Search: a key query, then nothing found.
+        h.eval(shell, 'KeybindsStore.editorQuery = "super e"')
+        h.eval(win, "(function(){ var p = w.findItem('settingsPage'); if (p && p.item) p.item.contentY = 0 })()")
+        shot("editor-search", 700)
+        h.eval(shell, 'KeybindsStore.editorQuery = "zzzz"')
+        shot("editor-search-empty", 700)
+        h.eval(shell, 'KeybindsStore.editorQuery = ""')
+        # Advanced part of an existing custom bind.
+        rows = h.eval(shell, "JSON.stringify(KeybindsStore.rows.filter(r => r.kind === 'custom').map(r => r.uid).slice(-1))")
+        last = (json.loads(rows or "[]") or [None])[0]
+        if last:
+            h.eval(shell, f'KeybindsStore.expandedUid = "{last}"')
+            h.eval(shell, f'KeybindsStore.reveal("{last}")')
+            QTest.qWait(400)
+            adv = h.eval(win, f'w.findItem("keybindAdvanced", w.findItem("keybindRow:{last}"))')
+            if adv is not None:
+                h.eval(adv, "clicked()")
             shot("editor-advanced", 900)
-        h.eval(shell, f'KeybindsStore.remove("{uid}")')
+            h.eval(shell, 'KeybindsStore.expandedUid = ""')
         # A conflict on purpose: a compositor bind on the first custom combo.
         rows = h.eval(shell, "JSON.stringify(KeybindsStore.rows.filter(r => r.kind === 'custom').slice(0, 1))")
         first = json.loads(rows or "[]")

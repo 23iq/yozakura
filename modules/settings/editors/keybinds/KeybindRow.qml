@@ -23,6 +23,8 @@ Item {
     readonly property bool conflicted: conflicts.length > 0
     readonly property bool modified: KeybindsStore.isModified(bind)
     readonly property var app: BindModel.appOf(bind)
+    // Just added, or moved here by a new action: flashes for a moment.
+    readonly property bool highlighted: KeybindsStore.highlightUid !== "" && KeybindsStore.highlightUid === bind.uid
 
     objectName: "keybindRow:" + bind.uid
     implicitHeight: col.implicitHeight
@@ -42,6 +44,20 @@ Item {
         color: root.expanded ? Ui.alpha(Colors.overBackground, 0.05) : (root.conflicted ? Ui.alpha(Colors.error, 0.06) : Ui.alpha(Colors.overBackground, headerArea.containsMouse ? 0.04 : 0))
         border.width: root.expanded ? 1 : 0
         border.color: root.conflicted ? Ui.alpha(Colors.error, 0.5) : Ui.alpha(Colors.outlineVariant, 0.6)
+    }
+
+    Rectangle {
+        objectName: "keybindHighlight"
+        anchors.fill: parent
+        radius: Styling.radius(-4)
+        color: Colors.primary
+        opacity: root.highlighted ? 0.16 : 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 450
+                easing.type: Easing.OutCubic
+            }
+        }
     }
 
     Column {

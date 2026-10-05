@@ -61,6 +61,17 @@ Flickable {
         }
     }
 
+    // Scroll an item of the page (e.g. one row of a custom editor) into
+    // view: centered, or its top near the top when it is tall.
+    function revealItem(item) {
+        if (!item)
+            return;
+        const y = item.mapToItem(column, 0, 0).y + column.y;
+        const top = item.height > height / 2 ? y - 96 : y - (height - item.height) / 2;
+        scroller.to = Math.max(0, Math.min(top, contentHeight - height));
+        scroller.restart();
+    }
+
     Timer {
         id: unflash
         interval: 1400
