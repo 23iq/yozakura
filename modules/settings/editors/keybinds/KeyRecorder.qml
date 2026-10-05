@@ -16,6 +16,8 @@ import "../../../keybinds/BindModel.js" as BindModel
 // Super), a mouse button or the wheel (with a modifier). The compositor
 // keeps combos it already binds, so the modifier chips can be toggled by
 // hand and the key typed by name (also for XF86 keys and switches).
+// A combo another bind (or the compositor) already uses is marked, live
+// while typing a key name too, but always saved: both binds are kept.
 ColumnLayout {
     id: root
 
@@ -35,9 +37,23 @@ ColumnLayout {
 
     readonly property var draftMods: KeyNames.normalizeMods(chipMods)
     readonly property var clashRows: BindModel.rowsUsing(KeybindsStore.rows, combo.modifiers, combo.key, exceptUid)
-    readonly property var clashNative: {
-        const id = KeyNames.comboId(combo.modifiers, combo.key);
+    readonly property var clashNative: nativeUsing(combo.modifiers, combo.key)
+    readonly property string clashText: clashList(clashRows, clashNative)
+    // While recording: the modifiers held/toggled + the key name typed.
+    readonly property string draftClashText: {
+        const key = keyName.text.trim();
+        if (!recording || !key)
+            return "";
+        return clashList(BindModel.rowsUsing(KeybindsStore.rows, draftMods, key, exceptUid), nativeUsing(draftMods, key));
+    }
+
+    function nativeUsing(mods, key) {
+        const id = KeyNames.comboId(mods, key);
         return id ? KeybindsStore.nativeBinds.filter(n => n.combo === id) : [];
+    }
+
+    function clashList(rows, native) {
+        return rows.map(r => KeybindsStore.title(r)).concat(native.map(n => I18n.t("binds.conflict_native", n.text))).join(", ");
     }
 
     spacing: 6
@@ -81,7 +97,7 @@ ColumnLayout {
             modifiers: root.combo.modifiers
             key: root.combo.key
             sizeOffset: 0
-            tone: root.clashRows.length || root.clashNative.length ? "error" : "normal"
+            tone: root.clashText !== "" ? "error" : "normal"
             placeholder: I18n.t("binds.not_set")
         }
         Item {
@@ -105,10 +121,12 @@ ColumnLayout {
     }
 
     Text {
+        objectName: "clashNote"
         Layout.fillWidth: true
-        visible: !root.recording && (root.clashRows.length > 0 || root.clashNative.length > 0)
+        readonly property string list: root.recording ? root.draftClashText : root.clashText
+        visible: list !== ""
         wrapMode: Text.Wrap
-        text: I18n.t("binds.also_used_by", root.clashRows.map(r => KeybindsStore.title(r)).concat(root.clashNative.map(n => I18n.t("binds.conflict_native", n.text))).join(", "))
+        text: I18n.t("binds.also_used_by", list) + ". " + I18n.t("binds.conflict_kept")
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(-3)
         color: Colors.error
@@ -238,6 +256,7 @@ ColumnLayout {
             }
             TextInput {
                 id: keyName
+                objectName: "keyName"
                 anchors.fill: parent
                 anchors.leftMargin: 12
                 anchors.rightMargin: 12

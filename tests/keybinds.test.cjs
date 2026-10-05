@@ -335,3 +335,63 @@ test('addNewDefaults appends missing defaults on free combos only', () => {
     const onF = { name: 'Mine', keys: [{ modifiers: ['SUPER'], key: 'f' }], actions: [{ id: 'window.close', args: {}, layouts: [] }], enabled: true };
     eq(Actions.addNewDefaults([onF], CustomDefaults.binds(), ids).binds.map(b => b.actions[0].id), ['window.close', 'window.fullscreen']);
 });
+
+// --- Open app ------------------------------------------------------------------
+
+const appBind = (app, mods, key, extra) => Object.assign({
+    name: '', keys: [{ modifiers: mods, key }], actions: [{ id: 'apps.launch', args: { app }, layouts: [] }], enabled: true,
+}, extra || {});
+
+test('apps.launch renders `<app> launch <desktop id>`, quoted only when needed', () => {
+    const exec = app => Actions.resolveAction({ id: 'apps.launch', args: { app } });
+    eq(exec('firefox'), { dispatcher: 'exec', argument: `${app} launch firefox`, flags: '' });
+    assert.strictEqual(exec(' org.gnome.Nautilus.desktop ').argument, `${app} launch org.gnome.Nautilus`);
+    assert.strictEqual(exec("it's; rm -rf ~").argument, `${app} launch 'it'\\''s; rm -rf ~'`);
+    assert.strictEqual(exec('').argument, '', 'no app: nothing to run');
+    eq(Actions.defaultArgs('apps.launch'), { app: '' });
+    eq(Actions.getActionFields('apps.launch').map(f => f.kind), ['app']);
+    eq(Actions.actionFromLegacy('exec', `${app} launch firefox`, ''), { id: 'apps.launch', args: { app: 'firefox' } });
+});
+
+test('the Go renderer quotes desktop ids like the JS one', () => {
+    const go = fs.readFileSync(path.join(repo, 'backend/pkg/svc/compositor/actions.go'), 'utf8');
+    const js = fs.readFileSync(path.join(repo, 'config/KeybindActions.js'), 'utf8');
+    const goRe = /plainWord = regexp\.MustCompile\(`([^`]+)`\)/.exec(go)[1];
+    const jsRe = /return \/(\^[^/]+\$)\/\.test\(s\)/.exec(js)[1];
+    assert.strictEqual(goRe, jsRe);
+});
+
+test('app binds: the row shows the installed app, else its id', () => {
+    const lookup = id => (id === 'firefox' ? { name: 'Firefox', icon: 'firefox' } : null);
+    const rows = Model.withApps(Model.buildRows(data([appBind('firefox', ['SUPER'], 'B'), appBind('gone', ['SUPER'], 'G')])), lookup);
+    const [ff, gone] = rows.slice(-2);
+    assert.strictEqual(ff.group, 'apps');
+    assert.strictEqual(Model.title(ff), 'Firefox');
+    eq(Model.appOf(ff), { id: 'firefox', name: 'Firefox', icon: 'firefox' });
+    assert.strictEqual(Model.title(gone), 'Open App · gone');
+    eq(Model.filterRows(rows, 'firefox').map(r => r.uid), [ff.uid]);
+    assert.strictEqual(Model.appOf(rows[0]), null);
+    // display fields never reach binds.json
+    eq(Model.customBind('', ff.keys, ff.actions).actions[0], { id: 'apps.launch', args: { app: 'firefox' }, layouts: [] });
+});
+
+test('a new custom bind opens an app; Advanced is only for the rare parts', () => {
+    eq(Model.newCustom().actions[0], { id: 'apps.launch', args: { app: '' }, layouts: [] });
+    const rows = Model.buildRows(data([
+        appBind('firefox', ['SUPER'], 'B'),
+        appBind('firefox', ['SUPER'], 'B', { keys: [{ modifiers: ['SUPER'], key: 'B' }, { modifiers: ['ALT'], key: 'B' }] }),
+        { name: 'x', keys: [{ modifiers: ['SUPER'], key: 'H' }], actions: [{ id: 'scrolling.promote', args: {}, layouts: ['scrolling'] }], enabled: true },
+        { name: 'raw', keys: [{ modifiers: ['SUPER'], key: 'J' }], actions: [{ id: 'legacy.dispatcher', args: { dispatcher: 'pin' } }], enabled: true },
+    ]));
+    eq(rows.slice(-4).map(Model.isAdvanced), [false, true, true, true]);
+    assert.strictEqual(Model.isAdvanced(rows[0]), false, 'core binds have no advanced part');
+});
+
+test('conflicts never drop a bind: both stay with their own combo', () => {
+    const list = [appBind('firefox', ['SUPER'], 'B'), appBind('kitty', ['SUPER'], 'K')];
+    const moved = Model.withCustom(list, 1, { keys: [{ modifiers: ['SUPER'], key: 'b' }] });
+    eq(moved.map(b => b.actions[0].args.app), ['firefox', 'kitty']);
+    eq(moved.map(b => b.keys[0].key), ['B', 'b']);
+    const c = Model.findConflicts(Model.buildRows(data(moved)), []);
+    eq(Object.keys(c).sort(), ['custom:0', 'custom:1']);
+});

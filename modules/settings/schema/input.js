@@ -2,8 +2,9 @@
 .import "../../keybinds/BindModel.js" as BindModel
 
 // Input & Keybinds: every shell and compositor shortcut from binds.json,
-// one card per BindModel group (KeybindGroupEditor), plus the toolbar
-// (search, add, cheatsheet, conflicts). Edits apply live (binds.json ->
+// one card per BindModel group (KeybindGroupEditor; the group's
+// cards stay compact: no description), plus the toolbar (search,
+// add, conflicts, cheatsheet). Edits apply live (binds.json ->
 // compositor TOML -> yozd). Entry format: see modules/settings/AGENTS.md.
 
 function groupSection(g) {
@@ -17,7 +18,6 @@ function groupSection(g) {
                 "group": g.id,
                 "resettable": false,
                 "label": g.title,
-                "description": g.desc,
                 "keywords": "keybinds shortcuts " + g.id
             }
         ]

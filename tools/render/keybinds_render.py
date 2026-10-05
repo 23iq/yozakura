@@ -7,7 +7,7 @@ Uses your real config, binds.json, palette and wallpaper (see
 settings_render.py) and, when Hyprland runs, the compositor's own binds
 (`hyprctl binds -j`, read-only) for conflict detection. Writes
 <out>/cheatsheet[-search]-<mode>.png and
-<out>/editor[-expanded|-record|-conflict]-<mode>.png.
+<out>/editor[-expanded|-record|-app|-advanced|-conflict]-<mode>.png.
 """
 from __future__ import annotations
 
@@ -132,6 +132,23 @@ Window {{
             h.eval(shell, 'KeybindsStore.expandedUid = "core:system.screenshot"')
             h.eval(recorder, "parent.start(); parent.chipMods = ['SUPER', 'SHIFT']")
             shot("editor-record", 900)
+        # A new bind: "Open app" with the app list open, then Advanced.
+        uid = h.eval(shell, 'KeybindsStore.addCustom("apps.launch")')
+        h.eval(shell, f'KeybindsStore.expandedUid = "{uid}"')
+        h.eval(shell, 'SettingsStore.navigate("input", "apps", "binds.apps")')
+        QTest.qWait(400)
+        pad = h.eval(win, f'w.findItem("keyCapture", w.findItem("keybindRow:{uid}"))')
+        if pad is not None:
+            h.eval(pad, "parent.cancel()")
+        # bring the open app list into view
+        h.eval(win, f"(function(){{ var p = w.findItem('keybindRow:{uid}'); "
+                    "while (p && p.contentY === undefined) p = p.parent; if (p) p.contentY += 300 })()")
+        shot("editor-app", 900)
+        adv = h.eval(win, f'w.findItem("keybindAdvanced", w.findItem("keybindRow:{uid}"))')
+        if adv is not None:
+            h.eval(adv, "clicked()")
+            shot("editor-advanced", 900)
+        h.eval(shell, f'KeybindsStore.remove("{uid}")')
         # A conflict on purpose: a compositor bind on the first custom combo.
         rows = h.eval(shell, "JSON.stringify(KeybindsStore.rows.filter(r => r.kind === 'custom').slice(0, 1))")
         first = json.loads(rows or "[]")

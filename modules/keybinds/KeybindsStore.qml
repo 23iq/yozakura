@@ -29,7 +29,12 @@ Singleton {
         root.revision;
         return root.snapshot();
     }
-    readonly property var rows: BindModel.buildRows(data)
+    // Rows carry the installed app's name/icon on "Open app" actions;
+    // re-read when the desktop entries change.
+    readonly property var rows: {
+        AppSearch.list;
+        return BindModel.withApps(BindModel.buildRows(data), root.appInfo);
+    }
     property var hyprBinds: []
     readonly property var nativeBinds: BindModel.nativeBinds(hyprBinds, rows)
     readonly property var conflicts: BindModel.findConflicts(rows, nativeBinds)
@@ -43,6 +48,30 @@ Singleton {
     // the one expanded row.
     property string editorQuery: ""
     property string expandedUid: ""
+    // Only conflicting rows (the toolbar's conflict chip).
+    property bool conflictFilter: false
+    // Rows the group cards show: search, then the conflict filter.
+    function visibleRows(groupId) {
+        const all = BindModel.filterRows(root.rows.filter(r => r.group === groupId), root.editorQuery, root.tr);
+        return root.conflictFilter ? all.filter(r => !!root.conflicts[r.uid]) : all;
+    }
+
+    // Installed app by desktop id: {name, icon}, or null.
+    function appInfo(id) {
+        if (!id)
+            return null;
+        const e = DesktopEntries.byId ? DesktopEntries.byId(id) : null;
+        if (e)
+            return {
+                "name": e.name || id,
+                "icon": e.icon || ""
+            };
+        const hit = Array.from(AppSearch.list || []).find(a => a && a.id === id);
+        return hit ? {
+            "name": hit.name || id,
+            "icon": hit.icon || ""
+        } : null;
+    }
 
     function tr(key) {
         return I18n.t(key);
@@ -104,10 +133,6 @@ Singleton {
 
     function title(r) {
         return r ? BindModel.title(r, root.tr) : "";
-    }
-
-    function subtitle(r) {
-        return r ? BindModel.subtitle(r, root.tr) : "";
     }
 
     function conflictsOf(uid) {
@@ -256,7 +281,7 @@ Singleton {
         root._changed();
     }
 
-    // New custom bind running `actionId` (default: a command); returns its uid.
+    // New custom bind running `actionId` (default: open an app); returns its uid.
     function addCustom(actionId) {
         const list = root._custom();
         root._setCustomList(BindModel.withAddedCustom(list, BindModel.newCustom(actionId)));
@@ -288,8 +313,16 @@ Singleton {
         return KeybindActions.groupOf(id);
     }
 
-    function actionOptions() {
-        return KeybindActions.getActionOptions().map(o => Object.assign({}, o, {
+    // Catalog actions for the picker; `withHidden` adds the raw dispatcher
+    // (the editor's "Advanced" part).
+    function actionOptions(withHidden) {
+        const extra = withHidden ? [KeybindActions.getActionById("legacy.dispatcher")] : [];
+        return KeybindActions.getActionOptions().concat(extra.map(a => ({
+                    "id": a.id,
+                    "label": a.label,
+                    "category": a.category,
+                    "group": a.group
+                }))).map(o => Object.assign({}, o, {
                 "text": BindModel.actionLabel(o.id, root.tr)
             }));
     }

@@ -395,7 +395,8 @@ QtObject {
     function forHyprName(n) { return null }
     function toggle(ref) { return true }
 }"""
-# Apps the special workspaces app picker finds (AppSearch.fuzzyQuery).
+# Installed apps (AppSearch: fuzzyQuery, getAllApps, list): the special
+# workspaces app picker and the keybinds "Open app" picker.
 APP_SEARCH_STUB = """pragma Singleton
 import QtQuick
 QtObject {
@@ -403,10 +404,12 @@ QtObject {
         {"id": "org.telegram.desktop", "name": "Telegram", "icon": "telegram", "execString": "Telegram -- %u"},
         {"id": "discord", "name": "Discord", "icon": "discord", "execString": "/usr/bin/discord --url -- %u"}
     ]
+    property var list: apps
     function fuzzyQuery(q) {
         const l = String(q).toLowerCase();
         return apps.filter(a => a.name.toLowerCase().indexOf(l) !== -1);
     }
+    function getAllApps() { return apps }
 }"""
 YOZD_STUB = 'pragma Singleton\nimport QtQuick\nQtObject { property string compositorName: "hyprland" }'
 

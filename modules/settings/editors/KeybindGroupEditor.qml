@@ -7,21 +7,21 @@ import qs.modules.keybinds
 import qs.modules.settings.store
 import qs.config
 import "keybinds"
-import "../../keybinds/BindModel.js" as BindModel
-import "../../../config/KeybindActions.js" as KeybindActions
 
 // The binds of one group (`entry.group`, a BindModel.GROUPS id): one
-// KeybindRow each, filtered by the toolbar search, plus "add" with the
-// group's first action.
+// compact KeybindRow each, filtered by the toolbar (search, conflicts).
 ColumnLayout {
     id: root
 
     property var entry
     readonly property string groupId: entry ? entry.group : ""
-    readonly property var rows: BindModel.filterRows(KeybindsStore.rows.filter(r => r.group === root.groupId), KeybindsStore.editorQuery, KeybindsStore.tr)
-    readonly property var firstAction: KeybindActions.getActionOptions().find(o => o.group === root.groupId)
+    readonly property var rows: {
+        KeybindsStore.rows;
+        KeybindsStore.conflicts;
+        return KeybindsStore.visibleRows(root.groupId);
+    }
 
-    spacing: 6
+    spacing: 2
 
     onRowsChanged: rowModel.sync(rows.map(r => r.uid))
 
@@ -37,6 +37,7 @@ ColumnLayout {
             return;
         KeybindsStore.pendingEdit = "";
         KeybindsStore.editorQuery = "";
+        KeybindsStore.conflictFilter = false;
         KeybindsStore.expandedUid = uid;
         SettingsStore.navigate("input", root.groupId, "binds." + root.groupId);
     }
@@ -64,16 +65,10 @@ ColumnLayout {
         Layout.fillWidth: true
         topPadding: 4
         bottomPadding: 4
-        text: KeybindsStore.editorQuery !== "" ? I18n.t("binds.no_matches") : I18n.t("binds.group_empty")
+        text: KeybindsStore.editorQuery !== "" || KeybindsStore.conflictFilter ? I18n.t("binds.no_matches") : I18n.t("binds.group_empty")
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(-2)
         font.italic: true
         color: Colors.outline
-    }
-
-    AddLink {
-        visible: !!root.firstAction
-        text: I18n.t("binds.add_to_group")
-        onClicked: KeybindsStore.expandedUid = KeybindsStore.addCustom(root.firstAction.id)
     }
 }

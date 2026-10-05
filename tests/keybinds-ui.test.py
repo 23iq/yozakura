@@ -1,6 +1,7 @@
 """Keybinds UI, offscreen: keycap rendering, the settings editor (enable,
-record incl. Super, chips, mouse, conflicts, add/remove, reset) and the
-cheatsheet panel (search, edit, Esc). Real modules/components,
+record incl. Super, chips, mouse, conflicts kept + filter, add/remove,
+reset, "Open app" with the app picker, Advanced) and the cheatsheet panel
+(search, edit, Esc). Real modules/components,
 modules/keybinds and modules/settings files on tests/lib/settings_env.py.
 """
 import json
@@ -135,8 +136,15 @@ check(find("keybindRow:core:system.tools") is not None, "core bind row rendered"
 check(find("keybindRow:custom:0") is not None, "custom bind row rendered")
 adapter = "KeybindsStore.adapter"
 
+# the list is compact: no switch per row, it lives in the opened editor
+check(ev('w.findItem("keybindEnabled", w.findItem("keybindRow:core:system.tools"))') is None, "no switch in the list")
+check(ev('w.findItem("keybindRow:core:system.tools").implicitHeight') <= 44, "rows are one compact line")
+
 # enable switch (core binds go to the adapter's `disabled` list)
+ev('KeybindsStore.expandedUid = "core:system.tools"')
+QTest.qWait(300)
 toggle = ev('w.findItem("keybindEnabled", w.findItem("keybindRow:core:system.tools"))')
+check(toggle is not None, "the opened editor has the enable switch")
 h.eval(toggle, "flip()")
 check(ev(f"{adapter}.disabled.indexOf('system.tools') !== -1"), "disabling a core bind lists it in `disabled`")
 check(ev("CompositorTomlWriter.writes") > 0, "an edit regenerates the compositor TOML")
@@ -215,13 +223,40 @@ check(ev("KeybindsStore.isModified(KeybindsStore.row('core:system.tools'))") is 
 ev('KeybindsStore.reset("core:system.tools")')
 check(ev(f"JSON.stringify([{tools}.modifiers, {tools}.key])") == '[["SUPER"],"S"]', "reset restores the default")
 
-# conflicts: another bind and a compositor bind
+# conflicts: another bind and a compositor bind. Saving a taken combo is
+# allowed and keeps both binds as they are (nothing is overwritten).
+ev('KeybindsStore.expandedUid = "custom:0"')
+QTest.qWait(200)
 ev('KeybindsStore.setKeys("custom:0", [{modifiers: ["SUPER"], key: "s"}])')
+check(ev(f"JSON.stringify([{adapter}.custom[0].keys[0].key, {tools}.key])") == '["s","S"]',
+      "a conflicting combo is saved and the other bind keeps its own")
+check(ev(f"{adapter}.custom.length") == 2 and ev(f"{adapter}.disabled.length") == 0, "no bind removed or disabled")
 check(ev("KeybindsStore.conflictsOf('custom:0').map(c => c.uid).join()") == "core:system.tools",
       "duplicate combo is a conflict")
 check(ev("KeybindsStore.conflictsOf('core:system.tools').length") == 1, "both sides are marked")
 QTest.qWait(100)
 check(h.eval(find("keybindRow:core:system.tools"), "conflicted") is True, "row highlights the conflict")
+note = ev('w.findItem("conflictNote", w.findItem("keybindRow:core:system.tools"))')
+check(h.eval(note, "visible") is True and "Terminal" in h.eval(note, "text"), "the row names the other bind")
+clash = ev('w.findItem("clashNote", w.findItem("keybindRow:custom:0"))')
+check(h.eval(clash, "visible") is True and "kept" in h.eval(clash, "text"),
+      f"the editor warns and says both are kept ({h.eval(clash, 'text')})")
+# while recording, a typed key name is checked live
+pad = find("keyCapture")
+rec = h.eval(pad, "parent")
+h.eval(rec, "start(); toggleMod('SUPER', true)")
+h.eval(ev('w.findItem("keyName", w.findItem("keybindRow:custom:0"))'), "text = 'S'")
+check("Take a screenshot" not in (h.eval(rec, "draftClashText") or "")
+      and "Open tools" in (h.eval(rec, "draftClashText") or ""), f"live clash: {h.eval(rec, 'draftClashText')}")
+h.eval(rec, "cancel()")
+# the toolbar chip lists only the conflicting binds
+ev("KeybindsStore.conflictFilter = true")
+QTest.qWait(100)
+check(find("keybindRow:core:system.tools") is not None and find("keybindRow:core:launcher") is None,
+      "conflict filter shows only conflicts")
+chip = find("keybindsConflicts")
+h.eval(chip, "children[1].clicked(null)")
+check(ev("KeybindsStore.conflictFilter") is False, "clicking the chip shows everything again")
 ev('KeybindsStore.hyprBinds = [{modmask: 64, key: "1", has_description: true, description: "Discord", submap: ""}]')
 check(ev("KeybindsStore.conflictText('custom:1')") == "Compositor: Discord", "native compositor bind conflict")
 ev("KeybindsStore.hyprBinds = []")
@@ -235,11 +270,39 @@ check(ev("KeybindsStore.row('custom:0').group") == "windows", "row moves to its 
 ev('KeybindsStore.setName("custom:0", "Close it")')
 check(ev(f"{adapter}.custom[0].name") == "Close it", "description saved")
 
-# add / remove custom binds
+# add: a new bind opens on "Open app" with the app list; picking an app
+# stores its desktop id and the row shows the app's name
 add = find("keybindsAdd")
 h.eval(add, "clicked()")
 check(ev(f"{adapter}.custom.length") == 3, "add creates a custom bind")
 check(ev("KeybindsStore.expandedUid") == "custom:2", "new bind opens")
+check(ev(f"{adapter}.custom[2].actions[0].id") == "apps.launch", "a new bind opens an app")
+QTest.qWait(300)
+option = find("appOption:discord")
+check(option is not None and h.eval(option, "visible"), "the app list is open on a new bind")
+h.eval(option, "children[3].clicked(null)")
+check(ev(f"JSON.stringify({adapter}.custom[2].actions[0].args)") == '{"app":"discord"}', "picked app saved by id")
+check(ev("KeybindsStore.title(KeybindsStore.row('custom:2'))") == "Discord", "the row shows the app name")
+check(ev("KeybindsStore.row('custom:2').group") == "apps", "app binds are in the apps group")
+# the action picker finds apps by name too
+QTest.qWait(200)
+picker = ev('w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, w.findItem("keybindRow:custom:2"))[0]')
+h.eval(picker, 'query = "tele"')
+check(h.eval(picker, "options[0].app") == "org.telegram.desktop", "typing an app name offers opening it")
+h.eval(picker, "choose(options[0])")
+check(ev(f"{adapter}.custom[2].actions[0].args.app") == "org.telegram.desktop", "picked from the action search")
+# Advanced: name, layouts, more combos/actions, raw dispatcher
+QTest.qWait(200)
+details = ev('w.findItem("keybindAdvanced", w.findItem("keybindRow:custom:2")).parent.parent')
+check(h.eval(details, "advanced") is False, "advanced part closed for a simple bind")
+picker = ev('w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, w.findItem("keybindRow:custom:2"))[0]')
+h.eval(picker, 'query = "dispatcher"')
+check(h.eval(picker, "options.length") == 0, "raw dispatcher only in Advanced")
+h.eval(details, "advanced = true")
+QTest.qWait(50)
+picker = ev('w.findAll(i => i.withHidden !== undefined && i.actionId !== undefined, w.findItem("keybindRow:custom:2"))[0]')
+h.eval(picker, 'query = "dispatcher"')
+check(h.eval(picker, "options.map(o => o.id).join()") == "legacy.dispatcher", "Advanced offers the raw dispatcher")
 ev('KeybindsStore.remove("custom:2")')
 check(ev(f"{adapter}.custom.length") == 2, "remove deletes it")
 

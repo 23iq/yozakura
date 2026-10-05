@@ -8,49 +8,32 @@ import qs.modules.services
 import qs.modules.keybinds
 import qs.config
 import "../../Ui.js" as Ui
-import "../../../keybinds/BindModel.js" as BindModel
 
-// Action field: shows the current action; opens an inline, searchable list
-// of every catalog action (KeybindActions.js) grouped like the cheatsheet,
-// including "Run command" and "Open app". Typing also lists matching
-// installed apps first: picking one is "Open app" with that app.
+// The app of an "Open app" bind: shows the chosen app (icon + name) and
+// opens a searchable list of the installed apps, the launcher's own index
+// (AppSearch: most used first, fuzzy search). Picks a desktop id.
 Column {
     id: root
 
-    property string actionId: ""
-    // Also offer the raw dispatcher (the editor's "Advanced" part).
-    property bool withHidden: false
-    // `args` is set for an app hit ({app: <desktop id>}), else null.
-    signal picked(string id, var args)
+    property string appId: ""
+    signal picked(string id)
 
     property bool open: false
     property string query: ""
 
-    readonly property var options: {
-        KeybindsStore.revision;
-        const all = KeybindsStore.actionOptions(root.withHidden);
-        const q = query.trim().toLowerCase();
-        const hits = q === "" ? all : all.filter(o => (o.text + " " + o.label + " " + o.id + " " + I18n.t(BindModel.group(o.group).title)).toLowerCase().indexOf(q) !== -1);
-        const apps = q === "" ? [] : AppSearch.fuzzyQuery(query.trim()).slice(0, 5).map(a => ({
-                    "id": "apps.launch",
-                    "app": a.id,
-                    "icon": a.icon || "",
-                    "text": I18n.t("binds.open_app", a.name),
-                    "group": "_apps"
-                }));
-        // Apps first, then grouped in display order, keeping the catalog
-        // order inside a group.
-        return apps.concat(BindModel.GROUPS.reduce((acc, g) => acc.concat(hits.filter(o => o.group === g.id)), []));
+    readonly property var info: KeybindsStore.appInfo(appId)
+    readonly property var apps: {
+        const q = query.trim();
+        if (q !== "")
+            return AppSearch.fuzzyQuery(q).slice(0, 40);
+        return AppSearch.getAllApps ? AppSearch.getAllApps() : [];
     }
 
     spacing: 6
 
-    function choose(o) {
-        root.picked(o.id, o.app !== undefined ? {
-            "app": o.app
-        } : null);
-        root.open = false;
-    }
+    // A new "Open app" bind shows the list right away (without taking the
+    // focus from the key recorder).
+    Component.onCompleted: open = appId === ""
 
     function toggle() {
         open = !open;
@@ -61,7 +44,13 @@ Column {
         }
     }
 
+    function choose(id) {
+        open = false;
+        picked(id);
+    }
+
     Item {
+        objectName: "appField"
         width: parent.width
         height: 38
         activeFocusOnTab: true
@@ -71,31 +60,30 @@ Column {
         Rectangle {
             anchors.fill: parent
             radius: Math.min(Styling.radius(0), height / 2)
-            color: Ui.alpha(Colors.overBackground, buttonArea.containsMouse ? 0.1 : 0.06)
+            color: Ui.alpha(Colors.overBackground, fieldArea.containsMouse ? 0.1 : 0.06)
             border.width: root.open || parent.activeFocus ? 2 : 1
-            border.color: root.open || parent.activeFocus ? Colors.primary : Ui.alpha(Colors.outline, 0.35)
+            border.color: root.open || parent.activeFocus ? Colors.primary : (root.appId !== "" && !root.info ? Colors.error : Ui.alpha(Colors.outline, 0.35))
         }
-        Text {
-            id: groupIcon
+        IconImage {
+            id: appIcon
             anchors.left: parent.left
-            anchors.leftMargin: 14
+            anchors.leftMargin: 12
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons[BindModel.group(KeybindsStore.actionGroup(root.actionId)).icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.primary
+            implicitSize: 20
+            source: Quickshell.iconPath(root.info ? (root.info.icon || root.appId) : "", "application-x-executable")
+            asynchronous: true
         }
         Text {
-            anchors.left: groupIcon.right
+            anchors.left: appIcon.right
             anchors.leftMargin: 10
             anchors.right: caret.left
             anchors.rightMargin: 10
             anchors.verticalCenter: parent.verticalCenter
-            text: BindModel.actionLabel(root.actionId, KeybindsStore.tr)
+            text: root.info ? root.info.name : (root.appId !== "" ? I18n.t("binds.app_missing", root.appId) : I18n.t("binds.app_choose"))
             elide: Text.ElideRight
             font.family: Config.theme.font
             font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overBackground
+            color: root.info ? Colors.overBackground : (root.appId !== "" ? Colors.error : Colors.outline)
         }
         Text {
             id: caret
@@ -109,7 +97,7 @@ Column {
             rotation: root.open ? 180 : 0
         }
         MouseArea {
-            id: buttonArea
+            id: fieldArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
@@ -119,7 +107,7 @@ Column {
 
     Rectangle {
         width: parent.width
-        height: root.open ? 300 : 0
+        height: root.open ? 260 : 0
         visible: height > 0
         clip: true
         radius: Styling.radius(-2)
@@ -135,12 +123,25 @@ Column {
             }
         }
 
-        TextInput {
-            id: filter
-            objectName: "actionFilter"
+        Text {
+            id: searchGlyph
             x: 14
             y: 10
-            width: parent.width - 28
+            height: 26
+            verticalAlignment: Text.AlignVCenter
+            text: Icons.search
+            font.family: Icons.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: Colors.overSurfaceVariant
+        }
+        TextInput {
+            id: filter
+            objectName: "appFilter"
+            anchors.left: searchGlyph.right
+            anchors.leftMargin: 8
+            anchors.right: parent.right
+            anchors.rightMargin: 14
+            y: 10
             height: 26
             verticalAlignment: TextInput.AlignVCenter
             font.family: Config.theme.font
@@ -155,14 +156,14 @@ Column {
             Keys.onDownPressed: list.incrementCurrentIndex()
             Keys.onUpPressed: list.decrementCurrentIndex()
             Keys.onReturnPressed: {
-                const o = root.options[Math.max(0, list.currentIndex)];
-                if (o)
-                    root.choose(o);
+                const a = root.apps[Math.max(0, list.currentIndex)];
+                if (a)
+                    root.choose(a.id);
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 visible: parent.text === ""
-                text: I18n.t("binds.action_search")
+                text: I18n.t("binds.app_search")
                 font: parent.font
                 color: Colors.outline
             }
@@ -176,55 +177,42 @@ Column {
             anchors.bottomMargin: 6
             width: parent.width
             clip: true
-            model: root.options
+            model: root.apps
             currentIndex: 0
             boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
             }
-            section.property: "group"
-            section.delegate: Text {
-                required property string section
-                leftPadding: 14
-                topPadding: 8
-                bottomPadding: 2
-                text: (section === "_apps" ? I18n.t("binds.apps_section") : I18n.t(BindModel.group(section).title)).toUpperCase()
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-4)
-                font.weight: Font.Bold
-                font.letterSpacing: 1
-                color: Colors.overSurfaceVariant
-            }
             delegate: Item {
                 id: option
                 required property var modelData
                 required property int index
+                objectName: "appOption:" + modelData.id
                 width: list.width
-                height: 32
+                height: 36
 
                 Rectangle {
                     anchors.fill: parent
                     anchors.leftMargin: 6
                     anchors.rightMargin: 6
                     radius: Styling.radius(-6)
-                    color: option.modelData.id === root.actionId && option.modelData.app === undefined ? Ui.alpha(Colors.primary, 0.18) : Ui.alpha(Colors.overBackground, optionArea.containsMouse || list.currentIndex === option.index ? 0.08 : 0)
+                    color: option.modelData.id === root.appId ? Ui.alpha(Colors.primary, 0.18) : Ui.alpha(Colors.overBackground, optionArea.containsMouse || list.currentIndex === option.index ? 0.08 : 0)
                 }
                 IconImage {
                     id: optionIcon
-                    x: 18
+                    x: 16
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: option.modelData.app !== undefined
-                    implicitSize: visible ? 18 : 0
-                    source: visible ? Quickshell.iconPath(option.modelData.icon || "", "application-x-executable") : ""
+                    implicitSize: 22
+                    source: Quickshell.iconPath(option.modelData.icon || "", "application-x-executable")
                     asynchronous: true
                 }
                 Text {
                     anchors.left: optionIcon.right
-                    anchors.leftMargin: optionIcon.visible ? 8 : 0
+                    anchors.leftMargin: 10
                     anchors.right: parent.right
                     anchors.rightMargin: 14
                     anchors.verticalCenter: parent.verticalCenter
-                    text: option.modelData.text
+                    text: option.modelData.name
                     elide: Text.ElideRight
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-1)
@@ -235,7 +223,7 @@ Column {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: root.choose(option.modelData)
+                    onClicked: root.choose(option.modelData.id)
                 }
             }
         }

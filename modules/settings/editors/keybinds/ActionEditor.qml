@@ -11,8 +11,8 @@ import "../../../../config/KeybindActions.js" as KeybindActions
 import "../../../keybinds/BindModel.js" as BindModel
 
 // One action of a bind: the searchable picker, the action's arguments
-// (workspace, direction, command...) and, for custom binds, the layouts it
-// is limited to.
+// (workspace, direction, command, the app to open...) and, in the
+// editor's "Advanced" part, the layouts it is limited to.
 ColumnLayout {
     id: root
 
@@ -23,6 +23,8 @@ ColumnLayout {
             "layouts": []
         })
     property bool showLayouts: false
+    // Offer the raw dispatcher in the picker.
+    property bool withHidden: false
     property bool removable: false
     signal edited(var action)
     signal removed
@@ -39,6 +41,14 @@ ColumnLayout {
         }, patch));
     }
 
+    function setArg(key, value) {
+        const args = Object.assign({}, root.action.args || {});
+        args[key] = value;
+        root.emit({
+            "args": args
+        });
+    }
+
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
@@ -46,9 +56,10 @@ ColumnLayout {
         ActionPicker {
             Layout.fillWidth: true
             actionId: root.action.id
-            onPicked: id => root.emit({
+            withHidden: root.withHidden
+            onPicked: (id, args) => root.emit({
                     "id": id,
-                    "args": KeybindActions.defaultArgs(id)
+                    "args": args || KeybindActions.defaultArgs(id)
                 })
         }
         PillButton {
@@ -67,28 +78,32 @@ ColumnLayout {
         delegate: RowLayout {
             id: fieldRow
             required property var modelData
+            readonly property bool isApp: modelData.kind === "app"
             Layout.fillWidth: true
             spacing: 12
 
             Text {
+                // The app picker speaks for itself.
+                visible: !fieldRow.isApp
                 Layout.preferredWidth: 110
                 text: I18n.t(KeybindActions.fieldLabelKey(fieldRow.modelData.key))
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
             }
+            AppPickerField {
+                visible: fieldRow.isApp
+                Layout.fillWidth: true
+                appId: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
+                onPicked: id => root.setArg(fieldRow.modelData.key, id)
+            }
             TextControl {
+                visible: !fieldRow.isApp
                 Layout.fillWidth: true
                 text: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
                 placeholder: fieldRow.modelData.placeholder
                 monospace: fieldRow.modelData.key === "command" || root.action.id === "legacy.dispatcher"
-                onEdited: t => {
-                    const args = Object.assign({}, root.action.args || {});
-                    args[fieldRow.modelData.key] = t;
-                    root.emit({
-                        "args": args
-                    });
-                }
+                onEdited: t => root.setArg(fieldRow.modelData.key, t)
             }
         }
     }

@@ -131,11 +131,62 @@ function actionDetail(action) {
     }).join(" ");
 }
 
-// "Switch Workspace · 3"
+// "Switch Workspace · 3"; an app bind is the app's name ("Firefox", see
+// withApps), else "Open app · <desktop id>".
 function actionText(action, tr) {
+    if (action.id === "apps.launch" && action.appName)
+        return action.appName;
     var detail = actionDetail(action);
     var label = actionLabel(action.id, tr);
     return detail ? label + " · " + detail : label;
+}
+
+// Rows with the installed app's name and icon on every "apps.launch"
+// action (display only, never written back). `lookup(desktopId)` returns
+// {name, icon} or null (not installed: the id is shown).
+function withApps(rows, lookup) {
+    return rows.map(function (row) {
+        if (!row.actions.some(function (a) {
+            return a.id === "apps.launch";
+        }))
+            return row;
+        return Object.assign({}, row, {
+            "actions": row.actions.map(function (a) {
+                var id = a.id === "apps.launch" ? Actions.appIdOf(a) : "";
+                var info = id && lookup ? lookup(id) : null;
+                if (!info)
+                    return a;
+                return Object.assign({}, a, {
+                    "appName": info.name || id,
+                    "appIcon": info.icon || ""
+                });
+            })
+        });
+    });
+}
+
+// The first app a row opens ({id, name, icon}), or null.
+function appOf(row) {
+    for (var i = 0; i < row.actions.length; i++) {
+        var a = row.actions[i];
+        if (a.id === "apps.launch")
+            return {
+                "id": Actions.appIdOf(a),
+                "name": a.appName || "",
+                "icon": a.appIcon || ""
+            };
+    }
+    return null;
+}
+
+// Uses something only the editor's "Advanced" part shows: several combos
+// or actions, layout limits or a raw dispatcher.
+function isAdvanced(row) {
+    if (row.kind !== "custom")
+        return false;
+    return row.keys.length > 1 || row.actions.length > 1 || row.actions.some(function (a) {
+        return (a.layouts && a.layouts.length > 0) || a.id === "legacy.dispatcher";
+    });
 }
 
 function title(row, tr) {
@@ -161,6 +212,8 @@ function searchText(row, tr) {
     });
     row.actions.forEach(function (a) {
         parts.push(a.id);
+        if (a.appName)
+            parts.push(a.appName);
         var entry = Actions.getActionById(a.id);
         if (entry)
             parts.push(entry.label);
@@ -435,8 +488,9 @@ function customBind(name, keys, actions, enabled) {
     };
 }
 
+// New custom bind (default action: open an app, the usual case).
 function newCustom(actionId) {
-    var id = actionId || "command.run";
+    var id = actionId || "apps.launch";
     return customBind("", [{
             "modifiers": ["SUPER"],
             "key": ""

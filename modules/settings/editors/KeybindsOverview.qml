@@ -9,8 +9,9 @@ import qs.config
 import qs.modules.settings
 import "../Ui.js" as Ui
 
-// Keybinds toolbar: search across all groups, add a custom bind, the
-// cheatsheet shortcut, the conflict summary and a reload from disk.
+// Keybinds toolbar: search across all groups, add a bind (opens it on
+// "Open app"), reload from disk, the conflict chip (click: show only the
+// conflicting binds) and the cheatsheet shortcut.
 ColumnLayout {
     id: root
 
@@ -77,14 +78,28 @@ ColumnLayout {
             icon: "plus"
             kind: "filled"
             text: I18n.t("binds.add_keybind")
-            onClicked: KeybindsStore.expandedUid = KeybindsStore.addCustom("command.run")
+            onClicked: {
+                KeybindsStore.editorQuery = "";
+                KeybindsStore.conflictFilter = false;
+                KeybindsStore.expandedUid = KeybindsStore.addCustom("apps.launch");
+            }
         }
 
         PillButton {
+            id: reloadButton
             icon: "arrowsClockwise"
             kind: "ghost"
-            text: I18n.t("binds.reload_binds")
+            text: ""
+            implicitWidth: implicitHeight
             onClicked: KeybindsStore.reload()
+            Accessible.name: I18n.t("binds.reload_binds")
+            HoverHandler {
+                id: reloadHover
+            }
+            StyledToolTip {
+                show: reloadHover.hovered
+                tooltipText: I18n.t("binds.reload_binds")
+            }
         }
     }
 
@@ -110,12 +125,16 @@ ColumnLayout {
             }
         }
 
+        // Conflicts: click to list only them (and back).
         Rectangle {
-            visible: KeybindsStore.conflictCount > 0
+            objectName: "keybindsConflicts"
+            visible: KeybindsStore.conflictCount > 0 || KeybindsStore.conflictFilter
             height: conflictRow.implicitHeight + 10
             width: conflictRow.implicitWidth + 20
             radius: height / 2
-            color: Ui.alpha(Colors.error, 0.14)
+            color: Ui.alpha(Colors.error, KeybindsStore.conflictFilter ? 0.26 : (conflictArea.containsMouse ? 0.2 : 0.14))
+            border.width: KeybindsStore.conflictFilter ? 1 : 0
+            border.color: Colors.error
 
             Row {
                 id: conflictRow
@@ -123,19 +142,26 @@ ColumnLayout {
                 spacing: 6
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Icons.warning
+                    text: KeybindsStore.conflictFilter ? Icons.xCircle : Icons.warning
                     font.family: Icons.font
                     font.pixelSize: Styling.fontSize(-1)
                     color: Colors.error
                 }
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: I18n.t("binds.conflicts_count", KeybindsStore.conflictCount)
+                    text: KeybindsStore.conflictFilter ? I18n.t("binds.conflicts_show_all") : I18n.t("binds.conflicts_count", KeybindsStore.conflictCount)
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)
                     font.weight: Font.DemiBold
                     color: Colors.error
                 }
+            }
+            MouseArea {
+                id: conflictArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: KeybindsStore.conflictFilter = !KeybindsStore.conflictFilter
             }
         }
     }

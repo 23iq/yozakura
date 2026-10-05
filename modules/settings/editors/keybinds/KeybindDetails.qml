@@ -8,10 +8,13 @@ import qs.modules.settings
 import qs.modules.settings.controls
 import qs.modules.settings.store
 import qs.config
+import "../../../keybinds/BindModel.js" as BindModel
 
-// Expanded editor of a bind: its key combos (recorder each), its actions
-// (picker + arguments + layouts), the description and delete/reset.
-// Core binds have one combo and one action; custom binds any number.
+// Expanded editor of a bind. The usual case is one step: record the keys,
+// pick what they do (an app, a shell panel, a window action...). Custom
+// binds keep the rest behind "Advanced": a name, more combos and actions,
+// layout limits and the raw dispatcher. A combo another bind uses is
+// marked but saved as is: both binds are kept.
 ColumnLayout {
     id: root
 
@@ -20,8 +23,10 @@ ColumnLayout {
     // Special workspace binds: only the combo is edited here; the rest
     // lives on the special workspaces page.
     readonly property bool special: bind.kind === "special"
+    // Open by default when the bind already uses advanced features.
+    property bool advanced: BindModel.isAdvanced(bind)
 
-    spacing: 12
+    spacing: 10
 
     function setKey(i, k) {
         const keys = root.bind.keys.slice();
@@ -48,98 +53,126 @@ ColumnLayout {
     }
 
     Item {
-        implicitHeight: 2
+        implicitHeight: 0
     }
 
-    SectionLabel {
-        text: I18n.t("binds.key_combination")
-    }
+    // Keys
+    FormRow {
+        label: I18n.t("binds.key_combination")
 
-    Repeater {
-        model: root.bind.keys
-        delegate: KeyRecorder {
-            required property var modelData
-            required property int index
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            combo: modelData
-            exceptUid: root.bind.uid
-            removable: root.custom && root.bind.keys.length > 1
-            autoStart: modelData.key === ""
-            onCommitted: k => root.setKey(index, k)
-            onRemoved: root.removeKey(index)
+            spacing: 6
+
+            Repeater {
+                model: root.bind.keys
+                delegate: KeyRecorder {
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    combo: modelData
+                    exceptUid: root.bind.uid
+                    removable: root.custom && root.bind.keys.length > 1
+                    autoStart: modelData.key === ""
+                    onCommitted: k => root.setKey(index, k)
+                    onRemoved: root.removeKey(index)
+                }
+            }
+
+            AddLink {
+                visible: root.custom && root.advanced
+                text: I18n.t("binds.add_key")
+                onClicked: KeybindsStore.setKeys(root.bind.uid, root.bind.keys.concat([
+                    {
+                        "modifiers": ["SUPER"],
+                        "key": ""
+                    }
+                ]))
+            }
         }
     }
 
-    AddLink {
-        visible: root.custom
-        Layout.leftMargin: 6
-        text: I18n.t("binds.add_key")
-        onClicked: KeybindsStore.setKeys(root.bind.uid, root.bind.keys.concat([
-            {
-                "modifiers": ["SUPER"],
-                "key": ""
-            }
-        ]))
-    }
-
-    SectionLabel {
+    // What it does
+    FormRow {
         visible: !root.special
-        text: I18n.t("binds.action")
-    }
+        label: I18n.t("binds.action")
 
-    Repeater {
-        model: root.special ? [] : root.bind.actions
-        delegate: ActionEditor {
-            required property var modelData
-            required property int index
+        ColumnLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            action: modelData
-            showLayouts: root.custom
-            removable: root.custom && root.bind.actions.length > 1
-            onEdited: a => root.setAction(index, a)
-            onRemoved: root.removeAction(index)
+            spacing: 10
+
+            Repeater {
+                model: root.special ? [] : root.bind.actions
+                delegate: ActionEditor {
+                    required property var modelData
+                    required property int index
+                    Layout.fillWidth: true
+                    action: modelData
+                    showLayouts: root.custom && root.advanced
+                    withHidden: root.custom && root.advanced
+                    removable: root.custom && root.bind.actions.length > 1
+                    onEdited: a => root.setAction(index, a)
+                    onRemoved: root.removeAction(index)
+                }
+            }
+
+            AddLink {
+                visible: root.custom && root.advanced
+                text: I18n.t("binds.add_action")
+                onClicked: KeybindsStore.setActions(root.bind.uid, root.bind.actions.concat([
+                    {
+                        "id": "apps.launch",
+                        "args": {
+                            "app": ""
+                        },
+                        "layouts": []
+                    }
+                ]))
+            }
         }
     }
 
-    AddLink {
-        visible: root.custom
-        Layout.leftMargin: 6
-        text: I18n.t("binds.add_action")
-        onClicked: KeybindsStore.setActions(root.bind.uid, root.bind.actions.concat([
-            {
-                "id": "command.run",
-                "args": {
-                    "command": ""
-                },
-                "layouts": []
-            }
-        ]))
+    // Name shown instead of the action (custom binds, "Advanced").
+    FormRow {
+        visible: root.custom && root.advanced
+        label: I18n.t("binds.description")
+
+        TextControl {
+            Layout.fillWidth: true
+            text: root.bind.name
+            placeholder: I18n.t("binds.keybind_name_placeholder")
+            onEdited: t => KeybindsStore.setName(root.bind.uid, t.trim())
+        }
     }
 
-    SectionLabel {
-        visible: root.custom
-        text: I18n.t("binds.description")
-    }
-
-    TextControl {
-        visible: root.custom
-        Layout.fillWidth: true
-        Layout.leftMargin: 12
-        Layout.rightMargin: 12
-        text: root.bind.name
-        placeholder: I18n.t("binds.keybind_name_placeholder")
-        onEdited: t => KeybindsStore.setName(root.bind.uid, t.trim())
-    }
-
+    // Footer: on/off, Advanced, reset or delete
     RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: 12
         Layout.rightMargin: 12
-        Layout.bottomMargin: 12
+        Layout.bottomMargin: 10
+        spacing: 10
+
+        ToggleControl {
+            objectName: "keybindEnabled"
+            checked: root.bind.enabled
+            onToggled: v => KeybindsStore.setEnabled(root.bind.uid, v)
+        }
+        Text {
+            text: I18n.t("binds.enabled")
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: Colors.overSurfaceVariant
+        }
+
+        AddLink {
+            objectName: "keybindAdvanced"
+            visible: root.custom
+            Layout.leftMargin: 6
+            icon: root.advanced ? "caretUp" : "caretDown"
+            text: I18n.t("binds.advanced")
+            onClicked: root.advanced = !root.advanced
+        }
 
         Item {
             Layout.fillWidth: true
@@ -168,13 +201,31 @@ ColumnLayout {
         }
     }
 
-    component SectionLabel: Text {
+    // A labelled line of the form: label on the left, controls on the right.
+    component FormRow: RowLayout {
+        id: form
+        property string label: ""
+        default property alias content: slot.data
+
+        Layout.fillWidth: true
         Layout.leftMargin: 12
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-3)
-        font.weight: Font.Bold
-        font.letterSpacing: 1
-        font.capitalization: Font.AllUppercase
-        color: Colors.overSurfaceVariant
+        Layout.rightMargin: 12
+        spacing: 12
+
+        Text {
+            Layout.preferredWidth: 72
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 10
+            text: form.label
+            elide: Text.ElideRight
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: Colors.overSurfaceVariant
+        }
+        ColumnLayout {
+            id: slot
+            Layout.fillWidth: true
+            spacing: 0
+        }
     }
 }
