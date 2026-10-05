@@ -69,3 +69,11 @@ func TestGenerateKeybindsHidesSpecialOnWorkspaceChange(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateKeybindsDefinesRecordSubmapLast(t *testing.T) {
+	out := (&Generator{}).GenerateKeybinds(ipc.ConfigKeybinds{})
+	want := "submap = yozakura-record\nbind = CTRL ALT, Escape, submap, reset\nsubmap = reset\n"
+	if !strings.HasSuffix(out, want) {
+		t.Fatalf("record submap must close the file:\n%s", out)
+	}
+}

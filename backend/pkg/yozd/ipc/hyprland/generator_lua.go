@@ -19,6 +19,15 @@ type LuaGenerator struct{}
 // moves (movetoworkspace[silent]) do not, so sending a window out of a
 // special keeps working as before. A user config loaded after the
 // generated file can still turn it off.
+// RecordSubmap is entered by the bind recorder (Settings > Binds) while it
+// records: it holds no binds but the escape, so every combo reaches the
+// recorder instead of firing the compositor bind. Hyprland only registers a
+// submap that has a bind.
+const RecordSubmap = brand.AppID + "-record"
+
+const luaRecordSubmap = "\n-- Bind recorder: no binds while recording (Ctrl+Alt+Escape leaves).\n" +
+	"hl.define_submap(\"" + RecordSubmap + "\", function() hl.bind(\"CTRL + ALT + Escape\", hl.dsp.submap(\"reset\")) end)\n"
+
 const luaHideSpecialOnWorkspaceChange = "hl.config({ binds = { hide_special_on_workspace_change = true } })\n\n"
 
 func NewLuaGenerator() *LuaGenerator {
@@ -235,6 +244,7 @@ func (g *LuaGenerator) GenerateKeybindsLua(config ipc.ConfigKeybinds) string {
 		}
 	}
 
+	b.WriteString(luaRecordSubmap)
 	return b.String()
 }
 

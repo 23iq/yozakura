@@ -158,7 +158,7 @@
   "binds.record": "Grabar",
   "binds.record_hint": "Pulsa un atajo, o haz clic aquí con un modificador y un botón del ratón",
   "binds.record_hint_key": "Ahora pulsa la tecla",
-  "binds.record_super_note": "Las combinaciones que ya usa el compositor no llegan a esta ventana: activa arriba los modificadores y pulsa solo la tecla, o escribe su nombre y pulsa Enter.",
+  "binds.record_super_note": "Mientras grabas, los atajos del compositor están en pausa, así que funciona cualquier combinación. ¿Algo se atascó? Ctrl+Alt+Esc los reactiva.",
   "binds.mod_super": "Super",
   "binds.cancel": "Cancelar",
   "binds.remove_key": "Quitar esta combinación",

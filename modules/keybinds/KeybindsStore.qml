@@ -327,6 +327,50 @@ Singleton {
             }));
     }
 
+    // --- Recording: compositor binds held off --------------------------------
+    // While a recorder records, Hyprland sits in yozd's empty submap
+    // (<app>-record, Ctrl+Alt+Escape leaves it), so every combo reaches the
+    // recorder instead of firing the bind it already has.
+
+    readonly property string recordSubmap: BrandActions.appId + "-record"
+    property int recorders: 0
+    signal recordTimedOut
+
+    function holdCompositorBinds(on) {
+        recorders = Math.max(0, recorders + (on ? 1 : -1));
+        setSubmap(recorders > 0 ? recordSubmap : "reset");
+        if (recorders > 0)
+            holdTimeout.restart();
+        else
+            holdTimeout.stop();
+    }
+
+    // $1: the submap to enter ("reset" leaves).
+    readonly property string submapScript: "hyprctl dispatch \"hl.dsp.submap(\\\"$1\\\")\" | grep -qx ok || hyprctl dispatch submap \"$1\""
+
+    function setSubmap(name) {
+        if (!Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+            return;
+        // Lua-config Hyprland takes a Lua dispatcher, hyprlang the classic one.
+        Quickshell.execDetached(["sh", "-c", root.submapScript, "sh", name]);
+    }
+
+    // A forgotten recorder never leaves the keyboard without binds.
+    property Timer holdTimeout: Timer {
+        interval: 60000
+        onTriggered: {
+            root.recorders = 0;
+            root.setSubmap("reset");
+            root.recordTimedOut();
+        }
+    }
+
+    // A shell restart mid-recording leaves Hyprland in the submap.
+    Component.onCompleted: {
+        if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE"))
+            Quickshell.execDetached(["sh", "-c", "[ \"$(hyprctl submap)\" = \"$1\" ] || exit 0; hyprctl dispatch \"hl.dsp.submap(\\\"reset\\\")\" | grep -qx ok || hyprctl dispatch submap reset", "sh", recordSubmap]);
+    }
+
     // --- Compositor binds (conflict detection) ---------------------------
 
     function refreshNative() {

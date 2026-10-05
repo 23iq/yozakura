@@ -162,7 +162,7 @@
   "binds.record": "Record",
   "binds.record_hint": "Press a shortcut, or click here with a modifier and a mouse button",
   "binds.record_hint_key": "Now press the key",
-  "binds.record_super_note": "Combos the compositor already uses never reach this window: switch the modifiers on above and press only the key, or type the key name and press Enter.",
+  "binds.record_super_note": "Compositor shortcuts are paused while recording, so any combo works. Stuck? Ctrl+Alt+Esc turns them back on.",
   "binds.mod_super": "Super",
   "binds.cancel": "Cancel",
   "binds.remove_key": "Remove this combo",

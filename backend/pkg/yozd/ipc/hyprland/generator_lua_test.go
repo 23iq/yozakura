@@ -294,3 +294,11 @@ func TestDispatcherToLuaWorkspaceSwitchAndMove(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateKeybindsLuaDefinesRecordSubmap(t *testing.T) {
+	out := NewLuaGenerator().GenerateKeybindsLua(ipc.ConfigKeybinds{})
+	want := `hl.define_submap("yozakura-record", function() hl.bind("CTRL + ALT + Escape", hl.dsp.submap("reset")) end)`
+	if strings.Count(out, want) != 1 {
+		t.Fatalf("record submap missing:\n%s", out)
+	}
+}

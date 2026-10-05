@@ -263,6 +263,9 @@ func (g *Generator) GenerateKeybinds(config ipc.ConfigKeybinds) string {
 		}
 	}
 
+	// Same as luaRecordSubmap.
+	out.WriteString("\n# Bind recorder: no binds while recording (Ctrl+Alt+Escape leaves).\n")
+	out.WriteString("submap = " + RecordSubmap + "\nbind = CTRL ALT, Escape, submap, reset\nsubmap = reset\n")
 	return out.String()
 }
 

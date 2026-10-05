@@ -16,6 +16,8 @@ import "../../../keybinds/BindModel.js" as BindModel
 // Super), a mouse button or the wheel (with a modifier). The compositor
 // keeps combos it already binds, so the modifier chips can be toggled by
 // hand and the key typed by name (also for XF86 keys and switches).
+// While recording, the compositor's binds are held off (KeybindsStore), so
+// combos it already binds (Super+E, a lone Super) reach the pad too.
 // A combo another bind (or the compositor) already uses is marked, live
 // while typing a key name too, but always saved: both binds are kept.
 ColumnLayout {
@@ -86,6 +88,17 @@ ColumnLayout {
 
     Component.onCompleted: if (autoStart)
         Qt.callLater(start)
+
+    onRecordingChanged: KeybindsStore.holdCompositorBinds(recording)
+    Component.onDestruction: if (recording)
+        KeybindsStore.holdCompositorBinds(false)
+
+    Connections {
+        target: KeybindsStore
+        function onRecordTimedOut() {
+            root.recording = false;
+        }
+    }
 
     // Idle: the combo, Record, remove
     RowLayout {
