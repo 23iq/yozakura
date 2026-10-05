@@ -804,7 +804,7 @@ func (h *Hyprland) BatchKeybinds(jsonPayload string) error {
 		if b.Flags == "m" && b.Argument == "" {
 			cmds = append(cmds, fmt.Sprintf("keyword %s %s,%s,%s", bindKeyword, mods, b.Key, b.Dispatcher))
 		} else {
-			cmds = append(cmds, fmt.Sprintf("keyword %s %s,%s,%s,%s", bindKeyword, mods, b.Key, b.Dispatcher, b.Argument))
+			cmds = append(cmds, fmt.Sprintf("keyword %s %s,%s,%s,%s", bindKeyword, mods, b.Key, b.Dispatcher, ipc.ResolveBindArgument(b)))
 		}
 	}
 

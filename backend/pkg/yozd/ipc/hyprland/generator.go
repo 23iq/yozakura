@@ -214,7 +214,7 @@ func (g *Generator) GenerateKeybinds(config ipc.ConfigKeybinds) string {
 		if dispatcher == "" {
 			dispatcher = "exec"
 		}
-		arg := kb.Argument
+		arg := ipc.ResolveBindArgument(kb)
 
 		bindKw := "bind"
 		if strings.HasPrefix(strings.ToLower(kb.Key), "mouse:") {
@@ -430,12 +430,14 @@ func (g *Generator) GenerateStartup(exec []string, execOnce []string) string {
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		out.WriteString(fmt.Sprintf("exec-once = %s\n", cmd))
 	}
 	for _, cmd := range exec {
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		out.WriteString(fmt.Sprintf("exec = %s\n", cmd))
 	}
 	return out.String()

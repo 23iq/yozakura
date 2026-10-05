@@ -507,7 +507,7 @@ func (g *Generator) GenerateKeybinds(config ipc.ConfigKeybinds) string {
 			skipped = append(skipped, fmt.Sprintf("%s — %s (key %q: %s)", comment, kb.Dispatcher, kb.Key, reason))
 			return
 		}
-		arg := kb.Argument
+		arg := ipc.ResolveBindArgument(kb)
 
 		isSpawn := kb.Dispatcher == "" || kb.Dispatcher == "exec" || kb.Dispatcher == "spawn"
 		var action string
@@ -765,12 +765,14 @@ func (g *Generator) GenerateStartup(exec []string, execOnce []string) string {
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		b.WriteString(fmt.Sprintf("spawn-at-startup %s\n", kdlQuote(cmd)))
 	}
 	for _, cmd := range exec {
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		b.WriteString(fmt.Sprintf("// niri does not re-run exec on reload; ignoring: %s\n", cmd))
 	}
 	return b.String()

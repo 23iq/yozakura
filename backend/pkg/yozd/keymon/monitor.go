@@ -9,6 +9,8 @@ import (
 	"unsafe"
 
 	"golang.org/x/sys/unix"
+
+	"yozakura/backend/pkg/yozd/ipc"
 )
 
 // inputEvent mirrors linux struct input_event on 64-bit: timeval (2x int64)
@@ -283,5 +285,5 @@ func (m *Monitor) dispatch(group string) {
 }
 
 func runShell(cmd string) error {
-	return exec.Command("sh", "-c", cmd).Run()
+	return exec.Command("sh", "-c", ipc.ResolveExecCommand(cmd)).Run()
 }

@@ -224,7 +224,7 @@ func (g *Generator) GenerateKeybinds(config ipc.ConfigKeybinds) string {
 		}
 		mods := formatMangoModifiers(kb.Modifiers)
 		dispatcher := mangoMapDispatcher(kb.Dispatcher)
-		arg := kb.Argument
+		arg := ipc.ResolveBindArgument(kb)
 
 		key := strings.ToUpper(kb.Key)
 		flags := strings.ToLower(kb.Flags)
@@ -338,12 +338,14 @@ func (g *Generator) GenerateStartup(exec []string, execOnce []string) string {
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		b.WriteString("exec-once = " + cmd + "\n")
 	}
 	for _, cmd := range exec {
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		b.WriteString("exec = " + cmd + "\n")
 	}
 	return b.String()

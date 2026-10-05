@@ -161,7 +161,7 @@ func (g *LuaGenerator) GenerateKeybindsLua(config ipc.ConfigKeybinds) string {
 		mods := strings.Join(kb.Modifiers, " + ")
 		key := kb.Key
 		dispatcher := kb.Dispatcher
-		arg := kb.Argument
+		arg := ipc.ResolveBindArgument(kb)
 
 		keyStr := key
 		if mods != "" {
@@ -483,6 +483,7 @@ func (g *LuaGenerator) GenerateStartupLua(exec []string, execOnce []string) stri
 			if strings.TrimSpace(cmd) == "" {
 				continue
 			}
+			cmd = ipc.ResolveExecCommand(cmd)
 			b.WriteString(fmt.Sprintf("    hl.exec_cmd(%q)\n", cmd))
 		}
 		b.WriteString("end)\n\n")
@@ -492,6 +493,7 @@ func (g *LuaGenerator) GenerateStartupLua(exec []string, execOnce []string) stri
 		if strings.TrimSpace(cmd) == "" {
 			continue
 		}
+		cmd = ipc.ResolveExecCommand(cmd)
 		b.WriteString(fmt.Sprintf("hl.exec_cmd(%q)\n", cmd))
 	}
 	return b.String()
