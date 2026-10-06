@@ -3283,5 +3283,9 @@
   "extras.ui.jobs.more.one": "+%1 en cola",
   "extras.ui.jobs.more.other": "+%1 en cola",
   "prefs.keyboard.n_on.one": "%1 activa",
-  "prefs.keyboard.n_on.other": "%1 activas"
+  "prefs.keyboard.n_on.other": "%1 activas",
+  "onboarding.skip.title": "¿Omitir la configuración?",
+  "onboarding.skip.body": "Puedes volver a ejecutarla desde Ajustes → Acerca de.",
+  "onboarding.skip.keep": "Continuar",
+  "onboarding.skip.confirm": "Omitir"
 }

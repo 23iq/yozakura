@@ -16,7 +16,7 @@ PanelWindow {
     property bool shown: false
 
     screen: Quickshell.screens.find(s => s.name === OnboardingService.screenName) || Quickshell.screens[0] || null
-    visible: !OnboardingService.suspended
+    visible: !OnboardingService.suspended && !OnboardingService.peek
     anchors {
         top: true
         bottom: true

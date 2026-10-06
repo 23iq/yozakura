@@ -9,7 +9,9 @@ import "OnboardingSteps.js" as Steps
 import "OnboardingModel.js" as Model
 
 // Wizard state shared by the steps: navigation, environment detection,
-// the preset choice, the keybind tour and the voice setup job. Settings go
+// the preset choice, the keybind tour and the voice setup job. Owned by
+// OnboardingService, which persists `step id` + `choices` (StateService) so
+// a shell reload or crash resumes the wizard where it was. Settings go
 // through SettingsStore (live preview; staged domains are applied when the
 // wizard ends).
 QtObject {
@@ -17,13 +19,47 @@ QtObject {
 
     property int index: 0
     readonly property var step: Steps.at(index)
+    readonly property string stepId: step.id
     readonly property int count: Steps.count()
     readonly property bool isFirst: Steps.isFirst(index)
     readonly property bool isLast: Steps.isLast(index)
     // +1 forward, -1 back: steps slide in from that side.
     property int direction: 1
 
+    // The "Skip setup?" confirmation is showing in the card.
+    property bool skipRequested: false
+    // Small persisted answers (keys are step-defined, values JSON-safe):
+    // what earlier steps chose, visible again after a resume.
+    property var choices: ({})
+
     signal finished
+
+    function remember(key, value) {
+        const c = Object.assign({}, choices);
+        c[key] = value;
+        choices = c;
+    }
+
+    // Back to a clean first-run state (the service reuses one instance).
+    function reset() {
+        direction = 1;
+        index = 0;
+        choices = ({});
+        tour = ({});
+        chosenPreset = "";
+        initialPreset = "";
+        skipRequested = false;
+    }
+
+    // Resume at a step id (unknown ids fall back to the first step).
+    function restore(id, saved) {
+        const i = Steps.indexOf(id);
+        index = i < 0 ? 0 : i;
+        choices = saved && typeof saved === "object" ? saved : ({});
+        chosenPreset = choices.preset || "";
+        if (choices.initialPreset !== undefined)
+            initialPreset = choices.initialPreset;
+    }
 
     function go(i) {
         const target = Steps.clamp(i);
@@ -88,6 +124,7 @@ QtObject {
         if (name === chosenPreset)
             return;
         chosenPreset = name;
+        remember("preset", name);
         if (name !== "")
             PresetsService.loadPreset(name);
         else if (initialPreset !== "")

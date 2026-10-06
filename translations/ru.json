@@ -3293,5 +3293,9 @@
   "prefs.keyboard.n_on.one": "включена: %1",
   "prefs.keyboard.n_on.few": "включено: %1",
   "prefs.keyboard.n_on.many": "включено: %1",
-  "prefs.keyboard.n_on.other": "включено: %1"
+  "prefs.keyboard.n_on.other": "включено: %1",
+  "onboarding.skip.title": "Пропустить настройку?",
+  "onboarding.skip.body": "Её можно запустить снова в Настройки → О программе.",
+  "onboarding.skip.keep": "Продолжить",
+  "onboarding.skip.confirm": "Пропустить"
 }

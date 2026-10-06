@@ -12,7 +12,8 @@ import "OnboardingSteps.js" as Steps
 Item {
     id: root
 
-    readonly property alias wizard: wizardState
+    // Owned by OnboardingService (persisted, resumable).
+    readonly property var wizard: OnboardingService.wizard
     // false while the window steps aside for a keybind-tour panel.
     property bool shown: true
 
@@ -20,28 +21,39 @@ Item {
 
     focus: true
 
-    OnboardingState {
-        id: wizardState
-        onFinished: root.closeRequested()
+    Connections {
+        target: root.wizard
+        function onFinished() {
+            root.closeRequested();
+        }
+        function onSkipRequestedChanged() {
+            if (!root.wizard.skipRequested)
+                root.forceActiveFocus();
+        }
     }
 
     Component.onCompleted: {
-        wizardState.initialPreset = PresetsService.activePreset || "";
-        wizardState.detect();
+        if (root.wizard.choices.initialPreset === undefined)
+            root.wizard.remember("initialPreset", PresetsService.activePreset || "");
+        root.wizard.initialPreset = root.wizard.choices.initialPreset;
+        root.wizard.detect();
     }
 
     Keys.onPressed: event => {
         if (event.key === Qt.Key_Escape) {
-            wizardState.finish();
+            root.wizard.skipRequested = !root.wizard.skipRequested;
             event.accepted = true;
+        } else if (root.wizard.skipRequested) {
+            // the confirmation owns the keyboard (Return acts on its buttons)
+            return;
         } else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !(event.modifiers & Qt.ShiftModifier)) {
-            wizardState.next();
+            root.wizard.next();
             event.accepted = true;
         } else if (event.key === Qt.Key_Left && (event.modifiers & Qt.AltModifier)) {
-            wizardState.back();
+            root.wizard.back();
             event.accepted = true;
         } else if (event.key === Qt.Key_Right && (event.modifiers & Qt.AltModifier)) {
-            wizardState.next();
+            root.wizard.next();
             event.accepted = true;
         }
     }
@@ -112,19 +124,19 @@ Item {
             ProgressDots {
                 objectName: "onboardingDots"
                 anchors.centerIn: parent
-                count: wizardState.count
-                current: wizardState.index
-                onPicked: i => wizardState.go(i)
+                count: root.wizard.count
+                current: root.wizard.index
+                onPicked: i => root.wizard.go(i)
             }
 
             NavButton {
                 objectName: "onboardingSkipAll"
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                visible: !wizardState.isLast
+                visible: !root.wizard.isLast
                 kind: "ghost"
                 text: I18n.t("onboarding.skip_setup")
-                onClicked: wizardState.finish()
+                onClicked: root.wizard.skipRequested = true
             }
         }
 
@@ -145,7 +157,7 @@ Item {
                 id: scaffold
                 width: parent.width
                 height: parent.height
-                step: wizardState.step
+                step: root.wizard.step
                 transform: Translate {
                     id: slide
                 }
@@ -163,7 +175,7 @@ Item {
                 NumberAnimation {
                     target: slide
                     property: "x"
-                    from: wizardState.direction * 48
+                    from: root.wizard.direction * 48
                     to: 0
                     duration: Config.animDuration * 1.4
                     easing.type: Easing.OutCubic
@@ -191,7 +203,7 @@ Item {
             Text {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                text: I18n.t("onboarding.step_of", wizardState.index + 1, wizardState.count)
+                text: I18n.t("onboarding.step_of", root.wizard.index + 1, root.wizard.count)
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-1)
                 color: Colors.outline
@@ -203,28 +215,33 @@ Item {
                 spacing: 10
                 NavButton {
                     objectName: "onboardingBack"
-                    visible: !wizardState.isFirst
+                    visible: !root.wizard.isFirst
                     kind: "ghost"
                     icon: "caretLeft"
                     text: I18n.t("onboarding.back")
-                    onClicked: wizardState.back()
+                    onClicked: root.wizard.back()
                 }
                 NavButton {
                     id: next
                     objectName: "onboardingNext"
                     kind: "filled"
-                    trailingIcon: wizardState.isLast ? "" : "caretRight"
-                    icon: wizardState.isLast ? "checkCircle" : ""
-                    text: wizardState.isFirst ? I18n.t("onboarding.get_started") : (wizardState.isLast ? I18n.t("onboarding.finish") : I18n.t("onboarding.continue"))
-                    onClicked: wizardState.next()
+                    trailingIcon: root.wizard.isLast ? "" : "caretRight"
+                    icon: root.wizard.isLast ? "checkCircle" : ""
+                    text: root.wizard.isFirst ? I18n.t("onboarding.get_started") : (root.wizard.isLast ? I18n.t("onboarding.finish") : I18n.t("onboarding.continue"))
+                    onClicked: root.wizard.next()
                 }
             }
         }
     }
 
+    SkipConfirm {
+        anchors.fill: card
+        wizard: root.wizard
+    }
+
     function loadStep() {
-        stepLoader.setSource(Qt.resolvedUrl(wizardState.step.component), {
-            "wizard": wizardState
+        stepLoader.setSource(Qt.resolvedUrl(root.wizard.step.component), {
+            "wizard": root.wizard
         });
         if (Config.animDuration > 0)
             enter.restart();
@@ -232,12 +249,12 @@ Item {
     }
 
     Connections {
-        target: wizardState
+        target: root.wizard
         function onIndexChanged() {
             root.loadStep();
         }
     }
-    Component.onDestruction: wizardState.cancelVoiceSetup()
+    Component.onDestruction: root.wizard.cancelVoiceSetup()
 
     Timer {
         // first step once the card exists

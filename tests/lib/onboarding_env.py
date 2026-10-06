@@ -66,13 +66,17 @@ QtObject {
     function run(command) { ran = ran.concat([command]); commandRan(command); }
     function toggleSettings() { settingsToggles++ }
 }""",
-    "OnboardingService": """pragma Singleton
+    # Persisted wizard state: an in-memory stand-in for the daemon-backed one.
+    "StateService": """pragma Singleton
 QtObject {
-    property bool visible: true
-    property bool suspended: false
-    property int completed: 0
-    function complete() { completed++; visible = false }
-    function open() { visible = true }
+    property var state: ({})
+    property bool initialized: true
+    property var writes: []
+    function get(key, d) { return state[key] !== undefined ? state[key] : d }
+    function set(key, value) {
+        const s = Object.assign({}, state); s[key] = value; state = s;
+        writes = writes.concat([key]);
+    }
 }""",
     "Visibilities": """pragma Singleton
 QtObject {
@@ -111,6 +115,8 @@ class OnboardingEnv(SettingsEnv):
         h.module("Quickshell.Io", QUICKSHELL_IO)
         presets = builtin_presets() if presets is None else presets
         services = dict(SERVICES)
+        # the real service: it owns the wizard state under test
+        services["OnboardingService"] = (REPO / "modules/services/OnboardingService.qml").read_text()
         services["AppSearch"] = APP_SEARCH_STUB
         services["YozdService"] = YOZD_STUB
         services["I18n"] = i18n_qml(lang)

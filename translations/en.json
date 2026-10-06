@@ -3283,5 +3283,9 @@
   "extras.ui.jobs.more.one": "+%1 queued",
   "extras.ui.jobs.more.other": "+%1 queued",
   "prefs.keyboard.n_on.one": "%1 on",
-  "prefs.keyboard.n_on.other": "%1 on"
+  "prefs.keyboard.n_on.other": "%1 on",
+  "onboarding.skip.title": "Skip setup?",
+  "onboarding.skip.body": "You can run it again from Settings → About.",
+  "onboarding.skip.keep": "Keep going",
+  "onboarding.skip.confirm": "Skip"
 }

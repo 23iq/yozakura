@@ -38,11 +38,27 @@ import qs.modules.globals
 import qs.config
 Window {
     width: 1400; height: 900; visible: true
-    readonly property var wizard: f.wizard
-    OnboardingFlow { id: f; objectName: "flow"; anchors.fill: parent }
+    readonly property var wizard: OnboardingService.wizard
+    property alias flowLoader: lf
+    Loader {
+        id: lf
+        anchors.fill: parent
+        active: false
+        sourceComponent: OnboardingFlow { objectName: "flow" }
+    }
 }""", auto_stub=False)
-flow = h.find(win, "flow")
-QTest.qWait(50)
+
+
+def start_flow(expr="OnboardingService.open()"):
+    """(Re)open the wizard like the shell does and instantiate the card."""
+    h.eval(win, "flowLoader.active = false")
+    h.eval(win, expr)
+    h.eval(win, "flowLoader.active = true")
+    QTest.qWait(50)
+    return h.find(win, "flow")
+
+
+flow = start_flow()
 
 
 def ev(expr):
@@ -131,15 +147,65 @@ ev('GlobalShortcuts.run("overview")')
 ev('GlobalShortcuts.run("assistant")')
 check(ev("wizard.tourComplete") is True, "tour completes when every task is done or skipped")
 
-# Finish (Esc) closes the wizard through closeRequested.
+# ---- Esc / Skip setup asks first ------------------------------------------
+from PySide6.QtCore import Qt  # noqa: E402
+
 closed = []
 flow.closeRequested.connect(lambda: closed.append(1))
 ev("wizard.go(0)")
 flow.forceActiveFocus()
-from PySide6.QtCore import Qt  # noqa: E402
-
 QTest.keyClick(win, Qt.Key_Escape)
-check(closed == [1], "Esc skips the setup")
+check(ev("wizard.skipRequested") is True, "Esc asks 'Skip setup?' instead of dismissing")
+check(closed == [], "Esc alone never ends the setup")
+QTest.qWait(30)
+panel = h.find(win, "skipConfirmPanel")
+check(panel is not None and ev("wizard.skipRequested") is True, "confirmation card is rendered in the card")
+QTest.keyClick(win, Qt.Key_Return)
+check(ev("wizard.skipRequested") is False and step_id() == "welcome", "Return on the focused 'Keep going' closes the confirm without advancing")
+QTest.keyClick(win, Qt.Key_Escape)
+QTest.keyClick(win, Qt.Key_Escape)
+check(ev("wizard.skipRequested") is False, "Esc again dismisses the confirmation")
+ev("wizard.skipRequested = true")
+h.eval(h.find(win, "skipKeepGoing"), "clicked()")
+check(ev("wizard.skipRequested") is False and closed == [], "Keep going closes the confirm and stays in the wizard")
+h.eval(h.find(win, "onboardingSkipAll"), "clicked()")
+check(ev("wizard.skipRequested") is True, "the header Skip setup button asks too")
+h.eval(h.find(win, "skipConfirm"), "clicked()")
+check(closed == [1], "confirming Skip ends the setup")
+
+# ---- persisted, resumable state --------------------------------------------
+ev("OnboardingService.complete()")
+check(ev("StateService.state.onboarding") is None, "complete() clears the persisted wizard")
+flow = start_flow()
+ev("wizard.go(3)")
+saved = json.loads(ev("JSON.stringify(StateService.state.onboarding)"))
+check(saved["step"] == seen[3], f"progress is stored by step id, got {saved}")
+ev('wizard.set("general.terminal", "foot"); wizard.remember("note", 7)')
+check(json.loads(ev("JSON.stringify(StateService.state.onboarding.choices.note)")) == 7, "remembered choices are persisted")
+# shell reload: the card and the wizard are recreated, the state stays on disk
+flow = start_flow("OnboardingService.close(); OnboardingService.open()")
+check(step_id() == seen[3] and ev("wizard.index") == 3, "reload resumes at the same step")
+check(ev("wizard.choices.note") == 7 and ev("OnboardingService.peek") is False, "choices come back, peek is reset")
+check(h.eval(h.find(win, "stepLoader"), "status === Loader.Ready") is True, "the resumed step loads")
+# a step id the registry no longer has falls back to the first step
+ev('StateService.state = ({onboarding: {step: "gone", choices: {}}})')
+flow = start_flow("OnboardingService.close(); OnboardingService.open()")
+check(step_id() == "welcome", "unknown saved step falls back to the first")
+flow = start_flow(f'OnboardingService.openAt("{seen[2]}")')
+check(step_id() == seen[2], "openAt jumps to a step id")
+# preset choice survives a resume
+ev(f"wizard.go({seen.index('preset')})")
+ev(f'wizard.choosePreset({json.dumps(names[0])})')
+flow = start_flow("OnboardingService.close(); OnboardingService.open()")
+check(ev("wizard.chosenPreset") == names[0] and step_id() == "preset", "the preset choice is restored")
+
+# toggle while peeking comes back to the wizard instead of closing it
+ev("OnboardingService.peek = true")
+ev("OnboardingService.toggle()")
+check(ev("OnboardingService.peek") is False and ev("OnboardingService.visible") is True, "toggle while peeking returns to the wizard")
+ev("OnboardingService.toggle()")
+check(ev("OnboardingService.visible") is False, "toggle on the open wizard closes it")
+check(json.loads(ev("JSON.stringify(StateService.state.onboarding.step)")) == "preset", "closing keeps the progress for the next open")
 
 # ---- Config.qml: general.json from before the wizard = existing install ----
 cfg = (Path(__file__).resolve().parents[1] / "config/Config.qml").read_text()
