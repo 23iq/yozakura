@@ -23,9 +23,13 @@ import (
 
 var version = "dev"
 
+// envCleanMsgs holds what envclean changed at startup; only the shell
+// supervisor prints it, one-shot subcommands stay quiet.
+var envCleanMsgs []string
+
 func main() {
 	ensureSelfOnPath()
-	envclean.CleanProcess()
+	envCleanMsgs = envclean.CleanProcess()
 	args := os.Args[1:]
 
 	if len(args) >= 1 {
@@ -400,6 +404,9 @@ func runShell() {
 		os.Setenv("TMUX_TMPDIR", tmpdir)
 	}
 
+	for _, m := range envCleanMsgs {
+		fmt.Fprintln(os.Stderr, m)
+	}
 	d, err := daemon.New()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: init daemon: %v\n", err)

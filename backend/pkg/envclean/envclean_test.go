@@ -65,8 +65,24 @@ func TestCleanNoChangeNoLog(t *testing.T) {
 
 func TestCleanProcess(t *testing.T) {
 	t.Setenv("QML_IMPORT_PATH", "/q::/q/:/r")
-	CleanProcess()
+	msgs := CleanProcess()
+	found := false
+	for _, m := range msgs {
+		found = found || m == "env: QML_IMPORT_PATH had 4 entries, kept 2"
+	}
+	if !found {
+		t.Errorf("msgs %v", msgs)
+	}
 	if got := os.Getenv("QML_IMPORT_PATH"); got != "/q:/r" {
 		t.Errorf("got %q", got)
+	}
+}
+
+func TestCleanProcessQuietWhenClean(t *testing.T) {
+	for _, k := range Vars {
+		t.Setenv(k, "/q:/r")
+	}
+	if msgs := CleanProcess(); len(msgs) != 0 {
+		t.Errorf("msgs %v", msgs)
 	}
 }

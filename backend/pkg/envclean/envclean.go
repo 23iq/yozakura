@@ -6,6 +6,7 @@
 package envclean
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -69,8 +70,11 @@ func Clean(env []string, logf func(format string, args ...any)) []string {
 }
 
 // CleanProcess normalises the current process environment in place so every
-// later exec inherits the clean values.
-func CleanProcess() {
+// later exec inherits the clean values. It is silent: it returns one message
+// per variable that changed and the caller decides whether to log them
+// (one-shot CLI subcommands must not print anything).
+func CleanProcess() []string {
+	var msgs []string
 	for _, k := range Vars {
 		v, ok := os.LookupEnv(k)
 		if !ok {
@@ -83,8 +87,9 @@ func CleanProcess() {
 		if err := os.Setenv(k, cleaned); err != nil {
 			continue
 		}
-		log.Printf("env: %s had %d entries, kept %d", k, n, count(cleaned))
+		msgs = append(msgs, fmt.Sprintf("env: %s had %d entries, kept %d", k, n, count(cleaned)))
 	}
+	return msgs
 }
 
 // ChildEnv returns the current environment, cleaned, for a supervised child.
