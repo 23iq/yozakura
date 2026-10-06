@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
+import qs.modules.shell
 import qs.config
 import qs.modules.globals
 
@@ -14,8 +15,8 @@ PanelWindow {
 
     property var menuHandle: null
     property var customItems: []
-    property int menuWidth: 160
-    property int itemHeight: 32
+    property int menuWidth: Metrics.menuW
+    property int itemHeight: Metrics.menuItemH
     property string menuType: ""
 
     anchors {
@@ -50,20 +51,12 @@ PanelWindow {
         id: cursorPos
         running: false
         command: Brand.daemonArgs(["system", "get-cursor-position"])
-        
+
         stdout: StdioCollector {
             onStreamFinished: {
                 let coords = text.trim().split(",");
-                if (coords.length === 2) {
-                    let x = parseInt(coords[0].trim());
-                    let y = parseInt(coords[1].trim());
-                    menu.x = x;
-                    menu.y = y;
-                    menu.visible = false;
-                    Qt.callLater(() => {
-                        menu.popup();
-                    });
-                }
+                if (coords.length === 2)
+                    contextWindow.placeAt(parseInt(coords[0].trim()), parseInt(coords[1].trim()));
             }
         }
     }
@@ -74,90 +67,87 @@ PanelWindow {
 
         OptionsMenu {
             id: menu
+            objectName: "contextOptionsMenu"
 
             menuWidth: contextWindow.menuWidth
             itemHeight: contextWindow.itemHeight
 
             function cleanMenuText(text) {
-                if (!text || text === "") return "";
-                
+                if (!text || text === "")
+                    return "";
+
                 text = String(text);
-                
+
                 if (text.startsWith(":/// ")) {
                     text = text.substring(5);
                 }
-                
+
                 return text.trim();
             }
 
             function isValidIcon(icon) {
-                if (!icon || icon === "") return false;
-                
-                if (icon.length > 4) return false;
-                if (icon.includes("/") || icon.includes(".") || icon.includes(":")) return false;
-                
+                if (!icon || icon === "")
+                    return false;
+
+                if (icon.length > 4)
+                    return false;
+                if (icon.includes("/") || icon.includes(".") || icon.includes(":"))
+                    return false;
+
                 return true;
             }
 
             function isImageIcon(icon) {
-                if (!icon || icon === "") return false;
-                
-                if (icon.includes("/") || icon.includes(".")) return true;
-                if (icon.startsWith("file://") || icon.startsWith("http")) return true;
-                if (icon.length > 10) return true;
-                
+                if (!icon || icon === "")
+                    return false;
+
+                if (icon.includes("/") || icon.includes("."))
+                    return true;
+                if (icon.startsWith("file://") || icon.startsWith("http"))
+                    return true;
+                if (icon.length > 10)
+                    return true;
+
                 return false;
             }
 
             QsMenuOpener {
                 id: menuOpener
                 menu: contextWindow.menuHandle
-
-                onChildrenChanged: {
-                    console.log("Menu children changed, count:", children ? children.values.length : "null");
-                }
             }
 
             items: {
                 if (contextWindow.customItems && contextWindow.customItems.length > 0) {
-                    console.log("Using custom items:", contextWindow.customItems.length);
                     return contextWindow.customItems.map(item => ({
-                        text: item.text || "",
-                        icon: item.icon || "",
-                        isImageIcon: item.isImageIcon || false,
-                        enabled: item.enabled !== false,
-                        isSeparator: item.isSeparator || false,
-                        highlightColor: item.highlightColor,
-                        textColor: item.textColor,
-                        onTriggered: function() {
-                            let callback = item.onTriggered;
-                            contextWindow.close();
-                            if (callback) {
-                                Qt.callLater(callback);
-                            }
-                        }
-                    }));
+                                text: item.text || "",
+                                icon: item.icon || "",
+                                isImageIcon: item.isImageIcon || false,
+                                enabled: item.enabled !== false,
+                                isSeparator: item.isSeparator || false,
+                                highlightColor: item.highlightColor,
+                                textColor: item.textColor,
+                                onTriggered: function () {
+                                    let callback = item.onTriggered;
+                                    contextWindow.close();
+                                    if (callback) {
+                                        Qt.callLater(callback);
+                                    }
+                                }
+                            }));
                 }
 
                 if (!contextWindow.menuHandle) {
                     return [];
                 }
 
-                console.log("Building menu items from systray...");
-                console.log("menuHandle:", contextWindow.menuHandle);
-                console.log("menuOpener.children:", menuOpener.children);
-
                 if (!menuOpener.children || !menuOpener.children.values) {
-                    console.log("No children values available");
                     return [];
                 }
 
                 let menuItems = [];
-                console.log("Children count:", menuOpener.children.values.length);
 
                 for (let i = 0; i < menuOpener.children.values.length; i++) {
                     let entry = menuOpener.children.values[i];
-                    console.log("Entry", i, ":", entry, "isSeparator:", entry ? entry.isSeparator : "null", "text:", entry ? entry.text : "null", "icon:", entry ? entry.icon : "null");
 
                     if (entry) {
                         if (entry.isSeparator) {
@@ -171,10 +161,10 @@ PanelWindow {
                         } else {
                             let originalText = entry.text;
                             let cleanText = menu.cleanMenuText(originalText);
-                            
+
                             let iconToUse = "";
                             let useImageIcon = false;
-                            
+
                             if (entry.icon) {
                                 if (menu.isValidIcon(entry.icon)) {
                                     iconToUse = entry.icon;
@@ -185,15 +175,7 @@ PanelWindow {
                                 }
                             }
 
-                            if (originalText !== cleanText) {
-                                console.log("Text cleaned - Original:", originalText, "-> Clean:", cleanText);
-                            }
-                            if (entry.icon) {
-                                console.log("Icon processed - Original:", entry.icon, "-> Used:", iconToUse, "isImage:", useImageIcon);
-                            }
-
                             if (cleanText === "" && iconToUse === "") {
-                                console.log("Skipping entry with no valid text or icon:", originalText);
                                 continue;
                             }
 
@@ -204,7 +186,6 @@ PanelWindow {
                                 enabled: entry.enabled !== false,
                                 isSeparator: false,
                                 onTriggered: function () {
-                                    console.log("Triggering menu item:", cleanText);
                                     let callback = entry.triggered;
                                     contextWindow.close();
                                     if (callback) {
@@ -215,14 +196,48 @@ PanelWindow {
                         }
                     }
                 }
-                console.log("Final menu items count:", menuItems.length);
                 return menuItems;
             }
         }
     }
 
+    // Cursor position the menu opens at (compositor coordinates)
+    property point cursor: Qt.point(0, 0)
+
+    // Opens the menu at a cursor position: below the cursor, flipped above /
+    // clamped when it does not fit the screen (placed once the items are
+    // laid out, and again when they change while open).
+    function placeAt(cx, cy) {
+        cursor = Qt.point(cx, cy);
+        menu.visible = false;
+        Qt.callLater(() => {
+            place();
+            menu.open();
+        });
+    }
+
+    function place() {
+        const sx = contextWindow.screen ? contextWindow.screen.x : 0;
+        const sy = contextWindow.screen ? contextWindow.screen.y : 0;
+        const w = menu.width;
+        const p = EdgeService.popupPlacement({
+            "width": contextWindow.width,
+            "height": contextWindow.height
+        }, {
+            "x": cursor.x - sx,
+            "y": cursor.y - sy,
+            "w": w,
+            "h": 0
+        }, {
+            "w": w,
+            "h": menu.implicitHeight
+        }, "top", 2);
+        menu.openDir = p.dir;
+        menu.placeX = p.x;
+        menu.placeY = p.y;
+    }
+
     function openMenu(handle) {
-        console.log("Opening context menu");
         menuHandle = handle;
         customItems = [];
         menuType = "";
@@ -232,12 +247,13 @@ PanelWindow {
     }
 
     function openCustomMenu(items, width, height, type) {
-        console.log("Opening custom context menu with", items.length, "items");
         menuHandle = null;
         customItems = items;
         menuType = type || "";
-        if (width !== undefined) menuWidth = width;
-        if (height !== undefined) itemHeight = height;
+        if (width !== undefined)
+            menuWidth = width;
+        if (height !== undefined)
+            itemHeight = height;
         visible = true;
         WlrLayershell.keyboardFocus = WlrKeyboardFocus.Exclusive;
         if (menuType === "player") {
@@ -247,7 +263,6 @@ PanelWindow {
     }
 
     function close() {
-        console.log("Closing context menu");
         menu.hoveredIndex = -1;
         menu.previousHoveredIndex = -1;
         menu.close();
@@ -281,6 +296,10 @@ PanelWindow {
 
     Connections {
         target: menu
+        function onImplicitHeightChanged() {
+            if (menu.visible)
+                contextWindow.place();
+        }
         function onClosed() {
             contextWindow.close();
         }

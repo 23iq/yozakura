@@ -17,6 +17,7 @@ var types = {
     "theme": {
         "animDuration": "int",
         "shape.cutSize": "int",
+        "popup.gap": "int",
         "fontSize": "int",
         "monoFontSize": "int",
         "paletteTransitionDuration": "int",

@@ -247,11 +247,11 @@ var keys = {
         "description": "Corner shape of the shell's surfaces."
     },
     "shape.corners": {
-        "enum": ["round", "cut", "square"],
-        "description": "Corner style of surfaces: round (rounded), cut (chamfered) or square."
+        "enum": ["round", "squircle", "cut", "tab"],
+        "description": "Corner style of surfaces: round, squircle (smooth superellipse), cut (chamfered) or tab (popups square the corners on their anchor edge)."
     },
     "shape.popupCorners": {
-        "enum": ["", "round", "cut", "square"],
+        "enum": ["", "round", "squircle", "cut", "tab"],
         "description": "Corner style of popups and menus; empty follows shape.corners."
     },
     "shape.cutSize": {
@@ -259,6 +259,22 @@ var keys = {
         "max": 32,
         "unit": "px",
         "description": "Chamfer size of cut corners."
+    },
+    "popup": {
+        "description": "Bar popups and menus: entry motion, tail and gap."
+    },
+    "popup.entry": {
+        "enum": ["fade-scale", "slide-from-anchor", "morph-from-bar", "unfold"],
+        "description": "How popups appear: fade and scale, slide out of the anchor, morph out of the bar or unfold."
+    },
+    "popup.tail": {
+        "description": "Draw a small tail on popups pointing at the item that opened them."
+    },
+    "popup.gap": {
+        "min": 0,
+        "max": 32,
+        "unit": "px",
+        "description": "Distance between a popup and the item that opened it."
     },
     "signatures": {
         "description": "Decorative signatures drawn on top of the shell's surfaces."

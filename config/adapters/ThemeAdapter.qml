@@ -19,6 +19,11 @@ JsonAdapter {
         property string popupCorners: ""
         property int cutSize: 10
     }
+    property JsonObject popup: JsonObject {
+        property string entry: "fade-scale"
+        property bool tail: false
+        property int gap: 8
+    }
     property JsonObject signatures: JsonObject {
         property bool brushHighlight: false
         property bool petals: false

@@ -13,11 +13,18 @@ var data = {
     "animDuration": 300,
     // Metrics density: compact | cozy | roomy (cozy = the historical sizes).
     "density": "cozy",
-    // Corner shape: round | cut | square; popupCorners "" follows corners.
+    // Corner shape: round | squircle | cut | tab; popupCorners "" follows corners.
     "shape": {
         "corners": "round",
         "popupCorners": "",
         "cutSize": 10
+    },
+    // Bar popups and menus: entry motion (fade-scale | slide-from-anchor |
+    // morph-from-bar | unfold), a tail toward the anchor, gap to the anchor.
+    "popup": {
+        "entry": "fade-scale",
+        "tail": false,
+        "gap": 8
     },
     // Decorative signatures; turned on by the default shift.
     "signatures": {

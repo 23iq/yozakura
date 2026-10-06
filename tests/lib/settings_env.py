@@ -183,6 +183,7 @@ MIRROR = [
     "modules/theme/GlassCurve.js",
     "modules/theme/GlassContrast.js",
     "modules/theme/Icons.qml",
+    "modules/theme/Motion.qml",
     "modules/theme/AppThemes.js",
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
@@ -641,7 +642,7 @@ class SettingsEnv:
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
-                  "modules/components/surfaceeffects", "modules/bar/workspaces/indicators",
+                  "modules/components/surfaceeffects", "modules/components/shape", "modules/bar/workspaces/indicators",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",

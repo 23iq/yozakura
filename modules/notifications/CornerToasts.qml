@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.shell
 import qs.config
 import "NotificationPolicy.js" as Policy
 
@@ -20,11 +21,15 @@ Item {
     property string screenName: ""
 
     readonly property bool active: Notifications.presentation === "corner" && Notifications.showsOnScreen(screenName)
-    readonly property var anchorsInfo: Policy.anchorsOf(Notifications.cornerPosition)
+    // notifications.position "auto": the corner the bar, dock and notch
+    // leave free (EdgeLayout.freeCorner); otherwise the configured corner
+    readonly property bool autoCorner: !Config.notifications || Config.notifications.position === "auto"
+    readonly property string cornerPosition: autoCorner && panel && panel.targetScreen ? EdgeService.freeCorner(panel.targetScreen, "auto") : Notifications.cornerPosition
+    readonly property var anchorsInfo: Policy.anchorsOf(cornerPosition)
     readonly property bool atBottom: anchorsInfo.vertical === "bottom"
     readonly property string side: anchorsInfo.horizontal
     readonly property int gap: 12
-    readonly property int toastWidth: Math.round(Math.min(width - 2 * gap, 360 * Math.max(1, Styling.fontSize(0) / 14)))
+    readonly property int toastWidth: Math.round(Math.min(width - 2 * gap, Metrics.toastW * Math.max(1, Styling.fontSize(0) / 14)))
 
     // Input region (UnifiedShellPanel mask)
     readonly property Item hitbox: list
@@ -116,60 +121,62 @@ Item {
         }
 
         add: Transition {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             ParallelAnimation {
                 NumberAnimation {
                     property: "opacity"
                     from: 0
                     to: 1
-                    duration: Config.animDuration
-                    easing.type: Easing.OutCubic
+                    duration: Motion.enter.duration
+                    easing.type: Motion.enter.easing
                 }
                 NumberAnimation {
                     property: "x"
                     from: root.enterX
                     to: 0
-                    duration: Config.animDuration
-                    easing.type: Easing.OutBack
-                    easing.overshoot: 1.1
+                    duration: Motion.enter.duration
+                    easing.type: Motion.enter.easing
+                    easing.overshoot: Motion.enter.overshoot
                 }
                 NumberAnimation {
                     property: "scale"
                     from: 0.92
                     to: 1
-                    duration: Config.animDuration
-                    easing.type: Easing.OutBack
+                    duration: Motion.enter.duration
+                    easing.type: Motion.enter.easing
+                    easing.overshoot: Motion.enter.overshoot
                 }
             }
         }
         remove: Transition {
-            enabled: Config.animDuration > 0
+            enabled: Motion.exit.duration > 0
             ParallelAnimation {
                 NumberAnimation {
                     property: "opacity"
                     to: 0
-                    duration: Math.round(Config.animDuration * 0.7)
-                    easing.type: Easing.InCubic
+                    duration: Motion.exit.duration
+                    easing.type: Motion.exit.easing
                 }
                 NumberAnimation {
                     property: "x"
-                    to: root.enterX !== 0 ? root.enterX : 0
-                    duration: Math.round(Config.animDuration * 0.7)
-                    easing.type: Easing.InCubic
+                    to: root.enterX
+                    duration: Motion.exit.duration
+                    easing.type: Motion.exit.easing
                 }
                 NumberAnimation {
                     property: "scale"
                     to: 0.95
-                    duration: Math.round(Config.animDuration * 0.7)
+                    duration: Motion.exit.duration
+                    easing.type: Motion.exit.easing
                 }
             }
         }
         displaced: Transition {
-            enabled: Config.animDuration > 0
+            enabled: Motion.morph.duration > 0
             NumberAnimation {
                 properties: "x,y"
-                duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                duration: Motion.morph.duration
+                easing.type: Motion.morph.easing
             }
         }
     }
