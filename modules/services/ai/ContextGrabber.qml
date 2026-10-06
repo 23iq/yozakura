@@ -194,7 +194,26 @@ QtObject {
                 text: clip.isImage || clip.isFile ? "" : (clip.fullContent || clip.preview || ""),
                 isImage: !!clip.isImage
             } : null,
-            timer: null
+            timer: root.runningTimer(),
+            routines: (RoutinesService.routines || []).map(r => ({
+                        id: r.id,
+                        name: r.name
+                    }))
+        };
+    }
+
+    // The timer closest to ringing, as {label, remaining} for a chip.
+    function runningTimer() {
+        const list = (TimersService.timers || []).filter(t => t.state === "running");
+        if (list.length === 0)
+            return null;
+        list.sort((a, b) => a.leftMs - b.leftMs);
+        const t = list[0];
+        const secs = Math.max(0, Math.round(t.leftMs / 1000));
+        const left = Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0");
+        return {
+            label: t.name ? t.name + " " + left : left,
+            remaining: t.leftMs
         };
     }
 

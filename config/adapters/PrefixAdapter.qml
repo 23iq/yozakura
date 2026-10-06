@@ -14,7 +14,7 @@ JsonAdapter {
     property string ai: "?"
     property string timers: "t"
     property JsonObject launcher: JsonObject {
-        property list<string> order: ["calculator", "commands", "timers", "apps", "specials", "wallpapers", "files", "ai"]
+        property list<string> order: ["calculator", "commands", "timers", "apps", "specials", "routines", "wallpapers", "files", "ai"]
         property list<string> disabled: []
         property bool aiOnTab: true
         property bool filesInMixed: true

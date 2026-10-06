@@ -1,6 +1,7 @@
 import QtQuick
 import qs.config
 import qs.modules.services
+import "ToolMedia.js" as ToolMedia
 
 // QML side of the backend "mcp" service: imported/built-in MCP servers, their
 // tools (exposed to chat models with tool calling) and tool calls.
@@ -141,7 +142,8 @@ QtObject {
             else
                 cb({
                     text: res ? (res.text || "") : "",
-                    isError: !!(res && res.isError)
+                    isError: !!(res && res.isError),
+                    images: ToolMedia.images(res ? res.content : [])
                 });
         });
     }

@@ -12,6 +12,8 @@ import Quickshell
 //   timers             notch hub with the list (also the clock click)
 //   stopwatch-toggle   start / pause the stopwatch
 //   focus-toggle       focus mode on / off (system.focus.minutes)
+//   focus:<minutes>    start (or restart) focus mode; 0 = the default length
+//   focus-stop         end focus mode now
 //   timer-stop         stop every ringing timer
 //   timer:<spec>       quick input line without the UI ("10m tea", "pomo")
 //   routine:<id>       backend routines.run (svc/routines, sub-project E)
@@ -37,6 +39,14 @@ Singleton {
             return true;
         case "timer-stop":
             TimersService.dismiss("");
+            return true;
+        case "focus-stop":
+            FocusMode.stop(false);
+            return true;
+        }
+        if (cmd.indexOf("focus:") === 0) {
+            const minutes = parseInt(cmd.substring(6), 10);
+            FocusMode.start(minutes > 0 ? Math.min(minutes, 480) : 0);
             return true;
         }
         if (cmd.indexOf("timer:") === 0) {

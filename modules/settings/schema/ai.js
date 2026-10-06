@@ -295,7 +295,7 @@ var category = {
                     "type": "multiselect",
                     "label": "prefs.ai.suggestion_kinds",
                     "description": "prefs.ai.suggestion_kinds.desc",
-                    "keywords": "suggestions clipboard selection media timer window",
+                    "keywords": "suggestions clipboard selection media timer window routine keybinds shortcuts",
                     "options": [
                         {
                             "value": "clipboard",
@@ -331,6 +331,16 @@ var category = {
                             "value": "time",
                             "label": "prefs.ai.sug_kind_time",
                             "icon": "sun"
+                        },
+                        {
+                            "value": "routine",
+                            "label": "prefs.ai.sug_kind_routine",
+                            "icon": "lightning"
+                        },
+                        {
+                            "value": "binds",
+                            "label": "prefs.ai.sug_kind_binds",
+                            "icon": "keyboard"
                         }
                     ],
                     "visibleWhen": {

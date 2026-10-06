@@ -93,7 +93,7 @@ function fromChatRow(r, index, options) {
             };
             if (c.status === "ask") {
                 common.status = "pending";
-                common.options = _json(["allow", "allow_session", "deny"], "");
+                common.options = _json(c.confirm ? ["allow", "deny"] : ["allow", "allow_session", "deny"], "");
                 out.push(row("permission", common));
             } else {
                 common.status = c.status || "running";

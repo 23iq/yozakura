@@ -7,6 +7,7 @@ import Quickshell.Io
 import qs.config
 import qs.modules.services
 import "BindModel.js" as BindModel
+import "RoutineSlots.js" as RoutineSlots
 import "../../config/CoreBinds.js" as CoreBinds
 import "../../config/KeybindActions.js" as KeybindActions
 import "../globals/BrandActions.js" as BrandActions
@@ -34,7 +35,8 @@ Singleton {
     readonly property var rows: {
         AppSearch.list;
         const built = BindModel.buildRows(data);
-        return BindModel.withApps(built.concat(BindModel.slotRows(built)), root.appInfo);
+        const slots = BindModel.slotRows(built).concat(RoutineSlots.rows(built, RoutinesService.routines));
+        return BindModel.withApps(built.concat(slots), root.appInfo);
     }
     property var hyprBinds: []
     readonly property var nativeBinds: BindModel.nativeBinds(hyprBinds, rows)
@@ -350,7 +352,8 @@ Singleton {
         const r = root.row(uid);
         if (!r || r.kind !== "slot")
             return uid;
-        const added = root.addCustom(r.actions[0].id);
+        // A routine slot keeps its routine and is named after it.
+        const added = r.routine ? root.addBind(r.name, r.keys, r.actions) : root.addCustom(r.actions[0].id);
         root.expandedUid = added;
         return added;
     }

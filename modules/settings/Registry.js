@@ -29,6 +29,7 @@ var EDITORS = {
     "AiMcpEditor": "editors/AiMcpEditor.qml",
     "AiPromptsEditor": "editors/AiPromptsEditor.qml",
     "AiAutomationsEditor": "editors/AiAutomationsEditor.qml",
+    "RoutinesEditor": "editors/RoutinesEditor.qml",
     "GlassAmountEditor": "editors/GlassAmountEditor.qml",
     "GlassSurfacesEditor": "editors/GlassSurfacesEditor.qml",
     "KeybindsOverview": "editors/KeybindsOverview.qml",
