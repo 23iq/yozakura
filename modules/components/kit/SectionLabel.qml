@@ -37,7 +37,10 @@ Item {
         MouseArea {
             id: actionMouse
             anchors.fill: parent
-            anchors.margins: -Space.xs
+            anchors.leftMargin: -Space.s
+            anchors.rightMargin: -Space.s
+            anchors.topMargin: -Math.max(Space.xs, (Space.controlS - actionText.height) / 2)
+            anchors.bottomMargin: anchors.topMargin
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.triggered()

@@ -98,7 +98,7 @@ h.module("qs.modules.components", {
     "PositionSlider": "Item { property var player; property bool useCustomColors; property color customProgressColor; property color customBackgroundColor }",
     "StyledSlider": "Item { property real value; property bool isDragging; property bool resizeParent; property bool tooltip; property color progressColor }",
 })
-h.module("qs.modules.widgets.dashboard.widgets.calendar", {"Calendar": "Item {}"})
+h.module("qs.modules.widgets.dashboard.widgets", {"CalendarWidget": "Item {}"})
 h.copy("modules/widgets/dashboard/home/HomeView.qml")
 
 win = h.load("""

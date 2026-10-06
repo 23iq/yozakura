@@ -28,186 +28,188 @@ Surface {
 
     Column {
         width: root.width - 2 * root.padding
-        spacing: Space.m
+        spacing: Look.groupGap
 
-        SectionLabel {
+        Group {
             width: parent.width
-            text: "Icon buttons"
-        }
-        Row {
-            spacing: Space.m
-            Labeled {
-                caption: "rest"
-                IconButton {
-                    icon: Icons.gear
+            label: "Icon buttons"
+            Row {
+                spacing: Space.m
+                Labeled {
+                    caption: "rest"
+                    IconButton {
+                        icon: Icons.gear
+                    }
+                }
+                Labeled {
+                    caption: "hover"
+                    IconButton {
+                        icon: Icons.moon
+                        highlighted: true
+                    }
+                }
+                Labeled {
+                    caption: "active"
+                    IconButton {
+                        icon: Icons.bellSlash
+                        active: true
+                    }
+                }
+                Labeled {
+                    caption: "off"
+                    IconButton {
+                        icon: Icons.trash
+                        enabled: false
+                    }
+                }
+                Labeled {
+                    caption: "primary"
+                    IconButton {
+                        icon: Icons.paperPlaneRight
+                        primary: true
+                    }
                 }
             }
-            Labeled {
-                caption: "hover"
+            Row {
+                spacing: Space.s
                 IconButton {
-                    icon: Icons.moon
-                    highlighted: true
-                }
-            }
-            Labeled {
-                caption: "active"
-                IconButton {
-                    icon: Icons.bellSlash
+                    size: "s"
+                    icon: Icons.wifiHigh
                     active: true
                 }
-            }
-            Labeled {
-                caption: "off"
                 IconButton {
-                    icon: Icons.trash
-                    enabled: false
+                    size: "s"
+                    icon: Icons.bluetooth
                 }
-            }
-            Labeled {
-                caption: "primary"
                 IconButton {
-                    icon: Icons.paperPlaneRight
-                    primary: true
+                    size: "s"
+                    icon: Icons.nightLight
                 }
-            }
-        }
-        Row {
-            spacing: Space.s
-            IconButton {
-                size: "s"
-                icon: Icons.wifiHigh
-                active: true
-            }
-            IconButton {
-                size: "s"
-                icon: Icons.bluetooth
-            }
-            IconButton {
-                size: "s"
-                icon: Icons.nightLight
-            }
-            IconButton {
-                size: "s"
-                icon: Icons.speakerHigh
-                highlighted: true
-            }
-            IconButton {
-                size: "s"
-                icon: Icons.shutdown
+                IconButton {
+                    size: "s"
+                    icon: Icons.speakerHigh
+                    highlighted: true
+                }
+                IconButton {
+                    size: "s"
+                    icon: Icons.shutdown
+                }
             }
         }
 
-        SectionLabel {
+        Group {
             width: parent.width
-            text: "Chips"
-        }
-        Flow {
-            width: parent.width
-            spacing: Space.s
-            Chip {
-                icon: Icons.wifiHigh
-                text: "Home 5G"
-                active: true
-            }
-            Chip {
-                icon: Icons.bluetooth
-                text: "Bluetooth"
-            }
-            Chip {
-                icon: Icons.nightLight
-                text: "Night light"
-                highlighted: true
-            }
-            Chip {
-                icon: Icons.bellSlash
-                text: "Silent"
-                active: true
-            }
-            Chip {
-                text: "All day"
+            divider: true
+            label: "Chips"
+            Flow {
+                width: parent.width
+                spacing: Space.s
+                Chip {
+                    icon: Icons.wifiHigh
+                    text: "Home 5G"
+                    active: true
+                }
+                Chip {
+                    icon: Icons.bluetooth
+                    text: "Bluetooth"
+                }
+                Chip {
+                    icon: Icons.nightLight
+                    text: "Night light"
+                    highlighted: true
+                }
+                Chip {
+                    icon: Icons.bellSlash
+                    text: "Silent"
+                    active: true
+                }
+                Chip {
+                    text: "All day"
+                }
             }
         }
 
-        SectionLabel {
+        Group {
             width: parent.width
-            text: "Now playing"
-            action: "Open"
-        }
-        Row {
-            width: parent.width
-            spacing: Space.m
-            Art {
-                width: 56
-                height: 56
-                source: root.art
+            divider: true
+            label: "Now playing"
+            actionText: "Open"
+            Row {
+                width: parent.width
+                spacing: Space.m
+                Art {
+                    width: 56
+                    height: 56
+                    source: root.art
+                }
+                Column {
+                    width: parent.width - 56 - Space.m
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 2
+                    KitText {
+                        width: parent.width
+                        role: "body"
+                        font.weight: Font.Medium
+                        text: "Midnight City"
+                    }
+                    KitText {
+                        width: parent.width
+                        role: "secondary"
+                        text: "M83 · Hurry Up, We're Dreaming"
+                    }
+                }
             }
             Column {
-                width: parent.width - 56 - Space.m
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-                KitText {
-                    width: parent.width
-                    role: "body"
-                    font.weight: Font.Medium
-                    text: "Midnight City"
-                }
-                KitText {
-                    width: parent.width
-                    role: "secondary"
-                    text: "M83 · Hurry Up, We're Dreaming"
-                }
-            }
-        }
-        Column {
-            width: parent.width
-            spacing: Space.xs
-            ProgressLine {
                 width: parent.width
-                value: 0.42
-            }
-            Item {
-                width: parent.width
-                height: elapsed.implicitHeight
-                KitText {
-                    id: elapsed
-                    role: "caption"
-                    tabular: true
-                    text: "1:44"
+                spacing: Space.xs
+                ProgressLine {
+                    width: parent.width
+                    value: 0.42
                 }
-                KitText {
-                    anchors.right: parent.right
-                    role: "caption"
-                    tabular: true
-                    text: "4:03"
+                Item {
+                    width: parent.width
+                    height: elapsed.implicitHeight
+                    KitText {
+                        id: elapsed
+                        role: "caption"
+                        tabular: true
+                        text: "1:44"
+                    }
+                    KitText {
+                        anchors.right: parent.right
+                        role: "caption"
+                        tabular: true
+                        text: "4:03"
+                    }
                 }
             }
-        }
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Space.l
-            IconButton {
-                icon: Icons.shuffle
-                size: "s"
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            IconButton {
-                icon: Icons.previous
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            IconButton {
-                icon: Icons.pause
-                primary: true
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            IconButton {
-                icon: Icons.next
-                anchors.verticalCenter: parent.verticalCenter
-            }
-            IconButton {
-                icon: Icons.repeat
-                size: "s"
-                active: true
-                anchors.verticalCenter: parent.verticalCenter
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Space.l
+                IconButton {
+                    icon: Icons.shuffle
+                    size: "s"
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                IconButton {
+                    icon: Icons.previous
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                IconButton {
+                    icon: Icons.pause
+                    primary: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                IconButton {
+                    icon: Icons.next
+                    anchors.verticalCenter: parent.verticalCenter
+                }
+                IconButton {
+                    icon: Icons.repeat
+                    size: "s"
+                    active: true
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
         }
     }

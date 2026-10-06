@@ -94,3 +94,44 @@ function apply(lang, variant, cfg) {
     }
     return cfg;
 }
+
+// How the shared kit (modules/components/kit) draws in each language. Read
+// through the kit's Look singleton; components never branch on the name.
+// Colors are Colors.* role names, opacities 0..1, weights CSS-style.
+//   group     the box of a Group: fill + opacity, outline / top highlight
+//             (overBackground / white alpha), radius ("none" | "card" =
+//             control radius + 4 | "small"), inner padding (Space key or
+//             ""), `gap` between stacked groups and `inset` (Surface
+//             padding) as Space keys, `divider`: Group.divider draws its
+//             hairline above the group
+//   dividers  whether Divider hairlines are drawn at all
+//   control   the rest / hover box of IconButton and Chip (null: the
+//             theme's "common" / "focus" variants as configured), `shape`
+//             ("round" | "square"), label weights, `solidActive`: active
+//             controls become a solid accent fill with the on-accent glyph
+var KIT = {
+    "ink": {
+        group: { fill: "", fillOpacity: 0, outline: 0, highlight: 0, radius: "none", padding: "", gap: "l", inset: "l", divider: true },
+        dividers: true,
+        control: { fill: "overBackground", rest: 0, hoverFill: "overBackground", hover: 0.08, edge: 0, shape: "round", weight: 400, activeWeight: 500, solidActive: false }
+    },
+    "glass": {
+        group: { fill: "surface", fillOpacity: 0.4, outline: 0.10, highlight: 0.2, radius: "card", padding: "m", gap: "m", inset: "m", divider: false },
+        dividers: true,
+        control: { fill: "overBackground", rest: 0.07, hoverFill: "overBackground", hover: 0.14, edge: 0.12, shape: "round", weight: 400, activeWeight: 500, solidActive: false }
+    },
+    "tiles": {
+        group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
+        dividers: false,
+        control: { fill: "surfaceContainerHigh", rest: 1, hoverFill: "surfaceContainerHighest", hover: 1, edge: 0, shape: "square", weight: 500, activeWeight: 600, solidActive: true }
+    },
+    "classic": {
+        group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "l", divider: false },
+        dividers: true,
+        control: null
+    }
+};
+
+function kit(lang) {
+    return KIT[normalize(lang)];
+}

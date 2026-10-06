@@ -18,6 +18,7 @@ Window {
     width: 400; height: 900; visible: true
     property int triggered: 0
     property int moved: 0
+    property int groupAction: 0
     Column {
         KitText { objectName: "display"; role: "display"; text: "21:47" }
         KitText { objectName: "title"; role: "title"; text: "Title" }
@@ -42,6 +43,10 @@ Window {
         Ring { objectName: "ring"; value: 0.4; KitText { text: "18:24" } }
         Art { objectName: "art" }
         Surface { objectName: "surface"; Item { width: 100; height: 50 } }
+        Group { objectName: "group"; width: 300; label: "Notifications"; actionText: "Clear"; divider: true
+                onActionTriggered: parent.Window.window.groupAction++
+                Item { objectName: "groupItem"; width: 100; height: 40 }
+                Item { objectName: "groupItem2"; width: 100; height: 20 } }
     }
 }"""
 
@@ -76,8 +81,10 @@ for lang, density in CASES:
     assert space("controlRadius") == space("surfaceRadius") - 4, tag
     assert space("smallRadius") == space("surfaceRadius") - 8, tag
 
-    # Structure
+    # Structure: dividers are hairlines, hidden where groups separate by gaps
+    look = functools.partial(lambda hh, w, key: hh.eval(w, f"Look.{key}"), h, win)
     assert get("hline").property("height") == 1 and get("vline").property("width") == 1, tag
+    assert get("hline").property("visible") == (lang != "tiles"), tag
     section = get("section")
     h.eval(section, "triggered()")
     assert win.property("triggered") == 1, tag
@@ -85,18 +92,29 @@ for lang, density in CASES:
     # IconButton sizes and states
     s, m = get("btnS"), get("btnM")
     assert s.property("width") == space("controlS") and m.property("width") == space("controlM"), tag
-    assert m.property("radius") == m.property("height") / 2, tag
+    if lang == "tiles":
+        assert m.property("radius") == min(space("controlRadius"), m.property("height") / 2), tag  # squarer
+    else:
+        assert m.property("radius") == m.property("height") / 2, tag
     assert m.property("variant") == "common" and m.property("look") == "normal", tag
-    rest = m.property("rectOpacity")
+    assert m.property("boxed") == (lang != "classic"), tag
+    rest = h.eval(win, "Look.controlFill(false).a")
     if lang == "ink":
         assert rest == 0, (tag, rest)  # ghost
+    if lang == "glass":
+        assert 0 < rest < 0.2 and h.eval(win, "Look.controlEdge.a") > 0, (tag, rest)  # translucent + hairline
     if lang == "tiles":
         assert rest == 1, (tag, rest)  # solid tile
+        assert h.eval(win, "Look.controlFill(false).toString()") == h.eval(win, "Colors.surfaceContainerHigh.toString()"), tag
     m.setProperty("highlighted", True)
     assert m.property("variant") == "focus" and m.property("look") == "hover", tag
     m.setProperty("active", True)
-    assert m.property("variant") == "primary" and m.property("look") == "active", tag
-    assert 0 < m.property("rectOpacity") < 0.3, (tag, m.property("rectOpacity"))
+    if lang == "tiles":  # solid accent fill with the on-accent glyph
+        assert m.property("variant") == "primary" and m.property("look") == "primary", tag
+        assert m.property("rectOpacity") > 0.85, (tag, m.property("rectOpacity"))
+    else:
+        assert m.property("variant") == "primary" and m.property("look") == "active", tag
+        assert 0 < m.property("rectOpacity") < 0.3, (tag, m.property("rectOpacity"))
     m.setProperty("primary", True)
     assert m.property("look") == "primary" and m.property("rectOpacity") > 0.85, tag
 
@@ -104,7 +122,9 @@ for lang, density in CASES:
     chip = get("chip")
     assert chip.property("height") == space("chip"), tag
     chip.setProperty("active", True)
-    assert chip.property("variant") == "primary" and chip.property("look") == "active", tag
+    assert chip.property("variant") == "primary", tag
+    assert chip.property("look") == ("primary" if lang == "tiles" else "active"), tag
+    assert chip.property("ink").name() == h.eval(win, "Type.%s.toString()" % ("onAccent" if lang == "tiles" else "accent")), tag
 
     # ListRow: ghost at rest, focus on hover, tint when selected; slots load
     row = get("row")
@@ -131,8 +151,32 @@ for lang, density in CASES:
 
     # Surface: the popup box with the standard padding around its content
     surf = get("surface")
-    assert surf.property("variant") == "popup" and surf.property("padding") == space("l"), tag
-    assert surf.property("implicitWidth") == 100 + 2 * space("l"), (tag, surf.property("implicitWidth"))
+    pad = look("surfacePadding")
+    assert surf.property("variant") == "popup" and pad == space({"ink": "l", "glass": "m", "tiles": "s"}.get(lang, "l")), tag
+    assert surf.property("implicitWidth") == 100 + 2 * pad, (tag, surf.property("implicitWidth"))
     assert surf.property("radius") == space("surfaceRadius"), tag
+
+    # Group: label + content (Space.m apart); the box comes from the language
+    group, box, rule = get("group"), get("groupBox"), get("groupRule")
+    a, b = get("groupItem"), get("groupItem2")
+    assert b.property("y") - a.property("y") == 40 + space("m"), tag
+    h.eval(get("groupLabel"), "triggered()")
+    assert win.property("groupAction") == 1, tag
+    fill = box.property("color")
+    if lang == "ink":  # no box, a hairline above, content flush with the label
+        assert fill.alpha() == 0 and h.eval(box, "border.width") == 0, tag
+        assert rule.property("visible") and group.property("padding") == 0, tag
+        assert box.property("y") == space("l") + 1, tag
+    else:
+        assert fill.alpha() > 0 and not rule.property("visible"), tag
+        assert group.property("padding") == space("m"), tag
+    if lang == "glass":  # frosted card: translucent surface, outline, radius control + 4
+        assert 0.35 <= fill.alphaF() <= 0.45, (tag, fill.alphaF())
+        assert box.property("radius") == space("controlRadius") + 4, tag
+        assert h.eval(win, "Look.groupHighlight.a") > 0 and h.eval(win, "Look.groupOutline.a") > 0, tag
+    if lang == "tiles":  # solid tile, no outline, small radius
+        assert fill.name() == h.eval(win, "Colors.surfaceContainer.toString()") and fill.alphaF() == 1, tag
+        assert h.eval(win, "Look.groupOutline.a") == 0 and box.property("radius") == space("smallRadius"), tag
+    assert group.property("implicitHeight") == box.property("y") + box.property("height"), tag
 
 print("kit: ok")

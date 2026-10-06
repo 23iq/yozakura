@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
-import qs.modules.widgets.dashboard.widgets.calendar
+import qs.modules.widgets.dashboard.widgets
 
 // Composed dashboard home (layout.dashboard.home = "composed"): one calm
 // surface, no boxes of its own. Left: clock and weather, now playing, quick
@@ -60,7 +60,7 @@ Item {
             Layout.fillHeight: true
             spacing: Metrics.spacing
 
-            Calendar {
+            CalendarWidget {
                 objectName: "calendar"
                 Layout.fillWidth: true
                 Layout.preferredHeight: Metrics.rowHeight * 5.5
