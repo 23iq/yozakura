@@ -1,0 +1,46 @@
+{
+  "id": "spaceship",
+  "name": "Spaceship",
+  "description": "term.prompt.spaceship.desc",
+  "lines": 2,
+  "separator": "none",
+  "layout": "text",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "dir",
+      "fg": "primary",
+      "style": "bold",
+      "icon": "none"
+    },
+    {
+      "type": "git_branch",
+      "fg": "secondary",
+      "style": "bold",
+      "prefix": "on "
+    },
+    {
+      "type": "git_status",
+      "fg": "error",
+      "style": "bold",
+      "icon": "none"
+    },
+    {
+      "type": "langs",
+      "fg": "tertiary",
+      "style": "bold",
+      "prefix": "via "
+    },
+    {
+      "type": "duration",
+      "fg": "secondary",
+      "style": "bold",
+      "prefix": "took ",
+      "icon": "none"
+    }
+  ],
+  "char": {
+    "symbol": "➜",
+    "color": "success"
+  }
+}

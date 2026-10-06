@@ -1,0 +1,30 @@
+{
+  "id": "plain",
+  "name": "Plain",
+  "description": "term.prompt.plain.desc",
+  "lines": 1,
+  "separator": "none",
+  "layout": "text",
+  "nerdFont": false,
+  "left": [
+    {
+      "type": "user",
+      "fg": "primary",
+      "style": "bold"
+    },
+    {
+      "type": "dir",
+      "fg": "secondary"
+    },
+    {
+      "type": "git_branch",
+      "fg": "tertiary",
+      "prefix": "(",
+      "suffix": ")"
+    }
+  ],
+  "char": {
+    "symbol": "$",
+    "color": "onSurface"
+  }
+}

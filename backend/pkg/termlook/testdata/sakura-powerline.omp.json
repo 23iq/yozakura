@@ -1,0 +1,131 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "version": 3,
+  "final_space": true,
+  "palette": {
+    "error": "#ffb4ab",
+    "on_error": "#690005",
+    "on_primary": "#520e62",
+    "on_secondary": "#412745",
+    "on_surface": "#ebdfe7",
+    "on_tertiary": "#620b25",
+    "outline": "#9a8d99",
+    "primary": "#f5adff",
+    "secondary": "#e0bbe2",
+    "success": "#b7d085",
+    "surface": "#171217",
+    "surface_high": "#2e282e",
+    "tertiary": "#ffb2bd"
+  },
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "os",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:on_primary",
+          "background": "p:primary",
+          "template": " {{ .Icon }} "
+        },
+        {
+          "type": "path",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:on_secondary",
+          "background": "p:secondary",
+          "template": " <b>\uf07c {{ .Path }}</b> ",
+          "properties": {
+            "max_depth": 3,
+            "style": "agnoster_short"
+          }
+        },
+        {
+          "type": "git",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:on_tertiary",
+          "background": "p:tertiary",
+          "template": " \ue725 {{ .HEAD }} ",
+          "properties": {
+            "branch_icon": ""
+          }
+        },
+        {
+          "type": "git",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:on_tertiary",
+          "background": "p:tertiary",
+          "template": "{{ if or .Working.Changed .Staging.Changed (gt .Ahead 0) (gt .Behind 0) }} {{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }} {{ end }}",
+          "properties": {
+            "fetch_status": true
+          }
+        },
+        {
+          "type": "node",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:primary",
+          "background": "p:surface_high",
+          "template": " \ue718 {{ .Full }} "
+        },
+        {
+          "type": "python",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:primary",
+          "background": "p:surface_high",
+          "template": " \ue73c {{ .Full }} "
+        },
+        {
+          "type": "go",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:primary",
+          "background": "p:surface_high",
+          "template": " \ue627 {{ .Full }} "
+        },
+        {
+          "type": "rust",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:primary",
+          "background": "p:surface_high",
+          "template": " \ue7a8 {{ .Full }} "
+        },
+        {
+          "type": "java",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:primary",
+          "background": "p:surface_high",
+          "template": " \ue738 {{ .Full }} "
+        },
+        {
+          "type": "executiontime",
+          "style": "powerline",
+          "powerline_symbol": "\ue0b0",
+          "foreground": "p:tertiary",
+          "background": "p:surface_high",
+          "template": " \uf252 {{ .FormattedMs }} ",
+          "properties": {
+            "style": "round",
+            "threshold": 2000
+          }
+        },
+        {
+          "type": "text",
+          "style": "plain",
+          "foreground": "p:primary",
+          "foreground_templates": [
+            "{{ if gt .Code 0 }}p:error{{ end }}"
+          ],
+          "template": "<b>❯</b>"
+        }
+      ]
+    }
+  ]
+}

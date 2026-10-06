@@ -1,0 +1,21 @@
+{
+  "id": "zen",
+  "name": "Zen",
+  "description": "term.prompt.zen.desc",
+  "lines": 1,
+  "separator": "none",
+  "layout": "text",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "dir",
+      "fg": "primary",
+      "style": "bold",
+      "icon": "none"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "secondary"
+  }
+}

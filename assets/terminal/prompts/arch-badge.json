@@ -1,0 +1,47 @@
+{
+  "id": "arch-badge",
+  "name": "Arch Badge",
+  "description": "term.prompt.arch-badge.desc",
+  "lines": 1,
+  "separator": "powerline",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "os",
+      "bg": "primary",
+      "fg": "onPrimary"
+    },
+    {
+      "type": "user",
+      "bg": "secondary",
+      "fg": "onSecondary",
+      "style": "bold"
+    },
+    {
+      "type": "host",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "dir",
+      "bg": "surfaceHigh",
+      "fg": "primary"
+    },
+    {
+      "type": "git_branch",
+      "bg": "surfaceHigh",
+      "fg": "tertiary",
+      "icon": "\uf1d3"
+    },
+    {
+      "type": "git_status",
+      "bg": "surfaceHigh",
+      "fg": "tertiary"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "primary"
+  }
+}

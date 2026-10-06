@@ -1,0 +1,49 @@
+{
+  "id": "cherry-blossom",
+  "name": "Cherry Blossom",
+  "description": "term.prompt.cherry-blossom.desc",
+  "lines": 1,
+  "separator": "rounded",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "user",
+      "bg": "primary",
+      "fg": "onPrimary",
+      "icon": "\udb80\ude4a",
+      "style": "bold"
+    },
+    {
+      "type": "dir",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "git_branch",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    },
+    {
+      "type": "git_status",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    }
+  ],
+  "right": [
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "secondary"
+    },
+    {
+      "type": "time",
+      "bg": "primary",
+      "fg": "onPrimary"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "tertiary"
+  }
+}

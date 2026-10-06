@@ -1,0 +1,42 @@
+{
+  "id": "flame",
+  "name": "Flame",
+  "description": "term.prompt.flame.desc",
+  "lines": 1,
+  "separator": "flame",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "os",
+      "bg": "error",
+      "fg": "onError"
+    },
+    {
+      "type": "dir",
+      "bg": "tertiary",
+      "fg": "onTertiary",
+      "style": "bold"
+    },
+    {
+      "type": "git_branch",
+      "bg": "primary",
+      "fg": "onPrimary"
+    },
+    {
+      "type": "git_status",
+      "bg": "primary",
+      "fg": "onPrimary"
+    },
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "tertiary",
+      "icon": "\uf06d"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "tertiary"
+  }
+}

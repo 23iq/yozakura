@@ -1,0 +1,48 @@
+{
+  "id": "capsule-right",
+  "name": "Capsule Right",
+  "description": "term.prompt.capsule-right.desc",
+  "lines": 1,
+  "separator": "rounded",
+  "layout": "pills",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "dir",
+      "bg": "primary",
+      "fg": "onPrimary",
+      "style": "bold"
+    },
+    {
+      "type": "git_branch",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "git_status",
+      "bg": "surfaceHigh",
+      "fg": "secondary"
+    }
+  ],
+  "right": [
+    {
+      "type": "status",
+      "bg": "error",
+      "fg": "onError"
+    },
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "tertiary"
+    },
+    {
+      "type": "time",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "primary"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "rounded-pills",
+  "name": "Rounded Pills",
+  "description": "term.prompt.rounded-pills.desc",
+  "lines": 1,
+  "separator": "rounded",
+  "layout": "pills",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "os",
+      "bg": "primary",
+      "fg": "onPrimary"
+    },
+    {
+      "type": "dir",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "git_branch",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    },
+    {
+      "type": "git_status",
+      "bg": "surfaceHigh",
+      "fg": "error",
+      "icon": "\uf071"
+    }
+  ],
+  "right": [
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "secondary"
+    },
+    {
+      "type": "time",
+      "bg": "surfaceHigh",
+      "fg": "primary"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "primary"
+  }
+}

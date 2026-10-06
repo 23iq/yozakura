@@ -1,0 +1,46 @@
+{
+  "id": "sakura-powerline",
+  "name": "Sakura Powerline",
+  "description": "term.prompt.sakura-powerline.desc",
+  "lines": 1,
+  "separator": "powerline",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "os",
+      "bg": "primary",
+      "fg": "onPrimary"
+    },
+    {
+      "type": "dir",
+      "bg": "secondary",
+      "fg": "onSecondary",
+      "style": "bold"
+    },
+    {
+      "type": "git_branch",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    },
+    {
+      "type": "git_status",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    },
+    {
+      "type": "langs",
+      "bg": "surfaceHigh",
+      "fg": "primary"
+    },
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "tertiary"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "primary"
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "developer",
+  "name": "Developer",
+  "description": "term.prompt.developer.desc",
+  "lines": 2,
+  "separator": "powerline",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "dir",
+      "bg": "primary",
+      "fg": "onPrimary",
+      "style": "bold"
+    },
+    {
+      "type": "git_branch",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "git_status",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "langs",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    }
+  ],
+  "right": [
+    {
+      "type": "status",
+      "bg": "error",
+      "fg": "onError"
+    },
+    {
+      "type": "jobs",
+      "bg": "surfaceHigh",
+      "fg": "secondary"
+    },
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "tertiary"
+    },
+    {
+      "type": "battery",
+      "bg": "surfaceHigh",
+      "fg": "success"
+    },
+    {
+      "type": "time",
+      "bg": "surfaceHigh",
+      "fg": "primary"
+    }
+  ],
+  "char": {
+    "symbol": "λ",
+    "color": "primary"
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "id": "tokyo-rounded",
+  "name": "Tokyo Rounded",
+  "description": "term.prompt.tokyo-rounded.desc",
+  "lines": 1,
+  "separator": "rounded",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "os",
+      "bg": "primary",
+      "fg": "onPrimary"
+    },
+    {
+      "type": "dir",
+      "bg": "secondary",
+      "fg": "onSecondary",
+      "icon": "\uf115"
+    },
+    {
+      "type": "git_branch",
+      "bg": "surfaceHigh",
+      "fg": "tertiary",
+      "icon": "\uf418"
+    },
+    {
+      "type": "git_status",
+      "bg": "surfaceHigh",
+      "fg": "tertiary"
+    },
+    {
+      "type": "langs",
+      "bg": "surfaceHigh",
+      "fg": "primary"
+    }
+  ],
+  "right": [
+    {
+      "type": "time",
+      "bg": "surfaceHigh",
+      "fg": "secondary",
+      "icon": "\uf43a"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "primary"
+  }
+}

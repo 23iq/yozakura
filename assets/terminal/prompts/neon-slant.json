@@ -1,0 +1,46 @@
+{
+  "id": "neon-slant",
+  "name": "Neon Slant",
+  "description": "term.prompt.neon-slant.desc",
+  "lines": 1,
+  "separator": "slant",
+  "layout": "powerline",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "os",
+      "bg": "secondary",
+      "fg": "onSecondary"
+    },
+    {
+      "type": "dir",
+      "bg": "primary",
+      "fg": "onPrimary",
+      "style": "bold"
+    },
+    {
+      "type": "git_branch",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    },
+    {
+      "type": "git_status",
+      "bg": "tertiary",
+      "fg": "onTertiary"
+    },
+    {
+      "type": "langs",
+      "bg": "surfaceHigh",
+      "fg": "secondary"
+    },
+    {
+      "type": "duration",
+      "bg": "surfaceHigh",
+      "fg": "tertiary"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "secondary"
+  }
+}

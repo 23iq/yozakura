@@ -1,0 +1,35 @@
+{
+  "id": "pure",
+  "name": "Pure",
+  "description": "term.prompt.pure.desc",
+  "lines": 2,
+  "separator": "none",
+  "layout": "text",
+  "nerdFont": true,
+  "left": [
+    {
+      "type": "dir",
+      "fg": "primary",
+      "icon": "none"
+    },
+    {
+      "type": "git_branch",
+      "fg": "outline",
+      "icon": "none"
+    },
+    {
+      "type": "git_status",
+      "fg": "secondary",
+      "icon": "none"
+    },
+    {
+      "type": "duration",
+      "fg": "tertiary",
+      "icon": "none"
+    }
+  ],
+  "char": {
+    "symbol": "❯",
+    "color": "primary"
+  }
+}
