@@ -210,9 +210,9 @@
     {
       "id": "yozakura.ai-agent",
       "labels": {
-        "en": "AI agent mode",
-        "es": "Modo agente de IA",
-        "ru": "Режим агента ИИ"
+        "en": "AI agent (Code space)",
+        "es": "Agente de IA (espacio Código)",
+        "ru": "ИИ-агент (пространство «Код»)"
       },
       "category": "Yozakura",
       "group": "ai",
@@ -222,14 +222,26 @@
     {
       "id": "yozakura.ai-shell",
       "labels": {
-        "en": "AI shell control",
-        "es": "Control del shell por IA",
-        "ru": "Управление оболочкой через ИИ"
+        "en": "AI assistant (desktop control)",
+        "es": "Asistente de IA (control del escritorio)",
+        "ru": "ИИ-ассистент (управление рабочим столом)"
       },
       "category": "Yozakura",
       "group": "ai",
       "dispatcher": "exec",
       "argument": "yozakura run ai-shell"
+    },
+    {
+      "id": "yozakura.ai-code",
+      "labels": {
+        "en": "AI Code space",
+        "es": "Espacio Código de la IA",
+        "ru": "Пространство «Код» ИИ"
+      },
+      "category": "Yozakura",
+      "group": "ai",
+      "dispatcher": "exec",
+      "argument": "yozakura run ai-code"
     },
     {
       "id": "yozakura.dnd-toggle",

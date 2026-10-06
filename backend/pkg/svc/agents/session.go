@@ -307,11 +307,15 @@ func (k *sessionSink) Permission(req PermissionRequest, reply func(string)) {
 		reply(DecisionDeny)
 		return
 	}
-	if d := m.policy().Decide(req, s.meta.Yolo, s.rules); d != "" {
+	d := m.hookDecision(s.meta, req)
+	if d == "" {
+		d = m.policy().Decide(req, s.meta.Yolo, s.rules)
+	}
+	if d != "" {
 		// Every automatic decision is reported, reads included, so the
 		// timeline shows what ran without asking.
 		s.emitLocked(Event{Kind: KindPermissionResolved, ID: req.ID, Tool: req.Tool, Title: req.Title,
-			Category: req.Category, Decision: DecisionAuto})
+			Category: req.Category, Decision: autoDecision(d)})
 		m.mu.Unlock()
 		reply(d)
 		return

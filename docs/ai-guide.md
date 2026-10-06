@@ -168,6 +168,29 @@ yozakura stopwatch start|pause|resume|toggle|lap|reset|status
 yozakura remind 18:00 call mom            # or: remind in 20m stretch; remind list; remind cancel r4
 ```
 
+AI coding tasks (daemon `tasks` service, state in
+`~/.local/share/yozakura/tasks/`; each run works in its own git worktree under
+`~/.local/share/yozakura/worktrees/<project>/<id>` on branch `yoz/<id>`; when the
+agent finishes, the project check runs and failures go back to it, then the
+task waits for review; accept squashes it into the current branch):
+
+```bash
+yozakura task new "Add a --json flag to list" --agent claude,codex [--plan] [--in-place] [--template tests]
+yozakura task list [--json]               # id, status, agents, title
+yozakura task show k1abc                  # runs, checks, changed files, plan
+yozakura task run k1abc                   # approve the plan (plan mode)
+yozakura task followup k1abc "also update the docs" [--run 1]
+yozakura task accept k1abc [--run 1] [-m "feat: ..."]   # one commit on the current branch
+yozakura task discard k1abc               # remove worktrees and branches
+yozakura task project . --check "make check" --max-attempts 2   # or --auto (detect)
+yozakura task templates                   # /review /tests /fix-check /explain /refactor + your own
+```
+
+Templates: `assets/ai/task-templates/*.md` (bundled),
+`~/.config/yozakura/task-templates/*.md` (global), `<project>/.yozakura/templates/*.md`
+(project); front matter `name`, `description`, `mode`; placeholders
+`{{input}} {{selection}} {{file}} {{clipboard}} {{diff}} {{staged}} {{branch}} {{project}} {{check}}`.
+
 Completion: `yozakura completion bash|zsh|fish` (keys, values and preset
 names are completed live from the catalog):
 
@@ -215,6 +238,8 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `stopwatch_control` | no | `{"action":"lap"}`; start, pause, resume, toggle, lap, reset, status |
 | `reminder_add`, `reminder_cancel` | no | `{"when":"in 20m","message":"stretch"}`, `{"when":"7:30pm"}`; cancel by id or message |
 | `usage_summary` | yes | AI token usage/cost from the ledger: `{"range":"week","groupBy":"model","limits":true}` (same data as `yozakura usage`) |
+| `task_list`, `task_status` | yes | coding tasks handed to CLI agents: status, runs, check results, summary, proposed commit message |
+| `task_create` | no | `{"dir":"/home/me/proj","prompt":"Add tests for the parser","agents":["claude","codex"],"mode":"plan"}`: delegate coding work (worktree per run, verify loop); the user reviews and accepts it in the AI bar |
 | `binds_search`, `binds_list`, `binds_check`, `binds_suggest` | yes | bind advisor: `{"query":"раскладка"}` -> results with a ready `action` ({id, args}); every bind with its source; is a combo free; free combos for an action |
 | `binds_set`, `binds_remove`, `binds_undo` | no | `{"combo":"SUPER+F","action":"window.fullscreen"}` (confirm with the user first); writes `binds.json` only, returns `undo: {tool, args}` |
 
