@@ -228,6 +228,35 @@ sent = json.loads(ev("JSON.stringify(Notifications.sent)"))
 check(len(sent) == 1 and "only shell" in sent[0]["summary"] and "config errors: monitor" in sent[0]["body"],
       f"a failed enable after the wizard closed is notified, got {sent}")
 check(ev("StateService.state.onboarding") is None, "finishing clears the saved wizard state")
+
+# Enter on the summary means Start (ruling C-3): applies the toggle, only when on.
+from PySide6.QtCore import Qt  # noqa: E402
+
+ev('BackendService.replies = Object.assign({}, BackendService.replies, {"exclusive.enable": ' + json.dumps(STATUS_OFF) + '})')
+
+
+def press_enter():
+    h.find(win, "flow").forceActiveFocus()
+    QTest.keyClick(win, Qt.Key_Return)
+    QTest.qWait(30)
+
+
+reopen_at_finish()
+press_enter()
+check(closed == [1, 1, 1] and len(calls("exclusive.enable")) == 1, "Enter with the toggle off finishes without enabling")
+reopen_at_finish()
+h.eval(vfind("exclusiveToggle"), "toggled(true)")
+press_enter()
+check(closed == [1, 1, 1, 1] and len(calls("exclusive.enable")) == 2, "Enter with the toggle on enables exactly once")
+# a running exclusive call: the enable waits for it instead of being dropped
+reopen_at_finish()
+h.eval(vfind("exclusiveToggle"), "toggled(true)")
+ev("ExclusiveService.busy = true")
+press_enter()
+check(len(calls("exclusive.enable")) == 2, "nothing is sent while another exclusive call runs")
+ev("ExclusiveService.busy = false")
+QTest.qWait(30)
+check(len(calls("exclusive.enable")) == 3, "the enable runs once the other call is done")
 check(calls("extras.cancel") == [] and ev("ExtrasService.busy") is True, "installs keep running after the wizard")
 
 if h.type_errors:

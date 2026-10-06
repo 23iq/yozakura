@@ -68,8 +68,9 @@ QtObject {
         index = target;
     }
     function next() {
+        // Enter / Continue on the summary means "Start using" (ruling C-3)
         if (isLast)
-            finish();
+            start();
         else
             go(index + 1);
     }
@@ -89,17 +90,35 @@ QtObject {
     // only-shell choice (Skip / Esc never do). A failure surfaces as a
     // notification: the wizard is gone by then.
     function start() {
-        if (isLast && wantsExclusive)
-            ExclusiveService.enable(ok => {
-                if (!ok)
-                    Notifications.notifyInternal({
-                        "summary": I18n.t("onboarding.finish.exclusive.failed", Brand.displayName),
-                        "body": I18n.t("onboarding.finish.exclusive.failed.body", ExclusiveService.error),
-                        "appName": Brand.displayName,
-                        "urgency": "critical"
-                    });
-            });
+        if (isLast && wantsExclusive) {
+            // another exclusive call is running: enable once it is done
+            if (ExclusiveService.busy)
+                _exclusivePending = true;
+            else
+                _enableExclusive();
+        }
         finish();
+    }
+    property bool _exclusivePending: false
+    function _enableExclusive() {
+        ExclusiveService.enable(ok => {
+            if (!ok)
+                Notifications.notifyInternal({
+                    "summary": I18n.t("onboarding.finish.exclusive.failed", Brand.displayName),
+                    "body": I18n.t("onboarding.finish.exclusive.failed.body", ExclusiveService.error),
+                    "appName": Brand.displayName,
+                    "urgency": "critical"
+                });
+        });
+    }
+    property Connections _exclusive: Connections {
+        target: ExclusiveService
+        function onBusyChanged() {
+            if (!ExclusiveService.busy && root._exclusivePending) {
+                root._exclusivePending = false;
+                root._enableExclusive();
+            }
+        }
     }
 
     // ---- installs and exclusive mode ---------------------------------------
