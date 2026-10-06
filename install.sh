@@ -200,14 +200,16 @@ step() {
 
 # done_line LABEL TIME: "✓ label ········ 12s".
 done_line() {
-  local label="$1" t="$2" dots
+  local label="$1" t="$2" dots mark="$C_GREEN$G_OK"
+  # A dry run did nothing: no check mark.
+  [[ "$DRY_RUN" == 1 ]] && mark="$C_DIM$G_INFO"
   dots=$((UI_W - ${#label} - ${#t} - 8))
   if ((dots < 2)); then
-    ok "$label ${C_DIM}$t${C_OFF}"
+    printf '  %s%s %s %s%s%s\n' "$mark" "$C_OFF" "$label" "$C_DIM" "$t" "$C_OFF" >&2
     return
   fi
   ui_rep "$dots" "$G_LEAD"
-  printf '  %s%s%s %s %s%s %s%s\n' "$C_GREEN" "$G_OK" "$C_OFF" "$label" "$C_DIM" "$UI_OUT" "$t" "$C_OFF" >&2
+  printf '  %s%s %s %s%s %s%s\n' "$mark" "$C_OFF" "$label" "$C_DIM" "$UI_OUT" "$t" "$C_OFF" >&2
 }
 
 # --- Boxes: the plan and the final screen ---
@@ -414,8 +416,32 @@ dry_banner() {
   printf '\n  %s%s DRY RUN %s%s %s%s\n' "$C_YELLOW$C_BOLD" "$B_H$B_H" "$B_H$B_H" "$C_OFF" "$C_YELLOW" "$1$C_OFF" >&2
 }
 
-# dry_note VERB TEXT: "would VERB: TEXT", dim, under the step it belongs to.
-dry_note() { printf '    %s%s would %s: %s%s\n' "$C_DIM" "$G_PIPE" "$1" "$2" "$C_OFF" >&2; }
+# dry_note VERB TEXT: "would VERB: TEXT", dim, under the step it belongs to;
+# a long TEXT wraps between words, indented under its start.
+dry_note() {
+  local head="would $1: " words=() word line="" w pad
+  w=$((UI_W - 8 - ${#head}))
+  ((w < 24)) && w=24
+  printf -v pad '%*s' "${#head}" ""
+  read -ra words <<<"$2"
+  for word in "${words[@]}"; do
+    if [[ -n "$line" ]] && ((${#line} + 1 + ${#word} > w)); then
+      printf '    %s%s %s%s%s\n' "$C_DIM" "$G_PIPE" "$head" "$line" "$C_OFF" >&2
+      head="$pad" line=""
+    fi
+    line+="${line:+ }$word"
+  done
+  printf '    %s%s %s%s%s\n' "$C_DIM" "$G_PIPE" "$head" "$line" "$C_OFF" >&2
+}
+
+# done_or_would DONE WOULD: "✓ DONE", or in a dry run a dim "· would WOULD".
+done_or_would() {
+  if [[ "$DRY_RUN" == 1 ]]; then
+    printf '  %s%s would %s%s\n' "$C_DIM" "$G_INFO" "$2" "$C_OFF" >&2
+  else
+    ok "$1"
+  fi
+}
 
 # dry_line CMD...: shows CMD as it would run; the installer's own helper
 # functions are spelled out as what they do.
@@ -507,7 +533,7 @@ run() {
   shift 2
   start=$SECONDS
   if [[ "$DRY_RUN" == 1 ]]; then
-    done_line "$label" "dry run"
+    done_line "$label" "would run"
     dry_line "$@"
     return 0
   fi
@@ -729,7 +755,9 @@ try_sudo() {
     fi
   fi
   SUDO_OK=1
-  # Keep the timestamp fresh for long package and build steps.
+  # Keep the timestamp fresh for long package and build steps (the tests'
+  # sandbox turns it off: its sudo is a stub).
+  [[ -n "${YOZAKURA_NO_SUDO_KEEPALIVE:-}" ]] && return 0
   (while kill -0 "$$" 2>/dev/null; do
     sudo -n true 2>/dev/null
     sleep 50
@@ -1294,13 +1322,14 @@ install_binaries() {
       would sudo install -D -m 755 "$built" "$target"
     fi
   done
-  ok "Installed ${bins[*]} to $BIN_DIR"
+  done_or_would "Installed ${bins[*]} to $BIN_DIR" "install ${bins[*]} to $BIN_DIR"
   # Tell the binary where its QML sources are (see backend/pkg/paths).
   write_file "$DATA_DIR/shell_repo" "$SRC_DIR"$'\n'
   if [[ "$LINK_BINS" == 1 ]]; then
     need_sudo
     for b in "${bins[@]}"; do would sudo ln -sf "$BIN_DIR/$b" "$SYS_BIN/$b"; done
-    ok "Linked them into $SYS_BIN (the compositor's autostart uses the session PATH)"
+    done_or_would "Linked them into $SYS_BIN (the compositor's autostart uses the session PATH)" \
+      "link them into $SYS_BIN (the compositor's autostart uses the session PATH)"
   fi
   logged "$BIN_DIR/$APP_ID" version || die "The installed $APP_ID does not run." "See $LOG_FILE"
 }
@@ -1341,7 +1370,9 @@ old_daemon_paths() {
   local p v
   for p in "$SYS_BIN/$OLD_DAEMON" "$HOME/.local/bin/$OLD_DAEMON"; do
     [[ -f "$p" ]] || continue
-    v="$("$p" --version 2>&1 || true) $(go version -m "$p" 2>/dev/null || true)"
+    # A dry run runs nothing foreign: only the Go build info is read.
+    v="$(go version -m "$p" 2>/dev/null || true)"
+    [[ "$DRY_RUN" == 1 ]] || v+=" $("$p" --version 2>&1 || true)"
     [[ "${v,,}" == *"$OLD_DAEMON"* ]] && echo "$p"
   done
   return 0
@@ -1358,7 +1389,7 @@ remove_old_daemon() {
       need_sudo
       would sudo rm -f "$p"
     fi
-    ok "Removed the old $OLD_DAEMON ($p); $DAEMON_ID replaces it"
+    done_or_would "Removed the old $OLD_DAEMON ($p); $DAEMON_ID replaces it" "remove the old $OLD_DAEMON ($p); $DAEMON_ID replaces it"
   done < <(old_daemon_paths)
 }
 
@@ -1386,7 +1417,7 @@ compositor_setup() {
     hyprland_bootstrap
     run_optional "polkit autostart" "Polkit agent autostart" "Start a polkit agent from your Hyprland config yourself." polkit_autostart
   fi
-  ok "$name config: $(tilde "$(comp_config "$COMPOSITOR")")"
+  done_or_would "$name config: $(tilde "$(comp_config "$COMPOSITOR")")" "add the $DISPLAY_NAME block to the $name config: $(tilde "$(comp_config "$COMPOSITOR")")"
 }
 
 # --exclusive: $DISPLAY_NAME takes over the whole Hyprland config. Older
@@ -1625,7 +1656,7 @@ offer_reboot() {
     [[ " ${SERVICES[*]} " == *" sddm "* ]] && default=y
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
-  info "Rebooting..."
+  [[ "$DRY_RUN" == 1 ]] || info "Rebooting..."
   would systemctl reboot || warn "Could not reboot; reboot yourself to start $DISPLAY_NAME."
 }
 
@@ -1688,7 +1719,7 @@ main() {
     install_binaries
     install_sys_helper
     remove_old_daemon
-    ok "Updated. Run '$APP_ID reload' to restart the shell."
+    done_or_would "Updated. Run '$APP_ID reload' to restart the shell." "be updated; then '$APP_ID reload' restarts the shell"
     dry_end
     return
   fi

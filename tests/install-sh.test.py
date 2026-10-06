@@ -28,7 +28,8 @@ TOOLS = (
     "touch env tr wc"
 ).split()
 
-LOGGER = '{ printf "%s" "${0##*/}"; [[ $# -eq 0 ]] || printf "\\t%s" "$@"; printf "\\n"; } >>"$STUB_LOG"\n'
+# One printf per call: concurrent stubs append whole lines, never interleave.
+LOGGER = 'l="${0##*/}"; for a in "$@"; do l+=$\'\\t\'"$a"; done; printf "%s\\n" "$l" >>"$STUB_LOG"\n'
 
 STUBS = {
     # STUB_SUDO_DENY: no cached credentials and no password accepted.
@@ -83,7 +84,7 @@ DRY_STUBS.update(
         "pacman": 'case "$1" in -T) shift; printf "%s\\n" "$@"; exit 0 ;; -Qq) exit 1 ;; esac\n' + LOUD,
         "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n' + LOUD,
         "dnf": '[[ "$1" == --version ]] && { echo "dnf5 version 5.2"; exit 0; }\n' + LOUD,
-        "go": '[[ "$1" == version && $# -eq 1 ]] && { echo "go version go1.24.0 linux/amd64"; exit 0; }\n' + LOUD,
+        "go": '[[ "$1" == version ]] && { [[ $# -eq 1 ]] && echo "go version go1.24.0 linux/amd64"; exit 0; }\n' + LOUD,
         # Reads to stdout only; a file:// URL is served (the package list).
         "curl": (
             'for a in "$@"; do [[ "$a" == -o ]] && { ' + LOUD.replace("\n", "; ", 1) + "}; done\n"
@@ -158,6 +159,8 @@ class Sandbox:
             "CUDA_PATH": str(self.root / "no-cuda"),
             "TMPDIR": str(self.root / "tmp"),
             "DRY_MARKER": str(self.marker),
+            # No background `sudo -n true; sleep 50` loop outliving a run.
+            "YOZAKURA_NO_SUDO_KEEPALIVE": "1",
             **self.extra_env,
         }
 
@@ -180,7 +183,9 @@ class Sandbox:
                 rc = proc.wait(timeout=120)
             else:
                 rc = self._run_on_tty(args, answers, err, shown)
-        return rc, err_path.read_text(), "".join(shown)
+        # Dry-run notes wrap long commands; join them back for matching.
+        err = re.sub(r"\n    \S {3,}", " ", err_path.read_text())
+        return rc, err, "".join(shown)
 
     def _run_on_tty(self, args, answers, err, shown):
         """Runs install.sh with a pseudo-terminal as its controlling terminal
