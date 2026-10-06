@@ -11,7 +11,7 @@ import (
 // topCommands are completed after the binary name (keep in sync with showHelp).
 var topCommands = []string{
 	"config", "preset", "special", "cmd", "timer", "stopwatch", "remind", "completion", "run", "toggle", "launch", "lock", "reload", "quit", "screen", "suspend",
-	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "ipc", "install", "remove",
+	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "usage", "ipc", "install", "remove",
 	"colorpicker", "lockwall", "thumbs", "dthumbs", "update", "doctor", "refresh", "onboarding", "help", "version", "goodbye",
 }
 

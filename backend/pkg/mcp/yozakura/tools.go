@@ -63,6 +63,7 @@ func Tools(d Deps) []mcp.ToolDef {
 	out = append(out, commandTools(d)...)
 	out = append(out, specialTools(d)...)
 	out = append(out, timerTools(d)...)
+	out = append(out, usageTools(d)...)
 	return out
 }
 

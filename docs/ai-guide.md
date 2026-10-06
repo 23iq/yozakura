@@ -200,6 +200,7 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `timer_control` | no | `{"id":"t3","action":"pause"}`; actions pause, resume, add (`"amount":"5m"`), reset, cancel, dismiss |
 | `stopwatch_control` | no | `{"action":"lap"}`; start, pause, resume, toggle, lap, reset, status |
 | `reminder_add`, `reminder_cancel` | no | `{"when":"in 20m","message":"stretch"}`, `{"when":"7:30pm"}`; cancel by id or message |
+| `usage_summary` | yes | AI token usage/cost from the ledger: `{"range":"week","groupBy":"model","limits":true}` (same data as `yozakura usage`) |
 
 Config and preset tools work on files and do not need the daemon; the others
 talk to the running shell. Tools whose change can be reverted (timers,
