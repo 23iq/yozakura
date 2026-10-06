@@ -516,7 +516,8 @@ func (d *Daemon) shutdown() {
 	// start agent processes or MCP servers after their owners shut down.
 	d.srv.Close()
 	if d.extras != nil {
-		// a running pacman/AUR install is waited for, never cut off
+		// drops queued installs; a running pacman/AUR one is left running
+		// (detached), never waited for or cut off
 		d.extras.Close()
 	}
 	if d.qsCmd != nil && d.qsCmd.Process != nil {

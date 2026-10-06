@@ -76,3 +76,16 @@ func TestScriptRedirectHostsAllowed(t *testing.T) {
 		t.Error("redirect host accepted as initial url")
 	}
 }
+
+// A job writes to a file, never a pipe: a daemon that goes away mid-job
+// cannot SIGPIPE pacman. Its lines still arrive, including the last ones.
+func TestExecRunnerOutputIsAFile(t *testing.T) {
+	var lines []string
+	code, err := ExecRunner{}.Run(context.Background(), []string{"sh", "-c", `[ -f /proc/self/fd/1 ] && echo file; sleep 0.1; printf 'a\rb\nlast'`}, nil, func(l string) { lines = append(lines, l) })
+	if err != nil || code != 0 {
+		t.Fatalf("%d %v", code, err)
+	}
+	if strings.Join(lines, "|") != "file|a|b|last" {
+		t.Fatalf("lines = %q", lines)
+	}
+}

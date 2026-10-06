@@ -20,8 +20,9 @@ const (
 	maxScriptBytes = 4 << 20
 )
 
-// ExecRunner runs jobs as real processes in their own process group; cancel
-// sends SIGTERM to the group, then SIGKILL after a grace period.
+// ExecRunner runs jobs as real processes in their own process group (a
+// daemon stop never signals them); cancel sends SIGTERM to the group, then
+// SIGKILL after a grace period.
 type ExecRunner struct{}
 
 // Run implements Runner. stdout and stderr are merged; lines are split on
@@ -40,23 +41,28 @@ func (ExecRunner) Run(ctx context.Context, argv []string, env []string, line fun
 		}
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 	}
-	cmd.WaitDelay = 10 * time.Second
-	pr, pw := io.Pipe()
-	cmd.Stdout, cmd.Stderr = pw, pw
+	// Output goes to an unlinked temp file the daemon follows, never to a
+	// pipe: when the daemon goes away (reload) mid-install, a pipe would
+	// SIGPIPE pacman/paru mid-transaction; a file just keeps the output.
+	out, follow, err := outputFile()
+	if err != nil {
+		return 0, err
+	}
+	cmd.Stdout, cmd.Stderr = out, out
+	exited := make(chan struct{})
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
-		splitLines(pr, line)
+		splitLines(&followReader{f: follow, exited: exited}, line)
 	}()
-	err := cmd.Start()
+	err = cmd.Start()
+	out.Close() // the child holds its own copy
 	if err == nil {
 		err = cmd.Wait()
 	}
-	pw.Close()
+	close(exited)
 	<-done
-	if errors.Is(err, exec.ErrWaitDelay) && cmd.ProcessState != nil && cmd.ProcessState.Success() {
-		return 0, nil // exited fine; a grandchild kept the pipe open
-	}
+	follow.Close()
 	var ee *exec.ExitError
 	if errors.As(err, &ee) {
 		code := ee.ExitCode()
@@ -66,6 +72,47 @@ func (ExecRunner) Run(ctx context.Context, argv []string, env []string, line fun
 		return code, nil
 	}
 	return 0, err
+}
+
+// outputFile is a temp file opened for writing (the child's output) and
+// for reading (followed), already unlinked: it lives while either is open.
+func outputFile() (w, r *os.File, err error) {
+	w, err = os.CreateTemp("", "extras-job-*.log")
+	if err != nil {
+		return nil, nil, err
+	}
+	defer os.Remove(w.Name())
+	r, err = os.Open(w.Name())
+	if err != nil {
+		w.Close()
+		return nil, nil, err
+	}
+	return w, r, nil
+}
+
+// followReader reads a growing file like tail -f until exited is closed,
+// then returns what is left and EOF.
+type followReader struct {
+	f      *os.File
+	exited chan struct{}
+	last   bool
+}
+
+func (r *followReader) Read(p []byte) (int, error) {
+	for {
+		n, err := r.f.Read(p)
+		if n > 0 || (err != nil && err != io.EOF) {
+			return n, err
+		}
+		if r.last {
+			return 0, io.EOF
+		}
+		select {
+		case <-r.exited:
+			r.last = true // one more read after the exit: the rest
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
 }
 
 // splitLines calls emit for each line of r, splitting on \n, \r and \r\n.

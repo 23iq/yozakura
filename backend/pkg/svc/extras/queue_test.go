@@ -24,6 +24,7 @@ type fakeRunner struct {
 	running int
 	maxPar  int
 	started chan string
+	onCtx   func(cancelled bool) // the ctx state when an `until` step ends
 }
 
 func (f *fakeRunner) Run(ctx context.Context, argv, env []string, line func(string)) (int, error) {
@@ -43,6 +44,9 @@ func (f *fakeRunner) Run(ctx context.Context, argv, env []string, line func(stri
 	}
 	if st.until != nil {
 		<-st.until
+		if f.onCtx != nil {
+			f.onCtx(ctx.Err() != nil)
+		}
 		return 0, nil
 	}
 	if st.block {

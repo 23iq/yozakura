@@ -3,7 +3,6 @@ package extras
 import (
 	"errors"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 )
@@ -120,39 +119,37 @@ func TestQueueAuthCancelledCancelsBatch(t *testing.T) {
 	}
 }
 
-// Shutdown (daemon reload) never interrupts a running system/AUR install:
-// it waits for it to finish and drops the queued jobs, logging both.
-func TestQueueShutdownWaitsForRootJob(t *testing.T) {
+// Shutdown (daemon reload) never blocks and never interrupts a running
+// system/AUR install: it returns at once, the job keeps running (its
+// context is not cancelled) and finishes; queued jobs are dropped.
+func TestQueueShutdownDetachesRootJob(t *testing.T) {
 	release := make(chan struct{})
+	var ctxDone bool
 	f := &fakeRunner{started: make(chan string, 4), steps: map[string]fakeStep{
 		"pkexec y sys install a": {until: release},
 	}}
+	f.onCtx = func(done bool) { ctxDone = done }
 	q, r := newTestQueue(t, f)
 	q.Enqueue([]Job{job("a", KindSystem, "pkexec", "y", "sys", "install", "a"), job("n", KindNpm, "npm", "n")})
 	<-f.started
 	var logs []string
-	var logMu sync.Mutex
-	done := make(chan struct{})
-	go func() {
-		q.Shutdown(func(l string) { logMu.Lock(); logs = append(logs, l); logMu.Unlock() })
-		close(done)
-	}()
-	select {
-	case <-done:
-		t.Fatal("shutdown must wait for the running system install")
-	case <-time.After(50 * time.Millisecond):
+	start := time.Now()
+	q.Shutdown(func(l string) { logs = append(logs, l) })
+	if d := time.Since(start); d > time.Second {
+		t.Fatalf("shutdown blocked %v", d)
+	}
+	joined := strings.Join(logs, "\n")
+	if !strings.Contains(joined, "leaving a running") || !strings.Contains(joined, "dropping queued n") {
+		t.Fatalf("logs = %q", joined)
 	}
 	close(release)
-	<-done
+	q.Wait()
+	if ctxDone {
+		t.Fatal("the system install's context was cancelled")
+	}
 	fin := r.final()
 	if fin["a"].State != JobDone || fin["n"].State != JobCancelled {
 		t.Fatalf("final = %+v", fin)
-	}
-	logMu.Lock()
-	defer logMu.Unlock()
-	joined := strings.Join(logs, "\n")
-	if !strings.Contains(joined, "waiting for a to finish") || !strings.Contains(joined, "dropping queued n") {
-		t.Fatalf("logs = %q", joined)
 	}
 	if strings.Join(f.calls, "|") != "pkexec y sys install a" {
 		t.Fatalf("calls = %v", f.calls)
@@ -166,6 +163,7 @@ func TestQueueShutdownStopsUserJob(t *testing.T) {
 	q.Enqueue([]Job{job("s", KindShell, "slow")})
 	<-f.started
 	q.Shutdown(func(string) {})
+	q.Wait() // the cancelled job ends on its own
 	if fin := r.final(); fin["s"].State != JobCancelled {
 		t.Fatalf("final = %+v", fin)
 	}

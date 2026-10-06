@@ -10,8 +10,9 @@ import (
 	"strings"
 )
 
-// Close empties the install queue for a daemon stop or reload: queued jobs
-// are dropped, a running system/AUR install is waited for (logged).
+// Close empties the install queue for a daemon stop or reload without
+// blocking: queued jobs are dropped, a running system/AUR install is left
+// running (logged).
 func (s *Service) Close() {
 	s.q.Shutdown(func(line string) { log.Printf("[extras] %s", line) })
 }
