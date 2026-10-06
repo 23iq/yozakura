@@ -3,12 +3,12 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
-// One app of the Apps & Extras catalog: icon in a soft tinted disc, name,
-// two-line description, a round select check (only while it can be
-// installed) and the state footer (CardFooter). The whole card toggles the
-// selection; hovering lifts it a little.
+// One app of the Apps & Extras catalog: icon in a soft tinted disc, name
+// (up to two lines), two-line description (the failure reason on a failed
+// card) and the state footer (CardFooter: select check, progress, retry).
+// The whole card toggles the selection; hovering lifts it a little.
 StyledRect {
     id: root
 
@@ -108,45 +108,18 @@ StyledRect {
         }
     }
 
-    // Top-right corner: the select check, or the "Failed" pill.
-    Item {
-        id: corner
-        anchors.right: parent.right
-        anchors.rightMargin: 14
-        y: 16
-        width: check.visible ? check.width : (failedPill.visible ? failedPill.width : 0)
-        height: check.height
-
-        CheckToggle {
-            id: check
-            objectName: "toggle"
-            anchors.right: parent.right
-            visible: root.selectable
-            checked: root.selected
-            hovered: root.hovered
-            onToggled: root.toggled()
-        }
-        StatusPill {
-            id: failedPill
-            objectName: "failedPill"
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            visible: root.cardState === "failed"
-            icon: "warning"
-            text: I18n.t("extras.ui.failed")
-            accent: Colors.error
-        }
-    }
-
     Text {
         objectName: "name"
         anchors.left: badge.right
         anchors.leftMargin: 12
-        anchors.right: corner.left
-        anchors.rightMargin: 8
+        anchors.right: parent.right
+        anchors.rightMargin: 16
         anchors.verticalCenter: badge.verticalCenter
         text: root.entry.name || ""
+        wrapMode: Text.WordWrap
+        maximumLineCount: 2
         elide: Text.ElideRight
+        lineHeight: 0.95
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(1)
         font.weight: Font.Bold
@@ -184,6 +157,9 @@ StyledRect {
         status: root.status
         progress: root.progress
         accent: root.accent
+        selected: root.selected
+        hovered: root.hovered
+        onToggled: root.toggled()
         onRetry: root.retry()
         onUpgradeRetry: root.upgradeRetry()
         onShowLog: root.showLog()

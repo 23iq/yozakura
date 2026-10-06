@@ -137,17 +137,29 @@ emit("extras.progress", {"job": "system-2", "kind": "system", "entries": ["chrom
                          "percent": -1, "phase": "installing chromium..."})
 check(ev("enabled", item(card("chromium"), "cancelButton")) is False, "running system install: cancel disabled")
 
-# multilib consent
-click(card("steam"))
+# multilib consent, asked while the grid is scrolled to the bottom: the
+# confirm floats in the sticky stack above the install bar
+win.setHeight(560)
+QTest.qWait(50)
+flick = h.find(win, "catalogFlick")
+ev("contentY = Math.max(0, contentHeight - height)", flick)
+QTest.qWait(30)
+check(ev("contentY", flick) > 0, "the catalog scrolls in a short window")
+ev("toggle('steam')", h.find(win, "catalogGrid"))
 click(h.find(win, "installButton"))
 confirm = h.find(win, "multilibConfirm")
 check(ev("visible", confirm) is True, "needs_confirm shows the multilib confirm card")
+top = confirm.mapToScene(QPointF(0, 0)).y()
+check(0 <= top and top + confirm.height() <= 560, "the confirm card is inside the viewport (y=%s)" % top)
 check("Steam" in ev("title", confirm), "the confirm card names Steam: %r" % ev("title", confirm))
 check(js("ids", bar) == ["steam"], "selection kept while waiting for consent")
 click(h.find(win, "confirmAccept"))
 inst = calls("extras.install")
 check(inst[-1]["params"] == {"ids": ["steam"], "confirmMultilib": True}, "accepting re-sends with confirmMultilib: %s" % inst[-1])
 check(ev("visible", confirm) is False, "confirm card closes after the accepted request")
+ev("contentY = 0", flick)
+win.setHeight(1300)
+QTest.qWait(50)
 
 # failure with needs_sync -> update system and retry; log popup
 emit("extras.progress", {"job": "system-2", "kind": "system", "entries": ["chromium"], "state": "failed",
@@ -186,6 +198,33 @@ emit("extras.status", {**{k: {"id": k, "state": "missing"} for k in ("claude-cod
                        "firefox": {"id": "firefox", "state": "installed"},
                        "claude-code": {"id": "claude-code", "state": "installed", "source": "bin"}})
 check(ev("cardState", card("claude-code")) == "installed", "a status event marks the card installed")
+
+# guards: no install while offline
+n = len(calls("extras.install"))
+ev("ExtrasService.install(['chromium'], false)")
+check(len(calls("extras.install")) == n, "install is refused while offline")
+
+# a done job pins "installed" only until a fresh detection covers it
+ev("ExtrasService.offline = false")
+emit("extras.progress", {"job": "flatpak-6", "kind": "flatpak", "entries": ["chromium"], "state": "done"})
+check(ev("cardState", card("chromium")) == "installed", "a finished job shows installed right away")
+QTest.qWait(1700)
+check(ev("cardState", card("chromium")) == "selectable", "the forced re-detection (still missing) drops the finished job")
+
+# onboarding host: recommended + missing preselected once, installed never
+emit("extras.status", __import__("extras_env").STATUS)
+win2 = h.load("""
+import QtQuick
+import QtQuick.Window
+import qs.modules.extras
+Window {
+    width: 900; height: 700; visible: true
+    CatalogHost { objectName: "onboardingHost"; anchors.fill: parent; mode: "onboarding" }
+}""")
+QTest.qWait(80)
+host = h.find(win2, "onboardingHost")
+check(js("selected", host) == {"claude-code": True}, "onboarding preselects recommended missing entries: %s" % js("selected", host))
+check(ev("autoPreselect", host) is True, "onboarding mode preselects by default")
 
 if failures:
     print(f"{len(failures)} failure(s)")

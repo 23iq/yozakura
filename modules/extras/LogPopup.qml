@@ -2,9 +2,8 @@ import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
-import qs.modules.settings
 import qs.config
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
 // Modal viewer of one install job's log (`extras.log`, tail 256 KiB):
 // read-only monospace text, scrolled to the end where the error is.
@@ -92,7 +91,7 @@ Popup {
                 font.weight: Font.Bold
                 color: Colors.overBackground
             }
-            PillButton {
+            ExtrasButton {
                 id: close
                 objectName: "logClose"
                 anchors.right: parent.right

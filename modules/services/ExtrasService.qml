@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.modules.services
 import "../extras/ExtrasModel.js" as ExtrasModel
 
@@ -23,9 +24,11 @@ Singleton {
     // entry id -> latest Progress of the job that installs it
     property var progress: ({})
     property bool loading: false
-    // The last job failed for lack of network: installs stay disabled until
-    // a job succeeds or the user checks again (refresh()).
+    // A job failed for lack of network: installs stay disabled until a
+    // connectivity probe ("Check again", refresh()) succeeds.
     property bool offline: false
+    // The connectivity probe is running.
+    property bool checking: false
     // Install waiting for consent: {kind: "multilib", entries, ids}
     property var confirm: null
     // Last refused install: {reasons: {id: reason}} (needs_aur_helper, ...)
@@ -79,10 +82,13 @@ Singleton {
         root._status(false);
     }
 
-    // Re-detect now (also clears the offline flag: "Check again").
+    // Re-detect now; while offline also probes the network ("Check again").
     function refresh() {
-        root.offline = false;
         root._status(true);
+        if (root.offline && !probe.running) {
+            root.checking = true;
+            probe.running = true;
+        }
     }
 
     function _status(force) {
@@ -90,14 +96,52 @@ Singleton {
             "refresh": true
         } : {}, (result, error) => {
             if (!error && result)
-                root.status = result;
+                root._setStatus(result, force);
         });
+    }
+
+    // New detection. Finished (done / cancelled) progress no longer pins a
+    // card once a fresh detection covers it: always after a forced
+    // refresh, otherwise only for entries now detected as installed.
+    function _setStatus(st, fresh) {
+        root.status = st;
+        const prog = {};
+        let dropped = false;
+        for (const id in root.progress) {
+            const p = root.progress[id];
+            const finished = p.state === "done" || p.state === "cancelled";
+            if (finished && (fresh || (st[id] && st[id].state === "installed")))
+                dropped = true;
+            else
+                prog[id] = p;
+        }
+        if (dropped)
+            root.progress = prog;
+    }
+
+    // Cheap connectivity probe: a HEAD request to a fixed URL (argv, no
+    // shell). curl's "couldn't resolve / connect / timed out" codes keep
+    // the flag; success clears it, and so does any other outcome (no curl,
+    // odd TLS setup) so a broken probe never blocks installs for good.
+    Process {
+        id: probe
+        command: ["curl", "-sI", "--max-time", "6", "-o", "/dev/null", "https://flathub.org"]
+        onExited: (code, status) => {
+            root.checking = false;
+            root.offline = [6, 7, 28].includes(code);
+        }
+    }
+
+    Timer {
+        id: detectAfterDone
+        interval: 1500
+        onTriggered: root._status(true)
     }
 
     // Queue the ids as one batch. A multilib need parks the request in
     // `confirm`; call again with confirmMultilib (accept()) to go on.
     function install(ids, confirmMultilib) {
-        if (!ids || ids.length === 0)
+        if (!ids || ids.length === 0 || root.offline)
             return;
         root.error = "";
         root.unavailable = null;
@@ -147,8 +191,21 @@ Singleton {
 
     // needs_sync failure: full system upgrade, then the same job again.
     function retryWithUpgrade(job) {
+        if (root.offline)
+            return;
         BackendService.call("extras.upgradeAndRetry", {
             "job": job
+        }, (result, error) => {
+            if (error)
+                root.error = ExtrasModel.parseError(error).message;
+        });
+    }
+
+    // Queue `chsh` to `shell` (must be in /etc/shells; asks for the password).
+    function setLoginShell(shell) {
+        root.error = "";
+        BackendService.call("extras.setLoginShell", {
+            "shell": shell
         }, (result, error) => {
             if (error)
                 root.error = ExtrasModel.parseError(error).message;
@@ -176,7 +233,7 @@ Singleton {
         if (p.state === "failed" && p.reason === "network")
             root.offline = true;
         else if (p.state === "done")
-            root.offline = false;
+            detectAfterDone.restart();
     }
 
     function _subscribe() {
@@ -187,7 +244,7 @@ Singleton {
             if (service === "extras.progress")
                 Qt.callLater(() => root._onProgress(data));
             else if (service === "extras.status" && data)
-                Qt.callLater(() => root.status = data);
+                Qt.callLater(() => root._setStatus(data, false));
         });
     }
 }

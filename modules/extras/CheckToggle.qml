@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.config
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
 // Round selection check of a catalog card: an outlined ring that pops into
 // a filled accent disc with a check mark.

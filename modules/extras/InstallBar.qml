@@ -2,10 +2,9 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
-import qs.modules.settings
 import qs.config
 import "ExtrasModel.js" as ExtrasModel
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
 // Sticky bottom bar of the catalog: what is installing right now (mini
 // progress, "+2 queued") and the "Install 3 apps · 1.3 GB" button for the
@@ -78,10 +77,8 @@ StyledRect {
     // Running job summary
     Item {
         id: summary
-        anchors.left: parent.left
-        anchors.leftMargin: 22
-        anchors.right: actions.left
-        anchors.rightMargin: 18
+        x: 22
+        width: parent.width - 22 - 18 - (actions.visible ? actions.width + 14 : 0)
         anchors.verticalCenter: parent.verticalCenter
         height: 34
 
@@ -154,13 +151,13 @@ StyledRect {
         spacing: 8
         visible: root.ids.length > 0
 
-        PillButton {
+        ExtrasButton {
             objectName: "clearButton"
             kind: "ghost"
             text: I18n.t("extras.ui.clear")
             onClicked: root.clearRequested()
         }
-        PillButton {
+        ExtrasButton {
             objectName: "installButton"
             kind: "filled"
             icon: "downloadSimple"

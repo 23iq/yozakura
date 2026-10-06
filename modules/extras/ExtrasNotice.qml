@@ -3,9 +3,9 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
-// Inline banner of the catalog (offline, refused installs, errors and the
+// Banner of the catalog (offline, refused installs, errors and the
 // multilib confirm): tinted icon disc, title, message and (as children)
 // its action buttons, which wrap under the text on narrow widths.
 // `tone`: "info", "warning" or "error".
@@ -22,8 +22,10 @@ StyledRect {
     readonly property bool stacked: root.width < 560
 
     variant: "pane"
+    // floats over the scrolled grid (CatalogHost): opaque, lifted
+    backgroundOpacity: 1
     radius: Styling.radius(4)
-    enableShadow: false
+    enableShadow: true
     implicitHeight: (root.stacked ? textCol.implicitHeight + actionRow.implicitHeight + 14 : Math.max(textCol.implicitHeight, actionRow.implicitHeight)) + 34
 
     Rectangle {

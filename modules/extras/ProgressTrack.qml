@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.config
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
 // Thin rounded progress bar. `percent` < 0 (unknown) slides a soft
 // segment back and forth instead of filling.

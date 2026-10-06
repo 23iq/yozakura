@@ -1,7 +1,6 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.modules.settings
 import qs.config
 
 // Inline consent card shown when an install needs Arch's 32-bit [multilib]
@@ -22,13 +21,13 @@ ExtrasNotice {
     title: I18n.t("extras.ui.multilib.title", root.names)
     message: I18n.t("extras.ui.multilib.message")
 
-    PillButton {
+    ExtrasButton {
         objectName: "confirmDecline"
         kind: "ghost"
         text: I18n.t("extras.ui.multilib.decline")
         onClicked: root.declined()
     }
-    PillButton {
+    ExtrasButton {
         objectName: "confirmAccept"
         kind: "filled"
         icon: "check"

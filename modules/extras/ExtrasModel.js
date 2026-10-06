@@ -216,3 +216,33 @@ function accentIndex(catalog, categoryId) {
     }
     return 0;
 }
+
+// Phases the backend reports as raw tool output that the UI translates;
+// anything else is shown as is.
+var PHASE_VERBS = ["downloading", "installing", "building", "resolving", "queued"];
+
+// Raw phase ("Downloading gemini 0.9.1", "installing chromium...") ->
+// {key, detail}: key "extras.ui.phase.<verb>" (with ".detail" + %1 when
+// detail is set) or "" with the raw text in detail.
+function phaseText(phase) {
+    var text = String(phase || "").trim();
+    var m = /^([a-z]+)\b[\s:]*(.*?)\s*(?:\.\.\.|…)?$/i.exec(text);
+    if (!m || PHASE_VERBS.indexOf(m[1].toLowerCase()) === -1)
+        return {
+            "key": "",
+            "detail": text
+        };
+    var verb = m[1].toLowerCase();
+    return {
+        "key": "extras.ui.phase." + verb,
+        "detail": verb === "resolving" ? "" : m[2]
+    };
+}
+
+// Reasons a status can give for "unavailable" (backend detect / plan).
+var UNAVAILABLE_REASONS = ["only_distro", "no_method", "needs_aur_helper", "needs_flatpak", "needs_npm"];
+
+// i18n key of the unavailable footer for a status reason (%1 = distro name).
+function unavailableKey(reason) {
+    return "extras.ui.unavailable." + (UNAVAILABLE_REASONS.indexOf(reason) !== -1 ? reason : "only_distro");
+}

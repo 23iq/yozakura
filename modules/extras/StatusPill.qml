@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.config
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
 // Small tinted state pill of a catalog card: icon + label in `accent`.
 Rectangle {

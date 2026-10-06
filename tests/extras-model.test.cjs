@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/extras/ExtrasModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {parseSize, formatSize, selectionSize, cardState, visibleEntries, preselect, selectedIds, parseError, groupByCategory, activeJobs, cancellable, accentIndex, toggled};')();
+const M = new Function(src + '; return {parseSize, formatSize, selectionSize, cardState, visibleEntries, preselect, selectedIds, parseError, groupByCategory, activeJobs, cancellable, accentIndex, toggled, phaseText, unavailableKey};')();
 
 const catalog = {
     categories: [
@@ -142,4 +142,20 @@ test('accentIndex is stable per category', () => {
     assert.strictEqual(M.accentIndex(catalog, 'games'), 1);
     assert.strictEqual(M.accentIndex(catalog, 'browsers'), 2);
     assert.strictEqual(M.accentIndex(catalog, 'nope'), 0);
+});
+
+test('phaseText translates known verbs and keeps the rest raw', () => {
+    assert.deepStrictEqual(M.phaseText('Downloading gemini 0.9.1'), { key: 'extras.ui.phase.downloading', detail: 'gemini 0.9.1' });
+    assert.deepStrictEqual(M.phaseText('installing chromium...'), { key: 'extras.ui.phase.installing', detail: 'chromium' });
+    assert.deepStrictEqual(M.phaseText('resolving dependencies...'), { key: 'extras.ui.phase.resolving', detail: '' });
+    assert.deepStrictEqual(M.phaseText('Building'), { key: 'extras.ui.phase.building', detail: '' });
+    assert.deepStrictEqual(M.phaseText('checking keys in keyring...'), { key: '', detail: 'checking keys in keyring...' });
+    assert.deepStrictEqual(M.phaseText(''), { key: '', detail: '' });
+});
+
+test('unavailableKey follows the status reason', () => {
+    assert.strictEqual(M.unavailableKey('only_distro'), 'extras.ui.unavailable.only_distro');
+    assert.strictEqual(M.unavailableKey('needs_aur_helper'), 'extras.ui.unavailable.needs_aur_helper');
+    assert.strictEqual(M.unavailableKey(undefined), 'extras.ui.unavailable.only_distro');
+    assert.strictEqual(M.unavailableKey('weird'), 'extras.ui.unavailable.only_distro');
 });

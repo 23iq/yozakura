@@ -6,7 +6,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.config
 import "ExtrasModel.js" as ExtrasModel
-import "../settings/Ui.js" as Ui
+import "ExtrasUi.js" as Ui
 
 // The Apps & Extras catalog: category chips + search, then cards in a grid
 // that fits as many >= minCardWidth columns as the width allows. Settings
@@ -24,7 +24,7 @@ Column {
     property var selected: ({})
     property bool showSearch: root.mode === "settings"
     property bool showChips: true
-    property int minCardWidth: 220
+    property int minCardWidth: 260
     property int gap: 14
     // Chip filter ("" = every offered category)
     property string category: ""
