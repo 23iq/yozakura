@@ -47,7 +47,7 @@ var groups = [
     {
         "id": "system",
         "title": "prefs.group.system",
-        "categories": ["windows", "terminal", "input", "voice", "timers", "routines", "system", "updates"]
+        "categories": ["displays", "windows", "terminal", "input", "voice", "timers", "routines", "system", "updates"]
     },
     {
         "id": "connect",
@@ -139,6 +139,14 @@ var categories = [
         "description": "prefs.cat.presets.desc",
         "keywords": "presets studio save load profiles themes layouts looks gallery mixer mix duplicate import export share try",
         "page": "PresetStudio"
+    },
+    {
+        "id": "displays",
+        "icon": "monitor",
+        "title": "prefs.cat.displays",
+        "description": "prefs.cat.displays.desc",
+        "keywords": "displays monitors screens resolution refresh rate hz scale dpi rotation rotate arrange layout position vrr adaptive sync identify hdmi displayport",
+        "page": "Displays"
     },
     {
         "id": "about",

@@ -276,6 +276,20 @@ ShellRoot {
         source: "modules/onboarding/OnboardingWindow.qml"
     }
 
+    // Display prompts: keep/revert countdown and identify numbers, per screen
+    Variants {
+        model: Quickshell.screens
+
+        Loader {
+            id: displayOverlaysLoader
+            active: SuspendManager.wakeReady
+            required property ShellScreen modelData
+            sourceComponent: DisplayOverlays {
+                targetScreen: displayOverlaysLoader.modelData
+            }
+        }
+    }
+
     // AI selection actions popup (only exists while open)
     Loader {
         active: Ai.selection !== null && Ai.selection.visible

@@ -30,6 +30,9 @@ Singleton {
     // Monitor rules in the user's compositor config, [{file, line, text}] from displays.conflicts
     property var conflicts: []
 
+    // Configs of the pending apply: saved as the layout once it is kept
+    property var _candidate: []
+
     signal applyFailed(string message)
 
     function refresh() {
@@ -68,6 +71,7 @@ Singleton {
                 "remaining": result.revertIn,
                 "live": result.live !== false
             };
+            root._candidate = configs;
             root.refresh();
         });
     }
@@ -79,8 +83,12 @@ Singleton {
         BackendService.call("displays.keep", {
             "session": id
         }, (result, error) => {
-            if (error)
+            if (error) {
                 console.warn("DisplaysService: keep failed", JSON.stringify(error));
+                return;
+            }
+            const saved = Config.displaysReady ? Array.from(Config.displays.monitors) : [];
+            root.saveCurrent(DisplayModel.mergeSaved(saved, root._candidate));
         });
     }
 
