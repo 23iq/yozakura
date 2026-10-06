@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/yozd/config"
 	"yozakura/backend/pkg/yozd/ipc"
 	"yozakura/backend/pkg/yozd/ipc/hyprland"
@@ -222,12 +223,14 @@ func runDaemon(customConfigPath string) {
 
 	socketPath := defaultSocketPath()
 
-	// Single instance check
-	if conn, err := net.Dial("unix", socketPath); err == nil {
-		conn.Close()
-		fmt.Printf("Error: %s daemon is already running.\n", brand.Daemon)
+	// Single instance: an exclusive flock held for the whole run (works
+	// with a stale socket file lying around, unlike a dial check).
+	lock, err := instancelock.Acquire(instancelock.DaemonPath(socketPath))
+	if err != nil {
+		fmt.Printf("Error: %s daemon: %v.\n", brand.Daemon, err)
 		os.Exit(1)
 	}
+	defer lock.Release()
 	if err := os.Remove(socketPath); err != nil && !os.IsNotExist(err) {
 		fmt.Printf("Warning: could not remove stale socket %s: %v\n", socketPath, err)
 	}
@@ -290,7 +293,7 @@ func runDaemon(customConfigPath string) {
 	if cfgWatcher != nil {
 		cfgWatcher.Stop()
 	}
-	os.Remove(socketPath)
+	srv.RemoveSocket()
 }
 
 func runSubscribe() {

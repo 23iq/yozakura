@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/json"
 	"net"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -40,4 +41,27 @@ func TestAsyncMethodsDoNotBlockTheConnection(t *testing.T) {
 	line, err = r.ReadBytes('\n')
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"id":1,"result":"slow"}`, string(line))
+}
+
+// A stopping instance must not delete the socket its successor bound at
+// the same path (the reload race that left the survivor unreachable).
+func TestCloseKeepsSuccessorSocket(t *testing.T) {
+	sock := filepath.Join(t.TempDir(), "s.sock")
+	old := NewServer(sock)
+	if err := old.Listen(); err != nil {
+		t.Fatal(err)
+	}
+	next := NewServer(sock)
+	if err := next.Listen(); err != nil {
+		t.Fatal(err)
+	}
+	defer next.Close()
+	old.Close()
+	if _, err := os.Lstat(sock); err != nil {
+		t.Fatalf("successor socket was removed: %v", err)
+	}
+	next.Close()
+	if _, err := os.Lstat(sock); !os.IsNotExist(err) {
+		t.Fatalf("owner Close must remove its socket, err=%v", err)
+	}
 }

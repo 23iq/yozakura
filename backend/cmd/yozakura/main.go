@@ -14,6 +14,7 @@ import (
 	"time"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/envclean"
+	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/migrate"
 
 	"yozakura/backend/pkg/daemon"
@@ -326,38 +327,29 @@ func mustCall(method string, params any) json.RawMessage {
 	return res
 }
 
-// isAlive returns true only when the daemon is actually reachable: the
-// socket file exists, a process is listening on it, and the PID file
-// points to a live process. Stale state from previous crashes is cleaned
-// up so a subsequent launch can spawn a fresh instance.
+// isAlive reports whether a daemon is running: it holds the instance lock,
+// or (builds that predate the lock) answers on the socket. Read-only: stale
+// files are replaced by the next daemon, never deleted here, so a probe can
+// not remove the socket of an instance that is just starting.
 func isAlive() bool {
-	sock := socketPath()
+	if _, held := instancelock.Held(instancelock.AppPath()); held {
+		return true
+	}
+	return legacyAlive()
+}
 
+// legacyAlive dials the socket to find a daemon that holds no lock.
+func legacyAlive() bool {
+	sock := socketPath()
 	info, err := os.Stat(sock)
 	if err != nil || info.Mode()&os.ModeSocket == 0 {
 		return false
 	}
-
 	c, err := net.DialTimeout("unix", sock, 500*time.Millisecond)
 	if err != nil {
-		os.Remove(sock)
-		os.Remove(pidPath())
 		return false
 	}
 	c.Close()
-
-	if data, err := os.ReadFile(pidPath()); err == nil {
-		pidStr := strings.TrimSpace(string(data))
-		if pid, err := strconv.Atoi(pidStr); err == nil {
-			if proc, err := os.FindProcess(pid); err == nil {
-				if err := proc.Signal(syscall.Signal(0)); err != nil {
-					os.Remove(sock)
-					os.Remove(pidPath())
-					return false
-				}
-			}
-		}
-	}
 	return true
 }
 
@@ -375,7 +367,21 @@ func pidPath() string {
 // transparently upgrade from older builds that lack system.shutdown.
 func runShell() {
 	refuseIfLegacyRunning()
-	if isAlive() {
+	// Exclusive for the whole lifetime, taken before the socket, the pid
+	// file or any child exists: a second daemon must touch nothing.
+	lock, err := instancelock.Acquire(instancelock.AppPath())
+	if err != nil {
+		var held *instancelock.HeldError
+		if errors.As(err, &held) {
+			fmt.Printf("%s already running (pid %d)\n", brand.AppID, held.PID)
+			os.Exit(0)
+		}
+		fmt.Fprintf(os.Stderr, "Error: instance lock: %v\n", err)
+		os.Exit(1)
+	}
+	defer lock.Release()
+	// We own the lock, so only a build that predates it can still be up.
+	if legacyAlive() {
 		pid := readPIDFile()
 		if _, err := newClient().Call("system.shutdown", nil); err == nil {
 			waitForDeath(pid, 5*time.Second)
@@ -485,11 +491,44 @@ func execCommand(name string, args ...string) {
 // shut down via IPC, waiting for it to actually die, and re-execing
 // ourselves in the background.
 func restartShell() {
+	// Concurrent reloads collapse into one: the loser waits for the winner
+	// to finish and does nothing, instead of racing it into a second daemon.
+	rl, err := instancelock.Acquire(instancelock.ReloadPath())
+	if err != nil {
+		instancelock.WaitFree(instancelock.ReloadPath(), 15*time.Second)
+		return
+	}
+	defer rl.Release()
+	restartShellLocked(startDaemon)
+}
+
+// startDaemon launches the replacement daemon; tests swap it.
+var startDaemon = startDetachedDaemon
+
+// restartShellLocked stops the running instance and starts a replacement.
+// The caller holds the reload lock. start launches the new daemon.
+func restartShellLocked(start func()) {
 	if isAlive() {
 		pid := readPIDFile()
 		_, _ = newClient().Call("system.shutdown", nil)
 		waitForDeath(pid, 5*time.Second)
 	}
+	// The old instance releases its lock only when it exits; starting
+	// earlier would make the new daemon refuse as "already running".
+	instancelock.WaitFree(instancelock.AppPath(), 5*time.Second)
+	start()
+	// Hold the reload lock until the new daemon owns the instance lock, so
+	// a reload right behind this one sees it alive and restarts it.
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if _, held := instancelock.Held(instancelock.AppPath()); held {
+			return
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+}
+
+func startDetachedDaemon() {
 	exe, _ := os.Executable()
 	cmd := exec.Command(exe)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}

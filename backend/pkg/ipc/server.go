@@ -7,6 +7,8 @@ import (
 	"net"
 	"os"
 	"sync"
+
+	"yozakura/backend/pkg/instancelock"
 )
 
 // Request is a JSON-RPC like request: {"id":..., "method":"...", "params":{...}}
@@ -77,6 +79,7 @@ type Server struct {
 	mu        sync.RWMutex
 	listener  net.Listener
 	closeOnce sync.Once
+	sockID    instancelock.SocketID
 }
 
 func NewServer(path string) *Server {
@@ -103,6 +106,12 @@ func (s *Server) Listen() error {
 	if err != nil {
 		return err
 	}
+	// Go would unlink the path by name on Close, even when a successor has
+	// since bound a new socket there; Close removes it only if still ours.
+	if ul, ok := ln.(*net.UnixListener); ok {
+		ul.SetUnlinkOnClose(false)
+	}
+	s.sockID = instancelock.StatSocket(s.path)
 	if err := os.Chmod(s.path, 0o600); err != nil {
 		return err
 	}
@@ -110,14 +119,15 @@ func (s *Server) Listen() error {
 	return nil
 }
 
-// Close shuts down the server and removes the socket. Only the first call
+// Close shuts down the server and removes the socket if it is still the
+// one this server bound. Only the first call
 // acts, so a later Close cannot remove a socket a new daemon has created.
 func (s *Server) Close() {
 	s.closeOnce.Do(func() {
 		if s.listener != nil {
 			s.listener.Close()
 		}
-		os.Remove(s.path)
+		instancelock.RemoveIfOwned(s.path, s.sockID)
 	})
 }
 

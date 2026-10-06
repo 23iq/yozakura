@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/instancelock"
 
 	"yozakura/backend/pkg/yozd/ipc"
 	"yozakura/backend/pkg/yozd/ipc/hyprland"
@@ -25,6 +26,8 @@ type Server struct {
 	clients    map[net.Conn]struct{}
 	clientsMu  sync.RWMutex
 	idleMgr    *IdleManager
+	sockID     instancelock.SocketID
+	sockMu     sync.Mutex
 
 	mu             sync.RWMutex
 	overviewOpen   *bool
@@ -387,6 +390,12 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
+	if ul, ok := l.(*net.UnixListener); ok {
+		ul.SetUnlinkOnClose(false)
+	}
+	s.sockMu.Lock()
+	s.sockID = instancelock.StatSocket(s.socketPath)
+	s.sockMu.Unlock()
 	defer l.Close()
 
 	for {
@@ -396,6 +405,14 @@ func (s *Server) Start() error {
 		}
 		go s.handleConnection(conn)
 	}
+}
+
+// RemoveSocket unlinks the socket Start bound, only if it is still ours (a
+// successor may have replaced it). Call it on shutdown.
+func (s *Server) RemoveSocket() bool {
+	s.sockMu.Lock()
+	defer s.sockMu.Unlock()
+	return instancelock.RemoveIfOwned(s.socketPath, s.sockID)
 }
 
 func (s *Server) resolveID(id string) (string, error) {
