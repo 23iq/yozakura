@@ -59,3 +59,60 @@ test('spotlight is inside the work area', () => {
         assert.ok(r.x >= w.x && r.y >= w.y && r.x + r.w <= w.x + w.w && r.y + r.h <= w.y + w.h, bar);
     }
 });
+
+// Notch on any edge, aligned start/center/end along it.
+const envN = (bar, dock, notch, align) => Object.assign(env(bar, dock, notch), { notch: { pos: notch, height: 36, visible: true, align } });
+const ALIGNS = ['start', 'center', 'end'];
+test('notch rect touches its edge, stays on screen and leaves bars and docks alone', () => {
+    for (const bar of EDGES) for (const dock of EDGES) for (const notch of EDGES) for (const align of ALIGNS) {
+        const e = envN(bar, dock, notch, align);
+        const r = L.notchRect(e, { along: 300, across: 36 });
+        const tag = `${bar}/${dock}/${notch}/${align}`;
+        assert.ok(inside(r, e.screen), tag);
+        assert.equal(r.vertical, notch === 'left' || notch === 'right', tag);
+        assert.equal(r.vertical ? r.h : r.w, 300, tag);
+        if (notch === 'top') assert.equal(r.y, 0, tag);
+        if (notch === 'bottom') assert.equal(r.y + r.h, 1080, tag);
+        if (notch === 'left') assert.equal(r.x, 0, tag);
+        if (notch === 'right') assert.equal(r.x + r.w, 1920, tag);
+        // the ends stay clear of a bar or dock on the perpendicular edges
+        const along = r.vertical ? [r.y, r.y + r.h] : [r.x, r.x + r.w];
+        const lo = r.vertical ? 'top' : 'left', hi = r.vertical ? 'bottom' : 'right';
+        const total = r.vertical ? 1080 : 1920;
+        const res = edge => (bar === edge ? 40 : 0) + (dock === edge ? 64 : 0);
+        assert.ok(along[0] >= res(lo) && along[1] <= total - res(hi), tag);
+    }
+});
+test('notch alignment orders start < center < end', () => {
+    for (const notch of EDGES) {
+        const at = a => L.notchRect(envN('top', 'bottom', notch, a), { along: 200, across: 36 });
+        const k = (notch === 'left' || notch === 'right') ? 'y' : 'x';
+        assert.ok(at('start')[k] < at('center')[k] && at('center')[k] < at('end')[k], notch);
+    }
+    const c = L.notchRect(envN('left', 'left', 'top', 'center'), { along: 200, across: 36 });
+    assert.equal(c.x, 860, 'center is the screen center, not the work area');
+    const bad = L.notchRect(envN('top', 'bottom', 'top', 'sideways'), { along: 200, across: 36 });
+    assert.equal(bad.x, 860, 'unknown align falls back to center');
+});
+test('notch panels open toward the screen center and grow from the aligned end', () => {
+    assert.equal(L.notchOpenDir('top'), 'down');
+    assert.equal(L.notchOpenDir('bottom'), 'up');
+    assert.equal(L.notchOpenDir('left'), 'right');
+    assert.equal(L.notchOpenDir('right'), 'left');
+    for (const notch of EDGES) for (const align of ALIGNS) {
+        const e = envN('top', 'bottom', notch, align);
+        const small = L.notchRect(e, { along: 200, across: 36 });
+        const big = L.notchRect(e, { along: 500, across: 300 });
+        const v = small.vertical, s0 = v ? small.y : small.x, b0 = v ? big.y : big.x;
+        const s1 = s0 + 200, b1 = b0 + 500;
+        if (align === 'start') assert.equal(b0, s0, `${notch}/${align}`);
+        if (align === 'end') assert.equal(b1, s1, `${notch}/${align}`);
+        if (align === 'center') assert.equal(b0 + b1, s0 + s1, `${notch}/${align}`);
+        assert.ok(inside(big, e.screen), `${notch}/${align}`);
+    }
+});
+test('a side notch reserves its thickness on that edge', () => {
+    const e = envN('top', 'bottom', 'right', 'center');
+    assert.equal(L.insets(e).right, 36);
+    assert.equal(L.workArea(e).w, 1920 - 36);
+});
