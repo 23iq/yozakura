@@ -1,7 +1,9 @@
 import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
+import qs.modules.components
 import qs.config
+import "PopupMotionKinds.js" as Kinds
 
 Menu {
     id: root
@@ -42,11 +44,49 @@ Menu {
     }
     property int itemHeight: 36
 
-    // Propiedades de estilo del menú
-    property color backgroundColor: Colors.background
-    property color borderColor: Colors.surfaceBright
-    property int borderWidth: 2
+    // Corner radius of the menu surface
     property int menuRadius: Config.roundness
+
+    // Placement (set by the opener from EdgeLayout.popupPlacement): the
+    // resting position and the opening direction. theme.popup.entry plays
+    // as a uniform scale + offset (a Controls popup has no per-axis scale).
+    property real placeX: 0
+    property real placeY: 0
+    property string openDir: "down"
+    property real motionProgress: 1
+    readonly property var motionFrame: Kinds.frame(Config.theme && Config.theme.popup ? Config.theme.popup.entry : "fade-scale", openDir, motionProgress, Metrics.spacing * 2)
+    readonly property string anchorEdge: Kinds.anchorEdge(openDir)
+
+    x: placeX + motionFrame.dx
+    y: placeY + motionFrame.dy
+    opacity: motionFrame.opacity
+    scale: Math.sqrt(motionFrame.scaleX * motionFrame.scaleY)
+    transformOrigin: ({
+            "top": Item.Top,
+            "bottom": Item.Bottom,
+            "left": Item.Left,
+            "right": Item.Right
+        })[anchorEdge]
+
+    enter: Transition {
+        NumberAnimation {
+            property: "motionProgress"
+            from: 0
+            to: 1
+            duration: Motion.enter.duration
+            easing.type: Motion.enter.easing
+            easing.overshoot: Motion.enter.overshoot
+        }
+    }
+    exit: Transition {
+        NumberAnimation {
+            property: "motionProgress"
+            from: 1
+            to: 0
+            duration: Motion.exit.duration
+            easing.type: Motion.exit.easing
+        }
+    }
 
     // Propiedades de highlight por defecto
     property color defaultHighlightColor: Styling.srItem("overprimary")
@@ -89,13 +129,13 @@ Menu {
     background: Item {
         implicitWidth: root.menuWidth
 
-        // Fondo principal
-        Rectangle {
+        // Menu surface (popup variant: theme shape, glass, border)
+        StyledRect {
             anchors.fill: parent
-            color: root.backgroundColor
+            variant: "popup"
+            glassSurface: "popups"
             radius: root.menuRadius
-            border.width: root.borderWidth
-            border.color: root.borderColor
+            anchorEdge: root.anchorEdge
         }
 
         // Highlight animado que sigue al hover
@@ -136,26 +176,26 @@ Menu {
             }
 
             Behavior on y {
-                enabled: root.previousHoveredIndex !== -1 && root.hoveredIndex !== -1 && Config.animDuration > 0
+                enabled: root.previousHoveredIndex !== -1 && root.hoveredIndex !== -1 && Motion.morph.duration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Easing.OutQuart
+                    duration: Motion.morph.duration / 2
+                    easing.type: Motion.morph.easing
                 }
             }
 
             Behavior on opacity {
-                enabled: Config.animDuration > 0
+                enabled: Motion.enter.duration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Easing.OutQuart
+                    duration: Motion.enter.duration / 2
+                    easing.type: Motion.enter.easing
                 }
             }
 
             Behavior on color {
-                enabled: Config.animDuration > 0
+                enabled: Motion.enter.duration > 0
                 ColorAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Easing.OutQuart
+                    duration: Motion.enter.duration / 2
+                    easing.type: Motion.enter.easing
                 }
             }
         }
@@ -248,10 +288,10 @@ Menu {
                                 textFormat: Text.RichText
 
                                 Behavior on color {
-                                    enabled: Config.animDuration > 0
+                                    enabled: Motion.enter.duration > 0
                                     ColorAnimation {
-                                        duration: Config.animDuration / 2
-                                        easing.type: Easing.OutQuart
+                                        duration: Motion.enter.duration / 2
+                                        easing.type: Motion.enter.easing
                                     }
                                 }
                             }
@@ -267,12 +307,6 @@ Menu {
                                 fillMode: Image.PreserveAspectFit
                                 smooth: true
                                 anchors.centerIn: parent
-
-                                onStatusChanged: {
-                                    if (status === Image.Error) {
-                                        console.log("Failed to load icon:", source);
-                                    }
-                                }
                             }
                         }
                     }
@@ -294,10 +328,10 @@ Menu {
                         width: root.menuWidth - 32 - iconLoader.width - (root.hasIcons ? parent.spacing : 0)
 
                         Behavior on color {
-                            enabled: Config.animDuration > 0
+                            enabled: Motion.enter.duration > 0
                             ColorAnimation {
-                                duration: Config.animDuration / 2
-                                easing.type: Easing.OutQuart
+                                duration: Motion.enter.duration / 2
+                                easing.type: Motion.enter.easing
                             }
                         }
                     }

@@ -1,10 +1,9 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.services
+import qs.modules.shell
 import qs.modules.theme
 import qs.modules.components
 import qs.config
@@ -24,7 +23,8 @@ PopupWindow {
 
     // Visual configuration
     property int popupPadding: 8
-    property int visualMargin: 8  // Distance from bar
+    // Distance from the anchor item (theme.popup.gap)
+    property int visualMargin: Config.theme && Config.theme.popup ? Config.theme.popup.gap : 8
     property int shadowMargin: 16  // Extra margin for shadow
     property string variant: "popup"  // StyledRect variant for background
 
@@ -47,17 +47,8 @@ PopupWindow {
     // Signal emitted when popup is closed externally (click outside)
     signal closedExternally
 
-    // Animation state
-    property real popupOpacity: 0
-    property real popupScale: 0.9
-
     // Bar position detection
     readonly property string barPosition: bar?.barPosition ?? "top"
-    readonly property bool barAtTop: barPosition === "top"
-    readonly property bool barAtBottom: barPosition === "bottom"
-    readonly property bool barAtLeft: barPosition === "left"
-    readonly property bool barAtRight: barPosition === "right"
-    readonly property bool barVertical: barAtLeft || barAtRight
 
     // Total size including shadow margin
     readonly property int totalWidth: contentWidth + shadowMargin * 2
@@ -73,35 +64,55 @@ PopupWindow {
     // Island tabs hang below the frame, so the frame never pads their popups
     readonly property bool containBar: bar?.contained ?? ((Config.bar?.containBar ?? false) && !(bar?.islandsStyle ?? false))
     readonly property int frameThickness: Config.bar?.frameThickness ?? 0
-    readonly property int frameOffset: (frameEnabled && containBar) ? frameThickness : 0
-    readonly property int effectiveFrameOffset: (frameEnabled && containBar) ? frameOffset : 0
+    readonly property int effectiveFrameOffset: (frameEnabled && containBar) ? frameThickness : 0
 
-    // Anchor positioning
-    // The anchor.rect defines where the popup window's top-left corner will be placed
-    // relative to the anchorItem's top-left corner
+    // Placement (EdgeLayout via EdgeService): the popup opens away from the
+    // bar edge, flips when it does not fit and stays on screen. Measured on
+    // open in the anchor window's coordinates (the bar's full-screen layer).
+    // theme.popup.tail: a tail toward the anchor, in front of the gap
+    readonly property bool showTail: !!(Config.theme && Config.theme.popup && Config.theme.popup.tail) && variant !== "transparent"
+    readonly property int tailSize: showTail ? Metrics.spacing : 0
+    readonly property int gap: visualMargin + effectiveFrameOffset + tailSize
+    property var anchorRect: ({
+            "x": 0,
+            "y": 0,
+            "w": 0,
+            "h": 0
+        })
+    property var area: ({
+            "width": 0,
+            "height": 0
+        })
+    readonly property var placement: EdgeService.popupPlacement(area, anchorRect, {
+        "w": contentWidth,
+        "h": contentHeight
+    }, barPosition, gap)
+    readonly property bool opensVertically: placement.dir === "down" || placement.dir === "up"
+    // Anchor center along the popup edge that faces it
+    readonly property real anchorAlong: opensVertically ? anchorRect.x + anchorRect.w / 2 - placement.x : anchorRect.y + anchorRect.h / 2 - placement.y
+
+    function measure() {
+        if (!anchorItem)
+            return;
+        const p = anchorItem.mapToItem(null, 0, 0);
+        anchorRect = {
+            "x": p.x,
+            "y": p.y,
+            "w": anchorItem.width,
+            "h": anchorItem.height
+        };
+        const win = anchorItem.Window.window;
+        const frame = win ? win : (bar && bar.screen ? bar.screen : null);
+        area = {
+            "width": frame ? frame.width : 0,
+            "height": frame ? frame.height : 0
+        };
+    }
+
+    // anchor.rect is the popup window's top-left relative to anchorItem
     anchor.item: anchorItem
-    anchor.rect.x: {
-        if (barVertical) {
-            // Left bar: popup appears to the right of the button
-            if (barAtLeft)
-                return anchorItem.width + visualMargin + effectiveFrameOffset - shadowMargin;
-            // Right bar: popup appears to the left of the button
-            return -totalWidth + shadowMargin - visualMargin - effectiveFrameOffset;
-        }
-        // Top/Bottom bar: center horizontally relative to button
-        return (anchorItem.width - totalWidth) / 2;
-    }
-    anchor.rect.y: {
-        if (barVertical) {
-            // Left/Right bar: center vertically relative to button
-            return (anchorItem.height - totalHeight) / 2;
-        }
-        // Top bar: popup appears below the button
-        if (barAtTop)
-            return anchorItem.height + visualMargin + effectiveFrameOffset - shadowMargin;
-        // Bottom bar: popup appears above the button
-        return -totalHeight + shadowMargin - visualMargin - effectiveFrameOffset;
-    }
+    anchor.rect.x: placement.x - anchorRect.x - shadowMargin
+    anchor.rect.y: placement.y - anchorRect.y - shadowMargin
     anchor.rect.width: 0
     anchor.rect.height: 0
 
@@ -140,40 +151,20 @@ PopupWindow {
         }
     }
 
-    // Animation behaviors
-    Behavior on popupOpacity {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    Behavior on popupScale {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Easing.OutCubic
-        }
-    }
-
-    // Main content wrapper
-    Item {
-        id: popupContainer
+    // theme.popup entry motion toward/away from the anchor + optional tail
+    PopupMotion {
+        id: motion
+        objectName: "popupMotion"
         anchors.fill: parent
         anchors.margins: root.shadowMargin
-        opacity: root.popupOpacity
-        scale: root.popupScale
-        transformOrigin: {
-            if (root.barAtTop)
-                return Item.Top;
-            if (root.barAtBottom)
-                return Item.Bottom;
-            if (root.barAtLeft)
-                return Item.Left;
-            if (root.barAtRight)
-                return Item.Right;
-            return Item.Center;
+        dir: root.placement.dir
+        anchorAlong: root.anchorAlong
+        tail: root.showTail
+        tailSize: root.tailSize
+        tailVariant: root.variant
+        onHidden: {
+            if (!root.isOpen)
+                root.visible = false;
         }
 
         StyledRect {
@@ -183,6 +174,7 @@ PopupWindow {
             glassSurface: "popups"
             enableShadow: true
             radius: Styling.radius(8)
+            anchorEdge: motion.anchorEdge
 
             Item {
                 id: contentContainer
@@ -193,31 +185,23 @@ PopupWindow {
     }
 
     function open() {
-        if (visible)
+        if (isOpen)
             return;
-
-        // Debug positioning
-        console.log("BarPopup OPEN - position:", barPosition, "anchorItem:", anchorItem.width, "x", anchorItem.height, "rect.x:", anchor.rect.x, "rect.y:", anchor.rect.y);
+        closeTimer.stop();
+        measure();
 
         // Group-aware mutual exclusion: ask Visibilities to close any
         // sibling popups already open in the same groupId, then
         // register this popup so future opens in the group close us.
         Visibilities.registerBarPopup(root);
 
-        // Set logical state immediately
+        // Logical state first, then show and animate in
         isOpen = true;
-
-        // Reset animation state
-        popupOpacity = 0;
-        popupScale = 0.9;
-
-        // Show popup
         visible = true;
+        motion.shown = true;
 
-        // Start animation after a frame
+        // Grab focus once the window is mapped
         Qt.callLater(() => {
-            popupOpacity = 1;
-            popupScale = 1;
             focusActive = true;
         });
     }
@@ -234,16 +218,15 @@ PopupWindow {
         isOpen = false;
         focusActive = false;
 
-        // Animate out
-        popupOpacity = 0;
-        popupScale = 0.9;
-
-        // Hide after animation
-        closeTimer.restart();
+        // Animate out; PopupMotion.hidden hides the window (the timer is a
+        // safety net for a window that stopped rendering)
+        motion.shown = false;
+        if (visible)
+            closeTimer.restart();
     }
 
     function toggle() {
-        if (visible) {
+        if (isOpen) {
             close();
         } else {
             open();
@@ -261,9 +244,10 @@ PopupWindow {
 
     Timer {
         id: closeTimer
-        interval: Config.animDuration > 0 ? Config.animDuration + 50 : 50
+        interval: Motion.exit.duration + 50
         onTriggered: {
-            root.visible = false;
+            if (!root.isOpen)
+                root.visible = false;
         }
     }
 
