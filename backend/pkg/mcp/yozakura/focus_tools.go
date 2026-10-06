@@ -22,7 +22,60 @@ func focusTools(d Deps) []mcp.ToolDef {
 		define("focus_stop", "Stop focus mode",
 			`End focus mode now (Do Not Disturb goes back to what it was, the missed-notifications summary is shown).`,
 			noArgs, toolOpts{idempotent: true}, d.focusStop),
+		define("focus_status", "Focus mode status",
+			`Whether focus mode is on and, when it is, when it started, when it ends ("endsAt", local time) and the minutes left ("paused" when its timer is paused).`,
+			noArgs, toolOpts{readOnly: true}, d.focusStatus),
 	}
+}
+
+// FocusStatus mirrors focus.get (pkg/svc/focus.Status).
+type FocusStatus struct {
+	Active      bool   `json:"active"`
+	Known       bool   `json:"known"`
+	StartedAt   int64  `json:"startedAt"`
+	EndsAt      int64  `json:"endsAt"`
+	LeftMs      int64  `json:"leftMs"`
+	MinutesLeft int    `json:"minutesLeft"`
+	Paused      bool   `json:"paused"`
+	TimerID     string `json:"timerId"`
+}
+
+// GetFocus reads focus.get.
+func GetFocus(c Caller) (FocusStatus, error) {
+	var st FocusStatus
+	if c == nil {
+		return st, errNoDaemon
+	}
+	raw, err := c.Call("focus.get", map[string]any{})
+	if err != nil {
+		return st, err
+	}
+	err = json.Unmarshal(raw, &st)
+	return st, err
+}
+
+func (d Deps) focusStatus(_ context.Context, _ json.RawMessage) (*mcp.CallToolResult, error) {
+	st, err := GetFocus(d.IPC)
+	if err != nil {
+		return nil, err
+	}
+	out := map[string]any{"active": st.Active}
+	if !st.Known {
+		out["note"] = "the shell has not reported focus mode since the daemon started"
+	}
+	if st.Active {
+		out["minutesLeft"] = st.MinutesLeft
+		if st.StartedAt > 0 {
+			out["startedAt"] = msToISO(float64(st.StartedAt))
+		}
+		if st.EndsAt > 0 {
+			out["endsAt"] = msToISO(float64(st.EndsAt))
+		}
+		if st.Paused {
+			out["paused"] = true
+		}
+	}
+	return mcp.JSONResult(out), nil
 }
 
 func (d Deps) focusStart(_ context.Context, args json.RawMessage) (*mcp.CallToolResult, error) {

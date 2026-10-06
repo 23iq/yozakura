@@ -154,7 +154,8 @@ func (d Deps) notesCreate(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	if err != nil {
 		return nil, err
 	}
-	return mcp.JSONResult(map[string]any{"id": id, "title": strings.TrimSpace(a.Title), "created": true}), nil
+	return mcp.JSONResult(map[string]any{"id": id, "title": strings.TrimSpace(a.Title), "created": true,
+		"undo": undo("notes_delete", map[string]any{"id": id})}), nil
 }
 
 func (d Deps) notesAppend(_ context.Context, args json.RawMessage) (*mcp.CallToolResult, error) {
@@ -185,7 +186,8 @@ func (d Deps) notesAppend(_ context.Context, args json.RawMessage) (*mcp.CallToo
 		if err != nil {
 			return nil, err
 		}
-		return mcp.JSONResult(map[string]any{"id": id, "title": idx.Notes[id].Title, "created": true}), nil
+		return mcp.JSONResult(map[string]any{"id": id, "title": idx.Notes[id].Title, "created": true,
+			"undo": undo("notes_delete", map[string]any{"id": id})}), nil
 	}
 	m := idx.Notes[id]
 	path := d.noteFile(id, m)
@@ -208,5 +210,9 @@ func (d Deps) notesAppend(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	if err := d.saveNotes(idx); err != nil {
 		return nil, err
 	}
-	return mcp.JSONResult(map[string]any{"id": id, "title": m.Title, "appended": text}), nil
+	out := map[string]any{"id": id, "title": m.Title, "appended": text}
+	if u := restoreUndo(id, m, old, false); u != nil {
+		out["undo"] = u
+	}
+	return mcp.JSONResult(out), nil
 }

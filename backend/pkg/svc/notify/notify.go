@@ -1,11 +1,11 @@
 package notify
 
 import (
-	"yozakura/backend/pkg/brand"
 	"encoding/json"
 	"os/exec"
 	"sync"
 	"sync/atomic"
+	"yozakura/backend/pkg/brand"
 
 	"yozakura/backend/pkg/ipc"
 )
@@ -53,11 +53,27 @@ type SendParams struct {
 	ExpireTimeout int          `json:"expireTimeout"`
 	ReplaceKey    string       `json:"replaceKey"`
 	Actions       []SendAction `json:"actions"`
+	// SummaryKey / BodyKey name translations (translations/*.json) the
+	// shell shows instead of Summary / Body, which stay the English
+	// fallback. Args fill %1, %2... of both; an arg may itself be a
+	// Text (translated first).
+	SummaryKey string `json:"summaryKey,omitempty"`
+	BodyKey    string `json:"bodyKey,omitempty"`
+	Args       []any  `json:"args,omitempty"`
+}
+
+// Text is a translatable notification argument: the shell shows
+// I18n.t(Key, Args...) when it knows Key, else Text.
+type Text struct {
+	Key  string `json:"key"`
+	Args []any  `json:"args,omitempty"`
+	Text string `json:"text"`
 }
 
 type SendAction struct {
 	Identifier string `json:"identifier"`
 	Text       string `json:"text"`
+	LabelKey   string `json:"labelKey,omitempty"` // translation of Text
 	Clipboard  string `json:"clipboard,omitempty"`
 	// Call is a daemon IPC call the shell makes when the action is clicked
 	// (e.g. timers.add {"id":"t3","spec":"5m"} for "+5 min"), so a backend
@@ -105,6 +121,15 @@ func (s *Service) Send(p SendParams) (int64, error) {
 		"expireTimeout": p.ExpireTimeout,
 		"replaceKey":    p.ReplaceKey,
 		"actions":       p.Actions,
+	}
+	if p.SummaryKey != "" {
+		payload["summaryKey"] = p.SummaryKey
+	}
+	if p.BodyKey != "" {
+		payload["bodyKey"] = p.BodyKey
+	}
+	if len(p.Args) > 0 {
+		payload["args"] = p.Args
 	}
 
 	s.mu.RLock()

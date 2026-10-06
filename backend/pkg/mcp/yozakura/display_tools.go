@@ -113,6 +113,10 @@ func (d Deps) brightnessSet(ctx context.Context, args json.RawMessage) (*mcp.Cal
 	results := []map[string]any{}
 	var undos []map[string]any
 	for _, t := range targets {
+		if t.Percent == nil {
+			// The list leaves slow DDC/CI reads out: ask for this display.
+			t.Percent = d.brightnessOf(ctx, t.ID)
+		}
 		cur := 50
 		if t.Percent != nil {
 			cur = *t.Percent
@@ -145,6 +149,21 @@ func (d Deps) brightnessSet(ctx context.Context, args json.RawMessage) (*mcp.Cal
 		out["undo"] = undo("brightness_set", args)
 	}
 	return mcp.JSONResult(out), nil
+}
+
+// brightnessOf reads one display's level (`<daemon> brightness get`), nil
+// when it cannot be read.
+func (d Deps) brightnessOf(ctx context.Context, id string) *int {
+	out, err := d.runText(ctx, nil, brand.Daemon, "brightness", "get", id)
+	if err != nil {
+		return nil
+	}
+	var r struct{ Brightness *float64 }
+	if json.Unmarshal([]byte(out), &r) != nil || r.Brightness == nil {
+		return nil
+	}
+	p := int(math.Round(*r.Brightness * 100))
+	return &p
 }
 
 // sameUndo: every display had the same level (one undo restores all).

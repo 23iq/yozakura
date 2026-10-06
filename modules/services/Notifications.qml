@@ -773,7 +773,8 @@ Singleton {
                 if (err)
                     root.notifyInternal(NotifyRequest.failureNotice(err, key => I18n.t(key)));
             }),
-            "tr": key => I18n.t(key)
+            "tr": key => I18n.t(key),
+            "has": key => I18n.has(key)
         };
     }
 

@@ -97,7 +97,11 @@ type Event struct {
 	Kind    string `json:"kind"` // "timer", "pomodoro" or "reminder"
 	ID      string `json:"id"`
 	Name    string `json:"name,omitempty"`
-	Message string `json:"message"`         // human sentence for notifications
+	Message string `json:"message"` // human sentence for notifications
+	// MsgKey/MsgArgs: the translation of Message (shell I18n, %1...);
+	// empty when Message is the user's own text.
+	MsgKey  string `json:"msgKey,omitempty"`
+	MsgArgs []any  `json:"msgArgs,omitempty"`
 	Phase   string `json:"phase,omitempty"` // pomodoro: the phase that starts now ("" when done)
 	Done    bool   `json:"done"`            // timer rings / pomodoro complete / reminder
 	Missed  bool   `json:"missed"`          // fired late (the daemon was not running)

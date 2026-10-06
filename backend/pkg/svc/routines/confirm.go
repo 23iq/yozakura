@@ -11,11 +11,11 @@ import (
 
 // ConfirmTools are the built-in MCP tools that always ask the user, even
 // with "allow for this session", a permissive policy or YOLO: they rewrite
-// keybinds, close windows or delete routines. The agents policy
+// keybinds, close windows or delete routines and notes. The agents policy
 // (svc/agents) and the chat policy (modules/services/ai/Permissions.js)
 // use the same list.
 var ConfirmTools = map[string]bool{
-	"binds_set": true, "binds_remove": true, "app_close": true, "routine_delete": true,
+	"binds_set": true, "binds_remove": true, "app_close": true, "routine_delete": true, "notes_delete": true,
 }
 
 // confirmActions are bind actions a routine step may run that are as

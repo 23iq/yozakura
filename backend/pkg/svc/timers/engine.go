@@ -303,15 +303,17 @@ func (e *Engine) fire(t *Timer, now int64) Event {
 			p.Phase = next
 			t.TotalMs, t.EndsAt = length, due+length
 			ev.Phase = next
-			ev.Message = pomodoroMessage(next, length)
+			ev.Message, ev.MsgKey = pomodoroMessage(next, length)
+			ev.MsgArgs = []any{FormatDuration(time.Duration(length) * time.Millisecond)}
 			return ev
 		}
-		ev.Message = "Pomodoro complete"
+		ev.Message, ev.MsgKey = "Pomodoro complete", "notify.pomodoro.complete"
 	}
 	t.State, t.EndsAt, t.LeftMs, t.FinishedAt = StateRinging, 0, 0, due
 	ev.Done = true
 	if ev.Message == "" {
-		ev.Message = "Timer " + FormatDuration(time.Duration(t.TotalMs)*time.Millisecond) + " finished"
+		d := FormatDuration(time.Duration(t.TotalMs) * time.Millisecond)
+		ev.Message, ev.MsgKey, ev.MsgArgs = "Timer "+d+" finished", "notify.timer.finished", []any{d}
 	}
 	return ev
 }
@@ -331,13 +333,15 @@ func (p *Pomodoro) next() (string, int64) {
 	return PhaseBreak, p.BreakMs
 }
 
-func pomodoroMessage(phase string, length int64) string {
+// pomodoroMessage returns the English text and its translation key (the
+// phase length is %1).
+func pomodoroMessage(phase string, length int64) (string, string) {
 	d := FormatDuration(time.Duration(length) * time.Millisecond)
 	switch phase {
 	case PhaseBreak:
-		return "Work session done: take a " + d + " break"
+		return "Work session done: take a " + d + " break", "notify.pomodoro.break"
 	case PhaseLongBreak:
-		return "Work session done: take a long " + d + " break"
+		return "Work session done: take a long " + d + " break", "notify.pomodoro.long_break"
 	}
-	return "Break over: " + d + " of focus"
+	return "Break over: " + d + " of focus", "notify.pomodoro.work"
 }

@@ -30,6 +30,16 @@ func TestBrightnessTools(t *testing.T) {
 	assert.Equal(t, "1.00", r.last().Args[3])
 	assert.NotNil(t, m["undo"], "only the known level is restored")
 
+	// A DDC monitor the list could not read: its level is asked for, so
+	// the delta and the undo use the real level.
+	r.out[brand.Daemon+" brightness get ddc-5"] = "{\n  \"brightness\": 0.7\n}"
+	m = structured(t, callTool(t, d, "brightness_set", `{"delta":10,"monitor":"ddc-5"}`))
+	assert.Equal(t, []string{"brightness", "set", "ddc-5", "0.80"}, r.last().Args)
+	assert.Equal(t, map[string]any{"tool": "brightness_set", "args": map[string]any{"percent": float64(70), "monitor": "ddc-5"}}, m["undo"])
+	r.out[brand.Daemon+" brightness get ddc-5"] = "Error: no brightness value available"
+	m = structured(t, callTool(t, d, "brightness_set", `{"percent":30,"monitor":"ddc-5"}`))
+	assert.Nil(t, m["undo"], "still unknown: no undo")
+
 	assert.True(t, callTool(t, d, "brightness_set", `{}`).IsError)
 	assert.True(t, callTool(t, d, "brightness_set", `{"percent":50,"monitor":"nope"}`).IsError)
 
@@ -64,6 +74,18 @@ func TestFocusTools(t *testing.T) {
 	res := callTool(t, d, "focus_stop", `{}`)
 	assert.False(t, res.IsError)
 	assert.Equal(t, "focus-stop", ipc.calls[2].Params.(map[string]any)["command"])
+
+	ipc.result["focus.get"] = `{"active":true,"known":true,"startedAt":1791280000000,"endsAt":1791281500000,"leftMs":600000,"minutesLeft":10,"timerId":"t9"}`
+	m = structured(t, callTool(t, d, "focus_status", `{}`))
+	assert.Equal(t, true, m["active"])
+	assert.Equal(t, float64(10), m["minutesLeft"])
+	assert.Equal(t, msToISO(1791281500000), m["endsAt"])
+	assert.Nil(t, m["note"])
+	ipc.result["focus.get"] = `{"active":false,"known":false}`
+	m = structured(t, callTool(t, d, "focus_status", `{}`))
+	assert.Equal(t, false, m["active"])
+	assert.NotNil(t, m["note"])
+	assert.Contains(t, ReadOnlyToolNames(), "focus_status")
 }
 
 func TestScreenLookReturnsImage(t *testing.T) {

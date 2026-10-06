@@ -7,7 +7,9 @@
     any string literal in QML/JS (covers key tables like `var keys = [...]`) or
     starts with a dynamic prefix: `I18n.t("prefix." + x)`, or any dotted
     literal ending in "." that is concatenated (`return "binds.action." + id`,
-    key builders whose result reaches I18n.t through a variable).
+    key builders whose result reaches I18n.t through a variable), or starts
+    with one of the config's `usedPrefixes` (keys sent by the Go backend,
+    e.g. notify.request summaryKey/bodyKey, with the reason as the value).
 """
 from __future__ import annotations
 
@@ -55,7 +57,7 @@ def run(cfg: dict) -> list[Issue]:
     issues: list[Issue] = []
 
     literals: set[str] = set()
-    prefixes: set[str] = set()
+    prefixes: set[str] = set(c.get("usedPrefixes", {}))
     for f in repo_files(".qml", ".js"):
         raw = (REPO / f).read_text(errors="replace")
         scan = scan_file(REPO / f)

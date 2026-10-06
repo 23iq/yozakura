@@ -201,6 +201,23 @@ func (s *Service) list(params json.RawMessage) (any, error) {
 	return result, nil
 }
 
+// Credential is one stored provider credential (in-process use only:
+// never send APIKey to a client that did not ask for it by provider).
+type Credential struct {
+	Provider, APIKey, Endpoint string
+}
+
+// Credentials lists the stored credentials (empty when none or on error).
+func (s *Service) Credentials() []Credential {
+	res, _ := s.list(nil)
+	list, _ := res.([]entry)
+	out := make([]Credential, 0, len(list))
+	for _, e := range list {
+		out = append(out, Credential{Provider: e.Provider, APIKey: e.APIKey, Endpoint: e.Endpoint})
+	}
+	return out
+}
+
 func (s *Service) has(params json.RawMessage) (any, error) {
 	var p struct {
 		Provider string `json:"provider"`

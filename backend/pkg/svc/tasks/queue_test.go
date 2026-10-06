@@ -50,8 +50,12 @@ func TestRateLimitParksAndResumes(t *testing.T) {
 	if tk.Runs[0].ResetsAt == 0 {
 		t.Fatal("resetsAt unknown")
 	}
-	if e.notes.find("usage limit") == nil {
+	if n := e.notes.find("usage limit"); n == nil {
 		t.Fatal("no limit notification")
+	} else if n.SummaryKey != "notify.task.limit" || n.BodyKey != "notify.task.limit_body" || len(n.Args) != 2 || n.Args[0] != tk.Title {
+		t.Fatalf("limit notification keys: %+v", n)
+	} else if n.Actions[0].LabelKey != "notify.action.open" {
+		t.Fatalf("open label: %+v", n.Actions)
 	}
 	waitTask(t, e.m, tk.ID, "review after reset", statusIs(StatusReview))
 	sends := e.fa.sent()

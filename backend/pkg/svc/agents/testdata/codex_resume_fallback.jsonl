@@ -2,11 +2,13 @@
 <
 <
 <
+<
 {"id":1,"result":{"userAgent":"x"}}
-{"id":2,"error":{"code":-32600,"message":"no rollout found for thread id old"}}
+{"id":2,"result":{"rateLimits":{"limitId":"codex","primary":{"usedPercent":12,"windowDurationMins":300,"resetsAt":1791273000},"secondary":{"usedPercent":3,"windowDurationMins":10080,"resetsAt":1791580853}}}}
+{"id":3,"error":{"code":-32600,"message":"no rollout found for thread id old"}}
 <
-{"id":3,"result":{"thread":{"id":"new-thread"}}}
+{"id":4,"result":{"thread":{"id":"new-thread"}}}
 <
-{"id":4,"result":{"turn":{"id":"t1"}}}
+{"id":5,"result":{"turn":{"id":"t1"}}}
 {"method":"turn/completed","params":{"turn":{"id":"t1","status":"completed"}}}
 =hold

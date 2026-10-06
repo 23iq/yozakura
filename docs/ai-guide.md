@@ -259,13 +259,16 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `routines_list` | yes | saved routines with their steps |
 | `routine_save`, `routine_run`, `routine_delete` | no | `{"name":"Night","steps":[{"kind":"tool","tool":"nightlight_set","args":{"enabled":true}},{"kind":"delay","ms":1000}]}` ("save this as a routine"); run returns a per-step report; delete always asks, and so do save/run of a routine with confirm-required steps (`app_close`, `binds_*`, `command.run`, `window.close`, quit), even in YOLO: the backend runs such a routine for an AI only after the user allowed that call (`routines.grant`) |
 | `notes_search`, `notes_read` | yes | the Notes tab (`<data dir>-notes/index.json` + `notes/<id>.md|.html`) |
-| `notes_create`, `notes_append` | no | `{"id":"Inbox","text":"buy milk","bullet":true}` (`create: true` makes a missing note) |
+| `notes_create`, `notes_append` | no | `{"id":"Inbox","text":"buy milk","bullet":true}` (`create: true` makes a missing note); undo deletes the new note / restores the previous content (`notes_restore`) |
+| `notes_delete`, `notes_restore` | no | delete a note (always asks; undo is `notes_restore` with its title and content); restore writes a note's whole content back, recreating it when deleted |
 | `apps_find` | yes | installed `.desktop` apps by name/id |
 | `app_launch`, `app_close` | no | `{"app":"firefox","workspace":3}`; close by window id/app/title (always asks; undo reopens) |
 | `system_info`, `network_status`, `bluetooth_status`, `brightness_get` | yes | battery, CPU/RAM/GPU load and temps, disks, uptime; Wi-Fi/ethernet (+ nearby networks, `known`); paired Bluetooth devices; brightness per display |
 | `bluetooth_connect`/`_disconnect`, `wifi_connect` (saved networks only), `wifi_toggle`, `audio_output_set` | no | each returns an undo |
 | `brightness_set`, `nightlight_set`, `caffeine_set` | no | `{"percent":40}` / `{"delta":-10}`, `{"enabled":true,"temperature":3500}`, `{"enabled":true}`; undo restores |
 | `focus_start`, `focus_stop` | no | focus mode (`ui.run focus:<min>` / `focus-stop`) |
+| `focus_status` | yes | focus mode on/off, start, end and minutes left (the shell mirrors its state with `focus.set`; `focus.get` adds the timer's progress) |
+| `providers_list`, `ollama_models` | yes | chat providers with a stored key + the local servers (Ollama, LM Studio): reachable or not, model ids (`providers.list`, free listing requests, keys never returned); installed Ollama models with capabilities (`providers.ollama.probe`, never loads a model) |
 | `screen_look` | yes (asks: private) | screenshot returned as an MCP image block (`{"target":"window","scale":0.5}`); vision HTTP models get it as an image message |
 
 Config and preset tools work on files and do not need the daemon; the others

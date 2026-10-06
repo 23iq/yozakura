@@ -31,6 +31,12 @@ Singleton {
         return str;
     }
 
+    // A translation exists for key (current language or the English
+    // fallback), so t() will not humanize it.
+    function has(key) {
+        return root.strings[key] !== undefined || root.fallback[key] !== undefined;
+    }
+
     function detectSystemLanguage() {
         const sources = [
             Qt.locale().name,

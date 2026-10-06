@@ -82,6 +82,10 @@ func main() {
 			os.Exit(runRoutine(args[1:], os.Stdin, os.Stdout, os.Stderr))
 		case "usage":
 			os.Exit(runUsage(args[1:], newClient(), os.Stdout, os.Stderr))
+		case "focus":
+			os.Exit(runFocus(args[1:], newClient(), os.Stdout, os.Stderr))
+		case "providers", "provider":
+			os.Exit(runProviders(args[1:], newClient(), os.Stdout, os.Stderr))
 		case "task", "tasks":
 			os.Exit(runTask(args[1:], os.Stdout, os.Stderr))
 		}
@@ -603,6 +607,7 @@ Commands:
                                      resume, add, stop, pomodoro ({bin} timer help)
     stopwatch [start|pause|lap|reset] Stopwatch (no argument: status)
     remind <time|in time> <text>     Reminder ("18:00 call mom", "in 20m stretch"); list, cancel
+    focus [start [min]|stop|status]  Focus mode: DND + countdown ({bin} focus help)
     routine <command>                Routines (step lists): list, show, run, save, delete
     task <command>                   AI coding tasks in git worktrees: new, list, show, run,
                                      accept, discard, followup ({bin} task help)
@@ -617,6 +622,8 @@ Commands:
     usage [today|week|month] [--by provider|model|day]
                                      AI token usage and cost (--json for raw)
     usage limits                     AI subscription limits (Claude, Codex)
+    providers [list|test <p>|ollama] AI chat providers: connected ones and their models,
+                                     test one, installed Ollama models ({bin} providers help)
     help                             Show this help message
     version, -v, --version           Show {name} version
     goodbye                          Uninstall {name}
