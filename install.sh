@@ -2,9 +2,11 @@
 # Yozakura installer and updater.
 #
 #   curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bash
-#   curl -fsSL .../install.sh | bash -s -- --with-voice --yes
+#   curl -fsSL .../install.sh | bash -s -- --compositor niri --yes
 #
-# It shows the full plan first and asks once. Re-running it updates an
+# It installs the core (the shell, one compositor, a login screen) and shows
+# the full plan first; apps, voice and the rest come from the setup wizard
+# on the first login. Re-running it updates an
 # existing install; `yozakura update` runs the checkout's copy with --update.
 # The package list is backend/pkg/deps/packages.tsv (shared with
 # `yozakura doctor`). Run with --help for every option.
@@ -33,9 +35,15 @@ DEPS_PATH="backend/pkg/deps/packages.tsv"
 FEDORA_COPR="lionheartp/Hyprland"
 PHOSPHOR_VERSION="2.1.2"
 SYS_BIN="/usr/local/bin"
+# Root-owned copy of the binary that pkexec runs for the setup wizard's app
+# installs: user-level code cannot replace it (unlike ~/.local/bin).
+SYS_HELPER="/usr/local/lib/$APP_ID/$APP_ID-sys"
+OS_RELEASE="${YOZAKURA_OS_RELEASE:-/etc/os-release}"
+COMPOSITORS=(hyprland niri mango)
 
-WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" # "" = default, 1 = yes, 0 = no
-INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 HYPR_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1
+WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
+INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0
+COMPOSITOR="" PREV_INSTALL=0 FAILED=()
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
@@ -304,7 +312,7 @@ ART_WORD_NARROW=(
   "  █    ▀▄▄▄▀  █▄▄▄▄  █   █  █  ▀▄  ▀▄▄▄▀  █  ▀▄  █   █"
 )
 ART_KANJI="夜桜"
-ART_TAGLINE="night-sakura desktop shell for Hyprland"
+ART_TAGLINE="desktop shell for Hyprland, niri and Mango"
 
 # art_version: the version of an existing checkout, if there is one.
 art_version() {
@@ -359,7 +367,10 @@ banner_full() {
     ui_paint "${words[i]}" 0 "$i" "$w" "${#words[@]}" && right[i + 1]="$UI_OUT"
   done
   art_brush "$w" $((UI_COLS - w - 26)) && right[6]="$UI_OUT"
-  ui_paint "$ART_KANJI" 0 0 4 1 && right[8]="$C_BOLD$UI_OUT  $C_DIM$ART_TAGLINE${1:+  $G_SEP  $1}$C_OFF"
+  # The version goes where it fits beside the tagline.
+  local ver="$1"
+  ((UI_COLS < 2 + 20 + 3 + 6 + ${#ART_TAGLINE} + 5 + ${#ver})) && ver=""
+  ui_paint "$ART_KANJI" 0 0 4 1 && right[8]="$C_BOLD$UI_OUT  $C_DIM$ART_TAGLINE${ver:+  $G_SEP  $ver}$C_OFF"
   for ((i = 0; i < rows; i++)); do
     ui_paint "${ART_FLOWER[i]}" 0 "$i" "${#ART_FLOWER[0]}" "$rows" && flower="$UI_OUT"
     art_emit "  $flower   ${right[i]:-}"
@@ -371,7 +382,7 @@ banner_compact() {
   local i rows=${#ART_FLOWER_SMALL[@]} flower right=() word="Y O Z A K U R A"
   ui_paint "$word" 0 0 "${#word}" 1 && right[2]="$C_BOLD$UI_OUT"
   art_brush "${#word}" && right[3]="$UI_OUT"
-  ui_paint "$ART_KANJI" 0 0 4 1 && right[4]="$C_BOLD$UI_OUT  ${C_DIM}desktop shell for Hyprland${1:+  $G_SEP  $1}$C_OFF"
+  ui_paint "$ART_KANJI" 0 0 4 1 && right[4]="$C_BOLD$UI_OUT  ${C_DIM}${ART_TAGLINE#desktop }$C_OFF"
   for ((i = 0; i < rows; i++)); do
     ui_paint "${ART_FLOWER_SMALL[i]}" 0 "$i" "${#ART_FLOWER_SMALL[0]}" "$rows" && flower="$UI_OUT"
     art_emit "  $flower   ${right[i]:-}"
@@ -379,7 +390,7 @@ banner_compact() {
 }
 
 banner_ascii() {
-  local i right=("" "${C_PINK}${C_BOLD}Y O Z A K U R A$C_OFF" "${C_DIM}night-sakura desktop shell for Hyprland$C_OFF" "${1:+$C_DIM$1$C_OFF}")
+  local i right=("" "${C_PINK}${C_BOLD}Y O Z A K U R A$C_OFF" "${C_DIM}night-sakura $ART_TAGLINE$C_OFF" "${1:+$C_DIM$1$C_OFF}")
   for ((i = 0; i < ${#ART_FLOWER_ASCII[@]}; i++)); do
     art_emit "  $C_PINK${ART_FLOWER_ASCII[i]}$C_OFF  ${right[i]}"
   done
@@ -392,7 +403,8 @@ has_phosphor() { local f; f="$(fc-list : family 2>/dev/null || true)"; [[ "${f,,
 log() { printf '%s\n' "$*" >>"$LOG_FILE" 2>/dev/null || true; }
 
 # run LABEL HINT CMD...: runs CMD with its output in the log, a spinner on a
-# terminal, and on failure the log tail plus HINT.
+# terminal, and on failure the log tail plus HINT. RUN_SOFT=1 turns the
+# failure into a warning and a non-zero status instead of the end.
 run() {
   local label="$1" hint="$2" rc=0 start
   shift 2
@@ -420,8 +432,34 @@ run() {
     # The error lines when there are any (download progress is noise).
     { grep -iE 'error|fail|conflict|not found|denied|cannot|unable' "$LOG_FILE" | tail -n 12 || tail -n 15 "$LOG_FILE"; } | sed "s/^/    $G_PIPE /" >&2
     printf '%s' "$C_OFF" >&2
+    if [[ "${RUN_SOFT:-0}" == 1 ]]; then
+      warn "$label failed (exit $rc); continuing.${hint:+ $hint}"
+      return "$rc"
+    fi
     die "$label failed (exit $rc)." "Full log: $LOG_FILE" ${hint:+"$hint"}
   fi
+  done_line "$label" $((SECONDS - start))
+}
+
+# run_optional NAME LABEL HINT CMD...: run, but a failure is only noted for
+# the summary at the end (NAME: failed) and the install goes on.
+run_optional() {
+  local name="$1"
+  shift
+  RUN_SOFT=1 run "$@" || FAILED+=("$name")
+  return 0
+}
+
+# run_attended LABEL HINT CMD...: CMD in the foreground on the terminal, for
+# a command that asks its own questions (pacman without --noconfirm).
+run_attended() {
+  local label="$1" hint="$2" rc=0 start=$SECONDS
+  shift 2
+  log "" "### $label: $*"
+  printf '  %s%s%s %s\n' "$C_ROSE" "$G_STEP" "$C_OFF" "$label" >&2
+  "$@" <"$TTY" >&2 || rc=$?
+  log "(attended, exit $rc)"
+  [[ "$rc" -eq 0 ]] || die "$label failed (exit $rc)." "Full log: $LOG_FILE" ${hint:+"$hint"}
   done_line "$label" $((SECONDS - start))
 }
 
@@ -440,10 +478,18 @@ $DISPLAY_NAME installer
 Usage: install.sh [options]
        curl -fsSL https://raw.githubusercontent.com/23iq/$APP_ID/main/install.sh | bash -s -- [options]
 
-Shows the plan (packages, services, files) and asks once. Without a terminal
-it proceeds with the defaults.
+Installs the core: the shell, your compositor and a login screen. Asks which
+compositor (Hyprland, niri or Mango), shows the plan (packages, services,
+files) and asks once; at the end it offers a reboot into the setup wizard.
+Without a terminal it proceeds with the defaults (Hyprland, no reboot).
 
-Optional features:
+Compositor:
+  --compositor NAME hyprland (default), niri or mango (Mango: Arch only)
+  --exclusive       Hyprland: let $DISPLAY_NAME manage the whole Hyprland config
+  --no-compositor-config
+                    leave the compositor's config files alone
+
+Optional features (or later, from the setup wizard):
   --with-voice      local speech-to-text (builds whisper.cpp, ~1 GB)
   --with-depth      depth clock behind the wallpaper subject (uv venv, ~0.7 GB)
   --with-sddm       SDDM login screen + the $DISPLAY_NAME theme (default when
@@ -455,7 +501,8 @@ Install:
   --dry-run         print the plan and exit without changing anything
   --no-deps         skip packages and services (sources + binaries only)
   --no-aur          Arch: no AUR helper; the icon font is installed per user
-  --no-hyprland     leave ~/.config/hypr alone
+  --reboot          reboot at the end without asking (needs a terminal)
+  --no-reboot       do not offer the reboot at the end
   --update          update an existing install: pull, rebuild, reinstall the
                     binaries (what '$APP_ID update' runs)
   --verbose         show command output instead of spinners
@@ -465,7 +512,9 @@ Install:
   -h, --help        this help
 
 Environment: YOZAKURA_REPO_URL (git remote or path), YOZAKURA_RAW_BASE (where
-the package list is fetched from), YOZAKURA_FLAKE (NixOS).
+the package list is fetched from), YOZAKURA_FLAKE (NixOS), YOZAKURA_GPU
+(NVIDIA, AMD or Intel: overrides the graphics detection), YOZAKURA_OS_RELEASE
+(an os-release file to read instead of /etc/os-release).
 Log: $LOG_FILE
 EOF
 }
@@ -481,14 +530,21 @@ parse_args() {
     --no-sddm) WITH_SDDM=0 ;;
     --no-deps) INSTALL_DEPS=0 ;;
     --no-aur) USE_AUR=0 ;;
-    --no-hyprland) HYPR_CONFIG=0 ;;
+    --no-compositor-config | --no-hyprland) COMP_CONFIG=0 ;;
+    --exclusive) EXCLUSIVE=1 ;;
+    --reboot) REBOOT=1 ;;
+    --no-reboot) REBOOT=0 ;;
     --dry-run) DRY_RUN=1 ;;
     --verbose) VERBOSE=1 ;;
-    --update) UPDATE_ONLY=1 INSTALL_DEPS=0 ASSUME_YES=1 HYPR_CONFIG=0 ;;
+    --update) UPDATE_ONLY=1 INSTALL_DEPS=0 ASSUME_YES=1 COMP_CONFIG=0 REBOOT=0 ;;
     -y | --yes) ASSUME_YES=1 ;;
-    --dir | --bin-dir | --branch)
+    --dir | --bin-dir | --branch | --compositor)
       [[ $# -ge 2 ]] || die "$1 needs a value"
       case "$1" in
+      --compositor)
+        COMPOSITOR="${2,,}"
+        [[ " ${COMPOSITORS[*]} " == *" $COMPOSITOR "* ]] || die "Unknown compositor: $2" "Choose one of: ${COMPOSITORS[*]}"
+        ;;
       --dir) SRC_DIR="$2" ;;
       --bin-dir) BIN_DIR="$2" ;;
       --branch)
@@ -551,9 +607,9 @@ need_sudo() {
 # === System detection ===
 detect_system() {
   local id="" name="" like=""
-  if [[ -r /etc/os-release ]]; then
-    # shellcheck disable=SC1091
-    id="$(. /etc/os-release && echo "${ID:-}")" like="$(. /etc/os-release && echo "${ID_LIKE:-}")" name="$(. /etc/os-release && echo "${PRETTY_NAME:-}")"
+  if [[ -r "$OS_RELEASE" ]]; then
+    # shellcheck disable=SC1090
+    id="$(. "$OS_RELEASE" && echo "${ID:-}")" like="$(. "$OS_RELEASE" && echo "${ID_LIKE:-}")" name="$(. "$OS_RELEASE" && echo "${PRETTY_NAME:-}")"
   fi
   DISTRO_NAME="${name:-unknown}"
   if [[ -f /etc/NIXOS || "$id" == nixos ]]; then
@@ -576,7 +632,7 @@ detect_system() {
     esac
   done
   GPU="$(printf '%s\n' "${vendors[@]:-}" | sort -u | paste -sd/ -)"
-  GPU="${GPU:-unknown}"
+  GPU="${YOZAKURA_GPU:-${GPU:-unknown}}"
 
   DM=""
   if [[ -L /etc/systemd/system/display-manager.service ]]; then
@@ -594,6 +650,110 @@ detect_system() {
 
 has_systemd() { [[ -d /run/systemd/system ]]; }
 
+# === Compositor ===
+comp_name() {
+  case "$1" in
+  hyprland) echo Hyprland ;;
+  mango) echo Mango ;;
+  *) echo "$1" ;;
+  esac
+}
+
+comp_about() {
+  case "$1" in
+  hyprland) echo "dynamic tiling with rich animations; the most tested with $DISPLAY_NAME" ;;
+  niri) echo "scrollable tiling: windows open on an endless horizontal strip" ;;
+  mango) echo "light, fast dwl-style tiling with many layouts" ;;
+  esac
+}
+
+# comp_bin NAME: the compositor's executable (to tell whether it is there).
+comp_bin() {
+  case "$1" in
+  hyprland) echo Hyprland ;;
+  *) echo "$1" ;;
+  esac
+}
+
+# comp_supported NAME: whether this distribution packages it (Mango: Arch only).
+comp_supported() { [[ "$1" != mango || "$DISTRO" != fedora ]]; }
+
+# comp_config NAME: the user config file '$APP_ID install NAME' adds its block to.
+comp_config() {
+  case "$1" in
+  hyprland) echo "$HOME/.config/hypr/$(hypr_entry)" ;;
+  niri) echo "$HOME/.config/niri/config.kdl" ;;
+  mango) echo "$HOME/.config/mango/config.conf" ;;
+  esac
+}
+
+# choose_compositor: COMPOSITOR = --compositor, else the configured one (a
+# re-run never asks again), else the answer to a menu of the ones this
+# distribution has (Hyprland without a terminal or with --yes).
+choose_compositor() {
+  local saved="$DATA_DIR/compositor" c="" opts=() i reply
+  [[ -e "$saved" || -e "$DATA_DIR/shell_repo" ]] && PREV_INSTALL=1
+  if [[ -n "$COMPOSITOR" ]]; then
+    comp_supported "$COMPOSITOR" && return 0
+    warn "$(comp_name "$COMPOSITOR") is not packaged for $DISTRO_NAME (Arch only)."
+  elif [[ -r "$saved" ]]; then
+    read -r c <"$saved" || true
+    c="${c,,}"
+    if [[ " ${COMPOSITORS[*]} " == *" $c "* ]] && comp_supported "$c"; then
+      COMPOSITOR="$c"
+      return 0
+    fi
+  fi
+  for c in "${COMPOSITORS[@]}"; do comp_supported "$c" && opts+=("$c"); done
+  if [[ -z "$TTY" || "$ASSUME_YES" == 1 || ${#opts[@]} -eq 1 ]]; then
+    [[ -n "$COMPOSITOR" ]] && info "Using $(comp_name "${opts[0]}") instead."
+    COMPOSITOR="${opts[0]}"
+    return 0
+  fi
+  compositor_menu "${opts[@]}"
+  while true; do
+    printf '  %s%s%s Compositor [1-%d, Enter = 1] ' "$C_PINK" "$G_ASK" "$C_OFF" "${#opts[@]}" >"$TTY"
+    read -r reply <"$TTY" || reply=""
+    reply="${reply:-1}"
+    if [[ "$reply" =~ ^[0-9]+$ ]] && ((reply >= 1 && reply <= ${#opts[@]})); then
+      COMPOSITOR="${opts[reply - 1]}"
+      break
+    fi
+    for i in "${!opts[@]}"; do
+      [[ "${reply,,}" == "${opts[i]}" ]] && COMPOSITOR="${opts[i]}" && break 2
+    done
+  done
+  ok "Compositor: $(comp_name "$COMPOSITOR")"
+}
+
+# compositor_menu NAME...: the numbered choices, a name and a line about each.
+compositor_menu() {
+  local i c tag about
+  echo >&2
+  ui_box_top "Choose your compositor"
+  for ((i = 1; i <= $#; i++)); do
+    c="${!i}" tag="" about="$(comp_about "$c")"
+    ((i == 1)) && tag+="  ${C_PINK}recommended$C_OFF"
+    has_cmd "$(comp_bin "$c")" && tag+="  ${C_GREEN}$G_OK installed$C_OFF"
+    [[ "$c" == niri && "$DISTRO" == fedora ]] && about+=" (may need: sudo dnf copr enable yalter/niri)"
+    ui_box_row ""
+    ui_box_row "$(printf '%s%d%s  %s%s%s%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$(comp_name "$c")" "$C_OFF" "$tag")"
+    ui_box_row "   $C_DIM$about$C_OFF"
+  done
+  comp_supported mango || { ui_box_row "" && ui_box_row "${C_DIM}Mango is not listed: it is packaged for Arch only.$C_OFF"; }
+  ui_box_row ""
+  ui_box_bottom
+  echo >&2
+}
+
+# choose_login: offer SDDM only where there is no display manager.
+choose_login() {
+  [[ -z "$WITH_SDDM" ]] || return 0
+  WITH_SDDM=0
+  [[ -z "$DM" && "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
+  if ask "No login screen found. Set up SDDM with the $DISPLAY_NAME theme?" y; then WITH_SDDM=1; fi
+}
+
 # === Package list (backend/pkg/deps/packages.tsv) ===
 load_deps() {
   local local_tsv="$SRC_DIR/$DEPS_PATH"
@@ -609,7 +769,7 @@ load_deps() {
 
 # deps_for COLUMN: package names of every row whose need is wanted.
 deps_for() {
-  local col="$1" wanted="|build|required|standard|hyprland|"  # Task 2: the chosen compositor replaces |hyprland|
+  local col="$1" wanted="|build|required|standard|${COMPOSITOR:-hyprland}|"
   [[ "$WITH_VOICE" == 1 ]] && wanted+="voice|"
   [[ "$WITH_DEPTH" == 1 ]] && wanted+="depth|"
   [[ "$WITH_SDDM" == 1 ]] && wanted+="sddm|"
@@ -625,6 +785,8 @@ arch_skip() {
   case "$1" in
   quickshell) has_cmd qs ;;
   hyprland) has_cmd Hyprland ;;
+  niri) has_cmd niri ;;
+  mangowm) has_cmd mango ;;
   matugen) has_cmd matugen ;;
   power-profiles-daemon) pacman -Qq tlp tuned tuned-ppd auto-cpufreq >/dev/null 2>&1 ;;
   pipewire-pulse) pacman -Qq pulseaudio >/dev/null 2>&1 ;;
@@ -734,15 +896,18 @@ show_plan() {
   ui_box_kv "Graphics" "$GPU"
   ui_box_kv "Login" "${DM:-none (console)}"
   ui_box_head "INSTALL"
+  ui_box_kv "Compositor" "$C_BOLD$(comp_name "$COMPOSITOR")$C_OFF"
   ui_box_kv "Sources" "$REPO_ACTION $(tilde "$SRC_DIR")"
   ui_box_row "$(printf '%-12s %s%s%s' "" "$C_DIM" "$REPO_URL${BRANCH:+ @ $BRANCH}" "$C_OFF")"
   ui_box_kv "Binaries" "$(tilde "$BIN_DIR")/{$APP_ID,$DAEMON_ID}$([[ "$LINK_BINS" == 1 ]] && echo " + links in $SYS_BIN (sudo)")"
   old="$(old_daemon_paths | paste -sd' ' -)"
+  ui_box_kv "Helper" "$SYS_HELPER (root-owned, sudo): the system helper for installing apps from the setup wizard"
   [[ -n "$old" ]] && ui_box_kv "Cleanup" "remove the old $OLD_DAEMON ($old) once $DAEMON_ID is installed"
   if [[ "$INSTALL_DEPS" == 1 ]]; then
     case "$DISTRO" in
     arch | fedora)
       local via="pacman -Syu"
+      [[ "$ASSUME_YES" == 0 && -n "$TTY" ]] && via+=", which asks to confirm"
       [[ "$DISTRO" == fedora ]] && via="dnf, COPR $FEDORA_COPR"
       if [[ ${#PKGS[@]} -eq 0 ]]; then
         ui_box_kv "Packages" "all installed"
@@ -752,60 +917,59 @@ show_plan() {
       fi
       [[ ${#AUR_PKGS[@]} -gt 0 ]] && ui_box_kv "AUR" "${AUR_PKGS[*]} via $AUR_HELPER"
       [[ "$DISTRO" == fedora ]] && ui_box_kv "Fonts" "Phosphor icons into ~/.local/share/fonts"
+      [[ "$DISTRO" == fedora && "$COMPOSITOR" == niri ]] &&
+        ui_box_kv "Note" "if dnf cannot find niri or xwayland-satellite: sudo dnf copr enable yalter/niri, then re-run" "$C_YELLOW"
       ;;
     *) ui_box_kv "Packages" "no package list for this distribution; '$APP_ID doctor' lists what to install" "$C_YELLOW" ;;
     esac
     [[ ${#SERVICES[@]} -gt 0 ]] && ui_box_kv "Services" "enable ${SERVICES[*]}"
     [[ "$ADD_INPUT_GROUP" == 1 ]] && ui_box_kv "Groups" "add $(id -un) to 'input' (Super-alone binds)"
   fi
-  if [[ "$HYPR_CONFIG" == 1 ]]; then
-    if legacy_hypr_block; then
-      ui_box_kv "Hyprland" "your ${LEGACY_ID^} block is switched over on the first start"
+  if [[ "$COMP_CONFIG" == 1 ]]; then
+    if [[ "$COMPOSITOR" == hyprland ]] && legacy_hypr_block; then
+      ui_box_kv "Config" "your ${LEGACY_ID^} block in ~/.config/hypr is switched over on the first start"
     else
-      ui_box_kv "Hyprland" "add the $DISPLAY_NAME block to ~/.config/hypr (+ polkit agent autostart)"
+      ui_box_kv "Config" "add the $DISPLAY_NAME block to $(tilde "$(comp_config "$COMPOSITOR")")$([[ "$COMPOSITOR" == hyprland ]] && echo " (+ polkit agent autostart)")"
+    fi
+  fi
+  if [[ "$EXCLUSIVE" == 1 ]]; then
+    if [[ "$COMPOSITOR" == hyprland ]]; then
+      ui_box_kv "Exclusive" "$DISPLAY_NAME manages the whole Hyprland config ('$APP_ID install hyprland --exclusive')"
+    else
+      ui_box_kv "Exclusive" "only for Hyprland; ignored for $(comp_name "$COMPOSITOR")" "$C_YELLOW"
     fi
   fi
   ui_box_head "OPTIONAL"
   ui_box_kv "Features" "$(feature_box "$WITH_VOICE") voice   $(feature_box "$WITH_DEPTH") depth clock   $(feature_box "$WITH_SDDM") SDDM theme"
-  [[ "$GPU" == *NVIDIA* ]] && ui_box_kv "Note" "NVIDIA: Hyprland needs the proprietary driver set up (nvidia-open + kernel modeset)" "$C_YELLOW"
+  [[ "$WITH_VOICE" == 1 ]] && ui_box_kv "Voice" "whisper.cpp, $(voice_backend) build"
+  ui_box_kv "Later" "apps, fonts and the rest from the setup wizard on the first login"
+  [[ "$GPU" == *NVIDIA* ]] && ui_box_kv "Note" "NVIDIA: Wayland compositors need the proprietary driver set up (nvidia-open + kernel modeset)" "$C_YELLOW"
   ui_box_row ""
   ui_box_kv "Log" "$C_DIM$(tilde "$LOG_FILE")$C_OFF"
   ui_box_bottom
   echo >&2
 }
 
-choose_features() {
-  ask "Voice input: local speech-to-text (whisper.cpp, ~1 GB)?" "$([[ "$WITH_VOICE" == 1 ]] && echo y || echo n)" && WITH_VOICE=1 || WITH_VOICE=0
-  ask "Depth clock: time behind the wallpaper subject (~0.7 GB)?" "$([[ "$WITH_DEPTH" == 1 ]] && echo y || echo n)" && WITH_DEPTH=1 || WITH_DEPTH=0
-  ask "SDDM login screen with the $DISPLAY_NAME theme?" "$([[ "$WITH_SDDM" == 1 ]] && echo y || echo n)" && WITH_SDDM=1 || WITH_SDDM=0
-}
-
 confirm_plan() {
   [[ "$ASSUME_YES" == 1 || -z "$TTY" ]] && return 0
   local reply
-  while true; do
-    printf '  %s%s%s Proceed? [Y/n, c = choose optional features] ' "$C_PINK" "$G_ASK" "$C_OFF" >"$TTY"
-    read -r reply <"$TTY" || reply=n
-    case "${reply:-y}" in
-    [Yy]*) return 0 ;;
-    [Cc]*)
-      choose_features
-      make_plan
-      show_plan
-      ;;
-    *)
-      info "Nothing was changed."
-      exit 0
-      ;;
-    esac
-  done
+  printf '  %s%s%s Proceed? [Y/n] ' "$C_PINK" "$G_ASK" "$C_OFF" >"$TTY"
+  read -r reply <"$TTY" || reply=n
+  [[ "${reply:-y}" =~ ^[Yy] ]] && return 0
+  info "Nothing was changed."
+  exit 0
 }
 
 # === Steps ===
 install_packages() {
   case "$DISTRO" in
   arch)
-    if [[ ${#PKGS[@]} -gt 0 ]]; then
+    # A full upgrade is confirmed by the person unless they said --yes;
+    # without a terminal nobody could answer, so that run is a --yes one.
+    if [[ ${#PKGS[@]} -gt 0 && "$ASSUME_YES" == 0 && -n "$TTY" ]]; then
+      run_attended "Installing ${#PKGS[@]} packages (pacman)" "Fix the pacman error above, then re-run the installer." \
+        sudo pacman -Syu --needed "${PKGS[@]}"
+    elif [[ ${#PKGS[@]} -gt 0 ]]; then
       run "Installing ${#PKGS[@]} packages (pacman)" "Fix the pacman error above, then re-run the installer." \
         retry sudo pacman -Syu --needed --noconfirm "${PKGS[@]}"
     fi
@@ -845,7 +1009,7 @@ bootstrap_yay() {
 # goes to the user's font dir.
 install_phosphor() {
   has_phosphor && return 0
-  run "Installing the Phosphor icon font (per user)" "Icons stay blank without it; retry later." phosphor_user_font
+  run_optional "icon font" "Installing the Phosphor icon font (per user)" "Icons stay blank without it; re-run the installer later." phosphor_user_font
 }
 
 phosphor_user_font() {
@@ -989,9 +1153,26 @@ install_binaries() {
   if [[ "$LINK_BINS" == 1 ]]; then
     need_sudo
     for b in "${bins[@]}"; do sudo ln -sf "$BIN_DIR/$b" "$SYS_BIN/$b"; done
-    ok "Linked them into $SYS_BIN (Hyprland's exec-once uses the session PATH)"
+    ok "Linked them into $SYS_BIN (the compositor's autostart uses the session PATH)"
   fi
   "$BIN_DIR/$APP_ID" version >>"$LOG_FILE" 2>&1 || die "The installed $APP_ID does not run." "See $LOG_FILE"
+}
+
+# The setup wizard installs apps through pkexec and $SYS_HELPER: a
+# root-owned copy, so code running as the user cannot swap what runs as root.
+install_sys_helper() {
+  local bin="$BIN_DIR/$APP_ID" fix
+  [[ -x "$bin" ]] || return 0
+  [[ -x "$SYS_HELPER" ]] && cmp -s "$bin" "$SYS_HELPER" && return 0
+  fix="sudo install -D -o root -g root -m 0755 $bin $SYS_HELPER"
+  if ! has_cmd sudo || { [[ "$SUDO_OK" == 0 && -z "$TTY" ]] && ! sudo -n true 2>/dev/null; }; then
+    warn "sudo cannot run here; the setup wizard cannot install apps until: $fix"
+    FAILED+=("system helper")
+    return 0
+  fi
+  need_sudo
+  run_optional "system helper" "System helper for installing apps from the setup wizard (root-owned copy)" "Retry later: $fix" \
+    sudo install -D -o root -g root -m 0755 "$bin" "$SYS_HELPER"
 }
 
 # Previous Ambxst installs left Axenide's axctl next to it; yozd replaces it.
@@ -1023,23 +1204,49 @@ remove_old_daemon() {
   done < <(old_daemon_paths)
 }
 
-# === Hyprland ===
+# === Compositor setup ===
 legacy_hypr_block() {
   grep -qs "/.local/share/$LEGACY_ID/" "$HOME/.config/hypr/hyprland.lua" "$HOME/.config/hypr/hyprland.conf"
 }
 
-hyprland_setup() {
-  [[ "$HYPR_CONFIG" == 1 ]] || return 0
+# The choice is recorded for '$APP_ID doctor' and the shell, then the
+# compositor's config gets the $DISPLAY_NAME block.
+compositor_setup() {
+  local name
+  name="$(comp_name "$COMPOSITOR")"
+  mkdir -p "$DATA_DIR"
+  printf '%s\n' "$COMPOSITOR" >"$DATA_DIR/compositor"
+  [[ "$COMP_CONFIG" == 1 ]] || return 0
   # A config that still loads the legacy shell is switched by the binary's
   # first start, once the new generated config exists (backend/pkg/migrate).
-  if legacy_hypr_block; then
+  if [[ "$COMPOSITOR" == hyprland ]] && legacy_hypr_block; then
     info "Your Hyprland config loads ${LEGACY_ID^}; the first start of '$APP_ID' switches it over (.pre-$APP_ID backups)."
     return 0
   fi
-  "$BIN_DIR/$APP_ID" install hyprland >>"$LOG_FILE" 2>&1 || die "'$APP_ID install hyprland' failed." "See $LOG_FILE"
-  hyprland_bootstrap
-  polkit_autostart
-  ok "Hyprland config: ~/.config/hypr/$(hypr_entry)"
+  "$BIN_DIR/$APP_ID" install "$COMPOSITOR" >>"$LOG_FILE" 2>&1 || die "'$APP_ID install $COMPOSITOR' failed." "See $LOG_FILE"
+  if [[ "$COMPOSITOR" == hyprland ]]; then
+    hyprland_bootstrap
+    run_optional "polkit autostart" "Polkit agent autostart" "Start a polkit agent from your Hyprland config yourself." polkit_autostart
+  fi
+  ok "$name config: $(tilde "$(comp_config "$COMPOSITOR")")"
+}
+
+# --exclusive: $DISPLAY_NAME takes over the whole Hyprland config. Older
+# binaries do not know the flag; then it is skipped with a note.
+exclusive_setup() {
+  [[ "$EXCLUSIVE" == 1 && "$COMP_CONFIG" == 1 ]] || return 0
+  if [[ "$COMPOSITOR" != hyprland ]]; then
+    warn "--exclusive is for Hyprland only; skipped for $(comp_name "$COMPOSITOR")."
+    return 0
+  fi
+  local help
+  help="$("$BIN_DIR/$APP_ID" install --help 2>&1 || true)"
+  if [[ "$help" != *exclusive* ]]; then
+    warn "This $APP_ID build cannot manage the whole Hyprland config yet; --exclusive skipped."
+    return 0
+  fi
+  run_optional "exclusive" "Handing the Hyprland config to $DISPLAY_NAME" "Retry later: $APP_ID install hyprland --exclusive" \
+    "$BIN_DIR/$APP_ID" install hyprland --exclusive
 }
 
 hypr_entry() {
@@ -1060,15 +1267,17 @@ hyprland_bootstrap() {
 # hyprpolkitagent ships a user unit but plain Hyprland sessions never reach
 # graphical-session.target, so it is started from the user's config (once,
 # only when no polkit agent is configured there yet).
+# The line ends in "<comment> $APP_ID: polkit" so '$APP_ID goodbye' removes
+# exactly that line.
 polkit_autostart() {
-  local entry marker="polkit agent (added by the $DISPLAY_NAME installer)"
+  local entry marker="$APP_ID: polkit"
   entry="$HOME/.config/hypr/$(hypr_entry)"
   [[ -e /usr/lib/systemd/user/hyprpolkitagent.service ]] || return 0
   grep -qsi polkit "$entry" && return 0
   if [[ "$entry" == *.lua ]]; then
-    printf '\n-- %s\nhl.on("hyprland.start", function()\n    hl.exec_cmd("systemctl --user start hyprpolkitagent")\nend)\n' "$marker" >>"$entry"
+    printf '\nhl.on("hyprland.start", function() hl.exec_cmd("systemctl --user start hyprpolkitagent") end) -- %s\n' "$marker" >>"$entry"
   else
-    printf '\n# %s\nexec-once = systemctl --user start hyprpolkitagent\n' "$marker" >>"$entry"
+    printf '\nexec-once = systemctl --user start hyprpolkitagent # %s\n' "$marker" >>"$entry"
   fi
 }
 
@@ -1082,20 +1291,43 @@ legacy_notes() {
   return 0
 }
 
+has_nvcc() { has_cmd nvcc || [[ -x /opt/cuda/bin/nvcc || -x /usr/local/cuda/bin/nvcc ]]; }
+
+# voice_backend: the whisper.cpp build for this GPU. CUDA (the script's own
+# default) needs NVIDIA plus the toolkit, Vulkan an AMD or Intel GPU and a
+# voice_setup.sh that knows --vulkan; everything else builds for the CPU.
+voice_backend() {
+  local gpu="${GPU,,}"
+  if [[ "$gpu" == *nvidia* ]] && has_nvcc; then
+    echo cuda
+  elif [[ "$gpu" == *amd* || "$gpu" == *intel* ]] && grep -qs -- '--vulkan)' "$SRC_DIR/scripts/voice_setup.sh"; then
+    echo vulkan
+  else
+    echo cpu
+  fi
+}
+
 optional_features() {
-  local scripts="$SRC_DIR/scripts"
+  local scripts="$SRC_DIR/scripts" voice=() depth=()
   if [[ "$WITH_DEPTH" == 1 ]]; then
-    run "Depth clock (venv + model)" "Retry later: $scripts/depth_setup.sh" bash "$scripts/depth_setup.sh"
+    # NVIDIA: onnxruntime with pip-packaged CUDA (only the driver needed).
+    [[ "${GPU,,}" == *nvidia* ]] && depth=(--gpu)
+    run_optional "depth" "Depth clock (venv + model)" "Retry later: $scripts/depth_setup.sh ${depth[*]}" bash "$scripts/depth_setup.sh" "${depth[@]}"
   fi
   if [[ "$WITH_VOICE" == 1 ]]; then
-    run "Voice input (building whisper.cpp, downloading the model)" "Retry later: $scripts/voice_setup.sh" bash "$scripts/voice_setup.sh"
+    case "$(voice_backend)" in
+    vulkan) voice=(--vulkan) ;;
+    cpu) voice=(--cpu) ;;
+    esac
+    run_optional "voice" "Voice input (building whisper.cpp, downloading the model)" "Retry later: $scripts/voice_setup.sh ${voice[*]}" bash "$scripts/voice_setup.sh" "${voice[@]}"
   fi
   if [[ "$WITH_SDDM" == 1 ]]; then
     if has_cmd sddm; then
       need_sudo
-      run "SDDM theme" "Retry later: sudo $scripts/install-sddm-theme.sh \$USER" sudo bash "$scripts/install-sddm-theme.sh" "$(id -un)"
+      run_optional "sddm theme" "SDDM theme" "Retry later: sudo $scripts/install-sddm-theme.sh \$USER" sudo bash "$scripts/install-sddm-theme.sh" "$(id -un)"
     else
       warn "SDDM is not installed; skipped the login theme."
+      FAILED+=("sddm theme")
     fi
   fi
   return 0
@@ -1141,37 +1373,85 @@ done_header() {
 numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")"; }
 command_row() { ui_box_row "$(printf '%s%-18s%s %s%s%s' "$C_PINK" "$1" "$C_OFF" "$C_DIM" "$2" "$C_OFF")"; }
 
+# in_session: whether this terminal runs inside the chosen compositor.
+in_session() {
+  case "$COMPOSITOR" in
+  hyprland) [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] ;;
+  niri) [[ -n "${NIRI_SOCKET:-}" ]] ;;
+  *)
+    local desktop="${XDG_CURRENT_DESKTOP:-}"
+    [[ "${desktop,,}" == *"$COMPOSITOR"* ]]
+    ;;
+  esac
+}
+
+# console_cmd: how to start the compositor from a text console.
+console_cmd() {
+  case "$COMPOSITOR" in
+  hyprland) echo "start-hyprland" ;;
+  niri) echo "niri-session" ;;
+  *) echo "mango" ;;
+  esac
+}
+
 next_steps() {
-  local in_hypr=0 hl="${C_PINK}Hyprland${C_OFF}"
-  [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && in_hypr=1
+  local name f
+  name="${C_PINK}$(comp_name "$COMPOSITOR")${C_OFF}"
   done_header
   ui_box_top "Next steps"
   ui_box_row ""
-  if [[ "$in_hypr" == 1 ]]; then
-    numbered 1 "You are in Hyprland already: run $C_PINK$APP_ID$C_OFF now."
-    numbered 2 "From the next login on it starts with Hyprland."
+  if in_session; then
+    numbered 1 "You are in $name already: run $C_PINK$APP_ID$C_OFF now."
+    numbered 2 "From the next login on it starts with $name."
   elif [[ " ${SERVICES[*]} " == *" sddm "* ]]; then
-    numbered 1 "Reboot and pick $hl on the new login screen."
-    numbered 2 "$DISPLAY_NAME starts with it. Super opens the launcher."
+    numbered 1 "Reboot and pick $name on the new login screen."
+    numbered 2 "The setup wizard greets you there. Super opens the launcher."
   elif [[ -n "$DM" || "$WITH_SDDM" == 1 ]]; then
-    numbered 1 "Log out (or reboot) and pick $hl on the login screen."
-    numbered 2 "$DISPLAY_NAME starts with it. Super opens the launcher."
+    numbered 1 "Log out (or reboot) and pick $name on the login screen."
+    numbered 2 "The setup wizard greets you there. Super opens the launcher."
   else
-    numbered 1 "Log in on a console and run ${C_PINK}start-hyprland${C_OFF} (or Hyprland)."
-    numbered 2 "$DISPLAY_NAME starts with it. Super opens the launcher."
+    numbered 1 "Log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
+    numbered 2 "The setup wizard greets you there. Super opens the launcher."
   fi
   [[ "$ADD_INPUT_GROUP" == 1 ]] && numbered "$G_INFO" "Log in again for the input group (Super-alone binds)."
+  if [[ ${#FAILED[@]} -gt 0 ]]; then
+    ui_box_head "NEEDS ATTENTION"
+    for f in "${FAILED[@]}"; do
+      ui_box_row "$C_YELLOW$G_WARN$C_OFF $f: failed (see log)"
+    done
+  fi
   ui_box_head "COMMANDS"
   command_row "$APP_ID doctor" "check the install"
   command_row "$APP_ID update" "pull, rebuild and reinstall"
   command_row "$APP_ID goodbye" "uninstall"
   ui_box_head "LATER"
-  [[ "$WITH_VOICE" == 1 ]] || command_row "voice input" "$(tilde "$SRC_DIR")/scripts/voice_setup.sh"
-  [[ "$WITH_DEPTH" == 1 ]] || command_row "depth clock" "$(tilde "$SRC_DIR")/scripts/depth_setup.sh"
+  command_row "apps, voice, more" "the setup wizard ($APP_ID onboarding)"
   command_row "install log" "$(tilde "$LOG_FILE")"
   ui_box_row ""
   ui_box_bottom
   echo >&2
+}
+
+# offer_reboot: the first login after a reboot lands in the setup wizard.
+# Asked only on a first install with a terminal; --yes means no (unless
+# --reboot), and the default is yes when this run set up the login screen.
+offer_reboot() {
+  local default=n
+  [[ "$REBOOT" == 0 || -z "$TTY" ]] && return 0
+  if [[ "$REBOOT" != 1 ]]; then
+    [[ "$PREV_INSTALL" == 1 || "$ASSUME_YES" == 1 ]] && return 0
+    in_session && return 0
+    [[ " ${SERVICES[*]} " == *" sddm "* ]] && default=y
+    ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
+  fi
+  info "Rebooting..."
+  systemctl reboot
+}
+
+finish() {
+  run_doctor
+  next_steps
+  offer_reboot
 }
 
 # === NixOS ===
@@ -1223,6 +1503,7 @@ main() {
     sync_repo
     build_backend
     install_binaries
+    install_sys_helper
     remove_old_daemon
     ok "Updated. Run '$APP_ID reload' to restart the shell."
     return
@@ -1234,10 +1515,10 @@ main() {
     return
   fi
 
-  # Defaults: SDDM when there is no login manager on a real (systemd) system.
-  if [[ -z "$WITH_SDDM" ]]; then
-    if [[ -z "$DM" ]] && has_systemd && [[ "$INSTALL_DEPS" == 1 ]]; then WITH_SDDM=1; else WITH_SDDM=0; fi
-  fi
+  # The only questions before the plan: the compositor, and SDDM when
+  # there is no login manager on a real (systemd) system.
+  choose_compositor
+  choose_login
   WITH_VOICE="${WITH_VOICE:-0}" WITH_DEPTH="${WITH_DEPTH:-0}"
   [[ "$INSTALL_DEPS" == 1 ]] && load_deps
   make_plan
@@ -1266,15 +1547,16 @@ main() {
   sync_repo
   build_backend
   install_binaries
+  install_sys_helper
   remove_old_daemon
   legacy_notes
-  hyprland_setup
+  compositor_setup
+  exclusive_setup
   if [[ "$WITH_VOICE$WITH_DEPTH$WITH_SDDM" == *1* ]]; then
     step "Optional features"
     optional_features
   fi
-  run_doctor
-  next_steps
+  finish
 }
 
 main "$@"
