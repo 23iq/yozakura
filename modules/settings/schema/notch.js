@@ -173,6 +173,38 @@ var category = {
             "title": "prefs.notch.section.activities",
             "entries": [
                 {
+                    "key": "notch.activities",
+                    "type": "custom",
+                    "component": "IslandActivitiesEditor",
+                    "label": "prefs.notch.island_activities",
+                    "description": "prefs.notch.island_activities.desc",
+                    "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
+                },
+                {
+                    "key": "notch.osd",
+                    "type": "toggle",
+                    "label": "prefs.notch.osd",
+                    "description": "prefs.notch.osd.desc",
+                    "keywords": "osd volume brightness island notch"
+                },
+                {
+                    "key": "notifications.notchStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "card",
+                            "label": "prefs.notifications.notch_style.card"
+                        },
+                        {
+                            "value": "compact",
+                            "label": "prefs.notifications.notch_style.compact"
+                        }
+                    ],
+                    "label": "prefs.notifications.notch_style",
+                    "description": "prefs.notifications.notch_style.desc",
+                    "keywords": "notification notch compact card one line"
+                },
+                {
                     "key": "bar.activities",
                     "type": "custom",
                     "component": "ActivitiesEditor",

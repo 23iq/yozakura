@@ -174,6 +174,10 @@ MIRROR = [
     "modules/extras",
     "modules/terminal",
     "modules/theme/Styling.qml",
+    "modules/theme/Metrics.qml",
+    "modules/theme/DensityMetrics.js",
+    "modules/theme/Motion.qml",
+    "config/motion/MotionBudget.js",
     "modules/theme/Glass.qml",
     "modules/theme/GlassModel.js",
     "modules/theme/GlassCurve.js",
@@ -181,6 +185,7 @@ MIRROR = [
     "modules/theme/Icons.qml",
     "modules/theme/AppThemes.js",
     "modules/notifications/NotificationPolicy.js",
+    "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
     "config/defaults",
     "config/ColorSpec.js",
@@ -610,7 +615,7 @@ class SettingsEnv:
         (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds)))
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
-        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass"])
+        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion"])
         # DepthClock (clock style gallery) reads the bar edge
         self.h.module("qs.modules.bar.panels", {
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})

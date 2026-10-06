@@ -7,14 +7,25 @@
   "x-file": "config/notifications.json",
   "properties": {
     "notchStyle": {
-      "title": "Notch style",
+      "title": "Notifications in the island",
       "type": "string",
       "default": "card",
-      "description": "Look of notifications in the notch: a full card or a compact one-line row that expands on hover.",
+      "description": "A full card, or one compact line that unfolds on hover.",
+      "x-settings": {
+        "category": "notch",
+        "section": "activities",
+        "label": "prefs.notifications.notch_style",
+        "control": "selector",
+        "keywords": "notification notch compact card one line"
+      },
       "enum": [
         "card",
         "compact"
-      ]
+      ],
+      "x-enumLabels": {
+        "card": "Card",
+        "compact": "Compact"
+      }
     },
     "presentation": {
       "title": "Style",

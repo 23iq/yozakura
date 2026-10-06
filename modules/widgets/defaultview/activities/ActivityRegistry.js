@@ -137,3 +137,35 @@ function triggerOf(activity, resolved) {
         return activity.category === "task" ? "tasks" : "privacy";
     return r[idx].trigger;
 }
+
+// ── Settings edits on a resolved list (new arrays, inputs untouched) ──
+
+function move(resolved, from, to) {
+    var list = _array(resolved).slice();
+    if (from < 0 || from >= list.length)
+        return list;
+    var t = Math.max(0, Math.min(list.length - 1, to));
+    var item = list.splice(from, 1)[0];
+    list.splice(t, 0, item);
+    return list;
+}
+
+function setField(resolved, id, field, value) {
+    return _array(resolved).map(function (e) {
+        if (e.id !== id)
+            return e;
+        var copy = Object.assign({}, e);
+        if (field === "enabled")
+            copy.enabled = value === true;
+        else if (field === "side" && e.side !== "center" && SIDES.indexOf(value) !== -1)
+            copy.side = value;
+        return copy;
+    });
+}
+
+// What notch.activities stores: [{ id, side, enabled }] in display order.
+function toConfig(resolved) {
+    return _array(resolved).map(function (e) {
+        return { id: e.id, side: e.side, enabled: e.enabled };
+    });
+}

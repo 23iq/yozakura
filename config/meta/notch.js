@@ -72,7 +72,7 @@ var keys = {
                     "enum": ["media", "privacy", "osd", "battery", "bluetooth", "timers", "tasks", "extras"]
                 },
                 "side": {
-                    "enum": ["leading", "trailing"]
+                    "enum": ["leading", "trailing", "center"]
                 },
                 "enabled": {
                     "type": "boolean"

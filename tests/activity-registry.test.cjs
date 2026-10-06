@@ -72,3 +72,19 @@ test('trigger of an activity is its entry trigger; ephemeral ones have none', ()
     assert.equal(R.triggerOf({ source: 'x', category: 'task' }, r), 'tasks');
     assert.ok(R.descriptor('osd').ephemeralMs >= 1000 && R.descriptor('osd').ephemeralMs <= 1500);
 });
+test('settings edits: move reorders, setField changes one entry, toConfig is what notch.activities stores', () => {
+    const r = R.resolve([]);
+    const order = plain(r).map(e => e.id);
+    const moved = plain(R.move(r, 0, 2));
+    assert.deepEqual(moved.map(e => e.id), [order[1], order[2], order[0], ...order.slice(3)]);
+    assert.deepEqual(plain(R.move(r, 1, 99)).map(e => e.id).slice(-1), [order[1]], 'clamped to the end');
+    assert.deepEqual(plain(R.move(r, 5, 5)).map(e => e.id), order);
+    const off = plain(R.setField(r, 'battery', 'enabled', false));
+    assert.equal(off.find(e => e.id === 'battery').enabled, false);
+    assert.equal(plain(r).find(e => e.id === 'battery').enabled, true, 'input untouched');
+    const cfg = plain(R.toConfig(R.setField(r, 'osd', 'side', 'leading')));
+    assert.deepEqual(Object.keys(cfg[0]).sort(), ['enabled', 'id', 'side']);
+    assert.equal(cfg.find(e => e.id === 'osd').side, 'leading');
+    assert.deepEqual(plain(R.resolve(cfg)), plain(R.resolve(R.toConfig(R.resolve(cfg)))), 'round trip');
+    assert.equal(plain(R.setField(r, 'media', 'side', 'leading')).find(e => e.id === 'media').side, 'center', 'media stays put');
+});

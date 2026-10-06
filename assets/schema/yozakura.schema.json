@@ -5978,10 +5978,18 @@
           }
         },
         "activities": {
-          "title": "Activities",
+          "title": "Island activities",
           "type": "array",
           "default": [],
-          "description": "Order, side and on/off of the island's activities ({id, side, enabled}); missing ids use the registry defaults.",
+          "description": "What the island shows and where. Drag to reorder, choose a side, switch each one on or off.",
+          "x-settings": {
+            "category": "notch",
+            "section": "activities",
+            "label": "prefs.notch.island_activities",
+            "control": "custom",
+            "component": "IslandActivitiesEditor",
+            "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
+          },
           "items": {
             "type": "object",
             "properties": {
@@ -6000,7 +6008,8 @@
               "side": {
                 "enum": [
                   "leading",
-                  "trailing"
+                  "trailing",
+                  "center"
                 ]
               },
               "enabled": {
@@ -6013,10 +6022,17 @@
           }
         },
         "osd": {
-          "title": "Osd",
+          "title": "Volume and brightness in the island",
           "type": "boolean",
           "default": false,
-          "description": "Show volume and brightness changes in the notch instead of the OSD overlay."
+          "description": "Show volume, microphone and brightness changes as a short level in the island.",
+          "x-settings": {
+            "category": "notch",
+            "section": "activities",
+            "label": "prefs.notch.osd",
+            "control": "toggle",
+            "keywords": "osd volume brightness island notch"
+          }
         }
       },
       "additionalProperties": false
@@ -6029,14 +6045,25 @@
       "x-file": "config/notifications.json",
       "properties": {
         "notchStyle": {
-          "title": "Notch style",
+          "title": "Notifications in the island",
           "type": "string",
           "default": "card",
-          "description": "Look of notifications in the notch: a full card or a compact one-line row that expands on hover.",
+          "description": "A full card, or one compact line that unfolds on hover.",
+          "x-settings": {
+            "category": "notch",
+            "section": "activities",
+            "label": "prefs.notifications.notch_style",
+            "control": "selector",
+            "keywords": "notification notch compact card one line"
+          },
           "enum": [
             "card",
             "compact"
-          ]
+          ],
+          "x-enumLabels": {
+            "card": "Card",
+            "compact": "Compact"
+          }
         },
         "presentation": {
           "title": "Style",
