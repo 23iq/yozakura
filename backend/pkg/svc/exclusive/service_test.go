@@ -2,9 +2,11 @@ package exclusive
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -98,27 +100,18 @@ func TestUnsupportedCompositor(t *testing.T) {
 }
 
 func TestImportAndUnimportThroughConfig(t *testing.T) {
-	cat, err := catalog.Load(paths.FindShellSource())
-	if err != nil {
+	if _, err := catalog.Load(paths.FindShellSource()); err != nil {
 		t.Skip("no shell source:", err)
 	}
-	dir := t.TempDir()
-	store := &catalog.Store{Cat: cat, File: func(d string) string { return filepath.Join(dir, d+".json") }}
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
 	kb := &ipc.KeyboardSettings{Layouts: []string{"us", "ru"}, Variants: []string{"", "phonetic"}, Options: []string{"grp:alt_shift_toggle"}, RepeatRate: 40}
 	mon := []ipc.OutputConfig{{Name: "DP-1", Enabled: true, Width: 2560, Height: 1440, Refresh: 144, Scale: 1}}
-	previous := map[string]any{}
-	for _, k := range importedKeys {
-		v, explicit, err := store.Get(k)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if explicit {
-			previous[k] = v
-		} else {
-			previous[k] = nil
-		}
+	previous, err := importSettings(mon, kb)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if err := writeImport(store, mon, kb); err != nil {
+	store, err := Store()
+	if err != nil {
 		t.Fatal(err)
 	}
 	got, _, _ := store.Get("keyboard.layouts")
@@ -129,17 +122,53 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 	if v, _, _ := store.Get("keyboard.repeatRate"); v != float64(40) && v != 40 {
 		t.Fatalf("rate %v", v)
 	}
-	m, _, _ := store.Get("displays.monitors")
-	if l, _ := m.([]any); len(l) != 1 {
+	if m, _, _ := store.Get("displays.monitors"); len(m.([]any)) != 1 {
 		t.Fatalf("monitors %v", m)
 	}
-	if err := unimportWith(store, previous); err != nil {
+	if err := unimportSettings(previous); err != nil {
 		t.Fatal(err)
 	}
-	if m, _, _ = store.Get("displays.monitors"); len(m.([]any)) != 0 {
+	if m, _, _ := store.Get("displays.monitors"); len(m.([]any)) != 0 {
 		t.Fatalf("monitors not reverted: %v", m)
 	}
 	if v, _, _ := store.Get("keyboard.repeatRate"); v != float64(25) && v != 25 {
 		t.Fatalf("rate not reverted: %v", v)
+	}
+}
+
+type fakeYozd struct {
+	name        string
+	nameErr     error
+	errs        []string
+	reloadErr   error
+	reloadCalls int
+}
+
+func (f *fakeYozd) Compositor() (string, error)     { return f.name, f.nameErr }
+func (f *fakeYozd) ReloadConfig() error             { f.reloadCalls++; return f.reloadErr }
+func (f *fakeYozd) ConfigErrors() ([]string, error) { return f.errs, nil }
+
+func TestReloadThroughYozd(t *testing.T) {
+	ok := &fakeYozd{name: "hyprland"}
+	if err := reloadWith(ok); err != nil || ok.reloadCalls != 1 {
+		t.Fatalf("clean reload: %v %d", err, ok.reloadCalls)
+	}
+	bad := &fakeYozd{name: "hyprland", errs: []string{"line 3: bad", "line 9: worse"}}
+	if err := reloadWith(bad); err == nil || !strings.Contains(err.Error(), "line 3: bad; line 9: worse") {
+		t.Fatalf("config errors must fail: %v", err)
+	}
+	down := &fakeYozd{nameErr: errors.New("connect: refused")}
+	if err := reloadWith(down); err == nil || down.reloadCalls != 0 {
+		t.Fatalf("unreachable yozd must fail without reloading: %v", err)
+	}
+	if err := reloadWith(&fakeYozd{name: "niri"}); err == nil {
+		t.Fatal("non-hyprland must fail")
+	}
+}
+
+func TestHostUsesXDGHyprDir(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", "/xdg/cfg")
+	if got := Host().HyprDir; got != "/xdg/cfg/hypr" {
+		t.Fatalf("host hypr dir %q", got)
 	}
 }

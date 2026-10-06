@@ -68,11 +68,13 @@ type Status struct {
 // config errors.
 type Options struct {
 	Home, AppID, Compositor string
-	Now                     func() time.Time
-	Systemd                 Systemd
-	Import                  func(monitors []ipc.OutputConfig, kb *ipc.KeyboardSettings) (previous map[string]any, err error)
-	Unimport                func(previous map[string]any) error
-	Reload                  func() error
+	// HyprDir is the Hyprland config dir; empty means <Home>/.config/hypr.
+	HyprDir  string
+	Now      func() time.Time
+	Systemd  Systemd
+	Import   func(monitors []ipc.OutputConfig, kb *ipc.KeyboardSettings) (previous map[string]any, err error)
+	Unimport func(previous map[string]any) error
+	Reload   func() error
 }
 
 func (o Options) appID() string {
@@ -82,7 +84,15 @@ func (o Options) appID() string {
 	return brand.AppID
 }
 
-func (o Options) hyprDir() string    { return filepath.Join(o.Home, ".config", "hypr") }
+func (o Options) hyprDir() string {
+	if o.HyprDir != "" {
+		return o.HyprDir
+	}
+	return filepath.Join(o.Home, ".config", "hypr")
+}
+
+// HyprPath is the Hyprland config dir exclusive mode manages.
+func HyprPath(o Options) string      { return o.hyprDir() }
 func (o Options) dataDir() string    { return filepath.Join(o.Home, ".local", "share", o.appID()) }
 func (o Options) backupRoot() string { return filepath.Join(o.dataDir(), "backups") }
 

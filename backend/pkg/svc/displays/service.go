@@ -20,7 +20,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -64,7 +63,7 @@ type Service struct {
 
 // NewService scans ~/.config/hypr (XDG) and skips the app's data dir.
 func NewService(p *paths.Paths) *Service {
-	s := newService(yozdcli.New(), filepath.Join(filepath.Dir(p.ConfigDir), "hypr"), p.DataDir)
+	s := newService(yozdcli.New(), paths.HyprDir(), p.DataDir)
 	s.home, _ = os.UserHomeDir()
 	return s
 }
@@ -77,6 +76,9 @@ func newService(y Yozd, hyprDir, dataDir string) *Service {
 		stop: make(chan struct{}),
 	}
 }
+
+// HyprDir is the config dir the service scans.
+func (s *Service) HyprDir() string { return s.hyprDir }
 
 // SetExclusiveCheck installs the exclusive-mode probe; while it reports true
 // the conflict scan finds nothing.

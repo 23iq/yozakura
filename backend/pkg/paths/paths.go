@@ -38,6 +38,12 @@ func New() *Paths {
 	}
 }
 
+// HyprDir is the Hyprland config directory (<XDG_CONFIG_HOME>/hypr), the one
+// place every component resolves it from.
+func HyprDir() string {
+	return filepath.Join(xdg("", "XDG_CONFIG_HOME", ".config"), "hypr")
+}
+
 func (p *Paths) Config(domain string) string {
 	return filepath.Join(p.ConfigDir, "config", domain+".json")
 }

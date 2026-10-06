@@ -14,6 +14,8 @@ func (s *Server) dispatchExtra(req Request) (interface{}, error) {
 	switch req.Method {
 	case "Config.ListBinds":
 		return listBinds(s.compositor)
+	case "Config.Errors":
+		return configErrors(s.compositor)
 	}
 	if res, handled, err := s.dispatchOutputs(req); handled {
 		return res, err
@@ -36,4 +38,18 @@ func listBinds(c ipc.Compositor) ([]ipc.Bind, error) {
 		binds = []ipc.Bind{}
 	}
 	return binds, nil
+}
+
+// configErrors returns the errors of the compositor's last config load
+// (ErrNotSupported when it cannot tell); never nil.
+func configErrors(c ipc.Compositor) ([]string, error) {
+	l, ok := c.(ipc.ConfigErrorLister)
+	if !ok {
+		return nil, ipc.ErrNotSupported
+	}
+	errs, err := l.ConfigErrors()
+	if errs == nil {
+		errs = []string{}
+	}
+	return errs, err
 }

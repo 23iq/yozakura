@@ -344,3 +344,26 @@ func TestUnitDisableFailureIsReported(t *testing.T) {
 		t.Fatalf("status %+v", st)
 	}
 }
+
+// A custom config home (XDG_CONFIG_HOME) is the one that is backed up and
+// replaced, not <Home>/.config/hypr.
+func TestEnableRestoreInCustomHyprDir(t *testing.T) {
+	home := t.TempDir()
+	hypr := filepath.Join(home, "xdg", "hypr")
+	write(t, filepath.Join(hypr, "hyprland.conf"), "monitor = DP-1,preferred,auto,1\n", 0o644)
+	rec := &recorder{}
+	o := testOptions(t, home, newSystemd(), rec)
+	o.HyprDir = hypr
+	before := snapshot(t, hypr)
+	st, err := Enable(o)
+	if err != nil || !st.Active {
+		t.Fatalf("enable: %v %+v", err, st)
+	}
+	if _, err := os.Stat(filepath.Join(home, ".config", "hypr")); err == nil {
+		t.Fatal("touched the default dir")
+	}
+	if _, err := Restore(o, ""); err != nil {
+		t.Fatal(err)
+	}
+	sameTree(t, before, snapshot(t, hypr))
+}

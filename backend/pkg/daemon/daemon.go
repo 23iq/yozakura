@@ -148,8 +148,7 @@ func New() (*Daemon, error) {
 
 	d.displays = displays.NewService(d.paths)
 	d.displays.SetExclusiveCheck(func() bool {
-		home, _ := os.UserHomeDir()
-		return exclusivemode.Active(filepath.Join(home, ".config", "hypr"))
+		return exclusivemode.Active(d.displays.HyprDir())
 	})
 	d.displays.Register(d.srv)
 	var layoutSrc keyboard.StateSource

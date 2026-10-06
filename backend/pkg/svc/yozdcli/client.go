@@ -109,6 +109,29 @@ func (c *Client) ReloadConfig() error {
 	return err
 }
 
+// ConfigErrors lists the errors of the compositor's last config load
+// (`yozd config errors`); empty when it was clean.
+func (c *Client) ConfigErrors() ([]string, error) {
+	out, err := c.call("config", "errors")
+	if err != nil {
+		return nil, err
+	}
+	var errs []string
+	if err := json.Unmarshal(out, &errs); err != nil {
+		return nil, fmt.Errorf("parse config errors: %w", err)
+	}
+	return errs, nil
+}
+
+// Compositor names the running compositor (hyprland, niri, mango).
+func (c *Client) Compositor() (string, error) {
+	out, err := c.call("system", "get-compositor")
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // NextLayout switches to the next keyboard layout.
 func (c *Client) NextLayout() error {
 	_, err := c.call("system", "switch-keyboard-layout", "next")

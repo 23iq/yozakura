@@ -3,6 +3,7 @@ package hyprland
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"yozakura/backend/pkg/yozd/ipc"
 )
@@ -45,4 +46,25 @@ func ParseBinds(data []byte) ([]ipc.Bind, error) {
 		})
 	}
 	return out, nil
+}
+
+// ConfigErrors lists the errors of the last config load (empty when it was
+// clean).
+func (h *Hyprland) ConfigErrors() ([]string, error) {
+	out, err := h.dispatch("configerrors")
+	if err != nil {
+		return nil, err
+	}
+	return parseConfigErrors(out), nil
+}
+
+func parseConfigErrors(out string) []string {
+	errs := []string{}
+	for _, l := range strings.Split(out, "\n") {
+		l = strings.TrimSpace(l)
+		if l != "" && !strings.EqualFold(l, "no errors") {
+			errs = append(errs, l)
+		}
+	}
+	return errs
 }

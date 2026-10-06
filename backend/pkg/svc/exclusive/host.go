@@ -3,7 +3,6 @@ package exclusive
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"strings"
 
 	"yozakura/backend/pkg/binds"
@@ -30,6 +29,7 @@ func Host() exclusive.Options {
 	home, _ := os.UserHomeDir()
 	return exclusive.Options{
 		Home:       home,
+		HyprDir:    paths.HyprDir(),
 		Compositor: binds.DetectCompositor(),
 		Systemd:    exclusive.ExecSystemd{},
 		Import:     importSettings,
@@ -146,21 +146,36 @@ func unimportWith(store *catalog.Store, previous map[string]any) error {
 	return nil
 }
 
-// reloadCompositor reloads Hyprland through yozd and reports the config
-// errors it prints afterwards. Without a running Hyprland it does nothing.
-func reloadCompositor() error {
-	if os.Getenv("HYPRLAND_INSTANCE_SIGNATURE") == "" {
-		return nil
+// compositorAPI is the part of yozd the reload needs.
+type compositorAPI interface {
+	Compositor() (string, error)
+	ReloadConfig() error
+	ConfigErrors() ([]string, error)
+}
+
+// reloadCompositor reloads Hyprland through yozd and fails on any config
+// error it reports. It asks yozd which compositor runs and refuses to go on
+// when yozd cannot answer or it is not Hyprland: without the reload check
+// there is no safety net, so Enable must not silently skip it.
+func reloadCompositor() error { return reloadWith(yozdcli.New()) }
+
+func reloadWith(y compositorAPI) error {
+	name, err := y.Compositor()
+	if err != nil {
+		return fmt.Errorf("cannot ask the compositor daemon which compositor runs (is Hyprland running?): %w", err)
 	}
-	if err := yozdcli.New().ReloadConfig(); err != nil {
+	if name != "hyprland" {
+		return fmt.Errorf("the compositor daemon reports %q, not hyprland", name)
+	}
+	if err := y.ReloadConfig(); err != nil {
 		return err
 	}
-	out, err := exec.Command("hyprctl", "configerrors").Output()
+	errs, err := y.ConfigErrors()
 	if err != nil {
-		return nil // no hyprctl: nothing to check
+		return fmt.Errorf("reading config errors: %w", err)
 	}
-	if msg := strings.TrimSpace(string(out)); msg != "" && !strings.EqualFold(msg, "no errors") {
-		return fmt.Errorf("config errors: %s", msg)
+	if len(errs) > 0 {
+		return fmt.Errorf("config errors: %s", strings.Join(errs, "; "))
 	}
 	return nil
 }

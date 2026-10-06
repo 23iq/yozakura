@@ -131,7 +131,7 @@ func exclusiveRestore(env exclusiveEnv, from string, yes bool, out io.Writer) er
 		backup = from
 	}
 	fmt.Fprintf(out, "Restore will:\n")
-	fmt.Fprintf(out, "  - put %s back exactly as it was in %s\n", o.Home+"/.config/hypr", backup)
+	fmt.Fprintf(out, "  - put %s back exactly as it was in %s\n", exclusive.HyprPath(o), backup)
 	fmt.Fprintf(out, "  - save the current files next to the backup (replaced-<time>/), the backup stays\n")
 	listOrNone(out, "  - re-enable these systemd user units", st.DisabledUnits)
 	fmt.Fprintf(out, "  - keep the imported monitor and keyboard settings\n")
