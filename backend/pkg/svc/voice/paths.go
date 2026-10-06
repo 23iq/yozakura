@@ -36,7 +36,7 @@ func (i Install) ModelPath(name string) string {
 	return filepath.Join(i.ModelsDir(), "ggml-"+name+".bin")
 }
 
-// Backend reports "cuda" or "cpu" from BUILD_INFO, "" when not installed.
+// Backend reports "cuda", "vulkan" or "cpu" from BUILD_INFO, "" when not installed.
 func (i Install) Backend() string {
 	data, err := os.ReadFile(filepath.Join(i.Root, "BUILD_INFO"))
 	if err != nil {

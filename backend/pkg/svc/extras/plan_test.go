@@ -162,7 +162,7 @@ func TestPlanCrossKindOrderAndScripts(t *testing.T) {
 	if err := c.Validate(); err != nil {
 		t.Fatal(err)
 	}
-	p := Platform{Distro: "arch", HasParu: true, HasFlatpak: true}
+	p := Platform{Distro: "arch", GPU: "nvidia", HasParu: true, HasFlatpak: true}
 	jobs := plan(t, c, p, nil, PlanOptions{ScriptsDir: "/repo/scripts"}, "sh", "plug", "cli")
 	if !reflect.DeepEqual(kinds(jobs), []JobKind{KindFlatpak, KindAUR, KindScript, KindShell}) {
 		t.Fatalf("kinds = %v", kinds(jobs))
@@ -175,5 +175,49 @@ func TestPlanCrossKindOrderAndScripts(t *testing.T) {
 	}
 	if want := []string{"bash", "/repo/scripts/voice_setup.sh"}; !reflect.DeepEqual(jobs[3].Argv, want) {
 		t.Errorf("shell job = %+v", jobs[3])
+	}
+}
+
+func TestShellArgsVoiceByGPU(t *testing.T) {
+	cases := map[string][]string{
+		"nvidia": nil, "amd": {"--vulkan"}, "intel": {"--vulkan"}, "none": {"--cpu"},
+	}
+	for gpu, want := range cases {
+		if got := ShellArgs("voice_setup.sh", Platform{GPU: gpu}); !reflect.DeepEqual(got, want) {
+			t.Errorf("gpu %s: %v, want %v", gpu, got, want)
+		}
+	}
+	if got := ShellArgs("other.sh", Platform{GPU: "amd"}); got != nil {
+		t.Errorf("unknown script args = %v", got)
+	}
+}
+
+func TestPlanVoiceVulkanAndDeps(t *testing.T) {
+	c := loadReal(t)
+	for _, tc := range []struct {
+		gpu  string
+		args []string
+		vk   bool
+	}{{"amd", []string{"--vulkan"}, true}, {"intel", []string{"--vulkan"}, true}, {"none", []string{"--cpu"}, false}, {"nvidia", nil, false}} {
+		jobs := plan(t, c, Platform{Distro: "arch", GPU: tc.gpu}, nil, PlanOptions{ScriptsDir: "/repo/scripts"}, "voice")
+		last := jobs[len(jobs)-1]
+		want := append([]string{"bash", "/repo/scripts/voice_setup.sh"}, tc.args...)
+		if last.Kind != KindShell || !reflect.DeepEqual(last.Argv, want) {
+			t.Errorf("%s: shell job = %+v", tc.gpu, last)
+		}
+		if jobs[0].Kind != KindSystem || !reflect.DeepEqual(jobs[0].Entries, []string{"voice-build-deps"}) {
+			t.Fatalf("%s: first job = %+v", tc.gpu, jobs[0])
+		}
+		has := false
+		for _, e := range c.Entries {
+			if e.ID == "voice-build-deps" {
+				for _, pkg := range e.Install.Arch.GPU[tc.gpu] {
+					has = has || pkg == "vulkan-headers"
+				}
+			}
+		}
+		if has != tc.vk {
+			t.Errorf("%s: vulkan-headers in deps = %v", tc.gpu, has)
+		}
 	}
 }

@@ -226,7 +226,27 @@
             "ninja",
             "gcc",
             "git"
-          ]
+          ],
+          "gpu": {
+            "amd": [
+              "cmake",
+              "ninja",
+              "gcc",
+              "git",
+              "vulkan-headers",
+              "shaderc",
+              "vulkan-icd-loader"
+            ],
+            "intel": [
+              "cmake",
+              "ninja",
+              "gcc",
+              "git",
+              "vulkan-headers",
+              "shaderc",
+              "vulkan-icd-loader"
+            ]
+          }
         },
         "fedora": {
           "pkgs": [
@@ -234,7 +254,27 @@
             "ninja-build",
             "gcc-c++",
             "git"
-          ]
+          ],
+          "gpu": {
+            "amd": [
+              "cmake",
+              "ninja-build",
+              "gcc-c++",
+              "git",
+              "vulkan-headers",
+              "glslc",
+              "vulkan-loader-devel"
+            ],
+            "intel": [
+              "cmake",
+              "ninja-build",
+              "gcc-c++",
+              "git",
+              "vulkan-headers",
+              "glslc",
+              "vulkan-loader-devel"
+            ]
+          }
         }
       }
     },

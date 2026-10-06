@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 # Sets up fully local voice input (speech-to-text) for the shell: builds
-# whisper.cpp from source (CUDA when available, CPU otherwise) and downloads
-# the multilingual large-v3-turbo model plus the Silero VAD model. No sudo,
-# nothing leaves the machine at runtime. Safe to re-run.
+# whisper.cpp from source (CUDA when available, Vulkan on request, CPU
+# otherwise) and downloads the multilingual large-v3-turbo model plus the
+# Silero VAD model. No sudo, nothing leaves the machine at runtime. Safe to
+# re-run.
 #
-#   scripts/voice_setup.sh [--cpu] [--force] [--model q5_0|q8_0|all]
+#   scripts/voice_setup.sh [--cpu|--vulkan] [--force] [--model q5_0|q8_0|all]
 #
 # --cpu     skip the CUDA build (CPU-only whisper.cpp, much slower).
+# --vulkan  Vulkan build for AMD/Intel GPUs (needs vulkan-headers + shaderc/glslc).
 # --force   wipe the build tree and rebuild from scratch.
 # --model   which quantisation of large-v3-turbo to download (default q5_0;
 #           "all" fetches both so they can be compared in Settings).
@@ -17,7 +19,7 @@
 #   <data dir>/whisper/bin/whisper-server   persistent HTTP server
 #   <data dir>/whisper/bin/whisper-cli      one-shot CLI (tests)
 #   <data dir>/whisper/models/*.bin         ggml models
-#   <data dir>/whisper/BUILD_INFO           backend=cuda|cpu, version
+#   <data dir>/whisper/BUILD_INFO           backend=cuda|vulkan|cpu, version
 set -euo pipefail
 
 # shellcheck source=scripts/lib/brand.sh
@@ -37,15 +39,17 @@ BIN="$ROOT/bin"
 MODELS="$ROOT/models"
 
 CPU=0
+VULKAN=0
 FORCE=0
 MODEL="q5_0"
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --cpu) CPU=1 ;;
+        --vulkan) VULKAN=1 ;;
         --force) FORCE=1 ;;
         --model) shift; MODEL="${1:-}" ;;
         --model=*) MODEL="${1#--model=}" ;;
-        -h|--help) sed -n '2,21p' "$0"; exit 0 ;;
+        -h|--help) sed -n "2,22p" "$0"; exit 0 ;;
         *) printf 'unknown option: %s\n' "$1" >&2; exit 2 ;;
     esac
     shift
@@ -128,6 +132,15 @@ build_cuda() {
     printf '%s\n' "$BUILD/cuda"
 }
 
+build_vulkan() {
+    info "Configuring Vulkan build"
+    cmake -S "$SRC" -B "$BUILD/vulkan" "${GENERATOR[@]}" "${COMMON[@]}" \
+        -DGGML_VULKAN=1 -DGGML_CUDA=OFF >&2 || return 1
+    info "Building (Vulkan, $JOBS jobs; this takes a few minutes)"
+    cmake --build "$BUILD/vulkan" -j "$JOBS" --target whisper-server whisper-cli >&2 || return 1
+    printf '%s\n' "$BUILD/vulkan"
+}
+
 build_cpu() {
     info "Configuring CPU build"
     cmake -S "$SRC" -B "$BUILD/cpu" "${GENERATOR[@]}" "${COMMON[@]}" -DGGML_CUDA=OFF >&2
@@ -138,7 +151,16 @@ build_cpu() {
 
 BACKEND="cpu"
 OUT=""
-if [[ "$CPU" == "0" ]]; then
+if [[ "$CPU" == "1" ]]; then
+    :
+elif [[ "$VULKAN" == "1" ]]; then
+    if OUT="$(build_vulkan)"; then
+        BACKEND="vulkan"
+    else
+        warn "Vulkan build failed; falling back to CPU"
+        OUT=""
+    fi
+else
     if OUT="$(build_cuda)"; then
         BACKEND="cuda"
     else
