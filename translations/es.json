@@ -3385,5 +3385,20 @@
   "onboarding.finish.exclusive.failed": "No se pudo hacer de %1 el único shell",
   "onboarding.finish.exclusive.failed.body": "%1 — consulta Ajustes → Sistema.",
   "onboarding.finish.installing_n.one": "%1 instalándose",
-  "onboarding.finish.installing_n.other": "%1 instalándose"
+  "onboarding.finish.installing_n.other": "%1 instalándose",
+  "prefs.cat.layout": "Disposición",
+  "prefs.cat.layout.desc": "Dónde se abren el lanzador y el panel, y la hoja lateral.",
+  "prefs.layout.section.hosts": "Dónde se abre cada cosa",
+  "prefs.layout.launcher_host": "El lanzador se abre en",
+  "prefs.layout.launcher_host.desc": "Notch: crece desde el notch. Spotlight: centrado sobre la pantalla atenuada. Hoja: un panel de altura completa que entra desde el lateral.",
+  "prefs.layout.dashboard_host": "El panel se abre en",
+  "prefs.layout.dashboard_host.desc": "Notch: crece desde el notch. Spotlight: centrado sobre la pantalla atenuada. Hoja: un panel de altura completa que entra desde el lateral.",
+  "prefs.layout.sheet_side": "Lado de la hoja",
+  "prefs.layout.sheet_side.desc": "Automático usa el borde derecho, o el izquierdo cuando la barra está a la derecha.",
+  "prefs.layout.host.notch": "Notch",
+  "prefs.layout.host.spotlight": "Spotlight",
+  "prefs.layout.host.sheet": "Hoja",
+  "prefs.layout.preview.launcher": "Lanzador",
+  "prefs.layout.preview.dashboard": "Panel",
+  "prefs.layout.preview.osd": "OSD"
 }

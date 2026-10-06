@@ -3401,5 +3401,20 @@
   "onboarding.finish.installing_n.one": "Устанавливается: %1",
   "onboarding.finish.installing_n.few": "Устанавливается: %1",
   "onboarding.finish.installing_n.many": "Устанавливается: %1",
-  "onboarding.finish.installing_n.other": "Устанавливается: %1"
+  "onboarding.finish.installing_n.other": "Устанавливается: %1",
+  "prefs.cat.layout": "Расположение",
+  "prefs.cat.layout.desc": "Где открываются лаунчер и панель, и боковая шторка.",
+  "prefs.layout.section.hosts": "Где что открывается",
+  "prefs.layout.launcher_host": "Лаунчер открывается в",
+  "prefs.layout.launcher_host.desc": "Вырез: вырастает из выреза. Spotlight: по центру над затемнённым экраном. Шторка: панель во всю высоту, выезжающая сбоку.",
+  "prefs.layout.dashboard_host": "Панель открывается в",
+  "prefs.layout.dashboard_host.desc": "Вырез: вырастает из выреза. Spotlight: по центру над затемнённым экраном. Шторка: панель во всю высоту, выезжающая сбоку.",
+  "prefs.layout.sheet_side": "Сторона шторки",
+  "prefs.layout.sheet_side.desc": "Авто — правый край, или левый, если панель задач справа.",
+  "prefs.layout.host.notch": "Вырез",
+  "prefs.layout.host.spotlight": "Spotlight",
+  "prefs.layout.host.sheet": "Шторка",
+  "prefs.layout.preview.launcher": "Лаунчер",
+  "prefs.layout.preview.dashboard": "Панель",
+  "prefs.layout.preview.osd": "OSD"
 }

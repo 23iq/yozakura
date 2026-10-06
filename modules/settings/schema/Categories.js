@@ -19,6 +19,7 @@
 .import "specials.js" as Specials
 .import "timers.js" as Timers
 .import "routines.js" as Routines
+.import "layout.js" as Layout
 
 // Settings information architecture: sidebar groups and categories.
 //
@@ -42,7 +43,7 @@ var groups = [
     {
         "id": "shell",
         "title": "prefs.group.shell",
-        "categories": ["bar", "notch", "launcher", "dock", "overview", "specials", "desktop", "lockscreen", "notifications"]
+        "categories": ["bar", "notch", "layout", "launcher", "dock", "overview", "specials", "desktop", "lockscreen", "notifications"]
     },
     {
         "id": "system",
@@ -88,6 +89,7 @@ var categories = [
     Appearance.category,
     Wallpapers.category,
     Bar.category,
+    Layout.category,
     legacy("surfaces", "stack", "prefs.cat.surfaces", "prefs.cat.surfaces.desc", "dashboard/controls/ThemePanel.qml", "", "shadows surfaces variants gradients opacity borders colors theme editor terminal opacity", [
         topic("settings.theme.shadow_opacity", "shadow", "darkness alpha transparency"),
         topic("settings.theme.shadow_blur", "shadow", "softness diffusion"),

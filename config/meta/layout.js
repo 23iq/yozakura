@@ -3,9 +3,9 @@
 // Catalog metadata of config/defaults/layout.js (see config/meta/Meta.js for
 // the entry format).
 
-var description = "Where the launcher and dashboard live (notch or a separate window), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.";
+var description = "Where the launcher and dashboard live (notch, centered spotlight or side sheet), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.";
 
-var HOSTS = ["notch", "window"];
+var HOSTS = ["notch", "spotlight", "sheet"];
 
 var keys = {
     "launcher": {
@@ -13,7 +13,7 @@ var keys = {
     },
     "launcher.host": {
         "enum": HOSTS,
-        "description": "Where the launcher opens: grown from the notch or as a centered window."
+        "description": "Where the launcher opens: grown from the notch, centered over a dimmed screen (spotlight) or as a full-height side sheet. Unknown values fall back to notch."
     },
     "launcher.resultStyle": {
         "enum": ["list", "grid"],
@@ -30,7 +30,7 @@ var keys = {
     },
     "dashboard.host": {
         "enum": HOSTS,
-        "description": "Where the dashboard opens: grown from the notch or as a window."
+        "description": "Where the dashboard opens: grown from the notch, centered over a dimmed screen (spotlight) or as a full-height side sheet. Unknown values fall back to notch."
     },
     "dashboard.tabs": {
         "description": "Dashboard tabs in order: [{id, visible}]."

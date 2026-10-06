@@ -3385,5 +3385,20 @@
   "onboarding.finish.exclusive.failed": "Couldn't make %1 the only shell",
   "onboarding.finish.exclusive.failed.body": "%1 — see Settings → System.",
   "onboarding.finish.installing_n.one": "%1 installing",
-  "onboarding.finish.installing_n.other": "%1 installing"
+  "onboarding.finish.installing_n.other": "%1 installing",
+  "prefs.cat.layout": "Layout",
+  "prefs.cat.layout.desc": "Where the launcher and dashboard open, and the side sheet.",
+  "prefs.layout.section.hosts": "Where things open",
+  "prefs.layout.launcher_host": "Launcher opens in",
+  "prefs.layout.launcher_host.desc": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+  "prefs.layout.dashboard_host": "Dashboard opens in",
+  "prefs.layout.dashboard_host.desc": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+  "prefs.layout.sheet_side": "Sheet side",
+  "prefs.layout.sheet_side.desc": "Auto uses the right edge, or the left one when the bar is on the right.",
+  "prefs.layout.host.notch": "Notch",
+  "prefs.layout.host.spotlight": "Spotlight",
+  "prefs.layout.host.sheet": "Sheet",
+  "prefs.layout.preview.launcher": "Launcher",
+  "prefs.layout.preview.dashboard": "Dashboard",
+  "prefs.layout.preview.osd": "OSD"
 }

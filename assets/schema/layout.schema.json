@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:yozakura:config:layout",
   "title": "layout",
-  "description": "Where the launcher and dashboard live (notch or a separate window), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.",
+  "description": "Where the launcher and dashboard live (notch, centered spotlight or side sheet), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.",
   "type": "object",
   "x-file": "config/layout.json",
   "properties": {
@@ -12,14 +12,28 @@
       "description": "Launcher placement and look.",
       "properties": {
         "host": {
-          "title": "Host",
+          "title": "Launcher opens in",
           "type": "string",
           "default": "notch",
-          "description": "Where the launcher opens: grown from the notch or as a centered window.",
+          "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.launcher_host",
+            "control": "selector",
+            "preview": "LayoutPreview",
+            "keywords": "launcher host spotlight sheet notch centered search"
+          },
           "enum": [
             "notch",
-            "window"
-          ]
+            "spotlight",
+            "sheet"
+          ],
+          "x-enumLabels": {
+            "notch": "Notch",
+            "spotlight": "Spotlight",
+            "sheet": "Sheet"
+          }
         },
         "resultStyle": {
           "title": "Result style",
@@ -52,14 +66,27 @@
       "description": "Dashboard placement, tabs and widget grid.",
       "properties": {
         "host": {
-          "title": "Host",
+          "title": "Dashboard opens in",
           "type": "string",
           "default": "notch",
-          "description": "Where the dashboard opens: grown from the notch or as a window.",
+          "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.dashboard_host",
+            "control": "selector",
+            "keywords": "dashboard host spotlight sheet notch side panel"
+          },
           "enum": [
             "notch",
-            "window"
-          ]
+            "spotlight",
+            "sheet"
+          ],
+          "x-enumLabels": {
+            "notch": "Notch",
+            "spotlight": "Spotlight",
+            "sheet": "Sheet"
+          }
         },
         "tabs": {
           "title": "Tabs",
@@ -114,15 +141,27 @@
       "description": "Side sheet (notifications, quick settings).",
       "properties": {
         "side": {
-          "title": "Side",
+          "title": "Sheet side",
           "type": "string",
           "default": "auto",
-          "description": "Edge the side sheet slides from; auto follows the bar.",
+          "description": "Auto uses the right edge, or the left one when the bar is on the right.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.sheet_side",
+            "control": "selector",
+            "keywords": "sheet side left right edge vertical bar"
+          },
           "enum": [
             "auto",
             "left",
             "right"
-          ]
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "left": "Left",
+            "right": "Right"
+          }
         }
       },
       "additionalProperties": false
