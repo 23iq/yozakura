@@ -94,10 +94,17 @@
       }
     },
     "sidebarPinnedOnStartup": {
-      "title": "Sidebar pinned on startup",
+      "title": "Pin the assistant sidebar at startup",
       "type": "boolean",
       "default": false,
-      "description": "Open the AI sidebar pinned at startup."
+      "description": "The assistant sidebar starts pinned open.",
+      "x-settings": {
+        "category": "ai",
+        "section": "sidebar",
+        "label": "prefs.sidebar.pinned",
+        "control": "toggle",
+        "keywords": "assistant sidebar pin pinned startup keep open visible"
+      }
     },
     "wideWidth": {
       "title": "Wide layout width",

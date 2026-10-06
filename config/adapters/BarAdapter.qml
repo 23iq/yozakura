@@ -6,12 +6,9 @@ JsonAdapter {
     property string position: "top"
     property string launcherIcon: ""
     property bool launcherIconTint: true
-    property bool launcherIconFullTint: true
     property int launcherIconSize: 24
-    property string pillStyle: "default"
     property list<string> screenList: []
     property bool enableFirefoxPlayer: false
-    property list<var> barColor: [["surface", 0]]
     property bool frameEnabled: false
     property int frameThickness: 6
     property bool pinnedOnStartup: true
@@ -25,45 +22,6 @@ JsonAdapter {
     property bool keepBarBorder: false
     property bool clockShowDate: false
     property bool compact: false
-    property var activities: ({
-            "enabled": true,
-            "presentation": "notch",
-            "maxVisible": 4,
-            "sources": {
-                "recording": true,
-                "privacy": true,
-                "timers": true,
-                "tasks": true,
-                "notificationProgress": true,
-                "jobView": true,
-                "browserDownloads": true,
-                "steam": true,
-                "terminal": true,
-                "fileOps": true,
-                "packages": true,
-                "torrents": true,
-                "aria2": true,
-                "syncthing": true,
-                "launchers": true
-            },
-            "downloads": {
-                "aggregate": true,
-                "showSpeed": true,
-                "endpoints": {
-                    "qbittorrent": "http://127.0.0.1:8080",
-                    "transmission": "http://127.0.0.1:9091/transmission/rpc",
-                    "deluge": "http://127.0.0.1:8112/json",
-                    "aria2": "http://127.0.0.1:6800/jsonrpc",
-                    "syncthing": ""
-                },
-                "secrets": {
-                    "qbittorrent": "",
-                    "transmission": "",
-                    "deluge": "deluge",
-                    "aria2": ""
-                }
-            }
-        })
     property var layout: ({
             "style": "classic",
             "left": ["launcher", "workspaces", "layoutSelector", "pin"],

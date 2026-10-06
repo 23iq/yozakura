@@ -1,5 +1,7 @@
 .pragma library
 .import "glass.js" as Glass
+.import "motion.js" as Motion
+.import "surfaces.js" as Surfaces
 
 // Appearance: theme mode, palette, typography, shape, glass and motion.
 // Entry format: see modules/settings/AGENTS.md.
@@ -109,43 +111,31 @@ var category = {
                     "label": "prefs.appearance.cut_size",
                     "description": "prefs.appearance.cut_size.desc",
                     "keywords": "cut chamfer size corner"
-                }
-            ]
-        },
-        {
-            "id": "popups",
-            "title": "prefs.appearance.section.popups",
-            "entries": [
-                {
-                    "key": "theme.popup.entry",
-                    "type": "selector",
-                    "label": "prefs.appearance.popup_entry",
-                    "description": "prefs.appearance.popup_entry.desc",
-                    "keywords": "popup menu animation entry open fade scale slide morph unfold",
-                    "options": [
-                        { "value": "fade-scale", "label": "prefs.appearance.popup_entry.fade_scale" },
-                        { "value": "slide-from-anchor", "label": "prefs.appearance.popup_entry.slide" },
-                        { "value": "morph-from-bar", "label": "prefs.appearance.popup_entry.morph" },
-                        { "value": "unfold", "label": "prefs.appearance.popup_entry.unfold" }
-                    ]
                 },
                 {
-                    "key": "theme.popup.tail",
+                    "key": "compositor.syncRoundness",
+                    "advanced": true,
                     "type": "toggle",
-                    "label": "prefs.appearance.popup_tail",
-                    "description": "prefs.appearance.popup_tail.desc",
-                    "keywords": "popup tail arrow pointer callout"
+                    "label": "prefs.windows.sync_rounding",
+                    "description": "prefs.windows.sync_rounding.desc",
+                    "keywords": "sync rounding roundness corners shell theme"
                 },
                 {
-                    "key": "theme.popup.gap",
+                    "key": "compositor.rounding",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
-                    "max": 32,
+                    "max": 40,
                     "step": 1,
                     "unit": "px",
-                    "label": "prefs.appearance.popup_gap",
-                    "description": "prefs.appearance.popup_gap.desc",
-                    "keywords": "popup gap distance margin offset bar"
+                    "visibleWhen": {
+                        "key": "compositor.syncRoundness",
+                    "advanced": true,
+                        "equals": false
+                    },
+                    "label": "prefs.windows.rounding",
+                    "description": "prefs.windows.rounding.desc",
+                    "keywords": "rounding radius corners round"
                 }
             ]
         },
@@ -232,51 +222,14 @@ var category = {
                     "keywords": "ink brush stroke highlight selection focus sumi-e"
                 }
             ]
-        },
-        {
-            "id": "motion",
-            "title": "prefs.appearance.section.motion",
-            "entries": [
-                {
-                    "key": "theme.animDuration",
-                    "type": "slider",
-                    "min": 0,
-                    "max": 1000,
-                    "step": 25,
-                    "unit": "ms",
-                    "specialValues": [
-                        {
-                            "value": 0,
-                            "label": "prefs.common.off"
-                        }
-                    ],
-                    "preview": "MotionPreview",
-                    "label": "settings.theme.animation",
-                    "description": "prefs.appearance.anim.desc",
-                    "keywords": "animation speed duration fast slow motion reduce"
-                },
-                {
-                    "key": "theme.paletteTransitionDuration",
-                    "type": "slider",
-                    "min": 0,
-                    "max": 1500,
-                    "step": 50,
-                    "unit": "ms",
-                    "specialValues": [
-                        {
-                            "value": 0,
-                            "label": "prefs.common.instant"
-                        }
-                    ],
-                    "preview": "PaletteFadePreview",
-                    "label": "settings.theme.palette_transition",
-                    "description": "prefs.appearance.palette_transition.desc",
-                    "keywords": "palette colors crossfade fade wallpaper change transition"
-                }
-            ]
         }
     ]
 };
 
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);
+
+// Surface roles and the shell shadow (schema/surfaces.js), then Motion
+// (schema/motion.js: profile, speed, shell timing) close the page.
+category.sections.push(...Surfaces.sections);
+category.sections.push(...Motion.sections);

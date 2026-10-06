@@ -86,13 +86,13 @@ func TestEntryMetadata(t *testing.T) {
 	assert.Contains(t, left.Items.Enum, "clock")
 	assert.True(t, left.UniqueItems)
 
-	act, _ := c.Entry("bar.activities")
+	act, _ := c.Entry("notch.liveActivities")
 	assert.Equal(t, "object", act.Type)
 	assert.Contains(t, act.Children, "maxVisible")
 	def := act.Default.(map[string]any)
 	assert.Equal(t, 4.0, def["maxVisible"])
 
-	sec, _ := c.Entry("bar.activities.downloads.secrets.deluge")
+	sec, _ := c.Entry("notch.liveActivities.downloads.secrets.deluge")
 	assert.True(t, sec.Secret)
 	lbl, _ := c.Entry("theme.srBg.label")
 	assert.True(t, lbl.ReadOnly)
@@ -159,15 +159,15 @@ func TestAssignValidation(t *testing.T) {
 		{"bar.layout.left", []any{"clock", "clock"}, "duplicate"},
 		{"bar.layout.left", []any{"clock", "zzz"}, "bar.layout.left[1] must be one of"},
 		{"bar.screenList", []any{1.0}, "must be a string"},
-		{"bar.activities", map[string]any{"enabled": false}, ""},
-		{"bar.activities", map[string]any{"bogus": 1.0}, "unknown key bar.activities.bogus"},
-		{"bar.activities", "x", "must be an object"},
+		{"notch.liveActivities", map[string]any{"enabled": false}, ""},
+		{"notch.liveActivities", map[string]any{"bogus": 1.0}, "unknown key notch.liveActivities.bogus"},
+		{"notch.liveActivities", "x", "must be an object"},
 		{"theme.srBg.label", "x", "read-only"},
 		{"theme.glass.amount", 0.5, ""},
 		{"theme.glass.amount", -1.0, ""},
 		{"theme.glass.amount", 1.5, "must be in 0..1 or -1"},
-		{"theme.glass.advanced.blurSize", -1.0, ""},
-		{"theme.glass.advanced.blurSize", -2.0, "must be in 0..40 or -1"},
+		{"theme.glass.advanced.opacity", -1.0, ""},
+		{"theme.glass.advanced.opacity", -2.0, "or -1"},
 		{"theme.glass.surfaces.dock.amount", -1.0, ""},
 		{"theme.glass.surfaces.windows.activeOpacity", 0.2, "0.3..1"},
 	}
@@ -208,11 +208,11 @@ func TestParseValue(t *testing.T) {
 	assert.Equal(t, []any{"a"}, v)
 	v, _ = ParseValue(get("bar.layout.left"), "", false)
 	assert.Equal(t, []any{}, v)
-	v, _ = ParseValue(get("bar.activities"), `{"enabled":false}`, false)
+	v, _ = ParseValue(get("notch.liveActivities"), `{"enabled":false}`, false)
 	assert.Equal(t, map[string]any{"enabled": false}, v)
 	v, _ = ParseValue(get("bar.position"), `"x"`, true)
 	assert.Equal(t, "x", v)
-	_, err = ParseValue(get("bar.barColor"), "surface", false)
+	_, err = ParseValue(get("layout.dashboard.grid.cells"), "surface", false)
 	assert.Error(t, err, "arrays without item type need JSON")
 	it, _ := ParseItem(get("bar.layout.left"), "clock")
 	assert.Equal(t, "clock", it)

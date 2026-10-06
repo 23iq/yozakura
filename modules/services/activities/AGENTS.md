@@ -3,7 +3,7 @@
 ## OVERVIEW
 Things happening right now (recording, mic/camera/screen sharing, timers,
 downloads/copies/updates) collected from **providers** and shown by the
-notch (`bar.activities.presentation: "notch"`, default,
+notch (`notch.liveActivities.presentation: "notch"`, default,
 `modules/widgets/defaultview/activities/`) or as islands next to it
 (`"islands"`, `modules/bar/activities/`). `"off"` stops every provider.
 
@@ -58,4 +58,4 @@ TransfersBackend ── BackendService ──> backend/pkg/svc/transfers (Go)
 | `syncthing` | `syncthing.go` | API key/address/folders from `config.xml`; one item per folder that is syncing with needed bytes; rate from received-bytes deltas | GUI on a unix socket unsupported; folders waiting for an offline peer are not shown |
 | `launchers` | `launchers.go` | Heroic helpers (legendary/gogdl/nile) + newest Heroic log progress lines; Lutris installer processes (indeterminate) | best effort, fixture-tested only; Lutris internal downloads are invisible |
 
-Endpoints/secrets live in `bar.activities.downloads.endpoints` / `.secrets` (bar.json).
+Endpoints/secrets live in `notch.liveActivities.downloads.endpoints` / `.secrets` (notch.json).

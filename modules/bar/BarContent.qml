@@ -102,7 +102,7 @@ Item {
 
     // Radius logic for "Squished" style
     readonly property real outerRadius: Styling.radius(0)
-    readonly property real innerRadius: (Config.bar && Config.bar.pillStyle === "squished") ? Styling.radius(0) / 2 : Styling.radius(0)
+    readonly property real innerRadius: Styling.radius(0)
     readonly property bool pinButtonVisible: (Config.bar && Config.bar.showPinButton !== undefined ? Config.bar.showPinButton : true)
 
     // ── Groups (start/center/end/drawer + gap slots) ──

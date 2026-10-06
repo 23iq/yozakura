@@ -19,11 +19,9 @@ var EDITORS = {
     "FolderList": "editors/FolderList.qml",
     "SpecialsEditor": "editors/SpecialsEditor.qml",
     "ComingSoonRow": "editors/ComingSoonRow.qml",
-    "DepthClockLink": "editors/DepthClockLink.qml",
     "ClockStyleGallery": "editors/ClockStyleGallery.qml",
     "ColorRoleSwatches": "editors/ColorRoleSwatches.qml",
     "DesktopWidgetsEditor": "editors/DesktopWidgetsEditor.qml",
-    "LegacyLink": "editors/LegacyLink.qml",
     "ActivitiesEditor": "editors/ActivitiesEditor.qml",
     "DashboardTabsEditor": "editors/DashboardTabsEditor.qml",
     "IslandActivitiesEditor": "editors/IslandActivitiesEditor.qml",
@@ -54,7 +52,8 @@ var EDITORS = {
     "TerminalLookEditor": "editors/TerminalLookEditor.qml",
     "CursorShapeChips": "editors/CursorShapeChips.qml",
     "AppThemingEditor": "editors/AppThemingEditor.qml",
-    "NotificationsStatus": "editors/NotificationsStatus.qml"
+    "NotificationsStatus": "editors/NotificationsStatus.qml",
+    "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml"
 };
 
 var PREVIEWS = {

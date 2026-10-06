@@ -15,7 +15,8 @@ modules/settings/
 ├── SettingsPage.qml        renders one schema category (PageHeader + SettingsSection...)
 ├── SettingsSection.qml     titled card of SettingRow
 ├── SettingRow.qml          label/description/modified dot/reset + typed control + preview
-├── LegacyPanelHost.qml     hosts a not-yet-migrated dashboard panel (adapter)
+├── connect/ConnectPage.qml Network/Bluetooth/Sound/Effects pages: the live device panels
+├── mods/                   the Mods page (ModsEditor + parts, ModsModel.js)
 ├── AboutPage / PlaceholderPage / PageHeader / PillButton / NavItem / ChangesBar
 ├── SchemaUtil.js           pure: keys, conditions, validation, search index (node-tested)
 ├── SettingsDefaults.js     default of any key, from config/defaults/*.js
@@ -77,7 +78,7 @@ it is saved), `options`
 `preview` (Registry name), `component` (custom editor name), `keys` (every
 key a composite entry reads/resets), `sizeKey` (font), `resettable: false`,
 `compositor` (entry or section shown only on that compositor, e.g. `"hyprland"`),
-`id` (when there is no single `key`), `target` (LegacyLink), `sizeUnit`
+`id` (when there is no single `key`), `target` (PageLink), `sizeUnit`
 (font).
 
 Collection types (controls/ListControl, PathControl, ScreensControl,
@@ -103,25 +104,28 @@ Section fields: `id`, `title`, `entries`, and `collapsible: true` (+
 a folded section unfolds it. A category file may pull sections from a
 sibling file (appearance.js splices in `schema/glass.js`).
 
-## ADDING / MIGRATING A CATEGORY
+## ADDING A CATEGORY
 Create `schema/<id>.js` exporting `category = {id, icon, title, description,
 keywords, sections: [{id, title, entries: [...]}]}`, import it in
-`Categories.js`, put it in a group and drop the old `legacy(...)` entry
-(and its `topics`). Legacy categories host an old panel through
-`LegacyPanelHost` (`legacy: {source, section}`) so nothing is lost meanwhile.
+`Categories.js` and put it in the group of the element it controls (one
+page per element; a setting is declared on one page only, see
+tests/settings-pages.test.cjs). Expert knobs get `"advanced": true`. A page
+merged into another keeps its old id working through `MOVED` in
+Categories.js; renamed keys keep the user's value through
+`config/meta/KeyAliases.js`.
 
 ## CHANGE FLOW
 `SettingsStore.set()` writes Config immediately (the whole shell previews the
 change live). For staged domains it first calls the GlobalStates
 `mark{Theme,Shell,Compositor}Changed()` (snapshot + pause auto-save, the same
-flow the legacy panels use); the ChangesBar then applies (`apply*Changes`,
+flow the old panels used); the ChangesBar then applies (`apply*Changes`,
 writes the JSON files) or discards (restores the snapshot). Domains without a
 snapshot list are saved immediately (`Config.save<Domain>()`), and
 `wallpaper.*` keys go straight to the wallpaper manager (wallpapers.json).
 
 ## VERIFY
 - `make check`: `settings-schema` audit (keys/defaults, translations,
-  options/ranges, conditions, registry, legacy sources, snapshot lists),
+  options/ranges, conditions, registry, snapshot lists),
   `tests/settings-schema.test.cjs` (schema/search/layout helpers),
   `tests/settings-ui.test.py` (renderer behaviour, offscreen).
 - `tools/render/settings_render.py [--mode dark|light|both] [--scroll N]

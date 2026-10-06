@@ -57,15 +57,8 @@ JsonAdapter {
         property string highlightRole: "overBackground"
         property JsonObject advanced: JsonObject {
             property real opacity: -1
-            property real blurSize: -1
-            property real blurPasses: -1
-            property real vibrancy: -1
-            property real noise: -1
-            property real contrast: -1
-            property real brightness: -1
             property real tintStrength: -1
             property real borderHighlight: -1
-            property real shadowSoftness: -1
         }
         property JsonObject surfaces: JsonObject {
             property JsonObject windows: JsonObject {

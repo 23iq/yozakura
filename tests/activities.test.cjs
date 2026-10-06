@@ -10,18 +10,17 @@ const Model = loadLibrary('../modules/services/activities/ActivityModel.js');
 const Progress = loadLibrary('../modules/services/activities/NotificationProgress.js');
 const Privacy = loadLibrary('../modules/services/activities/PrivacyDetect.js');
 const Layout = loadLibrary('../modules/bar/activities/ActivityLayout.js');
-const barDefaults = plain(loadLibrary('../config/defaults/bar.js').data);
+const notchDefaults = plain(loadLibrary('../config/defaults/notch.js').data);
 const validator = loadLibrary('../config/ConfigValidator.js');
 
 // ── config ──────────────────────────────────────────────────────────────
 
-test('defaults in bar.js match ActivityModel.DEFAULT_CONFIG', () => {
-    assert.deepEqual(plain(Model.DEFAULT_CONFIG), barDefaults.activities);
-    assert.equal(barDefaults.compact, false);
+test('defaults in notch.js match ActivityModel.DEFAULT_CONFIG', () => {
+    assert.deepEqual(plain(Model.DEFAULT_CONFIG), notchDefaults.liveActivities);
 });
 
 test('normalizeConfig fills gaps and clamps maxVisible', () => {
-    assert.deepEqual(plain(Model.normalizeConfig(undefined)), barDefaults.activities);
+    assert.deepEqual(plain(Model.normalizeConfig(undefined)), notchDefaults.liveActivities);
     const cfg = plain(Model.normalizeConfig({ enabled: false, maxVisible: 40, sources: { privacy: false } }));
     assert.equal(cfg.enabled, false);
     assert.equal(cfg.maxVisible, 8);
@@ -35,8 +34,8 @@ test('presentation: notch default, invalid falls back, off disables sources', ()
     assert.equal(Model.normalizeConfig({ presentation: 'islands' }).presentation, 'islands');
     assert.equal(Model.normalizeConfig({ presentation: 'bogus' }).presentation, 'notch');
     assert.equal(Model.sourceEnabled({ presentation: 'off' }, 'recording'), false);
-    assert.equal(validator.validate({ activities: { presentation: 'bogus' } }, barDefaults).activities.presentation, 'notch');
-    assert.equal(validator.validate({ activities: { presentation: 'off' } }, barDefaults).activities.presentation, 'off');
+    assert.equal(validator.validate({ liveActivities: { presentation: 'bogus' } }, notchDefaults).liveActivities.presentation, 'notch');
+    assert.equal(validator.validate({ liveActivities: { presentation: 'off' } }, notchDefaults).liveActivities.presentation, 'off');
 });
 
 test('downloads options keep endpoints/secrets as strings with defaults', () => {
@@ -59,11 +58,11 @@ test('sourceEnabled follows the master switch and per-source toggles', () => {
 });
 
 test('validator clamps activities.maxVisible and keeps nested sources', () => {
-    const out = validator.validate({ activities: { maxVisible: 99, sources: { privacy: false } } }, barDefaults);
-    assert.equal(out.activities.maxVisible, 8);
-    assert.equal(out.activities.sources.privacy, false);
-    assert.equal(out.activities.sources.recording, true);
-    assert.equal(validator.validate({ activities: { maxVisible: 0 } }, barDefaults).activities.maxVisible, 1);
+    const out = validator.validate({ liveActivities: { maxVisible: 99, sources: { privacy: false } } }, notchDefaults);
+    assert.equal(out.liveActivities.maxVisible, 8);
+    assert.equal(out.liveActivities.sources.privacy, false);
+    assert.equal(out.liveActivities.sources.recording, true);
+    assert.equal(validator.validate({ liveActivities: { maxVisible: 0 } }, notchDefaults).liveActivities.maxVisible, 1);
 });
 
 // ── aggregation ─────────────────────────────────────────────────────────

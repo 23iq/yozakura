@@ -19,10 +19,10 @@ var category = {
                     "id": "launcher.providers",
                     "type": "custom",
                     "component": "LauncherProvidersEditor",
-                    "keys": ["prefix.launcher.order", "prefix.launcher.disabled", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
+                    "keys": ["prefix.launcher.order", "prefix.launcher.disabled", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.timers", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
                     "label": "prefs.launcher.providers",
                     "description": "prefs.launcher.providers.desc",
-                    "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+                    "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
                 }
             ]
         },
@@ -87,6 +87,7 @@ var category = {
                 },
                 {
                     "key": "prefix.launcher.fileBackend",
+                    "advanced": true,
                     "type": "selector",
                     "options": [
                         {
@@ -108,6 +109,7 @@ var category = {
                 },
                 {
                     "key": "prefix.launcher.fileMaxResults",
+                    "advanced": true,
                     "type": "slider",
                     "min": 5,
                     "max": 100,
@@ -118,6 +120,7 @@ var category = {
                 },
                 {
                     "key": "prefix.launcher.currencyRefreshHours",
+                    "advanced": true,
                     "type": "slider",
                     "min": 1,
                     "max": 72,
@@ -126,20 +129,6 @@ var category = {
                     "label": "prefs.launcher.currency_refresh",
                     "description": "prefs.launcher.currency_refresh.desc",
                     "keywords": "currency rates exchange refresh offline cache"
-                }
-            ]
-        },
-        {
-            "id": "dashboard",
-            "title": "prefs.dashboard.section.tabs",
-            "entries": [
-                {
-                    "key": "layout.dashboard.tabs",
-                    "type": "custom",
-                    "component": "DashboardTabsEditor",
-                    "label": "prefs.dashboard.tabs",
-                    "description": "prefs.dashboard.tabs.desc",
-                    "keywords": "dashboard tabs order hide show reorder widgets wallpapers metrics rail"
                 }
             ]
         }

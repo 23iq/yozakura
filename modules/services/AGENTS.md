@@ -28,7 +28,7 @@ Backend singletons bridging Wayland protocols, CLI tools (nmcli, upower, wpctl, 
 | **App Search** | `AppSearch.qml` | Application indexing for launcher |
 | **Weather** | `WeatherService.qml` | Forecast, sunrise/sunset, day/night detection |
 | **Keybinds** | `GlobalShortcuts.qml` | Compositor-level keybind management |
-| **Live activities** | `activities/` | `ActivityService` aggregates providers listed in `ActivityProviders.qml`. New source = one `pragma Singleton` + `ActivityProvider { source; activities; activate() }` file + one registry entry (+ a `bar.activities.sources` default to make it toggleable). Pure logic in `ActivityModel.js`, `PrivacyDetect.js`, `NotificationProgress.js` |
+| **Live activities** | `activities/` | `ActivityService` aggregates providers listed in `ActivityProviders.qml`. New source = one `pragma Singleton` + `ActivityProvider { source; activities; activate() }` file + one registry entry (+ a `notch.liveActivities.sources` default to make it toggleable). Pure logic in `ActivityModel.js`, `PrivacyDetect.js`, `NotificationProgress.js` |
 
 ## CONVENTIONS
 - **Singleton pattern**: `pragma Singleton` + `Singleton { id: root }` root component.

@@ -7,7 +7,7 @@ import qs.modules.components
 ToggleButton {
     buttonIcon: Config.bar.launcherIcon || Qt.resolvedUrl("../../../assets/yozakura/yozakura-icon.svg").toString().replace("file://", "")
     iconTint: Config.bar.launcherIconTint
-    iconFullTint: Config.bar.launcherIconFullTint
+    iconFullTint: Config.bar.launcherIconTint
     iconSize: Config.bar.launcherIconSize
     tooltipText: I18n.t("bar.tooltip.launcher")
 

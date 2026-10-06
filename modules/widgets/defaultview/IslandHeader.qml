@@ -29,7 +29,7 @@ Item {
     readonly property bool mediaHovered: !!root.player && (root.vertical ? (root.rail ? root.rail.mediaHovered : false) : summaryHover.hovered && (!selectorHovered || mediaExpanded))
     readonly property real microphoneWidth: MicrophoneStatus.available && MicrophoneStatus.muted ? Styling.fontSize(4) : 0
     readonly property int motionDuration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
-    // Live activities flank the content (bar.activities.presentation
+    // Live activities flank the content (notch.liveActivities.presentation
     // "notch"): leading segments per task panel (timers, downloads), a
     // trailing privacy segment. Each segment opens its own panel. Order,
     // side and on/off come from notch.activities (ActivityRegistry.js).

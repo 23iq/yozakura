@@ -1,7 +1,10 @@
 .pragma library
 
-// Windows > Motion: the motion profile (config/motion) and its per-part
-// overrides (compositor.motion*). Spliced into windows.js.
+// Look > Motion: one place for every animation setting. The motion profile
+// (config/motion) and one Speed slider (compositor.motionDurationScale,
+// shell and windows alike); the per-part overrides and the shell's base
+// duration (theme.animDuration, set by presets) are Advanced. Spliced into
+// appearance.js.
 // Entry format: see modules/settings/AGENTS.md.
 
 var sections = [
@@ -37,6 +40,7 @@ var sections = [
             },
             {
                 "key": "compositor.motionWorkspaceStyle",
+                "advanced": true,
                 "type": "selector",
                 "options": [
                     {
@@ -66,6 +70,7 @@ var sections = [
             },
             {
                 "key": "compositor.motionBorderLoop",
+                "advanced": true,
                 "type": "selector",
                 "options": [
                     {
@@ -91,6 +96,7 @@ var sections = [
             },
             {
                 "key": "compositor.motionBorderLoopSpeed",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 100,
@@ -119,10 +125,48 @@ var sections = [
             },
             {
                 "key": "compositor.motionShell",
+                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.motion.shell",
                 "description": "prefs.motion.shell.desc",
                 "keywords": "shell animations speed easing follow profile"
+            },
+            {
+                "key": "theme.animDuration",
+                "advanced": true,
+                "type": "slider",
+                "min": 0,
+                "max": 1000,
+                "step": 25,
+                "unit": "ms",
+                "specialValues": [
+                    {
+                        "value": 0,
+                        "label": "prefs.common.off"
+                    }
+                ],
+                "preview": "MotionPreview",
+                "label": "prefs.motion.shell_base",
+                "description": "prefs.appearance.anim.desc",
+                "keywords": "animation speed duration fast slow motion reduce"
+            },
+            {
+                "key": "theme.paletteTransitionDuration",
+                "type": "slider",
+                "min": 0,
+                "max": 1500,
+                "step": 50,
+                "unit": "ms",
+                "specialValues": [
+                    {
+                        "value": 0,
+                        "label": "prefs.common.instant"
+                    }
+                ],
+                "preview": "PaletteFadePreview",
+                "label": "settings.theme.palette_transition",
+                "description": "prefs.appearance.palette_transition.desc",
+                "keywords": "palette colors crossfade fade wallpaper change transition"
             }
         ]
     }
