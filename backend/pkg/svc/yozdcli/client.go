@@ -103,6 +103,20 @@ func (c *Client) ActiveLayout() (ipc.KeyboardLayoutState, error) {
 	return st, nil
 }
 
+// CurrentKeyboard reads the keyboard settings in effect on the compositor
+// (ipc.ErrNotSupported where it cannot report them).
+func (c *Client) CurrentKeyboard() (ipc.KeyboardSettings, error) {
+	var k ipc.KeyboardSettings
+	out, err := c.call("keyboard", "current")
+	if err != nil {
+		return k, err
+	}
+	if err := json.Unmarshal(out, &k); err != nil {
+		return k, fmt.Errorf("parse keyboard settings: %w", err)
+	}
+	return k, nil
+}
+
 // ReloadConfig reloads the compositor config (`yozd config reload`).
 func (c *Client) ReloadConfig() error {
 	_, err := c.call("config", "reload")

@@ -8,6 +8,11 @@
 //	next     → switch to the next layout
 //	apply    {layouts:[{layout,variant}], switchBind, options, model?, repeatRate, repeatDelay}
 //	         → applies the settings live (persisting is the compositor TOML's job)
+//	current  → {available, layouts, switchBind, options, model, repeatRate, repeatDelay}:
+//	         the settings in effect on the compositor (the user's own config
+//	         while the shell does not manage the keyboard), in the keyboard
+//	         domain's shape; available is false where the compositor cannot
+//	         report them (niri, Mango). Read only.
 //
 // Events: keyboard.layout {name, index, code, short} on subscribe and on
 // every keyboard_layout event yozd reports through the compositor state.
@@ -16,6 +21,7 @@ package keyboard
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -29,6 +35,7 @@ import (
 type Yozd interface {
 	ApplyKeyboard(yipc.KeyboardSettings) error
 	ActiveLayout() (yipc.KeyboardLayoutState, error)
+	CurrentKeyboard() (yipc.KeyboardSettings, error)
 	NextLayout() error
 }
 
@@ -69,9 +76,10 @@ func (s *Service) Register(srv *ipc.Server) {
 			"active":  func(json.RawMessage) (any, error) { return s.Active() },
 			"next":    s.next,
 			"apply":   s.apply,
+			"current": func(json.RawMessage) (any, error) { return s.Current() },
 		},
 		Subscribe: s.subscribe,
-		Async:     map[string]bool{"catalog": true, "active": true, "next": true, "apply": true},
+		Async:     map[string]bool{"catalog": true, "active": true, "next": true, "apply": true, "current": true},
 	})
 }
 
@@ -100,6 +108,27 @@ func (s *Service) Active() (Active, error) {
 	s.names = st.Names
 	s.mu.Unlock()
 	return s.catalogOrEmpty().Resolve(st), nil
+}
+
+// Current is the compositor's keyboard settings in the keyboard domain's
+// shape (see the package doc).
+type Current struct {
+	Available bool `json:"available"`
+	compositor.KeyboardInput
+}
+
+// Current reads the settings in effect. A compositor that cannot report
+// them answers {available: false}; a daemon error is an error.
+func (s *Service) Current() (Current, error) {
+	k, err := s.yozd.CurrentKeyboard()
+	if errors.Is(err, yipc.ErrNotSupported) {
+		return Current{KeyboardInput: compositor.KeyboardFromSettings(yipc.KeyboardSettings{})}, nil
+	}
+	if err != nil {
+		return Current{}, err
+	}
+	in := compositor.KeyboardFromSettings(k)
+	return Current{Available: len(in.Layouts) > 0, KeyboardInput: in}, nil
 }
 
 func (s *Service) next(json.RawMessage) (any, error) {

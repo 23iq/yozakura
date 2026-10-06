@@ -39,7 +39,7 @@ func Host() exclusive.Options {
 	}
 }
 
-var importedKeys = []string{"displays.monitors", "keyboard.layouts", "keyboard.options", "keyboard.repeatRate", "keyboard.repeatDelay"}
+var importedKeys = []string{"displays.monitors", "keyboard.layouts", "keyboard.options", "keyboard.repeatRate", "keyboard.repeatDelay", "keyboard.managed"}
 
 // importSettings writes the parsed monitors and keyboard into the config
 // and returns the explicit values it replaced (nil = was default). On an
@@ -116,6 +116,11 @@ func writeImport(store *catalog.Store, monitors []ipc.OutputConfig, kb *ipc.Keyb
 		if err := set("keyboard.repeatDelay", kb.RepeatDelay); err != nil {
 			return err
 		}
+	}
+	// The exclusive config replaces the user's own: the imported keyboard
+	// is only kept if Yozakura renders it (keyboard.managed).
+	if len(kb.Layouts) > 0 {
+		return set("keyboard.managed", true)
 	}
 	return nil
 }

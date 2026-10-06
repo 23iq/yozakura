@@ -126,6 +126,7 @@ func usage() {
 	fmt.Println("    apply '<json>'          Apply an output config (name, enabled, width, height, ...)")
 	fmt.Println("\n  keyboard <action> [args]")
 	fmt.Println("    active                  Show the active keyboard layout")
+	fmt.Println("    current                 Show the keyboard settings in effect (JSON)")
 	fmt.Println("    apply '<json>'          Apply XKB settings (layouts, variants, options, ...)")
 	fmt.Println("\n  layout <action> [args]")
 	fmt.Println("    list                    List available layouts (compositor introspection + static fallback)")

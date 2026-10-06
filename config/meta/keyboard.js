@@ -6,6 +6,9 @@
 var description = "Keyboard layouts, the layout switch bind, extra XKB options and key repeat. Personal: presets never carry it.";
 
 var keys = {
+    "managed": {
+        "description": "Yozakura manages the keyboard: renders these settings into the compositor config and applies them live. Off until the keyboard is changed in Yozakura; the compositor's own settings stay in effect until then."
+    },
     "layouts": {
         "items": {
             "type": "object",
@@ -35,7 +38,7 @@ var keys = {
     },
     "repeatRate": {
         "min": 1,
-        "max": 100,
+        "max": 200,
         "unit": "/s",
         "description": "Key repeat rate."
     },

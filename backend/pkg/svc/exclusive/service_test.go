@@ -124,6 +124,9 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 	if m, _, _ := store.Get("displays.monitors"); len(m.([]any)) != 1 {
 		t.Fatalf("monitors %v", m)
 	}
+	if v, _, _ := store.Get("keyboard.managed"); v != true {
+		t.Fatalf("an imported keyboard must be managed (rendered), got %v", v)
+	}
 	if err := unimportSettings(previous); err != nil {
 		t.Fatal(err)
 	}
@@ -132,6 +135,9 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 	}
 	if v, _, _ := store.Get("keyboard.repeatRate"); v != float64(25) && v != 25 {
 		t.Fatalf("rate not reverted: %v", v)
+	}
+	if v, _, _ := store.Get("keyboard.managed"); v != false {
+		t.Fatalf("managed not reverted: %v", v)
 	}
 }
 

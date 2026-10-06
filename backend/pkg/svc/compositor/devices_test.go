@@ -135,12 +135,51 @@ func TestRenderDisplaysLoadsInYozd(t *testing.T) {
 	}
 }
 
-func TestRenderWithoutKeyboardKeepsEmptyLayouts(t *testing.T) {
+// An unmanaged keyboard (the shell sends none) and an empty displays list
+// render nothing: yozd then generates no input or monitor settings and the
+// user's own compositor config stays in effect.
+func TestRenderUnmanagedKeyboardAndNoDisplaysRenderNothing(t *testing.T) {
 	out := Render(Input{}, false)
-	if !strings.HasSuffix(out, "[input]\n[input.keyboard]\nlayouts = \"\"\nvariants = \"\"\n") {
-		t.Fatalf("unexpected tail:\n%s", out)
+	for _, frag := range []string{"[input]", "[input.keyboard]", "layouts =", "repeat_rate", "[[monitors]]"} {
+		if strings.Contains(out, frag) {
+			t.Fatalf("unexpected %q in:\n%s", frag, out)
+		}
 	}
-	if strings.Contains(out, "[[monitors]]") {
-		t.Fatal("no displays must render no [[monitors]]")
+	path := filepath.Join(t.TempDir(), "yozd.toml")
+	if err := os.WriteFile(path, []byte(out), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := yozdconfig.LoadConfig(path)
+	if err != nil {
+		t.Fatalf("yozd LoadConfig: %v", err)
+	}
+	if u := cfg.ToIPCConfig(); u.Keyboard != nil || len(u.Monitors) != 0 {
+		t.Fatalf("keyboard = %+v, monitors = %+v", u.Keyboard, u.Monitors)
+	}
+	in := Input{Displays: []DisplayInput{}}
+	if out := Render(in, false); strings.Contains(out, "[[monitors]]") || strings.Contains(out, "[input") {
+		t.Fatalf("empty displays list rendered something:\n%s", out)
+	}
+}
+
+func TestKeyboardFromSettings(t *testing.T) {
+	got := KeyboardFromSettings(ipc.KeyboardSettings{
+		Layouts: []string{"us", "ru"}, Variants: []string{"", "phonetic"},
+		Options: []string{"caps:escape", "grp:alt_shift_toggle"}, RepeatRate: 111, RepeatDelay: 175,
+	})
+	want := KeyboardInput{
+		Layouts:    []KeyboardLayout{{Layout: "us"}, {Layout: "ru", Variant: "phonetic"}},
+		SwitchBind: "alt_shift", Options: []string{"caps:escape"}, RepeatRate: 111, RepeatDelay: 175,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("got %+v, want %+v", got, want)
+	}
+	// round trip: the switch option comes back first
+	if s := got.Settings(); strings.Join(s.Options, ",") != "grp:alt_shift_toggle,caps:escape" {
+		t.Fatalf("round trip options = %v", s.Options)
+	}
+	none := KeyboardFromSettings(ipc.KeyboardSettings{Layouts: []string{"de"}, Options: []string{"grp:menu_toggle"}})
+	if none.SwitchBind != "none" || !reflect.DeepEqual(none.Options, []string{"grp:menu_toggle"}) {
+		t.Fatalf("unknown switch option stays an option: %+v", none)
 	}
 }

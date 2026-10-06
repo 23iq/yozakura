@@ -101,7 +101,7 @@ func sampleInput() Input {
 
 func TestRenderTopLevelSections(t *testing.T) {
 	out := Render(sampleInput(), false)
-	for _, section := range []string{"[target]", "[startup]", "[appearance]", "[general]", "[input]"} {
+	for _, section := range []string{"[target]", "[startup]", "[appearance]", "[general]"} {
 		if !strings.Contains(out, section) {
 			t.Errorf("missing section %q in rendered TOML:\n%s", section, out)
 		}

@@ -152,6 +152,13 @@ terminal and reverts unless you answer y (a kept change is saved to
 `displays.monitors`). Without a terminal and without `--yes` it reverts after
 the timeout and exits 3. `keyboard` writes `keyboard.layouts` /
 `keyboard.switchBind` through the same validated layer as `config set`.
+Until the user changes the keyboard in Yozakura (`keyboard.managed` false)
+nothing keyboard-related is rendered or applied and the compositor's own
+settings stay in effect (`keyboard list` shows them, read via the backend's
+`keyboard.current`); the first `keyboard add/remove/switch-bind` (or MCP
+`keyboard_set`, or an edit in Settings > Keyboard / onboarding) copies them
+into the domain and sets `managed` first. An empty `displays.monitors`
+likewise renders no monitor lines.
 
 Keybind advisor (`backend/pkg/binds`; edits `binds.json` only, never the
 compositor config; `--json` everywhere):

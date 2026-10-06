@@ -5328,6 +5328,12 @@
       "type": "object",
       "x-file": "config/keyboard.json",
       "properties": {
+        "managed": {
+          "title": "Managed",
+          "type": "boolean",
+          "default": false,
+          "description": "Yozakura manages the keyboard: renders these settings into the compositor config and applies them live. Off until the keyboard is changed in Yozakura; the compositor's own settings stay in effect until then."
+        },
         "layouts": {
           "title": "Layouts",
           "type": "array",
@@ -5383,7 +5389,7 @@
           "default": 25,
           "description": "Key repeat rate.",
           "minimum": 1,
-          "maximum": 100,
+          "maximum": 200,
           "x-unit": "/s"
         },
         "repeatDelay": {

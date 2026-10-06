@@ -33,6 +33,8 @@ type Compositor struct {
 	// Keyboard is returned by ActiveLayout; ApplyKeyboardCalls records ApplyKeyboard.
 	Keyboard           ipc.KeyboardLayoutState
 	ApplyKeyboardCalls []ipc.KeyboardSettings
+	// CurrentKB is returned by CurrentKeyboard.
+	CurrentKB ipc.KeyboardSettings
 
 	calls struct {
 		listWindows     int

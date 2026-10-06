@@ -3,6 +3,7 @@
 import Quickshell.Io
 
 JsonAdapter {
+    property bool managed: false
     property list<var> layouts: [
         {
             "layout": "us",

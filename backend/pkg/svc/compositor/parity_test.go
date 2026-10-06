@@ -35,7 +35,6 @@ func TestRenderMatchesCurrentDaemonToml(t *testing.T) {
 		"namespace = \"quickshell\"\nno_anim = true",
 		"namespace = \"fabric\"\nblur = true\nignore_alpha_value = 0.4",
 		"namespace = \"^yozakura(:.*)?$\"\nblur = true\nblur_popups = true\nno_anim = true\nignore_alpha_value = 0.20",
-		"[input]\n[input.keyboard]\nlayouts = \"\"\nvariants = \"\"\n",
 	}
 	for _, want := range required {
 		if !strings.Contains(out, want) {

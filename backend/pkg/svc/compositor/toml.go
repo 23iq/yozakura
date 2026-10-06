@@ -64,8 +64,7 @@ func Render(in Input, gameMode bool) string {
 	// [[monitors]]
 	writeMonitors(&b, in.Displays)
 
-	// [input]
-	b.WriteString("\n[input]\n")
+	// [input] (only while the shell manages the keyboard)
 	writeKeyboard(&b, in.Keyboard)
 
 	return b.String()

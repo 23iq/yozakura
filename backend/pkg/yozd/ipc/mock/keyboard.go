@@ -18,3 +18,12 @@ func (c *Compositor) ActiveLayout() (ipc.KeyboardLayoutState, error) {
 }
 
 var _ ipc.KeyboardManager = (*Compositor)(nil)
+
+// CurrentKeyboard returns the CurrentKB field.
+func (c *Compositor) CurrentKeyboard() (ipc.KeyboardSettings, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.CurrentKB, nil
+}
+
+var _ ipc.KeyboardReader = (*Compositor)(nil)

@@ -8,9 +8,25 @@ import "KeyboardModel.js" as KeyboardModel
 // Keyboard layouts: the XKB catalog, the active layout (live, from the
 // backend `keyboard` service) and instant application of the keyboard config
 // domain. The same settings are rendered into the compositor config by
-// CompositorTomlWriter (input()), so they also survive a compositor restart.
+// CompositorTomlWriter (compositorInput()), so they also survive a
+// compositor restart.
+//
+// Ruling K-1: nothing is rendered or applied until keyboard.managed. Before,
+// the user's own compositor settings stay in effect and the UI shows them
+// (`current`, read through the backend); the first edit() copies them into
+// the domain, sets managed and only then applies.
 Singleton {
     id: root
+
+    // Yozakura renders and applies the keyboard domain
+    readonly property bool managed: Config.keyboardReady && Config.keyboard.managed === true
+    // The compositor's settings in the domain's shape ({available, layouts,
+    // switchBind, options, repeatRate, repeatDelay}); null until read
+    property var current: null
+    // The UI may edit: managed, or the compositor's values are known
+    readonly property bool known: root.managed || root.current !== null
+    // What the UI shows: the domain once managed, the compositor's values before
+    readonly property var effective: KeyboardModel.effective(root.managed, Config.keyboardReady ? Config.keyboard : null, root.current)
 
     // Parsed rules list {layouts:[{name, description, variants}], options, groups}, loaded on first use
     property var catalog: null
@@ -25,8 +41,8 @@ Singleton {
         })
 
     // Before the first keyboard.layout event: the first configured layout
-    readonly property string shortLabel: root.active.short || (Config.keyboardReady && Config.keyboard.layouts.length > 0 ? KeyboardModel.shortName(Config.keyboard.layouts[0].layout) : "")
-    readonly property bool indicatorVisible: Config.keyboardReady && Config.keyboard.showIndicator && Config.keyboard.layouts.length > 1
+    readonly property string shortLabel: root.active.short || (root.effective.layouts.length > 0 ? KeyboardModel.shortName(root.effective.layouts[0].layout) : "")
+    readonly property bool indicatorVisible: Config.keyboardReady && Config.keyboard.showIndicator && root.effective.layouts.length > 1
 
     function shortName(layout) {
         return KeyboardModel.shortName(layout);
@@ -45,6 +61,44 @@ Singleton {
             "repeatRate": k.repeatRate,
             "repeatDelay": k.repeatDelay
         };
+    }
+
+    // The keyboard domain for the compositor config: null (nothing rendered,
+    // the user's own settings stay) until managed.
+    function compositorInput() {
+        return root.managed ? root.input() : null;
+    }
+
+    // Reads the compositor's settings (read only); then calls done().
+    function refreshCurrent(done) {
+        BackendService.call("keyboard.current", {}, (result, error) => {
+            if (error || !result) {
+                console.warn("KeyboardService: current failed", JSON.stringify(error));
+                return;
+            }
+            root.current = result;
+            if (done)
+                done();
+        });
+    }
+
+    // Every user change of the keyboard goes through here (settings page,
+    // onboarding): `patch` holds the new values ({layouts: [...]},
+    // {repeatRate: 40}, {showIndicator: false}). An edit made before the
+    // compositor's values are known waits for them.
+    function edit(patch) {
+        if (!Config.keyboardReady)
+            return;
+        if (!root.known) {
+            root.refreshCurrent(() => root.edit(patch));
+            return;
+        }
+        const writes = KeyboardModel.planEdit(root.managed, root.current, patch);
+        Config.pauseAutoSave = true;
+        for (const key in writes)
+            Config.keyboard[key] = writes[key];
+        Config.pauseAutoSave = false;
+        Config.saveKeyboard();
     }
 
     function loadCatalog() {
@@ -69,7 +123,7 @@ Singleton {
     }
 
     function apply() {
-        if (!Config.keyboardReady)
+        if (!root.managed)
             return;
         BackendService.call("keyboard.apply", root.input(), (result, error) => {
             if (error)
@@ -111,9 +165,13 @@ Singleton {
         function onRepeatDelayChanged() {
             applyDebounce.restart();
         }
+        function onManagedChanged() {
+            applyDebounce.restart();
+        }
     }
 
     Component.onCompleted: {
+        root.refreshCurrent();
         BackendService.addSubscription(["keyboard"], (service, data) => {
             if (service === "keyboard.layout")
                 Qt.callLater(() => root._onLayout(data));

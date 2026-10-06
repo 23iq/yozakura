@@ -206,7 +206,9 @@ Singleton {
             // Saved monitor layout (keyed by current connectors) and keyboard
             // layouts/repeat: rendered as [[monitors]] and the input section.
             displays: root.displayList(),
-            keyboard: root.keyboardOn() ? KeyboardService.input() : null,
+            // null until the user changes the keyboard in Yozakura
+            // (keyboard.managed): the compositor's own settings stay.
+            keyboard: KeyboardService.compositorInput(),
             windowRules: root.specialsOn() ? Specials.windowRules(Config.specials.workspaces) : [],
         };
     }
@@ -457,10 +459,6 @@ Singleton {
         root.callWrite();
     }
 
-    function keyboardOn() {
-        return Config.keyboardReady;
-    }
-
     property Connections displaysConnections: Connections {
         target: Config.displaysReady ? Config.displays : null
         function onMonitorsChanged() { root.callWrite(); }
@@ -486,6 +484,7 @@ Singleton {
         function onOptionsChanged() { root.callWrite(); }
         function onRepeatRateChanged() { root.callWrite(); }
         function onRepeatDelayChanged() { root.callWrite(); }
+        function onManagedChanged() { root.callWrite(); }
     }
 
     property Connections specialsConnections: Connections {

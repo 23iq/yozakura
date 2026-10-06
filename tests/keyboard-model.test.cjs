@@ -5,7 +5,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/services/KeyboardModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions, defaultsForLocale};')();
+const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions, defaultsForLocale, effective, planEdit, fromConfig};')();
+const migSrc = fs.readFileSync(path.join(__dirname, '..', 'config/KeyboardMigration.js'), 'utf8').replace('.pragma library', '');
+const Mig = new Function(migSrc + '; return {legacyManaged};')();
+const defSrc = fs.readFileSync(path.join(__dirname, '..', 'config/defaults/keyboard.js'), 'utf8').replace('.pragma library', '');
+const DEFAULTS = new Function(defSrc + '; return data;')();
 
 const catalog = {
     layouts: [
@@ -83,4 +87,64 @@ test('defaultsForLocale: us plus the layout of the system locale', () => {
     assert.deepStrictEqual(M.defaultsForLocale('xx_YY'), ['us'], 'unknown language: us only');
     assert.deepStrictEqual(M.defaultsForLocale(''), ['us']);
     assert.deepStrictEqual(M.defaultsForLocale('C'), ['us']);
+});
+
+// --- keyboard.managed (ruling K-1) ---
+const cfg = { layouts: [{ layout: 'us', variant: '' }], switchBind: 'alt_shift', options: [], repeatRate: 25, repeatDelay: 600 };
+const current = { available: true, layouts: [{ layout: 'us', variant: '' }, { layout: 'ru', variant: '' }], switchBind: 'alt_shift', options: ['caps:escape'], repeatRate: 111, repeatDelay: 175 };
+
+test('effective: the compositor values until managed, the domain after', () => {
+    const before = M.effective(false, cfg, current);
+    assert.deepStrictEqual(before.layouts.map(l => l.layout), ['us', 'ru']);
+    assert.strictEqual(before.repeatRate, 111);
+    assert.deepStrictEqual(before.options, ['caps:escape']);
+    assert.deepStrictEqual(M.effective(true, cfg, current), M.fromConfig(cfg));
+    assert.deepStrictEqual(M.effective(false, cfg, null), M.fromConfig(cfg), 'unknown current: the domain');
+    assert.deepStrictEqual(M.effective(false, cfg, { available: false, layouts: [] }), M.fromConfig(cfg), 'niri/mango: the domain');
+});
+
+test('planEdit: the first compositor edit copies the current values in and sets managed', () => {
+    const w = M.planEdit(false, current, { repeatRate: 120 });
+    assert.strictEqual(w.managed, true);
+    assert.deepStrictEqual(w.layouts.map(l => l.layout), ['us', 'ru']);
+    assert.strictEqual(w.repeatRate, 120, 'the edit wins over the copied value');
+    assert.strictEqual(w.repeatDelay, 175);
+    assert.deepStrictEqual(w.options, ['caps:escape']);
+    assert.strictEqual(w.switchBind, 'alt_shift');
+});
+
+test('planEdit: managed edits and showIndicator write only the patch', () => {
+    assert.deepStrictEqual(M.planEdit(true, current, { repeatRate: 30 }), { repeatRate: 30 });
+    assert.deepStrictEqual(M.planEdit(false, current, { showIndicator: false }), { showIndicator: false });
+});
+
+test('planEdit: out-of-range or unknown compositor values keep the configured ones', () => {
+    const w = M.planEdit(false, Object.assign({}, current, { repeatRate: 0, repeatDelay: 5000, switchBind: 'weird' }), { layouts: [{ layout: 'de', variant: '' }] });
+    assert.ok(!('repeatRate' in w) && !('repeatDelay' in w) && !('switchBind' in w));
+    assert.deepStrictEqual(w.layouts, [{ layout: 'de', variant: '' }]);
+    assert.strictEqual(w.managed, true);
+    // a compositor that cannot report: only the patch + managed
+    assert.deepStrictEqual(M.planEdit(false, { available: false, layouts: [] }, { switchBind: 'caps' }), { managed: true, switchBind: 'caps' });
+});
+
+test('migration: a keyboard.json of pure defaults stays unmanaged', () => {
+    assert.strictEqual(DEFAULTS.managed, false);
+    const legacy = { layouts: [{ layout: 'us', variant: '' }], switchBind: 'alt_shift', options: [], repeatRate: 25, repeatDelay: 600, showIndicator: true };
+    assert.strictEqual(Mig.legacyManaged(legacy, DEFAULTS), false);
+    assert.strictEqual(Mig.legacyManaged(Object.assign({}, legacy, { showIndicator: false }), DEFAULTS), false, 'showIndicator is not a compositor key');
+    assert.strictEqual(Mig.legacyManaged({ layouts: [{ layout: 'us' }] }, DEFAULTS), false, 'missing keys and variant count as defaults');
+});
+
+test('migration: a file the user changed (us,ru 111/175) is managed', () => {
+    const user = { layouts: [{ layout: 'us', variant: '' }, { layout: 'ru', variant: '' }], switchBind: 'alt_shift', options: [], repeatRate: 111, repeatDelay: 175, showIndicator: true };
+    assert.strictEqual(Mig.legacyManaged(user, DEFAULTS), true);
+    assert.strictEqual(Mig.legacyManaged({ repeatRate: 30 }, DEFAULTS), true);
+    assert.strictEqual(Mig.legacyManaged({ options: ['caps:escape'] }, DEFAULTS), true);
+});
+
+test('migration: files that already carry managed are left alone', () => {
+    assert.strictEqual(Mig.legacyManaged({ managed: false, repeatRate: 111 }, DEFAULTS), null);
+    assert.strictEqual(Mig.legacyManaged({ managed: true }, DEFAULTS), null);
+    assert.strictEqual(Mig.legacyManaged([], DEFAULTS), null);
+    assert.strictEqual(Mig.legacyManaged(null, DEFAULTS), null);
 });

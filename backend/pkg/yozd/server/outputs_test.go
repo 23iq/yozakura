@@ -89,3 +89,24 @@ func TestKeyboardApplyActive(t *testing.T) {
 		t.Fatalf("want ErrNotSupported, got %v", err)
 	}
 }
+
+func TestKeyboardCurrent(t *testing.T) {
+	m := mock.NewCompositor()
+	s := &Server{compositor: m}
+	res, err := call(t, s, "Keyboard.Current", nil)
+	k, _ := res.(ipc.KeyboardSettings)
+	if err != nil || k.Layouts == nil || k.Variants == nil || k.Options == nil {
+		t.Fatalf("empty lists must be []: %#v %v", res, err)
+	}
+	m.CurrentKB = ipc.KeyboardSettings{Layouts: []string{"us", "ru"}, Variants: []string{"", ""}, RepeatRate: 111}
+	res, _ = call(t, s, "Keyboard.Current", nil)
+	if k := res.(ipc.KeyboardSettings); len(k.Layouts) != 2 || k.RepeatRate != 111 {
+		t.Fatalf("got %+v", k)
+	}
+	if len(m.ApplyKeyboardCalls) != 0 {
+		t.Fatal("reading must not apply")
+	}
+	if _, err := call(t, &Server{compositor: bareComp{m}}, "Keyboard.Current", nil); !errors.Is(err, ipc.ErrNotSupported) {
+		t.Fatalf("want ErrNotSupported, got %v", err)
+	}
+}

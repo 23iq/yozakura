@@ -7,7 +7,7 @@ import (
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
-// dispatchOutputs handles the Monitor.Outputs/Apply and Keyboard.Apply/Active
+// dispatchOutputs handles the Monitor.Outputs/Apply and Keyboard.Apply/Active/Current
 // methods. handled is false for any other method.
 func (s *Server) dispatchOutputs(req Request) (res interface{}, handled bool, err error) {
 	switch req.Method {
@@ -27,6 +27,8 @@ func (s *Server) dispatchOutputs(req Request) (res interface{}, handled bool, er
 		err = applyKeyboard(s.compositor, k)
 	case "Keyboard.Active":
 		res, err = activeLayout(s.compositor)
+	case "Keyboard.Current":
+		res, err = currentKeyboard(s.compositor)
 	default:
 		return nil, false, nil
 	}
@@ -92,4 +94,23 @@ func activeLayout(c ipc.Compositor) (ipc.KeyboardLayoutState, error) {
 		st.Names = []string{}
 	}
 	return st, nil
+}
+
+// currentKeyboard reports the keyboard settings in effect; the lists are []
+// rather than null.
+func currentKeyboard(c ipc.Compositor) (ipc.KeyboardSettings, error) {
+	r, ok := c.(ipc.KeyboardReader)
+	if !ok {
+		return ipc.KeyboardSettings{}, ipc.ErrNotSupported
+	}
+	k, err := r.CurrentKeyboard()
+	if err != nil {
+		return ipc.KeyboardSettings{}, err
+	}
+	for _, l := range []*[]string{&k.Layouts, &k.Variants, &k.Options} {
+		if *l == nil {
+			*l = []string{}
+		}
+	}
+	return k, nil
 }

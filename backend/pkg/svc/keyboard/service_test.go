@@ -2,6 +2,7 @@ package keyboard
 
 import (
 	"encoding/json"
+	"errors"
 	"path/filepath"
 	"reflect"
 	"testing"
@@ -16,6 +17,8 @@ type fakeYozd struct {
 	state   yipc.KeyboardLayoutState
 	applied []yipc.KeyboardSettings
 	nexts   int
+	current yipc.KeyboardSettings
+	curErr  error
 }
 
 func (f *fakeYozd) ApplyKeyboard(s yipc.KeyboardSettings) error {
@@ -24,6 +27,7 @@ func (f *fakeYozd) ApplyKeyboard(s yipc.KeyboardSettings) error {
 }
 func (f *fakeYozd) ActiveLayout() (yipc.KeyboardLayoutState, error) { return f.state, nil }
 func (f *fakeYozd) NextLayout() error                               { f.nexts++; return nil }
+func (f *fakeYozd) CurrentKeyboard() (yipc.KeyboardSettings, error) { return f.current, f.curErr }
 
 type fakeSource struct{ ch chan compositor.State }
 
@@ -94,5 +98,34 @@ func TestSubscribeForwardsLayoutEvents(t *testing.T) {
 	}
 	if a := got(); a.Code != "us" || a.Index != 0 {
 		t.Fatalf("after switch back = %+v", a)
+	}
+}
+
+func TestCurrentIsTheDomainShapeAndNeverApplies(t *testing.T) {
+	y := &fakeYozd{current: yipc.KeyboardSettings{
+		Layouts: []string{"us", "ru"}, Variants: []string{"", ""},
+		Options: []string{"grp:alt_shift_toggle"}, RepeatRate: 111, RepeatDelay: 175,
+	}}
+	s := newService(y, nil, rules())
+	c, err := s.Current()
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := json.Marshal(c)
+	want := `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":[],"repeatRate":111,"repeatDelay":175}`
+	if string(raw) != want {
+		t.Fatalf("current = %s\nwant      %s", raw, want)
+	}
+	if len(y.applied) != 0 {
+		t.Fatal("current must not apply")
+	}
+
+	y.curErr = yipc.ErrNotSupported
+	if c, err := s.Current(); err != nil || c.Available {
+		t.Fatalf("unsupported compositor: %+v %v", c, err)
+	}
+	y.curErr = errors.New("daemon down")
+	if _, err := s.Current(); err == nil {
+		t.Fatal("a daemon error is an error")
 	}
 }

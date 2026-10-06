@@ -80,6 +80,27 @@ func TestKeyboardTools(t *testing.T) {
 	assert.True(t, callTool(t, d, "keyboard_set", `{"remove":"us"}`).IsError, "last layout")
 }
 
+func TestKeyboardSetTakesOverCompositorSettings(t *testing.T) {
+	d, _, ipc := newDeps(t)
+	ipc.result["keyboard.catalog"] = `{"layouts":[{"name":"us","variants":[]},{"name":"ru","variants":[]},{"name":"de","variants":[]}]}`
+	ipc.result["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":[],"repeatRate":111,"repeatDelay":175}`
+
+	m := structured(t, callTool(t, d, "keyboard_get", `{}`))
+	assert.Equal(t, false, m["managed"])
+	assert.Len(t, m["layouts"], 2, "unmanaged: the compositor's layouts")
+
+	m = structured(t, callTool(t, d, "keyboard_set", `{"add":"de"}`))
+	assert.Len(t, m["layouts"], 3, "us,ru from the compositor + de")
+	m = structured(t, callTool(t, d, "config_get", `{"key":"keyboard.repeatRate"}`))
+	assert.EqualValues(t, 111, m["value"])
+	m = structured(t, callTool(t, d, "keyboard_get", `{}`))
+	assert.Equal(t, true, m["managed"])
+
+	d2, _, ipc2 := newDeps(t)
+	ipc2.down = true
+	assert.True(t, callTool(t, d2, "keyboard_set", `{"switchBind":"caps"}`).IsError, "unreadable compositor: nothing written")
+}
+
 const twoOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,"modes":[{"width":2560,"height":1440,"refresh":165},{"width":2560,"height":1440,"refresh":144}]},
  {"id":"DEL|U27|2","name":"HDMI-A-1","enabled":true,"width":1920,"height":1080,"refresh":60,"x":2560,"scale":1,"modes":[{"width":1920,"height":1080,"refresh":60}]}]`
 

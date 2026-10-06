@@ -57,9 +57,14 @@ QtObject {
 }"""
 
 
+# keyboard.current: the compositor's own settings (the defaults' shape).
+CURRENT = {"available": True, "layouts": [{"layout": "us", "variant": ""}], "switchBind": "alt_shift",
+           "options": [], "repeatRate": 25, "repeatDelay": 600}
+
+
 class KeyboardEnv(DisplaysEnv):
     def __init__(self, name: str = "keyboard", *, replies=None, **kw):
-        replies = {"keyboard.catalog": CATALOG, "keyboard.next": {}, **(replies or {})}
+        replies = {"keyboard.catalog": CATALOG, "keyboard.next": {}, "keyboard.current": CURRENT, **(replies or {})}
         super().__init__(name, replies=replies, **kw)
         h = self.h
         qs = self.root / "qs"

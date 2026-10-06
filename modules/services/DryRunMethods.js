@@ -153,7 +153,7 @@ var METHODS = {
 };
 
 // Reads by exact name, and by verb (the part after the last dot).
-var READS = ["config.statesGet", "compositor.state"];
+var READS = ["config.statesGet", "compositor.state", "keyboard.current"];
 // Read-named but kept away from the daemon: identify draws on the real
 // shell too (mocked locally), API keys are never read in a dry run.
 var NOT_READS = ["displays.identify"];

@@ -205,3 +205,89 @@ function defaultsForLocale(locale) {
     var code = (lang === "pt" && (parts[1] || "").toUpperCase() === "BR") ? "br" : LOCALE_LAYOUTS[lang];
     return code ? ["us", code] : ["us"];
 }
+
+// --- Managed keyboard (keyboard.managed, ruling K-1) -----------------------
+// Until the user changes the keyboard in Yozakura the compositor's own
+// settings stay in effect: nothing is rendered or applied, and the UI shows
+// the compositor's values (`current`, the backend's keyboard.current reply).
+
+// Keys that reach the compositor (showIndicator is the shell's own).
+var COMPOSITOR_KEYS = ["layouts", "switchBind", "options", "repeatRate", "repeatDelay"];
+var REPEAT_RANGES = {
+    "repeatRate": [1, 200],
+    "repeatDelay": [100, 2000]
+};
+
+function _copyLayouts(list) {
+    return _list(list).map(function (l) {
+        return {
+            "layout": l.layout || "",
+            "variant": l.variant || ""
+        };
+    });
+}
+
+// Config keyboard domain -> plain values {layouts, switchBind, options,
+// repeatRate, repeatDelay}.
+function fromConfig(cfg) {
+    return {
+        "layouts": _copyLayouts(cfg && cfg.layouts),
+        "switchBind": (cfg && cfg.switchBind) || "none",
+        "options": _list(cfg && cfg.options),
+        "repeatRate": (cfg && cfg.repeatRate) || 0,
+        "repeatDelay": (cfg && cfg.repeatDelay) || 0
+    };
+}
+
+// The compositor's values worth taking over: only what it reported (a
+// repeat value outside the settings range keeps the configured one).
+function _currentValues(current) {
+    var out = {};
+    if (!current || !current.available || _list(current.layouts).length === 0)
+        return out;
+    out.layouts = _copyLayouts(current.layouts);
+    if (SWITCH_OPTIONS[current.switchBind] || current.switchBind === "none")
+        out.switchBind = current.switchBind;
+    out.options = _list(current.options);
+    Object.keys(REPEAT_RANGES).forEach(function (k) {
+        var v = Number(current[k]);
+        if (v >= REPEAT_RANGES[k][0] && v <= REPEAT_RANGES[k][1])
+            out[k] = v;
+    });
+    return out;
+}
+
+// What the keyboard UI shows: the domain once managed, the compositor's
+// values (over the domain) before.
+function effective(managed, cfg, current) {
+    var base = fromConfig(cfg);
+    if (managed)
+        return base;
+    var cur = _currentValues(current);
+    Object.keys(cur).forEach(function (k) {
+        base[k] = cur[k];
+    });
+    return base;
+}
+
+// The keyboard-domain writes for a user edit `patch` ({layouts: [...]},
+// {repeatRate: 40}, ...). The first edit of a compositor key while
+// unmanaged first copies the compositor's values in and sets managed, so
+// nothing the user had is lost; showIndicator alone never takes over.
+function planEdit(managed, current, patch) {
+    var out = {};
+    var touches = COMPOSITOR_KEYS.some(function (k) {
+        return patch && patch[k] !== undefined;
+    });
+    if (touches && !managed) {
+        var cur = _currentValues(current);
+        Object.keys(cur).forEach(function (k) {
+            out[k] = cur[k];
+        });
+        out.managed = true;
+    }
+    Object.keys(patch || {}).forEach(function (k) {
+        out[k] = patch[k];
+    });
+    return out;
+}

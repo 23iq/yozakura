@@ -63,3 +63,19 @@ func TestActiveLayoutAndNext(t *testing.T) {
 		t.Fatalf("args = %q", args)
 	}
 }
+
+func TestCurrentKeyboard(t *testing.T) {
+	var args []string
+	c := fake(`{"layouts":["us","ru"],"variants":["",""],"options":["grp:alt_shift_toggle"],"model":"","repeat_rate":111,"repeat_delay":175}`, &args)
+	k, err := c.CurrentKeyboard()
+	if err != nil || len(k.Layouts) != 2 || k.RepeatRate != 111 || k.RepeatDelay != 175 {
+		t.Fatalf("settings = %+v, %v", k, err)
+	}
+	if !reflect.DeepEqual(args, []string{"keyboard", "current"}) {
+		t.Fatalf("args = %q", args)
+	}
+	c = fake("Error: "+ipc.ErrNotSupported.Error(), &args)
+	if _, err := c.CurrentKeyboard(); !errors.Is(err, ipc.ErrNotSupported) {
+		t.Fatalf("want ErrNotSupported, got %v", err)
+	}
+}

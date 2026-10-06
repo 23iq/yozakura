@@ -30,6 +30,13 @@ type KeyboardManager interface {
 	ActiveLayout() (KeyboardLayoutState, error)
 }
 
+// KeyboardReader is implemented by compositors that can report the XKB and
+// key repeat settings in effect (the user's own compositor config included),
+// so the shell can show them before it manages the keyboard itself.
+type KeyboardReader interface {
+	CurrentKeyboard() (KeyboardSettings, error)
+}
+
 var xkbTokenRe = regexp.MustCompile(`^[A-Za-z0-9_:+()-]+$`)
 
 // Validate rejects any token that is not a plain XKB name. Empty variants are

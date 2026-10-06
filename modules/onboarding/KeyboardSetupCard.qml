@@ -10,34 +10,52 @@ import "../services/KeyboardModel.js" as KeyboardModel
 
 // Keyboard in the Displays step: the layouts as chips (remove, add from the
 // searchable catalog), how to switch between them and a field to try it.
-// Writes the keyboard config domain; KeyboardService applies it live.
+// Shows the layouts in effect (the compositor's own until Yozakura manages
+// the keyboard) or the locale suggestion (wizard.choices.keyboardDraft,
+// seeded by StepDisplays), which is only a draft: nothing is written or
+// applied until the user confirms or edits it (KeyboardService.edit).
 StyledRect {
     id: root
 
     property OnboardingState wizard
     property bool picking: false
 
-    readonly property var layouts: Config.keyboardReady ? Array.from(Config.keyboard.layouts) : []
+    readonly property var draftCodes: wizard && wizard.choices.keyboardDraft ? wizard.choices.keyboardDraft : null
+    readonly property var layouts: draftCodes ? draftCodes.map(c => ({
+                "layout": c,
+                "variant": ""
+            })) : KeyboardService.effective.layouts
     readonly property int pad: Math.round(Styling.fontSize(0) * 1.2)
     readonly property var bindChoices: ["alt_shift", "super_space", "caps", "ctrl_shift"].map(b => ({
                 "value": b,
                 "label": I18n.t("prefs.keyboard.bind." + b)
             }))
 
-    function setLayouts(list) {
+    // Any edit commits what the card shows (a pending suggestion included).
+    function commit(patch) {
         if (!Config.keyboardReady)
             return;
-        Config.keyboard.layouts = list;
-        Config.saveKeyboard();
-        wizard.remember("keyboard", list.map(l => l.layout));
+        if (root.draftCodes && patch.layouts === undefined)
+            patch.layouts = root.layouts;
+        KeyboardService.edit(patch);
+        if (root.draftCodes)
+            wizard.remember("keyboardDraft", null);
+        if (patch.layouts !== undefined)
+            wizard.remember("keyboard", patch.layouts.map(l => l.layout));
+        if (patch.switchBind !== undefined)
+            wizard.remember("switchBind", patch.switchBind);
+    }
+
+    function setLayouts(list) {
+        root.commit({
+            "layouts": list
+        });
     }
 
     function setBind(bind) {
-        if (!Config.keyboardReady)
-            return;
-        Config.keyboard.switchBind = bind;
-        Config.saveKeyboard();
-        wizard.remember("switchBind", bind);
+        root.commit({
+            "switchBind": bind
+        });
     }
 
     function description(code) {
@@ -50,7 +68,10 @@ StyledRect {
     radius: Styling.radius(4)
     implicitHeight: column.implicitHeight + pad * 2
 
-    Component.onCompleted: KeyboardService.loadCatalog()
+    Component.onCompleted: {
+        KeyboardService.loadCatalog();
+        KeyboardService.refreshCurrent();
+    }
 
     Rectangle {
         anchors.fill: parent
@@ -63,6 +84,8 @@ StyledRect {
 
     Column {
         id: column
+        // edits build on the layouts shown: wait until they are known
+        enabled: KeyboardService.known
         x: root.pad
         y: root.pad
         width: parent.width - root.pad * 2
@@ -73,6 +96,37 @@ StyledRect {
             icon: "keyboard"
             text: I18n.t("onboarding.keyboard.title")
             hint: I18n.t("onboarding.keyboard.desc")
+        }
+
+        UnmanagedNote {
+            objectName: "unmanagedNote"
+            width: parent.width
+            visible: !root.draftCodes && Config.keyboardReady && !KeyboardService.managed
+        }
+
+        Row {
+            objectName: "draftRow"
+            visible: !!root.draftCodes
+            width: parent.width
+            spacing: 12
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width - useDraft.width - parent.spacing
+                text: I18n.t("onboarding.keyboard.suggested")
+                wrapMode: Text.WordWrap
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                color: Colors.overSurfaceVariant
+            }
+            NavButton {
+                id: useDraft
+                objectName: "useDraft"
+                kind: "tonal"
+                height: 36
+                icon: "check"
+                text: I18n.t("onboarding.keyboard.use")
+                onClicked: root.setLayouts(root.layouts)
+            }
         }
 
         Flow {
@@ -184,7 +238,7 @@ StyledRect {
                 objectName: "switchChips"
                 width: parent.width - switchLabel.width - parent.spacing
                 options: root.bindChoices
-                value: Config.keyboardReady ? Config.keyboard.switchBind : "alt_shift"
+                value: KeyboardService.effective.switchBind
                 onSelected: bind => root.setBind(bind)
             }
         }

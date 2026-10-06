@@ -51,28 +51,26 @@ Item {
         wizard.remember("displays", modes);
     }
 
-    // First visit: `us` + the locale's layout, unless layouts were set
-    // before. The marker is persistent (not a wizard choice): a skipped or
-    // finished setup never re-seeds. Retried until config and state load.
+    // First visit: `us` + the locale's layout as a suggestion when the
+    // layouts in effect (the compositor's own until Yozakura manages the
+    // keyboard) are just `us`. Only the card's draft is seeded: nothing is
+    // written or applied until the user confirms or edits it. The marker is
+    // persistent (not a wizard choice): a skipped or finished setup never
+    // re-seeds. Retried until config, state and the current layouts load.
     readonly property string seededKey: "onboarding.keyboardSeeded"
 
     function seedKeyboard(locale) {
-        if (!wizard || !Config.keyboardReady || !StateService.initialized || StateService.get(root.seededKey, false) === true)
+        if (!wizard || !Config.keyboardReady || !KeyboardService.known || !StateService.initialized || StateService.get(root.seededKey, false) === true)
             return;
         StateService.set(root.seededKey, true);
-        const cur = Array.from(Config.keyboard.layouts);
+        const cur = KeyboardService.effective.layouts;
         const untouched = cur.length === 1 && cur[0].layout === "us" && !cur[0].variant;
         if (!untouched)
             return;
         const codes = KeyboardModel.defaultsForLocale(locale);
         if (codes.length < 2)
             return;
-        Config.keyboard.layouts = codes.map(c => ({
-                    "layout": c,
-                    "variant": ""
-                }));
-        Config.saveKeyboard();
-        wizard.remember("keyboard", codes);
+        wizard.remember("keyboardDraft", codes);
     }
 
     Component.onCompleted: {
@@ -83,6 +81,13 @@ Item {
     Connections {
         target: Config
         function onKeyboardReadyChanged() {
+            root.seedKeyboard(Qt.locale().name);
+        }
+    }
+
+    Connections {
+        target: KeyboardService
+        function onKnownChanged() {
             root.seedKeyboard(Qt.locale().name);
         }
     }

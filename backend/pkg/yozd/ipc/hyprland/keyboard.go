@@ -145,3 +145,72 @@ func parseActiveLayoutEvent(payload string) (map[string]interface{}, bool) {
 	}
 	return map[string]interface{}{"name": name}, true
 }
+
+// hyprKeyboardOptions are the `input:` options CurrentKeyboard reads.
+var hyprKeyboardOptions = []string{"kb_layout", "kb_variant", "kb_options", "kb_model", "repeat_rate", "repeat_delay"}
+
+// parseHyprOption reads a `j/getoption` reply: {"str": "us,ru"} or
+// {"int": 25}. Hyprland reports an empty string as "[[EMPTY]]".
+func parseHyprOption(data []byte) (str string, num int, err error) {
+	var o struct {
+		Str *string  `json:"str"`
+		Int *float64 `json:"int"`
+	}
+	if err := json.Unmarshal(data, &o); err != nil {
+		return "", 0, fmt.Errorf("parse getoption: %w", err)
+	}
+	if o.Str != nil && *o.Str != "[[EMPTY]]" {
+		str = strings.TrimSpace(*o.Str)
+	}
+	if o.Int != nil {
+		num = int(*o.Int)
+	}
+	return str, num, nil
+}
+
+// currentKeyboardFrom builds the settings from the getoption replies keyed
+// by option name (see hyprKeyboardOptions).
+func currentKeyboardFrom(replies map[string][]byte) (ipc.KeyboardSettings, error) {
+	vals := map[string]string{}
+	nums := map[string]int{}
+	for _, opt := range hyprKeyboardOptions {
+		raw, ok := replies[opt]
+		if !ok {
+			continue
+		}
+		s, n, err := parseHyprOption(raw)
+		if err != nil {
+			return ipc.KeyboardSettings{}, fmt.Errorf("%s: %w", opt, err)
+		}
+		vals[opt], nums[opt] = s, n
+	}
+	split := func(s string) []string {
+		if s == "" {
+			return nil
+		}
+		return strings.Split(s, ",")
+	}
+	k := ipc.KeyboardSettings{
+		Layouts:     split(vals["kb_layout"]),
+		Variants:    split(vals["kb_variant"]),
+		Options:     split(vals["kb_options"]),
+		Model:       vals["kb_model"],
+		RepeatRate:  nums["repeat_rate"],
+		RepeatDelay: nums["repeat_delay"],
+	}
+	return k.Normalize(), nil
+}
+
+// CurrentKeyboard reads the keyboard settings in effect (`getoption
+// input:...`), whoever set them.
+func (h *Hyprland) CurrentKeyboard() (ipc.KeyboardSettings, error) {
+	replies := map[string][]byte{}
+	for _, opt := range hyprKeyboardOptions {
+		resp, err := h.dispatch("j/getoption input:" + opt)
+		if err != nil {
+			return ipc.KeyboardSettings{}, err
+		}
+		replies[opt] = []byte(resp)
+	}
+	return currentKeyboardFrom(replies)
+}

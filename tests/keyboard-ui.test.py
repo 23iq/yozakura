@@ -55,13 +55,9 @@ def calls(method):
 
 def item(root, name):
     """Delegates of a Repeater are not QObject children of the card: walk the visual tree."""
-    for c in root.childItems():
-        if c.objectName() == name:
-            return c
-        found = item(c, name)
-        if found is not None:
-            return found
-    return None
+    return h.eval(root, "(function f(it) { if (it.objectName === %s) return it;"
+                        " for (const c of it.children) { const r = f(c); if (r) return r; } return null; })(this)"
+                  % json.dumps(name))
 
 
 def js(expr, obj=None):
@@ -73,6 +69,8 @@ def cfg(expr):
 
 
 check(len(calls("keyboard.catalog")) == 1, "the page loads the catalog")
+check(ev("Config.keyboard.managed") is False and ev("KeyboardService.managed") is False, "a fresh keyboard domain is unmanaged")
+check(h.find(win, "unmanagedNote").property("visible") is True, "unmanaged: the page says the compositor's settings are in use")
 check(ev("Config.keyboard.layouts.length") == 1, "starts with one layout")
 check(ev("indicator.visible") is False, "indicator hidden with a single layout")
 
@@ -92,6 +90,8 @@ QTest.qWait(50)
 layouts = cfg("Array.from(Config.keyboard.layouts)")
 check([l["layout"] for l in layouts] == ["us", "ru"], "adding ru writes keyboard.layouts")
 check("keyboard" in cfg("Config.saved"), "keyboard domain saved")
+check(ev("Config.keyboard.managed") is True, "the first change lets Yozakura manage the keyboard")
+check(h.find(win, "unmanagedNote").property("visible") is False, "the note goes once managed")
 check(ev("picking", h.find(win, "layoutList")) is False, "picking a layout closes the picker")
 
 # Indicator: appears with two layouts, shows RU on a layout event, click -> keyboard.next

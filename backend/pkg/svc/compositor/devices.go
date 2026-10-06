@@ -105,15 +105,15 @@ func writeMonitors(b *strings.Builder, displays []DisplayInput) {
 	}
 }
 
-// writeKeyboard renders [input.keyboard]. Without a keyboard domain (older
-// shells) the historical empty layouts are kept.
+// writeKeyboard renders [input] / [input.keyboard]. Without a keyboard
+// domain (the shell sends none until the user changes the keyboard in
+// Yozakura, keyboard.managed) nothing is rendered, so yozd generates no
+// keyboard settings and the user's own compositor config stays in effect.
 func writeKeyboard(b *strings.Builder, k *KeyboardInput) {
-	b.WriteString("[input.keyboard]\n")
 	if k == nil {
-		b.WriteString(`layouts = ""` + "\n")
-		b.WriteString(`variants = ""` + "\n")
 		return
 	}
+	b.WriteString("\n[input]\n[input.keyboard]\n")
 	s := k.Settings()
 	layouts, variants, options := s.Joined()
 	fmt.Fprintf(b, "layouts = %s\n", tomlString(layouts))
@@ -122,6 +122,37 @@ func writeKeyboard(b *strings.Builder, k *KeyboardInput) {
 	fmt.Fprintf(b, "model = %s\n", tomlString(s.Model))
 	fmt.Fprintf(b, "repeat_rate = %d\n", s.RepeatRate)
 	fmt.Fprintf(b, "repeat_delay = %d\n", s.RepeatDelay)
+}
+
+// KeyboardFromSettings is the inverse of Settings: the keyboard domain for
+// XKB settings read from the compositor. A known layout-switch option
+// becomes switchBind (the first one found; "none" without one), every other
+// option stays in Options.
+func KeyboardFromSettings(s ipc.KeyboardSettings) KeyboardInput {
+	s = s.Normalize()
+	k := KeyboardInput{SwitchBind: "none", Layouts: []KeyboardLayout{}, Options: []string{},
+		Model: s.Model, RepeatRate: s.RepeatRate, RepeatDelay: s.RepeatDelay}
+	for i, l := range s.Layouts {
+		k.Layouts = append(k.Layouts, KeyboardLayout{Layout: l, Variant: s.Variants[i]})
+	}
+	for _, o := range s.Options {
+		if bind := switchBindOf(o); bind != "" && k.SwitchBind == "none" {
+			k.SwitchBind = bind
+			continue
+		}
+		k.Options = append(k.Options, o)
+	}
+	return k
+}
+
+// switchBindOf names the switch bind whose XKB option is o ("" for none).
+func switchBindOf(o string) string {
+	for bind, opt := range switchBindOptions {
+		if opt == o {
+			return bind
+		}
+	}
+	return ""
 }
 
 // tomlFloat always carries a decimal point so TOML decodes it as a float.

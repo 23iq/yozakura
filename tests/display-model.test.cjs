@@ -107,6 +107,14 @@ test('renderList keeps disconnected monitors and uses saved list without outputs
     assert.deepEqual(r.map(c => c.name), ['DP-5', 'HDMI-1']);
 });
 
+// K-1: no saved monitors -> nothing rendered into the compositor config
+// (the user's own monitor lines stay in effect), with or without outputs.
+test('renderList of an empty displays.monitors is empty', () => {
+    assert.deepEqual(plain(M.renderList([], [])), []);
+    assert.deepEqual(plain(M.renderList([], [out('DP-1', 'A'), out('HDMI-A-1', 'B')])), []);
+    assert.deepEqual(plain(M.renderList(null, [out('DP-1', 'A')])), []);
+});
+
 const Gate = loadLibrary(path.join(__dirname, '../modules/services/WriteGate.js'));
 const Kb = loadLibrary(path.join(__dirname, '../modules/services/KeyboardModel.js'));
 

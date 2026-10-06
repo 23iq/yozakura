@@ -13,8 +13,9 @@ import (
 
 // Keyboard tools and the layout editing shared with `yozakura keyboard`.
 // Layouts live in the keyboard config domain (keyboard.layouts,
-// keyboard.switchBind); the shell applies them live and the backend renders
-// them into the compositor config.
+// keyboard.switchBind); once keyboard.managed is set (ManageKeyboard) the
+// shell applies them live and the backend renders them into the compositor
+// config.
 
 // SwitchBinds are the accepted keyboard.switchBind values.
 var SwitchBinds = []string{"alt_shift", "super_space", "caps", "ctrl_shift", "none"}
@@ -93,15 +94,36 @@ func ValidSwitchBind(s string) bool {
 }
 
 // KeyboardState is the keyboard config plus the active layout (when the
-// daemon answers).
+// daemon answers). Managed is false while the user's own compositor
+// settings are in effect; the layouts are then the compositor's (when the
+// daemon reports them).
 type KeyboardState struct {
 	Layouts    []KeyboardLayout `json:"layouts"`
 	SwitchBind string           `json:"switchBind"`
+	Managed    bool             `json:"managed"`
 	Active     json.RawMessage  `json:"active,omitempty"`
 }
 
-// ReadKeyboard reads the config; c may be nil (no active layout then).
+// ReadKeyboard reads the config; c may be nil (no active layout and no
+// compositor values then).
 func ReadKeyboard(store *catalog.Store, c Caller) (KeyboardState, error) {
+	st, err := readKeyboardConfig(store)
+	if err != nil || c == nil {
+		return st, err
+	}
+	if !st.Managed {
+		if cur, err := CurrentKeyboard(c); err == nil && cur.Available {
+			st.Layouts, st.SwitchBind = cur.Layouts, cur.SwitchBind
+		}
+	}
+	if a, err := c.Call("keyboard.active", nil); err == nil {
+		st.Active = a
+	}
+	return st, nil
+}
+
+// readKeyboardConfig reads keyboard.layouts, switchBind and managed.
+func readKeyboardConfig(store *catalog.Store) (KeyboardState, error) {
 	var st KeyboardState
 	v, _, err := store.Get("keyboard.layouts")
 	if err != nil {
@@ -116,12 +138,8 @@ func ReadKeyboard(store *catalog.Store, c Caller) (KeyboardState, error) {
 		return st, err
 	}
 	st.SwitchBind, _ = b.(string)
-	if c != nil {
-		if a, err := c.Call("keyboard.active", nil); err == nil {
-			st.Active = a
-		}
-	}
-	return st, nil
+	st.Managed, err = KeyboardManaged(store)
+	return st, err
 }
 
 // CheckLayoutKnown asks the daemon's XKB catalog; it passes when the daemon
@@ -172,7 +190,7 @@ func SaveLayouts(store *catalog.Store, list []KeyboardLayout) error {
 func keyboardTools(d Deps) []mcp.ToolDef {
 	return []mcp.ToolDef{
 		define("keyboard_get", "Keyboard layouts",
-			`The configured keyboard layouts, the layout switch binding and the layout that is active now.`,
+			`The keyboard layouts, the layout switch binding and the layout that is active now. managed=false: Yozakura does not manage the keyboard yet and the compositor's own settings are shown; the first keyboard_set takes them over.`,
 			noArgs, toolOpts{readOnly: true}, d.keyboardGet),
 		define("keyboard_set", "Set keyboard layouts",
 			`Change the keyboard layouts. "add" / "remove": a layout like "ru" or "us:intl"; "switchBind": alt_shift, super_space, caps, ctrl_shift or none; "next": true switches to the next layout now. Give one or more.`,
@@ -228,6 +246,11 @@ func (d Deps) keyboardSet(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	_, store, err := d.catalog()
 	if err != nil {
 		return nil, err
+	}
+	if a.Add != "" || a.Remove != "" || a.SwitchBind != "" {
+		if err := ManageKeyboard(store, d.callerOrNil()); err != nil {
+			return nil, err
+		}
 	}
 	before, err := ReadKeyboard(store, nil)
 	if err != nil {

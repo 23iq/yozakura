@@ -57,7 +57,7 @@ Item {
                 "id": "keyboard",
                 "icon": "keyboard",
                 "label": I18n.t("onboarding.keyboard.title"),
-                "value": Finish.layoutsLine(Config.keyboard.layouts) || "US"
+                "value": Finish.layoutsLine(KeyboardService.effective.layouts) || "US"
             },
             {
                 "id": "look",

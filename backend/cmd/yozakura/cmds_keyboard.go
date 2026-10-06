@@ -20,6 +20,9 @@ Keyboard layouts (keyboard.layouts / keyboard.switchBind; the running shell
 applies a change live). add appends a layout (e.g. ru, us:intl, de:nodeadkeys),
 remove drops it (the last one stays), switch-bind picks the key combination
 that cycles layouts and next switches to the next layout right now.
+Until the first change Yozakura leaves the keyboard to your compositor config
+and list shows its settings; the first add/remove/switch-bind takes them over
+(keyboard.managed) and needs the shell running.
 `
 
 type keyboardEnv struct {
@@ -93,6 +96,9 @@ func keyboardList(env keyboardEnv, asJSON bool, out io.Writer) error {
 		fmt.Fprintf(out, "%d  %s\n", i+1, l)
 	}
 	fmt.Fprintf(out, "Switch: %s\n", st.SwitchBind)
+	if !st.Managed {
+		fmt.Fprintln(out, "Managed by: your compositor config (a change here lets Yozakura manage it)")
+	}
 	if active != "" {
 		fmt.Fprintf(out, "Active: %s\n", active)
 	}
@@ -104,8 +110,16 @@ func keyboardEdit(env keyboardEnv, add bool, spec string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
+	if add {
+		if err := yozakura.CheckLayoutKnown(env.c, l); err != nil {
+			return err
+		}
+	}
 	store, err := env.store()
 	if err != nil {
+		return err
+	}
+	if err := yozakura.ManageKeyboard(store, env.c); err != nil {
 		return err
 	}
 	st, err := yozakura.ReadKeyboard(store, nil)
@@ -114,9 +128,6 @@ func keyboardEdit(env keyboardEnv, add bool, spec string, out io.Writer) error {
 	}
 	list := st.Layouts
 	if add {
-		if err := yozakura.CheckLayoutKnown(env.c, l); err != nil {
-			return err
-		}
 		var changed bool
 		if list, changed = yozakura.AddLayout(list, l); !changed {
 			fmt.Fprintf(out, "%s is already configured\n", l)
@@ -142,6 +153,9 @@ func keyboardSwitchBind(env keyboardEnv, bind string, out io.Writer) error {
 	}
 	store, err := env.store()
 	if err != nil {
+		return err
+	}
+	if err := yozakura.ManageKeyboard(store, env.c); err != nil {
 		return err
 	}
 	if _, err := store.Set("keyboard.switchBind", bind, false); err != nil {

@@ -316,6 +316,7 @@ w.module("qs.modules.services", {
 })
 w.module("qs.config.adapters", {p.stem: p.read_text() for p in sorted(adapters.glob("*.qml"))})
 w.copy("config/CustomBindDefaults.js", dest="qs/config")
+w.copy("config/KeyboardMigration.js", dest="qs/config")
 cfg = w.load(w.copy("config/Config.qml", dest="qs/config", strip_singleton=True), auto_stub=False)
 check(w.eval(cfg, "initialLoadComplete") is False, "not complete before the files load")
 w.eval(cfg, 'configMalformed("bar", "/cfg/bar.json.bad-1", true)')
@@ -328,6 +329,15 @@ check(w.eval(cfg, "initialLoadComplete") is True, f"initialLoadComplete after al
 check(all(w.eval(cfg, f"{d}Ready") for d in ref["defaults"]), "every <domain>Ready follows its ConfigFile")
 check(json.loads(w.eval(cfg, "generalLoader.content")).get("onboardingDone") is True,
       "general.json without onboardingDone counts as an existing install")
+check(json.loads(w.eval(cfg, "keyboardLoader.content")).get("managed") is False,
+      "keyboard.json without managed and with the defaults stays unmanaged")
+user_kb = {"layouts": [{"layout": "us", "variant": ""}, {"layout": "ru", "variant": ""}], "switchBind": "alt_shift",
+           "options": [], "repeatRate": 111, "repeatDelay": 175, "showIndicator": True}
+w.eval(cfg, "keyboardLoader.content = %s; keyboardLoader.loaded()" % json.dumps(json.dumps(user_kb)))
+kb_after = json.loads(w.eval(cfg, "keyboardLoader.content"))
+check(kb_after.get("managed") is True and kb_after.get("repeatRate") == 111,
+      f"a keyboard.json the user changed (us,ru 111/175) becomes managed, values kept: {kb_after}")
+check(json.loads(w.eval(cfg, "keyboardLoader.content")).get("managed") is True, "managed is kept on later loads")
 check(w.eval(cfg, "bar.position") == ref["defaults"]["bar"]["position"]
       and w.eval(cfg, "theme.glass.amount") == ref["defaults"]["theme"]["glass"]["amount"]
       and w.eval(cfg, "loader === themeLoader"), "Config.<domain>.<key> reads the adapters; Config.loader is the theme file")

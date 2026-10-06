@@ -29,6 +29,7 @@ import "defaults/notifications.js" as NotificationsDefaults
 import "defaults/specials.js" as SpecialsDefaults
 import "defaults/displays.js" as DisplaysDefaults
 import "defaults/keyboard.js" as KeyboardDefaults
+import "KeyboardMigration.js" as KeyboardMigration
 import "defaults/apps.js" as AppsDefaults
 import "defaults/terminal.js" as TerminalDefaults
 
@@ -204,6 +205,7 @@ Singleton {
         store: root
         name: "keyboard"
         defaults: KeyboardDefaults.data
+        onBeforeValidate: root.markKeyboardManagedIfLegacy(keyboardLoader)
         adapter: KeyboardAdapter {}
     }
     ConfigFile {
@@ -323,6 +325,22 @@ Singleton {
             var current = JSON.parse(raw);
             if (current && typeof current === "object" && current.onboardingDone === undefined) {
                 current.onboardingDone = true;
+                loader.setText(JSON.stringify(current, null, 2));
+            }
+        } catch (e) {}
+    }
+
+    // keyboard.json from before keyboard.managed: pure defaults stay
+    // unmanaged, anything the user changed stays managed (KeyboardMigration.js).
+    function markKeyboardManagedIfLegacy(loader) {
+        try {
+            var raw = loader.text();
+            if (!raw || raw.trim().length === 0)
+                return;
+            var current = JSON.parse(raw);
+            var managed = KeyboardMigration.legacyManaged(current, KeyboardDefaults.data);
+            if (managed !== null) {
+                current.managed = managed;
                 loader.setText(JSON.stringify(current, null, 2));
             }
         } catch (e) {}

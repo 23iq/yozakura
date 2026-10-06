@@ -29,7 +29,7 @@ KeyboardCard {
             objectName: "rateSlider"
             width: parent.width
             from: 1
-            to: 100
+            to: 200
             value: root.repeatRate
             unit: "/s"
             onMoved: v => root.rateMoved(Math.round(v))
