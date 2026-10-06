@@ -6,7 +6,7 @@
 Draws tools/render/KitGallery.qml (every modules/components/kit component in
 its states) once per visual language (ink, glass, tiles by default) with your
 real config, palette and wallpaper (see settings_render.py). Writes
-<out>/kit-<language>.png.
+<out>/<prefix>-<language>.png (prefix: kit).
 """
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ def main() -> int:
     ap.add_argument("languages", nargs="*", default=LANGUAGES)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
+    ap.add_argument("--prefix", default="kit", help="file name prefix (<prefix>-<language>.png)")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -41,7 +42,7 @@ def main() -> int:
         win.setProperty("art", url)
         win.setProperty("language", lang)
         QTest.qWait(900)
-        path = out / f"kit-{lang}.png"
+        path = out / f"{args.prefix}-{lang}.png"
         win.grabWindow().save(str(path))
         print(path)
     return 0

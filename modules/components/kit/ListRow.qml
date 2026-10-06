@@ -7,7 +7,8 @@ import qs.modules.components.kit
 // One row of a list: a leading slot (icon / Avatar / Art), a title with an
 // optional one-line subtitle (elided) and a trailing slot. Rows are ghosts
 // at rest (the surface is the box); hover / `highlighted` (keyboard cursor)
-// show the focus look, `selected` the accent tint. Height: Metrics.rowHeight.
+// show the language's hover box (Look), `selected` the accent tint. Height:
+// Metrics.rowHeight.
 StyledRect {
     id: root
 
@@ -19,20 +20,28 @@ StyledRect {
     property Component trailing: null
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property string look: KitStates.look(false, root.selected, root.hovered && root.enabled)
+    readonly property bool boxed: Look.boxedControls && root.look === "hover"
 
     signal clicked
 
     implicitHeight: Space.rowHeight
     implicitWidth: row.implicitWidth + Space.s * 2
     variant: KitStates.variant(root.look, "transparent")
-    backgroundOpacity: KitStates.opacity(root.look, root.hovered)
+    backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
     enableBorder: false
-    radius: Space.clampRadius(Space.controlRadius, height)
+    radius: Look.chipRadius(height)
     opacity: root.enabled ? 1 : 0.38
 
     Accessible.role: Accessible.ListItem
     Accessible.name: root.title
     Accessible.selected: root.selected
+
+    ControlBox {
+        shown: root.boxed
+        radius: root.radius
+        hovered: true
+        border.width: 0
+    }
 
     // Under the row: trailing controls get their own clicks.
     MouseArea {
@@ -66,6 +75,7 @@ StyledRect {
                 width: parent.width
                 role: "body"
                 text: root.title
+                font.weight: Look.labelWeight
             }
 
             KitText {

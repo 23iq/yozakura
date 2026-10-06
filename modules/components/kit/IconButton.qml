@@ -4,10 +4,11 @@ import qs.modules.components
 import "KitStates.js" as KitStates
 import qs.modules.components.kit
 
-// Round icon button. Sizes "s" (36) / "m" (40). Normal is the language's
-// "common" box (a ghost in ink), hover / `highlighted` the focus look,
-// `active` an accent tint with an accent glyph, `primary` the one filled
-// accent action of a surface.
+// Icon button. Sizes "s" (36) / "m" (40). Rest and hover / `highlighted`
+// are the language's control box (Look: a ghost in ink, translucent with a
+// hairline in glass, a solid squarer tile in tiles), `active` an accent tint
+// with an accent glyph (a solid accent fill in tiles), `primary` the one
+// filled accent action of a surface.
 StyledRect {
     id: root
 
@@ -18,16 +19,17 @@ StyledRect {
     property bool highlighted: false
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property bool pressed: mouse.pressed
-    readonly property string look: KitStates.look(root.primary, root.active, root.hovered && root.enabled)
+    readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive), root.active, root.hovered && root.enabled)
+    readonly property bool boxed: Look.boxedControls && (root.look === "normal" || root.look === "hover")
 
     signal clicked
 
     implicitWidth: root.size === "s" ? Space.controlS : Space.controlM
     implicitHeight: implicitWidth
     variant: KitStates.variant(root.look, "common")
-    backgroundOpacity: KitStates.opacity(root.look, root.hovered)
-    enableBorder: root.look === "normal" || root.look === "hover"
-    radius: Space.round(height)
+    backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
+    enableBorder: !root.boxed && (root.look === "normal" || root.look === "hover")
+    radius: Look.buttonRadius(height)
     opacity: root.enabled ? 1 : 0.38
     scale: root.pressed ? 0.94 : 1
 
@@ -40,6 +42,12 @@ StyledRect {
             duration: Motion.exit.duration / 2
             easing.type: Easing.OutCubic
         }
+    }
+
+    ControlBox {
+        shown: root.boxed
+        radius: root.radius
+        hovered: root.look === "hover"
     }
 
     Text {

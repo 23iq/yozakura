@@ -39,6 +39,35 @@ test('classic keeps every variant as configured', () => {
         assert.equal(V.apply('classic', v, pane), pane);
 });
 
+test('kit: ink has no group box, glass a translucent card, tiles a solid tile', () => {
+    const ink = plain(V.kit('ink')), glass = plain(V.kit('glass')), tiles = plain(V.kit('tiles'));
+    assert.equal(ink.group.fillOpacity, 0);
+    assert.equal(ink.group.radius, 'none');
+    assert.ok(ink.group.divider && ink.dividers);
+    assert.ok(glass.group.fillOpacity >= 0.35 && glass.group.fillOpacity <= 0.45);
+    assert.ok(glass.group.outline > 0 && glass.group.highlight > 0);
+    assert.equal(glass.group.radius, 'card');
+    assert.equal(tiles.group.fill, 'surfaceContainer');
+    assert.equal(tiles.group.fillOpacity, 1);
+    assert.equal(tiles.group.outline, 0);
+    assert.equal(tiles.dividers, false);
+    assert.equal(tiles.group.radius, 'small');
+});
+
+test('kit: controls are ghosts in ink, translucent in glass, solid in tiles', () => {
+    const ink = V.kit('ink').control, glass = V.kit('glass').control, tiles = V.kit('tiles').control;
+    assert.equal(ink.rest, 0);
+    assert.equal(ink.edge, 0);
+    assert.ok(glass.rest > 0 && glass.rest < 0.2 && glass.edge > 0);
+    assert.equal(tiles.fill, 'surfaceContainerHigh');
+    assert.equal(tiles.rest, 1);
+    assert.equal(tiles.shape, 'square');
+    assert.ok(tiles.weight > ink.weight);
+    assert.ok(tiles.solidActive && !ink.solidActive && !glass.solidActive);
+    assert.equal(V.kit('classic').control, null);
+    assert.equal(V.kit('chrome'), V.kit('ink'));
+});
+
 test('apply never mutates the theme config', () => {
     const before = plain(pane);
     V.apply('ink', 'pane', pane);
