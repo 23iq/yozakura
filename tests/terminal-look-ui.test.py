@@ -136,6 +136,8 @@ check(ev("height", find("cursor")) <= 3, "underline cursor is a thin bar")
 ev("BackendService.previews = %s" % json.dumps(sample_previews(exact=False, engine="ohmyposh")))
 ev("Config.terminal.engine = 'ohmyposh'")
 QTest.qWait(60)
+check([c["params"]["ids"] for c in calls("extras.install")] == [["oh-my-posh"]],
+      "switching a prompt that is on to a missing engine queues it: %s" % calls("extras.install"))
 check(visible(find("approxNotice")), "an approximate preview shows the notice")
 btn = find("installEngineButton")
 check(visible(btn), "a missing engine offers its install")
@@ -147,6 +149,10 @@ click(find("promptCard:two-line-box"))
 check(len(calls("extras.install")) == n + 1 and calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh"],
       "picking a prompt with the engine missing queues the engine")
 check(len(js("promptLines", find("terminalPreview"))) == 2, "two-line preset: two prompt lines")
+n = len(calls("extras.install"))
+ev("Config.terminal.enabled = false")
+ev("Config.terminal.enabled = true")
+check(len(calls("extras.install")) == n + 1, "switching the prompt on with the engine missing queues it")
 
 # palette change: previews fetched again
 before = len(calls("term.preview"))

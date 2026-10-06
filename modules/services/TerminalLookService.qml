@@ -150,11 +150,21 @@ Singleton {
     function choose(id) {
         if (!Config.terminal)
             return;
+        const wasOn = Config.terminal.enabled;
         Config.terminal.prompt = id;
-        Config.terminal.enabled = true;
+        Config.terminal.enabled = true;  // switching on runs _ensureEngine
         Config.saveTerminal();
+        if (wasOn)
+            root._ensureEngine();
+    }
+
+    // The prompt is on: queue its engine when it is missing (the hook only
+    // runs an installed engine, so nothing breaks meanwhile).
+    function _ensureEngine() {
         const st = root.status;
-        if (st && st.engineInstalled && !st.engineInstalled[root.engine])
+        if (!Config.terminal || !Config.terminal.enabled || !st || !st.engineInstalled || st.engineInstalled[root.engine])
+            return;
+        if (ExtrasService.cardState(TermModel.engineExtra(root.engine)) !== "installing")
             root.installEngine(root.engine);
     }
 
@@ -234,9 +244,11 @@ Singleton {
             root.apply();
         }
         function onEnabledChanged() {
+            root._ensureEngine();
             root.apply();
         }
         function onEngineChanged() {
+            root._ensureEngine();
             root.apply();
         }
         function onGreetingChanged() {
