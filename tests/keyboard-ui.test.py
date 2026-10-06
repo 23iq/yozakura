@@ -14,7 +14,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from keyboard_env import KeyboardEnv  # noqa: E402
 
 from PySide6.QtCore import QPoint, Qt  # noqa: E402
-from PySide6.QtQuick import QQuickItem  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 failures: list[str] = []

@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
-from exclusive_env import PLAN, STATUS_OFF, STATUS_ON, ExclusiveEnv  # noqa: E402
+from exclusive_env import STATUS_OFF, STATUS_ON, ExclusiveEnv  # noqa: E402
 
 from PySide6.QtTest import QTest  # noqa: E402
 
