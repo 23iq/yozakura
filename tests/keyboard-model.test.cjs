@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/services/KeyboardModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions};')();
+const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions, defaultsForLocale};')();
 
 const catalog = {
     layouts: [
@@ -69,4 +69,18 @@ test('variantOptions and groupOptions', () => {
     const g = M.groupOptions(catalog);
     assert.deepStrictEqual(g.map(x => x.name), ['caps', 'compose']);
     assert.strictEqual(g[0].options[0].name, 'caps:escape');
+});
+
+test('defaultsForLocale: us plus the layout of the system locale', () => {
+    assert.deepStrictEqual(M.defaultsForLocale('ru_RU'), ['us', 'ru']);
+    assert.deepStrictEqual(M.defaultsForLocale('en_US'), ['us']);
+    assert.deepStrictEqual(M.defaultsForLocale('en_GB.UTF-8'), ['us']);
+    assert.deepStrictEqual(M.defaultsForLocale('de_DE'), ['us', 'de']);
+    assert.deepStrictEqual(M.defaultsForLocale('uk_UA'), ['us', 'ua']);
+    assert.deepStrictEqual(M.defaultsForLocale('ar_EG'), ['us', 'ara']);
+    assert.deepStrictEqual(M.defaultsForLocale('pt_BR'), ['us', 'br']);
+    assert.deepStrictEqual(M.defaultsForLocale('pt-PT'), ['us', 'pt']);
+    assert.deepStrictEqual(M.defaultsForLocale('xx_YY'), ['us'], 'unknown language: us only');
+    assert.deepStrictEqual(M.defaultsForLocale(''), ['us']);
+    assert.deepStrictEqual(M.defaultsForLocale('C'), ['us']);
 });

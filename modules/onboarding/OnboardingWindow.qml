@@ -9,14 +9,16 @@ import qs.config
 // Full-screen first-run wizard on the screen it opened on: a frosted scrim
 // (the layer namespace gets the compositor blur) and the wizard card.
 // Loaded by shell.qml while OnboardingService.visible; hidden (unmapped)
-// while peeking (OnboardingService.peek).
+// while peeking (OnboardingService.peek) and while a live display change
+// waits for "Keep these display settings?" (the prompt is an Overlay layer
+// too, so the wizard steps aside instead of racing it for the top).
 PanelWindow {
     id: root
 
     property bool shown: false
 
     screen: Quickshell.screens.find(s => s.name === OnboardingService.screenName) || Quickshell.screens[0] || null
-    visible: !OnboardingService.peek
+    visible: !OnboardingService.peek && !(DisplaysService.pending && DisplaysService.session.live)
     anchors {
         top: true
         bottom: true

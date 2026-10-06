@@ -6,8 +6,9 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 
-// Pick a preset: "keep my look" plus every preset (built-in and saved).
-// Picking one applies it at once, so the shell behind the wizard changes.
+// Look step, "Style" tab: "keep my look" plus every preset (built-in and
+// saved). Picking one applies it at once, so the shell behind the wizard
+// changes (a preset may reload the shell: the wizard resumes here).
 Item {
     id: root
 

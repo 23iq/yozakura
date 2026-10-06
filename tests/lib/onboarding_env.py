@@ -1,22 +1,28 @@
 """Offscreen environment for the onboarding wizard (modules/onboarding).
 
-Extends SettingsEnv (real settings store/editors/components, generated
-Config/Colors) with the onboarding module and stand-ins for the shell
-services the wizard talks to: PresetsService (built-in presets from
-assets/presets), GlobalShortcuts (records run() and emits commandRan),
-OnboardingService, Visibilities, I18n with the language catalog, and a
-Quickshell.Io FileView that reads files synchronously.
+Extends KeyboardEnv (real settings store/editors/components, generated
+Config/Colors, the real DisplaysService + KeyboardService over a scripted
+BackendService: `replies`, `calls`, `emit`) with the onboarding module and
+stand-ins for the shell services the wizard talks to: PresetsService
+(built-in presets from assets/presets), GlobalShortcuts (records run() and
+emits commandRan), TerminalLookService (enablePrompt() writes terminal.prompt like
+the real one), the real OnboardingService, Visibilities, I18n with the
+language catalog, and a Quickshell.Io FileView that reads files
+synchronously.
 
 Used by tests/onboarding-ui.test.py and tools/render/onboarding_render.py.
 """
 from __future__ import annotations
 
 import json
+import re
 import os
 import shutil
 
+from displays_env import OUTPUTS as DISPLAY_OUTPUTS
+from keyboard_env import KeyboardEnv
 from qmlharness import REPO
-from settings_env import APP_SEARCH_STUB, YOZD_STUB, SettingsEnv, global_states_qml
+from settings_env import APP_SEARCH_STUB, TERMINAL_LOOK_STUB, YOZD_STUB, global_states_qml
 
 os.environ.setdefault("QML_XHR_ALLOW_FILE_READ", "1")
 
@@ -49,15 +55,11 @@ def i18n_qml(lang: str = "en") -> str:
 
 
 SERVICES = {
-    "BackendService": """pragma Singleton
-QtObject {
-    property var calls: []
-    property var responses: ({})
-    function call(method, params, cb) {
-        calls = calls.concat([{method: method, params: params}]);
-        if (responses[method] !== undefined && cb) cb(responses[method], null);
-    }
-}""",
+    # the real one sets the prompt, switches it on and saves
+    "TerminalLookService": re.sub(r"\n\s*function (choose|enablePrompt)\(id\) \{\}", "", TERMINAL_LOOK_STUB).replace(
+        "QtObject {", "import qs.config\nQtObject {\n    property var chosen: []\n    property bool nerdFontAvailable: true\n"
+        "    function enablePrompt(id) { chosen = chosen.concat([id]); Config.terminal.prompt = id;"
+        " Config.terminal.enabled = true }", 1),
     "GlobalShortcuts": """pragma Singleton
 QtObject {
     signal commandRan(string command)
@@ -107,10 +109,12 @@ QUICKSHELL_IO = {
 }
 
 
-class OnboardingEnv(SettingsEnv):
+class OnboardingEnv(KeyboardEnv):
     def __init__(self, name: str = "onboarding", *, lang: str = "en", presets: list | None = None,
-                 wallpaper: dict | None = None, **kw):
-        super().__init__(name, wallpaper=wallpaper, **kw)
+                 wallpaper: dict | None = None, outputs: list | None = None, replies: dict | None = None, **kw):
+        outputs = DISPLAY_OUTPUTS if outputs is None else outputs
+        replies = {"displays.list": outputs, "displays.conflicts": [], **(replies or {})}
+        super().__init__(name, wallpaper=wallpaper, outputs=outputs, replies=replies, **kw)
         h = self.h
         h.module("Quickshell.Io", QUICKSHELL_IO)
         presets = builtin_presets() if presets is None else presets

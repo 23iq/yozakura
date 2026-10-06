@@ -107,6 +107,16 @@ function agent(id) {
     return null;
 }
 
+// Screen diagonal in inches (one decimal) from the physical size the
+// compositor reports; 0 when it is unknown (projectors, some VMs).
+function diagonalInches(output) {
+    var w = output && output.physical_width_mm > 0 ? output.physical_width_mm : 0;
+    var h = output && output.physical_height_mm > 0 ? output.physical_height_mm : 0;
+    if (!w || !h)
+        return 0;
+    return Math.round(Math.sqrt(w * w + h * h) / 25.4 * 10) / 10;
+}
+
 // Terminal chips: the detected ones, plus the configured one if it is not
 // among them (so the current choice is always visible).
 function terminalChoices(detected, current) {

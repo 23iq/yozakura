@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Onboarding wizard (modules/onboarding), offscreen.
 
-Every step loads; Continue / Back / dots / Esc navigate and finish; a preset
-pick applies it; terminal/language picks write their keys; the keybind tour
-completes on GlobalShortcuts.commandRan (and steps the window aside); the
+Every step of the 8-step flow loads; Continue / Back / dots / Esc navigate
+and finish; the welcome language chips write system.language; the displays
+step offers the refresh upgrade (live apply, wizard steps aside for the
+keep prompt, keep saves) and pre-fills the keyboard; the look step tabs and
+preset pick; the terminal step writes general.terminal and terminal.prompt;
+the keybind tour completes on GlobalShortcuts.commandRan (and peeks); the
 general.json "existing install" rule of Config.qml.
 """
 from __future__ import annotations
@@ -27,7 +30,20 @@ def check(cond: bool, msg: str) -> None:
         print("FAIL:", msg)
 
 
-env = OnboardingEnv("onboarding-ui", overrides={"theme": {"animDuration": 0}})
+# DP-1 runs at 60 Hz but can do 165; HDMI-A-1 already runs at its best.
+OUTPUTS = [
+    {"id": "AOC-Q27-1", "name": "DP-1", "make": "AOC", "model": "Q27G2", "enabled": True,
+     "width": 2560, "height": 1440, "refresh": 60, "x": 0, "y": 0, "scale": 1, "transform": 0, "vrr": False,
+     "physical_width_mm": 597, "physical_height_mm": 336,
+     "modes": [{"width": 2560, "height": 1440, "refresh": r} for r in (165, 144, 60)]
+              + [{"width": 1920, "height": 1080, "refresh": 60}]},
+    {"id": "LG-27GL-2", "name": "HDMI-A-1", "make": "LG", "model": "27GL850", "enabled": True,
+     "width": 1920, "height": 1080, "refresh": 144, "x": 2560, "y": 0, "scale": 1, "transform": 0, "vrr": False,
+     "physical_width_mm": 598, "physical_height_mm": 336,
+     "modes": [{"width": 1920, "height": 1080, "refresh": r} for r in (144, 60)]},
+]
+env = OnboardingEnv("onboarding-ui", overrides={"theme": {"animDuration": 0}}, outputs=OUTPUTS,
+                    replies={"displays.apply": {"session": "s1", "revertIn": 15, "live": True}, "displays.keep": {}})
 h = env.h
 win = h.load("""
 import QtQuick
@@ -61,6 +77,18 @@ def start_flow(expr="OnboardingService.open()"):
 flow = start_flow()
 
 
+def vfind(root, name):
+    """Like h.find, through visual children too (Repeater delegates have no QObject parent)."""
+    try:
+        return h.find(root, name)
+    except AssertionError:
+        pass
+    start = root if root is not win else h.find(win, "stepLoader")
+    return h.eval(start, "(function f(it) { if (it.objectName === %s) return it;"
+                         " for (const c of it.children) { const r = f(c); if (r) return r; } return null; })(this)"
+                  % json.dumps(name))
+
+
 def ev(expr):
     return h.eval(win, expr)
 
@@ -82,7 +110,7 @@ for i in range(steps):
     seen.append(step_id())
     if i < steps - 1:
         ev("wizard.next()")
-check(seen[-1] == "finish", f"last step is finish, saw {seen}")
+check(seen == ["welcome", "displays", "look", "terminal", "apps", "ai", "keybinds", "finish"], f"the 8-step flow, saw {seen}")
 
 # Back and dot navigation
 ev("wizard.back()")
@@ -91,9 +119,76 @@ ev("wizard.go(1)")
 check(step_id() == seen[1], "go(1) jumps to the second step")
 check(ev("wizard.direction") == -1, "jumping back slides from the left")
 
-# Preset step: picking applies through PresetsService; "keep" restores.
-ev(f"wizard.go({seen.index('preset')})")
+# Welcome: the language chips write system.language and are remembered.
+ev("wizard.go(0)")
+QTest.qWait(30)
+h.eval(h.find(win, "languageChips"), 'selected("ru")')
+check(ev("Config.system.language") == "ru" and ev("wizard.choices.language") == "ru", "language chip writes system.language")
+h.eval(h.find(win, "languageChips"), 'selected("auto")')
+
+# Displays: the 60 Hz monitor offers its 165 Hz; the other one looks good.
+ev(f"wizard.go({seen.index('displays')})")
 QTest.qWait(50)
+dp = vfind(win, "monitorCard:DP-1")
+hdmi = vfind(win, "monitorCard:HDMI-A-1")
+check(dp is not None and hdmi is not None, "one card per monitor")
+up = vfind(dp, "upgradeButton")
+check(up is not None and h.eval(up, "visible") is True and "165" in h.eval(up, "text"), "60 Hz monitor offers 'Use 165 Hz'")
+check(h.eval(vfind(hdmi, "upgradeButton"), "visible") is False, "no upgrade on a monitor at its best rate")
+check(h.eval(vfind(hdmi, "looksGood"), "visible") is True, "a monitor with nothing to improve says it looks good")
+check(h.eval(vfind(dp, "looksGood"), "visible") is False, "the upgradable one does not")
+win_src = (Path(__file__).resolve().parents[1] / "modules/onboarding/OnboardingWindow.qml").read_text()
+import re  # noqa: E402
+wvis = re.search(r"^\s*visible: (.+)$", win_src, re.M).group(1)
+wprobe = h.load("import QtQuick\nimport qs.modules.services\nQtObject {\n    property bool vis: " + wvis + "\n}", auto_stub=False)
+check(h.eval(wprobe, "vis") is True, "wizard window mapped before the change")
+h.eval(up, "clicked()")
+QTest.qWait(30)
+applied = json.loads(ev("JSON.stringify(BackendService.calls.filter(c => c.method === 'displays.apply').map(c => c.params.outputs))"))
+check(len(applied) == 1, f"Use 165 Hz runs displays.apply once, got {applied}")
+if applied:
+    dp1 = [o for o in applied[0] if o["name"] == "DP-1"]
+    other = [o for o in applied[0] if o["name"] == "HDMI-A-1"]
+    check(dp1 and dp1[0]["refresh"] == 165 and dp1[0]["width"] == 2560, f"DP-1 goes to 165 Hz, got {dp1}")
+    check(other and other[0]["refresh"] == 144, "the other monitor keeps its mode")
+check(ev("DisplaysService.pending") is True, "the change is pending (keep/revert prompt)")
+check(h.eval(wprobe, "vis") is False, "the wizard steps aside while the keep prompt is up")
+check(ev("wizard.choices.displays['DP-1'].refresh") == 165, "the chosen mode is remembered")
+ev("DisplaysService.keep()")
+saved = json.loads(ev("JSON.stringify(Config.displays.monitors)"))
+check(any(m.get("name") == "DP-1" and m.get("refresh") == 165 for m in saved), f"Keep saves the layout, got {saved}")
+ev('DisplaysService._onSession({session: "s1", state: "kept", remaining: 0, live: true})')
+QTest.qWait(30)
+check(h.eval(wprobe, "vis") is True, "the wizard comes back after Keep")
+h.eval(vfind(dp, "moreButton"), "clicked()")
+QTest.qWait(30)
+check(vfind(dp, "monitorDetails") is not None, "More expands the full editor inline")
+
+# Keyboard: first visit pre-fills us + the locale layout (only over the default).
+step = loader.property("item")
+ev('Config.keyboard.layouts = [{layout: "us", variant: ""}]; wizard.remember("keyboardSeeded", false)')
+h.eval(step, 'seedKeyboard("ru_RU")')
+check(json.loads(ev("JSON.stringify(Config.keyboard.layouts.map(l => l.layout))")) == ["us", "ru"], "ru_RU pre-fills us,ru")
+check(ev("wizard.choices.keyboardSeeded") is True, "pre-fill happens once")
+ev('Config.keyboard.layouts = [{layout: "us", variant: ""}]')
+h.eval(step, 'seedKeyboard("ru_RU")')
+check(json.loads(ev("JSON.stringify(Config.keyboard.layouts.map(l => l.layout))")) == ["us"], "a second visit does not pre-fill again")
+h.eval(h.find(win, "layoutPicker"), 'picked("de")')
+check(json.loads(ev("JSON.stringify(Config.keyboard.layouts.map(l => l.layout))")) == ["us", "de"], "the picker adds a layout")
+check(json.loads(ev("JSON.stringify(wizard.choices.keyboard)")) == ["us", "de"], "layouts are remembered")
+QTest.qWait(30)
+check(vfind(win, "layoutChip:de") is not None, "layout chips show the new layout")
+
+# Look: Style / Wallpaper tabs; picking a preset applies it; "keep" restores.
+ev(f"wizard.go({seen.index('look')})")
+QTest.qWait(50)
+check(h.find(win, "lookPeek") is not None, "Preview on desktop is offered")
+check(h.eval(h.find(win, "lookStyle"), "visible") is True and h.eval(h.find(win, "lookWallpaper"), "visible") is False, "Style tab first")
+h.eval(h.find(win, "lookTabs"), 'picked("wallpaper")')
+QTest.qWait(30)
+check(ev("wizard.choices.lookTab") == "wallpaper", "the tab is remembered")
+check(h.eval(h.find(win, "lookStyle"), "visible") is False and h.eval(h.find(win, "lookWallpaper"), "visible") is True, "Wallpaper tab shows")
+h.eval(h.find(win, "lookTabs"), 'picked("style")')
 names = json.loads(ev("JSON.stringify(PresetsService.presets.map(p => p.name))"))
 check(len(names) > 0, "built-in presets listed")
 grid = h.find(win, "presetGrid")
@@ -104,15 +199,29 @@ ev('wizard.initialPreset = "Orig"')
 ev('wizard.choosePreset("")')
 check(json.loads(ev("JSON.stringify(PresetsService.loaded)"))[-1] == "Orig", "keep-current re-applies the initial preset")
 
-# System step: terminal + language picks write the config.
-ev(f"wizard.go({seen.index('system')})")
-ev('wizard.detected = wizard.detected.constructor === Object ? Object.assign({}, wizard.detected, {terminals: ["foot", "kitty"]}) : wizard.detected')
-QTest.qWait(30)
-check(h.find(win, "terminalList").property("count") >= 2, "detected terminals listed")
-ev('wizard.set("general.terminal", "foot")')
-check(ev("Config.general.terminal") == "foot", "terminal written")
-ev('wizard.set("system.language", "ru")')
-check(ev("Config.system.language") == "ru", "language written")
+# Terminal: detected terminal chips, "Other…", the prompt gallery.
+ev("TerminalLookService.presets = [{id: 'sakura-powerline', name: 'Sakura', description: 'x', nerdFont: true, lines: 1},"
+   " {id: 'plain', name: 'Plain', description: 'y', nerdFont: false, lines: 1}]")
+ev(f"wizard.go({seen.index('terminal')})")
+ev('wizard.detected = Object.assign({}, wizard.detected, {terminals: ["foot", "kitty"]})')
+QTest.qWait(50)
+check(h.find(win, "terminalPeek") is not None, "Preview on desktop is offered")
+h.eval(h.find(win, "terminalChips"), 'selected("foot")')
+check(ev("Config.general.terminal") == "foot" and ev("wizard.choices.terminal") == "foot", "terminal chip writes general.terminal")
+other = h.find(win, "terminalOther")
+h.eval(other, 'text = "  wezterm "; accepted()')
+check(ev("Config.general.terminal") == "wezterm", "Other… writes any terminal command")
+card = vfind(win, "promptCard:plain")
+check(card is not None, "prompt gallery shows the presets")
+if card is not None:
+    h.eval(card, "clicked()")
+check(ev("Config.terminal.prompt") == "plain" and ev("wizard.choices.prompt") == "plain", "picking a prompt writes terminal.prompt and is remembered")
+check(h.find(win, "fishDefault") is not None, "Make fish my default shell row")
+check(json.loads(ev("JSON.stringify(TerminalLookService.chosen)")) == ["plain"], "the gallery turns the prompt on through enablePrompt")
+check(h.eval(h.find(win, "nerdNotice"), "visible") is False, "no Nerd Font notice when one is installed")
+ev("TerminalLookService.nerdFontAvailable = false; TerminalLookService.enablePrompt('sakura-powerline')")
+check(h.eval(h.find(win, "nerdNotice"), "visible") is True, "a Nerd Font prompt without the font shows the notice")
+ev("TerminalLookService.nerdFontAvailable = true")
 
 # AI step renders with detected agents.
 ev(f"wizard.go({seen.index('ai')})")
@@ -194,10 +303,14 @@ check(step_id() == "welcome", "unknown saved step falls back to the first")
 flow = start_flow(f'OnboardingService.openAt("{seen[2]}")')
 check(step_id() == seen[2], "openAt jumps to a step id")
 # preset choice survives a resume
-ev(f"wizard.go({seen.index('preset')})")
+ev(f"wizard.go({seen.index('look')})")
 ev(f'wizard.choosePreset({json.dumps(names[0])})')
+ev('wizard.remember("lookTab", "wallpaper")')
 flow = start_flow("OnboardingService.close(); OnboardingService.open()")
-check(ev("wizard.chosenPreset") == names[0] and step_id() == "preset", "the preset choice is restored")
+check(ev("wizard.chosenPreset") == names[0] and step_id() == "look", "the preset choice is restored")
+check(ev("wizard.choices.lookTab") == "wallpaper", "the look tab choice comes back")
+QTest.qWait(50)
+check(h.eval(h.find(win, "lookWallpaper"), "visible") is True, "the resumed look step shows the remembered tab")
 
 # toggle while peeking comes back to the wizard instead of closing it
 ev("OnboardingService.peek = true")
@@ -205,7 +318,7 @@ ev("OnboardingService.toggle()")
 check(ev("OnboardingService.peek") is False and ev("OnboardingService.visible") is True, "toggle while peeking returns to the wizard")
 ev("OnboardingService.toggle()")
 check(ev("OnboardingService.visible") is False, "toggle on the open wizard closes it")
-check(json.loads(ev("JSON.stringify(StateService.state.onboarding.step)")) == "preset", "closing keeps the progress for the next open")
+check(json.loads(ev("JSON.stringify(StateService.state.onboarding.step)")) == "look", "closing keeps the progress for the next open")
 
 # ---- peek pill + service fixes ----------------------------------------------
 flow = start_flow("OnboardingService.close(); OnboardingService.open()")
@@ -222,7 +335,6 @@ check(label is not None and h.eval(label, "text") == f"Setup · step {ev('wizard
 h.eval(h.find(pwin, "peekBack"), "clicked()")
 check(ev("OnboardingService.peek") is False and ev("OnboardingService.visible") is True, "Back to setup leaves peek, wizard stays open")
 # OnboardingWindow's own `visible` binding (the layer window is not loadable offscreen)
-import re  # noqa: E402
 winsrc = (Path(__file__).resolve().parents[1] / "modules/onboarding/OnboardingWindow.qml").read_text()
 vis = re.search(r"^\s*visible: (.+)$", winsrc, re.M).group(1)
 vprobe = h.load("import QtQuick\nimport qs.modules.services\nQtObject {\n    property bool vis: " + vis + "\n}", auto_stub=False)

@@ -33,6 +33,18 @@ test('every step has a component file, unique id and translated texts', () => {
     assert.strictEqual(Steps.STEPS[Steps.count() - 1].id, 'finish');
 });
 
+test('the registry is the 8-step flow, in order, with existing icons', () => {
+    eq(Steps.STEPS.map(s => s.id), ['welcome', 'displays', 'look', 'terminal', 'apps', 'ai', 'keybinds', 'finish']);
+    const icons = fs.readFileSync(path.join(repo, 'modules/theme/Icons.qml'), 'utf8');
+    for (const s of Steps.STEPS) {
+        assert.ok(new RegExp('property string ' + s.icon + ':').test(icons), 'no icon ' + s.icon);
+        assert.strictEqual(s.optional, undefined, 'the unused optional field is gone');
+    }
+    eq(Steps.STEPS.filter(s => s.hero).map(s => s.id), ['welcome', 'finish']);
+    for (const old of ['StepPreset.qml', 'StepWallpaper.qml', 'StepSystem.qml', 'StepSpecials.qml'])
+        assert.ok(!fs.existsSync(path.join(dir, old)), old + ' was folded into the new steps');
+});
+
 test('navigation clamps at both ends', () => {
     assert.strictEqual(Steps.prev(0), 0);
     assert.strictEqual(Steps.next(Steps.count() - 1), Steps.count() - 1);
@@ -74,6 +86,13 @@ test('parseDetect keeps known terminals/agents in preference order', () => {
     eq(d.whisper, { installed: true, model: true });
     assert.ok(d.cuda && d.complete);
     assert.strictEqual(M.parseDetect('').complete, false);
+});
+
+test('diagonalInches: from the physical size, empty when unknown', () => {
+    assert.strictEqual(M.diagonalInches({ physical_width_mm: 597, physical_height_mm: 336 }), 27);
+    assert.strictEqual(M.diagonalInches({ physical_width_mm: 344, physical_height_mm: 194 }), 15.5);
+    assert.strictEqual(M.diagonalInches({ physical_width_mm: 0, physical_height_mm: 0 }), 0);
+    assert.strictEqual(M.diagonalInches(null), 0);
 });
 
 test('choices: current terminal and auto language always offered', () => {

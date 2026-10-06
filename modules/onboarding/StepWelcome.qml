@@ -4,14 +4,27 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
 import qs.config
+import qs.modules.settings.keyboard
 import "../settings/Ui.js" as Ui
+import "OnboardingModel.js" as Model
 
-// Welcome: the blossom unfolds, then the greeting and what setup covers
-// fade up one after another.
+// Welcome: the blossom unfolds, then the greeting, what setup covers and
+// the interface language (system.language, "auto" follows the locale) fade
+// up one after another.
 Item {
     id: root
 
     property OnboardingState wizard
+    readonly property string language: wizard ? String(wizard.get("system.language") || "auto") : "auto"
+    readonly property var languages: Model.languageChoices(I18n.availableLanguages).map(l => ({
+                "value": l.code,
+                "label": l.code === "auto" ? I18n.t("onboarding.system.language.auto") : l.name
+            }))
+
+    function pickLanguage(code) {
+        wizard.set("system.language", code);
+        wizard.remember("language", code);
+    }
     property real reveal: Config.animDuration > 0 ? 0 : 1
 
     NumberAnimation on reveal {
@@ -68,20 +81,24 @@ Item {
             Repeater {
                 model: [
                     {
-                        "icon": "magicWand",
+                        "icon": "monitor",
+                        "text": "onboarding.welcome.f_displays"
+                    },
+                    {
+                        "icon": "palette",
                         "text": "onboarding.welcome.f_look"
                     },
                     {
                         "icon": "terminal",
+                        "text": "onboarding.welcome.f_terminal"
+                    },
+                    {
+                        "icon": "squaresFour",
                         "text": "onboarding.welcome.f_apps"
                     },
                     {
                         "icon": "sparkle",
                         "text": "onboarding.welcome.f_ai"
-                    },
-                    {
-                        "icon": "keyboard",
-                        "text": "onboarding.welcome.f_keys"
                     }
                 ]
                 delegate: Rectangle {
@@ -118,6 +135,42 @@ Item {
                         }
                     }
                 }
+            }
+        }
+
+        Row {
+            id: languageRow
+            objectName: "languageRow"
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: Math.round(Styling.fontSize(0) * 0.8)
+            topPadding: Math.round(Styling.fontSize(0) * 0.8)
+            opacity: Math.min(1, Math.max(0, root.reveal * 2.4 - 1.3))
+
+            Row {
+                anchors.verticalCenter: languageChips.verticalCenter
+                spacing: 6
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: Icons.translate
+                    font.family: Icons.font
+                    font.pixelSize: Styling.fontSize(0)
+                    color: Colors.overSurfaceVariant
+                }
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: I18n.t("onboarding.system.language")
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-1)
+                    color: Colors.overSurfaceVariant
+                }
+            }
+
+            KeyChips {
+                id: languageChips
+                objectName: "languageChips"
+                options: root.languages
+                value: root.language
+                onSelected: code => root.pickLanguage(code)
             }
         }
 

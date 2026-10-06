@@ -188,3 +188,20 @@ function groupOptions(catalog) {
         return groups[n];
     });
 }
+
+// XKB layout of a locale's language (pt_BR is the one country variant).
+var LOCALE_LAYOUTS = {
+    "ru": "ru", "uk": "ua", "be": "by", "kk": "kz", "de": "de", "fr": "fr", "es": "es", "it": "it",
+    "pt": "pt", "pl": "pl", "cs": "cz", "tr": "tr", "ja": "jp", "ko": "kr", "zh": "cn", "el": "gr",
+    "he": "il", "ar": "ara"
+};
+
+// First-run layouts for a locale name ("ru_RU", "pt-BR.UTF-8"): `us` plus
+// the locale's own layout; English and unknown languages get `us` only.
+function defaultsForLocale(locale) {
+    var name = String(locale || "").split(".")[0].replace("-", "_");
+    var parts = name.split("_");
+    var lang = parts[0].toLowerCase();
+    var code = (lang === "pt" && (parts[1] || "").toUpperCase() === "BR") ? "br" : LOCALE_LAYOUTS[lang];
+    return code ? ["us", code] : ["us"];
+}
