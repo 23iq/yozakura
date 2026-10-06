@@ -47,7 +47,7 @@ var groups = [
     {
         "id": "system",
         "title": "prefs.group.system",
-        "categories": ["displays", "windows", "terminal", "input", "voice", "timers", "routines", "system", "updates"]
+        "categories": ["displays", "keyboard", "windows", "terminal", "input", "voice", "timers", "routines", "system", "updates"]
     },
     {
         "id": "connect",
@@ -147,6 +147,14 @@ var categories = [
         "description": "prefs.cat.displays.desc",
         "keywords": "displays monitors screens resolution refresh rate hz scale dpi rotation rotate arrange layout position vrr adaptive sync identify hdmi displayport",
         "page": "Displays"
+    },
+    {
+        "id": "keyboard",
+        "icon": "keyboard",
+        "title": "prefs.cat.keyboard",
+        "description": "prefs.cat.keyboard.desc",
+        "keywords": "keyboard layout layouts language russian english variant switch alt shift caps lock escape ctrl compose xkb options key repeat rate delay indicator type typing",
+        "page": "Keyboard"
     },
     {
         "id": "about",

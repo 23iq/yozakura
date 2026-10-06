@@ -176,6 +176,7 @@ MIRROR = [
     "config/motion",
     "modules/services/CompositorAppearance.js",
     "modules/services/DisplayModel.js",
+    "modules/services/KeyboardModel.js",
     "modules/bar/BarLayout.js",
     "modules/bar/BarModuleRegistry.js",
     "modules/bar/panels/PanelStyles.js",
@@ -470,6 +471,16 @@ QtObject {
     }
     function getAllApps() { return apps }
 }"""
+# Keyboard page (modules/settings/keyboard): idle stand-in; tests/lib/keyboard_env.py swaps in the real one.
+KEYBOARD_STUB = """pragma Singleton
+QtObject {
+    property var catalog: null
+    property var active: ({ "name": "", "index": 0, "code": "", "short": "" })
+    readonly property string shortLabel: active.short
+    readonly property bool indicatorVisible: false
+    function loadCatalog() {}
+    function next() {}
+}"""
 # Displays page (modules/settings/displays): idle stand-in; tests/lib/displays_env.py swaps in the real one.
 DISPLAYS_STUB = """pragma Singleton
 QtObject {
@@ -528,7 +539,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "RoutinesService": ROUTINES_STUB,
+                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -551,7 +562,7 @@ class SettingsEnv:
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
-                  "modules/settings/displays"]:
+                  "modules/settings/displays", "modules/settings/keyboard"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

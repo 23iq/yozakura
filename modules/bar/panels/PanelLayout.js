@@ -34,7 +34,7 @@ var AUTOHIDE = ["auto", "always", "never"];
 var DEFAULT_LAYOUT = {
     "style": "classic",
     "left": ["launcher", "workspaces", "layoutSelector", "pin"],
-    "right": ["presets", "tools", "systray", "controls", "battery", "clock", "power"],
+    "right": ["presets", "tools", "systray", "keyboardLayout", "controls", "battery", "clock", "power"],
     "drawer": []
 };
 
@@ -43,7 +43,7 @@ var DEFAULT_LAYOUT = {
 var LEGACY_VERTICAL = {
     "start": ["launcher", "systray", "tools", "presets"],
     "center": ["layoutSelector", "workspaces", "pin"],
-    "end": ["controls", "battery", "clock", "power"]
+    "end": ["keyboardLayout", "controls", "battery", "clock", "power"]
 };
 
 // JsonAdapter hands JSON arrays over as list wrappers (QVariantList), for

@@ -101,6 +101,12 @@ var MODULES = [
         "file": "modules/WorldClocks.qml"
     },
     {
+        "id": "keyboardLayout",
+        "icon": "keyboard",
+        "label": "prefs.bar.module.keyboardLayout",
+        "file": "modules/KeyboardLayoutIndicator.qml"
+    },
+    {
         "id": "controls",
         "icon": "faders",
         "label": "prefs.bar.module.controls"

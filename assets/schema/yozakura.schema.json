@@ -3077,6 +3077,7 @@
                   "systemStats",
                   "weather",
                   "worldClocks",
+                  "keyboardLayout",
                   "controls",
                   "battery",
                   "clock",
@@ -3101,6 +3102,7 @@
                 "presets",
                 "tools",
                 "systray",
+                "keyboardLayout",
                 "controls",
                 "battery",
                 "clock",
@@ -3124,6 +3126,7 @@
                   "systemStats",
                   "weather",
                   "worldClocks",
+                  "keyboardLayout",
                   "controls",
                   "battery",
                   "clock",
@@ -3172,6 +3175,7 @@
                   "systemStats",
                   "weather",
                   "worldClocks",
+                  "keyboardLayout",
                   "controls",
                   "battery",
                   "clock",
@@ -12565,6 +12569,11 @@
       "description": "Arrange monitors and set resolution, refresh rate, scale and rotation."
     },
     {
+      "id": "keyboard",
+      "title": "Keyboard",
+      "description": "Layouts, switching, key repeat and the bar indicator."
+    },
+    {
       "id": "about",
       "title": "About",
       "description": "Version and credits."
@@ -12600,6 +12609,7 @@
       "title": "System",
       "categories": [
         "displays",
+        "keyboard",
         "windows",
         "terminal",
         "input",

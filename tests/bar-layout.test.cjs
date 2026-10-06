@@ -22,7 +22,7 @@ test('missing layout reproduces the historical bar', () => {
     assert.deepEqual(result.warnings, []);
     assert.equal(result.style, 'classic');
     assert.deepEqual(result.left, ['launcher', 'workspaces', 'layoutSelector', 'pin']);
-    assert.deepEqual(result.right, ['presets', 'tools', 'systray', 'controls', 'battery', 'clock', 'power']);
+    assert.deepEqual(result.right, ['presets', 'tools', 'systray', 'keyboardLayout', 'controls', 'battery', 'clock', 'power']);
     assert.deepEqual(result.drawer, []);
 });
 
@@ -66,7 +66,7 @@ test('vertical keeps the legacy three-group arrangement only for the default lay
     const legacy = plain(layoutLib.resolveGroups(normalize(undefined), 'vertical', barDefaults.layout));
     assert.deepEqual(legacy.start, ['launcher', 'systray', 'tools', 'presets']);
     assert.deepEqual(legacy.center, ['layoutSelector', 'workspaces', 'pin']);
-    assert.deepEqual(legacy.end, ['controls', 'battery', 'clock', 'power']);
+    assert.deepEqual(legacy.end, ['keyboardLayout', 'controls', 'battery', 'clock', 'power']);
 
     const custom = plain(layoutLib.resolveGroups(normalize({ left: ['workspaces'], right: ['clock'], drawer: ['power'] }), 'vertical', barDefaults.layout));
     assert.deepEqual(custom, { start: ['workspaces'], center: [], end: ['clock'], drawer: ['power'] });

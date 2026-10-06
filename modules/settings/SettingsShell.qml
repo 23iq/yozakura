@@ -8,6 +8,7 @@ import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.presets
 import qs.modules.settings.displays
+import qs.modules.settings.keyboard
 import "schema/Categories.js" as Categories
 import "Ui.js" as Ui
 
@@ -251,10 +252,17 @@ Item {
             category: shell.category
         }
     }
+    Component {
+        id: keyboardPage
+        KeyboardPage {
+            category: shell.category
+        }
+    }
     // Hand-written pages by Categories.js `page` name.
     readonly property var pages: ({
             "AboutPage": aboutPage,
             "Displays": displaysPage,
+            "Keyboard": keyboardPage,
             "PresetStudio": presetStudioPage
         })
     Component {

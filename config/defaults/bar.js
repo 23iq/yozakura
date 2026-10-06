@@ -65,7 +65,7 @@ var data = {
     "layout": {
         "style": "classic",
         "left": ["launcher", "workspaces", "layoutSelector", "pin"],
-        "right": ["presets", "tools", "systray", "controls", "battery", "clock", "power"],
+        "right": ["presets", "tools", "systray", "keyboardLayout", "controls", "battery", "clock", "power"],
         "drawer": []
     },
     // Multi-panel layouts (modules/bar/panels/PanelLayout.js). Empty = the

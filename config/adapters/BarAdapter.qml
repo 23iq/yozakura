@@ -67,7 +67,7 @@ JsonAdapter {
     property var layout: ({
             "style": "classic",
             "left": ["launcher", "workspaces", "layoutSelector", "pin"],
-            "right": ["presets", "tools", "systray", "controls", "battery", "clock", "power"],
+            "right": ["presets", "tools", "systray", "keyboardLayout", "controls", "battery", "clock", "power"],
             "drawer": []
         })
     property var panels: []
