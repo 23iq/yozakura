@@ -156,7 +156,7 @@ Item {
                 Column {
                     anchors.left: appIcon.right
                     anchors.leftMargin: 12
-                    anchors.right: toggle.left
+                    anchors.right: hookPill.visible ? hookPill.left : toggle.left
                     anchors.rightMargin: 10
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 2
@@ -179,6 +179,20 @@ Item {
                         font.pixelSize: Styling.fontSize(-3)
                         color: appRow.st && appRow.st.installed && appRow.st.written ? Colors.primary : Colors.overSurfaceVariant
                     }
+                }
+                AppHookPill {
+                    id: hookPill
+                    objectName: "appHook:" + appRow.modelData.id
+                    anchors.right: toggle.left
+                    anchors.rightMargin: 12
+                    anchors.verticalCenter: parent.verticalCenter
+                    readonly property var hook: AppHooksService.status[appRow.modelData.id]
+                    appLabel: appRow.modelData.label
+                    hookState: hook ? hook.state : ""
+                    reason: hook && hook.reason ? hook.reason : ""
+                    needsRestart: !!(hook && hook.needsRestart)
+                    themed: appRow.on
+                    onConnectRequested: AppHooksService.connectApp(appRow.modelData.id)
                 }
                 ToggleControl {
                     id: toggle

@@ -80,6 +80,15 @@ QtObject {
     }
 }"""
 
+# App theme auto-connect (modules/services/AppHooksService.qml): the Terminal
+# & Apps rows read `status`; tests/lib/apphooks_env.py swaps in the real one.
+APPHOOKS_STUB = """pragma Singleton
+QtObject {
+    property var status: ({})
+    function connectApp(id) { }
+    function revert(id) { }
+}"""
+
 # Routines (modules/services/RoutinesService.qml): the routines editor, the
 # "Run routine" bind picker and the per-routine keybind slots. Saves, runs
 # and deletes are recorded in `calls`; callbacks answer right away.
@@ -539,7 +548,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB,
+                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
