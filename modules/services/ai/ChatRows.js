@@ -1,5 +1,6 @@
 .pragma library
 .import "Compaction.js" as Compaction
+.import "ToolMedia.js" as ToolMedia
 
 // Conversions between ChatSession rows (ListModel rows; attachments and
 // toolCalls as JSON strings), the canonical provider messages and the
@@ -22,7 +23,10 @@ var FINISHED = { done: 1, denied: 1, error: 1 };
 // Provider conversation: assistant rows expand their finished tool calls
 // into tool result messages; notices and errors are UI-only. After a
 // compaction only the last summary and the rows after it are sent.
-function toMessages(rows) {
+// options.images {callId: [attachments]} (vision models only) adds the
+// images tools returned as a user message after their results.
+function toMessages(rows, options) {
+    var images = options && options.images ? options.images : null;
     var out = [];
     var from = Compaction.lastSummary(rows);
     if (from >= 0)
@@ -42,6 +46,9 @@ function toMessages(rows) {
                 }) });
             for (var j = 0; j < done.length; j++)
                 out.push({ role: "tool", toolCallId: done[j].id, name: done[j].name, content: done[j].result || "", isError: !!done[j].isError });
+            var media = ToolMedia.imageMessage(done, images);
+            if (media)
+                out.push(media);
         }
     }
     return out;

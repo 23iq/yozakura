@@ -1,4 +1,5 @@
 .pragma library
+.import "ToolMedia.js" as ToolMedia
 
 // Reduces normalized agent events (backend/pkg/svc/agents, see Event) into UI
 // blocks. The reducer is incremental: apply() returns operations the QML side
@@ -7,7 +8,7 @@
 // Block (flat, ListModel friendly):
 //   {type: user|assistant|thinking|tool|permission|diff|error|notice,
 //    key, text, tool, title, category, status, input (JSON string), output,
-//    isError, path, diff, options (JSON string), decision, ts}
+//    isError, path, diff, options (JSON string), decision, undo (JSON string), ts}
 // tool.status: running|done|error|denied ; permission.status: pending|allowed|denied
 
 function newState() {
@@ -28,7 +29,7 @@ function newState() {
 function _block(type, fields) {
     var b = {
         type: type, key: "", text: "", tool: "", title: "", category: "", status: "",
-        input: "", output: "", isError: false, path: "", diff: "", options: "", decision: "", linked: false, ts: 0
+        input: "", output: "", isError: false, path: "", diff: "", options: "", decision: "", linked: false, undo: "", ts: 0
     };
     for (var k in fields)
         if (fields[k] !== undefined && fields[k] !== null)
@@ -136,6 +137,9 @@ function apply(state, ev) {
         var tkey = "tool:" + (ev.id || "");
         var ti = state.byKey[tkey];
         var upd = { output: ev.output || "", isError: !!ev.isError };
+        var tname = ti !== undefined ? state.blocks[ti].tool : (ev.tool || "");
+        if (ToolMedia.isYozakuraTool(tname))
+            upd.undo = _json(ToolMedia.undoFrom("yozakura", upd.output, upd.isError));
         if (ti !== undefined) {
             if (state.blocks[ti].status !== "denied")
                 upd.status = ev.isError ? "error" : "done";
@@ -148,7 +152,7 @@ function apply(state, ev) {
         } else {
             _append(state, ops, _block("tool", {
                 key: tkey, tool: ev.tool || "", title: ev.title || ev.tool || "", category: ev.category || "other",
-                status: ev.isError ? "error" : "done", output: upd.output, isError: upd.isError, ts: ts
+                status: ev.isError ? "error" : "done", output: upd.output, isError: upd.isError, undo: upd.undo || "", ts: ts
             }));
         }
         break;

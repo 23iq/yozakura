@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"yozakura/backend/pkg/svc/routines"
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/catalog"
@@ -83,6 +84,7 @@ func New(root string) (*Advisor, error) {
 		CompositorName: DetectCompositor(),
 		Apps:           InstalledApps,
 		Commands:       CommandsIn(root),
+		Routines:       RoutinesFrom(routines.DefaultPath()),
 		Specials: func() ([]specials.Special, error) {
 			c, err := catalog.Load(root)
 			if err != nil {

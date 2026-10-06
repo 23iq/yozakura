@@ -199,7 +199,7 @@ JsonAdapter {
         property string defaultSpace: "last"
         property bool enterToSend: true
         property bool suggestions: true
-        property list<string> suggestionKinds: ["clipboard", "selection", "media", "timer", "window", "desktop", "time"]
+        property list<string> suggestionKinds: ["clipboard", "selection", "media", "timer", "window", "desktop", "time", "routine", "binds"]
         property bool restoreLastSession: true
         property bool autoScroll: true
         property bool thinkingExpanded: false

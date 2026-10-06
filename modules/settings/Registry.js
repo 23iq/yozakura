@@ -33,6 +33,7 @@ var EDITORS = {
     "AiProvidersEditor": "editors/AiProvidersEditor.qml",
     "AiDefaultModel": "editors/AiDefaultModel.qml",
     "AiProviderVisibility": "editors/AiProviderVisibility.qml",
+    "RoutinesEditor": "editors/RoutinesEditor.qml",
     "GlassAmountEditor": "editors/GlassAmountEditor.qml",
     "GlassSurfacesEditor": "editors/GlassSurfacesEditor.qml",
     "KeybindsOverview": "editors/KeybindsOverview.qml",

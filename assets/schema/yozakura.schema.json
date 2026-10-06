@@ -930,7 +930,7 @@
             "entryTitle": "Automations",
             "keywords": "automation schedule cron trigger clipboard screenshot login briefing download"
           },
-          "description": "Automations: [{id, name, enabled, trigger: {type, ...}, prompt}] run by the AI center."
+          "description": "Automations: [{id, name, enabled, trigger: {type, ...}, prompt, output, routine}] run by the AI center; output \"routine\" runs the routine `routine` (svc/routines) without a model."
         },
         "voice": {
           "title": "Voice",
@@ -1171,7 +1171,9 @@
                 "timer",
                 "window",
                 "desktop",
-                "time"
+                "time",
+                "routine",
+                "binds"
               ],
               "items": {
                 "enum": [
@@ -1181,7 +1183,9 @@
                   "timer",
                   "window",
                   "desktop",
-                  "time"
+                  "time",
+                  "routine",
+                  "binds"
                 ]
               },
               "description": "What the suggestions may look at.",
@@ -1190,7 +1194,7 @@
                 "section": "bar_behavior",
                 "label": "prefs.ai.suggestion_kinds",
                 "control": "multiselect",
-                "keywords": "suggestions clipboard selection media timer window",
+                "keywords": "suggestions clipboard selection media timer window routine keybinds shortcuts",
                 "visibleWhen": {
                   "key": "ai.behavior.suggestions",
                   "equals": true
@@ -1204,7 +1208,9 @@
                 "timer": "Timers",
                 "window": "Active window",
                 "desktop": "Desktop",
-                "time": "Time of day"
+                "time": "Time of day",
+                "routine": "Routines",
+                "binds": "Keybinds"
               }
             },
             "restoreLastSession": {
@@ -5933,6 +5939,7 @@
                 "timers",
                 "apps",
                 "specials",
+                "routines",
                 "wallpapers",
                 "files",
                 "ai"
@@ -5944,6 +5951,7 @@
                   "timers",
                   "apps",
                   "specials",
+                  "routines",
                   "wallpapers",
                   "files",
                   "ai"
@@ -5980,6 +5988,7 @@
                   "timers",
                   "apps",
                   "specials",
+                  "routines",
                   "wallpapers",
                   "files",
                   "ai",
@@ -12005,6 +12014,11 @@
       "description": "Timers in the notch, alarms, Pomodoro, focus mode and quick note"
     },
     {
+      "id": "routines",
+      "title": "Routines",
+      "description": "One key, several actions: step lists you run from a keybind, the launcher or the AI"
+    },
+    {
       "id": "updates",
       "title": "Updates & OCR",
       "description": "Update checks and text recognition languages."
@@ -12094,6 +12108,7 @@
         "input",
         "voice",
         "timers",
+        "routines",
         "system",
         "updates"
       ]

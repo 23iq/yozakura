@@ -85,6 +85,8 @@ ColumnLayout {
             id: fieldRow
             required property var modelData
             readonly property bool isApp: modelData.kind === "app"
+            readonly property bool isRoutine: modelData.kind === "routine"
+            readonly property bool plain: !isApp && !isRoutine
             Layout.fillWidth: true
             spacing: 12
 
@@ -103,8 +105,14 @@ ColumnLayout {
                 appId: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
                 onPicked: id => root.setArg(fieldRow.modelData.key, id)
             }
+            RoutinePickerField {
+                visible: fieldRow.isRoutine
+                Layout.fillWidth: true
+                routineId: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
+                onPicked: id => root.setArg(fieldRow.modelData.key, id)
+            }
             TextControl {
-                visible: !fieldRow.isApp
+                visible: fieldRow.plain
                 Layout.fillWidth: true
                 text: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
                 placeholder: fieldRow.modelData.placeholder

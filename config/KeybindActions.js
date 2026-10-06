@@ -101,10 +101,10 @@ var ACTION_CATALOG = [
     { id: "utilities.timer", label: "Start Timer", category: "Utilities", group: "utilities", dispatcher: "exec", args: [{ key: "spec", label: "Timer", placeholder: "10m tea", defaultValue: "25m" }], argumentBuilder: function (args) {
         return runParam("timer:", args.spec);
     } },
-    // A routine (svc/routines, sub-project E): hidden until routines exist.
-    { id: "utilities.routine", label: "Run Routine", category: "Utilities", group: "utilities", dispatcher: "exec", args: [{ key: "routine", label: "Routine", placeholder: "morning", defaultValue: "" }], argumentBuilder: function (args) {
+    // A routine (svc/routines): the editor picks one (arg kind "routine").
+    { id: "utilities.routine", label: "Run Routine", category: "Utilities", group: "utilities", dispatcher: "exec", args: [{ key: "routine", label: "Routine", placeholder: "morning", defaultValue: "", kind: "routine" }], argumentBuilder: function (args) {
         return runParam("routine:", args.routine);
-    }, hidden: true },
+    } },
 
     { id: "window.close", label: "Close Window", category: "Window", group: "windows", dispatcher: "killactive", argument: "" },
     { id: "window.focus", label: "Focus Window", category: "Window", group: "windows", dispatcher: "movefocus", args: [{ key: "direction", label: "Direction", placeholder: "up/down/left/right", defaultValue: "up" }], argumentBuilder: function (args) {

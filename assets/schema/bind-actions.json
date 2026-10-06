@@ -622,7 +622,6 @@
       "category": "Utilities",
       "group": "utilities",
       "dispatcher": "exec",
-      "hidden": true,
       "args": [
         {
           "key": "routine",
@@ -632,7 +631,7 @@
             "ru": "Сценарий"
           },
           "placeholder": "morning",
-          "kind": "text",
+          "kind": "routine",
           "default": ""
         }
       ]

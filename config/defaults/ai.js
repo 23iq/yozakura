@@ -75,7 +75,7 @@ var data = {
         "defaultSpace": "last",
         "enterToSend": true,
         "suggestions": true,
-        "suggestionKinds": ["clipboard", "selection", "media", "timer", "window", "desktop", "time"],
+        "suggestionKinds": ["clipboard", "selection", "media", "timer", "window", "desktop", "time", "routine", "binds"],
         "restoreLastSession": true,
         "autoScroll": true,
         "thinkingExpanded": false,

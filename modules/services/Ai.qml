@@ -8,6 +8,7 @@ import qs.modules.settings.store
 import "ai"
 import "ai/EngineSelection.js" as Selection
 import "ai/ContextMath.js" as ContextMath
+import "ai/ToolHints.js" as ToolHints
 
 // Public assistant facade. Session ownership, request routing and prompt expansion
 // live in focused collaborators and survive unloading the workspace UI.
@@ -192,12 +193,13 @@ Singleton {
         s.policy = {
             autoApprove: Config.ai.agents.autoApprove || ["read"]
         };
-        s.system = Config.ai.systemPrompt;
         const request = requestOptions(s.model);
         s.effort = request.effort;
         s.numCtx = request.numCtx;
-        // Assistant chats (legacy "shell" chats included) get the MCP tools.
+        // Assistant chats (legacy "shell" chats included) get the MCP tools,
+        // and the system prompt names what they can do (ToolHints.js).
         s.tools = mcp && s.mode !== "quick" && s.mode !== "oneshot" && Config.ai.chatTools ? mcp.toolsFor("all") : [];
+        s.system = ToolHints.withHints(Config.ai.systemPrompt, s.tools);
     }
 
     // Per-request settings of an HTTP model: its effort level and, for

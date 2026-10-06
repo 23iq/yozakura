@@ -78,6 +78,8 @@ func main() {
 			os.Exit(runStopwatch(args[1:], os.Stdout, os.Stderr))
 		case "remind", "reminder":
 			os.Exit(runRemind(args[1:], os.Stdout, os.Stderr))
+		case "routine", "routines":
+			os.Exit(runRoutine(args[1:], os.Stdin, os.Stdout, os.Stderr))
 		case "usage":
 			os.Exit(runUsage(args[1:], newClient(), os.Stdout, os.Stderr))
 		case "task", "tasks":
@@ -601,6 +603,7 @@ Commands:
                                      resume, add, stop, pomodoro ({bin} timer help)
     stopwatch [start|pause|lap|reset] Stopwatch (no argument: status)
     remind <time|in time> <text>     Reminder ("18:00 call mom", "in 20m stretch"); list, cancel
+    routine <command>                Routines (step lists): list, show, run, save, delete
     task <command>                   AI coding tasks in git worktrees: new, list, show, run,
                                      accept, discard, followup ({bin} task help)
     binds <command>                  Keybind advisor: search, list, check, suggest, set,

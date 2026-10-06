@@ -80,6 +80,40 @@ QtObject {
     }
 }"""
 
+# Routines (modules/services/RoutinesService.qml): the routines editor, the
+# "Run routine" bind picker and the per-routine keybind slots. Saves, runs
+# and deletes are recorded in `calls`; callbacks answer right away.
+ROUTINES_STUB = """pragma Singleton
+import QtQuick
+QtObject {
+    property var routines: []
+    property var calls: []
+    property var nextReport: ({ "ok": true, "steps": [] })
+    function find(ref) { return routines.find(r => r.id === ref) || null }
+    function refresh() { calls = calls.concat([["refresh"]]) }
+    function call(method, params, cb) {
+        calls = calls.concat([[method, params]]);
+        if (cb) cb(method === "run" ? nextReport : {}, "");
+    }
+    function save(r, replace, cb) {
+        calls = calls.concat([["save", r, replace]]);
+        const id = replace || String(r.name || "routine").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const saved = Object.assign({}, r, { "id": id });
+        const i = routines.findIndex(x => x.id === id);
+        const next = routines.slice();
+        if (i >= 0) next[i] = saved; else next.push(saved);
+        routines = next;
+        if (cb) cb({ "routine": saved }, "");
+    }
+    function remove(id, cb) {
+        calls = calls.concat([["delete", id]]);
+        routines = routines.filter(x => x.id !== id);
+        if (cb) cb({}, "");
+    }
+    function run(id, cb) { calls = calls.concat([["run", id]]); if (cb) cb(nextReport, "") }
+    function test(r, cb) { calls = calls.concat([["test", r]]); if (cb) cb(nextReport, "") }
+}"""
+
 UPDATE_STUB = """pragma Singleton
 QtObject {
     property string currentVersion: "1.3.9"
@@ -127,6 +161,7 @@ MIRROR = [
     "modules/globals/Urls.js",
     "modules/services/ai/Cron.js",
     "modules/services/ai/Automations.js",
+    "modules/routines",
     "modules/theme/Styling.qml",
     "modules/theme/Glass.qml",
     "modules/theme/GlassModel.js",
@@ -473,7 +508,8 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, **LOCK_SERVICES, **DESKTOP_STUBS})
+                                              "YozdService": YOZD_STUB, "RoutinesService": ROUTINES_STUB,
+                                              **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
                                              "Brand": brand_qml()})
@@ -491,7 +527,8 @@ class SettingsEnv:
                   "modules/settings/previews", "modules/settings/store", "modules/components",
                   "modules/components/surfaceeffects", "modules/bar/workspaces/indicators",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
-                  "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials", "modules/desktop", "modules/desktop/widgets",
+                  "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
+                  "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
