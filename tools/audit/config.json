@@ -11,7 +11,8 @@
    "config/"
   ],
   "ignore": {
-   "config/meta/AdapterTypes.js": "QML types of config keys, read by tools/config/gen_adapters.cjs (node), not by QML"
+   "config/meta/AdapterTypes.js": "QML types of config keys, read by tools/config/gen_adapters.cjs (node), not by QML",
+   "modules/components/kit/": "shared UI kit (Type, Space, controls): the vocabulary every screen is being rebuilt from; consumers migrate screen by screen (render: tools/render/kit_render.py)"
   }
  },
  "configKeys": {
