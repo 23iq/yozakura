@@ -61,7 +61,7 @@
       "default": "Roboto Condensed",
       "description": "Used for all text in the shell.",
       "x-settings": {
-        "category": "appearance",
+        "category": "icons-type",
         "section": "typography",
         "label": "settings.theme.ui_font",
         "control": "font",
@@ -74,7 +74,7 @@
       "type": "number",
       "default": 14,
       "x-settings": {
-        "category": "appearance",
+        "category": "icons-type",
         "section": "typography",
         "label": "settings.theme.ui_font",
         "entry": "theme.font",
@@ -92,7 +92,7 @@
       "default": "Iosevka Nerd Font Mono",
       "description": "Used for code, paths and the terminal theme.",
       "x-settings": {
-        "category": "appearance",
+        "category": "icons-type",
         "section": "typography",
         "label": "settings.theme.mono_font",
         "control": "font",
@@ -105,7 +105,7 @@
       "type": "number",
       "default": 14,
       "x-settings": {
-        "category": "appearance",
+        "category": "icons-type",
         "section": "typography",
         "label": "settings.theme.mono_font",
         "entry": "theme.monoFont",
@@ -129,6 +129,83 @@
         "control": "toggle",
         "keywords": "icons monochrome tint color"
       }
+    },
+    "icons": {
+      "title": "Icons",
+      "type": "object",
+      "description": "Icon font settings.",
+      "properties": {
+        "weight": {
+          "title": "Icon weight",
+          "type": "string",
+          "default": "bold",
+          "description": "Stroke weight of the Phosphor icon font.",
+          "x-settings": {
+            "category": "icons-type",
+            "section": "icons",
+            "label": "prefs.icons_type.weight",
+            "control": "selector",
+            "keywords": "icon weight stroke thin solid filled phosphor"
+          },
+          "enum": [
+            "regular",
+            "bold",
+            "fill"
+          ],
+          "x-enumLabels": {
+            "regular": "Regular",
+            "bold": "Bold",
+            "fill": "Fill"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "type": {
+      "title": "Type",
+      "type": "object",
+      "description": "Type roles: heading font and case. Body text uses theme.font.",
+      "properties": {
+        "heading": {
+          "title": "Heading font",
+          "type": "string",
+          "default": "",
+          "description": "Font of page and section titles. Empty uses the UI font.",
+          "x-settings": {
+            "category": "icons-type",
+            "section": "headings",
+            "label": "prefs.icons_type.heading_font",
+            "control": "text",
+            "keywords": "heading title font typeface family display"
+          }
+        },
+        "headingCase": {
+          "title": "Heading case",
+          "type": "string",
+          "default": "none",
+          "description": "Letter case of titles.",
+          "x-settings": {
+            "category": "icons-type",
+            "section": "headings",
+            "label": "prefs.icons_type.heading_case",
+            "control": "selector",
+            "keywords": "heading title case uppercase lowercase capitalize caps"
+          },
+          "enum": [
+            "none",
+            "upper",
+            "lower",
+            "title"
+          ],
+          "x-enumLabels": {
+            "none": "As written",
+            "upper": "UPPER",
+            "lower": "lower",
+            "title": "Title"
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "enableCorners": {
       "title": "Enable Corners",
@@ -348,13 +425,27 @@
           "title": "Brush highlight",
           "type": "boolean",
           "default": false,
-          "description": "Paint selection and focus highlights as a brush stroke."
+          "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "signatures",
+            "label": "prefs.appearance.sig_brush",
+            "control": "toggle",
+            "keywords": "signature brush ink stroke highlight selection sumi-e"
+          }
         },
         "petals": {
-          "title": "Petals",
+          "title": "Falling petals",
           "type": "boolean",
           "default": false,
-          "description": "Drift sakura petals across the shell's surfaces."
+          "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "signatures",
+            "label": "prefs.appearance.sig_petals",
+            "control": "toggle",
+            "keywords": "signature petals sakura falling lockscreen particles"
+          }
         }
       },
       "additionalProperties": false

@@ -1,10 +1,12 @@
 pragma Singleton
 
 import QtQuick
+import qs.config
+import "IconWeights.js" as IconWeights
 
 QtObject {
-    // Icon font
-    readonly property string font: "Phosphor-Bold"
+    // Icon font: the family of theme.icons.weight (all weights share codepoints)
+    readonly property string font: IconWeights.family(Config.theme && Config.theme.icons ? Config.theme.icons.weight : "")
 
     // Overview button
     readonly property string overview: ""

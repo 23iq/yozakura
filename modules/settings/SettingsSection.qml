@@ -46,8 +46,9 @@ Column {
             Text {
                 id: title
                 leftPadding: 6
-                text: sectionRoot.section.title ? I18n.t(sectionRoot.section.title).toUpperCase() : ""
-                font.family: Config.theme.font
+                // Small caps label: upper unless the user picked a heading case.
+                text: !sectionRoot.section.title ? "" : (Config.theme.type ? Config.theme.type.headingCase : "none") === "none" ? I18n.t(sectionRoot.section.title).toUpperCase() : Styling.heading(I18n.t(sectionRoot.section.title))
+                font.family: Styling.headingFont
                 font.pixelSize: Styling.fontSize(-3)
                 font.weight: Font.Bold
                 font.letterSpacing: 1.4

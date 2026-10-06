@@ -49,31 +49,6 @@ var category = {
             ]
         },
         {
-            "id": "typography",
-            "title": "prefs.appearance.section.typography",
-            "entries": [
-                {
-                    "key": "theme.font",
-                    "type": "font",
-                    "keys": ["theme.font", "theme.fontSize"],
-                    "sizeKey": "theme.fontSize",
-                    "label": "settings.theme.ui_font",
-                    "description": "prefs.appearance.ui_font.desc",
-                    "keywords": "font typeface family text size typography"
-                },
-                {
-                    "key": "theme.monoFont",
-                    "type": "font",
-                    "keys": ["theme.monoFont", "theme.monoFontSize"],
-                    "sizeKey": "theme.monoFontSize",
-                    "monospace": true,
-                    "label": "settings.theme.mono_font",
-                    "description": "prefs.appearance.mono_font.desc",
-                    "keywords": "monospace code terminal font typeface"
-                }
-            ]
-        },
-        {
             "id": "shape",
             "title": "prefs.appearance.section.shape",
             "entries": [
@@ -171,6 +146,26 @@ var category = {
                     "label": "prefs.appearance.popup_gap",
                     "description": "prefs.appearance.popup_gap.desc",
                     "keywords": "popup gap distance margin offset bar"
+                }
+            ]
+        },
+        {
+            "id": "signatures",
+            "title": "prefs.appearance.section.signatures",
+            "entries": [
+                {
+                    "key": "theme.signatures.brushHighlight",
+                    "type": "toggle",
+                    "label": "prefs.appearance.sig_brush",
+                    "description": "prefs.appearance.sig_brush.desc",
+                    "keywords": "signature brush ink stroke highlight selection sumi-e"
+                },
+                {
+                    "key": "theme.signatures.petals",
+                    "type": "toggle",
+                    "label": "prefs.appearance.sig_petals",
+                    "description": "prefs.appearance.sig_petals.desc",
+                    "keywords": "signature petals sakura falling lockscreen particles"
                 }
             ]
         },

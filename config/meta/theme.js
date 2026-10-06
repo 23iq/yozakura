@@ -260,6 +260,23 @@ var keys = {
         "unit": "px",
         "description": "Chamfer size of cut corners."
     },
+    "icons": {
+        "description": "Icon font settings."
+    },
+    "icons.weight": {
+        "enum": ["regular", "bold", "fill"],
+        "description": "Weight of the Phosphor icon font: regular (thin strokes), bold (default) or fill (solid glyphs)."
+    },
+    "type": {
+        "description": "Type roles: heading font and case. Body text uses theme.font."
+    },
+    "type.heading": {
+        "description": "Font family of page, section and panel titles; empty uses theme.font."
+    },
+    "type.headingCase": {
+        "enum": ["none", "upper", "lower", "title"],
+        "description": "Letter case applied to titles: none, upper, lower or title."
+    },
     "popup": {
         "description": "Bar popups and menus: entry motion, tail and gap."
     },
