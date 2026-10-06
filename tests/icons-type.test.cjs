@@ -51,6 +51,12 @@ test('heading case is applied', () => {
     assert.equal(T.applyCase(null, 'upper'), '');
 });
 
+test('Icons.qml inlines the same families as IconWeights.js', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'modules/theme/Icons.qml'), 'utf8');
+    assert.ok(src.includes('|| "' + W.family('bold') + '"'));
+    for (const w of ['regular', 'fill']) assert.ok(src.includes('"' + w + '": "' + W.family(w) + '"'), w);
+});
+
 test('heading font falls back to the body font', () => {
     assert.equal(T.headingFamily({ heading: '' }, 'Inter'), 'Inter');
     assert.equal(T.headingFamily(null, 'Inter'), 'Inter');
