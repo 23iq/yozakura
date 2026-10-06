@@ -27,7 +27,7 @@ Primary system panel supporting horizontal (top/bottom) and vertical (left/right
   - `ActivityLayout.js` (pure, tested): placement mode — `tab` (notch-shaped tab from the edge: islands bar on the notch edge, or bar on another edge), `pill` (classic bar on the notch edge), `floating` (notch theme "island"); privacy prefers the right side, tasks the left, spill-over, then "+N".
   - `ActivityGaps.qml` (layout + retract-aware delegates), `ActivityIsland.qml` (body per mode, grow/retract), `ActivityContent/Indicator/Ring.qml`.
 - **Widgets**:
-  - `clock/`: Time, date, weather integration (`Clock.qml` — 672 lines).
+  - `clock/`: bar clock (faces, Pomodoro indicators) and its bento `ClockPanel` popup.
   - `systray/`: SNI-based system tray.
   - `workspaces/`: Compositor workspace visualization and navigation. `Workspaces.qml` lays out `WorkspaceButton` slots (layer visibility in `WorkspaceSlot.js`); `WorkspaceNumberLabel` renders the number in `workspaces.numeralStyle`. Numeral systems live in the `WorkspaceNumerals.js` registry (format, auto font, optical fit hints); add an entry there to add a system (settings, validation and the font probe in `services/NumeralFonts.qml` pick it up). The active slot is marked by `ActiveIndicator.qml` (stretchy two-index box) in `workspaces.indicatorStyle`: one QML per style in `workspaces/indicators/` + an entry in the `IndicatorStyles.js` registry (pill, underline, dot, brush, bracket). Tests: `tests/workspace-numerals.test.*`, `tests/workspace-slot.test.cjs`, `tests/workspace-indicators.test.py`, `tests/surface-effects.test.cjs`.
   - `IntegratedDock.qml`: Taskbar-style dock embedded directly into bar layout.
