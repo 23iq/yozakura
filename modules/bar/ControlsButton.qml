@@ -27,8 +27,9 @@ Item {
     // Popup visibility state (tracks intent, not animation)
     property bool popupOpen: controlsPopup.isOpen
 
-    Layout.preferredWidth: root.moduleSize
-    Layout.preferredHeight: root.moduleSize
+    // The OSD bar-inline style grows the button into a level slider.
+    Layout.preferredWidth: root.moduleSize + (root.vertical ? 0 : inlineOsd.reveal)
+    Layout.preferredHeight: root.moduleSize + (root.vertical ? inlineOsd.reveal : 0)
     Layout.fillWidth: vertical
     Layout.fillHeight: !vertical
 
@@ -76,11 +77,15 @@ Item {
             font.family: Icons.font
             font.pixelSize: BarMetrics.iconFor(18, root.moduleSize)
             color: root.popupOpen ? buttonBg.item : Styling.srItem("overprimary")
+            opacity: 1 - inlineOsd.opacity
         }
 
         OsdBarInline {
+            id: inlineOsd
             anchors.fill: parent
             radius: parent.radius ?? 0
+            vertical: root.vertical
+            screen: root.bar ? root.bar.screen : null
         }
 
         MouseArea {

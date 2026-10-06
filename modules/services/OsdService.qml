@@ -61,6 +61,13 @@ Singleton {
             root.inlineRequest(kind);
     }
 
+    // The device a level belongs to (the muted OSD names it); "" for brightness.
+    function currentDevice(kind: string): string {
+        if (kind === "mic")
+            return OsdStyles.deviceName(Audio.source);
+        return kind === "volume" ? root._sinkName : "";
+    }
+
     function openControls(screenName: string): void {
         root.controlsRequested(screenName || "");
     }

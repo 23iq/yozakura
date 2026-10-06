@@ -86,3 +86,21 @@ function stateOf(kind, value, muted) {
 function labelKey(kind) {
     return kind === "mic" ? "osd.mic" : kind === "brightness" ? "osd.brightness" : "osd.volume";
 }
+
+// "62%" (the value shown next to a level).
+function valueText(v) {
+    return percent(v) + "%";
+}
+
+// What a style shows next to the level, shared by every style:
+//   title   the line above the level: the "Muted" label (accent), or the
+//           new device right after an output switch; "" otherwise
+//   caption the quiet line under the title: the current device when muted
+//   value   "62%", "" when muted
+//   level   whether the level line shows (hidden while muted)
+//   accent  whether the title is the accent "Muted" label
+function readout(kind, value, muted, device, currentDevice, mutedLabel) {
+    if (stateOf(kind, value, muted) === "muted")
+        return { "title": mutedLabel || "", "caption": currentDevice || "", "value": "", "level": false, "accent": true };
+    return { "title": device || "", "caption": "", "value": valueText(value), "level": true, "accent": false };
+}

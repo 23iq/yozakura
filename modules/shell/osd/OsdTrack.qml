@@ -1,56 +1,50 @@
 import QtQuick
-import qs.modules.components
-import qs.modules.theme
 import qs.modules.shell.osd
+import qs.modules.components.kit
 
-// Level track shared by the OSD styles: a rounded groove with a fill that
-// grows left to right, or bottom to top when vertical. Muted dims the fill.
+// The level line shared by the OSD styles, drawn like the kit's LineSlider
+// track: a Space.stroke groove with an accent fill that grows left to right
+// (bottom to top when vertical) and eases to each new level. Display only:
+// the OSD window handles scroll and click over the whole OSD.
 Item {
     id: root
 
     property real value: 0
-    property bool muted: false
     property bool vertical: false
-    property int thickness: 4
+    readonly property real fraction: Math.max(0, Math.min(1, root.value))
 
-    implicitWidth: root.vertical ? root.thickness : 100
-    implicitHeight: root.vertical ? 100 : root.thickness
+    implicitWidth: root.vertical ? Space.stroke : 120
+    implicitHeight: root.vertical ? 120 : Space.stroke
 
-    StyledRect {
-        anchors.fill: parent
-        variant: "internalbg"
-        enableBorder: false
-        radius: Math.min(width, height) / 2
-    }
+    Rectangle {
+        id: groove
+        anchors.centerIn: parent
+        width: root.vertical ? Space.stroke : parent.width
+        height: root.vertical ? parent.height : Space.stroke
+        radius: Space.stroke / 2
+        color: Type.track
 
-    StyledRect {
-        id: fill
-        variant: root.muted ? "common" : "primary"
-        enableBorder: false
-        radius: Math.min(root.width, root.height) / 2
-        opacity: root.muted ? 0.5 : 1
-        anchors.left: parent.left
-        anchors.bottom: parent.bottom
-        width: root.vertical ? parent.width : Math.max(root.thickness, parent.width * root.value)
-        height: root.vertical ? Math.max(root.thickness, parent.height * root.value) : parent.height
+        Rectangle {
+            x: 0
+            y: root.vertical ? groove.height - height : 0
+            width: root.vertical ? groove.width : groove.width * root.fraction
+            height: root.vertical ? groove.height * root.fraction : groove.height
+            radius: groove.radius
+            color: Type.accent
 
-        Behavior on width {
-            enabled: !root.vertical
-            NumberAnimation {
-                duration: OsdMotion.enterMs
-                easing.type: OsdMotion.enterEasing
+            Behavior on width {
+                enabled: !root.vertical && OsdMotion.enterMs > 0
+                NumberAnimation {
+                    duration: OsdMotion.enterMs
+                    easing.type: OsdMotion.enterEasing
+                }
             }
-        }
-        Behavior on height {
-            enabled: root.vertical
-            NumberAnimation {
-                duration: OsdMotion.enterMs
-                easing.type: OsdMotion.enterEasing
-            }
-        }
-        Behavior on opacity {
-            NumberAnimation {
-                duration: OsdMotion.enterMs
+            Behavior on height {
+                enabled: root.vertical && OsdMotion.enterMs > 0
+                NumberAnimation {
+                    duration: OsdMotion.enterMs
+                    easing.type: OsdMotion.enterEasing
+                }
             }
         }
     }

@@ -65,6 +65,23 @@ test('device names: description first, then nick, then name; only on a real swit
     assert.equal(S.deviceSwitched('', 'b'), false);
     assert.equal(S.deviceSwitched('a', 'a'), false);
 });
+test('readout: muted shows the accent label and the device caption, no level', () => {
+    const r = S.readout('volume', 0.4, true, '', 'Speakers', 'Muted');
+    assert.deepEqual({ ...r }, { title: 'Muted', caption: 'Speakers', value: '', level: false, accent: true });
+});
+test('readout: a device switch titles the level with the new device', () => {
+    const r = S.readout('volume', 0.62, false, 'Headphones', 'Headphones', 'Muted');
+    assert.equal(r.title, 'Headphones');
+    assert.equal(r.value, '62%');
+    assert.equal(r.level, true);
+    assert.equal(r.accent, false);
+});
+test('readout: a plain level has no title; brightness is never muted', () => {
+    assert.equal(S.readout('volume', 0.3, false, '', 'Speakers', 'Muted').title, '');
+    const b = S.readout('brightness', 0.38, true, '', '', 'Muted');
+    assert.equal(b.level, true);
+    assert.equal(b.value, '38%');
+});
 test('mute is its own visual state', () => {
     assert.equal(S.stateOf('volume', 0.5, true), 'muted');
     assert.equal(S.stateOf('mic', 0.5, true), 'muted');
