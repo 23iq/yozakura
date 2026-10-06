@@ -5,7 +5,7 @@
   "font": "Manrope",
   "fontSize": 14,
   "monoFont": "JetBrains Mono",
-  "animDuration": 360,
+  "animDuration": 300,
   "paletteTransitionDuration": 900,
   "shadowOpacity": 0.35,
   "terminalOpacity": 0.88,

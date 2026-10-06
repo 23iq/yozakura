@@ -62,7 +62,7 @@ var profile = {
         },
         "windowsIn": {
             "curve": "sakuraOvershoot",
-            "speed": 4,
+            "speed": 3.5,
             "style": "popin 85%"
         },
         "windowsOut": {
@@ -72,7 +72,7 @@ var profile = {
         },
         "windowsMove": {
             "curve": "sakuraOvershoot",
-            "speed": 4
+            "speed": 3.5
         },
         "layersIn": {
             "curve": "sakuraDecel",

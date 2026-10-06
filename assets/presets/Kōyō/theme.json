@@ -5,7 +5,7 @@
   "font": "Nunito",
   "fontSize": 14,
   "monoFont": "JetBrains Mono",
-  "animDuration": 340,
+  "animDuration": 300,
   "paletteTransitionDuration": 1000,
   "shadowOpacity": 0.5,
   "terminalOpacity": 0.94,

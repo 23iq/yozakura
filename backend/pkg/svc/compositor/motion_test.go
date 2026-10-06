@@ -67,8 +67,8 @@ func TestMotionConfUsesBezierFallbackForSprings(t *testing.T) {
 	for _, want := range []string{
 		"animations {\n    enabled = true\n",
 		"    bezier = springsBounce, 0.34, 1.56, 0.64, 1\n",
-		"    animation = windowsIn, 1, 4.5, springsBounce, popin 80%\n",
-		"    animation = windowsMove, 1, 4.5, springsSettle\n",
+		"    animation = windowsIn, 1, 3.5, springsBounce, popin 80%\n",
+		"    animation = windowsMove, 1, 3.5, springsSettle\n",
 	} {
 		if !strings.Contains(conf, want) {
 			t.Errorf("conf missing %q\n%s", want, conf)

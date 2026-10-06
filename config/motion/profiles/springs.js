@@ -38,7 +38,7 @@ var profile = {
     "leaves": {
         "windows": {
             "curve": "springsBounce",
-            "speed": 4.5,
+            "speed": 3.5,
             "style": "popin 80%"
         },
         "windowsOut": {
@@ -48,11 +48,11 @@ var profile = {
         },
         "windowsMove": {
             "curve": "springsSettle",
-            "speed": 4.5
+            "speed": 3.5
         },
         "layers": {
             "curve": "springsBounce",
-            "speed": 3.8,
+            "speed": 3.5,
             "style": "popin 90%"
         },
         "layersOut": {

@@ -14,6 +14,7 @@ import "defaults/overview.js" as OverviewDefaults
 import "defaults/notch.js" as NotchDefaults
 import "defaults/compositor.js" as CompositorDefaults
 import "ColorSpec.js" as ColorSpec
+import "motion/MotionBudget.js" as MotionBudget
 import "motion/MotionProfiles.js" as MotionProfiles
 import "defaults/performance.js" as PerformanceDefaults
 import "defaults/weather.js" as WeatherDefaults
@@ -360,8 +361,10 @@ Singleton {
     // the shell's animation scale and easing family unless motionShell is off.
     readonly property var motionProfile: MotionProfiles.resolveId(compositor ? compositor.motionProfile : "")
     readonly property bool motionDrivesShell: !!compositor && compositor.motionShell !== false
-    readonly property real motionShellScale: !motionDrivesShell ? 1 : (motionProfile.disabled ? 0 : motionProfile.shell.scale * (compositor.motionDurationScale > 0 ? compositor.motionDurationScale : 1))
-    property int animDuration: Services.GameModeClient.toggled ? 0 : Math.round(theme.animDuration * motionShellScale)
+    // Profile scale alone; the budget caps it before the user's explicit duration scale.
+    readonly property real motionProfileScale: !motionDrivesShell ? 1 : (motionProfile.disabled ? 0 : motionProfile.shell.scale)
+    readonly property real motionUserScale: motionDrivesShell && compositor.motionDurationScale > 0 ? compositor.motionDurationScale : 1
+    property int animDuration: Services.GameModeClient.toggled ? 0 : Math.round(MotionBudget.shellBase(theme.animDuration, motionProfileScale) * motionUserScale)
     // Easing family of the motion profile, for animations that follow it.
     readonly property int animEasing: {
         const name = motionDrivesShell ? motionProfile.shell.easing : "OutCubic";

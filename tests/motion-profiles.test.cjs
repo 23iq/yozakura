@@ -9,6 +9,7 @@ const { loadLibrary } = require('./lib/qmljs.cjs');
 const root = path.join(__dirname, '..');
 const Profiles = loadLibrary(path.join(root, 'config/motion/MotionProfiles.js'));
 const Spec = loadLibrary(path.join(root, 'config/motion/MotionSpec.js'));
+const Budget = loadLibrary(path.join(__dirname, '../config/motion/MotionBudget.js'));
 const fixture = require('./fixtures/motion/sakura-hyprctl.json');
 
 const plain = v => JSON.parse(JSON.stringify(v));
@@ -67,7 +68,10 @@ test('sakura profile reproduces the sakura.lua animation state exactly', () => {
         const want = effective(a.leaf);
         assert.ok(want, `${a.leaf} exists in Hyprland`);
         assert.equal(a.enabled, want.enabled, `${a.leaf}.enabled`);
-        assert.equal(a.speed, Math.round(want.speed * 100) / 100, `${a.leaf}.speed`);
+        // The hand-written state, except for the motion budget's compositor caps.
+        const own = Profiles.get('sakura').leaves[a.leaf] !== undefined;
+        const cap = (own && Budget.COMPOSITOR.find(c => c.re.test(a.leaf)) || { max: Infinity }).max;
+        assert.equal(a.speed, Math.min(Math.round(want.speed * 100) / 100, cap), `${a.leaf}.speed`);
         assert.equal(a.style, want.style, `${a.leaf}.style`);
         const got = a.curve === 'default' ? curvePoints('default', builtin) : curvePoints(a.curve, spec.curves);
         assert.deepEqual(got.map(v => Math.round(v * 100) / 100), curvePoints(want.bezier, fixture.curves.concat(builtin)).map(v => Math.round(v * 100) / 100), `${a.leaf}.curve`);
@@ -131,8 +135,8 @@ test('lua chunk: guarded statements, no semicolons, sakura.lua syntax', () => {
     assert.ok(chunk.startsWith('pcall(hl.config, { animations = { enabled = true } }) pcall(function() hl.curve('));
     assert.ok(!chunk.includes('\n'), 'one line');
     assert.ok(chunk.includes('hl.curve("sakuraOvershoot", { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.08} } })'));
-    assert.ok(chunk.includes('hl.animation({ leaf = "windowsIn", enabled = true, speed = 4, bezier = "sakuraOvershoot", style = "popin 85%" })'));
-    assert.ok(chunk.includes('hl.animation({ leaf = "windowsMove", enabled = true, speed = 4, bezier = "sakuraOvershoot" })'));
+    assert.ok(chunk.includes('hl.animation({ leaf = "windowsIn", enabled = true, speed = 3.5, bezier = "sakuraOvershoot", style = "popin 85%" })'));
+    assert.ok(chunk.includes('hl.animation({ leaf = "windowsMove", enabled = true, speed = 3.5, bezier = "sakuraOvershoot" })'));
     assert.ok(chunk.includes('hl.animation({ leaf = "borderangle", enabled = true, speed = 100, bezier = "sakuraLinear", style = "loop" })'));
     assert.equal(Spec.luaChunk(Spec.resolve({ profile: 'off' })), 'pcall(hl.config, { animations = { enabled = false } })');
 });

@@ -1,6 +1,6 @@
 .pragma library
 
-// Slow, ink-like motion (Sumi-e): long symmetric eases, windows fade and
+// Soft, ink-like motion (Sumi-e): gentle eases without overshoot, windows fade and
 // barely grow, workspaces cross-fade. Nothing overshoots.
 // Format: config/motion/MotionProfiles.js.
 
@@ -12,7 +12,7 @@ var profile = {
     "curves": {
         "gentleInk": {
             "type": "bezier",
-            "points": [0.45, 0.0, 0.15, 1.0]
+            "points": [0.25, 0.46, 0.3, 1.0]
         },
         "gentleBreath": {
             "type": "bezier",
@@ -22,39 +22,39 @@ var profile = {
     "leaves": {
         "windows": {
             "curve": "gentleInk",
-            "speed": 6,
+            "speed": 3.5,
             "style": "popin 92%"
         },
         "windowsOut": {
             "curve": "gentleBreath",
-            "speed": 5,
+            "speed": 3,
             "style": "popin 95%"
         },
         "windowsMove": {
             "curve": "gentleInk",
-            "speed": 6
+            "speed": 3.5
         },
         "layers": {
             "curve": "gentleInk",
-            "speed": 5,
+            "speed": 3,
             "style": "fade"
         },
         "fade": {
             "curve": "gentleBreath",
-            "speed": 6
+            "speed": 3.5
         },
         "border": {
             "curve": "gentleBreath",
-            "speed": 8
+            "speed": 5
         },
         "workspaces": {
             "curve": "gentleBreath",
-            "speed": 7,
+            "speed": 4,
             "style": "fade"
         },
         "specialWorkspace": {
             "curve": "gentleInk",
-            "speed": 6,
+            "speed": 3.5,
             "style": "fade"
         }
     },
@@ -63,7 +63,7 @@ var profile = {
         "speed": 0
     },
     "shell": {
-        "scale": 1.6,
-        "easing": "InOutSine"
+        "scale": 1.0,
+        "easing": "OutSine"
     }
 };
