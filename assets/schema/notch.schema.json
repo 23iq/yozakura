@@ -24,21 +24,25 @@
       "title": "Position",
       "type": "string",
       "default": "top",
-      "description": "The screen edge the notch sits on.",
+      "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
         "label": "prefs.notch.position",
         "control": "selector",
-        "keywords": "notch position top bottom edge"
+        "keywords": "notch position top bottom left right side vertical edge"
       },
       "enum": [
         "top",
-        "bottom"
+        "bottom",
+        "left",
+        "right"
       ],
       "x-enumLabels": {
         "top": "Top",
-        "bottom": "Bottom"
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
       }
     },
     "align": {
@@ -71,7 +75,7 @@
       "description": "Height of the edge area that reveals a hidden notch.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "advanced",
         "label": "prefs.notch.hover_region",
         "control": "slider",
         "step": 1,
@@ -148,7 +152,7 @@
       "description": "Don't grow the notch into a media preview on hover.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "advanced",
         "label": "shell.notch.disable_hover_expansion",
         "control": "toggle",
         "keywords": "hover expand grow media preview"
@@ -309,18 +313,243 @@
         ]
       }
     },
-    "osd": {
-      "title": "Volume and brightness in the island",
-      "type": "boolean",
-      "default": false,
-      "description": "Show volume, microphone and brightness changes as a short level in the island.",
+    "liveActivities": {
+      "title": "Live Activities",
+      "type": "object",
+      "description": "Recording, privacy, timers and download progress shown as islands next to the notch.",
       "x-settings": {
         "category": "notch",
         "section": "activities",
-        "label": "prefs.notch.osd",
-        "control": "toggle",
-        "keywords": "osd volume brightness island notch"
-      }
+        "label": "shell.activities",
+        "control": "custom",
+        "component": "ActivitiesEditor",
+        "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+      },
+      "properties": {
+        "enabled": {
+          "title": "Enabled",
+          "type": "boolean",
+          "default": true,
+          "description": "Show live activities at all."
+        },
+        "presentation": {
+          "title": "Presentation",
+          "type": "string",
+          "default": "notch",
+          "description": "Where activities appear: inside the notch, as bar islands, or nowhere.",
+          "enum": [
+            "notch",
+            "islands",
+            "off"
+          ]
+        },
+        "maxVisible": {
+          "title": "Max visible",
+          "type": "number",
+          "default": 4,
+          "description": "Most activities shown at once.",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "sources": {
+          "title": "Sources",
+          "type": "object",
+          "properties": {
+            "recording": {
+              "title": "Recording",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "privacy": {
+              "title": "Privacy",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "timers": {
+              "title": "Timers",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "tasks": {
+              "title": "Tasks",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "notificationProgress": {
+              "title": "Notification progress",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "jobView": {
+              "title": "Job view",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "browserDownloads": {
+              "title": "Browser downloads",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "steam": {
+              "title": "Steam",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "terminal": {
+              "title": "Terminal",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "fileOps": {
+              "title": "File ops",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "packages": {
+              "title": "Packages",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "torrents": {
+              "title": "Torrents",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "aria2": {
+              "title": "Aria2",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "syncthing": {
+              "title": "Syncthing",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
+            "launchers": {
+              "title": "Launchers",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            }
+          },
+          "additionalProperties": false
+        },
+        "downloads": {
+          "title": "Downloads",
+          "type": "object",
+          "properties": {
+            "aggregate": {
+              "title": "Aggregate",
+              "type": "boolean",
+              "default": true,
+              "description": "Merge concurrent downloads into one activity."
+            },
+            "showSpeed": {
+              "title": "Show speed",
+              "type": "boolean",
+              "default": true,
+              "description": "Show transfer speed on download activities."
+            },
+            "endpoints": {
+              "title": "Endpoints",
+              "type": "object",
+              "description": "RPC/web endpoints of the download clients (machine specific, never in presets).",
+              "x-local": true,
+              "properties": {
+                "qbittorrent": {
+                  "title": "Qbittorrent",
+                  "type": "string",
+                  "default": "http://127.0.0.1:8080",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "transmission": {
+                  "title": "Transmission",
+                  "type": "string",
+                  "default": "http://127.0.0.1:9091/transmission/rpc",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "deluge": {
+                  "title": "Deluge",
+                  "type": "string",
+                  "default": "http://127.0.0.1:8112/json",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "aria2": {
+                  "title": "Aria2",
+                  "type": "string",
+                  "default": "http://127.0.0.1:6800/jsonrpc",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                },
+                "syncthing": {
+                  "title": "Syncthing",
+                  "type": "string",
+                  "default": "",
+                  "description": "RPC/web endpoint of this download client (empty = disabled).",
+                  "format": "uri"
+                }
+              },
+              "additionalProperties": false
+            },
+            "secrets": {
+              "title": "Secrets",
+              "type": "object",
+              "description": "Passwords/tokens of the download clients' RPC (never in presets).",
+              "x-local": true,
+              "properties": {
+                "qbittorrent": {
+                  "title": "Qbittorrent",
+                  "type": "string",
+                  "default": "",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                },
+                "transmission": {
+                  "title": "Transmission",
+                  "type": "string",
+                  "default": "",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                },
+                "deluge": {
+                  "title": "Deluge",
+                  "type": "string",
+                  "default": "deluge",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                },
+                "aria2": {
+                  "title": "Aria2",
+                  "type": "string",
+                  "default": "",
+                  "description": "Password/token of this download client's RPC.",
+                  "x-secret": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

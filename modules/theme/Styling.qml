@@ -1,9 +1,18 @@
 pragma Singleton
 import QtQuick
 import qs.config
+import "TypeRoles.js" as TypeRoles
 
 QtObject {
     readonly property string defaultFont: Config.defaultFont
+
+    // Type roles (theme.type): body = theme.font; heading falls back to it.
+    readonly property string bodyFont: Config.theme.font
+    readonly property string headingFont: TypeRoles.headingFamily(Config.theme.type, Config.theme.font)
+
+    function heading(text) {
+        return TypeRoles.applyCase(text, Config.theme.type ? Config.theme.type.headingCase : "none");
+    }
 
     function radius(offset) {
         return Config.roundness > 0 ? Math.max(Config.roundness + offset, 0) : 0;

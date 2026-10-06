@@ -49,8 +49,8 @@ RowLayout {
 
         Text {
             Layout.fillWidth: true
-            text: I18n.t(header.category.title)
-            font.family: Config.theme.font
+            text: Styling.heading(I18n.t(header.category.title))
+            font.family: Styling.headingFont
             font.pixelSize: Styling.fontSize(12)
             font.weight: Font.Bold
             color: Colors.overBackground

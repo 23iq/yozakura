@@ -22,7 +22,13 @@ var widgets = [
     { id: "weather", url: "WeatherWidget.qml", labelKey: "bento.widget.weather", icon: "thermometer",
       minW: 2, minH: 1, maxW: 4, maxH: 3, defaultW: 2, defaultH: 2 },
     { id: "metricsSummary", url: "MetricsSummary.qml", labelKey: "bento.widget.metricsSummary", icon: "cpu",
-      minW: 1, minH: 1, maxW: 4, maxH: 2, defaultW: 2, defaultH: 1 }
+      minW: 1, minH: 1, maxW: 4, maxH: 2, defaultW: 2, defaultH: 1 },
+    { id: "pomodoro", url: "time/PomodoroWidget.qml", labelKey: "bento.widget.pomodoro", icon: "countdown",
+      minW: 1, minH: 2, maxW: 2, maxH: 3, defaultW: 1, defaultH: 2 },
+    { id: "worldClocks", url: "time/WorldClocksWidget.qml", labelKey: "bento.widget.worldClocks", icon: "globe",
+      minW: 1, minH: 1, maxW: 4, maxH: 2, defaultW: 2, defaultH: 1 },
+    { id: "agenda", url: "time/AgendaWidget.qml", labelKey: "bento.widget.agenda", icon: "listChecks",
+      minW: 1, minH: 1, maxW: 2, maxH: 3, defaultW: 1, defaultH: 2 }
 ];
 
 function ids() {

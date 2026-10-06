@@ -35,6 +35,19 @@ var data = {
     "sheet": {
         "side": "auto"
     },
+    // notch: in the notch; fullscreen: big buttons over a dimmed screen;
+    // radial: a ring at the cursor (modules/widgets/powermenu/styles).
+    "powermenu": {
+        "style": "notch"
+    },
+    "tools": {
+        "style": "notch"
+    },
+    // fullscreen keeps the frosted full-screen sheet; spotlight / sheet use
+    // the launcher's hosts (modules/shell/hosts).
+    "cheatsheet": {
+        "host": "fullscreen"
+    },
     "osd": {
         "position": "auto",
         "style": "pill",

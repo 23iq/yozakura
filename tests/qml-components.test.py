@@ -86,7 +86,7 @@ Item { property bool isNavigating: false; property bool notchHovered: false; imp
 import QtQuick
 QtObject { property string presentation: "notch"; property var activities: []; property var tasks: []; property var privacy: []; property var transfers: []; property int count: 0; property bool showSpeed: true; function activate(a, b, s) {} function transferAction(t, a) {} function iconUrl(n) { return ""; } }'''})
  shutil.copy(repo/'modules/services/activities/TransferModel.js', p/'qs/modules/services/activities')
- module('Quickshell.Widgets', {'IconImage': 'import QtQuick\nImage { property real implicitSize }'})
+ module('Quickshell.Widgets', {'IconImage': 'import QtQuick\nImage { property real implicitSize }', 'ClippingRectangle': 'import QtQuick\nRectangle {}'})
  module('qs.modules.bar.activities', {n: (repo/'modules/bar/activities'/(n+'.qml')).read_text() for n in ['ActivityIndicator', 'ActivityRing']})
  notchActs = repo/'modules/widgets/defaultview/activities'
  d = module('qs.modules.widgets.defaultview.activities', {f.stem: f.read_text() for f in sorted(notchActs.glob('*.qml'))})
@@ -95,8 +95,9 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  module('qs.modules.shell.hosts', {'HostRouter': 'pragma Singleton\nimport QtQuick\nQtObject { function hostFor(m) { return "notch"; } function notchOpen(v) { return !!v && !!(v.launcher || v.dashboard || v.powermenu || v.tools || v.aiquick); } }'})
  module('qs.modules.shell.rehome', {'RehomedClock': 'import QtQuick\nText { property real size }', 'RehomedTray': 'import QtQuick\nItem { property real iconSize }'})
  children=p/'children'; children.mkdir()
- names=['NotchVisualizer','AlbumBackdrop','MediaTimeline','MediaTransportControls','ExpandedMedia','MediaSummary','IslandHeader','IslandNotifications','DefaultView']
- for n in ['Notch', 'NotchViewTransition']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)
+ names=['NotchVisualizer','AlbumBackdrop','MediaTimeline','MediaTransportControls','ExpandedMedia','MediaSummary','IslandHeader','IslandRail','IslandNotifications','DefaultView']
+ for n in ['Notch', 'NotchViewTransition', 'NotchSilhouette', 'NotchOutline']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)
+ shutil.copy(repo/'modules/notch/NotchShape.js', children)
  for n in names: shutil.copy(repo/'modules/widgets/defaultview'/(n+'.qml'),children)
  shutil.copy(repo/'modules/widgets/defaultview/IslandMedia.js',children)
  (children/'activities').mkdir()

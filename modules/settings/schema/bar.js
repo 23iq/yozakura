@@ -1,4 +1,5 @@
 .pragma library
+.import "barextra.js" as BarExtra
 
 // Bar & Islands: style, module layout, placement, clock, workspaces and
 // auto-hide. Entry format: see modules/settings/AGENTS.md.
@@ -138,6 +139,39 @@ var category = {
                     "label": "prefs.bar.clock_12h",
                     "description": "prefs.bar.clock_12h.desc",
                     "keywords": "clock 12h am pm 24h time format"
+                },
+                {
+                    "key": "bar.moduleOptions.clock.face",
+                    "type": "selector",
+                    "label": "prefs.bar.clock_face",
+                    "description": "prefs.bar.clock_face.desc",
+                    "keywords": "clock face style digital stacked dot matrix led kanji japanese",
+                    "options": [
+                        { "value": "digital", "label": "prefs.bar.clock_face.digital" },
+                        { "value": "stacked", "label": "prefs.bar.clock_face.stacked" },
+                        { "value": "dotMatrix", "label": "prefs.bar.clock_face.dotMatrix" },
+                        { "value": "kanji", "label": "prefs.bar.clock_face.kanji" }
+                    ]
+                },
+                {
+                    "key": "bar.moduleOptions.clock.pomodoroStyle",
+                    "type": "selector",
+                    "label": "prefs.bar.pomodoro_style",
+                    "description": "prefs.bar.pomodoro_style.desc",
+                    "keywords": "pomodoro focus timer ring underline countdown island progress clock",
+                    "options": [
+                        { "value": "ring", "label": "prefs.bar.pomodoro_style.ring" },
+                        { "value": "underline", "label": "prefs.bar.pomodoro_style.underline" },
+                        { "value": "countdown", "label": "prefs.bar.pomodoro_style.countdown" },
+                        { "value": "island", "label": "prefs.bar.pomodoro_style.island" }
+                    ]
+                },
+                {
+                    "key": "bar.moduleOptions.clock.showWeather",
+                    "type": "toggle",
+                    "label": "prefs.bar.clock_weather",
+                    "description": "prefs.bar.clock_weather.desc",
+                    "keywords": "clock weather symbol icon day name"
                 }
             ]
         },
@@ -238,22 +272,9 @@ var category = {
                     "keywords": "fullscreen game video overlay"
                 }
             ]
-        },
-        {
-            "id": "more",
-            "title": "prefs.bar.section.more",
-            "entries": [
-                {
-                    "id": "bar.classic",
-                    "type": "custom",
-                    "component": "LegacyLink",
-                    "target": "bar-classic",
-                    "resettable": false,
-                    "label": "prefs.bar.classic",
-                    "description": "prefs.bar.classic.desc",
-                    "keywords": "launcher icon pill style firefox player screens monitors shadow border advanced"
-                }
-            ]
         }
     ]
 };
+
+// The former "classic" bar options: launcher icon, screens, expert knobs.
+category.sections.push(...BarExtra.sections);

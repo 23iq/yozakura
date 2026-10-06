@@ -16,19 +16,19 @@ ColumnLayout {
 
     spacing: 8
 
-    readonly property var current: Config.bar.activities ? Config.bar.activities : ({})
+    readonly property var current: Config.notch.liveActivities ? Config.notch.liveActivities : ({})
     readonly property bool masterEnabled: group.current.enabled ?? true
 
     // "activities" is one JSON object: copy, change one field, reassign.
     // `section` names a nested object ("sources", "downloads").
     function setField(field, value, section) {
-        const next = JSON.parse(JSON.stringify(Config.bar.activities || {}));
+        const next = JSON.parse(JSON.stringify(Config.notch.liveActivities || {}));
         const target = section ? (next[section] = next[section] || {}) : next;
         if (target[field] === value)
             return;
         target[field] = value;
         GlobalStates.markShellChanged();
-        Config.bar.activities = next;
+        Config.notch.liveActivities = next;
     }
 
     readonly property var downloads: group.current.downloads || ({})

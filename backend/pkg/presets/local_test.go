@@ -10,16 +10,28 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// liveBar is a bar.json holding machine-local values: a download client
-// endpoint with credentials, its RPC secret and a personal folder.
+// liveBar is a bar.json holding a machine-local personal folder; liveNotch
+// a notch.json holding a download client endpoint with credentials and its
+// RPC secret.
 const liveBar = `{
   "position": "left",
-  "activities": {"downloads": {
-    "endpoints": {"qbittorrent": "http://me:pw@nas.home:8080"},
-    "secrets": {"qbittorrent": "hunter2"}
-  }},
   "moduleOptions": {"downloads": {"folder": "/home/me/Private"}}
 }`
+
+const liveNotch = `{
+  "position": "bottom",
+  "liveActivities": {"downloads": {
+    "endpoints": {"qbittorrent": "http://me:pw@nas.home:8080"},
+    "secrets": {"qbittorrent": "hunter2"}
+  }}
+}`
+
+// readBoth is bar.json + notch.json under dir (missing files read empty).
+func readBoth(dir string) []byte {
+	a, _ := os.ReadFile(filepath.Join(dir, "bar.json"))
+	b, _ := os.ReadFile(filepath.Join(dir, "notch.json"))
+	return append(a, b...)
+}
 
 const leak1, leak2, leak3 = "hunter2", "nas.home", "/home/me/Private"
 
@@ -39,26 +51,27 @@ func assertNoLeak(t *testing.T, what string, data []byte) {
 func TestCatalogMachineLocal(t *testing.T) {
 	m := newManager(t)
 	for _, k := range []string{
-		"bar.activities.downloads.secrets.qbittorrent", "bar.activities.downloads.secrets",
-		"bar.activities.downloads.endpoints.aria2", "bar.moduleOptions.downloads.folder",
+		"notch.liveActivities.downloads.secrets.qbittorrent", "notch.liveActivities.downloads.secrets",
+		"notch.liveActivities.downloads.endpoints.aria2", "bar.moduleOptions.downloads.folder",
 		"desktop.wallpaperFolders",
 	} {
 		assert.True(t, m.Cat.MachineLocal(k), k)
 	}
-	for _, k := range []string{"bar.position", "bar.activities.downloads.showSpeed", "theme.font"} {
+	for _, k := range []string{"bar.position", "notch.liveActivities.downloads.showSpeed", "theme.font"} {
 		assert.False(t, m.Cat.MachineLocal(k), k)
 	}
-	assert.True(t, m.Cat.Secret("bar.activities.downloads.secrets.deluge"))
-	assert.False(t, m.Cat.Secret("bar.activities.downloads.endpoints.deluge"))
+	assert.True(t, m.Cat.Secret("notch.liveActivities.downloads.secrets.deluge"))
+	assert.False(t, m.Cat.Secret("notch.liveActivities.downloads.endpoints.deluge"))
 }
 
 func TestSecretsNeverLeaveTheMachine(t *testing.T) {
 	m := newManager(t)
 	writeLive(t, m, "bar", liveBar)
+	writeLive(t, m, "notch", liveNotch)
 
 	saved, err := m.Save("Mine", nil, false)
 	assert.NoError(t, err)
-	data, _ := os.ReadFile(filepath.Join(saved.Path, "bar.json"))
+	data := readBoth(saved.Path)
 	assertNoLeak(t, "a saved preset", data)
 	assert.Contains(t, string(data), `"left"`, "the look is saved")
 
@@ -80,12 +93,13 @@ func TestSecretsNeverLeaveTheMachine(t *testing.T) {
 
 	mixed, err := m.Mix("Mixed", map[string]string{"layout": Current}, "", false)
 	assert.NoError(t, err)
-	data, _ = os.ReadFile(filepath.Join(mixed.Path, "bar.json"))
+	data = readBoth(mixed.Path)
 	assertNoLeak(t, "a mixed preset", data)
 
 	// A preset (or bundle) made before secrets were stripped still never
 	// shows them.
 	assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "bar.json"), []byte(liveBar), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "notch.json"), []byte(liveNotch), 0o644))
 	diffs, err = m.Compare("Mine", Defaults)
 	assert.NoError(t, err)
 	data, _ = json.Marshal(diffs)
@@ -96,10 +110,14 @@ func TestSecretsNeverLeaveTheMachine(t *testing.T) {
 func TestApplyAndRevertKeepMachineLocalKeys(t *testing.T) {
 	m := newManager(t)
 	writeLive(t, m, "bar", liveBar)
+	writeLive(t, m, "notch", liveNotch)
 	check := func(what string) {
 		t.Helper()
 		data, err := os.ReadFile(m.Store.File("bar"))
 		assert.NoError(t, err)
+		more, err := os.ReadFile(m.Store.File("notch"))
+		assert.NoError(t, err)
+		data = append(data, more...)
 		for _, s := range []string{leak1, leak2, leak3} {
 			assert.Contains(t, string(data), s, "%s keeps %q", what, s)
 		}
@@ -112,8 +130,8 @@ func TestApplyAndRevertKeepMachineLocalKeys(t *testing.T) {
 	// replaces the user's.
 	dir := filepath.Join(m.UserDir, "Foreign")
 	assert.NoError(t, os.MkdirAll(dir, 0o755))
-	assert.NoError(t, os.WriteFile(filepath.Join(dir, "bar.json"),
-		[]byte(`{"activities": {"downloads": {"secrets": {"qbittorrent": "theirs"}}}}`), 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(dir, "notch.json"),
+		[]byte(`{"liveActivities": {"downloads": {"secrets": {"qbittorrent": "theirs"}}}}`), 0o644))
 	_, _, err = m.Apply("Foreign")
 	assert.NoError(t, err)
 	check("apply of a preset with foreign secrets")

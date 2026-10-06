@@ -40,6 +40,7 @@ MIRROR_DIRS = [
 ]
 MIRROR_FILES = [
     "modules/theme/Styling.qml",
+    "modules/theme/TypeRoles.js",
     "modules/theme/Icons.qml",
     "modules/theme/BarMetrics.qml",
     "modules/theme/Metrics.qml",
@@ -62,6 +63,9 @@ MIRROR_FILES = [
     "modules/services/ShellLayout.qml",
     "modules/notch/Notch.qml",
     "modules/notch/NotchViewTransition.qml",
+    "modules/notch/NotchSilhouette.qml",
+    "modules/notch/NotchOutline.qml",
+    "modules/notch/NotchShape.js",
     "modules/shell/hosts/HostRouter.qml",
     "modules/shell/hosts/HostRouter.js",
     "modules/notch/styles/NotchStyles.js",

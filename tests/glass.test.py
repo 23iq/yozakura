@@ -129,7 +129,7 @@ check(ev("Config.theme.glass.amount") == -1, "chip resets to the preset's amount
 # Advanced section is folded; a search jump unfolds it.
 adv = ev('w.findItem("settingsSection:glassAdvanced")')
 check(adv is not None and ev('w.findItem("settingsSection:glassAdvanced").expanded') is False, "advanced folded")
-ev('w.findItem("settingsSection:glassAdvanced").rowFor("theme.glass.advanced.blurSize")')
+ev('w.findItem("settingsSection:glassAdvanced").rowFor("theme.glass.advanced.tintStrength")')
 check(ev('w.findItem("settingsSection:glassAdvanced").expanded') is True, "rowFor unfolds the section")
 
 # Per-surface editor writes the override.

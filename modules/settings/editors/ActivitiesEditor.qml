@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.widgets.dashboard.controls
 
-// Live activities (bar.activities): reuses the existing group editor
+// Live activities (notch.liveActivities): reuses the existing group editor
 // (master switch, presentation, max visible, downloads, sources). It stages
 // through GlobalStates.markShellChanged like every shell key.
 Item {

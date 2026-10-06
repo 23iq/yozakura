@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-// Options are user settings forwarded by the shell (bar.activities.downloads).
+// Options are user settings forwarded by the shell (notch.liveActivities.downloads).
 type Options struct {
 	// DownloadDir overrides XDG_DOWNLOAD_DIR (tests, unusual setups).
 	DownloadDir string `json:"downloadDir"`
@@ -60,7 +60,7 @@ var (
 	registry   = map[string]func() Source{}
 )
 
-// register adds a source factory under its config key (bar.activities.sources).
+// register adds a source factory under its config key (notch.liveActivities.sources).
 // Call it from the source file's init().
 func register(name string, factory func() Source) {
 	registryMu.Lock()

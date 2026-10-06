@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:yozakura:config:bar",
   "title": "bar",
-  "description": "The bar (panel): style (classic/islands), module layout, screen edge, frame, clock, auto-hide and live activities.",
+  "description": "The bar (panel): style (classic/islands), module layout, screen edge, frame, clock, auto-hide.",
   "type": "object",
   "x-file": "config/bar.json",
   "properties": {
@@ -34,69 +34,81 @@
       "title": "Launcher icon",
       "type": "string",
       "default": "",
-      "description": "Launcher button icon (icon name or image path); empty uses the app logo.",
+      "description": "Icon name or image file for the launcher button; empty uses the app logo.",
+      "x-settings": {
+        "category": "bar",
+        "section": "launcher",
+        "label": "prefs.bar.launcher_icon",
+        "control": "path",
+        "keywords": "launcher icon logo symbol image path start menu button"
+      },
       "format": "icon"
     },
     "launcherIconTint": {
-      "title": "Launcher icon tint",
+      "title": "Tint launcher icon",
       "type": "boolean",
       "default": true,
-      "description": "Tint the launcher icon with the palette."
-    },
-    "launcherIconFullTint": {
-      "title": "Launcher icon full tint",
-      "type": "boolean",
-      "default": true,
-      "description": "Tint the launcher icon fully (flat color) instead of a soft overlay."
+      "description": "Recolor the launcher icon with the theme palette.",
+      "x-settings": {
+        "category": "bar",
+        "section": "launcher",
+        "label": "prefs.bar.launcher_icon_tint",
+        "control": "toggle",
+        "keywords": "launcher icon tint color palette recolor"
+      }
     },
     "launcherIconSize": {
       "title": "Launcher icon size",
       "type": "number",
       "default": 24,
-      "description": "Launcher icon size.",
+      "description": "Size of the icon on the launcher button.",
+      "x-settings": {
+        "category": "bar",
+        "section": "launcher",
+        "label": "prefs.bar.launcher_icon_size",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "launcher icon size logo big small",
+        "min": 8,
+        "max": 64
+      },
       "minimum": 8,
       "maximum": 64,
       "x-unit": "px"
     },
-    "pillStyle": {
-      "title": "Pill style",
-      "type": "string",
-      "default": "default",
-      "description": "Shape of the module pills (squished = half radius).",
-      "enum": [
-        "default",
-        "squished"
-      ]
-    },
     "screenList": {
-      "title": "Screen list",
+      "title": "Bar monitors",
       "type": "array",
       "default": [],
-      "description": "Monitor names to show the bar on; empty = every monitor.",
+      "description": "Monitors that show the bar; none selected shows it on every monitor.",
+      "x-settings": {
+        "category": "bar",
+        "section": "screens",
+        "label": "prefs.bar.screens",
+        "control": "screens",
+        "keywords": "bar monitor screen display multi-monitor where",
+        "visibleWhen": {
+          "key": "bar.panels",
+          "empty": true
+        }
+      },
       "items": {
         "type": "string"
       }
     },
     "enableFirefoxPlayer": {
-      "title": "Enable firefox player",
+      "title": "Firefox media player",
       "type": "boolean",
       "default": false,
-      "description": "Show Firefox as a media player (MPRIS); off hides it."
-    },
-    "barColor": {
-      "title": "Bar color",
-      "type": "array",
-      "default": [
-        [
-          "surface",
-          0
-        ]
-      ],
-      "items": {
-        "type": "array"
-      },
-      "description": "Bar background gradient stops [[colorSpec, position], ...].",
-      "format": "gradient"
+      "description": "List Firefox as a media player (MPRIS); off hides its tabs from media controls.",
+      "x-settings": {
+        "category": "bar",
+        "section": "screens",
+        "label": "prefs.bar.firefox_player",
+        "control": "toggle",
+        "keywords": "firefox browser media player mpris music video youtube"
+      }
     },
     "frameEnabled": {
       "title": "Screen frame",
@@ -162,10 +174,25 @@
       }
     },
     "hoverRegionHeight": {
-      "title": "Hover region height",
+      "title": "Bar reveal strip",
       "type": "number",
       "default": 8,
       "description": "Size of the invisible edge strip that reveals the hidden bar.",
+      "x-settings": {
+        "category": "bar",
+        "section": "advanced",
+        "label": "prefs.bar.hover_region",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "bar hover region trigger strip area reveal autohide",
+        "visibleWhen": {
+          "key": "bar.hoverToReveal",
+          "equals": true
+        },
+        "min": 0,
+        "max": 40
+      },
       "minimum": 0,
       "maximum": 40,
       "x-unit": "px"
@@ -227,16 +254,54 @@
       }
     },
     "keepBarShadow": {
-      "title": "Keep bar shadow",
+      "title": "Keep bar shadow in frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar shadow when it is contained in the frame."
+      "description": "Keep the bar shadow when the bar sits inside the screen frame.",
+      "x-settings": {
+        "category": "bar",
+        "section": "advanced",
+        "label": "prefs.bar.keep_shadow",
+        "control": "toggle",
+        "keywords": "frame contain bar shadow keep",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "bar.frameEnabled",
+              "equals": true
+            },
+            {
+              "key": "bar.containBar",
+              "equals": true
+            }
+          ]
+        }
+      }
     },
     "keepBarBorder": {
-      "title": "Keep bar border",
+      "title": "Keep bar border in frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar border when it is contained in the frame."
+      "description": "Keep the bar border when the bar sits inside the screen frame.",
+      "x-settings": {
+        "category": "bar",
+        "section": "advanced",
+        "label": "prefs.bar.keep_border",
+        "control": "toggle",
+        "keywords": "frame contain bar border outline keep",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "bar.frameEnabled",
+              "equals": true
+            },
+            {
+              "key": "bar.containBar",
+              "equals": true
+            }
+          ]
+        }
+      }
     },
     "clockShowDate": {
       "title": "Show date",
@@ -264,244 +329,6 @@
         "control": "toggle",
         "keywords": "compact dense slim thin small height"
       }
-    },
-    "activities": {
-      "title": "Live Activities",
-      "type": "object",
-      "description": "Recording, privacy, timers and download progress shown as islands next to the notch.",
-      "x-settings": {
-        "category": "notch",
-        "section": "activities",
-        "label": "shell.activities",
-        "control": "custom",
-        "component": "ActivitiesEditor",
-        "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
-      },
-      "properties": {
-        "enabled": {
-          "title": "Enabled",
-          "type": "boolean",
-          "default": true,
-          "description": "Show live activities at all."
-        },
-        "presentation": {
-          "title": "Presentation",
-          "type": "string",
-          "default": "notch",
-          "description": "Where activities appear: inside the notch, as bar islands, or nowhere.",
-          "enum": [
-            "notch",
-            "islands",
-            "off"
-          ]
-        },
-        "maxVisible": {
-          "title": "Max visible",
-          "type": "number",
-          "default": 4,
-          "description": "Most activities shown at once.",
-          "minimum": 1,
-          "maximum": 8
-        },
-        "sources": {
-          "title": "Sources",
-          "type": "object",
-          "properties": {
-            "recording": {
-              "title": "Recording",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "privacy": {
-              "title": "Privacy",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "timers": {
-              "title": "Timers",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "tasks": {
-              "title": "Tasks",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "notificationProgress": {
-              "title": "Notification progress",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "jobView": {
-              "title": "Job view",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "browserDownloads": {
-              "title": "Browser downloads",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "steam": {
-              "title": "Steam",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "terminal": {
-              "title": "Terminal",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "fileOps": {
-              "title": "File ops",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "packages": {
-              "title": "Packages",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "torrents": {
-              "title": "Torrents",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "aria2": {
-              "title": "Aria2",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "syncthing": {
-              "title": "Syncthing",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            },
-            "launchers": {
-              "title": "Launchers",
-              "type": "boolean",
-              "default": true,
-              "description": "Track this activity source."
-            }
-          },
-          "additionalProperties": false
-        },
-        "downloads": {
-          "title": "Downloads",
-          "type": "object",
-          "properties": {
-            "aggregate": {
-              "title": "Aggregate",
-              "type": "boolean",
-              "default": true,
-              "description": "Merge concurrent downloads into one activity."
-            },
-            "showSpeed": {
-              "title": "Show speed",
-              "type": "boolean",
-              "default": true,
-              "description": "Show transfer speed on download activities."
-            },
-            "endpoints": {
-              "title": "Endpoints",
-              "type": "object",
-              "description": "RPC/web endpoints of the download clients (machine specific, never in presets).",
-              "x-local": true,
-              "properties": {
-                "qbittorrent": {
-                  "title": "Qbittorrent",
-                  "type": "string",
-                  "default": "http://127.0.0.1:8080",
-                  "description": "RPC/web endpoint of this download client (empty = disabled).",
-                  "format": "uri"
-                },
-                "transmission": {
-                  "title": "Transmission",
-                  "type": "string",
-                  "default": "http://127.0.0.1:9091/transmission/rpc",
-                  "description": "RPC/web endpoint of this download client (empty = disabled).",
-                  "format": "uri"
-                },
-                "deluge": {
-                  "title": "Deluge",
-                  "type": "string",
-                  "default": "http://127.0.0.1:8112/json",
-                  "description": "RPC/web endpoint of this download client (empty = disabled).",
-                  "format": "uri"
-                },
-                "aria2": {
-                  "title": "Aria2",
-                  "type": "string",
-                  "default": "http://127.0.0.1:6800/jsonrpc",
-                  "description": "RPC/web endpoint of this download client (empty = disabled).",
-                  "format": "uri"
-                },
-                "syncthing": {
-                  "title": "Syncthing",
-                  "type": "string",
-                  "default": "",
-                  "description": "RPC/web endpoint of this download client (empty = disabled).",
-                  "format": "uri"
-                }
-              },
-              "additionalProperties": false
-            },
-            "secrets": {
-              "title": "Secrets",
-              "type": "object",
-              "description": "Passwords/tokens of the download clients' RPC (never in presets).",
-              "x-local": true,
-              "properties": {
-                "qbittorrent": {
-                  "title": "Qbittorrent",
-                  "type": "string",
-                  "default": "",
-                  "description": "Password/token of this download client's RPC.",
-                  "x-secret": true
-                },
-                "transmission": {
-                  "title": "Transmission",
-                  "type": "string",
-                  "default": "",
-                  "description": "Password/token of this download client's RPC.",
-                  "x-secret": true
-                },
-                "deluge": {
-                  "title": "Deluge",
-                  "type": "string",
-                  "default": "deluge",
-                  "description": "Password/token of this download client's RPC.",
-                  "x-secret": true
-                },
-                "aria2": {
-                  "title": "Aria2",
-                  "type": "string",
-                  "default": "",
-                  "description": "Password/token of this download client's RPC.",
-                  "x-secret": true
-                }
-              },
-              "additionalProperties": false
-            }
-          },
-          "additionalProperties": false
-        }
-      },
-      "additionalProperties": false
     },
     "layout": {
       "title": "Layout",
@@ -807,10 +634,84 @@
           "type": "object",
           "properties": {
             "showWeather": {
-              "title": "Show weather",
+              "title": "Weather on the clock",
               "type": "boolean",
               "default": true,
-              "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
+              "description": "Lead the clock with the weather symbol instead of the day name.",
+              "x-settings": {
+                "category": "bar",
+                "section": "clock",
+                "label": "prefs.bar.clock_weather",
+                "control": "toggle",
+                "keywords": "clock weather symbol icon day name"
+              }
+            },
+            "face": {
+              "title": "Clock face",
+              "type": "string",
+              "default": "digital",
+              "description": "How the time is drawn. A vertical bar shows Digital as Stacked.",
+              "x-settings": {
+                "category": "bar",
+                "section": "clock",
+                "label": "prefs.bar.clock_face",
+                "control": "selector",
+                "keywords": "clock face style digital stacked dot matrix led kanji japanese"
+              },
+              "enum": [
+                "digital",
+                "stacked",
+                "dotMatrix",
+                "kanji"
+              ],
+              "x-enumLabels": {
+                "digital": "Digital",
+                "stacked": "Stacked",
+                "dotMatrix": "Dot matrix",
+                "kanji": "Kanji (十時 二十五分)"
+              }
+            },
+            "pomodoroStyle": {
+              "title": "Pomodoro on the clock",
+              "type": "string",
+              "default": "ring",
+              "description": "How a running Pomodoro shows on the bar clock. Island leaves it to the notch timers activity.",
+              "x-settings": {
+                "category": "bar",
+                "section": "clock",
+                "label": "prefs.bar.pomodoro_style",
+                "control": "selector",
+                "keywords": "pomodoro focus timer ring underline countdown island progress clock"
+              },
+              "enum": [
+                "ring",
+                "underline",
+                "countdown",
+                "island"
+              ],
+              "x-enumLabels": {
+                "ring": "Ring",
+                "underline": "Underline",
+                "countdown": "Countdown",
+                "island": "Island"
+              }
+            },
+            "panel": {
+              "title": "Panel",
+              "type": "object",
+              "description": "Clock popup panel.",
+              "properties": {
+                "cells": {
+                  "title": "Cells",
+                  "type": "array",
+                  "default": [],
+                  "description": "Placed clock panel widgets: [{widget, x, y, w, h}] on a 2-column grid; any bento widget id (weather, pomodoro, agenda, worldClocks, calendar, ...). Empty or invalid uses the default panel. Edited in place from the panel (pencil button).",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false

@@ -33,3 +33,8 @@ test('the capsule is one unit high and four wide, never degenerate', () => {
     assert.deepEqual(JSON.parse(JSON.stringify(S.capsule(8))), { w: 32, h: 8 });
     assert.deepEqual(JSON.parse(JSON.stringify(S.capsule(0))), { w: 16, h: 4 });
 });
+
+test('the capsule lies along a side edge', () => {
+    const h = S.capsule(8), v = S.capsule(8, true);
+    assert.deepEqual(JSON.parse(JSON.stringify(v)), { w: h.h, h: h.w });
+});

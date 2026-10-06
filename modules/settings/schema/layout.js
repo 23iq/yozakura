@@ -37,7 +37,10 @@ var category = {
                     "id": "layout.builder",
                     "type": "custom",
                     "component": "LayoutBuilder",
-                    "keys": ["bar.position", "bar.layout.style", "bar.panels", "notch.enabled", "notch.position", "notch.style", "notch.align", "dock.enabled", "dock.position", "dock.theme"],
+                    // Edits the parts' edge/style/align keys too, but those
+                    // live on the bar, notch and dock pages (one page per
+                    // setting); notch.enabled is the builder's own
+                    "keys": ["notch.enabled"],
                     "label": "prefs.layout.builder",
                     "description": "prefs.layout.builder.desc",
                     "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
@@ -87,6 +90,20 @@ var category = {
                     "label": "prefs.layout.sheet_side",
                     "description": "prefs.layout.sheet_side.desc",
                     "keywords": "sheet side left right edge vertical bar"
+                },
+                {
+                    "key": "layout.cheatsheet.host",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "fullscreen",
+                            "label": "prefs.layout.host.fullscreen",
+                            "icon": "arrowsOut"
+                        }
+                    ].concat(HOSTS.slice(1)),
+                    "label": "prefs.layout.cheatsheet_host",
+                    "description": "prefs.layout.cheatsheet_host.desc",
+                    "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
                 }
             ]
         }

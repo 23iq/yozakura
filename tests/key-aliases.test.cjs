@@ -65,6 +65,23 @@ test('a throwing transform keeps the target untouched', () => {
     assert.deepEqual(plain(raws.theme), {});
 });
 
+test('a transform that returns undefined drops the old key without writing', () => {
+    const raws = { notch: { osd: false }, layout: { osd: { style: 'pill' } } };
+    const list = [{ from: 'notch.osd', to: 'layout.osd.style', transform: v => (v ? 'island' : undefined), replaces: ['pill'] }];
+    assert.deepEqual(plain(validator.migrateAliases(raws, list)), ['notch']);
+    assert.deepEqual(plain(raws), { notch: {}, layout: { osd: { style: 'pill' } } });
+});
+
+test('`replaces` lets a value overwrite a target still at its default', () => {
+    const list = [{ from: 'notch.osd', to: 'layout.osd.style', transform: v => (v ? 'island' : undefined), replaces: ['pill'] }];
+    const raws = { notch: { osd: true }, layout: { osd: { style: 'pill' } } };
+    validator.migrateAliases(raws, list);
+    assert.equal(raws.layout.osd.style, 'island');
+    const custom = { notch: { osd: true }, layout: { osd: { style: 'corner' } } };
+    validator.migrateAliases(custom, list);
+    assert.equal(custom.layout.osd.style, 'corner');
+});
+
 test('domains lists every domain an alias reads or writes', () => {
     assert.deepEqual(plain(KeyAliases.domains(ALIASES)).sort(), ['bar', 'glass', 'notch', 'theme']);
 });
@@ -80,4 +97,27 @@ test('the real alias table is well formed', () => {
         if (a.transform !== undefined)
             assert.equal(typeof a.transform, 'function', a.from);
     }
+});
+
+test('real aliases: live activities, island OSD, glass blur and shadow', () => {
+    const raws = {
+        bar: { activities: { enabled: false }, position: 'top' },
+        notch: { osd: true },
+        layout: { osd: { style: 'pill', timeout: 2500 } },
+        theme: { glass: { advanced: { blurSize: 12.4, blurPasses: -1, vibrancy: 0.2, noise: -1, contrast: -1, brightness: 1.2, shadowSoftness: 0.5, opacity: 0.8 } } },
+        compositor: { blurSize: 4, blurPasses: 3, blurVibrancy: 0, blurBrightness: 0.9, shadowRange: 8 }
+    };
+    validator.migrateAliases(raws);
+    assert.deepEqual(plain(raws.notch), { liveActivities: { enabled: false } });
+    assert.equal(raws.bar.activities, undefined);
+    assert.equal(raws.layout.osd.style, 'island');
+    assert.deepEqual(plain(raws.theme.glass.advanced), { opacity: 0.8 });
+    // set overrides replace untouched defaults; a customised value wins
+    assert.deepEqual(plain(raws.compositor), { blurSize: 12, blurPasses: 3, blurVibrancy: 0.2, blurBrightness: 0.9, shadowRange: 12 });
+});
+
+test('real aliases: notch.osd off leaves the OSD style alone', () => {
+    const raws = { notch: { osd: false }, layout: { osd: { style: 'corner' } } };
+    validator.migrateAliases(raws);
+    assert.deepEqual(plain(raws), { notch: {}, layout: { osd: { style: 'corner' } } });
 });

@@ -15,14 +15,14 @@ import "TransferModel.js" as Transfers
 //   tasks       activities with category "task" (timers, downloads)
 //   privacy     activities with category "privacy" (recording, mic...)
 //   transfers   de-duplicated transfers for detailed views (TransferModel.js)
-// Presentation (bar.activities.presentation): "notch" renders them inside
+// Presentation (notch.liveActivities.presentation): "notch" renders them inside
 // the notch (modules/widgets/defaultview/activities), "islands" next to it
 // (modules/bar/activities), "off" disables every provider. With the notch
 // off they move to the bar or the corner pills (ShellLayout, "corner").
 Singleton {
     id: root
 
-    readonly property var settings: Model.normalizeConfig(Config.bar ? Config.bar.activities : undefined)
+    readonly property var settings: Model.normalizeConfig(Config.notch ? Config.notch.liveActivities : undefined)
     readonly property bool isEnabled: settings.enabled && settings.presentation !== "off"
     readonly property string presentation: isEnabled ? ShellLayout.activityPresentation(settings.presentation) : "off"
     readonly property int maxVisible: settings.maxVisible

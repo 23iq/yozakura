@@ -1,7 +1,7 @@
 .pragma library
 
-// Notifications > On-screen display: style, edge and timing of the volume /
-// brightness OSD (modules/shell/osd). Spliced into notifications.js.
+// Popups > On-screen display: style, edge and timing of the volume /
+// brightness OSD (modules/shell/osd).
 // Entry format: see modules/settings/AGENTS.md.
 
 var sections = [
@@ -81,3 +81,12 @@ var sections = [
         ]
     }
 ];
+
+var category = {
+    "id": "osd",
+    "icon": "speakerHigh",
+    "title": "prefs.cat.osd",
+    "description": "prefs.cat.osd.desc",
+    "keywords": "osd on-screen display volume brightness level indicator popup island",
+    "sections": sections
+};

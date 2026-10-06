@@ -3,6 +3,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components
 import qs.config
+import qs.modules.components.signatures
 import "ResultStyles.js" as ResultStyles
 
 // App icon grid (layout.launcher.resultStyle = "grid"). Selection is owned by
@@ -62,6 +63,10 @@ GridView {
                 duration: Motion.enter.duration / 2
                 easing.type: Motion.enter.easing
             }
+        }
+
+        BrushHighlight {
+            anchors.margins: -2
         }
 
         StyledRect {

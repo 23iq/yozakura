@@ -21,5 +21,43 @@ JsonAdapter {
     property bool visualizer: true
     property string style: "attached"
     property list<var> activities: []
-    property bool osd: false
+    property var liveActivities: ({
+            "enabled": true,
+            "presentation": "notch",
+            "maxVisible": 4,
+            "sources": {
+                "recording": true,
+                "privacy": true,
+                "timers": true,
+                "tasks": true,
+                "notificationProgress": true,
+                "jobView": true,
+                "browserDownloads": true,
+                "steam": true,
+                "terminal": true,
+                "fileOps": true,
+                "packages": true,
+                "torrents": true,
+                "aria2": true,
+                "syncthing": true,
+                "launchers": true
+            },
+            "downloads": {
+                "aggregate": true,
+                "showSpeed": true,
+                "endpoints": {
+                    "qbittorrent": "http://127.0.0.1:8080",
+                    "transmission": "http://127.0.0.1:9091/transmission/rpc",
+                    "deluge": "http://127.0.0.1:8112/json",
+                    "aria2": "http://127.0.0.1:6800/jsonrpc",
+                    "syncthing": ""
+                },
+                "secrets": {
+                    "qbittorrent": "",
+                    "transmission": "",
+                    "deluge": "deluge",
+                    "aria2": ""
+                }
+            }
+        })
 }

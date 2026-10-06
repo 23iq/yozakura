@@ -46,7 +46,6 @@ var types = {
         "srTertiaryFocus.gradientAngle": "int"
     },
     "bar": {
-        "activities": "var",
         "frameThickness": "int",
         "hoverRegionHeight": "int",
         "launcherIconSize": "int",
@@ -85,6 +84,7 @@ var types = {
     },
     "notch": {
         "activities": "list<var>",
+        "liveActivities": "var",
         "expandedArtworkSize": "int",
         "expandedMediaWidth": "int",
         "hoverCollapseDelay": "int",

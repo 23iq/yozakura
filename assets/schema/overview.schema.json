@@ -7,44 +7,96 @@
   "x-file": "config/overview.json",
   "properties": {
     "style": {
-      "title": "Style",
+      "title": "Overview style",
       "type": "string",
       "default": "grid",
-      "description": "Overview layout: grid of workspaces, or a horizontal filmstrip with the current workspace centered.",
+      "description": "A grid of every workspace, or a filmstrip with the current workspace centered. Scrolling layouts always use their own tape view.",
+      "x-settings": {
+        "category": "overview",
+        "section": "layout",
+        "label": "prefs.overview.style",
+        "control": "selector",
+        "keywords": "overview style layout grid strip filmstrip carousel"
+      },
       "enum": [
         "grid",
         "strip"
-      ]
+      ],
+      "x-enumLabels": {
+        "grid": "Grid",
+        "strip": "Filmstrip"
+      }
     },
     "rows": {
-      "title": "Rows",
+      "title": "Workspace rows",
       "type": "number",
       "default": 2,
-      "description": "Workspace rows in the overview.",
+      "description": "Rows of workspaces in the overview grid.",
+      "x-settings": {
+        "category": "overview",
+        "section": "layout",
+        "label": "prefs.overview.rows",
+        "control": "slider",
+        "step": 1,
+        "keywords": "overview rows grid vertical workspaces count",
+        "min": 1,
+        "max": 10
+      },
       "minimum": 1,
       "maximum": 10
     },
     "columns": {
-      "title": "Columns",
+      "title": "Workspace columns",
       "type": "number",
       "default": 5,
-      "description": "Workspace columns in the overview.",
+      "description": "Columns of the grid; in the filmstrip, how many workspaces are visible at once.",
+      "x-settings": {
+        "category": "overview",
+        "section": "layout",
+        "label": "prefs.overview.columns",
+        "control": "slider",
+        "step": 1,
+        "keywords": "overview columns grid horizontal workspaces count visible",
+        "min": 1,
+        "max": 10
+      },
       "minimum": 1,
       "maximum": 10
     },
     "scale": {
-      "title": "Scale",
+      "title": "Workspace preview size",
       "type": "number",
       "default": 0.15,
-      "description": "Size of workspace previews relative to the screen.",
+      "description": "Size of each workspace preview relative to the screen.",
+      "x-settings": {
+        "category": "overview",
+        "section": "size",
+        "label": "prefs.overview.scale",
+        "control": "slider",
+        "step": 0.01,
+        "keywords": "overview scale zoom size preview thumbnails",
+        "min": 0.05,
+        "max": 0.5
+      },
       "minimum": 0.05,
       "maximum": 0.5
     },
     "workspaceSpacing": {
-      "title": "Workspace spacing",
+      "title": "Workspace preview gap",
       "type": "number",
       "default": 8,
-      "description": "Gap between workspace previews.",
+      "description": "Gap between workspace previews in the overview.",
+      "x-settings": {
+        "category": "overview",
+        "section": "advanced",
+        "label": "prefs.overview.spacing",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "overview spacing gap between workspaces",
+        "min": 0,
+        "max": 64
+      },
       "minimum": 0,
       "maximum": 64,
       "x-unit": "px"

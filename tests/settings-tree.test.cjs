@@ -30,7 +30,7 @@ test('every category sits in exactly one group', () => {
 });
 
 test('old category ids still resolve to their own page', () => {
-    for (const id of ['appearance', 'wallpapers', 'surfaces', 'bar-classic', 'notch', 'overview', 'specials', 'network', 'sound', 'ai', 'sidebar', 'mods', 'about'])
+    for (const id of ['appearance', 'wallpapers', 'notch', 'overview', 'specials', 'network', 'sound', 'ai', 'mods', 'about'])
         assert.equal(Categories.resolve(id).id, id);
 });
 
@@ -38,7 +38,7 @@ test('group ids resolve to their first page', () => {
     assert.equal(Categories.resolve('island').id, 'notch');
     assert.equal(Categories.resolve('look').id, 'appearance');
     assert.equal(Categories.resolve('popups').id, 'notifications');
-    assert.equal(Categories.resolve('dashboard').id, 'sidebar');
+    assert.equal(Categories.resolve('dashboard').id, 'dashboard');
     assert.equal(Categories.resolve('layout').id, 'layout');
     assert.equal(Categories.resolve('system').id, 'system');
     assert.equal(Categories.resolve('nope'), null);

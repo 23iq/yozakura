@@ -86,3 +86,18 @@ test('transferStatus: sizes, speed, eta and states', () => {
     const unknown = plain(N.transferStatus({ processed: -1, total: -1, rate: -1, state: 'running', units: 'bytes', detail: 'Updating system' }, T, true, labels));
     assert.equal(unknown.left, 'Updating system');
 });
+
+test('stackedLabel: a side notch stacks short lines instead of turning the text', () => {
+    const lines = l => plain(N.stackedLabel(l));
+    assert.deepEqual(lines('18:42'), ['18', '42']);
+    assert.deepEqual(lines('1:02:33'), ['1h', '02']);
+    assert.deepEqual(lines('47%'), ['47%']);
+    assert.deepEqual(lines('100%'), ['100%']);
+    assert.deepEqual(lines('38 MB/s'), ['38', 'MB/s']);
+    assert.deepEqual(lines('1.2 GB left'), ['1.2', 'GB']);
+    assert.deepEqual(lines('Paused'), [], 'words stay in the tooltip');
+    assert.deepEqual(lines(''), []);
+    assert.deepEqual(lines(undefined), []);
+    // ticking keeps the line count (no jumps)
+    assert.equal(lines('00:09').length, lines('59:59').length);
+});

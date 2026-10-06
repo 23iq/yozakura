@@ -48,27 +48,8 @@ var category = {
     "sections": [
         {
             "id": "notch",
-            "title": "prefs.timers.section.notch",
+            "title": "prefs.timers.section.display",
             "entries": [
-                {
-                    "key": "system.timers.notchStyle",
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "ring",
-                            "label": "prefs.timers.style.ring",
-                            "icon": "circleNotch"
-                        },
-                        {
-                            "value": "text",
-                            "label": "prefs.timers.style.text",
-                            "icon": "textT"
-                        }
-                    ],
-                    "label": "prefs.timers.style",
-                    "description": "prefs.timers.style.desc",
-                    "keywords": "notch ring progress text countdown display"
-                },
                 toggle("system.timers.showSeconds", "prefs.timers.seconds", "prefs.timers.seconds.desc", "seconds countdown format mm:ss"),
                 toggle("system.timers.showStopwatch", "prefs.timers.stopwatch", "prefs.timers.stopwatch.desc", "stopwatch notch elapsed"),
                 number("system.timers.reminderLead", "prefs.timers.reminder_lead", "prefs.timers.reminder_lead.desc", 0, 1440, 5, "min", "reminder alarm upcoming notch soon", {
@@ -159,15 +140,6 @@ var category = {
             "id": "input",
             "title": "prefs.timers.section.input",
             "entries": [
-                {
-                    "key": "prefix.timers",
-                    "type": "text",
-                    "monospace": true,
-                    "pattern": "^\\S{1,8}$",
-                    "label": "prefs.timers.prefix",
-                    "description": "prefs.timers.prefix.desc",
-                    "keywords": "launcher prefix timers t"
-                },
                 {
                     "key": "system.timers.noteTitle",
                     "type": "text",

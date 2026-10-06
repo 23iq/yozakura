@@ -106,8 +106,8 @@
       "default": true,
       "description": "Blurs the wallpaper behind niri's workspace overview.",
       "x-settings": {
-        "category": "desktop",
-        "section": "overview",
+        "category": "overview",
+        "section": "wallpaper",
         "label": "prefs.desktop.overview_blur",
         "control": "toggle",
         "keywords": "overview blur wallpaper niri workspaces"
@@ -189,14 +189,13 @@
       "title": "Depth clock",
       "type": "boolean",
       "default": false,
-      "description": "A large clock that sits behind the subject of your wallpaper.",
+      "description": "A big clock drawn behind the subject of your wallpaper.",
       "x-settings": {
-        "category": "wallpapers",
-        "section": "more",
-        "label": "prefs.wall.depth_clock",
-        "control": "custom",
-        "component": "DepthClockLink",
-        "keywords": "depth clock subject behind wallpaper widget"
+        "category": "desktop",
+        "section": "clock",
+        "label": "prefs.desktop.depth_clock",
+        "control": "toggle",
+        "keywords": "clock time wallpaper depth subject behind big widget"
       }
     },
     "depthClockStyle": {
