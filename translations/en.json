@@ -3427,5 +3427,9 @@
   "prefs.launcher.preview": "Preview pane",
   "prefs.launcher.preview.desc": "Show a preview of the selected file, calculator result or clipboard entry.",
   "prefs.launcher.compact_when_empty": "Compact when empty",
-  "prefs.launcher.compact_when_empty.desc": "Show only the search field until you start typing."
+  "prefs.launcher.compact_when_empty.desc": "Show only the search field until you start typing.",
+  "settings.shell.overview_style": "Overview Style",
+  "shell.overview.style": "Style",
+  "settings.shell.overview_style_grid": "Grid",
+  "settings.shell.overview_style_strip": "Filmstrip"
 }

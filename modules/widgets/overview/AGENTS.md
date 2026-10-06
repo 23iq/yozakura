@@ -13,6 +13,8 @@ Mission Control-style workspace overview. Two layout modes: grid (default) and s
 | `ScrollingOverview.qml` | Vertical scrolling layout. Auto-centers on active workspace |
 | `ScrollingWorkspace.qml` | Individual workspace in scrolling mode. Handles horizontal scroll for window overflow |
 | `OverviewWindow.qml` | Window delegate in grid view. Drag, focus, close, search highlighting |
+| `OverviewStrip.qml` (+ `OverviewStripCell`, `OverviewStripWindows`) | `overview.style = strip`: horizontal filmstrip, selected workspace centered; arrows/wheel move, Enter switches, typing searches. Reuses `OverviewWindow`, whose parent chain (dragArea > window > windowSpace > belt > root) must stay |
+| `OverviewStyles.js` | Style registry (`resolve(style, layout)`; scrolling layout wins); `StripMath.js`, `OverviewSearch.js` are the pure logic |
 
 ## WHERE TO LOOK
 

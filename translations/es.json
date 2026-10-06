@@ -3427,5 +3427,9 @@
   "prefs.launcher.preview": "Panel de vista previa",
   "prefs.launcher.preview.desc": "Muestra una vista previa del archivo, resultado de calculadora o entrada del portapapeles seleccionados.",
   "prefs.launcher.compact_when_empty": "Compacto si está vacío",
-  "prefs.launcher.compact_when_empty.desc": "Muestra solo el campo de búsqueda hasta que empieces a escribir."
+  "prefs.launcher.compact_when_empty.desc": "Muestra solo el campo de búsqueda hasta que empieces a escribir.",
+  "settings.shell.overview_style": "Estilo de vista general",
+  "shell.overview.style": "Estilo",
+  "settings.shell.overview_style_grid": "Cuadrícula",
+  "settings.shell.overview_style_strip": "Tira de película"
 }

@@ -25,6 +25,7 @@ var GRADIENT_TYPES = ["linear", "radial", "halftone"];
 var WALLPAPER_TRANSITIONS = ["grow", "wipe", "dissolve", "fade", "random", "none"];
 var BAR_STYLES = BarLayout.STYLES;
 var BAR_MODULES = BarLayout.MODULE_IDS;
+var OVERVIEW_STYLES = ["grid", "strip"];
 var PILL_STYLES = ["default", "squished"];
 var NOTCH_THEMES = ["default", "island"];
 var DOCK_THEMES = ["default", "floating", "integrated"];

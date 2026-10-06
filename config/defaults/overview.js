@@ -1,6 +1,7 @@
 .pragma library
 
 var data = {
+    "style": "grid",
     "rows": 2,
     "columns": 5,
     "scale": 0.15,

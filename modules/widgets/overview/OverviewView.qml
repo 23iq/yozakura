@@ -1,15 +1,18 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.widgets.overview
 import qs.modules.services
 import qs.modules.globals
 import qs.config
+import "OverviewStyles.js" as OverviewStyles
 
 Item {
     id: root
     property var currentScreen
 
-    // Detect if we're in scrolling layout mode
-    readonly property bool isScrollingLayout: GlobalStates.compositorLayout === "scrolling"
+    // Style registry: the scrolling compositor layout wins over overview.style
+    readonly property string style: OverviewStyles.resolve(Config.overview.style, GlobalStates.compositorLayout)
+    readonly property bool isScrollingLayout: style === "scrolling"
 
     implicitWidth: overviewLoader.item ? overviewLoader.item.implicitWidth : 400
     implicitHeight: overviewLoader.item ? overviewLoader.item.implicitHeight : 300
@@ -48,7 +51,7 @@ Item {
         anchors.centerIn: parent
         active: true
         
-        sourceComponent: isScrollingLayout ? scrollingOverviewComponent : standardOverviewComponent
+        sourceComponent: root.style === "scrolling" ? scrollingOverviewComponent : root.style === "strip" ? stripOverviewComponent : standardOverviewComponent
     }
 
     // Standard grid overview
@@ -67,6 +70,16 @@ Item {
             Component.onCompleted: {
                 forceActiveFocus();
             }
+        }
+    }
+
+    // Horizontal filmstrip overview
+    Component {
+        id: stripOverviewComponent
+        OverviewStrip {
+            currentScreen: root.currentScreen
+
+            Component.onCompleted: forceActiveFocus()
         }
     }
 
@@ -112,6 +125,14 @@ Item {
         if (overviewLoader.item && overviewLoader.item.navigateToSelectedWindow) {
             overviewLoader.item.navigateToSelectedWindow();
         }
+    }
+
+    readonly property var view: overviewLoader.item
+
+    // Left/right with an empty search: the strip moves its selection and
+    // returns true; other styles return false and the caller switches workspace.
+    function stepWorkspace(dir) {
+        return view && view.stepWorkspace ? view.stepWorkspace(dir) : false;
     }
 
     function selectNextMatch() {

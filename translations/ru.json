@@ -3443,5 +3443,9 @@
   "prefs.launcher.preview": "Панель предпросмотра",
   "prefs.launcher.preview.desc": "Показывать предпросмотр выбранного файла, результата калькулятора или записи буфера обмена.",
   "prefs.launcher.compact_when_empty": "Компактно, пока пусто",
-  "prefs.launcher.compact_when_empty.desc": "Показывать только строку поиска, пока вы не начнёте печатать."
+  "prefs.launcher.compact_when_empty.desc": "Показывать только строку поиска, пока вы не начнёте печатать.",
+  "settings.shell.overview_style": "Стиль обзора",
+  "shell.overview.style": "Стиль",
+  "settings.shell.overview_style_grid": "Сетка",
+  "settings.shell.overview_style_strip": "Лента"
 }

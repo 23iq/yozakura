@@ -3,6 +3,7 @@
 import Quickshell.Io
 
 JsonAdapter {
+    property string style: "grid"
     property int rows: 2
     property int columns: 5
     property real scale: 0.15
