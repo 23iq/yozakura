@@ -302,7 +302,7 @@ class Harness:
             d = Path(QUrl(url).toLocalFile()).parent
             stub = d / f"{type_name}.qml"
             real = [p for p in REPO.glob(f"**/{type_name}.qml")
-                    if not p.relative_to(REPO).parts[0] in ("tests", ".cache", "node_modules")]
+                    if not p.relative_to(REPO).parts[0] in ("tests", ".cache", ".claude", ".git", "node_modules")]
             if real and not stub.exists():
                 raise AssertionError(
                     f"{type_name} is not a type in {QUrl(url).toLocalFile()}, but it exists in the repo "
