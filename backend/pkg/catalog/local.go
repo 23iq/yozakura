@@ -12,10 +12,11 @@ import "strings"
 // LocalDomains are config domains that are machine specific or private as
 // a whole (general holds the terminal command the shell executes; specials,
 // the special workspaces, are global like binds.json: switching presets
-// never touches them).
+// never touches them; displays, the saved monitor layout, is specific to
+// the machine and keyboard to the person).
 var LocalDomains = map[string]bool{
 	"system": true, "ai": true, "prefix": true, "weather": true, "notifications": true, "apps": true,
-	"general": true, "specials": true,
+	"general": true, "specials": true, "displays": true, "keyboard": true,
 }
 
 // localSelf reports whether the entry itself is machine-local.

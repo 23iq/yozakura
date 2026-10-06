@@ -98,7 +98,7 @@ func (s *Service) MigrateStates() error {
 var domains = []string{
 	"theme", "bar", "workspaces", "overview", "notch", "compositor",
 	"performance", "weather", "desktop", "lockscreen", "prefix", "system",
-	"dock", "ai", "general", "voice", "notifications", "apps", "specials", "pinnedapps", "binds",
+	"dock", "ai", "general", "voice", "notifications", "apps", "specials", "displays", "keyboard", "pinnedapps", "binds",
 }
 
 func isDomain(d string) bool {

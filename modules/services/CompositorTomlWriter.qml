@@ -10,6 +10,7 @@ import "CompositorAppearance.js" as Appearance
 import qs.modules.bar.panels
 import "../../config/CoreBinds.js" as CoreBinds
 import "../specials/Specials.js" as Specials
+import "DisplayModel.js" as DisplayModel
 
 /**
  * CompositorTomlWriter - Thin IPC client.
@@ -201,6 +202,10 @@ Singleton {
             motion: CompositorMotion.spec,
             smartGaps: !!c.smartGaps,
             // Special workspaces: apps with "always open here" rules.
+            // Saved monitor layout (keyed by current connectors) and keyboard
+            // layouts/repeat: rendered as [[monitors]] and the input section.
+            displays: root.displayList(),
+            keyboard: root.keyboardOn() ? KeyboardService.input() : null,
             windowRules: root.specialsOn() ? Specials.windowRules(Config.specials.workspaces) : [],
         };
     }
@@ -416,6 +421,47 @@ Singleton {
 
     function specialsOn() {
         return Config.specialsReady && Config.specials.enabled;
+    }
+
+    function displayList() {
+        if (!Config.displaysReady)
+            return [];
+        return DisplayModel.renderList(Array.from(Config.displays.monitors), DisplaysService.outputs);
+    }
+
+    // Hotplug can rename connectors, but every output refresh (also the one
+    // after a not yet confirmed change) must not rewrite the compositor
+    // config: only a different rendered list does.
+    property string _lastDisplays: ""
+    function _onOutputsChanged() {
+        const json = JSON.stringify(root.displayList());
+        if (json === root._lastDisplays)
+            return;
+        root._lastDisplays = json;
+        root.callWrite();
+    }
+
+    function keyboardOn() {
+        return Config.keyboardReady;
+    }
+
+    property Connections displaysConnections: Connections {
+        target: Config.displaysReady ? Config.displays : null
+        function onMonitorsChanged() { root.callWrite(); }
+    }
+
+    property Connections outputsConnections: Connections {
+        target: DisplaysService
+        function onOutputsChanged() { root._onOutputsChanged(); }
+    }
+
+    property Connections keyboardConnections: Connections {
+        target: Config.keyboardReady ? Config.keyboard : null
+        function onLayoutsChanged() { root.callWrite(); }
+        function onSwitchBindChanged() { root.callWrite(); }
+        function onOptionsChanged() { root.callWrite(); }
+        function onRepeatRateChanged() { root.callWrite(); }
+        function onRepeatDelayChanged() { root.callWrite(); }
     }
 
     property Connections specialsConnections: Connections {

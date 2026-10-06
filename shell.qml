@@ -339,6 +339,8 @@ ShellRoot {
             let _ = NightLightClient.active;
             _ = GameModeClient.toggled;
             _ = VoiceService.state; // voice input: subscribes to the backend voice service
+            _ = DisplaysService.outputs; // monitors: live outputs, apply/revert session
+            _ = KeyboardService.active; // keyboard: active layout, instant apply of layout changes
             _ = SpecialsService.active; // special workspaces: launch-on-open, renames, preload
             _ = TimersService.ready; // timers: notch activity, alarm sound, hub
             _ = FocusMode.active; // focus mode: ends with its timer, restores DND

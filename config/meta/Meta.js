@@ -13,6 +13,8 @@
 .import "workspaces.js" as Workspaces
 .import "misc.js" as Misc
 .import "specials.js" as Specials
+.import "displays.js" as Displays
+.import "keyboard.js" as Keyboard
 
 // Catalog metadata of every config domain: the part of the settings catalog
 // that config/defaults/*.js (values, types) and modules/settings/schema/*.js
@@ -58,6 +60,8 @@ var domains = {
     "apps": Apps,
     "workspaces": Workspaces,
     "specials": Specials,
+    "displays": Displays,
+    "keyboard": Keyboard,
     "general": Misc.general,
     "lockscreen": Misc.lockscreen,
     "overview": Misc.overview,

@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:keyboard",
+  "title": "keyboard",
+  "description": "Keyboard layouts, the layout switch bind, extra XKB options and key repeat. Personal: presets never carry it.",
+  "type": "object",
+  "x-file": "config/keyboard.json",
+  "properties": {
+    "layouts": {
+      "title": "Layouts",
+      "type": "array",
+      "default": [
+        {
+          "layout": "us",
+          "variant": ""
+        }
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "layout": {
+            "type": "string",
+            "description": "XKB layout code, e.g. us, ru, de."
+          },
+          "variant": {
+            "type": "string",
+            "description": "XKB variant, e.g. intl; empty for none."
+          }
+        },
+        "required": [
+          "layout"
+        ]
+      },
+      "description": "Layouts in switch order [{layout, variant}]."
+    },
+    "switchBind": {
+      "title": "Switch bind",
+      "type": "string",
+      "default": "alt_shift",
+      "description": "Key combination that cycles the layouts.",
+      "enum": [
+        "alt_shift",
+        "super_space",
+        "caps",
+        "ctrl_shift",
+        "none"
+      ]
+    },
+    "options": {
+      "title": "Options",
+      "type": "array",
+      "default": [],
+      "description": "Extra XKB options (e.g. ctrl:nocaps), besides the switch bind.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "repeatRate": {
+      "title": "Repeat rate",
+      "type": "number",
+      "default": 25,
+      "description": "Key repeat rate.",
+      "minimum": 1,
+      "maximum": 100,
+      "x-unit": "/s"
+    },
+    "repeatDelay": {
+      "title": "Repeat delay",
+      "type": "number",
+      "default": 600,
+      "description": "Delay before a held key repeats.",
+      "minimum": 100,
+      "maximum": 2000,
+      "x-unit": "ms"
+    },
+    "showIndicator": {
+      "title": "Show indicator",
+      "type": "boolean",
+      "default": true,
+      "description": "Show the active layout (EN, RU, ...) in the bar."
+    }
+  },
+  "additionalProperties": false
+}

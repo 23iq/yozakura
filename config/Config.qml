@@ -27,6 +27,8 @@ import "defaults/general.js" as GeneralDefaults
 import "defaults/voice.js" as VoiceDefaults
 import "defaults/notifications.js" as NotificationsDefaults
 import "defaults/specials.js" as SpecialsDefaults
+import "defaults/displays.js" as DisplaysDefaults
+import "defaults/keyboard.js" as KeyboardDefaults
 import "defaults/apps.js" as AppsDefaults
 
 Singleton {
@@ -78,10 +80,12 @@ Singleton {
     property bool voiceReady: voiceLoader.ready
     property bool notificationsReady: notificationsLoader.ready
     property bool specialsReady: specialsLoader.ready
+    property bool displaysReady: displaysLoader.ready
+    property bool keyboardReady: keyboardLoader.ready
     property bool appsReady: appsLoader.ready
     property bool keybindsInitialLoadComplete: keybinds.initialLoadComplete
 
-    property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady
+    property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady && displaysReady && keyboardReady
 
     // Compatibility aliases
     property alias loader: themeLoader
@@ -185,6 +189,20 @@ Singleton {
         name: "specials"
         defaults: SpecialsDefaults.data
         adapter: SpecialsAdapter {}
+    }
+    ConfigFile {
+        id: displaysLoader
+        store: root
+        name: "displays"
+        defaults: DisplaysDefaults.data
+        adapter: DisplaysAdapter {}
+    }
+    ConfigFile {
+        id: keyboardLoader
+        store: root
+        name: "keyboard"
+        defaults: KeyboardDefaults.data
+        adapter: KeyboardAdapter {}
     }
     ConfigFile {
         id: appsLoader
@@ -412,6 +430,12 @@ Singleton {
     // Special workspaces (global like binds.json; presets never carry them)
     property SpecialsAdapter specials: specialsLoader.adapter
 
+    // Saved monitor layout (machine specific; presets never carry it)
+    property DisplaysAdapter displays: displaysLoader.adapter
+
+    // Keyboard layouts, switch bind and key repeat
+    property KeyboardAdapter keyboard: keyboardLoader.adapter
+
     // External app theming configuration
     property AppsAdapter apps: appsLoader.adapter
 
@@ -469,6 +493,12 @@ Singleton {
     }
     function saveSpecials() {
         specialsLoader.writeAdapter();
+    }
+    function saveDisplays() {
+        displaysLoader.writeAdapter();
+    }
+    function saveKeyboard() {
+        keyboardLoader.writeAdapter();
     }
     function saveApps() {
         appsLoader.writeAdapter();

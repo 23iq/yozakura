@@ -53,6 +53,14 @@ var types = {
         "panels": "var",
         "screenList": "list<string>"
     },
+    "displays": {
+        "monitors": "list<var>"
+    },
+    "keyboard": {
+        "options": "list<string>",
+        "repeatDelay": "int",
+        "repeatRate": "int"
+    },
     "specials": {
         "launchTimeout": "int",
         "preloadDelay": "int"

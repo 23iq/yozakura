@@ -77,3 +77,7 @@ var LAUNCHER_TABS = LauncherProviders.TAB_IDS;
 // Special workspaces (modules/specials/Specials.js).
 var SPECIAL_ACCENTS = Specials.ACCENTS;
 var SPECIAL_IF_RUNNING = Specials.IF_RUNNING;
+
+// Keyboard layout switch binds (backend/pkg/svc/compositor/devices.go maps
+// each to its XKB group toggle option).
+var KEYBOARD_SWITCH_BINDS = ["alt_shift", "super_space", "caps", "ctrl_shift", "none"];
