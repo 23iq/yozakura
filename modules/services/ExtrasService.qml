@@ -29,6 +29,10 @@ Singleton {
     property bool offline: false
     // The connectivity probe is running.
     property bool checking: false
+    // Probe argv and its watchdog (tests point them at a missing binary).
+    property var probeCommand: ["curl", "-sI", "--max-time", "6", "-o", "/dev/null", "https://flathub.org"]
+    property int probeTimeout: 8000
+    property alias probeRunning: probe.running
     // Install waiting for consent: {kind: "multilib", entries, ids}
     property var confirm: null
     // Last refused install: {reasons: {id: reason}} (needs_aur_helper, ...)
@@ -87,6 +91,7 @@ Singleton {
         root._status(true);
         if (root.offline && !probe.running) {
             root.checking = true;
+            probeWatchdog.restart();
             probe.running = true;
         }
     }
@@ -123,12 +128,31 @@ Singleton {
     // shell). curl's "couldn't resolve / connect / timed out" codes keep
     // the flag; success clears it, and so does any other outcome (no curl,
     // odd TLS setup) so a broken probe never blocks installs for good.
+    // A probe that never starts or stops without an exit code (no curl) and
+    // one that hangs past the watchdog fail open the same way.
+    function _probeDone(offline) {
+        if (!root.checking)
+            return;
+        probeWatchdog.stop();
+        root.checking = false;
+        root.offline = offline;
+    }
+
     Process {
         id: probe
-        command: ["curl", "-sI", "--max-time", "6", "-o", "/dev/null", "https://flathub.org"]
-        onExited: (code, status) => {
-            root.checking = false;
-            root.offline = [6, 7, 28].includes(code);
+        command: root.probeCommand
+        onExited: (code, status) => root._probeDone([6, 7, 28].includes(code))
+        // exited (if any) is delivered first; only then fail open
+        onRunningChanged: if (!running)
+            Qt.callLater(() => root._probeDone(false))
+    }
+
+    Timer {
+        id: probeWatchdog
+        interval: root.probeTimeout
+        onTriggered: {
+            probe.running = false;
+            root._probeDone(false);
         }
     }
 
@@ -232,7 +256,7 @@ Singleton {
         }
         if (p.state === "failed" && p.reason === "network")
             root.offline = true;
-        else if (p.state === "done")
+        else if (p.state === "done" || p.state === "cancelled")
             detectAfterDone.restart();
     }
 

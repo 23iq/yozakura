@@ -23,8 +23,9 @@ Item {
     // Category ids to offer ([] = all)
     property var categories: []
     property bool autoPreselect: root.mode === "onboarding"
-    // false: the host keeps its content height (implicitHeight) and the
-    // parent scrolls; the bottom stack then sits under the grid.
+    // false: the inner Flickable does not scroll; the parent must size the
+    // host to its implicitHeight and scroll it, and the bottom stack then
+    // sits at the host's bottom, under the grid (not sticky).
     property bool scrollable: true
     // Shown above the grid (Settings: the page header)
     property Component header: null

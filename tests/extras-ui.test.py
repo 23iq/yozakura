@@ -211,6 +211,29 @@ check(ev("cardState", card("chromium")) == "installed", "a finished job shows in
 QTest.qWait(1700)
 check(ev("cardState", card("chromium")) == "selectable", "the forced re-detection (still missing) drops the finished job")
 
+# a cancelled job re-detects too
+n = len(calls("extras.status"))
+emit("extras.progress", {"job": "flatpak-7", "kind": "flatpak", "entries": ["chromium"], "state": "cancelled"})
+QTest.qWait(1700)
+check(len(calls("extras.status")) > n, "a cancelled job triggers a re-detection")
+
+# offline probe fails open: a missing binary (running drops, no exit code)
+ev("ExtrasService.probeCommand = ['/nonexistent/yozakura-test-curl']")
+ev("ExtrasService.offline = true")
+ev("ExtrasService.refresh()")
+check(ev("ExtrasService.checking") is True, "Check again starts the probe")
+ev("ExtrasService.probeRunning = false")
+QTest.qWait(50)
+check(ev("ExtrasService.checking") is False and ev("ExtrasService.offline") is False,
+      "a probe that stops without an exit code clears checking and offline")
+# ... and one that never reports back hits the watchdog
+ev("ExtrasService.probeTimeout = 150")
+ev("ExtrasService.offline = true")
+ev("ExtrasService.refresh()")
+QTest.qWait(400)
+check(ev("ExtrasService.checking") is False and ev("ExtrasService.offline") is False,
+      "the probe watchdog clears checking and offline")
+
 # onboarding host: recommended + missing preselected once, installed never
 emit("extras.status", __import__("extras_env").STATUS)
 win2 = h.load("""
