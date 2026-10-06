@@ -94,3 +94,37 @@ func TestExclusiveFlagErrors(t *testing.T) {
 		t.Errorf("restore while inactive: %d %q", code, errOut.String())
 	}
 }
+
+// Outside a Hyprland session (the installer, a TTY) no compositor is
+// detected: the explicit `install hyprland --exclusive` target counts.
+func TestExclusiveWithoutDetectedCompositor(t *testing.T) {
+	env, entry, _ := exclusiveTestEnv(t, "")
+	base := env.opts
+	env.opts = func() exclusive.Options { o := base(); o.Compositor = ""; return o }
+	var out, errOut bytes.Buffer
+	if code := runExclusiveInstall([]string{"hyprland", "--exclusive", "-y"}, env, &out, &errOut); code != 0 {
+		t.Fatalf("%d %s", code, errOut.String())
+	}
+	if data, _ := os.ReadFile(entry); strings.HasPrefix(string(data), "monitor") {
+		t.Fatal("enable did nothing")
+	}
+	// another compositor running is still refused
+	env2, _, _ := exclusiveTestEnv(t, "")
+	base2 := env2.opts
+	env2.opts = func() exclusive.Options { o := base2(); o.Compositor = "niri"; return o }
+	if code := runExclusiveInstall([]string{"hyprland", "--exclusive", "-y"}, env2, &out, &errOut); code != 1 {
+		t.Fatalf("niri: %d", code)
+	}
+}
+
+// install.sh probes `install --exclusive --help` for this usage line.
+func TestExclusiveHelpProbe(t *testing.T) {
+	if !installFlagsUsed([]string{"--exclusive", "--help"}) {
+		t.Fatal("the probe must reach the exclusive help")
+	}
+	env, _, _ := exclusiveTestEnv(t, "")
+	var out, errOut bytes.Buffer
+	if code := runExclusiveInstall([]string{"--exclusive", "--help"}, env, &out, &errOut); code != 0 || !strings.Contains(out.String(), "install hyprland --exclusive") {
+		t.Fatalf("%d %q", code, out.String())
+	}
+}

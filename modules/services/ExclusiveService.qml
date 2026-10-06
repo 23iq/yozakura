@@ -73,6 +73,9 @@ Singleton {
                         "replaced": result.replaced ?? "",
                         "backup": result.backup ?? ""
                     };
+                // restored, but a unit or the reload failed afterwards
+                if (result && result.warning)
+                    root.error = result.warning;
             }
             if (done)
                 done(!error);

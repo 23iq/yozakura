@@ -71,22 +71,32 @@ func intoNixStore(p string) bool {
 	return err == nil && strings.HasPrefix(real, "/nix/store/")
 }
 
-func minimalEntry(lua bool, backup string) string {
-	c, block, user := "#", brand.HyprConfBlock(), "source = ~/.config/hypr/user.conf"
+// minimalEntry is the whole entry file of exclusive mode: the generated
+// config, then the user file from hypr. polkit starts the polkit agent
+// (the generated config starts one only off Hyprland, where the installer
+// added it to the user's own entry, which this file replaces); "" when none
+// is installed.
+func minimalEntry(lua bool, backup, hypr, polkit string) string {
+	c, block := "#", brand.HyprConfBlock()
+	user := "source = " + filepath.Join(hypr, "user.conf")
+	start := "exec-once = " + polkit
 	if lua {
 		c, block = "--", brand.HyprLuaBlock()
-		user = `local user = loadfile(os.getenv("HOME") .. "/.config/hypr/user.lua") if user then user() end`
+		user = fmt.Sprintf("local user = loadfile(%q) if user then user() end", filepath.Join(hypr, "user.lua"))
+		start = fmt.Sprintf("hl.on(\"hyprland.start\", function() hl.exec_cmd(%q) end)", polkit)
 	}
-	cmd := brand.Command("exclusive", "restore")
-	return strings.Join([]string{
+	cmd := brand.Command("install", "--restore")
+	lines := []string{
 		exclusiveMarker(c),
 		fmt.Sprintf("%s This file was replaced by %s's exclusive mode. Your previous config is", c, brand.DisplayName),
 		fmt.Sprintf("%s backed up in %s; `%s` brings it back.", c, backup, cmd),
 		"",
 		strings.TrimSuffix(block, "\n"),
-		user,
-		"",
-	}, "\n")
+	}
+	if polkit != "" {
+		lines = append(lines, start)
+	}
+	return strings.Join(append(lines, user, ""), "\n")
 }
 
 func userNote(lua bool) string {
@@ -101,7 +111,7 @@ func userNote(lua bool) string {
 // writeMinimal replaces the entry with the minimal one (the old entry, a
 // file or a symlink, is in the backup; a symlink is replaced, never written
 // through) and creates an empty user file unless one exists.
-func writeMinimal(hypr, entry, backup string) error {
+func writeMinimal(hypr, entry, backup, polkit string) error {
 	lua := entry == luaEntry
 	if err := os.MkdirAll(hypr, 0o755); err != nil {
 		return err
@@ -115,7 +125,7 @@ func writeMinimal(hypr, entry, backup string) error {
 			return fmt.Errorf("write %s: %w", user, err)
 		}
 	}
-	if err := replaceFile(filepath.Join(hypr, entry), []byte(minimalEntry(lua, backup)), 0o644); err != nil {
+	if err := replaceFile(filepath.Join(hypr, entry), []byte(minimalEntry(lua, backup, hypr, polkit)), 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", entry, err)
 	}
 	return nil

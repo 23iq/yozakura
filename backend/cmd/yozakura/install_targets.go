@@ -9,6 +9,7 @@ import (
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/fsutil"
 	"yozakura/backend/pkg/migrate"
+	"yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/paths"
 )
 
@@ -115,6 +116,12 @@ func removeHyprland() {
 	luaPath := filepath.Join(hyprDir, "hyprland.lua")
 	confPath := filepath.Join(hyprDir, "hyprland.conf")
 	if isHomeManagerManaged(luaPath) || isHomeManagerManaged(confPath) {
+		return
+	}
+	if exclusive.Active(hyprDir) {
+		// the restore was declined: the entry is our minimal file, and
+		// without the block it would load nothing at all
+		fmt.Println("Exclusive mode is still active: " + hyprDir + " is left as is. Your previous config is in the backups under " + paths.New().DataDir + "/backups.")
 		return
 	}
 	reportErr(removeBlock(luaPath, blockMarker("--"), luaLoadLine(), legacyLuaLoadLine()))

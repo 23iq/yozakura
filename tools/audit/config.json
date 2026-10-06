@@ -49,7 +49,11 @@
    "backend/internal/proto/",
    "assets/",
    "backend/pkg/yozd/ipc/wayland/"
-  ]
+  ],
+  "allow": {
+   "_comment": "<file> -> why it must stay one file (reported as info, not as a warning)",
+   "install.sh": "the curl | bash installer must be a single self-contained file; it is split into sections and covered by tests/install-sh.test.py"
+  }
  },
  "brandLiterals": [
   {

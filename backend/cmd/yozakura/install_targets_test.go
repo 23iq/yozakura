@@ -149,3 +149,23 @@ func TestInstallSimpleTargetBootstrapsBeforeFirstStart(t *testing.T) {
 		}
 	}
 }
+
+// goodbye after declining the exclusive restore: the minimal entry (our
+// block is all it has) is left alone, never stripped to a bare config.
+func TestRemoveHyprlandKeepsExclusiveEntry(t *testing.T) {
+	cfg := t.TempDir()
+	t.Setenv("XDG_CONFIG_HOME", cfg)
+	hypr := filepath.Join(cfg, "hypr")
+	if err := os.MkdirAll(hypr, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	entry := filepath.Join(hypr, "hyprland.conf")
+	text := brand.ConfigBlockMarker("#") + " exclusive mode\n# replaced\n\n" + hyprConfBlock() + "source = " + filepath.Join(hypr, "user.conf") + "\n"
+	if err := os.WriteFile(entry, []byte(text), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	removeHyprland()
+	if data, _ := os.ReadFile(entry); string(data) != text {
+		t.Fatalf("exclusive entry changed:\n%s", data)
+	}
+}

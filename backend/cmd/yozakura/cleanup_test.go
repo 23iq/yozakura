@@ -190,3 +190,24 @@ func TestPurgeContinuesPastFailedDir(t *testing.T) {
 		t.Fatal("stopped at the first failure")
 	}
 }
+
+// The root helper goes together with its (then empty) folder.
+func TestCleanupSysHelperRemovesFolder(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "lib", brand.AppID)
+	helper := filepath.Join(dir, brand.AppID+"-sys")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(helper, []byte("x"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	savedPath, savedRm := sysHelperPath, pkexecRmHelper
+	t.Cleanup(func() { sysHelperPath, pkexecRmHelper = savedPath, savedRm })
+	sysHelperPath = func() string { return helper }
+	var got []string
+	pkexecRmHelper = func(h, d string) error { got = []string{h, d}; return nil }
+	removed, err := cleanupSysHelper(CleanupEnv{Out: &bytes.Buffer{}, Confirm: func(string) bool { return true }})
+	if err != nil || len(removed) != 1 || len(got) != 2 || got[0] != helper || got[1] != dir {
+		t.Fatalf("removed %v err %v got %v", removed, err, got)
+	}
+}

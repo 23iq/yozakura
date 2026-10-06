@@ -258,7 +258,7 @@ func TestConfSplitAcrossSources(t *testing.T) {
 	}
 	entry, _ := os.ReadFile(filepath.Join(hypr, "hyprland.conf"))
 	if !strings.Contains(string(entry), brand.HyprConfBlock()) || strings.Contains(string(entry), "./conf/") ||
-		!strings.Contains(string(entry), "source = ~/.config/hypr/user.conf") {
+		!strings.Contains(string(entry), "source = "+filepath.Join(hypr, "user.conf")) {
 		t.Fatalf("minimal conf:\n%s", entry)
 	}
 	if _, err := os.Stat(filepath.Join(hypr, "user.conf")); err != nil {

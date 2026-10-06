@@ -14,7 +14,10 @@ import (
 // conflict parser; rules it cannot express are left out) and keyboard
 // settings from every .conf/.lua under hypr, skipping our installer block
 // and anything resolving into dataDir. Monitors are deduplicated by name,
-// the last rule winning; kb is nil when no keyboard key is set.
+// the last rule winning; kb is nil when no keyboard key is set. Files are
+// read in sorted path order (not Hyprland's source order), so a keyboard
+// key set in two files takes the value of the later path: deterministic,
+// and the plan shows the import before anything is written.
 func ScanImports(hypr, dataDir string) ([]ipc.OutputConfig, *ipc.KeyboardSettings) {
 	monitors := []ipc.OutputConfig{}
 	index := map[string]int{}

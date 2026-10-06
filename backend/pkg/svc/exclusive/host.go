@@ -32,6 +32,7 @@ func Host() exclusive.Options {
 		Home:       home,
 		HyprDir:    paths.HyprDir(),
 		Compositor: binds.DetectCompositor(),
+		Polkit:     compositor.PolkitCommand(),
 		Systemd:    exclusive.ExecSystemd{},
 		Import:     importSettings,
 		Unimport:   unimportSettings,

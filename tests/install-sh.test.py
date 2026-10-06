@@ -55,12 +55,22 @@ FEDORA_STUBS = {
     "dnf": '[[ "$1" == --version ]] && echo "dnf5 version 5.2"\nexit 0\n',
 }
 # The built binary: knows install/doctor/version; --exclusive only with
-# FAKE_EXCLUSIVE (Part E builds).
+# FAKE_EXCLUSIVE (Part E builds). Like the real one: `install --help` is an
+# unknown target, `install --exclusive --help` prints the exclusive help,
+# and `install hyprland --exclusive` without -y reads its answer from stdin
+# (EOF under the installer: aborted, nothing changed).
 FAKE_BIN = (
     "#!/bin/bash\n"
     + LOGGER
     + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine" ;; esac\n'
-    + '[[ "$*" == "install --help" && -n "${FAKE_EXCLUSIVE:-}" ]] && echo "  --exclusive  own the whole config"\n'
+    + '[[ "$*" == "install --help" ]] && { echo "Unknown target \'--help\'" >&2; exit 1; }\n'
+    + 'if [[ "$*" == "install --exclusive --help" ]]; then\n'
+    + '  [[ -n "${FAKE_EXCLUSIVE:-}" ]] && { echo "Usage: yozakura install hyprland --exclusive [-y]"; exit 0; }\n'
+    + '  echo "Unknown target \'--exclusive\'" >&2; exit 1\n'
+    + "fi\n"
+    + 'if [[ "$1 $2 $3" == "install hyprland --exclusive" && " $* " != *" -y "* ]]; then\n'
+    + '  read -r ans || { echo "Aborted; nothing changed."; exit 0; }\n'
+    + "fi\n"
     + "exit 0\n"
 )
 SCRIPTS = {
@@ -378,11 +388,12 @@ def test_exclusive_needs_a_binary_that_knows_it():
         rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-deps", "--exclusive")
         installs = [c for c in sb.calls("yozakura") if c[:1] == ["install"]]
         check(rc == 0 and "--exclusive skipped" in err, "no skip warning for a binary without --exclusive", err)
-        check(["install", "hyprland", "--exclusive"] not in installs, f"--exclusive run anyway: {installs}")
+        check(not any(c[:3] == ["install", "hyprland", "--exclusive"] for c in installs), f"--exclusive run anyway: {installs}")
         sb.extra_env["FAKE_EXCLUSIVE"] = "1"
         rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-deps", "--exclusive")
         installs = [c for c in sb.calls("yozakura") if c[:1] == ["install"]]
-        check(rc == 0 and ["install", "hyprland", "--exclusive"] in installs, f"--exclusive not run: {installs}", err)
+        check(rc == 0 and ["install", "hyprland", "--exclusive", "-y"] in installs,
+              f"--exclusive not run with -y (the plan was confirmed already): {installs}", err)
     finally:
         sb.cleanup()
 
@@ -471,7 +482,7 @@ def test_dry_run_walks_everything_headless():
             r"would run: sudo install -D -o root -g root -m 0755 .*yozakura-sys",
             r"would write: ~/\.local/share/yozakura/compositor",
             r"would run: \S+/yozakura install hyprland$",
-            r"would run: \S+/yozakura install hyprland --exclusive",
+            r"would run: \S+/yozakura install hyprland --exclusive -y",
             r"would run: bash \S+/voice_setup\.sh",
             r"would run: bash \S+/depth_setup\.sh",
             r"would run: sudo bash \S+/install-sddm-theme\.sh",

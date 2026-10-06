@@ -1421,7 +1421,11 @@ compositor_setup() {
 }
 
 # --exclusive: $DISPLAY_NAME takes over the whole Hyprland config. Older
-# binaries do not know the flag; then it is skipped with a note.
+# (prebuilt release) binaries do not know the flag; then it is skipped with
+# a note. The probe `install --exclusive --help` only prints help on a
+# binary that knows it and is an unknown target (no side effect) on one
+# that does not. -y: the user already confirmed the plan here, and the
+# command runs without a terminal to answer on.
 exclusive_setup() {
   [[ "$EXCLUSIVE" == 1 && "$COMP_CONFIG" == 1 ]] || return 0
   if [[ "$LEGACY_PENDING" == 1 ]]; then
@@ -1432,15 +1436,15 @@ exclusive_setup() {
     warn "--exclusive is for Hyprland only; skipped for $(comp_name "$COMPOSITOR")."
     return 0
   fi
-  local help=exclusive
+  local help="install hyprland --exclusive"
   # A dry run has no new binary to ask; the one it would build knows it.
-  [[ "$DRY_RUN" == 1 ]] || help="$("$BIN_DIR/$APP_ID" install --help 2>&1 || true)"
-  if [[ "$help" != *exclusive* ]]; then
+  [[ "$DRY_RUN" == 1 ]] || help="$("$BIN_DIR/$APP_ID" install --exclusive --help 2>/dev/null || true)"
+  if [[ "$help" != *"install hyprland --exclusive"* ]]; then
     warn "This $APP_ID build cannot manage the whole Hyprland config yet; --exclusive skipped."
     return 0
   fi
   run_optional "exclusive" "Handing the Hyprland config to $DISPLAY_NAME" "Retry later: $APP_ID install hyprland --exclusive" \
-    "$BIN_DIR/$APP_ID" install hyprland --exclusive
+    "$BIN_DIR/$APP_ID" install hyprland --exclusive -y
 }
 
 hypr_entry() {

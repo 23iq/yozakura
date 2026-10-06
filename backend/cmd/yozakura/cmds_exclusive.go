@@ -86,6 +86,11 @@ func runExclusiveInstall(args []string, env exclusiveEnv, out, errOut io.Writer)
 
 func exclusiveEnable(env exclusiveEnv, yes bool, out io.Writer) error {
 	o := env.opts()
+	if o.Compositor == "" {
+		// outside a session (installer, TTY) nothing is detected: the
+		// explicit hyprland target counts; another running one is refused
+		o.Compositor = "hyprland"
+	}
 	plan, err := exclusive.Preview(o)
 	if err != nil {
 		return err

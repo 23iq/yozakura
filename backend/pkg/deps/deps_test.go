@@ -121,8 +121,23 @@ func ids(ds []Dep) map[string]bool {
 	return m
 }
 
+// required is what the shell cannot start without under a compositor:
+// every "required" row plus that compositor's rows ("" = the default).
+func required(compositor string) []Dep {
+	if compositor == "" {
+		compositor = DefaultCompositor
+	}
+	var out []Dep
+	for _, d := range All() {
+		if d.Need == NeedRequired || d.Need == compositor {
+			out = append(out, d)
+		}
+	}
+	return out
+}
+
 func TestRequiredIsCompositorScoped(t *testing.T) {
-	niri, hypr, mango := ids(Required("niri")), ids(Required("hyprland")), ids(Required("mango"))
+	niri, hypr, mango := ids(required("niri")), ids(required("hyprland")), ids(required("mango"))
 	if !niri["quickshell"] || !hypr["quickshell"] || !mango["quickshell"] {
 		t.Fatal("plain required rows belong to every compositor")
 	}
@@ -138,7 +153,7 @@ func TestRequiredIsCompositorScoped(t *testing.T) {
 	if !mango["mango"] || mango["hyprland"] || mango["niri"] {
 		t.Errorf("mango rows wrong: %v", mango)
 	}
-	if def := ids(Required("")); !def["hyprland"] || def["niri"] {
+	if def := ids(required("")); !def["hyprland"] || def["niri"] {
 		t.Error("empty compositor means hyprland")
 	}
 }

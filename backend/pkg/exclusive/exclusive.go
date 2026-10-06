@@ -78,6 +78,9 @@ type Options struct {
 	Import   func(monitors []ipc.OutputConfig, kb *ipc.KeyboardSettings) (previous map[string]any, err error)
 	Unimport func(previous map[string]any) error
 	Reload   func() error
+	// Polkit is the command that starts the polkit agent ("" = none found);
+	// the minimal entry runs it at Hyprland start.
+	Polkit string
 	// Offline checks the new entry file when Reload says ErrNoCompositor.
 	// It returns config errors as err and a warning when it could not
 	// check (no Hyprland binary, flag unsupported). Nil: nothing is checked.
@@ -197,7 +200,7 @@ func enable(o Options) (Status, error) {
 		}
 	}
 	r.treeTouched = true
-	if err := writeMinimal(hypr, entry, dir); err != nil {
+	if err := writeMinimal(hypr, entry, dir, o.Polkit); err != nil {
 		return r.rollback(err)
 	}
 	unitErrs, err := disableUnits(o, dir, &r.m)

@@ -72,8 +72,19 @@ func (s *Service) restore(params json.RawMessage) (any, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	st, err := exclusive.Restore(s.opts(), p.From)
+	if err != nil && st.Replaced != "" {
+		// the files are back: report that, with what went wrong after
+		return restoreResult{st, err.Error()}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
 	return st, nil
+}
+
+// restoreResult is a restore that put the files back but failed after
+// (re-enabling a unit, the reload): Warning says what.
+type restoreResult struct {
+	exclusive.Status
+	Warning string `json:"warning"`
 }

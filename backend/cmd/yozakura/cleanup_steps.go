@@ -33,8 +33,13 @@ func init() {
 
 func cleanupExclusive(env CleanupEnv) ([]string, error) {
 	o := exclusivesvc.Host()
-	if !exclusive.GetStatus(o).Active {
+	// by the entry file: goodbye often runs outside a Hyprland session,
+	// where the compositor is not detected
+	if !exclusive.Active(o.HyprDir) {
 		return nil, nil
+	}
+	if o.Compositor == "" {
+		o.Compositor = "hyprland"
 	}
 	if !env.Confirm("Exclusive mode is active. Restore your backed-up Hyprland config first?") {
 		return nil, nil
@@ -194,12 +199,23 @@ func cleanupBinLinks(env CleanupEnv) ([]string, error) {
 	return links, nil
 }
 
+// sysHelperPath is where install.sh puts the root helper (tests move it).
+var sysHelperPath = func() string { return "/usr/local/lib/" + brand.AppID + "/" + brand.AppID + "-sys" }
+
+// pkexecRmHelper removes the helper and then its folder when that is empty,
+// in one authorisation (paths as argv, the script is constant).
+var pkexecRmHelper = func(helper, dir string) error {
+	cmd := exec.Command("pkexec", "sh", "-c", `rm -f -- "$1" && { rmdir -- "$2" 2>/dev/null || true; }`, "sh", helper, dir)
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
+	return cmd.Run()
+}
+
 func cleanupSysHelper(env CleanupEnv) ([]string, error) {
-	helper := "/usr/local/lib/" + brand.AppID + "/" + brand.AppID + "-sys"
+	helper := sysHelperPath()
 	if !fileExists(helper) || !env.Confirm("Remove the root helper "+helper+" (needs admin rights)?") {
 		return nil, nil
 	}
-	if err := pkexecRm(helper); err != nil {
+	if err := pkexecRmHelper(helper, filepath.Dir(helper)); err != nil {
 		return nil, fmt.Errorf("pkexec rm: %w", err)
 	}
 	return []string{helper}, nil

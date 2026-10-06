@@ -192,3 +192,20 @@ func TestHostUsesXDGHyprDir(t *testing.T) {
 		t.Fatalf("host hypr dir %q", got)
 	}
 }
+
+// A restore that put the files back but could not reload (or re-enable a
+// unit) still reports what it did, with the problem as a warning.
+func TestRestorePartialKeepsStatus(t *testing.T) {
+	s, _, _ := testService(t)
+	call(t, s.enable, "")
+	base := s.opts
+	s.opts = func() exclusive.Options {
+		o := base()
+		o.Reload = func() error { return fmt.Errorf("config error line 3") }
+		return o
+	}
+	rs := call(t, s.restore, `{}`)
+	if rs["active"] != false || rs["replaced"] == "" || !strings.Contains(fmt.Sprint(rs["warning"]), "config error line 3") {
+		t.Fatalf("restore %v", rs)
+	}
+}
