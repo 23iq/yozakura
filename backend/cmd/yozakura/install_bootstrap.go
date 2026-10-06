@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/fsutil"
@@ -17,17 +18,23 @@ import (
 // start with the full generated config, which carries the same two lines.
 func bootstrapBody(t simpleTarget, bin, polkit string) string {
 	note := "Bootstrap written by " + brand.DisplayName + "; replaced on the first start."
-	cmds := []string{bin}
-	if polkit != "" {
-		cmds = append(cmds, polkit)
-	}
 	body := t.header + " " + note + "\n"
-	for _, c := range cmds {
-		if t.name == "Niri" {
-			body += fmt.Sprintf("spawn-at-startup %q\n", c)
-		} else {
-			body += "exec-once = " + c + "\n"
+	if t.name != "Niri" {
+		body += "exec-once = " + bin + "\n"
+		if polkit != "" {
+			body += "exec-once = " + polkit + "\n"
 		}
+		return body
+	}
+	// niri spawns argv, not a shell line: one quoted argument per word of
+	// the polkit command (fixed constants), the shell path as one argument.
+	body += fmt.Sprintf("spawn-at-startup %q\n", bin)
+	if polkit != "" {
+		args := strings.Fields(polkit)
+		for i, a := range args {
+			args[i] = fmt.Sprintf("%q", a)
+		}
+		body += "spawn-at-startup " + strings.Join(args, " ") + "\n"
 	}
 	return body
 }

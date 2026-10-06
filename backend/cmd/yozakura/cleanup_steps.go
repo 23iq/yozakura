@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -65,15 +66,19 @@ func cleanupFishHook(env CleanupEnv) ([]string, error) {
 }
 
 func cleanupMovedMonitors(env CleanupEnv) ([]string, error) {
-	got, err := displays.RestoreMoved(paths.HyprDir(), paths.New().DataDir, env.Home)
+	got, skipped, err := displays.RestoreMoved(paths.HyprDir(), paths.New().DataDir, env.Home)
 	var out []string
 	for _, c := range got {
 		out = append(out, fmt.Sprintf("uncommented %s:%d", c.File, c.Line))
 	}
+	for _, c := range skipped {
+		fmt.Fprintf(env.Out, "Left %s:%d commented out (%s)\n", c.File, c.Line, c.Reason)
+	}
 	return out, err
 }
 
-// polkitMarkers are the comment tails the installer puts on the polkit line.
+// polkitSuffixes are the comment tails install.sh puts on the polkit line:
+// [0] for hyprlang (.conf), [1] for Lua.
 func polkitSuffixes() []string {
 	return []string{"# " + brand.AppID + ": polkit", "-- " + brand.AppID + ": polkit"}
 }
@@ -102,7 +107,9 @@ func removePolkitLines(path string) (int, error) {
 	for _, l := range lines {
 		if isPolkitLine(l, lua) {
 			n++
-			if len(out) > 0 && out[len(out)-1] == "" {
+			// The blank line the installer wrote before its line goes too,
+			// unless it is one of several (then it was the user's).
+			if k := len(out); k > 0 && out[k-1] == "" && (k == 1 || out[k-2] != "") {
 				out = out[:len(out)-1]
 			}
 			continue
@@ -225,11 +232,13 @@ func cleanupPurge(env CleanupEnv) ([]string, error) {
 		return nil, nil
 	}
 	var removed []string
+	var errs []error
 	for _, d := range present {
 		if err := os.RemoveAll(d); err != nil {
-			return removed, err
+			errs = append(errs, err)
+			continue
 		}
 		removed = append(removed, d)
 	}
-	return removed, nil
+	return removed, errors.Join(errs...)
 }

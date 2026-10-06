@@ -104,6 +104,9 @@ func TestBootstrapBodyStartsShellAndPolkit(t *testing.T) {
 		}
 	}
 	mango := bootstrapBody(mangoConfig, "/opt/bin/yozakura", "systemctl --user start hyprpolkitagent")
+	if nu := bootstrapBody(niriConfig, "/b", "systemctl --user start hyprpolkitagent"); !strings.Contains(nu, `spawn-at-startup "systemctl" "--user" "start" "hyprpolkitagent"`) {
+		t.Errorf("niri unit fallback not argv:\n%s", nu)
+	}
 	for _, want := range []string{"exec-once = /opt/bin/yozakura\n", "exec-once = systemctl --user start hyprpolkitagent\n"} {
 		if !strings.Contains(mango, want) {
 			t.Errorf("mango bootstrap lacks %q:\n%s", want, mango)

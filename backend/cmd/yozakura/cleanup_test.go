@@ -147,3 +147,46 @@ func TestPurgeNeedsFlagAndConfirmation(t *testing.T) {
 		t.Error("purge removed unrelated data")
 	}
 }
+
+func TestRealStepsRegisteredInOrder(t *testing.T) {
+	var names []string
+	for _, s := range registeredCleanups() {
+		names = append(names, s.name)
+	}
+	idx := func(n string) int {
+		for i, x := range names {
+			if x == n {
+				return i
+			}
+		}
+		t.Fatalf("step %q not registered: %v", n, names)
+		return -1
+	}
+	// Restoring the exclusive backup swaps the hypr tree, so the line-level
+	// steps must run after it.
+	if !(idx("exclusive") < idx("monitor rules") && idx("exclusive") < idx("polkit autostart")) {
+		t.Fatalf("order %v", names)
+	}
+}
+
+func TestPurgeContinuesPastFailedDir(t *testing.T) {
+	data := t.TempDir()
+	t.Setenv("XDG_DATA_HOME", data)
+	t.Setenv("XDG_STATE_HOME", t.TempDir())
+	dirs := purgeDirs()
+	for _, d := range dirs {
+		os.MkdirAll(d, 0o755)
+	}
+	// A non-empty dir inside a read-only parent cannot be removed.
+	stuck := dirs[0]
+	os.WriteFile(filepath.Join(stuck, "f"), nil, 0o644)
+	os.Chmod(stuck, 0o555)
+	t.Cleanup(func() { os.Chmod(stuck, 0o755) })
+	r, err := cleanupPurge(CleanupEnv{Purge: true, Confirm: func(string) bool { return true }})
+	if err == nil || len(r) != len(dirs)-1 {
+		t.Fatalf("removed %v err %v", r, err)
+	}
+	if fileExists(dirs[len(dirs)-1]) {
+		t.Fatal("stopped at the first failure")
+	}
+}

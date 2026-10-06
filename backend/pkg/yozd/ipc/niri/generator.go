@@ -754,6 +754,21 @@ func (g *Generator) GenerateLayerRules(rules []ipc.LayerRule) string {
 	return b.String()
 }
 
+// spawnArgs renders a startup command as niri's argv: spawn-at-startup does
+// not go through a shell, so "a b" would be one program name. A plain
+// command (no quoting or shell syntax) is split into one argument per word;
+// anything else stays a single argument as written.
+func spawnArgs(cmd string) string {
+	if strings.ContainsAny(cmd, "'\"\\$`;|&<>*?()") {
+		return kdlQuote(cmd)
+	}
+	words := strings.Fields(cmd)
+	for i, w := range words {
+		words[i] = kdlQuote(w)
+	}
+	return strings.Join(words, " ")
+}
+
 func (g *Generator) GenerateStartup(exec []string, execOnce []string) string {
 	var b strings.Builder
 	if len(exec) == 0 && len(execOnce) == 0 {
@@ -766,7 +781,7 @@ func (g *Generator) GenerateStartup(exec []string, execOnce []string) string {
 			continue
 		}
 		cmd = ipc.ResolveExecCommand(cmd)
-		b.WriteString(fmt.Sprintf("spawn-at-startup %s\n", kdlQuote(cmd)))
+		b.WriteString("spawn-at-startup " + spawnArgs(cmd) + "\n")
 	}
 	for _, cmd := range exec {
 		if strings.TrimSpace(cmd) == "" {

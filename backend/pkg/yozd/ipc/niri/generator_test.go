@@ -200,8 +200,11 @@ func TestGenerateStartupSpawnAtStartup(t *testing.T) {
 	if !strings.Contains(out, `spawn-at-startup "waybar"`) {
 		t.Fatalf("expected spawn-at-startup waybar, got: %s", out)
 	}
-	if !strings.Contains(out, `spawn-at-startup "wl-paste --watch cliphist store"`) {
+	if !strings.Contains(out, `spawn-at-startup "wl-paste" "--watch" "cliphist" "store"`) {
 		t.Fatalf("expected spawn-at-startup with args, got: %s", out)
+	}
+	if got := g.GenerateStartup(nil, []string{"systemctl --user start hyprpolkitagent", `sh -c 'a b'`}); !strings.Contains(got, `spawn-at-startup "systemctl" "--user" "start" "hyprpolkitagent"`) || !strings.Contains(got, `spawn-at-startup "sh -c 'a b'"`) {
+		t.Fatalf("argv split: %s", got)
 	}
 	if !strings.Contains(out, "does not re-run exec") {
 		t.Fatalf("expected exec comment, got: %s", out)

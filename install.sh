@@ -1283,7 +1283,8 @@ exclusive_setup() {
 }
 
 hypr_entry() {
-  if [[ -f "$HOME/.config/hypr/hyprland.lua" || ! -f "$HOME/.config/hypr/hyprland.conf" ]]; then echo hyprland.lua; else echo hyprland.conf; fi
+  local dir="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
+  if [[ -f "$dir/hyprland.lua" || ! -f "$dir/hyprland.conf" ]]; then echo hyprland.lua; else echo hyprland.conf; fi
 }
 
 # The block loads <data dir>/hyprland.{lua,conf}, which the shell generates
@@ -1304,7 +1305,7 @@ hyprland_bootstrap() {
 # exactly that line.
 polkit_autostart() {
   local entry marker="$APP_ID: polkit"
-  entry="$HOME/.config/hypr/$(hypr_entry)"
+  entry="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)"
   [[ -e /usr/lib/systemd/user/hyprpolkitagent.service ]] || return 0
   grep -qsi polkit "$entry" && return 0
   if [[ "$entry" == *.lua ]]; then

@@ -23,6 +23,38 @@ exec-once = "yozakura"
 exec-once-non-hyprland = "/usr/lib/hyprpolkitagent/hyprpolkitagent"
 `
 
+const unitFallbackTOML = `
+[startup]
+exec-once = "yozakura"
+exec-once-non-hyprland = "systemctl --user start hyprpolkitagent"
+`
+
+// The user-unit fallback has arguments: niri gets argv, Mango a command line.
+func TestStartupUnitFallbackArgv(t *testing.T) {
+	dir := t.TempDir()
+	toml := filepath.Join(dir, "yozd.toml")
+	os.WriteFile(toml, []byte(unitFallbackTOML), 0o644)
+	cfg, err := LoadConfig(toml)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ipcCfg := cfg.ToIPCConfig()
+	write := func(name string, gen ipc.ConfigGenerator) string {
+		p := filepath.Join(dir, name)
+		if err := writeConfig(gen, p, ipcCfg, true); err != nil {
+			t.Fatal(err)
+		}
+		b, _ := os.ReadFile(p)
+		return string(b)
+	}
+	if kdl := write("niri.kdl", niri.NewGenerator()); !strings.Contains(kdl, `spawn-at-startup "systemctl" "--user" "start" "hyprpolkitagent"`) {
+		t.Errorf("niri:\n%s", kdl)
+	}
+	if m := write("mango.conf", mango.NewGenerator()); !strings.Contains(m, "exec-once = systemctl --user start hyprpolkitagent\n") {
+		t.Errorf("mango:\n%s", m)
+	}
+}
+
 // The polkit agent is for niri and Mango only: Hyprland's installer line
 // starts it there.
 func TestStartupNonHyprlandOnlyForNiriAndMango(t *testing.T) {

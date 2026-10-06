@@ -8,11 +8,12 @@ import (
 
 // RestoreMoved undoes MoveConflicts: every line commented out with the
 // "<comment> <app>: moved " prefix is uncommented again. It returns the
-// restored rules; files that cannot be rewritten (see unwritable) or whose
-// write fails are left as they are.
-func RestoreMoved(hyprDir, dataDir, home string) ([]Conflict, error) {
-	restored := []Conflict{}
-	err := WalkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
+// restored rules and, in skipped, the ones left commented out (a file that
+// cannot be rewritten, see unwritable, or whose write failed) with a Reason.
+func RestoreMoved(hyprDir, dataDir, home string) (restored, skipped []Conflict, err error) {
+	restored = []Conflict{}
+	skipped = []Conflict{}
+	err = WalkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
 		prefix := movedPrefix(lua)
 		var found []Conflict
 		for n, l := range lines {
@@ -21,14 +22,24 @@ func RestoreMoved(hyprDir, dataDir, home string) ([]Conflict, error) {
 				lines[n] = rest
 			}
 		}
-		if len(found) == 0 || unwritable(path, home) != "" {
+		if len(found) == 0 {
 			return nil
 		}
-		if err := fsutil.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+		reason := unwritable(path, home)
+		if reason == "" {
+			if err := fsutil.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644); err != nil {
+				reason = "write failed: " + err.Error()
+			}
+		}
+		if reason != "" {
+			for i := range found {
+				found[i].Reason = reason
+			}
+			skipped = append(skipped, found...)
 			return nil
 		}
 		restored = append(restored, found...)
 		return nil
 	})
-	return restored, err
+	return restored, skipped, err
 }
