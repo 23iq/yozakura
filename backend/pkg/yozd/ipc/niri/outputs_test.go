@@ -42,7 +42,11 @@ func TestNiriTransformIndex(t *testing.T) {
 func marshalActions(t *testing.T, cfg ipc.OutputConfig) []string {
 	t.Helper()
 	var out []string
-	for _, a := range niriOutputActions(cfg) {
+	acts, err := niriOutputActions(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, a := range acts {
 		b, err := json.Marshal(a)
 		if err != nil {
 			t.Fatal(err)
@@ -71,7 +75,7 @@ func TestNiriOutputActionsFull(t *testing.T) {
 		`{"Output":{"action":"On","output":"DP-1"}}`,
 		`{"Output":{"action":{"Mode":{"mode":{"Specific":{"height":1440,"refresh":239.97,"width":2560}}}},"output":"DP-1"}}`,
 		`{"Output":{"action":{"Scale":{"scale":{"Specific":1.5}}},"output":"DP-1"}}`,
-		`{"Output":{"action":{"Transform":{"transform":"_90"}},"output":"DP-1"}}`,
+		`{"Output":{"action":{"Transform":{"transform":"90"}},"output":"DP-1"}}`,
 		`{"Output":{"action":{"Position":{"position":{"Specific":{"x":1920,"y":0}}}},"output":"DP-1"}}`,
 		`{"Output":{"action":{"Vrr":{"vrr":{"on_demand":true,"vrr":true}}},"output":"DP-1"}}`,
 	})
@@ -111,5 +115,21 @@ func TestNiriApplyOutputRejectsInvalid(t *testing.T) {
 	c := f.Client()
 	if err := c.ApplyOutput(ipc.OutputConfig{Name: "DP-1\"; rm", Enabled: true}); err == nil {
 		t.Fatal("accepted bad name")
+	}
+}
+
+func TestNiriTransformWireNames(t *testing.T) {
+	for i, want := range []string{"Normal", "90", "180", "270", "Flipped", "Flipped90", "Flipped180", "Flipped270"} {
+		got := marshalActions(t, ipc.OutputConfig{Name: "DP-1", Enabled: true, Transform: i})
+		w := `{"Output":{"action":{"Transform":{"transform":"` + want + `"}},"output":"DP-1"}}`
+		if got[3] != w {
+			t.Errorf("transform %d: %s want %s", i, got[3], w)
+		}
+	}
+}
+
+func TestNiriTransformRange(t *testing.T) {
+	if _, err := niriOutputActions(ipc.OutputConfig{Name: "DP-1", Enabled: true, Transform: 8}); err == nil {
+		t.Fatal("accepted transform 8")
 	}
 }

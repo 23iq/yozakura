@@ -4,18 +4,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strings"
 
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
-// niriTransforms maps the wl_output transform (0..7) to niri's action names.
-var niriTransforms = [8]string{"Normal", "_90", "_180", "_270", "Flipped", "Flipped90", "Flipped180", "Flipped270"}
+// niriTransforms maps the wl_output transform (0..7) to niri's wire names.
+var niriTransforms = [8]string{"Normal", "90", "180", "270", "Flipped", "Flipped90", "Flipped180", "Flipped270"}
+
+func niriTransformName(i int) (string, error) {
+	if i < 0 || i >= len(niriTransforms) {
+		return "", fmt.Errorf("transform %d out of range 0..7", i)
+	}
+	return niriTransforms[i], nil
+}
 
 // niriTransformIndex parses a transform as niri reports it. Both the bare
 // ("90") and underscore ("_90") spellings are accepted.
 func niriTransformIndex(s string) int {
+	s = strings.TrimPrefix(s, "_")
 	for i, name := range niriTransforms {
-		if s == name || (i > 0 && i < 4 && s == name[1:]) {
+		if s == name {
 			return i
 		}
 	}
@@ -68,12 +77,12 @@ func parseNiriOutputs(data []byte) ([]ipc.Output, error) {
 
 // niriOutputActions builds the ordered `Output` action payloads for cfg.
 // cfg must have passed Validate.
-func niriOutputActions(cfg ipc.OutputConfig) []map[string]any {
+func niriOutputActions(cfg ipc.OutputConfig) ([]map[string]any, error) {
 	wrap := func(action any) map[string]any {
 		return map[string]any{"Output": map[string]any{"output": cfg.Name, "action": action}}
 	}
 	if !cfg.Enabled {
-		return []map[string]any{wrap("Off")}
+		return []map[string]any{wrap("Off")}, nil
 	}
 	var mode any = "Automatic"
 	if cfg.Width > 0 && cfg.Height > 0 {
@@ -91,14 +100,18 @@ func niriOutputActions(cfg ipc.OutputConfig) []map[string]any {
 	if !cfg.AutoPosition {
 		pos = map[string]any{"Specific": map[string]any{"x": cfg.X, "y": cfg.Y}}
 	}
+	tr, err := niriTransformName(cfg.Transform)
+	if err != nil {
+		return nil, err
+	}
 	return []map[string]any{
 		wrap("On"),
 		wrap(map[string]any{"Mode": map[string]any{"mode": mode}}),
 		wrap(map[string]any{"Scale": map[string]any{"scale": scale}}),
-		wrap(map[string]any{"Transform": map[string]any{"transform": niriTransforms[cfg.Transform]}}),
+		wrap(map[string]any{"Transform": map[string]any{"transform": tr}}),
 		wrap(map[string]any{"Position": map[string]any{"position": pos}}),
 		wrap(map[string]any{"Vrr": map[string]any{"vrr": map[string]any{"vrr": cfg.VRR > 0, "on_demand": cfg.VRR == 2}}}),
-	}
+	}, nil
 }
 
 // ListOutputs returns every output niri knows, with its mode list.
@@ -119,10 +132,28 @@ func (n *Niri) ApplyOutput(cfg ipc.OutputConfig) error {
 	if err := cfg.Validate(); err != nil {
 		return err
 	}
-	for _, req := range niriOutputActions(cfg) {
+	reqs, err := niriOutputActions(cfg)
+	if err != nil {
+		return err
+	}
+	for _, req := range reqs {
 		if err := n.request(req, nil); err != nil {
-			return err
+			return fmt.Errorf("output %s %s: %w", cfg.Name, niriActionName(req), err)
 		}
 	}
 	return nil
+}
+
+// niriActionName names the action in an Output request, for error context.
+func niriActionName(req map[string]any) string {
+	out, _ := req["Output"].(map[string]any)
+	switch a := out["action"].(type) {
+	case string:
+		return a
+	case map[string]any:
+		for k := range a {
+			return k
+		}
+	}
+	return "?"
 }
