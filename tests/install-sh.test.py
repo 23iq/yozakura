@@ -8,6 +8,7 @@ PATH that logs its argv; real tools are only the plain text utilities the
 script needs. Nothing touches the system: sudo only logs.
 """
 
+import hashlib
 import os
 import pty
 import re
@@ -67,6 +68,33 @@ SCRIPTS = {
     "depth_setup.sh": "exit 0\n",
     "install-sddm-theme.sh": "exit 0\n",
 }
+# --dry-run: every command that could change something writes a marker and
+# fails; only the reads the plan needs (pacman -T/-Qq, systemctl
+# is-active/is-enabled, go version, curl to stdout) are allowed through.
+LOUD = 'printf "%s\\n" "${0##*/} $*" >>"$DRY_MARKER"\nexit 97\n'
+DRY_STUBS = {
+    name: LOUD
+    for name in (
+        "sudo pkexec git make paru yay reboot install ln mkdir rm mv cp chmod mktemp touch tee unzip fc-cache makepkg"
+    ).split()
+}
+DRY_STUBS.update(
+    {
+        "pacman": 'case "$1" in -T) shift; printf "%s\\n" "$@"; exit 0 ;; -Qq) exit 1 ;; esac\n' + LOUD,
+        "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n' + LOUD,
+        "dnf": '[[ "$1" == --version ]] && { echo "dnf5 version 5.2"; exit 0; }\n' + LOUD,
+        "go": '[[ "$1" == version && $# -eq 1 ]] && { echo "go version go1.24.0 linux/amd64"; exit 0; }\n' + LOUD,
+        # Reads to stdout only; a file:// URL is served (the package list).
+        "curl": (
+            'for a in "$@"; do [[ "$a" == -o ]] && { ' + LOUD.replace("\n", "; ", 1) + "}; done\n"
+            'u="${*: -1}"; [[ "$u" == file://* ]] && exec cat "${u#file://}"\nexit 22\n'
+        ),
+    }
+)
+# The host decides whether the SDDM question comes (detect_system reads the
+# real display-manager link; has_systemd the real /run/systemd/system).
+ASKS_SDDM = not os.path.islink("/etc/systemd/system/display-manager.service") and os.path.isdir("/run/systemd/system")
+
 OS_RELEASE = {
     "arch": 'ID=arch\nPRETTY_NAME="Arch Linux"\n',
     "fedora": 'ID=fedora\nPRETTY_NAME="Fedora Linux 42"\n',
@@ -74,7 +102,7 @@ OS_RELEASE = {
 
 
 class Sandbox:
-    def __init__(self, distro="arch"):
+    def __init__(self, distro="arch", strict=False):
         self.root = Path(tempfile.mkdtemp(prefix="install-sh-"))
         self.bin = self.root / "bin"
         self.home = self.root / "home"
@@ -86,7 +114,11 @@ class Sandbox:
             assert real, f"missing host tool {tool}"
             (self.bin / tool).symlink_to(real)
         stubs = dict(STUBS, **(ARCH_STUBS if distro == "arch" else FEDORA_STUBS))
+        if strict:
+            stubs.update({k: v for k, v in DRY_STUBS.items() if k not in ("pacman", "dnf") or k in stubs})
         for name, body in stubs.items():
+            if (self.bin / name).is_symlink():
+                (self.bin / name).unlink()
             self._script(self.bin / name, "#!/bin/bash\n" + LOGGER + body)
         self._script(self.root / "fake-yozakura", FAKE_BIN)
         # An existing checkout (sync_repo fetches it; load_deps reads its list).
@@ -100,6 +132,8 @@ class Sandbox:
         self.os_release = self.root / "os-release"
         self.os_release.write_text(OS_RELEASE[distro])
         (self.root / "sysbin").mkdir()
+        (self.root / "tmp").mkdir()
+        self.marker = self.root / "dry-marker"
         self.extra_env = {}
 
     @staticmethod
@@ -122,6 +156,8 @@ class Sandbox:
             "YOZAKURA_GPU": "AMD",
             "YOZAKURA_SYS_BIN": str(self.root / "sysbin"),
             "CUDA_PATH": str(self.root / "no-cuda"),
+            "TMPDIR": str(self.root / "tmp"),
+            "DRY_MARKER": str(self.marker),
             **self.extra_env,
         }
 
@@ -187,6 +223,24 @@ class Sandbox:
             parts = line.split("\t")
             if parts[0] == prog:
                 out.append(parts[1:])
+        return out
+
+    def snapshot(self):
+        """Every path under the sandbox (but the run's own logs) with its type,
+        mode, mtime and content: two equal snapshots mean nothing changed."""
+        out = {}
+        for path in sorted(self.root.rglob("*")):
+            rel = str(path.relative_to(self.root))
+            if rel in ("argv.log", "stderr", "dry-marker"):
+                continue
+            st = path.lstat()
+            if path.is_symlink():
+                out[rel] = ("link", os.readlink(path))
+            elif path.is_dir():
+                out[rel] = ("dir", st.st_mode, st.st_mtime_ns)
+            else:
+                digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                out[rel] = ("file", st.st_mode, st.st_mtime_ns, digest)
         return out
 
     def cleanup(self):
@@ -331,7 +385,8 @@ def test_exclusive_needs_a_binary_that_knows_it():
 def test_fedora_menu_has_no_mango():
     sb = Sandbox("fedora")
     try:
-        rc, err, shown = sb.run("--no-sddm", "--dry-run", answers="1\n")
+        # Menu: 1; Proceed: n (the dry run would otherwise walk on).
+        rc, err, shown = sb.run("--no-sddm", "--dry-run", answers="1\nn\n")
         check(rc == 0 and "Choose your compositor" in err, "no compositor menu on Fedora", err + shown)
         check(not re.search(r"\d\s+Mango", err), "Fedora menu offers Mango", err)
         check("Mango is not listed" in err, "Fedora menu does not say why Mango is missing", err)
@@ -373,8 +428,110 @@ def test_helper_without_sudo_is_a_warning():
         sb.cleanup()
 
 
+DRY_ALLOWED = {"pacman", "systemctl", "go", "curl", "fc-list", "rpm", "dnf"}
+
+
+def check_untouched(sb, before, err):
+    check(not sb.marker.exists(), "dry run executed a command", sb.marker.read_text() if sb.marker.exists() else "")
+    progs = {line.split("\t")[0] for line in sb.log.read_text().splitlines()}
+    check(progs <= DRY_ALLOWED, f"dry run ran {sorted(progs - DRY_ALLOWED)}", sb.log.read_text())
+    after = sb.snapshot()
+    changed = sorted(k for k in before.keys() | after.keys() if before.get(k) != after.get(k))
+    check(not changed, f"dry run changed the sandbox: {changed[:10]}", err)
+
+
+def test_dry_run_walks_everything_headless():
+    sb = Sandbox("arch", strict=True)
+    try:
+        # A first install: no checkout yet, so the clone is shown too.
+        sb.extra_env["YOZAKURA_SRC"] = str(sb.root / "fresh-src")
+        raw = sb.root / "raw/backend/pkg/deps"
+        raw.mkdir(parents=True)
+        shutil.copy(REPO / "backend/pkg/deps/packages.tsv", raw)
+        sb.extra_env["YOZAKURA_RAW_BASE"] = "file://" + str(sb.root / "raw")
+        before = sb.snapshot()
+        rc, err, _ = sb.run(
+            "--dry-run", "-y", "--compositor", "hyprland", "--with-voice", "--with-depth", "--with-sddm", "--exclusive"
+        )
+        check(rc == 0, f"headless dry run exit {rc}", err)
+        check_untouched(sb, before, err)
+        lines = err.splitlines()
+        check(sum("DRY RUN" in line for line in lines) >= 2, "no DRY RUN banner at the top and the bottom", err)
+        for want in (
+            r"would run: sudo pacman -Syu --needed --noconfirm .*hyprland",
+            r"would run: git clone .* " + re.escape(str(sb.root / "fresh-src")),
+            r"would run: make -C \S+ build",
+            r"would run: install -m 755 ",
+            r"would write: ~/\.local/share/yozakura/shell_repo",
+            r"would run: sudo install -D -o root -g root -m 0755 .*yozakura-sys",
+            r"would write: ~/\.local/share/yozakura/compositor",
+            r"would run: \S+/yozakura install hyprland$",
+            r"would run: \S+/yozakura install hyprland --exclusive",
+            r"would run: bash \S+/voice_setup\.sh",
+            r"would run: bash \S+/depth_setup\.sh",
+            r"would run: sudo bash \S+/install-sddm-theme\.sh",
+            r"would run: \S+/yozakura doctor --with voice,depth,sddm",
+            r"yozakura onboarding --dry-run",
+        ):
+            check(re.search(want, err, re.M), f"dry run does not show {want!r}", err)
+        if os.path.isdir("/run/systemd/system"):
+            check(re.search(r"would run: sudo systemctl enable", err), "services not shown", err)
+        check("would run: systemctl reboot" not in err, "-y dry run offers a reboot", err)
+        check("NEEDS ATTENTION" not in err, "dry run reports failures", err)
+    finally:
+        sb.cleanup()
+
+
+def test_dry_run_fedora_and_update():
+    for distro, args, want in (
+        ("fedora", ("--dry-run", "-y", "--compositor", "niri"), r"would run: sudo dnf install -y .*niri"),
+        ("arch", ("--update", "--dry-run"), r"would run: make -C \S+ build"),
+    ):
+        sb = Sandbox(distro, strict=True)
+        try:
+            before = sb.snapshot()
+            rc, err, _ = sb.run(*args)
+            check(rc == 0, f"{distro} {args} exit {rc}", err)
+            check_untouched(sb, before, err)
+            check(re.search(want, err), f"{distro} {args} does not show {want!r}", err)
+            check(err.count("DRY RUN") >= 2, f"{distro} {args} lacks the DRY RUN lines", err)
+        finally:
+            sb.cleanup()
+
+
+def test_dry_run_interactive_walkthrough():
+    sb = Sandbox("arch", strict=True)
+    try:
+        before = sb.snapshot()
+        # Menu: 2 = niri; SDDM (when the host has no login manager): no;
+        # Proceed: y; Reboot: y.
+        answers = "2\n" + ("n\n" if ASKS_SDDM else "") + "y\ny\n"
+        rc, err, shown = sb.run("--dry-run", answers=answers)
+        check(rc == 0, f"interactive dry run exit {rc}", err + shown)
+        check_untouched(sb, before, err + shown)
+        check("Choose your compositor" in err, "no compositor menu", err)
+        check(("No login screen found" in shown) == ASKS_SDDM, "SDDM question mismatch", shown)
+        check("Proceed?" in shown and "Reboot now to start Yozakura?" in shown, "a question is missing", shown)
+        check(
+            re.search(r"would run: sudo pacman -Syu --needed (?!.*--noconfirm).*niri", err),
+            "attended pacman not shown",
+            err,
+        )
+        check(re.search(r"would run: \S+/yozakura install niri$", err, re.M), "niri config step not shown", err)
+        check("would run: systemctl reboot" in err, "reboot not shown", err)
+        check("yozakura onboarding --dry-run" in err, "no onboarding dry-run hint", err)
+        check("opens by itself" in err, "hint does not say the wizard opens after a reboot", err)
+        tail = "\n".join(err.rstrip().splitlines()[-15:])
+        check("DRY RUN" in tail, "no closing DRY RUN line", tail)
+    finally:
+        sb.cleanup()
+
+
 def main():
     for test in (
+        test_dry_run_walks_everything_headless,
+        test_dry_run_interactive_walkthrough,
+        test_dry_run_fedora_and_update,
         test_headless_without_yes_upgrades_noconfirm,
         test_exclusive_needs_a_binary_that_knows_it,
         test_fedora_menu_has_no_mango,

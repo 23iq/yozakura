@@ -6,7 +6,8 @@
 #
 # It installs the core (the shell, one compositor, a login screen) and shows
 # the full plan first; apps, voice and the rest come from the setup wizard
-# on the first login. Re-running it updates an
+# on the first login. --dry-run walks the same flow and only shows what each
+# step would run. Re-running it updates an
 # existing install; `yozakura update` runs the checkout's copy with --update.
 # The package list is backend/pkg/deps/packages.tsv (shared with
 # `yozakura doctor`). Run with --help for every option.
@@ -197,9 +198,9 @@ step() {
   printf '\n  %s%s%s %s%s%s %s%s%s\n' "$C_PINK" "$G_STEP" "$C_OFF" "$C_BOLD" "$1" "$C_OFF" "$C_LINE" "$UI_OUT" "$C_OFF" >&2
 }
 
-# done_line LABEL SECONDS: "✓ label ········ 12s".
+# done_line LABEL TIME: "✓ label ········ 12s".
 done_line() {
-  local label="$1" t="${2}s" dots
+  local label="$1" t="$2" dots
   dots=$((UI_W - ${#label} - ${#t} - 8))
   if ((dots < 2)); then
     ok "$label ${C_DIM}$t${C_OFF}"
@@ -400,7 +401,103 @@ has_cmd() { command -v "$1" >/dev/null 2>&1; }
 # No `fc-list | grep -q`: grep exits early and pipefail turns fc-list's
 # SIGPIPE into a failure.
 has_phosphor() { local f; f="$(fc-list : family 2>/dev/null || true)"; [[ "${f,,}" == *phosphor* ]]; }
-log() { printf '%s\n' "$*" >>"$LOG_FILE" 2>/dev/null || true; }
+log() { [[ "$DRY_RUN" == 1 ]] || printf '%s\n' "$*" >>"$LOG_FILE" 2>/dev/null || true; }
+
+# === Dry run ===
+# --dry-run walks the whole flow: questions, plan and every step, but each
+# command that would change something is only shown ("would run: ..."). The
+# helpers below and run/run_attended/try_sudo are the only places that
+# decide; reads (detection, the plan) stay real.
+
+# dry_banner TEXT: the "DRY RUN" line at the top and the bottom.
+dry_banner() {
+  printf '\n  %s%s DRY RUN %s%s %s%s\n' "$C_YELLOW$C_BOLD" "$B_H$B_H" "$B_H$B_H" "$C_OFF" "$C_YELLOW" "$1$C_OFF" >&2
+}
+
+# dry_note VERB TEXT: "would VERB: TEXT", dim, under the step it belongs to.
+dry_note() { printf '    %s%s would %s: %s%s\n' "$C_DIM" "$G_PIPE" "$1" "$2" "$C_OFF" >&2; }
+
+# dry_line CMD...: shows CMD as it would run; the installer's own helper
+# functions are spelled out as what they do.
+dry_line() {
+  local what
+  [[ "$1" == retry ]] && shift
+  case "$1" in
+  clone_repo) printf -v what 'git clone %s%q %q' "${BRANCH:+--branch $BRANCH }" "$REPO_URL" "$SRC_DIR" ;;
+  bootstrap_yay) what="git clone https://aur.archlinux.org/yay-bin.git, then makepkg -si (in a temporary dir)" ;;
+  add_input_group) what="sudo usermod -aG input $(id -un) (after sudo groupadd --system input, if it is missing)" ;;
+  phosphor_user_font) what="curl the Phosphor v$PHOSPHOR_VERSION zip, copy its fonts into $(tilde "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/phosphor"), fc-cache" ;;
+  download_release) what="curl the latest release binaries and SHA256SUMS into $(tilde "$SRC_DIR"), verify them, chmod 755" ;;
+  polkit_autostart) what="append the hyprpolkitagent autostart line to $(tilde "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)") (if no polkit agent is configured)" ;;
+  *)
+    local a q="'" plain='^[][A-Za-z0-9_./=:,@%+~{}-]+$'
+    what=""
+    for a in "$@"; do
+      # Plain words as they are, anything else single-quoted.
+      [[ "$a" =~ $plain ]] || a="$q${a//$q/$q\\$q$q}$q"
+      what+="${what:+ }$a"
+    done
+    ;;
+  esac
+  dry_note run "$what"
+}
+
+# would CMD...: runs CMD, or in a dry run shows it (status 0).
+would() {
+  if [[ "$DRY_RUN" == 1 ]]; then
+    dry_line "$@"
+    return 0
+  fi
+  "$@"
+}
+
+# logged CMD...: would, with CMD's output in the log.
+logged() {
+  if [[ "$DRY_RUN" == 1 ]]; then
+    dry_line "$@"
+    return 0
+  fi
+  "$@" >>"$LOG_FILE" 2>&1
+}
+
+# write_file PATH TEXT: PATH (and its directory) with TEXT, or in a dry run
+# only named.
+write_file() {
+  if [[ "$DRY_RUN" == 1 ]]; then
+    dry_note write "$(tilde "$1")"
+    return 0
+  fi
+  mkdir -p "$(dirname "$1")" && printf '%s' "$2" >"$1"
+}
+
+# dry_end: the closing line and what to try next, the setup wizard's own
+# dry run (the real one opens by itself on the first login after a reboot).
+dry_end() {
+  [[ "$DRY_RUN" == 1 ]] || return 0
+  local cmd="" b
+  if has_cmd "$APP_ID"; then
+    cmd="$APP_ID"
+  else
+    for b in "$BIN_DIR/$APP_ID" "$SRC_DIR/$APP_ID"; do
+      [[ -x "$b" ]] && cmd="$(tilde "$b")" && break
+    done
+  fi
+  echo >&2
+  ui_box_top "Next: the setup wizard"
+  ui_box_row ""
+  if [[ -n "$cmd" ]]; then
+    ui_box_row "${C_DIM}Walk the first-login wizard the same way, changing nothing:$C_OFF"
+  else
+    ui_box_row "${C_DIM}$APP_ID is not installed here yet; once it is, walk the wizard the same way:$C_OFF"
+  fi
+  ui_box_row "  $C_PINK${cmd:-$APP_ID} onboarding --dry-run$C_OFF"
+  ui_box_row ""
+  ui_box_row "${C_DIM}After a real install and a reboot, the wizard opens by itself on the first login.$C_OFF"
+  ui_box_row ""
+  ui_box_bottom
+  dry_banner "nothing was installed, written or changed"
+  echo >&2
+}
 
 # run LABEL HINT CMD...: runs CMD with its output in the log, a spinner on a
 # terminal, and on failure the log tail plus HINT. RUN_SOFT=1 turns the
@@ -409,6 +506,11 @@ run() {
   local label="$1" hint="$2" rc=0 start
   shift 2
   start=$SECONDS
+  if [[ "$DRY_RUN" == 1 ]]; then
+    done_line "$label" "dry run"
+    dry_line "$@"
+    return 0
+  fi
   log "" "### $label: $*"
   if [[ "$VERBOSE" == 1 ]]; then
     printf '  %s%s%s %s\n' "$C_ROSE" "$G_STEP" "$C_OFF" "$label" >&2
@@ -438,7 +540,7 @@ run() {
     fi
     die "$label failed (exit $rc)." "Full log: $LOG_FILE" ${hint:+"$hint"}
   fi
-  done_line "$label" $((SECONDS - start))
+  done_line "$label" "$((SECONDS - start))s"
 }
 
 # run_optional NAME LABEL HINT CMD...: run, but a failure is only noted for
@@ -455,12 +557,16 @@ run_optional() {
 run_attended() {
   local label="$1" hint="$2" rc=0 start=$SECONDS
   shift 2
+  [[ "$DRY_RUN" == 1 ]] && {
+    run "$label" "$hint" "$@"
+    return
+  }
   log "" "### $label: $*"
   printf '  %s%s%s %s\n' "$C_ROSE" "$G_STEP" "$C_OFF" "$label" >&2
   "$@" <"$TTY" >&2 || rc=$?
   log "(attended, exit $rc)"
   [[ "$rc" -eq 0 ]] || die "$label failed (exit $rc)." "Full log: $LOG_FILE" ${hint:+"$hint"}
-  done_line "$label" $((SECONDS - start))
+  done_line "$label" "$((SECONDS - start))s"
 }
 
 # retry CMD...: one more try after a pause (mirrors and COPR time out).
@@ -498,7 +604,8 @@ Optional features (or later, from the setup wizard):
 
 Install:
   -y, --yes         do not ask; go with the plan
-  --dry-run         print the plan and exit without changing anything
+  --dry-run         walk the whole install (questions, plan, every step)
+                    showing what would run; nothing is changed, no sudo
   --no-deps         skip packages and services (sources + binaries only)
   --no-aur          Arch: no AUR helper; the icon font is installed per user
   --reboot          reboot at the end without asking (needs a terminal)
@@ -589,6 +696,10 @@ ask() {
 # === sudo ===
 need_sudo() {
   [[ "$SUDO_OK" == 1 ]] && return 0
+  if [[ "$DRY_RUN" == 1 ]]; then
+    try_sudo
+    return 0
+  fi
   has_cmd sudo || die "sudo is not installed." "Install it as root (pacman -S sudo / dnf install sudo), or use --no-deps."
   [[ -n "$TTY" ]] || sudo -n true 2>/dev/null || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
   SUDO_FAILED=0
@@ -599,6 +710,12 @@ need_sudo() {
 # password is not asked for again.
 try_sudo() {
   [[ "$SUDO_OK" == 1 ]] && return 0
+  if [[ "$DRY_RUN" == 1 ]]; then
+    has_cmd sudo || warn "sudo is not installed; the real install needs it here."
+    info "sudo would ask for your password here (a dry run never asks)."
+    SUDO_OK=1
+    return 0
+  fi
   [[ "$SUDO_FAILED" == 0 ]] && has_cmd sudo || return 1
   if ! sudo -n true 2>/dev/null; then
     if [[ -z "$TTY" ]]; then
@@ -962,7 +1079,11 @@ show_plan() {
   ui_box_kv "Later" "apps, fonts and the rest from the setup wizard on the first login"
   [[ "$GPU" == *NVIDIA* ]] && ui_box_kv "Note" "NVIDIA: Wayland compositors need the proprietary driver set up (nvidia-open + kernel modeset)" "$C_YELLOW"
   ui_box_row ""
-  ui_box_kv "Log" "$C_DIM$(tilde "$LOG_FILE")$C_OFF"
+  if [[ "$DRY_RUN" == 1 ]]; then
+    ui_box_kv "Dry run" "every step is shown, nothing runs; no log is written" "$C_YELLOW"
+  else
+    ui_box_kv "Log" "$C_DIM$(tilde "$LOG_FILE")$C_OFF"
+  fi
   ui_box_bottom
   echo >&2
 }
@@ -1073,12 +1194,17 @@ clone_repo() {
 
 sync_repo() {
   if [[ ! -e "$SRC_DIR" ]]; then
-    mkdir -p "$(dirname "$SRC_DIR")"
+    would mkdir -p "$(dirname "$SRC_DIR")"
     run "Cloning the sources" "Check the URL and your connection." retry clone_repo
     return
   fi
   [[ -d "$SRC_DIR/.git" || -f "$SRC_DIR/.git" ]] || die "$SRC_DIR exists but is not a git checkout." "Move it away or pass --dir."
   run "Fetching updates" "Check your connection." git -C "$SRC_DIR" fetch --quiet origin ${BRANCH:+"$BRANCH"}
+  if [[ "$DRY_RUN" == 1 ]]; then
+    [[ -n "$BRANCH" ]] && dry_line git -C "$SRC_DIR" checkout -q "$BRANCH"
+    dry_note run "git -C $(printf '%q' "$SRC_DIR") merge --ff-only origin/<branch> (kept as it is with local changes)"
+    return
+  fi
   if [[ -n "$BRANCH" && "$(git -C "$SRC_DIR" rev-parse --abbrev-ref HEAD)" != "$BRANCH" ]]; then
     git -C "$SRC_DIR" checkout -q "$BRANCH" 2>/dev/null || git -C "$SRC_DIR" checkout -q -b "$BRANCH" --track "origin/$BRANCH" ||
       die "Could not switch $SRC_DIR to $BRANCH."
@@ -1112,7 +1238,7 @@ build_backend() {
     return
   fi
   run "Building $APP_ID and $DAEMON_ID ($(go version | awk '{print $3}'))" "Report the build error above as an issue." make -C "$SRC_DIR" build
-  if [[ -d "$SRC_DIR/backend/cmd/$DAEMON_ID" && ! -x "$SRC_DIR/$DAEMON_ID" ]]; then
+  if [[ "$DRY_RUN" == 0 && -d "$SRC_DIR/backend/cmd/$DAEMON_ID" && ! -x "$SRC_DIR/$DAEMON_ID" ]]; then
     run "Building $DAEMON_ID" "" bash -c "cd '$SRC_DIR/backend' && go build -o '../$DAEMON_ID' './cmd/$DAEMON_ID'"
   fi
 }
@@ -1148,31 +1274,35 @@ installed_bins() {
 }
 
 install_binaries() {
-  local b built target bins=()
-  mapfile -t bins < <(installed_bins)
+  local b built target bins=("$APP_ID" "$DAEMON_ID")
+  # A dry run built nothing: it shows the steps for both binaries.
+  [[ "$DRY_RUN" == 1 ]] || mapfile -t bins < <(installed_bins)
   [[ ${#bins[@]} -gt 0 ]] || die "The build produced no binaries in $SRC_DIR."
-  mkdir -p "$BIN_DIR" 2>/dev/null || true
+  if [[ "$DRY_RUN" == 0 ]]; then
+    mkdir -p "$BIN_DIR" 2>/dev/null || true
+  elif [[ ! -d "$BIN_DIR" ]]; then
+    dry_line mkdir -p "$BIN_DIR"
+  fi
   for b in "${bins[@]}"; do
     built="$SRC_DIR/$b" target="$BIN_DIR/$b"
     if [[ -e "$target" && "$(readlink -f "$target")" == "$(readlink -f "$built")" ]]; then
       continue
-    elif [[ -w "$BIN_DIR" ]]; then
-      install -m 755 "$built" "$target.new" && mv -f "$target.new" "$target"
+    elif [[ -w "$BIN_DIR" || ("$DRY_RUN" == 1 && ! -e "$BIN_DIR") ]]; then
+      would install -m 755 "$built" "$target.new" && would mv -f "$target.new" "$target"
     else
       need_sudo
-      sudo install -D -m 755 "$built" "$target"
+      would sudo install -D -m 755 "$built" "$target"
     fi
   done
   ok "Installed ${bins[*]} to $BIN_DIR"
   # Tell the binary where its QML sources are (see backend/pkg/paths).
-  mkdir -p "$DATA_DIR"
-  printf '%s\n' "$SRC_DIR" >"$DATA_DIR/shell_repo"
+  write_file "$DATA_DIR/shell_repo" "$SRC_DIR"$'\n'
   if [[ "$LINK_BINS" == 1 ]]; then
     need_sudo
-    for b in "${bins[@]}"; do sudo ln -sf "$BIN_DIR/$b" "$SYS_BIN/$b"; done
+    for b in "${bins[@]}"; do would sudo ln -sf "$BIN_DIR/$b" "$SYS_BIN/$b"; done
     ok "Linked them into $SYS_BIN (the compositor's autostart uses the session PATH)"
   fi
-  "$BIN_DIR/$APP_ID" version >>"$LOG_FILE" 2>&1 || die "The installed $APP_ID does not run." "See $LOG_FILE"
+  logged "$BIN_DIR/$APP_ID" version || die "The installed $APP_ID does not run." "See $LOG_FILE"
 }
 
 # The setup wizard installs apps through pkexec and $SYS_HELPER: a
@@ -1191,7 +1321,7 @@ helper_sudo() {
 
 install_sys_helper() {
   local bin="$BIN_DIR/$APP_ID" fix
-  [[ -x "$bin" ]] || return 0
+  [[ -x "$bin" || "$DRY_RUN" == 1 ]] || return 0
   helper_stale || return 0
   fix="sudo install -D -o root -g root -m 0755 $bin $SYS_HELPER"
   if ! try_sudo; then
@@ -1218,15 +1348,15 @@ old_daemon_paths() {
 }
 
 remove_old_daemon() {
-  [[ -x "$BIN_DIR/$DAEMON_ID" ]] || return 0
+  [[ -x "$BIN_DIR/$DAEMON_ID" || "$DRY_RUN" == 1 ]] || return 0
   local p
   while read -r p; do
     [[ -n "$p" ]] || continue
     if [[ -w "$(dirname "$p")" ]]; then
-      rm -f "$p"
+      would rm -f "$p"
     else
       need_sudo
-      sudo rm -f "$p"
+      would sudo rm -f "$p"
     fi
     ok "Removed the old $OLD_DAEMON ($p); $DAEMON_ID replaces it"
   done < <(old_daemon_paths)
@@ -1242,8 +1372,7 @@ legacy_hypr_block() {
 compositor_setup() {
   local name
   name="$(comp_name "$COMPOSITOR")"
-  mkdir -p "$DATA_DIR"
-  printf '%s\n' "$COMPOSITOR" >"$DATA_DIR/compositor"
+  write_file "$DATA_DIR/compositor" "$COMPOSITOR"$'\n'
   [[ "$COMP_CONFIG" == 1 ]] || return 0
   # A config that still loads the legacy shell is switched by the binary's
   # first start, once the new generated config exists (backend/pkg/migrate).
@@ -1252,7 +1381,7 @@ compositor_setup() {
     LEGACY_PENDING=1
     return 0
   fi
-  "$BIN_DIR/$APP_ID" install "$COMPOSITOR" >>"$LOG_FILE" 2>&1 || die "'$APP_ID install $COMPOSITOR' failed." "See $LOG_FILE"
+  logged "$BIN_DIR/$APP_ID" install "$COMPOSITOR" || die "'$APP_ID install $COMPOSITOR' failed." "See $LOG_FILE"
   if [[ "$COMPOSITOR" == hyprland ]]; then
     hyprland_bootstrap
     run_optional "polkit autostart" "Polkit agent autostart" "Start a polkit agent from your Hyprland config yourself." polkit_autostart
@@ -1272,8 +1401,9 @@ exclusive_setup() {
     warn "--exclusive is for Hyprland only; skipped for $(comp_name "$COMPOSITOR")."
     return 0
   fi
-  local help
-  help="$("$BIN_DIR/$APP_ID" install --help 2>&1 || true)"
+  local help=exclusive
+  # A dry run has no new binary to ask; the one it would build knows it.
+  [[ "$DRY_RUN" == 1 ]] || help="$("$BIN_DIR/$APP_ID" install --help 2>&1 || true)"
   if [[ "$help" != *exclusive* ]]; then
     warn "This $APP_ID build cannot manage the whole Hyprland config yet; --exclusive skipped."
     return 0
@@ -1291,10 +1421,15 @@ hypr_entry() {
 # on its first start. Until then a stub that only starts the shell (absolute
 # path) keeps the first login error-free and brings the shell up.
 hyprland_bootstrap() {
-  local bin="$BIN_DIR/$APP_ID" note="Bootstrap written by the $DISPLAY_NAME installer; replaced on the first start."
-  mkdir -p "$DATA_DIR"
-  [[ -e "$DATA_DIR/hyprland.lua" ]] || printf -- '-- %s\nhl.on("hyprland.start", function()\n    hl.exec_cmd("%s")\nend)\n' "$note" "$bin" >"$DATA_DIR/hyprland.lua"
-  [[ -e "$DATA_DIR/hyprland.conf" ]] || printf '# %s\nexec-once = %s\n' "$note" "$bin" >"$DATA_DIR/hyprland.conf"
+  local bin="$BIN_DIR/$APP_ID" note="Bootstrap written by the $DISPLAY_NAME installer; replaced on the first start." text
+  if [[ ! -e "$DATA_DIR/hyprland.lua" ]]; then
+    printf -v text -- '-- %s\nhl.on("hyprland.start", function()\n    hl.exec_cmd("%s")\nend)\n' "$note" "$bin"
+    write_file "$DATA_DIR/hyprland.lua" "$text"
+  fi
+  if [[ ! -e "$DATA_DIR/hyprland.conf" ]]; then
+    printf -v text '# %s\nexec-once = %s\n' "$note" "$bin"
+    write_file "$DATA_DIR/hyprland.conf" "$text"
+  fi
   return 0
 }
 
@@ -1362,7 +1497,8 @@ optional_features() {
     run_optional "voice" "Voice input (building whisper.cpp, downloading the model)" "Retry later: $scripts/voice_setup.sh ${voice[*]}" bash "$scripts/voice_setup.sh" "${voice[@]}"
   fi
   if [[ "$WITH_SDDM" == 1 ]]; then
-    if has_cmd sddm; then
+    # A dry run installed no packages; the real one would have added sddm.
+    if has_cmd sddm || [[ "$DRY_RUN" == 1 ]]; then
       need_sudo
       run_optional "sddm theme" "SDDM theme" "Retry later: sudo $scripts/install-sddm-theme.sh \$USER" sudo bash "$scripts/install-sddm-theme.sh" "$(id -un)"
     else
@@ -1383,6 +1519,10 @@ run_doctor() {
     IFS=,
     echo "${features[*]}"
   )")
+  if [[ "$DRY_RUN" == 1 ]]; then
+    dry_line "$BIN_DIR/$APP_ID" doctor "${args[@]}"
+    return 0
+  fi
   "$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1 | sed 's/^/  /' >&2 || true
 }
 
@@ -1390,14 +1530,15 @@ run_doctor() {
 done_header() {
   local ver i rows flower right=() name line art=("${ART_FLOWER[@]}")
   ver="$(head -n1 "$SRC_DIR/version" 2>/dev/null || true)"
+  line="$DISPLAY_NAME ${ver:+$ver }is installed"
+  [[ "$DRY_RUN" == 1 ]] && line="$DISPLAY_NAME ${ver:+$ver }would be installed"
   echo >&2
   if [[ "$UI_UTF8" == 0 ]]; then
-    printf '  %s%s %s %s%s is installed\n\n' "$C_PINK$C_BOLD" "$G_STEP" "$DISPLAY_NAME" "$ver" "$C_OFF" >&2
+    printf '  %s%s %s%s\n\n' "$C_PINK$C_BOLD" "$G_STEP" "$line" "$C_OFF" >&2
     return
   fi
   ((UI_COLS < 80)) && art=("${ART_FLOWER_SMALL[@]}")
   rows=${#art[@]}
-  line="$DISPLAY_NAME ${ver:+$ver }is installed"
   ui_paint "$DISPLAY_NAME" 0 0 "${#DISPLAY_NAME}" 1 && name="$C_BOLD$UI_OUT"
   right[rows / 2 - 2]="$name ${C_BOLD}${line#"$DISPLAY_NAME "}$C_OFF"
   art_brush "${#line}" && right[rows / 2 - 1]="$UI_OUT"
@@ -1466,7 +1607,7 @@ next_steps() {
   command_row "$APP_ID goodbye" "uninstall"
   ui_box_head "LATER"
   command_row "apps, voice, more" "the setup wizard ($APP_ID onboarding)"
-  command_row "install log" "$(tilde "$LOG_FILE")"
+  [[ "$DRY_RUN" == 1 ]] || command_row "install log" "$(tilde "$LOG_FILE")"
   ui_box_row ""
   ui_box_bottom
   echo >&2
@@ -1485,13 +1626,14 @@ offer_reboot() {
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
   info "Rebooting..."
-  systemctl reboot || warn "Could not reboot; reboot yourself to start $DISPLAY_NAME."
+  would systemctl reboot || warn "Could not reboot; reboot yourself to start $DISPLAY_NAME."
 }
 
 finish() {
   run_doctor
   next_steps
   offer_reboot
+  dry_end
 }
 
 # === NixOS ===
@@ -1511,10 +1653,6 @@ nixos_flow() {
     echo >&2
   }
   show_nixos_plan
-  [[ "$DRY_RUN" == 1 ]] && {
-    info "Dry run: nothing was changed."
-    return
-  }
   confirm_plan
   local name
   # The entry name comes from the flake URL; find it by its store path.
@@ -1526,17 +1664,21 @@ nixos_flow() {
     run "Adding $FLAKE_URI to your nix profile" "" bash -c "nix profile add '$FLAKE_URI' --impure || nix profile install '$FLAKE_URI' --impure"
   fi
   printf '\n  Next: %s install hyprland, then log into Hyprland (programs.hyprland.enable = true).\n\n' "$APP_ID" >&2
+  dry_end
 }
 
 main() {
   parse_args "$@"
   [[ "$EUID" -eq 0 ]] && die "Run this as your user, not root." "It uses sudo for the steps that need it."
-  mkdir -p "$LOG_DIR"
-  printf '# %s installer, %s\n' "$DISPLAY_NAME" "$(date)" >"$LOG_FILE"
+  if [[ "$DRY_RUN" == 0 ]]; then
+    mkdir -p "$LOG_DIR"
+    printf '# %s installer, %s\n' "$DISPLAY_NAME" "$(date)" >"$LOG_FILE"
+  fi
   detect_tty
   detect_system
 
   if [[ "$UPDATE_ONLY" == 1 ]]; then
+    [[ "$DRY_RUN" == 1 ]] && dry_banner "an update walk-through: commands are shown, nothing runs"
     step "Updating $DISPLAY_NAME"
     LINK_BINS=0
     [[ "$BIN_DIR" != "$SYS_BIN" && -e "$SYS_BIN/$APP_ID" && "$(readlink -f "$SYS_BIN/$APP_ID")" != "$(readlink -f "$BIN_DIR/$APP_ID")" ]] && LINK_BINS=1
@@ -1547,10 +1689,12 @@ main() {
     install_sys_helper
     remove_old_daemon
     ok "Updated. Run '$APP_ID reload' to restart the shell."
+    dry_end
     return
   fi
 
   banner
+  [[ "$DRY_RUN" == 1 ]] && dry_banner "a walk-through: each step shows what it would run; nothing is changed"
   if [[ "$DISTRO" == nixos ]]; then
     nixos_flow
     return
@@ -1564,10 +1708,6 @@ main() {
   [[ "$INSTALL_DEPS" == 1 ]] && load_deps
   make_plan
   show_plan
-  if [[ "$DRY_RUN" == 1 ]]; then
-    info "Dry run: nothing was changed."
-    return
-  fi
   confirm_plan
 
   if [[ "$INSTALL_DEPS" == 1 ]]; then
