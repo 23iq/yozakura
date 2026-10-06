@@ -12689,6 +12689,11 @@
       "description": "Layouts, switching, key repeat and the bar indicator."
     },
     {
+      "id": "extras",
+      "title": "Apps & Extras",
+      "description": "Browsers, chat, games, AI agents and tools, installed in one click."
+    },
+    {
       "id": "about",
       "title": "About",
       "description": "Version and credits."
@@ -12732,6 +12737,7 @@
         "timers",
         "routines",
         "system",
+        "extras",
         "updates"
       ]
     },

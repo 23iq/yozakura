@@ -171,6 +171,7 @@ MIRROR = [
     "modules/services/ai/Cron.js",
     "modules/services/ai/Automations.js",
     "modules/routines",
+    "modules/extras",
     "modules/theme/Styling.qml",
     "modules/theme/Glass.qml",
     "modules/theme/GlassModel.js",
@@ -508,6 +509,34 @@ QtObject {
     function scanConflicts() {}
     function moveConflicts() {}
 }"""
+# Apps & Extras page (modules/extras): idle stand-in; tests/lib/extras_env.py swaps in the real one.
+EXTRAS_STUB = """pragma Singleton
+QtObject {
+    property var catalog: null
+    property var platform: ({})
+    property var status: ({})
+    property var jobs: ({})
+    property var progress: ({})
+    property bool loading: false
+    property bool offline: false
+    property var confirm: null
+    property var unavailable: null
+    property string error: ""
+    property var activeJobs: []
+    property bool busy: false
+    signal queued(var ids)
+    function entry(id) { return null }
+    function displayName(id) { return id }
+    function load() {}
+    function refresh() {}
+    function install(ids, confirmMultilib) {}
+    function acceptConfirm() {}
+    function dismissConfirm() {}
+    function dismissUnavailable() {}
+    function cancel(job) {}
+    function retryWithUpgrade(job) {}
+    function fetchLog(job, cb) { cb("", "") }
+}"""
 # Exclusive mode card (modules/settings/system): idle stand-in; tests/lib/exclusive_env.py swaps in the real one.
 EXCLUSIVE_STUB = """pragma Singleton
 QtObject {
@@ -564,7 +593,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -587,7 +616,8 @@ class SettingsEnv:
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
-                  "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system"]:
+                  "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
+                  "modules/extras", "modules/settings/extras"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

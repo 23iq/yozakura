@@ -47,7 +47,7 @@ var groups = [
     {
         "id": "system",
         "title": "prefs.group.system",
-        "categories": ["displays", "keyboard", "windows", "terminal", "input", "voice", "timers", "routines", "system", "updates"]
+        "categories": ["displays", "keyboard", "windows", "terminal", "input", "voice", "timers", "routines", "system", "extras", "updates"]
     },
     {
         "id": "connect",
@@ -155,6 +155,14 @@ var categories = [
         "description": "prefs.cat.keyboard.desc",
         "keywords": "keyboard layout layouts language russian english variant switch alt shift caps lock escape ctrl compose xkb options key repeat rate delay indicator type typing",
         "page": "Keyboard"
+    },
+    {
+        "id": "extras",
+        "icon": "packageBox",
+        "title": "prefs.cat.extras",
+        "description": "prefs.cat.extras.desc",
+        "keywords": "apps extras install software packages catalog browsers chat games steam discord spotify media ai agents claude codex ollama cuda voice flatpak aur terminal fish starship",
+        "page": "Extras"
     },
     {
         "id": "about",
