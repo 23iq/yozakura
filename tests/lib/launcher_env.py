@@ -148,7 +148,8 @@ class LauncherEnv(SettingsEnv):
             shutil.copy(REPO / rel, qs / rel)
         self._qmldir(qs / "modules/theme", "qs.modules.theme",
                      only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion"])
-        for rel in ("assets/commands/commands.json", "assets/launcher/currency-fallback.json"):
+        for rel in ("assets/commands/commands.json", "assets/launcher/currency-fallback.json",
+                    "modules/services/timers/TimerFormat.js", "modules/services/timers/QuickInput.js"):
             (qs / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(REPO / rel, qs / rel)
         # Prefix tabs: light stand-ins (the real tabs need the whole dashboard).
