@@ -29,7 +29,7 @@ Singleton {
     readonly property bool fishInstalled: !!(root.status && root.status.fishInstalled)
     // The kitty font when installed, else the shell mono font or a Nerd
     // Font that is (the preview must show the glyphs), at the kitty size.
-    readonly property string fontFamily: TermModel.pickFont([Config.apps && Config.apps.kitty ? Config.apps.kitty.font : "", Config.theme.monoFont, "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font", "Symbols Nerd Font Mono"], root._families)
+    readonly property string fontFamily: TermModel.pickFont([Config.apps && Config.apps.kitty ? Config.apps.kitty.font : "", Config.theme.monoFont, "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font"], root._families)
     readonly property real fontPixelSize: Math.round(((Config.apps && Config.apps.kitty ? Number(Config.apps.kitty.fontSize) : 11) || 11) * 4 / 3)
     readonly property var _families: Qt.fontFamilies()
 
