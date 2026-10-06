@@ -41,7 +41,7 @@ Primary system panel supporting horizontal (top/bottom) and vertical (left/right
 | **Adding widgets** | `modules/<Name>.qml` + `BarModuleRegistry.js` | file module on `BarModuleBase`; place it via `bar.panels[].groups` |
 | **Adding a panel style** | `panels/styles/<Name>Panel.qml` + `panels/PanelStyles.js` | implement `PanelStyleBase` |
 | **Integrated dock** | `IntegratedDock.qml` | App switching within bar |
-| **Clock/Weather** | `clock/Clock.qml` | Complex: 672 lines, multiple display modes |
+| **Clock** | `clock/Clock.qml` | Faces (`ClockFaces.js` + `faces/`), Pomodoro indicators (`PomodoroStyles.js` + `indicators/`), bento `ClockPanel` popup |
 
 ## CONVENTIONS
 - **Adaptive styling**: Widgets use `startRadius`/`endRadius` for "pill" continuity based on group position.

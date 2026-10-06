@@ -138,6 +138,39 @@ var category = {
                     "label": "prefs.bar.clock_12h",
                     "description": "prefs.bar.clock_12h.desc",
                     "keywords": "clock 12h am pm 24h time format"
+                },
+                {
+                    "key": "bar.moduleOptions.clock.face",
+                    "type": "selector",
+                    "label": "prefs.bar.clock_face",
+                    "description": "prefs.bar.clock_face.desc",
+                    "keywords": "clock face style digital stacked dot matrix led kanji japanese",
+                    "options": [
+                        { "value": "digital", "label": "prefs.bar.clock_face.digital" },
+                        { "value": "stacked", "label": "prefs.bar.clock_face.stacked" },
+                        { "value": "dotMatrix", "label": "prefs.bar.clock_face.dotMatrix" },
+                        { "value": "kanji", "label": "prefs.bar.clock_face.kanji" }
+                    ]
+                },
+                {
+                    "key": "bar.moduleOptions.clock.pomodoroStyle",
+                    "type": "selector",
+                    "label": "prefs.bar.pomodoro_style",
+                    "description": "prefs.bar.pomodoro_style.desc",
+                    "keywords": "pomodoro focus timer ring underline countdown island progress clock",
+                    "options": [
+                        { "value": "ring", "label": "prefs.bar.pomodoro_style.ring" },
+                        { "value": "underline", "label": "prefs.bar.pomodoro_style.underline" },
+                        { "value": "countdown", "label": "prefs.bar.pomodoro_style.countdown" },
+                        { "value": "island", "label": "prefs.bar.pomodoro_style.island" }
+                    ]
+                },
+                {
+                    "key": "bar.moduleOptions.clock.showWeather",
+                    "type": "toggle",
+                    "label": "prefs.bar.clock_weather",
+                    "description": "prefs.bar.clock_weather.desc",
+                    "keywords": "clock weather symbol icon day name"
                 }
             ]
         },

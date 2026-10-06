@@ -24,7 +24,7 @@ const at = (cells, id) => plain(cells.find(c => c.widget === id));
 // ------------------------------------------------------------ registry
 
 test('every registry widget is complete, host-agnostic and its file exists', () => {
-    assert.deepEqual(plain(R.ids()), ['player', 'quickControls', 'calendar', 'specials', 'notifications', 'levels', 'weather', 'metricsSummary']);
+    assert.deepEqual(plain(R.ids()), ['player', 'quickControls', 'calendar', 'specials', 'notifications', 'levels', 'weather', 'metricsSummary', 'pomodoro', 'worldClocks', 'agenda']);
     for (const w of R.widgets) {
         assert.ok(w.labelKey && w.icon && w.url, w.id);
         assert.ok(fs.existsSync(path.join(dir, w.url)), w.url);

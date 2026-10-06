@@ -89,7 +89,12 @@ JsonAdapter {
                 "showDescription": true
             },
             "clock": {
-                "showWeather": true
+                "showWeather": true,
+                "face": "digital",
+                "pomodoroStyle": "ring",
+                "panel": {
+                    "cells": []
+                }
             },
             "worldClocks": {
                 "zones": [

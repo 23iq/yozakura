@@ -1,23 +1,28 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Io
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
-import "../../services/timers/TimerFormat.js" as TimerFormat
+import "../../../../services/timers/TimerFormat.js" as TimerFormat
 
-// Pomodoro card of the clock popup: a view over the backend Pomodoro
-// (timers.pomodoro in svc/timers, one source of truth with the notch, the
-// CLI and the AI). Idle: work/break lengths (system.pomodoro.workTime /
-// restTime, -/+ 1 min) and Start; running: time left of the phase, pause,
-// -1/+1 min, reset, cancel. The backend fires the phases and sends the
-// notifications; TimersService pauses at each phase when autoStart is off.
+// Pomodoro bento widget (bar clock panel, dashboard): a view over the
+// backend Pomodoro (timers.pomodoro in svc/timers, one source of truth with
+// the notch, the CLI and the AI). Idle: work/break lengths
+// (system.pomodoro.workTime / restTime, -/+ 1 min) and Start; running: time
+// left of the phase, pause, -1/+1 min, reset, cancel. A narrow tile stacks
+// the lengths and drops the -1/+1 buttons. The IPC target and the Spotify
+// sync live in modules/bar/clock/PomodoroSync.qml (not tied to a tile).
 Item {
     id: root
-    implicitHeight: content.implicitHeight + 24
-    width: 300
+
+    property real cellW: Metrics.bentoCell
+    property real cellH: Metrics.bentoCell
+    property bool compact: false
+    readonly property bool narrow: root.width < root.cellW * 1.5
+
+    implicitHeight: content.implicitHeight + 2 * Metrics.spacing
 
     readonly property var pomo: TimersService.pomodoro
     readonly property bool active: root.pomo !== null
@@ -26,33 +31,6 @@ Item {
     readonly property bool workPhase: !root.active || (root.pomo.pomodoro && root.pomo.pomodoro.phase === "work")
     readonly property var cfg: Config.system.pomodoro
 
-    signal requestPopupOpen
-
-    IpcHandler {
-        target: "pomodoro"
-        function check() {
-            root.requestPopupOpen();
-        }
-        function stop() {
-            if (root.active)
-                TimersService.cancel(root.pomo.id);
-        }
-    }
-
-    // system.pomodoro.syncSpotify: Spotify plays during work, pauses otherwise
-    readonly property var spotifyPlayer: MprisController.filteredPlayers.find(p => p.dbusName.toLowerCase().includes("spotify")) || null
-    readonly property bool spotifyShouldPlay: root.running && root.workPhase
-    onSpotifyShouldPlayChanged: root.updateSpotify()
-    function updateSpotify() {
-        const s = root.spotifyPlayer;
-        if (!root.cfg.syncSpotify || !s || !root.active)
-            return;
-        if (root.spotifyShouldPlay && !s.isPlaying && s.canPlay)
-            s.play();
-        else if (!root.spotifyShouldPlay && s.isPlaying && s.canPause)
-            s.pause();
-    }
-
     function adjust(key, delta) {
         root.cfg[key] = Math.max(60, Math.min(key === "workTime" ? 14400 : 7200, root.cfg[key] + delta));
     }
@@ -60,8 +38,8 @@ Item {
     ColumnLayout {
         id: content
         anchors.fill: parent
-        anchors.margins: 12
-        spacing: 12
+        anchors.margins: Metrics.spacing
+        spacing: Metrics.spacing
 
         RowLayout {
             Layout.fillWidth: true
@@ -96,7 +74,10 @@ Item {
             Layout.alignment: Qt.AlignHCenter
             text: root.ringing ? I18n.t("activities.pomodoro_done") : TimerFormat.clock(root.active ? root.pomo.leftMs : root.cfg.workTime * 1000)
             font.family: Config.theme.monoFont
-            font.pixelSize: Styling.fontSize(8)
+            font.features: {
+                "tnum": 1
+            }
+            font.pixelSize: Styling.fontSize(root.narrow ? 4 : 8)
             font.weight: Font.Bold
             color: root.ringing ? Colors.error : Colors.overBackground
         }
@@ -111,14 +92,23 @@ Item {
                 height: parent.height
                 radius: parent.radius
                 width: parent.width * (root.active ? (root.pomo.progress ?? 0) : 1)
+                Behavior on width {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Motion.morph.duration
+                        easing.type: Motion.morph.easing
+                    }
+                }
             }
         }
 
-        // Idle: lengths
-        RowLayout {
+        // Idle: lengths (stacked on a narrow tile)
+        GridLayout {
             visible: !root.active
             Layout.fillWidth: true
-            spacing: 8
+            columns: root.narrow ? 1 : 2
+            rowSpacing: Metrics.spacing / 2
+            columnSpacing: Metrics.spacing
             LengthStepper {
                 Layout.fillWidth: true
                 label: I18n.t("pomodoro.work_session")
@@ -136,10 +126,10 @@ Item {
         // Running: adjust, main button, reset/cancel
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Metrics.spacing
 
             PomoButton {
-                visible: root.active && !root.ringing
+                visible: root.active && !root.ringing && !root.narrow
                 text: I18n.t("pomodoro.minus_1m")
                 onClicked: TimersService.add(root.pomo.id, "-1m")
             }
@@ -158,7 +148,7 @@ Item {
                 }
             }
             PomoButton {
-                visible: root.active && !root.ringing
+                visible: root.active && !root.ringing && !root.narrow
                 text: I18n.t("pomodoro.plus_1m")
                 onClicked: TimersService.add(root.pomo.id, "+1m")
             }
@@ -169,9 +159,12 @@ Item {
             }
         }
 
-        RowLayout {
+        GridLayout {
+            visible: !root.compact
             Layout.alignment: Qt.AlignHCenter
-            spacing: 20
+            columns: root.narrow ? 1 : 2
+            columnSpacing: Metrics.spacing * 2
+            rowSpacing: Metrics.spacing / 2
             PomoSwitch {
                 text: I18n.t("common.auto")
                 checked: root.cfg.autoStart
@@ -180,10 +173,7 @@ Item {
             PomoSwitch {
                 text: I18n.t("pomodoro.sync_spotify")
                 checked: root.cfg.syncSpotify
-                onToggled: {
-                    root.cfg.syncSpotify = !root.cfg.syncSpotify;
-                    root.updateSpotify();
-                }
+                onToggled: root.cfg.syncSpotify = !root.cfg.syncSpotify
             }
         }
     }
@@ -281,8 +271,8 @@ Item {
                     Behavior on x {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
-                            duration: 200
-                            easing.type: Easing.OutQuart
+                            duration: Motion.morph.duration
+                            easing.type: Motion.morph.easing
                         }
                     }
                 }
