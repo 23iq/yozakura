@@ -172,6 +172,8 @@ check(not visible(find("engineNotice")), "the cue goes away when the install end
 check(len(js("promptLines", find("terminalPreview"))) == 2, "two-line preset: two prompt lines")
 
 # no Nerd Font on the system: notice with install and "Use Plain"
+ev("TerminalLookService._families = ['Noto Sans', 'JetBrainsMono Nerd Font']")  # not the host's fonts
+QTest.qWait(20)
 check(not visible(find("nerdNotice")), "a Nerd Font is installed: no font notice")
 ev("TerminalLookService._families = ['Noto Sans', 'DejaVu Sans Mono']")
 QTest.qWait(20)
