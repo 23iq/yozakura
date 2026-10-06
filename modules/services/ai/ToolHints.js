@@ -10,7 +10,7 @@ var HINTS = [
     { tools: ["timer_start"], text: "Timers, reminders, the stopwatch and focus mode: timer_start, reminder_add, stopwatch_control, focus_start, focus_status." },
     { tools: ["binds_search"], text: "Keybinds: find an action with binds_search, check a combo with binds_check, propose free combos with binds_suggest; call binds_set only after the user agrees (they confirm it). Every edit returns an undo." },
     { tools: ["routine_save"], text: "Routines: routine_save bundles several steps (bind actions, tools, delays) into one command — use it when the user says \"save this as a routine\" or wants one key to do several things; bind it with binds_set (action utilities.routine) and run it with routine_run." },
-    { tools: ["notes_search"], text: "Notes: notes_search, notes_read, notes_create, notes_append (the shell's Notes tab)." },
+    { tools: ["notes_search"], text: "Notes: notes_search, notes_read, notes_create, notes_append, notes_delete (asks first; undo restores) (the shell's Notes tab)." },
     { tools: ["apps_find"], text: "Apps: apps_find, app_launch (optionally on a workspace), app_close (ask first)." },
     { tools: ["system_info"], text: "Status: system_info (battery, CPU, RAM, disks, temperatures), network_status, bluetooth_status; settings: wifi_toggle, wifi_connect, bluetooth_connect, audio_output_set, brightness_set, nightlight_set, caffeine_set." },
     { tools: ["screen_look"], text: "screen_look shows you the screen when the user asks about what is on it." }

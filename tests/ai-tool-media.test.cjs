@@ -59,7 +59,7 @@ test('system prompt hints name the tool families the session has', () => {
 });
 
 test('keybind writes, closing apps and deleting routines always ask', () => {
-    for (const name of ['binds_set', 'binds_remove', 'app_close', 'routine_delete']) {
+    for (const name of ['binds_set', 'binds_remove', 'app_close', 'routine_delete', 'notes_delete']) {
         const tool = { name, server: 'yozakura' };
         assert.equal(P.decide(tool, { autoApprove: ['read', 'write', 'mcp'], sessionRules: { ['yozakura/' + name]: true } }), 'ask', name);
         assert.equal(P.decide(tool, { yolo: true }), 'ask', name + ' even in yolo');

@@ -75,6 +75,7 @@ func Tools(d Deps) []mcp.ToolDef {
 	out = append(out, bindTools(d)...)
 	out = append(out, routineTools(d)...)
 	out = append(out, noteTools(d)...)
+	out = append(out, noteUndoTools(d)...)
 	out = append(out, appTools(d)...)
 	out = append(out, sysinfoTools(d)...)
 	out = append(out, connectionTools(d)...)
