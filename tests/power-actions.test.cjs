@@ -25,3 +25,23 @@ test('labels and icons are resolved', () => {
     assert.equal(built[0].icon, 'L');
     assert.equal(built.find((a) => a.id === 'hibernate').icon, '');
 });
+
+test('confirm actions carry their hold hint', () => {
+    assert.equal(built.find((a) => a.id === 'shutdown').hold, 'T:powermenu.hold.shutdown');
+    assert.equal(built.find((a) => a.id === 'lock').hold, '');
+});
+
+test('uptime reads as days, hours or minutes', () => {
+    assert.equal(P.formatUptime(42), '0m');
+    assert.equal(P.formatUptime(12 * 60 + 5), '12m');
+    assert.equal(P.formatUptime(2 * 3600 + 5 * 60), '2h 05m');
+    assert.equal(P.formatUptime(3 * 86400 + 4 * 3600 + 59), '3d 4h');
+    assert.equal(P.formatUptime('x'), '');
+});
+
+test('the caption joins uptime and user@host, leaving out what is unknown', () => {
+    assert.equal(P.caption('7505.31 28000.10\narch\n', 'lazy', 'up %1'), 'up 2h 05m · lazy@arch');
+    assert.equal(P.caption('7505.31 28000.10\n', 'lazy', 'up %1'), 'up 2h 05m');
+    assert.equal(P.caption('', 'lazy', 'up %1'), '');
+    assert.equal(P.caption('garbage\narch', '', 'up %1'), '');
+});

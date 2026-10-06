@@ -1,5 +1,5 @@
 import QtQuick
-import qs.modules.components
+import qs.modules.widgets.menus
 import qs.modules.widgets.tools
 
 // layout.tools.style "radial": the tools on a RadialMenu at the cursor,
@@ -20,6 +20,7 @@ FocusScope {
 
     ToolsModel {
         id: tools
+        objectName: "toolsModel"
         onDone: root.closeRequested()
     }
 
