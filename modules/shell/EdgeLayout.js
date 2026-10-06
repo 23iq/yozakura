@@ -173,7 +173,7 @@ function notchRect(e, size) {
     var lo = vertical ? "top" : "left";
     var hi = vertical ? "bottom" : "right";
     function reserved(edge) {
-        var r = 0;
+        var r = e.frame || 0;
         if (e.bar && e.bar.visible && e.bar.pos === edge)
             r += e.bar.size;
         if (e.dock && e.dock.visible && e.dock.pos === edge)
