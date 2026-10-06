@@ -290,6 +290,7 @@ Item {
 
                     variant: "bg"
                     glassSurface: "dock"
+                    anchorEdge: root.position
                     // enableShadow: true
                     enableBorder: false
 
@@ -403,6 +404,7 @@ Item {
                 anchors.fill: parent
                 variant: "bg"
                 glassSurface: "dock"
+                anchorEdge: root.position
                 // enableShadow: true
                 radius: Styling.radius(4)
                 enableBorder: !root.unifiedEffectActive

@@ -10,6 +10,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
+import qs.modules.dock
 
 Button {
     id: root
@@ -27,7 +28,6 @@ Button {
 
     readonly property bool showIndicators: !isSeparator && (Config.dock?.showRunningIndicators ?? true) && appIsRunning
     readonly property int instanceCount: (isSeparator || !appToplevel) ? 0 : appToplevel.toplevelCount
-    readonly property real indicatorDotSize: 4
 
     enabled: !isSeparator
     implicitWidth: isSeparator ? (isVertical ? iconSize : 2) : iconSize + 8
@@ -110,58 +110,10 @@ Button {
                     }
                 }
 
-                // Running indicators - horizontal (for horizontal bar)
-                Row {
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: -2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 2
-                    visible: root.showIndicators && !root.isVertical
-
-                    Repeater {
-                        model: Math.min(root.instanceCount, 3)
-                        delegate: Rectangle {
-                            required property int index
-                            width: root.instanceCount <= 3 ? 6 : root.indicatorDotSize
-                            height: root.indicatorDotSize
-                            radius: height / 2
-                            color: root.appIsActive ? Styling.srItem("overprimary") : Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.4)
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Running indicators - vertical (for vertical bar)
-                Column {
-                    anchors.left: parent.left
-                    anchors.leftMargin: -2
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    visible: root.showIndicators && root.isVertical
-
-                    Repeater {
-                        model: Math.min(root.instanceCount, 3)
-                        delegate: Rectangle {
-                            required property int index
-                            width: root.indicatorDotSize
-                            height: root.instanceCount <= 3 ? 6 : root.indicatorDotSize
-                            radius: width / 2
-                            color: root.appIsActive ? Styling.srItem("overprimary") : Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.4)
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                }
-                            }
-                        }
-                    }
+                DockIndicator {
+                    edge: root.isVertical ? "left" : "bottom"
+                    count: root.showIndicators ? root.instanceCount : 0
+                    focused: root.appIsActive
                 }
             }
         }

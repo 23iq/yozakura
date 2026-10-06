@@ -1,6 +1,9 @@
 .pragma library
 
-// Desktop widget types. Adding a widget = one QML file in types/ (root
+// Desktop widget types. A widget that also exists in the dashboard (calendar,
+// weather) is the shared bento widget: `shared` names its entry in
+// modules/widgets/dashboard/widgets/WidgetRegistry.js and there is one
+// implementation. A desktop-only widget is one QML file in types/ (root
 // extends DesktopWidget.qml) + one entry below (+ its labelKey/descKey and
 // option label translations).
 //
@@ -8,7 +11,8 @@
 //   id        config value (desktop.widgets[].type)
 //   labelKey  I18n key of the name; descKey: one-line description
 //   icon      Icons.* name
-//   file      QML file in types/
+//   file      QML file in types/ (desktop-only widgets)
+//   shared    id of the shared bento widget to load instead of `file`
 //   size      default size in px on a 1440p-tall screen ({w, h}); scaled
 //             to the actual screen when the widget is added
 //   minSize   smallest size in px (resizing stops there)
@@ -46,7 +50,7 @@ var types = [
         labelKey: "desktop.widgets.type.calendar",
         descKey: "desktop.widgets.type.calendar.desc",
         icon: "calendar",
-        file: "CalendarWidget.qml",
+        shared: "calendar",
         size: { w: 360, h: 360 },
         minSize: { w: 240, h: 240 },
         options: [
@@ -101,12 +105,10 @@ var types = [
         labelKey: "desktop.widgets.type.weather",
         descKey: "desktop.widgets.type.weather.desc",
         icon: "sun",
-        file: "WeatherWidget.qml",
+        shared: "weather",
         size: { w: 360, h: 192 },
         minSize: { w: 216, h: 120 },
-        options: [
-            { key: "forecast", type: "toggle", default: true, labelKey: "desktop.widgets.opt.forecast" }
-        ]
+        options: []
     }
 ];
 

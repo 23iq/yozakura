@@ -2,19 +2,22 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.services
 import qs.modules.theme
-import qs.modules.desktop.widgets
-import "../CalendarModel.js" as CalendarModel
+import "CalendarModel.js" as CalendarModel
 
 // Month view; with a calendar source (khal) also the next events, beside
-// the month on a wide widget or under it on a tall one.
-DesktopWidget {
+// the month on a wide widget or under it on a tall one (not when `compact`).
+// Host-agnostic (see HostWidget): the dashboard bento grid and the desktop
+// both place it. Scroll over it to browse months; click the title to return.
+HostWidget {
     id: root
 
     property date now: new Date()
+    property int monthShift: 0
+    readonly property date shown: new Date(now.getFullYear(), now.getMonth() + monthShift, 1)
     readonly property int firstDay: CalendarModel.firstDayOf(options.weekStart ?? "locale", Qt.locale().firstDayOfWeek)
-    readonly property var cells: CalendarModel.monthGrid(now, firstDay, now)
-    readonly property int rows: CalendarModel.rowsNeeded(now, firstDay)
-    readonly property bool showEvents: (options.showEvents ?? true) && events.available && !preview
+    readonly property var cells: CalendarModel.monthGrid(shown, firstDay, now)
+    readonly property int rows: CalendarModel.rowsNeeded(shown, firstDay)
+    readonly property bool showEvents: (options.showEvents ?? true) && !compact && events.available && !preview
     readonly property bool wide: width > height * 1.45
     readonly property real gap: Math.round(12 * k)
 
@@ -35,6 +38,11 @@ DesktopWidget {
         }
     }
 
+    WheelHandler {
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: event => root.monthShift += event.angleDelta.y > 0 ? -1 : 1
+    }
+
     Item {
         id: month
         x: root.pad
@@ -45,13 +53,18 @@ DesktopWidget {
         Text {
             id: title
             width: parent.width
-            text: root.now.toLocaleDateString(Qt.locale(), "MMMM yyyy")
+            text: root.shown.toLocaleDateString(Qt.locale(), "MMMM yyyy")
             elide: Text.ElideRight
             font.family: root.font
             font.pixelSize: root.px(1)
             font.weight: Font.DemiBold
             font.capitalization: Font.Capitalize
             color: root.ink
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.monthShift = 0
+            }
         }
 
         Grid {

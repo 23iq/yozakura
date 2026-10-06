@@ -216,6 +216,13 @@ MIRROR = [
     "modules/widgets/dashboard/wallpapers/WallpaperCoverage.js",
     "modules/widgets/defaultview/NotchVisualizer.qml",
     "modules/desktop",
+    # Bento widgets shared with the desktop (calendar, weather).
+    "modules/widgets/dashboard/widgets/HostWidget.qml",
+    "modules/widgets/dashboard/widgets/CalendarWidget.qml",
+    "modules/widgets/dashboard/widgets/CalendarEvents.qml",
+    "modules/widgets/dashboard/widgets/CalendarModel.js",
+    "modules/widgets/dashboard/widgets/WeatherWidget.qml",
+    "modules/widgets/dashboard/widgets/WidgetRegistry.js",
     # Lock screen style gallery: the real lock screen view and its styles.
     "modules/lockscreen",
     "modules/widgets/dashboard/wallpapers/palette.vert.qsb",
@@ -240,7 +247,7 @@ DESKTOP_STUBS = {
                        "property var gpuTempHistories: [[50, 52, 54, 53, 54]]; property var consumers: ({}); "
                        "function setConsumer(k, a) { consumers[k] = a } }",
     "WeatherService": "pragma Singleton\nQtObject { property bool dataAvailable: true; property bool isLoading: false; "
-                      "property bool hasFailed: false; property string weatherSymbol: '☀'; property real currentTemp: 18; "
+                      "property bool hasFailed: false; property bool debugMode: false; property real effectiveSunProgress: 0.5; property string effectiveWeatherDescription: 'Clear sky'; property var effectiveTimeBlend: ({day: 1, evening: 0, night: 0}); property string effectiveWeatherEffect: 'clear'; property real effectiveWeatherIntensity: 0; property string weatherSymbol: '☀'; property real currentTemp: 18; "
                       "property real maxTemp: 21; property real minTemp: 11; property string weatherDescription: 'Clear sky'; "
                       "property var forecast: [{dayName: 'Today', emoji: '☀', maxTemp: 21, minTemp: 11}, "
                       "{dayName: 'Tue', emoji: '⛅', maxTemp: 19, minTemp: 10}, {dayName: 'Wed', emoji: '🌧', maxTemp: 15, minTemp: 9}, "
@@ -646,6 +653,7 @@ class SettingsEnv:
         self.h.module("qs.modules.widgets.dashboard.controls", {
             "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120 }"})
         self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
+        self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets", only=["HostWidget"])
         self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
         self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")

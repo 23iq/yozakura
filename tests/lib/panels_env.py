@@ -33,14 +33,17 @@ import timers_stubs
 # Repo trees mirrored verbatim (every QML gets a qmldir in its directory)
 MIRROR_DIRS = [
     "modules/bar",
+    "modules/dock/indicators",
     "modules/components",
     "modules/corners",
     "modules/frame",
     "modules/widgets/dashboard/widgets",
 ]
 MIRROR_FILES = [
+    "modules/dock/DockIndicator.qml",
     "modules/theme/Styling.qml",
     "modules/theme/TypeRoles.js",
+    "modules/theme/VisualLanguage.js",
     "modules/theme/Icons.qml",
     "modules/theme/BarMetrics.qml",
     "modules/theme/Metrics.qml",

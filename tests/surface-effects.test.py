@@ -17,7 +17,8 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-env = SettingsEnv("surface-effects", wallpaper={"dir": "/walls", "paths": [], "current": ""})
+# Classic visual language: the variants drawn exactly as configured.
+env = SettingsEnv("surface-effects", overrides={"theme": {"language": "classic"}}, wallpaper={"dir": "/walls", "paths": [], "current": ""})
 h = env.h
 failures: list[str] = []
 

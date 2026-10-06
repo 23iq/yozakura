@@ -30,6 +30,7 @@ var PILL_STYLES = ["default", "squished"];
 var NOTCH_STYLES = ["attached", "island", "pill"];
 var ALIGNS = ["start", "center", "end"];
 var DOCK_THEMES = ["default", "floating", "integrated"];
+var DOCK_INDICATORS = ["dot", "line", "glow", "brush"];
 var EXPAND_ON = ["hover", "click"];
 var ACTIVITY_PRESENTATIONS = ["notch", "islands", "off"];
 var NO_MEDIA_DISPLAY = ["userHost", "compositor", "custom"];
