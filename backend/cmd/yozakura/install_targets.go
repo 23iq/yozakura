@@ -57,10 +57,10 @@ func runRemove(targets []string) {
 // Blocks written by the legacy app (same layout, legacy name and data dir)
 // are upgraded in place by upgradeLegacyBlock, so user overrides that follow
 // the block keep loading after it.
-func blockMarker(comment string) string { return comment + " " + brand.DisplayName }
+func blockMarker(comment string) string { return brand.ConfigBlockMarker(comment) }
 
 func overridesNote(comment, keyword string) string {
-	return fmt.Sprintf("%s Down here you can write or %s anything that you want to override from %s's settings.", comment, keyword, brand.DisplayName)
+	return brand.ConfigOverridesNote(comment, keyword)
 }
 
 func dataRel() string { return "/.local/share/" + brand.AppID + "/" }

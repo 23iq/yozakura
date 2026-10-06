@@ -1,0 +1,22 @@
+! model
+  pc86            Generic 86-key PC
+  pc101           Generic 101-key PC
+
+! layout
+  us              English (US)
+  ru              Russian
+  gb              English (UK)
+
+! variant
+  intl            gb: English (UK, intl., with dead keys)
+  intl            us: English (US, intl., with dead keys)
+  phonetic        ru: Russian (phonetic)
+  typo            ru: Russian (typewriter)
+  orphan          zz: Nowhere
+
+! option
+  grp                  Switching to another layout
+  grp:switch           Right Alt (while pressed)
+  grp:alt_shift_toggle Alt+Shift
+  caps                 Caps Lock behavior
+  caps:escape          Make Caps Lock an additional Esc

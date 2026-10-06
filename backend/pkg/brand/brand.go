@@ -106,6 +106,16 @@ func NormalizeAction(id string) string {
 	return id
 }
 
+// ConfigBlockMarker is the first line ("<comment> <Name>") of the block the
+// installer appends to a compositor config. It is the block's stable
+// identity for append detection, removal and the display conflict scan.
+func ConfigBlockMarker(comment string) string { return comment + " " + DisplayName }
+
+// ConfigOverridesNote is the last line of that block; user overrides follow.
+func ConfigOverridesNote(comment, keyword string) string {
+	return fmt.Sprintf("%s Down here you can write or %s anything that you want to override from %s's settings.", comment, keyword, DisplayName)
+}
+
 func fileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil

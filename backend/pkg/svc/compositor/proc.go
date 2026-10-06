@@ -24,6 +24,9 @@ type State struct {
 	Workspaces   []json.RawMessage `json:"workspaces,omitempty"`
 	Monitors     []json.RawMessage `json:"monitors,omitempty"`
 	OverviewOpen *bool             `json:"overview_open,omitempty"`
+	// KeyboardLayout is yozd's last keyboard_layout event payload
+	// ({"name", "index"?, "names"?}); absent until the first switch.
+	KeyboardLayout json.RawMessage `json:"keyboard_layout,omitempty"`
 }
 
 const subscribeRetryDelay = 500 * time.Millisecond

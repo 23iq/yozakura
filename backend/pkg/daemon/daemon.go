@@ -22,9 +22,11 @@ import (
 	"yozakura/backend/pkg/svc/clipboard"
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
+	"yozakura/backend/pkg/svc/displays"
 	"yozakura/backend/pkg/svc/focus"
 	"yozakura/backend/pkg/svc/fsbrowse"
 	"yozakura/backend/pkg/svc/gamemode"
+	"yozakura/backend/pkg/svc/keyboard"
 	"yozakura/backend/pkg/svc/keystore"
 	"yozakura/backend/pkg/svc/linkpreview"
 	mcpsvc "yozakura/backend/pkg/svc/mcp"
@@ -62,6 +64,7 @@ type Daemon struct {
 	clipboard  *clipboard.Service
 	network    *network.Service
 	compositor *compositor.Service
+	displays   *displays.Service
 	caffeine   *caffeine.Service
 	gamemode   *gamemode.Service
 	powerprof  *powerprofile.Service
@@ -135,6 +138,14 @@ func New() (*Daemon, error) {
 	compSvc := compositor.NewService(d.paths)
 	compSvc.Register(d.srv)
 	d.compositor = compSvc
+
+	d.displays = displays.NewService(d.paths)
+	d.displays.Register(d.srv)
+	var layoutSrc keyboard.StateSource
+	if m := compSvc.Manager(); m != nil {
+		layoutSrc = m
+	}
+	keyboard.NewService(layoutSrc).Register(d.srv)
 
 	keySvc := keystore.NewService(d.paths)
 	keySvc.Register(d.srv)
@@ -481,6 +492,9 @@ func (d *Daemon) shutdown() {
 		d.qsDone = nil
 	}
 
+	if d.displays != nil {
+		d.displays.Close() // reverts an unconfirmed change while yozd is still up
+	}
 	if d.compositor != nil && d.compositor.Manager() != nil {
 		d.compositor.Manager().Close()
 	}

@@ -26,8 +26,9 @@ type Server struct {
 	clientsMu  sync.RWMutex
 	idleMgr    *IdleManager
 
-	mu           sync.RWMutex
-	overviewOpen *bool
+	mu             sync.RWMutex
+	overviewOpen   *bool
+	keyboardLayout map[string]interface{}
 }
 
 func New(c ipc.Compositor, path string) *Server {
@@ -350,6 +351,9 @@ func (s *Server) watchEvents() {
 				s.mu.Unlock()
 			}
 			s.broadcastEvent("Event.OverviewChanged", e.Payload)
+		case ipc.EventKeyboardLayout:
+			s.setKeyboardLayout(e.Payload)
+			s.broadcastEvent("Event.KeyboardLayout", e.Payload)
 		default:
 			// Check if this is a floating mode change (has address + floating in payload)
 			if addr, ok := e.Payload["address"].(string); ok {
@@ -1397,9 +1401,10 @@ func (s *Server) handleConnection(conn net.Conn) {
 				JSONRPC: "2.0",
 				Method:  "State.Dump",
 				State: &StateDump{
-					Windows:    s.cache.GetWindows(),
-					Workspaces: s.cache.GetWorkspaces(),
-					Monitors:   s.cache.GetMonitors(),
+					Windows:        s.cache.GetWindows(),
+					Workspaces:     s.cache.GetWorkspaces(),
+					Monitors:       s.cache.GetMonitors(),
+					KeyboardLayout: s.getKeyboardLayout(),
 				},
 			}
 			if data, err := json.Marshal(notif); err == nil {
@@ -1425,10 +1430,11 @@ func (s *Server) handleConnection(conn net.Conn) {
 }
 
 type StateDump struct {
-	Windows      []ipc.Window    `json:"windows"`
-	Workspaces   []ipc.Workspace `json:"workspaces"`
-	Monitors     []ipc.Monitor   `json:"monitors"`
-	OverviewOpen *bool           `json:"overview_open,omitempty"`
+	Windows        []ipc.Window           `json:"windows"`
+	Workspaces     []ipc.Workspace        `json:"workspaces"`
+	Monitors       []ipc.Monitor          `json:"monitors"`
+	OverviewOpen   *bool                  `json:"overview_open,omitempty"`
+	KeyboardLayout map[string]interface{} `json:"keyboard_layout,omitempty"` // keyboard_layout.go
 }
 
 type Notification struct {
@@ -1457,10 +1463,11 @@ func (s *Server) broadcastEvent(method string, params interface{}) {
 		Method:  method,
 		Params:  params,
 		State: &StateDump{
-			Windows:      s.cache.GetWindows(),
-			Workspaces:   s.cache.GetWorkspaces(),
-			Monitors:     s.cache.GetMonitors(),
-			OverviewOpen: s.getOverviewOpen(),
+			Windows:        s.cache.GetWindows(),
+			Workspaces:     s.cache.GetWorkspaces(),
+			Monitors:       s.cache.GetMonitors(),
+			OverviewOpen:   s.getOverviewOpen(),
+			KeyboardLayout: s.getKeyboardLayout(),
 		},
 	}
 

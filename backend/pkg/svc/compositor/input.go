@@ -31,6 +31,13 @@ type Input struct {
 	// modules/specials/Specials.js windowRules), rendered as
 	// [[window_rules]] for yozd.
 	WindowRules []WindowRule `json:"windowRules,omitempty"`
+	// Displays are the saved monitor settings (displays.monitors), keyed by
+	// the current connector name (the shell resolves saved ids first),
+	// rendered as [[monitors]] (see devices.go).
+	Displays []DisplayInput `json:"displays,omitempty"`
+	// Keyboard is the keyboard domain, rendered as [input.keyboard]. nil
+	// (older shells) keeps the historical empty layouts.
+	Keyboard *KeyboardInput `json:"keyboard,omitempty"`
 }
 
 // WindowRule sends windows matching Match ("class:^(x)$") to Workspace

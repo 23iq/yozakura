@@ -58,11 +58,12 @@ func Render(in Input, gameMode bool) string {
 	// [[window_rules]]
 	writeWindowRules(&b, in)
 
+	// [[monitors]]
+	writeMonitors(&b, in.Displays)
+
 	// [input]
 	b.WriteString("\n[input]\n")
-	b.WriteString("[input.keyboard]\n")
-	b.WriteString(`layouts = ""` + "\n")
-	b.WriteString(`variants = ""` + "\n")
+	writeKeyboard(&b, in.Keyboard)
 
 	return b.String()
 }

@@ -1,0 +1,105 @@
+// Package yozdcli calls the compositor daemon's display and keyboard RPCs
+// through its CLI (`<daemon> monitor outputs`, ...), the way other backend
+// services reach it. Values travel as argv (JSON in one argument), never
+// through a shell.
+package yozdcli
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os/exec"
+	"strings"
+
+	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/yozd/ipc"
+)
+
+// Client runs daemon CLI commands. Run is replaceable in tests.
+type Client struct {
+	Run func(args ...string) ([]byte, error)
+}
+
+// New returns a client for the installed daemon binary.
+func New() *Client {
+	return &Client{Run: func(args ...string) ([]byte, error) {
+		return exec.Command(paths.DaemonBinary(), args...).Output()
+	}}
+}
+
+// call runs args and turns the CLI's "Error: ..." line (printed with exit
+// status 0) into an error; "not supported" maps to ipc.ErrNotSupported.
+func (c *Client) call(args ...string) ([]byte, error) {
+	out, err := c.Run(args...)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s: %w", brand.Daemon, strings.Join(args[:min(2, len(args))], " "), err)
+	}
+	text := strings.TrimSpace(string(out))
+	if msg, ok := strings.CutPrefix(text, "Error:"); ok {
+		msg = strings.TrimSpace(msg)
+		if strings.Contains(msg, ipc.ErrNotSupported.Error()) {
+			return nil, ipc.ErrNotSupported
+		}
+		return nil, errors.New(msg)
+	}
+	return out, nil
+}
+
+// Outputs lists every output with its modes.
+func (c *Client) Outputs() ([]ipc.Output, error) {
+	out, err := c.call("monitor", "outputs")
+	if err != nil {
+		return nil, err
+	}
+	var outputs []ipc.Output
+	if err := json.Unmarshal(out, &outputs); err != nil {
+		return nil, fmt.Errorf("parse outputs: %w", err)
+	}
+	return outputs, nil
+}
+
+// ApplyOutput applies one output configuration live.
+func (c *Client) ApplyOutput(cfg ipc.OutputConfig) error {
+	if err := cfg.Validate(); err != nil {
+		return err
+	}
+	raw, err := json.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+	_, err = c.call("monitor", "apply", string(raw))
+	return err
+}
+
+// ApplyKeyboard applies XKB settings live.
+func (c *Client) ApplyKeyboard(s ipc.KeyboardSettings) error {
+	if err := s.Validate(); err != nil {
+		return err
+	}
+	raw, err := json.Marshal(s)
+	if err != nil {
+		return err
+	}
+	_, err = c.call("keyboard", "apply", string(raw))
+	return err
+}
+
+// ActiveLayout reports the main keyboard's active layout.
+func (c *Client) ActiveLayout() (ipc.KeyboardLayoutState, error) {
+	var st ipc.KeyboardLayoutState
+	out, err := c.call("keyboard", "active")
+	if err != nil {
+		return st, err
+	}
+	if err := json.Unmarshal(out, &st); err != nil {
+		return st, fmt.Errorf("parse keyboard state: %w", err)
+	}
+	return st, nil
+}
+
+// NextLayout switches to the next keyboard layout.
+func (c *Client) NextLayout() error {
+	_, err := c.call("system", "switch-keyboard-layout", "next")
+	return err
+}
