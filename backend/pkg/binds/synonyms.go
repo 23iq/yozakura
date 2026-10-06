@@ -1,0 +1,89 @@
+package binds
+
+// synonyms are groups of words (English + Russian) that mean the same
+// thing for bind search: a query word matching any word of a group also
+// matches the others. Russian words are matched by stem, so one inflected
+// form is enough. Add words here when a natural request finds nothing.
+var synonyms = [][]string{
+	{"раскладка", "xkb", "language", "lang", "язык"},
+	{"volume", "sound", "audio", "громкость", "звук", "аудио"},
+	{"mute", "silence", "unmute", "заглушить", "выключить", "беззвучный", "тишина"},
+	{"microphone", "mic", "микрофон"},
+	{"screenshot", "screen", "capture", "snapshot", "скриншот", "снимок", "экран"},
+	{"record", "recording", "screencast", "video", "запись", "записать", "видео"},
+	{"lock", "блокировка", "заблокировать", "замок"},
+	{"launcher", "apps", "menu", "лаунчер", "запуск", "приложения", "меню"},
+	{"terminal", "console", "shell", "терминал", "консоль"},
+	{"clipboard", "copy", "paste", "буфер", "обмена", "копировать"},
+	{"emoji", "smiley", "эмодзи", "смайлик", "смайлы"},
+	{"notes", "note", "заметки", "заметка"},
+	{"wallpaper", "wallpapers", "background", "обои", "фон"},
+	{"settings", "config", "preferences", "options", "настройки", "параметры"},
+	{"close", "kill", "закрыть", "убить"},
+	{"window", "окно", "окна"},
+	{"workspace", "desktop", "рабочий", "стол", "пространство"},
+	{"fullscreen", "полноэкранный", "весь"},
+	{"float", "floating", "плавающий", "плавающее"},
+	{"maximize", "maximise", "развернуть", "максимизировать"},
+	{"brightness", "backlight", "яркость", "подсветка"},
+	{"play", "pause", "playback", "играть", "пауза", "воспроизведение"},
+	{"music", "media", "player", "музыка", "медиа", "плеер"},
+	{"next", "forward", "следующий", "следующая", "вперед"},
+	{"previous", "prev", "back", "предыдущий", "предыдущая", "назад"},
+	{"assistant", "ai", "chat", "gpt", "claude", "ассистент", "ии", "чат", "нейросеть"},
+	{"voice", "speech", "dictation", "dictate", "голос", "диктовка", "речь"},
+	{"power", "shutdown", "reboot", "logout", "питание", "выключение", "перезагрузка"},
+	{"overview", "expose", "обзор"},
+	{"bar", "panel", "панель", "бар"},
+	{"dnd", "disturb", "notifications", "уведомления", "беспокоить"},
+	{"focus", "фокус"},
+	{"move", "переместить", "перенести", "двигать"},
+	{"resize", "size", "размер", "изменить"},
+	{"reload", "restart", "перезапуск", "перезагрузить"},
+	{"keybinds", "hotkeys", "shortcuts", "cheatsheet", "горячие", "сочетания", "шпаргалка"},
+	{"special", "scratchpad", "специальный", "скрытый"},
+	{"open", "show", "launch", "открыть", "показать", "запустить"},
+	{"toggle", "switch", "переключить", "сменить"},
+	{"browser", "web", "firefox", "chrome", "браузер"},
+	{"files", "file", "manager", "файлы", "файловый", "проводник"},
+	{"calculator", "calc", "калькулятор"},
+	{"color", "colour", "picker", "цвет", "пипетка"},
+	{"display", "monitor", "dpms", "дисплей", "монитор"},
+	{"pin", "sticky", "закрепить"},
+	{"center", "centre", "центр", "центрировать"},
+	{"group", "tabbed", "tabs", "группа", "вкладки"},
+	{"split", "разделить"},
+	{"sleep", "suspend", "сон", "спящий"},
+	{"lens", "ocr", "translate", "распознать", "перевести"},
+	{"tmux", "session", "сессия"},
+}
+
+// stopWords are dropped from queries ("bind a key to open the terminal").
+var stopWords = map[string]bool{
+	"a": true, "an": true, "the": true, "to": true, "for": true, "of": true, "on": true, "in": true, "my": true, "me": true,
+	"and": true, "or": true, "with": true, "please": true, "i": true, "want": true, "make": true, "set": true, "it": true,
+	"bind": true, "binding": true, "key": true, "keys": true, "hotkey": true, "shortcut": true, "combo": true, "press": true,
+	"на": true, "в": true, "и": true, "по": true, "для": true, "как": true, "мне": true, "хочу": true, "чтобы": true, "сделать": true,
+	"бинд": true, "клавиша": true, "клавишу": true, "кнопку": true, "кнопка": true, "назначить": true, "поставить": true, "повесить": true,
+	"сочетание": true, "хоткей": true, "с": true, "к": true, "а": true, "это": true,
+}
+
+// actionKeywords are extra search words for catalog actions (ids without
+// the app prefix) whose labels miss how people ask for them.
+var actionKeywords = map[string]string{
+	"system.lock":              "lock screen lockscreen блокировка экрана заблокировать",
+	"system.dpms-off":          "screen off monitor off выключить экран",
+	"system.dpms-on":           "screen on monitor on включить экран",
+	"keybinds":                 "hotkeys shortcuts cheatsheet help горячие клавиши шпаргалка",
+	"launcher":                 "app menu start run applications меню приложений запуск",
+	"powermenu":                "shutdown reboot logout power off выключение перезагрузка выйти",
+	"config":                   "settings preferences настройки",
+	"overview":                 "expose mission control all windows обзор все окна",
+	"tools":                    "utilities ocr инструменты",
+	"workspace.toggle-special": "scratchpad hidden workspace скрытый",
+	"audio.mute-toggle":        "mute sound без звука",
+	"window.close":             "kill quit закрыть",
+	"lens":                     "ocr translate image search распознать текст перевести",
+	"assistant":                "ai chat gpt ассистент ии чат",
+	"dnd-toggle":               "do not disturb notifications silence не беспокоить уведомления",
+}

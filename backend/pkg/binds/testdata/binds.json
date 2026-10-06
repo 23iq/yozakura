@@ -1,0 +1,326 @@
+{
+  "custom": [
+    {
+      "name": "Close Window",
+      "keys": [
+        {
+          "key": "Q",
+          "modifiers": [
+            "SUPER"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "args": {},
+          "id": "window.close",
+          "layouts": []
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "name": "Toggle Floating",
+      "keys": [
+        {
+          "key": "SPACE",
+          "modifiers": [
+            "SUPER"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "args": {},
+          "id": "window.toggle-float",
+          "layouts": []
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "name": "Workspace 1",
+      "keys": [
+        {
+          "key": "1",
+          "modifiers": [
+            "SUPER"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "args": {
+            "index": "1"
+          },
+          "id": "workspace.switch",
+          "layouts": []
+        }
+      ],
+      "enabled": true
+    },
+    {
+      "name": "Workspace 2",
+      "keys": [
+        {
+          "key": "2",
+          "modifiers": [
+            "SUPER"
+          ]
+        }
+      ],
+      "actions": [
+        {
+          "args": {
+            "index": "2"
+          },
+          "id": "workspace.switch",
+          "layouts": []
+        }
+      ],
+      "enabled": true
+    }
+  ],
+  "disabled": [
+    "system.reload"
+  ],
+  "yozakura": {
+    "assistant": {
+      "action": {
+        "args": {},
+        "id": "yozakura.assistant"
+      },
+      "key": "A",
+      "modifiers": [
+        "SUPER"
+      ]
+    },
+    "clipboard": {
+      "action": {
+        "args": {},
+        "id": "yozakura.clipboard"
+      },
+      "key": "V",
+      "modifiers": [
+        "SUPER"
+      ]
+    },
+    "dashboard": {
+      "action": {
+        "args": {},
+        "id": "yozakura.dashboard"
+      },
+      "key": "D",
+      "modifiers": [
+        "SUPER",
+        "CTRL"
+      ]
+    },
+    "dictation": {
+      "action": {
+        "args": {},
+        "id": "yozakura.dictation"
+      },
+      "key": "M",
+      "modifiers": [
+        "SUPER",
+        "SHIFT"
+      ]
+    },
+    "emoji": {
+      "action": {
+        "args": {},
+        "id": "yozakura.emoji"
+      },
+      "key": "PERIOD",
+      "modifiers": [
+        "SUPER"
+      ]
+    },
+    "launcher": {
+      "action": {
+        "args": {},
+        "id": "yozakura.launcher"
+      },
+      "key": "Super_L",
+      "modifiers": [
+        "SUPER"
+      ]
+    },
+    "notes": {
+      "action": {
+        "args": {},
+        "id": "yozakura.notes"
+      },
+      "key": "N",
+      "modifiers": [
+        "SUPER"
+      ]
+    },
+    "system": {
+      "bar": {
+        "action": {
+          "args": {},
+          "id": "yozakura.bar"
+        },
+        "key": "B",
+        "modifiers": [
+          "SUPER",
+          "SHIFT"
+        ]
+      },
+      "config": {
+        "action": {
+          "args": {},
+          "id": "yozakura.config"
+        },
+        "key": "C",
+        "modifiers": [
+          "SUPER",
+          "SHIFT"
+        ]
+      },
+      "keybinds": {
+        "action": {
+          "args": {},
+          "id": "yozakura.keybinds"
+        },
+        "key": "SLASH",
+        "modifiers": [
+          "SUPER"
+        ]
+      },
+      "lens": {
+        "action": {
+          "args": {},
+          "id": "yozakura.lens"
+        },
+        "key": "A",
+        "modifiers": [
+          "SUPER",
+          "SHIFT"
+        ]
+      },
+      "lockscreen": {
+        "action": {
+          "args": {},
+          "id": "system.lock"
+        },
+        "key": "Delete",
+        "modifiers": [
+          "SUPER"
+        ]
+      },
+      "overview": {
+        "action": {
+          "args": {},
+          "id": "yozakura.overview"
+        },
+        "key": "TAB",
+        "modifiers": [
+          "SUPER"
+        ]
+      },
+      "powermenu": {
+        "action": {
+          "args": {},
+          "id": "yozakura.powermenu"
+        },
+        "key": "ESCAPE",
+        "modifiers": [
+          "SUPER"
+        ]
+      },
+      "quit": {
+        "action": {
+          "args": {},
+          "id": "yozakura.quit"
+        },
+        "key": "B",
+        "modifiers": [
+          "SUPER",
+          "CTRL",
+          "ALT"
+        ]
+      },
+      "reload": {
+        "action": {
+          "args": {},
+          "id": "yozakura.reload"
+        },
+        "key": "B",
+        "modifiers": [
+          "SUPER",
+          "ALT"
+        ]
+      },
+      "screenrecord": {
+        "action": {
+          "args": {},
+          "id": "yozakura.screenrecord"
+        },
+        "key": "R",
+        "modifiers": [
+          "SUPER",
+          "SHIFT"
+        ]
+      },
+      "screenshot": {
+        "action": {
+          "args": {},
+          "id": "yozakura.screenshot"
+        },
+        "key": "S",
+        "modifiers": [
+          "SUPER",
+          "SHIFT"
+        ]
+      },
+      "tools": {
+        "action": {
+          "args": {},
+          "id": "yozakura.tools"
+        },
+        "key": "S",
+        "modifiers": [
+          "SUPER",
+          "CTRL"
+        ]
+      }
+    },
+    "tmux": {
+      "action": {
+        "args": {},
+        "id": "yozakura.tmux"
+      },
+      "key": "T",
+      "modifiers": [
+        "SUPER",
+        "ALT"
+      ]
+    },
+    "voiceAi": {
+      "action": {
+        "args": {},
+        "id": "yozakura.voice-ai"
+      },
+      "key": "M",
+      "modifiers": [
+        "SUPER"
+      ]
+    },
+    "wallpapers": {
+      "action": {
+        "args": {},
+        "id": "yozakura.wallpapers"
+      },
+      "key": "COMMA",
+      "modifiers": [
+        "SUPER"
+      ]
+    }
+  },
+  "migrations": [
+    "window-fullscreen"
+  ]
+}

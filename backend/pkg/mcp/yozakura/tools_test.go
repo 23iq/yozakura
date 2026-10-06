@@ -153,7 +153,8 @@ func TestEveryToolIsWellFormed(t *testing.T) {
 		"window_move_to_workspace", "workspace_switch", "notification_send", "notifications_list",
 		"clipboard_read", "clipboard_write", "clipboard_history", "screenshot", "media_control",
 		"media_status", "dnd_set", "shell_toggle", "volume_get", "volume_set", "shell_commands", "shell_command",
-		"specials_list", "special_open", "special_add", "special_update", "special_remove", "special_app_add"} {
+		"specials_list", "special_open", "special_add", "special_update", "special_remove", "special_app_add",
+		"binds_search", "binds_list", "binds_check", "binds_suggest", "binds_set", "binds_remove", "binds_undo"} {
 		assert.True(t, names[want], want)
 	}
 	ro := ReadOnlyToolNames()

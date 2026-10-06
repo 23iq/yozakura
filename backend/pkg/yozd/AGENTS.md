@@ -43,5 +43,9 @@ pkg/yozd/
   them together with every caller.
 - A new compositor implements `ipc.Compositor` in its own package and is
   added to the detection order in `cmd/yozd/main.go`.
+- New methods go in `server/binds.go` `dispatchExtra` (reached from the
+  `default:` of the switch in `server.go`, which must not grow), e.g.
+  `Config.ListBinds` (`yozd config list-binds`; compositors implement the
+  optional `ipc.BindLister`).
 - Tests: `go test ./pkg/yozd/... ./cmd/yozd` (mock compositor, no live
   session needed).

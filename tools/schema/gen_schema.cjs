@@ -7,6 +7,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { build } = require('./catalog.cjs');
+const bindActions = require('./bind_actions.cjs');
 
 const repo = path.resolve(__dirname, '../..');
 const outDir = path.join(repo, 'assets/schema');
@@ -18,6 +19,8 @@ if (errors.length) {
     process.exit(2);
 }
 const text = obj => JSON.stringify(obj, null, 2) + '\n';
+// Other generated catalogs next to the schemas (not *.schema.json).
+const extra = { [bindActions.FILE]: bindActions.build(repo) };
 
 if (mode === '--stdout') {
     const combined = Object.keys(files).find(n => files[n].$defs);
@@ -31,13 +34,17 @@ if (mode === '--check') {
         const p = path.join(outDir, n);
         return !fs.existsSync(p) || fs.readFileSync(p, 'utf8') !== text(files[n]);
     });
-    const extra = existing.filter(n => !(n in files));
+    for (const [n, obj] of Object.entries(extra)) {
+        const p = path.join(outDir, n);
+        if (!fs.existsSync(p) || fs.readFileSync(p, 'utf8') !== text(obj)) stale.push(n);
+    }
+    const unknown = existing.filter(n => !(n in files));
     for (const n of stale) console.log(`stale: assets/schema/${n}`);
-    for (const n of extra) console.log(`extra: assets/schema/${n}`);
-    process.exit(stale.length || extra.length ? 1 : 0);
+    for (const n of unknown) console.log(`extra: assets/schema/${n}`);
+    process.exit(stale.length || unknown.length ? 1 : 0);
 }
 
 fs.mkdirSync(outDir, { recursive: true });
 for (const n of existing) if (!(n in files)) fs.unlinkSync(path.join(outDir, n));
-for (const [n, obj] of Object.entries(files)) fs.writeFileSync(path.join(outDir, n), text(obj));
-console.log(`wrote ${Object.keys(files).length} files to assets/schema/`);
+for (const [n, obj] of Object.entries({ ...files, ...extra })) fs.writeFileSync(path.join(outDir, n), text(obj));
+console.log(`wrote ${Object.keys(files).length + Object.keys(extra).length} files to assets/schema/`);

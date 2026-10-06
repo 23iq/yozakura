@@ -123,6 +123,19 @@ yozakura special app remove Talk vesktop | special remove Talk
 yozakura special import-binds [--dry-run] # move hand-written special binds out of ~/.config/hypr/custom
 ```
 
+Keybind advisor (`backend/pkg/binds`; edits `binds.json` only, never the
+compositor config; `--json` everywhere):
+
+```bash
+yozakura binds search переключить раскладку  # actions, apps, launcher commands, workarounds (any language)
+yozakura binds list --source compositor      # shell-core | shell-user | shell-special | compositor
+yozakura binds check SUPER+SHIFT+S           # free? who uses it, reserved combos
+yozakura binds suggest window.toggle-float   # free ergonomic combos (SUPER+letter of the label first)
+yozakura binds set SUPER+B apps.launch app=firefox   # --replace, --additional, --name
+yozakura binds rm SUPER+B                    # core binds are switched off, custom ones removed
+yozakura binds undo <token>                  # every set/rm prints its undo command
+```
+
 Shell UI commands (need the running shell): `yozakura run <command>` with
 `launcher clipboard emoji tmux notes terminal dashboard wallpapers assistant overview
 powermenu tools config screenshot screenrecord lens lockscreen
@@ -201,6 +214,8 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `stopwatch_control` | no | `{"action":"lap"}`; start, pause, resume, toggle, lap, reset, status |
 | `reminder_add`, `reminder_cancel` | no | `{"when":"in 20m","message":"stretch"}`, `{"when":"7:30pm"}`; cancel by id or message |
 | `usage_summary` | yes | AI token usage/cost from the ledger: `{"range":"week","groupBy":"model","limits":true}` (same data as `yozakura usage`) |
+| `binds_search`, `binds_list`, `binds_check`, `binds_suggest` | yes | bind advisor: `{"query":"раскладка"}` -> results with a ready `action` ({id, args}); every bind with its source; is a combo free; free combos for an action |
+| `binds_set`, `binds_remove`, `binds_undo` | no | `{"combo":"SUPER+F","action":"window.fullscreen"}` (confirm with the user first); writes `binds.json` only, returns `undo: {tool, args}` |
 
 Config and preset tools work on files and do not need the daemon; the others
 talk to the running shell. Tools whose change can be reverted (timers,
@@ -313,8 +328,15 @@ Settings (`yozakura run config`, Input page). `binds.json` has two parts:
 "action": {"id": "yozakura.<name>", "args": {}}}}`) and `"custom"` (a list of
 `{name, enabled, keys: [{modifiers, key}], actions: [{id, args, layouts}]}`).
 The action ids are catalogued in `config/KeybindActions.js`
-(`ACTION_CATALOG`). There is no `config` domain for binds: edit the file with
-`jq` (keep a copy), e.g. to move the assistant to Super+I:
+(`ACTION_CATALOG`; `make schema` exports it with the core binds and every
+translation to `assets/schema/bind-actions.json` for the backend). Prefer
+`yozakura binds` / the `binds_*` MCP tools: they search actions in plain
+words (synonyms, Russian), check conflicts against the shell, special
+workspaces and the compositor's own binds (`yozd config list-binds`:
+`hyprctl binds -j` on Hyprland, a best-effort config parse on niri and
+MangoWC), suggest free combos and write `binds.json` atomically with an undo
+token. Without them, edit the file with `jq` (keep a copy), e.g. to move the
+assistant to Super+I:
 
 ```bash
 f=~/.config/yozakura/binds.json; cp "$f" "$f.bak"
@@ -363,6 +385,7 @@ combo.
 | Timers, stopwatch, reminders | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go` | `system.pomodoro.*` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |
 | Keybinds | `config/KeybindActions.js`, `modules/services/GlobalShortcuts.qml` | `binds.json` | |
+| Bind advisor | `backend/pkg/binds` (search, list, check, suggest, set/remove/undo), catalog `tools/schema/bind_actions.cjs` -> `assets/schema/bind-actions.json`, CLI `cmds_binds.go`, MCP `bind_tools.go`, yozd `Config.ListBinds` (`pkg/yozd/server/binds.go`, `ipc/*/binds.go`) | `binds.json` | `backend/pkg/binds/binds_test.go`, `tests/bind-actions.test.cjs` |
 | Settings catalog | `tools/schema/`, `config/meta/`, `backend/pkg/catalog` | | `tests/schema-catalog.test.cjs`, `backend/pkg/catalog/*_test.go` |
 | CLI | `backend/cmd/yozakura/` (`cmds_config.go`, `cmds_preset.go`, `cmds_completion.go`) | | `cmds_config_test.go` |
 | MCP tools | `backend/pkg/mcp/yozakura/` (`config_tools.go`, `preset_tools.go`, ...) | | `tools_test.go` |

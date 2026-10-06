@@ -66,6 +66,8 @@ func main() {
 			os.Exit(runCompletion(args[1:], os.Stdout, os.Stderr))
 		case "cmd", "command":
 			os.Exit(runCmd(args[1:], os.Stdout, os.Stderr))
+		case "binds", "bind":
+			os.Exit(runBinds(args[1:], defaultBindsEnv(), os.Stdout, os.Stderr))
 		case "special", "specials":
 			os.Exit(runSpecial(args[1:], os.Stdout, os.Stderr))
 		case "launch":
@@ -597,6 +599,8 @@ Commands:
                                      resume, add, stop, pomodoro ({bin} timer help)
     stopwatch [start|pause|lap|reset] Stopwatch (no argument: status)
     remind <time|in time> <text>     Reminder ("18:00 call mom", "in 20m stretch"); list, cancel
+    binds <command>                  Keybind advisor: search, list, check, suggest, set,
+                                     rm, undo ({bin} binds help)
     completion <bash|zsh|fish>       Print a shell completion script
     mods [command]                   Manage {name} modifications
     mcp [--list-tools]               Run the built-in MCP server on stdio (for AI agents)
