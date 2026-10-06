@@ -205,7 +205,7 @@ func TestWatcherReappliesOnColorChange(t *testing.T) {
 	b, _ := os.ReadFile(f.colors)
 	changed := strings.Replace(string(b), `"primary": "#`, `"primary": "#010203", "_x": "#`, 1)
 	if changed == string(b) {
-		t.Skip("fixture colors.json has no primary key to change")
+		t.Fatal("fixture colors.json has no primary key to change")
 	}
 	tmp := f.colors + ".tmp"
 	f.write(tmp, changed)
@@ -249,4 +249,20 @@ func waitFor(t *testing.T, cond func() bool, what string) {
 		time.Sleep(20 * time.Millisecond)
 	}
 	t.Fatalf("timed out: %s", what)
+}
+
+func TestWatcherFollowsColorsFileInMissingDir(t *testing.T) {
+	f := newFixture(t, `{"enabled": true, "prompt": "zen"}`)
+	data := mustRead(t, f.colors)
+	cacheDir := filepath.Dir(f.colors)
+	if err := os.RemoveAll(cacheDir); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.s.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer f.s.Stop()
+	f.write(f.colors, data) // the directory appears after Start
+	conf := filepath.Join(f.home, ".config", brand.AppID, "starship.toml")
+	waitFor(t, func() bool { _, err := os.Stat(conf); return err == nil }, "apply once colors.json shows up")
 }

@@ -10,17 +10,19 @@
       "title": "Enabled",
       "type": "boolean",
       "default": false,
-      "description": "Write the prompt config and the fish hook (fish conf.d). Off removes the hook; config.fish is never touched."
+      "description": "Write the prompt config and the fish hook (fish conf.d). Off removes the hook; config.fish is never touched. Machine-local: presets never switch the prompt on or off.",
+      "x-local": true
     },
     "engine": {
       "title": "Engine",
       "type": "string",
       "default": "starship",
-      "description": "Prompt engine.",
+      "description": "Prompt engine. Machine-local: presets never switch engines.",
       "enum": [
         "starship",
         "ohmyposh"
-      ]
+      ],
+      "x-local": true
     },
     "prompt": {
       "title": "Prompt",

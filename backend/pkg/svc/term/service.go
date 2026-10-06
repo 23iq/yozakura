@@ -74,6 +74,7 @@ type Service struct {
 
 	stop chan struct{}
 	done chan struct{}
+	wg   sync.WaitGroup // the initial apply
 }
 
 // NewService uses the real host.
@@ -391,7 +392,11 @@ func (s *Service) Start() error {
 	}
 	go w.run()
 	if s.config().Enabled {
-		go s.reapply()
+		s.wg.Add(1)
+		go func() {
+			defer s.wg.Done()
+			s.reapply()
+		}()
 	}
 	return nil
 }
@@ -407,6 +412,7 @@ func (s *Service) Stop() {
 	}
 	close(stop)
 	<-done
+	s.wg.Wait()
 }
 
 func (s *Service) onChange(file string) {

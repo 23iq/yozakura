@@ -28,7 +28,7 @@ var Aspects = []Aspect{
 	{ID: "windows", Domains: []string{"compositor", "performance"}, Keys: []string{"theme.animDuration", "theme.paletteTransitionDuration"}, Category: "windows"},
 	{ID: "desktop", Domains: []string{"desktop"}, Category: "desktop"},
 	{ID: "lockscreen", Domains: []string{"lockscreen"}, Category: "lockscreen"},
-	{ID: "terminal", Domains: []string{"terminal"}, Keys: []string{"apps.kitty"}, Category: "terminal"},
+	{ID: "terminal", Domains: []string{"terminal"}, Category: "terminal"},
 }
 
 // AspectByID returns the aspect, or nil.

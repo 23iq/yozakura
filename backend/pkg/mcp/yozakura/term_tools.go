@@ -23,7 +23,7 @@ func termTools(d Deps) []mcp.ToolDef {
 		define("term_set", "Set the terminal prompt",
 			`Turn the fish prompt on with a preset (see term_presets for ids), optionally choosing the engine ("starship" or "ohmyposh"), or turn it off with enabled false. It writes the terminal config, the engine config and a fish conf.d file (config.fish is never touched); colors follow the theme from then on. The result lists what is still missing: install the engine or fish with extras_install (ids starship, oh-my-posh, fish) and tell the user if their config.fish sets another prompt.`,
 			`{"type":"object","properties":{"preset":{"type":"string","description":"Preset id from term_presets."},"engine":{"type":"string","enum":["starship","ohmyposh"]},"enabled":{"type":"boolean","default":true,"description":"false turns the prompt off and removes the fish file."}},"additionalProperties":false}`,
-			toolOpts{}, d.termSet),
+			toolOpts{idempotent: true}, d.termSet),
 	}
 }
 

@@ -158,3 +158,46 @@ func TestCommandsNeverTravelWithPresets(t *testing.T) {
 	_, ok := docs["general"]
 	assert.False(t, ok, "a bundle's general domain is never read")
 }
+
+// A preset carries the terminal look but never the machine state: the
+// prompt switch and the engine stay as they are on this machine.
+func TestPresetNeverSwitchesPromptOrEngine(t *testing.T) {
+	m := newManager(t)
+	for _, k := range []string{"terminal.enabled", "terminal.engine"} {
+		assert.True(t, m.Cat.MachineLocal(k), k)
+	}
+	for _, k := range []string{"terminal.prompt", "terminal.padding", "terminal.cursorShape"} {
+		assert.False(t, m.Cat.MachineLocal(k), k)
+	}
+	live := `{"enabled": false, "engine": "starship", "prompt": "pure", "padding": 12}`
+	writeLive(t, m, "terminal", live)
+	saved, err := m.Save("Mine", nil, false)
+	assert.NoError(t, err)
+	if assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "terminal.json"),
+		[]byte(`{"enabled": true, "engine": "ohmyposh", "prompt": "zen"}`), 0o644)) {
+		_, _, err = m.Apply("Mine")
+		assert.NoError(t, err)
+		var got map[string]any
+		data, _ := os.ReadFile(m.Store.File("terminal"))
+		assert.NoError(t, json.Unmarshal(data, &got))
+		assert.Equal(t, false, got["enabled"])
+		assert.Equal(t, "starship", got["engine"])
+		assert.Equal(t, "zen", got["prompt"])
+	}
+
+	// no terminal section: terminal.json stays as it was
+	assert.NoError(t, os.Remove(filepath.Join(saved.Path, "terminal.json")))
+	writeLive(t, m, "terminal", live)
+	_, _, err = m.Apply("Mine")
+	assert.NoError(t, err)
+	data, _ := os.ReadFile(m.Store.File("terminal"))
+	assert.Equal(t, live, string(data))
+
+	// saving never writes the machine keys
+	saved2, err := m.Save("Mine2", nil, false)
+	assert.NoError(t, err)
+	data, _ = os.ReadFile(filepath.Join(saved2.Path, "terminal.json"))
+	assert.NotContains(t, string(data), "enabled")
+	assert.NotContains(t, string(data), "engine")
+	assert.Contains(t, string(data), "pure")
+}

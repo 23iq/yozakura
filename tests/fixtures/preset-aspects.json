@@ -49,9 +49,6 @@
     "domains": [
       "terminal"
     ],
-    "keys": [
-      "apps.kitty"
-    ],
     "category": "terminal"
   }
 ]

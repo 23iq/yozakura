@@ -7,11 +7,13 @@ var description = "Terminal look: the fish prompt (Starship or oh-my-posh) follo
 
 var keys = {
     "enabled": {
-        "description": "Write the prompt config and the fish hook (fish conf.d). Off removes the hook; config.fish is never touched."
+        "local": true,
+        "description": "Write the prompt config and the fish hook (fish conf.d). Off removes the hook; config.fish is never touched. Machine-local: presets never switch the prompt on or off."
     },
     "engine": {
+        "local": true,
         "enum": Enums.TERMINAL_ENGINES,
-        "description": "Prompt engine."
+        "description": "Prompt engine. Machine-local: presets never switch engines."
     },
     "prompt": {
         "description": "Prompt preset id (assets/terminal/prompts/<id>.json; list them with `yozakura term list`)."
