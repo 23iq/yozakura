@@ -1,0 +1,837 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "agents",
+      "name": "extras.cat.agents",
+      "icon": "robot"
+    },
+    {
+      "id": "localai",
+      "name": "extras.cat.localai",
+      "icon": "brain"
+    },
+    {
+      "id": "gpu",
+      "name": "extras.cat.gpu",
+      "icon": "cpu"
+    },
+    {
+      "id": "terminal",
+      "name": "extras.cat.terminal",
+      "icon": "terminal"
+    },
+    {
+      "id": "browsers",
+      "name": "extras.cat.browsers",
+      "icon": "globe"
+    },
+    {
+      "id": "chat",
+      "name": "extras.cat.chat",
+      "icon": "chatDots"
+    },
+    {
+      "id": "games",
+      "name": "extras.cat.games",
+      "icon": "gamepad"
+    },
+    {
+      "id": "media",
+      "name": "extras.cat.media",
+      "icon": "play"
+    },
+    {
+      "id": "work",
+      "name": "extras.cat.work",
+      "icon": "code"
+    },
+    {
+      "id": "files",
+      "name": "extras.cat.files",
+      "icon": "folder"
+    }
+  ],
+  "entries": [
+    {
+      "id": "claude-code",
+      "category": "agents",
+      "name": "Claude Code",
+      "icon": "robot",
+      "size": "200 MB",
+      "detect": {
+        "bins": [
+          "claude"
+        ]
+      },
+      "install": {
+        "script": {
+          "url": "https://claude.ai/install.sh"
+        }
+      }
+    },
+    {
+      "id": "codex",
+      "category": "agents",
+      "name": "Codex",
+      "icon": "robot",
+      "size": "150 MB",
+      "detect": {
+        "bins": [
+          "codex"
+        ]
+      },
+      "install": {
+        "npm": "@openai/codex"
+      },
+      "requires": [
+        "nodejs"
+      ]
+    },
+    {
+      "id": "gemini-cli",
+      "category": "agents",
+      "name": "Gemini CLI",
+      "icon": "sparkle",
+      "size": "150 MB",
+      "detect": {
+        "bins": [
+          "gemini"
+        ]
+      },
+      "install": {
+        "npm": "@google/gemini-cli"
+      },
+      "requires": [
+        "nodejs"
+      ]
+    },
+    {
+      "id": "opencode",
+      "category": "agents",
+      "name": "OpenCode",
+      "icon": "code",
+      "size": "100 MB",
+      "detect": {
+        "bins": [
+          "opencode"
+        ]
+      },
+      "install": {
+        "script": {
+          "url": "https://opencode.ai/install"
+        }
+      }
+    },
+    {
+      "id": "nodejs",
+      "category": "agents",
+      "name": "Node.js",
+      "icon": "code",
+      "hidden": true,
+      "detect": {
+        "bins": [
+          "node",
+          "npm"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "nodejs",
+            "npm"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "nodejs",
+            "npm"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ollama",
+      "category": "localai",
+      "name": "Ollama",
+      "icon": "brain",
+      "size": "1 GB",
+      "detect": {
+        "bins": [
+          "ollama"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "ollama"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "ollama"
+          ]
+        },
+        "gpu": {
+          "nvidia": [
+            "ollama-cuda"
+          ],
+          "amd": [
+            "ollama-rocm"
+          ],
+          "intel": [
+            "ollama"
+          ],
+          "none": [
+            "ollama"
+          ]
+        },
+        "service": "ollama"
+      }
+    },
+    {
+      "id": "cuda",
+      "category": "gpu",
+      "name": "CUDA Toolkit",
+      "icon": "cpu",
+      "size": "4 GB",
+      "detect": {
+        "pkgs": [
+          "cuda"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "cuda"
+          ]
+        }
+      },
+      "only": [
+        "arch"
+      ]
+    },
+    {
+      "id": "voice-build-deps",
+      "category": "gpu",
+      "name": "Voice build tools",
+      "icon": "cpu",
+      "hidden": true,
+      "detect": {
+        "bins": [
+          "cmake",
+          "ninja",
+          "gcc",
+          "git"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "cmake",
+            "ninja",
+            "gcc",
+            "git"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "cmake",
+            "ninja-build",
+            "gcc-c++",
+            "git"
+          ]
+        }
+      }
+    },
+    {
+      "id": "voice",
+      "category": "gpu",
+      "name": "Local voice (whisper)",
+      "icon": "mic",
+      "size": "2 GB",
+      "detect": {
+        "paths": [
+          "~/.local/share/yozakura/voice"
+        ]
+      },
+      "install": {
+        "shell": "voice_setup.sh"
+      },
+      "requires": [
+        "voice-build-deps"
+      ]
+    },
+    {
+      "id": "uv",
+      "category": "gpu",
+      "name": "uv",
+      "icon": "code",
+      "hidden": true,
+      "detect": {
+        "bins": [
+          "uv"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "uv"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "uv"
+          ]
+        }
+      }
+    },
+    {
+      "id": "depth",
+      "category": "gpu",
+      "name": "Depth wallpapers",
+      "icon": "cpu",
+      "size": "3 GB",
+      "detect": {
+        "paths": [
+          "~/.local/share/yozakura/depth"
+        ]
+      },
+      "install": {
+        "shell": "depth_setup.sh"
+      },
+      "requires": [
+        "uv"
+      ]
+    },
+    {
+      "id": "fish",
+      "category": "terminal",
+      "name": "fish",
+      "icon": "terminal",
+      "detect": {
+        "bins": [
+          "fish"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "fish"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "fish"
+          ]
+        }
+      }
+    },
+    {
+      "id": "starship",
+      "category": "terminal",
+      "name": "Starship",
+      "icon": "terminal",
+      "detect": {
+        "bins": [
+          "starship"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "starship"
+          ]
+        }
+      }
+    },
+    {
+      "id": "oh-my-posh",
+      "category": "terminal",
+      "name": "Oh My Posh",
+      "icon": "terminal",
+      "detect": {
+        "bins": [
+          "oh-my-posh"
+        ]
+      },
+      "install": {
+        "arch": {
+          "aur": [
+            "oh-my-posh-bin"
+          ]
+        },
+        "script": {
+          "url": "https://ohmyposh.dev/install.sh",
+          "args": [
+            "-d",
+            "~/.local/bin"
+          ]
+        }
+      }
+    },
+    {
+      "id": "fastfetch",
+      "category": "terminal",
+      "name": "fastfetch",
+      "icon": "terminal",
+      "detect": {
+        "bins": [
+          "fastfetch"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "fastfetch"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "fastfetch"
+          ]
+        }
+      }
+    },
+    {
+      "id": "kitty",
+      "category": "terminal",
+      "name": "kitty",
+      "icon": "terminal",
+      "detect": {
+        "bins": [
+          "kitty"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "kitty"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "kitty"
+          ]
+        }
+      }
+    },
+    {
+      "id": "ghostty",
+      "category": "terminal",
+      "name": "Ghostty",
+      "icon": "terminal",
+      "detect": {
+        "bins": [
+          "ghostty"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "ghostty"
+          ]
+        }
+      },
+      "only": [
+        "arch"
+      ]
+    },
+    {
+      "id": "firefox",
+      "category": "browsers",
+      "name": "Firefox",
+      "icon": "firefox",
+      "recommended": true,
+      "detect": {
+        "bins": [
+          "firefox"
+        ],
+        "flatpak": "org.mozilla.firefox"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "firefox"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "firefox"
+          ]
+        },
+        "flatpak": "org.mozilla.firefox"
+      }
+    },
+    {
+      "id": "zen-browser",
+      "category": "browsers",
+      "name": "Zen Browser",
+      "icon": "globe",
+      "detect": {
+        "bins": [
+          "zen-browser",
+          "zen"
+        ],
+        "flatpak": "app.zen_browser.zen"
+      },
+      "install": {
+        "arch": {
+          "aur": [
+            "zen-browser-bin"
+          ]
+        },
+        "flatpak": "app.zen_browser.zen"
+      }
+    },
+    {
+      "id": "chromium",
+      "category": "browsers",
+      "name": "Chromium",
+      "icon": "globe",
+      "detect": {
+        "bins": [
+          "chromium"
+        ],
+        "flatpak": "org.chromium.Chromium"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "chromium"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "chromium"
+          ]
+        },
+        "flatpak": "org.chromium.Chromium"
+      }
+    },
+    {
+      "id": "vesktop",
+      "category": "chat",
+      "name": "Vesktop",
+      "icon": "chatDots",
+      "recommended": true,
+      "detect": {
+        "bins": [
+          "vesktop"
+        ],
+        "flatpak": "dev.vencord.Vesktop"
+      },
+      "install": {
+        "arch": {
+          "aur": [
+            "vesktop-bin"
+          ]
+        },
+        "flatpak": "dev.vencord.Vesktop"
+      },
+      "post": [
+        "apphook:discord"
+      ]
+    },
+    {
+      "id": "discord",
+      "category": "chat",
+      "name": "Discord",
+      "icon": "chatDots",
+      "detect": {
+        "bins": [
+          "discord"
+        ],
+        "flatpak": "com.discordapp.Discord"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "discord"
+          ]
+        },
+        "flatpak": "com.discordapp.Discord"
+      }
+    },
+    {
+      "id": "telegram",
+      "category": "chat",
+      "name": "Telegram",
+      "icon": "telegram",
+      "detect": {
+        "bins": [
+          "telegram-desktop",
+          "Telegram"
+        ],
+        "flatpak": "org.telegram.desktop"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "telegram-desktop"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "telegram-desktop"
+          ]
+        },
+        "flatpak": "org.telegram.desktop"
+      },
+      "post": [
+        "apphook:telegram"
+      ]
+    },
+    {
+      "id": "steam",
+      "category": "games",
+      "name": "Steam",
+      "icon": "gamepad",
+      "detect": {
+        "bins": [
+          "steam"
+        ],
+        "flatpak": "com.valvesoftware.Steam"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "steam"
+          ]
+        },
+        "flatpak": "com.valvesoftware.Steam"
+      }
+    },
+    {
+      "id": "lutris",
+      "category": "games",
+      "name": "Lutris",
+      "icon": "gamepad",
+      "detect": {
+        "bins": [
+          "lutris"
+        ],
+        "flatpak": "net.lutris.Lutris"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "lutris"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "lutris"
+          ]
+        },
+        "flatpak": "net.lutris.Lutris"
+      }
+    },
+    {
+      "id": "spotify",
+      "category": "media",
+      "name": "Spotify",
+      "icon": "spotify",
+      "detect": {
+        "bins": [
+          "spotify"
+        ],
+        "flatpak": "com.spotify.Client"
+      },
+      "install": {
+        "arch": {
+          "aur": [
+            "spotify"
+          ]
+        },
+        "flatpak": "com.spotify.Client"
+      }
+    },
+    {
+      "id": "spicetify",
+      "category": "media",
+      "name": "Spicetify",
+      "icon": "musicNotes",
+      "detect": {
+        "bins": [
+          "spicetify"
+        ]
+      },
+      "install": {
+        "arch": {
+          "aur": [
+            "spicetify-cli"
+          ]
+        }
+      },
+      "requires": [
+        "spotify"
+      ],
+      "post": [
+        "apphook:spicetify"
+      ],
+      "only": [
+        "arch"
+      ]
+    },
+    {
+      "id": "mpv",
+      "category": "media",
+      "name": "mpv",
+      "icon": "play",
+      "detect": {
+        "bins": [
+          "mpv"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "mpv"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "mpv"
+          ]
+        }
+      }
+    },
+    {
+      "id": "obs",
+      "category": "media",
+      "name": "OBS Studio",
+      "icon": "camera",
+      "detect": {
+        "bins": [
+          "obs"
+        ],
+        "flatpak": "com.obsproject.Studio"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "obs-studio"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "obs-studio"
+          ]
+        },
+        "flatpak": "com.obsproject.Studio"
+      }
+    },
+    {
+      "id": "vscode",
+      "category": "work",
+      "name": "Visual Studio Code",
+      "icon": "code",
+      "detect": {
+        "bins": [
+          "code"
+        ],
+        "flatpak": "com.visualstudio.code"
+      },
+      "install": {
+        "arch": {
+          "aur": [
+            "visual-studio-code-bin"
+          ]
+        },
+        "flatpak": "com.visualstudio.code"
+      }
+    },
+    {
+      "id": "obsidian",
+      "category": "work",
+      "name": "Obsidian",
+      "icon": "note",
+      "detect": {
+        "bins": [
+          "obsidian"
+        ],
+        "flatpak": "md.obsidian.Obsidian"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "obsidian"
+          ]
+        },
+        "flatpak": "md.obsidian.Obsidian"
+      }
+    },
+    {
+      "id": "libreoffice",
+      "category": "work",
+      "name": "LibreOffice",
+      "icon": "file",
+      "detect": {
+        "bins": [
+          "libreoffice"
+        ],
+        "flatpak": "org.libreoffice.LibreOffice"
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "libreoffice-fresh"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "libreoffice"
+          ]
+        },
+        "flatpak": "org.libreoffice.LibreOffice"
+      }
+    },
+    {
+      "id": "nautilus",
+      "category": "files",
+      "name": "Nautilus",
+      "icon": "folder",
+      "detect": {
+        "bins": [
+          "nautilus"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "nautilus"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "nautilus"
+          ]
+        }
+      }
+    },
+    {
+      "id": "thunar",
+      "category": "files",
+      "name": "Thunar",
+      "icon": "folder",
+      "detect": {
+        "bins": [
+          "thunar"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "thunar"
+          ]
+        },
+        "fedora": {
+          "pkgs": [
+            "thunar"
+          ]
+        }
+      }
+    }
+  ]
+}
