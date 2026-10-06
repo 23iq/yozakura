@@ -1,11 +1,15 @@
 import QtQuick
-import qs.modules.components
+import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.shell.osd
+import qs.modules.components.kit
+import "../OsdStyles.js" as OsdStyles
 
-// Lives inside the bar's volume/brightness button: on an OSD event the
-// button fills like a gauge and shows the level glyph, then settles back.
+// Lives inside the bar's controls button: on an OSD event the button grows
+// by `reveal` (the host adds it to its length along the bar) and turns into
+// the level icon and a kit LineSlider with the value, then settles back.
+// The slider is live (drag / wheel set the level) and hovering keeps it up.
 // Registers with OsdService so the window falls back to the pill when no
 // bar widget exists.
 Item {
@@ -18,50 +22,83 @@ Item {
     property bool vertical: false
     property bool shown: false
     property real radius: 0
+    property var screen: null
+    // Extra length the host grows by while shown (animated).
+    readonly property int length: Math.round(Metrics.osdW * 0.7)
+    property real reveal: root.shown ? root.length : 0
+    readonly property var readout: OsdStyles.readout(root.kind, root.value, root.muted, root.device, "", I18n.t("osd.muted"))
 
     visible: opacity > 0
     opacity: root.shown ? 1 : 0
-    clip: true
+    enabled: root.shown
+    z: 1
 
-    Behavior on opacity {
+    Behavior on reveal {
+        enabled: OsdMotion.enterMs > 0
         NumberAnimation {
             duration: root.shown ? OsdMotion.enterMs : OsdMotion.exitMs
-            easing.type: OsdMotion.enterEasing
+            easing.type: root.shown ? OsdMotion.enterEasing : OsdMotion.exitEasing
+        }
+    }
+    Behavior on opacity {
+        enabled: OsdMotion.enterMs > 0
+        NumberAnimation {
+            duration: root.shown ? OsdMotion.enterMs : OsdMotion.exitMs
+            easing.type: root.shown ? OsdMotion.enterEasing : OsdMotion.exitEasing
         }
     }
 
-    StyledRect {
-        anchors.fill: parent
-        variant: "popup"
-        enableBorder: false
-        radius: root.radius
+    HoverHandler {
+        id: hover
+        onHoveredChanged: hovered ? settle.stop() : settle.restart()
     }
 
-    // Gauge: rises from the bottom edge of the button.
-    StyledRect {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: parent.height * root.value
-        variant: root.muted && root.kind !== "brightness" ? "common" : "primary"
-        enableBorder: false
-        radius: root.radius
-        opacity: 0.55
+    GridLayout {
+        anchors.fill: parent
+        anchors.leftMargin: root.vertical ? 0 : Space.m
+        anchors.rightMargin: root.vertical ? 0 : Space.m
+        anchors.topMargin: root.vertical ? Space.m : 0
+        anchors.bottomMargin: root.vertical ? Space.m : 0
+        flow: root.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
+        rowSpacing: Space.s
+        columnSpacing: Space.s
 
-        Behavior on height {
-            NumberAnimation {
-                duration: OsdMotion.enterMs
-                easing.type: OsdMotion.enterEasing
+        OsdGlyph {
+            Layout.alignment: Qt.AlignCenter
+            Layout.row: root.vertical ? 1 : 0
+            Layout.column: 0
+            kind: root.kind
+            value: root.value
+            muted: root.muted
+        }
+
+        LineSlider {
+            id: slider
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.row: 0
+            Layout.column: root.vertical ? 0 : 1
+            implicitWidth: root.vertical ? Space.controlS : 0
+            implicitHeight: root.vertical ? 0 : Space.controlS
+            vertical: root.vertical
+            step: Math.abs(OsdStyles.wheelStep(1))
+            showValue: true
+            valueText: root.readout.value !== "" ? root.readout.value : root.readout.title
+            highlighted: hover.hovered
+            // Muted: the level stays, quieted.
+            opacity: root.readout.level ? 1 : 0.5
+            onMoved: v => {
+                OsdService.adjust(root.kind, v - root.value, root.screen);
+                settle.restart();
             }
         }
     }
 
-    OsdGlyph {
-        anchors.centerIn: parent
-        font.pixelSize: Math.round(Math.min(root.width, root.height) * 0.5)
-        kind: root.kind
+    // Follows the level even after the slider set its own value on a drag.
+    Binding {
+        target: slider
+        property: "value"
         value: root.value
-        muted: root.muted
     }
 
     Timer {
@@ -78,7 +115,8 @@ Item {
             root.value = OsdService.lastValue;
             root.muted = OsdService.lastMuted;
             root.shown = true;
-            settle.restart();
+            if (!hover.hovered)
+                settle.restart();
         }
 
         function onLevel(kind, value, muted, device) {

@@ -107,6 +107,11 @@ PanelWindow {
             }
             Binding {
                 target: styleLoader.item
+                property: "currentDevice"
+                value: OsdService.currentDevice(root.kind)
+            }
+            Binding {
+                target: styleLoader.item
                 property: "vertical"
                 value: root.vertical
             }
