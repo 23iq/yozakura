@@ -33,7 +33,7 @@ var keys = {
         "description": "Where the dashboard opens: grown from the notch or as a window."
     },
     "dashboard.tabs": {
-        "description": "Dashboard tabs in order: [{id, visible}]."
+        "description": "Dashboard tabs in rail order: [{id, visible}], id = widgets | wallpapers | metrics (modules/widgets/dashboard/DashboardTabs.js). Unknown ids are ignored, missing ones are appended; at least one tab stays visible."
     },
     "dashboard.grid": {
         "description": "Widget grid of the dashboard."
@@ -44,7 +44,7 @@ var keys = {
         "description": "Columns of the dashboard widget grid."
     },
     "dashboard.grid.cells": {
-        "description": "Placed dashboard cells; empty uses the registry's default grid."
+        "description": "Placed dashboard widgets: [{widget, x, y, w, h}] in grid cells. widget = player | quickControls | calendar | specials | notifications | levels | weather | metricsSummary (modules/widgets/dashboard/widgets/WidgetRegistry.js). Empty or invalid uses the default grid; overlaps are pushed down and compacted. Edited in place from the dashboard (pencil button)."
     },
     "sheet": {
         "description": "Side sheet (notifications, quick settings)."

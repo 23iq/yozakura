@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
@@ -12,6 +13,7 @@ import qs.modules.widgets.dashboard.controls
 import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.widgets.dashboard.metrics
 import qs.config
+import "DashboardTabs.js" as DashboardTabs
 
 NotchAnimationBehavior {
     id: root
@@ -23,8 +25,11 @@ NotchAnimationBehavior {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    readonly property var tabModel: [Icons.widgets, Icons.wallpapers, Icons.heartbeat]
-    readonly property int tabCount: tabModel.length
+    // Stable tab indices (DashboardTabs.js) in rail order; hidden tabs are left out.
+    readonly property var tabOrder: DashboardTabs.visibleIndices(Config.layout.dashboard.tabs)
+    readonly property int tabCount: DashboardTabs.tabs.length
+    // Bento edit mode of the widgets tab (toggled from the rail).
+    property bool bentoEditing: false
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
@@ -56,7 +61,7 @@ NotchAnimationBehavior {
     function updateLoadedTabs() {
         let newLoadedTabs = {};
         
-        // Always load tab 0 (WidgetsTab) to avoid "jumpy" opening
+        // Always load tab 0 (widgets bento) to avoid "jumpy" opening
         newLoadedTabs[0] = true;
         
         // Always load current tab
@@ -86,7 +91,7 @@ NotchAnimationBehavior {
             return tabIndex === 0;
         }
 
-        if (tabIndex === 0) return true; // Always load WidgetsTab (Tab 0)
+        if (tabIndex === 0) return true; // Always load the widgets tab (Tab 0)
 
         if (Config.performance.dashboardPersistTabs) {
             return lruTabsLoaded[tabIndex] === true;
@@ -119,6 +124,7 @@ NotchAnimationBehavior {
         } else {
             // Reset launcher state when dashboard closes
             GlobalStates.clearLauncherState();
+            root.bentoEditing = false;
         }
     }
 
@@ -156,194 +162,17 @@ NotchAnimationBehavior {
         anchors.fill: parent
         spacing: 8
 
-        // Tab buttons
-        Item {
+        DashboardTabRail {
             id: tabsContainer
             width: root.tabWidth
             height: parent.height
-
-            // Manejo del scroll con rueda del mouse
-            WheelHandler {
-                id: wheelHandler
-                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-
-                onWheel: event => {
-                    // Determinar dirección del scroll
-                    let scrollUp = event.angleDelta.y > 0;
-                    let newIndex = root.state.currentTab;
-
-                    if (scrollUp && newIndex > 0) {
-                        // Scroll hacia arriba = pestaña anterior
-                        newIndex = newIndex - 1;
-                    } else if (!scrollUp && newIndex < root.tabCount - 1) {
-                        // Scroll hacia abajo = pestaña siguiente
-                        newIndex = newIndex + 1;
-                    }
-
-                    // Navegar solo si cambió el índice
-                    if (newIndex !== root.state.currentTab) {
-                        stack.navigateToTab(newIndex);
-                    }
-                }
-            }
-
-            // Background highlight que se desplaza verticalmente con efecto elástico
-            StyledRect {
-                id: tabHighlight
-                variant: "primary"
-                width: parent.width
-                radius: Styling.radius(4)
-                z: 0
-
-                property real idx1: root.state.currentTab
-                property real idx2: root.state.currentTab
-
-                // Calcular posición Y para un índice dado
-                function getYForIndex(idx) {
-                    if (idx <= 2) {
-                        return idx * (width + root.tabSpacing);
-                    } else {
-                        // Controls button at the bottom
-                        return controlsButtonContainer.y;
-                    }
-                }
-
-                property real targetY1: getYForIndex(idx1)
-                property real targetY2: getYForIndex(idx2)
-
-                property real animatedY1: targetY1
-                property real animatedY2: targetY2
-
-                x: 0
-                y: Math.min(animatedY1, animatedY2)
-                height: Math.abs(animatedY2 - animatedY1) + width
-
-                Behavior on animatedY1 {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration / 3
-                        easing.type: Easing.OutSine
-                    }
-                }
-                Behavior on animatedY2 {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutSine
-                    }
-                }
-
-                onTargetY1Changed: animatedY1 = targetY1
-                onTargetY2Changed: animatedY2 = targetY2
-            }
-
-            Column {
-                id: tabs
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                spacing: root.tabSpacing
-
-                Repeater {
-                    model: root.tabModel
-
-                    Button {
-                        required property int index
-                        required property string modelData
-
-                        text: modelData
-                        flat: true
-                        width: tabsContainer.width
-                        height: width
-                        // implicitHeight: (tabsContainer.height - root.tabSpacing * (root.tabCount - 1)) / root.tabCount
-
-                        background: Rectangle {
-                            color: "transparent"
-                            radius: Styling.radius(4)
-                        }
-
-                        contentItem: Text {
-                            text: parent.text
-                            textFormat: Text.RichText
-                            color: root.state.currentTab === index ? Styling.srItem("primary") : Colors.overBackground
-                            // font.family: Config.theme.font
-                            font.family: Icons.font
-                            // font.pixelSize: Config.theme.fontSize
-                            font.pixelSize: 20
-                            font.weight: Font.Medium
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
-                                }
-                            }
-                        }
-
-                        onClicked: stack.navigateToTab(index)
-                    }
-                }
-            }
-
-            // Controls button (separate at bottom)
-            StyledRect {
-                id: controlsButtonContainer
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: width
-                radius: Styling.radius(4)
-                variant: controlsButton.hovered ? "focus" : "common"
-                z: -1
-
-                opacity: GlobalStates.settingsWindowVisible ? 0 : 1
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutCubic
-                    }
-                }
-            }
-
-            Button {
-                id: controlsButton
-                anchors.bottom: parent.bottom
-                anchors.left: parent.left
-                anchors.right: parent.right
-                height: width
-                flat: true
-                hoverEnabled: true
-                z: 1
-
-                background: Rectangle {
-                    color: "transparent"
-                }
-
-                contentItem: Text {
-                    text: Icons.gear
-                    font.family: Icons.font
-                    font.pixelSize: 20
-                    font.weight: Font.Medium
-                    color: GlobalStates.settingsWindowVisible ? Styling.srItem("primary") : Colors.overBackground
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-
-                    Behavior on color {
-                        enabled: Config.animDuration > 0
-                        ColorAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutCubic
-                        }
-                    }
-                }
-
-                onClicked: GlobalShortcuts.toggleSettings()
-            }
+            tabSpacing: root.tabSpacing
+            order: root.tabOrder
+            currentTab: root.state.currentTab
+            canEdit: root.state.currentTab === 0
+            editing: root.bentoEditing
+            onNavigate: index => stack.navigateToTab(index)
+            onEditToggled: root.bentoEditing = !root.bentoEditing
         }
 
         Separator {
@@ -384,6 +213,7 @@ NotchAnimationBehavior {
                         // Reset launcher state when leaving unified launcher tab (tab 0)
                         if (root.state.currentTab === 0 && index !== 0) {
                             GlobalStates.clearLauncherState();
+                            root.bentoEditing = false;
                         }
 
                         root.state.currentTab = index;
@@ -505,12 +335,9 @@ NotchAnimationBehavior {
                         if (swiping) {
                             let deltaY = mouse.y - startY;
 
-                            if (deltaY < -swipeThreshold && root.state.currentTab < root.tabCount - 1) {
-                                // Swipe hacia arriba - siguiente tab
-                                stack.navigateToTab(root.state.currentTab + 1);
-                            } else if (deltaY > swipeThreshold && root.state.currentTab > 0) {
-                                // Swipe hacia abajo - tab anterior
-                                stack.navigateToTab(root.state.currentTab - 1);
+                            if (Math.abs(deltaY) > swipeThreshold && !root.bentoEditing) {
+                                // Swipe up: next tab, down: previous (rail order)
+                                stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, deltaY < 0 ? 1 : -1, false));
                             }
                         }
                         swiping = false;
@@ -528,8 +355,7 @@ NotchAnimationBehavior {
         enabled: GlobalStates.dashboardOpen
 
         onActivated: {
-            let nextIndex = (root.state.currentTab + 1) % root.tabCount;
-            stack.navigateToTab(nextIndex);
+            stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, 1));
         }
     }
 
@@ -539,11 +365,7 @@ NotchAnimationBehavior {
         enabled: GlobalStates.dashboardOpen
 
         onActivated: {
-            let prevIndex = root.state.currentTab - 1;
-            if (prevIndex < 0) {
-                prevIndex = root.tabCount - 1;
-            }
-            stack.navigateToTab(prevIndex);
+            stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, -1));
         }
     }
 
@@ -579,8 +401,12 @@ NotchAnimationBehavior {
     // Component definitions for better performance (defined once, reused)
     Component {
         id: unifiedLauncherComponent
-        WidgetsTab {
-            leftPanelWidth: root.leftPanelWidth
+        BentoView {
+            cols: Config.layout.dashboard.grid.cols
+            cells: Config.layout.dashboard.grid.cells
+            editing: root.bentoEditing
+            onEditingRequested: on => root.bentoEditing = on
+            onCommit: cells => Config.layout.dashboard.grid.cells = cells
         }
     }
 

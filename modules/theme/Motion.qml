@@ -18,25 +18,32 @@ Singleton {
     readonly property int exitEasing: root.easingOf(root.easingName)
     readonly property real _overshoot: 1.2
 
-    readonly property QtObject enter: QtObject {
-        readonly property int duration: MotionBudget.token("enter", root.base)
-        readonly property int easing: root.enterEasing
-        readonly property real overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
+    // Typed token so consumers (and qmllint) see duration/easing/overshoot.
+    component Token: QtObject {
+        property int duration: 0
+        property int easing: Easing.OutCubic
+        property real overshoot: 1.0
     }
-    readonly property QtObject exit: QtObject {
-        readonly property int duration: MotionBudget.token("exit", root.base)
-        readonly property int easing: root.exitEasing
-        readonly property real overshoot: root.exitEasing === Easing.OutBack ? root._overshoot : 1.0
+
+    readonly property Token enter: Token {
+        duration: MotionBudget.token("enter", root.base)
+        easing: root.enterEasing
+        overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
     }
-    readonly property QtObject morph: QtObject {
-        readonly property int duration: MotionBudget.token("morph", root.base)
-        readonly property int easing: root.enterEasing
-        readonly property real overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
+    readonly property Token exit: Token {
+        duration: MotionBudget.token("exit", root.base)
+        easing: root.exitEasing
+        overshoot: root.exitEasing === Easing.OutBack ? root._overshoot : 1.0
     }
-    readonly property QtObject emphasis: QtObject {
-        readonly property int duration: MotionBudget.token("emphasis", root.base)
-        readonly property int easing: root.enterEasing
-        readonly property real overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
+    readonly property Token morph: Token {
+        duration: MotionBudget.token("morph", root.base)
+        easing: root.enterEasing
+        overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
+    }
+    readonly property Token emphasis: Token {
+        duration: MotionBudget.token("emphasis", root.base)
+        easing: root.enterEasing
+        overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
     }
 
     // Stagger before secondary content (<= 40 ms) and palette crossfade (<= 600 ms).
