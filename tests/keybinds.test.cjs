@@ -117,6 +117,12 @@ test('Hyprland modmask decodes to modifiers', () => {
     eq(Keys.modsFromMask(0), []);
 });
 
+test('key hints: Super as text, glyph keys keep their icon', () => {
+    eq(Keys.hints(['SUPER', 'SHIFT'], 'S'), [{ text: 'Super', icon: '' }, { text: 'Shift', icon: '' }, { text: 'S', icon: '' }]);
+    eq(Keys.hints([], 'Up').map(h => h.text === '' && h.icon !== ''), [true]);
+    eq(Keys.hints(['SUPER'], 'Super_L'), [{ text: 'Super', icon: '' }]);
+});
+
 test('keycaps: the Super key is the app glyph, a lone Super shows once', () => {
     eq(Keys.caps(['SUPER', 'SHIFT'], 'S').map(c => c.kind + ':' + c.text), ['super:', 'text:Shift', 'text:S']);
     eq(Keys.caps(['SUPER'], 'Super_L').map(c => c.kind), ['super']);

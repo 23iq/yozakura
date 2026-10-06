@@ -1,12 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
+import qs.modules.keybinds
 
-// A titled glass card of cheatsheet rows (one BindModel group).
-StyledRect {
+// One BindModel group of the cheatsheet as a kit Group: its label and the
+// bind rows (the language gives it hairlines, a glass card or a tile).
+Group {
     id: root
 
     // {group: BindModel.GROUPS entry, rows}
@@ -14,53 +14,20 @@ StyledRect {
     property string selectedUid: ""
     signal editRequested(string uid)
 
-    variant: "pane"
-    radius: Styling.radius(2)
-    implicitHeight: body.implicitHeight + 24
+    label: I18n.t(root.model.group.title)
 
     Column {
-        id: body
-        x: 12
-        y: 12
-        width: parent.width - 24
-        spacing: 2
-
-        Row {
-            spacing: 8
-            bottomPadding: 6
-            leftPadding: 6
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Icons[root.model.group.icon] ?? ""
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(1)
-                color: Colors.primary
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: I18n.t(root.model.group.title)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
-                font.weight: Font.Bold
-                color: Colors.overBackground
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: root.model.rows.length
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.outline
-            }
-        }
+        id: rows
+        width: parent.width
+        spacing: 0
 
         Repeater {
             model: root.model.rows
             delegate: CheatsheetRow {
                 required property var modelData
-                width: body.width
+                width: rows.width
                 bind: modelData
-                selected: modelData.uid === root.selectedUid
+                highlighted: modelData.uid === root.selectedUid
                 onEditRequested: uid => root.editRequested(uid)
             }
         }

@@ -183,6 +183,18 @@ function comboText(mods, key, superName) {
     }).join(" + ");
 }
 
+// Kit KeyHints of a combo ([{text, icon}], `icon` an Icons key): the Super
+// key reads "Super", glyph keys (arrows, mouse) keep their icon.
+function hints(mods, key, superName) {
+    return caps(mods, key).map(function (c) {
+        if (c.kind === "super")
+            return { "text": superName || "Super", "icon": "" };
+        if (c.kind === "icon")
+            return { "text": "", "icon": c.icon };
+        return { "text": c.text, "icon": "" };
+    });
+}
+
 // --- Recorder: Qt key events -> Hyprland names ----------------------------
 
 var QT_MODS = [[0x10000000, "SUPER"], [0x04000000, "CTRL"], [0x08000000, "ALT"], [0x02000000, "SHIFT"]];
