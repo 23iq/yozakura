@@ -114,7 +114,7 @@ func TestKeyboardSetValidatesBeforeWriting(t *testing.T) {
 	m := structured(t, callTool(t, d, "keyboard_get", `{}`))
 	assert.Len(t, m["layouts"], 3)
 	// removing a bare layout name drops every variant; undo restores all
-	m = structured(t, callTool(t, d, "keyboard_set", `{"add":"ru"}`))
+	structured(t, callTool(t, d, "keyboard_set", `{"add":"ru"}`))
 	m = structured(t, callTool(t, d, "keyboard_set", `{"remove":"us"}`))
 	assert.Equal(t, map[string]any{"tool": "keyboard_set", "args": map[string]any{"add": "us,us:intl,us:dvorak"}}, m["undo"])
 }
