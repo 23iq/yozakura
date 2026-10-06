@@ -24,7 +24,8 @@ Singleton {
             "short": ""
         })
 
-    readonly property string shortLabel: root.active.short || ""
+    // Before the first keyboard.layout event: the first configured layout
+    readonly property string shortLabel: root.active.short || (Config.keyboardReady && Config.keyboard.layouts.length > 0 ? KeyboardModel.shortName(Config.keyboard.layouts[0].layout) : "")
     readonly property bool indicatorVisible: Config.keyboardReady && Config.keyboard.showIndicator && Config.keyboard.layouts.length > 1
 
     function shortName(layout) {

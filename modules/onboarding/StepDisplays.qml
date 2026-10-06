@@ -30,21 +30,36 @@ Item {
             return;
         const list = DisplayModel.arrange(others.concat([config]), config.name, config.x, config.y);
         DisplaysService.apply(list);
+        root._candidate = config;
+    }
+
+    // The monitor change waiting for "Keep"; remembered once it is kept.
+    property var _candidate: null
+
+    function _sessionEnded(state) {
+        const c = root._candidate;
+        root._candidate = null;
+        if (!c || state !== "kept")
+            return;
         const modes = Object.assign({}, wizard.choices.displays || {});
-        modes[config.name] = {
-            "width": config.width,
-            "height": config.height,
-            "refresh": config.refresh,
-            "scale": config.scale
+        modes[c.name] = {
+            "width": c.width,
+            "height": c.height,
+            "refresh": c.refresh,
+            "scale": c.scale
         };
         wizard.remember("displays", modes);
     }
 
-    // First visit: `us` + the locale's layout, unless layouts were set before.
+    // First visit: `us` + the locale's layout, unless layouts were set
+    // before. The marker is persistent (not a wizard choice): a skipped or
+    // finished setup never re-seeds. Retried until config and state load.
+    readonly property string seededKey: "onboarding.keyboardSeeded"
+
     function seedKeyboard(locale) {
-        if (!wizard || wizard.choices.keyboardSeeded === true || !Config.keyboardReady)
+        if (!wizard || !Config.keyboardReady || !StateService.initialized || StateService.get(root.seededKey, false) === true)
             return;
-        wizard.remember("keyboardSeeded", true);
+        StateService.set(root.seededKey, true);
         const cur = Array.from(Config.keyboard.layouts);
         const untouched = cur.length === 1 && cur[0].layout === "us" && !cur[0].variant;
         if (!untouched)
@@ -66,9 +81,28 @@ Item {
     }
 
     Connections {
+        target: Config
+        function onKeyboardReadyChanged() {
+            root.seedKeyboard(Qt.locale().name);
+        }
+    }
+
+    Connections {
+        target: StateService
+        function onInitializedChanged() {
+            root.seedKeyboard(Qt.locale().name);
+        }
+    }
+
+    Connections {
         target: DisplaysService
         function onApplyFailed(message) {
             root.error = message;
+            root._candidate = null;
+        }
+        function onSessionChanged() {
+            if (DisplaysService.session.state !== "pending")
+                root._sessionEnded(DisplaysService.session.state);
         }
     }
 

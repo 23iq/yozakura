@@ -97,6 +97,7 @@ check(ev("picking", h.find(win, "layoutList")) is False, "picking a layout close
 
 # Indicator: appears with two layouts, shows RU on a layout event, click -> keyboard.next
 check(ev("indicator.visible") is True, "indicator shows with two layouts")
+check(cfg("KeyboardService.shortLabel") == "EN", "before any layout event the label is the first layout (EN)")
 ev("BackendService.emit('keyboard.layout', {name: 'Russian', index: 1, code: 'ru', short: 'RU'})")
 QTest.qWait(80)
 check(h.find(win, "layoutLabel").property("text") == "RU", "indicator shows RU after the keyboard.layout event")
