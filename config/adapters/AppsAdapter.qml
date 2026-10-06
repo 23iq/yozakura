@@ -7,6 +7,9 @@ JsonAdapter {
         property bool gtk: true
         property bool qt: true
         property bool kitty: true
+        property bool ghostty: true
+        property bool foot: true
+        property bool alacritty: true
         property bool discord: true
         property bool spicetify: true
         property bool telegram: true

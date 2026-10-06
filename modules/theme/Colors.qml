@@ -134,6 +134,11 @@ FileView {
         onTriggered: {
             if (colors.appThemed("kitty"))
                 kittyGenerator.generate(colors);
+            // Same opacity/font inputs as kitty.
+            for (const id of ["ghostty", "foot", "alacritty"]) {
+                if (colors.appThemed(id))
+                    colors[id + "Generator"].generate(colors);
+            }
         }
     }
 
@@ -176,6 +181,18 @@ FileView {
 
     property KittyGenerator kittyGenerator: KittyGenerator {
         id: kittyGenerator
+    }
+
+    property GhosttyGenerator ghosttyGenerator: GhosttyGenerator {
+        id: ghosttyGenerator
+    }
+
+    property FootGenerator footGenerator: FootGenerator {
+        id: footGenerator
+    }
+
+    property AlacrittyGenerator alacrittyGenerator: AlacrittyGenerator {
+        id: alacrittyGenerator
     }
 
     property NvChadGenerator nvChadGenerator: NvChadGenerator {

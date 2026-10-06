@@ -51,6 +51,13 @@ func findBlock(content, marker string) (s, e int, ok bool) {
 // or replaces an existing one in place. It reports whether content changed.
 // RemoveBlock undoes an add byte for byte.
 func UpsertBlock(content, marker, body string) (string, bool) {
+	return UpsertBlockAt(content, marker, body, false)
+}
+
+// UpsertBlockAt is UpsertBlock with a choice of where a new block goes:
+// atTop puts it before everything (needed where later [sections] would scope
+// a trailing include, e.g. foot.ini). An existing block is replaced in place.
+func UpsertBlockAt(content, marker, body string, atTop bool) (string, bool) {
 	start, end := BlockMarkers(marker)
 	block := start + "\n" + strings.TrimRight(body, "\n") + "\n" + end
 	if s, e, ok := findBlock(content, marker); ok {
@@ -64,6 +71,8 @@ func UpsertBlock(content, marker, body string) (string, bool) {
 	switch {
 	case content == "":
 		return block + "\n", true
+	case atTop:
+		return block + "\n\n" + content, true
 	case strings.HasSuffix(content, "\n"):
 		return content + "\n" + block + "\n", true
 	default:
@@ -78,6 +87,9 @@ func RemoveBlock(content, marker string) (string, bool) {
 		return content, false
 	}
 	before, after := content[:s], content[e:]
+	if s == 0 && strings.HasPrefix(after, "\n") {
+		return after[1:], true // top block: drop the separator UpsertBlockAt added
+	}
 	if strings.HasSuffix(content[s:e], "\n") {
 		before = strings.TrimSuffix(before, "\n")
 		if before != "" && !strings.HasSuffix(before, "\n") {
@@ -88,9 +100,7 @@ func RemoveBlock(content, marker string) (string, bool) {
 		}
 		return content[:s] + after, true
 	}
-	if strings.HasSuffix(before, "\n\n") {
-		before = strings.TrimSuffix(before, "\n\n")
-	}
+	before = strings.TrimSuffix(before, "\n\n")
 	return before + after, true
 }
 

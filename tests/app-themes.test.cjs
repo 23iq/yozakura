@@ -69,3 +69,13 @@ test('status script reports installed apps and last written outputs', () => {
     assert.deepEqual(plain(A.parseStatus('junk\nnope|1|2\n')), {});
     fs.rmSync(home, { recursive: true, force: true });
 });
+
+test('ghostty, foot and alacritty are registered with generator files', () => {
+    for (const id of ['ghostty', 'foot', 'alacritty']) {
+        const a = A.byId(id);
+        assert.ok(a, id);
+        assert.deepEqual(plain(a.generators), [`${id}Generator`]);
+        const file = `../modules/theme/${id[0].toUpperCase() + id.slice(1)}Generator.qml`;
+        assert.ok(fs.existsSync(path.join(__dirname, file)), file);
+    }
+});

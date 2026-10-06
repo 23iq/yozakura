@@ -37,6 +37,30 @@ var APPS = [
         "outputs": ["$K/kitty.conf"]
     },
     {
+        "id": "ghostty",
+        "label": "Ghostty",
+        "icon": "terminal",
+        "generators": ["ghosttyGenerator"],
+        "detect": "command -v ghostty || [ -d \"$C/ghostty\" ]",
+        "outputs": ["$K/ghostty.conf"]
+    },
+    {
+        "id": "foot",
+        "label": "Foot",
+        "icon": "terminal",
+        "generators": ["footGenerator"],
+        "detect": "command -v foot || [ -d \"$C/foot\" ]",
+        "outputs": ["$K/foot.ini"]
+    },
+    {
+        "id": "alacritty",
+        "label": "Alacritty",
+        "icon": "terminal",
+        "generators": ["alacrittyGenerator"],
+        "detect": "command -v alacritty || [ -d \"$C/alacritty\" ]",
+        "outputs": ["$K/alacritty.toml"]
+    },
+    {
         "id": "discord",
         "label": "Discord (Vesktop / Vencord)",
         "icon": "chatDots",

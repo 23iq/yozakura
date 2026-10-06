@@ -2367,6 +2367,48 @@
               },
               "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
             },
+            "ghostty": {
+              "title": "Ghostty",
+              "type": "boolean",
+              "default": true,
+              "x-settings": {
+                "category": "terminal",
+                "section": "theming",
+                "label": "prefs.term.theming",
+                "entry": "apps.theming",
+                "entryTitle": "Theme these apps",
+                "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+              },
+              "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+            },
+            "foot": {
+              "title": "Foot",
+              "type": "boolean",
+              "default": true,
+              "x-settings": {
+                "category": "terminal",
+                "section": "theming",
+                "label": "prefs.term.theming",
+                "entry": "apps.theming",
+                "entryTitle": "Theme these apps",
+                "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+              },
+              "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+            },
+            "alacritty": {
+              "title": "Alacritty",
+              "type": "boolean",
+              "default": true,
+              "x-settings": {
+                "category": "terminal",
+                "section": "theming",
+                "label": "prefs.term.theming",
+                "entry": "apps.theming",
+                "entryTitle": "Theme these apps",
+                "keywords": "app theming colors palette gtk qt kitty discord vesktop spotify spicetify telegram firefox zen papirus neovim nvim sddm regenerate status installed"
+              },
+              "description": "Write the shell palette to this app when colors change (modules/theme/AppThemes.js); off leaves the app's theme alone."
+            },
             "discord": {
               "title": "Discord",
               "type": "boolean",
