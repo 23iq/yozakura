@@ -9,6 +9,16 @@ var data = {
     "monoFont": "Iosevka Nerd Font Mono",
     "monoFontSize": 14,
     "tintIcons": false,
+    // Icon font weight: regular | bold | fill (modules/theme/IconWeights.js).
+    "icons": {
+        "weight": "bold"
+    },
+    // Type roles: body follows `font`; heading "" = the body font;
+    // headingCase: none | upper | lower | title.
+    "type": {
+        "heading": "",
+        "headingCase": "none"
+    },
     "enableCorners": true,
     "animDuration": 300,
     // Metrics density: compact | cozy | roomy (cozy = the historical sizes).

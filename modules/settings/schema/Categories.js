@@ -1,5 +1,6 @@
 .pragma library
 .import "appearance.js" as Appearance
+.import "icons-type.js" as IconsType
 .import "wallpapers.js" as Wallpapers
 .import "bar.js" as Bar
 .import "notch.js" as Notch
@@ -97,7 +98,7 @@ var groups = [
         "id": "look",
         "icon": "paintBrush",
         "title": "prefs.group.look",
-        "categories": ["appearance", "wallpapers", "surfaces"]
+        "categories": ["appearance", "icons-type", "wallpapers", "surfaces"]
     },
     {
         "id": "presets",
@@ -139,6 +140,7 @@ function topic(label, section, keywords) {
 var categories = [
     Layout.category,
     Appearance.category,
+    IconsType.category,
     Wallpapers.category,
     Bar.category,
     legacy("surfaces", "stack", "prefs.cat.surfaces", "prefs.cat.surfaces.desc", "dashboard/controls/ThemePanel.qml", "", "shadows surfaces variants gradients opacity borders colors theme editor terminal opacity", [

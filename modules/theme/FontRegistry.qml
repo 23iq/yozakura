@@ -2,11 +2,12 @@ pragma Singleton
 import QtQuick
 import QtQml.Models
 import "BundledFonts.js" as BundledFonts
+import "IconWeights.js" as IconWeights
 
 // Loads every bundled UI font (BundledFonts.js, assets/fonts/ui) into the
 // application font database, so theme.font / theme.monoFont can name them
 // like installed fonts. shell.qml touches `count` before any surface is
-// created. A family that is neither bundled nor installed falls back to
+// created. Also loads the Phosphor icon weights (IconWeights.js). A family that is neither bundled nor installed falls back to
 // Qt's default sans (fontconfig), never to an empty face.
 QtObject {
     id: root
@@ -19,7 +20,7 @@ QtObject {
     }
 
     property Instantiator loaders: Instantiator {
-        model: BundledFonts.files()
+        model: BundledFonts.files().concat(IconWeights.files())
 
         delegate: FontLoader {
             required property string modelData
