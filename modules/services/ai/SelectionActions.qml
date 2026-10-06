@@ -5,13 +5,12 @@ import qs.config
 import qs.modules.services
 import qs.modules.globals
 import "Templates.js" as Templates
-import "SafeText.js" as SafeText
 import "../../aicenter/lib/Markdown.js" as Markdown
 
 // Selection actions: a bind opens a menu near the cursor with actions for the
 // primary selection (translate, explain, rewrite, fix code, prompt library).
-// The result replaces the selection (wtype), goes to the clipboard or opens
-// in the sidebar, per action.
+// Results remain in a preview until explicitly copied or opened in the
+// workspace. No focus-dependent typing is safe without verifying the target.
 QtObject {
     id: root
 
@@ -22,6 +21,9 @@ QtObject {
     property bool working: false
     property string workingLabel: ""
     property string error: ""
+    property string result: ""
+    property bool hasResult: false
+    property int _generation: 0
 
     // [{id, label, icon, prompt, output, kind: action|prompt}]
     readonly property var actions: {
@@ -50,13 +52,17 @@ QtObject {
     }
 
     function open() {
+        _generation++;
         error = "";
+        result = "";
+        hasResult = false;
         working = false;
         screenName = GlobalStates.focusedScreenName();
         reader.running = true;
     }
 
     function close() {
+        _generation++;
         visible = false;
         working = false;
     }
@@ -70,8 +76,8 @@ QtObject {
                 const pos = (parts[1] || "").trim().split(",").map(v => parseInt(v, 10));
                 root.cursor = pos.length === 2 && !isNaN(pos[0]) ? Qt.point(pos[0], pos[1]) : Qt.point(-1, -1);
                 if (!root.text.trim()) {
-                    notifier.command = ["notify-send", "-a", "Yozakura AI", I18n.t("ai.selection_empty_title"), I18n.t("ai.selection_empty_body")];
-                    notifier.running = true;
+                    root.notifier.command = ["notify-send", "-a", Brand.displayName, I18n.t("ai.selection_empty_title"), I18n.t("ai.selection_empty_body")];
+                    root.notifier.running = true;
                     return;
                 }
                 root.visible = true;
@@ -91,50 +97,75 @@ QtObject {
             name: "selection",
             text: text
         };
-        close();
-        Ai.askQuick(instruction, [att]);
+        return _finishShortcut(Ai.askQuick(instruction, [att]));
+    }
+
+    function _finishShortcut(accepted) {
+        if (accepted) {
+            close();
+            return true;
+        }
+        error = Ai.noticeError || I18n.t("ai.engine_unavailable");
+        return false;
+    }
+
+    function copyResult() {
+        if (!hasResult)
+            return;
+        error = "";
+        output.command = ["wl-copy", "--", result];
+        output.running = true;
+    }
+
+    function openResult() {
+        if (!hasResult)
+            return false;
+        if (!GlobalStates.assistantVisible)
+            GlobalStates.toggleAssistant();
+        // Continue with both the source and result available for inspection.
+        return _finishShortcut(Ai.send(result, [
+            {
+                type: "text",
+                kind: "selection",
+                name: "selection",
+                text: text
+            }
+        ]));
     }
 
     function run(action) {
+        if (working)
+            return;
         const prompt = Templates.expand(action.prompt, {
             selection: text,
             language: Config.ai.selection.language
         });
+        error = "";
+        result = "";
+        hasResult = false;
         if (action.output === "sidebar") {
-            close();
-            Ai.setMode("chat");
             if (!GlobalStates.assistantVisible)
                 GlobalStates.toggleAssistant();
-            Ai.send(prompt, []);
+            _finishShortcut(Ai.send(prompt, []));
             return;
         }
         if (action.output === "quickask") {
-            close();
-            Ai.askQuick(prompt, []);
+            _finishShortcut(Ai.askQuick(prompt, []));
             return;
         }
         working = true;
         workingLabel = action.label;
-        Ai.runPrompt(prompt, {}, (result, err) => {
+        const generation = ++_generation;
+        Ai.runPrompt(prompt, {}, (answer, err) => {
+            if (generation !== _generation)
+                return;
             working = false;
             if (err) {
                 error = err;
                 return;
             }
-            const clean = _unfence(result);
-            visible = false;
-            const typed = SafeText.forTyping(clean);
-            if (action.output === "clipboard") {
-                output.command = ["wl-copy", "--", clean];
-            } else if (typed.multiline) {
-                // Typing a line break into a terminal would run it: copy
-                // instead and let the user paste.
-                output.command = ["sh", "-c", "printf %s \"$1\" | wl-copy && notify-send -a \"$2\" -- \"$3\" \"$4\"", "sh", clean, Brand.displayName, I18n.t("ai.selection_multiline_title"), I18n.t("ai.selection_multiline_body")];
-            } else {
-                // Give focus back to the app, then type over the still-selected text.
-                output.command = ["sh", "-c", "sleep 0.15; if [ ${#1} -le 4000 ]; then wtype -- \"$1\"; else printf %s \"$1\" | wl-copy && wtype -M ctrl v -m ctrl; fi", "sh", typed.text];
-            }
-            output.running = true;
+            result = _unfence(answer);
+            hasResult = true;
         });
     }
 
@@ -146,5 +177,10 @@ QtObject {
         return String(s).trim();
     }
 
-    property Process output: Process {}
+    property Process output: Process {
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0)
+                root.error = I18n.t("ai.selection_copy_failed");
+        }
+    }
 }

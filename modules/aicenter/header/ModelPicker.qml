@@ -12,9 +12,19 @@ import qs.modules.aicenter.common
 // type to filter, Up/Down to move, Enter to pick, Esc to close.
 Popup {
     id: root
+    objectName: "workspaceEnginePicker"
 
-    property string filterKind: "chat"   // chat (api+local) | agent | all
+    property string filterKind: "all"   // chat (api+local) | agent | all
     signal picked(string id)
+
+    function choose(index) {
+        const entry = entries[index];
+        if (!entry || entry.available === false || Ai.busy)
+            return false;
+        picked(entry.id);
+        close();
+        return true;
+    }
 
     width: Math.min(parent ? parent.width - 24 : 420, 420)
     height: Math.min(460, list.contentHeight + search.height + 34)
@@ -27,7 +37,11 @@ Popup {
     readonly property var entries: {
         const q = search.text.toLowerCase();
         const all = Ai.models.filter(m => root.filterKind === "all" || (root.filterKind === "agent" ? m.kind === "agent" : m.kind !== "agent"));
-        return all.filter(m => !q || m.name.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.provider.includes(q));
+        const recent = Ai.recentModelIds || [];
+        return all.filter(m => !q || m.name.toLowerCase().includes(q) || m.model.toLowerCase().includes(q) || m.provider.includes(q)).sort((a, b) => {
+            const rank = m => m.id === Ai.defaultModelId ? -1 : (recent.indexOf(m.id) >= 0 ? recent.indexOf(m.id) : recent.length + 1);
+            return rank(a) - rank(b);
+        });
     }
 
     onOpened: {
@@ -79,9 +93,7 @@ Popup {
                     list.positionViewAtIndex(root.selectedIndex, ListView.Contain);
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    if (root.entries[root.selectedIndex])
-                        root.picked(root.entries[root.selectedIndex].id);
-                    root.close();
+                    root.choose(root.selectedIndex);
                     event.accepted = true;
                 }
             }
@@ -113,6 +125,7 @@ Popup {
                 required property int index
                 width: list.width
                 height: 40
+                opacity: entry.modelData.available === false ? 0.5 : 1
                 radius: Styling.radius(-6)
                 variant: entry.index === root.selectedIndex ? "focus" : (hov.hovered ? "common" : "transparent")
                 HoverHandler {
@@ -120,8 +133,7 @@ Popup {
                 }
                 TapHandler {
                     onTapped: {
-                        root.picked(entry.modelData.id);
-                        root.close();
+                        root.choose(entry.index);
                     }
                 }
                 RowLayout {
@@ -156,6 +168,13 @@ Popup {
                             font.pixelSize: Styling.fontSize(-4)
                             color: Colors.outline
                         }
+                    }
+                    Text {
+                        visible: entry.modelData.id === Ai.defaultModelId
+                        text: Icons.pin
+                        font.family: Icons.font
+                        font.pixelSize: 13
+                        color: Colors.primary
                     }
                     Text {
                         visible: Ai.currentModel && Ai.currentModel.id === entry.modelData.id

@@ -47,10 +47,11 @@ PanelWindow {
 
     StyledRect {
         id: menu
+        objectName: "selectionMenu"
         variant: "popup"
         radius: Styling.radius(0)
         enableShadow: true
-        width: 300
+        width: Math.min(win.width - Styling.fontSize(0) * 2, win.actions.hasResult ? Config.ai.sidebarWidth : Config.ai.sidebarWidth * 0.75)
         height: col.implicitHeight + 16
         readonly property point local: win.actions.cursor.x >= 0 ? Qt.point(win.actions.cursor.x - win.targetScreen.x, win.actions.cursor.y - win.targetScreen.y) : Qt.point((win.width - width) / 2, win.height / 3)
         x: Math.max(8, Math.min(win.width - width - 8, local.x + 12))
@@ -63,6 +64,13 @@ PanelWindow {
             scale = 1;
             opacity = 1;
             ask.forceActiveFocus();
+        }
+        Connections {
+            target: win.actions
+            function onHasResultChanged() {
+                if (win.actions.hasResult)
+                    resultText.forceActiveFocus();
+            }
         }
         Behavior on scale {
             NumberAnimation {
@@ -123,8 +131,83 @@ PanelWindow {
                 color: Colors.error
             }
 
+            Text {
+                visible: win.actions.hasResult
+                Layout.fillWidth: true
+                Layout.margins: Styling.fontSize(-6)
+                text: I18n.t("ai.selection_preview")
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(0)
+                color: Colors.overSurface
+            }
+
+            ScrollView {
+                visible: win.actions.hasResult
+                Layout.fillWidth: true
+                Layout.preferredHeight: Math.min(win.height * 0.4, resultText.implicitHeight)
+                clip: true
+                TextArea {
+                    id: resultText
+                    objectName: "selectionResult"
+                    text: win.actions.result
+                    readOnly: true
+                    selectByMouse: true
+                    textFormat: TextEdit.PlainText
+                    wrapMode: TextEdit.Wrap
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-1)
+                    color: Colors.overSurface
+                    background: StyledRect {
+                        variant: "common"
+                        radius: Styling.radius(-4)
+                    }
+                    Keys.onEscapePressed: win.actions.close()
+                }
+            }
+
+            RowLayout {
+                visible: win.actions.hasResult
+                Layout.fillWidth: true
+                Button {
+                    id: copyButton
+                    objectName: "selectionCopy"
+                    Layout.fillWidth: true
+                    text: I18n.t("ai.selection_apply")
+                    onClicked: win.actions.copyResult()
+                    contentItem: Text {
+                        text: copyButton.text
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-2)
+                        color: Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    background: StyledRect {
+                        variant: copyButton.hovered ? "focus" : "common"
+                        radius: Styling.radius(-4)
+                    }
+                }
+                Button {
+                    id: continueButton
+                    objectName: "selectionContinue"
+                    Layout.fillWidth: true
+                    text: I18n.t("ai.selection_continue")
+                    onClicked: win.actions.openResult()
+                    contentItem: Text {
+                        text: continueButton.text
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-2)
+                        color: Colors.overSurface
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    background: StyledRect {
+                        variant: continueButton.hovered ? "focus" : "common"
+                        radius: Styling.radius(-4)
+                    }
+                }
+            }
+
             Repeater {
-                model: win.actions.working ? [] : win.actions.actions
+                model: win.actions.working || win.actions.hasResult ? [] : win.actions.actions
                 delegate: StyledRect {
                     id: entry
                     required property var modelData
@@ -179,7 +262,8 @@ PanelWindow {
 
             TextField {
                 id: ask
-                visible: !win.actions.working
+                objectName: "selectionAsk"
+                visible: !win.actions.working && !win.actions.hasResult
                 Layout.fillWidth: true
                 Layout.topMargin: 4
                 placeholderText: I18n.t("ai.ask_selection")

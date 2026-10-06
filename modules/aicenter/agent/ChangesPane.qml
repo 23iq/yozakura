@@ -17,6 +17,7 @@ StyledRect {
 
     property var diffs: []        // [{path, diff, key}] from AgentTimeline state
     property string selected: ""
+    signal closeRequested
 
     readonly property var files: {
         const byPath = {};
@@ -87,6 +88,11 @@ StyledRect {
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-3)
                 color: Colors.outline
+            }
+            IconButton {
+                glyph: Icons.cancel
+                tooltip: I18n.t("ai.close")
+                onClicked: root.closeRequested()
             }
         }
 

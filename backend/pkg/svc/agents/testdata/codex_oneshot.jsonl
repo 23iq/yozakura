@@ -1,0 +1,11 @@
+<
+{"id":1,"result":{}}
+<
+<
+{"id":2,"result":{"config":{"mcp_servers":{"inherited":{"command":"unsafe-server"}},"features":{"shell_tool":false,"apps":false}}}}
+<
+{"id":3,"result":{"thread":{"id":"quick-thread"}}}
+<
+{"id":4,"result":{"turn":{"id":"quick-turn"}}}
+{"method":"turn/completed","params":{"turn":{"id":"quick-turn","status":"completed"}}}
+=hold

@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.settings.store
 
 // CLI agents (own login, no API keys): availability, binary, model, YOLO,
 // and the shared "safe auto, ask the rest" policy.
@@ -28,13 +29,13 @@ ColumnLayout {
     }
 
     function setAgent(id, key, value) {
-        Config.ai.agents[id][key] = value;
+        SettingsStore.set("ai.agents." + id + "." + key, value);
     }
 
     AiToggleRow {
         label: I18n.t("ai.auto_approve_reads")
         checked: (Config.ai.agents.autoApprove || []).indexOf("read") >= 0
-        onToggled: v => Config.ai.agents.autoApprove = v ? ["read"] : []
+        onToggled: v => SettingsStore.set("ai.agents.autoApprove", v ? ["read"] : [])
     }
 
     Repeater {
@@ -102,6 +103,13 @@ ColumnLayout {
                     placeholder: I18n.t("ai.agent_model_hint")
                     mono: true
                     onEdited: t => root.setAgent(card.modelData, "model", t.trim())
+                }
+                AiTextRow {
+                    label: I18n.t("ai.effort")
+                    value: card.cfg.effort || ""
+                    placeholder: I18n.t("ai.model_default")
+                    mono: true
+                    onEdited: t => root.setAgent(card.modelData, "effort", t.trim())
                 }
                 Text {
                     Layout.fillWidth: true

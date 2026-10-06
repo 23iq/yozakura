@@ -42,6 +42,7 @@ func (s *Service) ipcService() *ipc.Service {
 		Methods: map[string]ipc.HandlerFunc{
 			"list_agents": func(json.RawMessage) (any, error) { return s.m.ListAgents(), nil },
 			"configure":   s.configure,
+			"models":      s.models,
 			"create":      s.create,
 			"send":        s.send,
 			"respond":     s.respond,
@@ -54,7 +55,7 @@ func (s *Service) ipcService() *ipc.Service {
 		},
 		Subscribe: s.subscribe,
 		// Both run `<agent> --version` probes (up to 4 s each).
-		Async: map[string]bool{"list_agents": true, "configure": true},
+		Async: map[string]bool{"list_agents": true, "configure": true, "models": true, "create": true, "update": true},
 	}
 }
 
@@ -166,4 +167,15 @@ func (s *Service) events(params json.RawMessage) (any, error) {
 		return nil, err
 	}
 	return map[string]any{"events": evs, "last": last}, nil
+}
+
+func (s *Service) models(params json.RawMessage) (any, error) {
+	var p struct {
+		Agent string `json:"agent"`
+		Cwd   string `json:"cwd"`
+	}
+	if err := decode(params, &p); err != nil {
+		return nil, err
+	}
+	return s.m.Models(p.Agent, p.Cwd), nil
 }

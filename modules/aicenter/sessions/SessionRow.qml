@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
@@ -16,6 +17,9 @@ StyledRect {
     signal opened
     signal pinToggled
     signal removed
+    signal stopped
+    signal renamed(string title)
+    property bool renaming: false
 
     implicitHeight: 52
     radius: Styling.radius(-4)
@@ -68,8 +72,15 @@ StyledRect {
                     font.weight: Font.Medium
                     color: Colors.overSurface
                 }
+                Text {
+                    visible: (root.entry.pending || 0) > 0
+                    text: Icons.shieldCheck + " " + root.entry.pending
+                    color: Colors.warning
+                    font.family: Icons.font
+                    font.pixelSize: Styling.fontSize(-2)
+                }
                 StatusDot {
-                    visible: root.entry.kind === "agent" && root.entry.status !== "exited" && root.entry.status !== "idle"
+                    visible: root.entry.status && root.entry.status !== "exited" && root.entry.status !== "idle"
                     status: root.entry.status || "idle"
                 }
                 Text {
@@ -86,6 +97,23 @@ StyledRect {
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-3)
                 color: Colors.outline
+            }
+        }
+        IconButton {
+            glyph: Icons.stop
+            size: 24
+            visible: hov.hovered && ["running", "starting", "waiting"].indexOf(root.entry.status) >= 0
+            tooltip: I18n.t("ai.stop")
+            onClicked: root.stopped()
+        }
+        IconButton {
+            glyph: Icons.notePencil
+            size: 24
+            visible: hov.hovered
+            tooltip: I18n.t("ai.rename")
+            onClicked: {
+                root.renaming = true;
+                renameInput.forceActiveFocus();
             }
         }
         IconButton {
@@ -106,5 +134,22 @@ StyledRect {
             tooltip: I18n.t("ai.delete")
             onClicked: root.removed()
         }
+    }
+    TextField {
+        id: renameInput
+        anchors.fill: parent
+        visible: root.renaming
+        text: root.entry.title || ""
+        color: Colors.overSurface
+        background: StyledRect {
+            variant: "common"
+            radius: Styling.radius(-4)
+        }
+        onAccepted: {
+            if (text.trim())
+                root.renamed(text.trim());
+            root.renaming = false;
+        }
+        Keys.onEscapePressed: root.renaming = false
     }
 }

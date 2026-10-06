@@ -16,7 +16,7 @@ var keys = {
         "description": "Extra chat models added to the model picker."
     },
     "defaultModel": {
-        "description": "Chat model used by default (id from the model picker)."
+        "description": "Default assistant engine or API model ID; empty uses the last explicit choice."
     },
     "sidebarWidth": {
         "min": 240,
@@ -66,6 +66,9 @@ var keys = {
     },
     "agents.*.model": {
         "description": "Model passed to the agent (empty = the agent's default)."
+    },
+    "agents.*.effort": {
+        "description": "Reasoning effort for new agent sessions; empty uses the engine default. Supported values depend on the installed engine and selected model."
     },
     "agents.*.yolo": {
         "description": "Approve every tool call of this agent without asking (dangerous)."

@@ -120,6 +120,11 @@ func (a acpAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, e
 			_ = json.Unmarshal(res, &r)
 			c.imageCap = r.AgentCapabilities.PromptCapabilities.Image
 			resume := ""
+			if o.ResumeID != "" && !r.AgentCapabilities.LoadSession {
+				sink.Emit(Event{Kind: KindError, Message: "agent does not support native session resume"})
+				c.failStart()
+				return
+			}
 			if o.ResumeID != "" && r.AgentCapabilities.LoadSession {
 				resume = o.ResumeID
 			}
@@ -134,8 +139,7 @@ func (a acpAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, e
 	return c, nil
 }
 
-// openSession creates a session, or loads resumeID; a failed load falls
-// back to a new session, a failed creation ends the turn (failStart).
+// openSession creates a session or loads resumeID; failures end the turn.
 func (c *acpConn) openSession(resumeID string, fail func(string, *rpcError) bool) error {
 	o := c.opts
 	params := map[string]any{"cwd": o.Cwd, "mcpServers": acpMCPServers(o.MCP)}
@@ -153,19 +157,12 @@ func (c *acpConn) openSession(resumeID string, fail func(string, *rpcError) bool
 		c.loading = false
 		c.mu.Unlock()
 		if fail(method, e) {
-			if resumeID != "" {
-				c.mu.Lock()
-				c.session = ""
-				c.mu.Unlock()
-				if c.openSession("", fail) == nil {
-					return
-				}
-			}
 			c.failStart()
 			return
 		}
 		var s struct {
-			SessionID string `json:"sessionId"`
+			SessionID     string            `json:"sessionId"`
+			ConfigOptions []acpConfigOption `json:"configOptions"`
 		}
 		_ = json.Unmarshal(res, &s)
 		c.mu.Lock()
@@ -175,12 +172,7 @@ func (c *acpConn) openSession(resumeID string, fail func(string, *rpcError) bool
 		sid := c.session
 		c.mu.Unlock()
 		c.sink.SetAgentSessionID(sid)
-		if o.Model != "" {
-			_ = c.rpc.Call("session/set_config_option", map[string]any{"sessionId": sid, "configId": "model", "value": o.Model},
-				func(_ json.RawMessage, e *rpcError) { fail("model", e); c.markReady() })
-			return
-		}
-		c.markReady()
+		c.applySettings(sid, s.ConfigOptions)
 	})
 }
 

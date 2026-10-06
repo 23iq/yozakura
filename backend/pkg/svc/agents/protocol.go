@@ -91,6 +91,7 @@ type SessionMeta struct {
 	Status         string `json:"status"`
 	Pinned         bool   `json:"pinned"`
 	Yolo           bool   `json:"yolo"`
+	Effort         string `json:"effort"`
 	Model          string `json:"model"`
 	Mode           string `json:"mode"`
 	SystemPrompt   string `json:"systemPrompt,omitempty"`

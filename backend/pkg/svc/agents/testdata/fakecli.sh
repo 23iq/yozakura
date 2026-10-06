@@ -7,6 +7,10 @@
 # Every other line is printed to stdout. Received stdin lines are appended
 # to $FAKECLI_STDIN_LOG and the argv to $FAKECLI_ARGS_LOG (when set).
 set -u
+if [ "${1:-}" = "--help" ]; then
+    printf '%s\n' '--effort <level>'
+    exit 0
+fi
 if [ -n "${FAKECLI_ARGS_LOG:-}" ]; then
     printf '%s\n' "$@" >"$FAKECLI_ARGS_LOG"
 fi

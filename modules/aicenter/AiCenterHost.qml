@@ -16,16 +16,16 @@ Item {
 
     required property var targetScreen
 
-    readonly property bool active: Config.ai.enabled !== false && GlobalStates.assistantVisible && targetScreen.name === GlobalStates.assistantScreenName
+    readonly property bool active: Config.ai.enabled !== false && GlobalStates.assistantVisible && targetScreen && targetScreen.name === GlobalStates.assistantScreenName
     property alias hitbox: container
     property bool wantsFocus: false
     property bool keepLoaded: false
 
     readonly property bool onLeft: GlobalStates.assistantPosition === "left"
     readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
-    readonly property bool frameWrapped: frameEnabled && GlobalStates.assistantPinned
-    readonly property int sidebarMargin: frameWrapped ? 0 : 4
-    readonly property int panelWidth: Math.min(GlobalStates.assistantEffectiveWidth, Math.max(320, width - 24))
+    readonly property bool frameWrapped: frameEnabled && GlobalStates.assistantPinned && !GlobalStates.assistantFullscreen
+    readonly property int sidebarMargin: frameWrapped || GlobalStates.assistantFullscreen ? 0 : 4
+    readonly property int panelWidth: GlobalStates.assistantFullscreen ? width : Math.min(GlobalStates.assistantEffectiveWidth, Math.max(320, width - 24))
 
     function focusComposer() {
         const panel = loader.item as AiCenterPanel;
@@ -85,7 +85,7 @@ Item {
         height: container.height
         y: container.y
         x: root.onLeft ? container.x + container.width : container.x - width
-        visible: container.visible && root.active && !GlobalStates.assistantWide
+        visible: container.visible && root.active && !GlobalStates.assistantWide && !GlobalStates.assistantFullscreen
         cursorShape: Qt.SplitHCursor
         preventStealing: true
         property real pressX: 0

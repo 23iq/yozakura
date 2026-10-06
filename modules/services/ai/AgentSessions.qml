@@ -3,6 +3,7 @@ import Quickshell
 import qs.config
 import qs.modules.services
 import "AgentTimeline.js" as Timeline
+import "EngineSelection.js" as Selection
 
 // QML side of the backend "agents" service (Claude Code, Codex, OpenCode run
 // as CLI processes by the Go daemon). Keeps one timeline per opened session:
@@ -24,6 +25,22 @@ QtObject {
     property int _sub: -1
 
     signal sessionCreated(var meta)
+    signal eventReceived(var event)
+    signal operationError(string message)
+
+    property AgentModels modelCatalogs: AgentModels {}
+
+    function settingsFor(agent, cwd) {
+        return modelCatalogs.get(agent, cwd);
+    }
+
+    function refreshModels(agent, cwd) {
+        modelCatalogs.refresh(agent, cwd);
+    }
+
+    function prepareInput(text, attachments, capabilities) {
+        return Selection.agentInput(text, attachments, capabilities);
+    }
 
     readonly property Component listModel: Component {
         ListModel {}
@@ -35,6 +52,7 @@ QtObject {
                     enabled: a[id].enabled,
                     binary: a[id].binary,
                     model: a[id].model,
+                    effort: a[id].effort || "",
                     yolo: a[id].yolo,
                     extraArgs: a[id].extraArgs || []
                 });
@@ -131,6 +149,7 @@ QtObject {
     }
 
     function _onEvent(ev) {
+        eventReceived(ev);
         const tl = _timelines[ev.session];
         if (!tl)
             return; // not opened in the UI; the session list carries the summary
@@ -150,23 +169,27 @@ QtObject {
             cwd: cwd || Config.ai.agents.defaultCwd || Quickshell.env("HOME"),
             title: o.title || "",
             model: o.model || "",
+            effort: o.effort || "",
             mode: o.mode || "agent",
             systemPrompt: o.systemPrompt || "",
-            yolo: !!o.yolo
+            yolo: o.yolo === undefined ? null : !!o.yolo
         }, (res, err) => {
             if (err || !res) {
                 console.warn("agents.create failed:", err);
+                operationError(String(err || "create failed"));
                 if (o.onError)
                     o.onError(err || "create failed");
                 return;
             }
             const meta = res.session || res;
             root.sessions = [meta].concat(root.sessions.filter(s => s.id !== meta.id));
-            root.activeId = meta.id;
+            if (o.activate !== false)
+                root.activeId = meta.id;
             root.timeline(meta.id);
             root._rememberDir(meta.cwd);
             root.sessionCreated(meta);
-            if (o.prompt)
+            const accepted = !o.onCreated || o.onCreated(meta) !== false;
+            if (o.prompt && accepted)
                 root.send(meta.id, o.prompt, o.images || []);
         });
     }
@@ -179,14 +202,16 @@ QtObject {
         Config.ai.agents.recentDirs = list.slice(0, 8);
     }
 
-    function send(id, text, images) {
+    function send(id, text, images, onResult) {
         BackendService.call("agents.send", {
             session: id,
             text: text,
             images: images || []
         }, (res, err) => {
             if (err)
-                console.warn("agents.send failed:", err);
+                operationError(String(err));
+            if (onResult)
+                onResult(res, err);
         });
     }
 
@@ -226,6 +251,11 @@ QtObject {
     function update(id, fields) {
         BackendService.call("agents.update", Object.assign({
             session: id
-        }, fields), () => root.refresh());
+        }, fields), (res, err) => {
+            if (err)
+                operationError(String(err));
+            else if (res)
+                sessions = sessions.map(s => s.id === id ? res : s);
+        });
     }
 }

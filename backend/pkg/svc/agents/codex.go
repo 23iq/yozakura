@@ -63,6 +63,9 @@ func tomlValue(v any) string {
 // the commands it runs.
 func codexArgs(o StartOptions) ([]string, []string, error) {
 	args := []string{"app-server"}
+	if o.Mode == "oneshot" {
+		return append(args, codexQuickArgs()...), nil, nil
+	}
 	var env []string
 	vals := map[string]string{}
 	for i, s := range o.MCP {
@@ -146,15 +149,19 @@ func (codexAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, e
 	if o.SystemPrompt != "" {
 		params["developerInstructions"] = o.SystemPrompt
 	}
-	if err := c.openThread(params, o.ResumeID); err != nil {
+	open := func() error { return c.openThread(params, o.ResumeID) }
+	if o.Mode == "oneshot" {
+		open = func() error { return c.openQuickThread(params) }
+	}
+	if err := open(); err != nil {
 		p.stop()
 		return nil, err
 	}
 	return c, nil
 }
 
-// openThread starts (or resumes) the thread. A failed resume falls back to
-// a new thread; a failed start ends the pending turn and stops the process,
+// openThread starts or resumes a thread. A failed resume preserves its identity;
+// a failed start ends the pending turn and stops the process,
 // so the session never stays "running" with nothing behind it.
 func (c *codexConn) openThread(params map[string]any, resumeID string) error {
 	method := "thread/start"
@@ -165,12 +172,6 @@ func (c *codexConn) openThread(params map[string]any, resumeID string) error {
 	return c.rpc.Call(method, params, func(res json.RawMessage, e *rpcError) {
 		if e != nil {
 			c.sink.Emit(Event{Kind: KindError, Message: "codex: " + e.Message})
-			if resumeID != "" {
-				delete(params, "threadId")
-				if err := c.openThread(params, ""); err == nil {
-					return
-				}
-			}
 			c.failStart()
 			return
 		}
@@ -205,6 +206,9 @@ func (c *codexConn) failStart() {
 }
 
 func (c *codexConn) approval() string {
+	if c.opts.Mode == "oneshot" {
+		return "never"
+	}
 	if c.opts.yolo() {
 		return "never"
 	}
@@ -212,6 +216,9 @@ func (c *codexConn) approval() string {
 }
 
 func (c *codexConn) sandbox() string {
+	if c.opts.Mode == "oneshot" {
+		return "read-only"
+	}
 	if c.opts.yolo() {
 		return "danger-full-access"
 	}
@@ -230,7 +237,17 @@ func (c *codexConn) Send(text string, images []string) error {
 		c.mu.Lock()
 		thread := c.thread
 		c.mu.Unlock()
-		err := c.rpc.Call("turn/start", map[string]any{"threadId": thread, "input": input, "approvalPolicy": c.approval()},
+		params := map[string]any{"threadId": thread, "input": input, "approvalPolicy": c.approval()}
+		if c.opts.Mode == "oneshot" {
+			params["sandboxPolicy"] = codexQuickSandbox()
+		}
+		if c.opts.Model != "" {
+			params["model"] = c.opts.Model
+		}
+		if c.opts.Effort != "" {
+			params["effort"] = c.opts.Effort
+		}
+		err := c.rpc.Call("turn/start", params,
 			func(res json.RawMessage, e *rpcError) {
 				if e != nil {
 					c.sink.Emit(Event{Kind: KindError, Message: "codex: " + e.Message})

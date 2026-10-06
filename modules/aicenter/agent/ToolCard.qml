@@ -100,8 +100,8 @@ StyledRect {
                 Text {
                     Layout.fillWidth: true
                     text: root.title || root.tool
-                    font.family: Config.theme.monoFont
-                    font.pixelSize: Styling.monoFontSize(-2)
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-1)
                     color: Colors.overSurface
                     elide: Text.ElideMiddle
                 }
@@ -167,7 +167,7 @@ StyledRect {
         }
 
         DiffView {
-            visible: root.diff.length > 0 && (root.expanded || !root.compact)
+            visible: root.diff.length > 0 && root.expanded
             Layout.fillWidth: true
             Layout.bottomMargin: 2
             diff: root.diff

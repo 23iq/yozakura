@@ -56,16 +56,48 @@ function decide(tool, policy) {
     return "ask";
 }
 
-// Human summary for a permission card / tool card title.
-function summarize(name, args) {
+// A descriptor contains only data; callers translate it for their UI. Restrict
+// known effects to our built-in server, never infer a third-party tool's effect.
+function summaryDescriptor(name, args, server) {
+    if (server !== "yozakura")
+        return null;
     var a = args || {};
-    var keys = ["command", "path", "file_path", "url", "query", "key", "name", "panel", "workspace", "action", "text", "summary"];
-    for (var i = 0; i < keys.length; i++) {
-        var v = a[keys[i]];
-        if (v !== undefined && v !== null && String(v).length > 0) {
-            var s = String(v).replace(/\s+/g, " ");
-            return name + " · " + (s.length > 60 ? s.substring(0, 59) + "…" : s);
-        }
+    if (name === "config_set" && a.key) {
+        var key = String(a.key);
+        if (a.domain)
+            key = String(a.domain) + "." + key;
+        return a.value !== undefined ? {
+            key: "ai.permission_config_set", values: [key, valueText(a.value)]
+        } : { key: "ai.permission_config_change", values: [key] };
     }
-    return name;
+    if (name === "preset_apply" && a.name)
+        return { key: "ai.permission_preset_apply", values: [String(a.name)] };
+    if (name === "workspace_switch" && a.workspace !== undefined)
+        return { key: "ai.permission_workspace_switch", values: [String(a.workspace)] };
+    if (name === "window_focus" && (a.id || a.app || a.title))
+        return { key: "ai.permission_window_focus", values: [String(a.id || a.app || a.title)] };
+    if (name === "window_move_to_workspace" && a.workspace !== undefined)
+        return {
+            key: a.follow === true ? "ai.permission_window_follow" : "ai.permission_window_move",
+            values: [a.id || a.app ? String(a.id || a.app) : null, String(a.workspace)]
+        };
+    return null;
+}
+
+function valueText(value) {
+    return typeof value === "string" ? value : JSON.stringify(value);
+}
+
+// Unknown tools retain their actual name and arguments. Details in the card
+// show the original JSON even when a known tool has a plain-language title.
+function summarize(name, args, translate, server) {
+    var descriptor = summaryDescriptor(name, args, server);
+    if (descriptor && typeof translate === "function") {
+        var values = descriptor.values.map(function (value) {
+            return value === null ? translate("ai.permission_focused_window", []) : value;
+        });
+        return translate(descriptor.key, values);
+    }
+    var a = args || {};
+    return Object.keys(a).length ? String(name) + " · " + JSON.stringify(a) : String(name);
 }

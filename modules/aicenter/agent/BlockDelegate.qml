@@ -37,7 +37,7 @@ Item {
 
     // A tool row waiting for permission is shown as the permission card; once
     // answered, the card folds back into the tool row.
-    readonly property bool folded: (type === "thinking" && !showThinking) || (type === "tool" && status === "ask") || (type === "permission" && linked && status !== "pending")
+    readonly property bool folded: (type === "diff" && compactTools) || (type === "thinking" && !showThinking) || (type === "tool" && status === "ask") || (type === "permission" && linked && status !== "pending")
     implicitHeight: folded ? 0 : loader.implicitHeight + 10
     visible: !folded
 
@@ -151,10 +151,12 @@ Item {
     }
     Component {
         id: diffC
-        DiffView {
+        ToolCard {
+            title: root.path || I18n.t("ai.changes")
+            category: "write"
+            status: "done"
             diff: root.diff
             path: root.path
-            maxRows: 40
         }
     }
     Component {

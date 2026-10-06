@@ -64,6 +64,9 @@ def _theme_config(preset: str) -> str:
         if key.startswith("sr") and isinstance(base, dict):
             val = {**base, **theme.get(key, {})}
             props.append(f"        property var {key}: ({json.dumps(val)})")
+    for key in ("shadowXOffset", "shadowYOffset", "shadowBlur", "shadowOpacity"):
+        props.append(f"        property real {key}: {theme.get(key, defaults[key])}")
+    props.append(f"        property string shadowColor: {json.dumps(theme.get('shadowColor', defaults['shadowColor']))}")
     font = theme.get("font", "Roboto Condensed")
     mono = theme.get("monoFont", "monospace")
     return f"""
@@ -86,6 +89,7 @@ AI_CONFIG = """
         property bool chatTools: true
         property int maxToolRounds: 8
         property int wideWidth: 1100
+        property int sidebarWidth: 400
         property int unloadAfterMinutes: 10
         property string defaultMode: "chat"
         property string systemPrompt: ""
@@ -143,6 +147,11 @@ def build(preset: str, mode: str, ai_stub: str) -> Path:
 import QtQuick
 QtObject {
     property bool assistantWide: false
+    property bool assistantFullscreen: false
+    property int assistantWidth: 400
+    readonly property int assistantEffectiveWidth: assistantWide ? 1100 : assistantWidth
+    property string assistantPosition: "right"
+    property string assistantScreenName: "one"
     property bool assistantPinned: false
     property bool assistantVisible: true
     property string quickAskKind: "chat"

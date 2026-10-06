@@ -18,7 +18,7 @@ import qs.modules.aicenter.agent
 FocusScope {
     id: root
 
-    readonly property var session: GlobalStates.quickAskKind === "shell" ? Ai.shellChat : Ai.quick
+    readonly property var session: Ai.quick
     readonly property int lastIndex: session ? session.rows.count - 1 : -1
     property int revision: 0
     readonly property var last: {
@@ -85,13 +85,10 @@ FocusScope {
         if (!t || root.busy)
             return;
         const atts = GlobalStates.quickAskAttachments || [];
+        if (Ai.askQuick(t, atts, GlobalStates.quickAskKind) === false)
+            return;
         GlobalStates.quickAskAttachments = [];
         input.text = "";
-        if (GlobalStates.quickAskKind === "shell") {
-            Ai.shellChat.send(t, []);
-        } else {
-            Ai.askQuick(t, atts);
-        }
     }
 
     ColumnLayout {
@@ -156,7 +153,11 @@ FocusScope {
             Layout.fillWidth: true
             attachments: GlobalStates.quickAskAttachments || []
             removable: true
-            onRemoveRequested: GlobalStates.quickAskAttachments = []
+            onRemoveRequested: index => {
+                const attachments = (GlobalStates.quickAskAttachments || []).slice();
+                attachments.splice(index, 1);
+                GlobalStates.quickAskAttachments = attachments;
+            }
         }
 
         Flickable {

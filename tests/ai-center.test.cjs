@@ -14,7 +14,6 @@ const Templates = load('../modules/services/ai/Templates.js');
 const Cron = load('../modules/services/ai/Cron.js');
 const Permissions = load('../modules/services/ai/Permissions.js');
 const Automations = load('../modules/services/ai/Automations.js');
-const SafeText = load('../modules/services/ai/SafeText.js');
 const Urls = load('../modules/globals/Urls.js');
 
 // ── Markdown ────────────────────────────────────────────────────────────
@@ -219,7 +218,7 @@ test('permissions: read-only auto, writes ask, yolo and session rules', () => {
     assert.equal(Permissions.decide(write, { yolo: true }), 'allow');
     assert.equal(Permissions.decide(write, { sessionRules: { 'yozakura/config_set': true } }), 'allow');
     assert.equal(Permissions.category({ name: 'run_command' }), 'exec');
-    assert.equal(Permissions.summarize('config_set', { key: 'bar.position' }), 'config_set · bar.position');
+    assert.equal(Permissions.summarize('config_set', { key: 'bar.position' }), 'config_set · {"key":"bar.position"}');
 });
 
 test('permissions: third-party MCP tools are reads only with readOnlyHint', () => {
@@ -245,16 +244,6 @@ test('permissions: private desktop data always asks', () => {
         assert.equal(Permissions.decide(tool, {}), 'ask', name);
     }
     assert.equal(Permissions.category({ name: 'windows_list', server: 'yozakura', readOnly: true }), 'read');
-});
-
-test('selection replace: never types line breaks or control characters', () => {
-    assert.deepEqual(plain(SafeText.forTyping('hello world')), { text: 'hello world', multiline: false });
-    assert.deepEqual(plain(SafeText.forTyping('rm -rf ~\n')), { text: 'rm -rf ~', multiline: false });
-    assert.deepEqual(plain(SafeText.forTyping('a\x1b[201~\x03b\x07')), { text: 'a[201~b', multiline: false });
-    assert.equal(SafeText.forTyping('one\r\ntwo').multiline, true);
-    assert.equal(SafeText.forTyping('one\rtwo').multiline, true);
-    assert.equal(SafeText.forTyping('x\u2028y').multiline, true);
-    assert.equal(SafeText.forTyping('tab\there').text, 'tab\there');
 });
 
 test('urls: only http(s) links are opened', () => {

@@ -5,7 +5,7 @@ var data = {
     "systemPrompt": "You are a helpful assistant running on a Linux system. You have access to some tools to control the system.",
     "tool": "none",
     "extraModels": [],
-    "defaultModel": "gemini-2.0-flash",
+    "defaultModel": "",
     "sidebarWidth": 400,
     "sidebarPosition": "right",
     "sidebarPinnedOnStartup": false,
@@ -20,9 +20,9 @@ var data = {
         "defaultCwd": "",
         "recentDirs": [],
         "autoApprove": ["read"],
-        "claude": { "enabled": true, "binary": "", "model": "", "yolo": false, "extraArgs": [] },
-        "codex": { "enabled": true, "binary": "", "model": "", "yolo": false, "extraArgs": [] },
-        "opencode": { "enabled": true, "binary": "", "model": "", "yolo": false, "extraArgs": [] }
+        "claude": { "enabled": true, "binary": "", "model": "", "effort": "", "yolo": false, "extraArgs": [] },
+        "codex": { "enabled": true, "binary": "", "model": "", "effort": "", "yolo": false, "extraArgs": [] },
+        "opencode": { "enabled": true, "binary": "", "model": "", "effort": "", "yolo": false, "extraArgs": [] }
     },
     "mcp": {
         "yozakura": true,

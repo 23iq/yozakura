@@ -10,9 +10,32 @@ QtObject {
 
     property string mode: "chat"
     property bool initialized: true
-    readonly property var currentModel: models[1]
+    readonly property var currentModel: mode === "agent" ? models[0] : models[1]
+    readonly property string defaultModelId: models[1].id
+    property var recentModelIds: []
     readonly property var quickModel: models[2]
     readonly property bool busy: chat.busy
+    readonly property var activeAgent: mode === "agent" ? agents.active : null
+    readonly property string sessionKey: activeAgent ? "agent:" + activeAgent.id : "chat:" + chat.id
+    property string noticeError: ""
+    readonly property var agentSettings: ({agent: "claude", cwd: "/home/user/src/yozakura", model: "", effort: "", systemPrompt: ""})
+    property QtObject drafts: QtObject {
+        property var summaries: []
+        property var saved: ({})
+        property var positions: ({})
+        function draft(key) { return saved[key] || {text: "", attachments: []}; }
+        function setDraft(key, text, attachments) { saved[key] = {text: text, attachments: attachments}; }
+        function scroll(key) { return positions[key] || 0; }
+        function setScroll(key, y) { positions[key] = y; }
+    }
+    property var lastConfiguration: ({})
+    function configureAgent(fields) { lastConfiguration = fields; return true; }
+    function setDefaultModel(id) {}
+    function openConversation(kind, id) { mode = kind === "agent" ? "agent" : "chat"; if (kind === "agent") agents.activeId = id; }
+    function stopSession(kind, id) {}
+    function renameConversation(kind, id, title) {}
+    function pinConversation(kind, id, pinned) {}
+    function removeConversation(kind, id) {}
     property var models: [
         {
             id: "agent:claude",
@@ -100,6 +123,7 @@ QtObject {
         }
         function load(id) {
         }
+        function rename(id, title) {}
         function setPinned(id, p) {
         }
         function remove(id) {
@@ -129,9 +153,9 @@ QtObject {
     }
 
     property QtObject context: QtObject {
-        function grab(kind, cb) {
-            cb(null);
-        }
+        property var pendingGrab: null
+        function grab(kind, cb) { pendingGrab = cb; }
+        function deliver() { if (pendingGrab) pendingGrab({kind: "file", name: "later.txt"}); pendingGrab = null; }
         function pickDirectory(start, cb) {
             cb("");
         }
@@ -220,6 +244,8 @@ QtObject {
         }
         function refresh() {
         }
+        function settingsFor(agent, cwd) { return {models: [{id: "sonnet", name: "Sonnet", isDefault: true, efforts: ["low", "high"]}], manualModel: true}; }
+        function refreshModels(agent, cwd) {}
     }
 
     signal modelSelectionRequested
@@ -234,12 +260,15 @@ QtObject {
     }
     function newConversation() {
     }
+    property bool acceptSend: true
     function send(text, atts) {
+        if (!acceptSend) return false;
         chat.append({
             role: "user",
             content: text,
             attachments: atts
         });
+        return true;
     }
     function stop() {
     }

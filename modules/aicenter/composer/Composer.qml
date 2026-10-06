@@ -20,6 +20,7 @@ StyledRect {
     property var attachments: []
     property alias text: input.text
     property bool compact: false
+    property var submitHandler: null
 
     signal submitted(string text, var attachments)
     signal stopRequested
@@ -37,15 +38,24 @@ StyledRect {
 
     function addContext(kind) {
         Ai._ensureInit();
+        const key = Ai.sessionKey;
         Ai.context.grab(kind, att => {
-            if (att)
+            if (!att)
+                return;
+            if (key === Ai.sessionKey) {
                 root.attachments = root.attachments.concat([att]);
+            } else if (Ai.drafts) {
+                const draft = Ai.drafts.draft(key);
+                Ai.drafts.setDraft(key, draft.text || "", (draft.attachments || []).concat([att]));
+            }
         });
     }
 
     function submit() {
         const t = input.text;
         if (root.busy || (!t.trim() && root.attachments.length === 0))
+            return;
+        if (root.submitHandler && root.submitHandler(t, root.attachments) === false)
             return;
         root.submitted(t, root.attachments);
         input.text = "";
@@ -58,24 +68,12 @@ StyledRect {
             desc: I18n.t("ai.cmd_start_new_chat")
         },
         {
+            cmd: "/clear",
+            desc: I18n.t("ai.cmd_clear")
+        },
+        {
             cmd: "/model",
             desc: I18n.t("ai.cmd_switch_model")
-        },
-        {
-            cmd: "/chat",
-            desc: I18n.t("ai.cmd_chat")
-        },
-        {
-            cmd: "/agent",
-            desc: I18n.t("ai.cmd_agent")
-        },
-        {
-            cmd: "/shell",
-            desc: I18n.t("ai.cmd_shell")
-        },
-        {
-            cmd: "/help",
-            desc: I18n.t("ai.cmd_show_help")
         }
     ]
     readonly property var slashMatches: input.text.startsWith("/") && input.text.indexOf(" ") < 0 ? slashCommands.filter(c => c.cmd.startsWith(input.text)) : []

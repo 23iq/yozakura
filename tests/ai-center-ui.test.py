@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402
 
 headless.ensure(gl=True)
-from PySide6.QtCore import QUrl, QCoreApplication, QElapsedTimer, qInstallMessageHandler  # noqa: E402
+from PySide6.QtCore import QObject, QUrl, QCoreApplication, QElapsedTimer, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
@@ -25,8 +25,8 @@ from lib import aiscene  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = os.environ.get("AI_CENTER_RENDER")
-PRESETS = [("Yozakura Night", "dark", ["chat", "agent", "quick", "selection", "history", "settings"]),
-           ("Sumi-e", "light", ["chat", "agent", "quick", "selection"]),
+PRESETS = [("Yozakura Night", "dark", ["chat", "agent", "quick", "selection", "selection-result", "history", "settings"]),
+           ("Sumi-e", "light", ["chat", "agent", "quick", "selection", "selection-result"]),
            ("Kaze", "dark", ["chat", "agent"])]
 W, H = 1440, 860
 
@@ -105,7 +105,9 @@ def selection_window_source() -> str:
     src = "\n".join(line for line in src.split("\n") if not re.match(r"\s*(screen:|color: \"transparent\"|exclusionMode:|WlrLayershell\.)", line))
     src = src.replace("readonly property var targetScreen: Quickshell.screens.find(s => s.name === actions.screenName) || Quickshell.screens[0]",
                       "readonly property var targetScreen: ({ x: 0, y: 0 })")
-    return src
+    # MultiEffect's layer suppresses the cloned PanelWindow subtree in this
+    # Item fixture. Keep the real content and geometry, omit only its shadow.
+    return src.replace("enableShadow: true", "enableShadow: false")
 
 
 SCENE = """
@@ -215,7 +217,7 @@ Item {
     }
 
     Item {
-        visible: scene.kind === "selection"
+        visible: (scene.kind === "selection" || scene.kind === "selection-result")
         anchors.fill: parent
         StyledRect {
             id: editor
@@ -234,7 +236,8 @@ Item {
         }
         Loader {
             id: selLoader
-            active: scene.kind === "selection"
+            z: 100
+            active: (scene.kind === "selection" || scene.kind === "selection-result")
             anchors.fill: parent
             Component.onCompleted: setSource("SelectionMenu.qml", { actions: selState })
         }
@@ -246,6 +249,10 @@ Item {
             property bool working: false
             property string workingLabel: ""
             property string error: ""
+            property bool hasResult: scene.kind === "selection-result"
+            property string result: "The meeting has been moved to Thursday. Please bring last quarter’s figures."
+            function copyResult() {}
+            function openResult() {}
             property var actions: [
                 { id: "translate", label: "Translate", icon: "translate", output: "replace" },
                 { id: "explain", label: "Explain", icon: "lightbulb", output: "sidebar" },
@@ -316,6 +323,10 @@ for preset, mode, kinds in PRESETS:
         if kind == "chat":
             st = json.loads(evaluate(view, "state()"))
             assert st["chatRows"] == len(CHAT), st
+        if kind in ("selection", "selection-result"):
+            menu = view.rootObject().findChild(QObject, "selectionMenu")
+            assert menu is not None, "selection menu must be mounted"
+            assert menu.property("visible") and menu.property("width") > 0 and menu.property("opacity") == 1, "selection preview must be visible"
         if OUT:
             Path(OUT).mkdir(parents=True, exist_ok=True)
             name = f"{kind}-{preset.lower().replace(' ', '-')}.png"

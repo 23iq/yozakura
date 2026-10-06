@@ -47,8 +47,8 @@
     "defaultModel": {
       "title": "Default model",
       "type": "string",
-      "default": "gemini-2.0-flash",
-      "description": "Chat model used by default (id from the model picker)."
+      "default": "",
+      "description": "Default assistant engine or API model ID; empty uses the last explicit choice."
     },
     "sidebarWidth": {
       "title": "Sidebar width",
@@ -278,6 +278,20 @@
               },
               "description": "Model passed to the agent (empty = the agent's default)."
             },
+            "effort": {
+              "title": "Effort",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Reasoning effort for new agent sessions; empty uses the engine default. Supported values depend on the installed engine and selected model."
+            },
             "yolo": {
               "title": "Yolo",
               "type": "boolean",
@@ -351,6 +365,20 @@
               },
               "description": "Model passed to the agent (empty = the agent's default)."
             },
+            "effort": {
+              "title": "Effort",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Reasoning effort for new agent sessions; empty uses the engine default. Supported values depend on the installed engine and selected model."
+            },
             "yolo": {
               "title": "Yolo",
               "type": "boolean",
@@ -423,6 +451,20 @@
                 "keywords": "claude code codex opencode cli agent yolo permissions binary model"
               },
               "description": "Model passed to the agent (empty = the agent's default)."
+            },
+            "effort": {
+              "title": "Effort",
+              "type": "string",
+              "default": "",
+              "x-settings": {
+                "category": "ai",
+                "section": "agents",
+                "label": "ai.settings_agents",
+                "entry": "ai.agents.list",
+                "entryTitle": "CLI agents",
+                "keywords": "claude code codex opencode cli agent yolo permissions binary model"
+              },
+              "description": "Reasoning effort for new agent sessions; empty uses the engine default. Supported values depend on the installed engine and selected model."
             },
             "yolo": {
               "title": "Yolo",

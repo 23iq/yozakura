@@ -255,7 +255,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 42. **UI language**: `config set system.language ru` (`auto` = system locale).
 43. **Weather**: `config set weather.location "Tokyo"`, `config set weather.unit F`.
 44. **Launcher prefixes**: `config set prefix.clipboard cb`.
-45. **AI center**: `config set ai.defaultMode agent`, `config set ai.sidebarPosition left`; voice: `config set voice.activation toggle`.
+45. **AI center**: choose a default engine with `config set ai.defaultModel agent:codex` (or an exact API/local model ID), and position with `config set ai.sidebarPosition left`; voice: `config set voice.activation toggle`. The header cycles sidebar → wide → fullscreen without changing the saved sidebar width. History combines saved chats and agent sessions; switching keeps background tasks, drafts and scroll positions. Agent settings show the installed CLI's model/effort catalog; launch settings can change while idle. Quick Ask and selection actions use the selected default engine. Selection results offer explicit Copy/Continue. OpenCode ACP currently rejects the restricted Quick Ask profile rather than silently switching providers.
 46. **Pomodoro length**: `config set system.pomodoro.workTime 1800` (seconds).
 47. **Lighter on the GPU**: `config set performance.rotateCoverArt false`, `performance.windowPreview`, `performance.blurTransition`.
 48. **Turn a group off in one go**: `config set bar.activities '{"enabled":false}'`.

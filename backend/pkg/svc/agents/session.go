@@ -58,7 +58,14 @@ func (s *session) send(text string, images []string) error {
 		sink := &sessionSink{s: s, gen: s.gen}
 		s.setStatusLocked(StatusStarting)
 		m.mu.Unlock()
-		c, err := Lookup(s.meta.Agent).Start(context.Background(), opts, sink)
+		var c Conn
+		err = validateLaunch(Lookup(s.meta.Agent), opts.Mode, opts.SystemPrompt)
+		if err == nil && opts.Effort != "" {
+			err = m.validateSettings(s.meta.Agent, opts.Cwd, opts.Model, opts.Effort)
+		}
+		if err == nil {
+			c, err = Lookup(s.meta.Agent).Start(context.Background(), opts, sink)
+		}
 		m.mu.Lock()
 		if err != nil {
 			s.emitLocked(Event{Kind: KindError, Message: "failed to start " + s.meta.Agent + ": " + err.Error()})
@@ -291,6 +298,11 @@ func (k *sessionSink) Permission(req PermissionRequest, reply func(string)) {
 	m := s.m
 	m.mu.Lock()
 	if !k.live() {
+		m.mu.Unlock()
+		reply(DecisionDeny)
+		return
+	}
+	if s.meta.Mode == "oneshot" {
 		m.mu.Unlock()
 		reply(DecisionDeny)
 		return

@@ -13,8 +13,10 @@ QtObject {
     property var chats: []
     property bool loading: lister.running
     property string _readId: ""
+    property string _wantedReadId: ""
     property string _pinId: ""
-    property bool _pinValue: false
+    property var _editFields: ({})
+    property var _editQueue: []
 
     signal loaded(string id, var data)
 
@@ -32,8 +34,16 @@ QtObject {
     }
 
     function load(id) {
-        root._readId = id;
-        reader.command = ["cat", dir + "/" + id + ".json"];
+        _wantedReadId = id;
+        if (!reader.running)
+            _startRead();
+    }
+
+    function _startRead() {
+        if (reader.running)
+            return;
+        _readId = _wantedReadId;
+        reader.command = ["cat", dir + "/" + _readId + ".json"];
         reader.running = true;
     }
 
@@ -44,13 +54,38 @@ QtObject {
     }
 
     function setPinned(id, pinned) {
-        root._pinValue = pinned;
-        root._pinId = id;
-        pinner.command = ["cat", dir + "/" + id + ".json"];
+        edit(id, {
+            pinned: pinned
+        });
+    }
+
+    function rename(id, title) {
+        edit(id, {
+            title: title
+        });
+    }
+
+    function edit(id, fields) {
+        _editQueue = _editQueue.concat([
+            {
+                id: id,
+                fields: Object.assign({}, fields)
+            }
+        ]);
+        chats = chats.map(c => c.id === id ? Object.assign({}, c, fields) : c);
+        if (!pinner.running)
+            _startEdit();
+    }
+
+    function _startEdit() {
+        if (pinner.running || !_editQueue.length)
+            return;
+        const edit = _editQueue[0];
+        _editQueue = _editQueue.slice(1);
+        _editFields = edit.fields;
+        _pinId = edit.id;
+        pinner.command = ["cat", dir + "/" + _pinId + ".json"];
         pinner.running = true;
-        chats = chats.map(c => c.id === id ? Object.assign({}, c, {
-                pinned: pinned
-            }) : c);
     }
 
     function _parseList(text) {
@@ -99,10 +134,15 @@ QtObject {
     }
 
     property Process reader: Process {
+        onExited: {
+            if (root._readId !== root._wantedReadId)
+                Qt.callLater(() => root._startRead());
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    root.loaded(root._readId, JSON.parse(text));
+                    if (root._readId === root._wantedReadId)
+                        root.loaded(root._readId, JSON.parse(text));
                 } catch (e) {
                     console.warn("ChatStore: cannot load chat", root._readId, e);
                 }
@@ -111,6 +151,7 @@ QtObject {
     }
 
     property Process pinner: Process {
+        onExited: Qt.callLater(() => root._startEdit())
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -121,7 +162,7 @@ QtObject {
                             id: root._pinId,
                             messages: data
                         };
-                    data.pinned = root._pinValue;
+                    data = Object.assign(data, root._editFields);
                     data.id = root._pinId;
                     root.save(data);
                 } catch (e) {

@@ -12,6 +12,7 @@ import (
 type StartOptions struct {
 	Binary       string
 	Cwd          string
+	Effort       string
 	Model        string
 	ResumeID     string // agent-native session/thread id to resume
 	Mode         string // "agent" | "shell"

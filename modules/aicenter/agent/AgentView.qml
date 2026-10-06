@@ -7,21 +7,41 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 
-// Agent mode: session strip + timeline; in wide mode the changed files and
-// diffs sit next to the conversation.
+// Selected native session timeline; workspace panels are owned by the host.
 Item {
     id: root
+    property string scrollKey: ""
+    property bool restoringScroll: false
+    property real scrollPosition: 0
+    function saveScroll() {
+        if (scrollKey && Ai.drafts && !restoringScroll)
+            Ai.drafts.setScroll(scrollKey, scrollPosition);
+    }
+    function restoreScroll() {
+        saveScroll();
+        scrollKey = Ai.sessionKey;
+        restoringScroll = true;
+        Qt.callLater(() => {
+            scrollPosition = Ai.drafts ? Ai.drafts.scroll(scrollKey) : 0;
+            list.contentY = scrollPosition;
+            list.stick = list.atYEnd;
+            restoringScroll = false;
+        });
+    }
+    Component.onCompleted: restoreScroll()
+    Component.onDestruction: saveScroll()
+    Connections {
+        target: Ai
+        function onSessionKeyChanged() {
+            root.restoreScroll();
+        }
+    }
 
     property bool wide: false
     property string sessionId: ""     // fixed session (shell control); "" = the active agent session
     readonly property var sessions: Ai.agents
-    readonly property var meta: sessions ? (sessionId ? sessions.sessions.find(s => s.id === sessionId) || null : sessions.active) : null
+    readonly property var meta: sessions ? (sessionId ? sessions.sessions.find(s => s.id === sessionId) || null : Ai.activeAgent) : null
     readonly property var tl: meta ? sessions.timeline(meta.id) : null
-    readonly property var diffs: {
-        sessions ? sessions.timelineRevision : 0;
-        return tl ? tl.state.diffs.slice() : [];
-    }
-
     function agentLabel() {
         if (!meta || !sessions)
             return "";
@@ -67,10 +87,15 @@ Item {
                 cacheBuffer: 2000
                 boundsBehavior: Flickable.StopAtBounds
                 property bool stick: true
-                onMovementEnded: stick = atYEnd
-                onContentHeightChanged: if (stick)
+                onMovementEnded: {
+                    stick = atYEnd;
+                    root.scrollPosition = contentY;
+                    root.saveScroll();
+                }
+                onContentHeightChanged: if (stick && !root.restoringScroll)
                     Qt.callLater(positionViewAtEnd)
-                onCountChanged: Qt.callLater(positionViewAtEnd)
+                onCountChanged: if (stick && !root.restoringScroll)
+                    Qt.callLater(positionViewAtEnd)
 
                 delegate: BlockDelegate {
                     width: list.width - list.leftMargin - list.rightMargin
@@ -81,15 +106,6 @@ Item {
                 }
                 ScrollBar.vertical: ScrollBar {}
             }
-        }
-
-        ChangesPane {
-            visible: root.wide
-            Layout.fillHeight: true
-            Layout.preferredWidth: root.width * 0.48 - 10
-            Layout.bottomMargin: 4
-            Layout.rightMargin: 4
-            diffs: root.diffs
         }
     }
 }

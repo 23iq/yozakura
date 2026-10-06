@@ -18,6 +18,7 @@ import (
 type AgentConfig struct {
 	Enabled   *bool    `json:"enabled"`
 	Binary    string   `json:"binary"`
+	Effort    string   `json:"effort"`
 	Model     string   `json:"model"`
 	ExtraArgs []string `json:"extraArgs"`
 	Yolo      bool     `json:"yolo"`
@@ -167,6 +168,7 @@ type CreateParams struct {
 	Agent        string `json:"agent"`
 	Cwd          string `json:"cwd"`
 	Title        string `json:"title"`
+	Effort       string `json:"effort"`
 	Model        string `json:"model"`
 	Yolo         *bool  `json:"yolo"`
 	Mode         string `json:"mode"`
@@ -184,11 +186,14 @@ func (m *Manager) Create(p CreateParams) (SessionMeta, error) {
 	if Lookup(p.Agent) == nil {
 		return SessionMeta{}, fmt.Errorf("unknown agent: %s", p.Agent)
 	}
+	if err := validateLaunch(Lookup(p.Agent), p.Mode, p.SystemPrompt); err != nil {
+		return SessionMeta{}, err
+	}
 	if p.Mode == "" {
 		p.Mode = "agent"
 	}
 	if p.Cwd == "" {
-		if p.Mode != "shell" {
+		if p.Mode != "shell" && p.Mode != "oneshot" {
 			return SessionMeta{}, errors.New("cwd is required")
 		}
 		p.Cwd, _ = os.UserHomeDir()
@@ -197,11 +202,26 @@ func (m *Manager) Create(p CreateParams) (SessionMeta, error) {
 		return SessionMeta{}, fmt.Errorf("not a directory: %s", p.Cwd)
 	}
 	m.mu.Lock()
-	defer m.mu.Unlock()
 	cfg := m.agentCfg(p.Agent)
+	m.mu.Unlock()
+	if p.Model == "" {
+		p.Model = cfg.Model
+	}
+
+	if p.Effort == "" {
+		p.Effort = cfg.Effort
+	}
+	if err := m.validateSettings(p.Agent, p.Cwd, p.Model, p.Effort); err != nil {
+		return SessionMeta{}, err
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	yolo := cfg.Yolo
 	if p.Yolo != nil {
 		yolo = *p.Yolo
+	}
+	if p.Mode == "oneshot" {
+		yolo = false
 	}
 	model := p.Model
 	if model == "" {
@@ -209,7 +229,7 @@ func (m *Manager) Create(p CreateParams) (SessionMeta, error) {
 	}
 	now := m.now().UnixMilli()
 	s := newSession(m, SessionMeta{ID: newID(), Agent: p.Agent, Cwd: p.Cwd, Title: p.Title, Created: now, Updated: now,
-		Status: StatusIdle, Yolo: yolo, Model: model, Mode: p.Mode, SystemPrompt: p.SystemPrompt})
+		Status: StatusIdle, Yolo: yolo, Effort: p.Effort, Model: model, Mode: p.Mode, SystemPrompt: p.SystemPrompt})
 	m.sessions[s.meta.ID] = s
 	m.saveLocked()
 	m.broadcastSessionsLocked()
@@ -256,12 +276,15 @@ func (m *Manager) startOptionsLocked(s *session) (StartOptions, error) {
 			mcp = append(mcp, MCPServer{Name: YozakuraMCPName, Transport: "stdio", Command: exe, Args: []string{"mcp"}})
 		}
 	}
+	if s.meta.Mode == "oneshot" {
+		mcp = nil
+	}
 	prompt := s.meta.SystemPrompt
 	if s.meta.Mode == "shell" && prompt == "" {
 		prompt = DefaultShellPrompt
 	}
 	id := s.meta.ID
-	return StartOptions{Binary: bin, Cwd: s.meta.Cwd, Model: s.meta.Model, ResumeID: s.meta.AgentSessionID, Mode: s.meta.Mode,
+	return StartOptions{Binary: bin, Cwd: s.meta.Cwd, Model: s.meta.Model, Effort: s.meta.Effort, ResumeID: s.meta.AgentSessionID, Mode: s.meta.Mode,
 		SystemPrompt: prompt, ExtraArgs: cfg.ExtraArgs, MCP: mcp, Env: m.extraEnv,
 		Yolo: func() bool {
 			m.mu.Lock()
@@ -324,47 +347,6 @@ func (m *Manager) Delete(id string) error {
 	m.broadcastSessionsLocked()
 	m.mu.Unlock()
 	return nil
-}
-
-// UpdateParams are the agents.update parameters.
-type UpdateParams struct {
-	Session string  `json:"session"`
-	Title   *string `json:"title"`
-	Pinned  *bool   `json:"pinned"`
-	Yolo    *bool   `json:"yolo"`
-}
-
-// Update edits session metadata. Turning YOLO on approves pending requests.
-func (m *Manager) Update(p UpdateParams) (SessionMeta, error) {
-	s, err := m.get(p.Session)
-	if err != nil {
-		return SessionMeta{}, err
-	}
-	m.mu.Lock()
-	if p.Title != nil {
-		s.meta.Title = *p.Title
-	}
-	if p.Pinned != nil {
-		s.meta.Pinned = *p.Pinned
-	}
-	var approve []string
-	if p.Yolo != nil {
-		s.meta.Yolo = *p.Yolo
-		if s.meta.Yolo {
-			for rid := range s.pending {
-				approve = append(approve, rid)
-			}
-		}
-	}
-	s.meta.Updated = m.now().UnixMilli()
-	meta := s.meta
-	m.saveLocked()
-	m.broadcastSessionsLocked()
-	m.mu.Unlock()
-	for _, rid := range approve {
-		_ = s.respond(rid, DecisionAllow)
-	}
-	return meta, nil
 }
 
 // Sessions lists sessions: pinned first, then most recently updated.

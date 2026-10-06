@@ -2,6 +2,7 @@ import QtQuick
 import qs.config
 import qs.modules.services
 import "Providers.js" as Providers
+import "EngineSelection.js" as Selection
 
 // Every selectable "model": API models (fetched with the user's keys), local
 // Ollama models and CLI agents (Claude Code, Codex, OpenCode) reported by the
@@ -14,6 +15,7 @@ QtObject {
     property var apiModels: []
     property var agentModels: []
     readonly property var models: agentModels.concat(apiModels)
+    property int _generation: 0
     property int pending: 0
     readonly property bool fetching: pending > 0
 
@@ -27,16 +29,7 @@ QtObject {
     }
 
     function find(id) {
-        if (!id)
-            return null;
-        for (const m of models)
-            if (m.id === id)
-                return m;
-        // Legacy state stored the bare model name.
-        for (const m of models)
-            if (m.model === id || m.model.endsWith("/" + id))
-                return m;
-        return null;
+        return Selection.resolve(models, id);
     }
 
     function _entry(provider, item, endpoint) {
@@ -49,7 +42,7 @@ QtObject {
             kind: p && p.local ? "local" : "api",
             agent: "",
             icon: iconFor(provider),
-            description: item.description || p.label,
+            description: item.description || (p ? p.label : provider),
             endpoint: endpoint || "",
             available: true,
             tools: true
@@ -63,10 +56,11 @@ QtObject {
 
     function _fetch(provider, url, headers, endpoint) {
         pending++;
+        const generation = _generation;
         const g = getter.createObject(root);
         g.get(url, headers, (text, ok) => {
             pending = Math.max(0, pending - 1);
-            if (!ok)
+            if (!ok || generation !== _generation)
                 return;
             const items = Providers.parseModelList(provider, text);
             _merge(provider, items.map(it => _entry(provider, it, endpoint)));
@@ -74,6 +68,7 @@ QtObject {
     }
 
     function refresh() {
+        _generation++;
         const keyed = ["openai", "anthropic", "mistral", "groq"];
         for (const id of keyed) {
             const key = KeyStore.getKey(id);
@@ -102,10 +97,16 @@ QtObject {
         if (customEndpoint) {
             const ck = KeyStore.getKey("custom");
             _fetch("custom", customEndpoint.replace(/\/+$/, "") + "/models", ck ? ["Authorization: Bearer " + ck] : [], customEndpoint);
+        } else {
+            _merge("custom", []);
         }
         // Ollama is probed without a key; an unreachable daemon just yields nothing.
-        const ollamaBase = KeyStore.getEndpoint("ollama") || Providers.PROVIDERS.ollama.base;
-        _fetch("ollama", ollamaBase.replace(/\/+$/, "") + "/api/tags", [], KeyStore.getEndpoint("ollama"));
+        if (KeyStore.hasKey("ollama")) {
+            const ollamaBase = KeyStore.getEndpoint("ollama") || Providers.PROVIDERS.ollama.base;
+            _fetch("ollama", ollamaBase.replace(/\/+$/, "") + "/api/tags", [], KeyStore.getEndpoint("ollama"));
+        } else {
+            _merge("ollama", []);
+        }
         _addExtra();
     }
 
@@ -152,6 +153,7 @@ QtObject {
                     description: a.available ? (a.version || a.notes || "") : (a.notes || "not installed"),
                     endpoint: "",
                     available: !!a.available,
+                    capabilities: a.capabilities || {},
                     tools: true
                 }));
     }

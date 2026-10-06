@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.markdown
+import qs.modules.aicenter.common
 import "../../services/ai/AgentTimeline.js" as Timeline
 
 // "The agent wants to …" card: Allow / Allow for this session / Deny.
@@ -26,6 +27,7 @@ StyledRect {
     // False when the backend offers no session rule (interpreters, cd,
     // commands it cannot parse exactly): only Allow / Deny.
     property bool sessionAllowed: true
+    property bool detailsOpen: false
     readonly property bool pending: status === "pending"
 
     signal decided(string decision)
@@ -33,7 +35,7 @@ StyledRect {
     variant: pending ? "pane" : "common"
     radius: Styling.radius(-2)
     implicitHeight: col.implicitHeight + 24
-    border.width: pending ? 2 : 0
+    border.width: pending ? 1 : 0
     border.color: Colors.primary
     focus: pending
     activeFocusOnTab: pending
@@ -109,8 +111,8 @@ StyledRect {
                     Text {
                         Layout.fillWidth: true
                         text: root.title || root.tool
-                        font.family: Config.theme.monoFont
-                        font.pixelSize: Styling.monoFontSize(-1)
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(0)
                         font.weight: Font.DemiBold
                         color: Colors.overSurface
                         elide: Text.ElideMiddle
@@ -119,8 +121,16 @@ StyledRect {
             }
         }
 
+        Chip {
+            visible: root.pending && (root.detail.length > 0 || root.diff.length > 0)
+            label: I18n.t("ai.details")
+            trailingIcon: root.detailsOpen ? Icons.caretUp : Icons.caretDown
+            variant: "transparent"
+            onClicked: root.detailsOpen = !root.detailsOpen
+        }
+
         Text {
-            visible: root.pending && root.detail.length > 0 && root.diff.length === 0
+            visible: root.detailsOpen && root.pending && root.detail.length > 0 && root.diff.length === 0
             Layout.fillWidth: true
             text: root.detail
             textFormat: Text.PlainText
@@ -133,7 +143,7 @@ StyledRect {
         }
 
         DiffView {
-            visible: root.pending && root.diff.length > 0
+            visible: root.detailsOpen && root.pending && root.diff.length > 0
             Layout.fillWidth: true
             diff: root.diff
             path: root.path

@@ -4,41 +4,65 @@ import Quickshell
 import qs.config
 import qs.modules.services
 import qs.modules.globals
+import qs.modules.settings.store
 import "ai"
-import "ai/Templates.js" as Templates
+import "ai/EngineSelection.js" as Selection
 
-// AI center facade. Everything heavy is created on first use (_ensureInit),
-// so a shell that never opens the AI center pays almost nothing at startup.
-//   modes: chat (API/local models, MCP tools), agent (CLI agents via the Go
-//   agents service), shell (desktop control through the yozakura MCP tools)
+// Public assistant facade. Session ownership, request routing and prompt expansion
+// live in focused collaborators and survive unloading the workspace UI.
 Singleton {
     id: root
-
     readonly property bool enabled: Config.ai.enabled !== false
     property bool initialized: false
-
     property ModelCatalog catalog: null
     property ChatStore store: null
     property McpBridge mcp: null
     property AgentSessions agents: null
     property ContextGrabber context: null
-    property ChatSession chat: null
-    property ChatSession shellChat: null
-    property ChatSession quick: null
+    property ConversationSessions drafts: null
+    property var chat: null
+    property var shellChat: null
+    property var quick: null
     property var automations: null
     property var selection: null
-
     property string mode: Config.ai.defaultMode || "chat"
     property string currentModelId: ""
+    property string noticeError: ""
+    property string _openingChatId: ""
+    property int _newSerial: 0
+    property var _agentOverrides: ({})
+    readonly property string defaultModelId: Config.ai.defaultModel || ""
+    property var recentModelIds: []
+
     readonly property var models: catalog ? catalog.models : []
-    readonly property var currentModel: catalog ? (catalog.find(currentModelId) || catalog.apiModels[0] || null) : null
-    readonly property var quickModel: catalog ? (catalog.find(Config.ai.quickAsk.model) || currentModel) : null
-    readonly property var activeChat: mode === "shell" ? shellChat : chat
-    readonly property bool busy: activeChat ? activeChat.busy : false
+    readonly property var currentModel: catalog ? catalog.find(currentModelId) : null
+    readonly property var quickModel: catalog ? catalog.find(Config.ai.quickAsk.model || Config.ai.defaultModel || currentModelId) : null
+    readonly property var activeChat: mode === "agent" ? null : (mode === "shell" ? shellChat : chat)
+    readonly property var activeAgent: mode === "agent" && agents ? agents.active : null
+    readonly property bool busy: runner.starting || (activeAgent ? ["running", "starting", "waiting"].indexOf(activeAgent.status) >= 0 : (activeChat ? activeChat.busy : false))
+    readonly property string sessionKey: activeAgent ? "agent:" + activeAgent.id : (mode === "agent" ? "new:" + currentModelId + ":" + _newSerial : (activeChat ? "chat:" + activeChat.chatId : ""))
+    readonly property var agentSettings: {
+        const id = activeAgent ? activeAgent.agent : (currentModel?.agent || Config.ai.agents.defaultAgent);
+        const cfg = Config.ai.agents[id] || {};
+        return Object.assign({
+            agent: id,
+            model: cfg.model || "",
+            effort: cfg.effort || "",
+            cwd: Config.ai.agents.defaultCwd || "",
+            systemPrompt: "",
+            yolo: !!cfg.yolo
+        }, _agentOverrides[id] || {}, activeAgent || {});
+    }
 
     signal modelSelectionRequested
     signal focusComposerRequested
 
+    property RequestRunner runner: RequestRunner {
+        owner: root
+    }
+    property PromptActions promptActions: PromptActions {
+        owner: root
+    }
     readonly property Component catalogC: Component {
         ModelCatalog {}
     }
@@ -54,8 +78,14 @@ Singleton {
     readonly property Component contextC: Component {
         ContextGrabber {}
     }
+    readonly property Component poolC: Component {
+        ConversationSessions {}
+    }
     readonly property Component sessionC: Component {
         ChatSession {}
+    }
+    readonly property Component agentPromptC: Component {
+        AgentPrompt {}
     }
     readonly property Component automationsC: Component {
         AiAutomations {}
@@ -73,28 +103,51 @@ Singleton {
         mcp = mcpC.createObject(root);
         agents = agentsC.createObject(root);
         context = contextC.createObject(root);
-        chat = _newSession("chat", true);
+        drafts = poolC.createObject(root, {
+            makeSession: (kind, persist) => _newSession(kind, persist)
+        });
+        currentModelId = Selection.initial(Config.ai.defaultModel, StateService.initialized ? StateService.get("lastAiModel", "") : "", Config.ai.defaultMode, Config.ai.agents.defaultAgent, Config.ai.shell.target);
+        recentModelIds = StateService.initialized ? StateService.get("aiRecentModels", []) : [];
+        drafts.selected.connect(s => {
+            mode = s.mode === "shell" ? "shell" : "chat";
+            if (s.mode === "shell")
+                shellChat = s;
+            else
+                chat = s;
+            currentModelId = s.engineId;
+            _configureSession(s);
+        });
+        chat = drafts.newSession("chat", true, currentModelId);
         shellChat = _newSession("shell", true);
         quick = _newSession("quick", false);
         store.loaded.connect((id, data) => {
-            const target = data && data.mode === "shell" ? shellChat : chat;
-            target.load(data);
-            mode = target === shellChat ? "shell" : "chat";
+            if (id !== _openingChatId)
+                return;
+            _openingChatId = "";
+            drafts.open(Array.isArray(data) ? {
+                id: id,
+                messages: data
+            } : Object.assign({}, data, {
+                id: id
+            }));
         });
         agents.agentsChanged.connect(() => catalog.setAgents(agents.agents));
-        if (StateService.initialized)
-            currentModelId = StateService.get("lastAiModel", "");
+        agents.operationError.connect(message => {
+            noticeError = message;
+        });
         catalog.refresh();
         store.refresh();
         mcp.configure();
         agents.start();
+        if (currentModelId.startsWith("agent:"))
+            mode = "agent";
     }
 
     function _newSession(kind, persist) {
         const s = sessionC.createObject(root, {
             mode: kind,
             persist: persist
-        });
+        }) as ChatSession;
         s.callTool = (server, tool, args, cb) => mcp.call(server, tool, args, cb);
         s.saveRequested.connect(data => store.save(data));
         _configureSession(s);
@@ -102,33 +155,26 @@ Singleton {
     }
 
     function _configureSession(s) {
-        if (!s)
+        if (!s || s.busy)
             return;
-        const m = s === quick ? quickModel : currentModel;
+        const m = catalog ? catalog.find(s.engineId || currentModelId) : null;
         s.model = m && m.kind !== "agent" ? m : null;
-        s.apiKey = m ? (KeyStore.getKey(m.provider) || "") : "";
-        s.customCurl = m ? (KeyStore.getCustomCurl(m.provider) || "") : "";
+        s.apiKey = m ? KeyStore.getKey(m.provider) || "" : "";
+        s.customCurl = m ? KeyStore.getCustomCurl(m.provider) || "" : "";
         s.maxRounds = Config.ai.maxToolRounds || 8;
         s.policy = {
             autoApprove: Config.ai.agents.autoApprove || ["read"]
         };
-        if (s.mode === "shell") {
-            s.system = Config.ai.shell.systemPrompt;
-            s.tools = mcp ? mcp.toolsFor("yozakura") : [];
-        } else {
-            s.system = Config.ai.systemPrompt;
-            s.tools = Config.ai.chatTools && mcp && s.mode === "chat" ? mcp.toolsFor("all") : [];
-        }
+        s.system = s.mode === "shell" ? Config.ai.shell.systemPrompt : Config.ai.systemPrompt;
+        s.tools = mcp ? (s.mode === "shell" ? mcp.toolsFor("yozakura") : (s.mode === "chat" && Config.ai.chatTools ? mcp.toolsFor("all") : [])) : [];
     }
 
     function _reconfigure() {
-        _configureSession(chat);
+        for (const s of drafts ? drafts.sessions : [])
+            _configureSession(s);
         _configureSession(shellChat);
-        _configureSession(quick);
     }
-
     onCurrentModelChanged: _reconfigure()
-    onQuickModelChanged: _configureSession(quick)
     Connections {
         target: root.mcp
         function onAllToolsChanged() {
@@ -144,13 +190,6 @@ Singleton {
         }
     }
     Connections {
-        target: StateService
-        function onInitializedChanged() {
-            if (StateService.initialized && root.initialized && !root.currentModelId)
-                root.currentModelId = StateService.get("lastAiModel", "");
-        }
-    }
-    Connections {
         target: GlobalStates
         function onAssistantVisibleChanged() {
             if (GlobalStates.assistantVisible)
@@ -158,7 +197,6 @@ Singleton {
         }
     }
 
-    // Automations only exist when the user enabled at least one.
     readonly property bool _wantsAutomations: enabled && (Config.ai.automations || []).some(a => a && a.enabled)
     on_WantsAutomationsChanged: _syncAutomations()
     Component.onCompleted: _syncAutomations()
@@ -171,254 +209,181 @@ Singleton {
         }
     }
 
-    // ── model / mode ────────────────────────────────────────────────────
-
     function setModel(id) {
         _ensureInit();
+        _openingChatId = "";
         const m = catalog.find(id);
-        if (!m)
+        if (!m || m.available === false) {
+            noticeError = I18n.t("ai.engine_unavailable");
             return false;
+        }
+        noticeError = "";
         if (m.kind === "agent") {
-            setMode("agent");
-            Config.ai.agents.defaultAgent = m.agent;
-            return true;
+            if (!activeAgent || activeAgent.agent !== m.agent)
+                agents.activeId = "";
+            mode = "agent";
+        } else {
+            if (mode === "agent" || !chat || (chat.engineId !== m.id && (busy || chat.rows.count > 0)))
+                chat = drafts.newSession("chat", true, m.id);
+            chat.engineId = m.id;
+            mode = "chat";
         }
         currentModelId = m.id;
         StateService.set("lastAiModel", m.id);
+        recentModelIds = [m.id].concat(recentModelIds.filter(x => x !== m.id)).slice(0, 8);
+        StateService.set("aiRecentModels", recentModelIds);
+        _reconfigure();
         return true;
     }
 
-    function setMode(m) {
+    function setDefaultModel(id) {
+        SettingsStore.set("ai.defaultModel", id);
+    }
+
+    function configureAgent(fields) {
+        if (busy)
+            return false;
+        if (activeAgent)
+            agents.update(activeAgent.id, fields);
+        else {
+            const id = agentSettings.agent;
+            _agentOverrides = Object.assign({}, _agentOverrides, {
+                [id]: Object.assign({}, _agentOverrides[id] || {}, fields)
+            });
+        }
+        return true;
+    }
+
+    function setMode(value) {
         _ensureInit();
-        if (["chat", "agent", "shell"].indexOf(m) >= 0)
-            mode = m;
+        if (value === "agent")
+            setModel("agent:" + Config.ai.agents.defaultAgent);
+        else if (value === "chat" || value === "shell")
+            mode = currentModel?.kind === "agent" ? "agent" : value;
     }
 
     function newConversation() {
         _ensureInit();
-        if (mode === "agent")
+        _openingChatId = "";
+        const id = Config.ai.defaultModel || currentModelId;
+        _newSerial++;
+        noticeError = "";
+        if (id.startsWith("agent:")) {
             agents.activeId = "";
-        else
-            activeChat.clear();
+            currentModelId = id;
+            mode = "agent";
+        } else {
+            chat = drafts.newSession("chat", true, id);
+        }
         focusComposerRequested();
     }
 
-    // ── sending ─────────────────────────────────────────────────────────
+    function openConversation(kind, id) {
+        _ensureInit();
+        _openingChatId = "";
+        noticeError = "";
+        if (kind === "agent") {
+            agents.activeId = id;
+            mode = "agent";
+            if (agents.active)
+                currentModelId = "agent:" + agents.active.agent;
+        } else if (!drafts.select(id)) {
+            _openingChatId = id;
+            store.load(id);
+        }
+    }
+
+    function stopSession(kind, id) {
+        runner.stopSession(kind, id);
+    }
+
+    function removeConversation(kind, id) {
+        if (kind === "chat" && _openingChatId === id)
+            _openingChatId = "";
+        const wasSelected = kind === "agent" ? activeAgent?.id === id : activeChat?.chatId === id;
+        runner.stopSession(kind, id);
+        if (kind === "agent")
+            agents.remove(id);
+        else {
+            drafts.remove(id);
+            store.remove(id);
+        }
+        if (wasSelected) {
+            const next = drafts.sessions.find(s => s.persist !== false);
+            if (kind === "chat" && next)
+                drafts.select(next.chatId);
+            else
+                newConversation();
+        }
+    }
+    function renameConversation(kind, id, title) {
+        if (kind === "agent")
+            agents.update(id, {
+                title: title
+            });
+        else {
+            const s = drafts.sessions.find(x => x.chatId === id);
+            if (s) {
+                s.title = title;
+                store.save(s.serialize());
+                drafts.revision++;
+            } else
+                store.rename(id, title);
+        }
+    }
+    function pinConversation(kind, id, pinned) {
+        if (kind === "agent")
+            agents.update(id, {
+                pinned: pinned
+            });
+        else {
+            const s = drafts.sessions.find(x => x.chatId === id);
+            if (s) {
+                s.pinned = pinned;
+                store.save(s.serialize());
+                drafts.revision++;
+            } else
+                store.setPinned(id, pinned);
+        }
+    }
 
     function send(text, attachments) {
         _ensureInit();
-        if (_slash(text))
-            return true;
-        if (mode === "agent") {
-            const images = (attachments || []).filter(a => a.type === "image" && a.path).map(a => a.path);
-            const prompt = _inlineText(text, attachments);
-            if (agents.activeId)
-                agents.send(agents.activeId, prompt, images);
-            else
-                agents.create(Config.ai.agents.defaultAgent, Config.ai.agents.defaultCwd, {
-                    prompt: prompt,
-                    images: images
-                });
-            return true;
-        }
-        if (mode === "shell" && Config.ai.shell.target.indexOf("agent:") === 0) {
-            const agentId = Config.ai.shell.target.substring(6);
-            const shellSession = agents.sessions.find(s => s.mode === "shell" && s.agent === agentId && s.status !== "exited");
-            if (shellSession)
-                agents.send(shellSession.id, text, []);
-            else
-                agents.create(agentId, Quickshell.env("HOME"), {
-                    mode: "shell",
-                    prompt: text,
-                    title: I18n.t("ai.mode_shell"),
-                    systemPrompt: Config.ai.shell.systemPrompt
-                });
-            return true;
-        }
-        if (mode === "chat" && Config.ai.chatTools && !mcp.allLoaded && BackendService.socketAvailable) {
-            // First tool-capable message: start the imported MCP servers once.
-            const session = activeChat;
-            mcp.loadAll(() => {
-                _configureSession(session);
-                session.send(text, attachments || []);
-            });
-            return true;
-        }
-        _configureSession(activeChat);
-        return activeChat.send(text, attachments || []);
-    }
-
-    function _inlineText(text, attachments) {
-        const extra = (attachments || []).filter(a => a.type === "text" && a.text).map(a => "<context name=\"" + (a.name || a.kind) + "\">\n" + a.text + "\n</context>");
-        return extra.length ? extra.join("\n\n") + "\n\n" + text : text;
-    }
-
-    function stop() {
-        if (!initialized)
-            return;
-        if (mode === "agent" && agents.activeId)
-            agents.cancel(agents.activeId);
-        else if (activeChat)
-            activeChat.stop();
-    }
-
-    function _slash(text) {
-        const t = String(text || "").trim();
-        if (!t.startsWith("/"))
-            return false;
-        const cmd = t.split(/\s+/)[0].toLowerCase();
-        const arg = t.substring(cmd.length).trim();
-        switch (cmd) {
-        case "/new":
-        case "/clear":
+        if (text.trim() === "/new" || text.trim() === "/clear") {
             newConversation();
             return true;
-        case "/model":
-            if (!arg)
-                modelSelectionRequested();
-            else {
-                const m = models.find(x => x.name.toLowerCase().includes(arg.toLowerCase()) || x.model === arg);
-                if (m)
-                    setModel(m.id);
-                else if (activeChat)
-                    activeChat.notice(I18n.t("ai.model_not_found").replace("%1", arg));
-            }
-            return true;
-        case "/chat":
-        case "/agent":
-        case "/shell":
-            setMode(cmd.substring(1));
-            if (arg)
-                send(arg, []);
-            return true;
-        case "/help":
-            if (activeChat)
-                activeChat.notice(I18n.t("ai.help_message"));
+        }
+        if (text.trim() === "/model") {
+            modelSelectionRequested();
             return true;
         }
-        return false;
+        return runner.send(text, attachments || []);
     }
-
-    // ── one-shot prompts (automations, selection actions, quick ask) ────
-
-    // opts: {model: id, system, onDelta(text)}; cb(text, error)
+    function stop() {
+        runner.stop();
+    }
     function runPrompt(prompt, opts, cb) {
         _ensureInit();
-        const o = opts || {};
-        const m = catalog.find(o.model) || quickModel || currentModel;
-        if (!m || m.kind === "agent") {
-            cb("", I18n.t("ai.no_model"));
-            return;
-        }
-        const s = sessionC.createObject(root, {
-            mode: "oneshot",
-            persist: false,
-            model: m,
-            apiKey: KeyStore.getKey(m.provider) || "",
-            customCurl: KeyStore.getCustomCurl(m.provider) || "",
-            system: o.system || Config.ai.systemPrompt,
-            maxRounds: 1
-        });
-        s.turnFinished.connect((text, error) => {
-            cb(text, error);
-            s.destroy();
-        });
-        if (!s.send(prompt, o.attachments || [])) {
-            cb("", "empty prompt");
-            s.destroy();
-        }
+        runner.runPrompt(prompt, opts, cb);
     }
-
-    function askQuick(text, attachments) {
+    function askQuick(text, attachments, kind) {
         _ensureInit();
-        _configureSession(quick);
-        if (!quick.busy)
-            quick.clear();
-        quick.send(text, attachments || []);
-        GlobalStates.showQuickAsk();
+        return runner.askQuick(text, attachments, kind);
     }
-
-    // Moves the quick-ask exchange into the sidebar chat and opens it there.
     function continueInSidebar() {
-        _ensureInit();
-        if (GlobalStates.quickAskKind === "shell") {
-            mode = "shell";
-            GlobalStates.hideQuickAsk();
-            if (!GlobalStates.assistantVisible)
-                GlobalStates.toggleAssistant();
-            return;
-        }
-        const data = quick.serialize();
-        data.id = Date.now().toString();
-        data.mode = "chat";
-        chat.load(data);
-        mode = "chat";
-        quick.clear();
-        GlobalStates.hideQuickAsk();
-        if (!GlobalStates.assistantVisible)
-            GlobalStates.toggleAssistant();
-        store.save(chat.serialize());
+        runner.continueInSidebar();
     }
-
-    // Voice entry point (voice pipeline): target "sidebar" or "notch".
-    // Desktop commands go to shell mode (yozakura MCP), questions to chat.
     function handleVoice(text, target) {
         if (!enabled || !String(text || "").trim())
             return;
-        _ensureInit();
-        const t = target || (GlobalStates.assistantVisible ? "sidebar" : "notch");
-        const imperative = /^(open|close|switch|set|change|turn|enable|disable|toggle|move|show|hide|mute|unmute|pause|play|next|previous|take|copy|apply|focus|dnd|abre|cierra|cambia|pon|включи|выключи|открой|закрой|поставь|смени|сделай)\b/i;
-        if (Config.ai.shell.enabled && imperative.test(text.trim())) {
-            mode = "shell";
-            if (t === "sidebar") {
-                send(text, []);
-            } else {
-                _configureSession(shellChat);
-                shellChat.send(text, []);
-                GlobalStates.showQuickAsk("shell");
-            }
-            return;
-        }
-        if (t === "sidebar") {
-            mode = mode === "shell" ? "chat" : mode;
-            send(text, []);
-        } else {
+        if (target === "notch" || (!target && !GlobalStates.assistantVisible))
             askQuick(text, []);
-        }
+        else
+            send(text, []);
     }
-
-    // Fills a prompt-library template; reads selection/clipboard only when used.
     function expandTemplate(template, extra, cb) {
-        _ensureInit();
-        const vars = Object.assign({
-            language: Config.ai.selection.language
-        }, extra || {});
-        const needed = Templates.variables(template).filter(v => vars[v] === undefined && (v === "selection" || v === "clipboard" || v === "window"));
-        const next = () => {
-            if (needed.length === 0) {
-                cb(Templates.expand(template, vars));
-                return;
-            }
-            const v = needed.shift();
-            if (v === "selection")
-                context.selectionText(t => {
-                    vars.selection = t;
-                    next();
-                });
-            else if (v === "clipboard")
-                context.clipboardText(t => {
-                    vars.clipboard = t;
-                    next();
-                });
-            else
-                context.activeWindow(a => {
-                    vars.window = a ? a.text : "";
-                    next();
-                });
-        };
-        next();
+        promptActions.expandTemplate(template, extra, cb);
     }
-
     function runSelectionActions() {
         if (!enabled || !Config.ai.selection.enabled)
             return;
@@ -427,14 +392,13 @@ Singleton {
             selection = selectionC.createObject(root);
         selection.open();
     }
-
     function askAboutRegion() {
         _ensureInit();
         context.screenshot(true, att => {
-            if (!att)
-                return;
-            GlobalStates.quickAskAttachments = [att];
-            GlobalStates.showQuickAsk();
+            if (att) {
+                GlobalStates.quickAskAttachments = [att];
+                GlobalStates.showQuickAsk();
+            }
         });
     }
 }

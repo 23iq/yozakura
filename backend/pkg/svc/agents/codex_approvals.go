@@ -8,6 +8,17 @@ import (
 // Codex approvals: server->client requests answered with a decision.
 
 func (c *codexConn) onRequest(id json.RawMessage, method string, params json.RawMessage) {
+	if c.opts.Mode == "oneshot" {
+		switch method {
+		case "item/permissions/requestApproval":
+			_ = c.rpc.Reply(id, map[string]any{"permissions": map[string]any{}, "scope": "turn"})
+		case "execCommandApproval", "applyPatchApproval":
+			_ = c.rpc.Reply(id, map[string]any{"decision": "denied"})
+		default:
+			_ = c.rpc.Reply(id, map[string]any{"decision": "decline"})
+		}
+		return
+	}
 	var p struct {
 		ItemID         string           `json:"itemId"`
 		Command        string           `json:"command"`

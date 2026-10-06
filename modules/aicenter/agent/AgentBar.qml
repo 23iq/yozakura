@@ -35,7 +35,7 @@ RowLayout {
         Layout.leftMargin: 4
     }
     Text {
-        text: root.session ? root.agentLabel(root.session.agent) : ""
+        text: root.session ? (root.session.model || root.agentLabel(root.session.agent)) : ""
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(-1)
         font.weight: Font.DemiBold
@@ -59,26 +59,11 @@ RowLayout {
         font.pixelSize: Styling.fontSize(-3)
         color: root.status === "waiting" ? Colors.warning : Colors.outline
     }
-    Chip {
-        id: yolo
-        glyph: Icons.lightningBolt
-        label: "YOLO"
-        active: root.session ? root.session.yolo : false
-        variant: active ? "error" : "common"
-        onClicked: if (root.session)
-            Ai.agents.update(root.session.id, {
-                yolo: !root.session.yolo
-            })
-        StyledToolTip {
-            tooltipText: I18n.t("ai.yolo_tooltip")
-            show: yolo.hovered
-        }
-    }
     IconButton {
         visible: root.running
         glyph: Icons.stopCircle
         tooltip: I18n.t("ai.stop") + " (Ctrl+.)"
         danger: true
-        onClicked: Ai.agents.cancel(root.session.id)
+        onClicked: Ai.stopSession("agent", root.session.id)
     }
 }

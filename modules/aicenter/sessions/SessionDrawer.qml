@@ -7,6 +7,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import "../../services/ai/EngineSelection.js" as Selection
 
 // History: chats, shell-control chats and agent sessions with search and
 // pinning (pinned first, then most recent). Keyboard: type to search,
@@ -20,43 +21,9 @@ StyledRect {
     radius: Styling.radius(-2)
 
     property int selectedIndex: 0
-    readonly property string home: Quickshell.env("HOME")
-    readonly property var entries: {
-        const q = search.text.toLowerCase().trim();
-        const out = [];
-        for (const c of (Ai.store ? Ai.store.chats : [])) {
-            out.push({
-                kind: "chat",
-                id: c.id,
-                title: c.title,
-                mode: c.mode,
-                pinned: c.pinned,
-                updated: c.updated,
-                subtitle: c.preview || "",
-                hay: (c.title + " " + (c.search || "")).toLowerCase()
-            });
-        }
-        for (const s of (Ai.agents ? Ai.agents.sessions : [])) {
-            if (s.mode === "shell")
-                continue;
-            const where = s.cwd && s.cwd.indexOf(home) === 0 ? "~" + s.cwd.substring(home.length) : (s.cwd || "");
-            out.push({
-                kind: "agent",
-                id: s.id,
-                title: s.title,
-                mode: "agent",
-                agent: s.agent,
-                pinned: s.pinned,
-                updated: s.updated,
-                status: s.status,
-                subtitle: s.agent + " · " + where,
-                hay: (s.title + " " + s.agent + " " + where + " " + (s.lastText || "")).toLowerCase()
-            });
-        }
-        const filtered = q ? out.filter(e => q.split(/\s+/).every(w => e.hay.includes(w))) : out;
-        filtered.sort((a, b) => (b.pinned - a.pinned) || (b.updated - a.updated));
-        return filtered;
-    }
+    readonly property var entries: Selection.sessions(Ai.store ? Ai.store.chats : [], Ai.drafts ? Ai.drafts.summaries : [], Ai.agents ? Ai.agents.sessions : [], search.text).map(e => Object.assign({}, e, {
+            subtitle: (e.subtitle || "").replace(Quickshell.env("HOME"), "~")
+        }))
 
     function focusSearch() {
         search.forceActiveFocus();
@@ -69,29 +36,15 @@ StyledRect {
     function open(e) {
         if (!e)
             return;
-        if (e.kind === "agent") {
-            Ai.setMode("agent");
-            Ai.agents.activeId = e.id;
-        } else {
-            Ai.store.load(e.id);
-        }
+        Ai.openConversation(e.kind, e.id);
         root.closeRequested();
     }
 
     function togglePin(e) {
-        if (e.kind === "agent")
-            Ai.agents.update(e.id, {
-                pinned: !e.pinned
-            });
-        else
-            Ai.store.setPinned(e.id, !e.pinned);
+        Ai.pinConversation(e.kind, e.id, !e.pinned);
     }
-
     function remove(e) {
-        if (e.kind === "agent")
-            Ai.agents.remove(e.id);
-        else
-            Ai.store.remove(e.id);
+        Ai.removeConversation(e.kind, e.id);
     }
 
     ColumnLayout {
@@ -155,10 +108,12 @@ StyledRect {
                 required property int index
                 width: list.width
                 entry: entry.modelData
-                selected: entry.index === root.selectedIndex
+                selected: Ai.sessionKey === entry.modelData.kind + ":" + entry.modelData.id
                 onOpened: root.open(entry.modelData)
                 onPinToggled: root.togglePin(entry.modelData)
                 onRemoved: root.remove(entry.modelData)
+                onStopped: Ai.stopSession(entry.modelData.kind, entry.modelData.id)
+                onRenamed: title => Ai.renameConversation(entry.modelData.kind, entry.modelData.id, title)
             }
         }
 

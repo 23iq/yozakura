@@ -53,9 +53,15 @@ QtObject {
         aborted = true;
         if (curl.running)
             curl.signal(15);
+        else
+            finished({
+                aborted: true
+            });
     }
 
     function _launch() {
+        if (aborted)
+            return;
         const body = Providers.body(messages, model, tools, {
             system: system
         });

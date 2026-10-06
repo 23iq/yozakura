@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.services
 import "Providers.js" as Providers
 import "Permissions.js" as Permissions
 import "ChatRows.js" as ChatRows
@@ -19,6 +20,8 @@ QtObject {
     property bool pinned: false
     property string mode: "chat"          // chat | shell | quick
     property double created: Date.now()
+    property double updated: created
+    property string engineId: ""
     property var model: null              // catalog entry {provider, model, name, ...}
     property string apiKey: ""
     property string customCurl: ""
@@ -38,6 +41,7 @@ QtObject {
     property int pendingApprovals: 0
     property var _request: null
     property int _round: 0
+    property int _generation: 0
     property var _sessionRules: ({})
 
     signal changed
@@ -117,7 +121,7 @@ QtObject {
             title: title,
             pinned: pinned,
             mode: mode,
-            model: model ? model.id : "",
+            model: engineId || (model ? model.id : ""),
             created: created,
             updated: Date.now(),
             messages: ChatRows.toStored(_rows())
@@ -131,6 +135,8 @@ QtObject {
         title = data.title || "";
         pinned = !!data.pinned;
         created = data.created || Date.now();
+        updated = data.updated || created;
+        engineId = data.model || "";
         for (const row of ChatRows.fromStored(data))
             append(row);
         changed();
@@ -172,9 +178,11 @@ QtObject {
     }
 
     function stop() {
-        if (_request) {
-            _request.abort();
-        }
+        _generation++;
+        const request = _request;
+        _request = null;
+        if (request)
+            request.abort();
         for (let i = 0; i < rows.count; i++) {
             const calls = _parse(rows.get(i).toolCalls, []);
             let touched = false;
@@ -190,6 +198,7 @@ QtObject {
         }
         pendingApprovals = 0;
         busy = false;
+        _save();
     }
 
     function _startRound() {
@@ -221,7 +230,10 @@ QtObject {
                     })) : []
         });
         _request = req;
+        const generation = _generation;
         req.delta.connect((text, thinking) => {
+            if (generation !== _generation || _request !== req)
+                return;
             const r = rows.get(index);
             if (text)
                 rows.setProperty(index, "content", r.content + text);
@@ -229,6 +241,10 @@ QtObject {
                 rows.setProperty(index, "thinking", r.thinking + thinking);
         });
         req.finished.connect(result => {
+            if (generation !== _generation || _request !== req) {
+                req.destroy();
+                return;
+            }
             _request = null;
             req.destroy();
             rows.setProperty(index, "status", "");
@@ -285,7 +301,7 @@ QtObject {
             args: c.args,
             server: def ? def.server : "",
             tool: def ? def.tool : c.name,
-            title: Permissions.summarize(def ? def.tool : c.name, c.args),
+            title: Permissions.summarize(def ? def.tool : c.name, c.args, (key, values) => I18n.t.apply(I18n, [key].concat(values)), def ? def.server : ""),
             category: Permissions.category(info),
             status: "pending",
             result: "",
@@ -353,6 +369,7 @@ QtObject {
     }
 
     function _runCall(index, id) {
+        const generation = _generation;
         const calls = _setCall(index, id, {
             status: "running"
         });
@@ -367,6 +384,8 @@ QtObject {
             return;
         }
         callTool(c.server, c.tool, c.args || {}, res => {
+            if (generation !== _generation)
+                return;
             _setCall(index, id, {
                 status: res && res.isError ? "error" : "done",
                 isError: !!(res && res.isError),
@@ -421,6 +440,7 @@ QtObject {
     }
 
     function _save() {
+        updated = Date.now();
         changed();
         if (persist && rows.count > 0)
             saveRequested(serialize());

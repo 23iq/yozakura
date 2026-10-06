@@ -707,6 +707,7 @@ Singleton {
 
     // AI center: wide (agent) layout and the notch quick-ask card.
     property bool assistantWide: false
+    property bool assistantFullscreen: false
     readonly property int assistantEffectiveWidth: assistantWide ? Math.max(assistantWidth, Config.ai.wideWidth ?? 1040) : assistantWidth
     readonly property bool quickAskVisible: Visibilities.currentActiveModule === "aiquick"
     property string quickAskKind: "chat"   // chat | shell

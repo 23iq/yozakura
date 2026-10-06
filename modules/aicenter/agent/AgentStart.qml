@@ -15,7 +15,7 @@ ColumnLayout {
 
     readonly property string home: Quickshell.env("HOME")
     readonly property var agents: Ai.agents ? Ai.agents.agents : []
-    readonly property string cwd: Config.ai.agents.defaultCwd || home
+    readonly property string cwd: Ai.agentSettings.cwd || home
 
     spacing: 14
 
@@ -71,10 +71,10 @@ ColumnLayout {
                 required property var modelData
                 glyph: entry0.modelData.available ? Icons.robot : Icons.warning
                 label: entry0.modelData.label + (entry0.modelData.available ? "" : " · " + I18n.t("ai.not_installed"))
-                active: Config.ai.agents.defaultAgent === entry0.modelData.id
+                active: Ai.agentSettings.agent === entry0.modelData.id
                 enabled: entry0.modelData.available
                 opacity: enabled ? 1 : 0.55
-                onClicked: Config.ai.agents.defaultAgent = entry0.modelData.id
+                onClicked: Ai.setModel("agent:" + entry0.modelData.id)
             }
         }
         Text {
@@ -117,7 +117,9 @@ ColumnLayout {
                 label: root.shortPath(entry1.modelData)
                 mono: true
                 maxLabelWidth: 200
-                onClicked: Config.ai.agents.defaultCwd = entry1.modelData
+                onClicked: Ai.configureAgent({
+                    cwd: entry1.modelData
+                })
             }
         }
         Chip {
@@ -125,7 +127,9 @@ ColumnLayout {
             label: I18n.t("ai.browse")
             onClicked: Ai.context.pickDirectory(root.cwd, dir => {
                 if (dir)
-                    Config.ai.agents.defaultCwd = dir;
+                    Ai.configureAgent({
+                        cwd: dir
+                    });
             })
         }
     }
