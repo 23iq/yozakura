@@ -157,6 +157,14 @@ Column {
             iconText: Icons.magnifyingGlass
             placeholderText: I18n.t("extras.ui.search")
         }
+        Rectangle {
+            visible: root.showSearch
+            anchors.fill: search
+            radius: search.radius
+            color: "transparent"
+            border.width: 1
+            border.color: Ui.alpha(Colors.outlineVariant, 0.6)
+        }
     }
 
     Repeater {
