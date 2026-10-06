@@ -11,7 +11,7 @@ QtObject {
     id: root
 
     // The StyledRect (a Quickshell ClippingRectangle)
-    required property Item target
+    required property var target
     property var variantConfig: ({})
     property bool popup: false
     property string anchorEdge: ""

@@ -22,10 +22,10 @@ PopupWindow {
     default property alias contentData: contentContainer.data
 
     // Visual configuration
-    property int popupPadding: 8
+    property int popupPadding: Metrics.spacing
     // Distance from the anchor item (theme.popup.gap)
     property int visualMargin: Config.theme && Config.theme.popup ? Config.theme.popup.gap : 8
-    property int shadowMargin: 16  // Extra margin for shadow
+    property int shadowMargin: Metrics.padding  // Extra margin for shadow
     property string variant: "popup"  // StyledRect variant for background
 
     // Behavior configuration
