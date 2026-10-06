@@ -33,7 +33,7 @@ QtObject {
     function execute(a, vars, attachments) {
         Ai.expandTemplate(a.prompt, vars, prompt => {
             if (a.output === "sidebar") {
-                Ai.setMode("chat");
+                Ai.setSpace("assistant");
                 if (!GlobalStates.assistantVisible)
                     GlobalStates.toggleAssistant();
                 Ai.send(prompt, attachments || []);

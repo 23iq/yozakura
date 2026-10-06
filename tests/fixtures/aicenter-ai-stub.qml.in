@@ -1,5 +1,6 @@
 pragma Singleton
 import QtQuick
+import qs.modules.globals
 import "ai"
 import "ai/AgentTimeline.js" as Timeline
 
@@ -9,6 +10,7 @@ QtObject {
     id: root
 
     property string mode: "chat"
+    readonly property string space: GlobalStates.aiSpace
     property bool initialized: true
     readonly property var currentModel: mode === "agent" ? models[0] : models[1]
     readonly property string defaultModelId: models[1].id
@@ -16,6 +18,7 @@ QtObject {
     readonly property var quickModel: models[2]
     readonly property bool busy: chat.busy
     readonly property var activeAgent: mode === "agent" ? agents.active : null
+    readonly property var activeChat: mode === "agent" ? null : chat
     readonly property string sessionKey: activeAgent ? "agent:" + activeAgent.id : "chat:" + chat.id
     property string noticeError: ""
     readonly property var agentSettings: ({agent: "claude", cwd: "/home/user/src/yozakura", model: "", effort: "", systemPrompt: ""})
@@ -88,10 +91,6 @@ QtObject {
 
     property ChatSession chat: ChatSession {
         persist: false
-    }
-    property ChatSession shellChat: ChatSession {
-        persist: false
-        mode: "shell"
     }
     property ChatSession quick: ChatSession {
         persist: false
@@ -256,6 +255,16 @@ QtObject {
     function setMode(m) {
         mode = m;
     }
+    function setSpace(s) {
+        GlobalStates.aiSpace = s === "code" ? "code" : "assistant";
+        mode = GlobalStates.aiSpace === "code" ? "agent" : "chat";
+    }
+    property var ambient: ({hour: 10, media: {title: "Clair de lune", artist: "Debussy", playing: true}, clipboard: {text: "Traceback (most recent call last):\n  File \"x.py\""}})
+    function ambientContext() { return ambient; }
+    property int settingsOpened: 0
+    function openProviderSettings() { settingsOpened++; }
+    property var undone: []
+    function undoAction(u) { undone = undone.concat([u.tool]); }
     function setModel(id) {
     }
     function newConversation() {

@@ -72,9 +72,10 @@ QtObject {
             case "ai-quickask": GlobalStates.toggleQuickAsk(); break;
             case "ai-selection": Ai.runSelectionActions(); break;
             case "ai-region": Ai.askAboutRegion(); break;
-            case "ai-agent": openAssistantMode("agent"); break;
-            case "ai-shell": openAssistantMode("shell"); break;
-            case "ai-chat": openAssistantMode("chat"); break;
+            case "ai-agent":
+            case "ai-code": openAssistantSpace("code"); break;
+            case "ai-shell":
+            case "ai-chat": openAssistantSpace("assistant"); break;
 
             // Do not disturb (also used by the yozakura MCP dnd_set tool)
             case "dnd-on": Notifications.setDnd(true); break;
@@ -288,8 +289,8 @@ QtObject {
         }
     }
 
-    function openAssistantMode(mode) {
-        Ai.setMode(mode);
+    function openAssistantSpace(space) {
+        Ai.setSpace(space);
         if (!GlobalStates.assistantVisible)
             GlobalStates.toggleAssistant();
         else

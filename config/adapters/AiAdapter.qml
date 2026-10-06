@@ -4,15 +4,13 @@ import Quickshell.Io
 
 JsonAdapter {
     property bool enabled: true
-    property string systemPrompt: "You are a helpful assistant running on a Linux system. You have access to some tools to control the system."
-    property string tool: "none"
+    property string systemPrompt: "You are the user's assistant on their Linux desktop (Yozakura). You can control the desktop shell through the yozakura tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb): inspect state with the read-only tools first, make the smallest change that fulfils a request and say what you changed in one sentence. Otherwise answer clearly and briefly."
     property list<var> extraModels: []
     property string defaultModel: ""
     property int sidebarWidth: 400
     property string sidebarPosition: "right"
     property bool sidebarPinnedOnStartup: false
     property int wideWidth: 1040
-    property string defaultMode: "chat"
     property bool showThinking: true
     property bool chatTools: true
     property int maxToolRounds: 8
@@ -53,11 +51,6 @@ JsonAdapter {
         property bool importCodex: true
         property bool importOpencode: true
         property list<var> disabled: []
-    }
-    property JsonObject shell: JsonObject {
-        property bool enabled: true
-        property string target: ""
-        property string systemPrompt: "You control the user's Yozakura desktop shell through the yozakura MCP tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb). Inspect state with the read-only tools first, then make the smallest change that fulfils the request and say what you changed in one sentence."
     }
     property JsonObject quickAsk: JsonObject {
         property bool enabled: true
@@ -190,5 +183,32 @@ JsonAdapter {
     ]
     property JsonObject voice: JsonObject {
         property bool enabled: true
+    }
+    property JsonObject appearance: JsonObject {
+        property string defaultSize: "compact"
+        property string messageStyle: "bubble"
+        property string density: "comfortable"
+        property real fontScale: 1
+        property bool showAvatars: false
+        property bool showTimestamps: false
+        property bool animations: true
+        property bool glass: true
+        property real opacity: 1
+    }
+    property JsonObject behavior: JsonObject {
+        property string defaultSpace: "last"
+        property bool enterToSend: true
+        property bool suggestions: true
+        property list<string> suggestionKinds: ["clipboard", "selection", "media", "timer", "window", "desktop", "time"]
+        property bool restoreLastSession: true
+        property bool autoScroll: true
+        property bool thinkingExpanded: false
+        property bool collapseTools: true
+    }
+    property JsonObject strip: JsonObject {
+        property bool engine: true
+        property bool context: true
+        property bool cost: true
+        property bool limit: true
     }
 }

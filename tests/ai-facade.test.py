@@ -36,12 +36,16 @@ QtObject {
     function removeSubscription(id) {}
     function call(method, args, cb) {
         calls = calls.concat([{method:method,args:args}]);
-        if (cb) cb(method === "agents.list_agents" || method === "agents.sessions" ? [] : {}, "");
+        const created = {id: "created" + calls.length, agent: args.agent, mode: args.mode, cwd: args.cwd, status: "idle"};
+        if (cb) cb(method === "agents.list_agents" || method === "agents.sessions" ? [] : (method === "agents.create" ? created : {}), "");
     }
 }''',
 })
 h.singleton("qs.modules.globals", "GlobalStates", '''QtObject {
 property bool assistantVisible: false
+property string aiSpace: "assistant"
+property string settingsCategory: ""
+property bool settingsWindowVisible: false
 property string quickAskKind: ""
 property var quickAskAttachments: []
 function showQuickAsk(kind) { quickAskKind=kind||""; }
@@ -76,5 +80,34 @@ h.eval(obj, "chat.busy=false; var removed=chat.chatId; removeConversation('chat'
 assert h.eval(obj, "activeChat !== null || mode === 'agent'"), "deleting the visible chat leaves a usable conversation"
 h.eval(obj, "openConversation('chat','late'); openConversation('agent','first'); store.loaded('late',{id:'late',model:'openai:a',messages:[]})")
 assert h.eval(obj, "mode") == "agent", "late history load must not steal selection after opening an agent"
+# Spaces: Code keeps CLI agents and its own selection; Assistant gets its chat back.
+h.eval(obj, "setModel('openai:a'); chat.title='assistant chat'")
+assistant_chat = h.eval(obj, "chat.chatId")
+h.eval(obj, "setSpace('code')")
+assert h.eval(obj, "GlobalStates.aiSpace") == "code"
+assert h.eval(obj, "StateService.values.aiSpace") == "code", "visible space is persisted"
+assert h.eval(obj, "mode") == "agent" and h.eval(obj, "currentModelId").startswith("agent:"), "Code runs CLI agents"
+assert h.eval(obj, "activeAgent") is None, "Code starts without the assistant's agent session"
+assert not h.eval(obj, "setModel('openai:a')"), "HTTP models are rejected in Code"
+assert h.eval(obj, "noticeError") == "ai.code_needs_agent"
+h.eval(obj, "setModel('agent:codex')")
+assert h.eval(obj, "StateService.values.lastAiCodeModel") == "agent:codex"
+assert h.eval(obj, "sessionKey").startswith("new:code:")
+h.eval(obj, "BackendService.calls=[]; send('fix the build', [])")
+creates = [c for c in h.eval(obj, "JSON.stringify(BackendService.calls)") and __import__("json").loads(h.eval(obj, "JSON.stringify(BackendService.calls)")) if c["method"] == "agents.create"]
+assert creates and creates[0]["args"]["mode"] == "agent", creates
+h.eval(obj, "setSpace('assistant')")
+assert h.eval(obj, "mode") == "chat" and h.eval(obj, "chat.chatId") == assistant_chat, "Assistant restores its own chat"
+assert h.eval(obj, "currentModelId") == "openai:a"
+h.eval(obj, "setModel('agent:codex'); BackendService.calls=[]; send('dim the screen', [])")
+creates = [c for c in __import__("json").loads(h.eval(obj, "JSON.stringify(BackendService.calls)")) if c["method"] == "agents.create"]
+assert creates and creates[0]["args"]["mode"] == "assistant" and creates[0]["args"]["cwd"] == "/tmp", creates
+assert creates[0]["args"]["yolo"] is False, "assistant agents always ask"
+# Opening a project session from history switches to Code.
+h.eval(obj, "agents.sessions=agents.sessions.concat([{id:'proj',agent:'codex',status:'idle',mode:'agent',cwd:'/tmp'}]); openConversation('agent','proj')")
+assert h.eval(obj, "GlobalStates.aiSpace") == "code" and h.eval(obj, "activeAgent.id") == "proj"
+assert h.eval(obj, "StateService.values.aiLastCodeSession.id") == "proj", "last Code session is remembered"
+h.eval(obj, "openConversation('agent','first')")
+assert h.eval(obj, "GlobalStates.aiSpace") == "assistant", "legacy shell sessions belong to the Assistant"
 print("ai-facade: ok")
 h.exit(0)

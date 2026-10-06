@@ -4,14 +4,11 @@
 // Catalog metadata of config/defaults/ai.js (format: config/meta/Meta.js).
 // Most user-facing keys are declared in modules/settings/schema/ai.js.
 
-var description = "AI center: chat models, CLI agents (Claude Code, Codex, OpenCode), shell control over MCP, quick ask, selection actions, prompts and automations.";
+var description = "AI bar: Assistant space (any model, desktop control over MCP) and Code space (CLI agents: Claude Code, Codex, OpenCode), quick ask, selection actions, prompts and automations.";
 
 var AGENT_CATEGORIES = ["read", "write", "exec", "network", "mcp", "other"];
 
 var keys = {
-    "tool": {
-        "description": "Legacy tool selection of the old assistant (kept for compatibility)."
-    },
     "extraModels": {
         "description": "Extra chat models added to the model picker."
     },
@@ -30,9 +27,6 @@ var keys = {
     },
     "sidebarPinnedOnStartup": {
         "description": "Open the AI sidebar pinned at startup."
-    },
-    "defaultMode": {
-        "enum": Enums.AI_MODES
     },
     "agents": {
         "description": "CLI coding agents run by the backend session manager."
@@ -96,6 +90,15 @@ var keys = {
     },
     "automations": {
         "description": "Automations: [{id, name, enabled, trigger: {type, ...}, prompt}] run by the AI center."
+    },
+    "appearance": {
+        "description": "Look of the AI bar (sizes, message style, density, fonts)."
+    },
+    "behavior": {
+        "description": "Behaviour of the AI bar (spaces, sending, suggestions, scrolling)."
+    },
+    "strip": {
+        "description": "Items of the status strip above the AI bar composer."
     },
     "voice.enabled": {
         "description": "Allow voice input into the AI center."

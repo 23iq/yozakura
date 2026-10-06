@@ -43,10 +43,11 @@ type AgentInfo struct {
 	Notes        string       `json:"notes"`
 }
 
-// DefaultShellPrompt steers shell-control sessions.
-const DefaultShellPrompt = "You control the user's Linux desktop shell (Yozakura) through the `yozakura` MCP tools: " +
+// DefaultAssistantPrompt steers Assistant-space sessions.
+const DefaultAssistantPrompt = "You are the user's assistant on their Linux desktop (Yozakura). Control the desktop shell through the `yozakura` MCP tools: " +
 	"config, presets, wallpaper, windows/workspaces, notifications, clipboard, screenshots, media, do-not-disturb. " +
-	"Prefer those tools over shell commands, act directly on clear requests, and answer in one or two short sentences."
+	"Prefer those tools over shell commands; your own tools may read files and run commands, and the user confirms commands and file changes. " +
+	"Act directly on clear requests and answer briefly."
 
 // Manager owns all agent sessions.
 type Manager struct {
@@ -189,11 +190,12 @@ func (m *Manager) Create(p CreateParams) (SessionMeta, error) {
 	if err := validateLaunch(Lookup(p.Agent), p.Mode, p.SystemPrompt); err != nil {
 		return SessionMeta{}, err
 	}
+	p.Mode = normalizeMode(p.Mode)
 	if p.Mode == "" {
-		p.Mode = "agent"
+		p.Mode = ModeAgent
 	}
 	if p.Cwd == "" {
-		if p.Mode != "shell" && p.Mode != "oneshot" {
+		if p.Mode != ModeAssistant && p.Mode != ModeOneshot {
 			return SessionMeta{}, errors.New("cwd is required")
 		}
 		p.Cwd, _ = os.UserHomeDir()
@@ -220,7 +222,7 @@ func (m *Manager) Create(p CreateParams) (SessionMeta, error) {
 	if p.Yolo != nil {
 		yolo = *p.Yolo
 	}
-	if p.Mode == "oneshot" {
+	if p.Mode == ModeOneshot || p.Mode == ModeAssistant {
 		yolo = false
 	}
 	model := p.Model
@@ -267,21 +269,21 @@ func (m *Manager) startOptionsLocked(s *session) (StartOptions, error) {
 	for _, srv := range servers {
 		isYZ := srv.Name == YozakuraMCPName
 		haveYZ = haveYZ || isYZ
-		if (s.meta.Mode == "shell" && isYZ) || (s.meta.Mode != "shell" && (!isYZ || yz)) {
+		if !isYZ || yz || s.meta.Mode == ModeAssistant {
 			mcp = append(mcp, srv)
 		}
 	}
-	if s.meta.Mode == "shell" && !haveYZ {
+	if s.meta.Mode == ModeAssistant && !haveYZ {
 		if exe, err := os.Executable(); err == nil {
 			mcp = append(mcp, MCPServer{Name: YozakuraMCPName, Transport: "stdio", Command: exe, Args: []string{"mcp"}})
 		}
 	}
-	if s.meta.Mode == "oneshot" {
+	if s.meta.Mode == ModeOneshot {
 		mcp = nil
 	}
 	prompt := s.meta.SystemPrompt
-	if s.meta.Mode == "shell" && prompt == "" {
-		prompt = DefaultShellPrompt
+	if s.meta.Mode == ModeAssistant && prompt == "" {
+		prompt = DefaultAssistantPrompt
 	}
 	id := s.meta.ID
 	return StartOptions{Binary: bin, Cwd: s.meta.Cwd, Model: s.meta.Model, Effort: s.meta.Effort, ResumeID: s.meta.AgentSessionID, Mode: s.meta.Mode,

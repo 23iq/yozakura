@@ -8,12 +8,13 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 
-// One saved conversation or agent session in the history drawer.
+// One saved conversation or agent session in the history list.
 StyledRect {
     id: root
 
     property var entry: ({})
     property bool selected: false
+    property bool highlighted: false
     signal opened
     signal pinToggled
     signal removed
@@ -23,7 +24,7 @@ StyledRect {
 
     implicitHeight: 52
     radius: Styling.radius(-4)
-    variant: selected ? "focus" : (hov.hovered ? "common" : "transparent")
+    variant: selected ? "focus" : (hov.hovered || highlighted ? "common" : "transparent")
 
     function ago(ms) {
         if (!ms)
@@ -52,7 +53,7 @@ StyledRect {
         spacing: 10
 
         Text {
-            text: root.entry.kind === "agent" ? Icons.terminalWindow : (root.entry.mode === "shell" ? Icons.command : Icons.chatTeardrop)
+            text: root.entry.kind === "agent" ? Icons.terminalWindow : Icons.chatTeardrop
             font.family: Icons.font
             font.pixelSize: 15
             color: root.entry.kind === "agent" ? Colors.tertiary : Colors.primary

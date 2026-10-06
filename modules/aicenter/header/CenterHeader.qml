@@ -4,32 +4,47 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
-import qs.config
 import qs.modules.aicenter.common
 
-// A single engine choice and restrained workspace actions.
+// [Assistant | Code] … history, new, size, gear (Code), changes (Code), close.
+// The engine chip lives in the composer strip (ComposerStatus).
 RowLayout {
     id: root
+
     property bool historyOpen: false
+    property bool historyPinned: false     // persistent history column shown
+    property bool settingsOpen: false
+    property bool showChanges: false
     signal historyToggled
-    signal pickModel
     signal settingsToggled
     signal changesToggled
-    spacing: 3
 
-    Chip {
-        image: Ai.currentModel ? Ai.currentModel.icon : ""
-        glyph: Icons.sparkle
-        label: Ai.currentModel ? Ai.currentModel.name : I18n.t("ai.choose_model")
-        trailingIcon: Icons.caretUpDown
-        maxLabelWidth: Math.max(65, Math.min(260, root.width - 250))
-        variant: "transparent"
-        onClicked: root.pickModel()
+    readonly property bool code: GlobalStates.aiSpace === "code"
+    readonly property string size: GlobalStates.assistantFullscreen ? "fullscreen" : (GlobalStates.assistantWide ? "wide" : "compact")
+
+    spacing: 2
+
+    // compact -> wide -> fullscreen -> compact
+    function cycleSize() {
+        if (GlobalStates.assistantFullscreen) {
+            GlobalStates.assistantFullscreen = false;
+            GlobalStates.assistantWide = false;
+        } else if (GlobalStates.assistantWide) {
+            GlobalStates.assistantFullscreen = true;
+        } else {
+            GlobalStates.assistantWide = true;
+        }
+    }
+
+    SpaceSwitch {
+        iconsOnly: root.width < 330
     }
     Item {
         Layout.fillWidth: true
     }
     IconButton {
+        objectName: "headerHistory"
+        visible: !root.historyPinned
         glyph: Icons.clockCounterClockwise
         tooltip: I18n.t("ai.history") + " (Ctrl+H)"
         active: root.historyOpen
@@ -37,33 +52,29 @@ RowLayout {
     }
     IconButton {
         glyph: Icons.notePencil
-        tooltip: I18n.t("ai.new_chat") + " (Ctrl+N)"
+        tooltip: (root.code ? I18n.t("ai.new_task") : I18n.t("ai.new_chat")) + " (Ctrl+N)"
         onClicked: Ai.newConversation()
     }
     IconButton {
-        glyph: Icons.gear
-        tooltip: I18n.t("ai.session_settings")
-        onClicked: root.settingsToggled()
-    }
-    IconButton {
+        objectName: "headerChanges"
+        visible: root.showChanges
         glyph: Icons.gitDiff
         tooltip: I18n.t("ai.changes")
-        visible: Ai.activeAgent !== null
         onClicked: root.changesToggled()
     }
     IconButton {
-        glyph: GlobalStates.assistantFullscreen ? Icons.arrowsInSimple : Icons.arrowsOutSimple
-        tooltip: I18n.t(GlobalStates.assistantWide ? "ai.fullscreen" : "ai.wide")
-        onClicked: {
-            if (GlobalStates.assistantFullscreen) {
-                GlobalStates.assistantFullscreen = false;
-                GlobalStates.assistantWide = false;
-            } else if (GlobalStates.assistantWide) {
-                GlobalStates.assistantFullscreen = true;
-            } else {
-                GlobalStates.assistantWide = true;
-            }
-        }
+        objectName: "headerSettings"
+        visible: root.code
+        glyph: Icons.gear
+        tooltip: I18n.t("ai.session_settings")
+        active: root.settingsOpen
+        onClicked: root.settingsToggled()
+    }
+    IconButton {
+        objectName: "headerSize"
+        glyph: root.size === "fullscreen" ? Icons.arrowsInSimple : Icons.arrowsOutSimple
+        tooltip: I18n.t(root.size === "compact" ? "ai.wide" : (root.size === "wide" ? "ai.fullscreen" : "ai.compact")) + " (Ctrl+W)"
+        onClicked: root.cycleSize()
     }
     IconButton {
         glyph: Icons.cancel

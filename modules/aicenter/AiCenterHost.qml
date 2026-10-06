@@ -4,8 +4,9 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
 import qs.config
+import qs.modules.aicenter.common
 
-// Per-screen mount point of the AI center sidebar. The content is created
+// Per-screen mount point of the AI bar. The content is created
 // lazily on first open and unloaded after `ai.unloadAfterMinutes` closed,
 // so an unused AI center costs one empty Item per screen. Exposes the
 // properties UnifiedShellPanel needs: active, hitbox, wantsFocus.
@@ -116,10 +117,11 @@ Item {
         visible: root.active || slideR.running || slideL.running
         opacity: root.active ? 1 : 0.6
 
+        // Size changes (compact / wide / fullscreen) glide.
         Behavior on width {
-            enabled: Config.animDuration > 0
+            enabled: BarLook.animDuration > 0 && !resizeHandle.pressed
             NumberAnimation {
-                duration: Config.animDuration / 2
+                duration: BarLook.animDuration
                 easing.type: Easing.OutCubic
             }
         }

@@ -91,13 +91,24 @@ AI_CONFIG = """
         property int wideWidth: 1100
         property int sidebarWidth: 400
         property int unloadAfterMinutes: 10
-        property string defaultMode: "chat"
+        property string defaultModel: ""
+        property string sidebarPosition: "right"
         property string systemPrompt: ""
         property list<var> extraModels: []
         property list<var> prompts: []
         property list<var> automations: []
         property QtObject quickAsk: QtObject { property bool enabled: true; property string model: ""; property int width: 560 }
-        property QtObject shell: QtObject { property bool enabled: true; property string target: ""; property string systemPrompt: "" }
+        property QtObject appearance: QtObject {
+            property string defaultSize: "compact"; property string messageStyle: "bubble"; property string density: "comfortable"
+            property real fontScale: 1; property bool showAvatars: false; property bool showTimestamps: false
+            property bool animations: true; property bool glass: true; property real opacity: 1
+        }
+        property QtObject behavior: QtObject {
+            property string defaultSpace: "last"; property bool enterToSend: true; property bool suggestions: true
+            property list<string> suggestionKinds: ["clipboard", "selection", "media", "timer", "window", "desktop", "time"]
+            property bool restoreLastSession: true; property bool autoScroll: true; property bool thinkingExpanded: false; property bool collapseTools: true
+        }
+        property QtObject strip: QtObject { property bool engine: true; property bool context: true; property bool cost: true; property bool limit: true }
         property QtObject mcp: QtObject { property bool yozakura: true; property bool importClaude: true; property bool importCodex: true; property bool importOpencode: true; property list<var> disabled: [] }
         property QtObject selection: QtObject {
             property bool enabled: true; property string language: "English"; property string output: "replace"
@@ -155,6 +166,9 @@ QtObject {
     property bool assistantPinned: false
     property bool assistantVisible: true
     property string quickAskKind: "chat"
+    property string aiSpace: "assistant"
+    property string settingsCategory: ""
+    property bool settingsWindowVisible: false
     property var quickAskAttachments: []
     property bool quickAskVisible: true
     signal assistantFocusRequested(bool wasAlreadyOpen)

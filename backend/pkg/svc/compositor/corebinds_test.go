@@ -34,7 +34,7 @@ func TestRenderSystemBindsKnownThenUnknownSorted(t *testing.T) {
 // Every app action of the shell's catalog resolves (a missing entry drops
 // the bind from the TOML silently).
 func TestAppActionsResolve(t *testing.T) {
-	for _, name := range []string{"ai-quickask", "ai-selection", "ai-region", "ai-agent", "ai-shell", "dnd-toggle", "keybinds", "desktop-edit", "terminal"} {
+	for _, name := range []string{"ai-quickask", "ai-selection", "ai-region", "ai-agent", "ai-shell", "ai-code", "dnd-toggle", "keybinds", "desktop-edit", "terminal"} {
 		r := ResolveAction(Action{ID: "yozakura." + name})
 		if r == nil || r.Argument != "yozakura run "+name {
 			t.Errorf("%s: got %+v", name, r)

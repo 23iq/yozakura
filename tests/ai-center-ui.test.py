@@ -133,7 +133,7 @@ Item {
     }
     function agentWide() {
         GlobalStates.assistantWide = true;
-        Ai.setMode("agent");
+        Ai.setSpace("code");
     }
     function state() {
         return JSON.stringify({

@@ -24,6 +24,7 @@ function hideAssistant() {}
 }''')
 h.singleton('qs.modules.theme', 'Styling', 'QtObject {}')
 h.singleton('qs.modules.services', 'Ai', 'QtObject {}')
+h.singleton('qs.modules.aicenter.common', 'BarLook', 'QtObject { property int animDuration: 0 }')
 p = h.copy('modules/aicenter/AiCenterHost.qml')
 (p.parent / 'AiCenterPanel.qml').write_text('import QtQuick\nItem { property bool frameWrapped: false; function focusComposer() {} }')
 wrapper = p.parent / 'HostScene.qml'
@@ -48,7 +49,7 @@ from PySide6.QtQuick import QQuickView  # noqa: E402
 repo = Path(__file__).resolve().parents[1]
 root = aiscene.build('Sumi-e', 'light', (repo / 'tests/fixtures/aicenter-ai-stub.qml.in').read_text())
 scene = root / 'Workspace.qml'
-scene.write_text('import QtQuick\nimport qs.modules.services\nimport qs.modules.globals\nimport qs.modules.aicenter\nAiCenterPanel { width: 1280; height: 720; function chooseAgent() { Ai.setMode("agent"); } function chooseChat() { Ai.setMode("chat"); } function expand() { GlobalStates.assistantWide = true; GlobalStates.assistantFullscreen = true; } function rejectSend() { Ai.acceptSend = false; } function acceptSend() { Ai.acceptSend = true; } function configuredEffort() { return Ai.lastConfiguration.effort; } function disableAgent() { const m=Ai.models.slice(); m[0]=Object.assign({}, m[0], {available: false}); Ai.models=m; } function deliverContext() { Ai.context.deliver(); } function fillChat() { for (let i=0; i<30; i++) Ai.chat.append({role: "user", content: "long conversation " + i}); } }')
+scene.write_text('import QtQuick\nimport qs.modules.services\nimport qs.modules.globals\nimport qs.modules.aicenter\nAiCenterPanel { width: 1280; height: 720; function chooseAgent() { Ai.setSpace("code"); } function chooseChat() { Ai.setSpace("assistant"); } function expand() { GlobalStates.assistantWide = true; GlobalStates.assistantFullscreen = true; } function rejectSend() { Ai.acceptSend = false; } function acceptSend() { Ai.acceptSend = true; } function configuredEffort() { return Ai.lastConfiguration.effort; } function disableAgent() { const m=Ai.models.slice(); m[0]=Object.assign({}, m[0], {available: false}); Ai.models=m; } function deliverContext() { Ai.context.deliver(); } function fillChat() { for (let i=0; i<30; i++) Ai.chat.append({role: "user", content: "long conversation " + i}); } }')
 view = QQuickView()
 view.engine().addImportPath(str(root))
 view.setSource(QUrl.fromLocalFile(str(scene)))
@@ -148,7 +149,7 @@ Item {
         Config.bar.frameEnabled = true;
         Ai.agents.sessions = %s;
         Ai.agents.feed("s1", %s);
-        Ai.setMode("agent");
+        Ai.setSpace("code");
     }
     function geometry() { return host.hitbox.width; }
 }

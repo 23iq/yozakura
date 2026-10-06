@@ -35,12 +35,12 @@ func (claudeAdapter) Capabilities() Capabilities {
 // It can carry server env/headers (tokens), so it goes to a 0600 file and
 // never into argv.
 func claudeMCPConfig(o StartOptions) []byte {
-	if len(o.MCP) == 0 && o.Mode != "shell" && o.Mode != "oneshot" {
+	if len(o.MCP) == 0 && o.Mode != ModeOneshot {
 		return nil
 	}
 	servers := map[string]any{}
 	for _, s := range o.MCP {
-		if o.Mode == "oneshot" {
+		if o.Mode == ModeOneshot {
 			break
 		}
 		switch s.Transport {
@@ -79,14 +79,14 @@ func claudeArgs(o StartOptions, mcpConfig string) []string {
 	if mcpConfig != "" {
 		args = append(args, "--mcp-config", mcpConfig)
 	}
-	if o.Mode == "shell" || o.Mode == "oneshot" {
-		// Desktop control only: no built-in tools, only the shell MCP.
+	if o.Mode == ModeOneshot {
+		// Quick requests: no built-in tools and no MCP servers.
 		args = append(args, "--strict-mcp-config", "--tools", "")
 	}
 	if o.SystemPrompt != "" {
 		args = append(args, "--append-system-prompt", o.SystemPrompt)
 	}
-	if o.Mode == "oneshot" {
+	if o.Mode == ModeOneshot {
 		return append(args, "--disallowedTools", "*", "--settings", `{"disableAllHooks":true}`)
 	}
 	return append(args, o.ExtraArgs...)

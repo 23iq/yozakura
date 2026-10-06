@@ -15,7 +15,7 @@ type StartOptions struct {
 	Effort       string
 	Model        string
 	ResumeID     string // agent-native session/thread id to resume
-	Mode         string // "agent" | "shell"
+	Mode         string // ModeAgent | ModeAssistant | ModeOneshot
 	SystemPrompt string
 	ExtraArgs    []string
 	MCP          []MCPServer

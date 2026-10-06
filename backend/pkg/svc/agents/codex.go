@@ -222,7 +222,8 @@ func (c *codexConn) sandbox() string {
 	if c.opts.yolo() {
 		return "danger-full-access"
 	}
-	if c.opts.Mode == "shell" {
+	if c.opts.Mode == ModeAssistant {
+		// Writes and commands outside the read-only sandbox ask first.
 		return "read-only"
 	}
 	return "workspace-write"

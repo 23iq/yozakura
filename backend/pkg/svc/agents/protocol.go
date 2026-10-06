@@ -93,7 +93,7 @@ type SessionMeta struct {
 	Yolo           bool   `json:"yolo"`
 	Effort         string `json:"effort"`
 	Model          string `json:"model"`
-	Mode           string `json:"mode"`
+	Mode           string `json:"mode"` // agent (Code) | assistant | oneshot
 	SystemPrompt   string `json:"systemPrompt,omitempty"`
 	LastText       string `json:"lastText"`
 	Pending        int    `json:"pending"`

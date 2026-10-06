@@ -56,7 +56,7 @@ QtObject {
                     [key]: generation
                 });
                 owner.agents.create(m.agent, settings.cwd, Object.assign({}, settings, {
-                    mode: "agent",
+                    mode: owner.space === "code" ? "agent" : "assistant",
                     prompt: input.prompt,
                     images: input.images,
                     activate: false,
@@ -82,7 +82,7 @@ QtObject {
         if (!session)
             return false;
         owner._configureSession(session);
-        if (owner.mode === "chat" && Config.ai.chatTools && !owner.mcp.allLoaded && BackendService.socketAvailable) {
+        if (Config.ai.chatTools && !owner.mcp.allLoaded && BackendService.socketAvailable) {
             const key = "chat:" + session.chatId;
             const generation = ++_serial;
             pending = Object.assign({}, pending, {
@@ -164,7 +164,7 @@ QtObject {
         }
     }
 
-    function askQuick(text, attachments, kind) {
+    function askQuick(text, attachments) {
         if (owner.quick?.busy)
             return false;
         const m = owner.quickModel;
@@ -173,7 +173,7 @@ QtObject {
         if (!supportsAttachments(m, attachments))
             return error("ai.unsupported_attachment");
         const s = promptSession(m, {
-            system: kind === "shell" ? Config.ai.shell.systemPrompt : Config.ai.systemPrompt
+            system: Config.ai.systemPrompt
         });
         if (!s.send(text, attachments || [])) {
             s.destroy();

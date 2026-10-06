@@ -32,7 +32,6 @@ var EXPAND_ON = ["hover", "click"];
 var ACTIVITY_PRESENTATIONS = ["notch", "islands", "off"];
 var NO_MEDIA_DISPLAY = ["userHost", "compositor", "custom"];
 var COMPOSITOR_LAYOUTS = ["dwindle", "master", "scrolling"];
-var AI_MODES = ["chat", "agent", "shell"];
 var AI_SELECTION_OUTPUTS = ["replace", "clipboard", "sidebar"];
 var SIDES = ["left", "right"];
 var TEMPERATURE_UNITS = ["C", "F"];

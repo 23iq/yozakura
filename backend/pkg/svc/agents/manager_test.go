@@ -139,19 +139,20 @@ func TestManagerResumeAndShellMode(t *testing.T) {
 		t.Errorf("args = %s", args)
 	}
 
-	shell, err := m.Create(CreateParams{Agent: "claude", Mode: "shell"})
+	// "shell" is the former name of the assistant mode.
+	assistant, err := m.Create(CreateParams{Agent: "claude", Mode: "shell", Yolo: boolPtr(true)})
 	if err != nil {
 		t.Fatal(err)
 	}
 	home, _ := os.UserHomeDir()
-	if shell.Cwd != home {
-		t.Errorf("shell cwd = %s", shell.Cwd)
+	if assistant.Cwd != home || assistant.Mode != ModeAssistant || assistant.Yolo {
+		t.Errorf("assistant meta = %+v", assistant)
 	}
 	m.mu.Lock()
-	opts, err := m.startOptionsLocked(m.sessions[shell.ID])
+	opts, err := m.startOptionsLocked(m.sessions[assistant.ID])
 	m.mu.Unlock()
-	if err != nil || opts.SystemPrompt != DefaultShellPrompt || len(opts.MCP) != 1 || opts.MCP[0].Name != YozakuraMCPName {
-		t.Errorf("shell opts = %+v err=%v", opts, err)
+	if err != nil || opts.SystemPrompt != DefaultAssistantPrompt || len(opts.MCP) != 1 || opts.MCP[0].Name != YozakuraMCPName {
+		t.Errorf("assistant opts = %+v err=%v", opts, err)
 	}
 }
 

@@ -18,7 +18,7 @@ QtObject {
     property string chatId: Date.now().toString()
     property string title: ""
     property bool pinned: false
-    property string mode: "chat"          // chat | shell | quick
+    property string mode: "chat"          // chat | quick | oneshot (legacy files: shell = chat)
     property double created: Date.now()
     property double updated: created
     property string engineId: ""

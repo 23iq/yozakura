@@ -173,6 +173,31 @@ QtObject {
         });
     }
 
+    // What the user is looking at right now, for the Assistant's suggestion
+    // chips (aicenter/assistant/Suggestions.js). Cheap reads only.
+    function ambient() {
+        const p = MprisController.activePlayer;
+        const c = YozdService.focusedClient;
+        const clip = (ClipboardService.items || [])[0];
+        return {
+            hour: new Date().getHours(),
+            media: p && p.trackTitle ? {
+                title: p.trackTitle,
+                artist: p.trackArtist || "",
+                playing: !!p.isPlaying
+            } : null,
+            window: c ? {
+                appId: c["class"] || c.app_id || c.initialClass || "",
+                title: c.title || ""
+            } : null,
+            clipboard: clip ? {
+                text: clip.isImage || clip.isFile ? "" : (clip.fullContent || clip.preview || ""),
+                isImage: !!clip.isImage
+            } : null,
+            timer: null
+        };
+    }
+
     function grab(kind, cb) {
         switch (kind) {
         case "selection":

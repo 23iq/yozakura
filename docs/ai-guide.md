@@ -127,8 +127,9 @@ Shell UI commands (need the running shell): `yozakura run <command>` with
 `launcher clipboard emoji tmux notes terminal dashboard wallpapers assistant overview
 powermenu tools config screenshot screenrecord lens lockscreen
 media-play-pause media-next media-prev brightness-up brightness-down
-dnd-on dnd-off dnd-toggle ai-quickask ai-selection ai-region ai-agent
-ai-shell ai-chat` (see `modules/services/GlobalShortcuts.qml`);
+dnd-on dnd-off dnd-toggle ai-quickask ai-selection ai-region ai-code
+(Code space; `ai-agent` is an alias) ai-chat (Assistant space; `ai-shell` is an alias)`
+(see `modules/services/GlobalShortcuts.qml`);
 `yozakura toggle bar` pins/unpins the bar; `yozakura wallpaper <file>
 [-scheme scheme-tonal-spot] [-oled] [-monitor DP-1]`.
 
@@ -255,7 +256,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 42. **UI language**: `config set system.language ru` (`auto` = system locale).
 43. **Weather**: `config set weather.location "Tokyo"`, `config set weather.unit F`.
 44. **Launcher prefixes**: `config set prefix.clipboard cb`.
-45. **AI center**: choose a default engine with `config set ai.defaultModel agent:codex` (or an exact API/local model ID), and position with `config set ai.sidebarPosition left`; voice: `config set voice.activation toggle`. The header cycles sidebar → wide → fullscreen without changing the saved sidebar width. History combines saved chats and agent sessions; switching keeps background tasks, drafts and scroll positions. Agent settings show the installed CLI's model/effort catalog; launch settings can change while idle. Quick Ask and selection actions use the selected default engine. Selection results offer explicit Copy/Continue. OpenCode ACP currently rejects the restricted Quick Ask profile rather than silently switching providers.
+45. **AI bar**: two spaces, switched in the header (Ctrl+1 / Ctrl+2, binds `ai-chat` / `ai-code`): **Assistant** (any engine; CLI agents run in the backend `assistant` mode from `$HOME` with the yozakura MCP and ask before commands/file writes) and **Code** (CLI agents in a project folder: project bar, detailed transcript, changes, gear). Each space keeps its own engine, conversation and history (`GlobalStates.aiSpace`, persisted). Choose the Assistant engine with `config set ai.defaultModel agent:codex` (or an exact API/local model ID) and the Code agent with `config set ai.agents.defaultAgent codex`; look and behaviour live in `ai.appearance.*`, `ai.behavior.*`, `ai.strip.*` (settings → AI). Position with `config set ai.sidebarPosition left`; voice: `config set voice.activation toggle`. The header cycles compact → wide → fullscreen (Ctrl+W) without changing the saved sidebar width. History combines saved chats and agent sessions; switching keeps background tasks, drafts and scroll positions. Agent settings show the installed CLI's model/effort catalog; launch settings can change while idle. Quick Ask and selection actions use the selected default engine. Selection results offer explicit Copy/Continue. OpenCode ACP currently rejects the restricted Quick Ask profile rather than silently switching providers.
 46. **Pomodoro length**: `config set system.pomodoro.workTime 1800` (seconds).
 47. **Lighter on the GPU**: `config set performance.rotateCoverArt false`, `performance.windowPreview`, `performance.blurTransition`.
 48. **Turn a group off in one go**: `config set bar.activities '{"enabled":false}'`.
@@ -335,7 +336,7 @@ combo.
 | Launcher | `modules/widgets/launcher/` | `prefix.*` | |
 | Settings window | `modules/settings/` (schema-driven) | | `tests/settings-schema.test.cjs`, `tests/settings-ui.test.py` |
 | Presets | `backend/pkg/presets` (aspects registry: `aspects.go`), settings studio `modules/settings/presets/` + `modules/settings/store/PresetStudio.qml`, quick switcher `modules/services/PresetsService.qml` (all run `yozakura preset`) | `tools/render/presets_render.py` | `backend/pkg/presets/*_test.go`, `tests/preset-studio*.test.*` |
-| AI center | `modules/aicenter/`, `modules/services/Ai.qml`, `modules/services/ai/`, `backend/pkg/svc/agents` | `ai.*` | `tests/ai-*.test.*` |
+| AI bar | `modules/aicenter/` (`transcript/` one transcript for every engine, `assistant/`, `code/`, `header/`, `composer/`), `modules/services/Ai.qml`, `modules/services/ai/` (`SpaceState.qml` spaces), `backend/pkg/svc/agents` | `ai.*` | `tests/ai-*.test.*` |
 | Voice | `modules/services/voice/`, `backend/pkg/svc/voice` | `voice.*` | `tests/voice*.test.*` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |
 | Keybinds | `config/KeybindActions.js`, `modules/services/GlobalShortcuts.qml` | `binds.json` | |

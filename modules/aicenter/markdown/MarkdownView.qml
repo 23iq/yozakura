@@ -14,6 +14,7 @@ ColumnLayout {
     property string text: ""
     property bool streaming: false
     property color textColor: Colors.overBackground
+    property int fontSize: Styling.fontSize(0)
     readonly property var segments: Markdown.segments(text)
 
     spacing: 8
@@ -40,7 +41,7 @@ ColumnLayout {
                     selectionColor: Colors.primary
                     selectedTextColor: Colors.overPrimary
                     font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
+                    font.pixelSize: root.fontSize
                     onLinkActivated: link => {
                         if (Urls.isWeb(link))
                             Qt.openUrlExternally(link);

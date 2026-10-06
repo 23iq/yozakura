@@ -2,21 +2,40 @@ package agents
 
 import "errors"
 
+// Session modes. ModeAssistant is the AI bar's Assistant space: $HOME as
+// working directory, the yozakura MCP server always attached and the agent's
+// built-in tools kept (commands and file writes ask through the policy).
+// "shell" was its former name; stored sessions and old clients still send it.
+const (
+	ModeAgent     = "agent"
+	ModeAssistant = "assistant"
+	ModeOneshot   = "oneshot"
+	legacyShell   = "shell"
+)
+
+// normalizeMode maps the legacy "shell" mode to ModeAssistant.
+func normalizeMode(mode string) string {
+	if mode == legacyShell {
+		return ModeAssistant
+	}
+	return mode
+}
+
 // Optional adapter validation keeps provider-specific launch rules out of the manager.
 type launchValidator interface {
 	ValidateLaunch(mode, prompt string) error
 }
 
 func validateLaunch(a Adapter, mode, prompt string) error {
-	switch mode {
-	case "", "agent", "shell", "oneshot":
+	switch normalizeMode(mode) {
+	case "", ModeAgent, ModeAssistant, ModeOneshot:
 	default:
 		return errors.New("unknown agent session mode")
 	}
 	if validator, ok := a.(launchValidator); ok {
 		return validator.ValidateLaunch(mode, prompt)
 	}
-	if mode == "oneshot" {
+	if mode == ModeOneshot {
 		return errors.New("this adapter cannot restrict quick-request tools")
 	}
 	return nil

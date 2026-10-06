@@ -2,15 +2,13 @@
 
 var data = {
     "enabled": true,
-    "systemPrompt": "You are a helpful assistant running on a Linux system. You have access to some tools to control the system.",
-    "tool": "none",
+    "systemPrompt": "You are the user's assistant on their Linux desktop (Yozakura). You can control the desktop shell through the yozakura tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb): inspect state with the read-only tools first, make the smallest change that fulfils a request and say what you changed in one sentence. Otherwise answer clearly and briefly.",
     "extraModels": [],
     "defaultModel": "",
     "sidebarWidth": 400,
     "sidebarPosition": "right",
     "sidebarPinnedOnStartup": false,
     "wideWidth": 1040,
-    "defaultMode": "chat",
     "showThinking": true,
     "chatTools": true,
     "maxToolRounds": 8,
@@ -30,11 +28,6 @@ var data = {
         "importCodex": true,
         "importOpencode": true,
         "disabled": []
-    },
-    "shell": {
-        "enabled": true,
-        "target": "",
-        "systemPrompt": "You control the user's Yozakura desktop shell through the yozakura MCP tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb). Inspect state with the read-only tools first, then make the smallest change that fulfils the request and say what you changed in one sentence."
     },
     "quickAsk": {
         "enabled": true,
@@ -66,5 +59,32 @@ var data = {
     ],
     "voice": {
         "enabled": true
+    },
+    "appearance": {
+        "defaultSize": "compact",
+        "messageStyle": "bubble",
+        "density": "comfortable",
+        "fontScale": 1,
+        "showAvatars": false,
+        "showTimestamps": false,
+        "animations": true,
+        "glass": true,
+        "opacity": 1
+    },
+    "behavior": {
+        "defaultSpace": "last",
+        "enterToSend": true,
+        "suggestions": true,
+        "suggestionKinds": ["clipboard", "selection", "media", "timer", "window", "desktop", "time"],
+        "restoreLastSession": true,
+        "autoScroll": true,
+        "thinkingExpanded": false,
+        "collapseTools": true
+    },
+    "strip": {
+        "engine": true,
+        "context": true,
+        "cost": true,
+        "limit": true
     }
 };

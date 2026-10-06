@@ -7,23 +7,39 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.aicenter.common
 import "../../services/ai/EngineSelection.js" as Selection
 
-// History: chats, shell-control chats and agent sessions with search and
-// pinning (pinned first, then most recent). Keyboard: type to search,
-// Up/Down, Enter opens, Esc closes.
+// History of one space with search and pinning (pinned first, then most
+// recent): Assistant = chats and assistant agent sessions, Code = agent
+// sessions grouped by project. Keyboard: type to search, Up/Down, Enter
+// opens, Esc closes.
 StyledRect {
     id: root
 
     signal closeRequested
 
-    variant: "popup"
+    property bool docked: false          // persistent column (wide sizes)
+    variant: docked ? "transparent" : "popup"
     radius: Styling.radius(-2)
 
+    property string space: "assistant"
     property int selectedIndex: 0
-    readonly property var entries: Selection.sessions(Ai.store ? Ai.store.chats : [], Ai.drafts ? Ai.drafts.summaries : [], Ai.agents ? Ai.agents.sessions : [], search.text).map(e => Object.assign({}, e, {
+    readonly property var entries: Selection.sessions(Ai.store ? Ai.store.chats : [], Ai.drafts ? Ai.drafts.summaries : [], Ai.agents ? Ai.agents.sessions : [], search.text, space).map(e => Object.assign({}, e, {
             subtitle: (e.subtitle || "").replace(Quickshell.env("HOME"), "~")
         }))
+    // Code groups sessions under a header row per project.
+    readonly property var rows: space === "code" ? Selection.projectRows(entries) : entries
+    function _move(step) {
+        let i = selectedIndex;
+        do
+            i += step;
+        while (i >= 0 && i < rows.length && rows[i].header)
+        if (i >= 0 && i < rows.length) {
+            selectedIndex = i;
+            list.positionViewAtIndex(i, ListView.Contain);
+        }
+    }
 
     function focusSearch() {
         search.forceActiveFocus();
@@ -73,18 +89,17 @@ StyledRect {
                     color: Colors.outline
                 }
             }
-            onTextChanged: root.selectedIndex = 0
+            onTextChanged: root.selectedIndex = root.space === "code" ? 1 : 0
             Keys.onPressed: event => {
                 if (event.key === Qt.Key_Down) {
-                    root.selectedIndex = Math.min(root.entries.length - 1, root.selectedIndex + 1);
-                    list.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+                    root._move(1);
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Up) {
-                    root.selectedIndex = Math.max(0, root.selectedIndex - 1);
-                    list.positionViewAtIndex(root.selectedIndex, ListView.Contain);
+                    root._move(-1);
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                    root.open(root.entries[root.selectedIndex]);
+                    if (root.rows[root.selectedIndex] && !root.rows[root.selectedIndex].header)
+                        root.open(root.rows[root.selectedIndex]);
                     event.accepted = true;
                 } else if (event.key === Qt.Key_Escape) {
                     root.closeRequested();
@@ -99,21 +114,52 @@ StyledRect {
             Layout.fillHeight: true
             clip: true
             spacing: 2
-            model: root.entries
+            model: root.rows
             boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: ScrollBar {}
-            delegate: SessionRow {
+            delegate: Loader {
                 id: entry
                 required property var modelData
                 required property int index
                 width: list.width
-                entry: entry.modelData
-                selected: Ai.sessionKey === entry.modelData.kind + ":" + entry.modelData.id
-                onOpened: root.open(entry.modelData)
-                onPinToggled: root.togglePin(entry.modelData)
-                onRemoved: root.remove(entry.modelData)
-                onStopped: Ai.stopSession(entry.modelData.kind, entry.modelData.id)
-                onRenamed: title => Ai.renameConversation(entry.modelData.kind, entry.modelData.id, title)
+                sourceComponent: entry.modelData.header ? headerC : rowC
+                Component {
+                    id: headerC
+                    RowLayout {
+                        spacing: 6
+                        Text {
+                            Layout.leftMargin: 8
+                            Layout.topMargin: entry.index > 0 ? 10 : 2
+                            text: Icons.folder
+                            font.family: Icons.font
+                            font.pixelSize: BarLook.font(-3)
+                            color: Colors.outline
+                        }
+                        Text {
+                            Layout.topMargin: entry.index > 0 ? 10 : 2
+                            Layout.fillWidth: true
+                            text: entry.modelData.name
+                            elide: Text.ElideRight
+                            font.family: Config.theme.font
+                            font.pixelSize: BarLook.font(-3)
+                            font.weight: Font.DemiBold
+                            color: Colors.outline
+                        }
+                    }
+                }
+                Component {
+                    id: rowC
+                    SessionRow {
+                        entry: entry.modelData
+                        selected: Ai.sessionKey === entry.modelData.kind + ":" + entry.modelData.id
+                        highlighted: entry.index === root.selectedIndex
+                        onOpened: root.open(entry.modelData)
+                        onPinToggled: root.togglePin(entry.modelData)
+                        onRemoved: root.remove(entry.modelData)
+                        onStopped: Ai.stopSession(entry.modelData.kind, entry.modelData.id)
+                        onRenamed: title => Ai.renameConversation(entry.modelData.kind, entry.modelData.id, title)
+                    }
+                }
             }
         }
 

@@ -10,7 +10,7 @@ import qs.config
 import qs.modules.aicenter.common
 import qs.modules.aicenter.markdown
 import qs.modules.aicenter.chat
-import qs.modules.aicenter.agent
+import qs.modules.aicenter.transcript
 
 // Quick ask, a notch module (Visibilities "aiquick", pushed into the
 // island like the voice panel): one input, a streamed answer and "continue
@@ -85,7 +85,7 @@ FocusScope {
         if (!t || root.busy)
             return;
         const atts = GlobalStates.quickAskAttachments || [];
-        if (Ai.askQuick(t, atts, GlobalStates.quickAskKind) === false)
+        if (Ai.askQuick(t, atts) === false)
             return;
         GlobalStates.quickAskAttachments = [];
         input.text = "";

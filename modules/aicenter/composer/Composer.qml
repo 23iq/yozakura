@@ -10,7 +10,8 @@ import qs.modules.aicenter.common
 import qs.modules.aicenter.chat
 
 // Message input: multi-line text, context chips, attach menu, send/stop.
-// Enter sends, Shift+Enter newline, Ctrl+Shift+S/V/R/O/W attach context,
+// Enter sends and Shift+Enter adds a line (ai.behavior.enterToSend off:
+// Ctrl+Enter sends, Enter adds a line), Ctrl+Shift+S/V/R/O/W attach context,
 // Ctrl+. stops, Esc clears attachments, then text, then closes.
 StyledRect {
     id: root
@@ -76,6 +77,7 @@ StyledRect {
             desc: I18n.t("ai.cmd_switch_model")
         }
     ]
+    readonly property bool enterSends: BarLook.behavior.enterToSend !== false
     readonly property var slashMatches: input.text.startsWith("/") && input.text.indexOf(" ") < 0 ? slashCommands.filter(c => c.cmd.startsWith(input.text)) : []
     readonly property var contextKeys: ({
             [Qt.Key_S]: "selection",
@@ -139,7 +141,7 @@ StyledRect {
                 placeholderTextColor: Colors.outline
                 wrapMode: TextArea.Wrap
                 font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
+                font.pixelSize: BarLook.font(0)
                 color: Colors.overBackground
                 selectionColor: Colors.primary
                 selectedTextColor: Colors.overPrimary
@@ -152,7 +154,7 @@ StyledRect {
                 Keys.onPressed: event => {
                     const ctrl = (event.modifiers & Qt.ControlModifier) !== 0;
                     const shift = (event.modifiers & Qt.ShiftModifier) !== 0;
-                    if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !shift) {
+                    if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !shift && ctrl !== root.enterSends) {
                         if (root.slashMatches.length === 1 && input.text !== root.slashMatches[0].cmd)
                             input.text = root.slashMatches[0].cmd;
                         root.submit();
@@ -211,7 +213,7 @@ StyledRect {
             }
             Text {
                 visible: !root.compact && input.text.length > 0
-                text: I18n.t("ai.enter_hint")
+                text: I18n.t(root.enterSends ? "ai.enter_hint" : "ai.ctrl_enter_hint")
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-4)
                 color: Colors.outline

@@ -31,6 +31,7 @@ func (m *Manager) load() {
 		// No process survives a daemon restart; the session is resumable.
 		meta.Status = StatusExited
 		meta.Pending = 0
+		meta.Mode = normalizeMode(meta.Mode)
 		m.sessions[meta.ID] = newSession(m, meta)
 	}
 }

@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
 
 h = Harness("ai-request-runner")
-h.singleton("qs.config", "Config", 'QtObject {property var ai: ({systemPrompt:"",shell:{systemPrompt:""}})}')
+h.singleton("qs.config", "Config", 'QtObject {property var ai: ({systemPrompt:"", chatTools: false})}')
 h.singleton("qs.modules.globals", "GlobalStates", "QtObject {function showQuickAsk() {}}")
 h.singleton("qs.modules.services", "I18n", "QtObject {function t(key) {return key;}}")
 h.copy("modules/services/ai/RequestRunner.qml")
@@ -15,6 +15,7 @@ Item {
  id:scene
  property QtObject facade: QtObject {
   property string sessionKey: "agent:new"
+  property string space: "code"
   property bool busy: false
   property var currentModel: ({id:"agent:codex",agent:"codex",kind:"agent",available:true})
   property var quickModel: currentModel
@@ -46,6 +47,9 @@ h.eval(obj, "facade.agents.creates[0].onError()")
 assert h.eval(obj, "runner.pending[facade.sessionKey]") == new_generation, "old failure cannot consume new create"
 assert h.eval(obj, "facade.agents.creates[1].onCreated({id:'new'})")
 assert h.eval(obj, "facade.opened") == "new"
+assert h.eval(obj, "facade.agents.creates[1].mode") == "agent", "Code sessions are project agents"
+h.eval(obj, "facade.space='assistant'; facade.sessionKey='agent:assistant'; runner.send('dim the screen',[])")
+assert h.eval(obj, "facade.agents.creates[2].mode") == "assistant", "Assistant sessions use the assistant mode"
 h.eval(obj, "facade.currentModel=({id:'groq:test',provider:'groq',kind:'api',available:true});facade.quickModel=facade.currentModel")
 assert not h.eval(obj, "runner.send('image',[{type:'image',base64:'data'}])")
 assert h.eval(obj, "facade.noticeError") == "ai.unsupported_attachment"

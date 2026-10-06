@@ -200,7 +200,7 @@ func (c *acpConn) markReady() {
 func (c *acpConn) Send(text string, images []string) error {
 	run := func() {
 		prompt := []any{}
-		if c.opts.SystemPrompt != "" && c.opts.Mode == "shell" {
+		if c.opts.SystemPrompt != "" && c.opts.Mode == ModeAssistant {
 			text = c.opts.SystemPrompt + "\n\n" + text
 		}
 		if c.imageCap {

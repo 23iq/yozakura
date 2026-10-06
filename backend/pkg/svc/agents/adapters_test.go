@@ -208,14 +208,22 @@ func TestArgsAndMCPPassThrough(t *testing.T) {
 		{Name: "yozakura", Transport: "stdio", Command: "/usr/bin/yozakura", Args: []string{"mcp"}, Env: map[string]string{"A": "SECRET-A"}},
 		{Name: "docs", Transport: "http", URL: "https://example.com/mcp", Headers: map[string]string{"X": "SECRET-X"}},
 	}
-	o := StartOptions{Model: "opus", ResumeID: "abc", MCP: mcp, Mode: "shell", SystemPrompt: "be brief"}
+	o := StartOptions{Model: "opus", ResumeID: "abc", MCP: mcp, Mode: ModeAssistant, SystemPrompt: "be brief"}
 	a := claudeArgs(o, "/run/cfg.json")
 	joined := strings.Join(a, "\x00")
-	for _, want := range []string{"--resume\x00abc", "--model\x00opus", "--strict-mcp-config", "--tools\x00\x00",
+	for _, want := range []string{"--resume\x00abc", "--model\x00opus",
 		"--append-system-prompt\x00be brief", "--mcp-config\x00/run/cfg.json"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("claude args lack %q: %q", want, a)
 		}
+	}
+	// The Assistant keeps Claude's built-in tools (they ask for permission).
+	if strings.Contains(joined, "--tools") || strings.Contains(joined, "--strict-mcp-config") {
+		t.Errorf("assistant mode must keep built-in tools: %q", a)
+	}
+	quick := strings.Join(claudeArgs(StartOptions{Mode: ModeOneshot}, ""), "\x00")
+	if !strings.Contains(quick, "--strict-mcp-config") || !strings.Contains(quick, "--tools\x00\x00") {
+		t.Errorf("oneshot mode must drop every tool: %q", quick)
 	}
 	var cfg struct {
 		MCPServers map[string]map[string]any `json:"mcpServers"`

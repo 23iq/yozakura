@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:yozakura:config:ai",
   "title": "ai",
-  "description": "AI center: chat models, CLI agents (Claude Code, Codex, OpenCode), shell control over MCP, quick ask, selection actions, prompts and automations.",
+  "description": "AI bar: Assistant space (any model, desktop control over MCP) and Code space (CLI agents: Claude Code, Codex, OpenCode), quick ask, selection actions, prompts and automations.",
   "type": "object",
   "x-file": "config/ai.json",
   "properties": {
@@ -22,7 +22,7 @@
     "systemPrompt": {
       "title": "System prompt",
       "type": "string",
-      "default": "You are a helpful assistant running on a Linux system. You have access to some tools to control the system.",
+      "default": "You are the user's assistant on their Linux desktop (Yozakura). You can control the desktop shell through the yozakura tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb): inspect state with the read-only tools first, make the smallest change that fulfils a request and say what you changed in one sentence. Otherwise answer clearly and briefly.",
       "description": "Sent with every chat conversation.",
       "x-settings": {
         "category": "ai",
@@ -32,12 +32,6 @@
         "keywords": "system prompt instructions persona"
       }
     },
-    "tool": {
-      "title": "Tool",
-      "type": "string",
-      "default": "none",
-      "description": "Legacy tool selection of the old assistant (kept for compatibility)."
-    },
     "extraModels": {
       "title": "Extra models",
       "type": "array",
@@ -45,29 +39,58 @@
       "description": "Extra chat models added to the model picker."
     },
     "defaultModel": {
-      "title": "Default model",
+      "title": "Default engine (Assistant)",
       "type": "string",
       "default": "",
-      "description": "Default assistant engine or API model ID; empty uses the last explicit choice."
+      "description": "Engine of new Assistant chats, e.g. anthropic:claude-sonnet-4-5, ollama:qwen3 or agent:codex. Empty uses your last choice.",
+      "x-settings": {
+        "category": "ai",
+        "section": "bar_behavior",
+        "label": "prefs.ai.default_engine",
+        "control": "text",
+        "keywords": "default engine model assistant provider"
+      }
     },
     "sidebarWidth": {
-      "title": "Sidebar width",
+      "title": "Compact width",
       "type": "number",
       "default": 400,
-      "description": "Width of the AI sidebar.",
+      "description": "Width of the compact AI bar (you can also drag its edge).",
+      "x-settings": {
+        "category": "ai",
+        "section": "bar_appearance",
+        "label": "prefs.ai.compact_width",
+        "control": "slider",
+        "step": 10,
+        "unit": "px",
+        "keywords": "compact width sidebar size",
+        "min": 320,
+        "max": 900
+      },
       "minimum": 240,
       "maximum": 1200,
       "x-unit": "px"
     },
     "sidebarPosition": {
-      "title": "Sidebar position",
+      "title": "Screen side",
       "type": "string",
       "default": "right",
-      "description": "Screen side of the AI sidebar.",
+      "description": "Edge of the screen the AI bar slides in from.",
+      "x-settings": {
+        "category": "ai",
+        "section": "bar_appearance",
+        "label": "prefs.ai.side",
+        "control": "selector",
+        "keywords": "side left right position edge"
+      },
       "enum": [
         "left",
         "right"
-      ]
+      ],
+      "x-enumLabels": {
+        "left": "Left",
+        "right": "Right"
+      }
     },
     "sidebarPinnedOnStartup": {
       "title": "Sidebar pinned on startup",
@@ -79,42 +102,20 @@
       "title": "Wide layout width",
       "type": "number",
       "default": 1040,
-      "description": "Width of the wide layout (agent conversation + changes).",
+      "description": "Width of the wide layout (history + conversation; in Code also the changes).",
       "x-settings": {
         "category": "ai",
-        "section": "center",
+        "section": "bar_appearance",
         "label": "ai.wide_width",
-        "control": "number",
+        "control": "slider",
+        "step": 20,
         "unit": "px",
-        "keywords": "wide layout width agent",
+        "keywords": "wide layout width",
         "min": 600,
         "max": 2400
       },
       "minimum": 600,
       "maximum": 2400
-    },
-    "defaultMode": {
-      "title": "Opens in",
-      "type": "string",
-      "default": "chat",
-      "description": "Mode the sidebar opens in.",
-      "x-settings": {
-        "category": "ai",
-        "section": "center",
-        "label": "ai.default_mode",
-        "control": "selector",
-        "keywords": "mode chat agent shell default"
-      },
-      "enum": [
-        "chat",
-        "agent",
-        "shell"
-      ],
-      "x-enumLabels": {
-        "chat": "Chat",
-        "agent": "Agent",
-        "shell": "Shell"
-      }
     },
     "showThinking": {
       "title": "Show model thinking",
@@ -183,10 +184,27 @@
       "description": "CLI coding agents run by the backend session manager.",
       "properties": {
         "defaultAgent": {
-          "title": "Default agent",
+          "title": "Default agent (Code)",
           "type": "string",
           "default": "claude",
-          "description": "Agent id used for new agent sessions (claude, codex, opencode)."
+          "description": "CLI agent used by new sessions in the Code space.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.default_agent",
+            "control": "selector",
+            "keywords": "default agent code claude codex opencode"
+          },
+          "enum": [
+            "claude",
+            "codex",
+            "opencode"
+          ],
+          "x-enumLabels": {
+            "claude": "Claude Code",
+            "codex": "Codex",
+            "opencode": "OpenCode"
+          }
         },
         "defaultCwd": {
           "title": "Default cwd",
@@ -571,52 +589,6 @@
       },
       "additionalProperties": false
     },
-    "shell": {
-      "title": "Shell",
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "title": "Shell control",
-          "type": "boolean",
-          "default": true,
-          "description": "Let models change the desktop through the yozakura tools; voice commands use it too.",
-          "x-settings": {
-            "category": "ai",
-            "section": "shell",
-            "label": "prefs.ai.shell_enabled",
-            "control": "toggle",
-            "keywords": "shell control desktop voice commands"
-          }
-        },
-        "target": {
-          "title": "Shell control runs on",
-          "type": "string",
-          "default": "",
-          "description": "Empty = the current chat model; agent:claude, agent:codex or agent:opencode to use a CLI agent.",
-          "x-settings": {
-            "category": "ai",
-            "section": "shell",
-            "label": "prefs.ai.shell_target",
-            "control": "text",
-            "keywords": "shell control model agent target"
-          }
-        },
-        "systemPrompt": {
-          "title": "System prompt",
-          "type": "string",
-          "default": "You control the user's Yozakura desktop shell through the yozakura MCP tools (config, presets, wallpaper, windows, workspaces, notifications, clipboard, screenshots, media, do-not-disturb). Inspect state with the read-only tools first, then make the smallest change that fulfils the request and say what you changed in one sentence.",
-          "description": "Instructions for shell-control conversations.",
-          "x-settings": {
-            "category": "ai",
-            "section": "shell",
-            "label": "ai.system_prompt",
-            "control": "text",
-            "keywords": "shell control prompt"
-          }
-        }
-      },
-      "additionalProperties": false
-    },
     "quickAsk": {
       "title": "Quick ask",
       "type": "object",
@@ -903,6 +875,387 @@
           "type": "boolean",
           "default": true,
           "description": "Allow voice input into the AI center."
+        }
+      },
+      "additionalProperties": false
+    },
+    "appearance": {
+      "title": "Appearance",
+      "type": "object",
+      "description": "Look of the AI bar (sizes, message style, density, fonts).",
+      "properties": {
+        "defaultSize": {
+          "title": "Default size",
+          "type": "string",
+          "default": "compact",
+          "description": "Size of the AI bar when the shell starts. Switch with the size button or Ctrl+W.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.default_size",
+            "control": "selector",
+            "keywords": "size compact wide fullscreen width layout"
+          },
+          "enum": [
+            "compact",
+            "wide",
+            "fullscreen"
+          ],
+          "x-enumLabels": {
+            "compact": "Compact",
+            "wide": "Wide",
+            "fullscreen": "Fullscreen"
+          }
+        },
+        "messageStyle": {
+          "title": "Your messages",
+          "type": "string",
+          "default": "bubble",
+          "description": "Bubbles on the right, or flat blocks like the answers.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.message_style",
+            "control": "selector",
+            "keywords": "message bubble flat chat style"
+          },
+          "enum": [
+            "bubble",
+            "flat"
+          ],
+          "x-enumLabels": {
+            "bubble": "Bubbles",
+            "flat": "Flat"
+          }
+        },
+        "density": {
+          "title": "Density",
+          "type": "string",
+          "default": "comfortable",
+          "description": "Spacing between messages.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.density",
+            "control": "selector",
+            "keywords": "density compact comfortable spacing"
+          },
+          "enum": [
+            "compact",
+            "comfortable"
+          ],
+          "x-enumLabels": {
+            "compact": "Compact",
+            "comfortable": "Comfortable"
+          }
+        },
+        "fontScale": {
+          "title": "Text size",
+          "type": "number",
+          "default": 1,
+          "description": "Scale of the conversation text relative to the theme font size.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.font_scale",
+            "control": "slider",
+            "step": 0.05,
+            "unit": "×",
+            "keywords": "font size scale text zoom",
+            "min": 0.8,
+            "max": 1.4
+          },
+          "minimum": 0.8,
+          "maximum": 1.4
+        },
+        "showAvatars": {
+          "title": "Avatars",
+          "type": "boolean",
+          "default": false,
+          "description": "Show a small avatar next to your messages and the answers.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.show_avatars",
+            "control": "toggle",
+            "keywords": "avatar icon engine picture"
+          }
+        },
+        "showTimestamps": {
+          "title": "Timestamps",
+          "type": "boolean",
+          "default": false,
+          "description": "Show the time under each message.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.show_timestamps",
+            "control": "toggle",
+            "keywords": "time timestamp clock message"
+          }
+        },
+        "animations": {
+          "title": "Animations",
+          "type": "boolean",
+          "default": true,
+          "description": "Animate size changes, the space switch and new messages.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.animations",
+            "control": "toggle",
+            "keywords": "animation motion transition"
+          }
+        },
+        "glass": {
+          "title": "Glass surface",
+          "type": "boolean",
+          "default": true,
+          "description": "Use the theme's glass effect for the AI bar background.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.glass",
+            "control": "toggle",
+            "keywords": "glass blur translucent surface"
+          }
+        },
+        "opacity": {
+          "title": "Background opacity",
+          "type": "number",
+          "default": 1,
+          "description": "Opacity of the AI bar background; 1 follows the theme.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_appearance",
+            "label": "prefs.ai.opacity",
+            "control": "slider",
+            "step": 0.05,
+            "keywords": "opacity transparency background surface",
+            "min": 0.4,
+            "max": 1
+          },
+          "minimum": 0.4,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "behavior": {
+      "title": "Behavior",
+      "type": "object",
+      "description": "Behaviour of the AI bar (spaces, sending, suggestions, scrolling).",
+      "properties": {
+        "defaultSpace": {
+          "title": "Start in",
+          "type": "string",
+          "default": "last",
+          "description": "Space shown when the AI bar starts: the one you used last, the Assistant or Code.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.default_space",
+            "control": "selector",
+            "keywords": "space assistant code default startup"
+          },
+          "enum": [
+            "last",
+            "assistant",
+            "code"
+          ],
+          "x-enumLabels": {
+            "last": "Last used",
+            "assistant": "Assistant",
+            "code": "Code"
+          }
+        },
+        "enterToSend": {
+          "title": "Enter sends",
+          "type": "boolean",
+          "default": true,
+          "description": "On: Enter sends and Shift+Enter adds a line. Off: Ctrl+Enter sends and Enter adds a line.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.enter_to_send",
+            "control": "toggle",
+            "keywords": "enter send ctrl newline keyboard"
+          }
+        },
+        "suggestions": {
+          "title": "Suggestions",
+          "type": "boolean",
+          "default": true,
+          "description": "Show suggestions based on what you are doing when a chat is empty.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.suggestions",
+            "control": "toggle",
+            "keywords": "suggestions chips empty start ideas"
+          }
+        },
+        "suggestionKinds": {
+          "title": "Suggestion sources",
+          "type": "array",
+          "default": [
+            "clipboard",
+            "selection",
+            "media",
+            "timer",
+            "window",
+            "desktop",
+            "time"
+          ],
+          "items": {
+            "enum": [
+              "clipboard",
+              "selection",
+              "media",
+              "timer",
+              "window",
+              "desktop",
+              "time"
+            ]
+          },
+          "description": "What the suggestions may look at.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.suggestion_kinds",
+            "control": "multiselect",
+            "keywords": "suggestions clipboard selection media timer window",
+            "visibleWhen": {
+              "key": "ai.behavior.suggestions",
+              "equals": true
+            }
+          },
+          "uniqueItems": true,
+          "x-itemLabels": {
+            "clipboard": "Clipboard",
+            "selection": "Selection and screen",
+            "media": "Music",
+            "timer": "Timers",
+            "window": "Active window",
+            "desktop": "Desktop",
+            "time": "Time of day"
+          }
+        },
+        "restoreLastSession": {
+          "title": "Reopen the last conversation",
+          "type": "boolean",
+          "default": true,
+          "description": "When the AI bar starts, reopen the last conversation of each space instead of a new one.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.restore_last",
+            "control": "toggle",
+            "keywords": "restore last session conversation reopen"
+          }
+        },
+        "autoScroll": {
+          "title": "Follow new output",
+          "type": "boolean",
+          "default": true,
+          "description": "Keep the conversation scrolled to the end while an answer streams (scrolling up pauses it).",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.auto_scroll",
+            "control": "toggle",
+            "keywords": "scroll follow stream bottom"
+          }
+        },
+        "thinkingExpanded": {
+          "title": "Expand thinking",
+          "type": "boolean",
+          "default": false,
+          "description": "Show the model's reasoning expanded instead of folded.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.thinking_expanded",
+            "control": "toggle",
+            "keywords": "thinking reasoning expanded collapsed",
+            "visibleWhen": {
+              "key": "ai.showThinking",
+              "equals": true
+            }
+          }
+        },
+        "collapseTools": {
+          "title": "Collapse tool details",
+          "type": "boolean",
+          "default": true,
+          "description": "Show tool calls as one line; expand a row to see its input and output.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_behavior",
+            "label": "prefs.ai.collapse_tools",
+            "control": "toggle",
+            "keywords": "tool action details collapse expand"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "strip": {
+      "title": "Strip",
+      "type": "object",
+      "description": "Items of the status strip above the AI bar composer.",
+      "properties": {
+        "engine": {
+          "title": "Engine and model",
+          "type": "boolean",
+          "default": true,
+          "description": "Engine, model and reasoning effort; click it to switch.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_strip",
+            "label": "prefs.ai.strip_engine",
+            "control": "toggle",
+            "keywords": "status strip engine model effort"
+          }
+        },
+        "context": {
+          "title": "Context window",
+          "type": "boolean",
+          "default": true,
+          "description": "How much of the model's context the conversation uses.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_strip",
+            "label": "prefs.ai.strip_context",
+            "control": "toggle",
+            "keywords": "status strip context window tokens"
+          }
+        },
+        "cost": {
+          "title": "Session cost",
+          "type": "boolean",
+          "default": true,
+          "description": "Tokens and approximate cost of the conversation.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_strip",
+            "label": "prefs.ai.strip_cost",
+            "control": "toggle",
+            "keywords": "status strip cost tokens price"
+          }
+        },
+        "limit": {
+          "title": "Subscription limit",
+          "type": "boolean",
+          "default": true,
+          "description": "How much of the current provider's subscription limit is used.",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_strip",
+            "label": "prefs.ai.strip_limit",
+            "control": "toggle",
+            "keywords": "status strip subscription limit usage"
+          }
         }
       },
       "additionalProperties": false
