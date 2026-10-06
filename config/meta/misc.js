@@ -58,6 +58,10 @@ var lockscreen = {
 var overview = {
     "description": "Workspace overview (mission control) grid.",
     "keys": {
+        "style": {
+            "enum": Enums.OVERVIEW_STYLES,
+            "description": "Overview layout: grid of workspaces, or a horizontal filmstrip with the current workspace centered."
+        },
         "rows": {
             "min": 1,
             "max": 10,

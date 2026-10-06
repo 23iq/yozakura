@@ -6370,6 +6370,16 @@
       "type": "object",
       "x-file": "config/overview.json",
       "properties": {
+        "style": {
+          "title": "Style",
+          "type": "string",
+          "default": "grid",
+          "description": "Overview layout: grid of workspaces, or a horizontal filmstrip with the current workspace centered.",
+          "enum": [
+            "grid",
+            "strip"
+          ]
+        },
         "rows": {
           "title": "Rows",
           "type": "number",

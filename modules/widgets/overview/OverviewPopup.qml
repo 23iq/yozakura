@@ -14,6 +14,21 @@ import "."
 PanelWindow {
     id: overviewPopup
 
+    readonly property var overviewView: overviewLoader.item
+
+    // Next/previous workspace: the strip moves its selection, other styles switch
+    function stepWorkspace(dir) {
+        if (overviewView && overviewView.stepWorkspace(dir))
+            return;
+        const target = (YozdService.focusedWorkspace?.id || 1) + dir;
+        if (target > Config.workspaces.shown)
+            YozdService.dispatch("workspace 1");
+        else if (target < 1)
+            YozdService.dispatch("workspace " + Config.workspaces.shown);
+        else
+            YozdService.dispatch(dir > 0 ? "workspace r+1" : "workspace r-1");
+    }
+
     anchors {
         top: true
         bottom: true
@@ -199,13 +214,7 @@ PanelWindow {
 
                     onTabPressed: {
                         if (searchInput.text.length === 0) {
-                            const current = YozdService.focusedWorkspace?.id || 1;
-                            const next = current + 1;
-                            if (next > Config.workspaces.shown) {
-                                YozdService.dispatch("workspace 1");
-                            } else {
-                                YozdService.dispatch("workspace r+1");
-                            }
+                            overviewPopup.stepWorkspace(1);
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectNextMatch();
                         }
@@ -213,13 +222,7 @@ PanelWindow {
                     
                     onShiftTabPressed: {
                         if (searchInput.text.length === 0) {
-                            const current = YozdService.focusedWorkspace?.id || 1;
-                            const prev = current - 1;
-                            if (prev < 1) {
-                                YozdService.dispatch("workspace " + Config.workspaces.shown);
-                            } else {
-                                YozdService.dispatch("workspace r-1");
-                            }
+                            overviewPopup.stepWorkspace(-1);
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectPrevMatch();
                         }
@@ -250,13 +253,7 @@ PanelWindow {
 
                     onLeftPressed: {
                         if (searchInput.text.length === 0) {
-                            const current = YozdService.focusedWorkspace?.id || 1;
-                            const prev = current - 1;
-                            if (prev < 1) {
-                                YozdService.dispatch("workspace " + Config.workspaces.shown);
-                            } else {
-                                YozdService.dispatch("workspace r-1");
-                            }
+                            overviewPopup.stepWorkspace(-1);
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectPrevMatch();
                         }
@@ -264,13 +261,7 @@ PanelWindow {
 
                     onRightPressed: {
                         if (searchInput.text.length === 0) {
-                            const current = YozdService.focusedWorkspace?.id || 1;
-                            const next = current + 1;
-                            if (next > Config.workspaces.shown) {
-                                YozdService.dispatch("workspace 1");
-                            } else {
-                                YozdService.dispatch("workspace r+1");
-                            }
+                            overviewPopup.stepWorkspace(1);
                         } else if (overviewLoader.item) {
                             overviewLoader.item.selectNextMatch();
                         }

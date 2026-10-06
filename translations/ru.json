@@ -3401,5 +3401,9 @@
   "onboarding.finish.installing_n.one": "Устанавливается: %1",
   "onboarding.finish.installing_n.few": "Устанавливается: %1",
   "onboarding.finish.installing_n.many": "Устанавливается: %1",
-  "onboarding.finish.installing_n.other": "Устанавливается: %1"
+  "onboarding.finish.installing_n.other": "Устанавливается: %1",
+  "settings.shell.overview_style": "Стиль обзора",
+  "shell.overview.style": "Стиль",
+  "settings.shell.overview_style_grid": "Сетка",
+  "settings.shell.overview_style_strip": "Лента"
 }

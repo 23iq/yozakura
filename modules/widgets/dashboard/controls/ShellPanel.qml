@@ -1102,6 +1102,27 @@ Item {
                             Layout.bottomMargin: -4
                         }
 
+                        SelectorRow {
+                            label: I18n.t("shell.overview.style")
+                            options: [
+                                {
+                                    label: I18n.t("settings.shell.overview_style_grid"),
+                                    value: "grid"
+                                },
+                                {
+                                    label: I18n.t("settings.shell.overview_style_strip"),
+                                    value: "strip"
+                                }
+                            ]
+                            value: Config.overview.style ?? "grid"
+                            onValueSelected: newValue => {
+                                if (newValue !== Config.overview.style) {
+                                    GlobalStates.markShellChanged();
+                                    Config.overview.style = newValue;
+                                }
+                            }
+                        }
+
                         NumberInputRow {
                             label: I18n.t("shell.overview.rows")
                             value: Config.overview.rows ?? 2

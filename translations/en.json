@@ -3385,5 +3385,9 @@
   "onboarding.finish.exclusive.failed": "Couldn't make %1 the only shell",
   "onboarding.finish.exclusive.failed.body": "%1 — see Settings → System.",
   "onboarding.finish.installing_n.one": "%1 installing",
-  "onboarding.finish.installing_n.other": "%1 installing"
+  "onboarding.finish.installing_n.other": "%1 installing",
+  "settings.shell.overview_style": "Overview Style",
+  "shell.overview.style": "Style",
+  "settings.shell.overview_style_grid": "Grid",
+  "settings.shell.overview_style_strip": "Filmstrip"
 }

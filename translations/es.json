@@ -3385,5 +3385,9 @@
   "onboarding.finish.exclusive.failed": "No se pudo hacer de %1 el único shell",
   "onboarding.finish.exclusive.failed.body": "%1 — consulta Ajustes → Sistema.",
   "onboarding.finish.installing_n.one": "%1 instalándose",
-  "onboarding.finish.installing_n.other": "%1 instalándose"
+  "onboarding.finish.installing_n.other": "%1 instalándose",
+  "settings.shell.overview_style": "Estilo de vista general",
+  "shell.overview.style": "Estilo",
+  "settings.shell.overview_style_grid": "Cuadrícula",
+  "settings.shell.overview_style_strip": "Tira de película"
 }

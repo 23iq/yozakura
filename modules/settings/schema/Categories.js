@@ -108,6 +108,7 @@ var categories = [
         topic("settings.shell.dock_icon_size", "dock", "width height pixels apps")
     ]),
     legacy("overview", "overview", "prefs.cat.overview", "prefs.cat.overview.desc", "dashboard/controls/ShellPanel.qml", "overview", "overview expose mission control workspaces grid", [
+        topic("settings.shell.overview_style", "overview", "grid strip filmstrip layout"),
         topic("settings.shell.overview_rows", "overview", "grid layout vertical"),
         topic("settings.shell.overview_scale", "overview", "zoom size preview")
     ]),
