@@ -30,6 +30,8 @@ func fakeDryRunHome(t *testing.T) (dryRunEnv, string) {
 	mustOK(t, os.Symlink(filepath.Join(home, "dotfiles/general.json"), filepath.Join(home, "dotfiles", brand.AppID, "config/general.json")))
 	mustOK(t, os.MkdirAll(filepath.Join(home, ".config"), 0o755))
 	mustOK(t, os.Symlink(filepath.Join(home, "dotfiles", brand.AppID), filepath.Join(home, ".config", brand.AppID)))
+	// a link cycle: the folder links to itself
+	mustOK(t, os.Symlink(filepath.Join(home, "dotfiles", brand.AppID), filepath.Join(home, "dotfiles", brand.AppID, "config", "loop")))
 	write(".config/fontconfig/fonts.conf", "<fontconfig/>")
 	write(".config/kitty/kitty.conf", "font_size 11")
 	write(".cache/"+brand.AppID+"/wallpapers.json", `{"currentWall":"/w/a.png"}`)
@@ -143,6 +145,20 @@ func TestOnboardingDryRunSandboxAndJournal(t *testing.T) {
 	assert.Contains(t, out.String(), "install firefox, steam")
 	_, err = os.Stat(dir)
 	assert.True(t, os.IsNotExist(err), "temp dir removed")
+}
+
+func TestOnboardingDryRunCopyCap(t *testing.T) {
+	savedCap := dryRunCopyCap
+	dryRunCopyCap = 10
+	defer func() { dryRunCopyCap = savedCap }()
+	env, seenFile := fakeDryRunHome(t)
+	var out, errOut bytes.Buffer
+	assert.Equal(t, 1, runOnboardingDryRun([]string{"--dry-run"}, env, &out, &errOut))
+	assert.Contains(t, errOut.String(), "MiB to copy")
+	_, err := os.Stat(seenFile)
+	assert.True(t, os.IsNotExist(err), "Quickshell is not started")
+	left, _ := os.ReadDir(env.tmpParent)
+	assert.Empty(t, left, "the partial copy is removed")
 }
 
 func TestOnboardingDryRunKeep(t *testing.T) {

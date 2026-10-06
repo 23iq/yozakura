@@ -78,6 +78,18 @@ var METHODS = {
     "keyboard.next": function () {
         return "switch to the next keyboard layout";
     },
+    "displays.identify": function () {
+        return null;
+    },
+    "keystore.list": function () {
+        return null;
+    },
+    "keystore.set": function (p) {
+        return "save the API key of " + (p && p.provider);
+    },
+    "keystore.delete": function (p) {
+        return "remove the API key of " + (p && p.provider);
+    },
     "extras.install": function (p) {
         return "install " + ((p && p.ids) || []).join(", ") + (p && p.confirmMultilib ? " (enable multilib)" : "");
     },
@@ -142,12 +154,25 @@ var METHODS = {
 
 // Reads by exact name, and by verb (the part after the last dot).
 var READS = ["config.statesGet", "compositor.state"];
+// Read-named but kept away from the daemon: identify draws on the real
+// shell too (mocked locally), API keys are never read in a dry run.
+var NOT_READS = ["displays.identify"];
 var READ_VERB = /^(list|status|catalog|get.*|preview|presets|plan|log|probe|conflicts|identify|state|statesGet)$/;
 
 // compositor.dispatch runs a daemon CLI command: queries ("layout list",
 // "system get-compositor", "monitor status") are reads.
+// Nouns of the yozd CLI (backend/cmd/yozd main.go); no argument may look
+// like an option ("-c other.toml" must never pass as a query).
+var YOZD_NOUNS = ["window", "workspace", "monitor", "keyboard", "layout", "config", "system", "darkmode", "brightness", "overview"];
+
 function _isQuery(params) {
     var a = (params && params.args) || [];
+    if (!Array.isArray(a) || YOZD_NOUNS.indexOf(a[0]) < 0)
+        return false;
+    for (var i = 0; i < a.length; i++) {
+        if (typeof a[i] !== "string" || a[i].charAt(0) === "-")
+            return false;
+    }
     var verb = String(a[1] || "");
     return verb === "list" || verb === "status" || /^get(-|$)/.test(verb);
 }
@@ -158,8 +183,18 @@ function isRead(method, params) {
         return _isQuery(params);
     if (READS.indexOf(m) >= 0)
         return true;
+    if (NOT_READS.indexOf(m) >= 0 || m.indexOf("keystore.") === 0)
+        return false;
     var dot = m.lastIndexOf(".");
     return dot > 0 && READ_VERB.test(m.substring(dot + 1));
+}
+
+// Params of a read as sent to the daemon: extras.status never forces a
+// re-detection (that would broadcast to the real shell).
+function readParams(method, params) {
+    if (method === "extras.status" && params && params.refresh)
+        return {};
+    return params;
 }
 
 function isMutating(method, params) {

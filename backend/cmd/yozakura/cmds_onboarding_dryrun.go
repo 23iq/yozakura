@@ -43,6 +43,9 @@ var dryRunForeignConfig = []string{"fontconfig", "qt6ct"}
 // Folders larger than this are left empty in the copy (thumbnails etc.).
 var dryRunDirCap int64 = 64 << 20
 
+// The whole sandbox copy stops with an error past this.
+var dryRunCopyCap int64 = 256 << 20
+
 func defaultDryRunEnv() dryRunEnv {
 	home, _ := os.UserHomeDir()
 	base := func(env, def string) string {
@@ -182,7 +185,7 @@ func withEnv(environ []string, vars map[string]string) []string {
 }
 
 // buildDryRunSandbox fills the XDG dirs of vars: copies only, no link
-// into the user's dirs.
+// into the user's dirs, at most dryRunCopyCap bytes in all.
 func buildDryRunSandbox(env dryRunEnv, vars map[string]string) error {
 	config, cache, state := vars["XDG_CONFIG_HOME"], vars["XDG_CACHE_HOME"], vars["XDG_STATE_HOME"]
 	for _, d := range []string{filepath.Join(config, brand.AppID), filepath.Join(cache, brand.AppID), filepath.Join(state, brand.AppID)} {
@@ -190,18 +193,19 @@ func buildDryRunSandbox(env dryRunEnv, vars map[string]string) error {
 			return err
 		}
 	}
-	if err := copyIfExists(filepath.Join(env.configHome, brand.AppID), filepath.Join(config, brand.AppID), copyTree); err != nil {
+	c := newTreeCopier(dryRunCopyCap)
+	if err := copyIfExists(filepath.Join(env.configHome, brand.AppID), filepath.Join(config, brand.AppID), c.tree); err != nil {
 		return fmt.Errorf("copy config: %w", err)
 	}
 	for _, name := range dryRunForeignConfig {
 		src := filepath.Join(env.configHome, name)
 		if size, ok := treeSize(src, dryRunDirCap); ok && size > 0 {
-			if err := copyTree(src, filepath.Join(config, name)); err != nil {
+			if err := c.tree(src, filepath.Join(config, name)); err != nil {
 				return fmt.Errorf("copy %s: %w", name, err)
 			}
 		}
 	}
-	if err := copyIfExists(filepath.Join(env.cacheHome, brand.AppID), filepath.Join(cache, brand.AppID), copyCache); err != nil {
+	if err := copyIfExists(filepath.Join(env.cacheHome, brand.AppID), filepath.Join(cache, brand.AppID), c.cache); err != nil {
 		return fmt.Errorf("copy cache: %w", err)
 	}
 	return nil
@@ -214,16 +218,28 @@ func copyIfExists(src, dst string, copyFn func(src, dst string) error) error {
 	return copyFn(src, dst)
 }
 
-// copyTree copies src (a file or a folder, recursively) to dst with every
-// symlink replaced by what it points to; other file types are skipped.
-func copyTree(src, dst string) error {
-	return copyDeref(src, dst, 0)
+// fileKey identifies a file across links (device + inode).
+func fileKey(info os.FileInfo) ([2]uint64, bool) {
+	st, ok := info.Sys().(*syscall.Stat_t)
+	if !ok {
+		return [2]uint64{}, false
+	}
+	return [2]uint64{uint64(st.Dev), st.Ino}, true
 }
 
-func copyDeref(src, dst string, depth int) error {
-	if depth > 32 {
-		return fmt.Errorf("%s: too deep (symlink loop?)", src)
-	}
+// treeCopier copies trees with every symlink replaced by what it points
+// to (other file types are skipped), each folder once (a link cycle ends
+// there) and fails once more than limit bytes would be copied.
+type treeCopier struct {
+	seen          map[[2]uint64]bool
+	copied, limit int64
+}
+
+func newTreeCopier(limit int64) *treeCopier {
+	return &treeCopier{seen: map[[2]uint64]bool{}, limit: limit}
+}
+
+func (c *treeCopier) tree(src, dst string) error {
 	info, err := os.Stat(src)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -233,6 +249,12 @@ func copyDeref(src, dst string, depth int) error {
 	}
 	switch {
 	case info.IsDir():
+		if key, ok := fileKey(info); ok {
+			if c.seen[key] {
+				return nil
+			}
+			c.seen[key] = true
+		}
 		if err := os.MkdirAll(dst, 0o700); err != nil {
 			return err
 		}
@@ -241,50 +263,25 @@ func copyDeref(src, dst string, depth int) error {
 			return err
 		}
 		for _, e := range entries {
-			if err := copyDeref(filepath.Join(src, e.Name()), filepath.Join(dst, e.Name()), depth+1); err != nil {
+			if err := c.tree(filepath.Join(src, e.Name()), filepath.Join(dst, e.Name())); err != nil {
 				return err
 			}
 		}
 		return nil
 	case info.Mode().IsRegular():
+		c.copied += info.Size()
+		if c.copied > c.limit {
+			return fmt.Errorf("more than %d MiB to copy (at %s)", c.limit>>20, src)
+		}
 		return copyFile(src, dst)
 	}
 	return nil
 }
 
-// treeSize is the size of src (symlinks followed); ok is false once it
-// passes limit.
-func treeSize(src string, limit int64) (int64, bool) {
-	var total int64
-	var walk func(p string, depth int) bool
-	walk = func(p string, depth int) bool {
-		info, err := os.Stat(p)
-		if err != nil {
-			return true
-		}
-		if depth > 32 {
-			return false
-		}
-		if !info.IsDir() {
-			total += info.Size()
-			return total <= limit
-		}
-		entries, _ := os.ReadDir(p)
-		for _, e := range entries {
-			if !walk(filepath.Join(p, e.Name()), depth+1) {
-				return false
-			}
-		}
-		return true
-	}
-	ok := walk(src, 0)
-	return total, ok
-}
-
-// copyCache copies the app's cache: its files (wallpapers.json,
-// colors.json, ...) and every folder up to dryRunDirCap (thumbnails,
-// schemes); a larger one is created empty.
-func copyCache(src, dst string) error {
+// cache copies the app's cache: its files (wallpapers.json, colors.json,
+// ...) and every folder up to dryRunDirCap (thumbnails, schemes); a larger
+// folder is created empty, a larger file left out.
+func (c *treeCopier) cache(src, dst string) error {
 	if err := os.MkdirAll(dst, 0o700); err != nil {
 		return err
 	}
@@ -299,13 +296,46 @@ func copyCache(src, dst string) error {
 				err = os.MkdirAll(to, 0o700)
 			}
 		} else {
-			err = copyTree(from, to)
+			err = c.tree(from, to)
 		}
 		if err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// treeSize is the size of src (symlinks followed, each folder once); ok is
+// false once it passes limit.
+func treeSize(src string, limit int64) (int64, bool) {
+	var total int64
+	seen := map[[2]uint64]bool{}
+	var walk func(p string) bool
+	walk = func(p string) bool {
+		info, err := os.Stat(p)
+		if err != nil {
+			return true
+		}
+		if !info.IsDir() {
+			total += info.Size()
+			return total <= limit
+		}
+		if key, ok := fileKey(info); ok {
+			if seen[key] {
+				return true
+			}
+			seen[key] = true
+		}
+		entries, _ := os.ReadDir(p)
+		for _, e := range entries {
+			if !walk(filepath.Join(p, e.Name())) {
+				return false
+			}
+		}
+		return true
+	}
+	ok := walk(src)
+	return total, ok
 }
 
 func copyFile(src, dst string) error {

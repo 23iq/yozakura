@@ -17,6 +17,10 @@ function isMutating(method, params) {
     return Methods.isMutating(method, params);
 }
 
+function readParams(method, params) {
+    return Methods.readParams(method, params);
+}
+
 function create(failIds) {
     return {
         "nextId": 1,
@@ -179,6 +183,24 @@ function handle(state, method, params, now) {
             "data": _session(p.session, method === "displays.keep" ? "kept" : "reverted", 0),
             "line": null
         });
+        break;
+    case "displays.identify":
+        // numbers on this instance's screens only (the real shell sees nothing)
+        out.events.push({
+            "service": "displays.identify",
+            "data": {
+                "outputs": state.outputs.map(function (o, i) {
+                    return {
+                        "name": o.name,
+                        "index": i + 1
+                    };
+                })
+            },
+            "line": null
+        });
+        break;
+    case "keystore.list":
+        out.result = [];
         break;
     case "displays.moveConflicts":
         out.result = {

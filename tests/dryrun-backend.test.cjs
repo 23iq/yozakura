@@ -19,7 +19,7 @@ test('mutating methods are intercepted, reads pass through', () => {
         'config.write', 'config.patch', 'config.stateSet', 'config.statesSet',
         'compositor.write', 'compositor.dispatch', 'compositor.eval'])
         assert.ok(D.isMutating(m), m);
-    for (const m of ['displays.list', 'displays.identify', 'displays.conflicts', 'keyboard.catalog',
+    for (const m of ['displays.list', 'displays.conflicts', 'keyboard.catalog',
         'extras.catalog', 'extras.status', 'extras.log', 'term.presets', 'term.preview', 'term.status',
         'exclusive.status', 'exclusive.plan', 'config.statesGet', 'compositor.state', 'providers.ollama.probe',
         'weather.get', 'clipboard.getContent'])
@@ -30,8 +30,23 @@ test('mutating methods are intercepted, reads pass through', () => {
     for (const args of [['layout', 'set', 'dwindle'], ['system', 'execute', 'kitty'], []])
         assert.ok(D.isMutating('compositor.dispatch', { args }), args.join(' '));
     // fail closed: anything not known as a read is mocked
-    for (const m of ['nightlight.set', 'usage.record', 'config.read', 'brand.new', 'list', '', 'x.listing'])
+    for (const m of ['nightlight.set', 'usage.record', 'config.read', 'brand.new', 'list', '', 'x.listing',
+        'keystore.list', 'keystore.get', 'displays.identify'])
         assert.ok(D.isMutating(m), m);
+    // dispatch queries: a yozd noun first, no option anywhere
+    for (const args of [['-c', 'list'], ['layout', 'list', '-c', '/tmp/x.toml'], ['bogus', 'list'], ['layout', 'list', 5]])
+        assert.ok(D.isMutating('compositor.dispatch', { args }), JSON.stringify(args));
+});
+
+test('identify is local, keys stay away, refresh is stripped', () => {
+    const s = D.create([]);
+    D.overlay(s, 'displays.list', [{ name: 'DP-1' }, { name: 'HDMI-A-1' }]);
+    const r = D.handle(s, 'displays.identify', {}, 0);
+    eq([r.line, r.events], [null, [{ service: 'displays.identify', data: { outputs: [{ name: 'DP-1', index: 1 }, { name: 'HDMI-A-1', index: 2 }] }, line: null }]]);
+    eq(D.handle(s, 'keystore.list', {}, 0).result, [], 'no key is set');
+    eq(D.handle(s, 'keystore.set', { provider: 'openai', api_key: 'sk-secret' }, 0).line, 'save the API key of openai', 'the key is never journaled');
+    eq(D.readParams('extras.status', { refresh: true }), {});
+    eq(D.readParams('extras.catalog', { a: 1 }), { a: 1 });
 });
 
 test('unknown methods: mocked with an empty answer and journaled', () => {

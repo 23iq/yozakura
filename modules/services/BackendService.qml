@@ -72,6 +72,7 @@ Singleton {
                 root._dryCall(method, params, callback);
                 return;
             }
+            params = DryRunBackend.readParams(method, params);
             if (callback !== undefined) {
                 const cb = callback;
                 callback = (result, error) => cb(error ? result : DryRunBackend.overlay(root._dry, method, result), error);

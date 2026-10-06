@@ -49,10 +49,12 @@ READS = {"displays.list": OUTPUTS, "displays.conflicts": [],
 WIRE = """pragma Singleton
 QtObject {
     property var sent: []
+    property var params: []
     property var replies: (%s)
     function send(sock, line) {
         const msg = JSON.parse(line);
         sent = sent.concat([msg.method]);
+        params = params.concat([msg.params || null]);
         if (msg.method === "subscribe")
             return;
         const r = replies[msg.method];
@@ -169,6 +171,16 @@ check(ev(f'ExtrasService.status["{OK_ID}"].state') == "installed", "after ~4 s i
 check(ev(f'ExtrasService.progress["{FAIL_ID}"].state') == "failed"
       and ev(f'ExtrasService.progress["{FAIL_ID}"].reason') == "network", "the fail list fails with reason network")
 check("extras.install" not in sent(), f"no install reached the backend: {sent()}")
+
+# Identify: numbers only in this instance; a status refresh is not forced.
+ev("DisplaysService.identify()")
+QTest.qWait(80)
+check(ev("DisplaysService.identified.length") == 1, "identify shows the numbers here")
+check("displays.identify" not in sent(), "identify never reaches the backend (it would draw on the real shell)")
+ev("ExtrasService.refresh()")
+QTest.qWait(80)
+status_params = json.loads(ev("JSON.stringify(Wire.params.filter((p, i) => Wire.sent[i] === 'extras.status'))"))
+check(status_params and all(not (p or {}).get("refresh") for p in status_params), f"no forced re-detection: {status_params}")
 
 # Fail closed: a method not known as a read is mocked, journaled, never sent.
 ev('BackendService.call("nightlight.set", {"enabled": true}, () => {})')

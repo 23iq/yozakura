@@ -30,17 +30,21 @@ ShellRoot {
     property bool opened: false
     readonly property int openTimeout: 20000
 
+    // The journal file is only written once the sandbox is verified.
     function refuse(reason) {
         console.error("onboarding-dryrun.qml:", reason, "- run it with `" + Brand.appId + " onboarding --dry-run`");
-        DryRun.journal("stopped: " + reason);
+        if (root.verified)
+            DryRun.journal("stopped: " + reason);
         Qt.quit();
     }
 
-    // realpath of [dry-run dir, config dir, cache dir, state dir]
+    // realpath of [dry-run dir, config dir, cache dir, state dir]: exactly
+    // <dir>/config/<app>, <dir>/cache/<app>, <dir>/state/<app> (the CLI layout).
     function checkPaths(text) {
         const p = String(text).split("\n").filter(l => l !== "");
-        const bad = p.length === 4 && p[0] !== "/" ? p.slice(1).filter(d => d.indexOf(p[0] + "/") !== 0) : p;
-        if (p.length === 4 && bad.length === 0)
+        const want = p.length === 4 && p[0] !== "/" ? ["config", "cache", "state"].map(d => p[0] + "/" + d + "/" + Brand.appId) : [];
+        const bad = want.length === 3 ? p.slice(1).filter((d, i) => d !== want[i]) : p;
+        if (want.length === 3 && bad.length === 0)
             root.verified = true;
         else
             root.refuse("not a dry-run sandbox: " + (bad.join(", ") || "no dry-run dir"));
