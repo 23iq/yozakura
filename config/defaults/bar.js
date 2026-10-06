@@ -90,7 +90,13 @@ var data = {
             "showDescription": true
         },
         "clock": {
-            "showWeather": true
+            "showWeather": true,
+            "face": "digital",
+            "pomodoroStyle": "ring",
+            // cells: [] = the default clock panel grid.
+            "panel": {
+                "cells": []
+            }
         },
         "worldClocks": {
             "zones": [

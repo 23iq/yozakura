@@ -201,6 +201,23 @@ var keys = {
     "moduleOptions.clock.showWeather": {
         "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
     },
+    "moduleOptions.clock.face": {
+        "enum": ["digital", "stacked", "dotMatrix", "kanji"],
+        "description": "Clock face: digital text, hours over minutes, 3x5 dot matrix or Japanese numerals (十時 二十五分). A vertical bar shows digital as stacked."
+    },
+    "moduleOptions.clock.pomodoroStyle": {
+        "enum": ["ring", "underline", "countdown", "island"],
+        "description": "Running Pomodoro on the clock: a progress ring, a progress line along the button, the mm:ss countdown, or nothing on the bar (the notch timers activity shows it)."
+    },
+    "moduleOptions.clock.panel": {
+        "description": "Clock popup panel."
+    },
+    "moduleOptions.clock.panel.cells": {
+        "items": {
+            "type": "object"
+        },
+        "description": "Placed clock panel widgets: [{widget, x, y, w, h}] on a 2-column grid; any bento widget id (weather, pomodoro, agenda, worldClocks, calendar, ...). Empty or invalid uses the default panel. Edited in place from the panel (pencil button)."
+    },
     "moduleOptions.worldClocks.zones": {
         "items": {
             "type": "object"

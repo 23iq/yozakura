@@ -3369,10 +3369,84 @@
               "type": "object",
               "properties": {
                 "showWeather": {
-                  "title": "Show weather",
+                  "title": "Weather on the clock",
                   "type": "boolean",
                   "default": true,
-                  "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
+                  "description": "Lead the clock with the weather symbol instead of the day name.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "clock",
+                    "label": "prefs.bar.clock_weather",
+                    "control": "toggle",
+                    "keywords": "clock weather symbol icon day name"
+                  }
+                },
+                "face": {
+                  "title": "Clock face",
+                  "type": "string",
+                  "default": "digital",
+                  "description": "How the time is drawn. A vertical bar shows Digital as Stacked.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "clock",
+                    "label": "prefs.bar.clock_face",
+                    "control": "selector",
+                    "keywords": "clock face style digital stacked dot matrix led kanji japanese"
+                  },
+                  "enum": [
+                    "digital",
+                    "stacked",
+                    "dotMatrix",
+                    "kanji"
+                  ],
+                  "x-enumLabels": {
+                    "digital": "Digital",
+                    "stacked": "Stacked",
+                    "dotMatrix": "Dot matrix",
+                    "kanji": "Kanji (十時 二十五分)"
+                  }
+                },
+                "pomodoroStyle": {
+                  "title": "Pomodoro on the clock",
+                  "type": "string",
+                  "default": "ring",
+                  "description": "How a running Pomodoro shows on the bar clock. Island leaves it to the notch timers activity.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "clock",
+                    "label": "prefs.bar.pomodoro_style",
+                    "control": "selector",
+                    "keywords": "pomodoro focus timer ring underline countdown island progress clock"
+                  },
+                  "enum": [
+                    "ring",
+                    "underline",
+                    "countdown",
+                    "island"
+                  ],
+                  "x-enumLabels": {
+                    "ring": "Ring",
+                    "underline": "Underline",
+                    "countdown": "Countdown",
+                    "island": "Island"
+                  }
+                },
+                "panel": {
+                  "title": "Panel",
+                  "type": "object",
+                  "description": "Clock popup panel.",
+                  "properties": {
+                    "cells": {
+                      "title": "Cells",
+                      "type": "array",
+                      "default": [],
+                      "description": "Placed clock panel widgets: [{widget, x, y, w, h}] on a 2-column grid; any bento widget id (weather, pomodoro, agenda, worldClocks, calendar, ...). Empty or invalid uses the default panel. Edited in place from the panel (pencil button).",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "additionalProperties": false
