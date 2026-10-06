@@ -19,12 +19,15 @@ Singleton {
     property bool visible: false
     // Screen the wizard opened on (the focused one at that moment).
     property string screenName: ""
-    // A keybind-tour task opened a panel: the wizard steps aside until the
-    // panel closes (OnboardingWindow hides while this is true).
-    property bool suspended: false
     // The wizard is minimised to a pill so the desktop can be used (the
     // window is unmapped, not destroyed).
     property bool peek: false
+    // The user closed the wizard this session: the auto-show never reopens it.
+    property bool dismissedThisSession: false
+    // Restoring saved progress: wizard changes must not be persisted.
+    property bool _restoring: false
+    // open() was asked before StateService loaded: restore once it has.
+    property bool _openPending: false
 
     // One instance, reset and restored by open(); the card binds to it.
     property OnboardingState wizard: OnboardingState {}
@@ -32,18 +35,32 @@ Singleton {
     readonly property bool done: Config.general ? Config.general.onboardingDone === true : true
 
     function open() {
+        if (!StateService.initialized) {
+            _openPending = true;
+            return;
+        }
+        _openPending = false;
+        if (visible) {
+            // Already showing: keep the live state, just come back from a peek.
+            peek = false;
+            return;
+        }
         const saved = StateService.get("onboarding", null);
+        _restoring = true;
         wizard.reset();
         if (saved && typeof saved === "object")
             wizard.restore(saved.step, saved.choices);
+        _restoring = false;
         peek = false;
         _show();
     }
 
     // Open on a given step id (ignores any saved progress).
     function openAt(stepId) {
+        _restoring = true;
         wizard.reset();
         wizard.restore(stepId, ({}));
+        _restoring = false;
         peek = false;
         _show();
     }
@@ -51,7 +68,6 @@ Singleton {
     function _show() {
         const mon = YozdService.focusedMonitor;
         screenName = mon && mon.name ? mon.name : (Quickshell.screens.length > 0 ? Quickshell.screens[0].name : "");
-        suspended = false;
         if (Visibilities.currentActiveModule !== "")
             Visibilities.setActiveModule("");
         visible = true;
@@ -60,7 +76,7 @@ Singleton {
     function close() {
         visible = false;
         peek = false;
-        suspended = false;
+        dismissedThisSession = true;
     }
 
     function toggle() {
@@ -84,7 +100,7 @@ Singleton {
     }
 
     function persist() {
-        if (!visible || !StateService.initialized)
+        if (!visible || _restoring || !StateService.initialized)
             return;
         StateService.set("onboarding", {
             "step": wizard.stepId,
@@ -102,11 +118,19 @@ Singleton {
         }
     }
 
+    Connections {
+        target: StateService
+        function onInitializedChanged() {
+            if (StateService.initialized && root._openPending)
+                root.open();
+        }
+    }
+
     property Timer autoShow: Timer {
         interval: 3500
-        running: Config.initialLoadComplete && StateService.initialized && !root.done && !root.visible
+        running: Config.initialLoadComplete && StateService.initialized && !root.done && !root.visible && !root.dismissedThisSession
         onTriggered: {
-            if (!root.done)
+            if (!root.done && !root.dismissedThisSession)
                 root.open();
         }
     }

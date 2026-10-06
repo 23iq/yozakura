@@ -9,8 +9,8 @@ import "OnboardingModel.js" as Model
 
 // Interactive keybind tour: each task shows the real bound keys; pressing
 // them runs the action (compositor -> `<app> run <cmd>` -> GlobalShortcuts),
-// whose commandRan signal completes the task. The wizard window then steps
-// aside (OnboardingService.suspended) until the opened panel is closed.
+// whose commandRan signal completes the task. The wizard then collapses to
+// the peek pill (OnboardingService.peek) until the opened panel is closed.
 Item {
     id: root
 
@@ -52,7 +52,7 @@ Item {
         property int elapsed: 0
         function begin() {
             elapsed = 0;
-            OnboardingService.suspended = true;
+            OnboardingService.peek = true;
             watch.restart();
         }
         function panelOpen() {
@@ -67,13 +67,13 @@ Item {
             stepAside.elapsed += interval;
             if ((stepAside.elapsed >= 1000 && !stepAside.panelOpen()) || stepAside.elapsed >= 120000) {
                 stop();
-                OnboardingService.suspended = false;
+                OnboardingService.peek = false;
             }
         }
     }
     Component.onDestruction: {
         if (watch.running)
-            OnboardingService.suspended = false;
+            OnboardingService.peek = false;
     }
 
     Column {

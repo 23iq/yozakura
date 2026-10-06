@@ -9,14 +9,14 @@ import qs.config
 // Full-screen first-run wizard on the screen it opened on: a frosted scrim
 // (the layer namespace gets the compositor blur) and the wizard card.
 // Loaded by shell.qml while OnboardingService.visible; hidden (unmapped)
-// while a keybind-tour panel is open (OnboardingService.suspended).
+// while peeking (OnboardingService.peek).
 PanelWindow {
     id: root
 
     property bool shown: false
 
     screen: Quickshell.screens.find(s => s.name === OnboardingService.screenName) || Quickshell.screens[0] || null
-    visible: !OnboardingService.suspended && !OnboardingService.peek
+    visible: !OnboardingService.peek
     anchors {
         top: true
         bottom: true

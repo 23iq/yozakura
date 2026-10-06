@@ -133,13 +133,13 @@ QTest.qWait(30)
 check(ev("wizard.activeTask.id") == "cheatsheet", "tour starts with the cheatsheet")
 ev('GlobalShortcuts.run("keybinds")')
 check(ev("wizard.tour.cheatsheet") == "done", "pressing the cheatsheet bind completes the task")
-check(ev("OnboardingService.suspended") is True, "wizard steps aside while the panel is open")
+check(ev("OnboardingService.peek") is True, "wizard peeks (pill) while the panel is open")
 ev('Visibilities.currentActiveModule = "keybinds"')
 QTest.qWait(1400)
-check(ev("OnboardingService.suspended") is True, "stays aside while the panel is open")
+check(ev("OnboardingService.peek") is True, "stays peeking while the panel is open")
 ev('Visibilities.currentActiveModule = ""')
 QTest.qWait(600)
-check(ev("OnboardingService.suspended") is False, "comes back when the panel closes")
+check(ev("OnboardingService.peek") is False, "comes back when the panel closes")
 ev('GlobalShortcuts.run("dashboard")')
 check(ev("wizard.activeTask.id") == "launcher", "unrelated commands do not complete tasks")
 ev('wizard.markTask("launcher", "skipped")')
@@ -206,6 +206,37 @@ check(ev("OnboardingService.peek") is False and ev("OnboardingService.visible") 
 ev("OnboardingService.toggle()")
 check(ev("OnboardingService.visible") is False, "toggle on the open wizard closes it")
 check(json.loads(ev("JSON.stringify(StateService.state.onboarding.step)")) == "preset", "closing keeps the progress for the next open")
+
+# ---- peek pill + service fixes ----------------------------------------------
+flow = start_flow("OnboardingService.close(); OnboardingService.open()")
+ev("OnboardingService.peek = true")
+pwin = h.load("""
+import QtQuick
+import QtQuick.Window
+import qs.modules.onboarding
+Window { width: 700; height: 160; visible: true
+    PeekPill { objectName: "pill"; anchors.centerIn: parent; shown: true } }""", auto_stub=False)
+QTest.qWait(50)
+label = h.find(pwin, "peekLabel")
+check(label is not None and h.eval(label, "text") == f"Setup · step {ev('wizard.index') + 1}/{ev('wizard.count')}", "pill shows 'Setup · step N/M'")
+h.eval(h.find(pwin, "peekBack"), "clicked()")
+check(ev("OnboardingService.peek") is False and ev("OnboardingService.visible") is True, "Back to setup leaves peek, wizard stays open")
+# open() while visible neither resets nor overwrites progress
+ev("wizard.go(2)")
+ev("OnboardingService.peek = true")
+ev("OnboardingService.open()")
+check(ev("OnboardingService.peek") is False and ev("wizard.index") == 2, "open() while visible returns from peek and keeps the step")
+check(json.loads(ev("JSON.stringify(StateService.state.onboarding.step)")) == seen[2], "saved progress was not overwritten")
+# open() before StateService is ready waits for it, then restores
+ev("OnboardingService.close()")
+ev("StateService.initialized = false")
+ev("OnboardingService.open()")
+check(ev("OnboardingService.visible") is False, "open() before StateService is initialized defers")
+ev("StateService.initialized = true")
+check(ev("OnboardingService.visible") is True and ev("wizard.index") == 2, "deferred open runs and restores the saved step")
+# a user close stops the auto-show for the session
+ev("OnboardingService.close()")
+check(ev("OnboardingService.dismissedThisSession") is True and ev("OnboardingService.autoShow.running") is False, "auto-show does not reopen after a close")
 
 # ---- Config.qml: general.json from before the wizard = existing install ----
 cfg = (Path(__file__).resolve().parents[1] / "config/Config.qml").read_text()

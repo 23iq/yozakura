@@ -69,8 +69,10 @@ Window {{
     width: {w}; height: {h_}; visible: true; color: "black"
     readonly property var wizard: flow.wizard
     Image {{ anchors.fill: parent; source: {json.dumps(("file://" + wall) if wall else "")}; fillMode: Image.PreserveAspectCrop }}
-    Rectangle {{ anchors.fill: parent; color: Colors.background; opacity: 0.62 }}
-    OnboardingFlow {{ id: flow; objectName: "flow"; anchors.fill: parent }}
+    Rectangle {{ anchors.fill: parent; color: Colors.background; opacity: 0.62; visible: !OnboardingService.peek }}
+    OnboardingFlow {{ id: flow; objectName: "flow"; anchors.fill: parent; visible: !OnboardingService.peek }}
+    PeekPill {{ shown: true; visible: OnboardingService.peek; anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom; anchors.bottomMargin: 48 }}
 }}""")
         h = env.h
         h.eval(win, f"wizard.applyDetect({json.dumps(detected)})")
@@ -105,11 +107,15 @@ Window {{
                     h.eval(editor, 'write([])')
             elif sid == "keybinds":
                 h.eval(win, 'GlobalShortcuts.run("keybinds")')
-                h.eval(win, 'OnboardingService.suspended = false')
+                h.eval(win, 'OnboardingService.peek = false')
                 shot(f"{i + 1:02d}-{sid}-progress", 900)
                 h.eval(win, 'wizard.markTask("launcher", "skipped"); GlobalShortcuts.run("assistant");'
-                            ' GlobalShortcuts.run("overview"); OnboardingService.suspended = false')
+                            ' GlobalShortcuts.run("overview"); OnboardingService.peek = false')
                 shot(f"{i + 1:02d}-{sid}-complete", 900)
+        # peek: the wizard collapses to the pill over the bare desktop
+        h.eval(win, "wizard.go(2); OnboardingService.peek = true")
+        shot("peek", 1400)
+        h.eval(win, "OnboardingService.peek = false")
     return 0
 
 

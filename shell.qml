@@ -275,6 +275,10 @@ ShellRoot {
         active: SuspendManager.wakeReady && OnboardingService.visible
         source: "modules/onboarding/OnboardingWindow.qml"
     }
+    Loader {
+        active: SuspendManager.wakeReady && OnboardingService.visible && OnboardingService.peek
+        source: "modules/onboarding/OnboardingPeekPill.qml"
+    }
 
     // Display prompts: keep/revert countdown and identify numbers, per screen
     Variants {

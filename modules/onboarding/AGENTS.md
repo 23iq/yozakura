@@ -18,7 +18,7 @@ onboarding/
 └── ChoiceRow / NavButton / SectionLabel / StepScaffold / ProgressDots / SakuraLogo / TourTask
 ```
 State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
-`suspended`, `open/close/toggle/complete`, auto-show).
+`peek`, `open/close/toggle/complete`, auto-show).
 
 ## RULES
 - Adding a step = `Step<Name>.qml` + one entry in `OnboardingSteps.js` +
@@ -31,7 +31,8 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   wizard by itself); finish/skip/Esc set it true. Re-run: Settings > About,
   `<app> run onboarding`, launcher `> onboarding`.
 - Keybind tour completion comes from `GlobalShortcuts.commandRan`; while a
-  task's panel is open the window unmaps (`OnboardingService.suspended`).
+  task's panel is open the wizard peeks (`OnboardingService.peek`: window unmapped, `OnboardingPeekPill` shown).
+- Peek: `PeekButton` ("Preview on desktop") sets `peek`; the pill's "Back to setup" clears it.
 
 ## VERIFY
 `tests/onboarding.test.cjs`, `tests/onboarding-ui.test.py`
