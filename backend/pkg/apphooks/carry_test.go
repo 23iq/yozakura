@@ -100,16 +100,6 @@ func TestGhosttyQuotedOptionalInclude(t *testing.T) {
 	}
 }
 
-func TestQtForeignFileNotConnected(t *testing.T) {
-	f := newFake(t)
-	fakeQt(t, "qt6ct")
-	write(t, filepath.Join(f.env.ConfigHome, "environment.d", "90-yozakura-qt.conf"), "QT_QPA_PLATFORMTHEME=gtk3\n")
-	h, _ := Get("qt")
-	if st := h.Status(f.env); st.State == StateConnected {
-		t.Fatal(st)
-	}
-}
-
 func TestAlacrittyOurBlockPlusUserGeneralIsError(t *testing.T) {
 	f := newFake(t)
 	conf := filepath.Join(f.env.ConfigHome, "alacritty", "alacritty.toml")
@@ -143,12 +133,6 @@ func TestRevertAllContinuesPastFailure(t *testing.T) {
 	res := RevertAll(Env{}, []Hook{recHook{"a", os.ErrPermission, &n}, recHook{"b", nil, &n}})
 	if n != 2 || len(res) != 2 || res[0].Err == nil || res[1].Err != nil || res[1].Status.State != StateDisconnected {
 		t.Fatalf("%d %v", n, res)
-	}
-}
-
-func TestApplyByIDUnknown(t *testing.T) {
-	if _, err := ApplyByID(Env{}, "nope"); err == nil {
-		t.Fatal("want error")
 	}
 }
 

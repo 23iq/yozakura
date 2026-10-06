@@ -64,6 +64,9 @@ func (h kittyHook) Status(env Env) Status {
 			st.State, st.Reason = StateManaged, "kitty.conf is read-only or in the Nix store; add: "+h.includeLine(env)
 		} else {
 			st.State = StateDisconnected
+			if kittyUserTheme(content) {
+				st.Reason = ReasonUserTheme
+			}
 		}
 	case errors.Is(err, os.ErrNotExist):
 		if isManaged(h.confPath(env)) {
@@ -107,6 +110,26 @@ func (h kittyHook) Revert(env Env) (Status, error) {
 		return h.Status(env), nil
 	}
 	return st, nil
+}
+
+// ReasonUserTheme marks a disconnected app that has a theme of its own
+// (kitty +kitten themes): it is connected only on an explicit request,
+// never automatically.
+const ReasonUserTheme = "user_theme"
+
+// UserOwnsTheme reports a status that must not be connected automatically.
+func UserOwnsTheme(st Status) bool { return st.Reason == ReasonUserTheme }
+
+// kittyUserTheme reports a theme chosen with `kitty +kitten themes` (the
+// BEGIN_KITTY_THEME block or its include of current-theme.conf).
+func kittyUserTheme(content string) bool {
+	for _, l := range strings.Split(content, "\n") {
+		t := strings.TrimSpace(l)
+		if t == "# BEGIN_KITTY_THEME" || (strings.HasPrefix(t, "include ") && strings.HasSuffix(t, "current-theme.conf")) {
+			return true
+		}
+	}
+	return false
 }
 
 // failure turns a write error into a status.

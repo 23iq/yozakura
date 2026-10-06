@@ -41,6 +41,10 @@ type Input struct {
 	// PolkitCmd starts the polkit agent on niri and Mango (Hyprland's
 	// installer line does it there). The backend fills it (PolkitCommand).
 	PolkitCmd string `json:"polkitCmd,omitempty"`
+	// QtTheme is apps.theming.qt: the backend fills Env from it (QtEnv).
+	QtTheme bool `json:"qtTheme,omitempty"`
+	// Env are session environment variables, rendered as [env].
+	Env map[string]string `json:"env,omitempty"`
 }
 
 // WindowRule sends windows matching Match ("class:^(x)$") to Workspace

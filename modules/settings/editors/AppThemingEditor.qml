@@ -193,7 +193,12 @@ Item {
                     reason: hook && hook.reason ? hook.reason : ""
                     needsRestart: !!(hook && hook.needsRestart)
                     themed: appRow.on
-                    onConnectRequested: AppHooksService.connectApp(appRow.modelData.id)
+                    onConnectRequested: {
+                        // Connect means "theme it": the toggle goes on too
+                        if (!appRow.on)
+                            SettingsStore.set("apps.theming." + appRow.modelData.id, true);
+                        AppHooksService.connectApp(appRow.modelData.id);
+                    }
                 }
                 ToggleControl {
                     id: toggle

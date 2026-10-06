@@ -99,6 +99,9 @@ func (s *Service) write(params json.RawMessage) (any, error) {
 	if in.PolkitCmd == "" {
 		in.PolkitCmd = PolkitCommand()
 	}
+	if in.Env == nil {
+		in.Env = QtEnv(in.QtTheme)
+	}
 	content := Render(in, s.gameMode())
 	var path string
 	if s.paths != nil {

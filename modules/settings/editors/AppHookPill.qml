@@ -29,7 +29,9 @@ Item {
             return "managed";
         if (root.hookState === "error")
             return "error";
-        if (root.hookState === "disconnected" && root.themed)
+        // also with the toggle off: an existing install starts with its
+        // apps off and is offered Connect instead of being edited unasked
+        if (root.hookState === "disconnected")
             return "connect";
         return "";
     }

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/termlook"
 )
 
@@ -145,7 +146,7 @@ func termStatus(env usageCaller, asJSON bool, out io.Writer) error {
 	fmt.Fprintf(out, "prompt enabled: %v\nfish installed: %v\nfish is your login shell: %v\n", st.Enabled, st.FishInstalled, st.FishIsLoginShell)
 	fmt.Fprintf(out, "starship installed: %v\noh-my-posh installed: %v\n", st.EngineInstalled["starship"], st.EngineInstalled["ohmyposh"])
 	if st.ForeignPromptInit {
-		fmt.Fprintf(out, "warning: %s also sets a prompt; ours loads first and yours wins\n", st.ForeignFile)
+		fmt.Fprintln(out, foreignPromptNote(st.ForeignFile))
 	}
 	return nil
 }
@@ -199,7 +200,7 @@ func termApplied(env usageCaller, out io.Writer, msg string) error {
 	fmt.Fprintln(out, msg)
 	var st struct {
 		Enabled, FishInstalled, FishIsLoginShell, ForeignPromptInit bool
-		Engine                                                      string
+		Engine, ForeignFile                                         string
 		EngineInstalled                                             map[string]bool
 	}
 	if json.Unmarshal(raw, &st) != nil || !st.Enabled {
@@ -218,9 +219,19 @@ func termApplied(env usageCaller, out io.Writer, msg string) error {
 		fmt.Fprintln(out, "note: fish is not your login shell; the prompt shows in fish only (make it the default in Settings > Terminal)")
 	}
 	if st.ForeignPromptInit {
-		fmt.Fprintln(out, "note: your config.fish also sets a prompt; ours loads first and yours wins")
+		fmt.Fprintln(out, foreignPromptNote(st.ForeignFile))
 	}
 	return nil
+}
+
+// foreignPromptNote says why the prompt is not installed: file (the
+// user's own fish file) starts a prompt engine itself.
+func foreignPromptNote(file string) string {
+	if file == "" {
+		file = "your fish config"
+	}
+	return "note: " + file + " starts starship or oh-my-posh itself, so " + brand.DisplayName +
+		"'s prompt is not installed; remove that line to use it"
 }
 
 type termSpan struct {

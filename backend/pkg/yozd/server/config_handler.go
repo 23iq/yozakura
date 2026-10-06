@@ -84,6 +84,7 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 
 	var fullConfig strings.Builder
 	fullConfig.WriteString(bannerFor(h.generator))
+	fullConfig.WriteString(h.generator.GenerateEnv(payload.Env))
 	fullConfig.WriteString(outputsStr)
 	fullConfig.WriteString(keyboardStr)
 	fullConfig.WriteString(startupStr)
@@ -125,6 +126,7 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 		var luaConfig strings.Builder
 		luaConfig.WriteString(luaBanner)
 		luaConfig.WriteString("\n")
+		luaConfig.WriteString(h.luaGen.GenerateEnvLua(payload.Env))
 		luaConfig.WriteString(luaOutputs)
 		luaConfig.WriteString(luaKeyboard)
 		if luaStartup != "" {

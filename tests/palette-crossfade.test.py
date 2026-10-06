@@ -36,6 +36,7 @@ h.singleton('qs.config', 'Config', '''QtObject {
     property int animDuration: 300
     property QtObject loader: QtObject { signal fileChanged() }
     property QtObject theme: QtObject { property int paletteTransitionDuration: 600 }
+    property QtObject terminal: QtObject { property bool enabled: false; property int padding: 12; property string cursorShape: "beam"; property bool cursorBlink: true }
 }''')
 
 h.module('qs.modules.globals', {})  # real Brand singleton (cache dir)
@@ -97,6 +98,18 @@ cfg.property('theme').setProperty('paletteTransitionDuration', 0)
 colors.fileChanged.emit()
 QCoreApplication.processEvents()
 check('duration 0 snaps immediately', col('primary').name() == '#0000ff' and colors.property('_crossfading') is False, col('primary').name())
+
+# The terminal look (padding, cursor, enabled) regenerates kitty.conf
+def kitty_calls():
+    return len(json.loads(QQmlExpression(engine.rootContext(), colors, 'JSON.stringify(kittyGenerator.calls)').evaluate()[0]))
+pump(400)  # let the snap's own regeneration settle
+before = kitty_calls()
+cfg.property('terminal').setProperty('padding', 4)
+pump(250)
+check('a terminal padding change regenerates kitty', kitty_calls() == before + 1, f'{before} -> {kitty_calls()}')
+cfg.property('terminal').setProperty('enabled', True)
+pump(250)
+check('turning the terminal look on regenerates kitty', kitty_calls() == before + 2, f'{kitty_calls()}')
 
 print('PaletteCrossfade:', 'PASS' if ok_all else 'FAIL')
 sys.exit(0 if ok_all else 1)

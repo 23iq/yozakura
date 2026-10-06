@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"yozakura/backend/pkg/apphooks"
 )
 
 const repoRoot = "../../../.."
@@ -133,6 +135,23 @@ func TestTranslationsExist(t *testing.T) {
 		for _, k := range need {
 			if strings.TrimSpace(m[k]) == "" {
 				t.Errorf("%s: missing %s", filepath.Base(f), k)
+			}
+		}
+	}
+}
+
+// Every catalog post "apphook:<id>" names a registered hook (an unknown
+// one would fail silently after a successful install).
+func TestCatalogPostHooksRegistered(t *testing.T) {
+	for _, e := range loadReal(t).Entries {
+		for _, p := range e.Post {
+			prefix, id, _ := strings.Cut(p, ":")
+			if prefix != "apphook" {
+				t.Errorf("%s: unknown post action %q", e.ID, p)
+				continue
+			}
+			if _, ok := apphooks.Get(id); !ok {
+				t.Errorf("%s: post %q has no registered hook", e.ID, p)
 			}
 		}
 	}

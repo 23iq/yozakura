@@ -128,6 +128,24 @@ FileView {
         }
     }
 
+    // The terminal look (Settings > Terminal) feeds kitty's padding/cursor.
+    property Connections terminalLookWatcher: Connections {
+        target: Config.terminal
+        ignoreUnknownSignals: true
+        function onEnabledChanged() {
+            colors.kittyTimer.restart();
+        }
+        function onPaddingChanged() {
+            colors.kittyTimer.restart();
+        }
+        function onCursorShapeChanged() {
+            colors.kittyTimer.restart();
+        }
+        function onCursorBlinkChanged() {
+            colors.kittyTimer.restart();
+        }
+    }
+
     property Timer kittyTimer: Timer {
         interval: 100
         repeat: false

@@ -1,7 +1,6 @@
 package apphooks
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,17 +13,22 @@ func TestGhosttyAppendAndRevert(t *testing.T) {
 	orig := "font-size = 12\n"
 	write(t, conf, orig)
 	h, _ := Get("ghostty")
+	f.running = true
 	st, err := h.Apply(f.env)
-	if err != nil || st.State != StateConnected {
+	if err != nil || st.State != StateConnected || !st.NeedsRestart {
 		t.Fatalf("%v %v", st, err)
 	}
-	want := orig + "\n# >>> yozakura >>>\nconfig-file = ~/.cache/yozakura/ghostty.conf\n# <<< yozakura <<<\n"
+	// optional include (?): a missing theme file is no error in ghostty
+	want := orig + "\n# >>> yozakura >>>\nconfig-file = ?~/.cache/yozakura/ghostty.conf\n# <<< yozakura <<<\n"
 	if got := read(t, conf); got != want {
 		t.Fatalf("got %q", got)
 	}
-	f.running = true
-	if !h.Status(f.env).NeedsRestart {
-		t.Fatal("running ghostty needs a restart hint")
+	// the hint belongs to the apply that changed the file, not to every status
+	if h.Status(f.env).NeedsRestart {
+		t.Fatal("restart hint on a plain status")
+	}
+	if st, _ := h.Apply(f.env); st.NeedsRestart {
+		t.Fatal("restart hint on an apply that changed nothing")
 	}
 	if _, err := h.Apply(f.env); err != nil || read(t, conf) != want {
 		t.Fatal("not idempotent")
@@ -168,52 +172,20 @@ func TestTerminalNixStoreManaged(t *testing.T) {
 	}
 }
 
-func fakeQt(t *testing.T, have ...string) {
-	t.Helper()
-	old := lookPath
-	t.Cleanup(func() { lookPath = old })
-	lookPath = func(b string) (string, error) {
-		for _, h := range have {
-			if h == b {
-				return "/usr/bin/" + b, nil
-			}
-		}
-		return "", errors.New("not found")
-	}
-	t.Setenv("QT_QPA_PLATFORMTHEME", "")
-}
-
-func TestQtEnvFile(t *testing.T) {
+// An environment.d file of an older build is removed; one the user wrote
+// under the same name is kept.
+func TestRemoveLegacyQtEnv(t *testing.T) {
 	f := newFake(t)
-	fakeQt(t, "qt6ct")
 	file := filepath.Join(f.env.ConfigHome, "environment.d", "90-yozakura-qt.conf")
-	h, _ := Get("qt")
-	if st := h.Status(f.env); st.State != StateDisconnected {
-		t.Fatal(st)
+	write(t, file, "# Written by yozakura (Settings > Terminal & Apps). Removed when theming is switched off.\nQT_QPA_PLATFORMTHEME=qt6ct\n")
+	if got, err := RemoveLegacyQtEnv(f.env); err != nil || got != file || read(t, file) != "<missing>" {
+		t.Fatalf("%q %v", got, err)
 	}
-	st, err := h.Apply(f.env)
-	if err != nil || st.State != StateConnected || st.Reason != "relogin" {
-		t.Fatalf("%v %v", st, err)
-	}
-	if !strings.Contains(read(t, file), "QT_QPA_PLATFORMTHEME=qt6ct\n") {
-		t.Fatal(read(t, file))
-	}
-	if st, err := h.Revert(f.env); err != nil || st.State != StateDisconnected || read(t, file) != "<missing>" {
-		t.Fatalf("%v %v", st, err)
-	}
-}
-
-func TestQtAbsentAndForeignFileKept(t *testing.T) {
-	f := newFake(t)
-	fakeQt(t)
-	h, _ := Get("qt")
-	if st := h.Status(f.env); st.State != StateAbsent {
-		t.Fatal(st)
-	}
-	fakeQt(t, "qt5ct")
-	file := filepath.Join(f.env.ConfigHome, "environment.d", "90-yozakura-qt.conf")
 	write(t, file, "QT_QPA_PLATFORMTHEME=gtk3\n")
-	if _, err := h.Revert(f.env); err != nil || read(t, file) != "QT_QPA_PLATFORMTHEME=gtk3\n" {
+	if got, err := RemoveLegacyQtEnv(f.env); err != nil || got != "" || read(t, file) != "QT_QPA_PLATFORMTHEME=gtk3\n" {
 		t.Fatal("foreign file removed")
+	}
+	if _, ok := Get("qt"); ok {
+		t.Fatal("qt is no longer a hook")
 	}
 }

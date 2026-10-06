@@ -15,9 +15,9 @@ func TestFishHookGolden(t *testing.T) {
 		want string
 	}{
 		{"starship none", Config{Engine: EngineStarship, Greeting: "none"},
-			"if status is-interactive\n    if type -q starship\n        set -gx STARSHIP_CONFIG '/c/s.toml'\n        starship init fish | source\n    end\nend\nset -g fish_greeting\n"},
+			"if status is-interactive\n    if type -q starship\n        starship init fish | source\n        if functions -q fish_prompt\n            functions -e __yozakura_starship_prompt\n            functions -c fish_prompt __yozakura_starship_prompt\n            function fish_prompt\n                STARSHIP_CONFIG='/c/s.toml' __yozakura_starship_prompt\n            end\n        end\n        if functions -q fish_right_prompt\n            functions -e __yozakura_starship_right_prompt\n            functions -c fish_right_prompt __yozakura_starship_right_prompt\n            function fish_right_prompt\n                STARSHIP_CONFIG='/c/s.toml' __yozakura_starship_right_prompt\n            end\n        end\n    end\nend\nset -g fish_greeting\n"},
 		{"starship fastfetch", Config{Engine: EngineStarship, Greeting: "fastfetch"},
-			"if status is-interactive\n    if type -q starship\n        set -gx STARSHIP_CONFIG '/c/s.toml'\n        starship init fish | source\n    end\nend\nfunction fish_greeting\n    fastfetch\nend\n"},
+			"if status is-interactive\n    if type -q starship\n        starship init fish | source\n        if functions -q fish_prompt\n            functions -e __yozakura_starship_prompt\n            functions -c fish_prompt __yozakura_starship_prompt\n            function fish_prompt\n                STARSHIP_CONFIG='/c/s.toml' __yozakura_starship_prompt\n            end\n        end\n        if functions -q fish_right_prompt\n            functions -e __yozakura_starship_right_prompt\n            functions -c fish_right_prompt __yozakura_starship_right_prompt\n            function fish_right_prompt\n                STARSHIP_CONFIG='/c/s.toml' __yozakura_starship_right_prompt\n            end\n        end\n    end\nend\nfunction fish_greeting\n    fastfetch\nend\n"},
 		{"omp none", Config{Engine: EngineOMP, Greeting: "none"},
 			"if status is-interactive\n    if type -q oh-my-posh\n        oh-my-posh init fish --config '/c/s.toml' | source\n    end\nend\nset -g fish_greeting\n"},
 		{"omp fastfetch", Config{Engine: EngineOMP, Greeting: "fastfetch"},
@@ -144,5 +144,66 @@ func TestFishHookSilentWithoutEngine(t *testing.T) {
 		if out.String() != "" || errb.String() != "" {
 			t.Errorf("%s: output %q stderr %q", eng, out.String(), errb.String())
 		}
+	}
+}
+
+// The prompt sees our starship config, the session does not: no exported
+// STARSHIP_CONFIG, and the last command's status reaches starship.
+func TestFishHookStarshipConfigOnlyForThePrompt(t *testing.T) {
+	fish, err := exec.LookPath("fish")
+	if err != nil {
+		t.Skip("fish not installed")
+	}
+	dir := t.TempDir()
+	bin := filepath.Join(dir, "bin")
+	if err := os.MkdirAll(bin, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// a fake starship: init defines fish_prompt the way starship does
+	// (reading $status first), prompt prints what it got
+	fake := "#!/bin/sh\ncase \"$1\" in\ninit) printf '%s\\n' 'function fish_prompt' '    set -l s $status' '    starship prompt --status=$s' 'end' ;;\nprompt) echo \"cfg=$STARSHIP_CONFIG $2\" ;;\nesac\n"
+	if err := os.WriteFile(filepath.Join(bin, "starship"), []byte(fake), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	hook := filepath.Join(dir, "hook.fish")
+	if err := os.WriteFile(hook, []byte(FishHook(Config{Engine: EngineStarship, Greeting: "none"}, "/c/s.toml")), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cmd := exec.Command(fish, "--no-config", "-i", "-c", "source "+hook+"; false; fish_prompt; echo \"global=[$STARSHIP_CONFIG]\"; sh -c 'echo child=[$STARSHIP_CONFIG]'")
+	cmd.Env = []string{"PATH=" + bin + ":/usr/bin:/bin", "HOME=" + dir}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("%v: %s", err, out)
+	}
+	for _, want := range []string{"cfg=/c/s.toml --status=1", "global=[]", "child=[]"} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("missing %q in:\n%s", want, out)
+		}
+	}
+}
+
+// A conf.d file of that name the user wrote (no "Managed by" header) is
+// neither overwritten nor removed.
+func TestApplyLeavesForeignHookFile(t *testing.T) {
+	env := testEnv(t)
+	pal := fixturePalette(t)
+	ps := loadAll(t)
+	mine := "# my own setup\nset -g foo bar\n"
+	if err := os.MkdirAll(filepath.Dir(HookFile(env)), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(HookFile(env), []byte(mine), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	cfg := Config{Enabled: true, Engine: EngineStarship, Prompt: "sakura-powerline", Greeting: "none"}
+	if err := Apply(cfg, pal, ps, env); err == nil {
+		t.Fatal("writing over the user's file must fail")
+	}
+	cfg.Enabled = false
+	if err := Apply(cfg, pal, ps, env); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := os.ReadFile(HookFile(env)); string(got) != mine {
+		t.Fatalf("the user's file changed: %q", got)
 	}
 }

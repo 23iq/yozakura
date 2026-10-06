@@ -93,7 +93,7 @@ func installerURL() string {
 }
 
 // revertAppHooks takes the shell out of the apps it connected to (terminals,
-// Vesktop, Qt env file), reporting what it could not undo and returning the
+// Vesktop), reporting what it could not undo and returning the
 // ids it disconnected.
 func revertAppHooks(w io.Writer, env apphooks.Env, hooks []apphooks.Hook) []string {
 	connected := map[string]bool{}

@@ -43,6 +43,9 @@ func Render(in Input, gameMode bool) string {
 		fmt.Fprintf(&b, "exec-once-non-hyprland = %q\n", in.PolkitCmd)
 	}
 
+	// [env]
+	writeEnv(&b, in.Env)
+
 	// [appearance]
 	writeAppearance(&b, in, gameMode)
 

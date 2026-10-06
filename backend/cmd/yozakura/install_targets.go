@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/fsutil"
 	"yozakura/backend/pkg/migrate"
-	"yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/paths"
 )
 

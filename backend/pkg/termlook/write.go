@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"yozakura/backend/pkg/brand"
 )
 
 // Engine ids as stored in the terminal.engine setting.
@@ -70,11 +72,16 @@ func Apply(cfg Config, pal Palette, presets []Preset, env Env) error {
 	if env.AppID == "" || env.ConfigHome == "" {
 		return fmt.Errorf("termlook: env needs AppID and ConfigHome")
 	}
+	hook := HookFile(env)
+	exists, ours := hookOwned(hook)
 	if !cfg.Enabled {
-		if err := os.Remove(HookFile(env)); err != nil && !os.IsNotExist(err) {
-			return err
+		if !exists || !ours {
+			return nil // nothing of ours there
 		}
-		return nil
+		return os.Remove(hook)
+	}
+	if exists && !ours {
+		return fmt.Errorf("termlook: %s was not written by %s; move it away to use the prompt", hook, brand.DisplayName)
 	}
 	if cfg.Engine != EngineStarship && cfg.Engine != EngineOMP {
 		return fmt.Errorf("termlook: unknown engine %q", cfg.Engine)
@@ -93,7 +100,16 @@ func Apply(cfg Config, pal Palette, presets []Preset, env Env) error {
 	if err := writeAtomic(file, []byte(Render(cfg, p, pal))); err != nil {
 		return err
 	}
-	return writeAtomic(HookFile(env), []byte(FishHook(cfg, file)))
+	return writeAtomic(hook, []byte(FishHook(cfg, file)))
+}
+
+// hookOwned reports whether path exists and carries our header.
+func hookOwned(path string) (exists, ours bool) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return !os.IsNotExist(err), false
+	}
+	return true, strings.HasPrefix(string(data), "# Managed by "+brand.DisplayName+".")
 }
 
 func findPreset(presets []Preset, id string) (Preset, bool) {

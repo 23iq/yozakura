@@ -92,7 +92,7 @@ h.module("Quickshell.Io", {
 })
 h.singleton("qs.config", "Config", 'QtObject { property QtObject theme: QtObject { property string font: "Sans"; '
             'property bool lightMode: false; property var srBg: ({ opacity: 0.9 }) }; '
-            'property QtObject terminal: QtObject { property string cursorShape: "beam"; property real padding: 12; '
+            'property QtObject terminal: QtObject { property bool enabled: false; property string cursorShape: "beam"; property real padding: 12; '
             'property bool cursorBlink: true } }')
 h.module("qs.modules.globals", {"Brand": brand_qml(str(home)),
                                 "GlobalStates": "pragma Singleton\nQtObject { property var wallpaperManager: null }"})
@@ -203,9 +203,16 @@ h.engine.rootContext().setContextProperty("fakeColors", colors)
 h.eval(kitty, "root.generate(fakeColors)")
 kconf = h.eval(kitty, "root.writer.text")
 kconf = str(kconf)
+# terminal.enabled is false until the user picks a look: kitty's own
+# padding and cursor stay untouched
+check("kitty: no look keys while the terminal look is off", not any(k in kconf for k in (
+    "cursor_shape", "window_padding_width", "cursor_blink_interval")), kconf[:300])
+check("kitty: cursor_text_color kept", "cursor_text_color " in kconf)
+h.eval(kitty, "Config.terminal.enabled = true")
+h.eval(kitty, "root.generate(fakeColors)")
+kconf = str(h.eval(kitty, "root.writer.text"))
 check("kitty: default cursor and padding", all(k in kconf for k in (
     "cursor_shape beam\n", "window_padding_width 12\n", "cursor_blink_interval -1\n")), kconf[:300])
-check("kitty: cursor_text_color kept", "cursor_text_color " in kconf)
 h.eval(kitty, "Config.terminal.cursorBlink = false; Config.terminal.cursorShape = 'block'; Config.terminal.padding = 4")
 h.eval(kitty, "root.generate(fakeColors)")
 kconf = str(h.eval(kitty, "root.writer.text"))

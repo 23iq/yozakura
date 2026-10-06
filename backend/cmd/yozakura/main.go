@@ -12,6 +12,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/instancelock"
@@ -20,6 +21,7 @@ import (
 	"yozakura/backend/pkg/daemon"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/svc/compositor"
 )
 
 var version = "dev"
@@ -126,6 +128,7 @@ func main() {
 	}
 	markExistingInstallOnboarded()
 	markLegacyKeyboard()
+	markLegacyAppHooks()
 	ensureConfigFiles()
 
 	if len(args) == 0 {
@@ -281,6 +284,14 @@ func markLegacyKeyboard() {
 	}
 }
 
+// markLegacyAppHooks keeps an upgraded install's app configs untouched:
+// apps whose config exists start switched off (Settings offers Connect).
+func markLegacyAppHooks() {
+	if _, err := migrate.EnsureAppHooksConsent(*paths.New(), apphooks.DefaultEnv()); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: app theming migration: %v\n", err)
+	}
+}
+
 func ensureConfigFiles() {
 	if err := daemon.EnsureConfigFiles(paths.New(), defaultPresetDir()); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: failed to ensure config: %v\n", err)
@@ -421,6 +432,10 @@ func runShell() {
 
 	if iconTheme, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme").Output(); err == nil {
 		os.Setenv("QS_ICON_THEME", strings.Trim(strings.TrimSpace(string(iconTheme)), "'"))
+	}
+	// keep the session's own value for the generated Qt env (QtEnv)
+	if _, ok := os.LookupEnv(compositor.SessionQtThemeEnv); !ok {
+		os.Setenv(compositor.SessionQtThemeEnv, os.Getenv("QT_QPA_PLATFORMTHEME"))
 	}
 	os.Setenv("QT_QPA_PLATFORMTHEME", "qt6ct")
 	os.Unsetenv("HL_INITIAL_WORKSPACE_TOKEN")

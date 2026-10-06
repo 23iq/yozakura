@@ -151,7 +151,7 @@ func termTodo(st map[string]any, enabled bool) []string {
 		todo = append(todo, "fish is not the login shell: the prompt shows only in fish (ask before changing the login shell)")
 	}
 	if ok, _ := st["foreignPromptInit"].(bool); ok {
-		todo = append(todo, "config.fish also sets a prompt; ours loads first and the one in config.fish wins")
+		todo = append(todo, "a fish file of the user starts starship or oh-my-posh itself, so this prompt is not installed: remove that init line to use it")
 	}
 	return todo
 }

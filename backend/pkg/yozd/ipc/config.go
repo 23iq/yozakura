@@ -217,6 +217,8 @@ type ConfigUniversal struct {
 	ExecOnceNoHypr []string          `json:"exec_once_no_hypr,omitempty"`
 	Monitors       []OutputConfig    `json:"monitors,omitempty"`
 	Keyboard       *KeyboardSettings `json:"keyboard,omitempty"`
+	// Env are session environment variables (see env.go)
+	Env map[string]string `json:"env,omitempty"`
 }
 
 // ConfigGenerator transforms a universal configuration into compositor-specific hyprlang syntax
@@ -236,6 +238,8 @@ type ConfigGenerator interface {
 	GenerateOutputs(monitors []OutputConfig) string
 	// GenerateKeyboard outputs the XKB and key repeat settings ("" for nil)
 	GenerateKeyboard(keyboard *KeyboardSettings) string
+	// GenerateEnv outputs the session environment variables ("" for none)
+	GenerateEnv(env map[string]string) string
 }
 
 // LuaConfigGenerator transforms a universal configuration into Hyprland Lua syntax
@@ -247,6 +251,7 @@ type LuaConfigGenerator interface {
 	GenerateStartupLua(exec []string, execOnce []string) string
 	GenerateOutputsLua(monitors []OutputConfig) string
 	GenerateKeyboardLua(keyboard *KeyboardSettings) string
+	GenerateEnvLua(env map[string]string) string
 }
 
 // SetAppearanceKey sets one dot-notated appearance key (e.g. "gaps.inner")

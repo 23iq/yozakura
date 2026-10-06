@@ -5,7 +5,7 @@ import qs.modules.services
 import qs.config
 import "../theme/AppThemes.js" as AppThemes
 
-// Connects third-party apps (kitty, Ghostty, Foot, Alacritty, Vesktop, Qt) to
+// Connects third-party apps (kitty, Ghostty, Foot, Alacritty, Vesktop) to
 // the theme files the shell generates, through the backend `apphooks` service.
 // `status` maps an app id to {state, reason, files, needsRestart} with state
 // one of connected | disconnected | absent | managed | error. Apps whose

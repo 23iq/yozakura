@@ -18,8 +18,12 @@ QtObject {
 
     // Settings > Terminal: padding and cursor (terminal domain, see
     // config/defaults/terminal.js). kitty blinks when the interval is not 0.
+    // Nothing until the user turns the terminal look on (terminal.enabled):
+    // kitty's own padding and cursor are never replaced by our defaults.
     function lookKeys() {
         const t = Config.terminal;
+        if (!t || !t.enabled)
+            return "";
         const shapes = ["block", "beam", "underline"];
         const shape = t && shapes.indexOf(t.cursorShape) >= 0 ? t.cursorShape : "beam";
         const padding = t ? Math.max(0, Math.min(64, Math.round(Number(t.padding)))) : 12;

@@ -105,7 +105,7 @@ func TestApplyWritesFilesWhenEnabled(t *testing.T) {
 
 func TestApplyDisabledRemovesHookOnly(t *testing.T) {
 	f := newFixture(t, `{"enabled": false}`)
-	f.write(f.hook(), "# ours\n")
+	f.write(f.hook(), "# Managed by "+brand.DisplayName+". Remove this file or turn the prompt off in Settings.\n")
 	if _, err := f.s.apply(nil); err != nil {
 		t.Fatal(err)
 	}
@@ -265,4 +265,28 @@ func TestWatcherFollowsColorsFileInMissingDir(t *testing.T) {
 	f.write(f.colors, data) // the directory appears after Start
 	conf := filepath.Join(f.home, ".config", brand.AppID, "starship.toml")
 	waitFor(t, func() bool { _, err := os.Stat(conf); return err == nil }, "apply once colors.json shows up")
+}
+
+// The user's config.fish starts starship itself: our hook is not
+// installed (an existing one is removed) and the status says why.
+func TestForeignInitSkipsHook(t *testing.T) {
+	f := newFixture(t, `{"enabled": true}`)
+	if _, err := f.s.apply(nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(f.hook()); err != nil {
+		t.Fatal("hook not written without a foreign init")
+	}
+	f.write(filepath.Join(f.home, ".config", "fish", "config.fish"), "starship init fish | source\n")
+	res, err := f.s.apply(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := res.(Status)
+	if !st.HookSkipped || st.HookPresent {
+		t.Fatalf("status = %+v", st)
+	}
+	if _, err := os.Stat(f.hook()); !os.IsNotExist(err) {
+		t.Fatal("our hook stays next to the user's own init")
+	}
 }

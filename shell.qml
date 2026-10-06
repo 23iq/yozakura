@@ -352,7 +352,7 @@ ShellRoot {
             _ = VoiceService.state; // voice input: subscribes to the backend voice service
             _ = DisplaysService.outputs; // monitors: live outputs, apply/revert session
             _ = KeyboardService.active; // keyboard: active layout, instant apply of layout changes
-            _ = AppHooksService.status; // app theme auto-connect (terminals, Vesktop, Qt)
+            _ = AppHooksService.status; // app theme auto-connect (terminals, Vesktop)
             _ = SpecialsService.active; // special workspaces: launch-on-open, renames, preload
             _ = TimersService.ready; // timers: notch activity, alarm sound, hub
             _ = FocusMode.active; // focus mode: ends with its timer, restores DND

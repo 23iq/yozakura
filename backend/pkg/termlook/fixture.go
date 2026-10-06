@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"yozakura/backend/pkg/brand"
 )
 
 var fixtureMu sync.Mutex
@@ -25,7 +27,7 @@ func fixtureDir(ctx context.Context, env Env) (string, error) {
 	}
 	fixtureMu.Lock()
 	defer fixtureMu.Unlock()
-	dir := filepath.Join(env.cacheHome(), env.AppID, "term-fixture", "yozakura")
+	dir := filepath.Join(env.cacheHome(), env.AppID, "term-fixture", brand.AppID)
 	if _, err := os.Stat(filepath.Join(dir, ".git", "HEAD")); err == nil {
 		return dir, nil
 	}
@@ -38,7 +40,7 @@ func fixtureDir(ctx context.Context, env Env) (string, error) {
 	if err := write("main.go", "package main\n"); err != nil {
 		return "", err
 	}
-	if err := write("package.json", "{\"name\":\"yozakura\",\"version\":\"1.0.0\"}\n"); err != nil {
+	if err := write("package.json", "{\"name\":\""+brand.AppID+"\",\"version\":\"1.0.0\"}\n"); err != nil {
 		return "", err
 	}
 	run := func(args ...string) error {
@@ -54,7 +56,7 @@ func fixtureDir(ctx context.Context, env Env) (string, error) {
 	steps := [][]string{
 		{"init", "-q", "-b", "main"},
 		{"add", "main.go", "package.json"},
-		{"-c", "user.name=yozakura", "-c", "user.email=yozakura@localhost", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "fixture"},
+		{"-c", "user.name=" + brand.AppID, "-c", "user.email=" + brand.AppID + "@localhost", "-c", "commit.gpgsign=false", "commit", "-q", "-m", "fixture"},
 	}
 	for _, s := range steps {
 		if err := run(s...); err != nil {

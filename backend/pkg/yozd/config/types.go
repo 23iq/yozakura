@@ -14,8 +14,11 @@ type TOMLConfig struct {
 	WindowRules []WindowRuleConfig `toml:"window_rules,omitempty"`
 	LayerRules  []LayerRuleConfig  `toml:"layer_rules,omitempty"`
 	Startup     *StartupConfig     `toml:"startup,omitempty"`
-	Exec        interface{}        `toml:"exec,omitempty"`
-	ExecOnce    interface{}        `toml:"exec-once,omitempty"`
+	// Env are session environment variables (QT_QPA_PLATFORMTHEME, ...)
+	// set by the generated compositor config.
+	Env      map[string]string `toml:"env,omitempty"`
+	Exec     interface{}       `toml:"exec,omitempty"`
+	ExecOnce interface{}       `toml:"exec-once,omitempty"`
 }
 
 // TargetConfig declares where the generated compositor configuration files
@@ -248,6 +251,12 @@ func (c *TOMLConfig) ToIPCConfig() ipc.ConfigUniversal {
 
 	appendExecCommands(&cfg.Exec, c.Exec)
 	appendExecCommands(&cfg.ExecOnce, c.ExecOnce)
+	if len(c.Env) > 0 {
+		cfg.Env = map[string]string{}
+		for k, v := range c.Env {
+			cfg.Env[k] = v
+		}
+	}
 
 	return cfg
 }

@@ -56,6 +56,12 @@ func cleanupAppHooks(env CleanupEnv) ([]string, error) {
 	for _, id := range revertAppHooks(env.Out, apphooks.DefaultEnv(), apphooks.All()) {
 		removed = append(removed, "hook "+id)
 	}
+	// an older build's Qt variable in environment.d
+	if path, err := apphooks.RemoveLegacyQtEnv(apphooks.DefaultEnv()); err != nil {
+		fmt.Fprintf(env.Out, "Could not remove the Qt environment file: %s\n", err)
+	} else if path != "" {
+		removed = append(removed, path)
+	}
 	return removed, nil
 }
 

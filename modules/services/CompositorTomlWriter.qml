@@ -12,6 +12,7 @@ import "../../config/CoreBinds.js" as CoreBinds
 import "../specials/Specials.js" as Specials
 import "DisplayModel.js" as DisplayModel
 import "WriteGate.js" as WriteGate
+import "../theme/AppThemes.js" as AppThemes
 
 /**
  * CompositorTomlWriter - Thin IPC client.
@@ -196,6 +197,9 @@ Singleton {
                 position: Panels.primaryEdge,
             },
             layout: GlobalStates.compositorLayout,
+            // Qt theming: the backend sets QT_QPA_PLATFORMTHEME in the
+            // generated session environment (never environment.d)
+            qtTheme: AppThemes.enabled(Config.apps ? Config.apps.theming : null, "qt"),
             keybinds: gatherKeybinds(),
             hyprland: hl,
             // Motion profile (curves + animations) and the smart gaps rule:
@@ -485,6 +489,11 @@ Singleton {
         function onRepeatRateChanged() { root.callWrite(); }
         function onRepeatDelayChanged() { root.callWrite(); }
         function onManagedChanged() { root.callWrite(); }
+    }
+
+    property Connections qtThemingConnections: Connections {
+        target: Config.apps ? Config.apps.theming : null
+        function onQtChanged() { root.callWrite(); }
     }
 
     property Connections specialsConnections: Connections {

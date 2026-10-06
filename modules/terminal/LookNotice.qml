@@ -1,13 +1,14 @@
 import QtQuick
 import qs.config
 import qs.modules.theme
+import qs.modules.components
 import "../settings/Ui.js" as Ui
 
 // Inline status row of the terminal look (approximate preview, fish shell,
 // another prompt in config.fish): tinted icon, title, message and its
 // actions (children), which wrap under the text on narrow widths.
 // `tone`: "info", "warning" or "ok".
-Item {
+StyledRect {
     id: root
 
     property string tone: "info"
@@ -19,11 +20,15 @@ Item {
     readonly property color accent: root.tone === "warning" ? Colors.tertiary : (root.tone === "ok" ? Colors.green : Colors.primary)
     readonly property bool stacked: root.width < 560 && actionRow.implicitWidth > 0
 
+    variant: "pane"
+    enableShadow: false
+    radius: Math.min(Styling.radius(1), 14)
     implicitHeight: (root.stacked ? textCol.implicitHeight + actionRow.implicitHeight + 10 : Math.max(textCol.implicitHeight, actionRow.implicitHeight, 30)) + 20
 
+    // the tone's tint over the pane
     Rectangle {
         anchors.fill: parent
-        radius: Math.min(Styling.radius(1), 14)
+        radius: root.radius
         color: Ui.alpha(root.accent, 0.08)
         border.width: 1
         border.color: Ui.alpha(root.accent, 0.3)

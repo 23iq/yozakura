@@ -2,6 +2,8 @@ package apphooks
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"yozakura/backend/pkg/apphooks"
@@ -73,5 +75,53 @@ func TestRevertAndApplyByID(t *testing.T) {
 	}
 	if _, err := s.apply(json.RawMessage(`{}`)); err == nil {
 		t.Fatal("missing id must error")
+	}
+}
+
+type themedHook struct{ stubHook }
+
+func (h *themedHook) Status(apphooks.Env) apphooks.Status {
+	st := apphooks.Status{ID: h.id, State: h.state}
+	if h.state == apphooks.StateDisconnected {
+		st.Reason = apphooks.ReasonUserTheme
+	}
+	return st
+}
+
+// ensure (automatic) never connects an app with a theme of its own; an
+// explicit apply does.
+func TestEnsureSkipsUserTheme(t *testing.T) {
+	h := &themedHook{stubHook{id: "svc-test-themed", state: apphooks.StateDisconnected}}
+	apphooks.Register(h)
+	s := newService(apphooks.Env{})
+	if _, err := s.ensure([]byte(`{"ids":["svc-test-themed"]}`)); err != nil || h.applied != 0 {
+		t.Fatalf("auto-connected: %d %v", h.applied, err)
+	}
+	if _, err := s.apply([]byte(`{"id":"svc-test-themed"}`)); err != nil || h.applied != 1 {
+		t.Fatalf("explicit apply: %d %v", h.applied, err)
+	}
+}
+
+// An installed app is connected only when its theming toggle is on.
+func TestPostInstallHonoursToggle(t *testing.T) {
+	h := &stubHook{id: "svc-test-post", state: apphooks.StateDisconnected}
+	apphooks.Register(h)
+	apps := filepath.Join(t.TempDir(), "apps.json")
+	s := newService(apphooks.Env{})
+	s.appsFile = apps
+	if err := os.WriteFile(apps, []byte(`{"theming":{"svc-test-post":false}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.PostInstall("svc-test-post"); err != nil || h.applied != 0 {
+		t.Fatalf("toggle off: applied %d %v", h.applied, err)
+	}
+	if err := os.WriteFile(apps, []byte(`{"theming":{}}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.PostInstall("svc-test-post"); err != nil || h.applied != 1 {
+		t.Fatalf("toggle on (default): applied %d %v", h.applied, err)
+	}
+	if err := s.PostInstall("nope"); err == nil {
+		t.Fatal("unknown hook must error")
 	}
 }

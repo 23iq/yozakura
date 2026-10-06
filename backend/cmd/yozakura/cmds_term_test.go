@@ -74,7 +74,7 @@ func TestTermSetWritesConfigThenApplies(t *testing.T) {
 	assert.Contains(t, out, "prompt set to zen")
 	assert.Contains(t, out, "extras install starship")
 	assert.Contains(t, out, "not your login shell")
-	assert.Contains(t, out, "config.fish also sets a prompt")
+	assert.Contains(t, out, "starts starship or oh-my-posh itself")
 }
 
 func TestTermSetValidates(t *testing.T) {
@@ -112,7 +112,7 @@ func TestTermStatusAndDaemonDown(t *testing.T) {
 	f := newFakeTerm()
 	_, out, _ := termRun(t, f, "status")
 	assert.Contains(t, out, "starship installed: true")
-	assert.Contains(t, out, "/h/config.fish also sets a prompt")
+	assert.Contains(t, out, "/h/config.fish starts starship or oh-my-posh itself")
 	code, _, errOut := termRun(t, &fakeTerm{results: map[string]string{}}, "list")
 	assert.Equal(t, 1, code)
 	assert.Contains(t, errOut, "Error")
@@ -132,7 +132,7 @@ func TestGoodbyeRemovesTermHook(t *testing.T) {
 	env := termlook.Env{ConfigHome: home, AppID: "yozakura"}
 	hook := termlook.HookFile(env)
 	assert.NoError(t, os.MkdirAll(filepath.Dir(hook), 0o755))
-	assert.NoError(t, os.WriteFile(hook, []byte("x"), 0o644))
+	assert.NoError(t, os.WriteFile(hook, []byte(termlook.FishHook(termlook.Config{Engine: termlook.EngineStarship}, "/c/s.toml")), 0o644))
 	conf := filepath.Join(home, "fish", "config.fish")
 	assert.NoError(t, os.WriteFile(conf, []byte("user config"), 0o644))
 	var out bytes.Buffer

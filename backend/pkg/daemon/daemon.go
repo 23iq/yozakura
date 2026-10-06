@@ -14,7 +14,6 @@ import (
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/envclean"
 
-	"yozakura/backend/pkg/apphooks"
 	exclusivemode "yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/mcp/yozakura"
@@ -75,6 +74,7 @@ type Daemon struct {
 	compositor *compositor.Service
 	displays   *displays.Service
 	extras     *extras.Service
+	appHooks   *apphookssvc.Service
 	caffeine   *caffeine.Service
 	gamemode   *gamemode.Service
 	powerprof  *powerprofile.Service
@@ -168,7 +168,8 @@ func New() (*Daemon, error) {
 		layoutSrc = m
 	}
 	keyboard.NewService(layoutSrc).Register(d.srv)
-	apphookssvc.NewService().Register(d.srv)
+	d.appHooks = apphookssvc.NewService(d.paths.Config("apps"))
+	d.appHooks.Register(d.srv)
 
 	keySvc := keystore.NewService(d.paths)
 	keySvc.Register(d.srv)
@@ -223,10 +224,9 @@ func New() (*Daemon, error) {
 	d.notify = notifySvc
 
 	// Extras & apps catalog: detection, serial install queue, progress events.
-	extras.RegisterPost("apphook", func(id string) error {
-		_, err := apphooks.ApplyByID(apphooks.DefaultEnv(), id)
-		return err
-	})
+	// a catalog post "apphook:<id>" connects the app through the apphooks
+	// service (its lock, apps.theming.<id>, never a theme of the user's)
+	extras.RegisterPost("apphook", d.appHooks.PostInstall)
 	d.extras = extras.NewService(func(title, body string) {
 		_, _ = notifySvc.Send(notifysvc.SendParams{Summary: title, Body: body, AppIcon: "system-software-install"})
 	})

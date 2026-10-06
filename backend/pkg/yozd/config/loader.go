@@ -238,6 +238,12 @@ func mergeConfig(dst, src *TOMLConfig) {
 
 	mergeExec(&dst.Exec, src.Exec)
 	mergeExec(&dst.ExecOnce, src.ExecOnce)
+	for k, v := range src.Env {
+		if dst.Env == nil {
+			dst.Env = map[string]string{}
+		}
+		dst.Env[k] = v
+	}
 }
 
 func mergeExec(dst *interface{}, src interface{}) {

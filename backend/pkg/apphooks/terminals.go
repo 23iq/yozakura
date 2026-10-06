@@ -50,7 +50,6 @@ func (h fileHook) Status(env Env) Status {
 			st.State, st.Reason = StateError, "manual: "+hint
 		} else if ours || h.manual(env, rest) {
 			st.State = StateConnected
-			st.NeedsRestart = env.running(h.procs...)
 		} else if hint := h.guard(env, content); hint != "" {
 			st.State, st.Reason = StateError, "manual: "+hint
 		} else if isManaged(path) {
@@ -85,7 +84,10 @@ func (h fileHook) Apply(env Env) (Status, error) {
 	if err := writeBlockFile(env, h.id, h.file(env), existed, out); err != nil {
 		return failure(st, err), err
 	}
-	return h.Status(env), nil
+	// the file changed: a running terminal picks it up on restart
+	st = h.Status(env)
+	st.NeedsRestart = st.State == StateConnected && env.running(h.procs...)
+	return st, nil
 }
 
 func (h fileHook) Revert(env Env) (Status, error) {
@@ -144,7 +146,8 @@ func init() {
 			}
 			return filepath.Join(dir, "config")
 		},
-		body: func(env Env) string { return "config-file = " + cachePath(env, "ghostty.conf") },
+		// "?": optional, a missing theme file is not an error
+		body: func(env Env) string { return "config-file = ?" + cachePath(env, "ghostty.conf") },
 		manual: func(env Env, c string) bool {
 			return hasKeyValue(c, "config-file", cacheTargets(env, "ghostty.conf"))
 		},

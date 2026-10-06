@@ -12,7 +12,9 @@
 //	status {}                        -> Status
 //
 // Status is {enabled, engine, fishInstalled, fishIsLoginShell, engineInstalled:
-// {starship, ohmyposh}, foreignPromptInit, foreignFile, hookPath, hookPresent}.
+// {starship, ohmyposh}, foreignPromptInit, foreignFile, hookSkipped, hookPath,
+// hookPresent}. hookSkipped: the prompt is on but not installed because
+// foreignFile starts starship / oh-my-posh itself.
 // Installing an engine or fish is not done here: the UI calls extras.install
 // (ids starship, oh-my-posh, fish) and extras.setLoginShell.
 //
@@ -31,7 +33,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"sync"
 	"time"
 
@@ -52,19 +53,6 @@ type Options struct {
 	Passwd     func() ([]byte, error) // /etc/passwd
 	User       func() string          // current user name
 	Debounce   time.Duration
-}
-
-// Status is the state the settings page shows.
-type Status struct {
-	Enabled           bool            `json:"enabled"`
-	Engine            string          `json:"engine"`
-	FishInstalled     bool            `json:"fishInstalled"`
-	FishIsLoginShell  bool            `json:"fishIsLoginShell"`
-	EngineInstalled   map[string]bool `json:"engineInstalled"`
-	ForeignPromptInit bool            `json:"foreignPromptInit"`
-	ForeignFile       string          `json:"foreignFile,omitempty"`
-	HookPath          string          `json:"hookPath"`
-	HookPresent       bool            `json:"hookPresent"`
 }
 
 // Service is the term IPC service.
@@ -287,6 +275,11 @@ func (s *Service) Apply() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	cfg := s.config()
+	// the user's config.fish starts a prompt itself: ours is not installed
+	// (theirs would be initialised twice); the status says why
+	if cfg.Enabled && s.foreignFile() != "" {
+		cfg.Enabled = false
+	}
 	var pal termlook.Palette
 	var ps []termlook.Preset
 	if cfg.Enabled {
@@ -306,68 +299,6 @@ func (s *Service) apply(json.RawMessage) (any, error) {
 		return nil, err
 	}
 	return s.currentStatus(), nil
-}
-
-func (s *Service) status(json.RawMessage) (any, error) { return s.currentStatus(), nil }
-
-var foreignInit = regexp.MustCompile(`(^|[^\w-])(starship|oh-my-posh)\s+init\s+fish\b`)
-
-func (s *Service) currentStatus() Status {
-	cfg := s.config()
-	env := s.o.Env
-	st := Status{Enabled: cfg.Enabled, Engine: cfg.Engine, EngineInstalled: map[string]bool{}, HookPath: termlook.HookFile(env)}
-	_, st.FishInstalled = env.LookPath("fish")
-	_, st.EngineInstalled[termlook.EngineStarship] = env.LookPath("starship")
-	_, st.EngineInstalled[termlook.EngineOMP] = env.LookPath("oh-my-posh")
-	_, err := os.Stat(st.HookPath)
-	st.HookPresent = err == nil
-	st.FishIsLoginShell = s.fishIsLoginShell()
-	st.ForeignFile = foreignPromptFile(filepath.Join(env.ConfigHome, "fish"), st.HookPath)
-	st.ForeignPromptInit = st.ForeignFile != ""
-	return st
-}
-
-// fishIsLoginShell reads the user's passwd entry.
-func (s *Service) fishIsLoginShell() bool {
-	if s.o.Passwd == nil || s.o.User == nil {
-		return false
-	}
-	name := s.o.User()
-	data, err := s.o.Passwd()
-	if name == "" || err != nil {
-		return false
-	}
-	for _, line := range strings.Split(string(data), "\n") {
-		f := strings.Split(line, ":")
-		if len(f) >= 7 && f[0] == name {
-			return filepath.Base(f[6]) == "fish"
-		}
-	}
-	return false
-}
-
-// foreignPromptFile returns the first of config.fish and conf.d/*.fish
-// (other than our hook) that initializes starship or oh-my-posh itself.
-func foreignPromptFile(fishDir, hook string) string {
-	files := []string{filepath.Join(fishDir, "config.fish")}
-	if more, err := filepath.Glob(filepath.Join(fishDir, "conf.d", "*.fish")); err == nil {
-		files = append(files, more...)
-	}
-	for _, f := range files {
-		if f == hook {
-			continue
-		}
-		data, err := os.ReadFile(f)
-		if err != nil {
-			continue
-		}
-		for _, line := range strings.Split(string(data), "\n") {
-			if t := strings.TrimSpace(line); !strings.HasPrefix(t, "#") && foreignInit.MatchString(t) {
-				return f
-			}
-		}
-	}
-	return ""
 }
 
 var errStarted = errors.New("term: already started")

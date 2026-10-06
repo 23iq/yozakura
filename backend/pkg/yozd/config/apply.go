@@ -57,6 +57,7 @@ func ApplyConfig(cfg *TOMLConfig, compositor ipc.Compositor, configDir string) e
 		// Doing it headlessly keeps the .lua ready without touching Hyprland.
 		var luaB strings.Builder
 		luaGen := hyprland.NewLuaGenerator()
+		luaB.WriteString(luaGen.GenerateEnvLua(ipcCfg.Env))
 		luaB.WriteString(luaGen.GenerateOutputsLua(ipcCfg.Monitors))
 		luaB.WriteString(luaGen.GenerateKeyboardLua(ipcCfg.Keyboard))
 		luaStartup := luaGen.GenerateStartupLua(ipcCfg.Exec, ipcCfg.ExecOnce)
@@ -98,6 +99,7 @@ func writeConfig(gen ipc.ConfigGenerator, path string, payload ipc.ConfigUnivers
 		return fmt.Errorf("failed to create directory %s: %w", filepath.Dir(path), err)
 	}
 	var b strings.Builder
+	b.WriteString(gen.GenerateEnv(payload.Env))
 	b.WriteString(gen.GenerateOutputs(payload.Monitors))
 	b.WriteString(gen.GenerateKeyboard(payload.Keyboard))
 	startup := gen.GenerateStartup(payload.Exec, ipc.StartupOnce(payload, nonHypr))

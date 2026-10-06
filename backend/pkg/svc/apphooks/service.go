@@ -6,7 +6,8 @@
 //	status {}            -> {<id>: Status}
 //	ensure {ids: [...]}  -> {<id>: Status} for the ids; applies only hooks
 //	                        whose state is "disconnected" (never touches
-//	                        absent / managed / error / connected apps)
+//	                        absent / managed / error / connected apps, nor
+//	                        one with a theme of its own: user_theme)
 //	apply  {id}          -> Status
 //	revert {id}          -> Status
 package apphooks
@@ -14,6 +15,7 @@ package apphooks
 import (
 	"encoding/json"
 	"errors"
+	"os"
 	"sync"
 
 	"yozakura/backend/pkg/apphooks"
@@ -24,10 +26,14 @@ import (
 type Service struct {
 	env apphooks.Env
 	mu  sync.Mutex // one hook edit at a time
+	// appsFile is apps.json: PostInstall honours apps.theming.<id>
+	appsFile string
 }
 
-// NewService uses the real environment.
-func NewService() *Service { return &Service{env: apphooks.DefaultEnv()} }
+// NewService uses the real environment; appsFile is apps.json.
+func NewService(appsFile string) *Service {
+	return &Service{env: apphooks.DefaultEnv(), appsFile: appsFile}
+}
 
 func newService(env apphooks.Env) *Service { return &Service{env: env} }
 
@@ -58,21 +64,59 @@ func (s *Service) ensure(params json.RawMessage) (any, error) {
 			return nil, err
 		}
 	}
+	return s.ensureIDs(p.IDs), nil
+}
+
+// ensureIDs is ensure under the service lock.
+func (s *Service) ensureIDs(ids []string) map[string]apphooks.Status {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	out := map[string]apphooks.Status{}
-	for _, id := range p.IDs {
+	for _, id := range ids {
 		h, ok := apphooks.Get(id)
 		if !ok {
 			continue
 		}
 		st := h.Status(s.env)
-		if st.State == apphooks.StateDisconnected {
+		// automatic: an app with a theme of its own waits for Connect
+		if st.State == apphooks.StateDisconnected && !apphooks.UserOwnsTheme(st) {
 			st, _ = h.Apply(s.env) // the status carries any failure
 		}
 		out[id] = st
 	}
-	return out, nil
+	return out
+}
+
+// PostInstall connects an app the extras installer just installed (catalog
+// post "apphook:<id>") the way ensure does: only when apps.theming.<id> is
+// on, never an app with a theme of its own, one edit at a time.
+func (s *Service) PostInstall(id string) error {
+	if _, ok := apphooks.Get(id); !ok {
+		return errors.New("unknown app hook: " + id)
+	}
+	if !themed(s.appsFile, id) {
+		return nil
+	}
+	if st := s.ensureIDs([]string{id})[id]; st.State == apphooks.StateError {
+		return errors.New(st.Reason)
+	}
+	return nil
+}
+
+// themed reads apps.theming.<id> from apps.json (missing: on, like the
+// default; unreadable: off, nothing is touched).
+func themed(appsFile, id string) bool {
+	data, err := os.ReadFile(appsFile)
+	if os.IsNotExist(err) {
+		return true
+	}
+	var cfg struct {
+		Theming map[string]any `json:"theming"`
+	}
+	if err != nil || json.Unmarshal(data, &cfg) != nil {
+		return false
+	}
+	return cfg.Theming[id] != false
 }
 
 func (s *Service) one(params json.RawMessage, revert bool) (any, error) {

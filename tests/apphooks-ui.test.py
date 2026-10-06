@@ -104,6 +104,20 @@ QTest.qWait(80)
 check(len(calls("apphooks.revert")) == 1, "turning on does not revert")
 check("kitty" in calls("apphooks.ensure")[-1]["params"]["ids"], "re-enabled app ensured")
 
+# An upgraded install starts with apps off (never edited unasked): Connect
+# is offered anyway and switches the toggle on as it connects.
+h.eval(find(ed, "appTheme:foot"), "toggled(false)")
+QTest.qWait(80)
+ev('AppHooksService.status = Object.assign({}, AppHooksService.status, {foot: {id: "foot", state: "disconnected"}})')
+QTest.qWait(30)
+connect = find(pill("foot"), "hookConnect")
+check(connect is not None and connect.property("visible") is True, "Connect shows for a switched-off, disconnected app")
+applies = len(calls("apphooks.apply"))
+h.eval(connect, "clicked()")
+QTest.qWait(80)
+check(ev("Config.apps.theming.foot") is True, "Connect switches the toggle on")
+check(len(calls("apphooks.apply")) == applies + 1 and calls("apphooks.apply")[-1]["params"]["id"] == "foot", "Connect applies")
+
 if failures:
     print(f"{len(failures)} failure(s)")
     sys.exit(1)

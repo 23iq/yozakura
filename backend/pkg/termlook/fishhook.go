@@ -23,9 +23,21 @@ func FishHook(cfg Config, configFile string) string {
 		b.WriteString("        oh-my-posh init fish --config " + q + " | source\n")
 		b.WriteString("    end\n")
 	} else {
+		// STARSHIP_CONFIG is never exported globally (shells started from
+		// fish, a starship init of the user's, would read our file): each
+		// prompt function starship defines gets it for its own call only.
 		b.WriteString("    if type -q starship\n")
-		b.WriteString("        set -gx STARSHIP_CONFIG " + q + "\n")
 		b.WriteString("        starship init fish | source\n")
+		for _, fn := range []string{"fish_prompt", "fish_right_prompt"} {
+			inner := "__" + brand.AppID + "_starship_" + strings.TrimPrefix(fn, "fish_")
+			b.WriteString("        if functions -q " + fn + "\n")
+			b.WriteString("            functions -e " + inner + "\n")
+			b.WriteString("            functions -c " + fn + " " + inner + "\n")
+			b.WriteString("            function " + fn + "\n")
+			b.WriteString("                STARSHIP_CONFIG=" + q + " " + inner + "\n")
+			b.WriteString("            end\n")
+			b.WriteString("        end\n")
+		}
 		b.WriteString("    end\n")
 	}
 	b.WriteString("end\n")

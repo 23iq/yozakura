@@ -223,3 +223,25 @@ func TestRegistry(t *testing.T) {
 		t.Fatal("all")
 	}
 }
+
+// A kitty.conf with its own theme (kitty +kitten themes) is never
+// auto-connected: the status says why, an explicit Apply still connects.
+func TestKittyUserThemeNotAuto(t *testing.T) {
+	for _, theme := range []string{
+		"font_size 11\n# BEGIN_KITTY_THEME\n# Nord\ninclude current-theme.conf\n# END_KITTY_THEME\n",
+		"include current-theme.conf\n",
+		"include ./themes/current-theme.conf\n",
+	} {
+		f := newFake(t)
+		conf := filepath.Join(f.env.ConfigHome, "kitty", "kitty.conf")
+		write(t, conf, theme)
+		h, _ := Get("kitty")
+		st := h.Status(f.env)
+		if st.State != StateDisconnected || st.Reason != ReasonUserTheme || !UserOwnsTheme(st) {
+			t.Fatalf("%q: %+v", theme, st)
+		}
+		if st, err := h.Apply(f.env); err != nil || st.State != StateConnected {
+			t.Fatalf("explicit apply: %+v %v", st, err)
+		}
+	}
+}

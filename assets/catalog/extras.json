@@ -466,7 +466,10 @@
             "kitty"
           ]
         }
-      }
+      },
+      "post": [
+        "apphook:kitty"
+      ]
     },
     {
       "id": "ghostty",
@@ -485,6 +488,9 @@
           ]
         }
       },
+      "post": [
+        "apphook:ghostty"
+      ],
       "only": [
         "arch"
       ]
@@ -629,10 +635,7 @@
           ]
         },
         "flatpak": "org.telegram.desktop"
-      },
-      "post": [
-        "apphook:telegram"
-      ]
+      }
     },
     {
       "id": "steam",
@@ -735,9 +738,6 @@
       },
       "requires": [
         "spotify"
-      ],
-      "post": [
-        "apphook:spicetify"
       ],
       "only": [
         "arch"

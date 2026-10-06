@@ -70,16 +70,6 @@ func ownedBy(st os.FileInfo, uid int) bool {
 	return ok && int(s.Uid) == uid
 }
 
-// ApplyByID connects one app; the extras installer calls it after it installs
-// the app.
-func ApplyByID(env Env, id string) (Status, error) {
-	h, ok := Get(id)
-	if !ok {
-		return Status{ID: id}, fmt.Errorf("apphooks: unknown app %q", id)
-	}
-	return h.Apply(env)
-}
-
 // Statuses returns the status of every registered hook by id.
 func Statuses(env Env) map[string]Status {
 	out := map[string]Status{}
