@@ -55,11 +55,15 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
 ## DRY RUN
 `<app> onboarding --dry-run [--keep]` (`backend/cmd/yozakura/cmds_onboarding_dryrun.go`)
 starts `onboarding-dryrun.qml` (repo root: only the wizard, peek pill,
-display prompt and `DryRunWallpapers`) with `<PREFIX>DRYRUN=1` and the XDG
-config/cache/state dirs on temp copies. `DryRun` (modules/globals) is the
-switch + journal; `BackendService` answers the methods of the table in
-`modules/services/DryRunBackend.js` itself (reads still reach the daemon).
-A new mutating daemon method goes in that table; a QML `Process` /
+display prompt and `DryRunWallpapers`; it loads nothing until realpath
+shows the config/cache/state dirs inside the dry-run dir, and gives up
+after 20 s without a wizard) with `<PREFIX>DRYRUN=1` and the XDG dirs on
+plain temp copies. `DryRun` (modules/globals) is the switch + journal;
+`BackendService` fails closed: only the reads of
+`modules/services/DryRunMethods.js` reach the daemon, every other call is
+answered by `DryRunBackend.js` (unknown ones journaled as "unmocked call").
+A new read the wizard needs goes in that allowlist; a mutating method gets
+a journal line there (and fake events in DryRunBackend.js); a QML `Process` /
 CLI call that changes the system on the wizard path checks `DryRun.active`
 and journals instead (see PresetsService, CompositorTomlWriter, Colors
 generators, GlobalShortcuts). `DryRunBadge` marks the card and the pill.

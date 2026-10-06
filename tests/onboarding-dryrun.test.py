@@ -6,7 +6,8 @@ records every request line and answers reads) with DryRun active: the badge
 shows on the card and the peek pill; "Use 165 Hz" + Keep and an app install
 are journaled and answered by DryRunBackend.js (session countdown ticks,
 install progress, the <PREFIX>DRYRUN_FAIL list) while no mutating request
-ever reaches the socket; reads still do.
+ever reaches the socket (fail closed: unknown methods are mocked too);
+reads still do.
 """
 from __future__ import annotations
 
@@ -75,7 +76,8 @@ h = env.h
 h.module("Quickshell.Io", {"Wire": WIRE, "Socket": SOCKET})
 h.module("qs.modules.globals", {"DryRun": dryrun_qml({"DRYRUN": "1", "DRYRUN_FAIL": FAIL_ID})})
 services = env.root / "qs/modules/services"
-(services / "DryRunBackend.js").write_text((REPO / "modules/services/DryRunBackend.js").read_text())
+for lib in ("DryRunBackend.js", "DryRunMethods.js"):
+    (services / lib).write_text((REPO / "modules/services" / lib).read_text())
 backend = (REPO / "modules/services/BackendService.qml").read_text().replace("pragma Singleton\n", "")
 h.module("qs.modules.services", {"BackendService": "pragma Singleton\n" + backend})
 
@@ -167,6 +169,14 @@ check(ev(f'ExtrasService.status["{OK_ID}"].state') == "installed", "after ~4 s i
 check(ev(f'ExtrasService.progress["{FAIL_ID}"].state') == "failed"
       and ev(f'ExtrasService.progress["{FAIL_ID}"].reason') == "network", "the fail list fails with reason network")
 check("extras.install" not in sent(), f"no install reached the backend: {sent()}")
+
+# Fail closed: a method not known as a read is mocked, journaled, never sent.
+ev('BackendService.call("nightlight.set", {"enabled": true}, () => {})')
+ev('BackendService.call("weather.get", {}, () => {})')
+QTest.qWait(80)
+check("nightlight.set" not in sent(), f"an unknown method never reaches the backend: {sent()}")
+check("unmocked call nightlight.set" in journal(), f"it is journaled, got {journal()}")
+check("weather.get" in sent(), "a known read still does")
 
 if h.type_errors:
     failures.append("type errors: " + "; ".join(h.type_errors))

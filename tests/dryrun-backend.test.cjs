@@ -7,6 +7,7 @@ const path = require('node:path');
 const { loadLibrary } = require('./lib/qmljs.cjs');
 
 const D = loadLibrary(path.join(__dirname, '..', 'modules/services/DryRunBackend.js'));
+const M = loadLibrary(path.join(__dirname, '..', 'modules/services/DryRunMethods.js'));
 const plain = v => JSON.parse(JSON.stringify(v));
 const eq = (a, b, msg) => assert.deepStrictEqual(plain(a), plain(b), msg);
 
@@ -20,13 +21,24 @@ test('mutating methods are intercepted, reads pass through', () => {
         assert.ok(D.isMutating(m), m);
     for (const m of ['displays.list', 'displays.identify', 'displays.conflicts', 'keyboard.catalog',
         'extras.catalog', 'extras.status', 'extras.log', 'term.presets', 'term.preview', 'term.status',
-        'exclusive.status', 'exclusive.plan', 'config.statesGet', 'config.read', 'providers.ollama.probe'])
+        'exclusive.status', 'exclusive.plan', 'config.statesGet', 'compositor.state', 'providers.ollama.probe',
+        'weather.get', 'clipboard.getContent'])
         assert.ok(!D.isMutating(m), m);
     // compositor.dispatch: daemon CLI queries are reads, the rest mutates
     for (const args of [['layout', 'list'], ['system', 'get-compositor'], ['monitor', 'status']])
         assert.ok(!D.isMutating('compositor.dispatch', { args }), args.join(' '));
     for (const args of [['layout', 'set', 'dwindle'], ['system', 'execute', 'kitty'], []])
         assert.ok(D.isMutating('compositor.dispatch', { args }), args.join(' '));
+    // fail closed: anything not known as a read is mocked
+    for (const m of ['nightlight.set', 'usage.record', 'config.read', 'brand.new', 'list', '', 'x.listing'])
+        assert.ok(D.isMutating(m), m);
+});
+
+test('unknown methods: mocked with an empty answer and journaled', () => {
+    const s = D.create([]);
+    const r = D.handle(s, 'nightlight.set', { on: true }, 0);
+    eq([r.result, r.error, r.line, r.events], [{}, null, 'unmocked call nightlight.set', []]);
+    eq(M.line('apphooks.ensure', {}, s), null, 'quiet ones stay quiet');
 });
 
 test('journal lines', () => {
@@ -118,13 +130,19 @@ test('cancel stops a fake job', () => {
     const job = D.handle(s, 'extras.install', { ids: ['a'] }, 0).result.jobs[0].id;
     D.due(s, 1000);
     const c = D.handle(s, 'extras.cancel', { job }, 1000);
-    eq(c.events.map(e => e.data.state), ['cancelled']);
+    eq(c.events.map(e => [e.data.state, e.data.kind, e.data.entries]), [['cancelled', 'system', ['a']]], 'the job kind and entries');
     eq(D.due(s, 9999), []);
     assert.strictEqual(D.overlay(s, 'extras.status', {}).a, undefined);
 });
 
-test('ollama pull and login shell are fake jobs too', () => {
+test('ollama pull, login shell and upgrade-and-retry are fake jobs too', () => {
     const s = D.create([]);
+    const failed = D.handle(s, 'extras.install', { ids: ['steam'] }, 0).result.jobs[0].id;
+    D.due(s, 5000);
+    const up = D.handle(s, 'extras.upgradeAndRetry', { job: failed }, 5000);
+    eq([up.result.jobs[0].kind, up.result.jobs[0].entries, up.events[0].data.state], ['upgrade', ['steam'], 'queued']);
+    const upEnd = D.due(s, 10000);
+    eq(upEnd[upEnd.length - 1].data.state, 'done');
     const r = D.handle(s, 'extras.ollamaPull', { model: 'qwen' }, 0);
     eq(r.result.jobs[0].kind, 'ollama');
     const evs = D.due(s, 5000);

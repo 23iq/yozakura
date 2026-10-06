@@ -311,8 +311,10 @@ Singleton {
         if (!WriteGate.request(root._gate, DisplaysService.pending))
             return;
         // Dry run: the CLI call below bypasses BackendService's interception.
+        // Journaled only for changes made in the wizard (not the start-up write).
         if (DryRun.active) {
-            DryRun.journal("write the compositor config");
+            if (OnboardingService.visible)
+                DryRun.journal("write the compositor config");
             return;
         }
         if (ipcProcess.running) {

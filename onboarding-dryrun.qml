@@ -5,6 +5,7 @@
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.onboarding
@@ -18,56 +19,105 @@ import "modules/onboarding/OnboardingSteps.js" as Steps
 // and the display keep/revert prompt. Every change is mocked and journaled
 // (DryRun, BackendService); config writes land in the CLI's temp copy. Quits
 // when the wizard finishes or is skipped. Refuses to run outside that
-// sandbox (no <PREFIX>DRYRUN=1 or the config dir is the real one).
+// sandbox: nothing (Config included) loads until the real paths of the
+// config, cache and state dirs are checked to be inside <PREFIX>DRYRUN_DIR.
 ShellRoot {
     id: root
 
     readonly property int bundledFonts: FontRegistry.count
-    readonly property bool ready: Config.initialLoadComplete
+    // The dirs it writes resolve (symlinks followed) inside the dry-run dir.
+    property bool verified: false
+    property bool opened: false
+    readonly property int openTimeout: 20000
 
-    DryRunWallpapers {
-        id: wallpapers
-        Component.onCompleted: GlobalStates.wallpaperManager = wallpapers
+    function refuse(reason) {
+        console.error("onboarding-dryrun.qml:", reason, "- run it with `" + Brand.appId + " onboarding --dry-run`");
+        DryRun.journal("stopped: " + reason);
+        Qt.quit();
     }
 
-    Loader {
-        active: OnboardingService.visible
-        source: "modules/onboarding/OnboardingWindow.qml"
-    }
-    Loader {
-        active: OnboardingService.visible && OnboardingService.peek
-        source: "modules/onboarding/OnboardingPeekPill.qml"
-    }
-
-    Variants {
-        model: Quickshell.screens
-
-        DisplayOverlays {}
+    // realpath of [dry-run dir, config dir, cache dir, state dir]
+    function checkPaths(text) {
+        const p = String(text).split("\n").filter(l => l !== "");
+        const bad = p.length === 4 && p[0] !== "/" ? p.slice(1).filter(d => d.indexOf(p[0] + "/") !== 0) : p;
+        if (p.length === 4 && bad.length === 0)
+            root.verified = true;
+        else
+            root.refuse("not a dry-run sandbox: " + (bad.join(", ") || "no dry-run dir"));
     }
 
-    // Config loaded and the compositor state in: open on the focused screen.
-    Timer {
-        id: openTimer
-        interval: 400
-        running: root.ready && DryRun.sandboxed
-        onTriggered: {
-            OnboardingService.openAt(Steps.at(0).id);
-            console.info("[dry-run] setup wizard open on", OnboardingService.screenName);
+    Process {
+        id: realpaths
+        command: ["realpath", "-m", "--", DryRun.dir, Brand.configDir, Brand.cacheDir, Quickshell.statePath("")]
+        stdout: StdioCollector {
+            onStreamFinished: root.checkPaths(text)
         }
     }
 
+    Loader {
+        active: root.verified
+        sourceComponent: Scope {
+            id: wizardScope
+
+            readonly property bool ready: Config.initialLoadComplete
+            property bool started: false
+
+            DryRunWallpapers {
+                id: wallpapers
+                Component.onCompleted: GlobalStates.wallpaperManager = wallpapers
+            }
+
+            Loader {
+                active: OnboardingService.visible
+                source: "modules/onboarding/OnboardingWindow.qml"
+            }
+            Loader {
+                active: OnboardingService.visible && OnboardingService.peek
+                source: "modules/onboarding/OnboardingPeekPill.qml"
+            }
+
+            Variants {
+                model: Quickshell.screens
+
+                DisplayOverlays {}
+            }
+
+            // Config loaded and the compositor state in: open on the focused screen.
+            Timer {
+                interval: 400
+                running: wizardScope.ready && !wizardScope.started
+                onTriggered: {
+                    wizardScope.started = true;
+                    OnboardingService.openAt(Steps.at(0).id);
+                    console.info("[dry-run] setup wizard open on", OnboardingService.screenName);
+                }
+            }
+        }
+    }
+
+    // Wizard shown: remember it; closed (finished or skipped): quit. The
+    // service is only touched once the sandbox is verified.
     Connections {
-        target: OnboardingService
+        target: root.verified ? OnboardingService : null
         function onVisibleChanged() {
-            if (!OnboardingService.visible)
+            if (OnboardingService.visible)
+                root.opened = true;
+            else if (root.opened)
                 Qt.quit();
         }
     }
 
+    // Never hang invisibly: no wizard after a while ends the run.
+    Timer {
+        interval: root.openTimeout
+        running: DryRun.active && !root.opened
+        onTriggered: root.refuse("the setup wizard did not open within " + root.openTimeout / 1000 + " s")
+    }
+
     Component.onCompleted: {
-        if (!DryRun.sandboxed) {
-            console.error("onboarding-dryrun.qml: run it with `" + Brand.appId + " onboarding --dry-run`");
-            Qt.quit();
-        }
+        if (!DryRun.active || DryRun.dir === "")
+            root.refuse("not started as a dry run");
+        else
+            realpaths.running = true;
     }
 }

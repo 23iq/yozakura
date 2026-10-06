@@ -7,9 +7,10 @@ import "BrandActions.js" as BrandActions
 // Dry-run mode of the setup wizard (`<app> onboarding --dry-run`, root file
 // onboarding-dryrun.qml). The CLI runs a separate Quickshell with
 // <PREFIX>DRYRUN=1, <PREFIX>DRYRUN_DIR=<temp dir> and the XDG config/cache/
-// state dirs pointed at copies inside it. While active, BackendService
-// answers mutating methods from DryRunBackend.js and every guarded action
-// (theme generators, preset apply, compositor writes, ...) calls journal()
+// state dirs inside it (copies of the app's config and cache). While active,
+// BackendService only lets the reads of DryRunMethods.js reach the daemon
+// and answers every other call from DryRunBackend.js; guarded actions
+// (theme generators, preset apply, compositor writes, ...) skip or journal()
 // instead of changing the system; the CLI prints <dir>/dryrun.log on exit.
 // <PREFIX>DRYRUN_FAIL=id1,id2 makes those fake installs fail.
 Singleton {
@@ -27,8 +28,6 @@ Singleton {
 
     function journal(line) {
         if (!root.active || !line)
-            return;
-        if (root.lines.length > 0 && root.lines[root.lines.length - 1] === line)
             return;
         root.lines = root.lines.concat([String(line)]);
         console.info("[dry-run]", line);

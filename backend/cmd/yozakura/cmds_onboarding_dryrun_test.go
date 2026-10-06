@@ -24,10 +24,18 @@ func fakeDryRunHome(t *testing.T) (dryRunEnv, string) {
 		mustOK(t, os.MkdirAll(filepath.Dir(p), 0o755))
 		mustOK(t, os.WriteFile(p, []byte(text), 0o644))
 	}
-	write(".config/"+brand.AppID+"/config/general.json", `{"onboardingDone":true}`)
+	// dotfiles setup: the app's config dir and general.json are symlinks
+	write("dotfiles/"+brand.AppID+"/config/theme.json", `{}`)
+	write("dotfiles/general.json", `{"onboardingDone":true}`)
+	mustOK(t, os.Symlink(filepath.Join(home, "dotfiles/general.json"), filepath.Join(home, "dotfiles", brand.AppID, "config/general.json")))
+	mustOK(t, os.MkdirAll(filepath.Join(home, ".config"), 0o755))
+	mustOK(t, os.Symlink(filepath.Join(home, "dotfiles", brand.AppID), filepath.Join(home, ".config", brand.AppID)))
 	write(".config/fontconfig/fonts.conf", "<fontconfig/>")
+	write(".config/kitty/kitty.conf", "font_size 11")
 	write(".cache/"+brand.AppID+"/wallpapers.json", `{"currentWall":"/w/a.png"}`)
 	write(".cache/"+brand.AppID+"/thumbnails/a.png.jpg", "jpg")
+	write(".cache/"+brand.AppID+"/depth/model.bin", strings.Repeat("x", 4096))
+	write(".cache/fontconfig/cache", "fc")
 	write(".local/state/"+brand.AppID+"/states.json", `{"onboarding":{"step":"look"}}`)
 
 	shell := filepath.Join(root, "shell")
@@ -47,7 +55,11 @@ func fakeDryRunHome(t *testing.T) (dryRunEnv, string) {
   echo "state=$XDG_STATE_HOME"
   echo "general=$(cat "$XDG_CONFIG_HOME/` + brand.AppID + `/config/general.json")"
   echo "wall=$(cat "$XDG_CACHE_HOME/` + brand.AppID + `/wallpapers.json")"
-  echo "states=$(cat "$XDG_STATE_HOME/` + brand.AppID + `/states.json")"
+  echo "statefiles=$(ls -A "$XDG_STATE_HOME/` + brand.AppID + `" | wc -l)"
+  echo "links=$(find "$` + p + `DRYRUN_DIR" -type l | wc -l)"
+  echo "kitty=$(test -e "$XDG_CONFIG_HOME/kitty" && echo yes || echo no)"
+  echo "fccache=$(test -e "$XDG_CACHE_HOME/fontconfig" && echo yes || echo no)"
+  echo "depth=$(ls -A "$XDG_CACHE_HOME/` + brand.AppID + `/depth" | wc -l)"
   echo "font=$(cat "$XDG_CONFIG_HOME/fontconfig/fonts.conf")"
   echo "thumb=$(cat "$XDG_CACHE_HOME/` + brand.AppID + `/thumbnails/a.png.jpg")"
 } > "` + seen + `"
@@ -61,7 +73,6 @@ printf 'apply display DP-1 2560x1440@165\ninstall firefox, steam\n' > "$` + p + 
 	return dryRunEnv{
 		configHome: filepath.Join(home, ".config"),
 		cacheHome:  filepath.Join(home, ".cache"),
-		stateHome:  filepath.Join(home, ".local/state"),
 		tmpParent:  tmp,
 		qs:         qs,
 		shellDir:   shell,
@@ -96,6 +107,9 @@ func seenValues(t *testing.T, path string) map[string]string {
 }
 
 func TestOnboardingDryRunSandboxAndJournal(t *testing.T) {
+	savedCap := dryRunDirCap
+	dryRunDirCap = 1024
+	defer func() { dryRunDirCap = savedCap }()
 	env, seenFile := fakeDryRunHome(t)
 	var out, errOut bytes.Buffer
 	code := runOnboardingDryRun([]string{"--dry-run"}, env, &out, &errOut)
@@ -111,15 +125,19 @@ func TestOnboardingDryRunSandboxAndJournal(t *testing.T) {
 	assert.Equal(t, filepath.Join(dir, "config"), seen["config"])
 	assert.Equal(t, filepath.Join(dir, "cache"), seen["cache"])
 	assert.Equal(t, filepath.Join(dir, "state"), seen["state"])
-	assert.Equal(t, `{"onboardingDone":true}`, seen["general"], "config copied")
+	assert.Equal(t, `{"onboardingDone":true}`, seen["general"], "config copied through the symlinks")
 	assert.Equal(t, `{"currentWall":"/w/a.png"}`, seen["wall"], "wallpapers.json copied")
-	assert.Equal(t, `{"onboarding":{"step":"look"}}`, seen["states"], "state file copied")
-	assert.Equal(t, "<fontconfig/>", seen["font"], "other apps' config stays readable")
-	assert.Equal(t, "jpg", seen["thumb"], "cache folders stay readable")
+	assert.Equal(t, "0", strings.TrimSpace(seen["statefiles"]), "the state dir starts empty")
+	assert.Equal(t, "<fontconfig/>", seen["font"], "font settings copied for rendering")
+	assert.Equal(t, "jpg", seen["thumb"], "small cache folders copied")
+	assert.Equal(t, "0", strings.TrimSpace(seen["depth"]), "a cache folder over the cap stays empty")
+	assert.Equal(t, "no", seen["kitty"], "other apps' config is not provided")
+	assert.Equal(t, "no", seen["fccache"], "other caches are not provided")
+	assert.Equal(t, "0", strings.TrimSpace(seen["links"]), "no symlink anywhere in the sandbox")
 
-	real, err := os.ReadFile(filepath.Join(env.configHome, brand.AppID, "config/general.json"))
+	real, err := os.ReadFile(filepath.Join(env.configHome, "..", "dotfiles/general.json"))
 	mustOK(t, err)
-	assert.Equal(t, `{"onboardingDone":true}`, string(real), "the real config is untouched")
+	assert.Equal(t, `{"onboardingDone":true}`, string(real), "the real (symlinked) config is untouched")
 
 	assert.Contains(t, out.String(), "apply display DP-1 2560x1440@165")
 	assert.Contains(t, out.String(), "install firefox, steam")

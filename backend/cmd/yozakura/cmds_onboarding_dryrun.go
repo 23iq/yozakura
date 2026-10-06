@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -16,27 +15,33 @@ import (
 
 // `<app> onboarding --dry-run [--keep]`: the setup wizard in a separate
 // Quickshell instance (onboarding-dryrun.qml) where every button can be
-// clicked without changing anything. The app's config, cache and state
-// dirs are copied into a temp dir and the instance runs with XDG_CONFIG_HOME,
-// XDG_CACHE_HOME and XDG_STATE_HOME pointed there, so its own file writes
-// land in the copies. Other entries of those dirs are symlinked (fonts,
-// Qt/GTK settings and thumbnails read the same); the shell itself never
-// writes there in dry-run mode (DryRun guards the theme generators and
-// the compositor writer). Mutating daemon calls are mocked and journaled
-// by the shell (modules/services/BackendService.qml, DryRunBackend.js);
-// the journal is printed after the instance exits.
-// <PREFIX>DRYRUN_FAIL=id1,id2 makes those fake installs fail.
+// clicked without changing anything. The instance runs with
+// XDG_CONFIG_HOME, XDG_CACHE_HOME and XDG_STATE_HOME on dirs of a temp dir
+// holding plain copies (symlinks dereferenced: nothing in it points back at
+// the real dirs) of the app's config, its cache (folders over
+// dryRunDirCap stay empty) and the font/Qt settings needed to render
+// (dryRunForeignConfig); the state dir starts empty (StateService is
+// daemon-backed, its writes are mocked). Daemon calls other than known
+// reads are mocked and journaled by the shell (BackendService,
+// DryRunMethods.js, DryRunBackend.js); the journal is printed after the
+// instance exits. <PREFIX>DRYRUN_FAIL=id1,id2 makes those fake installs fail.
 
 // dryRunEnv is where the dry run reads from and what it runs (tests swap it).
 type dryRunEnv struct {
-	configHome, cacheHome, stateHome string // the user's XDG base dirs
-	tmpParent                        string // "" = os.TempDir()
-	qs                               string // Quickshell binary
-	shellDir                         string // shell source (onboarding-dryrun.qml)
-	environ                          []string
+	configHome, cacheHome string // the user's XDG base dirs
+	tmpParent             string // "" = os.TempDir()
+	qs                    string // Quickshell binary
+	shellDir              string // shell source (onboarding-dryrun.qml)
+	environ               []string
 }
 
 const dryRunQML = "onboarding-dryrun.qml"
+
+// Other apps' config the shell reads to render (fonts, Qt icon theme).
+var dryRunForeignConfig = []string{"fontconfig", "qt6ct"}
+
+// Folders larger than this are left empty in the copy (thumbnails etc.).
+var dryRunDirCap int64 = 64 << 20
 
 func defaultDryRunEnv() dryRunEnv {
 	home, _ := os.UserHomeDir()
@@ -53,7 +58,6 @@ func defaultDryRunEnv() dryRunEnv {
 	return dryRunEnv{
 		configHome: base("XDG_CONFIG_HOME", ".config"),
 		cacheHome:  base("XDG_CACHE_HOME", ".cache"),
-		stateHome:  base("XDG_STATE_HOME", ".local/state"),
 		qs:         qs,
 		shellDir:   shellDir(),
 		environ:    os.Environ(),
@@ -94,25 +98,16 @@ func runOnboardingDryRun(args []string, env dryRunEnv, out, errOut io.Writer) in
 	if !keep {
 		defer os.RemoveAll(dir)
 	}
-	sandbox := []struct {
-		name, real, env string
-		copyApp         func(src, dst string) error
-	}{
-		{"config", env.configHome, "XDG_CONFIG_HOME", copyTree},
-		{"cache", env.cacheHome, "XDG_CACHE_HOME", copyFilesLinkDirs},
-		{"state", env.stateHome, "XDG_STATE_HOME", copyTree},
-	}
 	vars := map[string]string{
 		brand.EnvPrefix + "DRYRUN":     "1",
 		brand.EnvPrefix + "DRYRUN_DIR": dir,
+		"XDG_CONFIG_HOME":              filepath.Join(dir, "config"),
+		"XDG_CACHE_HOME":               filepath.Join(dir, "cache"),
+		"XDG_STATE_HOME":               filepath.Join(dir, "state"),
 	}
-	for _, s := range sandbox {
-		dst := filepath.Join(dir, s.name)
-		if err := sandboxBase(s.real, dst, s.copyApp); err != nil {
-			fmt.Fprintf(errOut, "Error: copy %s: %v\n", s.name, err)
-			return 1
-		}
-		vars[s.env] = dst
+	if err := buildDryRunSandbox(env, vars); err != nil {
+		fmt.Fprintf(errOut, "Error: %v\n", err)
+		return 1
 	}
 
 	logPath := filepath.Join(dir, "quickshell.log")
@@ -133,10 +128,12 @@ func runOnboardingDryRun(args []string, env dryRunEnv, out, errOut io.Writer) in
 		fmt.Fprintf(errOut, "Error: start %s: %v\n", env.qs, err)
 		return 1
 	}
-	// Ctrl+C / kill end the wizard; the journal is still printed and the
-	// temp dir removed.
+	// Ctrl+C / kill / a closed terminal end the wizard; the journal is
+	// still printed and the temp dir removed (a gone reader of stdout must
+	// not kill us before the cleanup: SIGPIPE is ignored, writes just fail).
+	signal.Ignore(syscall.SIGPIPE)
 	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
 		for sig := range sigs {
 			_ = cmd.Process.Signal(sig)
@@ -184,59 +181,110 @@ func withEnv(environ []string, vars map[string]string) []string {
 	return out
 }
 
-// sandboxBase makes dst stand in for the XDG base dir real: the app's own
-// dir is copied (copyApp), every other entry is a symlink to the real one.
-func sandboxBase(real, dst string, copyApp func(src, dst string) error) error {
-	if err := os.MkdirAll(dst, 0o700); err != nil {
-		return err
-	}
-	entries, err := os.ReadDir(real)
-	if err != nil && !os.IsNotExist(err) {
-		return err
-	}
-	for _, e := range entries {
-		if e.Name() == brand.AppID {
-			continue
-		}
-		if err := os.Symlink(filepath.Join(real, e.Name()), filepath.Join(dst, e.Name())); err != nil {
+// buildDryRunSandbox fills the XDG dirs of vars: copies only, no link
+// into the user's dirs.
+func buildDryRunSandbox(env dryRunEnv, vars map[string]string) error {
+	config, cache, state := vars["XDG_CONFIG_HOME"], vars["XDG_CACHE_HOME"], vars["XDG_STATE_HOME"]
+	for _, d := range []string{filepath.Join(config, brand.AppID), filepath.Join(cache, brand.AppID), filepath.Join(state, brand.AppID)} {
+		if err := os.MkdirAll(d, 0o700); err != nil {
 			return err
 		}
 	}
-	app := filepath.Join(real, brand.AppID)
-	if _, err := os.Stat(app); os.IsNotExist(err) {
-		return os.MkdirAll(filepath.Join(dst, brand.AppID), 0o700)
+	if err := copyIfExists(filepath.Join(env.configHome, brand.AppID), filepath.Join(config, brand.AppID), copyTree); err != nil {
+		return fmt.Errorf("copy config: %w", err)
 	}
-	return copyApp(app, filepath.Join(dst, brand.AppID))
+	for _, name := range dryRunForeignConfig {
+		src := filepath.Join(env.configHome, name)
+		if size, ok := treeSize(src, dryRunDirCap); ok && size > 0 {
+			if err := copyTree(src, filepath.Join(config, name)); err != nil {
+				return fmt.Errorf("copy %s: %w", name, err)
+			}
+		}
+	}
+	if err := copyIfExists(filepath.Join(env.cacheHome, brand.AppID), filepath.Join(cache, brand.AppID), copyCache); err != nil {
+		return fmt.Errorf("copy cache: %w", err)
+	}
+	return nil
 }
 
-// copyTree copies a directory recursively (symlinks stay symlinks).
+func copyIfExists(src, dst string, copyFn func(src, dst string) error) error {
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return nil
+	}
+	return copyFn(src, dst)
+}
+
+// copyTree copies src (a file or a folder, recursively) to dst with every
+// symlink replaced by what it points to; other file types are skipped.
 func copyTree(src, dst string) error {
-	return filepath.WalkDir(src, func(path string, d fs.DirEntry, err error) error {
+	return copyDeref(src, dst, 0)
+}
+
+func copyDeref(src, dst string, depth int) error {
+	if depth > 32 {
+		return fmt.Errorf("%s: too deep (symlink loop?)", src)
+	}
+	info, err := os.Stat(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil // dangling link
+		}
+		return err
+	}
+	switch {
+	case info.IsDir():
+		if err := os.MkdirAll(dst, 0o700); err != nil {
+			return err
+		}
+		entries, err := os.ReadDir(src)
 		if err != nil {
 			return err
 		}
-		rel, _ := filepath.Rel(src, path)
-		target := filepath.Join(dst, rel)
-		switch {
-		case d.IsDir():
-			return os.MkdirAll(target, 0o700)
-		case d.Type()&fs.ModeSymlink != 0:
-			link, err := os.Readlink(path)
-			if err != nil {
+		for _, e := range entries {
+			if err := copyDeref(filepath.Join(src, e.Name()), filepath.Join(dst, e.Name()), depth+1); err != nil {
 				return err
 			}
-			return os.Symlink(link, target)
-		case d.Type().IsRegular():
-			return copyFile(path, target)
 		}
 		return nil
-	})
+	case info.Mode().IsRegular():
+		return copyFile(src, dst)
+	}
+	return nil
 }
 
-// copyFilesLinkDirs copies the files directly in src (wallpapers.json,
-// colors.json, ...) and links its folders (thumbnails, schemes: large and
-// only read).
-func copyFilesLinkDirs(src, dst string) error {
+// treeSize is the size of src (symlinks followed); ok is false once it
+// passes limit.
+func treeSize(src string, limit int64) (int64, bool) {
+	var total int64
+	var walk func(p string, depth int) bool
+	walk = func(p string, depth int) bool {
+		info, err := os.Stat(p)
+		if err != nil {
+			return true
+		}
+		if depth > 32 {
+			return false
+		}
+		if !info.IsDir() {
+			total += info.Size()
+			return total <= limit
+		}
+		entries, _ := os.ReadDir(p)
+		for _, e := range entries {
+			if !walk(filepath.Join(p, e.Name()), depth+1) {
+				return false
+			}
+		}
+		return true
+	}
+	ok := walk(src, 0)
+	return total, ok
+}
+
+// copyCache copies the app's cache: its files (wallpapers.json,
+// colors.json, ...) and every folder up to dryRunDirCap (thumbnails,
+// schemes); a larger one is created empty.
+func copyCache(src, dst string) error {
 	if err := os.MkdirAll(dst, 0o700); err != nil {
 		return err
 	}
@@ -246,10 +294,12 @@ func copyFilesLinkDirs(src, dst string) error {
 	}
 	for _, e := range entries {
 		from, to := filepath.Join(src, e.Name()), filepath.Join(dst, e.Name())
-		if e.Type().IsRegular() {
-			err = copyFile(from, to)
+		if _, ok := treeSize(from, dryRunDirCap); !ok {
+			if info, statErr := os.Stat(from); statErr == nil && info.IsDir() {
+				err = os.MkdirAll(to, 0o700)
+			}
 		} else {
-			err = os.Symlink(from, to)
+			err = copyTree(from, to)
 		}
 		if err != nil {
 			return err

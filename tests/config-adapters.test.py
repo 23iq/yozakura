@@ -67,8 +67,9 @@ QtObject {
 }""",
     "JsonAdapter": "QtObject {}",
     "JsonObject": "QtObject {}",
-    # Quickshell's loadFailed passes this enum's value (a number), not a name.
-    "FileViewError": "QtObject { enum Value { Success, Unknown, NotPermitted, FileNotFound, NotAFile } }",
+    # Quickshell's loadFailed passes this enum's value (a number), not a name;
+    # same order as Quickshell/Io/quickshell-io.qmltypes.
+    "FileViewError": "QtObject { enum Value { Success, Unknown, FileNotFound, PermissionDenied, NotAFile } }",
     "FileView": """QtObject {
     property string path
     property bool atomicWrites
@@ -290,7 +291,7 @@ check(json.loads(h.eval(mf2, "content") or "null") == {"a": 1} and h.eval(mf2, "
       "missing file without a preset: defaults written, domain ready")
 ms3 = missing_scene("enumerr")
 mf3 = h.eval(ms3, "file")
-h.eval(mf3, "loadFailed(3)")  # FileViewError.FileNotFound in the stub
+h.eval(mf3, "loadFailed(2)")  # FileViewError.FileNotFound (quickshell-io.qmltypes order)
 h.eval(ms3, "log.last.exited(1, 0)")
 check(h.eval(mf3, "ready") is True, "missing file reported as the FileViewError value: domain ready")
 

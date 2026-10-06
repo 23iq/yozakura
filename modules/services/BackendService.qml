@@ -23,10 +23,10 @@ pragma Singleton
 // connection — the user is expected to run `yozakura` (or autostart it)
 // before the shell starts.
 //
-// Dry run (DryRun.active, `<app> onboarding --dry-run`): mutating methods
-// (DryRunBackend.js table) never reach the socket; they are answered by the
-// mock, journaled, and their fake events are pushed to the subscribers.
-// Reads still go to the real daemon (their answers pass DryRunBackend.overlay).
+// Dry run (DryRun.active, `<app> onboarding --dry-run`): fail closed. Only
+// the reads allowed by DryRunMethods.js reach the daemon (their answers pass
+// DryRunBackend.overlay); every other call is answered by the mock,
+// journaled, and its fake events are pushed to the subscribers.
 Singleton {
     id: root
 
