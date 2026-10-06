@@ -3401,5 +3401,13 @@
   "onboarding.finish.installing_n.one": "Устанавливается: %1",
   "onboarding.finish.installing_n.few": "Устанавливается: %1",
   "onboarding.finish.installing_n.many": "Устанавливается: %1",
-  "onboarding.finish.installing_n.other": "Устанавливается: %1"
+  "onboarding.finish.installing_n.other": "Устанавливается: %1",
+  "prefs.bar.style.floating": "Парящая",
+  "prefs.bar.style.floating.desc": "Скруглённая панель с отступом от края",
+  "prefs.bar.style.pills": "Пилюли",
+  "prefs.bar.style.pills.desc": "Каждая группа в своей парящей пилюле",
+  "prefs.bar.style.docklike": "Как док",
+  "prefs.bar.style.docklike.desc": "По размеру содержимого, по центру",
+  "prefs.bar.style.none": "Нет",
+  "prefs.bar.style.none.desc": "Без панели; край экрана свободен"
 }

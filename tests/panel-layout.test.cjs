@@ -117,7 +117,7 @@ test('serialize round-trips through normalize', () => {
 test('style registry: every style has its component file and valid metadata', () => {
     const dir = path.join(__dirname, '..', 'modules/bar/panels');
     for (const s of Styles.STYLES) {
-        assert.ok(fs.existsSync(path.join(dir, s.file)), s.file);
+        assert.ok(s.hidden ? s.file === '' : fs.existsSync(path.join(dir, s.file)), s.file);
         assert.ok(s.edges.length > 0 && s.edges.every(e => Layout.EDGES.includes(e)), s.id);
         assert.ok(s.groups.every(g => Styles.GROUPS.includes(g)), s.id);
         assert.ok(['tab', 'pill'].includes(s.activity), s.id);

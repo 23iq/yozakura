@@ -168,7 +168,7 @@ function normalizePanel(raw, index, warnings) {
         "autohide": autohide,
         "reserve": typeof src.reserve === "boolean" ? src.reserve : true,
         "screens": screens,
-        "enabled": src.enabled !== false,
+        "enabled": src.enabled !== false && !PanelStyles.isHidden(style),
         "options": isObject(src.options) ? JSON.parse(JSON.stringify(src.options)) : {},
         "legacy": false
     };

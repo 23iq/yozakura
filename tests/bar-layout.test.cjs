@@ -53,7 +53,7 @@ test('duplicates keep the first occurrence across groups', () => {
 });
 
 test('invalid style and wrong types fall back per field', () => {
-    const result = normalize({ style: 'floating', left: 'launcher', right: [] });
+    const result = normalize({ style: 'weird', left: 'launcher', right: [] });
     assert.equal(result.style, 'classic');
     assert.deepEqual(result.left, barDefaults.layout.left);
     assert.deepEqual(result.right, []);

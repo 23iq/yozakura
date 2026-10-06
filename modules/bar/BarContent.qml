@@ -107,12 +107,24 @@ Item {
 
     // ── Groups (start/center/end/drawer + gap slots) ──
     readonly property var layoutGroups: PanelLayout.resolveGroups(spec)
-    readonly property var startIds: BarLayout.visibleIds(layoutGroups.start, { showPinButton: pinButtonVisible })
-    readonly property var centerIds: BarLayout.visibleIds(layoutGroups.center, { showPinButton: pinButtonVisible })
-    readonly property var endIds: BarLayout.visibleIds(layoutGroups.end, { showPinButton: pinButtonVisible })
-    readonly property var drawerIds: BarLayout.visibleIds(layoutGroups.drawer, { showPinButton: pinButtonVisible })
-    readonly property var gapStartIds: BarLayout.visibleIds(layoutGroups.gapStart, { showPinButton: pinButtonVisible })
-    readonly property var gapEndIds: BarLayout.visibleIds(layoutGroups.gapEnd, { showPinButton: pinButtonVisible })
+    readonly property var startIds: BarLayout.visibleIds(layoutGroups.start, {
+        showPinButton: pinButtonVisible
+    })
+    readonly property var centerIds: BarLayout.visibleIds(layoutGroups.center, {
+        showPinButton: pinButtonVisible
+    })
+    readonly property var endIds: BarLayout.visibleIds(layoutGroups.end, {
+        showPinButton: pinButtonVisible
+    })
+    readonly property var drawerIds: BarLayout.visibleIds(layoutGroups.drawer, {
+        showPinButton: pinButtonVisible
+    })
+    readonly property var gapStartIds: BarLayout.visibleIds(layoutGroups.gapStart, {
+        showPinButton: pinButtonVisible
+    })
+    readonly property var gapEndIds: BarLayout.visibleIds(layoutGroups.gapEnd, {
+        showPinButton: pinButtonVisible
+    })
 
     // ── Drawer: hidden modules revealed by hovering the end group ──
     property bool drawerHovered: false
@@ -131,7 +143,8 @@ Item {
         }
         return false;
     }
-    onDrawerIdsChanged: if (drawerIds.length === 0) drawerExpanded = false
+    onDrawerIdsChanged: if (drawerIds.length === 0)
+        drawerExpanded = false
 
     Timer {
         interval: Math.max(0, Config.notch ? Config.notch.hoverExpandDelay : 90)
@@ -158,6 +171,15 @@ Item {
         });
     }
     readonly property int islandThickness: islandsStyle && styleItem ? styleItem.implicitThickness : 0
+
+    // Reveal/hide motion of the panel body and hitbox (Motion tokens; 0 ms
+    // when motion is off)
+    readonly property var motionIn: Motion.enter
+    readonly property var motionOut: Motion.exit
+    component EdgeAnim: NumberAnimation {
+        duration: root.reveal ? root.motionIn.duration : root.motionOut.duration
+        easing.type: root.reveal ? root.motionIn.easing : root.motionOut.easing
+    }
 
     // Reveal logic
     readonly property bool reveal: {
@@ -245,13 +267,9 @@ Item {
     readonly property int barTargetWidth: orientation === "vertical" ? panelThickness : 0
     readonly property int barTargetHeight: orientation === "horizontal" ? panelThickness : 0
 
-    readonly property int totalBarWidth: barTargetWidth +
-        ((root.barPosition === "left" || root.orientation === "horizontal") ? (root.frameOffset + root.leftOuterMargin) : 0) +
-        ((root.barPosition === "right" || root.orientation === "horizontal") ? (root.frameOffset + root.rightOuterMargin) : 0)
+    readonly property int totalBarWidth: barTargetWidth + ((root.barPosition === "left" || root.orientation === "horizontal") ? (root.frameOffset + root.leftOuterMargin) : 0) + ((root.barPosition === "right" || root.orientation === "horizontal") ? (root.frameOffset + root.rightOuterMargin) : 0)
 
-    readonly property int totalBarHeight: barTargetHeight +
-        ((root.barPosition === "top" || root.orientation === "vertical") ? (root.frameOffset + root.topOuterMargin) : 0) +
-        ((root.barPosition === "bottom" || root.orientation === "vertical") ? (root.frameOffset + root.bottomOuterMargin) : 0)
+    readonly property int totalBarHeight: barTargetHeight + ((root.barPosition === "top" || root.orientation === "vertical") ? (root.frameOffset + root.topOuterMargin) : 0) + ((root.barPosition === "bottom" || root.orientation === "vertical") ? (root.frameOffset + root.bottomOuterMargin) : 0)
 
     // Depth from the screen edge (frame included) the panel occupies
     readonly property int edgeDepth: (orientation === "horizontal" ? barTargetHeight : barTargetWidth) + effectiveOuterMargin
@@ -327,33 +345,21 @@ Item {
         }
 
         Behavior on x {
-            enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && root.orientation === "vertical"
-            NumberAnimation {
-                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 4
-                easing.type: Easing.OutCubic
-            }
+            enabled: root.orientation === "vertical"
+            EdgeAnim {}
         }
         Behavior on y {
-            enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && root.orientation === "horizontal"
-            NumberAnimation {
-                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 4
-                easing.type: Easing.OutCubic
-            }
+            enabled: root.orientation === "horizontal"
+            EdgeAnim {}
         }
 
         Behavior on width {
-            enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && root.orientation === "vertical"
-            NumberAnimation {
-                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 4
-                easing.type: Easing.OutCubic
-            }
+            enabled: root.orientation === "vertical"
+            EdgeAnim {}
         }
         Behavior on height {
-            enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && root.orientation === "horizontal"
-            NumberAnimation {
-                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 4
-                easing.type: Easing.OutCubic
-            }
+            enabled: root.orientation === "horizontal"
+            EdgeAnim {}
         }
 
         // Bar content inside MouseArea (clicks pass through to children)
@@ -397,11 +403,7 @@ Item {
             // Opacity animation
             opacity: root.reveal ? 1 : 0
             Behavior on opacity {
-                enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
-                NumberAnimation {
-                    duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
-                    easing.type: Easing.OutCubic
-                }
+                EdgeAnim {}
             }
 
             // Slide animation
@@ -425,18 +427,10 @@ Item {
                     return 0;
                 }
                 Behavior on x {
-                    enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
-                    NumberAnimation {
-                        duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
-                        easing.type: Easing.OutCubic
-                    }
+                    EdgeAnim {}
                 }
                 Behavior on y {
-                    enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
-                    NumberAnimation {
-                        duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
-                        easing.type: Easing.OutCubic
-                    }
+                    EdgeAnim {}
                 }
             }
 

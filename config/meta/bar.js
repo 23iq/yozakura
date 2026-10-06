@@ -133,7 +133,7 @@ var keys = {
     },
     "layout.style": {
         "enum": Enums.BAR_STYLES,
-        "description": "Panel style of the legacy single bar (see bar.panels for every style)."
+        "description": "Look of the bar (spec bar.style): classic (full width), floating, islands (edge tabs), pills, dock-like or none (no bar, nothing reserved); bar.panels entries take the same styles."
     },
     "layout.left": {
         "items": {

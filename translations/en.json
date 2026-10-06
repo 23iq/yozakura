@@ -3385,5 +3385,13 @@
   "onboarding.finish.exclusive.failed": "Couldn't make %1 the only shell",
   "onboarding.finish.exclusive.failed.body": "%1 — see Settings → System.",
   "onboarding.finish.installing_n.one": "%1 installing",
-  "onboarding.finish.installing_n.other": "%1 installing"
+  "onboarding.finish.installing_n.other": "%1 installing",
+  "prefs.bar.style.floating": "Floating",
+  "prefs.bar.style.floating.desc": "A rounded bar lifted off the edge",
+  "prefs.bar.style.pills": "Pills",
+  "prefs.bar.style.pills.desc": "Each group in its own floating pill",
+  "prefs.bar.style.docklike": "Dock-like",
+  "prefs.bar.style.docklike.desc": "Sized to its content and centered",
+  "prefs.bar.style.none": "None",
+  "prefs.bar.style.none.desc": "No bar; the screen edge stays free"
 }

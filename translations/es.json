@@ -3385,5 +3385,13 @@
   "onboarding.finish.exclusive.failed": "No se pudo hacer de %1 el único shell",
   "onboarding.finish.exclusive.failed.body": "%1 — consulta Ajustes → Sistema.",
   "onboarding.finish.installing_n.one": "%1 instalándose",
-  "onboarding.finish.installing_n.other": "%1 instalándose"
+  "onboarding.finish.installing_n.other": "%1 instalándose",
+  "prefs.bar.style.floating": "Flotante",
+  "prefs.bar.style.floating.desc": "Una barra redondeada separada del borde",
+  "prefs.bar.style.pills": "Píldoras",
+  "prefs.bar.style.pills.desc": "Cada grupo en su propia píldora flotante",
+  "prefs.bar.style.docklike": "Tipo dock",
+  "prefs.bar.style.docklike.desc": "Ajustada a su contenido y centrada",
+  "prefs.bar.style.none": "Ninguna",
+  "prefs.bar.style.none.desc": "Sin barra; el borde de la pantalla queda libre"
 }

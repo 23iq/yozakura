@@ -23,6 +23,9 @@ PanelStyleBase {
     readonly property int contentImplicitWidth: contentItem ? contentItem.implicitWidth : 0
     readonly property int contentImplicitHeight: contentItem ? contentItem.implicitHeight : 0
 
+    // Corner radius of the strip; -1 = theme default ("floating" rounds it)
+    property real stripRadius: -1
+
     // Outer ends of the groups, for live activities
     property real classicStartReach: 0
     property real classicEndReach: 0
@@ -34,6 +37,7 @@ PanelStyleBase {
         // options.surface: "bar" (default, theme bar background) or "bg"
         variant: classic.b && classic.b.options && classic.b.options.surface === "bg" ? "bg" : "barbg"
         effectiveContainBar: classic.b ? classic.b.contained : false
+        radiusOverride: classic.stripRadius
 
         Loader {
             id: horizontalLoader
