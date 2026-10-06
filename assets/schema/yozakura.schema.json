@@ -5810,27 +5810,6 @@
       "type": "object",
       "x-file": "config/notch.json",
       "properties": {
-        "theme": {
-          "title": "Style",
-          "type": "string",
-          "default": "default",
-          "description": "Attached to the screen edge, or a floating island.",
-          "x-settings": {
-            "category": "notch",
-            "section": "notch",
-            "label": "prefs.notch.theme",
-            "control": "selector",
-            "keywords": "notch style island attached floating"
-          },
-          "enum": [
-            "default",
-            "island"
-          ],
-          "x-enumLabels": {
-            "default": "Default",
-            "island": "Island"
-          }
-        },
         "position": {
           "title": "Position",
           "type": "string",
@@ -5850,6 +5829,29 @@
           "x-enumLabels": {
             "top": "Top",
             "bottom": "Bottom"
+          }
+        },
+        "align": {
+          "title": "Alignment",
+          "type": "string",
+          "default": "center",
+          "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
+          "x-settings": {
+            "category": "notch",
+            "section": "notch",
+            "label": "prefs.notch.align",
+            "control": "selector",
+            "keywords": "notch align alignment left right corner start center end"
+          },
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ],
+          "x-enumLabels": {
+            "start": "Start",
+            "center": "Center",
+            "end": "End"
           }
         },
         "hoverRegionHeight": {
@@ -6034,27 +6036,81 @@
           "title": "Style",
           "type": "string",
           "default": "attached",
-          "description": "Notch look: attached to the screen edge or floating as an island.",
+          "description": "Attached to the screen edge, a floating island, or a pill that shrinks to a dot when idle.",
+          "x-settings": {
+            "category": "notch",
+            "section": "notch",
+            "label": "prefs.notch.theme",
+            "control": "selector",
+            "keywords": "notch style island attached floating pill dot minimal"
+          },
           "enum": [
             "attached",
-            "floating"
-          ]
+            "island",
+            "pill"
+          ],
+          "x-enumLabels": {
+            "attached": "Attached",
+            "island": "Island",
+            "pill": "Pill"
+          }
         },
         "activities": {
-          "title": "Activities",
+          "title": "Island activities",
           "type": "array",
           "default": [],
-          "description": "Live activities (ids) the notch may show, in priority order; empty = none.",
-          "items": {
-            "type": "string"
+          "description": "What the island shows and where. Drag to reorder, choose a side, switch each one on or off.",
+          "x-settings": {
+            "category": "notch",
+            "section": "activities",
+            "label": "prefs.notch.island_activities",
+            "control": "custom",
+            "component": "IslandActivitiesEditor",
+            "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
           },
-          "uniqueItems": true
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "enum": [
+                  "media",
+                  "privacy",
+                  "osd",
+                  "battery",
+                  "bluetooth",
+                  "timers",
+                  "tasks",
+                  "extras"
+                ]
+              },
+              "side": {
+                "enum": [
+                  "leading",
+                  "trailing",
+                  "center"
+                ]
+              },
+              "enabled": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
         },
         "osd": {
-          "title": "Osd",
+          "title": "Volume and brightness in the island",
           "type": "boolean",
           "default": false,
-          "description": "Show volume and brightness changes in the notch instead of the OSD overlay."
+          "description": "Show volume, microphone and brightness changes as a short level in the island.",
+          "x-settings": {
+            "category": "notch",
+            "section": "activities",
+            "label": "prefs.notch.osd",
+            "control": "toggle",
+            "keywords": "osd volume brightness island notch"
+          }
         }
       },
       "additionalProperties": false
@@ -6067,14 +6123,25 @@
       "x-file": "config/notifications.json",
       "properties": {
         "notchStyle": {
-          "title": "Notch style",
+          "title": "Notifications in the island",
           "type": "string",
           "default": "card",
-          "description": "Look of notch-born toasts: a full card or a compact pill.",
+          "description": "A full card, or one compact line that unfolds on hover.",
+          "x-settings": {
+            "category": "notch",
+            "section": "activities",
+            "label": "prefs.notifications.notch_style",
+            "control": "selector",
+            "keywords": "notification notch compact card one line"
+          },
           "enum": [
             "card",
-            "pill"
-          ]
+            "compact"
+          ],
+          "x-enumLabels": {
+            "card": "Card",
+            "compact": "Compact"
+          }
         },
         "presentation": {
           "title": "Style",

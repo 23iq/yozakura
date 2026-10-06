@@ -417,7 +417,10 @@ Singleton {
 
     // Notch configuration
     property NotchAdapter notch: notchLoader.adapter
-    property string notchTheme: notch.theme
+    // Legacy two-way look ("default" = attached, "island" = floating)
+    // for code that predates notch.style (pill floats like the island).
+    property string notchStyle: notch.style
+    property string notchTheme: notch.style === "attached" ? "default" : "island"
     property string notchPosition: notch.position
 
     onNotchPositionChanged: {

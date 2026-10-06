@@ -4,7 +4,8 @@
 //   e = { screen: {w, h}, frame: px,
 //         bar:   {pos, size, visible}, dock: {pos, size, visible},
 //         notch: {pos, height, visible} }
-// where pos is "top" | "bottom" | "left" | "right" (notch: top | bottom).
+// where pos is "top" | "bottom" | "left" | "right" and notch.align is
+// "start" | "center" | "end".
 
 var OPPOSITE = { top: "bottom", bottom: "top", left: "right", right: "left" };
 var VERTICAL = { left: true, right: true };
@@ -164,4 +165,48 @@ function freeCorner(e, pref) {
         }
     }
     return best;
+}
+
+// Direction the notch's panels open in: toward the screen center.
+function notchOpenDir(pos) {
+    return { top: "down", bottom: "up", left: "right", right: "left" }[pos] || "down";
+}
+
+// Rect of a notch of `size` = {along, across} (along the edge / away from
+// it) on e.notch.pos, aligned start | center | end (e.notch.align) along
+// the edge. Center is the screen center; start/end hug the ends left free
+// by a bar or dock on the perpendicular edges. A start notch keeps its
+// start when it grows, an end notch its end, a centered one its center,
+// so panels always grow toward the middle of the screen.
+function notchRect(e, size) {
+    var n = e.notch || {};
+    var pos = OPPOSITE[n.pos] ? n.pos : "top";
+    var vertical = !!VERTICAL[pos];
+    var s = e.screen;
+    var total = vertical ? s.h : s.w;
+    var lo = vertical ? "top" : "left";
+    var hi = vertical ? "bottom" : "right";
+    function reserved(edge) {
+        var r = e.frame || 0;
+        if (e.bar && e.bar.visible && e.bar.pos === edge)
+            r += e.bar.size;
+        if (e.dock && e.dock.visible && e.dock.pos === edge)
+            r += e.dock.size;
+        return r;
+    }
+    var min = reserved(lo);
+    var max = total - reserved(hi);
+    var along = Math.min(size.along, total);
+    var start;
+    if (n.align === "start")
+        start = min;
+    else if (n.align === "end")
+        start = max - along;
+    else
+        start = (total - along) / 2;
+    start = Math.round(_clamp(start, Math.min(min, total - along), Math.max(0, max - along)));
+    var across = Math.min(size.across, vertical ? s.w : s.h);
+    if (vertical)
+        return { x: pos === "left" ? 0 : s.w - across, y: start, w: across, h: along, vertical: true, dir: notchOpenDir(pos) };
+    return { x: start, y: pos === "top" ? 0 : s.h - across, w: along, h: across, vertical: false, dir: notchOpenDir(pos) };
 }

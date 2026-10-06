@@ -31,6 +31,8 @@ import QtQuick
 QtObject { function resolveColor(c) { return c; } property QtObject performance: QtObject { property bool blurTransition: false }; property QtObject theme: QtObject { property QtObject srBg: QtObject { property var border: ["white", 1] } }; property int animDuration: 160; property bool showBackground: true; property int roundness: 12; property string notchTheme: "island"; property string notchPosition: "top"; property QtObject bar: QtObject { property string position: "top" }; property QtObject notch: QtObject { property bool disableHoverExpansion: false; property int hoverExpandDelay: 90; property int hoverCollapseDelay: 200; property int expandedMediaWidth: 440; property int expandedArtworkSize: 64; property int microphoneNoticeDuration: 1800; property int mediaAnimationDuration: 160; property string customText: "Yozakura"; property bool visualizer: true } }'''})
  module('qs.modules.theme',{
  'BarMetrics':(repo/'modules/theme/BarMetrics.qml').read_text(),
+ 'Metrics':'pragma Singleton\nimport QtQuick\nQtObject { property int spacing: 8 }',
+ 'Motion':'pragma Singleton\nimport QtQuick\nQtObject { property QtObject enter: QtObject { property int duration: 0; property int easing: Easing.OutCubic }; property QtObject exit: QtObject { property int duration: 0; property int easing: Easing.OutCubic }; property QtObject morph: QtObject { property int duration: 0; property int easing: Easing.OutCubic } }',
  'Styling':'''pragma Singleton
 import QtQuick
 QtObject { property string defaultFont: "Sans"; function fontSize(n) { return 14+n; } function radius(n) { return 12+n; } function srItem(n) { return "white"; } }''',
@@ -95,9 +97,14 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  for n in ['Notch', 'NotchViewTransition']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)
  for n in names: shutil.copy(repo/'modules/widgets/defaultview'/(n+'.qml'),children)
  shutil.copy(repo/'modules/widgets/defaultview/IslandMedia.js',children)
+ (children/'activities').mkdir()
+ (children/'styles').mkdir()
+ shutil.copy(repo/'modules/notch/styles/NotchStyles.js', children/'styles')
+ shutil.copy(notchActs/'ActivityRegistry.js', children/'activities')
  # Notch panels module; MediaPanel reaches ExpandedMedia through '..'
  dv=p/'qs/modules/widgets/defaultview'; dv.mkdir(parents=True, exist_ok=True)
- for f in children.iterdir(): shutil.copy(f, dv)
+ for f in children.iterdir():
+     if f.is_file(): shutil.copy(f, dv)
  panels_src=repo/'modules/widgets/defaultview/panels'
  module('qs.modules.widgets.defaultview.panels', {f.stem: f.read_text() for f in sorted(panels_src.glob('*.qml'))})
  shutil.copy(panels_src/'NotchPanels.js', dv/'panels')

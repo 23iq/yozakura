@@ -11,6 +11,7 @@ import qs.modules.components
 import qs.modules.notifications
 import qs.config
 import "../notifications/notification_utils.js" as NotificationUtils
+import "NotchNotificationStyles.js" as NotchNotificationStyles
 
 Item {
     id: root
@@ -161,6 +162,18 @@ Item {
             // Resetear contadores
             timestampUpdateCounter = 0;
         }
+    }
+
+    // The current notification follows hover and the minute tick
+    Binding {
+        target: notificationStack.currentItem
+        property: "hovered"
+        value: root.hovered
+    }
+    Binding {
+        target: notificationStack.currentItem
+        property: "timestampUpdateCounter"
+        value: root.timestampUpdateCounter
     }
 
     Column {
@@ -368,396 +381,43 @@ Item {
                     id: notificationComponent
 
                     Item {
+                        id: slot
                         width: notificationStack.width
-                        implicitHeight: notificationContent.implicitHeight
+                        implicitHeight: styleLoader.implicitHeight
 
                         property var notification
+                        // Fed by the view's Bindings on the current item
+                        property bool hovered: false
+                        property int timestampUpdateCounter: 0
 
-                        Column {
-                            id: notificationContent
+                        // notifications.notchStyle (NotchNotificationStyles.js)
+                        Loader {
+                            id: styleLoader
                             width: parent.width
-                            spacing: hovered ? 8 : 0
-
-                            Behavior on spacing {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Easing.OutBack
-                                    easing.overshoot: 1.2
-                                }
-                            }
-
-                            // Contenido principal de la notificación
-                            Item {
-                                width: parent.width
-                                property int criticalMargins: hovered && notification && notification.urgency == NotificationUrgency.Critical ? 16 : 0
-                                implicitHeight: mainContentRow.implicitHeight + (criticalMargins * 2)
-
-                                Behavior on criticalMargins {
-                                    enabled: Config.animDuration > 0
-                                    NumberAnimation {
-                                        duration: Config.animDuration
-                                        easing.type: Easing.OutQuart
-                                    }
-                                }
-
-                                DiagonalStripePattern {
-                                    id: notchStripeContainer
-                                    anchors.fill: parent
-                                    visible: notification && notification.urgency == NotificationUrgency.Critical
-                                    radius: Styling.radius(4)
-                                    animationRunning: visible
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    acceptedButtons: Qt.LeftButton
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        if (notification) Notifications.activateNotification(notification.id);
-                                    }
-                                }
-
-                                RowLayout {
-                                    id: mainContentRow
-                                    anchors.fill: parent
-                                    anchors.topMargin: parent.criticalMargins
-                                    anchors.bottomMargin: parent.criticalMargins
-                                    anchors.leftMargin: parent.criticalMargins > 0 ? 8 : 0
-                                    anchors.rightMargin: parent.criticalMargins > 0 ? 8 : 0
-                                    implicitHeight: Math.max(hovered ? 48 : 32, textContainer.implicitHeight)
-                                    spacing: 8
-
-                                    // Contenido principal
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 8
-
-                                        // App icon
-                                        NotificationAppIcon {
-                                            id: appIcon
-                                            property int iconSize: hovered ? 48 : 32
-                                            Layout.preferredWidth: iconSize
-                                            Layout.preferredHeight: iconSize
-                                            Layout.alignment: Qt.AlignTop
-                                            size: iconSize
-                                            radius: Styling.radius(4)
-                                            appName: notification ? notification.appName : ""
-                                            appIcon: notification ? (notification.cachedAppIcon || notification.appIcon) : ""
-                                            image: notification ? (notification.cachedImage || notification.image) : ""
-                                            summary: notification ? notification.summary : ""
-                                            urgency: notification ? notification.urgency : NotificationUrgency.Normal
-
-                                            Behavior on iconSize {
-                                                enabled: Config.animDuration > 0
-                                                NumberAnimation {
-                                                    duration: Config.animDuration
-                                                    easing.type: Easing.OutQuart
-                                                }
-                                            }
-                                        }
-
-                                        // Textos de la notificación
-                                        Item {
-                                            id: textContainer
-                                            Layout.fillWidth: true
-                                            implicitHeight: hovered ? textColumnExpanded.implicitHeight : textRowCollapsed.implicitHeight
-
-                                            Column {
-                                                id: textColumnExpanded
-                                                width: parent.width
-                                                spacing: 4
-                                                visible: hovered
-
-                                                // Fila del summary, app name y timestamp
-                                                RowLayout {
-                                                    width: parent.width
-                                                    spacing: 4
-
-                                                    // Contenedor izquierdo para summary y app name
-                                                    Row {
-                                                        id: leftTextsContainer
-                                                        Layout.fillWidth: true
-                                                        Layout.minimumWidth: 0
-                                                        spacing: 4
-
-                                                        Text {
-                                                            id: summaryText
-                                                            property real combinedImplicitWidth: implicitWidth + (appNameText.visible ? appNameText.implicitWidth + parent.spacing : 0)
-                                                            width: {
-                                                                if (combinedImplicitWidth <= leftTextsContainer.width) {
-                                                                    return implicitWidth;
-                                                                }
-                                                                return leftTextsContainer.width - (appNameText.visible ? appNameText.width + parent.spacing : 0);
-                                                            }
-                                                            text: notification ? notification.summary : ""
-                                                            font.family: Config.theme.font
-                                                            font.pixelSize: Config.theme.fontSize
-                                                            font.weight: Font.Bold
-                                                            font.underline: notification && notification.urgency == NotificationUrgency.Critical && hovered
-                                                            color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Styling.srItem("overprimary")
-                                                            elide: Text.ElideRight
-                                                            maximumLineCount: 1
-                                                            wrapMode: Text.NoWrap
-                                                            verticalAlignment: Text.AlignVCenter
-                                                        }
-
-                                                        Text {
-                                                            id: appNameText
-                                                            property real availableWidth: leftTextsContainer.width - summaryText.implicitWidth - (visible ? parent.spacing : 0)
-                                                            width: {
-                                                                if (summaryText.combinedImplicitWidth <= leftTextsContainer.width) {
-                                                                    return implicitWidth;
-                                                                }
-                                                                return Math.min(implicitWidth, Math.max(60, availableWidth, leftTextsContainer.width * 0.3));
-                                                            }
-                                                            text: notification ? "• " + notification.appName : ""
-                                                            font.family: Config.theme.font
-                                                            font.pixelSize: Config.theme.fontSize
-                                                            font.weight: Font.Bold
-                                                            color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.outline
-                                                            elide: Text.ElideRight
-                                                            maximumLineCount: 1
-                                                            wrapMode: Text.NoWrap
-                                                            verticalAlignment: Text.AlignVCenter
-                                                            visible: text !== ""
-                                                        }
-                                                    }
-
-                                                    // Timestamp a la derecha
-                                                    Text {
-                                                        id: timestampText
-                                                        // Usar timestampUpdateCounter para forzar re-evaluación cada minuto
-                                                        text: notification ? (root.timestampUpdateCounter, NotificationUtils.getFriendlyNotifTimeString(notification.time)) : ""
-                                                        font.family: Config.theme.font
-                                                        font.pixelSize: Config.theme.fontSize
-                                                        font.weight: Font.Bold
-                                                        color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.outline
-                                                        verticalAlignment: Text.AlignVCenter
-                                                        visible: text !== ""
-                                                    }
-                                                }
-
-                                                Text {
-                                                    width: parent.width
-                                                    text: notification ? processNotificationBody(notification.body, notification.appName) : ""
-                                                    font.family: Config.theme.font
-                                                    font.pixelSize: Config.theme.fontSize
-                                                    font.weight: notification && notification.urgency == NotificationUrgency.Critical ? Font.Bold : Font.Normal
-                                                    color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.overBackground
-                                                    wrapMode: Text.Wrap
-                                                    maximumLineCount: 3
-                                                    elide: Text.ElideRight
-                                                    visible: text !== ""
-                                                }
-                                            }
-
-                                            Row {
-                                                id: textRowCollapsed
-                                                width: parent.width
-                                                spacing: 4
-                                                visible: !hovered
-
-                                                Text {
-                                                    id: summaryCollapsed
-                                                    property real combinedImplicitWidth: implicitWidth + (bodyCollapsed.visible ? bodyCollapsed.implicitWidth + bulletCollapsed.implicitWidth + parent.spacing * 2 : 0)
-                                                    width: {
-                                                        if (combinedImplicitWidth <= parent.width) {
-                                                            return implicitWidth;
-                                                        }
-                                                        return parent.width - (bodyCollapsed.visible ? bodyCollapsed.width + bulletCollapsed.width + parent.spacing * 2 : 0);
-                                                    }
-                                                    text: notification ? notification.summary : ""
-                                                    font.family: Config.theme.font
-                                                    font.pixelSize: Config.theme.fontSize
-                                                    font.weight: Font.Bold
-                                                    color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Styling.srItem("overprimary")
-                                                    elide: Text.ElideRight
-                                                    maximumLineCount: 1
-                                                    wrapMode: Text.NoWrap
-                                                    verticalAlignment: Text.AlignVCenter
-                                                }
-
-                                                Text {
-                                                    id: bulletCollapsed
-                                                    text: "•"
-                                                    font.family: Config.theme.font
-                                                    font.pixelSize: Config.theme.fontSize
-                                                    font.weight: Font.Bold
-                                                    color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.outline
-                                                    verticalAlignment: Text.AlignVCenter
-                                                    visible: notification && notification.body && notification.body.length > 0
-                                                }
-
-                                                Text {
-                                                    id: bodyCollapsed
-                                                    property real availableWidth: parent.width - summaryCollapsed.implicitWidth - (visible ? bulletCollapsed.implicitWidth + parent.spacing * 2 : 0)
-                                                    width: {
-                                                        if (summaryCollapsed.combinedImplicitWidth <= parent.width) {
-                                                            return implicitWidth;
-                                                        }
-                                                        return Math.min(implicitWidth, Math.max(60, availableWidth, parent.width * 0.3));
-                                                    }
-                                                    text: notification ? processNotificationBody(notification.body || "").replace(/\n/g, ' ') : ""
-                                                    font.family: Config.theme.font
-                                                    font.pixelSize: Config.theme.fontSize
-                                                    font.weight: notification && notification.urgency == NotificationUrgency.Critical ? Font.Bold : Font.Normal
-                                                    color: notification && notification.urgency == NotificationUrgency.Critical ? Colors.criticalText : Colors.overBackground
-                                                    wrapMode: Text.NoWrap
-                                                    elide: Text.ElideRight
-                                                    maximumLineCount: 1
-                                                    verticalAlignment: Text.AlignVCenter
-                                                    visible: text.length > 0
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    // Botón de descartar
-                                    Item {
-                                        property int buttonSize: hovered ? 24 : 0
-                                        Layout.preferredWidth: buttonSize
-                                        Layout.preferredHeight: buttonSize
-                                        Layout.alignment: Qt.AlignTop
-                                        z: 200
-
-                                        Behavior on buttonSize {
-                                            enabled: Config.animDuration > 0
-                                            NumberAnimation {
-                                                duration: Config.animDuration
-                                                easing.type: Easing.OutQuart
-                                            }
-                                        }
-
-                                        Loader {
-                                            anchors.fill: parent
-                                            active: hovered
-
-                                            sourceComponent: Button {
-                                                id: dismissButton
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                z: 200
-
-                                                background: Item {
-                                                    id: notchDismissBg
-                                                    property color iconColor: notification && notification.urgency == NotificationUrgency.Critical ? Colors.shadow : (dismissButton.pressed ? Colors.overError : Colors.error)
-
-                                                    Rectangle {
-                                                        anchors.fill: parent
-                                                        visible: notification && notification.urgency == NotificationUrgency.Critical
-                                                        color: parent.parent.hovered ? Qt.lighter(Colors.criticalRed, 1.3) : Colors.criticalRed
-                                                        radius: Styling.radius(4)
-
-                                                        Behavior on color {
-                                                            enabled: Config.animDuration > 0
-                                                            ColorAnimation {
-                                                                duration: Config.animDuration
-                                                            }
-                                                        }
-                                                    }
-
-                                                    StyledRect {
-                                                        id: notchDismissStyled
-                                                        anchors.fill: parent
-                                                        visible: !(notification && notification.urgency == NotificationUrgency.Critical)
-                                                        variant: parent.parent.pressed ? "error" : (parent.parent.hovered ? "focus" : "common")
-                                                        radius: Styling.radius(4)
-                                                    }
-                                                }
-
-                                                contentItem: Text {
-                                                    text: Icons.cancel
-                                                    textFormat: Text.RichText
-                                                    font.family: Icons.font
-                                                    font.pixelSize: 16
-                                                    color: notchDismissBg.iconColor
-                                                    horizontalAlignment: Text.AlignHCenter
-                                                    verticalAlignment: Text.AlignVCenter
-                                                }
-
-                                                onClicked: {
-                                                    if (notification) {
-                                                        Notifications.discardNotification(notification.id);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Botones de acción (solo visible con hover)
-                            Item {
-                                id: actionButtonsRow
-                                width: parent.width
-                                implicitHeight: (hovered && notification && notification.actions.length > 0 && !notification.isCached) ? 32 : 0
-                                height: implicitHeight
-                                visible: implicitHeight > 0
-                                clip: true
-                                z: 200
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    spacing: 4
-
-                                    Repeater {
-                                        model: notification ? notification.actions : []
-
-                                        Button {
-                                            Layout.fillWidth: true
-                                            Layout.preferredHeight: 32
-                                            z: 200
-
-                                            text: modelData.text
-                                            font.family: Config.theme.font
-                                            font.pixelSize: Config.theme.fontSize
-                                            font.weight: Font.Bold
-                                            hoverEnabled: true
-
-                                            background: Item {
-                                                id: notchActionBg
-                                                property color textColor: notification && notification.urgency == NotificationUrgency.Critical ? Colors.shadow : notchActionStyled.item
-
-                                                Rectangle {
-                                                    anchors.fill: parent
-                                                    visible: notification && notification.urgency == NotificationUrgency.Critical
-                                                    color: parent.parent.hovered ? Qt.lighter(Colors.criticalRed, 1.3) : Colors.criticalRed
-                                                    radius: Styling.radius(4)
-
-                                                    Behavior on color {
-                                                        enabled: Config.animDuration > 0
-                                                        ColorAnimation {
-                                                            duration: Config.animDuration
-                                                        }
-                                                    }
-                                                }
-
-                                                StyledRect {
-                                                    id: notchActionStyled
-                                                    anchors.fill: parent
-                                                    visible: !(notification && notification.urgency == NotificationUrgency.Critical)
-                                                    variant: parent.parent.pressed ? "primary" : (parent.parent.hovered ? "focus" : "common")
-                                                    radius: Styling.radius(4)
-                                                }
-                                            }
-
-                                            contentItem: Text {
-                                                text: parent.text
-                                                font: parent.font
-                                                color: notchActionBg.textColor
-                                                horizontalAlignment: Text.AlignHCenter
-                                                verticalAlignment: Text.AlignVCenter
-                                                elide: Text.ElideRight
-                                            }
-
-                                            onClicked: {
-                                                Notifications.attemptInvokeAction(notification.id, modelData.identifier);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                            sourceComponent: NotchNotificationStyles.isCompact(Config.notifications ? Config.notifications.notchStyle : "") ? compactStyle : cardStyle
+                        }
+                        Binding {
+                            target: styleLoader.item
+                            property: "notification"
+                            value: slot.notification
+                        }
+                        Binding {
+                            target: styleLoader.item
+                            property: "hovered"
+                            value: slot.hovered
+                        }
+                        Binding {
+                            target: styleLoader.item
+                            property: "timestampUpdateCounter"
+                            value: slot.timestampUpdateCounter
+                        }
+                        Component {
+                            id: cardStyle
+                            NotchNotificationCard {}
+                        }
+                        Component {
+                            id: compactStyle
+                            CompactNotification {}
                         }
                     }
                 }
@@ -852,30 +512,5 @@ Item {
                 }
             }
         }
-    }
-
-    // Función auxiliar para procesar el cuerpo de la notificación
-    function processNotificationBody(body, appName) {
-        if (!body)
-            return "";
-
-        let processedBody = body;
-
-        // Limpiar notificaciones de navegadores basados en Chromium
-        if (appName) {
-            const lowerApp = appName.toLowerCase();
-            const chromiumBrowsers = ["brave", "chrome", "chromium", "vivaldi", "opera", "microsoft edge"];
-
-            if (chromiumBrowsers.some(name => lowerApp.includes(name))) {
-                const lines = body.split('\n\n');
-
-                if (lines.length > 1 && lines[0].startsWith('<a')) {
-                    processedBody = lines.slice(1).join('\n\n');
-                }
-            }
-        }
-
-        // No reemplazar saltos de línea con espacios
-        return processedBody;
     }
 }

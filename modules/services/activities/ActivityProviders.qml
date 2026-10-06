@@ -11,6 +11,8 @@ Singleton {
     readonly property var all: [
         // Activities
         RecordingActivity, PrivacyActivity, TimerActivity, TasksActivity,
+        // Ephemeral island activities (notch.activities)
+        OsdActivity, BatteryActivity, BluetoothActivity,
         // Transfers (shown together as "downloads")
-        NotificationProgressActivity, JobViewActivity, BrowserDownloadsActivity, SteamActivity, TerminalDownloadsActivity, FileOpsActivity, PackagesActivity, TorrentsActivity, Aria2Activity, SyncthingActivity, LaunchersActivity]
+        NotificationProgressActivity, JobViewActivity, BrowserDownloadsActivity, SteamActivity, TerminalDownloadsActivity, FileOpsActivity, PackagesActivity, TorrentsActivity, Aria2Activity, SyncthingActivity, LaunchersActivity, ExtrasActivity]
 }

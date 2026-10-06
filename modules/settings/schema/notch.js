@@ -15,21 +15,25 @@ var category = {
             "title": "prefs.notch.section.notch",
             "entries": [
                 {
-                    "key": "notch.theme",
+                    "key": "notch.style",
                     "type": "selector",
                     "options": [
                         {
-                            "value": "default",
-                            "label": "common.default"
+                            "value": "attached",
+                            "label": "prefs.notch.style.attached"
                         },
                         {
                             "value": "island",
                             "label": "shell.dock.island"
+                        },
+                        {
+                            "value": "pill",
+                            "label": "prefs.notch.style.pill"
                         }
                     ],
                     "label": "prefs.notch.theme",
                     "description": "prefs.notch.theme.desc",
-                    "keywords": "notch style island attached floating"
+                    "keywords": "notch style island attached floating pill dot minimal"
                 },
                 {
                     "key": "notch.position",
@@ -49,6 +53,27 @@ var category = {
                     "label": "prefs.notch.position",
                     "description": "prefs.notch.position.desc",
                     "keywords": "notch position top bottom edge"
+                },
+                {
+                    "key": "notch.align",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "start",
+                            "label": "prefs.notch.align.start"
+                        },
+                        {
+                            "value": "center",
+                            "label": "prefs.notch.align.center"
+                        },
+                        {
+                            "value": "end",
+                            "label": "prefs.notch.align.end"
+                        }
+                    ],
+                    "label": "prefs.notch.align",
+                    "description": "prefs.notch.align.desc",
+                    "keywords": "notch align alignment left right corner start center end"
                 },
                 {
                     "key": "notch.expandOn",
@@ -147,6 +172,38 @@ var category = {
             "id": "activities",
             "title": "prefs.notch.section.activities",
             "entries": [
+                {
+                    "key": "notch.activities",
+                    "type": "custom",
+                    "component": "IslandActivitiesEditor",
+                    "label": "prefs.notch.island_activities",
+                    "description": "prefs.notch.island_activities.desc",
+                    "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
+                },
+                {
+                    "key": "notch.osd",
+                    "type": "toggle",
+                    "label": "prefs.notch.osd",
+                    "description": "prefs.notch.osd.desc",
+                    "keywords": "osd volume brightness island notch"
+                },
+                {
+                    "key": "notifications.notchStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "card",
+                            "label": "prefs.notifications.notch_style.card"
+                        },
+                        {
+                            "value": "compact",
+                            "label": "prefs.notifications.notch_style.compact"
+                        }
+                    ],
+                    "label": "prefs.notifications.notch_style",
+                    "description": "prefs.notifications.notch_style.desc",
+                    "keywords": "notification notch compact card one line"
+                },
                 {
                     "key": "bar.activities",
                     "type": "custom",

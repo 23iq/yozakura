@@ -62,6 +62,8 @@ d = h.module("qs.modules.widgets.defaultview.activities", {f.stem: f.read_text()
 for n in ["DefaultView", "IslandHeader"]:
     h.copy(f"modules/widgets/defaultview/{n}.qml", siblings=False)
 h.copy("modules/widgets/defaultview/IslandMedia.js", siblings=False)
+(h.root / "app/activities").mkdir(exist_ok=True)
+(h.root / "app/activities/ActivityRegistry.js").write_text((acts_dir / "ActivityRegistry.js").read_text())
 panels_src = REPO / "modules/widgets/defaultview/panels"
 pd = h.module("qs.modules.widgets.defaultview.panels", {f.stem: f.read_text() for f in sorted(panels_src.glob("*.qml")) if f.stem != "MediaPanel"})
 (pd / "NotchPanels.js").write_text((panels_src / "NotchPanels.js").read_text())

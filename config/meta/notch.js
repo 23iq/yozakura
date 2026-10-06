@@ -6,11 +6,12 @@
 var description = "The notch (dynamic island): style, edge, hover/click expansion, media preview and what it shows when idle.";
 
 var keys = {
-    "theme": {
-        "enum": Enums.NOTCH_THEMES
-    },
     "position": {
         "enum": Enums.VERTICAL_EDGES
+    },
+    "align": {
+        "enum": Enums.ALIGNS,
+        "description": "Where the notch sits along its edge: start, center or end."
     },
     "hoverRegionHeight": {
         "min": 0,
@@ -60,15 +61,26 @@ var keys = {
         "description": "How long the microphone mute/unmute notice stays."
     },
     "style": {
-        "enum": ["attached", "floating"],
-        "description": "Notch look: attached to the screen edge or floating as an island."
+        "enum": Enums.NOTCH_STYLES,
+        "description": "Notch look: attached to the screen edge, a floating island, or a pill that collapses to a dot when idle."
     },
     "activities": {
         "items": {
-            "type": "string"
+            "type": "object",
+            "properties": {
+                "id": {
+                    "enum": ["media", "privacy", "osd", "battery", "bluetooth", "timers", "tasks", "extras"]
+                },
+                "side": {
+                    "enum": ["leading", "trailing", "center"]
+                },
+                "enabled": {
+                    "type": "boolean"
+                }
+            },
+            "required": ["id"]
         },
-        "uniqueItems": true,
-        "description": "Live activities (ids) the notch may show, in priority order; empty = none."
+        "description": "Order, side and on/off of the island's activities ({id, side, enabled}); missing ids use the registry defaults."
     },
     "osd": {
         "description": "Show volume and brightness changes in the notch instead of the OSD overlay."

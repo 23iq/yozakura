@@ -40,6 +40,7 @@ Singleton {
             "notch": {
                 "pos": notch && notch.position ? notch.position : "top",
                 "height": BarMetrics.notchRestHeight,
+                "align": notch && notch.align ? notch.align : "center",
                 "visible": vis.notch ?? true
             }
         };
@@ -71,6 +72,12 @@ Singleton {
 
     function osdPlacement(screen, pref, size) {
         return EdgeLayout.osdPlacement(envFor(screen), pref || "auto", size);
+    }
+
+    // Notch of `size` {along, across} on its edge, aligned (notch.align);
+    // `.dir` is where its panels open (toward the screen center)
+    function notchRect(screen, size) {
+        return EdgeLayout.notchRect(envFor(screen), size);
     }
 
     function freeCorner(screen, pref) {

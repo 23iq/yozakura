@@ -375,6 +375,24 @@ notice = ev('w.findItem("aboutNoticeText")')
 check(notice is not None and h.eval(notice, "visible") and h.eval(legal, "noticePath").endswith("/NOTICE"),
       "legal row expands to the NOTICE viewer")
 
+# Island activities editor: every registry entry, reorder / side / enable
+# write notch.activities as [{id, side, enabled}]
+ev('select("notch")')
+settle(250)
+editor = ev('w.findItem("islandActivitiesEditor")')
+check(editor is not None, "island activities editor rendered")
+ids = json.loads(h.eval(editor, "JSON.stringify(list.map(e => e.id))"))
+check(len(ids) == 8 and ids[0] == "media", f"island activities in registry order ({ids})")
+h.eval(editor, "write(Registry.move(list, 0, 2))")
+settle(50)
+stored = json.loads(ev("JSON.stringify(Config.notch.activities)"))
+check([e["id"] for e in stored][:3] == [ids[1], ids[2], "media"], f"drag reorder stored ({stored[:3]})")
+h.eval(editor, "write(Registry.setField(list, 'battery', 'enabled', false))")
+h.eval(editor, "write(Registry.setField(list, 'osd', 'side', 'leading'))")
+settle(50)
+stored = {e["id"]: e for e in json.loads(ev("JSON.stringify(Config.notch.activities)"))}
+check(stored["battery"]["enabled"] is False and stored["osd"]["side"] == "leading", "enable and side stored")
+
 late = [e for e in errors if "/widgets/" not in e]
 check(not late, "QML errors during interaction:\n  " + "\n  ".join(late))
 print("settings-ui: ok")

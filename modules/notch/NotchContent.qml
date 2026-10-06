@@ -14,6 +14,7 @@ import qs.modules.widgets.launcher
 import qs.modules.bar.workspaces
 import qs.modules.aicenter.quickask
 import qs.config
+import qs.modules.shell
 import "./NotchNotificationView.qml"
 import qs.modules.bar.panels
 import qs.modules.shell.hosts
@@ -218,7 +219,7 @@ Item {
         width: notchRegionContainer.width + 20
         height: root.reveal ? notchRegionContainer.height : Math.max((Config.notch && Config.notch.hoverRegionHeight !== undefined) ? Config.notch.hoverRegionHeight : 8, 8)
 
-        x: (parent.width - width) / 2
+        x: notchRegionContainer.x - 10
         y: root.notchPosition === "top" ? 0 : parent.height - height
 
         Behavior on height {
@@ -242,7 +243,11 @@ Item {
         width: Math.max(notchAnimationContainer.width, notificationPopupContainer.visible ? notificationPopupContainer.width : 0)
         height: notchAnimationContainer.height + (notificationPopupContainer.visible ? notificationPopupContainer.height + notificationPopupContainer.anchors.topMargin : 0)
 
-        x: (parent.width - width) / 2
+        // Along the edge: notch.align through EdgeLayout.notchRect
+        x: EdgeService.notchRect(root.screen, {
+            along: width,
+            across: height
+        }).x
         y: root.notchPosition === "top" ? 0 : parent.height - height
 
         // HoverHandler to detect when mouse is over the revealed notch

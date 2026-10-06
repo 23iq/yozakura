@@ -23,8 +23,11 @@
 var PRIORITY = {
     recording: 100,
     screenShare: 90,
+    osd: 85,
     camera: 80,
     microphone: 70,
+    battery: 60,
+    bluetooth: 55,
     timer: 50,
     downloads: 40,
     progress: 30

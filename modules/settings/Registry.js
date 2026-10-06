@@ -26,6 +26,7 @@ var EDITORS = {
     "LegacyLink": "editors/LegacyLink.qml",
     "ActivitiesEditor": "editors/ActivitiesEditor.qml",
     "DashboardTabsEditor": "editors/DashboardTabsEditor.qml",
+    "IslandActivitiesEditor": "editors/IslandActivitiesEditor.qml",
     "AiAgentsEditor": "editors/AiAgentsEditor.qml",
     "AiMcpEditor": "editors/AiMcpEditor.qml",
     "AiUsageData": "editors/AiUsageData.qml",

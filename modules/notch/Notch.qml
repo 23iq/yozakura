@@ -8,6 +8,7 @@ import qs.modules.corners
 import qs.modules.services
 import qs.config
 import qs.modules.shell.hosts
+import "styles/NotchStyles.js" as NotchStyles
 
 Item {
     id: notchContainer
@@ -49,6 +50,23 @@ Item {
     // Screen this notch is on (notifications.screens filter)
     property string screenName: ""
     readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(screenName)
+
+    // notch.style (styles/NotchStyles.js); a collapsing style (pill) sits as
+    // a small capsule until something happens or the pointer arrives
+    readonly property var styleSpec: NotchStyles.spec(Config.notchStyle)
+    readonly property var restingView: stackViewInternal.currentItem
+    readonly property bool pillCollapsed: NotchStyles.collapsed(styleSpec, {
+        hovered: isHovered || parentHovered,
+        open: screenNotchOpen || isExpanded,
+        expanded: !!(restingView && restingView.expandedState),
+        notifications: hasActiveNotifications,
+        activities: !!(restingView && restingView.hasActivities)
+    })
+    readonly property var capsule: NotchStyles.capsule(Metrics.spacing)
+    // Motion tokens (var: their sub-objects are untyped for qmllint)
+    readonly property var motionMorph: Motion.morph
+    readonly property var motionEnter: Motion.enter
+    readonly property var motionExit: Motion.exit
 
     // Navigation, rather than visibility signals, owns layout: visibility may
     // change before StackView has selected its incoming item.
@@ -92,10 +110,10 @@ Item {
     readonly property int cornerSize: Config.roundness > 0 ? Config.roundness + 4 : 0
     readonly property int totalCornerWidth: Config.notchTheme === "default" ? cornerSize * 2 : 0
 
-    implicitWidth: isExpanded ? Math.max(targetContentWidth + totalCornerWidth, 290) : targetContentWidth + totalCornerWidth
-    implicitHeight: Config.notchTheme === "default" ? defaultHeight : (Config.notchTheme === "island" ? islandHeight : defaultHeight)
+    implicitWidth: pillCollapsed ? capsule.w : isExpanded ? Math.max(targetContentWidth + totalCornerWidth, 290) : targetContentWidth + totalCornerWidth
+    implicitHeight: pillCollapsed ? capsule.h : Config.notchTheme === "default" ? defaultHeight : islandHeight
 
-    readonly property int geometryAnimationDuration: isExpanded || screenNotchOpen || stackViewInternal.busy ? Config.animDuration : Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
+    readonly property int geometryAnimationDuration: styleSpec.collapses && !isExpanded ? motionMorph.duration : isExpanded || screenNotchOpen || stackViewInternal.busy ? Config.animDuration : Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
 
     Behavior on implicitWidth {
         enabled: Config.animDuration > 0
@@ -343,6 +361,16 @@ Item {
             width: parent.width
             height: parent.height
             clip: true
+            // The pill's capsule shows no content: it fades out before the
+            // silhouette shrinks and back in while it grows
+            opacity: notchContainer.pillCollapsed ? 0 : 1
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: notchContainer.pillCollapsed ? notchContainer.motionExit.duration : notchContainer.motionEnter.duration
+                    easing.type: notchContainer.pillCollapsed ? notchContainer.motionExit.easing : notchContainer.motionEnter.easing
+                }
+            }
 
             // Propiedad para controlar el blur durante las transiciones
             property real transitionBlur: 0.0
