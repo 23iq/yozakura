@@ -16,8 +16,8 @@ var keys = {
         "description": "Where the launcher opens: grown from the notch or as a centered window."
     },
     "launcher.resultStyle": {
-        "enum": ["list", "grid"],
-        "description": "How launcher results are laid out."
+        "enum": ["list", "cards", "grid"],
+        "description": "How launcher results are laid out: rows, taller cards or an app icon grid (non-app results use the list)."
     },
     "launcher.preview": {
         "description": "Show a preview pane next to the selected launcher result."

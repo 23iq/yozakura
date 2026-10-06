@@ -141,6 +141,13 @@ class LauncherEnv(SettingsEnv):
         dst = qs / "modules/widgets/launcher"
         shutil.copytree(REPO / "modules/widgets/launcher", dst, dirs_exist_ok=True)
         self._qmldir(dst, "qs.modules.widgets.launcher")
+        # Motion / Metrics tokens (the layout.launcher looks size and animate with them).
+        for rel in ("modules/theme/Metrics.qml", "modules/theme/Motion.qml", "modules/theme/DensityMetrics.js",
+                    "config/motion/MotionBudget.js"):
+            (qs / rel).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(REPO / rel, qs / rel)
+        self._qmldir(qs / "modules/theme", "qs.modules.theme",
+                     only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion"])
         for rel in ("assets/commands/commands.json", "assets/launcher/currency-fallback.json"):
             (qs / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(REPO / rel, qs / rel)

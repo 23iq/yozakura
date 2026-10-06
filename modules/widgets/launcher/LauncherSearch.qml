@@ -6,6 +6,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.config
 import "Providers.js" as Providers
+import "ResultStyles.js" as ResultStyles
 
 // The launcher's search tab: the search field, the provider results
 // (LauncherResults) and keyboard handling. Enter runs the selected result,
@@ -22,6 +23,17 @@ Item {
     readonly property var items: results.items
     readonly property alias resultsHost: results
     readonly property var current: selectedIndex >= 0 && selectedIndex < items.length ? items[selectedIndex] : null
+
+    // Result look (layout.launcher.resultStyle): list, cards or the app grid
+    // (other providers' results fall back to list; options need the list).
+    readonly property string styleName: ResultStyles.effective(Config.layout.launcher.resultStyle, items)
+    readonly property bool gridActive: styleName === "grid" && expandedIndex < 0
+    readonly property bool previewOpen: Config.layout.launcher.preview && expandedIndex < 0 && preview.available
+    readonly property int resultsWidth: previewOpen ? Metrics.launcherLeftPanelW : width
+
+    function gridKey(dir) {
+        select(grid.nextIndex(dir));
+    }
 
     // Glyph of the provider whose prefix is typed, else the search glyph.
     readonly property string modeIcon: {
@@ -129,6 +141,7 @@ Item {
         placeholderText: I18n.t("launcher.search")
         prefixIcon: view.modeIcon
         handleTabNavigation: true
+        disableCursorNavigation: view.gridActive
 
         onSearchTextChanged: text => {
             if (GlobalStates.launcherSearchText !== text)
@@ -149,14 +162,26 @@ Item {
             else
                 view.close();
         }
+        onLeftPressed: {
+            if (view.gridActive)
+                view.gridKey("left");
+        }
+        onRightPressed: {
+            if (view.gridActive)
+                view.gridKey("right");
+        }
         onDownPressed: {
-            if (view.expandedIndex >= 0)
+            if (view.gridActive)
+                view.gridKey("down");
+            else if (view.expandedIndex >= 0)
                 view.optionIndex = Math.min(view.optionIndex + 1, view.expandedOptions.length - 1);
             else
                 view.select(view.selectedIndex + 1);
         }
         onUpPressed: {
-            if (view.expandedIndex >= 0)
+            if (view.gridActive)
+                view.gridKey("up");
+            else if (view.expandedIndex >= 0)
                 view.optionIndex = Math.max(view.optionIndex - 1, 0);
             else if (view.selectedIndex > 0)
                 view.select(view.selectedIndex - 1);
@@ -178,10 +203,12 @@ Item {
     ResultList {
         id: list
         objectName: "launcherResults"
-        width: parent.width
+        width: view.resultsWidth
+        visible: !view.gridActive
+        style: view.styleName === "cards" ? "cards" : "list"
         anchors.top: input.bottom
         anchors.bottom: parent.bottom
-        anchors.topMargin: 8
+        anchors.topMargin: Metrics.spacing
         items: view.items
         selectedIndex: view.selectedIndex
         expandedIndex: view.expandedIndex
@@ -205,6 +232,46 @@ Item {
         onOptionTriggered: index => {
             view.optionIndex = index;
             view.runSelected();
+        }
+    }
+
+    ResultGrid {
+        id: grid
+        objectName: "launcherGrid"
+        width: view.resultsWidth
+        visible: view.gridActive
+        anchors.top: input.bottom
+        anchors.bottom: parent.bottom
+        anchors.topMargin: Metrics.spacing
+        items: view.gridActive ? view.items : []
+        selectedIndex: view.selectedIndex
+
+        onHoveredRow: index => view.select(index)
+        onClickedRow: index => view.run(index, "")
+        onRightClickedRow: index => {
+            view.select(index);
+            view.expand(index);
+        }
+    }
+
+    PreviewPane {
+        id: preview
+        objectName: "launcherPreview"
+        anchors.top: input.bottom
+        anchors.topMargin: Metrics.spacing
+        anchors.bottom: parent.bottom
+        anchors.left: list.right
+        anchors.leftMargin: Metrics.spacing
+        anchors.right: parent.right
+        selection: Config.layout.launcher.preview ? view.current : null
+        opacity: view.previewOpen ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity {
+            enabled: Motion.enter.duration > 0
+            NumberAnimation {
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
+            }
         }
     }
 }

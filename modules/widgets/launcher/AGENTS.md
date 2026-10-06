@@ -16,6 +16,9 @@ launcher/
 ├── LauncherResults.qml   creates the providers (by URL from Providers.js), routes the query, merges results
 ├── ResultList.qml        ListView: rows, sliding highlight, expanded options
 ├── ResultRow.qml         one result (icon/thumbnail/glyph, title, subtitle, badge, Enter hint)
+├── ResultIcon.qml / ResultCard.qml / ResultGrid.qml   shared icon tile, "cards" look, app icon grid (2D arrows)
+├── ResultStyles.js       layout.launcher.resultStyle: effective style (grid only for apps), grid navigation (pure)
+├── PreviewPane.qml       lazy debounced preview; previews/PreviewRegistry.js maps provider -> previews/*Preview.qml
 ├── ResultOptions.qml     options of an expanded result
 ├── KeyHint.qml           "Launch ⏎" hint with a keycap
 ├── Providers.js          provider registry + routing (pure, tests/launcher.test.cjs)

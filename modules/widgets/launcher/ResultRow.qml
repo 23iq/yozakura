@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.components
 import qs.config
@@ -20,7 +19,7 @@ Item {
     readonly property color fg: expanded ? Styling.srItem("pane") : selected ? Styling.srItem("primary") : Colors.overBackground
     readonly property color dim: expanded ? Styling.srItem("pane") : selected ? Styling.srItem("primary") : Colors.outline
 
-    implicitHeight: 48
+    implicitHeight: Metrics.rowHeight
 
     RowLayout {
         anchors.fill: parent
@@ -28,62 +27,11 @@ Item {
         anchors.rightMargin: 10
         spacing: 12
 
-        // Icon tile
-        Item {
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
-
-            // App icon from the icon theme
-            Image {
-                id: themeIcon
-                anchors.fill: parent
-                visible: !!row.item.image && !row.item.thumb
-                // Theme icon name, or an absolute path (Icon=/path in .desktop)
-                source: !visible ? "" : row.item.image.charAt(0) === "/" ? "file://" + row.item.image : "image://icon/" + row.item.image
-                sourceSize: Qt.size(64, 64)
-                fillMode: Image.PreserveAspectFit
-                mipmap: true
-                asynchronous: true
-                onStatusChanged: {
-                    if (status === Image.Error)
-                        source = "image://icon/image-missing";
-                }
-            }
-            Tinted {
-                anchors.fill: parent
-                visible: themeIcon.visible
-                sourceItem: themeIcon
-            }
-
-            // Wallpaper / file thumbnail
-            ClippingRectangle {
-                anchors.fill: parent
-                visible: !!row.item.thumb
-                radius: Styling.radius(-6)
-                color: Colors.surfaceContainerHigh
-                Image {
-                    anchors.fill: parent
-                    source: parent.visible ? row.item.image : ""
-                    sourceSize: Qt.size(96, 96)
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
-                }
-            }
-
-            // Glyph
-            StyledRect {
-                anchors.fill: parent
-                visible: !row.item.image
-                variant: row.selected ? "overprimary" : "common"
-                radius: Styling.radius(-6)
-                Text {
-                    anchors.centerIn: parent
-                    text: row.item.icon || ""
-                    font.family: Icons.font
-                    font.pixelSize: 17
-                    color: row.selected ? Styling.srItem("overprimary") : row.inert ? Colors.outline : Colors.primary
-                }
-            }
+        ResultIcon {
+            Layout.preferredWidth: Metrics.iconSize
+            Layout.preferredHeight: Metrics.iconSize
+            item: row.item
+            selected: row.selected
         }
 
         // Title + subtitle
@@ -102,10 +50,10 @@ Item {
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 Behavior on color {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.enter.duration > 0
                     ColorAnimation {
-                        duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        duration: Motion.enter.duration / 2
+                        easing.type: Motion.enter.easing
                     }
                 }
             }
@@ -127,7 +75,7 @@ Item {
         Item {
             Layout.alignment: Qt.AlignVCenter
             Layout.preferredWidth: Math.max(badge.implicitWidth, hint.implicitWidth)
-            Layout.preferredHeight: 22
+            Layout.preferredHeight: Metrics.badgeHeight
             visible: !row.inert && (badge.text !== "" || hint.text !== "")
 
             Text {
@@ -142,9 +90,10 @@ Item {
                 font.weight: Font.Medium
                 font.letterSpacing: 0.4
                 Behavior on opacity {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.enter.duration > 0
                     NumberAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Motion.enter.duration / 2
+                        easing.type: Motion.enter.easing
                     }
                 }
             }

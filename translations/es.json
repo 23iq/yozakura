@@ -3385,5 +3385,15 @@
   "onboarding.finish.exclusive.failed": "No se pudo hacer de %1 el único shell",
   "onboarding.finish.exclusive.failed.body": "%1 — consulta Ajustes → Sistema.",
   "onboarding.finish.installing_n.one": "%1 instalándose",
-  "onboarding.finish.installing_n.other": "%1 instalándose"
+  "onboarding.finish.installing_n.other": "%1 instalándose",
+  "prefs.launcher.section.appearance": "Apariencia",
+  "prefs.launcher.style.list": "Lista",
+  "prefs.launcher.style.cards": "Tarjetas",
+  "prefs.launcher.style.grid": "Cuadrícula",
+  "prefs.launcher.result_style": "Estilo de resultados",
+  "prefs.launcher.result_style.desc": "Filas de lista, tarjetas más altas o una cuadrícula de iconos de apps (otros resultados usan la lista).",
+  "prefs.launcher.preview": "Panel de vista previa",
+  "prefs.launcher.preview.desc": "Muestra una vista previa del archivo, resultado de calculadora o entrada del portapapeles seleccionados.",
+  "prefs.launcher.compact_when_empty": "Compacto si está vacío",
+  "prefs.launcher.compact_when_empty.desc": "Muestra solo el campo de búsqueda hasta que empieces a escribir."
 }

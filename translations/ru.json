@@ -3401,5 +3401,15 @@
   "onboarding.finish.installing_n.one": "Устанавливается: %1",
   "onboarding.finish.installing_n.few": "Устанавливается: %1",
   "onboarding.finish.installing_n.many": "Устанавливается: %1",
-  "onboarding.finish.installing_n.other": "Устанавливается: %1"
+  "onboarding.finish.installing_n.other": "Устанавливается: %1",
+  "prefs.launcher.section.appearance": "Внешний вид",
+  "prefs.launcher.style.list": "Список",
+  "prefs.launcher.style.cards": "Карточки",
+  "prefs.launcher.style.grid": "Сетка",
+  "prefs.launcher.result_style": "Стиль результатов",
+  "prefs.launcher.result_style.desc": "Строки списка, высокие карточки или сетка значков приложений (остальные результаты остаются списком).",
+  "prefs.launcher.preview": "Панель предпросмотра",
+  "prefs.launcher.preview.desc": "Показывать предпросмотр выбранного файла, результата калькулятора или записи буфера обмена.",
+  "prefs.launcher.compact_when_empty": "Компактно, пока пусто",
+  "prefs.launcher.compact_when_empty.desc": "Показывать только строку поиска, пока вы не начнёте печатать."
 }
