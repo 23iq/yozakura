@@ -280,14 +280,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Loader {
-            id: displayOverlaysLoader
-            active: SuspendManager.wakeReady
-            required property ShellScreen modelData
-            sourceComponent: DisplayOverlays {
-                targetScreen: displayOverlaysLoader.modelData
-            }
-        }
+        DisplayOverlays {}
     }
 
     // AI selection actions popup (only exists while open)

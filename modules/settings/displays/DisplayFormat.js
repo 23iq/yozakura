@@ -119,7 +119,7 @@ function fitLayout(configs, width, height) {
             "ox": 0,
             "oy": 0
         };
-    var room = biggest * 0.35;
+    var room = biggest * 0.15;
     var worldW = (maxX - minX) + room * 2;
     var worldH = (maxY - minY) + room * 2;
     var scale = Math.max(Math.min(width / worldW, height / worldH), 0.001);

@@ -43,6 +43,7 @@ StyledRect {
 
     // Dotted grid backdrop
     Canvas {
+        id: grid
         anchors.fill: canvas
         opacity: 0.5
         onWidthChanged: requestPaint()
@@ -50,7 +51,7 @@ StyledRect {
         Connections {
             target: Colors
             function onOutlineChanged() {
-                requestPaint();
+                grid.requestPaint();
             }
         }
         onPaint: {

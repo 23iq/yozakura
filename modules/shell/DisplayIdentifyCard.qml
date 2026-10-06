@@ -15,6 +15,7 @@ StyledRect {
     readonly property var output: DisplayFormat.outputFor(DisplaysService.outputs, entry ? entry.name : "")
 
     variant: "popup"
+    backgroundOpacity: 0.97
     width: 280
     height: 280
     radius: Styling.radius(10)

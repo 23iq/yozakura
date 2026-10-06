@@ -18,6 +18,7 @@ StyledRect {
     readonly property color ringColor: urgent ? Colors.error : Colors.primary
 
     variant: "popup"
+    backgroundOpacity: 0.97
     radius: Styling.radius(8)
     enableShadow: true
     implicitWidth: 460

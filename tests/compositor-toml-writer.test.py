@@ -39,13 +39,14 @@ h.singleton('qs.config', 'Config', '''QtObject {
     property QtObject bar: QtObject {}
 }''')
 h.singleton('qs.modules.globals', 'GlobalStates', 'QtObject {}')
+h.singleton('qs.modules.services', 'DisplaysService', 'QtObject { property bool pending: false; property var outputs: [] }')
 
 # gatherInput() reads the whole config tree; the test only needs a payload
 # that says which revision of the state was sent.
 # Repo layout under the harness root: the writer imports ../../config/CoreBinds.js.
 writer_qml = h.copy('modules/services/CompositorTomlWriter.qml', 'modules/services', strip_singleton=True, replace={
     'function gatherInput() {': 'property int revision: 0\n'
-                                '    function gatherInput() { return { revision: root.revision }; }\n'
+                                '    function gatherInput() { return { revision: root.revision, displays: [] }; }\n'
                                 '    function _realGatherInput() {',
 })
 writer = h.load(writer_qml)

@@ -181,8 +181,8 @@ StyledRect {
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.patch({
-                                "refresh": root.bestHz
-                            })
+                            "refresh": root.bestHz
+                        })
                     }
                 }
             }
@@ -212,6 +212,7 @@ StyledRect {
                     from: 0.5
                     to: 4
                     stepSize: 0.05
+                    unit: "\u00d7"
                     onChanged: v => root.patch({
                             "scale": Math.round(v * 100) / 100
                         })

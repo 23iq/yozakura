@@ -6,8 +6,8 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 
-// Full-screen "Keep these display settings?" prompt, one per screen while a
-// live layout change is pending (DisplaysService.pending). Enter keeps, Esc
+// Full-screen "Keep these display settings?" prompt, mapped on every screen
+// while a live layout change is pending (DisplaysService.pending). Enter keeps, Esc
 // reverts; the backend reverts by itself when the countdown ends.
 PanelWindow {
     id: root
@@ -16,6 +16,7 @@ PanelWindow {
     property bool shown: false
 
     screen: targetScreen
+    visible: DisplaysService.pending && DisplaysService.session.live
     anchors {
         top: true
         bottom: true
@@ -28,7 +29,14 @@ PanelWindow {
     WlrLayershell.namespace: Brand.namespace("displays-confirm")
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    Component.onCompleted: Qt.callLater(() => root.shown = true)
+    onVisibleChanged: {
+        if (visible) {
+            card.takeFocus();
+            Qt.callLater(() => root.shown = true);
+        } else {
+            root.shown = false;
+        }
+    }
 
     Rectangle {
         anchors.fill: parent

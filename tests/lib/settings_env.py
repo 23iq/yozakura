@@ -175,6 +175,7 @@ MIRROR = [
     "config/ColorSpec.js",
     "config/motion",
     "modules/services/CompositorAppearance.js",
+    "modules/services/DisplayModel.js",
     "modules/bar/BarLayout.js",
     "modules/bar/BarModuleRegistry.js",
     "modules/bar/panels/PanelStyles.js",
@@ -468,6 +469,24 @@ QtObject {
     }
     function getAllApps() { return apps }
 }"""
+# Displays page (modules/settings/displays): idle stand-in; tests/lib/displays_env.py swaps in the real one.
+DISPLAYS_STUB = """pragma Singleton
+QtObject {
+    property var outputs: []
+    property var session: ({ "id": "", "state": "", "remaining": 0, "live": true })
+    property bool pending: false
+    property var identified: []
+    property var conflicts: []
+    signal applyFailed(string message)
+    function refresh() {}
+    function currentConfigs() { return [] }
+    function apply(c) {}
+    function keep() {}
+    function revert() {}
+    function identify() {}
+    function scanConflicts() {}
+    function moveConflicts() {}
+}"""
 YOZD_STUB = 'pragma Singleton\nimport QtQuick\nQtObject { property string compositorName: "hyprland" }'
 
 
@@ -508,7 +527,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "RoutinesService": ROUTINES_STUB,
+                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "RoutinesService": ROUTINES_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -530,7 +549,8 @@ class SettingsEnv:
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
-                  "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets"]:
+                  "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
+                  "modules/settings/displays"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

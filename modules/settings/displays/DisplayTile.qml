@@ -145,6 +145,7 @@ StyledRect {
 
     Column {
         anchors.centerIn: parent
+        anchors.verticalCenterOffset: tile.height < 110 ? 10 : 0
         width: parent.width - 24
         spacing: 2
 
@@ -160,9 +161,19 @@ StyledRect {
         }
         Text {
             width: parent.width
-            visible: tile.height > 70
+            visible: tile.height > 60
             horizontalAlignment: Text.AlignHCenter
-            text: tile.config.name + "  ·  " + DisplayFormat.formatResolution(tile.config.width, tile.config.height) + (tile.config.refresh > 0 ? "  ·  " + DisplayFormat.formatHz(tile.config.refresh) : "")
+            text: tile.config.name
+            elide: Text.ElideRight
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: Colors.overSurfaceVariant
+        }
+        Text {
+            width: parent.width
+            visible: tile.height > 84
+            horizontalAlignment: Text.AlignHCenter
+            text: DisplayFormat.formatResolution(tile.config.width, tile.config.height) + (tile.config.refresh > 0 ? "  \u00b7  " + DisplayFormat.formatHz(tile.config.refresh) : "")
             elide: Text.ElideRight
             font.family: Config.theme.font
             font.pixelSize: Styling.fontSize(-2)
