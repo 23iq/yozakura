@@ -24,6 +24,7 @@ import qs.modules.lockscreen
 import qs.modules.dock
 import qs.modules.globals
 import qs.modules.shell
+import qs.modules.shell.hosts
 import qs.config
 import qs.modules.shell.osd
 import qs.modules.theme
@@ -165,6 +166,16 @@ ShellRoot {
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
             }
+        }
+    }
+
+    // Launcher/dashboard outside the notch (layout.*.host: spotlight, sheet)
+    Variants {
+        model: Quickshell.screens
+
+        HostedSurfaces {
+            required property ShellScreen modelData
+            screen: modelData
         }
     }
 

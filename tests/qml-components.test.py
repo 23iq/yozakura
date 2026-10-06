@@ -88,6 +88,8 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  notchActs = repo/'modules/widgets/defaultview/activities'
  d = module('qs.modules.widgets.defaultview.activities', {f.stem: f.read_text() for f in sorted(notchActs.glob('*.qml'))})
  shutil.copy(notchActs/'NotchActivities.js', d)
+ # Every module stays in the notch here (layout.*.host = notch)
+ module('qs.modules.shell.hosts', {'HostRouter': 'pragma Singleton\nimport QtQuick\nQtObject { function hostFor(m) { return "notch"; } function notchOpen(v) { return !!v && !!(v.launcher || v.dashboard || v.powermenu || v.tools || v.aiquick); } }'})
  children=p/'children'; children.mkdir()
  names=['NotchVisualizer','AlbumBackdrop','MediaTimeline','MediaTransportControls','ExpandedMedia','MediaSummary','IslandHeader','IslandNotifications','DefaultView']
  for n in ['Notch', 'NotchViewTransition']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)

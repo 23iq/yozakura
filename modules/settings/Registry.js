@@ -63,7 +63,8 @@ var PREVIEWS = {
     "TransitionPreview": "previews/TransitionPreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
-    "WindowsPreview": "previews/WindowsPreview.qml"
+    "WindowsPreview": "previews/WindowsPreview.qml",
+    "LayoutPreview": "layout/LayoutPreview.qml"
 };
 
 function editor(name) {

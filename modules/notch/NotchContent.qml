@@ -16,6 +16,7 @@ import qs.modules.aicenter.quickask
 import qs.config
 import "./NotchNotificationView.qml"
 import qs.modules.bar.panels
+import qs.modules.shell.hosts
 
 Item {
     id: root
@@ -80,7 +81,8 @@ Item {
     readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
 
     // Notch state properties
-    readonly property bool screenNotchOpen: screenVisibilities ? (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools || screenVisibilities.aiquick) : false
+    // Launcher/dashboard only open the notch when it hosts them (HostRouter)
+    readonly property bool screenNotchOpen: HostRouter.notchOpen(screenVisibilities)
     readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(screen.name)
 
     // Hover state with delay to prevent flickering
@@ -159,6 +161,12 @@ Item {
     function dismissPanel() {
         if (root.defaultView)
             root.defaultView.dismissPanel();
+    }
+
+    // Shows the launcher/dashboard when layout.<module>.host is "notch"
+    NotchHost {
+        id: notchHost
+        container: notchContainer
     }
 
     // Persistent views to avoid creation lag when opening the notch
@@ -431,46 +439,20 @@ Item {
         target: screenVisibilities
 
         function onLauncherChanged() {
-            if (screenVisibilities.launcher) {
+            if (root.screenVisibilities.launcher && HostRouter.hostFor("launcher") === "notch") {
                 persistentLauncherViewLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentLauncherViewLoader.item) {
-                        notchContainer.pushView(persistentLauncherViewLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem) {
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
+                Qt.callLater(() => notchHost.open(persistentLauncherViewLoader.item, root.screen));
+            } else if (!root.screenVisibilities.launcher) {
+                notchHost.close();
             }
         }
 
         function onDashboardChanged() {
-            if (screenVisibilities.dashboard) {
+            if (root.screenVisibilities.dashboard && HostRouter.hostFor("dashboard") === "notch") {
                 persistentDashboardViewLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentDashboardViewLoader.item) {
-                        notchContainer.pushView(persistentDashboardViewLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem) {
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
+                Qt.callLater(() => notchHost.open(persistentDashboardViewLoader.item, root.screen));
+            } else if (!root.screenVisibilities.dashboard) {
+                notchHost.close();
             }
         }
 

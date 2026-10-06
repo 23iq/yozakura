@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.corners
 import qs.modules.services
 import qs.config
+import qs.modules.shell.hosts
 
 Item {
     id: notchContainer
@@ -44,7 +45,7 @@ Item {
 
     // Screen-specific visibility properties passed from parent
     property var visibilities
-    readonly property bool screenNotchOpen: visibilities ? (visibilities.launcher || visibilities.dashboard || visibilities.powermenu || visibilities.tools || visibilities.aiquick) : false
+    readonly property bool screenNotchOpen: HostRouter.notchOpen(visibilities)
     // Screen this notch is on (notifications.screens filter)
     property string screenName: ""
     readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(screenName)

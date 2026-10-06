@@ -3420,5 +3420,18 @@
   "prefs.bar.style.docklike": "Как док",
   "prefs.bar.style.docklike.desc": "По размеру содержимого, по центру",
   "prefs.bar.style.none": "Нет",
-  "prefs.bar.style.none.desc": "Без панели; край экрана свободен"
+  "prefs.bar.style.none.desc": "Без панели; край экрана свободен",
+  "prefs.layout.section.hosts": "Где что открывается",
+  "prefs.layout.launcher_host": "Лаунчер открывается в",
+  "prefs.layout.launcher_host.desc": "Вырез: вырастает из выреза. Spotlight: по центру над затемнённым экраном. Шторка: панель во всю высоту, выезжающая сбоку.",
+  "prefs.layout.dashboard_host": "Панель открывается в",
+  "prefs.layout.dashboard_host.desc": "Вырез: вырастает из выреза. Spotlight: по центру над затемнённым экраном. Шторка: панель во всю высоту, выезжающая сбоку.",
+  "prefs.layout.sheet_side": "Сторона шторки",
+  "prefs.layout.sheet_side.desc": "Авто — правый край, или левый, если панель задач справа.",
+  "prefs.layout.host.notch": "Вырез",
+  "prefs.layout.host.spotlight": "Spotlight",
+  "prefs.layout.host.sheet": "Шторка",
+  "prefs.layout.preview.launcher": "Лаунчер",
+  "prefs.layout.preview.dashboard": "Панель",
+  "prefs.layout.preview.osd": "OSD"
 }

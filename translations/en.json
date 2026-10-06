@@ -3404,5 +3404,18 @@
   "prefs.bar.style.docklike": "Dock-like",
   "prefs.bar.style.docklike.desc": "Sized to its content and centered",
   "prefs.bar.style.none": "None",
-  "prefs.bar.style.none.desc": "No bar; the screen edge stays free"
+  "prefs.bar.style.none.desc": "No bar; the screen edge stays free",
+  "prefs.layout.section.hosts": "Where things open",
+  "prefs.layout.launcher_host": "Launcher opens in",
+  "prefs.layout.launcher_host.desc": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+  "prefs.layout.dashboard_host": "Dashboard opens in",
+  "prefs.layout.dashboard_host.desc": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
+  "prefs.layout.sheet_side": "Sheet side",
+  "prefs.layout.sheet_side.desc": "Auto uses the right edge, or the left one when the bar is on the right.",
+  "prefs.layout.host.notch": "Notch",
+  "prefs.layout.host.spotlight": "Spotlight",
+  "prefs.layout.host.sheet": "Sheet",
+  "prefs.layout.preview.launcher": "Launcher",
+  "prefs.layout.preview.dashboard": "Dashboard",
+  "prefs.layout.preview.osd": "OSD"
 }
