@@ -59,7 +59,7 @@ func main() {
 		runDaemon(customConfigPath)
 	case "subscribe":
 		runSubscribe()
-	case "window", "workspace", "monitor", "layout", "config", "system", "darkmode", "brightness", "overview":
+	case "window", "workspace", "monitor", "keyboard", "layout", "config", "system", "darkmode", "brightness", "overview":
 		if len(remainingArgs) < 2 {
 			usage()
 			return
@@ -120,6 +120,11 @@ func usage() {
 	fmt.Println("    focus <id>              Focus monitor")
 	fmt.Println("    move-to <mon_id> [win_id] Move window to monitor")
 	fmt.Println("    set-dpms <mon_id> <0|1> Set DPMS on/off")
+	fmt.Println("    outputs                 List outputs with modes (JSON)")
+	fmt.Println("    apply '<json>'          Apply an output config (name, enabled, width, height, ...)")
+	fmt.Println("\n  keyboard <action> [args]")
+	fmt.Println("    active                  Show the active keyboard layout")
+	fmt.Println("    apply '<json>'          Apply XKB settings (layouts, variants, options, ...)")
 	fmt.Println("\n  layout <action> [args]")
 	fmt.Println("    list                    List available layouts (compositor introspection + static fallback)")
 	fmt.Println("    current                 Show the active layout")
@@ -448,6 +453,15 @@ func handleRPC(category string, args []string) {
 		}
 		if len(args) > 2 {
 			params["on"] = args[2] == "1"
+		}
+	case "Monitor.Apply", "Keyboard.Apply":
+		if len(args) < 2 {
+			fmt.Printf("Usage: %s %s apply '<json>'\n", brand.Daemon, strings.ToLower(category))
+			os.Exit(1)
+		}
+		if err := mergeJSONParams(params, args[1]); err != nil {
+			fmt.Println("Error:", err)
+			os.Exit(1)
 		}
 	case "Layout.Set":
 		if len(args) > 1 {

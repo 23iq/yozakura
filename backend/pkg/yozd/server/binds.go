@@ -15,6 +15,9 @@ func (s *Server) dispatchExtra(req Request) (interface{}, error) {
 	case "Config.ListBinds":
 		return listBinds(s.compositor)
 	}
+	if res, handled, err := s.dispatchOutputs(req); handled {
+		return res, err
+	}
 	return nil, errMethodNotFound
 }
 
