@@ -10,8 +10,9 @@ var data = {
     "commands": ">",
     "files": "ff",
     "ai": "?",
+    "timers": "t",
     "launcher": {
-        "order": ["calculator", "commands", "apps", "specials", "wallpapers", "files", "ai"],
+        "order": ["calculator", "commands", "timers", "apps", "specials", "wallpapers", "files", "ai"],
         "disabled": [],
         "aiOnTab": true,
         "filesInMixed": true,

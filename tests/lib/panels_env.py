@@ -28,6 +28,7 @@ from PySide6.QtQuick import QQuickImageProvider
 from settings_env import SPECIALS_STUB, DEFAULT_PALETTE, _merge, colors_qml, config_qml, i18n_qml, load_defaults
 
 import panels_stubs as stubs
+import timers_stubs
 
 # Repo trees mirrored verbatim (every QML gets a qmldir in its directory)
 MIRROR_DIRS = [
@@ -120,7 +121,8 @@ class PanelsEnv:
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(self.palette))
         self._qmldir(qs / "modules/theme", "qs.modules.theme")
-        services = {"I18n": i18n_qml(), **stubs.services(icon_path)}
+        services = {"I18n": i18n_qml(), **stubs.services(icon_path), **timers_stubs.services()}
+        timers_stubs.copy_js(self.root)
         self.h.module("qs.modules.services", services)
         self.h.module("qs.modules.globals", {"GlobalStates": stubs.GLOBAL_STATES})
         for module, types in stubs.quickshell_modules(icon_path).items():

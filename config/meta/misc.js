@@ -144,6 +144,9 @@ var prefix = {
         "ai": {
             "description": "Prefix that sends the query to the AI quick ask."
         },
+        "timers": {
+            "description": "Prefix for timers, reminders and the stopwatch (e.g. \"t 10m tea\", \"t 18:00 call mom\", \"t sw\")."
+        },
         "launcher.order": {
             "items": {"enum": Enums.LAUNCHER_PROVIDERS},
             "uniqueItems": true,

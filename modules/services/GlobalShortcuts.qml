@@ -126,7 +126,10 @@ QtObject {
             case "brightness-up": Brightness.increaseAll(); break;
             case "brightness-down": Brightness.decreaseAll(); break;
 
-            default: console.warn("Unknown IPC command:", command);
+            // Timers, focus, quick note, routines (UtilityCommands.qml)
+            default:
+                if (!UtilityCommands.run(command))
+                    console.warn("Unknown IPC command:", command);
         }
     }
 

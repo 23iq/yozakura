@@ -5512,6 +5512,19 @@
           },
           "description": "Prefix that sends the query to the AI quick ask."
         },
+        "timers": {
+          "title": "Launcher prefix",
+          "type": "string",
+          "default": "t",
+          "description": "Type it and a space in the launcher: t 10m tea",
+          "x-settings": {
+            "category": "timers",
+            "section": "input",
+            "label": "prefs.timers.prefix",
+            "control": "text",
+            "keywords": "launcher prefix timers t"
+          }
+        },
         "launcher": {
           "title": "Launcher",
           "type": "object",
@@ -5522,6 +5535,7 @@
               "default": [
                 "calculator",
                 "commands",
+                "timers",
                 "apps",
                 "specials",
                 "wallpapers",
@@ -5532,6 +5546,7 @@
                 "enum": [
                   "calculator",
                   "commands",
+                  "timers",
                   "apps",
                   "specials",
                   "wallpapers",
@@ -5567,6 +5582,7 @@
                 "enum": [
                   "calculator",
                   "commands",
+                  "timers",
                   "apps",
                   "specials",
                   "wallpapers",
@@ -5884,7 +5900,7 @@
     "system": {
       "$id": "urn:yozakura:config:system",
       "title": "system",
-      "description": "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro timer and clipboard storage.",
+      "description": "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro, timers/alarms/focus mode and clipboard storage.",
       "type": "object",
       "x-file": "config/system.json",
       "properties": {
@@ -6150,34 +6166,374 @@
           "type": "object",
           "properties": {
             "workTime": {
-              "title": "Work time",
+              "title": "Work length",
               "type": "number",
               "default": 1500,
-              "description": "Pomodoro work period.",
+              "description": "Length of a Pomodoro work phase",
+              "x-settings": {
+                "category": "timers",
+                "section": "pomodoro",
+                "label": "prefs.timers.pomo_work",
+                "control": "number",
+                "step": 60,
+                "unit": "s",
+                "keywords": "pomodoro work focus length",
+                "min": 60,
+                "max": 14400
+              },
               "minimum": 60,
               "maximum": 14400,
               "x-unit": "s"
             },
             "restTime": {
-              "title": "Rest time",
+              "title": "Break length",
               "type": "number",
               "default": 300,
-              "description": "Pomodoro rest period.",
+              "description": "Length of a Pomodoro break",
+              "x-settings": {
+                "category": "timers",
+                "section": "pomodoro",
+                "label": "prefs.timers.pomo_rest",
+                "control": "number",
+                "step": 60,
+                "unit": "s",
+                "keywords": "pomodoro break rest length",
+                "min": 60,
+                "max": 7200
+              },
               "minimum": 60,
               "maximum": 7200,
               "x-unit": "s"
             },
             "autoStart": {
-              "title": "Auto start",
+              "title": "Continue automatically",
               "type": "boolean",
               "default": false,
-              "description": "Start the next pomodoro period automatically."
+              "description": "Off: the Pomodoro pauses at every phase change until you resume it",
+              "x-settings": {
+                "category": "timers",
+                "section": "pomodoro",
+                "label": "prefs.timers.pomo_auto",
+                "control": "toggle",
+                "keywords": "pomodoro auto start next phase continue"
+              }
             },
             "syncSpotify": {
-              "title": "Sync spotify",
+              "title": "Sync Spotify",
               "type": "boolean",
               "default": false,
-              "description": "Pause/resume Spotify with the pomodoro periods."
+              "description": "Spotify plays while you work and pauses on breaks",
+              "x-settings": {
+                "category": "timers",
+                "section": "pomodoro",
+                "label": "prefs.timers.pomo_spotify",
+                "control": "toggle",
+                "keywords": "pomodoro spotify music pause play"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "timers": {
+          "title": "Timers",
+          "type": "object",
+          "properties": {
+            "notchStyle": {
+              "title": "Timer display",
+              "type": "string",
+              "default": "ring",
+              "description": "A ring that empties as time runs out, or just the time",
+              "x-settings": {
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.timers.style",
+                "control": "selector",
+                "keywords": "notch ring progress text countdown display"
+              },
+              "enum": [
+                "ring",
+                "text"
+              ],
+              "x-enumLabels": {
+                "ring": "Ring",
+                "text": "Time only"
+              }
+            },
+            "showSeconds": {
+              "title": "Show seconds",
+              "type": "boolean",
+              "default": true,
+              "description": "12:34 instead of 13m in the notch",
+              "x-settings": {
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.timers.seconds",
+                "control": "toggle",
+                "keywords": "seconds countdown format mm:ss"
+              }
+            },
+            "pulseOnFinish": {
+              "title": "Pulse until stopped",
+              "type": "boolean",
+              "default": true,
+              "description": "A finished timer pulses in the notch until you stop it",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.pulse",
+                "control": "toggle",
+                "keywords": "pulse blink alarm finished notch"
+              }
+            },
+            "alarmPanel": {
+              "title": "Open the alarm in the notch",
+              "type": "boolean",
+              "default": true,
+              "description": "The notch opens with Stop and +5 min when a timer ends",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.alarm_panel",
+                "control": "toggle",
+                "keywords": "alarm panel notch stop snooze finished"
+              }
+            },
+            "sound": {
+              "title": "Alarm sound",
+              "type": "boolean",
+              "default": true,
+              "description": "Play a tone when a timer or reminder ends",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.sound",
+                "control": "toggle",
+                "keywords": "sound alarm tone ring audio"
+              }
+            },
+            "soundFile": {
+              "title": "Sound file",
+              "type": "string",
+              "default": "",
+              "description": "Empty: the built-in tone",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.sound_file",
+                "control": "path",
+                "keywords": "alarm sound file tone custom",
+                "visibleWhen": {
+                  "key": "system.timers.sound",
+                  "equals": true
+                }
+              },
+              "format": "path"
+            },
+            "alarmRepeat": {
+              "title": "Ring",
+              "type": "number",
+              "default": 3,
+              "description": "How many times the tone plays",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.repeat",
+                "control": "number",
+                "step": 1,
+                "unit": "",
+                "keywords": "alarm repeat ring times loop",
+                "visibleWhen": {
+                  "key": "system.timers.sound",
+                  "equals": true
+                },
+                "min": 0,
+                "max": 60,
+                "specialValues": [
+                  {
+                    "value": 0,
+                    "label": "Until stopped"
+                  }
+                ]
+              },
+              "minimum": 0,
+              "maximum": 60
+            },
+            "alarmInterval": {
+              "title": "Pause between rings",
+              "type": "number",
+              "default": 4,
+              "description": "Seconds between two tones",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.interval",
+                "control": "number",
+                "step": 1,
+                "unit": "s",
+                "keywords": "alarm repeat interval pause",
+                "visibleWhen": {
+                  "key": "system.timers.sound",
+                  "equals": true
+                },
+                "min": 1,
+                "max": 60
+              },
+              "minimum": 1,
+              "maximum": 60
+            },
+            "phaseSound": {
+              "title": "Chime between Pomodoro phases",
+              "type": "boolean",
+              "default": true,
+              "description": "A soft chime when work turns into a break and back",
+              "x-settings": {
+                "category": "timers",
+                "section": "alarm",
+                "label": "prefs.timers.phase_sound",
+                "control": "toggle",
+                "keywords": "pomodoro phase break chime sound",
+                "visibleWhen": {
+                  "key": "system.timers.sound",
+                  "equals": true
+                }
+              }
+            },
+            "showStopwatch": {
+              "title": "Show the stopwatch",
+              "type": "boolean",
+              "default": true,
+              "description": "The running stopwatch appears next to the notch",
+              "x-settings": {
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.timers.stopwatch",
+                "control": "toggle",
+                "keywords": "stopwatch notch elapsed"
+              }
+            },
+            "reminderLead": {
+              "title": "Show reminders ahead",
+              "type": "number",
+              "default": 15,
+              "description": "Reminders appear in the notch this long before they are due",
+              "x-settings": {
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.timers.reminder_lead",
+                "control": "number",
+                "step": 5,
+                "unit": "min",
+                "keywords": "reminder alarm upcoming notch soon",
+                "min": 0,
+                "max": 1440,
+                "specialValues": [
+                  {
+                    "value": 0,
+                    "label": "Never"
+                  }
+                ]
+              },
+              "minimum": 0,
+              "maximum": 1440
+            },
+            "clockClick": {
+              "title": "Bar clock click",
+              "type": "string",
+              "default": "popup",
+              "description": "What a left click on the clock opens; a right click opens the other one",
+              "x-settings": {
+                "category": "timers",
+                "section": "notch",
+                "label": "prefs.timers.clock",
+                "control": "selector",
+                "keywords": "bar clock click calendar weather timers open"
+              },
+              "enum": [
+                "popup",
+                "timers"
+              ],
+              "x-enumLabels": {
+                "popup": "Calendar & weather",
+                "timers": "Timers"
+              }
+            },
+            "noteTitle": {
+              "title": "Quick note target",
+              "type": "string",
+              "default": "",
+              "description": "Title of the Notes note quick notes are appended to (created when missing)",
+              "x-settings": {
+                "category": "timers",
+                "section": "input",
+                "label": "prefs.timers.note_title",
+                "control": "text",
+                "keywords": "quick note inbox notes title capture"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "focus": {
+          "title": "Focus",
+          "type": "object",
+          "properties": {
+            "minutes": {
+              "title": "Default length",
+              "type": "number",
+              "default": 50,
+              "description": "Used by the bind, the button and \"focus\" without a number",
+              "x-settings": {
+                "category": "timers",
+                "section": "focus",
+                "label": "prefs.timers.focus_minutes",
+                "control": "number",
+                "step": 5,
+                "unit": "min",
+                "keywords": "focus mode length minutes default",
+                "min": 5,
+                "max": 480
+              },
+              "minimum": 5,
+              "maximum": 480
+            },
+            "dnd": {
+              "title": "Turn on Do Not Disturb",
+              "type": "boolean",
+              "default": true,
+              "description": "Restored to how it was when focus ends",
+              "x-settings": {
+                "category": "timers",
+                "section": "focus",
+                "label": "prefs.timers.focus_dnd",
+                "control": "toggle",
+                "keywords": "focus do not disturb dnd notifications silence"
+              }
+            },
+            "hideBadges": {
+              "title": "Hide notification badges",
+              "type": "boolean",
+              "default": true,
+              "description": "The bell does not show unread notifications while you focus",
+              "x-settings": {
+                "category": "timers",
+                "section": "focus",
+                "label": "prefs.timers.focus_badges",
+                "control": "toggle",
+                "keywords": "focus badges unread bell notifications hide"
+              }
+            },
+            "summary": {
+              "title": "Summary at the end",
+              "type": "boolean",
+              "default": true,
+              "description": "A notification with how many notifications arrived and from which apps",
+              "x-settings": {
+                "category": "timers",
+                "section": "focus",
+                "label": "prefs.timers.focus_summary",
+                "control": "toggle",
+                "keywords": "focus summary missed notifications end"
+              }
             }
           },
           "additionalProperties": false
@@ -11249,6 +11605,11 @@
       "description": "Local speech recognition, dictation and push-to-talk."
     },
     {
+      "id": "timers",
+      "title": "Timers & focus",
+      "description": "Timers in the notch, alarms, Pomodoro, focus mode and quick note"
+    },
+    {
       "id": "updates",
       "title": "Updates & OCR",
       "description": "Update checks and text recognition languages."
@@ -11337,6 +11698,7 @@
         "terminal",
         "input",
         "voice",
+        "timers",
         "system",
         "updates"
       ]

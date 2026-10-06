@@ -68,6 +68,19 @@
       }
     },
     {
+      "id": "utilities",
+      "labels": {
+        "en": "Utilities",
+        "es": "Utilidades",
+        "ru": "Утилиты"
+      },
+      "descriptions": {
+        "en": "Timers, stopwatch, focus mode, quick note and routines.",
+        "es": "Temporizadores, cronómetro, modo concentración, nota rápida y rutinas.",
+        "ru": "Таймеры, секундомер, режим фокуса, быстрая заметка и сценарии."
+      }
+    },
+    {
       "id": "windows",
       "labels": {
         "en": "Windows",
@@ -496,6 +509,133 @@
       "dispatcher": "exec",
       "argument": "yozakura voice press dictation",
       "hold": true
+    },
+    {
+      "id": "yozakura.timer-input",
+      "labels": {
+        "en": "Timer quick input",
+        "es": "Entrada rápida de temporizador",
+        "ru": "Быстрый ввод таймера"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run timer-input",
+      "slot": true
+    },
+    {
+      "id": "yozakura.quick-note",
+      "labels": {
+        "en": "Quick note",
+        "es": "Nota rápida",
+        "ru": "Быстрая заметка"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run quick-note",
+      "slot": true
+    },
+    {
+      "id": "yozakura.timers",
+      "labels": {
+        "en": "Open timers",
+        "es": "Abrir temporizadores",
+        "ru": "Открыть таймеры"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run timers",
+      "slot": true
+    },
+    {
+      "id": "yozakura.stopwatch-toggle",
+      "labels": {
+        "en": "Start/pause stopwatch",
+        "es": "Iniciar/pausar cronómetro",
+        "ru": "Запустить/приостановить секундомер"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run stopwatch-toggle",
+      "slot": true
+    },
+    {
+      "id": "yozakura.focus-toggle",
+      "labels": {
+        "en": "Toggle focus mode",
+        "es": "Alternar modo concentración",
+        "ru": "Включить/выключить режим фокуса"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run focus-toggle",
+      "slot": true
+    },
+    {
+      "id": "yozakura.timer-stop",
+      "labels": {
+        "en": "Stop alarm",
+        "es": "Detener alarma",
+        "ru": "Остановить сигнал"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run timer-stop",
+      "slot": true
+    },
+    {
+      "id": "utilities.timer",
+      "labels": {
+        "en": "Start timer",
+        "es": "Iniciar temporizador",
+        "ru": "Запустить таймер"
+      },
+      "category": "Utilities",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "args": [
+        {
+          "key": "spec",
+          "labels": {
+            "en": "Timer",
+            "es": "Temporizador",
+            "ru": "Таймер"
+          },
+          "placeholder": "10m tea",
+          "kind": "text",
+          "default": "25m"
+        }
+      ]
+    },
+    {
+      "id": "utilities.routine",
+      "labels": {
+        "en": "Run routine",
+        "es": "Ejecutar rutina",
+        "ru": "Запустить сценарий"
+      },
+      "category": "Utilities",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "hidden": true,
+      "args": [
+        {
+          "key": "routine",
+          "labels": {
+            "en": "Routine",
+            "es": "Rutina",
+            "ru": "Сценарий"
+          },
+          "placeholder": "morning",
+          "kind": "text",
+          "default": ""
+        }
+      ]
     },
     {
       "id": "window.close",

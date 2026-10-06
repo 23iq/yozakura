@@ -122,8 +122,12 @@ var types = {
         "launcher.fileMaxResults": "int"
     },
     "system": {
+        "focus.minutes": "int",
         "pomodoro.restTime": "int",
-        "pomodoro.workTime": "int"
+        "pomodoro.workTime": "int",
+        "timers.alarmInterval": "int",
+        "timers.alarmRepeat": "int",
+        "timers.reminderLead": "int"
     },
     "dock": {
         "height": "int",

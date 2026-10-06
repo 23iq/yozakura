@@ -1,11 +1,13 @@
-"""ActivityService + a real provider (TimerActivity) offscreen: attach/detach,
-config gating and click routing through the registry."""
+"""ActivityService + a real provider (TimerActivity over a TimersService stub)
+offscreen: per-second labels, config gating and click routing through the
+registry."""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib import timers_stubs  # noqa: E402
 
 h = Harness("activity-service")
 h.singleton("qs.config", "Config", """QtObject {
@@ -13,7 +15,8 @@ h.singleton("qs.config", "Config", """QtObject {
 }""")
 h.module("Quickshell", {"Singleton": "Item {}"})
 h.module("qs.modules.theme", {"Icons": "pragma Singleton\nQtObject { property string timer: \"T\"; property string alarm: \"A\"; property string downloadSimple: \"D\" }"})
-h.module("qs.modules.services", {"I18n": "pragma Singleton\nQtObject { function t(k) { return k } }"})
+h.module("qs.modules.services", {"I18n": "pragma Singleton\nQtObject { function t(k) { return k } }", **timers_stubs.services()})
+timers_stubs.copy_js(h.root)
 
 mod = "qs/modules/services/activities"
 for name in ["ActivityService", "ActivityProvider", "TimerActivity"]:
@@ -31,49 +34,43 @@ h._write_qmldir(h.root / mod, "qs.modules.services.activities")
 root = h.load("""
 import QtQuick
 import qs.config
+import qs.modules.services
 import qs.modules.services.activities
 Item {
     id: root
-    property int opened: 0
-    QtObject {
-        id: pomodoro
-        property bool running: true
-        property int remaining: 65
-        readonly property var activityState: ({ running: pomodoro.running, alarm: false, remaining: pomodoro.remaining, total: 130, title: "Focus" })
-        function openActivity() { root.opened++; }
-    }
     readonly property var list: ActivityService.activities
-    function attach() { TimerActivity.attach(pomodoro); }
-    function detach() { TimerActivity.detach(pomodoro); }
-    function tick() { pomodoro.remaining = 64; }
-    function stop() { pomodoro.running = false; }
-    function start() { pomodoro.running = true; }
+    function run(left) { TimersService.timers = [{ id: "t1", name: "Focus", state: "running", ringing: false, leftMs: left, totalMs: 130000, progress: left / 130000, createdAt: 1 }]; }
+    function pause() { TimersService.timers = [{ id: "t1", name: "Focus", state: "paused", ringing: false, leftMs: 64000, totalMs: 130000, createdAt: 1 }]; }
+    function clear() { TimersService.timers = []; }
     function disable() { Config.bar = ({ activities: { enabled: true, sources: { timers: false } } }); }
+    function enable() { Config.bar = ({ activities: { enabled: true, maxVisible: 4, sources: { timers: true } } }); }
     function click() { ActivityService.activate(ActivityService.activities[0], Qt.LeftButton, "DP-1"); }
 }
 """)
 
 assert h.eval(root, "list.length") == 0
-h.eval(root, "attach()")
+h.eval(root, "run(65000)")
 QTest.qWait(10)
 assert h.eval(root, "list.length") == 1
 assert h.eval(root, "list[0].label") == "01:05"
 assert abs(h.eval(root, "list[0].progress") - 0.5) < 1e-6
 assert h.eval(root, "list[0].indicator") == "ring"
-h.eval(root, "tick()")
+assert h.eval(root, "list[0].detail") == "Focus"
+h.eval(root, "run(64000)")
 QTest.qWait(10)
 assert h.eval(root, "list[0].label") == "01:04", "per-second updates propagate"
 h.eval(root, "click()")
-assert h.eval(root, "opened") == 1, "click opens the owner"
-h.eval(root, "stop()")
+assert h.eval(root, "TimersService.hubOpen") and h.eval(root, "TimersService.hubScreen") == "DP-1", "click opens the timers hub"
+h.eval(root, "pause()")
 QTest.qWait(10)
 assert h.eval(root, "list.length") == 0, "paused timers are not live activities"
-h.eval(root, "start()")
+h.eval(root, "run(64000)")
 QTest.qWait(10)
 h.eval(root, "disable()")
 QTest.qWait(10)
 assert h.eval(root, "list.length") == 0, "bar.activities.sources.timers=false hides it"
-h.eval(root, "detach()")
+h.eval(root, "clear()")
+h.eval(root, "enable()")
 
 # Transfers: de-duplicated across providers, one aggregated "downloads" activity
 h.eval(root, """(function() {

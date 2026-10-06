@@ -111,7 +111,10 @@ var ROWS = [
     ["Move Column to Workspace 10", ["SUPER", "CTRL", "ALT"], "0", "layoutmsg", "movecoltoworkspace 10"],
     ["AI Quick Ask", ["SUPER", "ALT"], "A", "exec", BrandActions.appId + " run ai-quickask"],
     ["AI Selection Actions", ["SUPER", "ALT"], "S", "exec", BrandActions.appId + " run ai-selection"],
-    ["AI Ask About Region", ["SUPER", "ALT"], "R", "exec", BrandActions.appId + " run ai-region"]
+    ["AI Ask About Region", ["SUPER", "ALT"], "R", "exec", BrandActions.appId + " run ai-region"],
+    // Utilities: only these two get a default; the rest are unassigned slots
+    ["Timer", ["SUPER", "SHIFT"], "T", "exec", BrandActions.appId + " run timer-input"],
+    ["Quick Note", ["SUPER", "SHIFT"], "N", "exec", BrandActions.appId + " run quick-note"]
 ];
 
 function binds() {

@@ -47,6 +47,27 @@ var data = {
         "autoStart": false,
         "syncSpotify": false
     },
+    "timers": {
+        "notchStyle": "ring",
+        "showSeconds": true,
+        "pulseOnFinish": true,
+        "alarmPanel": true,
+        "sound": true,
+        "soundFile": "",
+        "alarmRepeat": 3,
+        "alarmInterval": 4,
+        "phaseSound": true,
+        "showStopwatch": true,
+        "reminderLead": 15,
+        "clockClick": "popup",
+        "noteTitle": ""
+    },
+    "focus": {
+        "minutes": 50,
+        "dnd": true,
+        "hideBadges": true,
+        "summary": true
+    },
     "clipboard": {
         "tmpfs": false
     }

@@ -86,4 +86,10 @@ var actionKeywords = map[string]string{
 	"lens":                     "ocr translate image search распознать текст перевести",
 	"assistant":                "ai chat gpt ассистент ии чат",
 	"dnd-toggle":               "do not disturb notifications silence не беспокоить уведомления",
+	"timer-input":              "timer countdown alarm reminder таймер будильник напоминание",
+	"quick-note":               "note memo jot inbox заметка записать",
+	"stopwatch-toggle":         "stopwatch lap секундомер",
+	"focus-toggle":             "focus pomodoro deep work concentrate фокус концентрация помодоро",
+	"timer-stop":               "alarm stop silence timer остановить будильник таймер",
+	"utilities.timer":          "timer countdown pomodoro таймер помодоро",
 }
