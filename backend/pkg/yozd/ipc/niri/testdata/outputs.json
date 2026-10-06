@@ -1,0 +1,20 @@
+{
+  "DP-1": {
+    "name": "DP-1", "make": "Lenovo Group Limited", "model": "Legion 27Q-10", "serial": "UNA08414",
+    "physical_size": [600, 340],
+    "modes": [
+      {"width": 2560, "height": 1440, "refresh_rate": 239970, "is_preferred": true},
+      {"width": 2560, "height": 1440, "refresh_rate": 144000, "is_preferred": false},
+      {"width": 1920, "height": 1080, "refresh_rate": 60000, "is_preferred": false}
+    ],
+    "current_mode": 0, "is_custom_mode": false, "vrr_supported": true, "vrr_enabled": true,
+    "logical": {"x": 0, "y": 0, "width": 1707, "height": 960, "scale": 1.5, "transform": "90"}
+  },
+  "HDMI-A-1": {
+    "name": "HDMI-A-1", "make": "", "model": "", "serial": null,
+    "physical_size": null,
+    "modes": [{"width": 1920, "height": 1080, "refresh_rate": 60000, "is_preferred": true}],
+    "current_mode": null, "is_custom_mode": false, "vrr_supported": false, "vrr_enabled": false,
+    "logical": null
+  }
+}
