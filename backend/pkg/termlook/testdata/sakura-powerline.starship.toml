@@ -53,7 +53,7 @@ read_only = " \uF023"
 format = "[\uE0B0](fg:prev_bg bg:tertiary)[ \uE725 $branch ](fg:on_tertiary bg:tertiary)"
 
 [git_status]
-format = "([\uE0B0](fg:prev_bg bg:tertiary)[ $all_status$ahead_behind ](fg:on_tertiary bg:tertiary))"
+format = "([ $all_status$ahead_behind ](fg:on_tertiary bg:tertiary))"
 
 [nodejs]
 format = "[\uE0B0](fg:prev_bg bg:surface_high)[ \uE718 $version ](fg:primary bg:surface_high)"

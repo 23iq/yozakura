@@ -39,14 +39,14 @@ func RenderStarship(p Preset, pal Palette) string {
 		format.WriteString(fmt.Sprintf("[%s](fg:outline) ", frameTop))
 	}
 	for i, s := range p.Left {
-		format.WriteString(r.segment(s, i == 0, true))
+		format.WriteString(r.segment(s, i == 0, true, joinsPrevious(p, p.Left, i)))
 	}
 	if p.Layout == "powerline" {
 		format.WriteString(fmt.Sprintf("[%s](fg:prev_bg) ", r.sep[0]))
 	}
 	var right strings.Builder
 	for i, s := range p.Right {
-		right.WriteString(r.segment(s, i == 0, false))
+		right.WriteString(r.segment(s, i == 0, false, joinsPrevious(p, p.Right, i)))
 	}
 	if p.Layout == "powerline" && p.Separator == "rounded" && len(p.Right) > 0 {
 		right.WriteString(fmt.Sprintf("[%s](fg:prev_bg)", r.sep[0]))
@@ -102,26 +102,38 @@ func charFormat(symbol, role string) string {
 // variables. Separators live inside each module's own format so a hidden
 // module (no git repo, no error) takes its separator with it; prev_bg
 // joins whichever module rendered last.
-func (r *starshipRenderer) segment(s Segment, first, left bool) string {
+func (r *starshipRenderer) segment(s Segment, first, left, joined bool) string {
 	if s.Type == "langs" {
 		var vars strings.Builder
-		for _, l := range langs {
+		for i, l := range langs {
 			icon := ""
 			if r.p.NerdFont {
 				icon = l.icon
 			}
-			r.module(l.starship, s, r.wrap(s, icon, first, left), nil)
+			r.module(l.starship, s, r.wrap(s, icon, first, left, joined && i == 0), nil)
 			vars.WriteString("$" + l.starship)
 		}
 		return vars.String()
 	}
 	mod := starshipModules[s.Type]
-	r.module(mod, s, r.wrap(s, segmentIcon(r.p, s), first, left), r.extras(s.Type))
+	r.module(mod, s, r.wrap(s, segmentIcon(r.p, s), first, left, joined), r.extras(s.Type))
 	return "$" + mod
 }
 
-// wrap builds a module format: separator/caps + colored body.
-func (r *starshipRenderer) wrap(s Segment, icon string, first, left bool) string {
+// joinsPrevious reports a powerline segment that continues the previous
+// one's background with no separator: same background, and the previous
+// segment is always visible whenever this one is (so prev_bg is known).
+func joinsPrevious(p Preset, segs []Segment, i int) bool {
+	if p.Layout != "powerline" || i == 0 || segs[i-1].BG != segs[i].BG {
+		return false
+	}
+	prev := segs[i-1].Type
+	return alwaysShown[prev] || (prev == "git_branch" && segs[i].Type == "git_status")
+}
+
+// wrap builds a module format: separator/caps + colored body. joined skips
+// the separator (same background as the segment before).
+func (r *starshipRenderer) wrap(s Segment, icon string, first, left, joined bool) string {
 	body := starshipVars[s.Type]
 	if icon != "" {
 		body = fmtLit(icon) + " " + body
@@ -140,7 +152,10 @@ func (r *starshipRenderer) wrap(s Segment, icon string, first, left bool) string
 		if s.Prefix != "" {
 			out += fmt.Sprintf("[%s](fg:outline)", fmtLit(s.Prefix))
 		}
-		out += fmt.Sprintf("[%s%s](%s)", body, fmtLit(s.Suffix), style)
+		out += fmt.Sprintf("[%s](%s)", body, style)
+		if s.Suffix != "" {
+			out += fmt.Sprintf("[%s](fg:outline)", fmtLit(s.Suffix))
+		}
 		if left {
 			out += " "
 		} else {
@@ -158,6 +173,7 @@ func (r *starshipRenderer) wrap(s Segment, icon string, first, left bool) string
 	default: // powerline
 		bg := paletteKey(s.BG)
 		switch {
+		case joined:
 		case !left:
 			out = fmt.Sprintf("[%s](fg:%s bg:prev_bg)", r.sep[1], bg)
 		case !first:

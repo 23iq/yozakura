@@ -11,6 +11,8 @@ import (
 	"testing"
 
 	"github.com/pelletier/go-toml/v2"
+
+	"yozakura/backend/pkg/brand"
 )
 
 var update = flag.Bool("update", false, "rewrite golden files")
@@ -66,11 +68,11 @@ func TestStarshipParsesAsTOML(t *testing.T) {
 		if err := toml.Unmarshal([]byte(RenderStarship(p, pal)), &doc); err != nil {
 			t.Fatalf("%s: %v", p.ID, err)
 		}
-		if doc["palette"] != "yozakura" {
+		if doc["palette"] != brand.AppID {
 			t.Errorf("%s: palette = %v", p.ID, doc["palette"])
 		}
 		pals, _ := doc["palettes"].(map[string]any)
-		yz, _ := pals["yozakura"].(map[string]any)
+		yz, _ := pals[brand.AppID].(map[string]any)
 		if yz["on_primary"] != pal["onPrimary"] || len(yz) != len(Roles) {
 			t.Errorf("%s: palettes.yozakura = %v", p.ID, yz)
 		}
@@ -104,7 +106,7 @@ func TestOMPIsValidJSON(t *testing.T) {
 		if err := dec.Decode(&doc); err != nil {
 			t.Fatalf("%s: %v", p.ID, err)
 		}
-		if !strings.Contains(doc.Schema, "oh-my-posh") || doc.Version != 3 || len(doc.Blocks) == 0 {
+		if !strings.Contains(doc.Schema, "oh-my-posh") || doc.Version != 4 || len(doc.Blocks) == 0 {
 			t.Errorf("%s: bad header %q v%d", p.ID, doc.Schema, doc.Version)
 		}
 		if doc.Palette["primary"] != pal["primary"] {
@@ -179,4 +181,48 @@ func fixtureRepo(t *testing.T) string {
 		t.Fatal(err)
 	}
 	return dir
+}
+
+// TestOMPRuns renders every preset through a real oh-my-posh ($OMP_BIN or
+// oh-my-posh on PATH); skipped when neither exists. oh-my-posh exits 0 even
+// on a broken config, so its output is checked for error text.
+func TestOMPRuns(t *testing.T) {
+	bin := os.Getenv("OMP_BIN")
+	if bin == "" {
+		var err error
+		if bin, err = exec.LookPath("oh-my-posh"); err != nil {
+			t.Skip("oh-my-posh not installed (set OMP_BIN to a binary)")
+		}
+	}
+	repo := fixtureRepo(t)
+	pal := fixturePalette(t)
+	for _, p := range loadAll(t) {
+		cfg := filepath.Join(t.TempDir(), "omp.json")
+		if err := os.WriteFile(cfg, []byte(RenderOMP(p, pal)), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		for _, args := range [][]string{
+			{"print", "primary", "--status", "1", "--execution-time", "4200"},
+			{"print", "right"},
+		} {
+			args = append(args, "--config", cfg, "--shell", "fish", "--pwd", repo)
+			cmd := exec.Command(bin, args...)
+			cmd.Dir = repo
+			cmd.Env = append(os.Environ(), "HOME="+t.TempDir())
+			var stdout, stderr bytes.Buffer
+			cmd.Stdout, cmd.Stderr = &stdout, &stderr
+			if err := cmd.Run(); err != nil {
+				t.Errorf("%s %v: %v (%s)", p.ID, args[:2], err, stderr.String())
+			}
+			out := strings.ToLower(stdout.String() + stderr.String())
+			for _, bad := range []string{"error", "unable to"} {
+				if strings.Contains(out, bad) {
+					t.Errorf("%s %v: oh-my-posh reported %q: %q", p.ID, args[:2], bad, stdout.String()+stderr.String())
+				}
+			}
+			if args[1] == "primary" && stdout.Len() == 0 {
+				t.Errorf("%s: empty prompt", p.ID)
+			}
+		}
+	}
 }

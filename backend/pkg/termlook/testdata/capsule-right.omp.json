@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
-  "version": 3,
+  "version": 4,
   "final_space": true,
   "palette": {
     "error": "#ffb4ab",
@@ -30,7 +30,7 @@
           "foreground": "p:on_primary",
           "background": "p:primary",
           "template": "<b>\uf07c {{ .Path }}</b>",
-          "properties": {
+          "options": {
             "max_depth": 3,
             "style": "agnoster_short"
           }
@@ -43,7 +43,7 @@
           "foreground": "p:on_secondary",
           "background": "p:secondary",
           "template": "\ue725 {{ .HEAD }}",
-          "properties": {
+          "options": {
             "branch_icon": ""
           }
         },
@@ -54,10 +54,7 @@
           "trailing_diamond": "\ue0b4 ",
           "foreground": "p:secondary",
           "background": "p:surface_high",
-          "template": "{{ if or .Working.Changed .Staging.Changed (gt .Ahead 0) (gt .Behind 0) }}{{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }}{{ end }}",
-          "properties": {
-            "fetch_status": true
-          }
+          "template": "{{ if or .Working.Changed .Staging.Changed (gt .Ahead 0) (gt .Behind 0) }}{{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }}{{ end }}"
         },
         {
           "type": "text",
@@ -90,7 +87,7 @@
           "foreground": "p:tertiary",
           "background": "p:surface_high",
           "template": "\uf252 {{ .FormattedMs }}",
-          "properties": {
+          "options": {
             "style": "round",
             "threshold": 2000
           }

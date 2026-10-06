@@ -35,36 +35,36 @@ type ompSegment struct {
 	Background          string         `json:"background,omitempty"`
 	ForegroundTemplates []string       `json:"foreground_templates,omitempty"`
 	Template            string         `json:"template"`
-	Properties          map[string]any `json:"properties,omitempty"`
+	Options             map[string]any `json:"options,omitempty"`
 }
 
 // ompKind is how a segment type maps to oh-my-posh: segment type, template
-// body, an optional condition that hides it, and segment properties.
+// body, an optional condition that hides it, and segment options.
 type ompKind struct {
 	typ, body, cond string
-	props           map[string]any
+	opts            map[string]any
 }
 
 var ompKinds = map[string]ompKind{
 	"os":         {typ: "os", body: "{{ .Icon }}"},
 	"user":       {typ: "session", body: "{{ .UserName }}"},
 	"host":       {typ: "session", body: "{{ .HostName }}"},
-	"dir":        {typ: "path", body: "{{ .Path }}", props: map[string]any{"style": "agnoster_short", "max_depth": 3}},
-	"git_branch": {typ: "git", body: "{{ .HEAD }}", props: map[string]any{"branch_icon": ""}},
+	"dir":        {typ: "path", body: "{{ .Path }}", opts: map[string]any{"style": "agnoster_short", "max_depth": 3}},
+	"git_branch": {typ: "git", body: "{{ .HEAD }}", opts: map[string]any{"branch_icon": ""}},
 	"git_status": {typ: "git", cond: "or .Working.Changed .Staging.Changed (gt .Ahead 0) (gt .Behind 0)",
-		body:  "{{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }}",
-		props: map[string]any{"fetch_status": true}},
-	"duration": {typ: "executiontime", body: "{{ .FormattedMs }}", props: map[string]any{"threshold": 2000, "style": "round"}},
+		body: "{{ if .Working.Changed }}{{ .Working.String }}{{ end }}{{ if .Staging.Changed }} {{ .Staging.String }}{{ end }}{{ if gt .Ahead 0 }} ⇡{{ .Ahead }}{{ end }}{{ if gt .Behind 0 }} ⇣{{ .Behind }}{{ end }}",
+	},
+	"duration": {typ: "executiontime", body: "{{ .FormattedMs }}", opts: map[string]any{"threshold": 2000, "style": "round"}},
 	"time":     {typ: "time", body: "{{ .CurrentDate | date \"15:04\" }}"},
 	"status":   {typ: "status", cond: "gt .Code 0", body: "{{ .Code }}"},
 	"battery":  {typ: "battery", cond: "not .Error", body: "{{ .Icon }}{{ .Percentage }}%"},
 }
 
-// RenderOMP renders an oh-my-posh (config version 3) JSON theme for the
+// RenderOMP renders an oh-my-posh (config version 4) JSON theme for the
 // preset. oh-my-posh has no shell-jobs segment, so "jobs" is left out.
 func RenderOMP(p Preset, pal Palette) string {
 	r := ompRenderer{p: p, sep: SeparatorGlyphs[p.Separator]}
-	cfg := ompConfig{Schema: ompSchema, Version: 3, FinalSpace: true, Palette: map[string]string{}}
+	cfg := ompConfig{Schema: ompSchema, Version: 4, FinalSpace: true, Palette: map[string]string{}}
 	for _, role := range Roles {
 		cfg.Palette[paletteKey(role)] = pal[role]
 	}
@@ -129,15 +129,17 @@ func (r ompRenderer) segment(s Segment, k ompKind, icon string, first, left bool
 	if icon != "" {
 		body = icon + " " + body
 	}
-	body += s.Suffix
 	fg := "p:" + paletteKey(s.FG)
+	if s.Suffix != "" && r.p.Layout != "text" {
+		body += s.Suffix
+	}
 	switch s.Style {
 	case "bold":
 		body = "<b>" + body + "</b>"
 	case "italic":
 		body = "<i>" + body + "</i>"
 	}
-	seg := ompSegment{Type: k.typ, Foreground: fg, Properties: k.props}
+	seg := ompSegment{Type: k.typ, Foreground: fg, Options: k.opts}
 	switch r.p.Layout {
 	case "text":
 		seg.Style = "plain"
@@ -149,6 +151,9 @@ func (r ompRenderer) segment(s Segment, k ompKind, icon string, first, left bool
 			pre += "<p:outline>" + s.Prefix + "</>"
 		}
 		body = pre + body
+		if s.Suffix != "" {
+			body += "<p:outline>" + s.Suffix + "</>"
+		}
 		if left {
 			body += " "
 		} else {
@@ -170,8 +175,13 @@ func (r ompRenderer) segment(s Segment, k ompKind, icon string, first, left bool
 		seg.PowerlineSymbol = r.sep[0]
 		if !left {
 			seg.PowerlineSymbol, seg.InvertPowerline = r.sep[1], true
-		} else if first && r.p.Separator == "rounded" {
-			seg.Style, seg.PowerlineSymbol, seg.LeadingDiamond = "diamond", "", r.sep[1]
+		} else if first {
+			// A powerline first segment gets a leading symbol; a diamond
+			// starts flush (or with a rounded cap).
+			seg.Style, seg.PowerlineSymbol = "diamond", ""
+			if r.p.Separator == "rounded" {
+				seg.LeadingDiamond = r.sep[1]
+			}
 		}
 		body = " " + s.Prefix + body + " "
 	}
