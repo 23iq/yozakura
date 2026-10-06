@@ -98,7 +98,7 @@ func nativePkgs(e extras.Entry, p extras.Platform) ([]string, error) {
 		return nil, notSystem
 	}
 	pkgs := m.Pkgs
-	if v, ok := e.Install.GPU[p.GPU]; ok && len(v) > 0 {
+	if v, ok := m.GPU[p.GPU]; ok && len(v) > 0 {
 		pkgs = v
 	}
 	if len(pkgs) == 0 {

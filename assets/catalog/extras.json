@@ -165,24 +165,18 @@
         "arch": {
           "pkgs": [
             "ollama"
-          ]
+          ],
+          "gpu": {
+            "nvidia": [
+              "ollama-cuda"
+            ],
+            "amd": [
+              "ollama-rocm"
+            ]
+          }
         },
         "fedora": {
           "pkgs": [
-            "ollama"
-          ]
-        },
-        "gpu": {
-          "nvidia": [
-            "ollama-cuda"
-          ],
-          "amd": [
-            "ollama-rocm"
-          ],
-          "intel": [
-            "ollama"
-          ],
-          "none": [
             "ollama"
           ]
         },

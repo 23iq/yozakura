@@ -24,9 +24,9 @@ func testCatalog() *extras.Catalog {
 		Categories: []extras.Category{{ID: "x"}},
 		Entries: []extras.Entry{
 			{ID: "ollama", Category: "x", Install: extras.Install{
-				Arch:    &extras.Method{Pkgs: []string{"ollama"}},
+				Arch: &extras.Method{Pkgs: []string{"ollama"},
+					GPU: extras.GPUVariants{"nvidia": {"ollama-cuda"}, "amd": {"ollama-rocm"}}},
 				Fedora:  &extras.Method{Pkgs: []string{"ollama"}},
-				GPU:     extras.GPUVariants{"nvidia": {"ollama-cuda"}, "amd": {"ollama-rocm"}},
 				Service: "ollama",
 			}},
 			{ID: "aur-only", Category: "x", Install: extras.Install{Arch: &extras.Method{AUR: []string{"thing-bin"}}}},
@@ -55,6 +55,15 @@ func TestResolveNoGPUVariantFallsBackToMethod(t *testing.T) {
 	pkgs, _, err := ResolveSystemPkgs(testCatalog(), extras.Platform{Distro: "fedora", GPU: "intel"}, []string{"ollama"})
 	if err != nil || !reflect.DeepEqual(pkgs, []string{"ollama"}) {
 		t.Fatalf("pkgs=%v err=%v", pkgs, err)
+	}
+}
+
+func TestResolveGPUVariantsArePerDistro(t *testing.T) {
+	for _, c := range []*extras.Catalog{testCatalog(), realCatalog(t)} {
+		pkgs, _, err := ResolveSystemPkgs(c, extras.Platform{Distro: "fedora", GPU: "nvidia"}, []string{"ollama"})
+		if err != nil || !reflect.DeepEqual(pkgs, []string{"ollama"}) {
+			t.Fatalf("fedora nvidia: pkgs=%v err=%v", pkgs, err)
+		}
 	}
 }
 

@@ -13,14 +13,16 @@ import (
 	"yozakura/backend/pkg/paths"
 )
 
-// Method lists native packages for one distro family.
+// Method lists native packages for one distro family. GPU variants override
+// Pkgs (repo packages) of this distro only, never AUR.
 type Method struct {
-	Pkgs []string `json:"pkgs,omitempty"`
-	AUR  []string `json:"aur,omitempty"` // arch only
+	Pkgs []string    `json:"pkgs,omitempty"`
+	AUR  []string    `json:"aur,omitempty"` // arch only
+	GPU  GPUVariants `json:"gpu,omitempty"`
 }
 
-// GPUVariants maps "nvidia"|"amd"|"intel"|"none" to packages that override
-// Method.Pkgs on arch/fedora.
+// GPUVariants maps "nvidia"|"amd"|"intel"|"none" to repo packages that
+// override the owning Method.Pkgs.
 type GPUVariants map[string][]string
 
 // ScriptSpec is a vetted remote install script.
@@ -44,8 +46,7 @@ type Install struct {
 	Flatpak string      `json:"flatpak,omitempty"`
 	Npm     string      `json:"npm,omitempty"`
 	Script  *ScriptSpec `json:"script,omitempty"`
-	Shell   string      `json:"shell,omitempty"` // repo script under scripts/
-	GPU     GPUVariants `json:"gpu,omitempty"`
+	Shell   string      `json:"shell,omitempty"`   // repo script under scripts/
 	Service string      `json:"service,omitempty"` // system unit to enable after
 }
 
@@ -221,6 +222,14 @@ func (m *Method) validate() error {
 	if err := checkPkgs(m.Pkgs); err != nil {
 		return err
 	}
+	for k, pkgs := range m.GPU {
+		if !gpuKeys[k] {
+			return fmt.Errorf("unknown gpu variant %q", k)
+		}
+		if err := checkPkgs(pkgs); err != nil {
+			return err
+		}
+	}
 	return checkPkgs(m.AUR)
 }
 
@@ -231,14 +240,6 @@ func (e *Entry) validateInstall() error {
 	}
 	if err := in.Fedora.validate(); err != nil {
 		return err
-	}
-	for k, pkgs := range in.GPU {
-		if !gpuKeys[k] {
-			return fmt.Errorf("unknown gpu variant %q", k)
-		}
-		if err := checkPkgs(pkgs); err != nil {
-			return err
-		}
 	}
 	if in.Flatpak != "" && !reFlatpak.MatchString(in.Flatpak) {
 		return fmt.Errorf("bad flatpak id %q", in.Flatpak)
@@ -258,7 +259,7 @@ func (e *Entry) validateInstall() error {
 		}
 	}
 	if in.Arch == nil && in.Fedora == nil && in.Flatpak == "" && in.Npm == "" &&
-		in.Script == nil && in.Shell == "" && len(in.GPU) == 0 {
+		in.Script == nil && in.Shell == "" {
 		return fmt.Errorf("no install method")
 	}
 	return nil
