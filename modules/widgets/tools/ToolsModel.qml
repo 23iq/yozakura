@@ -12,26 +12,18 @@ Item {
     id: root
 
     readonly property bool recording: ScreenRecorder.isRecording
-    readonly property var items: [
-        root.entry("screenshot", Icons.camera, "tools.screenshot"),
-        root.entry("screenshots", Icons.screenshots, "tools.screenshot_directory"),
+    readonly property var items: [root.entry("screenshot", Icons.camera, "tools.screenshot"), root.entry("screenshots", Icons.screenshots, "tools.screenshot_directory"),
         {
             "type": "separator"
         },
         Object.assign(root.entry("record", root.recording ? Icons.stop : Icons.recordScreen, root.recording ? "tools.screenrecord_stop" : "tools.screenrecord_start"), {
             "text": root.recording ? ScreenRecorder.duration : "",
             "variant": root.recording ? "error" : "primary"
-        }),
-        root.entry("recordings", Icons.recordings, "tools.screenrecord_directory"),
+        }), root.entry("recordings", Icons.recordings, "tools.screenrecord_directory"),
         {
             "type": "separator"
         },
-        root.entry("picker", Icons.picker, "tools.color_picker"),
-        root.entry("ocr", Icons.textT, "tools.ocr"),
-        root.entry("qr", Icons.qrCode, "tools.qr"),
-        root.entry("lens", Icons.google, "tools.google_lens"),
-        root.entry("mirror", GlobalStates.mirrorWindowVisible ? Icons.webcamSlash : Icons.webcam, "tools.mirror")
-    ]
+        root.entry("picker", Icons.picker, "tools.color_picker"), root.entry("ocr", Icons.textT, "tools.ocr"), root.entry("qr", Icons.qrCode, "tools.qr"), root.entry("lens", Icons.google, "tools.google_lens"), root.entry("mirror", GlobalStates.mirrorWindowVisible ? Icons.webcamSlash : Icons.webcam, "tools.mirror")]
     readonly property var actions: root.items.filter(i => i.type !== "separator")
 
     signal done
