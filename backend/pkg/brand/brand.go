@@ -60,6 +60,11 @@ func DaemonSocketPath() string {
 	if runtime := os.Getenv("XDG_RUNTIME_DIR"); runtime != "" {
 		return filepath.Join(runtime, Daemon+".sock")
 	}
+	// A parent that cleared the env (Codex MCP servers) still has the
+	// per-user runtime dir the daemon listens in.
+	if runtime := fmt.Sprintf("/run/user/%d", os.Getuid()); fileExists(filepath.Join(runtime, Daemon+".sock")) {
+		return filepath.Join(runtime, Daemon+".sock")
+	}
 	return fmt.Sprintf("/tmp/%s-%d.sock", Daemon, os.Getuid())
 }
 
@@ -99,4 +104,9 @@ func NormalizeAction(id string) string {
 		return Action(rest)
 	}
 	return id
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

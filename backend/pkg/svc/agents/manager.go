@@ -277,13 +277,16 @@ func (m *Manager) startOptionsLocked(s *session) (StartOptions, error) {
 	for _, srv := range servers {
 		isYZ := srv.Name == YozakuraMCPName
 		haveYZ = haveYZ || isYZ
+		if isYZ {
+			srv = withShellEnv(srv)
+		}
 		if !isYZ || yz || s.meta.Mode == ModeAssistant {
 			mcp = append(mcp, srv)
 		}
 	}
 	if s.meta.Mode == ModeAssistant && !haveYZ {
 		if exe, err := os.Executable(); err == nil {
-			mcp = append(mcp, MCPServer{Name: YozakuraMCPName, Transport: "stdio", Command: exe, Args: []string{"mcp"}})
+			mcp = append(mcp, withShellEnv(MCPServer{Name: YozakuraMCPName, Transport: "stdio", Command: exe, Args: []string{"mcp"}}))
 		}
 	}
 	if s.meta.Mode == ModeOneshot {

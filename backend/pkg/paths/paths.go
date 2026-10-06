@@ -1,6 +1,7 @@
 package paths
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -42,7 +43,25 @@ func (p *Paths) Config(domain string) string {
 }
 
 func (p *Paths) SocketPath() string {
-	return filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), brand.AppID+".sock")
+	return filepath.Join(RuntimeDir(), brand.AppID+".sock")
+}
+
+// RuntimeDir is XDG_RUNTIME_DIR, or /run/user/<uid> when a parent cleared
+// the environment (Codex starts MCP servers with a minimal env, so
+// `yozakura mcp` would otherwise look for the socket at "/yozakura.sock").
+func RuntimeDir() string {
+	if d := os.Getenv("XDG_RUNTIME_DIR"); d != "" {
+		return d
+	}
+	if d := fmt.Sprintf("/run/user/%d", os.Getuid()); dirExists(d) {
+		return d
+	}
+	return os.TempDir()
+}
+
+func dirExists(path string) bool {
+	st, err := os.Stat(path)
+	return err == nil && st.IsDir()
 }
 
 // QsPidFile stores the PID of the supervised Quickshell child. External
@@ -50,7 +69,7 @@ func (p *Paths) SocketPath() string {
 // `qs ipc` calls back into the running shell — without it they would have
 // to fall back to scanning processes via pgrep, which is racy.
 func (p *Paths) QsPidFile() string {
-	return filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), brand.AppID+"-qs.pid")
+	return filepath.Join(RuntimeDir(), brand.AppID+"-qs.pid")
 }
 
 // DaemonToml is the compositor daemon's config (brand.DaemonConfigFile),
@@ -137,7 +156,7 @@ func (p *Paths) ClipboardUnpinnedDB() string {
 // ClipboardTmpDB is the tmpfs location for unpinned history (toggle on).
 // It lives under XDG_RUNTIME_DIR so it is wiped on reboot.
 func (p *Paths) ClipboardTmpDB() string {
-	return filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), brand.AppID, "clipboard-unpinned.db")
+	return filepath.Join(RuntimeDir(), brand.AppID, "clipboard-unpinned.db")
 }
 
 func (p *Paths) ClipboardKeyFile() string {
@@ -147,7 +166,7 @@ func (p *Paths) ClipboardKeyFile() string {
 // ClipboardImageCacheDir is a tmpfs cache where image blobs are
 // materialized for drag-and-drop / external open.
 func (p *Paths) ClipboardImageCacheDir() string {
-	return filepath.Join(os.Getenv("XDG_RUNTIME_DIR"), brand.AppID, "clipboard-img")
+	return filepath.Join(RuntimeDir(), brand.AppID, "clipboard-img")
 }
 
 func (p *Paths) KeysDB() string {
