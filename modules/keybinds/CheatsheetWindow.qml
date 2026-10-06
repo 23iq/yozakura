@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import qs.modules.keybinds
+import qs.modules.components.kit
 
 // Full-screen keybind cheatsheet on one screen (layout.cheatsheet.host
 // "fullscreen"): a frosted scrim (the layer namespace gets the compositor
@@ -78,9 +79,9 @@ PanelWindow {
     CheatsheetView {
         id: panel
         anchors.fill: parent
-        anchors.leftMargin: Math.max(32, (parent.width - 1600) / 2)
+        anchors.leftMargin: Math.max(Space.xxl * 2, (parent.width - 1600) / 2)
         anchors.rightMargin: anchors.leftMargin
-        anchors.topMargin: Math.max(32, parent.height * 0.06)
+        anchors.topMargin: Math.max(Space.xxl * 2, parent.height * 0.08)
         anchors.bottomMargin: anchors.topMargin
         opacity: root.shown ? 1 : 0
         scale: root.shown ? 1 : 0.97

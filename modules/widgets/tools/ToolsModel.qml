@@ -6,7 +6,7 @@ import qs.modules.services
 import qs.config
 
 // The tools menu's actions for every style: `items` ({id, icon, label,
-// tooltip, variant, text} plus {type: "separator"} rows for the notch grid)
+// tooltip, active, text} plus {type: "separator"} rows for the notch strip)
 // and run(id). Screen tools start after the menu has closed (`done` first).
 Item {
     id: root
@@ -18,7 +18,7 @@ Item {
         },
         Object.assign(root.entry("record", root.recording ? Icons.stop : Icons.recordScreen, root.recording ? "tools.screenrecord_stop" : "tools.screenrecord_start"), {
             "text": root.recording ? ScreenRecorder.duration : "",
-            "variant": root.recording ? "error" : "primary"
+            "active": root.recording
         }), root.entry("recordings", Icons.recordings, "tools.screenrecord_directory"),
         {
             "type": "separator"

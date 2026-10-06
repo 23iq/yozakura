@@ -1,16 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 import qs.modules.keybinds
 import "BindModel.js" as BindModel
 
-// Cheatsheet content: title, search-as-you-type and the bind groups laid
-// out in balanced columns. Up/Down pick a row, Return edits it in the
-// settings; Esc is handled by the window.
+// Cheatsheet content: the heading is the search field (title role,
+// search-as-you-type), then the bind groups as kit Groups laid out in
+// balanced columns. Up/Down pick a row, Return edits it in the settings;
+// Esc (or the Esc key hint) closes.
 Item {
     id: root
 
@@ -25,8 +24,8 @@ Item {
     readonly property var columnModel: BindModel.columns(groups, Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap))))
     readonly property var ordered: columnModel.reduce((acc, col) => acc.concat(col.reduce((a, g) => a.concat(g.rows), [])), [])
     readonly property string selectedUid: selectedIndex >= 0 && selectedIndex < ordered.length ? ordered[selectedIndex].uid : ""
-    readonly property int gap: 14
-    readonly property int minColumnWidth: Math.round(Styling.fontSize(0) * 26)
+    readonly property int gap: Look.groupBoxed ? Look.groupGap : Space.xxl
+    readonly property int minColumnWidth: Math.round(Type.size("body") * 26)
 
     onQueryChanged: selectedIndex = query !== "" && ordered.length > 0 ? 0 : -1
 
@@ -40,55 +39,20 @@ Item {
         selectedIndex = Math.max(0, Math.min(ordered.length - 1, selectedIndex + delta));
     }
 
-    // Header
+    // Header: the search field is the title; the key hints sit at the right.
     Item {
         id: header
         width: parent.width
         height: search.implicitHeight
 
-        Row {
-            id: titleRow
-            anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
-            spacing: 12
-
-            Keycap {
-                anchors.verticalCenter: parent.verticalCenter
-                cap: ({
-                        "kind": "super",
-                        "text": "",
-                        "icon": ""
-                    })
-                sizeOffset: 4
-            }
-            Column {
-                anchors.verticalCenter: parent.verticalCenter
-                Text {
-                    text: I18n.t("binds.cheatsheet.title")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(6)
-                    font.weight: Font.Bold
-                    color: Colors.overBackground
-                }
-                Text {
-                    text: I18n.t("binds.cheatsheet.hint")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
-                }
-            }
-        }
-
-        SearchInput {
+        CheatsheetSearch {
             id: search
             objectName: "cheatsheetSearch"
-            anchors.right: closeButton.left
-            anchors.rightMargin: 10
+            anchors.left: parent.left
+            anchors.right: hints.left
+            anchors.rightMargin: Space.xl
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(420, Math.max(220, parent.width - titleRow.width - closeButton.width - 40))
-            iconText: Icons.search
-            placeholderText: I18n.t("binds.search_placeholder")
-            clearOnEscape: false
+            placeholderText: I18n.t("binds.cheatsheet.title")
             onSearchTextChanged: t => root.query = t
             onEscapePressed: root.closeRequested()
             onDownPressed: root.move(1)
@@ -99,36 +63,47 @@ Item {
             }
         }
 
-        Item {
-            id: closeButton
+        Row {
+            id: hints
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            width: escCap.implicitWidth
-            height: escCap.implicitHeight
+            spacing: Space.m
 
-            Keycap {
-                id: escCap
-                cap: ({
-                        "kind": "text",
-                        "text": "Esc",
-                        "icon": ""
-                    })
-                tone: closeArea.containsMouse ? "accent" : "normal"
+            KitText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "caption"
+                text: I18n.t("binds.cheatsheet.hint")
             }
-            MouseArea {
-                id: closeArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.closeRequested()
+
+            KeyHint {
+                id: escHint
+                anchors.verticalCenter: parent.verticalCenter
+                text: "Esc"
+                border.color: closeArea.containsMouse ? Type.text : Qt.rgba(Type.muted.r, Type.muted.g, Type.muted.b, 0.5)
+
+                MouseArea {
+                    id: closeArea
+                    anchors.fill: parent
+                    anchors.margins: -Space.s
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.closeRequested()
+                }
             }
         }
     }
 
+    Divider {
+        id: rule
+        anchors.top: header.bottom
+        anchors.topMargin: Space.m
+        width: parent.width
+    }
+
     Flickable {
         id: flick
-        anchors.top: header.bottom
-        anchors.topMargin: 20
+        anchors.top: rule.bottom
+        anchors.topMargin: Space.xl
         anchors.bottom: parent.bottom
         width: parent.width
         contentWidth: width
@@ -151,14 +126,16 @@ Item {
                 delegate: Column {
                     required property var modelData
                     width: columnsRow.colWidth
-                    spacing: root.gap
+                    spacing: Look.groupGap
 
                     Repeater {
                         model: parent.modelData
                         delegate: CheatsheetGroup {
                             required property var modelData
+                            required property int index
                             width: columnsRow.colWidth
                             model: modelData
+                            divider: index > 0
                             selectedUid: root.selectedUid
                             onEditRequested: uid => root.editRequested(uid)
                         }
@@ -167,14 +144,12 @@ Item {
             }
         }
 
-        Text {
+        KitText {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: 40
+            y: Space.xxl
             visible: root.filtered.length === 0
+            role: "secondary"
             text: I18n.t("binds.no_matches")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(1)
-            color: Colors.overSurfaceVariant
         }
     }
 }

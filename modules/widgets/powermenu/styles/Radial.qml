@@ -1,5 +1,5 @@
 import QtQuick
-import qs.modules.components
+import qs.modules.widgets.menus
 import qs.modules.widgets.powermenu
 
 // layout.powermenu.style "radial": the power actions on a RadialMenu at the
@@ -20,6 +20,7 @@ FocusScope {
 
     PowerMenuModel {
         id: power
+        objectName: "powerModel"
         onDone: root.closeRequested()
     }
 

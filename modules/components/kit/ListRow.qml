@@ -23,6 +23,7 @@ StyledRect {
     readonly property bool boxed: Look.boxedControls && root.look === "hover"
 
     signal clicked
+    signal doubleClicked
 
     implicitHeight: Space.rowHeight
     implicitWidth: row.implicitWidth + Space.s * 2
@@ -50,6 +51,7 @@ StyledRect {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton
         onClicked: root.clicked()
+        onDoubleClicked: root.doubleClicked()
     }
 
     RowLayout {

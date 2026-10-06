@@ -1,4 +1,4 @@
-"""RadialMenu (modules/components): opened at the cursor, the whole ring
+"""RadialMenu (modules/widgets/menus): opened at the cursor, the whole ring
 stays inside the work area at all four corners (EdgeLayout.radialCenter);
 keys move the selection, Enter triggers, a confirm item needs a full hold
 and Escape dismisses."""
@@ -6,32 +6,16 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib.qmlharness import Harness  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from lib.menus_env import MenusEnv  # noqa: E402
 from PySide6.QtCore import QElapsedTimer, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-h = Harness("radial-menu")
-h.singleton("qs.config", "Config", "QtObject { property int animDuration: 0; property string defaultFont: 'sans' }")
-h.module("qs.modules.theme", {
-    "Motion": """pragma Singleton
-QtObject {
-    property QtObject enter: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
-    property QtObject exit: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
-    property QtObject emphasis: QtObject { property int duration: 450; property int easing: Easing.OutCubic; property real overshoot: 1 }
-}""",
-    "Metrics": "pragma Singleton\nQtObject { property int rowHeight: 48; property int iconSize: 32; property int spacing: 8; property int padding: 16 }",
-    "Colors": "pragma Singleton\nQtObject { property color primary: 'red'; property color overBackground: 'white'; property color error: 'red' }",
-    "Icons": "pragma Singleton\nQtObject { property string font: 'sans' }",
-    "Styling": "pragma Singleton\nQtObject { function fontSize(o) { return 14 + o; } function radius(o) { return 16 + o; } function srItem(v) { return 'white'; } }",
-})
-h.copy("modules/components/HoldToConfirm.qml", "qs/modules/components")
-h.copy("modules/components/RadialMenu.qml", "qs/modules/components")
-h.copy("modules/shell/EdgeLayout.js", "qs/modules/shell")
-h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }"})
-
-root = h.load("""import QtQuick
+env = MenusEnv("radial-menu", overrides={"theme": {"animDuration": 0}})
+h = env.h
+root = env.load("""import QtQuick
 import QtQuick.Window
-import qs.modules.components
+import qs.modules.widgets.menus
 Window {
     width: 1920; height: 1080; visible: true
     property int fired: -1
@@ -46,12 +30,12 @@ Window {
         items: [
             { icon: "a", label: "Lock" },
             { icon: "b", label: "Suspend" },
-            { icon: "c", label: "Power off", confirm: true }
+            { icon: "c", label: "Power off", hold: "Hold to shut down", confirm: true }
         ]
         onTriggered: index => parent.Window.window.fired = index
         onDismissed: parent.Window.window.dismissals++
     }
-}""", auto_stub=False)
+}""")
 root.requestActivate()
 menu = h.find(root, "menu")
 
@@ -100,6 +84,12 @@ pump(750)
 QTest.keyRelease(root, Qt.Key_Return)
 pump(20)
 assert root.property("fired") == 2, root.property("fired")
+
+# the center names the selection and asks to hold a confirm item
+assert h.eval(h.find(root, "radialLabel"), "text") == "Power off"
+assert h.eval(h.find(root, "radialHint"), "text") == "Hold to shut down"
+QTest.keyClick(root, Qt.Key_Left)
+assert h.eval(h.find(root, "radialHint"), "visible") is False
 
 QTest.keyClick(root, Qt.Key_Escape)
 assert root.property("dismissals") == 1
