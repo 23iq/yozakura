@@ -26,15 +26,17 @@ Item {
     readonly property var legacyTabs: ["network", "bluetooth", "sound", "ai", "effects", "appearance", "input", "system", "windows", "bar", "mods"]
 
     property string currentCategory: GlobalStates.settingsCategory || "appearance"
-    readonly property var category: Categories.byId(currentCategory) || Categories.byId("appearance")
+    readonly property var category: Categories.resolve(currentCategory) || Categories.byId("appearance")
     readonly property bool compact: width < 860
     property var pendingReveal: null
 
+    // Accepts a category id or a sidebar group id (Categories.resolve).
     function select(id) {
-        if (!Categories.byId(id))
+        const c = Categories.resolve(id);
+        if (!c)
             return;
-        currentCategory = id;
-        GlobalStates.settingsCategory = id;
+        currentCategory = c.id;
+        GlobalStates.settingsCategory = c.id;
     }
 
     function navigate(categoryId, sectionId, entryId) {
@@ -42,7 +44,8 @@ Item {
             "section": sectionId || "",
             "entry": entryId || ""
         };
-        if (categoryId === currentCategory)
+        const c = Categories.resolve(categoryId);
+        if (c && c.id === currentCategory)
             revealTimer.restart();
         else
             select(categoryId);

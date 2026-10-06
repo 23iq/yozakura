@@ -1,0 +1,116 @@
+"""Settings skeleton (S0) behaviour, offscreen.
+
+* `advanced: true` entries render in a collapsed "Advanced" block
+  (schema/Advanced.js); revealing one (a search jump) unfolds it.
+* A section's reset button appears once it has changes and resets only
+  that section.
+* The sidebar tree: group ids resolve to their first page, the open group
+  lists its pages.
+"""
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+import headless  # noqa: E402
+
+headless.ensure(gl=True)
+
+from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
+from PySide6.QtTest import QTest  # noqa: E402
+from settings_env import SettingsEnv  # noqa: E402
+
+env = SettingsEnv("settings-advanced")
+h = env.h
+
+win = env.load("""
+import QtQuick
+import QtQuick.Window
+import qs.config
+import qs.modules.settings
+import qs.modules.settings.store
+import "../qs/modules/settings/schema/Advanced.js" as Advanced
+Window {
+    id: w
+    width: 1100; height: 760; visible: true
+    function findItem(name, from) {
+        var item = from || w.contentItem;
+        if (item.objectName === name) return item;
+        var kids = item.children || [];
+        if (item.contentItem && item.contentItem !== item && kids.indexOf(item.contentItem) === -1)
+            kids = kids.concat([item.contentItem]);
+        for (var i = 0; i < kids.length; i++) { var f = findItem(name, kids[i]); if (f) return f; }
+        return null;
+    }
+    function toggle(key, advanced) {
+        return { "key": key, "type": "toggle", "label": "prefs.bar.compact", "advanced": advanced };
+    }
+    SettingsPage {
+        objectName: "page"
+        anchors.fill: parent
+        category: Advanced.apply({
+            "id": "demo", "icon": "gear", "title": "prefs.cat.bar",
+            "sections": [
+                { "id": "main", "title": "prefs.cat.bar", "entries": [w.toggle("bar.compact", false), w.toggle("bar.frameEnabled", true)] },
+                { "id": "other", "title": "prefs.cat.dock", "entries": [w.toggle("bar.hoverToReveal", false)] }
+            ]
+        })
+    }
+}""")
+page = h.find(win, "page")
+
+
+def ev(expr: str, obj=None):
+    return h.eval(obj or win, expr)
+
+
+def check(cond: bool, what: str) -> None:
+    if not cond:
+        print("FAIL:", what, file=sys.stderr)
+        sys.exit(1)
+    print("PASS", what)
+
+
+QTest.qWait(200)
+adv = 'findItem("settingsSection:advanced")'
+check(ev(f"{adv} !== null"), "the page has an Advanced block")
+check(ev(f"{adv}.expanded") is False, "the Advanced block starts collapsed")
+check(ev('findItem("settingRow:bar.frameEnabled") !== null'), "the advanced entry renders inside it")
+h.eval(page, 'reveal("advanced", "bar.frameEnabled")')
+QTest.qWait(100)
+check(ev(f"{adv}.expanded") is True, "revealing an advanced entry (a search jump) opens the block")
+
+# Section reset
+reset_main = 'findItem("sectionReset:main")'
+check(ev(f"{reset_main}.visible") is False, "no section reset without changes")
+compact0, bg0 = ev("Config.bar.compact"), ev("Config.bar.hoverToReveal")
+ev(f"SettingsStore.set('bar.compact', {str(not compact0).lower()})")
+ev(f"SettingsStore.set('bar.hoverToReveal', {str(not bg0).lower()})")
+QTest.qWait(50)
+check(ev(f"{reset_main}.visible") is True, "a changed section shows its reset button")
+ev(f"{reset_main}.children[0].clicked(null)")
+QTest.qWait(50)
+check(ev("Config.bar.compact") == compact0, "section reset restores its entries")
+check(ev("Config.bar.hoverToReveal") != bg0, "…and leaves other sections alone")
+check(ev(f"{reset_main}.visible") is False, "…and hides the button again")
+ev(f"SettingsStore.set('bar.hoverToReveal', {str(bg0).lower()})")
+
+# Sidebar tree in the real shell
+shell_win = env.load("""
+import QtQuick
+import QtQuick.Window
+import qs.modules.settings
+Window {
+    width: 1100; height: 760; visible: true
+    SettingsShell { objectName: "shell"; anchors.fill: parent }
+}""")
+shell = h.find(shell_win, "shell")
+h.eval(shell, 'select("island")')
+QTest.qWait(200)
+check(h.eval(shell, "currentCategory") == "notch", "a group id opens its first page")
+h.eval(shell, 'select("overview")')
+QTest.qWait(200)
+check(h.eval(shell, "currentCategory") == "overview", "an old category id still opens its page")
+h.eval(shell, 'navigate("look", "", "")')
+QTest.qWait(200)
+check(h.eval(shell, "currentCategory") == "appearance", "navigate accepts a group id")
+print("all settings skeleton checks passed")

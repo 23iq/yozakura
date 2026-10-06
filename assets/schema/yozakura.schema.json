@@ -12880,6 +12880,11 @@
   },
   "x-categories": [
     {
+      "id": "layout",
+      "title": "Layout",
+      "description": "Where the bar, island and dock sit on the screen."
+    },
+    {
       "id": "appearance",
       "title": "Appearance",
       "description": "Theme mode, colors, fonts, shape and motion."
@@ -13057,8 +13062,76 @@
   ],
   "x-groups": [
     {
-      "id": "personalize",
-      "title": "Personalize",
+      "id": "layout",
+      "title": "Layout",
+      "categories": [
+        "layout"
+      ]
+    },
+    {
+      "id": "bar",
+      "title": "Bar",
+      "categories": [
+        "bar",
+        "bar-classic"
+      ]
+    },
+    {
+      "id": "island",
+      "title": "Island",
+      "categories": [
+        "notch",
+        "overview"
+      ]
+    },
+    {
+      "id": "dock",
+      "title": "Dock",
+      "categories": [
+        "dock"
+      ]
+    },
+    {
+      "id": "launcher",
+      "title": "Launcher",
+      "categories": [
+        "launcher"
+      ]
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard",
+      "categories": [
+        "sidebar",
+        "ai",
+        "ai-providers",
+        "ai-code"
+      ]
+    },
+    {
+      "id": "popups",
+      "title": "Popups",
+      "categories": [
+        "notifications"
+      ]
+    },
+    {
+      "id": "lockscreen",
+      "title": "Lockscreen",
+      "categories": [
+        "lockscreen"
+      ]
+    },
+    {
+      "id": "desktop",
+      "title": "Desktop",
+      "categories": [
+        "desktop"
+      ]
+    },
+    {
+      "id": "look",
+      "title": "Look",
       "categories": [
         "appearance",
         "wallpapers",
@@ -13066,57 +13139,33 @@
       ]
     },
     {
-      "id": "shell",
-      "title": "Shell",
+      "id": "presets",
+      "title": "Presets",
       "categories": [
-        "bar",
-        "notch",
-        "launcher",
-        "dock",
-        "overview",
-        "specials",
-        "desktop",
-        "lockscreen",
-        "notifications"
+        "presets"
       ]
     },
     {
       "id": "system",
       "title": "System",
       "categories": [
+        "system",
         "displays",
         "keyboard",
         "windows",
+        "specials",
         "terminal",
         "input",
         "voice",
         "timers",
         "routines",
-        "system",
-        "extras",
-        "updates"
-      ]
-    },
-    {
-      "id": "connect",
-      "title": "Connections",
-      "categories": [
         "network",
         "bluetooth",
         "sound",
-        "effects"
-      ]
-    },
-    {
-      "id": "extend",
-      "title": "More",
-      "categories": [
-        "ai",
-        "ai-providers",
-        "ai-code",
-        "sidebar",
+        "effects",
+        "extras",
         "mods",
-        "presets",
+        "updates",
         "about"
       ]
     }

@@ -57,7 +57,7 @@ test('sidebar groups reference existing categories, each listed once', () => {
             seen.add(id);
         }
     }
-    assert.equal(Categories.ordered()[0].id, 'appearance');
+    assert.equal(Categories.ordered()[0].id, 'layout');
 });
 
 test('registry files, legacy panels and links exist', () => {

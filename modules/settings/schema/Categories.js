@@ -19,45 +19,97 @@
 .import "specials.js" as Specials
 .import "timers.js" as Timers
 .import "routines.js" as Routines
+.import "layout.js" as Layout
+.import "Advanced.js" as Advanced
 
-// Settings information architecture: sidebar groups and categories.
+// Settings information architecture: the sidebar tree and its pages.
 //
-// A category is one of:
+// The sidebar shows the 12 top-level `groups` (one per shell element:
+// Layout, Bar, Island, ...); a group opens its first category and, when it
+// has several, lists them under itself. A category is one of:
 //   * schema-driven: has `sections` (see appearance.js) - rendered by
-//     SettingsPage.qml, searchable entry by entry;
+//     SettingsPage.qml, searchable entry by entry; entries flagged
+//     `advanced: true` gather in a collapsed "Advanced" block (Advanced.js);
 //   * legacy: has `legacy: {source, section}` - an old dashboard panel
 //     (path relative to modules/widgets/) hosted unchanged by
 //     LegacyPanelHost.qml until it is migrated; `topics` keep it searchable;
 //   * a page: has `page` - a hand-written page in modules/settings/.
-// Categories not listed in a group are reachable only by search or links
-// (e.g. "bar-classic", opened from the Bar page).
+// Every category is listed in exactly one group. `resolve(id)` accepts a
+// category id or a group id, so old deep links and the new tree both work.
 // To migrate a legacy category, give it `sections` and drop `legacy`/`topics`.
 
 var groups = [
     {
-        "id": "personalize",
-        "title": "prefs.group.personalize",
+        "id": "layout",
+        "icon": "frameCorners",
+        "title": "prefs.group.layout",
+        "categories": ["layout"]
+    },
+    {
+        "id": "bar",
+        "icon": "squaresFour",
+        "title": "prefs.group.bar",
+        "categories": ["bar", "bar-classic"]
+    },
+    {
+        "id": "island",
+        "icon": "dotsThree",
+        "title": "prefs.group.island",
+        "categories": ["notch", "overview"]
+    },
+    {
+        "id": "dock",
+        "icon": "dock",
+        "title": "prefs.group.dock",
+        "categories": ["dock"]
+    },
+    {
+        "id": "launcher",
+        "icon": "magnifyingGlass",
+        "title": "prefs.group.launcher",
+        "categories": ["launcher"]
+    },
+    {
+        "id": "dashboard",
+        "icon": "robot",
+        "title": "prefs.group.dashboard",
+        "categories": ["sidebar", "ai", "ai-providers", "ai-code"]
+    },
+    {
+        "id": "popups",
+        "icon": "bell",
+        "title": "prefs.group.popups",
+        "categories": ["notifications"]
+    },
+    {
+        "id": "lockscreen",
+        "icon": "lock",
+        "title": "prefs.group.lockscreen",
+        "categories": ["lockscreen"]
+    },
+    {
+        "id": "desktop",
+        "icon": "monitor",
+        "title": "prefs.group.desktop",
+        "categories": ["desktop"]
+    },
+    {
+        "id": "look",
+        "icon": "paintBrush",
+        "title": "prefs.group.look",
         "categories": ["appearance", "wallpapers", "surfaces"]
     },
     {
-        "id": "shell",
-        "title": "prefs.group.shell",
-        "categories": ["bar", "notch", "launcher", "dock", "overview", "specials", "desktop", "lockscreen", "notifications"]
+        "id": "presets",
+        "icon": "magicWand",
+        "title": "prefs.group.presets",
+        "categories": ["presets"]
     },
     {
         "id": "system",
+        "icon": "gear",
         "title": "prefs.group.system",
-        "categories": ["displays", "keyboard", "windows", "terminal", "input", "voice", "timers", "routines", "system", "extras", "updates"]
-    },
-    {
-        "id": "connect",
-        "title": "prefs.group.connect",
-        "categories": ["network", "bluetooth", "sound", "effects"]
-    },
-    {
-        "id": "extend",
-        "title": "prefs.group.extend",
-        "categories": ["ai", "ai-providers", "ai-code", "sidebar", "mods", "presets", "about"]
+        "categories": ["system", "displays", "keyboard", "windows", "specials", "terminal", "input", "voice", "timers", "routines", "network", "bluetooth", "sound", "effects", "extras", "mods", "updates", "about"]
     }
 ];
 
@@ -85,6 +137,7 @@ function topic(label, section, keywords) {
 }
 
 var categories = [
+    Layout.category,
     Appearance.category,
     Wallpapers.category,
     Bar.category,
@@ -174,6 +227,8 @@ var categories = [
     }
 ];
 
+categories = categories.map(Advanced.apply);
+
 function byId(id) {
     for (var i = 0; i < categories.length; i++) {
         if (categories[i].id === id)
@@ -182,11 +237,38 @@ function byId(id) {
     return null;
 }
 
-// Sidebar model: [{group, title, categories: [category...]}] in order.
+function groupById(id) {
+    for (var i = 0; i < groups.length; i++) {
+        if (groups[i].id === id)
+            return groups[i];
+    }
+    return null;
+}
+
+// The group (top-level sidebar entry) a category belongs to.
+function groupOf(categoryId) {
+    for (var i = 0; i < groups.length; i++) {
+        if (groups[i].categories.indexOf(categoryId) !== -1)
+            return groups[i];
+    }
+    return null;
+}
+
+// A category id (old deep links) or a group id (opens its first page).
+function resolve(id) {
+    var cat = byId(id);
+    if (cat)
+        return cat;
+    var g = groupById(id);
+    return g ? byId(g.categories[0]) : null;
+}
+
+// Sidebar model: [{id, icon, title, categories: [category...]}] in order.
 function sidebar() {
     return groups.map(function (g) {
         return {
             "id": g.id,
+            "icon": g.icon,
             "title": g.title,
             "categories": g.categories.map(byId).filter(function (c) {
                 return c !== null;
