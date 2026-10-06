@@ -14,6 +14,7 @@ import (
 	"time"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/envclean"
+	"yozakura/backend/pkg/instancelock"
 	"yozakura/backend/pkg/paths"
 )
 
@@ -37,6 +38,10 @@ const socketWaitTimeout = 5 * time.Second
 // daemonRestartDelay throttles restarts of a compositor daemon that exited
 // while the Manager was still running.
 const daemonRestartDelay = 500 * time.Millisecond
+
+// daemonHeldRecheck is how often the supervisor re-checks a lock held by
+// a foreign daemon instance.
+const daemonHeldRecheck = 3 * time.Second
 
 // Manager owns the long-running daemon children (yozd daemon, yozd subscribe)
 // and exposes their state to the rest of the compositor service. The Manager
@@ -151,6 +156,17 @@ func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 			case <-m.stopCh:
 				return
 			case <-time.After(daemonRestartDelay):
+			}
+			// Another daemon owns the instance lock: respawning would only
+			// make it refuse again, so keep waiting until it is gone.
+			if _, held := instancelock.Held(instancelock.DaemonPath(brand.DaemonSocketPath())); held {
+				err = fmt.Errorf("another %s instance holds the lock", brand.Daemon)
+				select {
+				case <-m.stopCh:
+					return
+				case <-time.After(daemonHeldRecheck):
+				}
+				continue
 			}
 			m.daemonMu.Lock()
 			if m.stopping {

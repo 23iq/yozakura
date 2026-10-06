@@ -493,40 +493,95 @@ func execCommand(name string, args ...string) {
 func restartShell() {
 	// Concurrent reloads collapse into one: the loser waits for the winner
 	// to finish and does nothing, instead of racing it into a second daemon.
-	rl, err := instancelock.Acquire(instancelock.ReloadPath())
+	rl, err := instancelock.TryAcquire(instancelock.ReloadPath())
 	if err != nil {
-		instancelock.WaitFree(instancelock.ReloadPath(), 15*time.Second)
-		return
+		var held *instancelock.HeldError
+		if errors.As(err, &held) {
+			instancelock.WaitFree(instancelock.ReloadPath(), 15*time.Second)
+			return
+		}
+		fmt.Fprintf(os.Stderr, "Error: reload lock: %v\n", err)
+		os.Exit(1)
 	}
 	defer rl.Release()
-	restartShellLocked(startDaemon)
+	if !restartShellLocked(startDaemon) {
+		os.Exit(1)
+	}
+}
+
+// restartShellLocked stops the running instance and starts a replacement.
+// The caller holds the reload lock. start launches the new daemon. It
+// reports false when the old instance would not exit (nothing is started).
+func restartShellLocked(start func()) bool {
+	if isAlive() {
+		pid := readPIDFile()
+		_, _ = newClient().Call("system.shutdown", nil)
+		waitForDeath(pid, stopWait)
+	}
+	// The old instance releases its lock only when it exits; starting
+	// earlier would make the new daemon refuse as "already running".
+	if !instancelock.WaitFree(instancelock.AppPath(), stopWait) && !forceStopHolder() {
+		fmt.Fprintf(os.Stderr, "Error: the previous %s instance did not exit; not starting another\n", brand.AppID)
+		return false
+	}
+	start()
+	// Hold the reload lock until the new daemon owns the instance lock, so
+	// a reload right behind this one sees it alive and restarts it.
+	deadline := time.Now().Add(startWait)
+	for time.Now().Before(deadline) {
+		if _, held := instancelock.Held(instancelock.AppPath()); held {
+			break
+		}
+		time.Sleep(25 * time.Millisecond)
+	}
+	return true
+}
+
+// Reload timeouts and process hooks; tests swap them.
+var (
+	stopWait  = 5 * time.Second
+	killWait  = 2 * time.Second
+	startWait = 3 * time.Second
+
+	isOurProcess = processIsThisExecutable
+	signalPID    = syscall.Kill
+)
+
+// forceStopHolder SIGTERMs, then SIGKILLs, the process holding the instance
+// lock, but only when it is this very executable. Reports whether the lock
+// ended up free.
+func forceStopHolder() bool {
+	pid, held := instancelock.Held(instancelock.AppPath())
+	if !held {
+		return true
+	}
+	if pid <= 0 || !isOurProcess(pid) {
+		return false
+	}
+	_ = signalPID(pid, syscall.SIGTERM)
+	if instancelock.WaitFree(instancelock.AppPath(), killWait) {
+		return true
+	}
+	_ = signalPID(pid, syscall.SIGKILL)
+	return instancelock.WaitFree(instancelock.AppPath(), killWait)
+}
+
+// processIsThisExecutable reports whether pid runs the same binary as we do.
+func processIsThisExecutable(pid int) bool {
+	self, err := os.Readlink("/proc/self/exe")
+	if err != nil {
+		return false
+	}
+	other, err := os.Readlink(fmt.Sprintf("/proc/%d/exe", pid))
+	if err != nil {
+		return false
+	}
+	trim := func(p string) string { return strings.TrimSuffix(p, " (deleted)") }
+	return trim(self) == trim(other)
 }
 
 // startDaemon launches the replacement daemon; tests swap it.
 var startDaemon = startDetachedDaemon
-
-// restartShellLocked stops the running instance and starts a replacement.
-// The caller holds the reload lock. start launches the new daemon.
-func restartShellLocked(start func()) {
-	if isAlive() {
-		pid := readPIDFile()
-		_, _ = newClient().Call("system.shutdown", nil)
-		waitForDeath(pid, 5*time.Second)
-	}
-	// The old instance releases its lock only when it exits; starting
-	// earlier would make the new daemon refuse as "already running".
-	instancelock.WaitFree(instancelock.AppPath(), 5*time.Second)
-	start()
-	// Hold the reload lock until the new daemon owns the instance lock, so
-	// a reload right behind this one sees it alive and restarts it.
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		if _, held := instancelock.Held(instancelock.AppPath()); held {
-			return
-		}
-		time.Sleep(25 * time.Millisecond)
-	}
-}
 
 func startDetachedDaemon() {
 	exe, _ := os.Executable()

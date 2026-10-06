@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"yozakura/backend/pkg/paths"
 )
 
 func TestSecondAcquireRefusedWithPID(t *testing.T) {
@@ -131,5 +133,65 @@ func TestPaths(t *testing.T) {
 	}
 	if filepath.Dir(DaemonPath("/a/b/s.sock")) != "/a/b" {
 		t.Fatal(DaemonPath("/a/b/s.sock"))
+	}
+}
+
+func TestProbeNeverRefusesDaemon(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		p := filepath.Join(t.TempDir(), "a.lock")
+		if err := os.WriteFile(p, nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		stop := make(chan struct{})
+		var wg sync.WaitGroup
+		for j := 0; j < 4; j++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for {
+					select {
+					case <-stop:
+						return
+					default:
+						Held(p)
+					}
+				}
+			}()
+		}
+		l, err := Acquire(p)
+		close(stop)
+		wg.Wait()
+		if err != nil {
+			t.Fatalf("iteration %d: probes made the daemon refuse: %v", i, err)
+		}
+		l.Release()
+	}
+}
+
+func TestProbeIsReadOnly(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "none.lock")
+	if _, held := Held(p); held {
+		t.Fatal("missing file reported held")
+	}
+	if _, err := os.Stat(p); !os.IsNotExist(err) {
+		t.Fatalf("probe created %s", p)
+	}
+	l, _ := Acquire(p)
+	defer l.Release()
+	before, _ := os.ReadFile(p)
+	Held(p)
+	after, _ := os.ReadFile(p)
+	if string(before) != string(after) || len(after) == 0 {
+		t.Fatalf("probe modified lock file: %q -> %q", before, after)
+	}
+}
+
+func TestPathsMatchSocketFallback(t *testing.T) {
+	t.Setenv("XDG_RUNTIME_DIR", "")
+	if filepath.Dir(AppPath()) != paths.RuntimeDir() {
+		t.Fatalf("%s not in %s", AppPath(), paths.RuntimeDir())
+	}
+	if filepath.Dir(AppPath()) != filepath.Dir(paths.New().SocketPath()) {
+		t.Fatalf("lock dir %s != socket dir %s", filepath.Dir(AppPath()), filepath.Dir(paths.New().SocketPath()))
 	}
 }

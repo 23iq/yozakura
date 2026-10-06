@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/paths"
 )
 
 // HeldError reports that another process holds the lock.
@@ -36,20 +37,44 @@ type Lock struct {
 	f *os.File
 }
 
-// Acquire takes the exclusive lock at path without blocking and records the
-// caller's pid in the file. A *HeldError is returned when it is taken.
-func Acquire(path string) (*Lock, error) {
+// acquireRetry is how long Acquire keeps retrying a lock that looks taken:
+// probes (Held) briefly take a shared lock, which must never make a real
+// daemon believe another instance is running.
+const acquireRetry = 500 * time.Millisecond
+
+// ExitHeld is the exit status of a daemon that refused to start because
+// another instance holds its lock; supervisors treat it as "do not respawn".
+const ExitHeld = 3
+
+// Acquire takes the exclusive lock at path and records the caller's pid in
+// the file. A lock that stays taken for ~500 ms yields a *HeldError.
+func Acquire(path string) (*Lock, error) { return acquire(path, acquireRetry) }
+
+// TryAcquire is Acquire without the retry window, for locks where losing
+// immediately is the point (collapsing concurrent reloads).
+func TryAcquire(path string) (*Lock, error) { return acquire(path, 0) }
+
+func acquire(path string, retry time.Duration) (*Lock, error) {
 	f, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0o600)
 	if err != nil {
 		return nil, err
 	}
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		pid := readPID(f)
-		f.Close()
-		if errors.Is(err, syscall.EWOULDBLOCK) {
+	deadline := time.Now().Add(retry)
+	for {
+		err = syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
+		if err == nil {
+			break
+		}
+		if !errors.Is(err, syscall.EWOULDBLOCK) {
+			f.Close()
+			return nil, err
+		}
+		if !time.Now().Before(deadline) {
+			pid := readPID(f)
+			f.Close()
 			return nil, &HeldError{Path: path, PID: pid}
 		}
-		return nil, err
+		time.Sleep(5 * time.Millisecond)
 	}
 	_ = f.Truncate(0)
 	_, _ = f.WriteAt([]byte(strconv.Itoa(os.Getpid())+"\n"), 0)
@@ -67,17 +92,18 @@ func (l *Lock) Release() {
 }
 
 // Held reports whether another holder owns the lock at path (and its pid).
-// It never leaves the lock taken.
+// It is a read-only probe: no file is created and nothing is written; a
+// missing file means not held.
 func Held(path string) (int, bool) {
-	l, err := Acquire(path)
-	if err == nil {
-		l.Release()
+	f, err := os.Open(path)
+	if err != nil {
 		return 0, false
 	}
-	var he *HeldError
-	if errors.As(err, &he) {
-		return he.PID, true
+	defer f.Close()
+	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_SH|syscall.LOCK_NB); err != nil {
+		return readPID(f), errors.Is(err, syscall.EWOULDBLOCK)
 	}
+	_ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
 	return 0, false
 }
 
@@ -103,12 +129,7 @@ func readPID(f *os.File) int {
 	return pid
 }
 
-func runtimeFile(name string) string {
-	if dir := os.Getenv("XDG_RUNTIME_DIR"); dir != "" {
-		return filepath.Join(dir, name)
-	}
-	return filepath.Join(os.TempDir(), fmt.Sprintf("%d-%s", os.Getuid(), name))
-}
+func runtimeFile(name string) string { return filepath.Join(paths.RuntimeDir(), name) }
 
 // AppPath is the lock held for the whole life of the app daemon.
 func AppPath() string { return runtimeFile(brand.AppID + ".lock") }

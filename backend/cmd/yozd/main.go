@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -228,6 +229,10 @@ func runDaemon(customConfigPath string) {
 	lock, err := instancelock.Acquire(instancelock.DaemonPath(socketPath))
 	if err != nil {
 		fmt.Printf("Error: %s daemon: %v.\n", brand.Daemon, err)
+		var held *instancelock.HeldError
+		if errors.As(err, &held) {
+			os.Exit(instancelock.ExitHeld)
+		}
 		os.Exit(1)
 	}
 	defer lock.Release()
