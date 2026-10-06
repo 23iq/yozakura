@@ -59,6 +59,10 @@ var keys = {
     "showRunningIndicators": {
         "description": "Dots under running apps."
     },
+    "indicator": {
+        "enum": Enums.DOCK_INDICATORS,
+        "description": "Running-app indicator style: dot, line, glow or brush."
+    },
     "showPinButton": {
         "description": "Show the pin (keep visible) button."
     },

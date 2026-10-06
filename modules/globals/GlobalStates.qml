@@ -457,7 +457,7 @@ Singleton {
         "notch": ["enabled", "position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "liveActivities"],
         "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle"],
         "overview": ["style", "rows", "columns", "scale", "workspaceSpacing"],
-        "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce", "ignoredAppRegexes"],
+        "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "indicator", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce", "ignoredAppRegexes"],
         "lockscreen": ["position", "style", "tone", "blur", "showMedia", "showVisualizer", "showStatus"],
         "desktop": ["enabled", "iconSize", "spacingVertical", "textColor", "wallpaperTransition", "wallpaperTransitionDuration", "wallpaperFolders", "depthClock", "depthClockStyle", "depthClockPosition", "depthClockVideo", "depthClockInk", "blurWallpaperOnOverview", "widgetsEnabled", "widgets", "widgetGrid", "widgetVariant"],
         "system": ["idle", "ocr", "disks", "language", "updateServiceEnabled", "clipboard", "pomodoro", "timers", "focus"],

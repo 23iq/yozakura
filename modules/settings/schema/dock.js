@@ -223,6 +223,37 @@ var category = {
                     "keywords": "dock running indicators dots open apps"
                 },
                 {
+                    "key": "dock.indicator",
+                    "type": "selector",
+                    "visibleWhen": {
+                        "all": [ON, {
+                                "key": "dock.showRunningIndicators",
+                                "equals": true
+                            }]
+                    },
+                    "options": [
+                        {
+                            "value": "dot",
+                            "label": "prefs.dock.indicator.dot"
+                        },
+                        {
+                            "value": "line",
+                            "label": "prefs.dock.indicator.line"
+                        },
+                        {
+                            "value": "glow",
+                            "label": "prefs.dock.indicator.glow"
+                        },
+                        {
+                            "value": "brush",
+                            "label": "prefs.dock.indicator.brush"
+                        }
+                    ],
+                    "label": "prefs.dock.indicator",
+                    "description": "prefs.dock.indicator.desc",
+                    "keywords": "dock indicator running dot line glow brush style"
+                },
+                {
                     "key": "dock.showPinButton",
                     "type": "toggle",
                     "visibleWhen": STANDALONE,

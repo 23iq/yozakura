@@ -13,6 +13,7 @@ var data = {
     "hoverToReveal": true,
     "availableOnFullscreen": false,
     "showRunningIndicators": true,
+    "indicator": "dot",
     "showPinButton": true,
     "showOverviewButton": true,
     "ignoredAppRegexes": [

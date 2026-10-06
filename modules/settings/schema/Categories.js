@@ -11,6 +11,7 @@
 .import "lockscreen.js" as Lockscreen
 .import "launcher.js" as Launcher
 .import "desktop.js" as Desktop
+.import "dock.js" as Dock
 .import "windows.js" as Windows
 .import "system.js" as System
 .import "voice.js" as Voice
@@ -25,7 +26,6 @@
 .import "osd.js" as Osd
 .import "menus.js" as Menus
 .import "Advanced.js" as Advanced
-.import "dock.js" as Dock
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
 

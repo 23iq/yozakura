@@ -11,7 +11,7 @@ var widgets = [
       minW: 1, minH: 2, maxW: 2, maxH: 4, defaultW: 1, defaultH: 3 },
     { id: "quickControls", url: "QuickControls.qml", labelKey: "bento.widget.quickControls", icon: "faders",
       minW: 2, minH: 1, maxW: 3, maxH: 2, defaultW: 2, defaultH: 1 },
-    { id: "calendar", url: "calendar/Calendar.qml", labelKey: "bento.widget.calendar", icon: "calendar",
+    { id: "calendar", url: "CalendarWidget.qml", labelKey: "bento.widget.calendar", icon: "calendar",
       minW: 1, minH: 1, maxW: 2, maxH: 3, defaultW: 1, defaultH: 2 },
     { id: "specials", url: "SpecialsPanel.qml", labelKey: "bento.widget.specials", icon: "stack",
       minW: 1, minH: 1, maxW: 4, maxH: 3, defaultW: 2, defaultH: 1 },

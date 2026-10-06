@@ -35,7 +35,8 @@ settings_env.QUICKSHELL_WIDGETS = dict(settings_env.QUICKSHELL_WIDGETS, Clipping
         Item { id: ci; anchors.fill: parent } }
 }""")
 
-env = settings_env.SettingsEnv("corner-mask")
+# Classic visual language: the variants drawn exactly as configured.
+env = settings_env.SettingsEnv("corner-mask", overrides={"theme": {"language": "classic"}})
 h = env.h
 failures: list[str] = []
 

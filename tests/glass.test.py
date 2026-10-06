@@ -16,9 +16,10 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv, load_defaults  # noqa: E402
 
-# A translucent preset (popup 0.9, pane 0.78) like Sakura Glass.
+# A translucent preset (popup 0.9, pane 0.78) like Sakura Glass, drawn in the
+# classic visual language (the variants exactly as configured).
 _theme = load_defaults()["theme"]
-OVERRIDES = {"theme": {"srPopup": dict(_theme["srPopup"], opacity=0.9), "srPane": dict(_theme["srPane"], opacity=0.78)}}
+OVERRIDES = {"theme": {"language": "classic", "srPopup": dict(_theme["srPopup"], opacity=0.9), "srPane": dict(_theme["srPane"], opacity=0.78)}}
 env = SettingsEnv("glass", overrides=OVERRIDES, wallpaper={"dir": "/walls", "paths": [], "current": ""})
 h = env.h
 failures: list[str] = []
