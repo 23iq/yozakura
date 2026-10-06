@@ -50,6 +50,9 @@ FileView {
     onLoaded: {
         file.beforeValidate();
         if (!file.ready) {
+            // Files touched by a key alias validate together (AliasGate).
+            if (file.store.aliasGate && file.store.aliasGate.hold(file))
+                return;
             file.validate(() => {
                 file.ready = true;
             });
@@ -60,6 +63,8 @@ FileView {
     onLoadFailed: error => {
         // Quickshell passes the FileViewError value (a number), not its name.
         if ((error === FileViewError.FileNotFound || String(error).includes("FileNotFound")) && !file.ready) {
+            if (file.store.aliasGate)
+                file.store.aliasGate.skip(file.name);
             file.handleMissing(() => {
                 file.ready = true;
             });
@@ -77,7 +82,8 @@ FileView {
         }
     }
 
-    function validate(onComplete) {
+    // `migrated`: the parsed file after the key-alias migration (AliasGate).
+    function validate(onComplete, migrated) {
         var raw = file.text();
         if (!raw || raw.trim().length === 0) {
             // File is missing or empty — create with defaults
@@ -89,7 +95,7 @@ FileView {
 
         try {
             var current = JSON.parse(raw);
-            var validated = ConfigValidator.validate(current, defaults);
+            var validated = ConfigValidator.validate(migrated !== undefined ? migrated : current, defaults);
 
             if (JSON.stringify(current) !== JSON.stringify(validated)) {
                 console.log("Merging and updating " + name + ".json...");

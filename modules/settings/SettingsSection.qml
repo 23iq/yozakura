@@ -5,11 +5,13 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
+import qs.modules.settings.store
 import "Ui.js" as Ui
 
 // A titled card of SettingRows (one schema section). `collapsible: true`
 // sections (advanced options) fold behind their title, `collapsed` sets the
-// initial state; a search jump into a folded section unfolds it.
+// initial state; a search jump into a folded section unfolds it. A titled
+// section with changed values shows a reset button in its header.
 Column {
     id: sectionRoot
 
@@ -17,6 +19,7 @@ Column {
     readonly property string sectionId: section.id
     readonly property bool collapsible: !!section.collapsible
     property bool expanded: !(collapsible && section.collapsed)
+    readonly property int modifiedCount: SettingsStore.sectionModifiedCount(section)
 
     objectName: "settingsSection:" + sectionId
     visible: !section.compositor || YozdService.compositorName === section.compositor
@@ -66,6 +69,29 @@ Column {
             enabled: sectionRoot.collapsible
             cursorShape: Qt.PointingHandCursor
             onClicked: sectionRoot.expanded = !sectionRoot.expanded
+        }
+
+        Text {
+            objectName: "sectionReset:" + sectionRoot.sectionId
+            visible: sectionRoot.modifiedCount > 0
+            anchors.right: parent.right
+            anchors.rightMargin: 6
+            anchors.verticalCenter: parent.verticalCenter
+            text: Icons.arrowCounterClockwise
+            font.family: Icons.font
+            font.pixelSize: Styling.fontSize(-2)
+            color: resetArea.containsMouse ? Colors.primary : Ui.alpha(Colors.overSurfaceVariant, 0.85)
+            Accessible.role: Accessible.Button
+            Accessible.name: I18n.t("prefs.common.reset_section")
+
+            MouseArea {
+                id: resetArea
+                anchors.fill: parent
+                anchors.margins: -6
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: SettingsStore.resetSection(sectionRoot.section)
+            }
         }
     }
 

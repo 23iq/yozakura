@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
 import qs.config
@@ -9,7 +8,7 @@ import "schema/Categories.js" as Categories
 import "SchemaUtil.js" as SchemaUtil
 import "Ui.js" as Ui
 
-// Brand, search and grouped category list. While a query is typed the list
+// Brand, search and the element page tree (SidebarTree). While a query is typed the list
 // is replaced by schema-generated search results.
 Item {
     id: sidebar
@@ -17,7 +16,6 @@ Item {
     property string currentCategory: ""
     property bool compact: false
     readonly property string query: searchField.text.trim()
-    readonly property var groups: Categories.sidebar()
     readonly property var index: SchemaUtil.buildSearchIndex(Categories.categories, k => I18n.t(k))
     readonly property var results: query.length > 0 ? SchemaUtil.search(index, query, 30) : []
     property int resultIndex: 0
@@ -173,76 +171,16 @@ Item {
         }
     }
 
-    // Categories
-    Flickable {
-        id: nav
+    // Element pages
+    SidebarTree {
         anchors.top: search.bottom
         anchors.topMargin: 14
         anchors.bottom: parent.bottom
         width: parent.width
-        contentHeight: navColumn.implicitHeight + 16
-        clip: true
-        boundsBehavior: Flickable.StopAtBounds
         visible: sidebar.query.length === 0
-        ScrollBar.vertical: ScrollBar {
-            policy: ScrollBar.AsNeeded
-        }
-
-        Column {
-            id: navColumn
-            x: 10
-            width: parent.width - 20
-            spacing: 2
-
-            Repeater {
-                model: sidebar.groups
-
-                delegate: Column {
-                    id: group
-                    required property var modelData
-                    required property int index
-                    width: navColumn.width
-                    spacing: 2
-
-                    Item {
-                        width: parent.width
-                        height: group.index === 0 ? 4 : 22
-                        visible: !sidebar.compact || group.index > 0
-                        Rectangle {
-                            visible: sidebar.compact
-                            anchors.centerIn: parent
-                            width: 24
-                            height: 1
-                            color: Ui.alpha(Colors.outlineVariant, 0.8)
-                        }
-                    }
-                    Text {
-                        visible: !sidebar.compact
-                        leftPadding: 14
-                        bottomPadding: 4
-                        text: I18n.t(group.modelData.title).toUpperCase()
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-4)
-                        font.weight: Font.Bold
-                        font.letterSpacing: 1.3
-                        color: Ui.alpha(Colors.overSurfaceVariant, 0.7)
-                    }
-
-                    Repeater {
-                        model: group.modelData.categories
-
-                        delegate: NavItem {
-                            required property var modelData
-                            width: navColumn.width
-                            category: modelData
-                            compact: sidebar.compact
-                            selected: sidebar.currentCategory === modelData.id
-                            onClicked: sidebar.categorySelected(modelData.id)
-                        }
-                    }
-                }
-            }
-        }
+        currentCategory: sidebar.currentCategory
+        compact: sidebar.compact
+        onCategorySelected: id => sidebar.categorySelected(id)
     }
 
     // Search results
