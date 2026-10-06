@@ -11,19 +11,16 @@ import qs.modules.settings.displays
 import qs.modules.settings.keyboard
 import qs.modules.settings.system
 import qs.modules.settings.extras
+import qs.modules.settings.connect
+import qs.modules.settings.mods
 import "schema/Categories.js" as Categories
 import "Ui.js" as Ui
 
 // Settings window content: sidebar (groups, search) + the current page.
 // Pages come from the category kind (see schema/Categories.js): schema
-// categories render through SettingsPage, legacy ones through
-// LegacyPanelHost, the rest are hand-written pages.
+// categories render through SettingsPage, the rest are hand-written pages.
 Item {
     id: shell
-
-    // Legacy GlobalStates.settingsCurrentTab values (old SettingsTab order),
-    // still written by e.g. the microphone activity to open the mixer.
-    readonly property var legacyTabs: ["network", "bluetooth", "sound", "ai", "effects", "appearance", "input", "system", "windows", "bar", "mods"]
 
     property string currentCategory: GlobalStates.settingsCategory || "appearance"
     readonly property var category: Categories.resolve(currentCategory) || Categories.byId("appearance")
@@ -58,16 +55,17 @@ Item {
         select(list[i].id);
     }
 
-    function consumeLegacyTab() {
-        const tab = GlobalStates.settingsCurrentTab;
-        if (tab > 0 && tab < legacyTabs.length) {
-            select(legacyTabs[tab]);
-            GlobalStates.settingsCurrentTab = 0;
+    // Another part of the shell asks for a page (e.g. the microphone
+    // activity opens Sound) while the window is open.
+    Connections {
+        target: GlobalStates
+        function onSettingsCategoryChanged() {
+            if (GlobalStates.settingsCategory && GlobalStates.settingsCategory !== shell.currentCategory)
+                shell.select(GlobalStates.settingsCategory);
         }
     }
 
     Component.onCompleted: {
-        consumeLegacyTab();
         // A preset trial or edit outlives the window: bring back its pill/banner.
         PresetStudio.refreshSessions();
     }
@@ -78,12 +76,6 @@ Item {
         page.active = true;
     }
 
-    Connections {
-        target: GlobalStates
-        function onSettingsCurrentTabChanged() {
-            shell.consumeLegacyTab();
-        }
-    }
     Connections {
         target: SettingsStore
         function onNavigateRequested(categoryId, sectionId, entryId) {
@@ -169,7 +161,7 @@ Item {
             y: editBanner.height
             width: parent.width
             height: parent.height - editBanner.height
-            sourceComponent: shell.category.sections ? schemaPage : (shell.category.legacy ? legacyPage : (shell.pages[shell.category.page] ?? placeholderPage))
+            sourceComponent: shell.category.sections ? schemaPage : (shell.pages[shell.category.page] ?? placeholderPage)
             property real slide: 0
 
             opacity: 1 - slide
@@ -234,9 +226,38 @@ Item {
         }
     }
     Component {
-        id: legacyPage
-        LegacyPanelHost {
+        id: modsPage
+        ModsEditor {
             category: shell.category
+        }
+    }
+    // Connect pages: the live device controls of the dashboard.
+    Component {
+        id: networkPage
+        ConnectPage {
+            category: shell.category
+            panel: "WifiPanel.qml"
+        }
+    }
+    Component {
+        id: bluetoothPage
+        ConnectPage {
+            category: shell.category
+            panel: "BluetoothPanel.qml"
+        }
+    }
+    Component {
+        id: soundPage
+        ConnectPage {
+            category: shell.category
+            panel: "AudioMixerPanel.qml"
+        }
+    }
+    Component {
+        id: effectsPage
+        ConnectPage {
+            category: shell.category
+            panel: "EasyEffectsPanel.qml"
         }
     }
     Component {
@@ -272,10 +293,15 @@ Item {
     // Hand-written pages by Categories.js `page` name.
     readonly property var pages: ({
             "AboutPage": aboutPage,
+            "Bluetooth": bluetoothPage,
             "Displays": displaysPage,
+            "Effects": effectsPage,
             "Extras": extrasPage,
             "Keyboard": keyboardPage,
-            "PresetStudio": presetStudioPage
+            "Mods": modsPage,
+            "Network": networkPage,
+            "PresetStudio": presetStudioPage,
+            "Sound": soundPage
         })
     Component {
         id: placeholderPage

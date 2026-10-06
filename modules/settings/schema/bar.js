@@ -1,4 +1,5 @@
 .pragma library
+.import "barextra.js" as BarExtra
 
 // Bar & Islands: style, module layout, placement, clock, workspaces and
 // auto-hide. Entry format: see modules/settings/AGENTS.md.
@@ -238,22 +239,9 @@ var category = {
                     "keywords": "fullscreen game video overlay"
                 }
             ]
-        },
-        {
-            "id": "more",
-            "title": "prefs.bar.section.more",
-            "entries": [
-                {
-                    "id": "bar.classic",
-                    "type": "custom",
-                    "component": "LegacyLink",
-                    "target": "bar-classic",
-                    "resettable": false,
-                    "label": "prefs.bar.classic",
-                    "description": "prefs.bar.classic.desc",
-                    "keywords": "launcher icon pill style firefox player screens monitors shadow border advanced"
-                }
-            ]
         }
     ]
 };
+
+// The former "classic" bar options: launcher icon, screens, expert knobs.
+category.sections.push(...BarExtra.sections);

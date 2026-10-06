@@ -39,10 +39,25 @@ test('every sidebar entry resolves to a page', () => {
             assert.ok(c && c.id === id, id);
             if (c.page)
                 assert.match(shell, new RegExp(`"${c.page}":`), `${id}: page ${c.page} is not mapped in SettingsShell`);
-            else if (!c.legacy)
+            else
                 assert.ok(c.sections && c.sections.length > 0, `${id} has no sections`);
         }
     }
+});
+
+test('no legacy panels are hosted any more', () => {
+    for (const c of Categories.categories)
+        assert.equal(c.legacy, undefined, c.id);
+    assert.equal(fs.existsSync(path.join(repo, 'modules/settings/LegacyPanelHost.qml')), false);
+    for (const f of ['ThemePanel', 'ShellPanel', 'ModsPanel'])
+        assert.equal(fs.existsSync(path.join(repo, 'modules/widgets/dashboard/controls', f + '.qml')), false, f);
+    assert.doesNotMatch(shell, /legacyTabs/);
+});
+
+test('ids of merged pages open the page that took them over', () => {
+    assert.equal(Categories.resolve('surfaces').id, 'appearance');
+    assert.equal(Categories.resolve('bar-classic').id, 'bar');
+    assert.equal(Categories.resolve('sidebar').id, 'ai');
 });
 
 test('a setting is declared on one page only', () => {
@@ -63,7 +78,13 @@ test('settings live on the page of the element they control', () => {
         'theme.animDuration': 'appearance',
         'compositor.rounding': 'appearance',
         'prefix.timers': 'launcher',
-        'prefix.clipboard': 'launcher'
+        'prefix.clipboard': 'launcher',
+        'desktop.blurWallpaperOnOverview': 'overview',
+        'overview.style': 'overview',
+        'ai.sidebarPinnedOnStartup': 'ai',
+        'theme.srBg.opacity': 'appearance',
+        'theme.shadowOpacity': 'appearance',
+        'notch.liveActivities': 'notch'
     };
     for (const [key, page] of Object.entries(expect))
         assert.deepEqual(own[key], [page], key);

@@ -457,7 +457,7 @@ Singleton {
         "notch": ["position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "liveActivities"],
         "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle"],
         "overview": ["style", "rows", "columns", "scale", "workspaceSpacing"],
-        "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce"],
+        "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce", "ignoredAppRegexes"],
         "lockscreen": ["position", "style", "tone", "blur", "showMedia", "showVisualizer", "showStatus"],
         "desktop": ["enabled", "iconSize", "spacingVertical", "textColor", "wallpaperTransition", "wallpaperTransitionDuration", "wallpaperFolders", "depthClock", "depthClockStyle", "depthClockPosition", "depthClockVideo", "depthClockInk", "blurWallpaperOnOverview", "widgetsEnabled", "widgets", "widgetGrid", "widgetVariant"],
         "system": ["idle", "ocr", "disks", "language", "updateServiceEnabled", "clipboard", "pomodoro", "timers", "focus"],
@@ -747,7 +747,6 @@ Singleton {
 
     // Legacy numeric tab (old SettingsTab order); the settings window maps
     // it to a category and resets it to 0.
-    property int settingsCurrentTab: 0
     // Category shown by the settings window (modules/settings/schema/Categories.js)
     property string settingsCategory: "appearance"
 }

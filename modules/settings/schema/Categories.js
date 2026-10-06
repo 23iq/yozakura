@@ -24,6 +24,9 @@
 .import "osd.js" as Osd
 .import "menus.js" as Menus
 .import "Advanced.js" as Advanced
+.import "dock.js" as Dock
+.import "overview.js" as Overview
+.import "sidebar.js" as Sidebar
 
 // Settings information architecture: the sidebar tree and its pages.
 //
@@ -33,13 +36,11 @@
 //   * schema-driven: has `sections` (see appearance.js) - rendered by
 //     SettingsPage.qml, searchable entry by entry; entries flagged
 //     `advanced: true` gather in a collapsed "Advanced" block (Advanced.js);
-//   * legacy: has `legacy: {source, section}` - an old dashboard panel
-//     (path relative to modules/widgets/) hosted unchanged by
-//     LegacyPanelHost.qml until it is migrated; `topics` keep it searchable;
-//   * a page: has `page` - a hand-written page in modules/settings/.
+//   * a page: has `page` - a hand-written page mapped by name in
+//     SettingsShell.pages (Connect pages host the live device controls).
 // Every category is listed in exactly one group. `resolve(id)` accepts a
-// category id or a group id, so old deep links and the new tree both work.
-// To migrate a legacy category, give it `sections` and drop `legacy`/`topics`.
+// category id, a moved id (MOVED) or a group id, so old deep links and the
+// new tree both work.
 
 var groups = [
     {
@@ -52,7 +53,7 @@ var groups = [
         "id": "bar",
         "icon": "squaresFour",
         "title": "prefs.group.bar",
-        "categories": ["bar", "bar-classic"]
+        "categories": ["bar"]
     },
     {
         "id": "island",
@@ -76,7 +77,7 @@ var groups = [
         "id": "dashboard",
         "icon": "robot",
         "title": "prefs.group.dashboard",
-        "categories": ["dashboard", "sidebar", "ai", "ai-providers", "ai-code"]
+        "categories": ["dashboard", "ai", "ai-providers", "ai-code"]
     },
     {
         "id": "popups",
@@ -100,7 +101,7 @@ var groups = [
         "id": "look",
         "icon": "paintBrush",
         "title": "prefs.group.look",
-        "categories": ["appearance", "wallpapers", "surfaces"]
+        "categories": ["appearance", "wallpapers"]
     },
     {
         "id": "presets",
@@ -116,27 +117,32 @@ var groups = [
     }
 ];
 
-function legacy(id, icon, title, description, source, section, keywords, topics) {
+// A hand-written page (SettingsShell.pages[name]).
+function page(id, icon, name, keywords) {
     return {
         "id": id,
         "icon": icon,
-        "title": title,
-        "description": description,
+        "title": "prefs.cat." + id,
+        "description": "prefs.cat." + id + ".desc",
         "keywords": keywords,
-        "legacy": {
-            "source": source,
-            "section": section || ""
-        },
-        "topics": topics || []
+        "page": name
     };
 }
 
-function topic(label, section, keywords) {
-    return {
-        "label": label,
-        "section": section || "",
-        "keywords": keywords || ""
-    };
+// Categories that moved into another page: old deep links land there.
+var MOVED = {
+    "surfaces": "appearance",
+    "bar-classic": "bar",
+    "sidebar": "ai"
+};
+
+// A copy of `cat` with `extra` sections appended.
+function withSections(cat, extra) {
+    var out = {};
+    for (var k in cat)
+        out[k] = cat[k];
+    out.sections = cat.sections.concat(extra);
+    return out;
 }
 
 var categories = [
@@ -144,30 +150,10 @@ var categories = [
     Appearance.category,
     Wallpapers.category,
     Bar.category,
-    legacy("surfaces", "stack", "prefs.cat.surfaces", "prefs.cat.surfaces.desc", "dashboard/controls/ThemePanel.qml", "", "shadows surfaces variants gradients opacity borders colors theme editor terminal opacity", [
-        topic("settings.theme.shadow_opacity", "shadow", "darkness alpha transparency"),
-        topic("settings.theme.shadow_blur", "shadow", "softness diffusion"),
-        topic("settings.theme.color_variant", "colors", "background popup internal bar pane"),
-        topic("theme.gradient_mode", "colors", "linear radial halftone"),
-        topic("settings.theme.terminal_opacity", "general", "kitty transparency")
-    ]),
-    legacy("bar-classic", "squaresFour", "prefs.cat.bar-classic", "prefs.cat.bar-classic.desc", "dashboard/controls/ShellPanel.qml", "bar", "bar launcher icon pill style firefox player screens monitors shadow border", [
-        topic("settings.shell.launcher_icon", "bar", "logo symbol path"),
-        topic("settings.shell.pill_style", "bar", "squished roundness radius bar"),
-        topic("settings.shell.firefox_player", "bar", "browser media music"),
-        topic("settings.shell.bar_screens", "bar", "monitor display")
-    ]),
     Notch.category,
+    Dock.category,
+    Overview.category,
     Launcher.category,
-    legacy("dock", "dock", "prefs.cat.dock", "prefs.cat.dock.desc", "dashboard/controls/ShellPanel.qml", "dock", "dock taskbar apps favorites pinned", [
-        topic("settings.shell.dock_position", "dock", "left bottom right edge"),
-        topic("settings.shell.dock_icon_size", "dock", "width height pixels apps")
-    ]),
-    legacy("overview", "overview", "prefs.cat.overview", "prefs.cat.overview.desc", "dashboard/controls/ShellPanel.qml", "overview", "overview expose mission control workspaces grid", [
-        topic("settings.shell.overview_style", "overview", "grid strip filmstrip layout"),
-        topic("settings.shell.overview_rows", "overview", "grid layout vertical"),
-        topic("settings.shell.overview_scale", "overview", "zoom size preview")
-    ]),
     Desktop.category,
     Lockscreen.category,
     Notifications.category,
@@ -183,15 +169,14 @@ var categories = [
     Timers.category,
     Routines.category,
     Updates.category,
-    legacy("network", "wifiHigh", "prefs.cat.network", "prefs.cat.network.desc", "dashboard/controls/WifiPanel.qml", "", "network wifi internet ethernet connection", []),
-    legacy("bluetooth", "bluetooth", "prefs.cat.bluetooth", "prefs.cat.bluetooth.desc", "dashboard/controls/BluetoothPanel.qml", "", "bluetooth devices pairing headphones", []),
-    legacy("sound", "speakerHigh", "prefs.cat.sound", "prefs.cat.sound.desc", "dashboard/controls/AudioMixerPanel.qml", "", "sound audio volume mixer output input microphone speaker", []),
-    legacy("effects", "waveform", "prefs.cat.effects", "prefs.cat.effects.desc", "dashboard/controls/EasyEffectsPanel.qml", "", "equalizer easyeffects bass audio effects", []),
-    Ai.category,
+    page("network", "wifiHigh", "Network", "network wifi internet ethernet connection"),
+    page("bluetooth", "bluetooth", "Bluetooth", "bluetooth devices pairing headphones"),
+    page("sound", "speakerHigh", "Sound", "sound audio volume mixer output input microphone speaker"),
+    page("effects", "waveform", "Effects", "equalizer easyeffects bass audio effects"),
+    withSections(Ai.category, Sidebar.sections),
     AiProviders.category,
     AiCode.category,
-    legacy("sidebar", "sidebar", "prefs.cat.sidebar", "prefs.cat.sidebar.desc", "dashboard/controls/ShellPanel.qml", "sidebar", "assistant sidebar ai panel width position", []),
-    legacy("mods", "puzzlePiece", "prefs.cat.mods", "prefs.cat.mods.desc", "dashboard/controls/ModsPanel.qml", "", "mods extensions plugins modifications install", []),
+    page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"),
     {
         "id": "presets",
         "icon": "magicWand",
@@ -263,7 +248,7 @@ function groupOf(categoryId) {
 
 // A category id (old deep links) or a group id (opens its first page).
 function resolve(id) {
-    var cat = byId(id);
+    var cat = byId(MOVED[id] || id);
     if (cat)
         return cat;
     var g = groupById(id);

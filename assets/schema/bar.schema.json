@@ -34,38 +34,81 @@
       "title": "Launcher icon",
       "type": "string",
       "default": "",
-      "description": "Launcher button icon (icon name or image path); empty uses the app logo.",
+      "description": "Icon name or image file for the launcher button; empty uses the app logo.",
+      "x-settings": {
+        "category": "bar",
+        "section": "launcher",
+        "label": "prefs.bar.launcher_icon",
+        "control": "path",
+        "keywords": "launcher icon logo symbol image path start menu button"
+      },
       "format": "icon"
     },
     "launcherIconTint": {
-      "title": "Launcher icon tint",
+      "title": "Tint launcher icon",
       "type": "boolean",
       "default": true,
-      "description": "Tint the launcher icon with the palette."
+      "description": "Recolor the launcher icon with the theme palette.",
+      "x-settings": {
+        "category": "bar",
+        "section": "launcher",
+        "label": "prefs.bar.launcher_icon_tint",
+        "control": "toggle",
+        "keywords": "launcher icon tint color palette recolor"
+      }
     },
     "launcherIconSize": {
       "title": "Launcher icon size",
       "type": "number",
       "default": 24,
-      "description": "Launcher icon size.",
+      "description": "Size of the icon on the launcher button.",
+      "x-settings": {
+        "category": "bar",
+        "section": "launcher",
+        "label": "prefs.bar.launcher_icon_size",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "launcher icon size logo big small",
+        "min": 8,
+        "max": 64
+      },
       "minimum": 8,
       "maximum": 64,
       "x-unit": "px"
     },
     "screenList": {
-      "title": "Screen list",
+      "title": "Bar monitors",
       "type": "array",
       "default": [],
-      "description": "Monitor names to show the bar on; empty = every monitor.",
+      "description": "Monitors that show the bar; none selected shows it on every monitor.",
+      "x-settings": {
+        "category": "bar",
+        "section": "screens",
+        "label": "prefs.bar.screens",
+        "control": "screens",
+        "keywords": "bar monitor screen display multi-monitor where",
+        "visibleWhen": {
+          "key": "bar.panels",
+          "empty": true
+        }
+      },
       "items": {
         "type": "string"
       }
     },
     "enableFirefoxPlayer": {
-      "title": "Enable firefox player",
+      "title": "Firefox media player",
       "type": "boolean",
       "default": false,
-      "description": "Show Firefox as a media player (MPRIS); off hides it."
+      "description": "List Firefox as a media player (MPRIS); off hides its tabs from media controls.",
+      "x-settings": {
+        "category": "bar",
+        "section": "screens",
+        "label": "prefs.bar.firefox_player",
+        "control": "toggle",
+        "keywords": "firefox browser media player mpris music video youtube"
+      }
     },
     "frameEnabled": {
       "title": "Screen frame",
@@ -131,10 +174,25 @@
       }
     },
     "hoverRegionHeight": {
-      "title": "Hover region height",
+      "title": "Bar reveal strip",
       "type": "number",
       "default": 8,
       "description": "Size of the invisible edge strip that reveals the hidden bar.",
+      "x-settings": {
+        "category": "bar",
+        "section": "advanced",
+        "label": "prefs.bar.hover_region",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "bar hover region trigger strip area reveal autohide",
+        "visibleWhen": {
+          "key": "bar.hoverToReveal",
+          "equals": true
+        },
+        "min": 0,
+        "max": 40
+      },
       "minimum": 0,
       "maximum": 40,
       "x-unit": "px"
@@ -196,16 +254,54 @@
       }
     },
     "keepBarShadow": {
-      "title": "Keep bar shadow",
+      "title": "Keep bar shadow in frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar shadow when it is contained in the frame."
+      "description": "Keep the bar shadow when the bar sits inside the screen frame.",
+      "x-settings": {
+        "category": "bar",
+        "section": "advanced",
+        "label": "prefs.bar.keep_shadow",
+        "control": "toggle",
+        "keywords": "frame contain bar shadow keep",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "bar.frameEnabled",
+              "equals": true
+            },
+            {
+              "key": "bar.containBar",
+              "equals": true
+            }
+          ]
+        }
+      }
     },
     "keepBarBorder": {
-      "title": "Keep bar border",
+      "title": "Keep bar border in frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar border when it is contained in the frame."
+      "description": "Keep the bar border when the bar sits inside the screen frame.",
+      "x-settings": {
+        "category": "bar",
+        "section": "advanced",
+        "label": "prefs.bar.keep_border",
+        "control": "toggle",
+        "keywords": "frame contain bar border outline keep",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "bar.frameEnabled",
+              "equals": true
+            },
+            {
+              "key": "bar.containBar",
+              "equals": true
+            }
+          ]
+        }
+      }
     },
     "clockShowDate": {
       "title": "Show date",

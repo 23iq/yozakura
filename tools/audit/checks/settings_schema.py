@@ -57,15 +57,15 @@ def run(cfg: dict) -> list[Issue]:
     for cat in data["categories"]:
         for p in cat["problems"]:
             issues.append(Issue(CHECK, ERROR, p, file=SCHEMA_DIR, key=f"{cat['id']}:{p}"))
-        if cat.get("legacy") and not (REPO / "modules/widgets" / cat["legacy"]).is_file():
-            issues.append(Issue(CHECK, ERROR, f"{cat['id']}: legacy panel modules/widgets/{cat['legacy']} is missing",
-                                file=SCHEMA_DIR, key=f"{cat['id']}:legacy"))
         for target in cat["links"]:
             if target not in ids:
                 issues.append(Issue(CHECK, ERROR, f"{cat['id']}: link to unknown category '{target}'",
                                     file=SCHEMA_DIR, key=f"{cat['id']}:{target}"))
         for key in cat["keys"]:
             domain, prop = (key.split(".") + [""])[:2]
+            # theme.sr* surface roles are snapshotted as a group (_getSrVariantNames)
+            if domain == "theme" and prop.startswith("sr"):
+                continue
             if domain in snapshots and prop not in snapshots[domain]:
                 issues.append(Issue(CHECK, ERROR,
                                     f"{cat['id']}: `{domain}.{prop}` is edited by the settings but not in the "

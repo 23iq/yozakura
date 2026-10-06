@@ -7,117 +7,402 @@
   "x-file": "config/dock.json",
   "properties": {
     "enabled": {
-      "title": "Enabled",
+      "title": "Show the dock",
       "type": "boolean",
       "default": true,
-      "description": "Show the dock."
+      "description": "A dock with pinned and running apps.",
+      "x-settings": {
+        "category": "dock",
+        "section": "dock",
+        "label": "prefs.dock.enabled",
+        "control": "toggle",
+        "keywords": "dock enable show hide on off"
+      }
     },
     "theme": {
-      "title": "Theme",
+      "title": "Dock style",
       "type": "string",
       "default": "default",
-      "description": "Dock style; integrated puts the apps inside the bar.",
+      "description": "Default sits on the edge, floating detaches from it, integrated puts the apps inside the bar.",
+      "x-settings": {
+        "category": "dock",
+        "section": "dock",
+        "label": "prefs.dock.theme",
+        "control": "selector",
+        "keywords": "dock style theme floating integrated bar inside",
+        "visibleWhen": {
+          "key": "dock.enabled",
+          "equals": true
+        }
+      },
       "enum": [
         "default",
         "floating",
         "integrated"
-      ]
+      ],
+      "x-enumLabels": {
+        "default": "Default",
+        "floating": "Floating",
+        "integrated": "Integrated"
+      }
     },
     "position": {
-      "title": "Position",
+      "title": "Dock edge",
       "type": "string",
       "default": "bottom",
-      "description": "Screen edge of the dock.",
+      "description": "Screen edge the dock sits on.",
+      "x-settings": {
+        "category": "dock",
+        "section": "dock",
+        "label": "prefs.dock.position",
+        "control": "selector",
+        "keywords": "dock position edge top bottom left right vertical",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      },
       "enum": [
         "top",
         "bottom",
         "left",
         "right"
-      ]
+      ],
+      "x-enumLabels": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      }
     },
     "height": {
-      "title": "Height",
+      "title": "Dock thickness",
       "type": "number",
       "default": 48,
-      "description": "Dock thickness.",
+      "description": "Height of a horizontal dock, width of a vertical one.",
+      "x-settings": {
+        "category": "dock",
+        "section": "size",
+        "label": "prefs.dock.height",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "dock height thickness size width",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        },
+        "min": 24,
+        "max": 128
+      },
       "minimum": 24,
       "maximum": 128,
       "x-unit": "px"
     },
     "iconSize": {
-      "title": "Icon size",
+      "title": "Dock icon size",
       "type": "number",
       "default": 24,
-      "description": "App icon size.",
+      "description": "Size of the app icons in the dock.",
+      "x-settings": {
+        "category": "dock",
+        "section": "size",
+        "label": "prefs.dock.icon_size",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "dock icon size apps big small",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        },
+        "min": 12,
+        "max": 96
+      },
       "minimum": 12,
       "maximum": 96,
       "x-unit": "px"
     },
     "spacing": {
-      "title": "Spacing",
+      "title": "Dock icon spacing",
       "type": "number",
       "default": 4,
-      "description": "Space between icons.",
+      "description": "Gap between the dock icons.",
+      "x-settings": {
+        "category": "dock",
+        "section": "advanced",
+        "label": "prefs.dock.spacing",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "dock spacing gap between icons",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        },
+        "min": 0,
+        "max": 32
+      },
       "minimum": 0,
       "maximum": 32,
       "x-unit": "px"
     },
     "margin": {
-      "title": "Margin",
+      "title": "Dock edge margin",
       "type": "number",
       "default": 4,
-      "description": "Distance from the screen edge.",
+      "description": "Distance between the dock and the screen edge.",
+      "x-settings": {
+        "category": "dock",
+        "section": "advanced",
+        "label": "prefs.dock.margin",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "dock margin distance edge offset",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        },
+        "min": 0,
+        "max": 64
+      },
       "minimum": 0,
       "maximum": 64,
       "x-unit": "px"
     },
     "hoverRegionHeight": {
-      "title": "Hover region height",
+      "title": "Dock reveal strip",
       "type": "number",
       "default": 16,
-      "description": "Size of the edge strip that reveals the hidden dock.",
+      "description": "Size of the invisible edge strip that reveals the hidden dock.",
+      "x-settings": {
+        "category": "dock",
+        "section": "advanced",
+        "label": "prefs.dock.hover_region",
+        "control": "slider",
+        "step": 1,
+        "unit": "px",
+        "keywords": "dock hover region trigger strip area reveal",
+        "visibleWhen": {
+          "all": [
+            {
+              "all": [
+                {
+                  "key": "dock.enabled",
+                  "equals": true
+                },
+                {
+                  "key": "dock.theme",
+                  "notEquals": "integrated"
+                }
+              ]
+            },
+            {
+              "key": "dock.hoverToReveal",
+              "equals": true
+            }
+          ]
+        },
+        "min": 0,
+        "max": 64
+      },
       "minimum": 0,
       "maximum": 64,
       "x-unit": "px"
     },
     "pinnedOnStartup": {
-      "title": "Pinned on startup",
+      "title": "Pin the dock at startup",
       "type": "boolean",
       "default": false,
-      "description": "Dock starts pinned (always visible)."
+      "description": "The dock starts always visible instead of hiding.",
+      "x-settings": {
+        "category": "dock",
+        "section": "autohide",
+        "label": "prefs.dock.pinned",
+        "control": "toggle",
+        "keywords": "dock pin autohide hide show startup always visible",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "hoverToReveal": {
-      "title": "Hover to reveal",
+      "title": "Reveal the dock on hover",
       "type": "boolean",
       "default": true,
-      "description": "Reveal the hidden dock when the pointer touches its edge."
+      "description": "Show the hidden dock when the pointer touches its edge.",
+      "x-settings": {
+        "category": "dock",
+        "section": "autohide",
+        "label": "prefs.dock.hover_reveal",
+        "control": "toggle",
+        "keywords": "dock hover reveal mouse edge autohide",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "availableOnFullscreen": {
-      "title": "Available on fullscreen",
+      "title": "Dock over fullscreen apps",
       "type": "boolean",
       "default": false,
-      "description": "Allow revealing the dock over fullscreen windows."
+      "description": "Allow revealing the dock over fullscreen windows.",
+      "x-settings": {
+        "category": "dock",
+        "section": "autohide",
+        "label": "prefs.dock.fullscreen",
+        "control": "toggle",
+        "keywords": "dock fullscreen game video overlay",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "showRunningIndicators": {
-      "title": "Show running indicators",
+      "title": "Running app dots",
       "type": "boolean",
       "default": true,
-      "description": "Dots under running apps."
+      "description": "Mark running apps with a dot under their icon.",
+      "x-settings": {
+        "category": "dock",
+        "section": "content",
+        "label": "prefs.dock.running",
+        "control": "toggle",
+        "keywords": "dock running indicators dots open apps",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "showPinButton": {
-      "title": "Show pin button",
+      "title": "Dock pin button",
       "type": "boolean",
       "default": true,
-      "description": "Show the pin (keep visible) button."
+      "description": "A button that keeps the dock visible.",
+      "x-settings": {
+        "category": "dock",
+        "section": "content",
+        "label": "prefs.dock.pin_button",
+        "control": "toggle",
+        "keywords": "dock pin button keep visible",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "showOverviewButton": {
-      "title": "Show overview button",
+      "title": "Dock overview button",
       "type": "boolean",
       "default": true,
-      "description": "Show the workspace overview button."
+      "description": "A button that opens the workspace overview.",
+      "x-settings": {
+        "category": "dock",
+        "section": "content",
+        "label": "prefs.dock.overview_button",
+        "control": "toggle",
+        "keywords": "dock overview button workspaces mission control",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "ignoredAppRegexes": {
-      "title": "Ignored app regexes",
+      "title": "Apps hidden from the dock",
       "type": "array",
       "default": [
         "quickshell.*",
@@ -127,42 +412,120 @@
         "type": "string",
         "format": "regex"
       },
-      "description": "App ids matching these regexes never appear in the dock."
+      "description": "App ids matching one of these regular expressions never appear in the dock.",
+      "x-settings": {
+        "category": "dock",
+        "section": "advanced",
+        "label": "prefs.dock.ignored",
+        "control": "list",
+        "keywords": "dock ignore hide apps regex filter exclude app id class",
+        "visibleWhen": {
+          "key": "dock.enabled",
+          "equals": true
+        }
+      }
     },
     "screenList": {
-      "title": "Screen list",
+      "title": "Dock monitors",
       "type": "array",
       "default": [],
-      "description": "Monitor names to show the dock on; empty = every monitor.",
+      "description": "Monitors that show the dock; none selected shows it on every monitor.",
+      "x-settings": {
+        "category": "dock",
+        "section": "dock",
+        "label": "prefs.dock.screens",
+        "control": "screens",
+        "keywords": "dock monitor screen display multi-monitor where",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      },
       "items": {
         "type": "string"
       }
     },
     "keepHidden": {
-      "title": "Keep hidden",
+      "title": "Hide the dock on empty desktops",
       "type": "boolean",
       "default": false,
-      "description": "Keep the dock hidden until revealed."
+      "description": "Keep the dock hidden even when no window covers it, until it is revealed.",
+      "x-settings": {
+        "category": "dock",
+        "section": "autohide",
+        "label": "prefs.dock.keep_hidden",
+        "control": "toggle",
+        "keywords": "dock keep hidden autohide windows empty desktop",
+        "visibleWhen": {
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.theme",
+              "notEquals": "integrated"
+            }
+          ]
+        }
+      }
     },
     "magnification": {
-      "title": "Magnification",
+      "title": "Magnify icons on hover",
       "type": "boolean",
       "default": false,
-      "description": "Magnify dock icons under the pointer (dock-style panels)."
+      "description": "Grow the icon under the pointer, in the dock and dock-style bar panels.",
+      "x-settings": {
+        "category": "dock",
+        "section": "effects",
+        "label": "prefs.dock.magnification",
+        "control": "toggle",
+        "keywords": "dock magnification zoom magnify icons hover macos"
+      }
     },
     "magnificationScale": {
-      "title": "Magnification scale",
+      "title": "Magnification amount",
       "type": "number",
       "default": 1.6,
       "description": "Size of the icon under the pointer when magnifying.",
+      "x-settings": {
+        "category": "dock",
+        "section": "effects",
+        "label": "prefs.dock.magnification_scale",
+        "control": "slider",
+        "step": 0.1,
+        "unit": "×",
+        "keywords": "dock magnification scale zoom amount size",
+        "visibleWhen": {
+          "key": "dock.magnification",
+          "equals": true
+        },
+        "min": 1,
+        "max": 2.5
+      },
       "minimum": 1,
       "maximum": 2.5
     },
     "launchBounce": {
-      "title": "Launch bounce",
+      "title": "Bounce on launch",
       "type": "boolean",
       "default": false,
-      "description": "Bounce a dock icon while its app launches."
+      "description": "Bounce an app icon while the app is starting.",
+      "x-settings": {
+        "category": "dock",
+        "section": "effects",
+        "label": "prefs.dock.launch_bounce",
+        "control": "toggle",
+        "keywords": "dock launch bounce animation opening app"
+      }
     }
   },
   "additionalProperties": false

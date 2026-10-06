@@ -1,5 +1,5 @@
 // Dump the settings schema for tools/audit/checks/settings_schema.py:
-// every category with its validation problems, keys, legacy sources and
+// every category with its validation problems, keys, and
 // registry files. Usage: node settings_schema.cjs <repo>
 const path = require('node:path');
 const repo = process.argv[2];
@@ -23,7 +23,6 @@ const out = {
     categories: Categories.categories.map(c => ({
         id: c.id,
         grouped: grouped.has(c.id),
-        legacy: c.legacy ? c.legacy.source : null,
         problems: SchemaUtil.validateCategory(c, Defaults.get, tr, Registry),
         keys: SchemaUtil.flatten([c]).flatMap(x => SchemaUtil.entryKeys(x.entry)),
         links: SchemaUtil.flatten([c]).map(x => x.entry.target).filter(Boolean),

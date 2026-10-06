@@ -130,7 +130,7 @@ ActivityProvider {
         if (activity.action !== "mic")
             return;
         if (button === Qt.RightButton) {
-            GlobalStates.settingsCurrentTab = 2;
+            GlobalStates.settingsCategory = "sound";
             if (!GlobalStates.settingsWindowVisible)
                 GlobalShortcuts.toggleSettings(screenName);
             return;

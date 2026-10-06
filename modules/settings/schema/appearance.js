@@ -1,6 +1,7 @@
 .pragma library
 .import "glass.js" as Glass
 .import "motion.js" as Motion
+.import "surfaces.js" as Surfaces
 
 // Appearance: theme mode, palette, typography, shape, glass and motion.
 // Entry format: see modules/settings/AGENTS.md.
@@ -233,5 +234,7 @@ var category = {
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);
 
-// Motion (schema/motion.js: profile, speed, shell timing) closes the page.
+// Surface roles and the shell shadow (schema/surfaces.js), then Motion
+// (schema/motion.js: profile, speed, shell timing) close the page.
+category.sections.push(...Surfaces.sections);
 category.sections.push(...Motion.sections);

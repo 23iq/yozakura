@@ -30,7 +30,7 @@ test('every category sits in exactly one group', () => {
 });
 
 test('old category ids still resolve to their own page', () => {
-    for (const id of ['appearance', 'wallpapers', 'surfaces', 'bar-classic', 'notch', 'overview', 'specials', 'network', 'sound', 'ai', 'sidebar', 'mods', 'about'])
+    for (const id of ['appearance', 'wallpapers', 'notch', 'overview', 'specials', 'network', 'sound', 'ai', 'mods', 'about'])
         assert.equal(Categories.resolve(id).id, id);
 });
 

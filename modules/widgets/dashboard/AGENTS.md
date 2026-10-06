@@ -8,7 +8,7 @@ Central interactive hub of Yozakura. Tabbed interface with LRU-based lazy-loadin
 - **Side Tabs**: `DashboardTabRail` (visible tabs in `layout.dashboard.tabs` order, bento edit toggle, settings). Tabs are registered in `DashboardTabs.js`; a tab's index there is stable (`GlobalStates.dashboardCurrentTab`), the config only sets rail order/visibility (settings editor `modules/settings/editors/DashboardTabsEditor.qml`).
 - **Sub-tabs** (each a directory):
   - `widgets/`: bento grid. `WidgetRegistry.js` (host-agnostic widgets `{id, url, labelKey, icon, minW/H, maxW/H, defaultW/H}`, `defaultGrid(cols)`; a widget fills its tile and may declare `cellW`, `cellH`, `compact`), `BentoGrid.js` (pure layout: normalize/move/resize/add/remove; `tests/bento-grid.test.cjs`), `BentoView` (grid + edit mode, saves `layout.dashboard.grid` through `commit`), `BentoTile`, `BentoToolbar`, `WidgetPicker` (`tests/bento-edit.test.py`). Widgets: `FullPlayer`, `QuickControls`, `Calendar`, `SpecialsPanel`, `NotificationHistory`, `LevelsColumn`, `WeatherWidget`, `MetricsSummary`.
-  - `controls/`: Legacy settings panels — `ShellPanel`, `ThemePanel`, `VariantEditor` — hosted by the schema-driven settings window (`modules/settings`) until each category is migrated (Windows, System, Terminal & Apps, Voice, Updates and Notifications are schema pages now: `modules/settings/schema/{system,terminal,voice,updates,notifications}.js`).
+  - `controls/`: live device panels (Wi-Fi, Bluetooth, audio mixer, EasyEffects), also shown by the settings Connect pages (`modules/settings/connect/ConnectPage.qml`). Every setting lives in the schema-driven settings window (`modules/settings`).
   - `assistant/`: `AssistantTab` (1196 lines) — AI chat interface.
   - `clipboard/`: `ClipboardTab` — Searchable clipboard history. `ClipboardTabBase` holds state/actions, `ClipboardTab` the layout and keys; parts: `ClipboardSearchBar`, `ClipboardList` + `ClipboardItemDelegate` (row, icon, options menu, confirm actions), `ClipboardPreviewPanel` (image/text/link/file previews, metadata); pure helpers in `ClipboardView.js` (`tests/clipboard-view.test.cjs`), behaviour in `tests/clipboard-tab.test.py`.
   - `notes/`: `NotesTab` — state + list actions; `NotesStore` (index.json + note files), `NotesListPanel`/`NoteListItem`/`NoteItemOptions`/`NoteConfirmButtons` (list), `RichTextEditor`+`RichTextFormat`, `MarkdownEditor`+`MarkdownFormat`, `NoteToolButton`. Test: `tests/notes-tab.test.py`.
@@ -22,8 +22,6 @@ Central interactive hub of Yozakura. Tabbed interface with LRU-based lazy-loadin
 | Task | Location | Notes |
 |------|----------|-------|
 | **Tab loading** | `Dashboard.qml` | `TabLoader` + `shouldTabBeLoaded(index)` LRU logic |
-| **System settings** | `controls/ShellPanel.qml` | Bar, dock, notch configuration UI |
-| **Theme settings** | `controls/ThemePanel.qml` | Colors, gradients, fonts, opacity |
 | **AI chat** | `assistant/AssistantTab.qml` | Multi-provider chat with streaming |
 | **Clipboard** | `clipboard/ClipboardTabBase.qml` | State/actions; view parts in `clipboard/Clipboard*.qml` |
 | **Notes** | `notes/NotesTab.qml` | Rich text + markdown notes, search; storage in `NotesStore.qml` |
