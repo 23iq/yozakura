@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -57,11 +58,11 @@ func TestDoctorDepsScopedToCompositor(t *testing.T) {
 		return m
 	}
 	n := names("niri")
-	if n["niri"] != deps.NeedRequired || n["hyprland"] != "" || n["portal-hyprland"] != "" {
+	if n["niri"] != deps.NeedRequired || n["xwayland-satellite"] != deps.Standard || n["hyprland"] != "" || n["portal-hyprland"] != "" || n["polkit-agent"] != deps.Standard {
 		t.Errorf("niri: %v", n)
 	}
 	h := names("hyprland")
-	if h["hyprland"] != deps.NeedRequired || h["niri"] != "" {
+	if h["hyprland"] != deps.NeedRequired || h["portal-hyprland"] != deps.Standard || h["niri"] != "" {
 		t.Errorf("hyprland: %v", h)
 	}
 }
@@ -71,5 +72,18 @@ func TestNormalizeCompositor(t *testing.T) {
 		if got := normalizeCompositor(in); got != want {
 			t.Errorf("%q: got %s want %s", in, got, want)
 		}
+	}
+}
+
+func TestReadCompositor(t *testing.T) {
+	dir := t.TempDir()
+	if got := readCompositor(dir); got != "hyprland" {
+		t.Errorf("missing file: %s", got)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "compositor"), []byte("niri\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got := readCompositor(dir); got != "niri" {
+		t.Errorf("got %s", got)
 	}
 }

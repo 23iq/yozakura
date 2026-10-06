@@ -24,7 +24,7 @@ const (
 
 // Compositor-scoped need values: required only when that compositor is
 // the configured one.
-var Compositors = []string{"hyprland", "niri", "mango"}
+func Compositors() []string { return []string{"hyprland", "niri", "mango"} }
 
 // DefaultCompositor is used when none is configured.
 const DefaultCompositor = "hyprland"
@@ -46,7 +46,7 @@ func (d Dep) Optional() bool {
 
 // CompositorScoped reports whether the row is required for one compositor only.
 func (d Dep) CompositorScoped() bool {
-	for _, c := range Compositors {
+	for _, c := range Compositors() {
 		if d.Need == c {
 			return true
 		}
@@ -232,6 +232,12 @@ func InstallHint(distro string, pkgs []string) string {
 	case "fedora":
 		if len(repo) > 0 {
 			cmds = append(cmds, "sudo dnf copr enable lionheartp/Hyprland && sudo dnf install "+strings.Join(repo, " "))
+			for _, p := range repo {
+				if p == "niri" || p == "xwayland-satellite" {
+					cmds = append(cmds, "niri and xwayland-satellite may need the niri COPR: sudo dnf copr enable yalter/niri")
+					break
+				}
+			}
 		}
 	}
 	return strings.Join(cmds, "\n")

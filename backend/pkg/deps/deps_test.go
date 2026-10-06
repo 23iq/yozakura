@@ -132,7 +132,7 @@ func TestRequiredIsCompositorScoped(t *testing.T) {
 	if niri["hyprland"] || niri["portal-hyprland"] || niri["mango"] {
 		t.Errorf("niri must not need other compositors' rows: %v", niri)
 	}
-	if !hypr["hyprland"] || !hypr["polkit-agent"] || hypr["niri"] {
+	if !hypr["hyprland"] || hypr["niri"] {
 		t.Errorf("hyprland rows wrong: %v", hypr)
 	}
 	if !mango["mango"] || mango["hyprland"] || mango["niri"] {
@@ -155,5 +155,14 @@ func TestParseCompositorNeed(t *testing.T) {
 	ds, err := Parse("niri\tniri\tniri\tniri\tniri\tx\n")
 	if err != nil || len(ds) != 1 || !ds[0].CompositorScoped() {
 		t.Fatalf("got %v %v", ds, err)
+	}
+}
+
+func TestInstallHintFedoraNiriCopr(t *testing.T) {
+	if h := InstallHint("fedora", []string{"niri"}); !strings.Contains(h, "yalter/niri") {
+		t.Errorf("no niri COPR hint: %q", h)
+	}
+	if h := InstallHint("fedora", []string{"cava"}); strings.Contains(h, "yalter/niri") {
+		t.Errorf("unexpected niri hint: %q", h)
 	}
 }

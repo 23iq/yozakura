@@ -56,7 +56,11 @@ func runDoctor(args []string, out io.Writer) int {
 // configuredCompositor reads the compositor the installer chose
 // (~/.local/share/<AppID>/compositor); hyprland when absent or unknown.
 func configuredCompositor() string {
-	data, err := os.ReadFile(filepath.Join(paths.New().DataDir, "compositor"))
+	return readCompositor(paths.New().DataDir)
+}
+
+func readCompositor(dataDir string) string {
+	data, err := os.ReadFile(filepath.Join(dataDir, "compositor"))
 	if err != nil {
 		return deps.DefaultCompositor
 	}
@@ -65,7 +69,7 @@ func configuredCompositor() string {
 
 func normalizeCompositor(s string) string {
 	s = strings.ToLower(strings.TrimSpace(s))
-	for _, c := range deps.Compositors {
+	for _, c := range deps.Compositors() {
 		if s == c {
 			return s
 		}
@@ -84,7 +88,12 @@ func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []
 			if d.Need != compositor {
 				continue
 			}
-			need = deps.NeedRequired
+			// Only the compositor itself is fatal; its companions
+			// (portals, XWayland bridge) degrade features.
+			need = deps.Standard
+			if d.ID == compositor {
+				need = deps.NeedRequired
+			}
 		}
 		it := doctorItem{name: d.ID, need: need, purpose: d.Purpose, ok: c.Present(d), pkgs: d.Packages(c.Distro)}
 		if d.ID == brand.Daemon && !it.ok {

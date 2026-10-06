@@ -30,7 +30,7 @@ gstreamer	standard	/usr/lib*/gstreamer-1.0/libgstlibav.so	gst-plugins-good gst-p
 matugen	required	matugen	matugen	matugen	palette generation from the wallpaper
 portal-hyprland	hyprland	/usr/lib*/xdg-desktop-portal-hyprland|/usr/libexec/xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	screen sharing, screenshots for apps
 portal-gtk	standard	/usr/lib*/xdg-desktop-portal-gtk|/usr/libexec/xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	file pickers and settings for apps
-polkit-agent	hyprland	/usr/lib*/hyprpolkitagent*|/usr/libexec/hyprpolkitagent|/usr/lib*/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib*/polkit-kde-authentication-agent-1	hyprpolkitagent	hyprpolkitagent	password prompts for system actions
+polkit-agent	standard	/usr/lib*/hyprpolkitagent*|/usr/libexec/hyprpolkitagent|/usr/lib*/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib*/polkit-kde-authentication-agent-1	hyprpolkitagent	hyprpolkitagent	password prompts for system actions
 pipewire	standard	pipewire	pipewire pipewire-pulse	pipewire pipewire-pulseaudio	audio
 wireplumber	standard	wireplumber|wpctl	wireplumber	wireplumber	audio session manager, volume control
 pw-record	standard	pw-record	pipewire	pipewire-utils	audio visualizer input, voice recording
