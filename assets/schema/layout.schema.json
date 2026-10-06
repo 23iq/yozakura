@@ -207,28 +207,79 @@
       "description": "On-screen display for volume and brightness.",
       "properties": {
         "position": {
-          "title": "Position",
+          "title": "Edge",
           "type": "string",
           "default": "auto",
-          "description": "Screen edge of the OSD; auto is opposite the bar.",
+          "description": "Screen edge of the indicator; Auto picks the edge away from the bar.",
+          "x-settings": {
+            "category": "notifications",
+            "section": "osd",
+            "label": "prefs.osd.position",
+            "control": "selector",
+            "keywords": "osd position edge side top bottom left right",
+            "visibleWhen": {
+              "key": "layout.osd.style",
+              "notEquals": "bar-inline"
+            }
+          },
           "enum": [
             "auto",
             "top",
             "bottom",
             "left",
             "right"
-          ]
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "top": "Top",
+            "bottom": "Bottom",
+            "left": "Left",
+            "right": "Right"
+          }
         },
         "style": {
           "title": "Style",
           "type": "string",
           "default": "pill",
-          "description": "OSD look.",
+          "description": "How the volume and brightness indicator looks and where it lives.",
+          "x-settings": {
+            "category": "notifications",
+            "section": "osd",
+            "label": "prefs.osd.style",
+            "control": "selector",
+            "keywords": "osd volume brightness on screen display pill island bar edge indicator"
+          },
           "enum": [
             "pill",
-            "bar",
-            "minimal"
-          ]
+            "edge",
+            "island",
+            "bar-inline"
+          ],
+          "x-enumLabels": {
+            "pill": "Pill",
+            "edge": "Edge bar",
+            "island": "Island",
+            "bar-inline": "In the bar"
+          }
+        },
+        "timeout": {
+          "title": "Display time",
+          "type": "number",
+          "default": 2500,
+          "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
+          "x-settings": {
+            "category": "notifications",
+            "section": "osd",
+            "label": "prefs.osd.timeout",
+            "control": "slider",
+            "step": 100,
+            "unit": "ms",
+            "keywords": "osd duration timeout how long hide",
+            "min": 800,
+            "max": 8000
+          },
+          "minimum": 800,
+          "maximum": 8000
         }
       },
       "additionalProperties": false

@@ -37,6 +37,7 @@ var data = {
     },
     "osd": {
         "position": "auto",
-        "style": "pill"
+        "style": "pill",
+        "timeout": 2500
     }
 };

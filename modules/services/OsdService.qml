@@ -1,17 +1,127 @@
 pragma Singleton
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
+import qs.config
+import qs.modules.services
+import "../shell/osd/OsdStyles.js" as OsdStyles
+import "../shell/osd/MicrophoneVolume.js" as MicrophoneVolume
 
-// Hub between the OSD and the island. The OSD side (volume, mic,
-// brightness, output device changes) calls `toIsland(...)` when the OSD is
-// routed into the notch (notch.osd / layout.osd.style "island"); the
-// island's OsdActivity shows it as an ephemeral level segment.
-//   kind    "volume" | "mic" | "brightness" | "device"
-//   value   level 0..1
-//   muted   distinct muted state
-//   device  output/input device name ("" when unchanged)
+// Single source of OSD events. Listens to Audio and Brightness, normalises
+// them to (kind, value, muted, device) and routes them by the chosen style:
+//   level        -> every OSD host (window styles, bar-inline)
+//   toIsland     -> the notch, when style == island
+//   inlineRequest-> the bar widget, when style == bar-inline
+// `device` is non-empty only when it should be shown (an output switch).
 Singleton {
     id: root
 
+    // volume | mic | brightness
+    signal level(string kind, real value, bool muted, string device)
     signal toIsland(string kind, real value, bool muted, string device)
+    signal inlineRequest(string kind)
+    // Click on any OSD: open the bar's controls popup.
+    signal controlsRequested(string screenName)
+
+    readonly property string style: OsdStyles.normalize(Config.layout && Config.layout.osd ? Config.layout.osd.style : "pill")
+    readonly property int timeout: Config.layout && Config.layout.osd && Config.layout.osd.timeout > 0 ? Config.layout.osd.timeout : 2500
+
+    // Hosts register here: the bar widget (bar-inline) and the notch (island).
+    property int inlineHosts: 0
+    property bool islandHandled: false
+    readonly property var route: OsdStyles.resolve(root.style, {
+        "inlineAvailable": root.inlineHosts > 0,
+        "islandHandled": root.islandHandled
+    })
+
+    // Last event, for hosts that mount after it fired.
+    property string lastKind: "volume"
+    property real lastValue: 0
+    property bool lastMuted: false
+    property string lastDevice: ""
+    property string lastScreen: ""
+
+    property string _sinkName: ""
+    property var _micBaseline: null
+
+    function registerInline(on: bool): void {
+        root.inlineHosts = Math.max(0, root.inlineHosts + (on ? 1 : -1));
+    }
+
+    function report(kind: string, value: real, muted: bool, device: string, screenName: string): void {
+        root.lastKind = kind;
+        root.lastValue = OsdStyles.clamp01(value);
+        root.lastMuted = muted;
+        root.lastDevice = device || "";
+        root.lastScreen = screenName || "";
+        root.level(kind, root.lastValue, muted, root.lastDevice);
+        if (root.style === "island")
+            root.toIsland(kind, root.lastValue, muted, root.lastDevice);
+        else if (root.route.style === "bar-inline")
+            root.inlineRequest(kind);
+    }
+
+    function openControls(screenName: string): void {
+        root.controlsRequested(screenName || "");
+    }
+
+    // Scroll over an OSD: change the level of `kind` by `delta` (0..1 scale).
+    function adjust(kind: string, delta: real, screen: var): void {
+        if (kind === "volume")
+            Audio.setVolume(OsdStyles.clamp01((Audio.sink?.audio?.volume ?? 0) + delta));
+        else if (kind === "mic")
+            Audio.setMicVolume(OsdStyles.clamp01((Audio.source?.audio?.volume ?? 0) + delta));
+        else if (kind === "brightness") {
+            const mon = screen ? Brightness.getMonitorForScreen(screen) : null;
+            if (mon && mon.ready)
+                mon.setBrightness(Math.max(0.01, Math.min(1, mon.brightness + delta)));
+        }
+    }
+
+    function _resetMic(): void {
+        const ready = !!Audio.source?.ready && !!Audio.source?.audio;
+        root._micBaseline = MicrophoneVolume.observe(null, Audio.source, Audio.source?.audio?.volume, ready);
+    }
+
+    Component.onCompleted: {
+        root._sinkName = OsdStyles.deviceName(Audio.sink);
+        root._resetMic();
+    }
+
+    Connections {
+        target: Audio
+
+        function onSourceChanged() {
+            root._resetMic();
+        }
+
+        function onSinkChanged() {
+            const name = OsdStyles.deviceName(Audio.sink);
+            const switched = OsdStyles.deviceSwitched(root._sinkName, name);
+            root._sinkName = name;
+            if (switched && Audio.sink?.audio)
+                root.report("volume", Audio.sink.audio.volume, Audio.sink.audio.muted, name, "");
+        }
+
+        function onVolumeChanged(volume, muted, node) {
+            root.report("volume", volume, muted, "", "");
+        }
+
+        function onMicVolumeChanged(volume, muted, node) {
+            if (node !== Audio.source)
+                return;
+            const ready = !!Audio.source?.ready && !!Audio.source?.audio;
+            root._micBaseline = MicrophoneVolume.observe(root._micBaseline, node, volume, ready);
+            if (root._micBaseline.show)
+                root.report("mic", volume, muted, "", "");
+        }
+    }
+
+    Connections {
+        target: Brightness
+
+        function onBrightnessChanged(value, screen) {
+            root.report("brightness", value, false, "", screen ? screen.name : "");
+        }
+    }
 }

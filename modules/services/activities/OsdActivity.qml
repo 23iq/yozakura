@@ -12,10 +12,13 @@ EphemeralProvider {
 
     source: "osd"
 
+    // The island renders routed levels, so the OSD window can stay hidden.
+    Component.onCompleted: OsdService.islandHandled = true
+
     Connections {
         target: OsdService
         function onToIsland(kind, value, muted, device) {
-            if (Config.notch && Config.notch.osd)
+            if (OsdService.style === "island" || (Config.notch && Config.notch.osd))
                 root.flash(Sources.osdActivity(kind, value, muted, device, {
                     muted: I18n.t("activities.osd.muted")
                 }));
