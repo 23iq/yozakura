@@ -12,7 +12,7 @@ DisplayNotice {
 
     tone: "warning"
     icon: "warning"
-    title: I18n.t("prefs.displays.conflicts.title", root.count)
+    title: I18n.tn("prefs.displays.conflicts.title", root.count)
     message: I18n.t("prefs.displays.conflicts.desc")
 
     PillButton {

@@ -3063,7 +3063,6 @@
   "prefs.displays.discard": "Descartar cambios",
   "prefs.displays.apply": "Aplicar",
   "prefs.displays.apply_failed": "No se pudo aplicar la disposición",
-  "prefs.displays.conflicts.title": "%1 reglas de monitor en la configuración del compositor",
   "prefs.displays.conflicts.desc": "Pueden anular la disposición de aquí. Muévelas y Yozakura se encarga de esos monitores.",
   "prefs.displays.conflicts.move": "Moverlas aquí",
   "prefs.displays.deferred.title": "Se aplica al conservarla",
@@ -3072,5 +3071,7 @@
   "prefs.displays.keep": "Conservar",
   "prefs.displays.confirm.title": "¿Conservar estos ajustes de pantalla?",
   "prefs.displays.confirm.desc": "Si no haces nada, tus pantallas vuelven a la disposición anterior.",
-  "prefs.displays.confirm.seconds": "segundos"
+  "prefs.displays.confirm.seconds": "segundos",
+  "prefs.displays.conflicts.title.one": "%1 regla de monitor en la configuración del compositor",
+  "prefs.displays.conflicts.title.other": "%1 reglas de monitor en la configuración del compositor"
 }

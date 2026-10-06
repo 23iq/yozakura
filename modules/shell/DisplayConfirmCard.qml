@@ -12,8 +12,10 @@ StyledRect {
     id: root
 
     readonly property int remaining: DisplaysService.session.remaining
-    // Length of the window, taken from the first value seen
-    property int total: Math.max(DisplaysService.session.remaining, 1)
+    // Length of the window: the first remaining value of each session
+    property int total: 1
+    readonly property string sessionId: DisplaysService.session.id
+    onSessionIdChanged: root.total = Math.max(DisplaysService.session.remaining, 1)
     readonly property bool urgent: remaining <= 5
     readonly property color ringColor: urgent ? Colors.error : Colors.primary
 
@@ -21,8 +23,10 @@ StyledRect {
     backgroundOpacity: 0.97
     radius: Styling.radius(8)
     enableShadow: true
+    readonly property int padding: 36
+    readonly property int ringSize: 140
     implicitWidth: 460
-    implicitHeight: content.implicitHeight + 72
+    implicitHeight: content.implicitHeight + padding * 2
     focus: true
 
     Keys.onReturnPressed: DisplaysService.keep()
@@ -33,22 +37,25 @@ StyledRect {
         keepButton.forceActiveFocus();
     }
 
-    Component.onCompleted: takeFocus()
+    Component.onCompleted: {
+        root.total = Math.max(DisplaysService.session.remaining, 1);
+        takeFocus();
+    }
 
     Column {
         id: content
         anchors.centerIn: parent
-        width: parent.width - 72
+        width: parent.width - root.padding * 2
         spacing: 22
 
         Item {
             id: ringBox
             objectName: "countdownRing"
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 140
-            height: 140
+            width: root.ringSize
+            height: root.ringSize
             // Counts down linearly: each second glides to the next value
-            property real fraction: Math.max(root.remaining - 1, 0) / root.total
+            property real fraction: Math.min(root.remaining / root.total, 1)
 
             Behavior on fraction {
                 enabled: Config.animDuration > 0

@@ -30,7 +30,9 @@ StyledRect {
     variant: "pane"
     radius: Styling.radius(4)
     enableShadow: false
-    implicitHeight: 340 + (disabled.length > 0 ? strip.height + 14 : 0)
+    readonly property int margin: 16
+    readonly property int canvasHeight: 308
+    implicitHeight: canvasHeight + margin * 2 + (disabled.length > 0 ? strip.height + 14 : 0)
 
     Rectangle {
         anchors.fill: parent
@@ -68,10 +70,10 @@ StyledRect {
     Item {
         id: canvas
         objectName: "arrangementCanvas"
-        x: 16
-        y: 16
-        width: parent.width - 32
-        height: 308
+        x: root.margin
+        y: root.margin
+        width: parent.width - root.margin * 2
+        height: root.canvasHeight
         clip: true
 
         Repeater {
@@ -120,9 +122,9 @@ StyledRect {
     Flow {
         id: strip
         visible: root.disabled.length > 0
-        x: 16
+        x: root.margin
         y: canvas.y + canvas.height + 8
-        width: parent.width - 32
+        width: parent.width - root.margin * 2
         spacing: 8
 
         Repeater {

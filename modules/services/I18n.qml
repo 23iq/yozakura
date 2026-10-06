@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.config
+import "Plural.js" as Plural
 
 Singleton {
     id: root
@@ -29,6 +30,14 @@ Singleton {
         for (let i = 1; i < arguments.length; i++)
             str = str.replace("%" + i, arguments[i]);
         return str;
+    }
+
+    // Count-dependent text: `<key>.<category>` (one/few/many/other for the
+    // current language), else `<key>.other`, else `<key>`; %1 is the count.
+    function tn(key, n) {
+        const cat = Plural.category(root.resolvedLanguage, n);
+        const k = [key + "." + cat, key + ".other", key].find(c => root.has(c)) ?? key;
+        return root.t(k, n);
     }
 
     // A translation exists for key (current language or the English

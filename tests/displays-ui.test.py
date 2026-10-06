@@ -54,6 +54,7 @@ def calls(method):
 
 check(len(calls("displays.conflicts")) >= 1, "the page scans for conflicts on open")
 check(h.find(win, "conflictBanner").property("visible") is True, "the conflict banner shows when conflicts exist")
+check(ev("title", h.find(win, "conflictBanner")) == "1 monitor rule in your compositor config", "banner pluralises (one)")
 check(ev("page.draft.length") == 2, "draft has one entry per output")
 tiles = h.find(win, "tiles")
 check(ev("count", tiles) == 2 and ev("itemAt(0).config.name", tiles) == "DP-1" and ev("itemAt(1).visible", tiles) is True, "a tile per monitor")
@@ -75,6 +76,7 @@ if applied:
     check(outs["DP-1"]["refresh"] == 240 and outs["HDMI-A-1"]["refresh"] == 144, "candidate carries the new refresh and the untouched monitor")
 check(ev("DisplaysService.pending") is True, "session is pending after apply")
 check(h.find(win, "card").property("visible") is True, "confirm card shows while pending")
+check(ev("card.total") == 15, "the ring's total is captured when the session starts")
 check(ev("card.remaining") == 15 and h.find(win, "countdownText").property("text") == "15", "countdown starts at 15")
 
 # Keep -> displays.keep and the layout is saved
@@ -91,13 +93,20 @@ ev("DisplaysService.session = {id: 's2', state: 'pending', remaining: 9, live: t
 ev("DisplaysService.revert()")
 check(len(calls("displays.revert")) == 1, "Revert calls displays.revert")
 check(h.find(win, "card").property("remaining") == 9, "countdown follows the session")
+ev("DisplaysService.session = {id: 's5', state: 'pending', remaining: 15, live: true}")
+ev("DisplaysService.session = {id: 's5', state: 'pending', remaining: 5, live: true}")
+ring = h.find(win, "countdownRing")
+check(ev("card.total") == 15 and abs(ev("fraction", ring) - 5 / 15) < 0.01, "ring is a third full at 5 s of 15")
+ev("DisplaysService.session = {id: 's4', state: 'pending', remaining: 8, live: true}")
+check(ev("card.total") == 8, "a new session id re-captures the total")
+check(abs(ev("fraction", ring) - 1) < 0.01, "a fresh session starts with a full ring")
 
 # Dragging: dropping HDMI near DP-1's bottom snaps below it
 ev("DisplaysService.session = {id: '', state: '', remaining: 0, live: true}")
 ev("page.resync()")
 ev("page.edit('HDMI-A-1', {scale: 2})")
 d = json.loads(ev("JSON.stringify(page.draft)"))
-check(d[1]["scale"] == 2 and d[1]["x"] >= 2560 or d[1]["y"] >= 1440, "scaling keeps the monitors from overlapping")
+check(d[1]["scale"] == 2 and (d[1]["x"] >= 2560 or d[1]["y"] >= 1440), "scaling keeps the monitors from overlapping")
 
 # Dragging: dropping HDMI-A-1 near the bottom of DP-1 snaps it below
 ev("page.resync()")

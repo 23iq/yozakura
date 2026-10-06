@@ -16,7 +16,6 @@ PanelWindow {
     readonly property var entry: (DisplaysService.identified || []).find(e => e.name === (root.targetScreen ? root.targetScreen.name : "")) ?? null
 
     screen: targetScreen
-    visible: entry !== null || card.opacity > 0
     implicitWidth: 360
     implicitHeight: 360
     color: "transparent"

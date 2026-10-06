@@ -88,6 +88,7 @@ Window {{
     ev(page, "selectedName = 'HDMI-A-1'")
     ev(page, "edit('DP-1', {enabled: true})")
     snap("page-second")
+    ev(win, "DisplaysService.session = {id: 's', state: 'pending', remaining: 15, live: true}")
     ev(win, "DisplaysService.session = {id: 's', state: 'pending', remaining: 11, live: true}")
     env.h.find(win, "prompt").setProperty("visible", True)
     snap("confirm", 1400)

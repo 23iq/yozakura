@@ -3063,7 +3063,6 @@
   "prefs.displays.discard": "Discard changes",
   "prefs.displays.apply": "Apply",
   "prefs.displays.apply_failed": "Could not apply the layout",
-  "prefs.displays.conflicts.title": "%1 monitor rules in your compositor config",
   "prefs.displays.conflicts.desc": "They can override the layout set here. Move them and Yozakura takes over those monitors.",
   "prefs.displays.conflicts.move": "Move them here",
   "prefs.displays.deferred.title": "Applies after you keep it",
@@ -3072,5 +3071,7 @@
   "prefs.displays.keep": "Keep",
   "prefs.displays.confirm.title": "Keep these display settings?",
   "prefs.displays.confirm.desc": "If you do nothing, your displays go back to the previous layout.",
-  "prefs.displays.confirm.seconds": "seconds"
+  "prefs.displays.confirm.seconds": "seconds",
+  "prefs.displays.conflicts.title.one": "%1 monitor rule in your compositor config",
+  "prefs.displays.conflicts.title.other": "%1 monitor rules in your compositor config"
 }

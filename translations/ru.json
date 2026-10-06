@@ -3063,7 +3063,6 @@
   "prefs.displays.discard": "Отменить изменения",
   "prefs.displays.apply": "Применить",
   "prefs.displays.apply_failed": "Не удалось применить раскладку",
-  "prefs.displays.conflicts.title": "Правил мониторов в конфиге композитора: %1",
   "prefs.displays.conflicts.desc": "Они могут переопределять раскладку отсюда. Перенесите их, и этими мониторами займётся Yozakura.",
   "prefs.displays.conflicts.move": "Перенести сюда",
   "prefs.displays.deferred.title": "Применится после подтверждения",
@@ -3072,5 +3071,9 @@
   "prefs.displays.keep": "Оставить",
   "prefs.displays.confirm.title": "Оставить эти настройки дисплеев?",
   "prefs.displays.confirm.desc": "Если ничего не делать, дисплеи вернутся к прежней раскладке.",
-  "prefs.displays.confirm.seconds": "секунд"
+  "prefs.displays.confirm.seconds": "секунд",
+  "prefs.displays.conflicts.title.one": "Правило монитора в конфиге композитора: %1",
+  "prefs.displays.conflicts.title.other": "Правил мониторов в конфиге композитора: %1",
+  "prefs.displays.conflicts.title.few": "Правила мониторов в конфиге композитора: %1",
+  "prefs.displays.conflicts.title.many": "Правил мониторов в конфиге композитора: %1"
 }

@@ -357,6 +357,7 @@ def i18n_qml() -> str:
             f"    property var strings: ({json.dumps(strings, ensure_ascii=False)})\n"
             f"    property var availableLanguages: ({(REPO / 'translations/languages.json').read_text()})\n"
             "    function detectSystemLanguage() { return 'en' }\n"
+            "    function tn(key, n) { const k = key + (n === 1 ? '.one' : '.other'); return t(strings[k] !== undefined ? k : key, n); }\n"
             "    function t(key) { let s = strings[key] ?? key;"
             " for (let i = 1; i < arguments.length; i++) s = s.replace('%' + i, arguments[i]); return s; }\n}\n")
 

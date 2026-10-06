@@ -43,6 +43,7 @@ def i18n_qml(lang: str = "en") -> str:
     return ("pragma Singleton\nimport QtQuick\nQtObject {\n"
             f"    property var strings: ({json.dumps(strings, ensure_ascii=False)})\n"
             f"    property var availableLanguages: ({json.dumps(langs, ensure_ascii=False)})\n"
+            "    function tn(key, n) { const k = key + (n === 1 ? '.one' : '.other'); return t(strings[k] !== undefined ? k : key, n); }\n"
             "    function t(key) { let s = strings[key] ?? key;"
             " for (let i = 1; i < arguments.length; i++) s = s.replace('%' + i, arguments[i]); return s; }\n}\n")
 

@@ -40,7 +40,7 @@ StyledRect {
     // Drop position in logical px
     signal dropped(real lx, real ly)
 
-    variant: "pane"
+    variant: selected ? "focus" : "pane"
     radius: Math.min(Styling.radius(4), 22)
     width: Math.max(logical.w * pxScale, 8)
     height: Math.max(logical.h * pxScale, 8)

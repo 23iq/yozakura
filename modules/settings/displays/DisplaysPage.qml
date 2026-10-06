@@ -34,7 +34,8 @@ Flickable {
         policy: ScrollBar.AsNeeded
     }
 
-    // SettingsShell reveal() hook (search jumps): one page, nothing to scroll to.
+    // SettingsShell calls reveal() on search jumps for every page type; this
+    // page is a single block with no entries to scroll to, so it is a no-op.
     function reveal(section, entry) {
     }
 
