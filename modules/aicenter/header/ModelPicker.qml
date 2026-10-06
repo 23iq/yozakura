@@ -27,26 +27,9 @@ Popup {
     readonly property var picker: Config.ai.picker || ({})
     readonly property var catalogModels: Ai.models || []
 
-    // Presets with no listed model and no usable key/URL.
-    readonly property var unconnected: {
-        KeyStore.keyCache;
-        const listed = {};
-        for (const m of catalogModels)
-            listed[m.provider] = true;
-        return Presets.sorted().filter(p => {
-            if (listed[p.id])
-                return false;
-            if (p.keyRequired)
-                return !KeyStore.getKey(p.id);
-            if (p.id === "custom")
-                return !KeyStore.getEndpoint("custom");
-            return true;
-        }).map(p => ({
-                    id: p.id,
-                    label: p.label,
-                    icon: p.icon
-                }));
-    }
+    // Presets with no listed model, no key/URL and no running local server
+    // (hidden providers are left out; ProviderConnect.unconnected()).
+    readonly property var unconnected: Ai.providers ? Ai.providers.unconnected : []
     readonly property var labels: {
         const out = {};
         for (const p of Presets.PRESETS)
@@ -121,7 +104,7 @@ Popup {
             if (Ai.catalog.apiModels.length === 0)
                 Ai.catalog.refresh();
             else
-                Ai.catalog.probeOllama(false);
+                Ai.catalog.probeLocal(false);
         }
     }
 

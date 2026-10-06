@@ -102,5 +102,18 @@ var keys = {
     },
     "voice.enabled": {
         "description": "Allow voice input into the AI center."
+    },
+    "providers": {
+        "description": "Chat providers: request timeout and retries, picker visibility, local auto-probe, custom endpoint headers."
+    },
+    "providers.hidden": {
+        "items": {
+            "type": "string",
+            "enum": ["openai", "anthropic", "gemini", "mistral", "groq", "minimax", "openrouter", "deepseek", "lmstudio", "ollama", "custom"]
+        },
+        "description": "Provider ids hidden from the model picker (not listed, not probed, never shown as not connected)."
+    },
+    "lmstudio": {
+        "description": "LM Studio (local OpenAI-compatible server)."
     }
 };

@@ -68,14 +68,15 @@ func (s *Service) handleProbe(params json.RawMessage) (any, error) {
 
 func (s *Service) handleTest(params json.RawMessage) (any, error) {
 	var p struct {
-		Provider string `json:"provider"`
-		BaseURL  string `json:"baseUrl"`
-		Key      string `json:"key"`
+		Provider string            `json:"provider"`
+		BaseURL  string            `json:"baseUrl"`
+		Key      string            `json:"key"`
+		Headers  map[string]string `json:"headers"`
 	}
 	_ = json.Unmarshal(params, &p)
 	ctx, cancel := probeContext(context.Background(), 20*time.Second)
 	defer cancel()
-	return s.TestConnection(ctx, p.Provider, p.BaseURL, p.Key), nil
+	return s.TestConnectionWithHeaders(ctx, p.Provider, p.BaseURL, p.Key, p.Headers), nil
 }
 
 func (s *Service) handleInfo(params json.RawMessage) (any, error) {

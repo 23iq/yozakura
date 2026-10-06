@@ -11,7 +11,9 @@ ChatSession, AgentTimeline.js, the markdown/diff/highlight libs) is real.
 """
 from __future__ import annotations
 
+import atexit
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -114,7 +116,12 @@ AI_CONFIG = """
             property int warnAt: 80; property int criticalAt: 95; property bool autoCompact: true; property int autoCompactAt: 95
             property int keepTurns: 4; property string compactModel: ""; property list<var> overrides: []
         }
-        property QtObject ollama: QtObject { property int numCtx: 32768 }
+        property QtObject ollama: QtObject { property int numCtx: 32768; property string endpoint: ""; property string keepAlive: "" }
+        property QtObject lmstudio: QtObject { property string endpoint: "" }
+        property QtObject providers: QtObject {
+            property int timeout: 600; property int retries: 1; property list<string> hidden: []; property int probeInterval: 60
+            property list<var> customHeaders: []; property bool openrouterAttribution: true
+        }
         property QtObject picker: QtObject { property bool showCapabilities: true; property bool groupByProvider: true; property bool showUnconnected: true; property bool showRecent: true }
         property QtObject mcp: QtObject { property bool yozakura: true; property bool importClaude: true; property bool importCodex: true; property bool importOpencode: true; property list<var> disabled: [] }
         property QtObject selection: QtObject {
@@ -137,12 +144,15 @@ AI_CONFIG = """
 def build(preset: str, mode: str, ai_stub: str) -> Path:
     """Returns the import root; caller loads scenes with addImportPath(root)."""
     tmp = Path(tempfile.mkdtemp(prefix="aiscene-"))
+    if not os.environ.get("AISCENE_KEEP"):
+        atexit.register(shutil.rmtree, tmp, True)
     qs = tmp / "qs"
     for src in (REPO / "modules").rglob("*"):
         if src.is_file() and src.suffix in (".qml", ".js", ".qsb"):
             dst = qs / "modules" / src.relative_to(REPO / "modules")
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(src, dst)
+    shutil.copytree(REPO / "assets/aiproviders", qs / "assets/aiproviders")
     palette = json.loads((REPO / "tests/fixtures/aicenter-palettes.json").read_text())[mode]
     colors = "pragma Singleton\nimport QtQuick\nQtObject {\n" + "\n".join(f'    property color {k}: "{v}"' for k, v in palette.items()) + "\n}\n"
     (qs / "modules/theme/Colors.qml").write_text(colors)
@@ -157,8 +167,68 @@ def build(preset: str, mode: str, ai_stub: str) -> Path:
     services = qs / "modules/services"
     (services / "I18n.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject {\n    readonly property var table: (" + json.dumps(en) + ")\n"
                                        "    function t(k) { return table[k] !== undefined ? table[k] : k; }\n}\n")
-    (services / "BackendService.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { property bool socketAvailable: true; function call(m, p, cb) {} function addSubscription(s, cb) { return 1; } }\n")
-    (services / "KeyStore.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { property var keyCache: ({}); function getKey(p) { return ''; } function getCustomCurl(p) { return ''; } function getEndpoint(p) { return ''; } function hasKey(p) { return false; } }\n")
+    # BackendService: `responses[method]` (a value or a function(params))
+    # answers a call; every call is recorded.
+    (services / "BackendService.qml").write_text("""pragma Singleton
+import QtQuick
+QtObject {
+    property bool socketAvailable: true
+    property var calls: []
+    property var responses: ({})
+    function call(m, p, cb) {
+        calls = calls.concat([{method: m, params: p}]);
+        const r = responses[m];
+        if (r !== undefined && cb) cb(typeof r === "function" ? r(p) : r, null);
+    }
+    function addSubscription(s, cb) { return 1; }
+}
+""")
+    # KeyStore: an in-memory key cache with the real API.
+    (services / "KeyStore.qml").write_text("""pragma Singleton
+import QtQuick
+QtObject {
+    property var keyCache: ({})
+    property bool initialized: true
+    signal keysChanged
+    function getKey(p) { return keyCache[p] ? keyCache[p].api_key : ''; }
+    function getCustomCurl(p) { return keyCache[p] ? keyCache[p].custom_curl : ''; }
+    function getEndpoint(p) { return keyCache[p] ? keyCache[p].endpoint : ''; }
+    function hasKey(p) { return !!keyCache[p] && keyCache[p].api_key !== ''; }
+    function setKey(p, key, endpoint, curl) {
+        const c = Object.assign({}, keyCache);
+        c[p] = {api_key: key || '', endpoint: endpoint || '', custom_curl: curl || ''};
+        keyCache = c;
+        keysChanged();
+    }
+    function deleteKey(p) {
+        const c = Object.assign({}, keyCache);
+        delete c[p];
+        keyCache = c;
+        keysChanged();
+    }
+}
+""")
+    # SettingsStore: writes the scene Config directly and records each set.
+    (qs / "modules/settings/store/SettingsStore.qml").write_text("""pragma Singleton
+import QtQuick
+import qs.config
+QtObject {
+    property var sets: []
+    function get(key) {
+        let o = Config;
+        for (const part of key.split(".")) o = o ? o[part] : undefined;
+        return o;
+    }
+    function set(key, value) {
+        sets = sets.concat([{key: key, value: value}]);
+        const parts = key.split(".");
+        let o = Config;
+        for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]];
+        o[parts[parts.length - 1]] = value;
+    }
+}
+""")
+    (qs / "modules/settings/store/qmldir").write_text("module qs.modules.settings.store\nsingleton SettingsStore 1.0 SettingsStore.qml\n")
     (services / "Ai.qml").write_text(ai_stub)
     (services / "qmldir").write_text("module qs.modules.services\nsingleton Ai 1.0 Ai.qml\nsingleton I18n 1.0 I18n.qml\nsingleton BackendService 1.0 BackendService.qml\nsingleton KeyStore 1.0 KeyStore.qml\n")
     (qs / "modules/globals/GlobalStates.qml").write_text("""pragma Singleton

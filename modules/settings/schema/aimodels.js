@@ -114,17 +114,6 @@ var sections = [
                 "placeholder": "prefs.ai.compact_model.placeholder"
             },
             {
-                "key": "ai.ollama.numCtx",
-                "type": "number",
-                "label": "prefs.ai.ollama_num_ctx",
-                "description": "prefs.ai.ollama_num_ctx.desc",
-                "keywords": "ollama num_ctx context length tokens memory vram local",
-                "min": 0,
-                "max": 1048576,
-                "step": 1024,
-                "specialValues": [{ "value": 0, "label": "prefs.ai.ollama_num_ctx.model_max" }]
-            },
-            {
                 "key": "ai.context.overrides",
                 "type": "list",
                 "fields": [

@@ -128,3 +128,13 @@ test('voice setup progress follows the script stages and never goes back', () =>
     for (const m of ['Cloning', 'Configuring', 'Building', 'Installed whisper', 'Downloading', 'Done.'])
         assert.ok(script.includes(m), 'voice_setup.sh no longer prints ' + m);
 });
+
+test('ollamaState: running (probe), installed but stopped, missing', () => {
+    const detected = M.parseDetect('agent=ollama:/usr/bin/ollama');
+    const running = M.ollamaState(detected, { reachable: true, models: [{ id: 'a', capabilities: ['completion'] }, { id: 'e', capabilities: ['embedding'] }] });
+    assert.equal(running.state, 'running');
+    assert.equal(running.count, 1);
+    assert.equal(M.ollamaState(M.parseDetect(''), { reachable: true, models: [] }).state, 'running', 'a server without the binary (container, remote) counts');
+    assert.equal(M.ollamaState(detected, { reachable: false }).state, 'installed');
+    assert.equal(M.ollamaState(M.parseDetect(''), null).state, 'missing');
+});

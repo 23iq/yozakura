@@ -4,6 +4,7 @@
 .import "bar.js" as Bar
 .import "notch.js" as Notch
 .import "ai.js" as Ai
+.import "aiproviders.js" as AiProviders
 .import "input.js" as Input
 .import "lockscreen.js" as Lockscreen
 .import "launcher.js" as Launcher
@@ -53,7 +54,7 @@ var groups = [
     {
         "id": "extend",
         "title": "prefs.group.extend",
-        "categories": ["ai", "sidebar", "mods", "presets", "about"]
+        "categories": ["ai", "ai-providers", "sidebar", "mods", "presets", "about"]
     }
 ];
 
@@ -122,7 +123,7 @@ var categories = [
     legacy("sound", "speakerHigh", "prefs.cat.sound", "prefs.cat.sound.desc", "dashboard/controls/AudioMixerPanel.qml", "", "sound audio volume mixer output input microphone speaker", []),
     legacy("effects", "waveform", "prefs.cat.effects", "prefs.cat.effects.desc", "dashboard/controls/EasyEffectsPanel.qml", "", "equalizer easyeffects bass audio effects", []),
     Ai.category,
-    legacy("ai-providers", "robot", "ai.providers", "prefs.ai.providers.desc", "config/AiPanel.qml", "", "ai api key provider openai anthropic gemini mistral groq ollama minimax custom endpoint", []),
+    AiProviders.category,
     legacy("sidebar", "sidebar", "prefs.cat.sidebar", "prefs.cat.sidebar.desc", "dashboard/controls/ShellPanel.qml", "sidebar", "assistant sidebar ai panel width position", []),
     legacy("mods", "puzzlePiece", "prefs.cat.mods", "prefs.cat.mods.desc", "dashboard/controls/ModsPanel.qml", "", "mods extensions plugins modifications install", []),
     {

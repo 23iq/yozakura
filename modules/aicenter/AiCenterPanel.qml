@@ -14,6 +14,7 @@ import qs.modules.aicenter.code
 import qs.modules.aicenter.agent
 import qs.modules.aicenter.composer
 import qs.modules.aicenter.sessions
+import qs.modules.aicenter.providers
 
 // The AI bar. Two spaces (GlobalStates.aiSpace): Assistant (any engine,
 // compact transcript) and Code (CLI agents in a project: project bar,
@@ -104,6 +105,11 @@ StyledRect {
         }
         function onFocusComposerRequested() {
             root.focusComposer();
+        }
+        function onConnectProviderRequested(provider) {
+            root.historyOpen = false;
+            root.settingsOpen = false;
+            connectSheet.open(provider);
         }
     }
     Shortcut {
@@ -308,6 +314,13 @@ StyledRect {
         z: 11
         onCloseRequested: root.settingsOpen = false
     }
+    ConnectSheet {
+        id: connectSheet
+        anchors.fill: parent
+        anchors.margins: 10
+        z: 12
+        onCloseRequested: root.focusComposer()
+    }
     ModelPicker {
         id: picker
         parent: root
@@ -316,6 +329,9 @@ StyledRect {
         filterKind: root.code ? "agent" : "all"
         onPicked: id => Ai.setModel(id)
         onConnectRequested: provider => Ai.openProviderSettings(provider)
-        onClosed: root.focusComposer()
+        onClosed: {
+            if (!connectSheet.opened)
+                root.focusComposer();
+        }
     }
 }

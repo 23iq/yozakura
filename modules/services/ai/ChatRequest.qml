@@ -2,12 +2,17 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import "Providers.js" as Providers
+import "ProviderConnect.js" as Connect
+import "RequestPolicy.js" as Policy
 import qs.modules.globals
+import qs.config
 
 // One streaming chat-completion request (curl). Request body and headers go
 // to 0600 files in $XDG_RUNTIME_DIR so API keys never appear in argv; a
 // custom curl template reads them from $AI_API_KEY / $AI_ENDPOINT /
-// $AI_BODY_PATH instead.
+// $AI_BODY_PATH instead. ai.providers.timeout/retries bound the request
+// (a retry only happens before anything was streamed), provider headers
+// (custom endpoint, OpenRouter) and Ollama keep_alive come from the config.
 // Usage: set model/apiKey/messages/tools/system, call start(); listen to
 // delta() and finished().
 QtObject {
@@ -33,6 +38,9 @@ QtObject {
     property var _acc: Providers.newAccumulator()
     property string _raw: ""
     property string _error: ""
+    property bool _streamed: false
+    property int _attempt: 0
+    readonly property var _providerConfig: Config.ai.providers || ({})
 
     signal delta(string text, string thinking)
     signal finished(var result)
@@ -45,20 +53,29 @@ QtObject {
             return;
         }
         aborted = false;
+        _attempt = 0;
+        _reset();
+        prepare.running = true;
+    }
+
+    function _reset() {
         _acc = Providers.newAccumulator();
         _raw = "";
         _error = "";
-        prepare.running = true;
+        _streamed = false;
     }
 
     function abort() {
         aborted = true;
-        if (curl.running)
+        retryTimer.stop();
+        if (curl.running) {
             curl.signal(15);
-        else
+        } else {
+            cleanup.running = true;
             finished({
                 aborted: true
             });
+        }
     }
 
     function _launch() {
@@ -67,7 +84,8 @@ QtObject {
         const body = Providers.body(messages, model, tools, {
             system: system,
             effort: effort,
-            numCtx: numCtx
+            numCtx: numCtx,
+            keepAlive: Config.ai.ollama ? Config.ai.ollama.keepAlive || "" : ""
         });
         bodyFile.setText(JSON.stringify(body));
         const url = Providers.endpoint(model, apiKey);
@@ -80,8 +98,11 @@ QtObject {
             curl.environment = c.env;
             curl.command = ["bash", "-c", c.script];
         } else {
-            headerFile.setText(Providers.headers(model, apiKey).join("\n") + "\n");
-            curl.command = ["curl", "-sS", "-N", "--no-buffer", "--connect-timeout", "15", "-X", "POST", url, "-H", "@" + headerPath, "--data-binary", "@" + bodyPath];
+            headerFile.setText(Providers.headers(model, apiKey, Connect.extraHeaders(model.provider, _providerConfig, {
+                url: Brand.repoUrl,
+                name: Brand.displayName
+            })).join("\n") + "\n");
+            curl.command = ["curl", "-sS", "-N", "--no-buffer", "--connect-timeout", "15"].concat(Policy.timeoutArgs(_providerConfig.timeout), ["-X", "POST", url, "-H", "@" + headerPath, "--data-binary", "@" + bodyPath]);
         }
         curl.running = true;
     }
@@ -111,15 +132,16 @@ QtObject {
                 const r = Providers.parse(root.model.provider, line, root._acc);
                 if (r.error && !root._error)
                     root._error = r.error;
-                if (r.text || r.thinking)
+                if (r.text || r.thinking) {
+                    root._streamed = true;
                     root.delta(r.text, r.thinking);
+                }
             }
         }
         stderr: StdioCollector {
             id: curlErr
         }
         onExited: code => {
-            root.cleanup.running = true;
             let error = root._error;
             const acc = root._acc;
             if (root.aborted)
@@ -128,6 +150,20 @@ QtObject {
                 error = curlErr.text.trim() || ("curl exited with " + code);
             else if (!error && !acc.text && !acc.thinking && acc.calls.length === 0)
                 error = Providers.errorFromBody(root._raw) || "Empty response";
+            if (Policy.shouldRetry({
+                error: error,
+                aborted: root.aborted,
+                streamed: root._streamed || acc.calls.length > 0,
+                curlCode: code,
+                attempt: root._attempt,
+                max: root._providerConfig.retries
+            })) {
+                root._attempt++;
+                root.retryTimer.interval = Policy.backoff(root._attempt);
+                root.retryTimer.start();
+                return;
+            }
+            root.cleanup.running = true;
             root.finished({
                 text: acc.text,
                 thinking: acc.thinking,
@@ -137,6 +173,15 @@ QtObject {
                 error: error,
                 aborted: root.aborted
             });
+        }
+    }
+
+    property Timer retryTimer: Timer {
+        onTriggered: {
+            if (root.aborted)
+                return;
+            root._reset();
+            root._launch();
         }
     }
 

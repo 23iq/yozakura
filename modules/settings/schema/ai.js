@@ -248,14 +248,6 @@ var category = {
                     ]
                 },
                 {
-                    "key": "ai.defaultModel",
-                    "type": "text",
-                    "label": "prefs.ai.default_engine",
-                    "description": "prefs.ai.default_engine.desc",
-                    "keywords": "default engine model assistant provider",
-                    "placeholder": "prefs.ai.default_engine.placeholder"
-                },
-                {
                     "key": "ai.agents.defaultAgent",
                     "type": "selector",
                     "label": "prefs.ai.default_agent",
@@ -597,12 +589,13 @@ var category = {
                 {
                     "id": "ai.providers.link",
                     "type": "custom",
-                    "component": "LegacyLink",
+                    "component": "PageLink",
                     "target": "ai-providers",
+                    "linkText": "prefs.ai.providers.open",
                     "resettable": false,
                     "label": "ai.providers",
                     "description": "prefs.ai.providers.desc",
-                    "keywords": "api key provider openai anthropic gemini mistral groq ollama custom endpoint"
+                    "keywords": "api key provider openai anthropic gemini mistral groq deepseek openrouter lm studio ollama custom endpoint connect"
                 }
             ]
         }

@@ -61,6 +61,19 @@ QtObject {
     }
     function detect() {
         detectProc.running = true;
+        probeOllama();
+    }
+    // Ollama server state (backend probe: lists models, loads none).
+    property var ollamaProbe: null
+    readonly property var ollama: Model.ollamaState(detected, ollamaProbe)
+    function probeOllama() {
+        const endpoint = Config.ai && Config.ai.ollama ? Config.ai.ollama.endpoint || "" : "";
+        BackendService.call("providers.ollama.probe", {
+            endpoint: endpoint
+        }, (res, err) => {
+            if (!err && res)
+                root.ollamaProbe = res;
+        });
     }
     function applyDetect(text) {
         detected = Model.parseDetect(text);

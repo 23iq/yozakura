@@ -86,11 +86,23 @@ QtObject {
         property var apiModels: root.models.slice(1)
         property bool fetching: false
         property int probes: 0
+        property int refreshes: 0
+        property var ollama: ({reachable: true, endpoint: "http://127.0.0.1:11434", error: ""})
+        property var lmstudio: ({reachable: false, endpoint: "", error: ""})
         function refresh() {
+            refreshes++;
         }
         function probeOllama(force) {
             probes++;
         }
+        function probeLocal(force) {
+            probes++;
+        }
+    }
+    // The real provider connection logic (KeyStore/BackendService/SettingsStore
+    // are scene stubs).
+    property ProviderSetup providers: ProviderSetup {
+        catalog: root.catalog
     }
 
     // Effort and context state (EffortState / ContextState stand-ins).
@@ -275,6 +287,10 @@ QtObject {
         }
         function settingsFor(agent, cwd) { return {models: [{id: "sonnet", name: "Sonnet", isDefault: true, efforts: ["low", "high"]}], manualModel: true}; }
         function refreshModels(agent, cwd) {}
+        property QtObject modelCatalogs: QtObject {
+            property var catalogs: ({})
+            function has(agent, cwd) { return true; }
+        }
     }
 
     signal modelSelectionRequested
@@ -293,7 +309,8 @@ QtObject {
     function ambientContext() { return ambient; }
     property int settingsOpened: 0
     property string connectProvider: ""
-    function openProviderSettings(p) { settingsOpened++; connectProvider = p || ""; }
+    signal connectProviderRequested(string provider)
+    function openProviderSettings(p) { settingsOpened++; connectProvider = p || ""; connectProviderRequested(connectProvider); }
     property var undone: []
     function undoAction(u) { undone = undone.concat([u.tool]); }
     function setModel(id) {

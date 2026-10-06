@@ -132,8 +132,10 @@ func (s *Service) set(params json.RawMessage) (any, error) {
 		CustomCurl string `json:"custom_curl"`
 	}
 	json.Unmarshal(params, &p)
-	if p.Provider == "" || p.APIKey == "" {
-		return map[string]any{"error": "set requires provider and api_key"}, nil
+	// A key-less entry is valid when it carries an endpoint (a custom
+	// OpenAI-compatible server without authentication).
+	if p.Provider == "" || (p.APIKey == "" && p.Endpoint == "") {
+		return map[string]any{"error": "set requires provider and api_key or endpoint"}, nil
 	}
 	key := machineKey()
 	enc := encrypt(p.APIKey, key)

@@ -54,6 +54,18 @@ QtObject {
         function serverTools(name, cb) { cb([], ""); }
         function refresh() {}
     }
+    property var models: [{ id: "anthropic:claude-sonnet-4-5", name: "Claude Sonnet 4.5", provider: "anthropic", kind: "api" }]
+    // Provider connections (services/ai/ProviderSetup.qml): scripted.
+    property var providers: QtObject {
+        property var hidden: []
+        property var saved: []
+        function status(id) { return { state: id === "ollama" ? "connected" : "none", connected: id === "ollama", local: id === "ollama" || id === "lmstudio" }; }
+        function current(id) { return { key: "", url: "", curl: "" }; }
+        function test(id, key, url, cb) { cb({ ok: true, verified: true, count: 2, error: "", models: [] }); }
+        function save(id, key, url, curl) { saved = saved.concat([id]); return true; }
+        function disconnect(id) {}
+        function setHidden(id, hide) { hidden = hide ? hidden.concat([id]) : hidden.filter(h => h !== id); }
+    }
     function _ensureInit() {}
 }"""
 
@@ -97,6 +109,16 @@ MIRROR = [
     "modules/settings",
     "modules/components",
     "modules/aicenter/common",
+    "modules/aicenter/providers",
+    "modules/aicenter/agent/SettingsChoice.qml",
+    "modules/aicenter/header/CapabilityBadges.qml",
+    "modules/services/ai/ProviderConnect.js",
+    "modules/services/ai/ProviderPresets.js",
+    "modules/services/ai/Providers.js",
+    "modules/services/ai/Effort.js",
+    "modules/services/ai/ModelInfo.js",
+    "modules/services/ai/ContextMath.js",
+    "assets/aiproviders",
     "modules/keybinds",
     "assets/yozakura/super-key.svg",
     "config/KeybindActions.js",
@@ -462,6 +484,9 @@ class SettingsEnv:
         self.h.module("qs.modules.widgets.dashboard.controls", {
             "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120 }"})
         self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
+        self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
+        self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
+        self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
                   "modules/components/surfaceeffects", "modules/bar/workspaces/indicators",

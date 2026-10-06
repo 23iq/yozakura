@@ -3,7 +3,9 @@ import Quickshell
 import Quickshell.Io
 import qs.config
 import qs.modules.services
+import qs.modules.globals
 import "Providers.js" as Providers
+import "ProviderConnect.js" as Connect
 import "ModelInfo.js" as ModelInfo
 import "EngineSelection.js" as Selection
 
@@ -31,8 +33,35 @@ QtObject {
             endpoint: "",
             error: ""
         })
+    // LM Studio state from the last listing (same shape).
+    property var lmstudio: ({
+            reachable: false,
+            endpoint: "",
+            error: ""
+        })
     property double _lastProbe: 0
     readonly property int probeInterval: 15000
+    readonly property var providerConfig: Config.ai.providers ?? null
+    readonly property var hidden: providerConfig?.hidden ?? []
+    readonly property string ollamaEndpoint: Config.ai.ollama ? (Config.ai.ollama.endpoint || "") : ""
+    readonly property string lmstudioEndpoint: Config.ai.lmstudio ? (Config.ai.lmstudio.endpoint || "") : ""
+
+    onOllamaEndpointChanged: probeOllama(true)
+    onLmstudioEndpointChanged: probeLmStudio(true)
+    onHiddenChanged: Qt.callLater(refresh)
+
+    function isHidden(provider) {
+        return hidden.indexOf(provider) >= 0;
+    }
+
+    // Local providers are re-probed while the AI bar is open
+    // (ai.providers.probeInterval seconds, 0 = only when the picker opens).
+    property Timer autoProbe: Timer {
+        interval: Math.max(5, root.providerConfig?.probeInterval ?? 0) * 1000
+        repeat: true
+        running: (root.providerConfig?.probeInterval ?? 0) > 0 && GlobalStates.assistantVisible
+        onTriggered: root.probeLocal(false)
+    }
 
     readonly property Component getter: Component {
         HttpGet {}
@@ -64,7 +93,7 @@ QtObject {
     function _withInfo(m) {
         if (m.kind === "agent")
             return m;
-        const info = m.info && m.info.source === "ollama" ? m.info : Object.assign({}, ModelInfo.lookup(table, m.provider, m.model) || {});
+        const info = m.info && m.info.source === "ollama" ? m.info : Object.assign({}, ModelInfo.lookup(table, m.provider, m.model) || m.hint || {});
         return Object.assign({}, m, {
             info: info,
             tools: info.tools !== false,
@@ -87,7 +116,8 @@ QtObject {
             available: true,
             tools: true,
             images: true,
-            info: item.info || null
+            info: item.info || null,
+            hint: item.hint || null
         });
     }
 
@@ -96,39 +126,39 @@ QtObject {
         apiModels = keep.concat(list);
     }
 
-    function _fetch(provider, url, headers, endpoint) {
+    // done(ok, text) is optional (LM Studio reachability).
+    function _fetch(provider, url, headers, endpoint, done) {
         pending++;
         const generation = _generation;
         const g = getter.createObject(root);
         g.get(url, headers, (text, ok) => {
             pending = Math.max(0, pending - 1);
-            if (!ok || generation !== _generation)
+            if (generation !== _generation)
                 return;
-            const items = Providers.parseModelList(provider, text);
+            const items = ok ? Providers.parseModelList(provider, text) : [];
+            const listed = ok && (items.length > 0 || /"data"|"models"/.test(text));
+            if (done)
+                done(listed, text);
+            if (!ok)
+                return;
             _merge(provider, items.map(it => _entry(provider, it, endpoint)));
         });
     }
 
     function refresh() {
         _generation++;
-        const keyed = ["openai", "anthropic", "mistral", "groq", "openrouter", "deepseek"];
+        const keyed = ["openai", "anthropic", "gemini", "mistral", "groq", "openrouter", "deepseek"];
         for (const id of keyed) {
             const key = KeyStore.getKey(id);
-            if (!key) {
+            if (!key || isHidden(id)) {
                 _merge(id, []);
                 continue;
             }
-            const r = Providers.modelsRequest(id, key);
-            _fetch(id, r.url, r.headers, "");
+            const endpoint = KeyStore.getEndpoint(id) || "";
+            const r = Providers.modelsRequest(id, key, endpoint);
+            _fetch(id, r.url, r.headers, endpoint);
         }
-        const gkey = KeyStore.getKey("gemini");
-        if (gkey) {
-            const g = Providers.modelsRequest("gemini", gkey);
-            _fetch("gemini", g.url, g.headers, "");
-        } else {
-            _merge("gemini", []);
-        }
-        if (KeyStore.getKey("minimax"))
+        if (KeyStore.getKey("minimax") && !isHidden("minimax"))
             _merge("minimax", Providers.MINIMAX_MODELS.map(m => _entry("minimax", {
                     id: m,
                     name: m
@@ -136,14 +166,45 @@ QtObject {
         else
             _merge("minimax", []);
         const customEndpoint = KeyStore.getEndpoint("custom");
-        if (customEndpoint) {
-            const ck = KeyStore.getKey("custom");
-            _fetch("custom", customEndpoint.replace(/\/+$/, "") + "/models", ck ? ["Authorization: Bearer " + ck] : [], customEndpoint);
+        if (customEndpoint && !isHidden("custom")) {
+            const c = Providers.modelsRequest("custom", KeyStore.getKey("custom"), customEndpoint, Connect.extraHeaders("custom", providerConfig));
+            _fetch("custom", c.url, c.headers, customEndpoint);
         } else {
             _merge("custom", []);
         }
-        probeOllama(true);
+        probeLocal(true);
         _addExtra();
+    }
+
+    // Ollama and LM Studio (throttled unless `force`).
+    function probeLocal(force) {
+        probeOllama(force);
+        probeLmStudio(force);
+    }
+
+    // LM Studio: its OpenAI-compatible /models listing (no key) is both the
+    // model list and the reachability check.
+    function probeLmStudio(force) {
+        if (isHidden("lmstudio")) {
+            lmstudio = {
+                reachable: false,
+                endpoint: "",
+                error: ""
+            };
+            _merge("lmstudio", []);
+            return;
+        }
+        const endpoint = Connect.baseUrl("lmstudio", lmstudioEndpoint);
+        const r = Providers.modelsRequest("lmstudio", "", endpoint);
+        _fetch("lmstudio", r.url, r.headers, endpoint, (ok, text) => {
+            lmstudio = {
+                reachable: ok,
+                endpoint: endpoint,
+                error: ok ? "" : (Providers.errorFromBody(text) || "unreachable")
+            };
+            if (!ok)
+                _merge("lmstudio", []);
+        });
     }
 
     // Lists the local Ollama models through the backend probe (no model is
@@ -153,14 +214,23 @@ QtObject {
         if (!force && now - _lastProbe < probeInterval)
             return;
         _lastProbe = now;
+        if (isHidden("ollama")) {
+            ollama = {
+                reachable: false,
+                endpoint: "",
+                error: ""
+            };
+            _merge("ollama", []);
+            return;
+        }
         const generation = _generation;
-        const endpoint = KeyStore.getEndpoint("ollama");
+        const endpoint = ollamaEndpoint;
         pending++;
         BackendService.call("providers.ollama.probe", {
             endpoint: endpoint
         }, (res, err) => {
             pending = Math.max(0, pending - 1);
-            if (generation !== _generation || endpoint !== KeyStore.getEndpoint("ollama"))
+            if (generation !== _generation || endpoint !== ollamaEndpoint)
                 return;
             if (err || !res) {
                 _legacyOllama(endpoint);
@@ -181,15 +251,19 @@ QtObject {
         });
     }
 
-    // Older daemons without the providers service: the former opt-in
-    // (an "ollama" keystore entry) and a direct /api/tags listing.
+    // Older daemons without the providers service: a direct /api/tags
+    // listing (reachable = connected, like the probe).
     function _legacyOllama(endpoint) {
-        if (!KeyStore.hasKey("ollama")) {
-            _merge("ollama", []);
-            return;
-        }
-        const base = endpoint || Providers.PROVIDERS.ollama.base;
-        _fetch("ollama", base.replace(/\/+$/, "") + "/api/tags", [], endpoint);
+        const base = Connect.baseUrl("ollama", endpoint);
+        _fetch("ollama", base.replace(/\/+$/, "") + "/api/tags", [], endpoint, ok => {
+            ollama = {
+                reachable: ok,
+                endpoint: base,
+                error: ok ? "" : "unreachable"
+            };
+            if (!ok)
+                _merge("ollama", []);
+        });
     }
 
     function _addExtra() {

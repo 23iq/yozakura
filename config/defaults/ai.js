@@ -101,7 +101,20 @@ var data = {
         "overrides": []
     },
     "ollama": {
-        "numCtx": 32768
+        "numCtx": 32768,
+        "endpoint": "",
+        "keepAlive": ""
+    },
+    "lmstudio": {
+        "endpoint": ""
+    },
+    "providers": {
+        "timeout": 600,
+        "retries": 1,
+        "hidden": [],
+        "probeInterval": 60,
+        "customHeaders": [],
+        "openrouterAttribution": true
     },
     "picker": {
         "showCapabilities": true,

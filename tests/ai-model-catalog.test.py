@@ -1,7 +1,8 @@
 """Model catalog: Ollama models from the backend probe (real capabilities,
-chat-only models), stale probes ignored, the legacy /api/tags fallback for
-daemons without the providers service, and capability records from
-assets/ai/models.json for API models."""
+chat-only models; reachable = connected, no keystore opt-in), stale probes
+ignored, the /api/tags fallback for daemons without the providers service,
+LM Studio listed from its /models (reachability), hidden providers skipped,
+and capability records from assets/ai/models.json for API models."""
 import json
 import sys
 from pathlib import Path
@@ -13,18 +14,25 @@ REPO = Path(__file__).resolve().parents[1]
 TABLE = (REPO / "assets/ai/models.json").read_text()
 
 h = Harness("ai-model-catalog")
-h.singleton("qs.config", "Config", "QtObject { property var ai: ({extraModels:[], agents:{}}) }")
+h.singleton("qs.config", "Config", """QtObject {
+    property QtObject ai: QtObject {
+        property var extraModels: []
+        property var agents: ({})
+        property QtObject ollama: QtObject { property string endpoint: "" }
+        property QtObject lmstudio: QtObject { property string endpoint: "" }
+        property QtObject providers: QtObject { property var hidden: []; property int probeInterval: 0; property var customHeaders: [] }
+    }
+}""")
+h.module("qs.modules.globals", {"GlobalStates": "pragma Singleton\nQtObject { property bool assistantVisible: false }"})
 h.module("Quickshell", {"Quickshell": "pragma Singleton\nQtObject { property string shellDir: '/repo' }"})
 h.module("Quickshell.Io", {"FileView": "QtObject { property string path; property bool printErrors; property string content; signal loaded; function text() { return content; } }"})
 h.module("qs.modules.services", {
     "KeyStore": '''pragma Singleton
 QtObject {
-    property bool legacy: false
-    property string endpoint: ""
     property var keys: ({})
     function getKey(p) { return keys[p] || "" }
-    function hasKey(p) { return p === "ollama" && legacy }
-    function getEndpoint(p) { return p === "ollama" ? endpoint : "" }
+    function hasKey(p) { return false }
+    function getEndpoint(p) { return "" }
 }''',
     "BackendService": '''pragma Singleton
 QtObject {
@@ -55,6 +63,14 @@ def answer(i, result, err=""):
     h.eval(obj, f"BackendService.calls[{i}].cb({json.dumps(result)}, {json.dumps(err)})")
 
 
+def last_request(part):
+    n = h.eval(obj, "Discovery.requests.length")
+    for i in range(n - 1, -1, -1):
+        if part in h.eval(obj, f"Discovery.requests[{i}].url"):
+            return i
+    return -1
+
+
 # The probe lists Ollama models with their real capabilities.
 h.eval(obj, "refresh()")
 assert h.eval(obj, "BackendService.calls[0].method") == "providers.ollama.probe"
@@ -66,7 +82,7 @@ assert h.eval(obj, "find('ollama:gemma3:4b').tools") is False, "no tools capabil
 assert h.eval(obj, "find('ollama:gemma3:4b').description") == "Ollama"
 assert h.eval(obj, "find('ollama:qwen3.5:9b').description") == "9.7B · Q4_K_M"
 assert h.eval(obj, "ollama.reachable") is True
-assert h.eval(obj, "pending") == 0
+assert h.eval(obj, "pending") == 1, "only the LM Studio listing is still running"
 
 # Re-probing is throttled unless forced.
 h.eval(obj, "probeOllama(false)")
@@ -74,32 +90,53 @@ assert h.eval(obj, "BackendService.calls.length") == 1, "a probe right after the
 h.eval(obj, "probeOllama(true)")
 assert h.eval(obj, "BackendService.calls.length") == 2
 
-# A probe for an old endpoint cannot replace the current list.
-h.eval(obj, "KeyStore.endpoint = 'http://other:11434'")
+# A probe for an old endpoint cannot replace the current list (changing
+# the endpoint re-probes at once).
+h.eval(obj, "Config.ai.ollama.endpoint = 'http://other:11434'")
+calls = h.eval(obj, "BackendService.calls.length")
+assert calls == 3 and h.eval(obj, "BackendService.calls[2].params.endpoint") == "http://other:11434"
 answer(1, {"reachable": True, "models": []})
 assert h.eval(obj, "apiModels.length") == 2, "stale endpoint result ignored"
 
-# Old daemon (no providers service): the former opt-in still lists /api/tags.
-h.eval(obj, "KeyStore.legacy = true; refresh()")
-answer(2, None, "unknown method")
-assert h.eval(obj, "Discovery.requests.length") == 1
-assert h.eval(obj, "Discovery.requests[0].url") == "http://other:11434/api/tags"
-h.eval(obj, 'Discovery.requests[0].finish(\'{"models":[{"name":"old"}]}\')')
-assert h.eval(obj, "find('ollama:old') !== null")
-h.eval(obj, "KeyStore.legacy = false; refresh()")
+# Old daemon (no providers service): /api/tags directly, no opt-in needed;
+# reachable = connected.
+h.eval(obj, "refresh()")
 answer(3, None, "unknown method")
-assert h.eval(obj, "apiModels.length") == 0, "without the opt-in nothing is listed"
+tags = last_request("/api/tags")
+assert h.eval(obj, f"Discovery.requests[{tags}].url") == "http://other:11434/api/tags"
+h.eval(obj, f'Discovery.requests[{tags}].finish(\'{{"models":[{{"name":"old"}}]}}\')')
+assert h.eval(obj, "find('ollama:old') !== null")
+assert h.eval(obj, "ollama.reachable") is True
+
+# LM Studio: its /models listing (no key) is both list and reachability.
+lm = last_request(":1234/v1/models")
+assert lm >= 0, "LM Studio is probed on refresh"
+assert h.eval(obj, f"Discovery.requests[{lm}].url") == "http://127.0.0.1:1234/v1/models"
+h.eval(obj, f'Discovery.requests[{lm}].finish(\'{{"data":[{{"id":"qwen3-8b"}},{{"id":"text-embedding-nomic"}}]}}\')')
+assert h.eval(obj, "lmstudio.reachable") is True
+assert h.eval(obj, "find('lmstudio:qwen3-8b').kind") == "local"
+assert h.eval(obj, "find('lmstudio:qwen3-8b').endpoint") == "http://127.0.0.1:1234/v1"
+assert h.eval(obj, "find('lmstudio:text-embedding-nomic')") is None
+
+# Hidden providers are neither probed nor listed.
+h.eval(obj, "Config.ai.providers.hidden = ['ollama', 'lmstudio']; refresh()")
+before = h.eval(obj, "BackendService.calls.length")
+h.eval(obj, "refresh()")
+assert h.eval(obj, "BackendService.calls.length") == before, "hidden Ollama is not probed"
+assert h.eval(obj, "apiModels.length") == 0
+assert h.eval(obj, "ollama.reachable") is False
+h.eval(obj, "Config.ai.providers.hidden = []")
 
 # API models get capability records from the bundled table once it loads.
 h.eval(obj, "KeyStore.keys = ({openai: 'k'}); refresh()")
-req = h.eval(obj, "Discovery.requests.length") - 1
+req = last_request("api.openai.com")
 h.eval(obj, f'Discovery.requests[{req}].finish(\'{{"data":[{{"id":"gpt-5"}},{{"id":"gpt-4o"}}]}}\')')
 assert h.eval(obj, "find('openai:gpt-5').info.contextWindow === undefined"), "no table yet"
 h.eval(obj, f"tableFile.content = {json.dumps(TABLE)}; tableFile.loaded()")
 assert h.eval(obj, "find('openai:gpt-5').info.contextWindow") == 400000
 assert h.eval(obj, "find('openai:gpt-5').info.reasoning") == "openai_effort"
 h.eval(obj, "refresh()")
-req = h.eval(obj, "Discovery.requests.length") - 1
+req = last_request("api.openai.com")
 h.eval(obj, f'Discovery.requests[{req}].finish(\'{{"data":[{{"id":"gpt-4o"}}]}}\')')
 assert h.eval(obj, "find('openai:gpt-4o').info.contextWindow") == 128000, "fetched after the table: enriched at once"
 print("ai-model-catalog: ok")

@@ -130,3 +130,25 @@ func TestTestConnectionLocalAndUnlisted(t *testing.T) {
 		t.Fatalf("down = %+v", res)
 	}
 }
+
+func TestTestConnectionCustomHeaders(t *testing.T) {
+	const token = "proxy-token-7777"
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("X-Proxy-Auth") != token {
+			http.Error(w, `{"error":{"message":"denied for `+r.Header.Get("X-Proxy-Auth")+`"}}`, http.StatusForbidden)
+			return
+		}
+		_, _ = w.Write([]byte(`{"data":[{"id":"local-model"}]}`))
+	}))
+	defer srv.Close()
+	s := newTestService(t)
+
+	ok := s.TestConnectionWithHeaders(context.Background(), "custom", srv.URL+"/v1", "", map[string]string{"X-Proxy-Auth": token, "X-Bad": "a\r\nInjected: 1"})
+	if !ok.OK || len(ok.Models) != 1 {
+		t.Fatalf("ok = %+v", ok)
+	}
+	bad := s.TestConnectionWithHeaders(context.Background(), "custom", srv.URL+"/v1", "", map[string]string{"X-Proxy-Auth": "wrong-token-1"})
+	if bad.OK || strings.Contains(bad.Error, "wrong-token-1") {
+		t.Fatalf("bad = %+v", bad)
+	}
+}

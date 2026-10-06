@@ -8,14 +8,29 @@
 var TERMINALS = ["kitty", "foot", "alacritty", "ghostty", "wezterm", "konsole", "gnome-terminal", "xfce4-terminal", "st"];
 
 // AI agents/runtimes detected in the AI step. `config` is the ai.agents.<id>
-// block the toggle writes (none for Ollama: its local models show up in
-// the model list by themselves when the daemon runs).
+// block the toggle writes (none for Ollama: it is detected by probing its
+// server, see ollamaState(); no key or opt-in is needed).
 var AGENTS = [
     { "id": "claude", "label": "Claude Code", "icon": "sparkle", "config": "claude", "install": "onboarding.ai.claude.install" },
     { "id": "codex", "label": "Codex", "icon": "code", "config": "codex", "install": "onboarding.ai.codex.install" },
     { "id": "opencode", "label": "OpenCode", "icon": "terminalWindow", "config": "opencode", "install": "onboarding.ai.opencode.install" },
     { "id": "ollama", "label": "Ollama", "icon": "cube", "config": "", "install": "onboarding.ai.ollama.install" }
 ];
+
+// Ollama in the AI step: "running" (the backend probe reached the server;
+// `count` chat models), "installed" (the binary exists but the server does
+// not answer) or "missing".
+function ollamaState(detected, probe) {
+    if (probe && probe.reachable) {
+        var models = (probe.models || []).filter(function (m) {
+            var caps = m.capabilities || [];
+            return caps.indexOf("embedding") < 0 || caps.indexOf("completion") >= 0;
+        });
+        return { "state": "running", "count": models.length };
+    }
+    var installed = !!(detected && detected.agents && detected.agents.ollama !== undefined);
+    return { "state": installed ? "installed" : "missing", "count": 0 };
+}
 
 // Interactive keybind tour: `command` is the GlobalShortcuts.run() command
 // the bound action dispatches, `action` the action-id suffix of the bind.

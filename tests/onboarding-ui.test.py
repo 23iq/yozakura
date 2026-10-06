@@ -104,6 +104,12 @@ ev('wizard.detected = Object.assign({}, wizard.detected, {agents: {claude: "/usr
 QTest.qWait(30)
 check(h.find(win, "aiMaster") is not None, "AI master toggle present")
 check(h.find(win, "voiceSetup") is not None, "voice setup offered")
+check(h.find(win, "aiProviders") is not None, "Connect a provider row offered")
+check(ev("wizard.ollama.state") == "missing", "no binary and no probe answer: Ollama missing")
+ev('wizard.ollamaProbe = ({reachable: true, models: [{id: "qwen3", capabilities: ["completion"]}]})')
+check(ev("wizard.ollama.state") == "running" and ev("wizard.ollama.count") == 1, "a reachable server means Ollama runs (no key)")
+ev("wizard.probeOllama()")
+check(ev("BackendService.calls.some(c => c.method === 'providers.ollama.probe')"), "Ollama is detected by probing the server")
 
 # Keybind tour: commandRan completes the matching task and steps aside.
 ev(f"wizard.go({seen.index('keybinds')})")

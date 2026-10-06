@@ -5,8 +5,8 @@ import qs.config
 import "../settings/Ui.js" as Ui
 
 // A selectable card row: icon chip, title, subtitle and, on the right,
-// a check mark (`mode: "check"`), a switch (`"toggle"`) or nothing
-// (`"none"`, e.g. status-only rows). `badge` is a small status pill.
+// a check mark (`mode: "check"`), a switch (`"toggle"`), an arrow
+// (`"link"`: opens something) or nothing (`"none"`, e.g. status-only rows). `badge` is a small status pill.
 Item {
     id: root
 
@@ -128,7 +128,7 @@ Item {
         Item {
             id: trailing
             anchors.verticalCenter: parent.verticalCenter
-            width: root.mode === "toggle" ? toggle.implicitWidth : (root.mode === "check" ? check.width : 0)
+            width: root.mode === "toggle" ? toggle.implicitWidth : (root.mode === "check" ? check.width : (root.mode === "link" ? arrow.implicitWidth : 0))
             height: Math.max(toggle.implicitHeight, check.height)
 
             ToggleControl {
@@ -138,6 +138,15 @@ Item {
                 enabled: root.enabled
                 checked: root.checked
                 onToggled: v => root.toggled(v)
+            }
+            Text {
+                id: arrow
+                visible: root.mode === "link"
+                anchors.centerIn: parent
+                text: Icons.caretRight
+                font.family: Icons.font
+                font.pixelSize: Styling.fontSize(0)
+                color: Colors.overSurfaceVariant
             }
             Rectangle {
                 id: check

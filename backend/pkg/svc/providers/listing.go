@@ -67,6 +67,13 @@ type TestResult struct {
 // only performs free GET listing requests; the key is never logged and is
 // scrubbed from error texts.
 func (s *Service) TestConnection(ctx context.Context, provider, baseURL, key string) TestResult {
+	return s.TestConnectionWithHeaders(ctx, provider, baseURL, key, nil)
+}
+
+// TestConnectionWithHeaders is TestConnection with extra request headers
+// for OpenAI-compatible listings (a custom endpoint's own auth headers).
+// Header values are scrubbed from error texts like the key.
+func (s *Service) TestConnectionWithHeaders(ctx context.Context, provider, baseURL, key string, extra map[string]string) TestResult {
 	res := TestResult{Models: []ListedModel{}}
 	p, known := presets[provider]
 	if !known {
@@ -103,16 +110,20 @@ func (s *Service) TestConnection(ctx context.Context, provider, baseURL, key str
 		}
 		return res
 	}
-	models, err := s.listModels(ctx, p, base, key)
+	models, err := s.listModels(ctx, p, base, key, extra)
 	if err != nil {
-		res.Error = scrub(err.Error(), key)
+		msg := scrub(err.Error(), key)
+		for _, v := range extra {
+			msg = scrub(msg, v)
+		}
+		res.Error = msg
 		return res
 	}
 	res.OK, res.Verified, res.Models = true, true, models
 	return res
 }
 
-func (s *Service) listModels(ctx context.Context, p preset, base, key string) ([]ListedModel, error) {
+func (s *Service) listModels(ctx context.Context, p preset, base, key string, extra map[string]string) ([]ListedModel, error) {
 	h := map[string]string{}
 	var u string
 	switch p.family {
@@ -145,6 +156,12 @@ func (s *Service) listModels(ctx context.Context, p preset, base, key string) ([
 		u = base + "/models"
 		if key != "" {
 			h["Authorization"] = "Bearer " + key
+		}
+		for k, v := range extra {
+			k = strings.TrimSpace(k)
+			if k != "" && !strings.ContainsAny(k+v, "\r\n") {
+				h[k] = v
+			}
 		}
 	}
 	var raw json.RawMessage

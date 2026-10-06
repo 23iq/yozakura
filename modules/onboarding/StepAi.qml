@@ -6,8 +6,9 @@ import qs.config
 import "../settings/Ui.js" as Ui
 import "OnboardingModel.js" as Model
 
-// AI agents (detected CLI agents and Ollama; toggles write ai.agents.<id>)
-// and local voice input (whisper.cpp: status, toggle, or a one-click setup
+// AI agents (detected CLI agents and Ollama, which is found by probing its
+// server; toggles write ai.agents.<id>), a "Connect a provider" row that
+// opens the AI bar's Connect sheet over the step, and local voice input (whisper.cpp: status, toggle, or a one-click setup
 // running scripts/voice_setup.sh with live progress).
 Item {
     id: root
@@ -18,8 +19,27 @@ Item {
     readonly property bool aiOn: wizard ? wizard.get("ai.enabled") !== false : true
     readonly property int gap: Math.round(Styling.fontSize(0) * 1.6)
 
+    readonly property var ollama: wizard ? wizard.ollama : Model.ollamaState(detected, null)
+
     function installed(id) {
+        if (id === "ollama")
+            return ollama.state !== "missing";
         return detected.agents[id] !== undefined;
+    }
+    function badge(id, present) {
+        if (id === "ollama" && ollama.state === "running")
+            return I18n.t("onboarding.ai.ollama.running");
+        if (id === "ollama" && ollama.state === "installed")
+            return I18n.t("onboarding.ai.ollama.stopped");
+        return present ? I18n.t("onboarding.installed") : I18n.t("onboarding.not_found");
+    }
+    function subtitle(row, present) {
+        if (row.id === "ollama") {
+            if (ollama.state === "running")
+                return ollama.count > 0 ? I18n.t("onboarding.ai.ollama.models").arg(ollama.count) : I18n.t("onboarding.ai.ollama.no_models");
+            return ollama.state === "installed" ? I18n.t("onboarding.ai.ollama.start") : I18n.t(row.install);
+        }
+        return present ? detected.agents[row.id] : I18n.t(row.install);
     }
 
     Row {
@@ -60,12 +80,24 @@ Item {
                     dimmed: !present || !root.aiOn
                     icon: modelData.icon
                     title: modelData.label
-                    badge: present ? I18n.t("onboarding.installed") : I18n.t("onboarding.not_found")
-                    badgeOk: present
-                    subtitle: present ? (modelData.config === "" ? I18n.t("onboarding.ai.ollama.desc") : root.detected.agents[modelData.id]) : I18n.t(modelData.install)
+                    badge: root.badge(modelData.id, present)
+                    badgeOk: modelData.id === "ollama" ? root.ollama.state === "running" : present
+                    subtitle: root.subtitle(modelData, present)
                     checked: modelData.config !== "" && root.wizard && root.wizard.get("ai.agents." + modelData.config + ".enabled") !== false
                     onToggled: v => root.wizard.set("ai.agents." + agentRow.modelData.config + ".enabled", v)
                 }
+            }
+
+            ChoiceRow {
+                objectName: "aiProviders"
+                width: parent.width
+                mode: "link"
+                enabled: root.aiOn
+                dimmed: !root.aiOn
+                icon: "plugsConnected"
+                title: I18n.t("onboarding.ai.providers")
+                subtitle: I18n.t("onboarding.ai.providers.desc")
+                onClicked: connect.active = true
             }
         }
 
@@ -190,6 +222,28 @@ Item {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // The AI bar's Connect sheet, loaded on demand over the step.
+    Loader {
+        id: connect
+        objectName: "aiConnectLoader"
+        anchors.fill: parent
+        z: 10
+        active: false
+        onActiveChanged: {
+            if (active)
+                setSource(Qt.resolvedUrl("../aicenter/providers/ConnectSheet.qml"), {
+                    opened: true
+                });
+        }
+        Connections {
+            target: connect.item
+            ignoreUnknownSignals: true
+            function onCloseRequested() {
+                connect.active = false;
             }
         }
     }

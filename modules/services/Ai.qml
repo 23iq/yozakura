@@ -87,6 +87,10 @@ Singleton {
     property ContextState contextState: ContextState {
         owner: root
     }
+    // Provider connections (Connect sheet, settings page, onboarding).
+    property ProviderSetup providers: ProviderSetup {
+        catalog: root.catalog
+    }
     readonly property Component catalogC: Component {
         ModelCatalog {}
     }
@@ -373,12 +377,16 @@ Singleton {
         return context ? context.ambient() : ({});
     }
 
-    // "Connect a model": the AI page of the settings window (`provider`, if
-    // given, is the provider the user picked; the inline sheet uses it).
+    // "Connect a model": the AI bar opens its inline Connect sheet on
+    // connectProviderRequested (`provider` preselects one, "" = the grid);
+    // without the bar on screen the settings "Providers" page opens instead.
     signal connectProviderRequested(string provider)
     function openProviderSettings(provider) {
-        connectProviderRequested(provider || "");
-        GlobalStates.settingsCategory = "ai";
+        if (GlobalStates.assistantVisible) {
+            connectProviderRequested(provider || "");
+            return;
+        }
+        GlobalStates.settingsCategory = "ai-providers";
         GlobalStates.settingsWindowVisible = true;
     }
 

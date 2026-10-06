@@ -44,10 +44,11 @@
       "default": "",
       "description": "Engine of new Assistant chats, e.g. anthropic:claude-sonnet-4-5, ollama:qwen3 or agent:codex. Empty uses your last choice.",
       "x-settings": {
-        "category": "ai",
-        "section": "bar_behavior",
+        "category": "ai-providers",
+        "section": "defaults",
         "label": "prefs.ai.default_engine",
-        "control": "text",
+        "control": "custom",
+        "component": "AiDefaultModel",
         "keywords": "default engine model assistant provider"
       }
     },
@@ -1443,8 +1444,8 @@
           "default": 32768,
           "description": "Tokens to allocate (num_ctx), capped at the model's maximum. Larger needs more memory; Ollama's own default drops the start of long chats.",
           "x-settings": {
-            "category": "ai",
-            "section": "context",
+            "category": "ai-providers",
+            "section": "local",
             "label": "prefs.ai.ollama_num_ctx",
             "control": "number",
             "step": 1024,
@@ -1460,6 +1461,184 @@
           },
           "minimum": 0,
           "maximum": 1048576
+        },
+        "endpoint": {
+          "title": "Ollama address",
+          "type": "string",
+          "default": "",
+          "description": "Where Ollama is probed and asked. Empty uses http://127.0.0.1:11434.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "local",
+            "label": "prefs.ai.ollama_endpoint",
+            "control": "text",
+            "keywords": "ollama endpoint url host port server remote local"
+          }
+        },
+        "keepAlive": {
+          "title": "Keep Ollama models loaded",
+          "type": "string",
+          "default": "",
+          "description": "How long a model stays in memory after a reply (5m, 1h, -1 = forever, 0 = unload at once). Empty uses Ollama's default.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "local",
+            "label": "prefs.ai.ollama_keep_alive",
+            "control": "text",
+            "keywords": "ollama keep alive unload memory vram minutes"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "lmstudio": {
+      "title": "Lmstudio",
+      "type": "object",
+      "description": "LM Studio (local OpenAI-compatible server).",
+      "properties": {
+        "endpoint": {
+          "title": "LM Studio address",
+          "type": "string",
+          "default": "",
+          "description": "LM Studio's local server. Empty uses http://127.0.0.1:1234/v1.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "local",
+            "label": "prefs.ai.lmstudio_endpoint",
+            "control": "text",
+            "keywords": "lm studio lmstudio endpoint url server port local"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "providers": {
+      "title": "Providers",
+      "type": "object",
+      "description": "Chat providers: request timeout and retries, picker visibility, local auto-probe, custom endpoint headers.",
+      "properties": {
+        "timeout": {
+          "title": "Request timeout",
+          "type": "number",
+          "default": 600,
+          "description": "Longest time one chat request may take, streaming included.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "requests",
+            "label": "prefs.ai.providers.timeout",
+            "control": "number",
+            "step": 30,
+            "unit": "s",
+            "keywords": "timeout request seconds slow hang",
+            "min": 0,
+            "max": 3600,
+            "specialValues": [
+              {
+                "value": 0,
+                "label": "No limit"
+              }
+            ]
+          },
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "retries": {
+          "title": "Retries",
+          "type": "number",
+          "default": 1,
+          "description": "Extra attempts after a network error, rate limit or overloaded server, only before any text arrived.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "requests",
+            "label": "prefs.ai.providers.retries",
+            "control": "number",
+            "keywords": "retry retries rate limit 429 overloaded network error",
+            "min": 0,
+            "max": 5
+          },
+          "minimum": 0,
+          "maximum": 5
+        },
+        "hidden": {
+          "title": "Show in the model picker",
+          "type": "array",
+          "default": [],
+          "description": "A hidden provider is neither listed nor probed, and never shows as not connected.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "defaults",
+            "label": "prefs.ai.providers.visible",
+            "control": "custom",
+            "component": "AiProviderVisibility",
+            "keywords": "hide show provider picker enable disable list"
+          },
+          "items": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "anthropic",
+              "gemini",
+              "mistral",
+              "groq",
+              "minimax",
+              "openrouter",
+              "deepseek",
+              "lmstudio",
+              "ollama",
+              "custom"
+            ]
+          }
+        },
+        "probeInterval": {
+          "title": "Look for local servers every",
+          "type": "number",
+          "default": 60,
+          "description": "While the AI bar is open, Ollama and LM Studio are checked again at this interval (they are always checked when the model picker opens). No model is loaded.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "local",
+            "label": "prefs.ai.providers.probe_interval",
+            "control": "number",
+            "step": 15,
+            "unit": "s",
+            "keywords": "probe detect auto refresh interval local ollama lm studio",
+            "min": 0,
+            "max": 3600,
+            "specialValues": [
+              {
+                "value": 0,
+                "label": "Only when the picker opens"
+              }
+            ]
+          },
+          "minimum": 0,
+          "maximum": 3600
+        },
+        "customHeaders": {
+          "title": "Custom endpoint headers",
+          "type": "array",
+          "default": [],
+          "description": "Extra HTTP headers sent to the Custom (OpenAI-compatible) provider, e.g. a proxy's auth header.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "requests",
+            "label": "prefs.ai.providers.headers",
+            "control": "list",
+            "keywords": "custom endpoint headers proxy auth authorization openai compatible"
+          }
+        },
+        "openrouterAttribution": {
+          "title": "Identify the app to OpenRouter",
+          "type": "boolean",
+          "default": true,
+          "description": "Sends the optional HTTP-Referer and X-Title headers so requests show up under this app in OpenRouter.",
+          "x-settings": {
+            "category": "ai-providers",
+            "section": "requests",
+            "label": "prefs.ai.providers.openrouter_attribution",
+            "control": "toggle",
+            "keywords": "openrouter referer title attribution headers app"
+          }
         }
       },
       "additionalProperties": false

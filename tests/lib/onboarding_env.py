@@ -48,6 +48,15 @@ def i18n_qml(lang: str = "en") -> str:
 
 
 SERVICES = {
+    "BackendService": """pragma Singleton
+QtObject {
+    property var calls: []
+    property var responses: ({})
+    function call(method, params, cb) {
+        calls = calls.concat([{method: method, params: params}]);
+        if (responses[method] !== undefined && cb) cb(responses[method], null);
+    }
+}""",
     "GlobalShortcuts": """pragma Singleton
 QtObject {
     signal commandRan(string command)

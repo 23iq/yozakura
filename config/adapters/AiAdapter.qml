@@ -226,6 +226,19 @@ JsonAdapter {
     }
     property JsonObject ollama: JsonObject {
         property int numCtx: 32768
+        property string endpoint: ""
+        property string keepAlive: ""
+    }
+    property JsonObject lmstudio: JsonObject {
+        property string endpoint: ""
+    }
+    property JsonObject providers: JsonObject {
+        property int timeout: 600
+        property int retries: 1
+        property list<string> hidden: []
+        property int probeInterval: 60
+        property list<var> customHeaders: []
+        property bool openrouterAttribution: true
     }
     property JsonObject picker: JsonObject {
         property bool showCapabilities: true

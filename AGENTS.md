@@ -62,7 +62,6 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 │   ├── theme/            # Colors, Icons, Styling singletons + app generators
 │   ├── tools/            # Screenshot, screen recording, mirror, color picker
 │   └── widgets/          # Complex overlays: dashboard, launcher, overview, etc.
-│       ├── config/       # AiPanel (hosted by the settings window)
 │       ├── dashboard/    # Main hub: controls, metrics, assistant, clipboard, notes
 │       ├── defaultview/  # Notch idle content (compact player, notification indicator)
 │       ├── launcher/     # App search + multi-tab launcher

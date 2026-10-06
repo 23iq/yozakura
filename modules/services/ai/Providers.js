@@ -26,6 +26,7 @@ var PROVIDERS = {
     openrouter: { family: "openai", label: "OpenRouter", icon: "openrouter.svg", keyId: "OPENROUTER_API_KEY", base: "https://openrouter.ai/api/v1", models: "/models", tools: true, images: true, usage: true },
     deepseek: { family: "openai", label: "DeepSeek", icon: "deepseek.svg", keyId: "DEEPSEEK_API_KEY", base: "https://api.deepseek.com/v1", models: "/models", tools: true, images: false, usage: true },
     minimax: { family: "anthropic", label: "MiniMax", icon: "minimax.svg", keyId: "MINIMAX_API_KEY", base: "https://api.minimax.io/anthropic/v1", bearer: true, tools: true, images: false },
+    lmstudio: { family: "openai", label: "LM Studio", icon: "lmstudio.svg", keyId: "", base: "http://127.0.0.1:1234/v1", models: "/models", local: true, tools: true, images: true },
     ollama: { family: "ollama", label: "Ollama", icon: "ollama.svg", keyId: "", base: "http://127.0.0.1:11434", local: true, tools: true, images: true },
     custom: { family: "openai", label: "Custom (OpenAI compatible)", icon: "openrouter.svg", keyId: "", base: "", models: "/models", tools: true, images: true }
 };
@@ -166,7 +167,10 @@ function endpoint(model, key) {
     }
 }
 
-function headers(model, key) {
+// `extra`: further "Name: value" lines (custom endpoint headers, OpenRouter
+// attribution; ProviderConnect.extraHeaders). Line breaks are dropped so a
+// value cannot add header lines.
+function headers(model, key, extra) {
     var p = provider(model.provider);
     var h = ["Content-Type: application/json"];
     if (p.family === "anthropic") {
@@ -180,18 +184,32 @@ function headers(model, key) {
     } else if (p.family === "openai" && key) {
         h.push("Authorization: Bearer " + key);
     }
+    for (var i = 0; i < (extra || []).length; i++)
+        h.push(String(extra[i]).replace(/[\r\n]+/g, " "));
     return h;
 }
 
-// Model-list request for a keyed provider: {url, headers}; the key is only
-// in the headers (written to a 0600 header file by HttpGet).
-function modelsRequest(id, key) {
+// Model-list request: {url, headers}; the key is only in the headers
+// (written to a 0600 header file by HttpGet). `base` overrides the preset
+// base (custom endpoint, LM Studio); no Authorization without a key.
+function modelsRequest(id, key, base, extra) {
     var p = provider(id);
-    if (p.family === "gemini")
-        return { url: p.base + "/models?pageSize=200", headers: ["x-goog-api-key: " + key] };
-    if (p.family === "anthropic")
-        return { url: p.base + (p.models || "/models") + "?limit=100", headers: ["x-api-key: " + key, "anthropic-version: 2023-06-01"] };
-    return { url: p.base + (p.models || "/models"), headers: ["Authorization: Bearer " + key] };
+    var b = String(base || p.base || "").replace(/\/+$/, "");
+    var h;
+    var url;
+    if (p.family === "gemini") {
+        url = b + "/models?pageSize=200";
+        h = ["x-goog-api-key: " + key];
+    } else if (p.family === "anthropic") {
+        url = b + (p.models || "/models") + "?limit=100";
+        h = [p.bearer ? "Authorization: Bearer " + key : "x-api-key: " + key, "anthropic-version: 2023-06-01"];
+    } else {
+        url = b + (p.models || "/models");
+        h = key ? ["Authorization: Bearer " + key] : [];
+    }
+    for (var i = 0; i < (extra || []).length; i++)
+        h.push(String(extra[i]).replace(/[\r\n]+/g, " "));
+    return { url: url, headers: h };
 }
 
 // Custom curl template -> {script, env}. Placeholders become environment
@@ -331,7 +349,7 @@ function _ollamaMessages(system, messages) {
 
 // opts: {system, maxTokens, temperature, effort (off|low|medium|high|max,
 // mapped by Effort.js from the model's capability record `model.info`),
-// numCtx (Ollama context length to allocate)}
+// numCtx (Ollama context length to allocate), keepAlive (Ollama keep_alive)}
 function body(messages, model, tools, opts) {
     var o = opts || {};
     var msgs = normalize(messages);
@@ -360,6 +378,9 @@ function body(messages, model, tools, opts) {
         // num_ctx it silently drops the start of longer chats.
         if (o.numCtx > 0)
             b.options = { num_ctx: o.numCtx };
+        // How long Ollama keeps the model loaded ("5m", "1h", "-1", "0").
+        if (o.keepAlive)
+            b.keep_alive = /^-?\d+$/.test(String(o.keepAlive)) ? Number(o.keepAlive) : String(o.keepAlive);
         if (t.length > 0)
             b.tools = t.map(function (x) {
                 return { type: "function", "function": { name: x.name, description: x.description || "", parameters: x.parameters || { type: "object", properties: {} } } };
@@ -652,7 +673,32 @@ function finishTools(acc) {
 var OPENAI_ALLOWED = /^(gpt-|o\d|chatgpt-)/;
 var OPENAI_EXCLUDED = /(audio|realtime|transcribe|tts|image|embedding|moderation|search|instruct|davinci|babbage|dall-e|whisper)/;
 
-// Parses a provider's model listing into [{id, name, description}].
+// Capabilities a listing itself reports (OpenRouter: context_length,
+// supported_parameters, architecture.input_modalities); used when the
+// bundled table does not know the model.
+function _listingHint(d) {
+    var hint = {};
+    var any = false;
+    if (d.context_length > 0) {
+        hint.contextWindow = d.context_length;
+        any = true;
+    }
+    if (Array.isArray(d.supported_parameters)) {
+        hint.tools = d.supported_parameters.indexOf("tools") >= 0;
+        any = true;
+    }
+    var mods = d.architecture && d.architecture.input_modalities;
+    if (Array.isArray(mods)) {
+        hint.vision = mods.indexOf("image") >= 0;
+        any = true;
+    }
+    if (!any)
+        return null;
+    hint.source = "listing";
+    return hint;
+}
+
+// Parses a provider's model listing into [{id, name, description, hint?}].
 function parseModelList(providerId, text) {
     var json;
     try {
@@ -689,7 +735,13 @@ function parseModelList(providerId, text) {
             continue;
         if ((providerId === "groq" || providerId === "mistral") && /whisper|embed|tts|guard|moderation|ocr/.test(mid))
             continue;
-        out.push({ id: mid, name: data[k].display_name || mid, description: "" });
+        if (providerId === "lmstudio" && /embed/i.test(mid))
+            continue;
+        var item = { id: mid, name: data[k].display_name || (providerId === "openrouter" ? data[k].name : "") || mid, description: "" };
+        var hint = _listingHint(data[k]);
+        if (hint)
+            item.hint = hint;
+        out.push(item);
     }
     return out;
 }

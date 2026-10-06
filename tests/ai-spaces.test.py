@@ -121,12 +121,17 @@ assert any("Clair de lune" in t for t in labels), labels
 assert not visible("connectModel")
 assert not visible("projectBar") and not visible("headerSettings"), "gear and project bar belong to Code"
 
-# No usable model: one call to action that opens the settings.
+# No usable model: one call to action that opens the inline Connect sheet.
 ev(top, "noModels()")
 pump()
 assert visible("connectModel") and not visible("suggestionChips")
 ev(find("welcomeView"), "connectRequested()")
-assert ev(top, "settingsOpened()") == 1, "the call to action opens the provider settings"
+pump()
+assert ev(top, "settingsOpened()") == 1, "the call to action asks for a connection"
+assert find("connectSheet").property("opened"), "the Connect sheet opens inside the bar"
+click(find("connectClose"))
+pump(200)
+assert not find("connectSheet").property("opened")
 ev(top, "someModels()")
 pump()
 
