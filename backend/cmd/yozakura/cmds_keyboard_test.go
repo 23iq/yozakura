@@ -221,3 +221,57 @@ func TestConfigSetKeyboardRemoveAndIndexAfterTakeover(t *testing.T) {
 	assert.Contains(t, got, `"layout": "ru"`)
 	assert.Contains(t, got, `"layout": "de"`)
 }
+
+// --dry-run on an unmanaged keyboard previews the edit against the
+// compositor's values (like the real write) and writes nothing.
+func TestConfigSetKeyboardDryRunUsesCompositorValues(t *testing.T) {
+	_, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":["caps:escape"],"repeatRate":111,"repeatDelay":175}`
+	old := keyboardDaemon
+	keyboardDaemon = func() yozakura.Caller { return rc }
+	t.Cleanup(func() { keyboardDaemon = old })
+	managed := func() string { _, got, _ := run(t, cfg, "get", "keyboard.managed"); return got }
+
+	code, out, errS := run(t, cfg, "set", "keyboard.options", "--add", "ctrl:nocaps", "--dry-run")
+	assert.Equal(t, 0, code, errS)
+	assert.Contains(t, out, `["caps:escape","ctrl:nocaps"]`, out)
+	assert.Contains(t, out, "dry run")
+	code, out, errS = run(t, cfg, "set", "keyboard.options", "--remove", "caps:escape", "--dry-run")
+	assert.Equal(t, 0, code, errS)
+	assert.Contains(t, out, `["caps:escape"] -> []`, out)
+	assert.Equal(t, "false\n", managed(), "dry run takes nothing over")
+	_, opts, _ := run(t, cfg, "get", "keyboard.options", "--json")
+	assert.NotContains(t, opts, "caps:escape")
+}
+
+// --remove of an item the compositor does not have fails and takes nothing over.
+func TestConfigSetKeyboardRemoveMissingUnmanaged(t *testing.T) {
+	_, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""}],"switchBind":"alt_shift","options":["caps:escape"],"repeatRate":111,"repeatDelay":175}`
+	old := keyboardDaemon
+	keyboardDaemon = func() yozakura.Caller { return rc }
+	t.Cleanup(func() { keyboardDaemon = old })
+
+	code, _, errS := run(t, cfg, "set", "keyboard.options", "--remove", "ctrl:nocaps")
+	assert.Equal(t, 1, code)
+	assert.Contains(t, errS, "does not contain")
+	_, got, _ := run(t, cfg, "get", "keyboard.managed")
+	assert.Equal(t, "false\n", got)
+}
+
+// Adding a second layout when the user has one and no switch key gets
+// alt_shift; a switch the user chose is kept.
+func TestKeyboardAddSecondLayoutDefaultsSwitch(t *testing.T) {
+	env, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""}],"switchBind":"none","options":[],"repeatRate":25,"repeatDelay":600}`
+	var out, errOut bytes.Buffer
+	assert.Equal(t, 0, runKeyboard([]string{"add", "ru"}, env, &out, &errOut), errOut.String())
+	_, got, _ := run(t, cfg, "get", "keyboard.switchBind")
+	assert.Equal(t, "alt_shift\n", got)
+
+	env2, rc2 := keyboardTestEnv(t)
+	rc2.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""}],"switchBind":"caps","options":[],"repeatRate":25,"repeatDelay":600}`
+	assert.Equal(t, 0, runKeyboard([]string{"add", "ru"}, env2, &out, &errOut), errOut.String())
+	_, got, _ = run(t, cfg, "get", "keyboard.switchBind")
+	assert.Equal(t, "caps\n", got)
+}

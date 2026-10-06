@@ -179,11 +179,22 @@ func CheckLayoutKnown(c Caller, l KeyboardLayout) error {
 }
 
 // SaveLayouts writes keyboard.layouts through the validated config layer.
+// Going from one layout to several with no switch key (switchBind none)
+// also sets alt_shift so the new layout is reachable; a switch the user
+// chose is never replaced.
 func SaveLayouts(store *catalog.Store, list []KeyboardLayout) error {
 	raw, _ := json.Marshal(list)
 	var v any
 	_ = json.Unmarshal(raw, &v)
-	_, err := store.Set("keyboard.layouts", v, false)
+	kv := []catalog.KV{{Key: "keyboard.layouts", Value: v}}
+	before, err := readKeyboardConfig(store)
+	if err != nil {
+		return err
+	}
+	if len(list) > 1 && len(before.Layouts) <= 1 && before.SwitchBind == "none" {
+		kv = append(kv, catalog.KV{Key: "keyboard.switchBind", Value: "alt_shift"})
+	}
+	_, err = store.SetAll(kv, false)
 	return err
 }
 

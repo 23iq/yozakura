@@ -183,3 +183,12 @@ func TestKeyboardSetValidatesBeforeWriting(t *testing.T) {
 	m = structured(t, callTool(t, d, "keyboard_set", `{"remove":"us"}`))
 	assert.Equal(t, map[string]any{"tool": "keyboard_set", "args": map[string]any{"add": "us,us:intl,us:dvorak"}}, m["undo"])
 }
+
+func TestKeyboardSetSecondLayoutDefaultsSwitch(t *testing.T) {
+	d, _, ipc := newDeps(t)
+	ipc.result["keyboard.catalog"] = `{"layouts":[{"name":"us","variants":[]},{"name":"ru","variants":[]}]}`
+	ipc.result["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""}],"switchBind":"none","options":[],"repeatRate":25,"repeatDelay":600}`
+	structured(t, callTool(t, d, "keyboard_set", `{"add":"ru"}`))
+	m := structured(t, callTool(t, d, "config_get", `{"key":"keyboard.switchBind"}`))
+	assert.Equal(t, "alt_shift", m["value"])
+}

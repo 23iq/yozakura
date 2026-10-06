@@ -281,8 +281,14 @@ function touchesCompositor(patch) {
 // {repeatRate: 40}, ...). The first edit of a compositor key while
 // unmanaged first copies the compositor's values in and sets managed, so
 // nothing the user had is lost; showIndicator alone never takes over.
-function planEdit(managed, current, patch) {
+// Going from one layout to several with no switch key (switchBind none)
+// gets alt_shift, so the new layout is reachable; a switch the user set is
+// kept. cfg is the keyboard domain (the values in effect once managed).
+function planEdit(managed, current, patch, cfg) {
     var out = {};
+    var before = effective(managed, cfg, current);
+    var newLayouts = patch && patch.layouts;
+    var needSwitch = newLayouts !== undefined && patch.switchBind === undefined && _list(newLayouts).length > 1 && before.layouts.length <= 1 && before.switchBind === "none";
     if (touchesCompositor(patch) && !managed) {
         var cur = _currentValues(current);
         Object.keys(cur).forEach(function (k) {
@@ -293,5 +299,7 @@ function planEdit(managed, current, patch) {
     Object.keys(patch || {}).forEach(function (k) {
         out[k] = patch[k];
     });
+    if (needSwitch)
+        out.switchBind = "alt_shift";
     return out;
 }

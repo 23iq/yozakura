@@ -221,22 +221,9 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if a.has("dry-run") {
-		if arrErr != nil {
-			return arrErr
-		}
-		old, _, _ := c.store.Get(key)
-		if ref.Index < 0 {
-			if _, err := c.cat.Assign(e.Key, value, a.has("force")); err != nil {
-				return err
-			}
-		}
-		fmt.Fprintf(out, "%s: %s -> %s (dry run, not written)\n", catalog.NormalizeKey(key), shown(e, old), shown(e, value))
-		return nil
-	}
 	// keyboard: the first change takes the compositor's settings over in the
 	// same write; --add/--remove and [i] apply to the compositor's values
-	handled, changes, err := yozakura.KeyboardConfigSet(c.store, keyboardDaemon(), key, func(base any) (any, error) {
+	build := func(base any) (any, error) {
 		switch {
 		case add || remove:
 			return editArrayOn(base, e, addV, add, remV, remove)
@@ -244,7 +231,11 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 			return yozakura.ItemAt(base, ref.Index, value)
 		}
 		return value, nil
-	}, a.has("force"), a.has("replace"))
+	}
+	if a.has("dry-run") {
+		return c.dryRunSet(out, key, e, ref.Index, value, arrErr, build, a.has("force"), a.has("replace"))
+	}
+	handled, changes, err := yozakura.KeyboardConfigSet(c.store, keyboardDaemon(), key, build, a.has("force"), a.has("replace"))
 	if !handled && err == nil {
 		if arrErr != nil {
 			return arrErr
@@ -255,6 +246,30 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 		return err
 	}
 	printChanges(out, c.cat, changes, catalog.NormalizeKey(key), value)
+	return nil
+}
+
+// dryRunSet prints what set would write; an unmanaged keyboard previews
+// against the compositor's values, like the real write.
+func (c *configEnv) dryRunSet(out io.Writer, key string, e *catalog.Entry, index int, value any, arrErr error, build func(any) (any, error), force, replace bool) error {
+	handled, old, whole, err := yozakura.KeyboardConfigPreview(c.store, keyboardDaemon(), key, build, force, replace)
+	if err != nil {
+		return err
+	}
+	if handled {
+		fmt.Fprintf(out, "%s: %s -> %s (dry run, not written)\n", e.Key, shown(e, old), shown(e, whole))
+		return nil
+	}
+	if arrErr != nil {
+		return arrErr
+	}
+	old, _, _ = c.store.Get(key)
+	if index < 0 {
+		if _, err := c.cat.Assign(e.Key, value, force); err != nil {
+			return err
+		}
+	}
+	fmt.Fprintf(out, "%s: %s -> %s (dry run, not written)\n", catalog.NormalizeKey(key), shown(e, old), shown(e, value))
 	return nil
 }
 

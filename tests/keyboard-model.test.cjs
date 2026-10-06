@@ -156,3 +156,27 @@ test('touchesCompositor: only keys the compositor sees', () => {
     assert.strictEqual(M.touchesCompositor({ managed: true }), false);
     assert.deepStrictEqual(M.planEdit(false, { available: false }, { managed: true }), { managed: true }, 'explicit takeover');
 });
+
+test('planEdit: adding a 2nd layout with no switch key defaults the switch to alt_shift', () => {
+    const one = { available: true, layouts: [{ layout: 'us', variant: '' }], switchBind: 'none', options: [], repeatRate: 25, repeatDelay: 600 };
+    const two = [{ layout: 'us', variant: '' }, { layout: 'ru', variant: '' }];
+    // unmanaged: the compositor reports one layout and no switch
+    const w = M.planEdit(false, one, { layouts: two });
+    assert.strictEqual(w.switchBind, 'alt_shift');
+    assert.strictEqual(w.managed, true);
+    // managed: the configured domain has one layout and switchBind none
+    const cfg = { layouts: [{ layout: 'us', variant: '' }], switchBind: 'none', options: [] };
+    assert.strictEqual(M.planEdit(true, one, { layouts: two }, cfg).switchBind, 'alt_shift');
+});
+
+test('planEdit: the user\'s switch is never replaced by the default', () => {
+    const one = { available: true, layouts: [{ layout: 'us', variant: '' }], switchBind: 'caps', options: [], repeatRate: 25, repeatDelay: 600 };
+    const two = [{ layout: 'us', variant: '' }, { layout: 'ru', variant: '' }];
+    assert.strictEqual(M.planEdit(false, one, { layouts: two }).switchBind, 'caps');
+    // an explicit switchBind in the same edit wins
+    assert.strictEqual(M.planEdit(false, Object.assign({}, one, { switchBind: 'none' }), { layouts: two, switchBind: 'none' }).switchBind, 'none');
+    // already two layouts with none: the user chose no switch key
+    const cfg = { layouts: two, switchBind: 'none', options: [] };
+    const three = two.concat([{ layout: 'ua', variant: '' }]);
+    assert.ok(!('switchBind' in M.planEdit(true, one, { layouts: three }, cfg)));
+});

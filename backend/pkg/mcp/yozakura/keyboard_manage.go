@@ -139,31 +139,60 @@ func inRange(store *catalog.Store, key string, v float64) bool {
 // one atomic write. handled is false for any other write (managed already,
 // another key or domain, managed=false): the caller writes it as usual.
 func KeyboardConfigSet(store *catalog.Store, c Caller, key string, build func(base any) (any, error), force, replace bool) (handled bool, changes []catalog.Change, err error) {
+	handled, kv, _, err := planKeyboardConfigSet(store, c, key, build, force, replace)
+	if !handled || err != nil {
+		return handled, nil, err
+	}
+	changes, err = store.SetAll(kv, force)
+	return true, changes, err
+}
+
+// KeyboardConfigPreview is KeyboardConfigSet without writing (--dry-run):
+// old is the value the edit starts from (the compositor's while unmanaged),
+// whole the value it would write. handled is false when KeyboardConfigSet
+// would not handle the write.
+func KeyboardConfigPreview(store *catalog.Store, c Caller, key string, build func(base any) (any, error), force, replace bool) (handled bool, old, whole any, err error) {
+	handled, kv, old, err := planKeyboardConfigSet(store, c, key, build, force, replace)
+	if !handled || err != nil {
+		return handled, nil, nil, err
+	}
+	ref, _ := store.Cat.Lookup(key)
+	for _, x := range kv {
+		if x.Key == ref.Entry.Key {
+			whole = x.Value
+		}
+	}
+	return true, old, whole, nil
+}
+
+// planKeyboardConfigSet is the takeover + edit KeyboardConfigSet writes;
+// base is the value build started from. Nothing is written.
+func planKeyboardConfigSet(store *catalog.Store, c Caller, key string, build func(base any) (any, error), force, replace bool) (handled bool, kv []catalog.KV, base any, err error) {
 	ref, err := store.Cat.Lookup(key)
 	if err != nil || ref.Entry.Domain != "keyboard" {
-		return false, nil, nil // the write itself reports a bad key
+		return false, nil, nil, nil // the write itself reports a bad key
 	}
 	name := strings.SplitN(strings.TrimPrefix(ref.Entry.Key, "keyboard."), ".", 2)[0]
 	if !KeyboardTakeoverKeys[name] && name != "managed" {
-		return false, nil, nil
+		return false, nil, nil, nil
 	}
 	if managed, err := KeyboardManaged(store); err != nil || managed {
-		return false, nil, err
+		return false, nil, nil, err
 	}
 	if name == "managed" {
 		cur, _, err := store.Get(ref.Entry.Key)
 		if err != nil {
-			return false, nil, err
+			return false, nil, nil, err
 		}
 		if v, err := build(cur); err != nil || v != true {
-			return false, nil, err
+			return false, nil, nil, err
 		}
 	}
-	kv, err := takeoverValues(store, c, replace)
+	kv, err = takeoverValues(store, c, replace)
 	if err != nil {
-		return true, nil, err
+		return true, nil, nil, err
 	}
-	base, found := any(nil), false
+	found := false
 	for _, x := range kv {
 		if x.Key == ref.Entry.Key {
 			base, found = x.Value, true
@@ -171,15 +200,15 @@ func KeyboardConfigSet(store *catalog.Store, c Caller, key string, build func(ba
 	}
 	if !found {
 		if base, _, err = store.Get(ref.Entry.Key); err != nil {
-			return true, nil, err
+			return true, nil, nil, err
 		}
 	}
 	whole, err := build(base)
 	if err != nil {
-		return true, nil, err
+		return true, nil, nil, err
 	}
 	if err := store.Check(ref.Entry.Key, whole, force); err != nil {
-		return true, nil, err
+		return true, nil, nil, err
 	}
 	replaced := false
 	for i := range kv {
@@ -190,8 +219,7 @@ func KeyboardConfigSet(store *catalog.Store, c Caller, key string, build func(ba
 	if !replaced {
 		kv = append(kv, catalog.KV{Key: ref.Entry.Key, Value: whole})
 	}
-	changes, err = store.SetAll(kv, force)
-	return true, changes, err
+	return true, kv, base, nil
 }
 
 // ItemAt is base (an array) with item at index: replaced, or appended at
