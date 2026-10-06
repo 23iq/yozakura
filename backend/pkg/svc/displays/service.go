@@ -57,6 +57,7 @@ type Service struct {
 	// outputs at apply time (stable ids). nil: nothing is saved.
 	persist func(cand []yipc.OutputConfig, outs []yipc.Output) error
 	sessMu  sync.Mutex
+	keepMu  sync.Mutex
 	sessOut map[string][]yipc.Output // session id → outputs at apply
 	saved   map[string]bool          // session id → its keep saved it
 
@@ -213,16 +214,22 @@ func (s *Service) keep(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, fmt.Errorf("displays.keep: %w", err)
 	}
+	// one keep at a time: a second keep of the same session (shell prompt
+	// + CLI) gets the first one's save, and retries a save that failed
+	s.keepMu.Lock()
+	defer s.keepMu.Unlock()
 	kept, again, err := s.mgr.Keep(p.Session)
 	if err != nil {
 		return nil, err
 	}
 	s.sessMu.Lock()
 	defer s.sessMu.Unlock()
-	if again {
-		return map[string]any{"ok": true, "saved": s.saved[kept.ID]}, nil
+	if !again {
+		s.publishSession(kept)
 	}
-	s.publishSession(kept)
+	if s.saved[kept.ID] {
+		return map[string]any{"ok": true, "saved": true}, nil
+	}
 	if s.persist == nil {
 		return map[string]any{"ok": true, "saved": false}, nil
 	}

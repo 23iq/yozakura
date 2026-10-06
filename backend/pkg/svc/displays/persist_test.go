@@ -60,3 +60,54 @@ func TestKeepReportsSaveFailure(t *testing.T) {
 		t.Fatalf("the change stays kept: %v", l)
 	}
 }
+
+// Two keeps of one session race (overlay + CLI): both get the save result;
+// a failed save is retried by the next keep.
+func TestConcurrentKeepsShareTheSave(t *testing.T) {
+	y := &fakeYozd{outputs: twoOutputs()}
+	var mu sync.Mutex
+	now := time.Unix(1000, 0)
+	s, _ := newTestService(y, &now, &mu)
+	defer s.Close()
+	var saves int
+	var saveMu sync.Mutex
+	fail := true
+	s.SetPersist(func([]ipc.OutputConfig, []ipc.Output) error {
+		saveMu.Lock()
+		defer saveMu.Unlock()
+		saves++
+		time.Sleep(20 * time.Millisecond)
+		if fail {
+			fail = false
+			return errors.New("busy")
+		}
+		return nil
+	})
+	res := rpc(t, s.apply, map[string]any{"outputs": []ipc.OutputConfig{{Name: "DP-1", Enabled: true, Width: 1920, Height: 1080, Scale: 1}}})
+	params := []byte(`{"session":"` + res["session"].(string) + `"}`)
+	if _, err := s.keep(params); err == nil {
+		t.Fatal("first save fails")
+	}
+	var wg sync.WaitGroup
+	results := make([]any, 2)
+	for i := range results {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			r, err := s.keep(params)
+			if err != nil {
+				t.Error(err)
+			}
+			results[i] = r
+		}(i)
+	}
+	wg.Wait()
+	for _, r := range results {
+		if m := r.(map[string]any); m["saved"] != true {
+			t.Fatalf("keep = %v", m)
+		}
+	}
+	if saves != 2 {
+		t.Fatalf("saves = %d (one failed, one retried, none duplicated)", saves)
+	}
+}
