@@ -37,6 +37,7 @@ import (
 	"yozakura/backend/pkg/svc/screenshot"
 	"yozakura/backend/pkg/svc/sleep"
 	"yozakura/backend/pkg/svc/systemmonitor"
+	"yozakura/backend/pkg/svc/timers"
 	"yozakura/backend/pkg/svc/transfers"
 	voicesvc "yozakura/backend/pkg/svc/voice"
 	"yozakura/backend/pkg/svc/wallpaper"
@@ -66,6 +67,8 @@ type Daemon struct {
 	voice      *voicesvc.Service
 	mods       *mods.Manager
 	agents     *agents.Manager
+	notify     *notifysvc.Service
+	timers     *timers.Service
 
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
@@ -176,6 +179,16 @@ func New() (*Daemon, error) {
 	// shelling out to notify-send. See pkg/svc/notify for the rationale.
 	notifySvc := notifysvc.NewService()
 	notifySvc.Register(d.srv)
+	d.notify = notifySvc
+
+	// Timers, stopwatch, reminders (persisted, wall clock); finished
+	// timers notify through notify.Send. The scheduler starts in Run.
+	d.timers = timers.NewService(timers.Options{
+		Path:     filepath.Join(p.DataDir, timers.FileName),
+		Notify:   func(sp notifysvc.SendParams) { _, _ = notifySvc.Send(sp) },
+		Pomodoro: func() timers.PomodoroConfig { return timers.SystemPomodoro(p.Config("system")) },
+	})
+	d.timers.Register(d.srv)
 
 	// CLI coding agents (Claude Code, Codex, OpenCode) for the AI center.
 	agentsMgr := agents.NewManager(filepath.Join(p.DataDir, "agents"))
@@ -287,6 +300,16 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 				log.Printf("[yozakura] nightlight restore: %v", err)
 			}
 		}
+	}()
+
+	// Timers that expired while the daemon was down fire on the first poll;
+	// wait for the shell's notify subscription so their notifications show.
+	go func() {
+		deadline := time.Now().Add(30 * time.Second)
+		for d.notify.Subscribers() == 0 && time.Now().Before(deadline) {
+			time.Sleep(250 * time.Millisecond)
+		}
+		d.timers.Start()
 	}()
 
 	if err := d.spawnQS(qsBin, shellQML); err != nil {
@@ -437,6 +460,9 @@ func (d *Daemon) shutdown() {
 	}
 	if d.voice != nil {
 		d.voice.Close()
+	}
+	if d.timers != nil {
+		d.timers.Close()
 	}
 
 	if d.sweep != nil {

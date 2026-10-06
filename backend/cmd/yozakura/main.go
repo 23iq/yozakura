@@ -70,6 +70,12 @@ func main() {
 			os.Exit(runSpecial(args[1:], os.Stdout, os.Stderr))
 		case "launch":
 			os.Exit(runLaunch(args[1:], defaultLaunchEnv(), os.Stderr))
+		case "timer", "timers":
+			os.Exit(runTimer(args[1:], os.Stdout, os.Stderr))
+		case "stopwatch", "sw":
+			os.Exit(runStopwatch(args[1:], os.Stdout, os.Stderr))
+		case "remind", "reminder":
+			os.Exit(runRemind(args[1:], os.Stdout, os.Stderr))
 		}
 	}
 
@@ -585,6 +591,10 @@ Commands:
                                      ({bin} preset help; "{bin} preset <name>" applies)
     special <command>                Special workspaces: list, open, add, set, remove,
                                      app add|remove, import-binds ({bin} special help)
+    timer <time> [name]              Start a timer ("10m tea", "1h30", "18:00"); list, pause,
+                                     resume, add, stop, pomodoro ({bin} timer help)
+    stopwatch [start|pause|lap|reset] Stopwatch (no argument: status)
+    remind <time|in time> <text>     Reminder ("18:00 call mom", "in 20m stretch"); list, cancel
     completion <bash|zsh|fish>       Print a shell completion script
     mods [command]                   Manage {name} modifications
     mcp [--list-tools]               Run the built-in MCP server on stdio (for AI agents)

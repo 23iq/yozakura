@@ -76,7 +76,7 @@ func TestE2E_SendTriggersSubscriberEvent(t *testing.T) {
 	}()
 
 	// Wait for the subscriber to register before firing the request.
-	waitFor(t, func() bool { return len(svc.subs) == 1 }, 2*time.Second, "subscriber registration")
+	waitFor(t, func() bool { return svc.Subscribers() == 1 }, 2*time.Second, "subscriber registration")
 
 	// Caller dials and invokes notify.send.
 	conn, err := net.Dial("unix", sockPath)
