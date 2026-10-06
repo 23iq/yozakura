@@ -31,35 +31,57 @@ func candidateUnits(o Options) []string {
 	return out
 }
 
-// disableUnits disables (with --now) every enabled candidate. Units that
-// do not exist or are not enabled are skipped silently; failures are
-// returned as messages and the unit is not recorded.
-func disableUnits(o Options) (disabled, errs []string) {
-	disabled = []string{}
-	if o.Systemd == nil {
-		return disabled, nil
-	}
-	for _, u := range candidateUnits(o) {
-		if !o.Systemd.IsEnabled(u) {
-			continue
-		}
-		if err := o.Systemd.Disable(u); err != nil {
-			errs = append(errs, "could not disable "+u+": "+err.Error())
-			continue
-		}
-		disabled = append(disabled, u)
-	}
-	return disabled, errs
+// unitRecord is one unit exclusive mode disables. Every enabled
+// candidate is recorded before any Disable call, so a crash never loses the
+// record; re-enabling a unit whose Disable never ran is harmless (it was
+// enabled). WasActive says whether to start it again.
+type unitRecord struct {
+	Name      string `json:"name"`
+	WasActive bool   `json:"wasActive"`
+	Disabled  bool   `json:"disabled"`
 }
 
-// enableUnits re-enables exactly the recorded units.
-func enableUnits(o Options, units []string) (errs []string) {
+// disableUnits disables (with --now) every enabled candidate, persisting
+// the manifest before the first Disable and after each success. Units that
+// do not exist or are not enabled are skipped silently; a failed Disable is
+// returned as a message (the unit stays enabled). The error is a manifest
+// write failure, which aborts Enable.
+func disableUnits(o Options, dir string, m *manifest) (msgs []string, err error) {
+	if o.Systemd == nil {
+		return nil, nil
+	}
+	for _, u := range candidateUnits(o) {
+		if o.Systemd.IsEnabled(u) {
+			m.Units = append(m.Units, unitRecord{Name: u, WasActive: o.Systemd.IsActive(u)})
+		}
+	}
+	if err := writeManifest(dir, *m); err != nil {
+		return nil, err
+	}
+	for i := range m.Units {
+		u := &m.Units[i]
+		if err := o.Systemd.Disable(u.Name); err != nil {
+			msgs = append(msgs, "could not disable "+u.Name+": "+err.Error())
+			continue
+		}
+		u.Disabled = true
+		m.DisabledUnits = append(m.DisabledUnits, u.Name)
+		if err := writeManifest(dir, *m); err != nil {
+			return msgs, err
+		}
+	}
+	return msgs, nil
+}
+
+// enableUnits re-enables every recorded unit, starting the ones that were
+// running.
+func enableUnits(o Options, units []unitRecord) (errs []string) {
 	if o.Systemd == nil {
 		return nil
 	}
 	for _, u := range units {
-		if err := o.Systemd.Enable(u); err != nil {
-			errs = append(errs, "could not re-enable "+u+": "+err.Error())
+		if err := o.Systemd.Enable(u.Name, u.WasActive); err != nil {
+			errs = append(errs, "could not re-enable "+u.Name+": "+err.Error())
 		}
 	}
 	return errs

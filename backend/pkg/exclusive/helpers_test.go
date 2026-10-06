@@ -14,22 +14,36 @@ import (
 
 // fakeSystemd records enable/disable calls over a set of known units.
 type fakeSystemd struct {
-	enabled  map[string]bool
-	listed   []string
-	disabled []string
-	failOn   string
+	enabled   map[string]bool
+	active    map[string]bool
+	listed    []string
+	disabled  []string
+	started   []string
+	failOn    string
+	onDisable func(unit string)
 }
 
 func (f *fakeSystemd) IsEnabled(u string) bool { return f.enabled[u] }
+func (f *fakeSystemd) IsActive(u string) bool  { return f.active[u] }
 func (f *fakeSystemd) Disable(u string) error {
+	if f.onDisable != nil {
+		f.onDisable(u)
+	}
 	if u == f.failOn {
 		return fs.ErrPermission
 	}
-	f.enabled[u] = false
+	f.enabled[u], f.active[u] = false, false
 	f.disabled = append(f.disabled, u)
 	return nil
 }
-func (f *fakeSystemd) Enable(u string) error { f.enabled[u] = true; return nil }
+func (f *fakeSystemd) Enable(u string, start bool) error {
+	f.enabled[u] = true
+	if start {
+		f.active[u] = true
+		f.started = append(f.started, u)
+	}
+	return nil
+}
 func (f *fakeSystemd) ListUserUnits(pattern string) []string {
 	var out []string
 	for _, u := range f.listed {
@@ -41,10 +55,11 @@ func (f *fakeSystemd) ListUserUnits(pattern string) []string {
 }
 
 type recorder struct {
-	imports  int
-	monitors []ipc.OutputConfig
-	kb       *ipc.KeyboardSettings
-	reloads  int
+	imports   int
+	monitors  []ipc.OutputConfig
+	kb        *ipc.KeyboardSettings
+	reloads   int
+	unimports []map[string]any
 }
 
 func testOptions(t *testing.T, home string, sd *fakeSystemd, rec *recorder) Options {
@@ -54,12 +69,13 @@ func testOptions(t *testing.T, home string, sd *fakeSystemd, rec *recorder) Opti
 		Home: home, AppID: "yozakura", Compositor: "hyprland",
 		Now:     func() time.Time { clock = clock.Add(time.Second); return clock },
 		Systemd: sd,
-		Import: func(m []ipc.OutputConfig, kb *ipc.KeyboardSettings) error {
+		Import: func(m []ipc.OutputConfig, kb *ipc.KeyboardSettings) (map[string]any, error) {
 			rec.imports++
 			rec.monitors, rec.kb = m, kb
-			return nil
+			return map[string]any{"keyboard.layouts": "us"}, nil
 		},
-		Reload: func() error { rec.reloads++; return nil },
+		Unimport: func(prev map[string]any) error { rec.unimports = append(rec.unimports, prev); return nil },
+		Reload:   func() error { rec.reloads++; return nil },
 	}
 }
 
@@ -131,6 +147,9 @@ func backups(t *testing.T, home string) []string {
 	entries, _ := os.ReadDir(filepath.Join(home, ".local/share/yozakura/backups"))
 	var out []string
 	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), ".") {
+			continue
+		}
 		out = append(out, e.Name())
 	}
 	return out

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestCopyTreeKeepsModesAndLinks(t *testing.T) {
@@ -25,12 +26,12 @@ func TestCopyTreeKeepsModesAndLinks(t *testing.T) {
 func TestBackupNamesDoNotCollide(t *testing.T) {
 	home, _ := luaHome(t)
 	o := testOptions(t, home, newSystemd(), &recorder{})
-	o.Now = nil // real clock: two backups in the same second
-	a, err := createBackup(o)
+	now := time.Now()
+	a, _, err := createBackup(o, now)
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := createBackup(o)
+	b, _, err := createBackup(o, now)
 	if err != nil {
 		t.Fatal(err)
 	}

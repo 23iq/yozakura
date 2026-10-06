@@ -111,17 +111,11 @@ func writeMinimal(hypr, entry, backup string) error {
 		user = filepath.Join(hypr, "user.lua")
 	}
 	if _, err := os.Lstat(user); os.IsNotExist(err) {
-		if err := os.WriteFile(user, []byte(userNote(lua)), 0o644); err != nil {
+		if err := writeFileSync(user, []byte(userNote(lua)), 0o644); err != nil {
 			return fmt.Errorf("write %s: %w", user, err)
 		}
 	}
-	tmp := filepath.Join(hypr, "."+entry+".exclusive-tmp")
-	if err := os.WriteFile(tmp, []byte(minimalEntry(lua, backup)), 0o644); err != nil {
-		os.Remove(tmp)
-		return fmt.Errorf("write %s: %w", entry, err)
-	}
-	if err := os.Rename(tmp, filepath.Join(hypr, entry)); err != nil {
-		os.Remove(tmp)
+	if err := replaceFile(filepath.Join(hypr, entry), []byte(minimalEntry(lua, backup)), 0o644); err != nil {
 		return fmt.Errorf("write %s: %w", entry, err)
 	}
 	return nil

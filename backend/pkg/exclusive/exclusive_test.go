@@ -32,6 +32,7 @@ func luaHome(t *testing.T) (string, string) {
 func newSystemd() *fakeSystemd {
 	return &fakeSystemd{
 		enabled: map[string]bool{"waybar.service": true, "dunst.service": false, "quickshell-foo.service": true, "quickshell-yozakura.service": true},
+		active:  map[string]bool{"waybar.service": true},
 		listed:  []string{"quickshell-foo.service", "quickshell-yozakura.service", "other.service"},
 	}
 }
@@ -137,6 +138,12 @@ func TestReloadFailureRestores(t *testing.T) {
 	if calls != 2 {
 		t.Fatalf("rollback must reload the restored config, reloads %d", calls)
 	}
+	if len(rec.unimports) != 1 || rec.unimports[0]["keyboard.layouts"] != "us" {
+		t.Fatalf("rollback must revert the import: %v", rec.unimports)
+	}
+	if !reflect.DeepEqual(sd.started, []string{"waybar.service"}) {
+		t.Fatalf("only units that were running restart: %v", sd.started)
+	}
 	if len(backups(t, home)) != 0 {
 		t.Fatalf("failed attempt left a backup: %v", backups(t, home))
 	}
@@ -146,14 +153,16 @@ func TestImportFailureRestores(t *testing.T) {
 	home, hypr := luaHome(t)
 	sd, rec := newSystemd(), &recorder{}
 	o := testOptions(t, home, sd, rec)
-	o.Import = func([]ipc.OutputConfig, *ipc.KeyboardSettings) error { return errors.New("bad config") }
+	o.Import = func([]ipc.OutputConfig, *ipc.KeyboardSettings) (map[string]any, error) {
+		return nil, errors.New("bad config")
+	}
 	before := snapshot(t, hypr)
 	if _, err := Enable(o); err == nil {
 		t.Fatal("want import error")
 	}
 	sameTree(t, before, snapshot(t, hypr))
-	if len(sd.disabled) != 0 {
-		t.Fatal("units disabled despite failure")
+	if len(sd.disabled) != 0 || len(rec.unimports) != 0 || rec.reloads != 0 || len(backups(t, home)) != 0 {
+		t.Fatalf("import failure must only drop the backup: %+v %v", rec, backups(t, home))
 	}
 }
 
@@ -199,15 +208,20 @@ func TestRestoreExact(t *testing.T) {
 	if rec.reloads != 2 {
 		t.Fatalf("restore must reload, reloads %d", rec.reloads)
 	}
+	if st.Replaced == "" || filepath.Dir(st.Replaced) != backup || st.Previous["keyboard.layouts"] != "us" || len(rec.unimports) != 0 {
+		t.Fatalf("restore status %+v unimports %v", st, rec.unimports)
+	}
+	if !reflect.DeepEqual(sd.started, []string{"waybar.service"}) {
+		t.Fatalf("only units that were running restart: %v", sd.started)
+	}
 }
 
 func TestRestoreMissingBackup(t *testing.T) {
 	home, hypr := luaHome(t)
 	sd, rec := newSystemd(), &recorder{}
 	o := testOptions(t, home, sd, rec)
-	before := snapshot(t, hypr)
-	if _, err := Restore(o, ""); !errors.Is(err, ErrNoBackup) {
-		t.Fatalf("want ErrNoBackup, got %v", err)
+	if _, err := Restore(o, ""); !errors.Is(err, ErrNotActive) {
+		t.Fatalf("want ErrNotActive, got %v", err)
 	}
 	st, err := Enable(o)
 	if err != nil {
@@ -227,7 +241,6 @@ func TestRestoreMissingBackup(t *testing.T) {
 	if sd.enabled["waybar.service"] {
 		t.Fatal("units changed by a failed restore")
 	}
-	_ = before
 }
 
 func TestConfSplitAcrossSources(t *testing.T) {
