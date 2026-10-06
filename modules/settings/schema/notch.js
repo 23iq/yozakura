@@ -183,13 +183,6 @@ var category = {
                     "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
                 },
                 {
-                    "key": "notch.osd",
-                    "type": "toggle",
-                    "label": "prefs.notch.osd",
-                    "description": "prefs.notch.osd.desc",
-                    "keywords": "osd volume brightness island notch"
-                },
-                {
                     "key": "notifications.notchStyle",
                     "type": "selector",
                     "options": [
@@ -207,7 +200,7 @@ var category = {
                     "keywords": "notification notch compact card one line"
                 },
                 {
-                    "key": "bar.activities",
+                    "key": "notch.liveActivities",
                     "type": "custom",
                     "component": "ActivitiesEditor",
                     "label": "shell.activities",

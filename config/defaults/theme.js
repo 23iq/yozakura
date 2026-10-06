@@ -56,17 +56,12 @@ var data = {
         "referenceAmount": -1,
         "tintRole": "primary",
         "highlightRole": "overBackground",
+        // Shell-only overrides; blur and shadow values belong to the
+        // compositor (compositor.blur*, shadowRange: KeyAliases.js).
         "advanced": {
             "opacity": -1,
-            "blurSize": -1,
-            "blurPasses": -1,
-            "vibrancy": -1,
-            "noise": -1,
-            "contrast": -1,
-            "brightness": -1,
             "tintStrength": -1,
-            "borderHighlight": -1,
-            "shadowSoftness": -1
+            "borderHighlight": -1
         },
         "surfaces": {
             "windows": { "amount": -1, "activeOpacity": -1, "inactiveOpacity": -1 },

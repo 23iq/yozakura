@@ -6,7 +6,7 @@ import qs.modules.services.activities
 // The provider registry. Adding an activity source = one new provider file
 // (`pragma Singleton` + `ActivityProvider { ... }`, or `TransferProvider`
 // for a backend transfers source) + one entry here, and a default under
-// bar.activities.sources if it should be toggleable.
+// notch.liveActivities.sources if it should be toggleable.
 Singleton {
     readonly property var all: [
         // Activities

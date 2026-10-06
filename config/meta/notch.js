@@ -82,7 +82,44 @@ var keys = {
         },
         "description": "Order, side and on/off of the island's activities ({id, side, enabled}); missing ids use the registry defaults."
     },
-    "osd": {
-        "description": "Show volume and brightness changes in the notch instead of the OSD overlay."
+    "liveActivities": {
+        "description": "Live activities (recording, downloads, timers, privacy, ...)."
+    },
+    "liveActivities.enabled": {
+        "description": "Show live activities at all."
+    },
+    "liveActivities.presentation": {
+        "enum": Enums.ACTIVITY_PRESENTATIONS,
+        "description": "Where activities appear: inside the notch, as bar islands, or nowhere."
+    },
+    "liveActivities.maxVisible": {
+        "min": 1,
+        "max": 8,
+        "description": "Most activities shown at once."
+    },
+    "liveActivities.sources.*": {
+        "description": "Track this activity source."
+    },
+    "liveActivities.downloads.aggregate": {
+        "description": "Merge concurrent downloads into one activity."
+    },
+    "liveActivities.downloads.showSpeed": {
+        "description": "Show transfer speed on download activities."
+    },
+    "liveActivities.downloads.endpoints": {
+        "local": true,
+        "description": "RPC/web endpoints of the download clients (machine specific, never in presets)."
+    },
+    "liveActivities.downloads.endpoints.*": {
+        "format": "uri",
+        "description": "RPC/web endpoint of this download client (empty = disabled)."
+    },
+    "liveActivities.downloads.secrets": {
+        "local": true,
+        "description": "Passwords/tokens of the download clients' RPC (never in presets)."
+    },
+    "liveActivities.downloads.secrets.*": {
+        "secret": true,
+        "description": "Password/token of this download client's RPC."
     }
 };

@@ -112,9 +112,9 @@ func TestConfigCommands(t *testing.T) {
 	code, out, _ = run(t, cfg, "reset", "bar", "--yes")
 	assert.Equal(t, 0, code)
 	assert.Contains(t, out, "bar.position: \"left\" -> \"top\"")
-	code, out, _ = run(t, cfg, "list", "bar.activities", "--json")
+	code, out, _ = run(t, cfg, "list", "notch.liveActivities", "--json")
 	assert.Equal(t, 0, code)
-	assert.Contains(t, out, `"key": "bar.activities.enabled"`)
+	assert.Contains(t, out, `"key": "notch.liveActivities.enabled"`)
 
 	code, out, _ = run(t, cfg, "schema", "notch")
 	assert.Equal(t, 0, code)

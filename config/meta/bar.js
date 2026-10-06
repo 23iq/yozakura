@@ -3,7 +3,7 @@
 
 // Catalog metadata of config/defaults/bar.js (format: config/meta/Meta.js).
 
-var description = "The bar (panel): style (classic/islands), module layout, screen edge, frame, clock, auto-hide and live activities.";
+var description = "The bar (panel): style (classic/islands), module layout, screen edge, frame, clock, auto-hide.";
 
 var keys = {
     "position": {
@@ -87,46 +87,6 @@ var keys = {
     },
     "compact": {
         "description": "Thinner bar with smaller paddings."
-    },
-    "activities": {
-        "description": "Live activities (recording, downloads, timers, privacy, ...)."
-    },
-    "activities.enabled": {
-        "description": "Show live activities at all."
-    },
-    "activities.presentation": {
-        "enum": Enums.ACTIVITY_PRESENTATIONS,
-        "description": "Where activities appear: inside the notch, as bar islands, or nowhere."
-    },
-    "activities.maxVisible": {
-        "min": 1,
-        "max": 8,
-        "description": "Most activities shown at once."
-    },
-    "activities.sources.*": {
-        "description": "Track this activity source."
-    },
-    "activities.downloads.aggregate": {
-        "description": "Merge concurrent downloads into one activity."
-    },
-    "activities.downloads.showSpeed": {
-        "description": "Show transfer speed on download activities."
-    },
-    "activities.downloads.endpoints": {
-        "local": true,
-        "description": "RPC/web endpoints of the download clients (machine specific, never in presets)."
-    },
-    "activities.downloads.endpoints.*": {
-        "format": "uri",
-        "description": "RPC/web endpoint of this download client (empty = disabled)."
-    },
-    "activities.downloads.secrets": {
-        "local": true,
-        "description": "Passwords/tokens of the download clients' RPC (never in presets)."
-    },
-    "activities.downloads.secrets.*": {
-        "secret": true,
-        "description": "Password/token of this download client's RPC."
     },
     "layout": {
         "description": "Bar layout: style and the ordered module ids of each group."

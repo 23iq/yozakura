@@ -90,7 +90,7 @@ Item {
 
     // ── Lifetime: only alive while something is (or was just) showing ──
     property bool lingering: false
-    // Only for bar.activities.presentation "islands"; "notch" renders inside
+    // Only for notch.liveActivities.presentation "islands"; "notch" renders inside
     // the notch (modules/widgets/defaultview/activities)
     readonly property bool wanted: ActivityService.presentation === "islands" && ActivityService.count > 0
     onWantedChanged: {

@@ -2,7 +2,7 @@
 
 The resting notch (`DefaultView`) shows a header with segments: the media
 title, a timers segment and a downloads segment on the left, a privacy
-segment on the right (live activities, `bar.activities.presentation:
+segment on the right (live activities, `notch.liveActivities.presentation:
 "notch"`). Each segment opens **its own panel**; only one is open at a time
 and the notch morphs between the collapsed size and the panel's size (the
 Notch's own geometry animation; panels crossfade over
