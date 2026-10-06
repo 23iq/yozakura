@@ -36,7 +36,8 @@ function collapsed(s, state) {
 
 // Size of the idle capsule: `unit` (Metrics.spacing) high, four units
 // wide, so it reads as a quiet line on the edge rather than a button.
-function capsule(unit) {
+// `vertical` (a side edge): the same line, standing along the edge.
+function capsule(unit, vertical) {
     var u = Math.max(4, Math.round(unit || 0));
-    return { w: u * 4, h: u };
+    return vertical ? { w: u, h: u * 4 } : { w: u * 4, h: u };
 }

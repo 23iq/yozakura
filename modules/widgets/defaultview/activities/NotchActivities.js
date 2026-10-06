@@ -56,6 +56,26 @@ function widthTemplate(label) {
     return s.replace(/\d/g, "0");
 }
 
+// A label re-laid for a side (upright) notch: at most two short lines, never
+// turned text. "18:42" -> ["18", "42"], "1:02:33" -> ["1h", "02"], "47%"
+// stays, "38 MB/s" -> ["38", "MB/s"]; plain words stay in the tooltip.
+function stackedLabel(label) {
+    var s = String(label === undefined || label === null ? "" : label).trim();
+    var m = s.match(/^(\d+):(\d{2}):(\d{2})$/);
+    if (m)
+        return [m[1] + "h", m[2]];
+    m = s.match(/^(\d+):(\d{2})$/);
+    if (m)
+        return [m[1], m[2]];
+    if (/^\d+%$/.test(s))
+        return [s];
+    if (!/\d/.test(s))
+        return [];
+    return s.split(/\s+/).slice(0, 2).map(function (t) {
+        return t.slice(0, 4);
+    });
+}
+
 // The part of a "Kind · details" string before / after the first " · "
 function splitDetail(detail) {
     var s = String(detail || "");

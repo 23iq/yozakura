@@ -1195,7 +1195,7 @@
   "prefs.notch.section.activities": "Активности",
   "prefs.notch.theme": "Стиль",
   "prefs.notch.position": "Положение",
-  "prefs.notch.position.desc": "Край экрана, у которого находится вырез.",
+  "prefs.notch.position.desc": "Край экрана, у которого находится вырез. У бокового края он стоит вертикально и раскрывается к центру.",
   "prefs.notch.theme.desc": "Прикреплён к краю экрана, плавающий остров или пилюля, которая в покое сжимается в точку.",
   "prefs.notch.style.attached": "Прикреплённый",
   "prefs.notch.style.pill": "Пилюля",

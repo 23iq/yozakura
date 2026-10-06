@@ -5865,21 +5865,25 @@
           "title": "Position",
           "type": "string",
           "default": "top",
-          "description": "The screen edge the notch sits on.",
+          "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
             "label": "prefs.notch.position",
             "control": "selector",
-            "keywords": "notch position top bottom edge"
+            "keywords": "notch position top bottom left right side vertical edge"
           },
           "enum": [
             "top",
-            "bottom"
+            "bottom",
+            "left",
+            "right"
           ],
           "x-enumLabels": {
             "top": "Top",
-            "bottom": "Bottom"
+            "bottom": "Bottom",
+            "left": "Left",
+            "right": "Right"
           }
         },
         "align": {

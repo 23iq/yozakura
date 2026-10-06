@@ -1195,7 +1195,7 @@
   "prefs.notch.section.activities": "Activities",
   "prefs.notch.theme": "Style",
   "prefs.notch.position": "Position",
-  "prefs.notch.position.desc": "The screen edge the notch sits on.",
+  "prefs.notch.position.desc": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
   "prefs.notch.theme.desc": "Attached to the screen edge, a floating island, or a pill that shrinks to a dot when idle.",
   "prefs.notch.style.attached": "Attached",
   "prefs.notch.style.pill": "Pill",
