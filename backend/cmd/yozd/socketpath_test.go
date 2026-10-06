@@ -22,6 +22,11 @@ func TestDefaultSocketPathFallsBackToTmp(t *testing.T) {
 	t.Setenv(brand.DaemonEnv("SOCKET"), "")
 	t.Setenv("XDG_RUNTIME_DIR", "")
 	want := fmt.Sprintf("/tmp/%s-%d.sock", brand.Daemon, os.Getuid())
+	// A live daemon in the per-user runtime dir is found first (env-less
+	// parents such as Codex MCP servers rely on it).
+	if live := fmt.Sprintf("/run/user/%d/%s.sock", os.Getuid(), brand.Daemon); fileExistsForTest(live) {
+		want = live
+	}
 	if got := defaultSocketPath(); got != want {
 		t.Fatalf("want %q, got %q", want, got)
 	}
@@ -33,3 +38,5 @@ func TestDefaultSocketPathOverride(t *testing.T) {
 		t.Fatalf("want override honored, got %q", got)
 	}
 }
+
+func fileExistsForTest(p string) bool { _, err := os.Stat(p); return err == nil }
