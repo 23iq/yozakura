@@ -5,6 +5,8 @@
 # Prints one block per change: "<pid> <comm>" lines followed by "--".
 # Event driven with inotifywait (open/close on the device nodes); without
 # inotify-tools it falls back to a slow poll. Sleeps when no camera exists.
+# Exits once the shell that started it is gone (it rarely writes, so a closed
+# pipe alone would never stop it and restarts would pile up orphans).
 
 scan() {
     find /proc/[0-9]*/fd -maxdepth 1 -lname '/dev/video*' 2>/dev/null |
@@ -29,7 +31,13 @@ emit() {
 has_inotify=0
 command -v inotifywait >/dev/null 2>&1 && has_inotify=1
 
-while :; do
+parent=$PPID
+parent_alive() {
+    ppid=$(sed 's/.*) [A-Za-z] //; s/ .*//' "/proc/$$/stat" 2>/dev/null)
+    [ "$ppid" = "$parent" ]
+}
+
+while parent_alive; do
     set -- /dev/video*
     if [ ! -e "$1" ]; then
         if [ -n "$last" ] && [ "$last" != "--" ]; then
