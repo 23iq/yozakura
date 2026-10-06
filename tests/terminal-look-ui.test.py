@@ -38,6 +38,7 @@ import qs.modules.settings.editors
 import qs.modules.services
 import qs.config
 import qs.modules.theme
+import qs.modules.settings.store
 Window {
     width: 1000; height: 1500; visible: true
     Column {
@@ -136,8 +137,7 @@ check(ev("height", find("cursor")) <= 3, "underline cursor is a thin bar")
 ev("BackendService.previews = %s" % json.dumps(sample_previews(exact=False, engine="ohmyposh")))
 ev("Config.terminal.engine = 'ohmyposh'")
 QTest.qWait(60)
-check([c["params"]["ids"] for c in calls("extras.install")] == [["oh-my-posh"]],
-      "switching a prompt that is on to a missing engine queues it: %s" % calls("extras.install"))
+check(calls("extras.install") == [], "a config change from elsewhere never installs anything")
 check(visible(find("approxNotice")), "an approximate preview shows the notice")
 btn = find("installEngineButton")
 check(visible(btn), "a missing engine offers its install")
@@ -148,11 +148,43 @@ n = len(calls("extras.install"))
 click(find("promptCard:two-line-box"))
 check(len(calls("extras.install")) == n + 1 and calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh"],
       "picking a prompt with the engine missing queues the engine")
-check(len(js("promptLines", find("terminalPreview"))) == 2, "two-line preset: two prompt lines")
 n = len(calls("extras.install"))
-ev("Config.terminal.enabled = false")
-ev("Config.terminal.enabled = true")
-check(len(calls("extras.install")) == n + 1, "switching the prompt on with the engine missing queues it")
+ev("SettingsStore.set('terminal.enabled', false)")
+ev("SettingsStore.set('terminal.enabled', true)")
+check(len(calls("extras.install")) == n + 1, "switching the prompt on in settings with the engine missing queues it")
+ev("SettingsStore.set('terminal.engine', 'starship')")
+ev("SettingsStore.set('terminal.engine', 'ohmyposh')")
+check(len(calls("extras.install")) == n + 2, "switching to a missing engine in settings queues it (installed one: nothing)")
+
+# the queued engine install: progress cue replaces the approximate notice
+ev("BackendService.emit('extras.progress', %s)" % json.dumps(
+    {"job": "system-9", "kind": "system", "entries": ["oh-my-posh"], "state": "running", "percent": 40,
+     "phase": "Downloading oh-my-posh"}))
+QTest.qWait(40)
+check(visible(find("engineNotice")), "an engine install in progress shows the cue")
+check("this prompt" in ev("title", find("engineNotice")), "the cue says what is installed: %r" % ev("title", find("engineNotice")))
+check(ev("message", find("engineNotice")) == "Downloading oh-my-posh", "the cue shows the install phase")
+check(not visible(find("approxNotice")), "the approximate notice steps aside while installing")
+ev("BackendService.emit('extras.progress', %s)" % json.dumps(
+    {"job": "system-9", "kind": "system", "entries": ["oh-my-posh"], "state": "failed", "percent": -1}))
+QTest.qWait(40)
+check(not visible(find("engineNotice")), "the cue goes away when the install ends")
+check(len(js("promptLines", find("terminalPreview"))) == 2, "two-line preset: two prompt lines")
+
+# no Nerd Font on the system: notice with install and "Use Plain"
+check(not visible(find("nerdNotice")), "a Nerd Font is installed: no font notice")
+ev("TerminalLookService._families = ['Noto Sans', 'DejaVu Sans Mono']")
+QTest.qWait(20)
+check(visible(find("nerdNotice")), "no Nerd Font + a Nerd Font preset: the font notice shows")
+click(find("installNerdButton"))
+check(calls("extras.install")[-1]["params"]["ids"] == ["nerd-font"], "Install Nerd Font queues the nerd-font entry")
+click(find("usePlainButton"))
+check(ev("Config.terminal.prompt") == "plain", "Use Plain picks the plain prompt")
+check(not visible(find("nerdNotice")), "plain needs no Nerd Font: notice hidden")
+click(find("promptCard:two-line-box"))
+ev("TerminalLookService._families = ['Symbols Nerd Font Mono']")
+QTest.qWait(20)
+check(not visible(find("nerdNotice")), "a symbols-only Nerd Font is enough")
 
 # palette change: previews fetched again
 before = len(calls("term.preview"))

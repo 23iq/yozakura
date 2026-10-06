@@ -31,7 +31,11 @@ Singleton {
     // Font that is (the preview must show the glyphs), at the kitty size.
     readonly property string fontFamily: TermModel.pickFont([Config.apps && Config.apps.kitty ? Config.apps.kitty.font : "", Config.theme.monoFont, "JetBrainsMono Nerd Font Mono", "JetBrainsMono Nerd Font"], root._families)
     readonly property real fontPixelSize: Math.round(((Config.apps && Config.apps.kitty ? Number(Config.apps.kitty.fontSize) : 11) || 11) * 4 / 3)
-    readonly property var _families: Qt.fontFamilies()
+    property var _families: Qt.fontFamilies()
+    // Some font has the Nerd Font icons (patched or "Symbols Nerd Font";
+    // fontconfig falls back to it in kitty). The Qt font list is read once,
+    // so a font installed from the catalog counts through its status.
+    readonly property bool nerdFontAvailable: TermModel.hasNerdFont(root._families) || ExtrasService.cardState("nerd-font") === "installed"
 
     property bool _loaded: false
     // keys asked for (re-fetched after an invalidation), keys in flight
@@ -150,17 +154,17 @@ Singleton {
     function choose(id) {
         if (!Config.terminal)
             return;
-        const wasOn = Config.terminal.enabled;
         Config.terminal.prompt = id;
-        Config.terminal.enabled = true;  // switching on runs _ensureEngine
+        Config.terminal.enabled = true;
         Config.saveTerminal();
-        if (wasOn)
-            root._ensureEngine();
+        root.ensureEngine();
     }
 
     // The prompt is on: queue its engine when it is missing (the hook only
-    // runs an installed engine, so nothing breaks meanwhile).
-    function _ensureEngine() {
+    // runs an installed engine, so nothing breaks meanwhile). Called from
+    // user actions only (choose, the settings toggle and engine switch),
+    // never from config changes made elsewhere.
+    function ensureEngine() {
         const st = root.status;
         if (!Config.terminal || !Config.terminal.enabled || !st || !st.engineInstalled || st.engineInstalled[root.engine])
             return;
@@ -244,11 +248,9 @@ Singleton {
             root.apply();
         }
         function onEnabledChanged() {
-            root._ensureEngine();
             root.apply();
         }
         function onEngineChanged() {
-            root._ensureEngine();
             root.apply();
         }
         function onGreetingChanged() {

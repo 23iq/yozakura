@@ -380,6 +380,25 @@
       }
     },
     {
+      "id": "nerd-font",
+      "category": "terminal",
+      "name": "Nerd Font symbols",
+      "icon": "textAa",
+      "detect": {
+        "fonts": [
+          "Nerd Font"
+        ]
+      },
+      "install": {
+        "arch": {
+          "pkgs": [
+            "ttf-nerd-fonts-symbols",
+            "ttf-jetbrains-mono-nerd"
+          ]
+        }
+      }
+    },
+    {
       "id": "oh-my-posh",
       "category": "terminal",
       "name": "Oh My Posh",

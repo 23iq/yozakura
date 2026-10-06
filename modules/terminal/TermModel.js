@@ -92,6 +92,17 @@ function pickFont(candidates, families) {
     return "monospace";
 }
 
+// Some installed family carries the Nerd Font icons ("Symbols Nerd Font",
+// "JetBrainsMono Nerd Font", ...).
+function hasNerdFont(families) {
+    var fams = families || [];
+    for (var i = 0; i < fams.length; i++) {
+        if (/nerd/i.test(String(fams[i])))
+            return true;
+    }
+    return false;
+}
+
 function previewKey(engine, id) {
     return engine + ":" + id;
 }

@@ -1,3 +1,5 @@
+//go:build ignore
+
 // Command termpreview renders every prompt preset like the `term.preview`
 // IPC call (exact when the engine is installed), for
 // tools/render/terminal_render.py. Run from backend/:

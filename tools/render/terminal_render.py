@@ -11,7 +11,8 @@ approximate renderer. Palette and wallpaper come from your setup like
 settings_render.py. Views: `page` (preview, notices, gallery), `gallery`
 (scrolled to the cards), `controls` (engine, greeting, padding, cursor),
 `approx` (oh-my-posh missing, fish not the login shell, a foreign prompt
-in config.fish, fastfetch greeting, block cursor).
+in config.fish, fastfetch greeting, block cursor), `notices` (no Nerd Font
+on the system, the engine installing for this prompt).
 Writes <out>/<view>-<mode>.png.
 """
 from __future__ import annotations
@@ -135,6 +136,15 @@ Window {{
     ev(win, "TerminalLookService.refreshStatus()")
     env.h.find(win, "settingsPage").property("item").setProperty("contentY", 0)
     snap("approx", 1500)
+
+    # No Nerd Font on the system + the engine being installed for this prompt.
+    ev(win, "TerminalLookService._families = ['Noto Sans', 'DejaVu Sans Mono']")
+    ev(win, "TerminalLookService.choose('sakura-powerline')")
+    ev(win, "Config.terminal.greeting = 'none'")
+    ev(win, "BackendService.emit('extras.progress', %s)" % json.dumps(
+        {"job": "system-7", "kind": "system", "entries": ["oh-my-posh"], "state": "running", "percent": 62,
+         "phase": "Downloading oh-my-posh 26.1"}))
+    snap("notices", 1500)
 
 
 if __name__ == "__main__":

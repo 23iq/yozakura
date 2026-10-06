@@ -29,6 +29,9 @@ Singleton {
     property string highlightedEntry: ""
 
     signal navigateRequested(string categoryId, string sectionId, string entryId)
+    // A settings control (or reset) changed `key`: lets an editor react to
+    // user actions only, never to config changes from elsewhere.
+    signal valueSet(string key, var value)
 
     function navigate(categoryId, sectionId, entryId) {
         navigateRequested(categoryId, sectionId || "", entryId || "");
@@ -118,6 +121,7 @@ Singleton {
             if (typeof saver === "function")
                 saver();
         }
+        root.valueSet(key, value);
     }
 
     function isModified(entry) {

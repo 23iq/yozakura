@@ -33,6 +33,7 @@ type Probe interface {
 	InstalledPkgs() map[string]bool // pacman -Qq or rpm -qa
 	Flatpaks() map[string]bool      // flatpak list --app
 	Glob(pattern string) bool
+	FontFamilies() []string // fc-list : family
 }
 
 // Detect resolves the state of every catalog entry (including hidden ones).
@@ -40,15 +41,22 @@ func Detect(c *Catalog, p Platform, probe Probe) map[string]Status {
 	out := make(map[string]Status, len(c.Entries))
 	pkgs := probe.InstalledPkgs()
 	flat := probe.Flatpaks()
+	var fonts []string
 	for _, e := range c.Entries {
-		out[e.ID] = detectEntry(e, p, probe, pkgs, flat)
+		if len(e.Detect.Fonts) > 0 {
+			fonts = lowerAll(probe.FontFamilies())
+			break
+		}
+	}
+	for _, e := range c.Entries {
+		out[e.ID] = detectEntry(e, p, probe, pkgs, flat, fonts)
 	}
 	return out
 }
 
-func detectEntry(e Entry, p Platform, probe Probe, pkgs, flat map[string]bool) Status {
+func detectEntry(e Entry, p Platform, probe Probe, pkgs, flat map[string]bool, fonts []string) Status {
 	st := Status{ID: e.ID}
-	if src := firstSource(e, probe, pkgs, flat); src != "" {
+	if src := firstSource(e, probe, pkgs, flat, fonts); src != "" {
 		st.State, st.Source = StateInstalled, src
 		return st
 	}
@@ -64,7 +72,7 @@ func detectEntry(e Entry, p Platform, probe Probe, pkgs, flat map[string]bool) S
 	return st
 }
 
-func firstSource(e Entry, probe Probe, pkgs, flat map[string]bool) string {
+func firstSource(e Entry, probe Probe, pkgs, flat map[string]bool, fonts []string) string {
 	for _, b := range e.Detect.Bins {
 		if probe.LookPath(b) {
 			return "bin"
@@ -83,7 +91,23 @@ func firstSource(e Entry, probe Probe, pkgs, flat map[string]bool) string {
 			return "path"
 		}
 	}
+	for _, want := range e.Detect.Fonts {
+		w := strings.ToLower(want)
+		for _, f := range fonts {
+			if strings.Contains(f, w) {
+				return "font"
+			}
+		}
+	}
 	return ""
+}
+
+func lowerAll(l []string) []string {
+	out := make([]string, len(l))
+	for i, s := range l {
+		out[i] = strings.ToLower(s)
+	}
+	return out
 }
 
 // hasMethod reports whether the entry can be installed on this platform

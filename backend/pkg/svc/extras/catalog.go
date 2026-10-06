@@ -37,6 +37,9 @@ type DetectSpec struct {
 	Flatpak string   `json:"flatpak,omitempty"`
 	Pkgs    []string `json:"pkgs,omitempty"`
 	Paths   []string `json:"paths,omitempty"` // globs, "~" allowed
+	// Fonts: installed when a font family contains one of these
+	// (case-insensitive, fontconfig families).
+	Fonts []string `json:"fonts,omitempty"`
 }
 
 // Install lists the ways an entry can be installed.

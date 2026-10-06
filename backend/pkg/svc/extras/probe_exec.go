@@ -58,6 +58,20 @@ func (ExecProbe) Glob(pattern string) bool {
 	return err == nil && len(m) > 0
 }
 
+// FontFamilies lists the fontconfig font families (one family name per
+// entry; fc-list joins a font's localized names with commas).
+func (ExecProbe) FontFamilies() []string {
+	var out []string
+	for l := range lines(runOut("fc-list", ":", "family")) {
+		for _, f := range strings.Split(l, ",") {
+			if f = strings.TrimSpace(f); f != "" {
+				out = append(out, f)
+			}
+		}
+	}
+	return out
+}
+
 func runOut(name string, args ...string) string {
 	ctx, cancel := context.WithTimeout(context.Background(), probeTimeout)
 	defer cancel()

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/terminal/TermModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {spansToRuns, columns, alignRight, layoutRuns, pickFont, previewKey, engineExtra, approxNotice, fishState};')();
+const M = new Function(src + '; return {spansToRuns, columns, alignRight, layoutRuns, pickFont, hasNerdFont, previewKey, engineExtra, approxNotice, fishState};')();
 
 test('spansToRuns merges adjacent spans of the same style and drops empty ones', () => {
     const runs = M.spansToRuns([
@@ -82,4 +82,31 @@ test('fishState', () => {
     assert.strictEqual(M.fishState({ fishInstalled: false }), 'missing');
     assert.strictEqual(M.fishState({ fishInstalled: true, fishIsLoginShell: false }), 'notLogin');
     assert.strictEqual(M.fishState({ fishInstalled: true, fishIsLoginShell: true }), 'ok');
+});
+
+test('every prompt preset description and approximate reason is translated in every language', () => {
+    const root = path.join(__dirname, '..');
+    const dir = path.join(root, 'assets/terminal/prompts');
+    const keys = fs.readdirSync(dir).filter(f => f.endsWith('.json'))
+        .map(f => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).description);
+    assert.ok(keys.length >= 10, 'presets found');
+    for (const r of ['engine_missing', 'git_missing', 'timeout', 'error'])
+        keys.push(M.approxNotice({ exact: false, engine: 'starship', reason: r }).reason);
+    const langs = JSON.parse(fs.readFileSync(path.join(root, 'translations/languages.json'), 'utf8'));
+    const codes = (Array.isArray(langs) ? langs.map(l => l.code || l) : Object.keys(langs));
+    assert.ok(codes.includes('en') && codes.length >= 3, 'languages: ' + codes);
+    for (const code of codes) {
+        const strings = JSON.parse(fs.readFileSync(path.join(root, 'translations', code + '.json'), 'utf8'));
+        for (const k of keys) {
+            assert.ok(typeof k === 'string' && (k.startsWith('term.prompt.') || k.startsWith('prefs.term.look.approx.')), 'key shape: ' + k);
+            assert.ok(strings[k], code + ': missing ' + k);
+        }
+    }
+});
+
+test('hasNerdFont matches patched and symbols-only Nerd Fonts', () => {
+    assert.strictEqual(M.hasNerdFont(['Noto Sans', 'Symbols Nerd Font Mono']), true);
+    assert.strictEqual(M.hasNerdFont(['JetBrainsMono NERD Font']), true);
+    assert.strictEqual(M.hasNerdFont(['Noto Sans', 'DejaVu Sans Mono']), false);
+    assert.strictEqual(M.hasNerdFont(null), false);
 });
