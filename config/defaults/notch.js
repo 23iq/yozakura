@@ -21,6 +21,9 @@ var data = {
     "expandedArtworkSize": 64,
     "microphoneNoticeDuration": 1800,
     "visualizer": true,
+    // Media panel layout: row (compact player row) | artwork (large art,
+    // tinted card; panels/MediaPanel.qml in modules/widgets/defaultview)
+    "mediaStyle": "row",
     // attached | island | pill (modules/notch/styles/NotchStyles.js);
     // activities: order/side/enabled of the island's activities
     // ({id, side, enabled}, modules/widgets/defaultview/activities/ActivityRegistry.js).

@@ -140,6 +140,23 @@ var category = {
             "title": "prefs.notch.section.media",
             "entries": [
                 {
+                    "key": "notch.mediaStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "row",
+                            "label": "prefs.notch.media_style.row"
+                        },
+                        {
+                            "value": "artwork",
+                            "label": "prefs.notch.media_style.artwork"
+                        }
+                    ],
+                    "label": "prefs.notch.media_style",
+                    "description": "prefs.notch.media_style.desc",
+                    "keywords": "media player panel style row artwork album cover spotify"
+                },
+                {
                     "key": "notch.visualizer",
                     "type": "toggle",
                     "label": "shell.notch.visualizer",
