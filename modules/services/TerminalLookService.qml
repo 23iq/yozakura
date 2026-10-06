@@ -149,9 +149,12 @@ Singleton {
         Object.keys(root._wanted).forEach(key => root._queue(key));
     }
 
-    // Pick a prompt: switches it on (an existing prompt is only replaced
-    // once the user picks one) and queues the engine when it is missing.
-    function choose(id) {
+    // The user picked prompt `id`: switch it on (an existing prompt is only
+    // replaced once the user picks one) and queue the engine when it is
+    // missing. Every UI that turns the prompt on (settings gallery,
+    // onboarding) calls this instead of writing terminal.prompt/enabled,
+    // so the engine install is never skipped.
+    function enablePrompt(id) {
         if (!Config.terminal)
             return;
         Config.terminal.prompt = id;
@@ -162,7 +165,7 @@ Singleton {
 
     // The prompt is on: queue its engine when it is missing (the hook only
     // runs an installed engine, so nothing breaks meanwhile). Called from
-    // user actions only (choose, the settings toggle and engine switch),
+    // user actions only (enablePrompt, the settings toggle and engine switch),
     // never from config changes made elsewhere.
     function ensureEngine() {
         const st = root.status;

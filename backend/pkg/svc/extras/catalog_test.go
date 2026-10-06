@@ -66,8 +66,10 @@ func TestValidateRejects(t *testing.T) {
 		"bad script arg": func(c *Catalog) {
 			c.Entries[0].Install.Script = &ScriptSpec{URL: "https://claude.ai/x", Args: []string{"; rm"}}
 		},
-		"no method": func(c *Catalog) { c.Entries[0].Install = Install{} },
-		"bad shell": func(c *Catalog) { c.Entries[0].Install.Shell = "../x.sh" },
+		"no method":  func(c *Catalog) { c.Entries[0].Install = Install{} },
+		"bad shell":  func(c *Catalog) { c.Entries[0].Install.Shell = "../x.sh" },
+		"bad font":   func(c *Catalog) { c.Entries[0].Detect.Fonts = []string{"Nerd $(x)"} },
+		"empty font": func(c *Catalog) { c.Entries[0].Detect.Fonts = []string{""} },
 	}
 	for name, mut := range cases {
 		c := base()

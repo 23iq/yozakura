@@ -87,6 +87,7 @@ type Catalog struct {
 
 var (
 	rePkg     = regexp.MustCompile(`^[a-z0-9@._+-]+$`)
+	reFont    = regexp.MustCompile(`^[A-Za-z0-9 ._+-]{1,64}$`)
 	reID      = regexp.MustCompile(`^[a-z0-9-]+$`)
 	reNpm     = regexp.MustCompile(`^(@[a-z0-9-]+/)?[a-z0-9._-]+$`)
 	reFlatpak = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
@@ -170,6 +171,11 @@ func (c *Catalog) Validate() error {
 		}
 		if err := checkPkgs(e.Detect.Pkgs); err != nil {
 			return fmt.Errorf("extras catalog: %s: detect: %w", e.ID, err)
+		}
+		for _, f := range e.Detect.Fonts {
+			if !reFont.MatchString(f) {
+				return fmt.Errorf("extras catalog: %s: detect: bad font family %q", e.ID, f)
+			}
 		}
 	}
 	for _, e := range c.Entries {

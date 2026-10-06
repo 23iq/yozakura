@@ -10,7 +10,7 @@ import "../settings/Ui.js" as Ui
 
 // Prompt presets as cards: each shows its real prompt line (rendered by the
 // engine, or approximated) on a strip of your terminal background. Picking
-// one switches the prompt on (TerminalLookService.choose).
+// one switches the prompt on (TerminalLookService.enablePrompt).
 Item {
     id: root
 
@@ -42,7 +42,7 @@ Item {
                 selected: root.current === modelData.id
                 title: modelData.name
                 subtitle: I18n.t(modelData.description)
-                onClicked: TerminalLookService.choose(modelData.id)
+                onClicked: TerminalLookService.enablePrompt(modelData.id)
 
                 Component.onCompleted: TerminalLookService.ensure(modelData.id, root.engine)
                 Connections {

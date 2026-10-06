@@ -2191,6 +2191,7 @@
   "prefs.term.look.installing": "Installing…",
   "prefs.term.look.nerd.title": "Your fonts don't have the prompt icons",
   "prefs.term.look.nerd.desc": "This prompt uses Nerd Font icons; without such a font they show as empty boxes in the terminal.",
+  "prefs.term.look.nerd.manual": "Install a Nerd Font (for example Symbols Nerd Font) with your package manager.",
   "prefs.term.look.nerd.install": "Install Nerd Font",
   "prefs.term.look.nerd.use_plain": "Use Plain",
   "prefs.term.look.engine_queued": "Installing %1 for this prompt…",

@@ -28,6 +28,8 @@ Column {
     readonly property bool promptOn: !!(root.term && root.term.enabled)
     readonly property var presetInfo: TerminalLookService.presets.find(p => p.id === root.prompt) ?? null
     readonly property bool needsNerdFont: !!root.presetInfo && root.presetInfo.nerdFont && !TerminalLookService.nerdFontAvailable
+    // No install method here (not Arch): only the manual hint.
+    readonly property bool nerdInstallable: ExtrasService.cardState("nerd-font") !== "unavailable"
     readonly property string engineExtra: TermModel.engineExtra(root.engine)
     readonly property bool engineInstalling: root.promptOn && root.installing(root.engineExtra)
     readonly property var engineProgress: ExtrasService.progress[root.engineExtra] ?? null
@@ -115,16 +117,17 @@ Column {
         tone: "warning"
         icon: "textAa"
         title: I18n.t("prefs.term.look.nerd.title")
-        message: I18n.t("prefs.term.look.nerd.desc")
+        message: I18n.t("prefs.term.look.nerd.desc") + (root.nerdInstallable ? "" : " " + I18n.t("prefs.term.look.nerd.manual"))
 
         PillButton {
             objectName: "usePlainButton"
             kind: "tonal"
             text: I18n.t("prefs.term.look.nerd.use_plain")
-            onClicked: TerminalLookService.choose("plain")
+            onClicked: TerminalLookService.enablePrompt("plain")
         }
         PillButton {
             objectName: "installNerdButton"
+            visible: root.nerdInstallable
             readonly property bool busy: root.installing("nerd-font")
             enabled: !busy
             kind: "filled"

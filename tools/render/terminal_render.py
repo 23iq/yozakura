@@ -124,7 +124,7 @@ Window {{
     scroll_to("settingRow:terminal.enabled")
     snap("controls")
 
-    ev(win, "TerminalLookService.choose('two-line-box')")
+    ev(win, "TerminalLookService.enablePrompt('two-line-box')")
     ev(win, "Config.terminal.engine = 'ohmyposh'")
     ev(win, "Config.terminal.greeting = 'fastfetch'")
     ev(win, "Config.terminal.cursorShape = 'block'")
@@ -139,7 +139,7 @@ Window {{
 
     # No Nerd Font on the system + the engine being installed for this prompt.
     ev(win, "TerminalLookService._families = ['Noto Sans', 'DejaVu Sans Mono']")
-    ev(win, "TerminalLookService.choose('sakura-powerline')")
+    ev(win, "TerminalLookService.enablePrompt('sakura-powerline')")
     ev(win, "Config.terminal.greeting = 'none'")
     ev(win, "BackendService.emit('extras.progress', %s)" % json.dumps(
         {"job": "system-7", "kind": "system", "entries": ["oh-my-posh"], "state": "running", "percent": 62,
