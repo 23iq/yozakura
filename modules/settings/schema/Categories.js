@@ -10,6 +10,7 @@
 .import "lockscreen.js" as Lockscreen
 .import "launcher.js" as Launcher
 .import "desktop.js" as Desktop
+.import "dock.js" as Dock
 .import "windows.js" as Windows
 .import "system.js" as System
 .import "voice.js" as Voice
@@ -61,7 +62,7 @@ var groups = [
         "id": "dock",
         "icon": "dock",
         "title": "prefs.group.dock",
-        "categories": ["dock"]
+        "categories": ["dock", "dock-classic"]
     },
     {
         "id": "launcher",
@@ -156,7 +157,8 @@ var categories = [
     ]),
     Notch.category,
     Launcher.category,
-    legacy("dock", "dock", "prefs.cat.dock", "prefs.cat.dock.desc", "dashboard/controls/ShellPanel.qml", "dock", "dock taskbar apps favorites pinned", [
+    Dock.category,
+    legacy("dock-classic", "dock", "prefs.cat.dock-classic", "prefs.cat.dock-classic.desc", "dashboard/controls/ShellPanel.qml", "dock", "dock taskbar apps favorites pinned", [
         topic("settings.shell.dock_position", "dock", "left bottom right edge"),
         topic("settings.shell.dock_icon_size", "dock", "width height pixels apps")
     ]),

@@ -119,6 +119,12 @@ def drag(p0: QPoint, p1: QPoint) -> None:
 
 settle(300)
 
+# Calendar and weather are the shared bento widgets (one implementation),
+# drawn on the desktop surface: no pane of their own, no debug button.
+check(h.eval(frame("c1"), "body.framed") is False and h.eval(frame("c1"), "body.monthShift") == 0,
+      "desktop calendar is the shared CalendarWidget without its own pane")
+check(h.eval(frame("w1"), "body.showDebugControls") is False, "desktop weather is the shared WeatherWidget, no debug button")
+
 # Every type renders inside its frame, at its relative geometry.
 for w in WIDGETS:
     f = frame(w["id"])

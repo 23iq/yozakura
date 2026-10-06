@@ -1840,7 +1840,6 @@
   "desktop.widgets.opt.tint.primary": "Primario",
   "desktop.widgets.opt.tint.secondary": "Secundario",
   "desktop.widgets.opt.tint.tertiary": "Terciario",
-  "desktop.widgets.opt.forecast": "Pronóstico",
   "desktop.widgets.media.idle": "Reproduce algo para verlo aquí",
   "desktop.widgets.calendar.upcoming": "Próximamente",
   "desktop.widgets.calendar.no_events": "Nada planeado",
@@ -1848,8 +1847,6 @@
   "desktop.widgets.system.ram": "RAM",
   "desktop.widgets.system.gpu_temp": "GPU",
   "desktop.widgets.note.placeholder": "Escribe algo…",
-  "desktop.widgets.weather.unavailable": "Tiempo no disponible",
-  "desktop.widgets.weather.loading": "Cargando el tiempo…",
   "desktop.widgets.remove": "Quitar",
   "desktop.widgets.overlaps_clock": "Tapa el reloj de profundidad",
   "desktop.widgets.clock_area": "Reloj de profundidad",
@@ -3527,5 +3524,15 @@
   "prefs.appearance.popup_tail": "Flecha de ventana emergente",
   "prefs.appearance.popup_tail.desc": "Apunta las ventanas emergentes al elemento que las abrió.",
   "prefs.appearance.popup_gap": "Separación de ventanas emergentes",
-  "prefs.appearance.popup_gap.desc": "Distancia entre una ventana emergente y el elemento que la abrió."
+  "prefs.appearance.popup_gap.desc": "Distancia entre una ventana emergente y el elemento que la abrió.",
+  "prefs.cat.dock-classic": "Todas las opciones del dock",
+  "prefs.cat.dock-classic.desc": "Posición, tamaño, ocultación automática y más (panel clásico).",
+  "prefs.dock.section.indicator": "Aplicaciones en ejecución",
+  "prefs.dock.running.desc": "Marca las aplicaciones con ventanas abiertas.",
+  "prefs.dock.indicator": "Estilo del indicador",
+  "prefs.dock.indicator.desc": "Cómo se marcan las aplicaciones en ejecución; sigue el borde donde está el dock.",
+  "prefs.dock.indicator.dot": "Puntos",
+  "prefs.dock.indicator.line": "Línea",
+  "prefs.dock.indicator.glow": "Resplandor",
+  "prefs.dock.indicator.brush": "Pincelada"
 }

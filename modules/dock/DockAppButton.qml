@@ -17,8 +17,6 @@ Button {
     required property var appToplevel
     property int lastFocused: -1
     property real iconSize: Config.dock?.iconSize ?? 40
-    property real countDotWidth: 10
-    property real countDotHeight: 4
     property string dockPosition: "bottom"
 
     // Position helpers
@@ -113,61 +111,10 @@ Button {
                     }
                 }
 
-                // Running indicators - horizontal layout (for bottom dock)
-                Row {
-                    anchors.bottom: parent.bottom
-                    anchors.bottomMargin: -2
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 3
-                    visible: root.showIndicators && !root.isVertical
-
-                    Repeater {
-                        model: Math.min(root.instanceCount, 3)
-                        delegate: Rectangle {
-                            required property int index
-                            width: root.instanceCount <= 3 ? root.countDotWidth : root.countDotHeight
-                            height: root.countDotHeight
-                            radius: height / 2
-                            color: root.appIsActive ? Styling.srItem("overprimary") : Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.4)
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Running indicators - vertical layout (for left/right dock)
-                // Left dock: indicators on left edge, Right dock: indicators on right edge
-                Column {
-                    anchors.left: root.isLeft ? parent.left : undefined
-                    anchors.leftMargin: -2
-                    anchors.right: root.isRight ? parent.right : undefined
-                    anchors.rightMargin: -2
-                    anchors.verticalCenter: parent.verticalCenter
-                    spacing: 3
-                    visible: root.showIndicators && root.isVertical
-
-                    Repeater {
-                        model: Math.min(root.instanceCount, 3)
-                        delegate: Rectangle {
-                            required property int index
-                            width: root.countDotHeight
-                            height: root.instanceCount <= 3 ? root.countDotWidth : root.countDotHeight
-                            radius: width / 2
-                            color: root.appIsActive ? Styling.srItem("overprimary") : Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.4)
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                }
-                            }
-                        }
-                    }
+                DockIndicator {
+                    edge: root.dockPosition
+                    count: root.showIndicators ? root.instanceCount : 0
+                    focused: root.appIsActive
                 }
             }
         }

@@ -8,8 +8,9 @@ const plain = value => JSON.parse(JSON.stringify(value));
 
 const registry = loadLibrary('../modules/desktop/widgets/WidgetRegistry.js');
 const geo = loadLibrary('../modules/desktop/widgets/WidgetGeometry.js');
-const cal = loadLibrary('../modules/desktop/widgets/CalendarModel.js');
+const cal = loadLibrary('../modules/widgets/dashboard/widgets/CalendarModel.js');
 const net = loadLibrary('../modules/desktop/widgets/NetRate.js');
+const shared = loadLibrary('../modules/widgets/dashboard/widgets/WidgetRegistry.js');
 const clocks = loadLibrary('../modules/desktop/clockstyles/ClockStyleRegistry.js');
 const validator = loadLibrary('../config/ConfigValidator.js');
 const schema = loadLibrary('../modules/settings/schema/desktop.js');
@@ -23,7 +24,14 @@ test('every widget type is complete and its file exists', () => {
     assert.deepEqual(plain(ids), ['media', 'calendar', 'system', 'note', 'weather']);
     for (const t of registry.types) {
         assert.ok(t.labelKey && t.descKey && t.icon, t.id);
-        assert.ok(fs.existsSync(path.join(__dirname, '../modules/desktop/widgets/types', t.file)), t.file);
+        if (t.shared) {
+            // One implementation: the shared bento widget, not a desktop copy.
+            assert.ok(shared.byId(t.shared), `${t.id} -> shared ${t.shared}`);
+            assert.ok(!t.file, `${t.id} has no desktop duplicate`);
+            assert.ok(fs.existsSync(path.join(__dirname, '../modules/widgets/dashboard/widgets', shared.byId(t.shared).url)), t.shared);
+        } else {
+            assert.ok(fs.existsSync(path.join(__dirname, '../modules/desktop/widgets/types', t.file)), t.file);
+        }
         assert.ok(t.size.w >= t.minSize.w && t.size.h >= t.minSize.h, t.id);
         for (const o of t.options) {
             assert.ok(['toggle', 'select'].includes(o.type), `${t.id}.${o.key}`);
@@ -32,6 +40,24 @@ test('every widget type is complete and its file exists', () => {
         }
     }
     assert.equal(registry.get('nope'), null);
+});
+
+test('calendar and weather are the shared widgets; their desktop duplicates are gone', () => {
+    const fs = require('node:fs');
+    assert.equal(registry.get('calendar').shared, 'calendar');
+    assert.equal(registry.get('weather').shared, 'weather');
+    for (const f of ['types/CalendarWidget.qml', 'types/WeatherWidget.qml', 'CalendarModel.js', 'CalendarEvents.qml'])
+        assert.ok(!fs.existsSync(path.join(__dirname, '../modules/desktop/widgets', f)), f);
+    assert.ok(!fs.existsSync(path.join(__dirname, '../modules/widgets/dashboard/widgets/calendar')), 'old dashboard calendar');
+});
+
+test('existing desktop configs keep rendering: old options on shared types are tolerated', () => {
+    const list = registry.normalizeList([
+        { id: 'w1', type: 'weather', x: 0.1, y: 0.1, w: 0.2, h: 0.2, options: { forecast: false } },
+        { id: 'c1', type: 'calendar', x: 0.4, y: 0.1, w: 0.2, h: 0.3, options: { weekStart: 'monday' } }
+    ]);
+    assert.deepEqual(plain(list.map(w => w.type)), ['weather', 'calendar']);
+    assert.equal(registry.option(list[1], 'weekStart'), 'monday');
 });
 
 test('options fill in registry defaults, own values win', () => {

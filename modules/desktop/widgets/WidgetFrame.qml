@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.config
 import qs.modules.desktop.widgets
 import "WidgetRegistry.js" as Registry
+import "../../widgets/dashboard/widgets/WidgetRegistry.js" as Shared
 import "WidgetGeometry.js" as Geometry
 // Types are loaded by URL from the registry; the directory import makes
 // Quickshell's scanner include types/.
@@ -106,19 +107,39 @@ Item {
             id: content
             anchors.fill: parent
             active: root.type !== null
-            source: root.type ? Qt.resolvedUrl("types/" + root.type.file) : ""
+            source: root.type ? Qt.resolvedUrl(root.type.shared ? "../../widgets/dashboard/widgets/" + Shared.byId(root.type.shared).url : "types/" + root.type.file) : ""
             onLoaded: {
-                const w = item as DesktopWidget;
-                w.widget = Qt.binding(() => root.widget);
-                w.options = Qt.binding(() => Registry.options(root.widget));
-                w.ink = Qt.binding(() => surface.item);
-                w.active = Qt.binding(() => root.active);
-                w.preview = Qt.binding(() => root.preview);
-                w.editing = Qt.binding(() => root.editing);
-                w.k = Qt.binding(() => root.k);
-                w.optionChanged.connect((key, value) => root.optionChanged(key, value));
+                // Desktop-only types and shared bento widgets take the same
+                // optional inputs; each declares only the ones it uses.
+                const w = item;
+                const inputs = {
+                    "widget": () => root.widget,
+                    "options": () => Registry.options(root.widget),
+                    "ink": () => surface.item,
+                    "active": () => root.active,
+                    "preview": () => root.preview,
+                    "editing": () => root.editing,
+                    "k": () => root.k,
+                    "compact": () => root.width < 200 || root.height < 160,
+                    "animationsEnabled": () => root.active && !root.preview
+                };
+                for (const name in inputs)
+                    if (w[name] !== undefined)
+                        w[name] = Qt.binding(inputs[name]);
+                // The desktop surface is the frame; no debug buttons.
+                const off = ["framed", "showDebugControls"];
+                for (const name of off)
+                    if (w[name] !== undefined)
+                        w[name] = false;
+                root.relayOptions(w);
             }
         }
+    }
+
+    // Desktop-only types report option edits (the note text); shared ones don't.
+    function relayOptions(target: var): void {
+        if (target.optionChanged)
+            target.optionChanged.connect((key, value) => root.optionChanged(key, value));
     }
 
     // ---- edit chrome ----

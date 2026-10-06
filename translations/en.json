@@ -1840,7 +1840,6 @@
   "desktop.widgets.opt.tint.primary": "Primary",
   "desktop.widgets.opt.tint.secondary": "Secondary",
   "desktop.widgets.opt.tint.tertiary": "Tertiary",
-  "desktop.widgets.opt.forecast": "Forecast",
   "desktop.widgets.media.idle": "Play something to see it here",
   "desktop.widgets.calendar.upcoming": "Upcoming",
   "desktop.widgets.calendar.no_events": "Nothing planned",
@@ -1848,8 +1847,6 @@
   "desktop.widgets.system.ram": "RAM",
   "desktop.widgets.system.gpu_temp": "GPU",
   "desktop.widgets.note.placeholder": "Write something…",
-  "desktop.widgets.weather.unavailable": "Weather unavailable",
-  "desktop.widgets.weather.loading": "Loading weather…",
   "desktop.widgets.remove": "Remove",
   "desktop.widgets.overlaps_clock": "Covers the depth clock",
   "desktop.widgets.clock_area": "Depth clock",
@@ -3527,5 +3524,15 @@
   "prefs.appearance.popup_tail": "Popup tail",
   "prefs.appearance.popup_tail.desc": "Point popups at the item that opened them.",
   "prefs.appearance.popup_gap": "Popup gap",
-  "prefs.appearance.popup_gap.desc": "Distance between a popup and the item that opened it."
+  "prefs.appearance.popup_gap.desc": "Distance between a popup and the item that opened it.",
+  "prefs.cat.dock-classic": "All dock options",
+  "prefs.cat.dock-classic.desc": "Position, size, auto-hide and more (classic panel).",
+  "prefs.dock.section.indicator": "Running apps",
+  "prefs.dock.running.desc": "Mark apps that have open windows.",
+  "prefs.dock.indicator": "Indicator style",
+  "prefs.dock.indicator.desc": "How running apps are marked; it follows the edge the dock is on.",
+  "prefs.dock.indicator.dot": "Dots",
+  "prefs.dock.indicator.line": "Line",
+  "prefs.dock.indicator.glow": "Glow",
+  "prefs.dock.indicator.brush": "Brush"
 }

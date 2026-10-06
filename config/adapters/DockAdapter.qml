@@ -15,6 +15,7 @@ JsonAdapter {
     property bool hoverToReveal: true
     property bool availableOnFullscreen: false
     property bool showRunningIndicators: true
+    property string indicator: "dot"
     property bool showPinButton: true
     property bool showOverviewButton: true
     property list<string> ignoredAppRegexes: ["quickshell.*", "xdg-desktop-portal.*"]

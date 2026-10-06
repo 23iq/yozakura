@@ -5200,10 +5200,42 @@
           "description": "Allow revealing the dock over fullscreen windows."
         },
         "showRunningIndicators": {
-          "title": "Show running indicators",
+          "title": "Show Running Indicators",
           "type": "boolean",
           "default": true,
-          "description": "Dots under running apps."
+          "description": "Mark apps that have open windows.",
+          "x-settings": {
+            "category": "dock",
+            "section": "indicator",
+            "label": "shell.show_running_indicators",
+            "control": "toggle",
+            "keywords": "running apps dots indicator"
+          }
+        },
+        "indicator": {
+          "title": "Indicator style",
+          "type": "string",
+          "default": "dot",
+          "description": "How running apps are marked; it follows the edge the dock is on.",
+          "x-settings": {
+            "category": "dock",
+            "section": "indicator",
+            "label": "prefs.dock.indicator",
+            "control": "selector",
+            "keywords": "dock indicator running dot line glow brush style"
+          },
+          "enum": [
+            "dot",
+            "line",
+            "glow",
+            "brush"
+          ],
+          "x-enumLabels": {
+            "dot": "Dots",
+            "line": "Line",
+            "glow": "Glow",
+            "brush": "Brush"
+          }
         },
         "showPinButton": {
           "title": "Show pin button",
@@ -13249,6 +13281,11 @@
       "description": "App dock position, size and behavior."
     },
     {
+      "id": "dock-classic",
+      "title": "All dock options",
+      "description": "Position, size, auto-hide and more (classic panel)."
+    },
+    {
       "id": "overview",
       "title": "Overview",
       "description": "The workspace overview grid."
@@ -13412,7 +13449,8 @@
       "id": "dock",
       "title": "Dock",
       "categories": [
-        "dock"
+        "dock",
+        "dock-classic"
       ]
     },
     {

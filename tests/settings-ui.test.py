@@ -87,7 +87,7 @@ def check(cond: bool, what: str) -> None:
 
 
 # Every category renders without QML errors.
-order = ["appearance", "wallpapers", "surfaces", "bar", "bar-classic", "notch", "dock", "overview", "desktop",
+order = ["appearance", "wallpapers", "surfaces", "bar", "bar-classic", "notch", "dock", "dock-classic", "overview", "desktop",
          "lockscreen", "notifications", "windows", "input", "terminal", "system", "voice", "updates", "about"]
 for cat in order:
     ev(f'select("{cat}")')

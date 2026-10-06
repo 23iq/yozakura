@@ -6,8 +6,6 @@ import qs.modules.services
 import qs.config
 import "BentoGrid.js" as BentoGrid
 import "WidgetRegistry.js" as WidgetRegistry
-// Reaches calendar/ for Quickshell's scanner (Calendar is loaded by URL).
-import "calendar"
 
 // Bento grid of registry widgets, editable in place. Host-agnostic: the host
 // passes `cols` and the saved `cells`, binds `editing` and stores the cells
