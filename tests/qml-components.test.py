@@ -43,6 +43,7 @@ QtObject { property color overBackground: "white"; property color criticalRed: "
 import QtQuick
 QtObject { property string font: "Sans"; property string player: "P"; property string spotify: "S"; property string previous: "<"; property string next: ">"; property string play: "P"; property string pause: "II"; property string mic: "M"; property string micSlash: "X"; property string accept: "v"; property string copy: "c"; property string sync: "s"; property string downloadSimple: "d"; property string folder: "f"; property string cancel: "x"; property string stop: "S" }'''})
  module('qs.modules.services',{
+ 'ShellLayout':'pragma Singleton\nimport QtQuick\nQtObject { property var notchSegments: [] }',
  'I18n':'''pragma Singleton
 import QtQuick
 QtObject { function t(s) { return s; } }''',
@@ -92,6 +93,7 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  shutil.copy(notchActs/'NotchActivities.js', d)
  # Every module stays in the notch here (layout.*.host = notch)
  module('qs.modules.shell.hosts', {'HostRouter': 'pragma Singleton\nimport QtQuick\nQtObject { function hostFor(m) { return "notch"; } function notchOpen(v) { return !!v && !!(v.launcher || v.dashboard || v.powermenu || v.tools || v.aiquick); } }'})
+ module('qs.modules.shell.rehome', {'RehomedClock': 'import QtQuick\nText { property real size }', 'RehomedTray': 'import QtQuick\nItem { property real iconSize }'})
  children=p/'children'; children.mkdir()
  names=['NotchVisualizer','AlbumBackdrop','MediaTimeline','MediaTransportControls','ExpandedMedia','MediaSummary','IslandHeader','IslandNotifications','DefaultView']
  for n in ['Notch', 'NotchViewTransition']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)

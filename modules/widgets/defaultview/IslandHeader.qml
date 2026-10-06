@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services.activities
 import qs.modules.widgets.defaultview.activities
 import qs.config
+import qs.modules.shell.rehome
 import "activities/ActivityRegistry.js" as Registry
 
 Item {
@@ -63,7 +64,11 @@ Item {
     signal segmentClicked(string trigger, var activity, int button)
     // The media title was clicked
     signal mediaClicked
-    readonly property real contentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + microphoneWidth + 36 + activitiesWidth
+    // The bar's clock and tray while the bar is off (ShellLayout)
+    readonly property bool showClock: ShellLayout.notchSegments.indexOf("clock") !== -1
+    readonly property bool showTray: ShellLayout.notchSegments.indexOf("tray") !== -1
+    readonly property real rehomedWidth: clockLoader.width + trayLoader.width
+    readonly property real contentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + microphoneWidth + 36 + activitiesWidth + rehomedWidth
     implicitHeight: Config.notchTheme === "island" ? BarMetrics.notchIslandHeight : BarMetrics.notchRestHeight
 
     // Edge anchoring avoids a second positioner layout pass at the end of a
@@ -74,6 +79,15 @@ Item {
         anchors.leftMargin: 8
         anchors.verticalCenter: parent.verticalCenter
 
+        Loader {
+            id: clockLoader
+            active: root.showClock
+            anchors.verticalCenter: parent.verticalCenter
+            width: item ? (item as Item).implicitWidth + Metrics.spacing * 2 : 0
+            sourceComponent: RehomedClock {
+                size: Styling.fontSize(-1)
+            }
+        }
         Loader {
             id: timersLoader
             active: root.activitiesOn
@@ -100,9 +114,20 @@ Item {
         }
     }
     Loader {
+        id: trayLoader
+        active: root.showTray
+        anchors.right: parent.right
+        anchors.rightMargin: active ? 8 : 0
+        anchors.verticalCenter: parent.verticalCenter
+        width: item && (item as Item).visible ? (item as Item).implicitWidth + Metrics.spacing : 0
+        sourceComponent: RehomedTray {
+            iconSize: Metrics.iconSize - 4
+        }
+    }
+    Loader {
         id: trailingLoader
         active: root.activitiesOn
-        anchors.right: parent.right
+        anchors.right: trayLoader.left
         anchors.rightMargin: 8
         anchors.verticalCenter: parent.verticalCenter
         sourceComponent: NotchActivitySegment {

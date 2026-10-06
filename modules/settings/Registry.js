@@ -54,7 +54,8 @@ var EDITORS = {
     "TerminalLookEditor": "editors/TerminalLookEditor.qml",
     "CursorShapeChips": "editors/CursorShapeChips.qml",
     "AppThemingEditor": "editors/AppThemingEditor.qml",
-    "NotificationsStatus": "editors/NotificationsStatus.qml"
+    "NotificationsStatus": "editors/NotificationsStatus.qml",
+    "LayoutBuilder": "layout/LayoutBuilder.qml"
 };
 
 var PREVIEWS = {

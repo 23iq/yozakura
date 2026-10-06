@@ -4,6 +4,7 @@ import Quickshell
 import qs.config
 import qs.modules.theme
 import "EdgeLayout.js" as EdgeLayout
+import "LayoutModel.js" as LayoutModel
 
 // Builds the EdgeLayout environment for a screen from Config.bar/dock/notch
 // and exposes the placement helpers bound to it. All edge-aware UI (popups,
@@ -30,7 +31,9 @@ Singleton {
             "bar": {
                 "pos": bar && bar.position ? bar.position : "top",
                 "size": BarMetrics.moduleSize,
-                "visible": vis.bar ?? true
+                "visible": (vis.bar ?? true) && LayoutModel.fromConfig({
+                    "bar": bar
+                }).bar.enabled
             },
             "dock": {
                 "pos": dock && dock.position ? dock.position : "bottom",
@@ -41,7 +44,7 @@ Singleton {
                 "pos": notch && notch.position ? notch.position : "top",
                 "height": BarMetrics.notchRestHeight,
                 "align": notch && notch.align ? notch.align : "center",
-                "visible": vis.notch ?? true
+                "visible": (vis.notch ?? true) && !(notch && notch.enabled === false)
             }
         };
     }

@@ -6,6 +6,9 @@
 var description = "The notch (dynamic island): style, edge, hover/click expansion, media preview and what it shows when idle.";
 
 var keys = {
+    "enabled": {
+        "description": "Show the notch at rest. Off, its live activities move to the bar (or to corner pills without a bar) and it only appears while it shows a view."
+    },
     "position": {
         "enum": Enums.VERTICAL_EDGES
     },

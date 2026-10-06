@@ -10,12 +10,28 @@
       "title": "Enabled",
       "type": "boolean",
       "default": true,
+      "x-settings": {
+        "category": "layout",
+        "section": "parts",
+        "label": "prefs.layout.builder",
+        "entry": "layout.builder",
+        "entryTitle": "Bar, notch and dock",
+        "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
+      },
       "description": "Show the dock."
     },
     "theme": {
       "title": "Theme",
       "type": "string",
       "default": "default",
+      "x-settings": {
+        "category": "layout",
+        "section": "parts",
+        "label": "prefs.layout.builder",
+        "entry": "layout.builder",
+        "entryTitle": "Bar, notch and dock",
+        "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
+      },
       "description": "Dock style; integrated puts the apps inside the bar.",
       "enum": [
         "default",
@@ -27,6 +43,14 @@
       "title": "Position",
       "type": "string",
       "default": "bottom",
+      "x-settings": {
+        "category": "layout",
+        "section": "parts",
+        "label": "prefs.layout.builder",
+        "entry": "layout.builder",
+        "entryTitle": "Bar, notch and dock",
+        "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
+      },
       "description": "Screen edge of the dock.",
       "enum": [
         "top",

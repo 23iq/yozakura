@@ -454,7 +454,7 @@ Singleton {
     // Shell config sections and their properties
     readonly property var _shellSections: {
         "bar": ["position", "launcherIcon", "launcherIconTint", "launcherIconFullTint", "launcherIconSize", "enableFirefoxPlayer", "screenList", "frameEnabled", "frameThickness", "pinnedOnStartup", "hoverToReveal", "hoverRegionHeight", "showPinButton", "availableOnFullscreen", "pillStyle", "use12hFormat", "containBar", "keepBarShadow", "keepBarBorder", "clockShowDate", "layout", "compact", "activities", "panels", "moduleOptions"],
-        "notch": ["position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "osd"],
+        "notch": ["enabled", "position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "osd"],
         "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle"],
         "overview": ["style", "rows", "columns", "scale", "workspaceSpacing"],
         "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce"],

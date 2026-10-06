@@ -185,6 +185,13 @@ MIRROR = [
     "modules/theme/Icons.qml",
     "modules/theme/Motion.qml",
     "modules/theme/AppThemes.js",
+    # Layout page: the composable layout model, its live singleton and the
+    # edge environment the preview reads
+    "modules/theme/BarMetrics.qml",
+    "modules/shell/EdgeService.qml",
+    "modules/shell/EdgeLayout.js",
+    "modules/shell/LayoutModel.js",
+    "modules/services/ShellLayout.qml",
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
@@ -616,7 +623,8 @@ class SettingsEnv:
         (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds)))
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
-        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion"])
+        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion", "BarMetrics"])
+        self._qmldir(qs / "modules/shell", "qs.modules.shell", only=["EdgeService"])
         # DepthClock (clock style gallery) reads the bar edge
         self.h.module("qs.modules.bar.panels", {
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
@@ -649,6 +657,7 @@ class SettingsEnv:
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
                   "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
+                  "modules/settings/layout",
                   "modules/extras", "modules/settings/extras", "modules/terminal"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 

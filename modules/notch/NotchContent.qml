@@ -18,6 +18,7 @@ import qs.modules.shell
 import "./NotchNotificationView.qml"
 import qs.modules.bar.panels
 import qs.modules.shell.hosts
+import "NotchReveal.js" as NotchReveal
 
 Item {
     id: root
@@ -67,17 +68,6 @@ Item {
     // applies to the screen that actually has the fullscreen window
     readonly property bool activeWindowFullscreen: CompositorData.monitorHasFullscreen(compositorMonitor)
 
-    // Should auto-hide logic:
-    // 1. If notch and bar are on different sides: hide if keepHidden is ON, OR if windows/fullscreen are present
-    // 2. If notch and bar are on same side: hide only if bar is unpinned OR if fullscreen is present
-    readonly property bool shouldAutoHide: {
-        if (barPosition !== notchPosition) {
-            if ((Config.notch && Config.notch.keepHidden !== undefined) ? Config.notch.keepHidden : false) return true;
-            return hasWindows || activeWindowFullscreen;
-        }
-        return !barPinned || activeWindowFullscreen;
-    }
-
     // Check if the bar for this screen is vertical
     readonly property bool isBarVertical: barPosition === "left" || barPosition === "right"
 
@@ -94,31 +84,19 @@ Item {
 
     readonly property bool microphoneNotice: MicrophoneStatus.noticeVisible && MicrophoneStatus.noticeScreen === screen.name
 
-    // Reveal logic:
-    readonly property bool reveal: {
-        // If fullscreen and bar is NOT available on fullscreen, hard-hide the notch too
-        // This prevents barHoverActive from leaking through when the bar itself is hidden
-        if (activeWindowFullscreen && !(Config.bar && Config.bar.availableOnFullscreen !== undefined ? Config.bar.availableOnFullscreen : false)) {
-            return false;
-        }
-
-        // If keepHidden is true, ONLY show on interaction
-        // UNLESS notch and bar are on same side (e.g. both top), then keepHidden is IGNORED for sync consistency
-        if (((Config.notch && Config.notch.keepHidden !== undefined) ? Config.notch.keepHidden : false) && barPosition !== notchPosition) {
-            return (screenNotchOpen || panelAuto || hasActiveNotifications || microphoneNotice || hoverActive || barHoverActive);
-        }
-
-        // If not auto-hiding (pinned and not fullscreen), always show
-        if (!shouldAutoHide) return true;
-        
-        // Show on interaction (hover, open, notifications)
-        // This works even in fullscreen, ensuring hover always works
-        if (screenNotchOpen || panelAuto || hasActiveNotifications || microphoneNotice || hoverActive || barHoverActive) {
-            return true;
-        }
-        
-        return false;
-    }
+    // Reveal logic (NotchReveal.js); a disabled notch (notch.enabled, see
+    // ShellLayout) only shows while a view is open in it
+    readonly property bool reveal: NotchReveal.reveal({
+        "enabled": ShellLayout.notchEnabled,
+        "keepHidden": Config.notch ? Config.notch.keepHidden === true : false,
+        "sameEdge": barPosition === notchPosition,
+        "hasWindows": hasWindows,
+        "fullscreen": activeWindowFullscreen,
+        "barPinned": barPinned,
+        "availableOnFullscreen": Config.bar ? Config.bar.availableOnFullscreen === true : false,
+        "open": screenNotchOpen || panelAuto,
+        "interacting": screenNotchOpen || panelAuto || hasActiveNotifications || microphoneNotice || hoverActive || barHoverActive
+    })
 
     // Timer to delay hiding the notch after mouse leaves
     Timer {

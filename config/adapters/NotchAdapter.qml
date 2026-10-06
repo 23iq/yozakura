@@ -3,6 +3,7 @@
 import Quickshell.Io
 
 JsonAdapter {
+    property bool enabled: true
     property string position: "top"
     property string align: "center"
     property int hoverRegionHeight: 8

@@ -39,6 +39,12 @@ h.module("qs.modules.services", {
     "Visibilities": "pragma Singleton\nQtObject { property bool playerMenuOpen: false }",
     **timers_stubs.services(),
     "VoiceService": "pragma Singleton\nQtObject { property bool panelOpen: false; property string panelScreen: \"\"; property string state: \"listening\"; property string target: \"ai\"; property var bands: []; property int dismissals: 0; function dismiss() { dismissals++; panelOpen = false; } }",
+    # Bar content re-homed into the notch (none: the bar is on)
+    "ShellLayout": "pragma Singleton\nQtObject { property var notchSegments: [] }",
+})
+h.module("qs.modules.shell.rehome", {
+    "RehomedClock": "Text { property real size }",
+    "RehomedTray": "Item { property real iconSize }",
 })
 h.singleton("qs.modules.services.activities", "ActivityService", """QtObject {
     property string presentation: "notch"

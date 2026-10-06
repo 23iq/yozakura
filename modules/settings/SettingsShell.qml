@@ -8,6 +8,7 @@ import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.presets
 import qs.modules.settings.displays
+import qs.modules.settings.layout
 import qs.modules.settings.keyboard
 import qs.modules.settings.system
 import qs.modules.settings.extras
