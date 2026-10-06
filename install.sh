@@ -609,7 +609,7 @@ load_deps() {
 
 # deps_for COLUMN: package names of every row whose need is wanted.
 deps_for() {
-  local col="$1" wanted="|build|required|standard|"
+  local col="$1" wanted="|build|required|standard|hyprland|"  # Task 2: the chosen compositor replaces |hyprland|
   [[ "$WITH_VOICE" == 1 ]] && wanted+="voice|"
   [[ "$WITH_DEPTH" == 1 ]] && wanted+="depth|"
   [[ "$WITH_SDDM" == 1 ]] && wanted+="sddm|"

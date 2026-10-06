@@ -47,18 +47,46 @@ func runDoctor(args []string, out io.Writer) int {
 	}
 
 	c := deps.NewChecker()
-	items := doctorDeps(c, features)
-	items = append(items, doctorInstall(c.Distro)...)
+	comp := configuredCompositor()
+	items := doctorDeps(c, features, comp)
+	items = append(items, doctorInstall(c.Distro, comp)...)
 	return printDoctor(out, c.Distro, items, verbose)
 }
 
-func doctorDeps(c *deps.Checker, features map[string]bool) []doctorItem {
+// configuredCompositor reads the compositor the installer chose
+// (~/.local/share/<AppID>/compositor); hyprland when absent or unknown.
+func configuredCompositor() string {
+	data, err := os.ReadFile(filepath.Join(paths.New().DataDir, "compositor"))
+	if err != nil {
+		return deps.DefaultCompositor
+	}
+	return normalizeCompositor(string(data))
+}
+
+func normalizeCompositor(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	for _, c := range deps.Compositors {
+		if s == c {
+			return s
+		}
+	}
+	return deps.DefaultCompositor
+}
+
+func doctorDeps(c *deps.Checker, features map[string]bool, compositor string) []doctorItem {
 	var items []doctorItem
 	for _, d := range deps.All() {
 		if d.Optional() && !features[d.Need] {
 			continue
 		}
-		it := doctorItem{name: d.ID, need: d.Need, purpose: d.Purpose, ok: c.Present(d), pkgs: d.Packages(c.Distro)}
+		need := d.Need
+		if d.CompositorScoped() {
+			if d.Need != compositor {
+				continue
+			}
+			need = deps.NeedRequired
+		}
+		it := doctorItem{name: d.ID, need: need, purpose: d.Purpose, ok: c.Present(d), pkgs: d.Packages(c.Distro)}
 		if d.ID == brand.Daemon && !it.ok {
 			it.ok = daemonFound()
 		}
@@ -71,9 +99,18 @@ func doctorDeps(c *deps.Checker, features map[string]bool) []doctorItem {
 	return items
 }
 
-func doctorInstall(distro string) []doctorItem {
+func doctorInstall(distro, compositor string) []doctorItem {
 	src := paths.FindBaseShellSource()
-	items := []doctorItem{{name: "shell sources", need: deps.Required, purpose: "the QML the UI runs", ok: src != "", fix: installerHint()}}
+	items := []doctorItem{{name: "shell sources", need: deps.NeedRequired, purpose: "the QML the UI runs", ok: src != "", fix: installerHint()}}
+	if compositor == "hyprland" {
+		items = append(items, doctorHyprland(distro)...)
+	}
+	items = append(items, doctorItem{name: "input group", need: deps.Standard, purpose: "binds on a modifier alone (Super)", ok: inGroup("input"), fix: "sudo usermod -aG input $USER, then log in again"})
+	return items
+}
+
+func doctorHyprland(distro string) []doctorItem {
+	var items []doctorItem
 	if distro != "nixos" {
 		sessions, _ := filepath.Glob("/usr/share/wayland-sessions/hyprland*.desktop")
 		items = append(items, doctorItem{name: "Hyprland session", need: deps.Standard, purpose: "Hyprland in the login screen", ok: len(sessions) > 0, fix: "reinstall the hyprland package"})
@@ -86,7 +123,6 @@ func doctorInstall(distro string) []doctorItem {
 		}
 	}
 	items = append(items, doctorItem{name: "Hyprland config", need: deps.Standard, purpose: brand.DisplayName + " block in ~/.config/hypr", ok: block, fix: brand.AppID + " install hyprland"})
-	items = append(items, doctorItem{name: "input group", need: deps.Standard, purpose: "binds on a modifier alone (Super)", ok: inGroup("input"), fix: "sudo usermod -aG input $USER, then log in again"})
 	return items
 }
 
@@ -133,7 +169,7 @@ func printDoctor(out io.Writer, distro string, items []doctorItem, verbose bool)
 			if !verbose {
 				continue
 			}
-		case it.need == deps.Required:
+		case it.need == deps.NeedRequired:
 			mark = paint("31", "✖")
 			missingRequired++
 		default:

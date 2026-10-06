@@ -18,7 +18,7 @@ func TestTableParses(t *testing.T) {
 		}
 		seen[d.ID] = true
 		switch d.Need {
-		case Required, Standard, Build, "voice", "depth", "sddm":
+		case NeedRequired, Standard, Build, "hyprland", "niri", "mango", "voice", "depth", "sddm":
 		default:
 			t.Errorf("%s: unknown need %q", d.ID, d.Need)
 		}
@@ -110,5 +110,50 @@ func TestInstallHint(t *testing.T) {
 	}
 	if InstallHint("other", []string{"x"}) != "" {
 		t.Fatal("no hint expected for unknown distros")
+	}
+}
+
+func ids(ds []Dep) map[string]bool {
+	m := map[string]bool{}
+	for _, d := range ds {
+		m[d.ID] = true
+	}
+	return m
+}
+
+func TestRequiredIsCompositorScoped(t *testing.T) {
+	niri, hypr, mango := ids(Required("niri")), ids(Required("hyprland")), ids(Required("mango"))
+	if !niri["quickshell"] || !hypr["quickshell"] || !mango["quickshell"] {
+		t.Fatal("plain required rows belong to every compositor")
+	}
+	if !niri["niri"] || !niri["xwayland-satellite"] || !niri["portal-gnome"] {
+		t.Errorf("niri rows missing: %v", niri)
+	}
+	if niri["hyprland"] || niri["portal-hyprland"] || niri["mango"] {
+		t.Errorf("niri must not need other compositors' rows: %v", niri)
+	}
+	if !hypr["hyprland"] || !hypr["polkit-agent"] || hypr["niri"] {
+		t.Errorf("hyprland rows wrong: %v", hypr)
+	}
+	if !mango["mango"] || mango["hyprland"] || mango["niri"] {
+		t.Errorf("mango rows wrong: %v", mango)
+	}
+	if def := ids(Required("")); !def["hyprland"] || def["niri"] {
+		t.Error("empty compositor means hyprland")
+	}
+}
+
+func TestCompositorRowsAreNotOptional(t *testing.T) {
+	for _, d := range All() {
+		if d.CompositorScoped() && d.Optional() {
+			t.Errorf("%s: compositor row reported optional", d.ID)
+		}
+	}
+}
+
+func TestParseCompositorNeed(t *testing.T) {
+	ds, err := Parse("niri\tniri\tniri\tniri\tniri\tx\n")
+	if err != nil || len(ds) != 1 || !ds[0].CompositorScoped() {
+		t.Fatalf("got %v %v", ds, err)
 	}
 }

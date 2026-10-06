@@ -2,8 +2,9 @@
 # names per distro) and `yozakura doctor` (checks). Tab-separated columns:
 #   id      short name shown to the user
 #   need    required (the shell does not start without it), standard
-#           (installed by default; a feature degrades without it), build, or
-#           an optional feature: voice, depth, sddm
+#           (installed by default; a feature degrades without it), build,
+#           hyprland|niri|mango (required only for that compositor), or an
+#           optional feature: voice, depth, sddm
 #   check   alternatives separated by "|": a command on PATH, an absolute
 #           path glob, or font:<family substring>; "-" = package query only
 #   arch    Arch packages (space-separated; aur:<name> from the AUR, "-" none)
@@ -16,7 +17,7 @@ go	build	go	go	golang	building the backend
 make	build	make	make	make	building the backend
 curl	build	curl	curl	curl	downloads (installer, fonts, models)
 unzip	build	unzip	unzip	unzip	unpacking the icon font
-hyprland	required	Hyprland|hyprland	hyprland	hyprland	the compositor (and its display-manager session entry)
+hyprland	hyprland	Hyprland|hyprland	hyprland	hyprland	the compositor (and its display-manager session entry)
 yozd	required	yozd	-	-	the compositor daemon (binds, rules, config), built from this repository
 quickshell	required	qs|quickshell	quickshell	quickshell	the QML runtime the whole UI runs in
 qt6-base	required	/usr/lib*/qt6/plugins/platforms/libqwayland*.so|/usr/lib*/qt6/plugins/platforms/libqxcb.so	qt6-base qt6-wayland	qt6-qtbase qt6-qtwayland	Qt 6 on Wayland
@@ -27,9 +28,9 @@ qt6-multimedia	required	/usr/lib*/qt6/qml/QtMultimedia	qt6-multimedia qt6-multim
 qt6-shadertools	standard	-	qt6-shadertools qt6-tools syntax-highlighting	qt6-qtshadertools qt6-qttools kf6-syntax-highlighting	shader effects, code highlighting
 gstreamer	standard	/usr/lib*/gstreamer-1.0/libgstlibav.so	gst-plugins-good gst-plugins-bad gst-libav	gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugin-libav	video playback backend
 matugen	required	matugen	matugen	matugen	palette generation from the wallpaper
-portal-hyprland	standard	/usr/lib*/xdg-desktop-portal-hyprland|/usr/libexec/xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	screen sharing, screenshots for apps
+portal-hyprland	hyprland	/usr/lib*/xdg-desktop-portal-hyprland|/usr/libexec/xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	screen sharing, screenshots for apps
 portal-gtk	standard	/usr/lib*/xdg-desktop-portal-gtk|/usr/libexec/xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	file pickers and settings for apps
-polkit-agent	standard	/usr/lib*/hyprpolkitagent*|/usr/libexec/hyprpolkitagent|/usr/lib*/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib*/polkit-kde-authentication-agent-1	hyprpolkitagent	hyprpolkitagent	password prompts for system actions
+polkit-agent	hyprland	/usr/lib*/hyprpolkitagent*|/usr/libexec/hyprpolkitagent|/usr/lib*/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib*/polkit-kde-authentication-agent-1	hyprpolkitagent	hyprpolkitagent	password prompts for system actions
 pipewire	standard	pipewire	pipewire pipewire-pulse	pipewire pipewire-pulseaudio	audio
 wireplumber	standard	wireplumber|wpctl	wireplumber	wireplumber	audio session manager, volume control
 pw-record	standard	pw-record	pipewire	pipewire-utils	audio visualizer input, voice recording
@@ -69,6 +70,10 @@ gtk-theme	standard	/usr/share/themes/adw-gtk3*	adw-gtk-theme	adw-gtk3-theme	GTK 
 icons	standard	/usr/share/icons/breeze|/usr/share/icons/hicolor	breeze-icons hicolor-icon-theme	breeze-icon-theme hicolor-icon-theme	app and tray icons
 fonts	standard	font:Noto Sans CJK	ttf-roboto ttf-roboto-mono ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-nerd-fonts-symbols	google-roboto-fonts google-roboto-mono-fonts dejavu-sans-fonts liberation-sans-fonts google-noto-sans-fonts google-noto-sans-cjk-fonts google-noto-emoji-fonts	text, CJK and emoji glyphs
 phosphor-icons	required	font:Phosphor	aur:ttf-phosphor-icons	-	UI icons (installed per user when no package is available)
+niri	niri	niri	niri	niri	the compositor (and its display-manager session entry)
+xwayland-satellite	niri	xwayland-satellite	xwayland-satellite	xwayland-satellite	X11 apps under niri
+portal-gnome	niri	/usr/lib*/xdg-desktop-portal-gnome|/usr/libexec/xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	screen sharing, screenshots for apps under niri
+mango	mango	mango|mangowm	mangowm	-	the compositor (Arch only; no Fedora package)
 cmake	voice	cmake	cmake ninja gcc	cmake ninja-build gcc-c++	building whisper.cpp for voice input
 uv	depth	uv	uv	uv	the depth clock's Python environment
 sddm	sddm	sddm	sddm	sddm	login screen with the matching theme

@@ -17,10 +17,17 @@ var table string
 
 // Need classes, see packages.tsv.
 const (
-	Required = "required"
-	Standard = "standard"
-	Build    = "build"
+	NeedRequired = "required"
+	Standard     = "standard"
+	Build        = "build"
 )
+
+// Compositor-scoped need values: required only when that compositor is
+// the configured one.
+var Compositors = []string{"hyprland", "niri", "mango"}
+
+// DefaultCompositor is used when none is configured.
+const DefaultCompositor = "hyprland"
 
 // Dep is one row of packages.tsv.
 type Dep struct {
@@ -34,7 +41,33 @@ type Dep struct {
 
 // Optional reports whether the dependency belongs to an opt-in feature.
 func (d Dep) Optional() bool {
-	return d.Need != Required && d.Need != Standard && d.Need != Build
+	return d.Need != NeedRequired && d.Need != Standard && d.Need != Build && !d.CompositorScoped()
+}
+
+// CompositorScoped reports whether the row is required for one compositor only.
+func (d Dep) CompositorScoped() bool {
+	for _, c := range Compositors {
+		if d.Need == c {
+			return true
+		}
+	}
+	return false
+}
+
+// Required returns the rows the shell cannot start without under the given
+// compositor: every "required" row plus that compositor's rows. An unknown
+// or empty compositor means the default.
+func Required(compositor string) []Dep {
+	if compositor == "" {
+		compositor = DefaultCompositor
+	}
+	var out []Dep
+	for _, d := range All() {
+		if d.Need == NeedRequired || d.Need == compositor {
+			out = append(out, d)
+		}
+	}
+	return out
 }
 
 // Packages returns the packages for a distro family ("arch" or "fedora").

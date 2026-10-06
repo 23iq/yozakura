@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 func TestPrintDoctorReportsMissing(t *testing.T) {
 	var out bytes.Buffer
 	items := []doctorItem{
-		{name: "hyprland", need: deps.Required, ok: false, pkgs: []string{"hyprland"}},
+		{name: "hyprland", need: deps.NeedRequired, ok: false, pkgs: []string{"hyprland"}},
 		{name: "cava", need: deps.Standard, ok: false, pkgs: []string{"cava"}},
 		{name: "jq", need: deps.Standard, ok: true, pkgs: []string{"jq"}},
 		{name: "Hyprland config", need: deps.Standard, ok: false, fix: "yozakura install hyprland"},
@@ -43,5 +44,32 @@ func TestPrintDoctorAllGood(t *testing.T) {
 func TestDoctorRejectsUnknownFlags(t *testing.T) {
 	if code := runDoctor([]string{"--bogus"}, &bytes.Buffer{}); code != 2 {
 		t.Fatalf("got %d", code)
+	}
+}
+
+func TestDoctorDepsScopedToCompositor(t *testing.T) {
+	c := &deps.Checker{Distro: "arch", LookPath: func(string) (string, error) { return "", os.ErrNotExist }, Glob: func(string) ([]string, error) { return nil, nil }, Fonts: func() string { return "" }}
+	names := func(comp string) map[string]string {
+		m := map[string]string{}
+		for _, it := range doctorDeps(c, map[string]bool{}, comp) {
+			m[it.name] = it.need
+		}
+		return m
+	}
+	n := names("niri")
+	if n["niri"] != deps.NeedRequired || n["hyprland"] != "" || n["portal-hyprland"] != "" {
+		t.Errorf("niri: %v", n)
+	}
+	h := names("hyprland")
+	if h["hyprland"] != deps.NeedRequired || h["niri"] != "" {
+		t.Errorf("hyprland: %v", h)
+	}
+}
+
+func TestNormalizeCompositor(t *testing.T) {
+	for in, want := range map[string]string{"niri\n": "niri", " Mango ": "mango", "hyprland": "hyprland", "": "hyprland", "sway": "hyprland"} {
+		if got := normalizeCompositor(in); got != want {
+			t.Errorf("%q: got %s want %s", in, got, want)
+		}
 	}
 }
