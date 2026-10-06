@@ -59,6 +59,16 @@ type SendAction struct {
 	Identifier string `json:"identifier"`
 	Text       string `json:"text"`
 	Clipboard  string `json:"clipboard,omitempty"`
+	// Call is a daemon IPC call the shell makes when the action is clicked
+	// (e.g. timers.add {"id":"t3","spec":"5m"} for "+5 min"), so a backend
+	// service can react to its own notification's actions.
+	Call *ActionCall `json:"call,omitempty"`
+}
+
+// ActionCall is one daemon IPC request (service.method + params).
+type ActionCall struct {
+	Method string `json:"method"`
+	Params any    `json:"params,omitempty"`
 }
 
 func (s *Service) send(params json.RawMessage) (any, error) {
@@ -66,8 +76,18 @@ func (s *Service) send(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, err
 	}
+	id, err := s.Send(p)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"requestId": id}, nil
+}
+
+// Send pushes a notification request to the subscribed shell. In-process
+// services (timers) call it directly.
+func (s *Service) Send(p SendParams) (int64, error) {
 	if p.Summary == "" && p.Body == "" {
-		return nil, &ValidationError{msg: "notify.send: summary or body required"}
+		return 0, &ValidationError{msg: "notify.send: summary or body required"}
 	}
 	if p.AppName == "" {
 		p.AppName = brand.DisplayName
@@ -92,8 +112,7 @@ func (s *Service) send(params json.RawMessage) (any, error) {
 	for sub := range s.subs {
 		sub.Send("notify.request", payload)
 	}
-
-	return map[string]any{"requestId": int64(id)}, nil
+	return int64(id), nil
 }
 
 func (s *Service) subscribe(sub *ipc.Subscriber) {
@@ -110,6 +129,13 @@ func (s *Service) subscribe(sub *ipc.Subscriber) {
 	s.mu.Lock()
 	delete(s.subs, sub)
 	s.mu.Unlock()
+}
+
+// Subscribers returns how many shells listen for notification requests.
+func (s *Service) Subscribers() int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.subs)
 }
 
 // ValidationError reports a malformed notify.send payload.

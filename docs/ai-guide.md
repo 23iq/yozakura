@@ -139,6 +139,21 @@ Tokyo"`, `yozakura cmd wallpaper random`, `yozakura cmd theme light` run
 one. UI commands need the running shell; config and CLI ones do not.
 `yozakura onboarding` reopens the welcome / setup wizard.
 
+Timers, stopwatch and reminders (daemon `timers` service, persisted in
+`~/.local/share/yozakura/timers.json`, counted by wall clock so they survive
+restarts; a finished timer rings with a notification "+5 min" / "Stop"):
+
+```bash
+yozakura timer 10m tea                    # times: 10m, 1h30, 1h30m, 90s, 25 (= minutes), 1:30:00, 18:00, 7:30pm
+yozakura timer list [--json]              # timers, stopwatch and reminders
+yozakura timer pause|resume|reset|cancel [id|name]   # id optional with one timer
+yozakura timer add t3 5m                  # "-1m" removes time; on a ringing timer it snoozes
+yozakura timer stop                       # stop every ringing timer
+yozakura timer pomodoro [50m] [10m]       # work/break cycles (defaults: system.pomodoro.*)
+yozakura stopwatch start|pause|resume|toggle|lap|reset|status
+yozakura remind 18:00 call mom            # or: remind in 20m stretch; remind list; remind cancel r4
+```
+
 Completion: `yozakura completion bash|zsh|fish` (keys, values and preset
 names are completed live from the catalog):
 
@@ -180,9 +195,16 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `specials_list` | yes | special workspaces with binds, apps and current window counts |
 | `special_open`, `special_add`, `special_update`, `special_remove`, `special_app_add` | no | manage special workspaces: `{"name":"Chat","toggle":"SUPER+S","apps":["org.telegram.desktop"]}` |
 | `shell_command` | no | run one: `{"command":"glass","arg":"0.6"}`, `{"command":"dnd"}` |
+| `timer_list`, `reminder_list` | yes | timers (id, name, state, time left), stopwatch (elapsed, laps), reminders |
+| `timer_start` | no | `{"duration":"10m","name":"tea"}`, `{"duration":"18:00"}`, `{"pomodoro":true,"duration":"50m","break":"10m"}` |
+| `timer_control` | no | `{"id":"t3","action":"pause"}`; actions pause, resume, add (`"amount":"5m"`), reset, cancel, dismiss |
+| `stopwatch_control` | no | `{"action":"lap"}`; start, pause, resume, toggle, lap, reset, status |
+| `reminder_add`, `reminder_cancel` | no | `{"when":"in 20m","message":"stretch"}`, `{"when":"7:30pm"}`; cancel by id or message |
 
 Config and preset tools work on files and do not need the daemon; the others
-talk to the running shell. Keys may be passed fully qualified (`"key":
+talk to the running shell. Tools whose change can be reverted (timers,
+reminders, stopwatch) return `"undo": {"tool": ..., "args": {...}}`: calling
+that tool with those args undoes the change. Keys may be passed fully qualified (`"key":
 "theme.roundness"`) or as `"domain"` + relative `"key"`.
 
 **Agent etiquette.** Search or describe before you set; never invent keys.
@@ -337,6 +359,7 @@ combo.
 | Presets | `backend/pkg/presets` (aspects registry: `aspects.go`), settings studio `modules/settings/presets/` + `modules/settings/store/PresetStudio.qml`, quick switcher `modules/services/PresetsService.qml` (all run `yozakura preset`) | `tools/render/presets_render.py` | `backend/pkg/presets/*_test.go`, `tests/preset-studio*.test.*` |
 | AI center | `modules/aicenter/`, `modules/services/Ai.qml`, `modules/services/ai/`, `backend/pkg/svc/agents` | `ai.*` | `tests/ai-*.test.*` |
 | Voice | `modules/services/voice/`, `backend/pkg/svc/voice` | `voice.*` | `tests/voice*.test.*` |
+| Timers, stopwatch, reminders | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go` | `system.pomodoro.*` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |
 | Keybinds | `config/KeybindActions.js`, `modules/services/GlobalShortcuts.qml` | `binds.json` | |
 | Settings catalog | `tools/schema/`, `config/meta/`, `backend/pkg/catalog` | | `tests/schema-catalog.test.cjs`, `backend/pkg/catalog/*_test.go` |
