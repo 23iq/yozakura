@@ -22,7 +22,7 @@ h.module("Quickshell.Io", {
     "Process": "QtObject { property var command; property var stdout; property var stderr; property var environment; property bool running: false; signal exited(int code, int status); function signal(number) {} }",
     "StdioCollector": "QtObject { property string text; signal streamFinished; }",
     "SplitParser": "QtObject { signal read(string line); }",
-    "FileView": "QtObject { property string path; property bool atomicWrites; property bool blockWrites; property bool printErrors; function setText(text) {} }",
+    "FileView": "QtObject { property string path; property bool atomicWrites; property bool blockWrites; property bool printErrors; signal loaded; function setText(text) {} function text() { return ''; } }",
 })
 h.module("qs.modules.services", {
     "I18n": "pragma Singleton\nQtObject { function t(key) { return key; } }",
@@ -109,5 +109,29 @@ assert h.eval(obj, "GlobalStates.aiSpace") == "code" and h.eval(obj, "activeAgen
 assert h.eval(obj, "StateService.values.aiLastCodeSession.id") == "proj", "last Code session is remembered"
 h.eval(obj, "openConversation('agent','first')")
 assert h.eval(obj, "GlobalStates.aiSpace") == "assistant", "legacy shell sessions belong to the Assistant"
+# Effort is remembered per model and reaches the chat; Ollama gets num_ctx.
+h.eval(obj, """setSpace('assistant'); catalog.apiModels=[
+  {id:'anthropic:claude-sonnet-4-5',model:'claude-sonnet-4-5',provider:'anthropic',name:'Sonnet',kind:'api',available:true,
+   info:{reasoning:'anthropic_budget',efforts:['off','low','medium','high','max'],contextWindow:200000}},
+  {id:'ollama:qwen3',model:'qwen3',provider:'ollama',name:'qwen3',kind:'local',available:true,
+   info:{source:'ollama',reasoning:'ollama_think',capabilities:['thinking'],contextWindow:262144}}];
+setModel('anthropic:claude-sonnet-4-5')""")
+assert h.eval(obj, "effort.level") == "", "auto: nothing sent until the user picks a level"
+assert h.eval(obj, "JSON.stringify(effort.levels)") == '["off","low","medium","high","max"]'
+assert h.eval(obj, "effort.set('high')")
+assert h.eval(obj, "chat.effort") == "high", "the chat uses the chosen level"
+assert h.eval(obj, "StateService.values.aiModelEfforts['anthropic:claude-sonnet-4-5']") == "high", "remembered per model"
+assert h.eval(obj, "contextState.window") == 200000
+h.eval(obj, "chat.contextTokens = 190000")
+assert h.eval(obj, "contextState.level") == "critical"
+h.eval(obj, "setModel('ollama:qwen3')")
+assert h.eval(obj, "chat.numCtx") == 32768, "num_ctx = min(model max, ai.ollama.numCtx)"
+assert h.eval(obj, "contextState.window") == 32768
+h.eval(obj, "setModel('anthropic:claude-sonnet-4-5')")
+assert h.eval(obj, "effort.level") == "high", "switching back restores the model's level"
+# Agents: the chosen native level is remembered for the next session.
+h.eval(obj, "setModel('agent:codex'); effort.set('xhigh')")
+assert h.eval(obj, "StateService.values.aiModelEfforts['agent:codex/default']") == "xhigh"
+assert h.eval(obj, "agentSettings.effort") == "xhigh"
 print("ai-facade: ok")
 h.exit(0)

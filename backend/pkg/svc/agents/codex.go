@@ -343,6 +343,10 @@ func (c *codexConn) onNotify(method string, params json.RawMessage) {
 				InputTokens  int64 `json:"inputTokens"`
 				OutputTokens int64 `json:"outputTokens"`
 			} `json:"total"`
+			Last struct {
+				TotalTokens int64 `json:"totalTokens"`
+			} `json:"last"`
+			ModelContextWindow int64 `json:"modelContextWindow"`
 		} `json:"tokenUsage"`
 	}
 	_ = json.Unmarshal(params, &p)
@@ -371,7 +375,10 @@ func (c *codexConn) onNotify(method string, params json.RawMessage) {
 			c.sink.Emit(Event{Kind: KindDiff, ID: "turn:" + p.TurnID, Diff: p.Diff})
 		}
 	case "thread/tokenUsage/updated":
-		c.usage = &Usage{InputTokens: p.TokenUsage.Total.InputTokens, OutputTokens: p.TokenUsage.Total.OutputTokens}
+		// total is the whole thread; last is the latest request, which is
+		// what currently fills the context window.
+		c.usage = &Usage{InputTokens: p.TokenUsage.Total.InputTokens, OutputTokens: p.TokenUsage.Total.OutputTokens,
+			ContextTokens: p.TokenUsage.Last.TotalTokens, ContextWindow: p.TokenUsage.ModelContextWindow}
 	case "error":
 		if !p.WillRetry && p.Error.Message != "" {
 			c.sink.Emit(Event{Kind: KindError, Message: p.Error.Message})

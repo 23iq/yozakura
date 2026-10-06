@@ -135,7 +135,13 @@ var types = {
     },
     "ai": {
         "agents.autoApprove": "list<var>",
+        "context.autoCompactAt": "int",
+        "context.criticalAt": "int",
+        "context.keepTurns": "int",
+        "context.overrides": "list<var>",
+        "context.warnAt": "int",
         "maxToolRounds": "int",
+        "ollama.numCtx": "int",
         "quickAsk.width": "int",
         "sidebarWidth": "int",
         "unloadAfterMinutes": "int",

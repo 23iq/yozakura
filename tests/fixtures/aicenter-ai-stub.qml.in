@@ -85,7 +85,37 @@ QtObject {
     property QtObject catalog: QtObject {
         property var apiModels: root.models.slice(1)
         property bool fetching: false
+        property int probes: 0
         function refresh() {
+        }
+        function probeOllama(force) {
+            probes++;
+        }
+    }
+
+    // Effort and context state (EffortState / ContextState stand-ins).
+    property QtObject effort: QtObject {
+        property var levels: ["off", "low", "medium", "high", "max"]
+        property string level: ""
+        property string autoHint: ""
+        property var chosen: []
+        function set(v) {
+            chosen = chosen.concat([v]);
+            level = v;
+            return true;
+        }
+        function ensureAgentCatalog() {}
+    }
+    property QtObject contextState: QtObject {
+        property int used: 0
+        property int window: 0
+        property string source: "table"
+        property bool agentEngine: root.mode === "agent"
+        property bool canCompact: false
+        property bool compacting: false
+        property int compactions: 0
+        function compact(s) {
+            compactions++;
         }
     }
 
@@ -262,7 +292,8 @@ QtObject {
     property var ambient: ({hour: 10, media: {title: "Clair de lune", artist: "Debussy", playing: true}, clipboard: {text: "Traceback (most recent call last):\n  File \"x.py\""}})
     function ambientContext() { return ambient; }
     property int settingsOpened: 0
-    function openProviderSettings() { settingsOpened++; }
+    property string connectProvider: ""
+    function openProviderSettings(p) { settingsOpened++; connectProvider = p || ""; }
     property var undone: []
     function undoAction(u) { undone = undone.concat([u.tool]); }
     function setModel(id) {

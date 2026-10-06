@@ -1,4 +1,6 @@
 .pragma library
+.import "Effort.js" as Effort
+.import "ProviderPresets.js" as Presets
 
 // Chat providers as data + pure functions (no QML objects), so request
 // building and stream parsing are unit-testable with recorded streams.
@@ -16,11 +18,13 @@
 // calls in `acc`; finishTools(acc) yields [{id, name, args}].
 
 var PROVIDERS = {
-    openai: { family: "openai", label: "OpenAI", icon: "openai.svg", keyId: "OPENAI_API_KEY", base: "https://api.openai.com/v1", models: "/models", tools: true, images: true },
+    openai: { family: "openai", label: "OpenAI", icon: "openai.svg", keyId: "OPENAI_API_KEY", base: "https://api.openai.com/v1", models: "/models", tools: true, images: true, usage: true },
     gemini: { family: "gemini", label: "Google Gemini", icon: "google.svg", keyId: "GEMINI_API_KEY", base: "https://generativelanguage.googleapis.com/v1beta", tools: true, images: true },
     anthropic: { family: "anthropic", label: "Anthropic", icon: "anthropic.svg", keyId: "ANTHROPIC_API_KEY", base: "https://api.anthropic.com/v1", models: "/models", tools: true, images: true },
     mistral: { family: "openai", label: "Mistral", icon: "mistral.svg", keyId: "MISTRAL_API_KEY", base: "https://api.mistral.ai/v1", models: "/models", tools: true, images: false },
     groq: { family: "openai", label: "Groq", icon: "groq.svg", keyId: "GROQ_API_KEY", base: "https://api.groq.com/openai/v1", models: "/models", tools: true, images: false },
+    openrouter: { family: "openai", label: "OpenRouter", icon: "openrouter.svg", keyId: "OPENROUTER_API_KEY", base: "https://openrouter.ai/api/v1", models: "/models", tools: true, images: true, usage: true },
+    deepseek: { family: "openai", label: "DeepSeek", icon: "deepseek.svg", keyId: "DEEPSEEK_API_KEY", base: "https://api.deepseek.com/v1", models: "/models", tools: true, images: false, usage: true },
     minimax: { family: "anthropic", label: "MiniMax", icon: "minimax.svg", keyId: "MINIMAX_API_KEY", base: "https://api.minimax.io/anthropic/v1", bearer: true, tools: true, images: false },
     ollama: { family: "ollama", label: "Ollama", icon: "ollama.svg", keyId: "", base: "http://127.0.0.1:11434", local: true, tools: true, images: true },
     custom: { family: "openai", label: "Custom (OpenAI compatible)", icon: "openrouter.svg", keyId: "", base: "", models: "/models", tools: true, images: true }
@@ -36,11 +40,14 @@ function family(id) {
     return provider(id).family;
 }
 
+// A model's tool support: the provider must speak tools and the model's
+// capability record (models.json / Ollama probe) must not say otherwise.
 function supportsTools(model) {
     if (!model)
         return false;
     var p = provider(model.provider);
-    return !!p.tools && model.tools !== false;
+    var info = model.info || {};
+    return !!p.tools && model.tools !== false && info.tools !== false;
 }
 
 // ── message normalization ──────────────────────────────────────────────
@@ -60,6 +67,10 @@ function normalize(messages) {
         }
         if (m.role === "assistant") {
             var a = { role: "assistant", content: m.content || "" };
+            if (m.signature) {
+                a.thinking = m.thinking || "";
+                a.signature = m.signature;
+            }
             if (m.toolCalls && m.toolCalls.length > 0) {
                 a.toolCalls = m.toolCalls;
             } else if (m.functionCall) {
@@ -242,6 +253,10 @@ function _anthropicMessages(messages) {
                 push("user", { type: "image", source: { type: "base64", media_type: imgs[j].mimeType, data: imgs[j].base64 } });
             push("user", { type: "text", text: userText(m) || " " });
         } else if (m.role === "assistant") {
+            // With extended thinking, a tool loop must hand the signed
+            // thinking block back before the tool_use it led to.
+            if (m.thinking && m.signature)
+                push("assistant", { type: "thinking", thinking: m.thinking, signature: m.signature });
             if (m.content)
                 push("assistant", { type: "text", text: m.content });
             var calls = m.toolCalls || [];
@@ -314,7 +329,9 @@ function _ollamaMessages(system, messages) {
     return out;
 }
 
-// opts: {system, maxTokens, temperature, thinking}
+// opts: {system, maxTokens, temperature, effort (off|low|medium|high|max,
+// mapped by Effort.js from the model's capability record `model.info`),
+// numCtx (Ollama context length to allocate)}
 function body(messages, model, tools, opts) {
     var o = opts || {};
     var msgs = normalize(messages);
@@ -339,13 +356,17 @@ function body(messages, model, tools, opts) {
                     }) }];
     } else if (fam === "ollama") {
         b = { model: model.model, messages: _ollamaMessages(o.system, msgs), stream: true };
+        // Ollama's default context is a few thousand tokens: without
+        // num_ctx it silently drops the start of longer chats.
+        if (o.numCtx > 0)
+            b.options = { num_ctx: o.numCtx };
         if (t.length > 0)
             b.tools = t.map(function (x) {
                 return { type: "function", "function": { name: x.name, description: x.description || "", parameters: x.parameters || { type: "object", properties: {} } } };
             });
     } else {
         b = { model: model.model, messages: _openaiMessages(o.system, msgs), stream: true };
-        if (model.provider === "openai")
+        if (provider(model.provider).usage)
             b.stream_options = { include_usage: true };
         if (t.length > 0)
             b.tools = t.map(function (x) {
@@ -354,13 +375,15 @@ function body(messages, model, tools, opts) {
     }
     if (o.temperature !== undefined && fam !== "gemini")
         b.temperature = o.temperature;
+    if (o.effort && model.info)
+        b = Effort.apply(b, Presets.effortFamily(model.provider), o.effort, model.info);
     return b;
 }
 
 // ── stream parsing ─────────────────────────────────────────────────────
 
 function newAccumulator() {
-    return { calls: [], byIndex: {}, byId: {}, text: "", thinking: "", usage: null, sawDone: false };
+    return { calls: [], byIndex: {}, byId: {}, text: "", thinking: "", signature: "", usage: null, sawDone: false };
 }
 
 function _call(acc, key) {
@@ -475,12 +498,17 @@ function _parseAnthropic(line, acc) {
             r.text = json.delta.text || "";
         else if (json.delta.type === "thinking_delta")
             r.thinking = json.delta.thinking || "";
+        else if (json.delta.type === "signature_delta")
+            acc.signature += json.delta.signature || "";
         else if (json.delta.type === "input_json_delta")
             _call(acc, json.index).argsText += json.delta.partial_json || "";
         break;
     case "message_start":
-        if (json.message && json.message.usage)
-            acc.usage = { inputTokens: json.message.usage.input_tokens || 0, outputTokens: 0 };
+        // input_tokens excludes cache reads/writes; the prompt is all three.
+        if (json.message && json.message.usage) {
+            var mu = json.message.usage;
+            acc.usage = { inputTokens: (mu.input_tokens || 0) + (mu.cache_read_input_tokens || 0) + (mu.cache_creation_input_tokens || 0), outputTokens: 0, cachedTokens: mu.cache_read_input_tokens || 0 };
+        }
         break;
     case "message_delta":
         if (json.usage) {

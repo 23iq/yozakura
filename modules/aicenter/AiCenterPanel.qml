@@ -210,11 +210,27 @@ StyledRect {
                     font.family: Config.theme.font
                     font.pixelSize: BarLook.font(-2)
                 }
+                ContextNotice {
+                    Layout.fillWidth: true
+                    used: Ai.contextState ? Ai.contextState.used : 0
+                    window: Ai.contextState ? Ai.contextState.window : 0
+                    agent: Ai.contextState ? Ai.contextState.agentEngine : false
+                    canCompact: Ai.contextState ? Ai.contextState.canCompact : false
+                    compacting: Ai.contextState ? Ai.contextState.compacting : false
+                    sessionKey: Ai.sessionKey
+                    onCompactRequested: Ai.contextState.compact(null)
+                }
                 ComposerStatus {
                     Layout.fillWidth: true
                     Layout.leftMargin: 4
                     Layout.rightMargin: 4
+                    contextUsed: Ai.contextState ? Ai.contextState.used : 0
+                    contextWindow: Ai.contextState ? Ai.contextState.window : 0
+                    contextSource: Ai.contextState ? Ai.contextState.source : ""
+                    canCompact: Ai.contextState ? Ai.contextState.canCompact : false
+                    compacting: Ai.contextState ? Ai.contextState.compacting : false
                     onPickRequested: picker.open()
+                    onCompactRequested: Ai.contextState.compact(null)
                 }
                 Composer {
                     id: composer
@@ -299,6 +315,7 @@ StyledRect {
         y: 60
         filterKind: root.code ? "agent" : "all"
         onPicked: id => Ai.setModel(id)
+        onConnectRequested: provider => Ai.openProviderSettings(provider)
         onClosed: root.focusComposer()
     }
 }

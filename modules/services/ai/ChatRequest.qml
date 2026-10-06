@@ -19,6 +19,8 @@ QtObject {
     property var tools: []
     property string system: ""
     property string customCurl: ""
+    property string effort: ""
+    property int numCtx: 0
 
     readonly property bool running: curl.running
     property bool aborted: false
@@ -63,7 +65,9 @@ QtObject {
         if (aborted)
             return;
         const body = Providers.body(messages, model, tools, {
-            system: system
+            system: system,
+            effort: effort,
+            numCtx: numCtx
         });
         bodyFile.setText(JSON.stringify(body));
         const url = Providers.endpoint(model, apiKey);
@@ -127,6 +131,7 @@ QtObject {
             root.finished({
                 text: acc.text,
                 thinking: acc.thinking,
+                signature: acc.signature,
                 toolCalls: Providers.finishTools(acc),
                 usage: acc.usage,
                 error: error,

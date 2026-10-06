@@ -34,6 +34,12 @@ Item {
    function close(id) {closed=closed.concat([id]);}
   }
   function openConversation(kind,id) {opened=id;}
+  function requestOptions(m) {return {effort:"",numCtx:0};}
+  property QtObject effort: QtObject {function rememberedFor(a,m) {return null;}}
+  property QtObject contextState: QtObject {
+   property QtObject compactor: QtObject {function abort() {}}
+   function needsAutoCompact(s) {return false;}
+  }
  }
  property RequestRunner runner: RequestRunner {owner:scene.facade}
  property string callbackError: ""

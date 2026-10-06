@@ -4,7 +4,7 @@
 // see services/ai/ChatSession.qml) and AgentTimeline blocks (CLI agents, see
 // services/ai/AgentTimeline.js) into flat, ListModel-friendly rows:
 //
-//   {kind: user|assistant|thinking|action|permission|diff|error|notice,
+//   {kind: user|assistant|thinking|action|permission|diff|error|notice|compacted,
 //    key, text, engine (model name), status, streaming, attachments (JSON), title, tool,
 //    category, input (JSON string), output, isError, path, diff, decision,
 //    options (JSON), undo (JSON string, "" = not undoable), ref, source, ts}
@@ -17,7 +17,7 @@
 // patch() turns two row lists into minimal ListModel operations, so a
 // streamed token updates one row only.
 
-var KINDS = ["user", "assistant", "thinking", "action", "permission", "diff", "error", "notice"];
+var KINDS = ["user", "assistant", "thinking", "action", "permission", "diff", "error", "notice", "compacted"];
 
 var FIELDS = {
     kind: "", key: "", text: "", engine: "", status: "", streaming: false, attachments: "[]",
@@ -108,6 +108,9 @@ function fromChatRow(r, index, options) {
     }
     case "error":
         return [row("error", { key: base, text: r.content || "", source: index, ts: ts })];
+    case "summary":
+        // A compaction marker; `text` is the summary the model now sees.
+        return [row("compacted", { key: base, text: r.content || "", source: index, ts: ts })];
     default:
         return [row("notice", { key: base, text: r.content || "", source: index, ts: ts })];
     }
@@ -199,9 +202,9 @@ function patch(before, after, offset) {
 
 // True when a row starts a new speaker group (assistant header, spacing).
 function startsGroup(prevKind, kind) {
-    if (kind === "user" || kind === "notice" || kind === "error")
+    if (kind === "user" || kind === "notice" || kind === "error" || kind === "compacted")
         return true;
-    return !prevKind || prevKind === "user" || prevKind === "notice" || prevKind === "error";
+    return !prevKind || prevKind === "user" || prevKind === "notice" || prevKind === "error" || prevKind === "compacted";
 }
 
 // Parsed undo descriptor of a row, or null.

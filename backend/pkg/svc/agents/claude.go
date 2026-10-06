@@ -107,6 +107,9 @@ type claudeConn struct {
 	nreq  int
 	inMsg map[string]bool // message ids streamed via partial events
 	tools map[string]string
+	// context tokens of the latest main-thread request (its prompt incl.
+	// cache reads/writes + output), reported with the done event
+	lastContext int64
 }
 
 func (a claudeAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, error) {
@@ -232,6 +235,9 @@ func (c *claudeConn) onStreamEvent(ev map[string]any) {
 }
 
 func (c *claudeConn) onAssistant(msg map[string]any) {
+	if u := asMap(msg["usage"]); len(u) > 0 {
+		c.lastContext = claudeContextTokens(u)
+	}
 	id, _ := msg["id"].(string)
 	streamed := c.inMsg[id]
 	for _, b := range asSlice(msg["content"]) {
@@ -335,7 +341,8 @@ func (c *claudeConn) onControlRequest(m map[string]any) {
 
 func (c *claudeConn) onResult(m map[string]any) {
 	u := asMap(m["usage"])
-	usage := &Usage{InputTokens: int64(num(u["input_tokens"])), OutputTokens: int64(num(u["output_tokens"])), CostUSD: num(m["total_cost_usd"])}
+	usage := &Usage{InputTokens: int64(num(u["input_tokens"])), OutputTokens: int64(num(u["output_tokens"])), CostUSD: num(m["total_cost_usd"]),
+		ContextTokens: c.lastContext, ContextWindow: claudeContextWindow(asMap(m["modelUsage"]))}
 	if isErr, _ := m["is_error"].(bool); isErr {
 		msg, _ := m["result"].(string)
 		if msg == "" {
@@ -344,6 +351,28 @@ func (c *claudeConn) onResult(m map[string]any) {
 		c.sink.Emit(Event{Kind: KindError, Message: msg})
 	}
 	c.sink.Emit(Event{Kind: KindDone, Usage: usage})
+}
+
+// claudeContextTokens is the conversation size of one API request: the
+// prompt (uncached + cache reads + cache writes) plus the answer.
+func claudeContextTokens(u map[string]any) int64 {
+	return int64(num(u["input_tokens"]) + num(u["cache_read_input_tokens"]) + num(u["cache_creation_input_tokens"]) + num(u["output_tokens"]))
+}
+
+// claudeContextWindow picks the main model's window from the result's
+// modelUsage (per model: contextWindow, input/cache tokens). Sub-agents and
+// helpers (e.g. a small model titling the session) also appear there, so the
+// model that processed the most prompt tokens wins.
+func claudeContextWindow(mu map[string]any) int64 {
+	var best, bestTokens float64
+	for _, v := range mu {
+		e := asMap(v)
+		tokens := num(e["inputTokens"]) + num(e["cacheReadInputTokens"]) + num(e["cacheCreationInputTokens"])
+		if w := num(e["contextWindow"]); w > 0 && (best == 0 || tokens > bestTokens) {
+			best, bestTokens = w, tokens
+		}
+	}
+	return int64(best)
 }
 
 // --- small JSON helpers shared by adapters ---

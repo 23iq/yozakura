@@ -1,4 +1,5 @@
 .pragma library
+.import "Compaction.js" as Compaction
 
 // Conversions between ChatSession rows (ListModel rows; attachments and
 // toolCalls as JSON strings), the canonical provider messages and the
@@ -19,10 +20,14 @@ function parse(s, fallback) {
 var FINISHED = { done: 1, denied: 1, error: 1 };
 
 // Provider conversation: assistant rows expand their finished tool calls
-// into tool result messages; notices and errors are UI-only.
+// into tool result messages; notices and errors are UI-only. After a
+// compaction only the last summary and the rows after it are sent.
 function toMessages(rows) {
     var out = [];
-    for (var i = 0; i < rows.length; i++) {
+    var from = Compaction.lastSummary(rows);
+    if (from >= 0)
+        out.push(Compaction.summaryMessage(rows[from].content));
+    for (var i = from + 1; i < rows.length; i++) {
         var r = rows[i];
         if (r.role === "user") {
             out.push({ role: "user", content: r.content, attachments: parse(r.attachments, []) });
@@ -32,7 +37,7 @@ function toMessages(rows) {
             });
             if (!r.content && done.length === 0)
                 continue;
-            out.push({ role: "assistant", content: r.content, toolCalls: done.map(function (c) {
+            out.push({ role: "assistant", content: r.content, thinking: r.thinking || "", signature: r.signature || "", toolCalls: done.map(function (c) {
                     return { id: c.id, name: c.name, args: c.args };
                 }) });
             for (var j = 0; j < done.length; j++)
@@ -50,7 +55,7 @@ function toStored(rows) {
         if (r.role === "error")
             continue;
         out.push({
-            role: r.role, content: r.content, thinking: r.thinking || undefined, model: r.model || undefined,
+            role: r.role, content: r.content, thinking: r.thinking || undefined, signature: r.signature || undefined, model: r.model || undefined,
             attachments: parse(r.attachments, []).map(function (a) {
                 return a.base64 && a.base64.length > 400000 ? Object.assign({}, a, { base64: "" }) : a;
             }),
@@ -78,7 +83,7 @@ function fromStored(data) {
             }
             continue;
         }
-        var row = { role: m.role === "system" ? "notice" : m.role, content: m.content || "", thinking: m.thinking || "", model: m.model || "", attachments: m.attachments || [], toolCalls: m.toolCalls || [], ts: m.ts || 0 };
+        var row = { role: m.role === "system" ? "notice" : m.role, content: m.content || "", thinking: m.thinking || "", signature: m.signature || "", model: m.model || "", attachments: m.attachments || [], toolCalls: m.toolCalls || [], ts: m.ts || 0 };
         if (m.functionCall)
             row.toolCalls = [{ id: "legacy_" + i, name: m.functionCall.name, args: m.functionCall.args, title: m.functionCall.name, status: m.functionApproved === false ? "denied" : "done" }];
         rows.push(row);

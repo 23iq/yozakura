@@ -73,10 +73,15 @@ type Event struct {
 }
 
 // Usage is attached to done events when the agent reports it.
+// ContextTokens is the size of the conversation the model saw in the last
+// request of the turn (what fills the context window) and ContextWindow the
+// model's window; both are 0 when the agent does not report them.
 type Usage struct {
-	InputTokens  int64   `json:"inputTokens"`
-	OutputTokens int64   `json:"outputTokens"`
-	CostUSD      float64 `json:"costUsd"`
+	InputTokens   int64   `json:"inputTokens"`
+	OutputTokens  int64   `json:"outputTokens"`
+	CostUSD       float64 `json:"costUsd"`
+	ContextTokens int64   `json:"contextTokens,omitempty"`
+	ContextWindow int64   `json:"contextWindow,omitempty"`
 }
 
 // SessionMeta is the persisted description of a session.

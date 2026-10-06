@@ -82,7 +82,7 @@ test('anthropic body + stream (incl. minimax bearer)', () => {
     assert.equal(r.text, 'Hello');
     assert.equal(r.thinking, 't');
     assert.deepEqual(r.tools, [{ id: 'toolu_1', name: 'windows_list', args: {} }]);
-    assert.deepEqual(r.usage, { inputTokens: 7, outputTokens: 9 });
+    assert.deepEqual(r.usage, { inputTokens: 7, outputTokens: 9, cachedTokens: 0 });
 });
 
 test('gemini body (schema cleaned) + stream with function call', () => {

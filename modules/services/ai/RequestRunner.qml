@@ -93,7 +93,19 @@ QtObject {
                     return;
                 forget(key);
                 owner._configureSession(session);
-                session.send(text, attachments || []);
+                _sendChat(session, text, attachments);
+            });
+            return true;
+        }
+        return _sendChat(session, text, attachments);
+    }
+
+    // Nearly full window: summarise older turns before sending.
+    function _sendChat(session, text, attachments) {
+        if (owner.contextState.needsAutoCompact(session)) {
+            owner.contextState.compact(session, (ok, aborted) => {
+                if (!aborted)
+                    session.send(text, attachments || []);
             });
             return true;
         }
@@ -102,6 +114,7 @@ QtObject {
 
     function stop() {
         forget(owner.sessionKey);
+        owner.contextState.compactor.abort();
         if (owner.activeAgent)
             owner.agents.cancel(owner.activeAgent.id);
         else if (owner.activeChat)
@@ -122,12 +135,14 @@ QtObject {
     function promptSession(m, opts) {
         if (m.kind === "agent") {
             const cfg = Config.ai.agents[m.agent] || {};
+            const nativeModel = opts.nativeModel || cfg.model || "";
+            const remembered = owner.effort.rememberedFor(m.agent, nativeModel);
             return owner.agentPromptC.createObject(owner, {
                 owner: owner.agents,
                 model: m,
                 cwd: opts.cwd || "",
-                nativeModel: opts.nativeModel || cfg.model || "",
-                effort: opts.effort || cfg.effort || "",
+                nativeModel: nativeModel,
+                effort: opts.effort || (remembered !== null ? remembered : (cfg.effort || "")),
                 system: opts.system || Config.ai.systemPrompt
             });
         }
@@ -137,6 +152,9 @@ QtObject {
         session.apiKey = KeyStore.getKey(m.provider) || "";
         session.customCurl = KeyStore.getCustomCurl(m.provider) || "";
         session.system = opts.system || Config.ai.systemPrompt;
+        const request = owner.requestOptions(m);
+        session.effort = request.effort;
+        session.numCtx = request.numCtx;
         session.tools = [];
         session.maxRounds = 1;
         return session;

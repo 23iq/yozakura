@@ -117,6 +117,11 @@ QtObject {
         return _timelines[id];
     }
 
+    // The timeline of an opened session, without opening it (null if not open).
+    function peekTimeline(id) {
+        return _timelines[id] || null;
+    }
+
     function _load(id) {
         BackendService.call("agents.events", {
             session: id,

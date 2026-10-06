@@ -1218,6 +1218,19 @@
             "keywords": "status strip engine model effort"
           }
         },
+        "effort": {
+          "title": "Reasoning effort",
+          "type": "boolean",
+          "default": true,
+          "description": "Effort selector next to the model (only for models that support it).",
+          "x-settings": {
+            "category": "ai",
+            "section": "bar_strip",
+            "label": "prefs.ai.strip_effort",
+            "control": "toggle",
+            "keywords": "status strip reasoning effort thinking level"
+          }
+        },
         "context": {
           "title": "Context window",
           "type": "boolean",
@@ -1255,6 +1268,256 @@
             "label": "prefs.ai.strip_limit",
             "control": "toggle",
             "keywords": "status strip subscription limit usage"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "effort": {
+      "title": "Effort",
+      "type": "object",
+      "properties": {
+        "defaultLevel": {
+          "title": "Default reasoning effort",
+          "type": "string",
+          "default": "auto",
+          "description": "Level for models you have not set yourself; a level chosen in a chat is remembered for that model.",
+          "x-settings": {
+            "category": "ai",
+            "section": "model_effort",
+            "label": "prefs.ai.effort_default",
+            "control": "selector",
+            "keywords": "reasoning effort thinking default level budget"
+          },
+          "enum": [
+            "auto",
+            "off",
+            "low",
+            "medium",
+            "high",
+            "max"
+          ],
+          "x-enumLabels": {
+            "auto": "Model default",
+            "off": "Off",
+            "low": "Low",
+            "medium": "Medium",
+            "high": "High",
+            "max": "Max"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "context": {
+      "title": "Context",
+      "type": "object",
+      "properties": {
+        "warnAt": {
+          "title": "Warn at",
+          "type": "number",
+          "default": 80,
+          "description": "The context meter turns amber and offers Compact from this fill level.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.context_warn",
+            "control": "slider",
+            "step": 5,
+            "unit": "%",
+            "keywords": "context window warning amber threshold percent full",
+            "min": 50,
+            "max": 95
+          },
+          "minimum": 50,
+          "maximum": 95
+        },
+        "criticalAt": {
+          "title": "Critical at",
+          "type": "number",
+          "default": 95,
+          "description": "The context meter turns red from this fill level.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.context_critical",
+            "control": "slider",
+            "step": 1,
+            "unit": "%",
+            "keywords": "context window critical red threshold percent full",
+            "min": 60,
+            "max": 100
+          },
+          "minimum": 60,
+          "maximum": 100
+        },
+        "autoCompact": {
+          "title": "Compact automatically",
+          "type": "boolean",
+          "default": true,
+          "description": "Before sending, summarise older messages of an API/Ollama chat when the window is nearly full. Agents compact themselves.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.auto_compact",
+            "control": "toggle",
+            "keywords": "auto compact compaction summarize summary context history"
+          }
+        },
+        "autoCompactAt": {
+          "title": "Compact at",
+          "type": "number",
+          "default": 95,
+          "description": "Fill level that triggers automatic compaction.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.auto_compact_at",
+            "control": "slider",
+            "step": 1,
+            "unit": "%",
+            "keywords": "auto compact threshold percent context",
+            "visibleWhen": {
+              "key": "ai.context.autoCompact",
+              "equals": true
+            },
+            "min": 50,
+            "max": 100
+          },
+          "minimum": 50,
+          "maximum": 100
+        },
+        "keepTurns": {
+          "title": "Keep recent turns",
+          "type": "number",
+          "default": 4,
+          "description": "How many of your last messages (with their answers) stay verbatim when compacting.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.keep_turns",
+            "control": "number",
+            "keywords": "compact keep recent turns messages verbatim",
+            "min": 0,
+            "max": 20
+          },
+          "minimum": 0,
+          "maximum": 20
+        },
+        "compactModel": {
+          "title": "Compaction model",
+          "type": "string",
+          "default": "",
+          "description": "Model that writes the summary, e.g. a cheaper one; empty uses the chat's model.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.compact_model",
+            "control": "text",
+            "keywords": "compact summary model cheap fast"
+          }
+        },
+        "overrides": {
+          "title": "Context window overrides",
+          "type": "array",
+          "default": [],
+          "description": "Window size per model, for models the built-in table does not know or gets wrong.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.context_overrides",
+            "control": "list",
+            "keywords": "context window override model size tokens custom"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ollama": {
+      "title": "Ollama",
+      "type": "object",
+      "properties": {
+        "numCtx": {
+          "title": "Ollama context length",
+          "type": "number",
+          "default": 32768,
+          "description": "Tokens to allocate (num_ctx), capped at the model's maximum. Larger needs more memory; Ollama's own default drops the start of long chats.",
+          "x-settings": {
+            "category": "ai",
+            "section": "context",
+            "label": "prefs.ai.ollama_num_ctx",
+            "control": "number",
+            "step": 1024,
+            "keywords": "ollama num_ctx context length tokens memory vram local",
+            "min": 0,
+            "max": 1048576,
+            "specialValues": [
+              {
+                "value": 0,
+                "label": "Model maximum"
+              }
+            ]
+          },
+          "minimum": 0,
+          "maximum": 1048576
+        }
+      },
+      "additionalProperties": false
+    },
+    "picker": {
+      "title": "Picker",
+      "type": "object",
+      "properties": {
+        "showCapabilities": {
+          "title": "Show capabilities",
+          "type": "boolean",
+          "default": true,
+          "description": "Badges in the model picker: tools, vision, reasoning, context size.",
+          "x-settings": {
+            "category": "ai",
+            "section": "model_effort",
+            "label": "prefs.ai.picker_capabilities",
+            "control": "toggle",
+            "keywords": "model picker capabilities badges tools vision thinking context"
+          }
+        },
+        "groupByProvider": {
+          "title": "Group by provider",
+          "type": "boolean",
+          "default": true,
+          "description": "Show the models in one section per provider.",
+          "x-settings": {
+            "category": "ai",
+            "section": "model_effort",
+            "label": "prefs.ai.picker_group",
+            "control": "toggle",
+            "keywords": "model picker group provider sections"
+          }
+        },
+        "showUnconnected": {
+          "title": "Show providers that are not connected",
+          "type": "boolean",
+          "default": true,
+          "description": "List them at the end of the picker with a Connect button.",
+          "x-settings": {
+            "category": "ai",
+            "section": "model_effort",
+            "label": "prefs.ai.picker_unconnected",
+            "control": "toggle",
+            "keywords": "model picker providers not connected connect api key"
+          }
+        },
+        "showRecent": {
+          "title": "Recent models on top",
+          "type": "boolean",
+          "default": true,
+          "description": "The models you used last, above the full list.",
+          "x-settings": {
+            "category": "ai",
+            "section": "model_effort",
+            "label": "prefs.ai.picker_recent",
+            "control": "toggle",
+            "keywords": "model picker recent last used"
           }
         }
       },

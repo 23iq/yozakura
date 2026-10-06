@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.settings.store
 import "ai"
 import "ai/EngineSelection.js" as Selection
+import "ai/ContextMath.js" as ContextMath
 
 // Public assistant facade. Session ownership, request routing and prompt expansion
 // live in focused collaborators and survive unloading the workspace UI.
@@ -40,7 +41,7 @@ Singleton {
     readonly property var quickModel: catalog ? catalog.find(Config.ai.quickAsk.model || Config.ai.defaultModel || currentModelId) : null
     readonly property var activeChat: mode === "agent" ? null : chat
     readonly property var activeAgent: mode === "agent" && agents ? agents.active : null
-    readonly property bool busy: runner.starting || (activeAgent ? ["running", "starting", "waiting"].indexOf(activeAgent.status) >= 0 : (activeChat ? activeChat.busy : false))
+    readonly property bool busy: runner.starting || contextState.compacting || (activeAgent ? ["running", "starting", "waiting"].indexOf(activeAgent.status) >= 0 : (activeChat ? activeChat.busy : false))
     readonly property string sessionKey: activeAgent ? "agent:" + activeAgent.id : (mode === "agent" ? "new:" + space + ":" + currentModelId + ":" + _newSerial : (activeChat ? "chat:" + activeChat.chatId : ""))
     readonly property var agentSettings: {
         const id = activeAgent ? activeAgent.agent : (currentModel?.agent || Config.ai.agents.defaultAgent);
@@ -51,14 +52,20 @@ Singleton {
             yolo: false,
             systemPrompt: ""
         } : {};
-        return Object.assign({
+        const s = Object.assign({
             agent: id,
             model: cfg.model || "",
-            effort: cfg.effort || "",
+            effort: "",
             cwd: Config.ai.agents.defaultCwd || "",
             systemPrompt: "",
             yolo: !!cfg.yolo
         }, _agentOverrides[space + ":" + id] || {}, assistant, activeAgent || {});
+        // New sessions start with the level last chosen for this model.
+        if (!s.effort && !activeAgent) {
+            const remembered = effort.rememberedFor(id, s.model);
+            s.effort = remembered !== null ? remembered : (cfg.effort || "");
+        }
+        return s;
     }
 
     signal modelSelectionRequested
@@ -71,6 +78,13 @@ Singleton {
         owner: root
     }
     property SpaceState spaces: SpaceState {
+        owner: root
+    }
+    // Reasoning effort per model, and the visible conversation's context window.
+    property EffortState effort: EffortState {
+        owner: root
+    }
+    property ContextState contextState: ContextState {
         owner: root
     }
     readonly property Component catalogC: Component {
@@ -118,6 +132,7 @@ Singleton {
         });
         currentModelId = Selection.initial(Config.ai.defaultModel, StateService.initialized ? StateService.get("lastAiModel", "") : "");
         recentModelIds = StateService.initialized ? StateService.get("aiRecentModels", []) : [];
+        effort.init();
         drafts.selected.connect(s => {
             mode = "chat";
             chat = s;
@@ -174,8 +189,25 @@ Singleton {
             autoApprove: Config.ai.agents.autoApprove || ["read"]
         };
         s.system = Config.ai.systemPrompt;
+        const request = requestOptions(s.model);
+        s.effort = request.effort;
+        s.numCtx = request.numCtx;
         // Assistant chats (legacy "shell" chats included) get the MCP tools.
         s.tools = mcp && s.mode !== "quick" && s.mode !== "oneshot" && Config.ai.chatTools ? mcp.toolsFor("all") : [];
+    }
+
+    // Per-request settings of an HTTP model: its effort level and, for
+    // Ollama, the context length to allocate.
+    function requestOptions(m) {
+        if (!m || m.kind === "agent")
+            return {
+                effort: "",
+                numCtx: 0
+            };
+        return {
+            effort: effort.levelFor(m),
+            numCtx: m.provider === "ollama" ? ContextMath.numCtx(m.info ? m.info.contextWindow : 0, Config.ai.ollama.numCtx) : 0
+        };
     }
 
     function _reconfigure() {
@@ -341,8 +373,11 @@ Singleton {
         return context ? context.ambient() : ({});
     }
 
-    // "Connect a model": the AI page of the settings window.
-    function openProviderSettings() {
+    // "Connect a model": the AI page of the settings window (`provider`, if
+    // given, is the provider the user picked; the inline sheet uses it).
+    signal connectProviderRequested(string provider)
+    function openProviderSettings(provider) {
+        connectProviderRequested(provider || "");
         GlobalStates.settingsCategory = "ai";
         GlobalStates.settingsWindowVisible = true;
     }

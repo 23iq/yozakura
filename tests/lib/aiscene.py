@@ -108,7 +108,14 @@ AI_CONFIG = """
             property list<string> suggestionKinds: ["clipboard", "selection", "media", "timer", "window", "desktop", "time"]
             property bool restoreLastSession: true; property bool autoScroll: true; property bool thinkingExpanded: false; property bool collapseTools: true
         }
-        property QtObject strip: QtObject { property bool engine: true; property bool context: true; property bool cost: true; property bool limit: true }
+        property QtObject strip: QtObject { property bool engine: true; property bool effort: true; property bool context: true; property bool cost: true; property bool limit: true }
+        property QtObject effort: QtObject { property string defaultLevel: "auto" }
+        property QtObject context: QtObject {
+            property int warnAt: 80; property int criticalAt: 95; property bool autoCompact: true; property int autoCompactAt: 95
+            property int keepTurns: 4; property string compactModel: ""; property list<var> overrides: []
+        }
+        property QtObject ollama: QtObject { property int numCtx: 32768 }
+        property QtObject picker: QtObject { property bool showCapabilities: true; property bool groupByProvider: true; property bool showUnconnected: true; property bool showRecent: true }
         property QtObject mcp: QtObject { property bool yozakura: true; property bool importClaude: true; property bool importCodex: true; property bool importOpencode: true; property list<var> disabled: [] }
         property QtObject selection: QtObject {
             property bool enabled: true; property string language: "English"; property string output: "replace"
@@ -151,7 +158,7 @@ def build(preset: str, mode: str, ai_stub: str) -> Path:
     (services / "I18n.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject {\n    readonly property var table: (" + json.dumps(en) + ")\n"
                                        "    function t(k) { return table[k] !== undefined ? table[k] : k; }\n}\n")
     (services / "BackendService.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { property bool socketAvailable: true; function call(m, p, cb) {} function addSubscription(s, cb) { return 1; } }\n")
-    (services / "KeyStore.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { function getKey(p) { return ''; } function getCustomCurl(p) { return ''; } }\n")
+    (services / "KeyStore.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { property var keyCache: ({}); function getKey(p) { return ''; } function getCustomCurl(p) { return ''; } function getEndpoint(p) { return ''; } function hasKey(p) { return false; } }\n")
     (services / "Ai.qml").write_text(ai_stub)
     (services / "qmldir").write_text("module qs.modules.services\nsingleton Ai 1.0 Ai.qml\nsingleton I18n 1.0 I18n.qml\nsingleton BackendService 1.0 BackendService.qml\nsingleton KeyStore 1.0 KeyStore.qml\n")
     (qs / "modules/globals/GlobalStates.qml").write_text("""pragma Singleton

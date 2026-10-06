@@ -83,8 +83,30 @@ var data = {
     },
     "strip": {
         "engine": true,
+        "effort": true,
         "context": true,
         "cost": true,
         "limit": true
+    },
+    "effort": {
+        "defaultLevel": "auto"
+    },
+    "context": {
+        "warnAt": 80,
+        "criticalAt": 95,
+        "autoCompact": true,
+        "autoCompactAt": 95,
+        "keepTurns": 4,
+        "compactModel": "",
+        "overrides": []
+    },
+    "ollama": {
+        "numCtx": 32768
+    },
+    "picker": {
+        "showCapabilities": true,
+        "groupByProvider": true,
+        "showUnconnected": true,
+        "showRecent": true
     }
 };

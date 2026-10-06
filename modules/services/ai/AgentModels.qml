@@ -10,6 +10,11 @@ QtObject {
         return JSON.stringify([agent, cwd || ""]);
     }
 
+    // Whether the catalog was requested (loaded, loading or failed).
+    function has(agent, cwd) {
+        return catalogs[key(agent, cwd)] !== undefined;
+    }
+
     function get(agent, cwd) {
         return catalogs[key(agent, cwd)] || {
             models: [],

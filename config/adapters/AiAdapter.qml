@@ -207,8 +207,30 @@ JsonAdapter {
     }
     property JsonObject strip: JsonObject {
         property bool engine: true
+        property bool effort: true
         property bool context: true
         property bool cost: true
         property bool limit: true
+    }
+    property JsonObject effort: JsonObject {
+        property string defaultLevel: "auto"
+    }
+    property JsonObject context: JsonObject {
+        property int warnAt: 80
+        property int criticalAt: 95
+        property bool autoCompact: true
+        property int autoCompactAt: 95
+        property int keepTurns: 4
+        property string compactModel: ""
+        property list<var> overrides: []
+    }
+    property JsonObject ollama: JsonObject {
+        property int numCtx: 32768
+    }
+    property JsonObject picker: JsonObject {
+        property bool showCapabilities: true
+        property bool groupByProvider: true
+        property bool showUnconnected: true
+        property bool showRecent: true
     }
 }

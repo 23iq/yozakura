@@ -1,4 +1,5 @@
 .pragma library
+.import "aimodels.js" as AiModels
 
 // AI bar: general, look and behaviour of the bar, quick ask, CLI agents,
 // MCP servers, selection actions, prompt library and automations. Entry format: see
@@ -383,6 +384,13 @@ var category = {
                     "keywords": "status strip engine model effort"
                 },
                 {
+                    "key": "ai.strip.effort",
+                    "type": "toggle",
+                    "label": "prefs.ai.strip_effort",
+                    "description": "prefs.ai.strip_effort.desc",
+                    "keywords": "status strip reasoning effort thinking level"
+                },
+                {
                     "key": "ai.strip.context",
                     "type": "toggle",
                     "label": "prefs.ai.strip_context",
@@ -600,3 +608,7 @@ var category = {
         }
     ]
 };
+
+// Model picker, effort and context sections (schema/aimodels.js) go right
+// after the status strip.
+category.sections.splice(category.sections.findIndex(s => s.id === "bar_strip") + 1, 0, ...AiModels.sections);

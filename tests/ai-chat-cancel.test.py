@@ -18,6 +18,8 @@ QtObject {
     property string system
     property var messages
     property var tools
+    property string effort
+    property int numCtx
     signal delta(string text, string thinking)
     signal finished(var result)
     function start() {}

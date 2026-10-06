@@ -3,12 +3,15 @@ import qs.modules.services
 import "Providers.js" as Providers
 import "Permissions.js" as Permissions
 import "ChatRows.js" as ChatRows
+import "ContextMath.js" as ContextMath
 import "../../aicenter/lib/Markdown.js" as Markdown
 
 // A conversation with an API/local model, including the MCP tool loop.
 // `rows` (ListModel) is what the UI renders; complex fields are JSON strings
 // so a streamed token updates a single row:
-//   role: user|assistant|notice|error ; content ; thinking ; model ; status
+//   role: user|assistant|notice|error|summary ; content ; thinking ; model ; status
+//   signature: Anthropic thinking signature (sent back in tool loops)
+//   summary rows replace everything before them in requests (compaction)
 //   attachments: JSON [{type, mimeType, base64, name, kind, text}]
 //   toolCalls:   JSON [{id, name, server, tool, args, title, category, status, result, isError}]
 //                status: pending|ask|running|done|denied|error
@@ -32,6 +35,14 @@ QtObject {
         })
     property int maxRounds: 8
     property bool persist: true
+    // Unified effort level (Effort.js) and Ollama num_ctx for requests.
+    property string effort: ""
+    property int numCtx: 0
+    // Conversation size after the last turn (prompt + answer tokens) and
+    // the last request's usage {inputTokens, outputTokens, cachedTokens}.
+    property int contextTokens: 0
+    property var lastUsage: null
+    property bool compacting: false
 
     // Wired by the owner: call(server, tool, args, cb(result {text, isError}))
     property var callTool: null
@@ -59,6 +70,8 @@ QtObject {
         title = "";
         pinned = false;
         created = Date.now();
+        contextTokens = 0;
+        lastUsage = null;
         _sessionRules = {};
         changed();
     }
@@ -81,18 +94,34 @@ QtObject {
         }
     }
 
-    function append(row) {
-        rows.append({
+    function _rowData(row) {
+        return {
             role: row.role || "notice",
             content: row.content || "",
             thinking: row.thinking || "",
+            signature: row.signature || "",
             model: row.model || "",
             status: row.status || "",
             attachments: _json(row.attachments || []),
             toolCalls: _json(row.toolCalls || []),
             ts: row.ts || Date.now()
-        });
+        };
+    }
+
+    function append(row) {
+        rows.append(_rowData(row));
         return rows.count - 1;
+    }
+
+    // Compaction result: a summary row at `index` stands in for every row
+    // before it in later requests (the rows stay visible).
+    function insertSummary(index, text) {
+        rows.insert(Math.max(0, Math.min(index, rows.count)), _rowData({
+            role: "summary",
+            content: text
+        }));
+        contextTokens = ContextMath.estimateTokens(toMessages(), system);
+        _save();
     }
 
     function notice(text) {
@@ -122,6 +151,7 @@ QtObject {
             pinned: pinned,
             mode: mode,
             model: engineId || (model ? model.id : ""),
+            contextTokens: contextTokens,
             created: created,
             updated: Date.now(),
             messages: ChatRows.toStored(_rows())
@@ -137,13 +167,15 @@ QtObject {
         created = data.created || Date.now();
         updated = data.updated || created;
         engineId = data.model || "";
+        contextTokens = data.contextTokens || 0;
+        lastUsage = null;
         for (const row of ChatRows.fromStored(data))
             append(row);
         changed();
     }
 
     function send(text, attachments) {
-        if (busy || (!text.trim() && (!attachments || attachments.length === 0)))
+        if (busy || compacting || (!text.trim() && (!attachments || attachments.length === 0)))
             return false;
         if (!title)
             title = Markdown.preview(text, 48);
@@ -158,7 +190,7 @@ QtObject {
     }
 
     function retry(index) {
-        if (busy || index < 0 || index >= rows.count)
+        if (busy || compacting || index < 0 || index >= rows.count)
             return;
         let cut = index;
         while (cut > 0 && rows.get(cut).role !== "user")
@@ -222,6 +254,8 @@ QtObject {
             apiKey: apiKey,
             customCurl: customCurl,
             system: system,
+            effort: effort,
+            numCtx: numCtx,
             messages: toMessages(),
             tools: _round <= maxRounds ? tools.map(t => ({
                         name: t.name,
@@ -248,6 +282,9 @@ QtObject {
             _request = null;
             req.destroy();
             rows.setProperty(index, "status", "");
+            if (result.signature)
+                rows.setProperty(index, "signature", result.signature);
+            _trackContext(result.usage);
             if (result.error) {
                 busy = false;
                 if (!rows.get(index).content)
@@ -277,6 +314,16 @@ QtObject {
             }
         });
         req.start();
+    }
+
+    // Ollama reports only the tokens it had to evaluate (cached prefixes
+    // are not counted), so an estimate of the conversation is the floor.
+    function _trackContext(usage) {
+        if (usage)
+            lastUsage = usage;
+        const estimate = ContextMath.estimateTokens(toMessages(), system);
+        const reported = ContextMath.usedFromUsage(usage);
+        contextTokens = reported > 0 ? (model && model.provider === "ollama" ? Math.max(reported, estimate) : reported) : estimate;
     }
 
     function _toolDef(name) {

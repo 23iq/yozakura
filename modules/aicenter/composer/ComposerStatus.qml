@@ -8,35 +8,34 @@ import qs.config
 import qs.modules.aicenter.common
 import "../../services/ai/Providers.js" as Providers
 
-// Strip above the composer: `◆ engine · model · effort ▾` (opens the model
-// picker), agent status, and slots filled by later work: context window
-// usage (contextUsed / contextWindow), session cost (costText) and the
-// subscription limit (limitFraction 0..1 + limitText). Each item can be
+// Strip above the composer: `◆ engine · model ▾` (opens the model picker),
+// `· effort ▾` (EffortChip, inline selector), agent status, the context
+// window meter (ContextMeter, Compact button), session cost (costText) and
+// the subscription limit (limitFraction 0..1 + limitText). Each item can be
 // hidden in the settings (ai.strip.*).
 RowLayout {
     id: root
 
     property int contextUsed: 0
     property int contextWindow: 0
+    property string contextSource: ""
+    property bool canCompact: false
+    property bool compacting: false
     property string costText: ""
     property real limitFraction: -1
     property string limitText: ""
 
     signal pickRequested
+    signal compactRequested
 
     readonly property var model: Ai.currentModel
     readonly property bool isAgent: model !== null && model.kind === "agent"
     readonly property var settings: Ai.agentSettings || ({})
     readonly property string engineLabel: !model ? I18n.t("ai.choose_model") : (isAgent ? model.name : (Providers.provider(model.provider).label || model.provider))
-    readonly property var parts: !model ? [] : (isAgent ? [settings.model || I18n.t("ai.model_default"), settings.effort || ""] : [model.name])
+    readonly property var parts: !model ? [] : (isAgent ? [settings.model || I18n.t("ai.model_default")] : [model.name])
     readonly property string agentStatus: Ai.activeAgent ? Ai.activeAgent.status : ""
-    readonly property real contextFraction: contextWindow > 0 ? Math.min(1, contextUsed / contextWindow) : 0
 
     spacing: 8
-
-    function compact(n) {
-        return n >= 1000 ? Math.round(n / 1000) + "k" : String(n);
-    }
 
     StyledRect {
         objectName: "composerEngine"
@@ -83,6 +82,10 @@ RowLayout {
         }
     }
 
+    EffortChip {
+        Layout.leftMargin: -6
+    }
+
     StatusDot {
         visible: root.agentStatus === "waiting" || root.agentStatus === "running" || root.agentStatus === "starting"
         status: root.agentStatus || "idle"
@@ -99,29 +102,15 @@ RowLayout {
         Layout.fillWidth: true
     }
 
-    RowLayout {
-        objectName: "composerContext"
+    ContextMeter {
         visible: Config.ai.strip.context !== false && root.contextWindow > 0
-        spacing: 6
-        StyledRect {
-            Layout.preferredWidth: 44
-            Layout.preferredHeight: 4
-            variant: "internalbg"
-            radius: 2
-            // Fill of the meter (amber from 80 %).
-            Rectangle {
-                width: parent.width * root.contextFraction
-                height: parent.height
-                radius: parent.radius
-                color: root.contextFraction >= 0.8 ? Colors.warning : Colors.primary
-            }
-        }
-        Text {
-            text: root.compact(root.contextUsed) + " / " + root.compact(root.contextWindow)
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-4)
-            color: root.contextFraction >= 0.8 ? Colors.warning : Colors.outline
-        }
+        used: root.contextUsed
+        window: root.contextWindow
+        source: root.contextSource
+        agent: root.isAgent
+        canCompact: root.canCompact
+        compacting: root.compacting
+        onCompactRequested: root.compactRequested()
     }
     Text {
         objectName: "composerCost"

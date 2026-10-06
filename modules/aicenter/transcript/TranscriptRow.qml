@@ -74,6 +74,8 @@ Item {
                 return permissionC;
             case "error":
                 return errorC;
+            case "compacted":
+                return compactedC;
             default:
                 return noticeC;
             }
@@ -177,6 +179,12 @@ Item {
                 iconSize: 13
                 onClicked: root.retryRequested(root.source)
             }
+        }
+    }
+    Component {
+        id: compactedC
+        CompactedMarker {
+            summary: root.text
         }
     }
     Component {

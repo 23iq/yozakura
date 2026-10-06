@@ -111,7 +111,7 @@ assert evaluate(workspace, 'configuredEffort()') == '', 'engine default effort m
 view.grabWindow().save('/tmp/ai-workspace-settings.png')
 engine_picker = workspace.findChild(QObject, 'workspaceEnginePicker')
 evaluate(workspace, 'disableAgent()')
-assert evaluate(engine_picker, 'choose(entries.findIndex(m => m.kind === "agent"))') is False, 'unavailable engine must reject keyboard/tap selection'
+assert evaluate(engine_picker, 'activate(rows.findIndex(r => r.type === "model" && r.entry.kind === "agent"))') is False, 'unavailable engine must reject keyboard/tap selection'
 view.close()
 view.deleteLater()
 QCoreApplication.processEvents()

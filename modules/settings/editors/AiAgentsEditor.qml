@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 import qs.modules.settings.store
+import "../../services/ai/EffortPrefs.js" as EffortPrefs
 
 // CLI agents (own login, no API keys): availability, binary, model, YOLO,
 // and the shared "safe auto, ask the rest" policy.
@@ -45,6 +46,13 @@ ColumnLayout {
             required property string modelData
             readonly property var meta: root.info(modelData)
             readonly property var cfg: Config.ai.agents[modelData] || ({})
+            // Native effort levels of the configured model (agents.models).
+            readonly property var efforts: {
+                Ai.agents ? Ai.agents.modelCatalogs.catalogs : null;
+                return Ai.agents ? EffortPrefs.agentLevels(Ai.agents.settingsFor(modelData, ""), cfg.model || "") : [];
+            }
+            Component.onCompleted: if (Ai.agents && meta && meta.available && !Ai.agents.modelCatalogs.has(modelData, ""))
+                Ai.agents.refreshModels(modelData, "")
             Layout.fillWidth: true
             variant: "common"
             radius: Styling.radius(-2)
@@ -104,7 +112,23 @@ ColumnLayout {
                     mono: true
                     onEdited: t => root.setAgent(card.modelData, "model", t.trim())
                 }
+                AiSelectRow {
+                    visible: card.efforts.length > 0
+                    label: I18n.t("ai.effort")
+                    options: [
+                        {
+                            value: "",
+                            label: "ai.model_default"
+                        }
+                    ].concat(card.efforts.map(e => ({
+                                value: e,
+                                label: "ai.effort_level." + e
+                            })))
+                    value: card.cfg.effort || ""
+                    onSelected: v => root.setAgent(card.modelData, "effort", v)
+                }
                 AiTextRow {
+                    visible: card.efforts.length === 0
                     label: I18n.t("ai.effort")
                     value: card.cfg.effort || ""
                     placeholder: I18n.t("ai.model_default")
