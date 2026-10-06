@@ -2,6 +2,8 @@ package migrate
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -18,21 +20,29 @@ import (
 // apps.theming.<id> = false (Settings shows "Connect"). The legacy Qt file
 // in environment.d (older builds) is removed there too.
 
-// appHooksMarker records that the consent migration ran (data dir).
-const appHooksMarker = ".apphooks-consent"
+// AppHooksMarker records that the consent migration ran (data dir). Until
+// it exists the apphooks service connects nothing automatically.
+const AppHooksMarker = ".apphooks-consent"
+
+// errMalformedApps: apps.json cannot be parsed, so the toggles cannot be
+// switched off; the migration is retried on the next start (no marker).
+var errMalformedApps = errors.New("apps.json is malformed; app theming stays off until it is fixed")
 
 // EnsureAppHooksConsent runs on every start before the shell. It returns
-// the app ids switched off (nil on a fresh install or a later start).
+// the app ids switched off (nil on a fresh install or a later start). A
+// failure to remove the legacy Qt file is reported but never stops the
+// consent step; a malformed apps.json leaves the marker unwritten.
 func EnsureAppHooksConsent(p paths.Paths, env apphooks.Env) ([]string, error) {
 	if p.ConfigDir == "" || p.DataDir == "" {
 		return nil, nil
 	}
-	if _, err := apphooks.RemoveLegacyQtEnv(env); err != nil {
-		return nil, err
+	_, qtErr := apphooks.RemoveLegacyQtEnv(env)
+	if qtErr != nil {
+		qtErr = fmt.Errorf("legacy Qt environment file: %w", qtErr)
 	}
-	marker := filepath.Join(p.DataDir, appHooksMarker)
+	marker := filepath.Join(p.DataDir, AppHooksMarker)
 	if _, err := os.Stat(marker); err == nil {
-		return nil, nil
+		return nil, qtErr
 	}
 	var off []string
 	if existingInstall(p) {
@@ -43,13 +53,20 @@ func EnsureAppHooksConsent(p paths.Paths, env apphooks.Env) ([]string, error) {
 			}
 		}
 		if err := setThemingOff(p.Config("apps"), off); err != nil {
-			return nil, err
+			return nil, errors.Join(err, qtErr)
 		}
 	}
 	if err := os.MkdirAll(p.DataDir, 0o755); err != nil {
-		return off, err
+		return off, errors.Join(err, qtErr)
 	}
-	return off, fsutil.WriteFile(marker, []byte("1\n"), 0o644)
+	return off, errors.Join(fsutil.WriteFile(marker, []byte("1\n"), 0o644), qtErr)
+}
+
+// AppHooksConsented reports whether the consent migration ran (dataDir is
+// the app's data dir): before that nothing is connected automatically.
+func AppHooksConsented(dataDir string) bool {
+	_, err := os.Stat(filepath.Join(dataDir, AppHooksMarker))
+	return err == nil
 }
 
 // existingInstall: general.json says onboarding is done (an install from
@@ -82,12 +99,11 @@ func setThemingOff(path string, ids []string) error {
 	doc := catalog.NewObject()
 	if data, err := os.ReadFile(path); err == nil {
 		v, err := catalog.DecodeOrdered(data)
-		if err != nil {
-			return nil // malformed: the shell backs it up; nothing to keep
+		o, ok := v.(*catalog.Object)
+		if err != nil || !ok {
+			return errMalformedApps
 		}
-		if o, ok := v.(*catalog.Object); ok {
-			doc = o
-		}
+		doc = o
 	} else if !os.IsNotExist(err) {
 		return err
 	}

@@ -28,12 +28,20 @@ type Service struct {
 	mu  sync.Mutex // one hook edit at a time
 	// appsFile is apps.json: PostInstall honours apps.theming.<id>
 	appsFile string
+	// consented reports the upgrade consent migration ran
+	// (migrate.EnsureAppHooksConsent); until then nothing is connected
+	// automatically (ensure, PostInstall). nil: always.
+	consented func() bool
 }
 
-// NewService uses the real environment; appsFile is apps.json.
-func NewService(appsFile string) *Service {
-	return &Service{env: apphooks.DefaultEnv(), appsFile: appsFile}
+// NewService uses the real environment; appsFile is apps.json, consented
+// gates the automatic connection (see Service.consented).
+func NewService(appsFile string, consented func() bool) *Service {
+	return &Service{env: apphooks.DefaultEnv(), appsFile: appsFile, consented: consented}
 }
+
+// auto reports whether automatic connection is allowed now.
+func (s *Service) auto() bool { return s.consented == nil || s.consented() }
 
 func newService(env apphooks.Env) *Service { return &Service{env: env} }
 
@@ -63,6 +71,16 @@ func (s *Service) ensure(params json.RawMessage) (any, error) {
 		if err := json.Unmarshal(params, &p); err != nil {
 			return nil, err
 		}
+	}
+	if !s.auto() {
+		// no consent yet (e.g. a malformed apps.json): report, touch nothing
+		out := map[string]apphooks.Status{}
+		for _, id := range p.IDs {
+			if h, ok := apphooks.Get(id); ok {
+				out[id] = h.Status(s.env)
+			}
+		}
+		return out, nil
 	}
 	return s.ensureIDs(p.IDs), nil
 }
@@ -94,7 +112,7 @@ func (s *Service) PostInstall(id string) error {
 	if _, ok := apphooks.Get(id); !ok {
 		return errors.New("unknown app hook: " + id)
 	}
-	if !themed(s.appsFile, id) {
+	if !s.auto() || !themed(s.appsFile, id) {
 		return nil
 	}
 	if st := s.ensureIDs([]string{id})[id]; st.State == apphooks.StateError {

@@ -17,6 +17,7 @@ import (
 	exclusivemode "yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/mcp/yozakura"
+	"yozakura/backend/pkg/migrate"
 	"yozakura/backend/pkg/mods"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/svc"
@@ -168,7 +169,7 @@ func New() (*Daemon, error) {
 		layoutSrc = m
 	}
 	keyboard.NewService(layoutSrc).Register(d.srv)
-	d.appHooks = apphookssvc.NewService(d.paths.Config("apps"))
+	d.appHooks = apphookssvc.NewService(d.paths.Config("apps"), func() bool { return migrate.AppHooksConsented(p.DataDir) })
 	d.appHooks.Register(d.srv)
 
 	keySvc := keystore.NewService(d.paths)

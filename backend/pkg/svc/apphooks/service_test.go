@@ -125,3 +125,20 @@ func TestPostInstallHonoursToggle(t *testing.T) {
 		t.Fatal("unknown hook must error")
 	}
 }
+
+// Until the consent migration ran nothing is connected automatically.
+func TestNoAutoConnectWithoutConsent(t *testing.T) {
+	h := &stubHook{id: "svc-test-consent", state: apphooks.StateDisconnected}
+	apphooks.Register(h)
+	s := newService(apphooks.Env{})
+	s.consented = func() bool { return false }
+	if _, err := s.ensure([]byte(`{"ids":["svc-test-consent"]}`)); err != nil || h.applied != 0 {
+		t.Fatalf("ensure applied %d %v", h.applied, err)
+	}
+	if err := s.PostInstall("svc-test-consent"); err != nil || h.applied != 0 {
+		t.Fatalf("post applied %d %v", h.applied, err)
+	}
+	if _, err := s.apply([]byte(`{"id":"svc-test-consent"}`)); err != nil || h.applied != 1 {
+		t.Fatalf("explicit Connect still works: %d %v", h.applied, err)
+	}
+}

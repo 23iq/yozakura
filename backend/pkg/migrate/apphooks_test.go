@@ -84,3 +84,41 @@ func TestAppHooksConsentFreshInstall(t *testing.T) {
 		t.Fatalf("after the marker: %v", off)
 	}
 }
+
+// A legacy Qt file that cannot be removed is reported, but the consent
+// step still runs (toggles off, marker written).
+func TestAppHooksConsentQtErrorNotFatal(t *testing.T) {
+	p, env := hookEnv(t)
+	put(t, p.Config("general"), `{"onboardingDone": true}`)
+	put(t, filepath.Join(env.ConfigHome, "kitty", "kitty.conf"), "font_size 11\n")
+	qtDir := filepath.Join(env.ConfigHome, "environment.d")
+	put(t, filepath.Join(qtDir, "90-yozakura-qt.conf"), "# Written by yozakura (x)\nQT_QPA_PLATFORMTHEME=qt6ct\n")
+	if err := os.Chmod(qtDir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(qtDir, 0o755) })
+	if os.Getuid() == 0 {
+		t.Skip("root removes anyway")
+	}
+	off, err := EnsureAppHooksConsent(p, env)
+	if err == nil || len(off) != 1 || off[0] != "kitty" || !AppHooksConsented(p.DataDir) {
+		t.Fatalf("off %v err %v consented %v", off, err, AppHooksConsented(p.DataDir))
+	}
+}
+
+// A malformed apps.json: nothing written, no marker (retried next start).
+func TestAppHooksConsentMalformedApps(t *testing.T) {
+	p, env := hookEnv(t)
+	put(t, p.Config("general"), `{"onboardingDone": true}`)
+	put(t, p.Config("apps"), `{"theming": `)
+	put(t, filepath.Join(env.ConfigHome, "kitty", "kitty.conf"), "font_size 11\n")
+	if _, err := EnsureAppHooksConsent(p, env); err == nil {
+		t.Fatal("malformed apps.json must be reported")
+	}
+	if AppHooksConsented(p.DataDir) {
+		t.Fatal("marker written: the toggles were never switched off")
+	}
+	if b, _ := os.ReadFile(p.Config("apps")); string(b) != `{"theming": ` {
+		t.Fatalf("apps.json changed: %s", b)
+	}
+}
