@@ -52,7 +52,6 @@ modules/components/ActionGrid.qml
 modules/components/CarouselProgress.qml
 modules/components/CircularSeekBar.qml
 modules/components/ContextMenu.qml
-modules/components/StyledRect.qml
 modules/components/Tinted.qml
 modules/components/TintedWallpaper.qml
 modules/components/WavyLine.qml

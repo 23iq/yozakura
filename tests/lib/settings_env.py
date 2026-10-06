@@ -179,6 +179,7 @@ MIRROR = [
     "modules/theme/GlassCurve.js",
     "modules/theme/GlassContrast.js",
     "modules/theme/Icons.qml",
+    "modules/theme/Motion.qml",
     "modules/theme/AppThemes.js",
     "modules/notifications/NotificationPolicy.js",
     "modules/services/voice/VoiceModel.js",
@@ -610,7 +611,7 @@ class SettingsEnv:
         (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds)))
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
-        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass"])
+        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Motion"])
         # DepthClock (clock style gallery) reads the bar edge
         self.h.module("qs.modules.bar.panels", {
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
@@ -636,7 +637,7 @@ class SettingsEnv:
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
-                  "modules/components/surfaceeffects", "modules/bar/workspaces/indicators",
+                  "modules/components/surfaceeffects", "modules/components/shape", "modules/bar/workspaces/indicators",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",

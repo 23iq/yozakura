@@ -4,6 +4,7 @@ import Quickshell.Widgets
 import qs.config
 import qs.modules.theme
 import qs.modules.components.surfaceeffects
+import qs.modules.components.shape
 
 ClippingRectangle {
     id: root
@@ -30,6 +31,16 @@ ClippingRectangle {
     // Opt out of the surface effect's highlight fill (theme.surfaceEffect,
     // e.g. the ink brush stroke on "primary"/"focus" highlights).
     property bool effectHighlight: true
+    // Edge of this rect that faces its anchor ("top", ... or ""): the
+    // `tab` corner style squares the corners on it.
+    property string anchorEdge: ""
+    // false keeps round corners whatever theme.shape says ("transparent"
+    // draws nothing to shape)
+    property bool cornerStyled: variant !== "transparent"
+    // theme.shape.popupCorners applies to popup surfaces
+    property bool popupShape: variant === "popup" || glassSurface === "popups"
+    // Corner style (shape/CornerStyle.js); masked = drawn by CornerMask
+    readonly property bool cornerMasked: cornerShape.masked
 
     readonly property var variantConfig: Styling.getStyledRectConfig(variant) || {}
 
@@ -79,7 +90,8 @@ ClippingRectangle {
 
     // Resolve gradient stops into vec4 color array for shader uniforms
     function resolveStopColor(index) {
-        if (!gradientStops || index >= gradientStops.length) return Qt.vector4d(0,0,0,0);
+        if (!gradientStops || index >= gradientStops.length)
+            return Qt.vector4d(0, 0, 0, 0);
         const resolved = Config.resolveColor(gradientStops[index][0]);
         // Qt.color() ensures hex strings become proper color objects with .r/.g/.b/.a
         const c = Qt.color(resolved);
@@ -87,18 +99,8 @@ ClippingRectangle {
     }
 
     // Pack stop positions into two vec4s (positions 0-3 in first, 4-7 in second)
-    readonly property vector4d stopPositionsPack0: Qt.vector4d(
-        gradientStops && gradientStops.length > 0 ? gradientStops[0][1] : 0,
-        gradientStops && gradientStops.length > 1 ? gradientStops[1][1] : 0,
-        gradientStops && gradientStops.length > 2 ? gradientStops[2][1] : 0,
-        gradientStops && gradientStops.length > 3 ? gradientStops[3][1] : 0
-    )
-    readonly property vector4d stopPositionsPack1: Qt.vector4d(
-        gradientStops && gradientStops.length > 4 ? gradientStops[4][1] : 0,
-        gradientStops && gradientStops.length > 5 ? gradientStops[5][1] : 0,
-        gradientStops && gradientStops.length > 6 ? gradientStops[6][1] : 0,
-        gradientStops && gradientStops.length > 7 ? gradientStops[7][1] : 0
-    )
+    readonly property vector4d stopPositionsPack0: Qt.vector4d(gradientStops && gradientStops.length > 0 ? gradientStops[0][1] : 0, gradientStops && gradientStops.length > 1 ? gradientStops[1][1] : 0, gradientStops && gradientStops.length > 2 ? gradientStops[2][1] : 0, gradientStops && gradientStops.length > 3 ? gradientStops[3][1] : 0)
+    readonly property vector4d stopPositionsPack1: Qt.vector4d(gradientStops && gradientStops.length > 4 ? gradientStops[4][1] : 0, gradientStops && gradientStops.length > 5 ? gradientStops[5][1] : 0, gradientStops && gradientStops.length > 6 ? gradientStops[6][1] : 0, gradientStops && gradientStops.length > 7 ? gradientStops[7][1] : 0)
 
     radius: variantConfig.radius !== undefined ? variantConfig.radius : Styling.radius(0)
 
@@ -127,13 +129,24 @@ ClippingRectangle {
     // Surface effect highlight (SurfaceFx): the effect paints the fill
     // itself, so the rect's own color goes transparent. Off = one false check.
     readonly property bool effectFill: SurfaceFx.highlightUrl !== "" && effectHighlight && effectSurface === "" && SurfaceFx.highlights(variant) && !needsGradientShader && Math.min(width, height) >= 12
-    color: effectFill ? "transparent" : fillColor
+    color: effectFill || cornerShape.masked ? "transparent" : fillColor
 
     Behavior on radius {
-        enabled: root.animateRadius && Config.animDuration > 0
+        enabled: root.animateRadius && Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration / 4
+            duration: Motion.morph.duration / 4
+            easing.type: Motion.morph.easing
         }
+    }
+
+    CornerShape {
+        id: cornerShape
+        target: root
+        variantConfig: root.variantConfig
+        popup: root.popupShape
+        anchorEdge: root.anchorEdge
+        enabled: root.cornerStyled
+        radiusValues: [root.topLeftRadius, root.topRightRadius, root.bottomRightRadius, root.bottomLeftRadius]
     }
 
     // Linear gradient - procedural (no texture)
@@ -265,9 +278,34 @@ ClippingRectangle {
         }
     }
 
-    // Shadow effect
-    layer.enabled: enableShadow
-    layer.effect: Shadow {}
+    // Shadow effect; a masked corner style renders through CornerMask
+    // (which carries the shadow itself)
+    layer.enabled: enableShadow || cornerShape.masked
+    layer.effect: cornerShape.masked ? maskEffect : shadowEffect
+
+    Component {
+        id: shadowEffect
+        Shadow {}
+    }
+
+    Component {
+        id: maskEffect
+        CornerMask {
+            shapeStyle: cornerShape.shaderStyle
+            cutSize: cornerShape.cutSize
+            radii: cornerShape.radii
+            shadow: root.enableShadow
+            fillColor: {
+                const c = root.effectFill ? Qt.rgba(0, 0, 0, 0) : root.fillColor;
+                return Qt.vector4d(c.r, c.g, c.b, c.a);
+            }
+            borderWidth: root.enableBorder && root.borderData ? root.borderData[1] : 0
+            borderColor: {
+                const c = Qt.color(Config.resolveColor(root.borderData ? root.borderData[0] : "transparent"));
+                return Qt.vector4d(c.r, c.g, c.b, c.a);
+            }
+        }
+    }
 
     // Border overlay to avoid ClippingRectangle artifacts
     ClippingRectangle {
@@ -280,6 +318,6 @@ ClippingRectangle {
         color: "transparent"
         border.color: Config.resolveColor(root.borderData ? root.borderData[0] : "transparent")
         border.width: root.borderData ? root.borderData[1] : 0
-        visible: root.enableBorder
+        visible: root.enableBorder && !cornerShape.masked
     }
 }
