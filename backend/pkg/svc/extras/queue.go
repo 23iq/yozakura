@@ -2,6 +2,7 @@ package extras
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -41,12 +42,29 @@ func postHook(prefix string) PostHook {
 // jobEnv keeps tool output parseable.
 var jobEnv = []string{"LC_ALL=C", "LANG=C"}
 
+// Cancel errors.
+var (
+	ErrUnknownJob     = errors.New("no such queued or running job")
+	ErrNotCancellable = errors.New("can't stop a running system install")
+)
+
 type qjob struct {
 	Job
 	batch     int
 	cancelled bool
 	cancel    context.CancelFunc
 	prog      Progress
+}
+
+// cancellable reports whether a running job of this kind may be
+// interrupted: pacman/dnf (direct, via the AUR helper, multilib or
+// upgrade) must never be killed mid-transaction.
+func (j *qjob) cancellable() bool {
+	switch j.Kind {
+	case KindFlatpak, KindNpm, KindScript, KindShell:
+		return true
+	}
+	return false
 }
 
 // Queue runs install jobs one at a time, in order. Safe for concurrent use.
@@ -61,7 +79,7 @@ type Queue struct {
 	current  *qjob
 	working  bool
 	batch    int
-	failed   map[string]bool // job ids that did not succeed
+	outcome  map[int]map[string]string // batch -> job id -> failed|cancelled
 	logDir   string
 	post     func(entryID string) []string // entry id -> post actions
 	after    func(Job, bool)
@@ -69,10 +87,10 @@ type Queue struct {
 	idleDone chan struct{}
 }
 
-// NewQueue returns an idle queue. emit receives every state change; notify
-// is called once per finished (done or failed) job.
+// NewQueue returns an idle queue. emit receives every state change, in
+// order per job; notify is called once per finished (done or failed) job.
 func NewQueue(run Runner, emit func(Progress), notify func(title, body string)) *Queue {
-	return &Queue{run: run, emit: emit, notify: notify, failed: map[string]bool{},
+	return &Queue{run: run, emit: emit, notify: notify, outcome: map[int]map[string]string{},
 		logDir: filepath.Join(paths.New().StateDir, "extras"), fetch: DownloadScript}
 }
 
@@ -91,56 +109,96 @@ func (q *Queue) SetAfterJob(fn func(job Job, ok bool)) {
 	q.mu.Unlock()
 }
 
-// Enqueue appends one batch of jobs (as returned by Plan).
+// Enqueue appends one batch of jobs (as returned by Plan). The "queued"
+// events are emitted before the jobs become runnable, so they always
+// precede the jobs' later events.
 func (q *Queue) Enqueue(jobs []Job) {
+	if len(jobs) == 0 {
+		return
+	}
 	q.mu.Lock()
 	q.batch++
-	var queued []Progress
+	b := q.batch
+	q.mu.Unlock()
+	batch := make([]*qjob, 0, len(jobs))
 	for _, j := range jobs {
-		qj := &qjob{Job: j, batch: q.batch}
+		qj := &qjob{Job: j, batch: b}
 		qj.prog = Progress{Job: j.ID, Kind: j.Kind, Entries: j.Entries, State: JobQueued, Percent: -1}
-		q.pending = append(q.pending, qj)
-		queued = append(queued, qj.prog)
+		batch = append(batch, qj)
+		q.send(qj.prog)
 	}
-	start := !q.working && len(q.pending) > 0
+	q.mu.Lock()
+	q.pending = append(q.pending, batch...)
+	start := !q.working
 	if start {
 		q.working = true
 		q.idleDone = make(chan struct{})
 	}
 	q.mu.Unlock()
-	for _, p := range queued {
-		q.send(p)
-	}
 	if start {
 		go q.loop()
 	}
 }
 
-// Cancel cancels a queued job, or stops the running one.
-func (q *Queue) Cancel(jobID string) {
+// Cancel cancels a queued job, or stops a running user-level job
+// (flatpak, npm, scripts). A running system or AUR install cannot be
+// stopped: ErrNotCancellable.
+func (q *Queue) Cancel(jobID string) error {
 	q.mu.Lock()
-	if q.current != nil && q.current.ID == jobID {
-		q.current.cancelled = true
-		if q.current.cancel != nil {
-			q.current.cancel()
+	if c := q.current; c != nil && c.ID == jobID {
+		defer q.mu.Unlock()
+		if !c.cancellable() {
+			return ErrNotCancellable
 		}
-		q.mu.Unlock()
-		return
+		c.cancelled = true
+		if c.cancel != nil {
+			c.cancel()
+		}
+		return nil
 	}
-	var gone []Progress
+	var gone *qjob
 	for i, j := range q.pending {
 		if j.ID == jobID {
 			q.pending = append(q.pending[:i], q.pending[i+1:]...)
-			q.failed[j.ID] = true
-			j.prog.State = JobCancelled
-			gone = append(gone, j.prog)
+			gone = j
 			break
 		}
 	}
-	q.mu.Unlock()
-	for _, p := range gone {
-		q.send(p)
+	if gone == nil {
+		q.mu.Unlock()
+		return ErrUnknownJob
 	}
+	q.record(gone, JobCancelled)
+	gone.prog.State = JobCancelled
+	p := gone.prog
+	q.pruneBatch(gone.batch)
+	q.mu.Unlock()
+	q.send(p)
+	return nil
+}
+
+// record stores a non-done outcome for dependents. Caller holds mu.
+func (q *Queue) record(j *qjob, state string) {
+	m := q.outcome[j.batch]
+	if m == nil {
+		m = map[string]string{}
+		q.outcome[j.batch] = m
+	}
+	m[j.ID] = state
+}
+
+// pruneBatch drops outcomes of a batch with no queued or running job left.
+// Caller holds mu.
+func (q *Queue) pruneBatch(b int) {
+	if q.current != nil && q.current.batch == b {
+		return
+	}
+	for _, j := range q.pending {
+		if j.batch == b {
+			return
+		}
+	}
+	delete(q.outcome, b)
 }
 
 // Jobs returns the state of the running and queued jobs.
@@ -188,18 +246,28 @@ func (q *Queue) loop() {
 		}
 		j := q.pending[0]
 		q.pending = q.pending[1:]
-		var depFailed bool
+		depState := ""
 		for _, d := range j.Deps {
-			depFailed = depFailed || q.failed[d]
+			switch q.outcome[j.batch][d] {
+			case JobCancelled:
+				depState = JobCancelled
+			case JobFailed:
+				if depState == "" {
+					depState = JobFailed
+				}
+			}
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		j.cancel = cancel
 		q.current = j
 		q.mu.Unlock()
 
-		if depFailed {
+		switch depState {
+		case JobCancelled:
+			q.finish(j, JobCancelled, "")
+		case JobFailed:
 			q.finish(j, JobFailed, ReasonDependency)
-		} else {
+		default:
 			state, reason := q.execute(ctx, j)
 			q.finish(j, state, reason)
 		}
@@ -225,7 +293,7 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 	var dropped []Progress
 	q.mu.Lock()
 	if !ok {
-		q.failed[j.ID] = true
+		q.record(j, state)
 	}
 	j.prog.State, j.prog.Reason = state, reason
 	if ok {
@@ -239,13 +307,13 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 				keep = append(keep, p)
 				continue
 			}
-			q.failed[p.ID] = true
 			p.prog.State, p.prog.Reason = JobCancelled, ReasonAuthCancelled
 			dropped = append(dropped, p.prog)
 		}
 		q.pending = keep
 	}
 	q.current = nil
+	q.pruneBatch(j.batch)
 	q.mu.Unlock()
 	q.send(final)
 	for _, p := range dropped {

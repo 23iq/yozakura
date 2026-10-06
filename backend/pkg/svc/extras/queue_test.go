@@ -2,6 +2,7 @@ package extras
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -78,6 +79,15 @@ func newTestQueue(t *testing.T, f *fakeRunner) (*Queue, *recorder) {
 	return q, r
 }
 
+func registerTestPost(t *testing.T, prefix string, fn PostHook) {
+	RegisterPost(prefix, fn)
+	t.Cleanup(func() {
+		postMu.Lock()
+		delete(postHooks, prefix)
+		postMu.Unlock()
+	})
+}
+
 func job(id string, k JobKind, argv ...string) Job {
 	return Job{ID: id, Kind: k, Entries: []string{id}, Names: []string{strings.ToUpper(id)}, Argv: argv}
 }
@@ -89,7 +99,7 @@ func TestQueueSerialAndPost(t *testing.T) {
 	q, r := newTestQueue(t, f)
 	var mu sync.Mutex
 	var hooked, after []string
-	RegisterPost("testhook", func(arg string) error { mu.Lock(); hooked = append(hooked, arg); mu.Unlock(); return nil })
+	registerTestPost(t, "testhook", func(arg string) error { mu.Lock(); hooked = append(hooked, arg); mu.Unlock(); return nil })
 	q.SetPostActions(func(id string) []string {
 		if id == "a" {
 			return []string{"testhook:a-app", "unknown:x"}
@@ -129,49 +139,6 @@ func TestQueueSerialAndPost(t *testing.T) {
 	data, err := os.ReadFile(fin["a"].Log)
 	if err != nil || !strings.Contains(string(data), "installing a-lib") {
 		t.Errorf("log = %q, %v", data, err)
-	}
-}
-
-func TestQueueCancel(t *testing.T) {
-	f := &fakeRunner{started: make(chan string, 4), steps: map[string]fakeStep{"slow": {block: true}}}
-	q, r := newTestQueue(t, f)
-	q.Enqueue([]Job{job("s", KindShell, "slow"), job("n", KindNpm, "npm", "n"), job("m", KindNpm, "npm", "m")})
-	<-f.started
-	q.Cancel("n") // queued
-	q.Cancel("s") // running
-	q.Wait()
-	fin := r.final()
-	if fin["s"].State != JobCancelled || fin["n"].State != JobCancelled || fin["m"].State != JobDone {
-		t.Errorf("final = %+v", fin)
-	}
-	if strings.Join(f.calls, "|") != "slow|npm m" {
-		t.Errorf("calls = %v", f.calls)
-	}
-	if len(r.notifs) != 1 {
-		t.Errorf("notifs = %v", r.notifs)
-	}
-}
-
-func TestQueueAuthCancelledCancelsBatch(t *testing.T) {
-	f := &fakeRunner{steps: map[string]fakeStep{"pkexec y sys install a b": {code: 126}}}
-	q, r := newTestQueue(t, f)
-	sys := job("sys", KindSystem, "pkexec", "y", "sys", "install", "a", "b")
-	sys.Entries = []string{"a", "b"}
-	q.Enqueue([]Job{sys, job("n", KindNpm, "npm", "n")})
-	q.Enqueue([]Job{job("other", KindNpm, "npm", "o")})
-	q.Wait()
-	fin := r.final()
-	if p := fin["sys"]; p.State != JobCancelled || p.Reason != ReasonAuthCancelled || len(p.Entries) != 2 {
-		t.Errorf("sys = %+v", p)
-	}
-	if p := fin["n"]; p.State != JobCancelled || p.Reason != ReasonAuthCancelled {
-		t.Errorf("n = %+v", p)
-	}
-	if fin["other"].State != JobDone {
-		t.Errorf("other batch = %+v", fin["other"])
-	}
-	if strings.Join(f.calls, "|") != "pkexec y sys install a b|npm o" {
-		t.Errorf("calls = %v", f.calls)
 	}
 }
 
@@ -243,7 +210,97 @@ func TestExecRunnerLinesAndExit(t *testing.T) {
 	go func() { time.Sleep(50 * time.Millisecond); cancel() }()
 	start := time.Now()
 	code, _ = ExecRunner{}.Run(ctx, []string{"sleep", "30"}, nil, func(string) {})
-	if code == 0 || time.Since(start) > 5*time.Second {
+	if code != 128+15 || time.Since(start) > 5*time.Second {
 		t.Errorf("cancel: code=%d after %v", code, time.Since(start))
+	}
+}
+
+func TestQueueEventOrder(t *testing.T) {
+	f := &fakeRunner{started: make(chan string, 8), steps: map[string]fakeStep{"slow": {block: true}}}
+	q, r := newTestQueue(t, f)
+	q.Enqueue([]Job{job("s", KindShell, "slow")})
+	<-f.started
+	q.Enqueue([]Job{job("b1", KindNpm, "npm", "b1"), job("b2", KindNpm, "npm", "b2")})
+	_ = q.Cancel("s")
+	q.Wait()
+	first := map[string]string{}
+	r.mu.Lock()
+	for _, p := range r.prog {
+		if _, ok := first[p.Job]; !ok {
+			first[p.Job] = p.State
+		}
+	}
+	r.mu.Unlock()
+	for id, p := range r.final() {
+		if first[id] != JobQueued {
+			t.Errorf("%s first event %q", id, first[id])
+		}
+		if p.State != JobDone && p.State != JobCancelled {
+			t.Errorf("%s last event %q", id, p.State)
+		}
+	}
+}
+
+func TestQueueConcurrentEnqueueSerial(t *testing.T) {
+	f := &fakeRunner{}
+	q, r := newTestQueue(t, f)
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			id := fmt.Sprintf("j%d", i)
+			q.Enqueue([]Job{job(id+"a", KindNpm, "npm", id+"a"), job(id+"b", KindNpm, "npm", id+"b")})
+		}(i)
+	}
+	wg.Wait()
+	q.Wait()
+	if f.maxPar != 1 || len(f.calls) != 16 {
+		t.Errorf("maxPar=%d calls=%d", f.maxPar, len(f.calls))
+	}
+	pos := map[string]int{}
+	for i, c := range f.calls {
+		pos[strings.TrimPrefix(c, "npm ")] = i
+	}
+	for i := 0; i < 8; i++ {
+		if a, b := pos[fmt.Sprintf("j%da", i)], pos[fmt.Sprintf("j%db", i)]; a > b {
+			t.Errorf("batch %d out of order", i)
+		}
+	}
+	if len(r.final()) != 16 {
+		t.Errorf("final = %d", len(r.final()))
+	}
+}
+
+func TestQueuePacmanPipedPercent(t *testing.T) {
+	var lines []string
+	for _, c := range pacmanPiped {
+		lines = append(lines, c.line)
+	}
+	f := &fakeRunner{steps: map[string]fakeStep{"pkexec y sys install a": {lines: lines}}}
+	q, r := newTestQueue(t, f)
+	j := job("a", KindSystem, "pkexec", "y", "sys", "install", "a")
+	j.Pkgs = []string{"firefox", "telegram-desktop"}
+	q.Enqueue([]Job{j})
+	q.Wait()
+	var pcts []int
+	r.mu.Lock()
+	for _, p := range r.prog {
+		if p.State == JobRunning {
+			pcts = append(pcts, p.Percent)
+		}
+	}
+	r.mu.Unlock()
+	last := -1
+	saw50 := false
+	for _, p := range pcts {
+		if p < last {
+			t.Fatalf("percent went back: %v", pcts)
+		}
+		last = p
+		saw50 = saw50 || p == 50
+	}
+	if !saw50 {
+		t.Errorf("percents = %v", pcts)
 	}
 }

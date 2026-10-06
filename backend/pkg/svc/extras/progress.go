@@ -49,7 +49,13 @@ var (
 	reFlatpakStep = regexp.MustCompile(`^(Installing|Updating|Downloading)\s+(\d+)/(\d+)\S*\s*(?:(\d{1,3})%)?`)
 	// npm: "added 12 packages in 3s"
 	reNpmAdded = regexp.MustCompile(`^(added|changed) \d+ packages?`)
-	rePercent  = regexp.MustCompile(`(\d{1,3})%\s*$`)
+	// pacman without a tty (noprogressbar): "installing firefox..."
+	rePacmanPkg = regexp.MustCompile(`^(installing|upgrading|reinstalling|downgrading) (\S+?)\.\.\.$`)
+	// " firefox-131.0-1-x86_64 downloading..."
+	rePacmanDl = regexp.MustCompile(`^(\S+) downloading\.\.\.$`)
+	// "checking package integrity...", "resolving dependencies..."
+	rePacmanPhase = regexp.MustCompile(`^[a-z][a-z ]+\.\.\.$`)
+	rePercent     = regexp.MustCompile(`(\d{1,3})%\s*$`)
 )
 
 // ParseLine extracts progress from one output line of a job of the given
@@ -67,6 +73,15 @@ func ParseLine(kind JobKind, line string) (pct int, phase string, ok bool) {
 		}
 		if m := reDnfStep.FindStringSubmatch(line); m != nil {
 			return stepPct(m[3], m[4], ""), clip(strings.ToLower(m[1]) + " " + m[2]), true
+		}
+		if m := rePacmanPkg.FindStringSubmatch(line); m != nil {
+			return -1, m[1] + " " + m[2], true
+		}
+		if m := rePacmanDl.FindStringSubmatch(line); m != nil {
+			return -1, clip("downloading " + m[1]), true
+		}
+		if rePacmanPhase.MatchString(line) {
+			return -1, clip(strings.TrimSuffix(line, "...")), true
 		}
 		if strings.HasPrefix(line, ":: ") {
 			return -1, clip(strings.TrimPrefix(line, ":: ")), true
@@ -122,11 +137,29 @@ func clip(s string) string {
 	return s
 }
 
+// pkgPercent derives a job percent from a piped pacman phase
+// ("installing <pkg>") and the job's package list: the share of the job's
+// packages before <pkg>. -1 when the package is not one of them.
+func pkgPercent(phase string, pkgs []string) int {
+	_, name, ok := strings.Cut(phase, " ")
+	if !ok || len(pkgs) == 0 {
+		return -1
+	}
+	for i, p := range pkgs {
+		if p == name {
+			return i * 100 / len(pkgs)
+		}
+	}
+	return -1
+}
+
 // lineReason maps an output line to a failure reason ("" when it tells
 // nothing).
 func lineReason(line string) string {
 	l := strings.ToLower(line)
 	switch {
+	case strings.Contains(l, "request dismissed"), strings.Contains(l, "not authorized"):
+		return ReasonAuthCancelled
 	case strings.Contains(l, "target not found"):
 		return ReasonNeedsSync
 	case strings.Contains(l, "could not resolve host"), strings.Contains(l, "failed to connect"),
@@ -141,14 +174,15 @@ func lineReason(line string) string {
 	return ""
 }
 
-// exitReason maps a failed command to a reason: pkexec exits 126 when the
-// authentication dialog is dismissed and 127 when authorization fails.
+// exitReason maps a failed command to a reason: a reason seen in its output
+// wins (pkexec dismissal lines printed under paru/yay included); otherwise
+// pkexec exits 126 when the dialog is dismissed and 127 when not authorized.
 func exitReason(argv []string, code int, seen string) string {
-	if len(argv) > 0 && argv[0] == "pkexec" && (code == 126 || code == 127) {
-		return ReasonAuthCancelled
-	}
 	if seen != "" {
 		return seen
+	}
+	if len(argv) > 0 && argv[0] == "pkexec" && (code == 126 || code == 127) {
+		return ReasonAuthCancelled
 	}
 	return ReasonError
 }

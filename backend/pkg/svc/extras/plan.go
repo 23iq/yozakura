@@ -43,6 +43,7 @@ type Job struct {
 	Entries   []string   `json:"entries"`
 	Names     []string   `json:"names"`
 	Argv      []string   `json:"argv"`
+	Pkgs      []string   `json:"pkgs,omitempty"` // system/aur packages, for progress
 	Pre       [][]string `json:"pre,omitempty"`
 	ScriptURL string     `json:"scriptUrl,omitempty"`
 	NeedsRoot bool       `json:"needsRoot"`
@@ -153,33 +154,34 @@ func Plan(c *Catalog, p Platform, st map[string]Status, ids []string, self strin
 // expand returns the requested entries plus their missing requirements in
 // dependency order.
 func expand(c *Catalog, st map[string]Status, ids []string) ([]Entry, error) {
+	unknown := map[string]string{}
+	for _, id := range ids {
+		if _, ok := c.Get(id); !ok {
+			unknown[id] = "unknown"
+		}
+	}
+	if len(unknown) > 0 {
+		return nil, &UnavailableError{Reasons: unknown}
+	}
 	var out []Entry
 	seen := map[string]bool{}
-	var visit func(id string) error
-	visit = func(id string) error {
+	var visit func(id string)
+	visit = func(id string) {
 		if seen[id] {
-			return nil
+			return
 		}
 		seen[id] = true
-		e, ok := c.Get(id)
-		if !ok {
-			return &UnavailableError{Reasons: map[string]string{id: "unknown"}}
-		}
+		e, _ := c.Get(id) // requires are validated by the catalog
 		if st[id].State == StateInstalled {
-			return nil
+			return
 		}
 		for _, r := range e.Requires {
-			if err := visit(r); err != nil {
-				return err
-			}
+			visit(r)
 		}
 		out = append(out, e)
-		return nil
 	}
 	for _, id := range ids {
-		if err := visit(id); err != nil {
-			return nil, err
-		}
+		visit(id)
 	}
 	return out, nil
 }
@@ -271,14 +273,31 @@ func (b *builder) place(e Entry, k JobKind) {
 	switch k {
 	case KindSystem:
 		j.Argv = append(j.Argv, e.ID)
+		j.Pkgs = append(j.Pkgs, b.repoPkgs(e)...)
 	case KindAUR:
 		j.Argv = append(j.Argv, e.Install.Arch.AUR...)
+		j.Pkgs = append(j.Pkgs, e.Install.Arch.AUR...)
 	case KindFlatpak:
 		j.Argv = append(j.Argv, e.Install.Flatpak)
 	case KindNpm:
 		j.Argv = append(j.Argv, e.Install.Npm)
 	}
 	b.jobOf[e.ID] = j
+}
+
+// repoPkgs is the distro's package list of e (GPU variant first).
+func (b *builder) repoPkgs(e Entry) []string {
+	m := e.Install.Arch
+	if b.p.Distro == "fedora" {
+		m = e.Install.Fedora
+	}
+	if m == nil {
+		return nil
+	}
+	if v := m.GPU[b.p.GPU]; len(v) > 0 {
+		return v
+	}
+	return m.Pkgs
 }
 
 func (b *builder) init(j *Job, e Entry) {

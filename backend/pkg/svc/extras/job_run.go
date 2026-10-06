@@ -2,6 +2,7 @@ package extras
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -30,6 +31,9 @@ func (q *Queue) execute(ctx context.Context, j *qjob) (state, reason string) {
 			if q.wasCancelled(j) {
 				return JobCancelled, ""
 			}
+			if errors.Is(err, ErrScriptRejected) {
+				return JobFailed, ReasonError
+			}
 			return JobFailed, ReasonNetwork
 		}
 		defer os.Remove(path)
@@ -41,30 +45,34 @@ func (q *Queue) execute(ctx context.Context, j *qjob) (state, reason string) {
 	}
 	cmds := append(append([][]string(nil), j.Pre...), argv)
 	for _, cmd := range cmds {
+		if q.wasCancelled(j) { // cancelled before this command started
+			return JobCancelled, ""
+		}
 		fmt.Fprintf(logw, "$ %s\n", strings.Join(cmd, " "))
 		seen := ""
 		code, err := q.run.Run(ctx, cmd, jobEnv, func(line string) {
 			fmt.Fprintln(logw, line)
-			if r := lineReason(line); r != "" && seen == "" {
+			if r := lineReason(line); r != "" && (seen == "" || r == ReasonAuthCancelled) {
 				seen = r
 			}
 			q.progress(j, line)
 		})
+		if code == 0 && err == nil {
+			continue // finished despite a late cancel: keep the result
+		}
 		if q.wasCancelled(j) {
 			return JobCancelled, ""
 		}
-		if err != nil && code == 0 {
+		if code == 0 {
 			fmt.Fprintf(logw, "error: %v\n", err)
 			return JobFailed, ReasonError
 		}
-		if code != 0 {
-			fmt.Fprintf(logw, "exit status %d\n", code)
-			r := exitReason(cmd, code, seen)
-			if r == ReasonAuthCancelled {
-				return JobCancelled, r
-			}
-			return JobFailed, r
+		fmt.Fprintf(logw, "exit status %d\n", code)
+		r := exitReason(cmd, code, seen)
+		if r == ReasonAuthCancelled {
+			return JobCancelled, r
 		}
+		return JobFailed, r
 	}
 	return JobDone, ""
 }
@@ -76,14 +84,18 @@ func (q *Queue) wasCancelled(j *qjob) bool {
 }
 
 // progress updates the job from one output line and emits on change.
+// Percent is monotonic within a job.
 func (q *Queue) progress(j *qjob, line string) {
 	pct, phase, ok := ParseLine(j.Kind, line)
 	if !ok {
 		return
 	}
+	if pct < 0 {
+		pct = pkgPercent(phase, j.Pkgs)
+	}
 	q.mu.Lock()
 	changed := false
-	if pct >= 0 && pct != j.prog.Percent {
+	if pct > j.prog.Percent { // never goes back (e.g. pacman hook counters)
 		j.prog.Percent, changed = pct, true
 	}
 	if phase != "" && phase != j.prog.Phase {
