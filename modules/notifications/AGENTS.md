@@ -30,7 +30,9 @@ Notification popup system built on Quickshell.Services.Notifications. Handles di
 modules/notifications/
 ├── NotificationPolicy.js          # Pure policy (presentation, rules, DND, limits)
 ├── CornerToasts.qml               # Corner toast stack (presentation "corner")
-├── CornerToast.qml                # One toast card (latest of a group + "+N")
+├── CornerToast.qml                # One toast: kit Surface + Group, grouped app = compact stack
+├── ToastCard.qml                  # Toast content from the kit (Art, KitText roles, ProgressLine, Chips)
+├── ToastModel.js                  # Pure toast helpers (tests/corner-toast-model.test.cjs)
 ├── notification_utils.js          # Time formatting, body processing
 ├── NotificationDelegate.qml       # Core component (471 lines)
 ├── NotificationAppIcon.qml        # Icon/image with fallback chain

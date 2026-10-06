@@ -4,28 +4,39 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
-import qs.config
-import "./NotificationDelegate.qml"
+import qs.modules.components.kit
+import "ToastModel.js" as ToastModel
 
 // One corner toast: the latest notification of a popup group (one app, or
-// one notification when notifications.groupByApp is off) on a glass popup
-// card, with a "+N" badge for the rest of the group. Hover pauses the
-// group's timers; the delegate handles click (activate), actions and dismiss.
+// one notification when notifications.groupByApp is off) on a kit Surface.
+// The rest of the group is a compact stack: up to two sheets peek out from
+// under the card, away from the screen edge (`stackUp` for bottom corners),
+// and the caption counts them. Hover pauses the group's timers and shows
+// the dismiss button; click activates, middle click dismisses the group.
 Item {
     id: root
 
     property var group: null
+    property bool stackUp: false
     // Last non-empty group: keeps the content while the remove transition runs
     property var held: null
     onGroupChanged: if (group)
         held = group
-    readonly property var notifications: held ? held.notifications.filter(n => n && (n.summary || n.body)) : []
-    readonly property var latest: notifications.length > 0 ? notifications.reduce((a, b) => (b.time > a.time ? b : a)) : null
-    readonly property int extra: Math.max(0, notifications.length - 1)
+    readonly property var notifications: root.held ? ToastModel.visible(root.held.notifications) : []
+    readonly property var latest: ToastModel.latest(root.notifications)
+    readonly property int extra: Math.max(0, root.notifications.length - 1)
+    readonly property int depth: ToastModel.stackDepth(root.notifications.length)
+    readonly property int peek: Space.s
 
-    implicitHeight: card.implicitHeight
+    implicitHeight: card.implicitHeight + root.depth * root.peek
+
+    function dismiss(): void {
+        if (root.notifications.length > 0)
+            Notifications.discardNotifications(root.notifications.map(n => n.id));
+    }
 
     HoverHandler {
+        id: hover
         onHoveredChanged: {
             if (!root.held)
                 return;
@@ -36,49 +47,63 @@ Item {
         }
     }
 
-    StyledRect {
+    // The stack: sheets behind the card, each narrower and quieter.
+    Repeater {
+        model: root.depth
+
+        Surface {
+            required property int index
+            readonly property int step: index + 1
+            z: -step
+            x: Space.m * step
+            y: root.stackUp ? root.depth * root.peek - root.peek * step : root.peek * step
+            width: root.width - 2 * Space.m * step
+            height: card.height
+            glassSurface: "popups"
+            opacity: 1 - 0.3 * step
+        }
+    }
+
+    Surface {
         id: card
-        variant: "popup"
+        y: root.stackUp ? root.depth * root.peek : 0
+        width: root.width
+        implicitHeight: box.implicitHeight + 2 * padding
         glassSurface: "popups"
-        width: parent.width
-        implicitHeight: delegate.implicitHeight + 24
-        radius: Styling.radius(4)
         layer.enabled: true
         layer.effect: Shadow {}
 
-        NotificationDelegate {
-            id: delegate
-            x: 12
-            y: 12
-            width: card.width - 24
-            notificationObject: root.latest
-            notifications: root.latest ? [root.latest] : []
-            expanded: true
-            onlyNotification: true
-            onDestroyRequested: {
-                if (root.notifications.length > 0)
-                    Notifications.discardNotifications(root.notifications.map(n => n.id));
+        MouseArea {
+            width: box.width
+            height: box.height
+            acceptedButtons: Qt.LeftButton | Qt.MiddleButton
+            cursorShape: Qt.PointingHandCursor
+            onClicked: mouse => {
+                if (mouse.button === Qt.MiddleButton)
+                    root.dismiss();
+                else if (root.latest)
+                    Notifications.activateNotification(root.latest.id);
             }
         }
 
-        // "+N" more from the same app
-        StyledRect {
-            visible: root.extra > 0
-            variant: "primary"
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 10
-            width: badge.implicitWidth + 14
-            height: badge.implicitHeight + 6
-            radius: height / 2
-            Text {
-                id: badge
-                anchors.centerIn: parent
-                text: "+" + root.extra
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                font.weight: Font.DemiBold
-                color: parent.item
+        // The language's group box (ink: none, glass: a frosted card, tiles: a tile).
+        Group {
+            id: box
+            width: card.width - 2 * card.padding
+
+            ToastCard {
+                id: content
+                width: parent.width
+                notification: root.latest
+                extra: root.extra
+                hovered: hover.hovered
+                onDismissRequested: root.dismiss()
+                onActionInvoked: identifier => {
+                    if (!root.latest)
+                        return;
+                    Notifications.attemptInvokeAction(root.latest.id, identifier, false);
+                    root.dismiss();
+                }
             }
         }
     }

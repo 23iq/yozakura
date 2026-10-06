@@ -36,7 +36,7 @@ QtObject {
     property QtObject morph: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
 }"""})
 h.copy("modules/notifications/CornerToasts.qml", siblings=False)
-h.stub("CornerToast", "Item { property var group }")
+h.stub("CornerToast", "Item { property var group; property bool stackUp }")
 
 root = h.load("""import QtQuick
 import qs.config

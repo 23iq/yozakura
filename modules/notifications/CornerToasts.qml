@@ -118,6 +118,7 @@ Item {
             required property string key
             width: list.width
             group: Notifications.popupGroupsByAppName[key] ?? null
+            stackUp: root.atBottom
         }
 
         add: Transition {
