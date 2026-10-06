@@ -182,8 +182,10 @@ Item {
 
             // ---- live preview + prompt gallery ------------------------------
             Item {
+                id: body
                 width: parent.width
-                height: Math.max(previewCol.implicitHeight, Math.round(Styling.fontSize(0) * 16))
+                // fills the step; the gallery scrolls inside it
+                height: Math.max(previewCol.implicitHeight, flick.height - y)
 
                 Column {
                     id: previewCol

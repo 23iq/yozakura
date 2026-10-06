@@ -2,8 +2,10 @@
 
 ## OVERVIEW
 First-run setup wizard: a full-screen glass card (Overlay layer, namespace
-`<app>:onboarding`) walking through look, wallpapers, terminal/language,
-AI agents + voice, an interactive keybind tour and a summary.
+`<app>:onboarding`) in 8 steps (OnboardingSteps.js): welcome + language,
+displays + keyboard, look (preset + wallpaper tabs), terminal (app, fish
+prompt, login shell), apps, AI + voice, an interactive keybind tour and a
+summary.
 
 ## STRUCTURE
 ```
@@ -14,6 +16,8 @@ onboarding/
 ├── OnboardingSteps.js     step registry (id, component, icon, title/subtitle keys, hero)
 ├── OnboardingModel.js     pure helpers: probe script + parser, TOUR, findKeys, presetLook, voiceProgress
 ├── Step*.qml              one file per step (get `wizard`, the OnboardingState)
+├── MonitorUpgradeCard / KeyboardSetupCard   parts of StepDisplays
+├── LookPresetGrid / LookWallpaperStrip / OnboardingTabs   parts of StepLook
 ├── PresetCard / PresetPreview   static mini desktop from a preset's bar.json/theme.json
 └── ChoiceRow / NavButton / SectionLabel / StepScaffold / ProgressDots / SakuraLogo / TourTask
 ```
@@ -32,7 +36,10 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   `<app> run onboarding`, launcher `> onboarding`.
 - Keybind tour completion comes from `GlobalShortcuts.commandRan`; while a
   task's panel is open the wizard peeks (`OnboardingService.peek`: window unmapped, `OnboardingPeekPill` shown).
-- Peek: `PeekButton` ("Preview on desktop") sets `peek`; the pill's "Back to setup" clears it.
+- Peek: `PeekButton` ("Preview on desktop", Look and Terminal steps) sets `peek`; the pill's "Back to setup" clears it.
+- Every step `wizard.remember(key, value)`s what the user chose (resume shows it).
+- Display changes go through `DisplaysService.apply` (live, 15 s keep/revert prompt);
+  OnboardingWindow unmaps while a live change is pending so the prompt is on top.
 
 ## VERIFY
 `tests/onboarding.test.cjs`, `tests/onboarding-ui.test.py`

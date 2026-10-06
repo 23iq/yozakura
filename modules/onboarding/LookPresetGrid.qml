@@ -63,7 +63,7 @@ Item {
                 preset: cell.modelData
                 wallpaper: root.wallpaper
                 current: root.current
-                selected: (cell.modelData ? cell.modelData.name : "") === root.wizard.chosenPreset
+                selected: !!root.wizard && (cell.modelData ? cell.modelData.name : "") === root.wizard.chosenPreset
                 onPicked: root.wizard.choosePreset(cell.modelData ? cell.modelData.name : "")
             }
         }
