@@ -22,6 +22,10 @@ PanelWindow {
     implicitWidth: pill.implicitWidth + 2 * gap
     implicitHeight: pill.implicitHeight + 2 * gap
     color: "transparent"
+    // only the pill takes input; the transparent halo lets clicks through
+    mask: Region {
+        item: pill
+    }
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.namespace: Brand.namespace("onboarding-peek")
