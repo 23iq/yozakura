@@ -17,18 +17,11 @@ var keys = {
     "launcherIconTint": {
         "description": "Tint the launcher icon with the palette."
     },
-    "launcherIconFullTint": {
-        "description": "Tint the launcher icon fully (flat color) instead of a soft overlay."
-    },
     "launcherIconSize": {
         "min": 8,
         "max": 64,
         "unit": "px",
         "description": "Launcher icon size."
-    },
-    "pillStyle": {
-        "enum": Enums.PILL_STYLES,
-        "description": "Shape of the module pills (squished = half radius)."
     },
     "screenList": {
         "items": {
@@ -38,10 +31,6 @@ var keys = {
     },
     "enableFirefoxPlayer": {
         "description": "Show Firefox as a media player (MPRIS); off hides it."
-    },
-    "barColor": {
-        "format": "gradient",
-        "description": "Bar background gradient stops [[colorSpec, position], ...]."
     },
     "frameEnabled": {
         "description": "Draw a frame around the screen edges joined with the bar."

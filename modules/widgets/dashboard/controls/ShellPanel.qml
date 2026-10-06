@@ -485,17 +485,6 @@ Item {
                             }
                         }
 
-                        ToggleRow {
-                            label: I18n.t("shell.launcher_icon_full_tint")
-                            checked: Config.bar.launcherIconFullTint ?? true
-                            onToggled: value => {
-                                if (value !== Config.bar.launcherIconFullTint) {
-                                    GlobalStates.markShellChanged();
-                                    Config.bar.launcherIconFullTint = value;
-                                }
-                            }
-                        }
-
                         NumberInputRow {
                             label: I18n.t("shell.launcher_icon_size")
                             value: Config.bar.launcherIconSize ?? 24
@@ -510,26 +499,6 @@ Item {
                             }
                         }
 
-                        SelectorRow {
-                            label: I18n.t("shell.pill_style")
-                            options: [
-                                {
-                                    label: I18n.t("common.default"),
-                                    value: "default"
-                                },
-                                {
-                                    label: I18n.t("shell.squished"),
-                                    value: "squished"
-                                }
-                            ]
-                            value: Config.bar.pillStyle ?? "default"
-                            onValueSelected: newValue => {
-                                if (newValue !== Config.bar.pillStyle) {
-                                    GlobalStates.markShellChanged();
-                                    Config.bar.pillStyle = newValue;
-                                }
-                            }
-                        }
 
                         SelectorRow {
                             label: I18n.t("shell.bar_style")

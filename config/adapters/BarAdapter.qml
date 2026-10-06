@@ -6,12 +6,9 @@ JsonAdapter {
     property string position: "top"
     property string launcherIcon: ""
     property bool launcherIconTint: true
-    property bool launcherIconFullTint: true
     property int launcherIconSize: 24
-    property string pillStyle: "default"
     property list<string> screenList: []
     property bool enableFirefoxPlayer: false
-    property list<var> barColor: [["surface", 0]]
     property bool frameEnabled: false
     property int frameThickness: 6
     property bool pinnedOnStartup: true

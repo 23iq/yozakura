@@ -43,12 +43,6 @@
       "default": true,
       "description": "Tint the launcher icon with the palette."
     },
-    "launcherIconFullTint": {
-      "title": "Launcher icon full tint",
-      "type": "boolean",
-      "default": true,
-      "description": "Tint the launcher icon fully (flat color) instead of a soft overlay."
-    },
     "launcherIconSize": {
       "title": "Launcher icon size",
       "type": "number",
@@ -57,16 +51,6 @@
       "minimum": 8,
       "maximum": 64,
       "x-unit": "px"
-    },
-    "pillStyle": {
-      "title": "Pill style",
-      "type": "string",
-      "default": "default",
-      "description": "Shape of the module pills (squished = half radius).",
-      "enum": [
-        "default",
-        "squished"
-      ]
     },
     "screenList": {
       "title": "Screen list",
@@ -82,21 +66,6 @@
       "type": "boolean",
       "default": false,
       "description": "Show Firefox as a media player (MPRIS); off hides it."
-    },
-    "barColor": {
-      "title": "Bar color",
-      "type": "array",
-      "default": [
-        [
-          "surface",
-          0
-        ]
-      ],
-      "items": {
-        "type": "array"
-      },
-      "description": "Bar background gradient stops [[colorSpec, position], ...].",
-      "format": "gradient"
     },
     "frameEnabled": {
       "title": "Screen frame",

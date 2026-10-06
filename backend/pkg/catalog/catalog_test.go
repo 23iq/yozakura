@@ -212,7 +212,7 @@ func TestParseValue(t *testing.T) {
 	assert.Equal(t, map[string]any{"enabled": false}, v)
 	v, _ = ParseValue(get("bar.position"), `"x"`, true)
 	assert.Equal(t, "x", v)
-	_, err = ParseValue(get("bar.barColor"), "surface", false)
+	_, err = ParseValue(get("layout.dashboard.grid.cells"), "surface", false)
 	assert.Error(t, err, "arrays without item type need JSON")
 	it, _ := ParseItem(get("bar.layout.left"), "clock")
 	assert.Equal(t, "clock", it)
