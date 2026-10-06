@@ -284,7 +284,9 @@ Singleton {
         onLoaded: {
             if (!root.pinnedAppsReady) {
                 var raw = text();
-                if (!raw || raw.trim().length === 0) {
+                // the dry run never writes the real data dir (only config,
+                // cache and state are sandboxed)
+                if ((!raw || raw.trim().length === 0) && !DryRun.active) {
                     console.log("pinnedapps.json not found, creating with default values...");
                     pinnedAppsLoader.writeAdapter();
                 }
@@ -298,7 +300,7 @@ Singleton {
         }
         onPathChanged: reload()
         onAdapterUpdated: {
-            if (root.pinnedAppsReady && !root.pauseAutoSave) {
+            if (root.pinnedAppsReady && !root.pauseAutoSave && !DryRun.active) {
                 pinnedAppsLoader.writeAdapter();
             }
         }

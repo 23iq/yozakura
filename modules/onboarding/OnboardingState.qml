@@ -41,6 +41,7 @@ QtObject {
 
     // Back to a clean first-run state (the service reuses one instance).
     function reset() {
+        leaveGuard = null;
         direction = 1;
         index = 0;
         choices = ({});
@@ -58,16 +59,32 @@ QtObject {
         chosenPreset = choices.preset || "";
         if (choices.initialPreset !== undefined)
             initialPreset = choices.initialPreset;
+        // the language is staged until the wizard ends: a crash or reload
+        // loses it, the remembered choice brings it back
+        if (typeof choices.language === "string")
+            set("system.language", choices.language);
     }
+
+    // A step may hold Continue / Enter to finish something first (the apps
+    // step queues its picks): leaveGuard() returns false and the step calls
+    // advance() once done. Cleared on every navigation.
+    property var leaveGuard: null
 
     function go(i) {
         const target = Steps.clamp(i);
         if (target === index)
             return;
+        leaveGuard = null;
         direction = target > index ? 1 : -1;
         index = target;
     }
     function next() {
+        if (leaveGuard && !leaveGuard())
+            return;
+        advance();
+    }
+    // Forward without asking the step (its guard already ran)
+    function advance() {
         // Enter / Continue on the summary means "Start using" (ruling C-3)
         if (isLast)
             start();

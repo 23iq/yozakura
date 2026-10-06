@@ -429,7 +429,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 64. **Undo everything in one domain**: `config reset compositor --yes`.
 
 ### Special workspaces
-65. **A scratchpad for chat on Super+S**: `special add Chat --template chat --toggle SUPER+S --send SUPER+ALT+S` (settings: Special workspaces; onboarding offers templates). Hyprland only; elsewhere the page shows a notice and nothing runs.
+65. **A scratchpad for chat on Super+S**: `special add Chat --template chat --toggle SUPER+S --send SUPER+ALT+S` (settings: Special workspaces offers templates). Hyprland only; elsewhere the page shows a notice and nothing runs.
 66. **Launch apps when it opens**: `special app add Chat org.telegram.desktop` (class from StartupWMClass, command from Exec; edit with `--match`/`--command`). Already running elsewhere: `--if-running move` pulls it in, default leaves it. Never launched twice while it maps its window (`specials.launchTimeout`).
 67. **Always open an app there**: `--rule` (Hyprland window rule `workspace special:<name> silent`).
 68. **Start apps hidden at login**: `special set Chat --preload on` (`specials.preloadDelay`).
@@ -519,7 +519,7 @@ combo.
 | Settings catalog | `tools/schema/`, `config/meta/`, `backend/pkg/catalog` | | `tests/schema-catalog.test.cjs`, `backend/pkg/catalog/*_test.go` |
 | CLI | `backend/cmd/yozakura/` (`cmds_config.go`, `cmds_preset.go`, `cmds_completion.go`) | | `cmds_config_test.go` |
 | MCP tools | `backend/pkg/mcp/yozakura/` (`config_tools.go`, `preset_tools.go`, ...) | | `tools_test.go` |
-| Special workspaces | `modules/specials/` (`Specials.js` logic, `SpecialsService.qml` launch/move/rename/preload), settings `modules/settings/editors/SpecialsEditor.qml` + `editors/specials/`, onboarding `StepSpecials.qml`, dashboard `widgets/SpecialsPanel.qml`, launcher `providers/SpecialsProvider.qml`, `backend/pkg/specials` (CLI `cmds_special.go`, MCP `special_tools.go`), yozd `System.ExecuteIn` + `[[window_rules]] workspace` | `specials.*` (global, `catalog.LocalDomains`) | `tests/specials.test.cjs`, `tests/specials-ui.test.py`, `backend/pkg/specials/*_test.go`, `presets/specials_test.go` |
+| Special workspaces | `modules/specials/` (`Specials.js` logic, `SpecialsService.qml` launch/move/rename/preload), settings `modules/settings/editors/SpecialsEditor.qml` + `editors/specials/`, dashboard `widgets/SpecialsPanel.qml`, launcher `providers/SpecialsProvider.qml`, `backend/pkg/specials` (CLI `cmds_special.go`, MCP `special_tools.go`), yozd `System.ExecuteIn` + `[[window_rules]] workspace` | `specials.*` (global, `catalog.LocalDomains`) | `tests/specials.test.cjs`, `tests/specials-ui.test.py`, `backend/pkg/specials/*_test.go`, `presets/specials_test.go` |
 
 ## 6. Extending Yozakura
 

@@ -76,6 +76,16 @@ func isDryRunArgs(args []string) bool {
 	return false
 }
 
+// onboardingArgsError is the usage error for `onboarding <args>` ("" when
+// valid): no arguments opens the wizard, --dry-run [--keep] runs it
+// sandboxed; anything else is refused before anything runs.
+func onboardingArgsError(args []string) string {
+	if len(args) == 0 || isDryRunArgs(args) {
+		return "" // the dry run checks its own flags
+	}
+	return fmt.Sprintf("usage: %s onboarding [--dry-run [--keep]] (unknown %q)", brand.AppID, args[0])
+}
+
 func runOnboardingDryRun(args []string, env dryRunEnv, out, errOut io.Writer) int {
 	keep := false
 	for _, a := range args {
@@ -279,8 +289,9 @@ func (c *treeCopier) tree(src, dst string) error {
 }
 
 // cache copies the app's cache: its files (wallpapers.json, colors.json,
-// ...) and every folder up to dryRunDirCap (thumbnails, schemes); a larger
-// folder is created empty, a larger file left out.
+// ...) and every folder up to dryRunDirCap (thumbnails, schemes) while the
+// total cap allows; a larger folder is created empty, a larger file left
+// out, so a big cache never aborts the dry run.
 func (c *treeCopier) cache(src, dst string) error {
 	if err := os.MkdirAll(dst, 0o700); err != nil {
 		return err
@@ -291,7 +302,9 @@ func (c *treeCopier) cache(src, dst string) error {
 	}
 	for _, e := range entries {
 		from, to := filepath.Join(src, e.Name()), filepath.Join(dst, e.Name())
-		if _, ok := treeSize(from, dryRunDirCap); !ok {
+		// past the folder cap, or past what is left of the total cap: a
+		// cache folder is created empty (never an error), a file left out
+		if size, ok := treeSize(from, dryRunDirCap); !ok || c.copied+size > c.limit {
 			if info, statErr := os.Stat(from); statErr == nil && info.IsDir() {
 				err = os.MkdirAll(to, 0o700)
 			}

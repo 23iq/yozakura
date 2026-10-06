@@ -46,8 +46,15 @@ QtObject {
     property var subs: []
     function call(method, params, cb) {
         calls = calls.concat([{method: method, params: params}]);
+        let r = replies[method];
+        if (Array.isArray(r) && r.length > 0 && r[0] !== null && typeof r[0] === "object" && ("error" in r[0] || "jobs" in r[0])) {
+            // a sequence of replies, consumed one call at a time (the last repeats)
+            const next = Object.assign({}, replies);
+            next[method] = r.length > 1 ? r.slice(1) : r[0];
+            replies = next;
+            r = r[0];
+        }
         if (cb) {
-            const r = replies[method];
             if (r !== undefined && r !== null && r.error) cb(null, r.error);
             else cb(r === undefined ? null : r, null);
         }

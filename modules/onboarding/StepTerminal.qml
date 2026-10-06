@@ -30,6 +30,9 @@ Item {
     readonly property var preview: TerminalLookService.previews[TermModel.previewKey(TerminalLookService.engine, TerminalLookService.prompt)]
     readonly property string fish: TermModel.fishState(TerminalLookService.status)
     readonly property bool fishBusy: ExtrasService.cardState("fish") === "installing"
+    // installing fish or the login-shell change failed: the request did not happen
+    readonly property var loginJobs: Object.values(ExtrasService.jobs || {}).filter(j => j && j.kind === "login")
+    readonly property bool fishFailed: !root.fishBusy && !root.loginJobs.some(j => j.state === "queued" || j.state === "running") && (ExtrasService.cardState("fish") === "failed" || root.loginJobs.some(j => j.state === "failed"))
     readonly property var presetInfo: TerminalLookService.presets.find(p => p.id === TerminalLookService.prompt) ?? null
     readonly property bool needsNerdFont: !!presetInfo && presetInfo.nerdFont && !TerminalLookService.nerdFontAvailable
     readonly property bool nerdInstallable: ExtrasService.cardState("nerd-font") !== "unavailable"
@@ -218,7 +221,7 @@ Item {
                         mode: "toggle"
                         icon: "terminal"
                         enabled: root.fish !== "ok" && !root.fishBusy
-                        checked: root.fish === "ok" || (!!root.wizard && root.wizard.choices.fishDefault === true)
+                        checked: root.fish === "ok" || (!!root.wizard && root.wizard.choices.fishDefault === true && !root.fishFailed)
                         title: I18n.t("onboarding.terminal.fish")
                         subtitle: I18n.t(root.fish === "ok" ? "onboarding.terminal.fish.ok" : (root.fish === "missing" ? "onboarding.terminal.fish.missing" : "onboarding.terminal.fish.desc"))
                         badge: root.fishBusy ? I18n.t("prefs.term.look.installing") : ""

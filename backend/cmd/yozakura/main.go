@@ -106,6 +106,10 @@ func main() {
 		case "sys":
 			os.Exit(runSys(args[1:], defaultSysEnv(os.Stdout), os.Stdout, os.Stderr))
 		case "onboarding":
+			if msg := onboardingArgsError(args[1:]); msg != "" {
+				fmt.Fprintln(os.Stderr, msg)
+				os.Exit(2)
+			}
 			// before migrations: a dry run never touches the user's files
 			if isDryRunArgs(args[1:]) {
 				os.Exit(runOnboardingDryRun(args[1:], defaultDryRunEnv(), os.Stdout, os.Stderr))

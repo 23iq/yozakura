@@ -14,8 +14,7 @@ import "../../specials/Specials.js" as Specials
 // Special workspaces (config specials.workspaces): quick templates, then
 // one card per special. Every edit writes the whole list through
 // SettingsStore; Specials.js does the pure edits. On compositors without
-// special workspaces only a notice is shown. Also hosted by the onboarding
-// step (StepSpecials.qml), so it never assumes the settings window.
+// special workspaces only a notice is shown.
 Column {
     id: root
 

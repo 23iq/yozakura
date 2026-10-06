@@ -1,12 +1,14 @@
 import QtQuick
 import qs.modules.services
 import qs.modules.extras
+import "../extras/ExtrasModel.js" as ExtrasModel
 
 // Everyday apps from the extras catalog. On the first visit the
 // recommended ones that are not installed yet come pre-checked; the
 // selection is remembered (`apps`) so a revisit or resume shows it again.
 // Installing queues them in the backend and the wizard moves on while
-// they install.
+// they install; Continue / Enter with picks left queues them too (after
+// the multilib consent when one is needed), so a pick is never dropped.
 Item {
     id: root
 
@@ -23,7 +25,50 @@ Item {
             root.wizard.remember("apps", ids);
     }
 
+    // Continue with picks: queue them, go on once queued (or the consent
+    // was declined); an error keeps the wizard here to show it.
+    property bool _leaving: false
+
+    function leave() {
+        const ids = ExtrasModel.selectedIds(ExtrasService.catalog, ExtrasService.status, ExtrasService.progress, host.selected);
+        if (ids.length === 0 || ExtrasService.offline)
+            return true;
+        root._leaving = true;
+        ExtrasService.install(ids, false);
+        return false;
+    }
+
+    function _goOn() {
+        if (!root._leaving)
+            return;
+        root._leaving = false;
+        if (root.wizard)
+            root.wizard.advance();
+    }
+
+    Connections {
+        target: ExtrasService
+        function onQueued() {
+            root._goOn();
+        }
+        function onConfirmChanged() {
+            // declined (an accepted one ends in queued, right after)
+            if (!ExtrasService.confirm)
+                Qt.callLater(root._goOn);
+        }
+        function onErrorChanged() {
+            if (ExtrasService.error !== "")
+                root._leaving = false;
+        }
+        function onUnavailableChanged() {
+            if (ExtrasService.unavailable)
+                root._leaving = false;
+        }
+    }
+
     Component.onCompleted: {
+        if (root.wizard)
+            root.wizard.leaveGuard = root.leave;
         ExtrasService.load();
         if (root.saved !== undefined) {
             // installed or installing meanwhile: no longer a pick

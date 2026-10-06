@@ -55,6 +55,7 @@ STATUS["firefox"] = {"id": "firefox", "state": "installed", "source": "pkg"}
 
 env = OnboardingEnv("onboarding-apps-ui", overrides={"theme": {"animDuration": 0}},
                     replies={"extras.catalog": {**CATALOG, "platform": {"distro": "arch"}}, "extras.status": STATUS,
+                             "extras.install": [{"error": 'needs_confirm: {"kind":"multilib","entries":["steam"]}'}, {"jobs": []}],
                              "extras.ollamaPull": {"jobs": [{"id": "ollama-1", "kind": "ollama", "entries": []}]},
                              "exclusive.status": STATUS_OFF,
                              "providers.ollama.probe": {"reachable": True, "models": [{"id": "gemma3:latest"}]}, "exclusive.plan": PLAN, "exclusive.enable": STATUS_OFF})
@@ -125,10 +126,22 @@ go("ai")
 go("apps")
 check(json.loads(ev("JSON.stringify(wizard.choices.apps)")) == ["steam"], "a restored pick installed meanwhile is dropped")
 h.eval(vfind("card-vesktop"), "toggled()")
-h.eval(vfind("installButton"), "clicked()")
+# Continue with a selection queues it (it is not dropped); Steam needs
+# multilib, so the consent shows first and the wizard goes on after it
+ev("wizard.next()")
+QTest.qWait(60)
 inst = calls("extras.install")
-check(len(inst) == 1 and inst[0]["ids"] == ["vesktop", "steam"], f"Install queues the selection, got {inst}")
+check(len(inst) == 1 and inst[0]["ids"] == ["vesktop", "steam"], f"Continue queues the selection, got {inst}")
+check(ev("wizard.step.id") == "apps", "the wizard waits on the step for the multilib consent")
+confirm = vfind("multilibConfirm")
+check(confirm is not None and h.eval(confirm, "visible") is True, "the multilib consent shows")
+h.eval(vfind("confirmAccept"), "clicked()")
+QTest.qWait(60)
+inst = calls("extras.install")
+check(len(inst) == 2 and inst[1] == {"ids": ["vesktop", "steam"], "confirmMultilib": True}, f"accepting re-sends, got {inst}")
+check(ev("wizard.step.id") == "ai", f"after the consent the wizard goes on, at {ev('wizard.step.id')}")
 check(json.loads(ev("JSON.stringify(wizard.installs)")) == ["vesktop", "steam"], "the wizard records what it queued")
+go("apps")
 ev('BackendService.emit("extras.progress", {job: "j1", kind: "system", entries: ["vesktop", "steam"], state: "running", percent: 30, phase: ""})')
 
 # ---- AI & voice ----------------------------------------------------------------

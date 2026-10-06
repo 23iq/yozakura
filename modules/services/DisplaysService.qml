@@ -124,11 +124,12 @@ Singleton {
     function saveCurrent(configs) {
         if (!Config.displaysReady)
             return;
+        const paused = Config.pauseAutoSave;
         Config.pauseAutoSave = true;
         try {
             Config.displays.monitors = configs;
         } finally {
-            Config.pauseAutoSave = false;
+            Config.pauseAutoSave = paused;
         }
         Config.saveDisplays();
     }

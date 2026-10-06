@@ -197,3 +197,30 @@ func TestIsDryRunArgs(t *testing.T) {
 	assert.True(t, isDryRunArgs([]string{"--keep", "--dry-run"}))
 	assert.False(t, isDryRunArgs(nil))
 }
+
+// `onboarding` takes no other arguments: a typo must not open the real
+// wizard (or run migrations) instead of the dry run.
+func TestOnboardingArgsRejected(t *testing.T) {
+	assert.Equal(t, "", onboardingArgsError(nil))
+	assert.Equal(t, "", onboardingArgsError([]string{"--dry-run", "--keep"}))
+	for _, bad := range [][]string{{"--dryrun"}, {"--keep"}, {"now"}} {
+		assert.Contains(t, onboardingArgsError(bad), "usage:", "%v", bad)
+	}
+}
+
+// A big cache never aborts the dry run: past the total cap a cache folder
+// is left empty (the config copy still fails, see TestOnboardingDryRunCopyCap).
+func TestOnboardingDryRunCacheOverCapLeftEmpty(t *testing.T) {
+	savedCap := dryRunCopyCap
+	dryRunCopyCap = 100 // the config fits, the 4 KiB depth model does not
+	defer func() { dryRunCopyCap = savedCap }()
+	env, seenFile := fakeDryRunHome(t)
+	var out, errOut bytes.Buffer
+	mustOK(t, codeErr(runOnboardingDryRun([]string{"--dry-run", "--keep"}, env, &out, &errOut)))
+	cache := filepath.Join(seenValues(t, seenFile)["cache"], brand.AppID)
+	left, err := os.ReadDir(filepath.Join(cache, "depth"))
+	assert.NoError(t, err, "the folder exists")
+	assert.Empty(t, left, "over the cap: left empty")
+	_, err = os.Stat(filepath.Join(cache, "wallpapers.json"))
+	assert.NoError(t, err, "small files are still copied")
+}
