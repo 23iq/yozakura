@@ -68,6 +68,7 @@ func (s *scopes) decide(meta agents.SessionMeta, req agents.PermissionRequest) s
 	in, _ := req.Input.(map[string]any)
 	switch req.Category {
 	case agents.CatRead, agents.CatNetwork:
+		// Sandbox widening (agents.CatSandbox) is not listed: it always asks.
 		return agents.DecisionAllow
 	case agents.CatWrite:
 		p := req.Path
@@ -91,6 +92,10 @@ func (s *scopes) decide(meta agents.SessionMeta, req agents.PermissionRequest) s
 				}
 				cmd = strings.Join(parts, " ")
 			}
+		}
+		// A command that runs elsewhere (Codex reports its cwd) asks.
+		if cwd, _ := in["cwd"].(string); cwd != "" && !insideDir(sc.worktree, cwd) {
+			return ""
 		}
 		if cmd != "" && DeniedCommand(cmd, sc.worktree) == "" {
 			return agents.DecisionAllow
@@ -124,34 +129,66 @@ var (
 // DeniedCommand returns why a shell command inside a task worktree must
 // still ask the user, or "" when it may run unattended. It is a guard
 // against accidents (pushing, publishing, network writes, privileged or
-// destructive commands outside the worktree), not a sandbox.
+// destructive commands outside the worktree), not a sandbox. A `cd` that
+// leaves the worktree asks (Claude's Bash tool keeps that directory for
+// later calls); a `cd` inside it moves the base of later relative paths.
 func DeniedCommand(cmd, worktree string) string {
 	c := unwrapShell(cmd)
 	if strings.Contains(c, "`") || strings.Contains(c, "$(") || strings.Contains(c, "<(") {
 		return "command substitution"
 	}
-	for _, m := range redirectOut.FindAllStringSubmatch(c, -1) {
-		target := strings.Trim(m[1], `"'`)
-		if target != "/dev/null" && !strings.HasPrefix(target, "&") && !safePath(target, worktree) {
-			return "writes outside the worktree"
-		}
-	}
+	cwd := worktree
 	for _, seg := range segmentSplit.Split(c, -1) {
+		for _, m := range redirectOut.FindAllStringSubmatch(seg, -1) {
+			target := strings.Trim(m[1], `"'`)
+			if target != "/dev/null" && !strings.HasPrefix(target, "&") && !safePath(target, cwd, worktree) {
+				return "writes outside the worktree"
+			}
+		}
 		argv := strings.Fields(seg)
-		for len(argv) > 0 && strings.Contains(argv[0], "=") && !strings.HasPrefix(argv[0], "-") {
+		for i, a := range argv {
+			argv[i] = strings.Trim(a, "(){}") // subshells and groups
+		}
+		for len(argv) > 0 && (argv[0] == "" || strings.Contains(argv[0], "=") && !strings.HasPrefix(argv[0], "-")) {
 			argv = argv[1:] // VAR=value prefixes
 		}
 		if len(argv) == 0 {
 			continue
 		}
-		if why := deniedArgv(argv, worktree); why != "" {
+		switch filepath.Base(argv[0]) {
+		case "cd", "pushd":
+			target := firstNonFlag(argv[1:])
+			if target == "" || target == "-" || !safePath(target, cwd, worktree) {
+				return "cd outside the worktree"
+			}
+			cwd = resolve(cwd, strings.Trim(target, `"'`))
+			continue
+		case "popd":
+			return "cd outside the worktree"
+		}
+		if why := deniedArgv(argv, cwd, worktree); why != "" {
 			return why
 		}
 	}
 	return ""
 }
 
-func deniedArgv(argv []string, worktree string) string {
+// shells run a script given on the command line (`sh -c '...'`, eval):
+// its commands are not checked, so it asks.
+var shells = map[string]bool{"sh": true, "bash": true, "zsh": true, "dash": true, "ksh": true, "fish": true}
+
+// shellScript reports a -c flag (alone or in a cluster such as -lc).
+func shellScript(args []string) bool {
+	for _, a := range args {
+		if len(a) > 1 && a[0] == '-' && a[1] != '-' && strings.Contains(a, "c") {
+			return true
+		}
+	}
+	return false
+}
+
+// deniedArgv checks one simple command run from cwd (inside worktree).
+func deniedArgv(argv []string, cwd, worktree string) string {
 	name := filepath.Base(argv[0])
 	args := argv[1:]
 	has := func(flags ...string) bool {
@@ -168,6 +205,8 @@ func deniedArgv(argv []string, worktree string) string {
 	switch {
 	case privTools[name]:
 		return "privileged command"
+	case name == "eval" || name == "exec" || shells[name] && shellScript(args):
+		return "nested shell"
 	case networkTools[name]:
 		return "remote access"
 	case sysTools[name] || strings.HasPrefix(name, "mkfs"):
@@ -206,7 +245,7 @@ func deniedArgv(argv []string, worktree string) string {
 			targets = targets[max(len(targets)-1, 0):] // only the destination is written
 		}
 		for _, a := range targets {
-			if !safePath(a, worktree) {
+			if strings.Contains(a, "..") || !safePath(a, cwd, worktree) {
 				return name + " outside the worktree"
 			}
 		}
@@ -251,13 +290,22 @@ func firstNonFlag(args []string) string {
 	return ""
 }
 
-// safePath reports whether a command argument names a path in the worktree.
-func safePath(p, worktree string) bool {
+// safePath reports whether a command argument (relative to cwd) names a
+// path in the worktree. Home (~) and variable ($) paths never do.
+func safePath(p, cwd, worktree string) bool {
 	p = strings.Trim(p, `"'`)
 	if p == "" || strings.HasPrefix(p, "~") || strings.Contains(p, "$") {
 		return false
 	}
-	return insideDir(worktree, p)
+	return insideDir(worktree, resolve(cwd, p))
+}
+
+// resolve makes p absolute against cwd.
+func resolve(cwd, p string) string {
+	if filepath.IsAbs(p) {
+		return filepath.Clean(p)
+	}
+	return filepath.Clean(filepath.Join(cwd, p))
 }
 
 // unwrapShell turns `bash -lc "script"` into script.

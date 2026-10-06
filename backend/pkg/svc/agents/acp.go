@@ -229,15 +229,21 @@ func (c *acpConn) Send(text string, images []string) error {
 			var r struct {
 				StopReason string `json:"stopReason"`
 				Usage      struct {
-					InputTokens  int64 `json:"inputTokens"`
-					OutputTokens int64 `json:"outputTokens"`
+					InputTokens       int64 `json:"inputTokens"`
+					OutputTokens      int64 `json:"outputTokens"`
+					CachedReadTokens  int64 `json:"cachedReadTokens"`
+					CachedWriteTokens int64 `json:"cachedWriteTokens"`
 				} `json:"usage"`
 			}
 			_ = json.Unmarshal(res, &r)
 			if r.StopReason == "refusal" {
 				c.sink.Emit(Event{Kind: KindError, Message: "The agent refused to continue."})
 			}
-			c.sink.Emit(Event{Kind: KindDone, Usage: &Usage{InputTokens: r.Usage.InputTokens, OutputTokens: r.Usage.OutputTokens}})
+			// ACP reports the usage of this prompt turn: it is the turn's share.
+			u := r.Usage
+			c.sink.Emit(Event{Kind: KindDone, Usage: &Usage{InputTokens: u.InputTokens, OutputTokens: u.OutputTokens,
+				Turn: &TurnUsage{Model: c.opts.Model, InputTokens: u.InputTokens + u.CachedReadTokens + u.CachedWriteTokens,
+					OutputTokens: u.OutputTokens, CachedTokens: u.CachedReadTokens}}})
 		})
 		if err != nil {
 			c.sink.Emit(Event{Kind: KindError, Message: err.Error()})
@@ -374,7 +380,7 @@ func (c *acpConn) onToolCall(tc acpToolCall) {
 				}
 			}
 		}
-		c.sink.Emit(Event{Kind: KindToolResult, ID: tc.ToolCallID, Tool: tool, Output: truncate(strings.Join(parts, "\n")), IsError: tc.Status == "failed"})
+		c.sink.Emit(toolResultEvent(tc.ToolCallID, tool, strings.Join(parts, "\n"), tc.Status == "failed"))
 	}
 }
 

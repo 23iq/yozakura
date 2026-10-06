@@ -36,6 +36,10 @@ const (
 	CatExec    = "exec"
 	CatNetwork = "network"
 	CatMCP     = "mcp"
+	// CatSandbox widens the agent's sandbox (Codex extra permissions:
+	// network, paths outside the workspace): never auto-approved by a
+	// category or a task hook.
+	CatSandbox = "sandbox"
 	CatOther   = "other"
 )
 
@@ -70,6 +74,9 @@ type Event struct {
 	Status   string   `json:"status,omitempty"`
 	Message  string   `json:"message,omitempty"`
 	Usage    *Usage   `json:"usage,omitempty"`
+	// Undo is the undo descriptor of a Yozakura tool result (tool_result),
+	// kept even when Output is truncated.
+	Undo map[string]any `json:"undo,omitempty"`
 }
 
 // Usage is attached to done events when the agent reports it.

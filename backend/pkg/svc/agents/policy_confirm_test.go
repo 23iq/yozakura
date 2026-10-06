@@ -12,8 +12,11 @@ func TestConfirmToolsAlwaysAsk(t *testing.T) {
 	if d := p.Decide(req, false, map[string]bool{tool: true}); d != "" {
 		t.Fatalf("binds_set must ask, got %q", d)
 	}
-	if d := p.Decide(req, true, nil); d != DecisionAllow {
-		t.Fatalf("yolo allows, got %q", d)
+	if d := p.Decide(req, true, nil); d != "" {
+		t.Fatalf("confirm tools ask even in yolo, got %q", d)
+	}
+	if d := p.Decide(PermissionRequest{Tool: "x", Category: CatRead, Confirm: true}, true, nil); d != "" {
+		t.Fatalf("a Confirm request asks, got %q", d)
 	}
 	other := "mcp__" + YozakuraMCPName + "__routine_save"
 	if d := p.Decide(PermissionRequest{Tool: other, Category: CatMCP, RuleKey: other}, false, nil); d != DecisionAllow {

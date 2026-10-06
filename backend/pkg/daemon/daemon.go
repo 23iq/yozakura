@@ -228,7 +228,7 @@ func New() (*Daemon, error) {
 	d.mcp.Register(d.srv)
 	agentsMgr.SetUsageSink(d.usage)
 	// Routines: deterministic step lists (bind actions, built-in tools).
-	newRoutines(d.srv, p, d.mcp, notifySvc)
+	agentsMgr.SetConfirmGate(routineGate{svc: newRoutines(d.srv, p, d.mcp, notifySvc)})
 	agentsMgr.SetMCPProvider(func() []agents.MCPServer {
 		specs := d.mcp.EnabledSpecs()
 		out := make([]agents.MCPServer, 0, len(specs))

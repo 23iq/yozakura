@@ -2,6 +2,7 @@ package agents
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"time"
@@ -81,13 +82,19 @@ func (s *session) send(text string, images []string) error {
 	return conn.Send(text, images)
 }
 
+// ErrNotPending answers a reply to a permission request that is no longer
+// waiting (answered elsewhere, or the session restarted).
+var ErrNotPending = errors.New("this request was already answered")
+
 func (s *session) respond(request, decision string) error {
 	m := s.m
 	m.mu.Lock()
 	p, ok := s.pending[request]
 	if !ok {
 		m.mu.Unlock()
-		return nil // already answered (or session restarted)
+		// Already answered (or the session restarted): a notification's
+		// button reports it.
+		return ErrNotPending
 	}
 	if decision == DecisionAllowSession && p.req.RuleKey == "" {
 		decision = DecisionAllow // no session rule was offered for this request
@@ -106,6 +113,9 @@ func (s *session) respond(request, decision string) error {
 		agentDecision = DecisionAllow
 	}
 	resolve(request, p)
+	if decision != DecisionDeny {
+		m.allowedLocked(p.req)
+	}
 	if decision == DecisionAllowSession && p.req.RuleKey != "" {
 		s.rules[p.req.RuleKey] = true
 		// The same rule answers the other waiting requests too.
@@ -308,7 +318,15 @@ func (k *sessionSink) Permission(req PermissionRequest, reply func(string)) {
 		reply(DecisionDeny)
 		return
 	}
+	// Confirm-required requests always ask: a hook may only refuse them.
+	req.Confirm = m.confirmLocked(req)
+	if req.Confirm {
+		req.RuleKey = ""
+	}
 	d := m.hookDecision(s.meta, req)
+	if req.Confirm && d == DecisionAllow {
+		d = ""
+	}
 	if d == "" {
 		d = m.policy().Decide(req, s.meta.Yolo, s.rules)
 	}

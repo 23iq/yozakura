@@ -13,6 +13,7 @@ func TestDeniedCommand(t *testing.T) {
 		"git status", "git commit -m wip", "curl -s https://example.com", "mkdir -p src/new", "cp ../x.txt notes.txt",
 		"echo hi > out.txt", "ls 2>/dev/null", "bash -lc 'go vet ./...'", "/usr/bin/bash -lc \"cargo build\"",
 		"CGO_ENABLED=0 go build", "wget https://example.com/file", "rsync -a src/ dst/", "chmod 755 run.sh",
+		"cd src && rm -rf build", "cd sub/dir && make", "cd /data/wt/k1/src; touch x", "(cd src && make)",
 	}
 	for _, c := range allowed {
 		if why := DeniedCommand(c, wt); why != "" {
@@ -27,6 +28,11 @@ func TestDeniedCommand(t *testing.T) {
 		"rm /etc/passwd", "echo x > /etc/hosts", "cat a >> ~/.bashrc", "echo $(whoami)", "ls `pwd`", "npm publish",
 		"cargo publish", "docker push img", "gh pr create", "mv src /tmp/src", "cp a.txt /usr/local/bin/a",
 		"systemctl --user stop x", "dd if=/dev/zero of=x", "bash -lc 'git push'", "tee /etc/x",
+		// cd leaves the worktree (Claude's Bash keeps that cwd for later calls)
+		"cd ~ && rm -rf .config", "cd /tmp; rm -rf x", "cd .. && rm -rf k1", "cd", "cd -", "pushd /etc", "popd",
+		"(cd ~; rm -rf .config)", "cd $HOME && ls", "cd src && rm -rf ../../k2", "cd src; echo x > ../../out",
+		// nested shells and paths that climb out
+		"sh -c 'rm -rf ~'", "make && bash -c 'rm -rf /x'", "eval rm -rf x", "rm -rf src/../../k2", "touch ../x",
 	}
 	for _, c := range denied {
 		if why := DeniedCommand(c, wt); why == "" {
@@ -59,6 +65,10 @@ func TestScopeDecide(t *testing.T) {
 		{"wt", req(agents.CatExec, "", map[string]any{"command": []any{"git", "push"}}), ""},
 		{"wt", req(agents.CatExec, "", map[string]any{"command": "git push"}), ""},
 		{"wt", req(agents.CatNetwork, "", nil), agents.DecisionAllow},
+		{"wt", req(agents.CatSandbox, "", map[string]any{"permissions": map[string]any{"network": true}}), ""},
+		{"wt", req(agents.CatExec, "", map[string]any{"command": "make", "cwd": "/home/u"}), ""},
+		{"wt", req(agents.CatExec, "", map[string]any{"command": "make", "cwd": "/w/k1/sub"}), agents.DecisionAllow},
+		{"wt", req(agents.CatExec, "", map[string]any{"command": "cd ~ && rm -rf .config"}), ""},
 		{"wt", req(agents.CatRead, "", nil), agents.DecisionAllow},
 		{"wt", req(agents.CatMCP, "", nil), ""},
 		{"plan", req(agents.CatWrite, "/w/k1/a", nil), agents.DecisionDeny},

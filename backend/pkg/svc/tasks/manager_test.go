@@ -40,7 +40,7 @@ func TestRunReviewAccept(t *testing.T) {
 	if r.Changes == nil || r.Changes.Files != 1 || r.Changes.Paths[0] != "hello.txt" {
 		t.Fatalf("changes: %+v", r.Changes)
 	}
-	if tk.Cost.InputTokens != 10 || tk.Cost.CostUSD == 0 {
+	if tk.Cost.InputTokens != 10 || tk.Cost.OutputTokens != 5 || tk.Cost.CostUSD != 0.01 {
 		t.Fatalf("cost: %+v", tk.Cost)
 	}
 	first := e.fa.sent()[0].text

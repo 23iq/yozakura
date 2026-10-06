@@ -95,7 +95,7 @@ func (c *codexConn) itemCompleted(it codexItem) {
 		if isErr {
 			out = string(it.Error)
 		}
-		c.sink.Emit(Event{Kind: KindToolResult, ID: it.ID, Tool: "mcp__" + it.Server + "__" + it.Tool, Output: truncate(out), IsError: isErr})
+		c.sink.Emit(toolResultEvent(it.ID, "mcp__"+it.Server+"__"+it.Tool, out, isErr))
 	case "webSearch":
 		c.sink.Emit(Event{Kind: KindToolResult, ID: it.ID, Tool: "WebSearch", Output: it.Query})
 	}

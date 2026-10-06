@@ -276,7 +276,7 @@ func (c *claudeConn) onUser(m map[string]any) {
 		}
 		tid, _ := bm["tool_use_id"].(string)
 		isErr, _ := bm["is_error"].(bool)
-		c.sink.Emit(Event{Kind: KindToolResult, ID: tid, Tool: c.tools[tid], Output: truncate(contentText(bm["content"])), IsError: isErr})
+		c.sink.Emit(toolResultEvent(tid, c.tools[tid], contentText(bm["content"]), isErr))
 		if res := asMap(m["tool_use_result"]); res != nil {
 			if path, _ := res["filePath"].(string); path != "" {
 				rel := path

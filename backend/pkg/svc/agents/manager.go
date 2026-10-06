@@ -66,6 +66,8 @@ type Manager struct {
 	versions  map[string]string
 	hooks     hooks // listeners + permission hook (hooks.go)
 	usage     UsageSink
+	gate      ConfirmGate    // extra always-confirm requests (confirm_gate.go)
+	usageWG   sync.WaitGroup // usage records in flight (Shutdown waits)
 }
 
 // NewManager loads persisted sessions from dir (created on demand).
@@ -397,4 +399,6 @@ func (m *Manager) Shutdown() {
 		go func(s *session) { defer wg.Done(); s.close() }(s)
 	}
 	wg.Wait()
+	// The usage ledger closes after the agents: finish its writes first.
+	m.usageWG.Wait()
 }

@@ -157,8 +157,15 @@ func (m *Manager) handle(ev agents.Event) {
 			}
 		}
 	case agents.KindDone:
-		if ev.Usage != nil {
-			r.Cost.add(Cost{InputTokens: ev.Usage.InputTokens, OutputTokens: ev.Usage.OutputTokens, CostUSD: ev.Usage.CostUSD})
+		// Usage's top-level figures can be the agent's running totals
+		// (Claude, Codex): only the turn's share adds up.
+		if ev.Usage != nil && ev.Usage.Turn != nil {
+			tu := ev.Usage.Turn
+			c := Cost{InputTokens: tu.InputTokens, OutputTokens: tu.OutputTokens}
+			if tu.CostUSD != nil {
+				c.CostUSD = *tu.CostUSD
+			}
+			r.Cost.add(c)
 			changed = true
 		}
 		if live {

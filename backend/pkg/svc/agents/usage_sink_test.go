@@ -78,6 +78,23 @@ func TestManagerRecordsTurnUsage(t *testing.T) {
 	}
 }
 
+// OpenCode (ACP) reports the usage of each prompt: it is recorded as the
+// turn's share, cached reads counted in the prompt tokens.
+func TestManagerRecordsACPUsage(t *testing.T) {
+	m, _, f := newTestManager(t, "opencode_ask.jsonl")
+	sink := &fakeUsage{}
+	m.SetUsageSink(sink)
+	meta, _ := m.Create(CreateParams{Agent: "opencode", Cwd: f.dir, Model: "ollama/qwen3.5:9b", Yolo: boolPtr(true)})
+	_ = m.Send(meta.ID, "hi", nil)
+	waitFor(t, "recorded", func() bool { r, _ := sink.snapshot(); return len(r) == 1 })
+	m.Shutdown() // waits for in-flight records
+	r, _ := sink.snapshot()
+	if len(r) != 1 || r[0].Provider != "opencode" || r[0].Model != "ollama/qwen3.5:9b" || r[0].InputTokens <= r[0].CachedTokens ||
+		r[0].CachedTokens == 0 || r[0].OutputTokens == 0 {
+		t.Fatalf("records = %+v", r)
+	}
+}
+
 func TestRecordTurnSpaceAndSkips(t *testing.T) {
 	m := NewManager(t.TempDir())
 	sink := &fakeUsage{}

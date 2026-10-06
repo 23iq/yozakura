@@ -55,7 +55,7 @@ func (c *codexConn) onRequest(id json.RawMessage, method string, params json.Raw
 		var perms any
 		_ = json.Unmarshal(p.Permissions, &perms)
 		in := map[string]any{"permissions": perms, "reason": p.Reason}
-		c.sink.Permission(PermissionRequest{ID: reqID, Tool: "permissions", Title: "Extra permissions: " + oneLine(p.Reason, 80), Category: CatNetwork,
+		c.sink.Permission(PermissionRequest{ID: reqID, Tool: "permissions", Title: "Extra permissions: " + oneLine(p.Reason, 80), Category: CatSandbox,
 			Input: in, RuleKey: "permissions"}, func(d string) {
 			if d == DecisionDeny {
 				_ = c.rpc.Reply(id, map[string]any{"permissions": map[string]any{}, "scope": "turn"})

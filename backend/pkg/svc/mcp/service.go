@@ -342,6 +342,28 @@ func (s *Service) CallTool(ctx context.Context, server, tool string, args json.R
 	}
 }
 
+// CallBuiltin calls a tool of the built-in server even when the user
+// turned it off for AI engines: routines and the transcript's Undo are the
+// user's own actions, not an AI's.
+func (s *Service) CallBuiltin(ctx context.Context, tool string, args json.RawMessage) (*mcp.CallToolResult, error) {
+	sp := s.yozakuraSpec()
+	var argv any = map[string]any{}
+	if len(args) > 0 && string(args) != "null" {
+		argv = args
+	}
+	for attempt := 0; ; attempt++ {
+		e, err := s.client(ctx, sp)
+		if err != nil {
+			return nil, err
+		}
+		res, err := e.client.CallTool(ctx, tool, argv)
+		if err != nil && attempt == 0 && isDead(e.client) {
+			continue
+		}
+		return res, err
+	}
+}
+
 func isDead(c *mcp.Client) bool {
 	select {
 	case <-c.Done():

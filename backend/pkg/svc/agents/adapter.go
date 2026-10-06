@@ -35,6 +35,10 @@ type PermissionRequest struct {
 	RuleKey  string // key remembered by "allow for this session"
 	Path     string // file the call would change (edits), for the card's diff
 	Diff     string // proposed change as a unified diff, when known up front
+	// Confirm marks a request that always asks (confirm tools, routines
+	// running confirm-required steps): no session rule, no hook, policy or
+	// YOLO auto-answer. The manager sets it.
+	Confirm bool
 }
 
 // Sink receives everything an adapter observes. Calls may come from the

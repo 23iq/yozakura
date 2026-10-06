@@ -5,6 +5,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"yozakura/backend/pkg/svc/routines"
 )
 
 // Policy decides which permission requests are answered automatically.
@@ -27,17 +29,18 @@ func (p Policy) auto(category string) bool {
 
 // Decide returns the automatic decision for a request, or "" when the
 // user has to be asked. rules holds "allow for this session" keys.
+// Confirm-required requests are checked first: they ask even in YOLO.
 func (p Policy) Decide(req PermissionRequest, yolo bool, rules map[string]bool) string {
+	if req.Confirm || IsConfirmTool(req.Tool) {
+		return ""
+	}
 	if yolo {
 		return DecisionAllow
-	}
-	if IsConfirmTool(req.Tool) {
-		return ""
 	}
 	if req.RuleKey != "" && rules[req.RuleKey] {
 		return DecisionAllow
 	}
-	if p.auto(req.Category) {
+	if req.Category != CatSandbox && p.auto(req.Category) {
 		return DecisionAllow
 	}
 	return ""
@@ -110,17 +113,23 @@ var yozakuraReadOnly = map[string]bool{
 	"system_info": true, "network_status": true, "bluetooth_status": true, "brightness_get": true,
 }
 
-// Yozakura MCP tools that always ask, even with "allow for this session"
-// or an auto-approved MCP category: they change the user's keybinds,
-// close windows or delete routines.
-var yozakuraConfirm = map[string]bool{
-	"binds_set": true, "binds_remove": true, "app_close": true, "routine_delete": true,
+// IsConfirmTool reports a tool that must always be confirmed, even with
+// "allow for this session", an auto-approved MCP category or YOLO: the
+// Yozakura tools of routines.ConfirmTools (keybind edits, closing windows,
+// deleting routines).
+func IsConfirmTool(tool string) bool {
+	name := YozakuraTool(tool)
+	return name != "" && routines.ConfirmTools[name]
 }
 
-// IsConfirmTool reports a tool that must always be confirmed.
-func IsConfirmTool(tool string) bool {
+// YozakuraTool is the bare name of a built-in Yozakura MCP tool as an
+// agent names it ("mcp__yozakura__app_close" -> "app_close"), or "".
+func YozakuraTool(tool string) string {
 	parts := strings.SplitN(tool, "__", 3)
-	return len(parts) == 3 && parts[0] == "mcp" && parts[1] == YozakuraMCPName && yozakuraConfirm[parts[2]]
+	if len(parts) == 3 && parts[0] == "mcp" && parts[1] == YozakuraMCPName {
+		return parts[2]
+	}
+	return ""
 }
 
 var claudeReadTools = map[string]bool{

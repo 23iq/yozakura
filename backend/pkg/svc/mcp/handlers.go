@@ -132,6 +132,9 @@ func (s *Service) call(params json.RawMessage) (any, error) {
 		Server    string          `json:"server"`
 		Tool      string          `json:"tool"`
 		Arguments json.RawMessage `json:"arguments"`
+		// Builtin: a user action (Undo) on the built-in server, allowed
+		// even when that server is off for AI engines.
+		Builtin bool `json:"builtin"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, err
@@ -141,7 +144,13 @@ func (s *Service) call(params json.RawMessage) (any, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), callTimeout)
 	defer cancel()
-	res, err := s.CallTool(ctx, p.Server, p.Tool, p.Arguments)
+	var res *mcp.CallToolResult
+	var err error
+	if p.Builtin && p.Server == brand.AppID {
+		res, err = s.CallBuiltin(ctx, p.Tool, p.Arguments)
+	} else {
+		res, err = s.CallTool(ctx, p.Server, p.Tool, p.Arguments)
+	}
 	if err != nil {
 		return map[string]any{"text": err.Error(), "content": []any{}, "isError": true}, nil
 	}

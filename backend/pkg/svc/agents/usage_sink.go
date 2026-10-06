@@ -60,7 +60,11 @@ func (m *Manager) recordTurnLocked(s *session, u *Usage) {
 		r.CostUSD = &c
 	}
 	sink := m.usage
-	go func() { _, _ = sink.Record(r) }()
+	m.usageWG.Add(1)
+	go func() {
+		defer m.usageWG.Done()
+		_, _ = sink.Record(r)
+	}()
 }
 
 // limitsReporter is implemented by sinks that accept subscription limits.
@@ -90,5 +94,9 @@ func (k *sessionSink) RateLimits(l usage.Limits) {
 	if l.Source == "" {
 		l.Source = "agent"
 	}
-	go func() { _ = sink.SetLimits(l) }()
+	m.usageWG.Add(1)
+	go func() {
+		defer m.usageWG.Done()
+		_ = sink.SetLimits(l)
+	}()
 }

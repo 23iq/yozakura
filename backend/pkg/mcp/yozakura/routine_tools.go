@@ -22,7 +22,7 @@ func routineTools(d Deps) []mcp.ToolDef {
 			`List the user's saved routines: id, name, icon and steps (kind action = a keybind action {action, args}; kind tool = a Yozakura tool {tool, args}; kind delay = wait {ms}). Routines run deterministically from a keybind, the launcher, an automation or routine_run.`,
 			noArgs, toolOpts{readOnly: true}, d.routinesList),
 		define("routine_run", "Run routine",
-			`Run a saved routine by id or name and return a per-step report (status ok/failed/skipped, output, error). A failed step stops the routine unless it was saved with continueOnError.`,
+			`Run a saved routine by id or name and return a per-step report (status ok/failed/skipped, output, error). A failed step stops the routine unless it was saved with continueOnError. A routine that closes windows, edits keybinds or runs a command line asks the user first.`,
 			`{"type":"object","properties":{"id":{"type":"string","description":"Routine id or name."}},"required":["id"],"additionalProperties":false}`,
 			toolOpts{}, d.routineRun),
 		define("routine_save", "Save routine",
@@ -111,7 +111,7 @@ func (d Deps) routineRun(_ context.Context, args json.RawMessage) (*mcp.CallTool
 		return nil, fmt.Errorf("id is required (see routines_list)")
 	}
 	var rep routines.Report
-	if err := d.routinesCall("run", map[string]any{"id": a.ID, "quiet": true}, &rep); err != nil {
+	if err := d.routinesCall("run", map[string]any{"id": a.ID, "quiet": true, "agent": true}, &rep); err != nil {
 		return nil, err
 	}
 	res := mcp.JSONResult(rep)

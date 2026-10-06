@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,6 +22,7 @@ type Service struct {
 	notify func(summary, body string)
 
 	mu     sync.Mutex // serialises writers
+	grants grants     // user confirmations of AI runs (confirm.go)
 	subsMu sync.Mutex
 	subs   map[*ipc.Subscriber]struct{}
 }
@@ -54,7 +56,38 @@ func (s *Service) methods() map[string]ipc.HandlerFunc {
 		"save":   s.save,
 		"delete": s.remove,
 		"run":    s.run,
+		"grant":  s.grant,
 	}
+}
+
+// ConfirmFor lists what the saved routine ref runs that needs the user's
+// confirmation before an AI may run it (see ConfirmSteps); nil when the
+// routine is unknown.
+func (s *Service) ConfirmFor(ref string) []string {
+	r, ok := s.lookup(ref)
+	if !ok {
+		return nil
+	}
+	return ConfirmSteps(r, s.lookup)
+}
+
+// Grant records that the user allowed an AI to run routine ref once (the
+// next agent run of it within grantTTL).
+func (s *Service) Grant(ref string) {
+	if r, ok := s.lookup(ref); ok {
+		s.grants.add(r.ID)
+	}
+}
+
+func (s *Service) grant(params json.RawMessage) (any, error) {
+	var p refParams
+	_ = json.Unmarshal(params, &p)
+	r, ok := s.lookup(p.ID)
+	if !ok {
+		return nil, fmt.Errorf("no routine %q", p.ID)
+	}
+	s.grants.add(r.ID)
+	return map[string]any{"id": r.ID}, nil
 }
 
 // List returns the saved routines.
@@ -169,12 +202,16 @@ func (s *Service) remove(params json.RawMessage) (any, error) {
 }
 
 // run executes a saved routine ("id") or an unsaved one ("routine", the
-// editor's test run). "quiet" skips the failure notification.
+// editor's test run). "quiet" skips the failure notification. "agent"
+// marks a run an AI asked for (the routine_run tool): a routine with steps
+// that need confirmation (ConfirmSteps) runs only with a grant the user
+// gave by allowing that call (Grant).
 func (s *Service) run(params json.RawMessage) (any, error) {
 	var p struct {
 		ID      string   `json:"id"`
 		Routine *Routine `json:"routine"`
 		Quiet   bool     `json:"quiet"`
+		Agent   bool     `json:"agent"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, err
@@ -192,6 +229,12 @@ func (s *Service) run(params json.RawMessage) (any, error) {
 			return nil, fmt.Errorf("no routine %q", p.ID)
 		}
 		r = found
+	}
+	if p.Agent {
+		if need := ConfirmSteps(r, s.lookup); len(need) > 0 && (p.Routine != nil || !s.grants.take(r.ID)) {
+			return nil, fmt.Errorf("routine %q runs steps that need the user's confirmation (%s); "+
+				"the user must allow this run, or start it from the launcher or a keybind", r.Name, strings.Join(need, ", "))
+		}
 	}
 	rep := s.Run(r)
 	if !rep.OK && !p.Quiet && s.notify != nil {

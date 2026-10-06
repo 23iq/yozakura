@@ -13,7 +13,8 @@ type UpdateParams struct {
 	Yolo         *bool   `json:"yolo"`
 }
 
-// Update edits session metadata. Turning YOLO on approves pending requests.
+// Update edits session metadata. Turning YOLO on approves pending requests
+// (not the confirm-required ones); assistant sessions cannot turn it on.
 func (m *Manager) Update(p UpdateParams) (SessionMeta, error) {
 	s, err := m.get(p.Session)
 	if err != nil {
@@ -23,6 +24,10 @@ func (m *Manager) Update(p UpdateParams) (SessionMeta, error) {
 	defer s.opMu.Unlock()
 	launch := p.Model != nil || p.Effort != nil || p.SystemPrompt != nil
 	m.mu.Lock()
+	if p.Yolo != nil && *p.Yolo && (s.meta.Mode == ModeAssistant || s.meta.Mode == ModeOneshot) {
+		m.mu.Unlock()
+		return SessionMeta{}, errors.New("YOLO is not available for assistant sessions")
+	}
 	if launch && (s.meta.Status != StatusIdle && s.meta.Status != StatusExited || len(s.pending) > 0) {
 		m.mu.Unlock()
 		return SessionMeta{}, errors.New("launch settings can only change while idle")
@@ -74,8 +79,10 @@ func (m *Manager) Update(p UpdateParams) (SessionMeta, error) {
 	if p.Yolo != nil {
 		s.meta.Yolo = *p.Yolo
 		if s.meta.Yolo {
-			for rid := range s.pending {
-				approve = append(approve, rid)
+			for rid, pp := range s.pending {
+				if !pp.req.Confirm {
+					approve = append(approve, rid)
+				}
 			}
 		}
 	}

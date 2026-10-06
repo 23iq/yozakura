@@ -103,7 +103,11 @@ func (f *fakeAgents) emit(id string, ev agents.Event) {
 // reply emits an assistant answer and the end of the turn.
 func (f *fakeAgents) reply(id, text string) {
 	f.emit(id, agents.Event{Kind: agents.KindText, Text: text, Delta: true})
-	f.emit(id, agents.Event{Kind: agents.KindDone, Usage: &agents.Usage{InputTokens: 10, OutputTokens: 5, CostUSD: 0.01}})
+	// The top-level figures are the agent's running totals (ignored); the
+	// turn's share is what a task adds up.
+	cost := 0.01
+	f.emit(id, agents.Event{Kind: agents.KindDone, Usage: &agents.Usage{InputTokens: 900, OutputTokens: 500, CostUSD: 7,
+		Turn: &agents.TurnUsage{InputTokens: 10, OutputTokens: 5, CostUSD: &cost}}})
 }
 
 func (f *fakeAgents) sent() []sentMsg {

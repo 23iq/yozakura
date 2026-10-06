@@ -18,8 +18,12 @@ import (
 const (
 	SpaceAssistant = "assistant"
 	SpaceCode      = "code"
-	EngineHTTP     = "http"
-	EngineAgent    = "agent"
+	// Background requests of the HTTP engine: conversation compaction and
+	// automations (prompt outputs), counted apart from the chat itself.
+	SpaceCompaction = "compaction"
+	SpaceAutomation = "automation"
+	EngineHTTP      = "http"
+	EngineAgent     = "agent"
 )
 
 // Record is one ledger line: the usage of one request/turn.
@@ -54,9 +58,9 @@ func (r *Record) normalize(now time.Time) error {
 		return errors.New("usage: cost must not be negative")
 	}
 	switch r.Space {
-	case "", SpaceAssistant, SpaceCode:
+	case "", SpaceAssistant, SpaceCode, SpaceCompaction, SpaceAutomation:
 	default:
-		return errors.New("usage: space must be assistant or code")
+		return errors.New("usage: space must be assistant, code, compaction or automation")
 	}
 	switch r.Engine {
 	case "", EngineHTTP, EngineAgent:

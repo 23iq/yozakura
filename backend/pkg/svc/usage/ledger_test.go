@@ -93,6 +93,10 @@ func TestRecordValidation(t *testing.T) {
 	} {
 		assert.Error(t, bad.normalize(now), "%+v", bad)
 	}
+	for _, space := range []string{SpaceAssistant, SpaceCode, SpaceCompaction, SpaceAutomation} {
+		ok := Record{Provider: "x", Space: space}
+		assert.NoError(t, ok.normalize(now), space)
+	}
 }
 
 func splitLines(s string) []string {
