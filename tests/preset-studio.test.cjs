@@ -65,7 +65,7 @@ test('composeLook takes each key from the preset chosen for its aspect', () => {
     assert.equal(look['theme.animDuration'], 200, 'motion follows windows, not colors');
     assert.equal(look['desktop.depthClock'], true);
     const d = M.defaultSources(aspects, presets, 'Mine');
-    assert.deepEqual(plain(d), { layout: 'Mine', colors: 'Mine', windows: 'Mine', desktop: 'Mine', lockscreen: 'Mine' });
+    assert.deepEqual(plain(d), { layout: 'Mine', colors: 'Mine', windows: 'Mine', desktop: 'Mine', lockscreen: 'Mine', terminal: 'Mine' });
     assert.equal(M.defaultSources(aspects, presets, 'gone').layout, 'Neon Tokyo', 'falls back to the first preset');
     let i = 0;
     const s = M.shuffle(aspects, presets, () => (i++ % 3) / 3);

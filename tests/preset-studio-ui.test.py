@@ -115,7 +115,7 @@ check(wait_for("PresetStudio.loaded"), "the studio loads the preset list through
 listed = sb.json("list", "--json")
 QTest.qWait(300)
 check(w('countPrefix("presetCard:")') == len(listed), f"one card per preset ({len(listed)})")
-check(ev("PresetStudio.aspects.length") == 5, "aspects come from `preset aspects`")
+check(ev("PresetStudio.aspects.length") == 6, "aspects come from `preset aspects`")
 
 # Filters / search
 w('cur().filter = "light"')
@@ -220,7 +220,7 @@ check(wait_for('PresetStudio.find("Neon Mine") !== null'), "undo restores it")
 
 # Mixer
 w('pg().show("mixer")')
-check(wait_for("Object.keys(cur().sources).length === 5", obj=win), "the mixer starts with a source per aspect")
+check(wait_for("Object.keys(cur().sources).length === 6", obj=win), "the mixer starts with a source per aspect")
 w('cur().sources = ' + json.dumps({"layout": "Kaze", "colors": "Neon Tokyo", "windows": "CRT", "desktop": "Sumi-e",
                                    "lockscreen": "Neon Mine"}))
 QTest.qWait(50)
