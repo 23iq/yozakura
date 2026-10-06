@@ -27,8 +27,26 @@ var category = {
     "icon": "layout",
     "title": "prefs.cat.layout",
     "description": "prefs.cat.layout.desc",
-    "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview",
+    "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
     "sections": [
+        {
+            "id": "parts",
+            "title": "prefs.layout.section.parts",
+            "entries": [
+                {
+                    "id": "layout.builder",
+                    "type": "custom",
+                    "component": "LayoutBuilder",
+                    // Edits the parts' edge/style/align keys too, but those
+                    // live on the bar, notch and dock pages (one page per
+                    // setting); notch.enabled is the builder's own
+                    "keys": ["notch.enabled"],
+                    "label": "prefs.layout.builder",
+                    "description": "prefs.layout.builder.desc",
+                    "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
+                }
+            ]
+        },
         {
             "id": "hosts",
             "title": "prefs.layout.section.hosts",

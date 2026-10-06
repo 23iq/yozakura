@@ -42,6 +42,58 @@ function _hostRect(e, host, size, cfg) {
     };
 }
 
+// ── Layout builder mock (ScreenMock): the parts as chips, in mock pixels ──
+
+// Share of the edge a part takes (bar: when not "fill").
+var PART_LENGTH = { "bar": 0.5, "notch": 0.24, "dock": 0.36 };
+
+// Rects of the enabled parts of a LayoutModel layout, stacked per edge
+// (`stacking` = LayoutModel.stacking) with `mock` = {w, h, thick, gap,
+// inset}. Top/bottom stacks run the full width; side stacks fit between
+// them, and aligned parts sit between the side stacks.
+function partRects(layout, stacking, mock) {
+    var m = mock;
+    var step = m.thick + m.gap;
+    function reserve(edge) {
+        return m.inset + (stacking[edge] || []).length * step;
+    }
+    var out = [];
+    ["top", "bottom", "left", "right"].forEach(function (edge) {
+        var vertical = edge === "left" || edge === "right";
+        var parts = stacking[edge] || [];
+        for (var i = 0; i < parts.length; i++) {
+            var id = parts[i];
+            var p = layout[id];
+            var off = m.inset + i * step;
+            var lo = vertical ? reserve("top") : reserve("left");
+            var hi = vertical ? m.h - reserve("bottom") : m.w - reserve("right");
+            if (!vertical && id === "bar" && p.align === "fill") {
+                lo = m.inset;
+                hi = m.w - m.inset;
+            }
+            var span = hi - lo;
+            var len = id === "bar" && p.align === "fill" ? span : Math.round(span * PART_LENGTH[id]);
+            var align = id === "dock" ? "center" : p.align;
+            var start = align === "start" ? lo : align === "end" ? hi - len : Math.round(lo + (span - len) / 2);
+            var across = edge === "top" || edge === "left" ? off : (vertical ? m.w : m.h) - off - m.thick;
+            out.push(vertical ? { id: id, edge: edge, vertical: true, x: across, y: start, w: m.thick, h: len } : { id: id, edge: edge, vertical: false, x: start, y: across, w: len, h: m.thick });
+        }
+    });
+    return out;
+}
+
+// Screen edge closest to (x, y) inside a w x h mock, "" outside it.
+function nearestEdge(x, y, w, h) {
+    if (x < 0 || y < 0 || x > w || y > h)
+        return "";
+    var d = { top: y, bottom: h - y, left: x, right: w - x };
+    var best = "top";
+    for (var k in d)
+        if (d[k] < d[best])
+            best = k;
+    return best;
+}
+
 function scene(e, cfg) {
     var out = [];
     if (e.bar && e.bar.visible)

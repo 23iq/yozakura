@@ -16,6 +16,13 @@ PreviewStage {
     id: root
 
     property var entry
+    // Items not drawn (the layout builder draws the parts itself) and the
+    // opacity of the rest; `screen` is the screen thumbnail
+    property var hiddenIds: []
+    property real itemOpacity: 1
+    // Room kept free under the screen (the builder's shelf)
+    property real bottomReserve: 0
+    readonly property Item screen: screenBox
     stageHeight: 190
 
     readonly property var refScreen: Quickshell.screens.length > 0 ? Quickshell.screens[0] : ({
@@ -73,9 +80,9 @@ PreviewStage {
     Rectangle {
         id: screenBox
         objectName: "layoutPreviewScreen"
-        readonly property real k: Math.min((root.width - 40) / root.env.screen.w, (root.height - 36) / root.env.screen.h)
+        readonly property real k: Math.min((root.width - 40) / root.env.screen.w, (root.height - 36 - root.bottomReserve) / root.env.screen.h)
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: 8
+        anchors.verticalCenterOffset: 8 - root.bottomReserve / 2
         width: root.env.screen.w * k
         height: root.env.screen.h * k
         radius: Math.min(Styling.radius(-4), 8)
@@ -85,7 +92,7 @@ PreviewStage {
         clip: true
 
         Repeater {
-            model: root.items
+            model: root.items.filter(i => root.hiddenIds.indexOf(i.id) === -1)
 
             Rectangle {
                 required property var modelData
@@ -98,6 +105,7 @@ PreviewStage {
                 color: root.fill(modelData.id)
                 border.width: root.labels[modelData.id] ? 1 : 0
                 border.color: root.stroke(modelData.id)
+                opacity: root.itemOpacity
 
                 Text {
                     anchors.centerIn: parent

@@ -14,6 +14,7 @@ import qs.modules.components
 import qs.config
 import qs.modules.aicenter
 import qs.modules.notifications
+import qs.modules.shell.rehome
 
 PanelWindow {
     id: unifiedPanel
@@ -138,11 +139,12 @@ PanelWindow {
     mask: Region {
         // Full-screen capture when any module/popup is open
         item: unifiedPanel.needsFullScreenInput ? fullScreenMask : null
-        regions: [unifiedPanel.notchRegion, unifiedPanel.dockRegion, unifiedPanel.assistantRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion].concat(panelHost.hitRegions)
+        regions: [unifiedPanel.notchRegion, unifiedPanel.dockRegion, unifiedPanel.assistantRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
     }
 
     readonly property Region notchRegion: Region {
-        item: notchContent.notchHitbox
+        // A disabled notch takes input only while it shows a view
+        item: ShellLayout.notchEnabled || notchContent.reveal ? notchContent.notchHitbox : null
     }
     readonly property Region dockRegion: Region {
         // Only include the dock hitbox if the dock is actually enabled and visible on this screen.
@@ -159,6 +161,9 @@ PanelWindow {
     }
     readonly property Region toastRegion: Region {
         item: cornerToasts.active ? cornerToasts.hitbox : null
+    }
+    readonly property Region cornerPillsRegion: Region {
+        item: cornerPills.hitbox
     }
 
     // Focus Grab for Notch — registers with FocusGrabManager for click-outside coordination
@@ -259,6 +264,14 @@ PanelWindow {
             anchors.fill: parent
             screen: unifiedPanel.targetScreen
             z: 4
+        }
+
+        // Re-homed content when the bar and/or notch are off (ShellLayout)
+        CornerPills {
+            id: cornerPills
+            anchors.fill: parent
+            panel: unifiedPanel
+            z: 5
         }
 
         // Corner toasts (notifications.presentation "corner")

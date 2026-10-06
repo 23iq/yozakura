@@ -1,6 +1,10 @@
 .pragma library
 
 var data = {
+    // Off: the notch only appears while it shows a view (launcher, power
+    // menu...); its activities move to the bar or corner pills
+    // (modules/shell/LayoutModel.js)
+    "enabled": true,
     "position": "top",
     // start | center | end along the edge (modules/shell/EdgeLayout.js)
     "align": "center",
