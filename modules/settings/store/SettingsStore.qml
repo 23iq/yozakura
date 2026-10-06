@@ -163,6 +163,20 @@ Singleton {
             reset(all[i].entry);
     }
 
+    // One schema section of a page (its header's reset button).
+    function sectionModifiedCount(section) {
+        return section ? modifiedCount({
+            "sections": [section]
+        }) : 0;
+    }
+
+    function resetSection(section) {
+        if (section)
+            resetCategory({
+                "sections": [section]
+            });
+    }
+
     function visible(entry) {
         // entries tied to one compositor (exclusive mode: Hyprland)
         if (entry.compositor && YozdService.compositorName !== entry.compositor)
