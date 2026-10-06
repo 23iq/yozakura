@@ -17,6 +17,7 @@ import (
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/svc/usage"
 )
 
 // Runner executes external commands. stdin may be nil.
@@ -44,6 +45,7 @@ type Deps struct {
 	StateDir          string   // preset trash and trial/edit sessions
 	BindsFile         string   // binds.json (special workspace bind conflicts)
 	AppDirs           []string // .desktop dirs (nil: the XDG ones)
+	UsageDir          string   // AI usage ledger (pkg/svc/usage)
 	Now               func() time.Time
 }
 
@@ -61,6 +63,7 @@ func DefaultDeps() Deps {
 		WallpapersFile:    filepath.Join(p.CacheDir, "wallpapers.json"),
 		StateDir:          p.StateDir,
 		BindsFile:         p.KeybindsFile(),
+		UsageDir:          usage.DefaultDir(p.DataDir),
 		Now:               time.Now,
 	}
 }

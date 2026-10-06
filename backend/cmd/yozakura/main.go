@@ -70,6 +70,8 @@ func main() {
 			os.Exit(runSpecial(args[1:], os.Stdout, os.Stderr))
 		case "launch":
 			os.Exit(runLaunch(args[1:], defaultLaunchEnv(), os.Stderr))
+		case "usage":
+			os.Exit(runUsage(args[1:], newClient(), os.Stdout, os.Stderr))
 		}
 	}
 
@@ -591,6 +593,9 @@ Commands:
     voice press <ai|dictation>       Voice input: start (or stop) listening
     voice release|stop|cancel        Voice input: end a hold / finish / discard
     voice status|warm|unload         Voice input: state, preload or stop whisper
+    usage [today|week|month] [--by provider|model|day]
+                                     AI token usage and cost (--json for raw)
+    usage limits                     AI subscription limits (Claude, Codex)
     help                             Show this help message
     version, -v, --version           Show {name} version
     goodbye                          Uninstall {name}

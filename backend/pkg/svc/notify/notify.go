@@ -66,6 +66,12 @@ func (s *Service) send(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, err
 	}
+	return s.Send(p)
+}
+
+// Send forwards a notification to every subscribed shell. Other backend
+// services (usage limits, …) call it directly instead of going through IPC.
+func (s *Service) Send(p SendParams) (any, error) {
 	if p.Summary == "" && p.Body == "" {
 		return nil, &ValidationError{msg: "notify.send: summary or body required"}
 	}

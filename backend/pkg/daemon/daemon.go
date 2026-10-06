@@ -37,6 +37,7 @@ import (
 	"yozakura/backend/pkg/svc/sleep"
 	"yozakura/backend/pkg/svc/systemmonitor"
 	"yozakura/backend/pkg/svc/transfers"
+	"yozakura/backend/pkg/svc/usage"
 	voicesvc "yozakura/backend/pkg/svc/voice"
 	"yozakura/backend/pkg/svc/wallpaper"
 	"yozakura/backend/pkg/svc/weather"
@@ -65,6 +66,7 @@ type Daemon struct {
 	voice      *voicesvc.Service
 	mods       *mods.Manager
 	agents     *agents.Manager
+	usage      *usage.Service
 
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
@@ -175,6 +177,18 @@ func New() (*Daemon, error) {
 	// shelling out to notify-send. See pkg/svc/notify for the rationale.
 	notifySvc := notifysvc.NewService()
 	notifySvc.Register(d.srv)
+
+	// AI usage ledger + subscription limits (see pkg/svc/usage). The
+	// agents service can feed it through usage.Recorder / usage.LimitsSink.
+	d.usage = usage.NewService(usage.Options{
+		Dir:         usage.DefaultDir(p.DataDir),
+		Prices:      usage.LoadPrices(usage.BundledPricesPath(paths.FindShellSource()), usage.OverridePricesPath(p.ConfigDir)),
+		ClaudeFetch: usage.NewClaudeFetcher().Fetch,
+		Notify: func(summary, body string) {
+			_, _ = notifySvc.Send(notifysvc.SendParams{Summary: summary, Body: body, AppIcon: "dialog-warning", ReplaceKey: "usage-limit"})
+		},
+	})
+	d.usage.Register(d.srv)
 
 	// CLI coding agents (Claude Code, Codex, OpenCode) for the AI center.
 	agentsMgr := agents.NewManager(filepath.Join(p.DataDir, "agents"))
@@ -434,6 +448,9 @@ func (d *Daemon) shutdown() {
 	}
 	if d.voice != nil {
 		d.voice.Close()
+	}
+	if d.usage != nil {
+		d.usage.Close()
 	}
 
 	if d.sweep != nil {

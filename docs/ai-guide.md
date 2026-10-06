@@ -180,6 +180,7 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `specials_list` | yes | special workspaces with binds, apps and current window counts |
 | `special_open`, `special_add`, `special_update`, `special_remove`, `special_app_add` | no | manage special workspaces: `{"name":"Chat","toggle":"SUPER+S","apps":["org.telegram.desktop"]}` |
 | `shell_command` | no | run one: `{"command":"glass","arg":"0.6"}`, `{"command":"dnd"}` |
+| `usage_summary` | yes | AI token usage/cost from the ledger: `{"range":"week","groupBy":"model","limits":true}` (same data as `yozakura usage`) |
 
 Config and preset tools work on files and do not need the daemon; the others
 talk to the running shell. Keys may be passed fully qualified (`"key":
