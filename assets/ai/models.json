@@ -1,0 +1,79 @@
+{
+    "_comment": "Model capabilities for the HTTP chat providers, matched by the longest case-insensitive id prefix. Omitted fields are unknown (not 'false'). reasoning: openai_effort (reasoning_effort), anthropic_budget (thinking.budget_tokens), gemini_budget (thinkingConfig.thinkingBudget), gemini_level (thinkingConfig.thinkingLevel), none. efforts: unified levels the model accepts; effortMap: provider value for a level when it differs from the level name. Read by backend/pkg/svc/providers (providers.models.info) and by QML. Ollama models are probed live instead.",
+    "updated": "2026-10-06",
+    "efforts": ["off", "low", "medium", "high", "max"],
+    "vendors": {
+        "openai": "openai",
+        "anthropic": "anthropic",
+        "google": "gemini",
+        "mistralai": "mistral",
+        "deepseek": "deepseek",
+        "minimax": "minimax",
+        "meta-llama": "open",
+        "qwen": "open",
+        "moonshotai": "open"
+    },
+    "providers": {
+        "openai": [
+            { "prefix": "gpt-4o", "contextWindow": 128000, "maxOutput": 16384, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "gpt-4.1", "contextWindow": 1047576, "maxOutput": 32768, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "gpt-5", "contextWindow": 400000, "maxOutput": 128000, "vision": true, "tools": true, "reasoning": "openai_effort", "efforts": ["off", "low", "medium", "high"], "effortMap": { "off": "minimal" } },
+            { "prefix": "gpt-5-chat", "contextWindow": 128000, "maxOutput": 16384, "vision": true, "reasoning": "none" },
+            { "prefix": "gpt-5-codex", "contextWindow": 400000, "maxOutput": 128000, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] },
+            { "prefix": "gpt-5.", "contextWindow": 400000, "maxOutput": 128000, "vision": true, "tools": true, "reasoning": "openai_effort", "efforts": ["off", "low", "medium", "high"], "effortMap": { "off": "none" }, "note": "5.1 and later point releases: 'none' replaces 'minimal'" },
+            { "prefix": "gpt-5.1-codex", "contextWindow": 400000, "maxOutput": 128000, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] },
+            { "prefix": "gpt-5.1-codex-max", "contextWindow": 400000, "maxOutput": 128000, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high", "max"], "effortMap": { "max": "xhigh" } },
+            { "prefix": "gpt-5.2", "contextWindow": 400000, "maxOutput": 128000, "vision": true, "tools": true, "reasoning": "openai_effort", "efforts": ["off", "low", "medium", "high", "max"], "effortMap": { "off": "none", "max": "xhigh" } },
+            { "prefix": "o1", "contextWindow": 200000, "maxOutput": 100000, "vision": true, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] },
+            { "prefix": "o3", "contextWindow": 200000, "maxOutput": 100000, "vision": true, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] },
+            { "prefix": "o3-mini", "contextWindow": 200000, "maxOutput": 100000, "vision": false, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] },
+            { "prefix": "o4-mini", "contextWindow": 200000, "maxOutput": 100000, "vision": true, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] }
+        ],
+        "anthropic": [
+            { "prefix": "claude-", "contextWindow": 200000, "vision": true, "tools": true, "reasoning": "anthropic_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 1024 } },
+            { "prefix": "claude-3-5-haiku", "contextWindow": 200000, "maxOutput": 8192, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "claude-3-5-sonnet", "contextWindow": 200000, "maxOutput": 8192, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "claude-3-7-sonnet", "contextWindow": 200000, "maxOutput": 64000, "vision": true, "tools": true, "reasoning": "anthropic_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 1024 } },
+            { "prefix": "claude-sonnet-4", "contextWindow": 200000, "maxOutput": 64000, "vision": true, "tools": true, "reasoning": "anthropic_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 1024 } },
+            { "prefix": "claude-haiku-4", "contextWindow": 200000, "maxOutput": 64000, "vision": true, "tools": true, "reasoning": "anthropic_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 1024 } },
+            { "prefix": "claude-opus-4", "contextWindow": 200000, "maxOutput": 32000, "vision": true, "tools": true, "reasoning": "anthropic_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 1024 } },
+            { "prefix": "claude-opus-4-5", "contextWindow": 200000, "maxOutput": 64000, "vision": true, "tools": true, "reasoning": "anthropic_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 1024 } }
+        ],
+        "gemini": [
+            { "prefix": "gemini-2.0-flash", "contextWindow": 1048576, "maxOutput": 8192, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "gemini-2.5-pro", "contextWindow": 1048576, "maxOutput": 65536, "vision": true, "tools": true, "reasoning": "gemini_budget", "efforts": ["low", "medium", "high", "max"], "budget": { "min": 128, "max": 32768 } },
+            { "prefix": "gemini-2.5-flash", "contextWindow": 1048576, "maxOutput": 65536, "vision": true, "tools": true, "reasoning": "gemini_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 0, "max": 24576 } },
+            { "prefix": "gemini-2.5-flash-lite", "contextWindow": 1048576, "maxOutput": 65536, "vision": true, "tools": true, "reasoning": "gemini_budget", "efforts": ["off", "low", "medium", "high", "max"], "budget": { "min": 512, "max": 24576 } },
+            { "prefix": "gemini-3", "contextWindow": 1048576, "maxOutput": 65536, "vision": true, "tools": true, "reasoning": "gemini_level", "efforts": ["low", "high"] }
+        ],
+        "mistral": [
+            { "prefix": "mistral-large", "contextWindow": 131072, "tools": true, "reasoning": "none" },
+            { "prefix": "mistral-medium", "contextWindow": 131072, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "mistral-small", "contextWindow": 131072, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "ministral", "contextWindow": 131072, "tools": true, "reasoning": "none" },
+            { "prefix": "pixtral", "contextWindow": 131072, "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "codestral", "contextWindow": 256000, "tools": true, "reasoning": "none" },
+            { "prefix": "magistral", "tools": true, "reasoning": "none", "note": "always reasons; no effort control" }
+        ],
+        "groq": [
+            { "prefix": "llama-3.3-70b-versatile", "contextWindow": 131072, "maxOutput": 32768, "tools": true, "reasoning": "none" },
+            { "prefix": "qwen/qwen3-32b", "contextWindow": 131072, "tools": true, "reasoning": "openai_effort", "efforts": ["off", "medium"], "effortMap": { "off": "none", "medium": "default" } }
+        ],
+        "deepseek": [
+            { "prefix": "deepseek-chat", "contextWindow": 128000, "maxOutput": 8192, "vision": false, "tools": true, "reasoning": "none" },
+            { "prefix": "deepseek-reasoner", "contextWindow": 128000, "maxOutput": 65536, "vision": false, "tools": true, "reasoning": "none", "note": "always reasons; no effort control" }
+        ],
+        "minimax": [
+            { "prefix": "minimax-m2", "contextWindow": 204800, "vision": false, "tools": true, "reasoning": "none", "note": "interleaved thinking is always on" }
+        ],
+        "open": [
+            { "prefix": "gpt-oss", "contextWindow": 131072, "tools": true, "reasoning": "openai_effort", "efforts": ["low", "medium", "high"] },
+            { "prefix": "llama-3.1-8b", "contextWindow": 131072, "tools": true, "reasoning": "none" },
+            { "prefix": "llama-3.3-70b", "contextWindow": 131072, "tools": true, "reasoning": "none" },
+            { "prefix": "llama-4-scout", "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "llama-4-maverick", "vision": true, "tools": true, "reasoning": "none" },
+            { "prefix": "kimi-k2", "contextWindow": 131072, "tools": true, "reasoning": "none" },
+            { "prefix": "kimi-k2-instruct-0905", "contextWindow": 262144, "tools": true, "reasoning": "none" }
+        ]
+    }
+}

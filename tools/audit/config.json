@@ -10,7 +10,9 @@
    "config/"
   ],
   "ignore": {
-   "config/meta/AdapterTypes.js": "QML types of config keys, read by tools/config/gen_adapters.cjs (node), not by QML"
+   "config/meta/AdapterTypes.js": "QML types of config keys, read by tools/config/gen_adapters.cjs (node), not by QML",
+   "modules/services/ai/Effort.js": "wired in sub-project B/C (AI bar redesign); tested by tests/ai-effort.test.cjs",
+   "modules/services/ai/ProviderPresets.js": "wired in sub-project B/C (AI bar redesign); tested by tests/ai-provider-presets.test.cjs"
   }
  },
  "configKeys": {

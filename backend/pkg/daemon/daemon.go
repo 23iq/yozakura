@@ -32,6 +32,7 @@ import (
 	ocrsvc "yozakura/backend/pkg/svc/ocr"
 	"yozakura/backend/pkg/svc/powerprofile"
 	"yozakura/backend/pkg/svc/preset"
+	"yozakura/backend/pkg/svc/providers"
 	recordersvc "yozakura/backend/pkg/svc/recorder"
 	"yozakura/backend/pkg/svc/screenshot"
 	"yozakura/backend/pkg/svc/sleep"
@@ -180,6 +181,8 @@ func New() (*Daemon, error) {
 	agentsMgr := agents.NewManager(filepath.Join(p.DataDir, "agents"))
 	agents.NewService(agentsMgr).Register(d.srv)
 	d.agents = agentsMgr
+	// Chat providers: Ollama probe, connection tests, model capability table.
+	providers.NewService(p).Register(d.srv)
 	// Local speech-to-text (whisper.cpp server started on demand).
 	d.voice = voicesvc.NewService(d.paths)
 	d.voice.Register(d.srv)
