@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.signatures
 import "ResultStyles.js" as ResultStyles
 
 // The launcher result list: rows of ResultRow, a sliding selection
@@ -93,6 +94,10 @@ ListView {
                 duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
+        }
+
+        BrushHighlight {
+            shown: list.expandedIndex < 0 || list.selectedIndex !== list.expandedIndex
         }
 
         StyledRect {

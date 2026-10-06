@@ -27,6 +27,9 @@ MIRROR = [
     "modules/desktop/clockstyles",
     "modules/widgets/defaultview/NotchVisualizer.qml",
     "modules/theme/Icons.qml",
+    "modules/theme/GlassContrast.js",
+    "modules/components/signatures",
+    "modules/components/surfaceeffects",
     "assets/fonts/clock",
     "config/ColorSpec.js",
 ]
@@ -40,6 +43,8 @@ QtObject { property var activePlayer: null; property bool canGoPrevious: true; p
 QtObject { property bool available: true; property int consumerCount: 0; property var keys: ({})
  function setConsumer(k, a) { keys[k] = a; var n = 0; for (var x in keys) if (keys[x]) n++; consumerCount = n; }
  function levels(n) { var o = []; for (var i = 0; i < n; i++) o.push(0.25 + 0.6 * Math.abs(Math.sin(i * 1.7))); return o; } }""",
+    "GameModeClient": "pragma Singleton\nQtObject { property bool toggled: false }",
+    "PowerProfileClient": "pragma Singleton\nQtObject { property string currentProfile: \"balanced\" }",
     "Battery": """pragma Singleton
 import qs.modules.theme
 QtObject { property bool available: true; property real percentage: 76; property bool isPluggedIn: false
@@ -123,7 +128,8 @@ class LockscreenEnv:
         self.h.module("Quickshell.Services.Pam", PAM)
         self.h.module("Quickshell.Widgets", {"ClippingRectangle": "Rectangle { clip: true }"})
         for d in ["modules/lockscreen", "modules/lockscreen/styles", "modules/desktop/clockstyles",
-                  "modules/widgets/defaultview"]:
+                  "modules/widgets/defaultview", "modules/components/signatures",
+                  "modules/components/surfaceeffects"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
         # Binding/runtime errors of the lock screen files (not just type errors).
         self.errors: list[str] = []

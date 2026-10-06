@@ -155,6 +155,10 @@ Item {
         sourceComponent: root.style ? root.style.backdrop : null
     }
 
+    Petals {
+        opacity: root.reveal
+    }
+
     // ── Foreground ──────────────────────────────────────────────────────
     Item {
         id: foreground
