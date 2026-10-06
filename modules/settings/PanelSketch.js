@@ -80,16 +80,24 @@ function sketch(panel, W, H, unit) {
     }[style.id] || 1;
     var t = Math.round(unit * thin + unit * 0.3);
     var cross;
+    // Floating looks sit off the edge by this much
+    var lift = Math.round(unit * 0.4);
 
-    if (style.id === "dock") {
+    if (style.hidden) {
+        return {
+            "shapes": [],
+            "icons": [],
+            "depth": 0
+        };
+    } else if (style.id === "dock" || style.id === "dock-like") {
         var all = start.concat(center, end);
         var gaps = [start, center, end].filter(function (x) {
             return x.length > 0;
         }).length - 1;
-        var dslot = unit * 1.15;
+        var dslot = style.id === "dock" ? unit * 1.15 : slot;
         var w = all.length * dslot + Math.max(0, gaps) * unit * 0.4 + unit * 0.5;
         var margin = Math.round(unit * 0.35);
-        var dt = Math.round(unit * 1.5);
+        var dt = style.id === "dock" ? Math.round(unit * 1.5) : t;
         var x0 = panel.align === "start" ? unit : (panel.align === "end" ? len - w - unit : (len - w) / 2);
         shapes.push({
             "x": x0,
@@ -107,36 +115,39 @@ function sketch(panel, W, H, unit) {
             x += grp.length * dslot + unit * 0.4;
         });
         depth = margin + dt;
-    } else if (style.id === "islands" || style.id === "corners") {
-        cross = t / 2;
+    } else if (style.id === "islands" || style.id === "corners" || style.id === "pills") {
+        var pills = style.id === "pills";
+        var off = pills ? lift : 0;
+        cross = off + t / 2;
         var groupsOnTabs = [["start", start], ["end", end.concat([])]];
-        if (style.id === "islands" && center.length > 0)
+        if (style.id !== "corners" && center.length > 0)
             groupsOnTabs.push(["center", center]);
         groupsOnTabs.forEach(function (pair) {
             var ids = pair[1];
             if (ids.length === 0)
                 return;
             var tw = ids.length * slot + unit * 0.5;
-            var tx = pair[0] === "start" ? 0 : (pair[0] === "end" ? len - tw : (len - tw) / 2);
+            var tx = pair[0] === "start" ? off : (pair[0] === "end" ? len - tw - off : (len - tw) / 2);
             shapes.push({
                 "x": tx,
-                "y": 0,
+                "y": off,
                 "w": tw,
                 "h": t,
-                "r": t * 0.45,
-                "kind": "tab"
+                "r": pills ? t / 2 : t * 0.45,
+                "kind": pills ? "dock" : "tab"
             });
             icons = icons.concat(run(ids, tx + unit * 0.25, cross, slot, size));
         });
-        depth = t;
+        depth = off + t;
     } else {
-        var inset = style.id === "classic" && panel.margin !== 0 ? Math.round(unit * 0.18) : 0;
+        var floating = style.id === "floating";
+        var inset = floating ? lift : (style.id === "classic" && panel.margin !== 0 ? Math.round(unit * 0.18) : 0);
         shapes.push({
             "x": inset,
             "y": inset,
             "w": len - 2 * inset,
             "h": t,
-            "r": inset > 0 ? t * 0.35 : 0,
+            "r": floating ? t / 2 : (inset > 0 ? t * 0.35 : 0),
             "kind": "band"
         });
         cross = inset + t / 2;

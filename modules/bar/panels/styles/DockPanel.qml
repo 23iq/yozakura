@@ -32,6 +32,10 @@ PanelStyleBase {
         return out;
     }
 
+    // Surface variant and own shadow ("dock-like" uses the bar surface)
+    property string surface: "bg"
+    property bool ownShadow: true
+
     implicitThickness: moduleSize + 2 * pad
     implicitLength: (vertical ? row.implicitHeight : row.implicitWidth) + 2 * pad
     outerMargin: Math.round(moduleSize * 0.16)
@@ -39,8 +43,8 @@ PanelStyleBase {
 
     StyledRect {
         anchors.fill: parent
-        variant: "bg"
-        enableShadow: true
+        variant: dock.surface
+        enableShadow: dock.ownShadow
         radius: Math.min(Styling.radius(10), dock.implicitThickness / 2)
     }
 

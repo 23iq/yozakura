@@ -36,7 +36,7 @@ Item {
         spacing: 10
 
         Repeater {
-            model: PanelStyles.STYLES
+            model: PanelStyles.STYLES.filter(s => !s.hidden)
             delegate: ChoiceCard {
                 id: card
                 required property var modelData

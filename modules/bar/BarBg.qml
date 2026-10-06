@@ -10,6 +10,8 @@ Item {
     required property string position
     // StyledRect variant of the band ("barbg"; strip styles may use "bg")
     property string variant: "barbg"
+    // Corner radius of the band; -1 = theme default (floating styles round it)
+    property real radiusOverride: -1
 
     default property alias content: contentContainer.data
 
@@ -38,7 +40,7 @@ Item {
         variant: root.variant
         glassSurface: "bar"
         visible: root.variant !== "barbg" || Config.showBackground
-        radius: Styling.radius(effectiveContainBar ? 4 : 0)
+        radius: root.radiusOverride >= 0 ? root.radiusOverride : Styling.radius(root.effectiveContainBar ? 4 : 0)
         enableBorder: !effectiveContainBar || (Config.bar.keepBarBorder ?? false)
 
         // Position and size expanded to cover corners

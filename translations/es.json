@@ -3396,5 +3396,13 @@
   "prefs.group.look": "Aspecto",
   "prefs.group.presets": "Preajustes",
   "prefs.cat.layout": "Disposición",
-  "prefs.cat.layout.desc": "Dónde se colocan la barra, la isla y el dock en la pantalla."
+  "prefs.cat.layout.desc": "Dónde se colocan la barra, la isla y el dock en la pantalla.",
+  "prefs.bar.style.floating": "Flotante",
+  "prefs.bar.style.floating.desc": "Una barra redondeada separada del borde",
+  "prefs.bar.style.pills": "Píldoras",
+  "prefs.bar.style.pills.desc": "Cada grupo en su propia píldora flotante",
+  "prefs.bar.style.docklike": "Tipo dock",
+  "prefs.bar.style.docklike.desc": "Ajustada a su contenido y centrada",
+  "prefs.bar.style.none": "Ninguna",
+  "prefs.bar.style.none.desc": "Sin barra; el borde de la pantalla queda libre"
 }

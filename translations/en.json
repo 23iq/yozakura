@@ -3396,5 +3396,13 @@
   "prefs.group.look": "Look",
   "prefs.group.presets": "Presets",
   "prefs.cat.layout": "Layout",
-  "prefs.cat.layout.desc": "Where the bar, island and dock sit on the screen."
+  "prefs.cat.layout.desc": "Where the bar, island and dock sit on the screen.",
+  "prefs.bar.style.floating": "Floating",
+  "prefs.bar.style.floating.desc": "A rounded bar lifted off the edge",
+  "prefs.bar.style.pills": "Pills",
+  "prefs.bar.style.pills.desc": "Each group in its own floating pill",
+  "prefs.bar.style.docklike": "Dock-like",
+  "prefs.bar.style.docklike.desc": "Sized to its content and centered",
+  "prefs.bar.style.none": "None",
+  "prefs.bar.style.none.desc": "No bar; the screen edge stays free"
 }

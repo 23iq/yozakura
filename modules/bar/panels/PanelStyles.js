@@ -129,8 +129,72 @@ var STYLES = [
         "containable": false,
         "activity": "pill",
         "floating": true
+    },
+    // bar.style looks (spec Addendum 2); "classic" is the full-width strip
+    {
+        "id": "floating",
+        "file": "styles/FloatingPanel.qml",
+        "icon": "appWindow",
+        "label": "prefs.bar.style.floating",
+        "desc": "prefs.bar.style.floating.desc",
+        "edges": ALL_EDGES,
+        "groups": ["start", "center", "end", "drawer", "gapStart", "gapEnd"],
+        "flat": false,
+        "size": 0,
+        "containable": false,
+        "activity": "pill",
+        "floating": false
+    },
+    {
+        "id": "pills",
+        "file": "styles/PillsPanel.qml",
+        "icon": "columns",
+        "label": "prefs.bar.style.pills",
+        "desc": "prefs.bar.style.pills.desc",
+        "edges": ALL_EDGES,
+        "groups": ["start", "center", "end", "drawer"],
+        "flat": false,
+        "size": 0,
+        "containable": false,
+        "activity": "pill",
+        "floating": false
+    },
+    {
+        "id": "dock-like",
+        "file": "styles/DockLikePanel.qml",
+        "icon": "stack",
+        "label": "prefs.bar.style.docklike",
+        "desc": "prefs.bar.style.docklike.desc",
+        "edges": ALL_EDGES,
+        "groups": ["start", "center", "end"],
+        "flat": false,
+        "size": 0,
+        "containable": false,
+        "activity": "pill",
+        "floating": true
+    },
+    // No bar at all: the panel is never shown and reserves nothing
+    {
+        "id": "none",
+        "file": "",
+        "icon": "minus",
+        "label": "prefs.bar.style.none",
+        "desc": "prefs.bar.style.none.desc",
+        "edges": ALL_EDGES,
+        "groups": [],
+        "flat": false,
+        "size": 0,
+        "containable": false,
+        "activity": "pill",
+        "floating": false,
+        "hidden": true
     }
 ];
+
+// The looks offered as `bar.layout.style` cards, in order (spec: full,
+// floating, islands, dock-like, none; "classic" = full, "islands" = edge
+// tabs, "pills" = groups as separate floating pills).
+var BAR_STYLES = ["classic", "floating", "islands", "pills", "dock-like", "none"];
 
 var _byId = {};
 for (var _i = 0; _i < STYLES.length; _i++)
@@ -149,6 +213,17 @@ function has(id) {
 // Registry entry; unknown ids resolve to "classic".
 function get(id) {
     return _byId[id] || _byId["classic"];
+}
+
+function barStyles() {
+    return BAR_STYLES.map(function (id) {
+        return _byId[id];
+    });
+}
+
+// A style that draws no bar ("none"): the panel is disabled.
+function isHidden(id) {
+    return _byId[id] !== undefined && _byId[id].hidden === true;
 }
 
 function supportsEdge(id, edge) {
