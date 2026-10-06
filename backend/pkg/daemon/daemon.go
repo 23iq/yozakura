@@ -201,8 +201,9 @@ func New() (*Daemon, error) {
 		Prices:         usage.LoadPrices(usage.BundledPricesPath(paths.FindShellSource()), usage.OverridePricesPath(p.ConfigDir)),
 		PricesOverride: usage.OverridePricesPath(p.ConfigDir),
 		ClaudeFetch:    usage.NewClaudeFetcher().Fetch,
-		Notify: func(summary, body string) {
-			_, _ = notifySvc.Send(notifysvc.SendParams{Summary: summary, Body: body, AppIcon: "dialog-warning", ReplaceKey: "usage-limit"})
+		Notify: func(sp notifysvc.SendParams) {
+			sp.AppIcon, sp.ReplaceKey = "dialog-warning", "usage-limit"
+			_, _ = notifySvc.Send(sp)
 		},
 	})
 	d.usage.Register(d.srv)

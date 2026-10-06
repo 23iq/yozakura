@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/svc/notify"
 )
 
 // runCap bounds one run (delays are capped at MaxTotalMs).
@@ -19,7 +20,7 @@ const runCap = MaxTotalMs + 5*time.Minute
 type Service struct {
 	path   string
 	exec   Executor
-	notify func(summary, body string)
+	notify func(notify.SendParams)
 
 	mu     sync.Mutex // serialises writers
 	grants grants     // user confirmations of AI runs (confirm.go)
@@ -32,7 +33,7 @@ type Options struct {
 	Path string // routines.json
 	Exec Executor
 	// Notify reports a failed run that nobody watches (nil: silent).
-	Notify func(summary, body string)
+	Notify func(notify.SendParams)
 }
 
 // NewService builds the service; the executor's Lookup is filled in.
@@ -238,7 +239,7 @@ func (s *Service) run(params json.RawMessage) (any, error) {
 	}
 	rep := s.Run(r)
 	if !rep.OK && !p.Quiet && s.notify != nil {
-		s.notify("Routine "+r.Name+" failed", failureText(rep))
+		s.notify(failureNotice(r, rep))
 	}
 	return rep, nil
 }
@@ -253,13 +254,19 @@ func (s *Service) Run(r Routine) Report {
 	return rep
 }
 
-func failureText(rep Report) string {
+// failureNotice is the "routine failed" notification (%1 routine name;
+// the body: %2 step number, %3 step label, %4 error).
+func failureNotice(r Routine, rep Report) notify.SendParams {
+	p := notify.SendParams{Summary: "Routine " + r.Name + " failed", SummaryKey: "notify.routine.failed",
+		Body: "Stopped", BodyKey: "notify.routine.stopped", Args: []any{r.Name}}
 	for _, st := range rep.Steps {
 		if st.Status == StatusFailed {
-			return fmt.Sprintf("Step %d (%s): %s", st.Index+1, st.Label, st.Error)
+			p.Body = fmt.Sprintf("Step %d (%s): %s", st.Index+1, st.Label, st.Error)
+			p.BodyKey, p.Args = "notify.routine.step", []any{r.Name, st.Index + 1, st.Label, st.Error}
+			break
 		}
 	}
-	return "Stopped"
+	return p
 }
 
 func (s *Service) subscribe(sub *ipc.Subscriber) {

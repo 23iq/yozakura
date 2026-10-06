@@ -177,22 +177,28 @@ func (s *Service) announce(ev Event) {
 
 func notificationFor(ev Event) notify.SendParams {
 	p := notify.SendParams{Body: ev.Message, AppIcon: "alarm-clock", ReplaceKey: "timer-" + ev.ID, Urgency: "normal"}
-	if ev.Missed {
-		p.Body += " (due " + time.UnixMilli(ev.DueAt).Format("15:04") + ")"
+	// The body as a translatable argument (%1): the event's message, or
+	// the user's own text as is.
+	body := any(ev.Message)
+	if ev.MsgKey != "" {
+		p.BodyKey, p.Args = ev.MsgKey, ev.MsgArgs
+		body = notify.Text{Key: ev.MsgKey, Args: ev.MsgArgs, Text: ev.Message}
 	}
+	due := time.UnixMilli(ev.DueAt).Format("15:04")
 	switch ev.Kind {
 	case "reminder":
-		p.Summary, p.Urgency = "Reminder", "critical"
+		p.Summary, p.SummaryKey, p.Urgency = "Reminder", "notify.reminder.title", "critical"
 		if ev.Name == "" {
-			p.Body = "It is " + time.UnixMilli(ev.DueAt).Format("15:04")
+			p.Body, p.BodyKey, p.Args = "It is "+due, "notify.reminder.it_is", []any{due}
+			body = notify.Text{Key: p.BodyKey, Args: p.Args, Text: p.Body}
 		}
 		p.Actions = []notify.SendAction{
-			{Identifier: "snooze", Text: "+5 min", Call: &notify.ActionCall{Method: "timers.reminderAdd",
+			{Identifier: "snooze", Text: "+5 min", LabelKey: "timers.action.snooze", Call: &notify.ActionCall{Method: "timers.reminderAdd",
 				Params: map[string]any{"when": "5m", "message": ev.Name}}},
-			{Identifier: "dismiss", Text: "Stop"},
+			{Identifier: "dismiss", Text: "Stop", LabelKey: "timers.action.stop"},
 		}
 	case "pomodoro":
-		p.Summary = "Pomodoro"
+		p.Summary, p.SummaryKey = "Pomodoro", "notify.pomodoro.title"
 		if ev.Done {
 			p.Urgency = "critical"
 			p.Actions = stopActions(ev.ID)
@@ -201,17 +207,23 @@ func notificationFor(ev Event) notify.SendParams {
 		p.Summary, p.Urgency = "Timer", "critical"
 		if ev.Name != "" {
 			p.Summary = ev.Name
+		} else {
+			p.SummaryKey = "notify.timer.title"
 		}
 		p.Actions = stopActions(ev.ID)
+	}
+	if ev.Missed {
+		p.Body += " (due " + due + ")"
+		p.BodyKey, p.Args = "notify.missed", []any{body, due}
 	}
 	return p
 }
 
 func stopActions(id string) []notify.SendAction {
 	return []notify.SendAction{
-		{Identifier: "snooze", Text: "+5 min", Call: &notify.ActionCall{Method: "timers.add",
+		{Identifier: "snooze", Text: "+5 min", LabelKey: "timers.action.snooze", Call: &notify.ActionCall{Method: "timers.add",
 			Params: map[string]any{"id": id, "spec": "5m"}}},
-		{Identifier: "stop", Text: "Stop", Call: &notify.ActionCall{Method: "timers.dismiss",
+		{Identifier: "stop", Text: "Stop", LabelKey: "timers.action.stop", Call: &notify.ActionCall{Method: "timers.dismiss",
 			Params: map[string]any{"id": id}}},
 	}
 }

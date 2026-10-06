@@ -91,3 +91,38 @@ test('a failed action call becomes a short quiet notice', () => {
     assert.ok(n.expireTimeout > 0 && n.hints['suppress-sound']);
     assert.equal(R.failureNotice('boom').body, 'boom');
 });
+
+test('localized backend texts: keys with args, nested args, fallback without a translation', () => {
+    const table = {
+        'notify.missed': '%1 (vence %2)',
+        'notify.timer.finished': 'Temporizador de %1 terminado',
+        'notify.timer.title': 'Temporizador',
+        'notify.action.open': 'Abrir'
+    };
+    const d = deps();
+    d.tr = key => table[key];
+    d.has = key => key in table;
+    const o = R.build({
+        summary: 'Timer', summaryKey: 'notify.timer.title',
+        body: 'Timer 5m finished (due 14:10)', bodyKey: 'notify.missed',
+        args: [{ key: 'notify.timer.finished', args: ['5m'], text: 'Timer 5m finished' }, '14:10'],
+        actions: [{ identifier: 'open', text: 'Open', labelKey: 'notify.action.open' },
+            { identifier: 'x', text: 'Keep', labelKey: 'notify.unknown' }]
+    }, d);
+    assert.equal(o.summary, 'Temporizador');
+    assert.equal(o.body, 'Temporizador de 5m terminado (vence 14:10)');
+    assert.deepEqual(plain(o.actions).map(a => a.text), ['Abrir', 'Keep']);
+
+    const unknown = R.build({ summary: 'English', summaryKey: 'notify.nope', body: 'b', args: ['x'] }, d);
+    assert.equal(unknown.summary, 'English', 'no translation: the fallback text');
+    assert.equal(unknown.body, 'b', 'no key: the plain body');
+});
+
+test('argument substitution is one pass and tolerates missing args', () => {
+    const d = deps();
+    d.tr = () => '%1 / %2 / %3';
+    assert.equal(R.localized('k', ['a%2', null], 'f', d), 'a%2 /  / %3');
+    const nested = Object.assign(deps(), { tr: k => (k === 'k' ? '<%1>' : ''), has: k => k === 'k' });
+    assert.equal(R.localized('k', [{ key: 'gone', text: 'fallback' }], 'f', nested), '<fallback>');
+    assert.equal(R.localized('', [], 'f', d), 'f');
+});

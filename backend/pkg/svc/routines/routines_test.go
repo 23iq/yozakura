@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/svc/notify"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -214,7 +215,7 @@ func TestServiceCRUDAndRun(t *testing.T) {
 	path := filepath.Join(t.TempDir(), FileName)
 	f := &fakeExec{fail: "playerctl previous"}
 	var notes []string
-	s := NewService(Options{Path: path, Exec: f.executor(nil), Notify: func(a, b string) { notes = append(notes, a+": "+b) }})
+	s := NewService(Options{Path: path, Exec: f.executor(nil), Notify: func(p notify.SendParams) { notes = append(notes, p.Summary+": "+p.Body) }})
 
 	m, err := call(t, s, "save", map[string]any{"routine": map[string]any{"name": "Morning", "steps": []any{
 		map[string]any{"kind": "action", "action": "media.next"}}}})

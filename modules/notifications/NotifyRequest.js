@@ -5,10 +5,15 @@
 //   clipboard  value copied with wl-copy when clicked (colorpicker formats)
 //   call       {method, params}: a backend IPC call made when clicked
 //              (timers "+5 min" -> timers.add, "Stop" -> timers.dismiss)
-// Timer notifications (replaceKey "timer-...") get their button texts
-// translated by identifier and no notification sound: the timer alarm
-// (TimersService) plays its own. `deps`: {call(method, params),
-// copy(value), tr(key)}. What an action does is kept as data
+// Localized backend texts: summaryKey / bodyKey are translation keys
+// shown instead of summary / body (the English fallback) when the
+// language files know them; `args` fill their %1, %2... (an arg may be a
+// {key, args, text} itself, translated the same way); an action's
+// labelKey translates its text. Timer notifications (replaceKey
+// "timer-...") without labelKey get their button texts translated by
+// identifier, and no notification sound: the timer alarm (TimersService)
+// plays its own. `deps`: {call(method, params), copy(value), tr(key),
+// has(key) (optional: a translation exists)}. What an action does is kept as data
 // (`actionData`, saved with the notification) and turned into handlers by
 // handlers(), so the buttons still work on a notification restored from
 // history. expireTimeout 0 (the backend's "until dismissed") keeps a
@@ -35,7 +40,9 @@ function build(data, deps) {
         if (!a || !a.identifier)
             continue;
         var text = a.text || a.identifier;
-        if (timer && TIMER_TEXTS[a.identifier] && deps.tr)
+        if (a.labelKey)
+            text = localized(a.labelKey, [], text, deps);
+        else if (timer && TIMER_TEXTS[a.identifier] && deps.tr)
             text = deps.tr(TIMER_TEXTS[a.identifier]);
         actions.push({
             "identifier": a.identifier,
@@ -53,9 +60,10 @@ function build(data, deps) {
                 }
             };
     }
+    var args = (data && Array.isArray(data.args)) ? data.args : [];
     var opts = {
-        "summary": (data && data.summary) || "",
-        "body": (data && data.body) || "",
+        "summary": localized(data && data.summaryKey, args, (data && data.summary) || "", deps),
+        "body": localized(data && data.bodyKey, args, (data && data.body) || "", deps),
         "appName": (data && data.appName) || "Yozakura",
         "appIcon": (data && data.appIcon) || "",
         "image": (data && data.image) || "",
@@ -72,6 +80,27 @@ function build(data, deps) {
             "suppress-sound": true
         };
     return opts;
+}
+
+// The translation of key with %1, %2... replaced by args (one pass, so an
+// argument's own "%2" stays as is), or fallback when there is no key or
+// no translation for it.
+function localized(key, args, fallback, deps) {
+    if (!key || !deps || !deps.tr || (deps.has && !deps.has(key)))
+        return fallback;
+    var list = args || [];
+    return String(deps.tr(key)).replace(/%(\d+)/g, function (m, n) {
+        var i = Number(n) - 1;
+        return i >= 0 && i < list.length ? argText(list[i], deps) : m;
+    });
+}
+
+function argText(a, deps) {
+    if (a === null || a === undefined)
+        return "";
+    if (typeof a === "object" && a.key)
+        return localized(String(a.key), Array.isArray(a.args) ? a.args : [], a.text !== undefined && a.text !== null ? String(a.text) : "", deps);
+    return String(a);
 }
 
 // Popup lifetime in ms: 0 = until dismissed (only with actions: the

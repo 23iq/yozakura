@@ -71,6 +71,12 @@ func TestServicePersistsAndFiresAfterRestart(t *testing.T) {
 	n := h2.notes[0]
 	assert.Equal(t, "tea", n.Summary)
 	assert.Contains(t, n.Body, "(due 14:10)") // missed while down
+	assert.Empty(t, n.SummaryKey, "a named timer keeps its name")
+	assert.Equal(t, "notify.missed", n.BodyKey)
+	if assert.Len(t, n.Args, 2) {
+		assert.Equal(t, "notify.timer.finished", n.Args[0].(notify.Text).Key)
+		assert.Equal(t, "14:10", n.Args[1])
+	}
 	assert.Equal(t, "critical", n.Urgency)
 	if assert.Len(t, n.Actions, 2) {
 		assert.Equal(t, "timers.add", n.Actions[0].Call.Method)

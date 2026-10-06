@@ -126,7 +126,7 @@ func agentLabel(id string) string {
 }
 
 func openAction(id string) notify.SendAction {
-	return notify.SendAction{Identifier: "open", Text: "Open", Call: &notify.ActionCall{Method: "tasks.open",
+	return notify.SendAction{Identifier: "open", Text: "Open", LabelKey: "notify.action.open", Call: &notify.ActionCall{Method: "tasks.open",
 		Params: map[string]any{"id": id}}}
 }
 
@@ -147,10 +147,11 @@ func (m *Manager) permissionNotice(t *Task, r *Run, ev agents.Event) func() {
 	}
 	return m.send(notify.SendParams{
 		Summary: agentLabel(r.Agent) + " is waiting", Body: oneLine(firstNonEmpty(ev.Title, ev.Tool), 160) + "\n" + t.Title,
+		SummaryKey: "notify.task.waiting", Args: []any{agentLabel(r.Agent)},
 		AppIcon: "dialog-question", Urgency: "critical", ReplaceKey: "task-perm-" + ev.ID,
 		Actions: []notify.SendAction{
-			{Identifier: "allow", Text: "Allow", Call: respond(agents.DecisionAllow)},
-			{Identifier: "deny", Text: "Deny", Call: respond(agents.DecisionDeny)},
+			{Identifier: "allow", Text: "Allow", LabelKey: "notify.action.allow", Call: respond(agents.DecisionAllow)},
+			{Identifier: "deny", Text: "Deny", LabelKey: "notify.action.deny", Call: respond(agents.DecisionDeny)},
 			openAction(t.ID),
 		},
 	})
@@ -168,29 +169,32 @@ func (m *Manager) noticeForTaskLocked(t *Task, fx *effects) {
 	switch t.Status {
 	case StatusAwaitingPlan:
 		kind = "plan"
-		p.Summary = "Plan ready"
-		p.Actions = []notify.SendAction{{Identifier: "run", Text: "Run", Call: &notify.ActionCall{Method: "tasks.run",
+		p.Summary, p.SummaryKey = "Plan ready", "notify.task.plan"
+		p.Actions = []notify.SendAction{{Identifier: "run", Text: "Run", LabelKey: "notify.action.run", Call: &notify.ActionCall{Method: "tasks.run",
 			Params: map[string]any{"id": t.ID}}}, openAction(t.ID)}
 	case StatusReview:
 		kind = "review"
-		p.Summary = "Ready for review"
+		p.Summary, p.SummaryKey = "Ready for review", "notify.task.review"
 		if c := lastCheck(t); c != "" {
 			p.Body += "\nCheck: " + c
+			p.BodyKey, p.Args = "notify.task.review_body", []any{t.Title, notify.Text{Key: "notify.check." + c, Text: c}}
 		}
 		p.Actions = []notify.SendAction{openAction(t.ID)}
 	case StatusFailed:
 		kind = "failed"
-		p.Summary, p.AppIcon, p.Urgency = "Task failed", "dialog-error", "critical"
+		p.Summary, p.SummaryKey, p.AppIcon, p.Urgency = "Task failed", "notify.task.failed", "dialog-error", "critical"
 		if t.Error != "" {
 			p.Body += "\n" + oneLine(t.Error, 200)
 		}
 		p.Actions = []notify.SendAction{openAction(t.ID)}
 	case StatusWaitingLimit:
 		kind = "limit"
-		p.Summary = "Waiting for the usage limit"
+		p.Summary, p.SummaryKey = "Waiting for the usage limit", "notify.task.limit"
 		for _, r := range t.Runs {
 			if r.ResetsAt > 0 {
-				p.Body += fmt.Sprintf("\nRetry at %s", time.UnixMilli(r.ResetsAt).Format("15:04"))
+				at := time.UnixMilli(r.ResetsAt).Format("15:04")
+				p.Body += fmt.Sprintf("\nRetry at %s", at)
+				p.BodyKey, p.Args = "notify.task.limit_body", []any{t.Title, at}
 				break
 			}
 		}

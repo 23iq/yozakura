@@ -33,6 +33,9 @@
   ],
   "allowMissing": {},
   "allowUnused": {},
+  "usedPrefixes": {
+   "notify.": "summaryKey/bodyKey/labelKey/args of backend notify.request (timers, tasks, usage, routines in backend/pkg/svc), translated by modules/notifications/NotifyRequest.js"
+  },
   "keyDataFiles": [
    "assets/commands/commands.json"
   ]

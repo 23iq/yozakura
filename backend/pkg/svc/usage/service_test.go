@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/svc/notify"
 )
 
 type notes struct {
@@ -20,9 +21,9 @@ type notes struct {
 	list []string
 }
 
-func (n *notes) add(summary, _ string) {
+func (n *notes) add(p notify.SendParams) {
 	n.mu.Lock()
-	n.list = append(n.list, summary)
+	n.list = append(n.list, p.Summary)
 	n.mu.Unlock()
 }
 

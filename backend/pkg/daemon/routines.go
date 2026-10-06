@@ -32,8 +32,9 @@ func newRoutines(srv *ipc.Server, p *paths.Paths, mcp *mcpsvc.Service, notify *n
 				return res.Text(), res.IsError, nil
 			},
 		},
-		Notify: func(summary, body string) {
-			_, _ = notify.Send(notifysvc.SendParams{Summary: summary, Body: body, AppIcon: "dialog-warning", ReplaceKey: "routine-failed"})
+		Notify: func(sp notifysvc.SendParams) {
+			sp.AppIcon, sp.ReplaceKey = "dialog-warning", "routine-failed"
+			_, _ = notify.Send(sp)
 		},
 	})
 	svc.Register(srv)

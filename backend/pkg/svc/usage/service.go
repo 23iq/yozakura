@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/svc/notify"
 )
 
 // Recorder is what producers outside this package (the agents service)
@@ -32,7 +33,7 @@ type Options struct {
 	// PricesOverride is the user's price override file (shown by usage.info).
 	PricesOverride string
 	// Notify shows a shell notification (threshold alerts). nil: none.
-	Notify func(summary, body string)
+	Notify func(notify.SendParams)
 	// ClaudeFetch reads the Claude subscription windows. nil: disabled.
 	ClaudeFetch func(context.Context) (Limits, error)
 	Now         func() time.Time
@@ -43,7 +44,7 @@ type Service struct {
 	ledger *Ledger
 	prices *PriceTable
 	limits *LimitsStore
-	notify func(summary, body string)
+	notify func(notify.SendParams)
 	now    func() time.Time
 	poller *claudePoller
 
@@ -144,7 +145,7 @@ func (s *Service) SetLimits(l Limits) error {
 		s.saveAlertStates()
 		if s.notify != nil {
 			for _, a := range alerts {
-				s.notify(a.Message(s.now()))
+				s.notify(a.Notice(s.now()))
 			}
 		}
 	}
