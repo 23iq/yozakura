@@ -113,17 +113,32 @@ PanelWindow {
                 if (current && MenuStyles.fileFor(modelData, style) !== "")
                     active = true;
             }
+            function focusItem() {
+                const it = slot.item as Item;
+                if (it)
+                    it.forceActiveFocus();
+            }
+
             onShownChanged: {
-                if (shown && item)
-                    Qt.callLater(() => slot.item.forceActiveFocus());
+                if (shown)
+                    Qt.callLater(slot.focusItem);
             }
             onLoaded: {
                 item.cursor = Qt.binding(() => root.cursor);
                 item.area = Qt.binding(() => root.area);
                 item.shown = Qt.binding(() => slot.shown);
-                item.closeRequested.connect(root.close);
                 if (slot.shown)
-                    Qt.callLater(() => slot.item.forceActiveFocus());
+                    Qt.callLater(slot.focusItem);
+            }
+
+            // Every style declares `signal closeRequested`
+            Connections {
+                target: slot.item
+                ignoreUnknownSignals: true
+
+                function onCloseRequested() {
+                    root.close();
+                }
             }
         }
     }

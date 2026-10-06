@@ -184,12 +184,9 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        LazyLoader {
+        MenuOverlayHost {
             required property ShellScreen modelData
-            active: HostRouter.powermenuStyle !== "notch" || HostRouter.toolsStyle !== "notch"
-            MenuOverlay {
-                screen: modelData
-            }
+            screen: modelData
         }
     }
 

@@ -97,8 +97,8 @@ PanelWindow {
         height: gallery.implicitHeight
         radius: Styling.radius(20)
         enableShadow: true
-        opacity: presetsOpen ? 1 : 0
-        scale: presetsOpen ? 1 : 0.94
+        opacity: presetsPopup.presetsOpen ? 1 : 0
+        scale: presetsPopup.presetsOpen ? 1 : 0.94
 
         Behavior on opacity {
             enabled: Motion.enter.duration > 0
@@ -131,11 +131,11 @@ PanelWindow {
     }
 
     onPresetsOpenChanged: {
-        if (presetsOpen)
+        if (presetsPopup.presetsOpen)
             Qt.callLater(() => gallery.forceActiveFocus());
     }
     Component.onCompleted: {
-        if (presetsOpen)
+        if (presetsPopup.presetsOpen)
             Qt.callLater(() => gallery.forceActiveFocus());
     }
 }
