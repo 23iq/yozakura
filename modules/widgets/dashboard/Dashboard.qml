@@ -5,6 +5,7 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.notch
@@ -31,16 +32,19 @@ NotchAnimationBehavior {
     readonly property int tabCount: DashboardTabs.tabs.length
     // Bento edit mode of the widgets tab (toggled from the rail).
     property bool bentoEditing: false
-    readonly property int tabSpacing: 8
+    readonly property int tabSpacing: Space.s
+    // Space on each side of the rail divider.
+    readonly property int railGap: Space.m
 
-    readonly property int tabWidth: 48
+    readonly property int tabWidth: Space.controlM
+    readonly property int railWidth: tabWidth + railGap * 2 + Space.hairline
     // layout.dashboard.home: the widgets tab shows the composed home view or the bento grid.
     readonly property bool homeComposed: (Config.layout.dashboard.home ?? "composed") !== "bento"
     // The widgets tab is as wide and tall as its view (composed home, or the bento grid), so nothing is clipped.
     readonly property Item widgetsItem: widgetsTabLoader.item as Item
-    readonly property real widgetsWidth: homeComposed && widgetsItem ? widgetsItem.implicitWidth + 2 : 780 // + the rail separator
+    readonly property real widgetsWidth: homeComposed && widgetsItem ? widgetsItem.implicitWidth : 780
     readonly property real widgetsHeight: widgetsItem ? widgetsItem.implicitHeight : 430
-    readonly property real nonAnimWidth: (state.currentTab === 0 ? widgetsWidth : 400) + tabWidth + 16
+    readonly property real nonAnimWidth: (state.currentTab === 0 ? widgetsWidth : 400) + railWidth
 
     onHomeComposedChanged: bentoEditing = false
 
@@ -169,7 +173,7 @@ NotchAnimationBehavior {
     Row {
         id: mainLayout
         anchors.fill: parent
-        spacing: 8
+        spacing: root.railGap
 
         DashboardTabRail {
             id: tabsContainer
@@ -184,19 +188,22 @@ NotchAnimationBehavior {
             onEditToggled: root.bentoEditing = !root.bentoEditing
         }
 
-        Separator {
-            width: 2
+        // A slot, so the content keeps its place where dividers are hidden (tiles).
+        Item {
+            width: Space.hairline
             height: parent.height
-            vert: true
+
+            Divider {
+                vertical: true
+                anchors.fill: parent
+            }
         }
 
-            // Content area
-        Rectangle {
+        // Content area
+        Item {
             id: viewWrapper
 
-            color: "transparent"
-
-            width: parent.width - root.tabWidth - 2 - 16 // Ancho total menos tabs, separador y spacings
+            width: parent.width - root.railWidth
             height: parent.height
 
             clip: true

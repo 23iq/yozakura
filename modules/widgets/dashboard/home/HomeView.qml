@@ -1,72 +1,103 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
-import qs.modules.components
-import qs.modules.widgets.dashboard.widgets
+import qs.modules.components.kit
 
 // Composed dashboard home (layout.dashboard.home = "composed"): one calm
-// surface, no boxes of its own. Left: clock and weather, now playing, quick
-// toggles, volume and brightness. A hairline. Right: the shell's month
-// calendar and the notifications. Sizes come from Metrics (density aware).
+// surface in two columns split by a Divider, built from the kit's Groups
+// (the visual language gives them their look). Left: time, date and
+// weather, now playing, quick toggles, levels. Right: the month calendar and
+// the notifications, which take the remaining height. The view is as large
+// as its content; the dashboard follows it.
 Item {
     id: root
 
-    readonly property int gap: Metrics.padding * 1.5
+    // Around the column divider; boxed groups sit one group gap apart.
+    readonly property int gap: Look.groupBoxed ? Math.round(Look.groupGap / 2) : Space.xl
     readonly property int leftW: Metrics.sheetW
     readonly property int rightW: Metrics.launcherLeftPanelW
 
-    implicitWidth: root.leftW + root.rightW + root.gap * 2 + Metrics.padding * 2 + 2
-    implicitHeight: Math.max(Metrics.dashH, left.implicitHeight + Metrics.padding * 2)
+    implicitWidth: root.leftW + root.rightW + root.gap * 2 + Space.hairline
+    implicitHeight: Math.max(Metrics.dashH, left.implicitHeight, calendar.implicitHeight + Look.groupGap + notifications.minimumHeight)
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: Metrics.padding
         spacing: root.gap
 
-        ColumnLayout {
+        // Header, player and toggles from the top; the levels at the bottom.
+        Item {
             id: left
             Layout.preferredWidth: root.leftW
             Layout.fillHeight: true
-            spacing: Metrics.padding
+            implicitHeight: top.implicitHeight + Look.groupGap + levels.implicitHeight
 
-            HomeHeader {
-                Layout.fillWidth: true
-            }
+            Column {
+                id: top
+                width: parent.width
+                spacing: Look.groupGap
 
-            HomePlayer {
-                Layout.fillWidth: true
-            }
+                Group {
+                    width: parent.width
 
-            HomeToggles {
-                objectName: "toggles"
-                Layout.fillWidth: true
-            }
+                    HomeHeader {
+                        objectName: "header"
+                        width: parent.width
+                    }
+                }
 
-            Item {
-                Layout.fillHeight: true
+                HomePlayer {
+                    objectName: "player"
+                    width: parent.width
+                    divider: true
+                }
+
+                Group {
+                    width: parent.width
+                    divider: true
+
+                    HomeToggles {
+                        objectName: "toggles"
+                        width: parent.width
+                    }
+                }
             }
 
             HomeLevels {
-                Layout.fillWidth: true
+                id: levels
+                objectName: "levels"
+                anchors.bottom: parent.bottom
+                width: parent.width
+                divider: true
             }
         }
 
-        Separator {
-            vert: true
+        // A slot, so the columns keep their place without the divider
+        // (hidden where groups are boxes: glass cards, tiles).
+        Item {
+            implicitWidth: Space.hairline
+            Layout.fillHeight: true
+
+            Divider {
+                objectName: "columnDivider"
+                vertical: true
+                anchors.fill: parent
+                visible: Look.dividers && !Look.groupBoxed
+            }
         }
 
         ColumnLayout {
             Layout.preferredWidth: root.rightW
             Layout.fillHeight: true
-            spacing: Metrics.spacing
+            spacing: Look.groupGap
 
-            CalendarWidget {
+            HomeCalendar {
+                id: calendar
                 objectName: "calendar"
                 Layout.fillWidth: true
-                Layout.preferredHeight: Metrics.rowHeight * 5.5
             }
 
             HomeNotifications {
+                id: notifications
                 objectName: "notifications"
                 Layout.fillWidth: true
                 Layout.fillHeight: true
