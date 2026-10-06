@@ -103,6 +103,12 @@ func (c *Client) ActiveLayout() (ipc.KeyboardLayoutState, error) {
 	return st, nil
 }
 
+// ReloadConfig reloads the compositor config (`yozd config reload`).
+func (c *Client) ReloadConfig() error {
+	_, err := c.call("config", "reload")
+	return err
+}
+
 // NextLayout switches to the next keyboard layout.
 func (c *Client) NextLayout() error {
 	_, err := c.call("system", "switch-keyboard-layout", "next")

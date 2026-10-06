@@ -14,6 +14,7 @@ import (
 	"yozakura/backend/pkg/brand"
 
 	"yozakura/backend/pkg/apphooks"
+	exclusivemode "yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/mods"
 	"yozakura/backend/pkg/paths"
@@ -25,6 +26,7 @@ import (
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
 	"yozakura/backend/pkg/svc/displays"
+	"yozakura/backend/pkg/svc/exclusive"
 	"yozakura/backend/pkg/svc/extras"
 	"yozakura/backend/pkg/svc/focus"
 	"yozakura/backend/pkg/svc/fsbrowse"
@@ -145,6 +147,10 @@ func New() (*Daemon, error) {
 	d.compositor = compSvc
 
 	d.displays = displays.NewService(d.paths)
+	d.displays.SetExclusiveCheck(func() bool {
+		home, _ := os.UserHomeDir()
+		return exclusivemode.Active(filepath.Join(home, ".config", "hypr"))
+	})
 	d.displays.Register(d.srv)
 	var layoutSrc keyboard.StateSource
 	if m := compSvc.Manager(); m != nil {
@@ -213,6 +219,8 @@ func New() (*Daemon, error) {
 	extras.NewService(func(title, body string) {
 		_, _ = notifySvc.Send(notifysvc.SendParams{Summary: title, Body: body, AppIcon: "system-software-install"})
 	}).Register(d.srv)
+
+	exclusive.NewService().Register(d.srv)
 
 	// Terminal prompt presets and the writer following the palette.
 	d.term = term.NewService(p)

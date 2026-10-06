@@ -595,6 +595,8 @@ Commands:
     brightness -r [monitor]          Restore saved brightness
     brightness -l                    List monitors and their brightness
     install <target>                 Install compositor config (hyprland, niri, mango)
+    install hyprland --exclusive     Make {name} the only shell (backs up ~/.config/hypr);
+    install --restore [--from DIR]   undo it ({bin} install hyprland --exclusive --help)
     remove <target>                  Remove compositor config (hyprland, niri, mango)
     colorpicker                      Pick a screen color (interactive loupe)
     lockwall <wallpaper> <data>      Extract lockscreen frame from video/GIF

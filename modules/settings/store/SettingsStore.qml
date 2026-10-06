@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.globals
+import qs.modules.services
 import "../SchemaUtil.js" as SchemaUtil
 import "../SettingsDefaults.js" as SettingsDefaults
 
@@ -159,6 +160,9 @@ Singleton {
     }
 
     function visible(entry) {
+        // entries tied to one compositor (exclusive mode: Hyprland)
+        if (entry.compositor && YozdService.compositorName !== entry.compositor)
+            return false;
         return SchemaUtil.evalCondition(entry.visibleWhen, root.get);
     }
 

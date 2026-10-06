@@ -44,6 +44,7 @@ var EDITORS = {
     "MotionProfileCards": "editors/MotionProfileCards.qml",
     "PageLink": "editors/PageLink.qml",
     "LanguagePicker": "editors/LanguagePicker.qml",
+    "ExclusiveCard": "system/ExclusiveCard.qml",
     "VoiceStatus": "editors/VoiceStatus.qml",
     "UpdatesStatus": "editors/UpdatesStatus.qml",
     "OcrLanguages": "editors/OcrLanguages.qml",

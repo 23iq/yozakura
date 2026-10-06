@@ -120,3 +120,7 @@ func writeMinimal(hypr, entry, backup string) error {
 	}
 	return nil
 }
+
+// Active reports whether hypr (a ~/.config/hypr dir) carries the exclusive
+// mode entry.
+func Active(hypr string) bool { return activeEntry(hypr) != "" }

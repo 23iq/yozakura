@@ -225,3 +225,23 @@ func TestUnwritableNixStore(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
+
+func TestConflictsEmptyWhileExclusive(t *testing.T) {
+	hypr, data, _ := fixture(t)
+	s := newService(nil, hypr, data)
+	got, err := s.conflicts(nil)
+	if err != nil || len(got.([]Conflict)) == 0 {
+		t.Fatalf("fixture must conflict first: %v %v", got, err)
+	}
+	active := true
+	s.SetExclusiveCheck(func() bool { return active })
+	got, err = s.conflicts(nil)
+	list, ok := got.([]Conflict)
+	if err != nil || !ok || list == nil || len(list) != 0 {
+		t.Fatalf("exclusive: want empty non-nil list, got %#v %v", got, err)
+	}
+	active = false
+	if got, _ = s.conflicts(nil); len(got.([]Conflict)) == 0 {
+		t.Fatal("conflicts must come back when exclusive mode ends")
+	}
+}

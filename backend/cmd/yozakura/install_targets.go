@@ -12,6 +12,9 @@ import (
 )
 
 func runInstall(targets []string) {
+	if installFlagsUsed(targets) {
+		os.Exit(runExclusiveInstall(targets, defaultExclusiveEnv(), os.Stdout, os.Stderr))
+	}
 	target := ""
 	if len(targets) > 0 {
 		target = targets[0]

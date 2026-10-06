@@ -19,6 +19,7 @@ Column {
     property bool expanded: !(collapsible && section.collapsed)
 
     objectName: "settingsSection:" + sectionId
+    visible: !section.compositor || YozdService.compositorName === section.compositor
     spacing: 10
 
     function rowFor(entryId) {

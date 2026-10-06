@@ -211,18 +211,21 @@ type run struct {
 // removed. If the tree restore fails the backup is kept and named.
 func (r *run) rollback(cause error) (Status, error) {
 	o := r.o
+	var errs []string
+	treeBack := true
 	if r.treeTouched {
 		if _, err := restoreTree(o, r.dir, r.m, o.now(), false); err != nil {
-			return GetStatus(o), fmt.Errorf("%w; restoring the backup failed: %v (backup kept in %s)", cause, err, r.dir)
+			treeBack = false
+			errs = append(errs, "restoring the backup failed: "+err.Error())
 		}
 	}
-	errs := enableUnits(o, r.m.Units)
+	errs = append(errs, enableUnits(o, r.m.Units)...)
 	if r.imported && o.Unimport != nil {
 		if err := o.Unimport(r.m.Previous); err != nil {
 			errs = append(errs, "could not revert imported settings: "+err.Error())
 		}
 	}
-	if r.treeTouched {
+	if r.treeTouched && treeBack {
 		_ = o.reload() // best effort: the original config was working before
 	}
 	if len(errs) > 0 {

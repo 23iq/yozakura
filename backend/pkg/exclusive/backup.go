@@ -88,6 +88,13 @@ func readManifest(dir string) (manifest, error) {
 	if m.Version != 1 {
 		return m, fmt.Errorf("manifest: unsupported version %d", m.Version)
 	}
+	if len(m.Units) == 0 {
+		// Older manifests only list the disabled names (they were stopped
+		// with --now, so start them again).
+		for _, n := range m.DisabledUnits {
+			m.Units = append(m.Units, unitRecord{Name: n, WasActive: true, Disabled: true})
+		}
+	}
 	if info, err := os.Lstat(filepath.Join(dir, "hypr")); err != nil || !info.IsDir() {
 		return m, fmt.Errorf("backup has no hypr directory")
 	}

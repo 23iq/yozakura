@@ -123,6 +123,19 @@ yozakura special app remove Talk vesktop | special remove Talk
 yozakura special import-binds [--dry-run] # move hand-written special binds out of ~/.config/hypr/custom
 ```
 
+Exclusive mode (Hyprland only: make Yozakura the only shell, with a backup):
+
+```bash
+yozakura install hyprland --exclusive [-y]   # lists backup path, units, imported monitors/keyboard, asks y/N
+yozakura install --restore [--from DIR] [-y] # newest backup unless --from; the backup is kept
+```
+
+IPC `exclusive.status | plan | enable | restore` (backend `pkg/exclusive`,
+service `pkg/svc/exclusive`, `ExclusiveService.qml`, Settings > System card
+`modules/settings/system/ExclusiveCard.qml`). Backups live in
+`~/.local/share/yozakura/backups/<time>/`; while active `displays.conflicts`
+reports nothing (the old files are no longer loaded).
+
 Monitors and keyboard layouts (talk to the running backend; `--json` on lists):
 
 ```bash

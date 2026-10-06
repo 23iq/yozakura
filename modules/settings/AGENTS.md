@@ -76,6 +76,7 @@ it is saved), `options`
 `{key, equals|notEquals|in|truthy}`, `{all|any: [...]}`, `{not: ...}`),
 `preview` (Registry name), `component` (custom editor name), `keys` (every
 key a composite entry reads/resets), `sizeKey` (font), `resettable: false`,
+`compositor` (entry or section shown only on that compositor, e.g. `"hyprland"`),
 `id` (when there is no single `key`), `target` (LegacyLink), `sizeUnit`
 (font).
 

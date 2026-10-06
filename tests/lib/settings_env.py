@@ -508,6 +508,22 @@ QtObject {
     function scanConflicts() {}
     function moveConflicts() {}
 }"""
+# Exclusive mode card (modules/settings/system): idle stand-in; tests/lib/exclusive_env.py swaps in the real one.
+EXCLUSIVE_STUB = """pragma Singleton
+QtObject {
+    property var status: ({ "active": false, "backup": "", "disabledUnits": [], "compositor": "", "reason": "" })
+    property var plan: ({})
+    property bool busy: false
+    property string error: ""
+    property var restored: null
+    readonly property bool supported: false
+    readonly property bool active: false
+    readonly property string blocked: ""
+    function refresh() {}
+    function loadPlan() {}
+    function enable(done) {}
+    function restore(done) {}
+}"""
 YOZD_STUB = 'pragma Singleton\nimport QtQuick\nQtObject { property string compositorName: "hyprland" }'
 
 
@@ -548,7 +564,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB,
+                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -571,7 +587,7 @@ class SettingsEnv:
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
-                  "modules/settings/displays", "modules/settings/keyboard"]:
+                  "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

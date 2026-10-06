@@ -48,6 +48,9 @@ type Service struct {
 	hyprDir, dataDir, home string
 	now                    func() time.Time
 	tick                   time.Duration
+	// exclusive reports exclusive mode: the user's old compositor files are
+	// no longer loaded then, so they cannot conflict.
+	exclusive func() bool
 
 	timerMu sync.Mutex
 	timerOn bool
@@ -74,6 +77,10 @@ func newService(y Yozd, hyprDir, dataDir string) *Service {
 		stop: make(chan struct{}),
 	}
 }
+
+// SetExclusiveCheck installs the exclusive-mode probe; while it reports true
+// the conflict scan finds nothing.
+func (s *Service) SetExclusiveCheck(f func() bool) { s.exclusive = f }
 
 // Register exposes the service over IPC.
 func (s *Service) Register(srv *ipc.Server) {
@@ -287,6 +294,9 @@ func (s *Service) identify(json.RawMessage) (any, error) {
 }
 
 func (s *Service) conflicts(json.RawMessage) (any, error) {
+	if s.exclusive != nil && s.exclusive() {
+		return []Conflict{}, nil
+	}
 	return ScanConflicts(s.hyprDir, s.dataDir)
 }
 

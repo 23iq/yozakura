@@ -60,6 +60,22 @@ var category = {
             ]
         },
         {
+            "id": "exclusive",
+            "compositor": "hyprland",
+            "entries": [
+                {
+                    "id": "system.exclusive",
+                    "type": "custom",
+                    "component": "ExclusiveCard",
+                    "compositor": "hyprland",
+                    "resettable": false,
+                    "label": "prefs.exclusive.title",
+                    "description": "prefs.exclusive.desc",
+                    "keywords": "exclusive only shell hyprland waybar mako dunst backup restore minimal config user.lua disable other bars daemons systemd"
+                }
+            ]
+        },
+        {
             "id": "weather",
             "title": "settings.system.weather",
             "entries": [

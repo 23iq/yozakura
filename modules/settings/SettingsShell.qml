@@ -9,6 +9,7 @@ import qs.modules.settings.store
 import qs.modules.settings.presets
 import qs.modules.settings.displays
 import qs.modules.settings.keyboard
+import qs.modules.settings.system
 import "schema/Categories.js" as Categories
 import "Ui.js" as Ui
 
