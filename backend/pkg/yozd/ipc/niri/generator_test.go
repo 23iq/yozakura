@@ -203,8 +203,18 @@ func TestGenerateStartupSpawnAtStartup(t *testing.T) {
 	if !strings.Contains(out, `spawn-at-startup "wl-paste" "--watch" "cliphist" "store"`) {
 		t.Fatalf("expected spawn-at-startup with args, got: %s", out)
 	}
-	if got := g.GenerateStartup(nil, []string{"systemctl --user start hyprpolkitagent", `sh -c 'a b'`}); !strings.Contains(got, `spawn-at-startup "systemctl" "--user" "start" "hyprpolkitagent"`) || !strings.Contains(got, `spawn-at-startup "sh -c 'a b'"`) {
+	if got := g.GenerateStartup(nil, []string{"systemctl --user start hyprpolkitagent", `sh -c 'a b'`}); !strings.Contains(got, `spawn-at-startup "systemctl" "--user" "start" "hyprpolkitagent"`) || !strings.Contains(got, `spawn-at-startup "sh" "-c" "sh -c 'a b'"`) {
 		t.Fatalf("argv split: %s", got)
+	}
+	for cmd, want := range map[string]string{
+		"a | b":                `spawn-at-startup "sh" "-c" "a | b"`,
+		"FOO=bar cmd":          `spawn-at-startup "sh" "-c" "FOO=bar cmd"`,
+		"'/my dir/bin' --flag": `spawn-at-startup "sh" "-c" "'/my dir/bin' --flag"`,
+		"cmd --opt=1 x":        `spawn-at-startup "cmd" "--opt=1" "x"`,
+	} {
+		if got := g.GenerateStartup(nil, []string{cmd}); !strings.Contains(got, want+"\n") {
+			t.Errorf("%q: want %s in %s", cmd, want, got)
+		}
 	}
 	if !strings.Contains(out, "does not re-run exec") {
 		t.Fatalf("expected exec comment, got: %s", out)

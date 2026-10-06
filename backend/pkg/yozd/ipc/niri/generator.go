@@ -756,17 +756,33 @@ func (g *Generator) GenerateLayerRules(rules []ipc.LayerRule) string {
 
 // spawnArgs renders a startup command as niri's argv: spawn-at-startup does
 // not go through a shell, so "a b" would be one program name. A plain
-// command (no quoting or shell syntax) is split into one argument per word;
-// anything else stays a single argument as written.
+// command is split into one argument per word. A command with quoting or
+// shell syntax, or a leading VAR=value assignment, runs as sh -c "<cmd>"
+// (the same semantics as Hyprland's exec-once, which uses a shell).
 func spawnArgs(cmd string) string {
-	if strings.ContainsAny(cmd, "'\"\\$`;|&<>*?()") {
-		return kdlQuote(cmd)
-	}
 	words := strings.Fields(cmd)
+	if strings.ContainsAny(cmd, "'\"\\$`;|&<>*?()") || (len(words) > 0 && isEnvAssign(words[0])) {
+		return kdlQuote("sh") + " " + kdlQuote("-c") + " " + kdlQuote(cmd)
+	}
 	for i, w := range words {
 		words[i] = kdlQuote(w)
 	}
 	return strings.Join(words, " ")
+}
+
+// isEnvAssign reports whether w looks like NAME=value.
+func isEnvAssign(w string) bool {
+	name, _, ok := strings.Cut(w, "=")
+	if !ok || name == "" {
+		return false
+	}
+	for i, r := range name {
+		if r == '_' || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (i > 0 && r >= '0' && r <= '9') {
+			continue
+		}
+		return false
+	}
+	return true
 }
 
 func (g *Generator) GenerateStartup(exec []string, execOnce []string) string {
