@@ -93,9 +93,12 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  for n in ['Notch', 'NotchViewTransition']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)
  for n in names: shutil.copy(repo/'modules/widgets/defaultview'/(n+'.qml'),children)
  shutil.copy(repo/'modules/widgets/defaultview/IslandMedia.js',children)
+ (children/'activities').mkdir()
+ shutil.copy(notchActs/'ActivityRegistry.js', children/'activities')
  # Notch panels module; MediaPanel reaches ExpandedMedia through '..'
  dv=p/'qs/modules/widgets/defaultview'; dv.mkdir(parents=True, exist_ok=True)
- for f in children.iterdir(): shutil.copy(f, dv)
+ for f in children.iterdir():
+     if f.is_file(): shutil.copy(f, dv)
  panels_src=repo/'modules/widgets/defaultview/panels'
  module('qs.modules.widgets.defaultview.panels', {f.stem: f.read_text() for f in sorted(panels_src.glob('*.qml'))})
  shutil.copy(panels_src/'NotchPanels.js', dv/'panels')

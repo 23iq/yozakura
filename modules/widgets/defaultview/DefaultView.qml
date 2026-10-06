@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.modules.services.activities
 import qs.modules.widgets.defaultview.panels
 import qs.config
+import "activities/ActivityRegistry.js" as Registry
 
 // Resting notch: the header (user/media/segments) plus, at most one at a
 // time, the panel of the segment the pointer rests on (notch.expandOn
@@ -29,12 +30,14 @@ Item {
     readonly property var activePlayer: MprisController.activePlayer
     readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(root.screenName)
     readonly property bool isBottom: Config.notchPosition === "bottom"
+    // The media summary is the "media" activity (notch.activities)
+    readonly property bool mediaEnabled: Registry.isEnabled(Config.notch ? Config.notch.activities : [], "media")
     readonly property bool hasActivities: header.hasActivities
 
     // ── panels ──
     readonly property var panelAvailability: controller.availability({
         // disableHoverExpansion keeps the compact player instead of a card
-        player: !!root.activePlayer && !Config.notch.disableHoverExpansion,
+        player: root.mediaEnabled && !!root.activePlayer && !Config.notch.disableHoverExpansion,
         transfers: header.activitiesOn ? ActivityService.transfers.length : 0,
         timers: header.activitiesOn ? ActivityService.tasks.filter(a => a.source === "timers").length : 0,
         privacy: header.activitiesOn ? ActivityService.privacy.length : 0,
@@ -123,7 +126,7 @@ Item {
         height: implicitHeight
         anchors.top: root.isBottom ? undefined : parent.top
         anchors.bottom: root.isBottom ? parent.bottom : undefined
-        player: root.activePlayer
+        player: root.mediaEnabled ? root.activePlayer : null
         hovered: root.expandedState
         mediaExpanded: controller.openPanel === "media"
         panelOpen: controller.expanded

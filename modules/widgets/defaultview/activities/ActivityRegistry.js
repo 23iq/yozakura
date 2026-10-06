@@ -126,10 +126,14 @@ function sides(activities, resolved) {
     return out;
 }
 
+// Panel trigger of an activity's entry; unknown sources open their
+// category's panel.
 function triggerOf(activity, resolved) {
     if (!activity)
         return "";
     var r = _array(resolved);
     var idx = _index(r, activity.source);
-    return idx === -1 ? "" : r[idx].trigger;
+    if (idx === -1)
+        return activity.category === "task" ? "tasks" : "privacy";
+    return r[idx].trigger;
 }

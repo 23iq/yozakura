@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services.activities
 import qs.modules.widgets.defaultview.activities
 import qs.config
+import "activities/ActivityRegistry.js" as Registry
 
 Item {
     id: root
@@ -24,11 +25,18 @@ Item {
     readonly property int motionDuration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
     // Live activities flank the content (bar.activities.presentation
     // "notch"): leading segments per task panel (timers, downloads), a
-    // trailing privacy segment. Each segment opens its own panel.
+    // trailing privacy segment. Each segment opens its own panel. Order,
+    // side and on/off come from notch.activities (ActivityRegistry.js).
     readonly property bool activitiesOn: ActivityService.presentation === "notch"
     readonly property bool hasActivities: root.activitiesOn && ActivityService.count > 0
-    readonly property var timerTasks: ActivityService.tasks.filter(a => a.source === "timers")
-    readonly property var otherTasks: ActivityService.tasks.filter(a => a.source !== "timers")
+    readonly property var registry: Registry.resolve(Config.notch ? Config.notch.activities : [])
+    readonly property var sides: Registry.sides(ActivityService.activities, root.registry)
+    readonly property var timerTasks: root.sides.leading.filter(a => Registry.triggerOf(a, root.registry) === "timers")
+    readonly property var otherTasks: root.sides.leading.filter(a => Registry.triggerOf(a, root.registry) !== "timers")
+    readonly property var trailingItems: root.sides.trailing
+    // Panel a segment opens: its top item's (ephemeral ones open none)
+    readonly property string tasksTrigger: root.otherTasks.length ? Registry.triggerOf(root.otherTasks[0], root.registry) : "tasks"
+    readonly property string trailingTrigger: root.trailingItems.length ? Registry.triggerOf(root.trailingItems[0], root.registry) : "privacy"
     readonly property NotchActivitySegment timersSegment: timersLoader.item as NotchActivitySegment
     readonly property NotchActivitySegment tasksSegment: tasksLoader.item as NotchActivitySegment
     readonly property NotchActivitySegment trailingSegment: trailingLoader.item as NotchActivitySegment
@@ -38,9 +46,9 @@ Item {
         if (root.timersSegment && root.timersSegment.hovered)
             return "timers";
         if (root.tasksSegment && root.tasksSegment.hovered)
-            return "tasks";
+            return root.tasksTrigger;
         if (root.trailingSegment && root.trailingSegment.hovered)
-            return "privacy";
+            return root.trailingTrigger;
         if (root.mediaHovered)
             return "media";
         return "";
@@ -87,7 +95,7 @@ Item {
                 items: root.otherTasks
                 motionDuration: root.motionDuration
                 tooltipEnabled: !root.panelOpen
-                onActivated: (activity, button) => root.segmentClicked("tasks", activity, button)
+                onActivated: (activity, button) => root.segmentClicked(root.tasksTrigger, activity, button)
             }
         }
     }
@@ -99,10 +107,10 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         sourceComponent: NotchActivitySegment {
             side: "trailing"
-            items: ActivityService.privacy
+            items: root.trailingItems
             motionDuration: root.motionDuration
             tooltipEnabled: !root.panelOpen
-            onActivated: (activity, button) => root.segmentClicked("privacy", activity, button)
+            onActivated: (activity, button) => root.segmentClicked(root.trailingTrigger, activity, button)
         }
     }
 

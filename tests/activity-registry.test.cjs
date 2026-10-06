@@ -68,5 +68,7 @@ test('trigger of an activity is its entry trigger; ephemeral ones have none', ()
     assert.equal(R.triggerOf({ source: 'recording' }, r), 'privacy');
     assert.equal(R.triggerOf({ source: 'battery' }, r), '');
     assert.equal(R.triggerOf(null, r), '');
+    assert.equal(R.triggerOf({ source: 'x', category: 'privacy' }, r), 'privacy');
+    assert.equal(R.triggerOf({ source: 'x', category: 'task' }, r), 'tasks');
     assert.ok(R.descriptor('osd').ephemeralMs >= 1000 && R.descriptor('osd').ephemeralMs <= 1500);
 });
