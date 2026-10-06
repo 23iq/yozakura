@@ -89,7 +89,7 @@ var keys = {
         "description": "Prompt library: [{id, name, prompt}] ({date} and similar placeholders are expanded)."
     },
     "automations": {
-        "description": "Automations: [{id, name, enabled, trigger: {type, ...}, prompt}] run by the AI center."
+        "description": "Automations: [{id, name, enabled, trigger: {type, ...}, prompt, output, routine}] run by the AI center; output \"routine\" runs the routine `routine` (svc/routines) without a model."
     },
     "appearance": {
         "description": "Look of the AI bar (sizes, message style, density, fonts)."

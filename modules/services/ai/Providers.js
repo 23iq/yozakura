@@ -465,7 +465,7 @@ function _parseOpenAI(line, acc) {
         return r;
     r.error = _errorText(json);
     if (json.usage)
-        r.usage = acc.usage = { inputTokens: json.usage.prompt_tokens || 0, outputTokens: json.usage.completion_tokens || 0 };
+        r.usage = acc.usage = { inputTokens: json.usage.prompt_tokens || 0, outputTokens: json.usage.completion_tokens || 0, cachedTokens: (json.usage.prompt_tokens_details || {}).cached_tokens || 0 };
     var choice = json.choices && json.choices.length > 0 ? json.choices[0] : null;
     if (!choice)
         return r;
@@ -565,7 +565,7 @@ function _parseGemini(line, acc) {
         return r;
     r.error = _errorText(json);
     if (json.usageMetadata)
-        r.usage = acc.usage = { inputTokens: json.usageMetadata.promptTokenCount || 0, outputTokens: json.usageMetadata.candidatesTokenCount || 0 };
+        r.usage = acc.usage = { inputTokens: json.usageMetadata.promptTokenCount || 0, outputTokens: json.usageMetadata.candidatesTokenCount || 0, cachedTokens: json.usageMetadata.cachedContentTokenCount || 0 };
     var cand = json.candidates && json.candidates.length > 0 ? json.candidates[0] : null;
     if (!cand)
         return r;

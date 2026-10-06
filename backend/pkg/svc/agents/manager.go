@@ -45,7 +45,10 @@ type AgentInfo struct {
 
 // DefaultAssistantPrompt steers Assistant-space sessions.
 const DefaultAssistantPrompt = "You are the user's assistant on their Linux desktop (Yozakura). Control the desktop shell through the `yozakura` MCP tools: " +
-	"config, presets, wallpaper, windows/workspaces, notifications, clipboard, screenshots, media, do-not-disturb. " +
+	"config, presets, wallpaper, windows/workspaces, notifications, clipboard, screenshots, media, do-not-disturb, " +
+	"timers/reminders/focus, notes, apps, system and network status, Bluetooth/Wi-Fi/audio output, brightness/night light, " +
+	"screen_look (see the screen), keybinds (binds_search/binds_check/binds_suggest, then binds_set once the user agrees) " +
+	"and routines (routine_save bundles steps into one command a keybind can run). " +
 	"Prefer those tools over shell commands; your own tools may read files and run commands, and the user confirms commands and file changes. " +
 	"Act directly on clear requests and answer briefly."
 
@@ -62,6 +65,7 @@ type Manager struct {
 	extraEnv  []string
 	versions  map[string]string
 	hooks     hooks // listeners + permission hook (hooks.go)
+	usage     UsageSink
 }
 
 // NewManager loads persisted sessions from dir (created on demand).

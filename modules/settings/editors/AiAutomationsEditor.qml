@@ -6,11 +6,13 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.settings.editors.keybinds
 import "../../services/ai/Cron.js" as Cron
 import "../../services/ai/Automations.js" as Logic
 
 // Prompt automations: schedule (cron), login briefing, finished transfers,
-// copied text matching a regex, new screenshots.
+// copied text matching a regex, new screenshots. The "routine" output runs
+// a saved routine instead of a prompt.
 ColumnLayout {
     id: root
 
@@ -166,6 +168,7 @@ ColumnLayout {
                             })
                     }
                     AiTextRow {
+                        visible: card.modelData.output !== "routine"
                         label: I18n.t("ai.prompt") + " — {selection} {clipboard} {date} {time} {file} {input}"
                         value: card.modelData.prompt
                         multiline: true
@@ -176,12 +179,29 @@ ColumnLayout {
                     AiSelectRow {
                         label: I18n.t("ai.output")
                         value: card.modelData.output
-                        options: ["notify", "quickask", "sidebar", "clipboard"].map(o => ({
+                        options: ["notify", "quickask", "sidebar", "clipboard", "routine"].map(o => ({
                                     label: "ai.output_" + (o),
                                     value: o
                                 }))
                         onSelected: v => root.patch(card.index, {
                                 output: v
+                            })
+                    }
+                    Text {
+                        visible: card.modelData.output === "routine"
+                        text: I18n.t("routines.automation_pick")
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-1)
+                        font.weight: Font.Medium
+                        color: Colors.overSurfaceVariant
+                    }
+                    RoutinePickerField {
+                        objectName: "automationRoutine"
+                        visible: card.modelData.output === "routine"
+                        Layout.fillWidth: true
+                        routineId: card.modelData.routine
+                        onPicked: id => root.patch(card.index, {
+                                routine: id
                             })
                     }
                     AiToggleRow {

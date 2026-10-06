@@ -81,7 +81,7 @@ var catalog = []ActionSpec{
 	{ID: brand.Action("focus-toggle"), Label: "Toggle Focus Mode", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "focus-toggle")},
 	{ID: brand.Action("timer-stop"), Label: "Stop Alarm", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "timer-stop")},
 	{ID: "utilities.timer", Label: "Start Timer", Category: "Utilities", Dispatcher: "exec", Args: []ActionArg{{Key: "spec", Label: "Timer", Placeholder: "10m tea", DefaultValue: "25m"}}, ArgumentFn: func(args map[string]any) string { return runParam("timer:", stringArg(args, "spec")) }},
-	{ID: "utilities.routine", Label: "Run Routine", Category: "Utilities", Dispatcher: "exec", Args: []ActionArg{{Key: "routine", Label: "Routine", Placeholder: "morning", DefaultValue: ""}}, ArgumentFn: func(args map[string]any) string { return runParam("routine:", stringArg(args, "routine")) }, Hidden: true},
+	{ID: "utilities.routine", Label: "Run Routine", Category: "Utilities", Dispatcher: "exec", Args: []ActionArg{{Key: "routine", Label: "Routine", Placeholder: "morning", DefaultValue: ""}}, ArgumentFn: func(args map[string]any) string { return runParam("routine:", stringArg(args, "routine")) }},
 
 	{ID: "window.close", Label: "Close Window", Category: "Window", Dispatcher: "killactive", Argument: ""},
 	{ID: "window.focus", Label: "Focus Window", Category: "Window", Dispatcher: "movefocus", Args: []ActionArg{{Key: "direction", Label: "Direction", Placeholder: "up/down/left/right", DefaultValue: "up"}}, ArgumentFn: func(args map[string]any) string { return directionToLetter(stringArg(args, "direction")) }},

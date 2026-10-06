@@ -3,6 +3,7 @@ import qs.modules.services
 import "Providers.js" as Providers
 import "Permissions.js" as Permissions
 import "ChatRows.js" as ChatRows
+import "ToolMedia.js" as ToolMedia
 import "ContextMath.js" as ContextMath
 import "../../aicenter/lib/Markdown.js" as Markdown
 
@@ -44,8 +45,11 @@ QtObject {
     property var lastUsage: null
     property bool compacting: false
 
-    // Wired by the owner: call(server, tool, args, cb(result {text, isError}))
+    // Wired by the owner: call(server, tool, args, cb(result {text, isError, images}))
     property var callTool: null
+    // Images returned by tool calls ({callId: [attachments]}), in memory
+    // only: sent to vision models after the tool results (ToolMedia.js).
+    property var toolImages: ({})
 
     property ListModel rows: ListModel {}
     property bool busy: false
@@ -140,7 +144,10 @@ QtObject {
 
     // Canonical conversation for the provider (expands tool results).
     function toMessages() {
-        return ChatRows.toMessages(_rows());
+        const see = ToolMedia.canSee(model, model ? Providers.provider(model.provider) : null);
+        return ChatRows.toMessages(_rows(), {
+            images: see ? toolImages : null
+        });
     }
 
     function serialize() {
@@ -256,6 +263,7 @@ QtObject {
             system: system,
             effort: effort,
             numCtx: numCtx,
+            usageSession: chatId,
             messages: toMessages(),
             tools: _round <= maxRounds ? tools.map(t => ({
                         name: t.name,
@@ -362,6 +370,11 @@ QtObject {
         for (const c of calls) {
             if (c.status !== "pending")
                 continue;
+            // Calls that always ask get a card without "for session".
+            c.confirm = Permissions.mustConfirm({
+                name: c.tool,
+                server: c.server
+            });
             const def = _toolDef(c.name);
             if (!def) {
                 c.status = "error";
@@ -433,10 +446,17 @@ QtObject {
         callTool(c.server, c.tool, c.args || {}, res => {
             if (generation !== _generation)
                 return;
+            const text = res ? String(res.text || "") : "";
+            const failed = !!(res && res.isError);
+            if (res && res.images && res.images.length)
+                toolImages = Object.assign({}, toolImages, {
+                    [id]: res.images
+                });
             _setCall(index, id, {
-                status: res && res.isError ? "error" : "done",
-                isError: !!(res && res.isError),
-                result: res ? String(res.text || "") : ""
+                status: failed ? "error" : "done",
+                isError: failed,
+                result: text,
+                undo: ToolMedia.undoFrom(c.server, text, failed)
             });
             _maybeContinue(index);
         });

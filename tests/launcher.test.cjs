@@ -47,7 +47,7 @@ test('routing: prefixes win, word prefixes need a space, mixed otherwise', () =>
     assert.equal(r('ffmpeg').mode, 'mixed');
     assert.deepEqual(r('').providers.map(p => p.id), ['apps']);
     const mixed = r('firefox').providers.map(p => p.id);
-    assert.deepEqual(mixed, ['calculator', 'commands', 'apps', 'specials', 'files', 'ai']);
+    assert.deepEqual(mixed, ['calculator', 'commands', 'apps', 'specials', 'routines', 'files', 'ai']);
     assert.ok(!mixed.includes('wallpapers'));
     // a disabled provider's prefix is plain text
     assert.equal(r('> dnd', ['commands']).mode, 'mixed');

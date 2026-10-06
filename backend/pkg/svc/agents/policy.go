@@ -31,6 +31,9 @@ func (p Policy) Decide(req PermissionRequest, yolo bool, rules map[string]bool) 
 	if yolo {
 		return DecisionAllow
 	}
+	if IsConfirmTool(req.Tool) {
+		return ""
+	}
 	if req.RuleKey != "" && rules[req.RuleKey] {
 		return DecisionAllow
 	}
@@ -47,6 +50,9 @@ func (p Policy) Decide(req PermissionRequest, yolo bool, rules map[string]bool) 
 // interpreter, wrapper, script path or cd, whose effect is not fixed by the
 // command line.
 func ruleKey(tool, category string, input map[string]any) string {
+	if IsConfirmTool(tool) {
+		return ""
+	}
 	cmd, hasCmd := input["command"].(string)
 	if !hasCmd && category != CatExec {
 		return tool
@@ -98,7 +104,23 @@ var yozakuraReadOnly = map[string]bool{
 	"config_schema": true, "config_get": true, "config_search": true, "config_describe": true, "presets_list": true,
 	"preset_diff": true, "wallpapers_list": true,
 	"windows_list": true, "workspaces_list": true, "media_status": true, "volume_get": true,
-	"specials_list": true, "task_list": true, "task_status": true,
+	"specials_list": true, "task_list": true, "task_status": true, "usage_summary": true,
+	"timer_list": true, "reminder_list": true, "binds_search": true, "binds_list": true, "binds_check": true,
+	"binds_suggest": true, "routines_list": true, "notes_search": true, "notes_read": true, "apps_find": true,
+	"system_info": true, "network_status": true, "bluetooth_status": true, "brightness_get": true,
+}
+
+// Yozakura MCP tools that always ask, even with "allow for this session"
+// or an auto-approved MCP category: they change the user's keybinds,
+// close windows or delete routines.
+var yozakuraConfirm = map[string]bool{
+	"binds_set": true, "binds_remove": true, "app_close": true, "routine_delete": true,
+}
+
+// IsConfirmTool reports a tool that must always be confirmed.
+func IsConfirmTool(tool string) bool {
+	parts := strings.SplitN(tool, "__", 3)
+	return len(parts) == 3 && parts[0] == "mcp" && parts[1] == YozakuraMCPName && yozakuraConfirm[parts[2]]
 }
 
 var claudeReadTools = map[string]bool{

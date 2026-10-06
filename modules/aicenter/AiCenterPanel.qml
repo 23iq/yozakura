@@ -18,6 +18,7 @@ import qs.modules.aicenter.sessions
 import qs.modules.aicenter.providers
 import qs.modules.aicenter.tasks
 import "../services/tasks/TaskModel.js" as TaskModel
+import qs.modules.aicenter.usage
 
 // The AI bar. Two spaces (GlobalStates.aiSpace): Assistant (any engine,
 // compact transcript) and Code (CLI agents in a project: project bar,
@@ -34,6 +35,7 @@ StyledRect {
     property bool settingsOpen: false
     property bool changesOpen: true
     property bool changesDrawerOpen: false
+    property bool usageOpen: false
     readonly property bool code: GlobalStates.aiSpace === "code"
     readonly property bool wide: GlobalStates.assistantWide || GlobalStates.assistantFullscreen
     property bool codeChat: false
@@ -110,6 +112,7 @@ StyledRect {
     }
     Component.onDestruction: saveDraft()
     onCodeChanged: settingsOpen = false
+    readonly property UsageStripState usageStrip: UsageStripState {}
     Connections {
         target: Ai
         function onSessionKeyChanged() {
@@ -174,6 +177,8 @@ StyledRect {
             historyPinned: root.historyDocked
             settingsOpen: root.settingsOpen
             showChanges: root.code && Ai.activeAgent !== null && root.diffs.length > 0
+            usageOpen: root.usageOpen
+            onUsageToggled: root.usageOpen = !root.usageOpen
             onHistoryToggled: root.toggleHistory()
             onSettingsToggled: root.settingsOpen = !root.settingsOpen
             onChangesToggled: {
@@ -277,6 +282,14 @@ StyledRect {
                     contextSource: Ai.contextState ? Ai.contextState.source : ""
                     canCompact: Ai.contextState ? Ai.contextState.canCompact : false
                     compacting: Ai.contextState ? Ai.contextState.compacting : false
+                    costText: root.usageStrip.costText
+                    costDetail: root.usageStrip.costDetail
+                    limitFraction: root.usageStrip.limitFraction
+                    limitText: root.usageStrip.limitText
+                    limitLevel: root.usageStrip.limitLevel
+                    limitTooltip: root.usageStrip.limitTooltip
+                    limitDetail: root.usageStrip.limitDetail
+                    onUsageRequested: root.usageOpen = true
                     onPickRequested: picker.open()
                     onCompactRequested: Ai.contextState.compact(null)
                 }
@@ -374,6 +387,18 @@ StyledRect {
         anchors.margins: 10
         z: 12
         onCloseRequested: root.focusComposer()
+    }
+    UsageScreen {
+        // Below the header, so its usage button toggles the screen.
+        anchors.fill: parent
+        anchors.margins: 10
+        anchors.topMargin: 10 + header.height + 8
+        visible: root.usageOpen
+        z: 12
+        onCloseRequested: {
+            root.usageOpen = false;
+            root.focusComposer();
+        }
     }
     ModelPicker {
         id: picker

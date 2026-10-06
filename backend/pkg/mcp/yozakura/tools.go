@@ -16,7 +16,14 @@ const ServerInstructions = `Yozakura is the user's Wayland desktop shell (bar, n
 These tools read and change it. Prefer reading state first (config_get, windows_list, workspaces_list,
 media_status) and make the smallest change that fulfils the request. Config changes apply live and persist.
 Find keys with config_search or config_schema and check them with config_describe before config_set;
-never guess key names. Save a preset (preset_save) before sweeping changes so the user can go back.`
+never guess key names. Save a preset (preset_save) before sweeping changes so the user can go back.
+Beyond the look of the shell you can: start timers, reminders, the stopwatch and focus mode; read and write the
+user's notes; find, launch and close apps; report battery/CPU/disk/network/Bluetooth; connect Bluetooth devices,
+saved Wi-Fi networks and switch the audio output; set brightness, night light and caffeine; look at the screen
+(screen_look, vision models). Keybinds: find what to bind with binds_search, check a combo with binds_check, propose
+free combos with binds_suggest, then binds_set after the user agrees. Routines bundle several steps into one
+command (routine_save; "save this as a routine"), run by a keybind (action utilities.routine), the launcher or
+routine_run. Results with "undo" can be reverted; mention it. Ask before closing apps or deleting anything.`
 
 type toolOpts struct {
 	readOnly    bool
@@ -66,6 +73,14 @@ func Tools(d Deps) []mcp.ToolDef {
 	out = append(out, usageTools(d)...)
 	out = append(out, taskTools(d)...)
 	out = append(out, bindTools(d)...)
+	out = append(out, routineTools(d)...)
+	out = append(out, noteTools(d)...)
+	out = append(out, appTools(d)...)
+	out = append(out, sysinfoTools(d)...)
+	out = append(out, connectionTools(d)...)
+	out = append(out, displayTools(d)...)
+	out = append(out, focusTools(d)...)
+	out = append(out, visionTools(d)...)
 	return out
 }
 

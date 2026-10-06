@@ -197,9 +197,10 @@ func New() (*Daemon, error) {
 	// AI usage ledger + subscription limits (see pkg/svc/usage). The
 	// agents service can feed it through usage.Recorder / usage.LimitsSink.
 	d.usage = usage.NewService(usage.Options{
-		Dir:         usage.DefaultDir(p.DataDir),
-		Prices:      usage.LoadPrices(usage.BundledPricesPath(paths.FindShellSource()), usage.OverridePricesPath(p.ConfigDir)),
-		ClaudeFetch: usage.NewClaudeFetcher().Fetch,
+		Dir:            usage.DefaultDir(p.DataDir),
+		Prices:         usage.LoadPrices(usage.BundledPricesPath(paths.FindShellSource()), usage.OverridePricesPath(p.ConfigDir)),
+		PricesOverride: usage.OverridePricesPath(p.ConfigDir),
+		ClaudeFetch:    usage.NewClaudeFetcher().Fetch,
 		Notify: func(summary, body string) {
 			_, _ = notifySvc.Send(notifysvc.SendParams{Summary: summary, Body: body, AppIcon: "dialog-warning", ReplaceKey: "usage-limit"})
 		},
@@ -225,6 +226,9 @@ func New() (*Daemon, error) {
 	// Yozakura tools; proxies tools for chat models and feeds CLI agents.
 	d.mcp = mcpsvc.NewService()
 	d.mcp.Register(d.srv)
+	agentsMgr.SetUsageSink(d.usage)
+	// Routines: deterministic step lists (bind actions, built-in tools).
+	newRoutines(d.srv, p, d.mcp, notifySvc)
 	agentsMgr.SetMCPProvider(func() []agents.MCPServer {
 		specs := d.mcp.EnabledSpecs()
 		out := make([]agents.MCPServer, 0, len(specs))

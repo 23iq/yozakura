@@ -3,12 +3,13 @@
 
 // Trigger evaluation for AI automations (pure; AiAutomations.qml wires the
 // shell signals). Automation:
-//   {id, name, enabled, trigger: {type, cron, pattern, kinds}, prompt, model, output, offer}
+//   {id, name, enabled, trigger: {type, cron, pattern, kinds}, prompt, model, output, offer, routine}
 // trigger.type: schedule | transfer | clipboard | screenshot | login
-// output: notify | sidebar | quickask | clipboard
+// output: notify | sidebar | quickask | clipboard | routine (runs the saved
+// routine `routine` deterministically: no prompt, no model)
 
 var TYPES = ["schedule", "transfer", "clipboard", "screenshot", "login"];
-var OUTPUTS = ["notify", "sidebar", "quickask", "clipboard"];
+var OUTPUTS = ["notify", "sidebar", "quickask", "clipboard", "routine"];
 
 function normalize(a) {
     var t = a && a.trigger ? a.trigger : {};
@@ -25,15 +26,21 @@ function normalize(a) {
         prompt: String(a && a.prompt ? a.prompt : ""),
         model: String(a && a.model ? a.model : ""),
         output: OUTPUTS.indexOf(a && a.output) >= 0 ? a.output : "notify",
-        offer: a && a.offer !== undefined ? !!a.offer : true
+        offer: a && a.offer !== undefined ? !!a.offer : true,
+        routine: String(a && a.routine ? a.routine : "")
     };
+}
+
+// A prompt automation needs a prompt; a routine automation its routine.
+function runnable(a) {
+    return a.output === "routine" ? a.routine !== "" : a.prompt !== "";
 }
 
 function active(list, type) {
     var out = [];
     for (var i = 0; i < (list || []).length; i++) {
         var a = normalize(list[i]);
-        if (a.enabled && a.trigger.type === type && a.prompt)
+        if (a.enabled && a.trigger.type === type && runnable(a))
             out.push(a);
     }
     return out;

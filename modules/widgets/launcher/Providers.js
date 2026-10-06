@@ -55,6 +55,15 @@ var PROVIDERS = [
         "mixed": true
     },
     {
+        // Saved routines (svc/routines): mixed results only
+        "id": "routines",
+        "kind": "inline",
+        "file": "providers/RoutinesProvider.qml",
+        "icon": "lightning",
+        "prefix": "",
+        "mixed": true
+    },
+    {
         "id": "wallpapers",
         "kind": "inline",
         "file": "providers/WallpapersProvider.qml",

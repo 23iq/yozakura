@@ -7,7 +7,17 @@
 
 // Yozakura tools that read private data (clipboard, notifications): they
 // are read-only but always ask, like in the Go agents policy.
-var PRIVATE = { clipboard_read: true, clipboard_history: true, notifications_list: true };
+var PRIVATE = { clipboard_read: true, clipboard_history: true, notifications_list: true, screen_look: true };
+
+// Yozakura tools that always ask, even with "allow for this session" or a
+// permissive policy (same list as the Go agents policy): they rewrite the
+// user's keybinds, close windows or delete routines. Their card has no
+// "for session" choice.
+var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_delete: true };
+
+function mustConfirm(tool) {
+    return !!tool && tool.server === "yozakura" && CONFIRM[String(tool.name || "")] === true;
+}
 
 var READ_VERBS = /^(get|list|read|search|find|query|show|describe|status|fetch_status|schema|view|lookup|count)([_\-.]|$)/;
 
@@ -46,6 +56,8 @@ function ruleKey(tool) {
 // returns "allow" | "ask"
 function decide(tool, policy) {
     var p = policy || {};
+    if (mustConfirm(tool))
+        return "ask";
     if (p.yolo)
         return "allow";
     if (p.sessionRules && p.sessionRules[ruleKey(tool)])

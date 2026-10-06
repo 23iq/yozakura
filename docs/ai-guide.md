@@ -168,6 +168,20 @@ yozakura stopwatch start|pause|resume|toggle|lap|reset|status
 yozakura remind 18:00 call mom            # or: remind in 20m stretch; remind list; remind cancel r4
 ```
 
+Routines (daemon `routines` service, `~/.config/yozakura/routines.json`):
+deterministic step lists — bind actions, built-in MCP tools, delays — run by
+a keybind (action `utilities.routine` `{"routine": "<id>"}`, one "Not set"
+slot per routine in Keybinds → Utilities), the launcher (by name), an AI
+automation (output "routine") or the AI. Edited in Settings → Routines.
+
+```bash
+yozakura routine list [--json]            # id, name, step count
+yozakura routine show morning             # steps with their args
+yozakura routine run morning              # per-step report (exit 1 when a step failed)
+yozakura routine save routine.json        # or "-" for stdin: {"name","icon","steps":[{"kind":"tool","tool":"dnd_set","args":{"enabled":true}},{"kind":"delay","ms":2000},{"kind":"action","action":"media.next"}]}
+yozakura routine delete morning
+```
+
 AI coding tasks (daemon `tasks` service, state in
 `~/.local/share/yozakura/tasks/`; each run works in its own git worktree under
 `~/.local/share/yozakura/worktrees/<project>/<id>` on branch `yoz/<id>`; when the
@@ -242,6 +256,17 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `task_create` | no | `{"dir":"/home/me/proj","prompt":"Add tests for the parser","agents":["claude","codex"],"mode":"plan"}`: delegate coding work (worktree per run, verify loop); the user reviews and accepts it in the AI bar |
 | `binds_search`, `binds_list`, `binds_check`, `binds_suggest` | yes | bind advisor: `{"query":"раскладка"}` -> results with a ready `action` ({id, args}); every bind with its source; is a combo free; free combos for an action |
 | `binds_set`, `binds_remove`, `binds_undo` | no | `{"combo":"SUPER+F","action":"window.fullscreen"}` (confirm with the user first); writes `binds.json` only, returns `undo: {tool, args}` |
+| `routines_list` | yes | saved routines with their steps |
+| `routine_save`, `routine_run`, `routine_delete` | no | `{"name":"Night","steps":[{"kind":"tool","tool":"nightlight_set","args":{"enabled":true}},{"kind":"delay","ms":1000}]}` ("save this as a routine"); run returns a per-step report; delete always asks |
+| `notes_search`, `notes_read` | yes | the Notes tab (`<data dir>-notes/index.json` + `notes/<id>.md|.html`) |
+| `notes_create`, `notes_append` | no | `{"id":"Inbox","text":"buy milk","bullet":true}` (`create: true` makes a missing note) |
+| `apps_find` | yes | installed `.desktop` apps by name/id |
+| `app_launch`, `app_close` | no | `{"app":"firefox","workspace":3}`; close by window id/app/title (always asks; undo reopens) |
+| `system_info`, `network_status`, `bluetooth_status`, `brightness_get` | yes | battery, CPU/RAM/GPU load and temps, disks, uptime; Wi-Fi/ethernet (+ nearby networks, `known`); paired Bluetooth devices; brightness per display |
+| `bluetooth_connect`/`_disconnect`, `wifi_connect` (saved networks only), `wifi_toggle`, `audio_output_set` | no | each returns an undo |
+| `brightness_set`, `nightlight_set`, `caffeine_set` | no | `{"percent":40}` / `{"delta":-10}`, `{"enabled":true,"temperature":3500}`, `{"enabled":true}`; undo restores |
+| `focus_start`, `focus_stop` | no | focus mode (`ui.run focus:<min>` / `focus-stop`) |
+| `screen_look` | yes (asks: private) | screenshot returned as an MCP image block (`{"target":"window","scale":0.5}`); vision HTTP models get it as an image message |
 
 Config and preset tools work on files and do not need the daemon; the others
 talk to the running shell. Tools whose change can be reverted (timers,
@@ -414,6 +439,8 @@ combo.
 | Timers, stopwatch, reminders, focus | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go`; shell: `modules/services/TimersService.qml` (thin client), `FocusMode.qml`, `QuickNote.qml`, `UtilityCommands.qml`, `modules/services/timers/*.js`, notch `activities/TimerActivity.qml` + `panels/Timer*`, `AlarmPanel`, `QuickInputField`, launcher `providers/TimersProvider.qml` | `system.pomodoro.*`, `system.timers.*`, `system.focus.*`, `prefix.timers` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go`, `tests/timers-*.test.*`, `tests/timer-panels.test.py`, `tests/notify-request.test.cjs` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |
 | Keybinds | `config/KeybindActions.js`, `modules/services/GlobalShortcuts.qml` | `binds.json` | |
+| Routines | `backend/pkg/svc/routines` (model/run/IPC), `pkg/daemon/routines.go`, CLI `cmds_routine.go`, MCP `routine_tools.go`; shell `modules/services/RoutinesService.qml`, `modules/routines/RoutineModel.js`, settings `editors/RoutinesEditor.qml` + `editors/routines/`, launcher `providers/RoutinesProvider.qml`, keybind slots `modules/keybinds/RoutineSlots.js` | `routines.json` | `backend/pkg/svc/routines/*_test.go`, `tests/routines.test.cjs`, `tests/routines-ui.test.py`, `tests/ai-automation-routine.test.py` |
+| AI automation tools | `backend/pkg/mcp/yozakura/{note,app,sysinfo,connection,display,focus,vision}_tools.go`; chat side `modules/services/ai/ToolMedia.js` (undo + images), `ToolHints.js` (system prompt hints), `Permissions.js` (`CONFIRM`) | | `*_tools_test.go`, `tests/ai-tool-media.test.cjs` |
 | Bind advisor | `backend/pkg/binds` (search, list, check, suggest, set/remove/undo), catalog `tools/schema/bind_actions.cjs` -> `assets/schema/bind-actions.json`, CLI `cmds_binds.go`, MCP `bind_tools.go`, yozd `Config.ListBinds` (`pkg/yozd/server/binds.go`, `ipc/*/binds.go`) | `binds.json` | `backend/pkg/binds/binds_test.go`, `tests/bind-actions.test.cjs` |
 | Settings catalog | `tools/schema/`, `config/meta/`, `backend/pkg/catalog` | | `tests/schema-catalog.test.cjs`, `backend/pkg/catalog/*_test.go` |
 | CLI | `backend/cmd/yozakura/` (`cmds_config.go`, `cmds_preset.go`, `cmds_completion.go`) | | `cmds_config_test.go` |

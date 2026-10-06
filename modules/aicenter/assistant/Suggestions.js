@@ -4,13 +4,14 @@
 //
 // suggest(ctx, kinds, max) -> [{id, kind, icon, text, args, context}]
 //   ctx:   {hour, clipboard: {text, isImage}, media: {title, artist, playing},
-//           window: {appId, title}, timer: {label, remaining}}
+//           window: {appId, title}, timer: {label, remaining},
+//           routines: [{id, name}] (undefined = routines unknown)}
 //          (every part optional; missing parts produce no chip)
 //   kinds: enabled kinds (ai.behavior.suggestionKinds); empty/undefined = all
 //   text:  translation key; args fill %1, %2 (I18n.t(text).arg(...))
 //   context: what the composer attaches on click ("" | clipboard | selection | region)
 
-var KINDS = ["clipboard", "selection", "media", "timer", "window", "desktop", "time"];
+var KINDS = ["clipboard", "selection", "media", "timer", "window", "desktop", "time", "routine", "binds"];
 
 var ERROR_RE = /(Traceback \(most recent call last\)|Exception|panic: |error(\[E\d+\])?:|Segmentation fault|\bat .+:\d+)/;
 var URL_RE = /^https?:\/\/\S+$/;
@@ -53,6 +54,23 @@ function _timer(t) {
     return [{ id: "timer", kind: "timer", icon: "timer", text: "ai.sug_timer_left", args: [_clip(t.label, 32)], context: "" }];
 }
 
+// Saved routines: run the first one; none yet: offer to make one.
+function _routines(list) {
+    if (!Array.isArray(list))
+        return [];
+    if (list.length === 0)
+        return [{ id: "routine-new", kind: "routine", icon: "lightning", text: "ai.sug_routine_new", args: [], context: "" }];
+    return [{ id: "routine-run", kind: "routine", icon: "lightning", text: "ai.sug_routine_run", args: [_clip(list[0].name || list[0].id, 32)], context: "" }];
+}
+
+// Keybinds: a shortcut for the app in front, else a look at the binds.
+function _binds(w) {
+    var app = w && (w.appId || w.title);
+    if (app)
+        return [{ id: "binds-app", kind: "binds", icon: "keyboard", text: "ai.sug_binds_app", args: [_clip(app, 28)], context: "" }];
+    return [{ id: "binds-review", kind: "binds", icon: "keyboard", text: "ai.sug_binds_review", args: [], context: "" }];
+}
+
 function _window(w) {
     var app = w && (w.appId || w.title);
     if (!app)
@@ -83,7 +101,7 @@ function suggest(ctx, kinds, max) {
     var limit = max > 0 ? max : 4;
     // Live context first (it is what the user is looking at), then the
     // always-available prompts.
-    var all = [].concat(_clipboard(c.clipboard), _media(c.media), _timer(c.timer), _window(c.window), SELECTION.slice(0, 1), _time(c.hour), DESKTOP.slice(0, 1), SELECTION.slice(1), DESKTOP.slice(1));
+    var all = [].concat(_clipboard(c.clipboard), _media(c.media), _timer(c.timer), _window(c.window), _routines(c.routines), SELECTION.slice(0, 1), _time(c.hour), DESKTOP.slice(0, 1), SELECTION.slice(1), _binds(c.window), DESKTOP.slice(1));
     var out = [];
     for (var i = 0; i < all.length && out.length < limit; i++)
         if (on.indexOf(all[i].kind) >= 0)

@@ -504,7 +504,7 @@ test('utilities: slot actions show as unassigned rows until a bind runs them', (
     const slots = Actions.ACTION_CATALOG.filter(a => a.slot).map(a => a.id);
     for (const name of ['timer-input', 'quick-note', 'timers', 'stopwatch-toggle', 'focus-toggle', 'timer-stop'])
         assert.ok(slots.includes(app + '.' + name), name);
-    assert.ok(!slots.includes('utilities.routine'), 'routines stay hidden until svc/routines exists');
+    assert.ok(!slots.includes('utilities.routine'), 'routines get one slot each (RoutineSlots.js), not a generic one');
     const rows = Model.buildRows({ root: {}, custom: [], disabled: [] });
     const free = plain(Model.slotRows(rows));
     eq(free.map(r => r.actions[0].id), slots);
@@ -542,5 +542,6 @@ test('utilities: parametrised actions run the shell command', () => {
     eq(plain(Actions.resolveAction({ id: 'utilities.timer', args: { spec: '10m tea' } })), { dispatcher: 'exec', argument: app + " run 'timer:10m tea'", flags: '' });
     eq(plain(Actions.resolveAction({ id: 'utilities.timer', args: { spec: '' } })).argument, '');
     eq(plain(Actions.resolveAction({ id: 'utilities.routine', args: { routine: 'morning' } })).argument, app + " run 'routine:morning'");
-    assert.ok(Actions.getActionById('utilities.routine').hidden);
+    assert.ok(!Actions.getActionById('utilities.routine').hidden, 'routines are bindable');
+    assert.strictEqual(Actions.getActionById('utilities.routine').args[0].kind, 'routine');
 });

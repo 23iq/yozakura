@@ -29,6 +29,7 @@ QtObject {
     readonly property string caretRight: ""
     readonly property string caretUp: ""
     readonly property string caretDown: ""
+    readonly property string chartBar: "\ue150"
 
     readonly property string caretDoubleLeft: ""
     readonly property string caretDoubleRight: ""

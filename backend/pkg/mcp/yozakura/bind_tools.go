@@ -62,6 +62,7 @@ func (d Deps) bindAdvisor() (*binds.Advisor, error) {
 		CompositorName: binds.DetectCompositor(),
 		Apps:           binds.AppsIn(d.appDirs()),
 		Commands:       binds.CommandsIn(d.ShellSource),
+		Routines:       binds.RoutinesFrom(d.RoutinesFile),
 		Specials: func() ([]specials.Special, error) {
 			_, list, err := d.loadSpecials()
 			return list, err

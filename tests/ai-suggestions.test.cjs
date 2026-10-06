@@ -6,7 +6,22 @@ const S = loadLibrary('modules/aicenter/assistant/Suggestions.js');
 const ids = list => JSON.parse(JSON.stringify(list)).map(s => s.id);
 
 test('without context only the always-available prompts are offered', () => {
-    assert.deepEqual(ids(S.suggest({}, [], 4)), ['selection', 'desktop-theme', 'region', 'desktop-dnd']);
+    assert.deepEqual(ids(S.suggest({}, [], 4)), ['selection', 'desktop-theme', 'region', 'binds-review']);
+});
+
+test('routines: run the first saved one, or offer to make one', () => {
+    assert.equal(S.suggest({ routines: [] }, ['routine'], 2)[0].id, 'routine-new');
+    const run = S.suggest({ routines: [{ id: 'morning', name: 'Morning start' }] }, ['routine'], 2);
+    assert.equal(run[0].id, 'routine-run');
+    assert.deepEqual(Array.from(run[0].args), ['Morning start']);
+    assert.equal(S.suggest({}, ['routine'], 2).length, 0, 'unknown routines: no chip');
+});
+
+test('binds: a shortcut for the app in front, else a review', () => {
+    const app = S.suggest({ window: { appId: 'firefox' } }, ['binds'], 2);
+    assert.equal(app[0].id, 'binds-app');
+    assert.deepEqual(Array.from(app[0].args), ['firefox']);
+    assert.equal(S.suggest({}, ['binds'], 2)[0].id, 'binds-review');
 });
 
 test('clipboard content picks the most useful prompt', () => {

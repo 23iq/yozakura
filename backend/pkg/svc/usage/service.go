@@ -29,6 +29,8 @@ type LimitsSink interface {
 type Options struct {
 	Dir    string      // ledger directory
 	Prices *PriceTable // nil: no estimates
+	// PricesOverride is the user's price override file (shown by usage.info).
+	PricesOverride string
 	// Notify shows a shell notification (threshold alerts). nil: none.
 	Notify func(summary, body string)
 	// ClaudeFetch reads the Claude subscription windows. nil: disabled.
@@ -44,6 +46,8 @@ type Service struct {
 	notify func(summary, body string)
 	now    func() time.Time
 	poller *claudePoller
+
+	pricesOverride string
 
 	mu   sync.RWMutex
 	subs map[*ipc.Subscriber]struct{}
@@ -65,6 +69,8 @@ func NewService(o Options) *Service {
 		notify: o.Notify,
 		now:    o.Now,
 		subs:   map[*ipc.Subscriber]struct{}{},
+
+		pricesOverride: o.PricesOverride,
 	}
 	s.loadAlertStates()
 	if o.ClaudeFetch != nil {
@@ -93,6 +99,9 @@ func (s *Service) Register(srv *ipc.Server) {
 			"limits.set":          s.handleLimitsSet,
 			"limits.get":          s.handleLimitsGet,
 			"claudeLimits.enable": s.handleClaudeEnable,
+			"alerts.set":          s.handleAlertsSet,
+			"clear":               s.handleClear,
+			"info":                s.handleInfo,
 		},
 		Subscribe: s.subscribe,
 	})

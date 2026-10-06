@@ -1,5 +1,6 @@
 .pragma library
 .import "aimodels.js" as AiModels
+.import "aiusage.js" as AiUsage
 
 // AI bar: general, look and behaviour of the bar, quick ask, CLI agents,
 // MCP servers, selection actions, prompt library and automations. Entry format: see
@@ -287,7 +288,7 @@ var category = {
                     "type": "multiselect",
                     "label": "prefs.ai.suggestion_kinds",
                     "description": "prefs.ai.suggestion_kinds.desc",
-                    "keywords": "suggestions clipboard selection media timer window",
+                    "keywords": "suggestions clipboard selection media timer window routine keybinds shortcuts",
                     "options": [
                         {
                             "value": "clipboard",
@@ -323,6 +324,16 @@ var category = {
                             "value": "time",
                             "label": "prefs.ai.sug_kind_time",
                             "icon": "sun"
+                        },
+                        {
+                            "value": "routine",
+                            "label": "prefs.ai.sug_kind_routine",
+                            "icon": "lightning"
+                        },
+                        {
+                            "value": "binds",
+                            "label": "prefs.ai.sug_kind_binds",
+                            "icon": "keyboard"
                         }
                     ],
                     "visibleWhen": {
@@ -605,3 +616,5 @@ var category = {
 // Model picker, effort and context sections (schema/aimodels.js) go right
 // after the status strip.
 category.sections.splice(category.sections.findIndex(s => s.id === "bar_strip") + 1, 0, ...AiModels.sections);
+// Usage and limits (schema/aiusage.js) after the model/effort/context ones.
+category.sections.splice(category.sections.findIndex(s => s.id === "bar_strip") + 1 + AiModels.sections.length, 0, ...AiUsage.sections);

@@ -31,6 +31,11 @@ QtObject {
     }
 
     function execute(a, vars, attachments) {
+        if (a.output === "routine") {
+            // Deterministic: no prompt, no model; the backend reports failures.
+            RoutinesService.run(a.routine);
+            return;
+        }
         Ai.expandTemplate(a.prompt, vars, prompt => {
             if (a.output === "sidebar") {
                 Ai.setSpace("assistant");
