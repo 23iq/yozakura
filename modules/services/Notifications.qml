@@ -174,7 +174,7 @@ Singleton {
                 "interval": d.timeout
             });
             if (d.sound)
-                root.rules.playSound();
+                root.rules.playSound(info.hints);
         }
         Qt.callLater(root.enforceLimits);
     }
@@ -381,6 +381,8 @@ Singleton {
         imageSupported: true
         keepOnReload: false
         persistenceSupported: true
+        // Capability "sound": sound-file / sound-name / suppress-sound are honoured
+        extraHints: ["sound"]
 
         onNotification: notification => {
             // Verificar que la notificación tiene contenido válido antes de procesarla
@@ -406,7 +408,8 @@ Singleton {
                 "appName": notification.appName,
                 "desktopEntry": notification.desktopEntry,
                 "urgency": notification.urgency,
-                "expireTimeout": notification.expireTimeout
+                "expireTimeout": notification.expireTimeout,
+                "hints": notification.hints
             });
 
             root.notify(newNotifObject);

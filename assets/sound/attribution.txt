@@ -1,1 +1,2 @@
 Polite Warning Tone by nlux -- https://freesound.org/s/622773/ -- License: Attribution 4.0
+Notification Chime (notification-chime.wav) -- synthesized for Yozakura with ffmpeg aevalsrc, part of this project (AGPL-3.0)

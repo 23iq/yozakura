@@ -106,9 +106,15 @@ QtObject {
         return Policy.decide(root.policyConfig(), info, root.silent);
     }
 
-    readonly property string defaultSound: Quickshell.shellDir + "/assets/sound/polite-warning-tone.wav"
-    function playSound() {
-        const file = root.cfg && root.cfg.sound && root.cfg.sound.file ? root.cfg.sound.file : root.defaultSound;
-        Quickshell.execDetached(["sh", "-c", 'command -v pw-play >/dev/null && exec pw-play "$1"; command -v paplay >/dev/null && exec paplay "$1"', "notify-sound", file]);
+    readonly property string defaultSound: Quickshell.shellDir + "/assets/sound/notification-chime.wav"
+    // Honours the app's freedesktop sound hints (Policy.soundRequest):
+    // suppress-sound -> silence, sound-name -> sound theme via canberra,
+    // sound-file -> that file; otherwise (or when those fail) the shell tone.
+    function playSound(hints) {
+        const req = Policy.soundRequest(hints);
+        if (!req)
+            return;
+        const tone = root.cfg && root.cfg.sound && root.cfg.sound.file ? root.cfg.sound.file : root.defaultSound;
+        Quickshell.execDetached(["sh", "-c", '[ -n "$1" ] && command -v canberra-gtk-play >/dev/null && canberra-gtk-play -i "$1" 2>/dev/null && exit 0; f=$2; [ -r "$f" ] || f=$3; command -v pw-play >/dev/null && exec pw-play "$f"; command -v paplay >/dev/null && exec paplay "$f"', "notify-sound", req.name || "", req.file || "", tone]);
     }
 }

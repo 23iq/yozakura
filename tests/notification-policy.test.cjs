@@ -113,3 +113,19 @@ test('grouping key, visible limit and history trim', () => {
     assert.deepEqual(plain(P.trimHistory(list, 0)), [1, 3, 4]);
     assert.deepEqual(plain(P.trimHistory(list, 100)), []);
 });
+
+test('soundRequest: suppress-sound, sound-name, sound-file, none', () => {
+    const r = h => plain(P.soundRequest(h));
+    assert.equal(P.soundRequest({ 'suppress-sound': true }), null);
+    assert.equal(P.soundRequest({ 'suppress-sound': 1, 'sound-file': '/a.wav' }), null);
+    assert.equal(P.soundRequest({ 'suppress-sound': 'true' }), null);
+    assert.deepEqual(r({ 'suppress-sound': false }), {});
+    assert.deepEqual(r({ 'sound-name': 'message-new-instant' }), { name: 'message-new-instant' });
+    assert.deepEqual(r({ 'sound-name': 'x; rm -rf ~' }), {});
+    assert.deepEqual(r({ 'sound-file': '/usr/share/sounds/a.oga' }), { file: '/usr/share/sounds/a.oga' });
+    assert.deepEqual(r({ 'sound-file': 'file:///home/u/My%20Tone.ogg' }), { file: '/home/u/My Tone.ogg' });
+    assert.deepEqual(r({ 'sound-file': 'relative.wav' }), {});
+    assert.deepEqual(r({ 'sound-name': 'bell', 'sound-file': '/a.wav' }), { name: 'bell' });
+    assert.deepEqual(r(undefined), {});
+    assert.deepEqual(r({}), {});
+});

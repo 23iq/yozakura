@@ -11,7 +11,9 @@ Notification popup system built on Quickshell.Services.Notifications. Handles di
   bar's edge), corner position, screens filter, per-app rules
   (`matchRules`: mute | priority | alwaysShow | soundOff, `*` wildcards),
   DND schedule (`inSchedule`, windows past midnight), `decide()` (popup,
-  sound, timeout), `overflowPopups` (maxVisible), `trimHistory`, `groupKey`.
+  sound, timeout), `overflowPopups` (maxVisible), `trimHistory`, `groupKey`,
+  `soundRequest` (app sound hints: suppress-sound, sound-name, sound-file;
+  played by `services/NotificationRules.qml` `playSound`, else the shell tone).
 - `modules/services/Notifications.qml` applies it in `admit()`; `silent` is
   DND (manual `notifications.dnd.enabled` or scheduled; `setDnd`/`toggleDnd`,
   used by the dnd-* actions and the dashboard). `notchPopupList` /

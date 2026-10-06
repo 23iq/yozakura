@@ -196,6 +196,35 @@ function decide(cfg, notif, dnd) {
     };
 }
 
+// Which sound a notification asks for, from its freedesktop hints
+// (Desktop Notifications spec): null when it sets `suppress-sound` (the app
+// plays its own or wants silence), {name} for `sound-name` (a sound theme
+// id), {file} for `sound-file` (path or file:// URI), {} for the shell tone.
+function soundRequest(hints) {
+    var h = hints && typeof hints === "object" ? hints : {};
+    var suppress = h["suppress-sound"];
+    if (suppress === true || suppress === 1 || /^(1|true)$/i.test(String(suppress === undefined || suppress === null ? "" : suppress)))
+        return null;
+    var name = String(h["sound-name"] || "").trim();
+    if (/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(name))
+        return {
+            "name": name
+        };
+    var file = String(h["sound-file"] || "").trim();
+    if (file.indexOf("file://") === 0) {
+        try {
+            file = decodeURIComponent(file.slice(7));
+        } catch (e) {
+            file = file.slice(7);
+        }
+    }
+    if (file.charAt(0) === "/")
+        return {
+            "file": file
+        };
+    return {};
+}
+
 // Group key of a notification in popups and history.
 function groupKey(notif, groupByApp) {
     var app = (notif && notif.appName) || "";
