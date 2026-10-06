@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/migrate"
 )
 
@@ -92,5 +93,56 @@ func TestRemoveBlockKeepsLongLinesAndBacksUp(t *testing.T) {
 	bak, err := os.ReadFile(lua + ".bak")
 	if err != nil || string(bak) != orig {
 		t.Fatalf("no .bak with the original content: %v", err)
+	}
+}
+
+func TestBootstrapBodyStartsShellAndPolkit(t *testing.T) {
+	niri := bootstrapBody(niriConfig, "/opt/bin/yozakura", "/usr/lib/hyprpolkitagent/hyprpolkitagent")
+	for _, want := range []string{`spawn-at-startup "/opt/bin/yozakura"`, `spawn-at-startup "/usr/lib/hyprpolkitagent/hyprpolkitagent"`} {
+		if !strings.Contains(niri, want) {
+			t.Errorf("niri bootstrap lacks %s:\n%s", want, niri)
+		}
+	}
+	mango := bootstrapBody(mangoConfig, "/opt/bin/yozakura", "systemctl --user start hyprpolkitagent")
+	for _, want := range []string{"exec-once = /opt/bin/yozakura\n", "exec-once = systemctl --user start hyprpolkitagent\n"} {
+		if !strings.Contains(mango, want) {
+			t.Errorf("mango bootstrap lacks %q:\n%s", want, mango)
+		}
+	}
+	if strings.Contains(bootstrapBody(niriConfig, "/b", ""), "polkit") {
+		t.Error("polkit line without an agent")
+	}
+}
+
+// Before the first shell start the include target must exist and start the
+// shell; an existing generated file is never overwritten.
+func TestInstallSimpleTargetBootstrapsBeforeFirstStart(t *testing.T) {
+	for _, tc := range []struct {
+		t        simpleTarget
+		cfg, gen string
+		want     string
+	}{
+		{niriConfig, "niri/config.kdl", "niri.kdl", "spawn-at-startup "},
+		{mangoConfig, "mango/config.conf", "mango.conf", "exec-once = "},
+	} {
+		home := t.TempDir()
+		t.Setenv("HOME", home)
+		t.Setenv("XDG_CONFIG_HOME", "")
+		t.Setenv("XDG_DATA_HOME", "")
+		installSimpleTarget(tc.t)
+		cfg, _ := os.ReadFile(filepath.Join(home, ".config", tc.cfg))
+		if !strings.Contains(string(cfg), tc.gen) {
+			t.Fatalf("%s lacks the include of %s:\n%s", tc.cfg, tc.gen, cfg)
+		}
+		genPath := filepath.Join(home, ".local/share", brand.AppID, tc.gen)
+		got, err := os.ReadFile(genPath)
+		if err != nil || !strings.Contains(string(got), tc.want) {
+			t.Fatalf("bootstrap %s: %v\n%s", genPath, err, got)
+		}
+		os.WriteFile(genPath, []byte("generated\n"), 0o644)
+		installSimpleTarget(tc.t)
+		if got, _ := os.ReadFile(genPath); string(got) != "generated\n" {
+			t.Fatalf("bootstrap overwrote the generated file: %s", got)
+		}
 	}
 }

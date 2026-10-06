@@ -9,6 +9,7 @@ import (
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/fsutil"
 	"yozakura/backend/pkg/migrate"
+	"yozakura/backend/pkg/paths"
 )
 
 func runInstall(targets []string) {
@@ -89,7 +90,7 @@ var mangoConfig = simpleTarget{name: "Mango", relDir: "mango", relFile: "config.
 
 func installHyprland() {
 	home, _ := os.UserHomeDir()
-	hyprDir := filepath.Join(home, ".config/hypr")
+	hyprDir := paths.HyprDir()
 	os.MkdirAll(hyprDir, 0o755)
 	luaPath := filepath.Join(hyprDir, "hyprland.lua")
 	confPath := filepath.Join(hyprDir, "hyprland.conf")
@@ -110,8 +111,7 @@ func installHyprland() {
 }
 
 func removeHyprland() {
-	home, _ := os.UserHomeDir()
-	hyprDir := filepath.Join(home, ".config/hypr")
+	hyprDir := paths.HyprDir()
 	luaPath := filepath.Join(hyprDir, "hyprland.lua")
 	confPath := filepath.Join(hyprDir, "hyprland.conf")
 	if isHomeManagerManaged(luaPath) || isHomeManagerManaged(confPath) {
@@ -165,8 +165,7 @@ func printHomeManagerHyprlandGuidance(luaPath, confPath string) {
 }
 
 func installSimpleTarget(t simpleTarget) {
-	home, _ := os.UserHomeDir()
-	dir := filepath.Join(home, ".config", t.relDir)
+	dir := filepath.Join(filepath.Dir(paths.New().ConfigDir), t.relDir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return
@@ -176,11 +175,11 @@ func installSimpleTarget(t simpleTarget) {
 	block := fmt.Sprintf("%s\n%s\n\n%s OVERRIDES\n%s\n",
 		blockMarker(t.header), fmt.Sprintf(t.line, dataRel()), t.header, overridesNote(t.header, includeKeyword(t.name)))
 	appendBlock(path, blockMarker(t.header), block)
+	writeStartupBootstrap(t, currentExecutable())
 }
 
 func removeSimpleTarget(t simpleTarget) {
-	home, _ := os.UserHomeDir()
-	path := filepath.Join(home, ".config", t.relDir, t.relFile)
+	path := filepath.Join(filepath.Dir(paths.New().ConfigDir), t.relDir, t.relFile)
 	reportErr(removeBlock(path, blockMarker(t.header), fmt.Sprintf(t.line, dataRel())))
 }
 

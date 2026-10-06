@@ -76,7 +76,7 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 	}
 	outputsStr := h.generator.GenerateOutputs(payload.Monitors)
 	keyboardStr := h.generator.GenerateKeyboard(payload.Keyboard)
-	startupStr := h.generator.GenerateStartup(payload.Exec, payload.ExecOnce)
+	startupStr := h.generator.GenerateStartup(payload.Exec, ipc.StartupOnce(payload, !h.isHyprland()))
 	appStr := h.generator.GenerateAppearance(payload.Appearance)
 	bindStr := h.generator.GenerateKeybinds(payload.Keybinds)
 	rulesStr := h.generator.GenerateWindowRules(payload.WindowRules)
@@ -163,4 +163,9 @@ func (h *ConfigHandler) loadGeneratedConfig(path string) error {
 		return rl.ReloadConfig()
 	}
 	return nil
+}
+
+func (h *ConfigHandler) isHyprland() bool {
+	_, ok := h.compositor.(*hyprland.Hyprland)
+	return ok
 }

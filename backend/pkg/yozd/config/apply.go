@@ -50,7 +50,7 @@ func ApplyConfig(cfg *TOMLConfig, compositor ipc.Compositor, configDir string) e
 		resolved := server.ResolveTargetPath(hyprlandTarget, configDir)
 		primary, alt := splitHyprlandTarget(resolved)
 		hyprGen := hyprland.NewGenerator()
-		if err := writeConfig(hyprGen, primary, ipcCfg); err != nil {
+		if err := writeConfig(hyprGen, primary, ipcCfg, false); err != nil {
 			return err
 		}
 		// Hyprland has a Lua side too — render it with the Lua generator.
@@ -77,12 +77,12 @@ func ApplyConfig(cfg *TOMLConfig, compositor ipc.Compositor, configDir string) e
 		fmt.Printf("Lua config written to: %s\n", alt)
 	}
 	if !isNiri && niriTarget != "" {
-		if err := writeConfig(niri.NewGenerator(), server.ResolveTargetPath(niriTarget, configDir), ipcCfg); err != nil {
+		if err := writeConfig(niri.NewGenerator(), server.ResolveTargetPath(niriTarget, configDir), ipcCfg, true); err != nil {
 			return err
 		}
 	}
 	if !isMango && mangoTarget != "" {
-		if err := writeConfig(mango.NewGenerator(), server.ResolveTargetPath(mangoTarget, configDir), ipcCfg); err != nil {
+		if err := writeConfig(mango.NewGenerator(), server.ResolveTargetPath(mangoTarget, configDir), ipcCfg, true); err != nil {
 			return err
 		}
 	}
@@ -93,14 +93,14 @@ func ApplyConfig(cfg *TOMLConfig, compositor ipc.Compositor, configDir string) e
 // writeConfig renders the universal config with the given generator and
 // writes it to path. It does NOT reload the compositor — the headless pass
 // owns this helper and the inactives aren't running.
-func writeConfig(gen ipc.ConfigGenerator, path string, payload ipc.ConfigUniversal) error {
+func writeConfig(gen ipc.ConfigGenerator, path string, payload ipc.ConfigUniversal, nonHypr bool) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", filepath.Dir(path), err)
 	}
 	var b strings.Builder
 	b.WriteString(gen.GenerateOutputs(payload.Monitors))
 	b.WriteString(gen.GenerateKeyboard(payload.Keyboard))
-	startup := gen.GenerateStartup(payload.Exec, payload.ExecOnce)
+	startup := gen.GenerateStartup(payload.Exec, ipc.StartupOnce(payload, nonHypr))
 	if startup != "" {
 		b.WriteString(startup)
 		b.WriteString("\n")

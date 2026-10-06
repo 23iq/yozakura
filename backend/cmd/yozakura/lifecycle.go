@@ -93,13 +93,22 @@ func installerURL() string {
 }
 
 // revertAppHooks takes the shell out of the apps it connected to (terminals,
-// Vesktop, Qt env file), reporting what it could not undo.
-func revertAppHooks(w io.Writer, env apphooks.Env, hooks []apphooks.Hook) {
+// Vesktop, Qt env file), reporting what it could not undo and returning the
+// ids it disconnected.
+func revertAppHooks(w io.Writer, env apphooks.Env, hooks []apphooks.Hook) []string {
+	connected := map[string]bool{}
+	for _, h := range hooks {
+		connected[h.ID()] = h.Status(env).State == apphooks.StateConnected
+	}
+	var done []string
 	for _, o := range apphooks.RevertAll(env, hooks) {
 		if o.Err != nil {
 			fmt.Fprintf(w, "Could not disconnect %s: %s\n", o.Status.ID, o.Err)
+		} else if connected[o.Status.ID] {
+			done = append(done, o.Status.ID)
 		}
 	}
+	return done
 }
 
 // removeTermHook deletes the fish prompt file the shell owns (conf.d), so
@@ -110,9 +119,12 @@ func removeTermHook(w io.Writer, env termlook.Env) {
 	}
 }
 
-// runGoodbye uninstalls: compositor blocks (backups kept), the binary, and on
-// request the source checkout and the configuration.
-func runGoodbye() {
+// runGoodbye uninstalls: every registered cleanup (see RegisterCleanup),
+// compositor blocks (backups kept), the binary, and on request the source
+// checkout and the configuration. --purge also deletes downloaded models,
+// venvs and extras logs.
+func runGoodbye(args []string) {
+	purge := parseCLI(args, []string{"purge"}, nil).has("purge")
 	reader := bufio.NewReader(os.Stdin)
 	confirm := func(question string) bool {
 		fmt.Print(question + " (y/N): ")
@@ -129,8 +141,8 @@ func runGoodbye() {
 	if isAlive() {
 		quitShell()
 	}
-	revertAppHooks(os.Stdout, apphooks.DefaultEnv(), apphooks.All())
-	removeTermHook(os.Stdout, termlook.Env{ConfigHome: filepath.Dir(paths.New().ConfigDir), AppID: brand.AppID})
+	home, _ := os.UserHomeDir()
+	runCleanups(CleanupEnv{Out: os.Stdout, Confirm: confirm, Purge: purge, Home: home}, registeredCleanups())
 
 	exe := currentExecutable()
 	if fileExists("/etc/NIXOS") || strings.HasPrefix(exe, "/nix/store/") {
@@ -162,10 +174,6 @@ func runGoodbye() {
 				fmt.Println("Removed " + bin)
 			} else {
 				fmt.Printf("Could not remove %s (%v); remove it by hand.\n", bin, err)
-			}
-			link := filepath.Join("/usr/local/bin", filepath.Base(bin))
-			if target, err := os.Readlink(link); err == nil && target == bin {
-				fmt.Printf("Remove the link %s with: sudo rm %s\n", link, link)
 			}
 		}
 	}

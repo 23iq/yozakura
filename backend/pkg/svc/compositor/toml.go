@@ -39,6 +39,9 @@ func Render(in Input, gameMode bool) string {
 	// [startup]
 	b.WriteString("\n[startup]\n")
 	fmt.Fprintf(&b, "exec-once = %q\n", brand.AppID)
+	if in.PolkitCmd != "" {
+		fmt.Fprintf(&b, "exec-once-non-hyprland = %q\n", in.PolkitCmd)
+	}
 
 	// [appearance]
 	writeAppearance(&b, in, gameMode)

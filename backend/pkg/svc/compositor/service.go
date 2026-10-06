@@ -96,6 +96,9 @@ func (s *Service) write(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &in); err != nil {
 		return nil, fmt.Errorf("compositor.write: %w", err)
 	}
+	if in.PolkitCmd == "" {
+		in.PolkitCmd = PolkitCommand()
+	}
 	content := Render(in, s.gameMode())
 	var path string
 	if s.paths != nil {

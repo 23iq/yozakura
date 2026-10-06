@@ -47,7 +47,7 @@ func main() {
 			runRemove(args[1:])
 			return
 		case "goodbye":
-			runGoodbye()
+			runGoodbye(args[1:])
 			return
 		case "doctor":
 			os.Exit(runDoctor(args[1:], os.Stdout))
@@ -647,7 +647,7 @@ Commands:
                                      ({bin} term help)
     help                             Show this help message
     version, -v, --version           Show {name} version
-    goodbye                          Uninstall {name}
+    goodbye [--purge]                Uninstall {name} (--purge: also models, venvs, logs)
 `))
 }
 

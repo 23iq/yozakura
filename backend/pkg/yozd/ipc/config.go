@@ -206,14 +206,17 @@ type LayerRule struct {
 
 // ConfigUniversal holds the entire configuration state
 type ConfigUniversal struct {
-	Appearance  ConfigAppearance  `json:"appearance"`
-	Keybinds    ConfigKeybinds    `json:"keybinds"`
-	WindowRules []WindowRule      `json:"window_rules"`
-	LayerRules  []LayerRule       `json:"layer_rules"`
-	Exec        []string          `json:"exec,omitempty"`
-	ExecOnce    []string          `json:"exec_once,omitempty"`
-	Monitors    []OutputConfig    `json:"monitors,omitempty"`
-	Keyboard    *KeyboardSettings `json:"keyboard,omitempty"`
+	Appearance  ConfigAppearance `json:"appearance"`
+	Keybinds    ConfigKeybinds   `json:"keybinds"`
+	WindowRules []WindowRule     `json:"window_rules"`
+	LayerRules  []LayerRule      `json:"layer_rules"`
+	Exec        []string         `json:"exec,omitempty"`
+	ExecOnce    []string         `json:"exec_once,omitempty"`
+	// ExecOnceNoHypr are autostart commands for every compositor except
+	// Hyprland (whose installer already starts them, e.g. the polkit agent).
+	ExecOnceNoHypr []string          `json:"exec_once_no_hypr,omitempty"`
+	Monitors       []OutputConfig    `json:"monitors,omitempty"`
+	Keyboard       *KeyboardSettings `json:"keyboard,omitempty"`
 }
 
 // ConfigGenerator transforms a universal configuration into compositor-specific hyprlang syntax
@@ -483,4 +486,13 @@ func derefString(v *string) interface{} {
 		return nil
 	}
 	return *v
+}
+
+// StartupOnce is the exec-once list for one compositor: the common commands
+// plus ExecOnceNoHypr when nonHypr.
+func StartupOnce(c ConfigUniversal, nonHypr bool) []string {
+	if !nonHypr || len(c.ExecOnceNoHypr) == 0 {
+		return c.ExecOnce
+	}
+	return append(append([]string(nil), c.ExecOnce...), c.ExecOnceNoHypr...)
 }

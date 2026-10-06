@@ -38,6 +38,9 @@ type Input struct {
 	// Keyboard is the keyboard domain, rendered as [input.keyboard]. nil
 	// (older shells) keeps the historical empty layouts.
 	Keyboard *KeyboardInput `json:"keyboard,omitempty"`
+	// PolkitCmd starts the polkit agent on niri and Mango (Hyprland's
+	// installer line does it there). The backend fills it (PolkitCommand).
+	PolkitCmd string `json:"polkitCmd,omitempty"`
 }
 
 // WindowRule sends windows matching Match ("class:^(x)$") to Workspace

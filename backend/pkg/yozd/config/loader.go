@@ -233,6 +233,7 @@ func mergeConfig(dst, src *TOMLConfig) {
 		}
 		mergeExec(&dst.Startup.Exec, src.Startup.Exec)
 		mergeExec(&dst.Startup.ExecOnce, src.Startup.ExecOnce)
+		mergeExec(&dst.Startup.ExecOnceNoHyprland, src.Startup.ExecOnceNoHyprland)
 	}
 
 	mergeExec(&dst.Exec, src.Exec)

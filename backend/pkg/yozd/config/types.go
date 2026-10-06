@@ -32,6 +32,8 @@ type TargetConfig struct {
 type StartupConfig struct {
 	Exec     interface{} `toml:"exec,omitempty"`
 	ExecOnce interface{} `toml:"exec-once,omitempty"`
+	// ExecOnceNoHyprland is exec-once for niri and Mango only.
+	ExecOnceNoHyprland interface{} `toml:"exec-once-non-hyprland,omitempty"`
 }
 
 type GeneralConfig struct {
@@ -241,6 +243,7 @@ func (c *TOMLConfig) ToIPCConfig() ipc.ConfigUniversal {
 	if c.Startup != nil {
 		appendExecCommands(&cfg.Exec, c.Startup.Exec)
 		appendExecCommands(&cfg.ExecOnce, c.Startup.ExecOnce)
+		appendExecCommands(&cfg.ExecOnceNoHypr, c.Startup.ExecOnceNoHyprland)
 	}
 
 	appendExecCommands(&cfg.Exec, c.Exec)
