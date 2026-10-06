@@ -2,7 +2,7 @@
 activity segments and notch panels) with stubbed services, shared by the
 notch tests. `island(name, config_extra)` returns the Harness."""
 from lib.qmlharness import REPO, Harness
-from lib import timers_stubs
+from lib import kit_stubs, timers_stubs
 
 
 def island(name: str, config_extra: str = "") -> Harness:
@@ -28,6 +28,7 @@ def island(name: str, config_extra: str = "") -> Harness:
         "StyledToolTip": "Item { property string tooltipText; property bool show }",
         "Separator": "Item { property bool vert; implicitWidth: 2; implicitHeight: 2 }",
     })
+    kit_stubs.install(h)
     h.module("Quickshell.Widgets", {"IconImage": "Image { property real implicitSize }"})
     h.module("qs.modules.services", {
         "I18n": "pragma Singleton\nQtObject { function t(k) { return ({ \"activities.left\": \"left\", \"activities.failed\": \"Failed\", \"activities.paused\": \"Paused\" })[k] || k } }",
@@ -81,7 +82,6 @@ def island(name: str, config_extra: str = "") -> Harness:
         "NotificationIndicator": "Item { implicitWidth: 24; implicitHeight: 24 }",
         "MediaSummary": "Item { property var player; property bool mediaExpanded; property bool revealed; property bool selectorOpen: false; property bool selectorHovered: false }",
         "CompactPlayer": "Item { property var player; property bool notchHovered }",
-        "ExpandedMedia": "Item { property var player; property bool revealed; implicitHeight: 120 }",
         "IslandNotifications": "Item { property bool hovered; property bool navigating: false }",
         "IslandRail": "Column { property var player; property int motionDuration; property bool mediaHovered: false; signal mediaClicked }",
     }.items():

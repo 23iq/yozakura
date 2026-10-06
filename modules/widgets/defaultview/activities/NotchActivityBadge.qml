@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.components
-import qs.config
+import qs.modules.components.kit
 
 // Tiny count pill ("2") for activities a segment does not show.
 StyledRect {
@@ -12,21 +12,17 @@ StyledRect {
     variant: "common"
     enableBorder: false
     visible: count > 0
-    readonly property real diameter: Math.round(Styling.fontSize(-4) + 6)
+    readonly property real diameter: Type.size("caption") + Space.s
     implicitHeight: diameter
-    implicitWidth: Math.max(diameter, countText.implicitWidth + 8)
+    implicitWidth: Math.max(diameter, countText.implicitWidth + Space.s)
     radius: diameter / 2
 
-    Text {
+    KitText {
         id: countText
         anchors.centerIn: parent
+        role: "caption"
+        tabular: true
+        color: Type.text
         text: badge.count
-        color: Colors.overBackground
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-4)
-        font.weight: Font.Bold
-        font.features: ({
-                "tnum": 1
-            })
     }
 }

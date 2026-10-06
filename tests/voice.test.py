@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO, Harness  # noqa: E402
+from lib import kit_stubs  # noqa: E402
 from PySide6.QtCore import QSize  # noqa: E402
 from PySide6.QtGui import QColor  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402
@@ -184,6 +185,7 @@ QtObject {
     function stop() {}
 }"""})
 
+kit_stubs.install(h)
 view_file = h.copy("modules/widgets/defaultview/panels/VoicePanel.qml", dest="modules/widgets/defaultview/panels")
 # VoiceModel.js was already copied next to the service; the view needs it too
 (h.root / "modules/services/voice").mkdir(parents=True, exist_ok=True)

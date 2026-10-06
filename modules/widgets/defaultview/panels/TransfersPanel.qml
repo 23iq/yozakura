@@ -1,5 +1,5 @@
 import QtQuick
-import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.services.activities
 import qs.modules.widgets.defaultview.activities
@@ -24,28 +24,26 @@ NotchPanel {
         return parts.join(" · ");
     }
 
-    implicitHeight: panel.padding * 2 + title.implicitHeight + panel.unit * 2 + list.implicitHeight
+    implicitHeight: panel.topPadding + group.implicitHeight + panel.padding
 
-    NotchPanelTitle {
-        id: title
+    Group {
+        id: group
         x: panel.padding
-        y: panel.padding
+        y: panel.topPadding
         width: parent.width - panel.padding * 2
-        unit: panel.unit
-        icon: Icons.downloadSimple
-        text: I18n.t("activities.downloads") + (ActivityService.transfers.length > 1 ? "  " + ActivityService.transfers.length : "")
-        summary: panel.summaryText
-        accent: panel.summary.state === "failed" ? Colors.error : Colors.primary
-    }
 
-    NotchActivitiesSection {
-        id: list
-        x: panel.padding
-        y: title.y + title.implicitHeight + panel.unit * 2
-        width: parent.width - panel.padding * 2
-        height: implicitHeight
-        maxRows: panel.maxRows > 0 ? panel.maxRows : 5
-        transfers: ActivityService.transfers
-        screenName: panel.screenName
+        NotchPanelTitle {
+            width: parent.width
+            text: I18n.t("activities.downloads") + (ActivityService.transfers.length > 1 ? " · " + ActivityService.transfers.length : "")
+            summary: panel.summaryText
+        }
+
+        NotchActivitiesSection {
+            width: parent.width
+            height: implicitHeight
+            maxRows: panel.maxRows > 0 ? panel.maxRows : 5
+            transfers: ActivityService.transfers
+            screenName: panel.screenName
+        }
     }
 }

@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.bar.activities
+import qs.modules.components.kit
 import "NotchActivities.js" as NotchActivities
 
 // One collapsed activity segment at an edge of the notch header: the side's
@@ -114,18 +115,16 @@ Item {
                 font: labelText.font
                 text: NotchActivities.widthTemplate(labelBox.label)
             }
-            Text {
+            KitText {
                 id: labelText
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                role: "secondary"
+                tabular: true
+                color: Type.text
+                font.weight: Look.activeLabelWeight
+                elide: Text.ElideNone
                 text: labelBox.label
-                color: Colors.overBackground
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                font.weight: Font.DemiBold
-                font.features: ({
-                        "tnum": 1
-                    })
             }
         }
 
@@ -134,17 +133,15 @@ Item {
             visible: segment.vertical && NotchActivities.hasLabel(segment.showItem)
             Repeater {
                 model: segment.vertical && segment.showItem ? NotchActivities.stackedLabel(segment.showItem.label) : []
-                delegate: Text {
+                delegate: KitText {
                     required property string modelData
                     anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
+                    role: "caption"
+                    tabular: true
+                    color: Type.text
+                    font.weight: Look.activeLabelWeight
+                    elide: Text.ElideNone
                     text: modelData
-                    color: Colors.overBackground
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-4)
-                    font.weight: Font.DemiBold
-                    font.features: ({
-                            "tnum": 1
-                        })
                 }
             }
         }

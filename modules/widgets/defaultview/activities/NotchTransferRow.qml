@@ -1,16 +1,18 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import Quickshell.Widgets
 import qs.config
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.services.activities
+import qs.modules.components.kit
 import "NotchActivities.js" as NotchActivities
 import "../../../services/activities/TransferModel.js" as TransferModel
 
-// One download/copy/update in the expanded notch: app icon, title (middle
-// elided), progress bar, sizes · speed and ETA or state, and actions (open
-// folder; pause/resume/cancel when the source supports them).
-Item {
+// One download/copy/update in the expanded notch: a ListRow (app art, name,
+// sizes · speed · ETA or state, actions: pause / resume / open folder /
+// cancel when the source supports them) over a ProgressLine aligned with
+// the text.
+Column {
     id: row
 
     property var transfer: null
@@ -26,12 +28,9 @@ Item {
         done: I18n.t("activities.done")
     })
     readonly property bool finished: row.t.state === "done" || row.t.state === "failed"
-    readonly property color accent: row.t.state === "failed" ? Colors.error : (row.t.state === "done" ? Colors.green : (row.t.state === "running" ? Colors.primary : Colors.overSurfaceVariant))
-    readonly property real iconSize: Math.round(Styling.fontSize(6))
-    readonly property real pad: Math.round(Styling.fontSize(-4))
+    readonly property var actionList: row.t.actions || []
 
-    implicitHeight: column.implicitHeight + row.pad * 2
-
+    spacing: 0
     // Finished items fade out while the backend lingers them
     opacity: row.t.state === "done" ? 0.55 : 1
     Behavior on opacity {
@@ -41,128 +40,68 @@ Item {
         }
     }
 
-    Item {
-        id: iconBox
-        x: 0
-        y: row.pad
-        width: row.iconSize
-        height: row.iconSize
-
-        IconImage {
-            id: appIcon
-            anchors.fill: parent
-            source: ActivityService.iconUrl(row.t.appIcon || "")
-            visible: status === Image.Ready
-            asynchronous: true
-        }
-        Text {
-            anchors.centerIn: parent
-            visible: !appIcon.visible
-            text: row.t.state === "done" ? Icons.accept : (row.t.kind === "copy" ? Icons.copy : (row.t.kind === "sync" || row.t.kind === "update" ? Icons.sync : Icons.downloadSimple))
-            font.family: Icons.font
-            font.pixelSize: Math.round(row.iconSize * 0.75)
-            color: row.accent
-        }
-    }
-
-    Column {
-        id: column
-        anchors.left: iconBox.right
-        anchors.leftMargin: row.pad * 2
-        anchors.right: parent.right
-        y: row.pad
-        spacing: Math.round(row.pad * 0.8)
-
-        Item {
-            width: parent.width
-            height: Math.max(titleText.implicitHeight, actions.implicitHeight)
-
-            Text {
-                id: titleText
-                anchors.left: parent.left
-                anchors.right: actions.left
-                anchors.rightMargin: row.pad
-                anchors.verticalCenter: parent.verticalCenter
-                text: row.t.title || row.t.app || ""
-                textFormat: Text.PlainText
-                elide: Text.ElideMiddle
-                color: Colors.overBackground
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                font.weight: Font.DemiBold
+    ListRow {
+        id: listRow
+        width: parent.width
+        title: row.t.title || row.t.app || ""
+        subtitle: [row.status.left, row.status.right].filter(s => !!s).join(" · ")
+        leading: Component {
+            Art {
+                width: Space.controlS
+                height: Space.controlS
+                source: ActivityService.iconUrl(row.t.appIcon || "")
+                icon: row.t.state === "done" ? Icons.accept : (row.t.kind === "copy" ? Icons.copy : (row.t.kind === "sync" || row.t.kind === "update" ? Icons.sync : Icons.downloadSimple))
             }
-
+        }
+        trailing: Component {
             Row {
-                id: actions
-                anchors.right: parent.right
-                anchors.verticalCenter: parent.verticalCenter
-                spacing: Math.round(row.pad / 2)
+                spacing: Space.xs
 
-                NotchIconButton {
-                    visible: !row.finished && row.t.state !== "paused" && (row.t.actions || []).indexOf("suspend") !== -1
+                IconButton {
+                    objectName: "transferPause"
+                    size: "s"
+                    visible: !row.finished && row.t.state !== "paused" && row.actionList.indexOf("suspend") !== -1
                     icon: Icons.pause
-                    tooltip: I18n.t("activities.pause")
+                    Accessible.name: I18n.t("activities.pause")
                     onClicked: ActivityService.transferAction(row.t, "suspend")
                 }
-                NotchIconButton {
-                    visible: !row.finished && row.t.state === "paused" && (row.t.actions || []).indexOf("resume") !== -1
+                IconButton {
+                    objectName: "transferResume"
+                    size: "s"
+                    visible: !row.finished && row.t.state === "paused" && row.actionList.indexOf("resume") !== -1
                     icon: Icons.play
-                    tooltip: I18n.t("activities.resume")
+                    Accessible.name: I18n.t("activities.resume")
                     onClicked: ActivityService.transferAction(row.t, "resume")
                 }
-                NotchIconButton {
+                IconButton {
+                    objectName: "transferOpen"
+                    size: "s"
                     visible: !!(row.t.path || row.t.dir || row.t.openUrl || row.t.source === "notificationProgress")
                     icon: Icons.folder
-                    tooltip: I18n.t("activities.open_folder")
+                    Accessible.name: I18n.t("activities.open_folder")
                     onClicked: ActivityService.transferAction(row.t, "open")
                 }
-                NotchIconButton {
-                    visible: !row.finished && (row.t.actions || []).indexOf("cancel") !== -1
+                IconButton {
+                    objectName: "transferCancel"
+                    size: "s"
+                    visible: !row.finished && row.actionList.indexOf("cancel") !== -1
                     icon: Icons.cancel
-                    tone: "error"
-                    tooltip: I18n.t("activities.cancel")
+                    Accessible.name: I18n.t("activities.cancel")
                     onClicked: ActivityService.transferAction(row.t, "cancel")
                 }
             }
         }
+    }
 
-        NotchProgressBar {
-            width: parent.width
-            progress: row.progressValue
-            accent: row.accent
-            running: row.t.state === "running"
-        }
-
-        Item {
-            width: parent.width
-            height: statusLeft.implicitHeight
-
-            Text {
-                id: statusLeft
-                anchors.left: parent.left
-                anchors.right: statusRight.left
-                anchors.rightMargin: row.pad
-                text: row.status.left
-                elide: Text.ElideRight
-                color: Colors.overSurfaceVariant
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                font.features: ({
-                        "tnum": 1
-                    })
-            }
-            Text {
-                id: statusRight
-                anchors.right: parent.right
-                text: row.status.right
-                color: row.status.tone === "error" ? Colors.error : (row.status.tone === "done" ? Colors.green : Colors.overSurfaceVariant)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                font.weight: row.status.tone === "normal" ? Font.Normal : Font.DemiBold
-                font.features: ({
-                        "tnum": 1
-                    })
-            }
-        }
+    // Under the text column (art + its gap), not under the art
+    ProgressLine {
+        x: Space.s + Space.controlS + Space.m
+        width: parent.width - x - Space.s
+        visible: !row.finished
+        value: row.progressValue < 0 ? 0 : row.progressValue
+    }
+    Item {
+        width: 1
+        height: Space.s
     }
 }

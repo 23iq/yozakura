@@ -1,9 +1,7 @@
 import QtQuick
-import QtQuick.Layouts
-import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.theme
-import qs.config
 import "../../../services/voice/VoiceModel.js" as VoiceModel
 
 // Notch panel "voice" (NotchPanels.js: auto + modal): opens by itself while
@@ -21,7 +19,7 @@ NotchPanel {
     readonly property bool failed: voiceState === "error" || voiceState === "empty"
     readonly property bool showPreview: voiceState === "done" && VoiceService.text !== ""
 
-    implicitHeight: column.implicitHeight + root.padding * 2
+    implicitHeight: root.topPadding + group.implicitHeight + root.padding
 
     onDismissed: VoiceService.dismiss()
 
@@ -52,114 +50,93 @@ NotchPanel {
         return Icons.mic;
     }
 
-    ColumnLayout {
-        id: column
+    Group {
+        id: group
         x: root.padding
-        y: root.padding
+        y: root.topPadding
         width: parent.width - root.padding * 2
-        spacing: 12
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
+        Item {
+            width: parent.width
+            height: Math.max(badge.height, titles.implicitHeight)
 
-            // Mic badge: breathes with the input level
-            StyledRect {
-                id: micBadge
-                variant: root.failed ? "common" : "primary"
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 40
-                radius: Styling.radius(20)
-                enableShadow: root.listening
-                scale: root.listening ? 1 + Math.min(0.18, VoiceService.level * 0.25) : 1
+            // Mic in a Ring that follows the input level
+            Ring {
+                id: badge
+                width: Space.controlM
+                height: Space.controlM
+                anchors.verticalCenter: parent.verticalCenter
+                value: root.listening ? Math.min(1, VoiceService.level * 1.4) : (root.transcribing ? 0.25 : 0)
+                rotation: 0
 
-                Behavior on scale {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: 80
-                        easing.type: Easing.OutQuad
-                    }
+                RotationAnimation on rotation {
+                    running: root.transcribing && root.revealed
+                    from: 0
+                    to: 360
+                    duration: 900
+                    loops: Animation.Infinite
+                    onStopped: badge.rotation = 0
                 }
 
                 Text {
-                    anchors.centerIn: parent
-                    text: root.transcribing ? Icons.circleNotch : root.badgeIcon()
+                    text: root.badgeIcon()
+                    rotation: -badge.rotation
                     font.family: Icons.font
-                    font.pixelSize: 20
-                    color: root.failed ? Colors.error : micBadge.item
-
-                    RotationAnimation on rotation {
-                        running: root.transcribing && root.revealed
-                        from: 0
-                        to: 360
-                        duration: 900
-                        loops: Animation.Infinite
-                    }
-                    onTextChanged: rotation = 0
+                    font.pixelSize: Type.iconSize("body")
+                    color: root.failed ? Colors.error : (root.listening ? Type.accent : Type.secondary)
                 }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
+            Column {
+                id: titles
+                anchors.left: badge.right
+                anchors.leftMargin: Space.m
+                anchors.right: meta.left
+                anchors.rightMargin: Space.m
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 1
 
-                Text {
-                    Layout.fillWidth: true
+                KitText {
+                    width: parent.width
+                    role: "title"
+                    color: root.failed ? Colors.error : Type.text
                     text: I18n.t(VoiceModel.statusKey({
                         state: root.voiceState,
                         target: VoiceService.target,
                         error: VoiceService.error
                     }) || "voice.status.listening")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(1)
-                    font.weight: Font.DemiBold
-                    color: root.failed ? Colors.error : Colors.overBackground
-                    elide: Text.ElideRight
                 }
-
-                Text {
-                    Layout.fillWidth: true
+                KitText {
+                    width: parent.width
+                    role: "secondary"
                     text: I18n.t(root.dictation ? "voice.target.dictation" : "voice.target.ai")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
-                    elide: Text.ElideRight
                 }
             }
 
-            // Language badge
-            StyledRect {
+            Row {
+                id: meta
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Space.s
                 visible: !root.failed
-                variant: "common"
-                Layout.preferredHeight: 24
-                Layout.preferredWidth: langText.implicitWidth + 16
-                radius: Styling.radius(-4)
 
-                Text {
-                    id: langText
-                    anchors.centerIn: parent
+                KeyHint {
+                    anchors.verticalCenter: parent.verticalCenter
                     text: VoiceModel.languageBadge(VoiceService.language)
-                    font.family: Config.theme.monoFont
-                    font.pixelSize: Styling.monoFontSize(-3)
-                    font.weight: Font.Bold
-                    color: Colors.primary
                 }
-            }
-
-            Text {
-                visible: !root.failed
-                text: VoiceModel.formatElapsed(VoiceService.elapsedMs)
-                font.family: Config.theme.monoFont
-                font.pixelSize: Styling.monoFontSize(-1)
-                color: root.listening ? Colors.overBackground : Colors.overSurfaceVariant
-                Layout.minimumWidth: 36
-                horizontalAlignment: Text.AlignRight
+                KitText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "secondary"
+                    tabular: true
+                    color: root.listening ? Type.text : Type.secondary
+                    text: VoiceModel.formatElapsed(VoiceService.elapsedMs)
+                }
             }
         }
 
         VoiceBars {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 44
+            width: parent.width
+            height: Space.xxl + Space.s
             visible: !root.showPreview && !root.failed
             bands: VoiceService.bands
             speech: VoiceService.speech
@@ -167,37 +144,22 @@ NotchPanel {
         }
 
         // Transcript preview
-        StyledRect {
-            variant: "common"
-            Layout.fillWidth: true
-            Layout.preferredHeight: previewText.implicitHeight + 20
+        KitText {
+            width: parent.width
             visible: root.showPreview
-            radius: Styling.radius(-2)
-
-            Text {
-                id: previewText
-                anchors.fill: parent
-                anchors.margins: 10
-                text: VoiceService.text
-                wrapMode: Text.Wrap
-                maximumLineCount: 4
-                elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
-                color: Colors.overBackground
-            }
+            role: "body"
+            text: VoiceService.text
+            wrapMode: Text.Wrap
+            maximumLineCount: 4
         }
 
-        Text {
-            Layout.fillWidth: true
+        KitText {
+            width: parent.width
             visible: text !== ""
+            role: "caption"
             text: root.hintText()
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
-            opacity: 0.85
         }
     }
 }

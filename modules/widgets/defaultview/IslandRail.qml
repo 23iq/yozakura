@@ -1,11 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell.Widgets
 import qs.modules.services
 import qs.modules.theme
 import qs.modules.components
 import qs.config
+import qs.modules.components.kit
 
 // Middle of an upright island (notch on a side edge), top to bottom: the
 // avatar, a hairline, the media disc (album art, or the play state; its
@@ -48,20 +48,15 @@ Column {
         readonly property string art: root.player?.trackArtUrl ?? ""
         readonly property bool playing: root.player?.isPlaying ?? false
 
-        ClippingRectangle {
+        // The artwork as an Avatar inside a Ring that is full while playing
+        Ring {
             anchors.fill: parent
-            radius: width / 2
-            color: Colors.surface
-            border.width: media.playing ? 2 : 0
-            border.color: Colors.primary
-            Image {
-                anchors.fill: parent
+            value: media.playing ? 1 : 0
+            Avatar {
+                width: media.width - Space.stroke * 2 - 2
+                height: width
                 source: media.art
-                visible: media.art !== ""
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                sourceSize.width: width * 2
-                sourceSize.height: height * 2
+                icon: ""
             }
         }
         Text {
@@ -69,8 +64,8 @@ Column {
             visible: media.art === "" || mediaHover.hovered
             text: media.playing ? Icons.pause : Icons.play
             font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: media.art === "" ? Colors.primary : Colors.overBackground
+            font.pixelSize: Type.iconSize("caption")
+            color: media.art === "" ? Type.accent : Type.text
             style: Text.Outline
             styleColor: media.art === "" ? "transparent" : Colors.background
         }
