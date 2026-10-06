@@ -92,6 +92,8 @@ func (p *ansiParser) escape(rs []rune, i int) int {
 			p.sgr(string(rs[i+2 : j]))
 		}
 		return j + 1
+	case '(', ')', '*', '+', '#':
+		return min(i+3, len(rs))
 	case ']', 'P', '_', '^', 'X':
 		for j := i + 2; j < len(rs); j++ {
 			if rs[j] == 0x07 {
@@ -111,13 +113,20 @@ func (p *ansiParser) sgr(params string) {
 		p.cur = Span{}
 		return
 	}
-	parts := strings.Split(strings.ReplaceAll(params, ":", ";"), ";")
-	nums := make([]int, len(parts))
-	for k, s := range parts {
-		nums[k], _ = strconv.Atoi(s)
-	}
-	for k := 0; k < len(nums); k++ {
-		n := nums[k]
+	groups := strings.Split(params, ";")
+	for k := 0; k < len(groups); k++ {
+		sub := strings.Split(groups[k], ":")
+		n, _ := strconv.Atoi(sub[0])
+		if len(sub) > 1 {
+			// Colon form (38:2::r:g:b, 4:3): one group carries its own
+			// arguments; empty fields (colour space id) are skipped.
+			if n == 38 || n == 48 {
+				p.setColor(n, colonArgs(sub[1:]))
+			} else if n == 4 {
+				p.cur.Underline = true
+			}
+			continue
+		}
 		switch {
 		case n == 0:
 			p.cur = Span{}
@@ -146,16 +155,50 @@ func (p *ansiParser) sgr(params string) {
 		case n >= 100 && n <= 107:
 			p.cur.BG = p.table[n-100+8]
 		case n == 38 || n == 48:
-			col, used := p.extended(nums[k+1:])
-			k += used
-			if col != "" {
-				if n == 38 {
-					p.cur.FG = col
-				} else {
-					p.cur.BG = col
-				}
+			rest := groups[k+1:]
+			if len(rest) > 4 {
+				rest = rest[:4]
 			}
+			args := make([]int, len(rest))
+			for j, g := range rest {
+				args[j], _ = strconv.Atoi(g)
+			}
+			col, used := p.extended(args)
+			k += used
+			p.assign(n, col)
 		}
+		// Faint (2), reverse (7), strikethrough (9) and the rest are
+		// ignored: Span cannot express them and they print no text.
+	}
+}
+
+func colonArgs(fields []string) []int {
+	var out []int
+	for _, f := range fields {
+		if f != "" {
+			v, _ := strconv.Atoi(f)
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+func (p *ansiParser) setColor(n int, args []int) {
+	// 38:2:cs:r:g:b keeps only the last three after the colour space id.
+	if len(args) >= 5 && args[0] == 2 {
+		args = append([]int{2}, args[len(args)-3:]...)
+	}
+	col, _ := p.extended(args)
+	p.assign(n, col)
+}
+
+func (p *ansiParser) assign(n int, col string) {
+	switch {
+	case col == "":
+	case n == 38:
+		p.cur.FG = col
+	default:
+		p.cur.BG = col
 	}
 }
 

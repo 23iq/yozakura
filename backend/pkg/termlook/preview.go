@@ -3,6 +3,7 @@ package termlook
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -18,6 +19,29 @@ type PreviewResult struct {
 	Right  []Span
 	Exact  bool
 	Engine string
+	// Reason says why the preview is approximate: "engine_missing",
+	// "git_missing", "timeout" or "error". Empty when Exact.
+	Reason string
+}
+
+var (
+	errEngineMissing = errors.New("engine not installed")
+	errGitMissing    = errors.New("git not installed")
+)
+
+// engineBudget bounds each engine run.
+const engineBudget = 3 * time.Second
+
+func reasonOf(err error) string {
+	switch {
+	case errors.Is(err, errEngineMissing):
+		return "engine_missing"
+	case errors.Is(err, errGitMissing):
+		return "git_missing"
+	case errors.Is(err, context.DeadlineExceeded):
+		return "timeout"
+	}
+	return "error"
 }
 
 // Preview renders preset p for cfg's engine, using the real engine in a
@@ -27,11 +51,12 @@ func Preview(ctx context.Context, cfg Config, p Preset, pal Palette, env Env, wi
 	if width < 20 {
 		width = 80
 	}
-	if res, err := previewExact(ctx, cfg, p, pal, env, width); err == nil {
+	res, err := previewExact(ctx, cfg, p, pal, env, width)
+	if err == nil {
 		return res, nil
 	}
 	left, right := RenderApprox(p, pal)
-	return PreviewResult{Left: left, Right: right, Engine: cfg.Engine}, nil
+	return PreviewResult{Left: left, Right: right, Engine: cfg.Engine, Reason: reasonOf(err)}, nil
 }
 
 func previewExact(ctx context.Context, cfg Config, p Preset, pal Palette, env Env, width int) (PreviewResult, error) {
@@ -41,10 +66,8 @@ func previewExact(ctx context.Context, cfg Config, p Preset, pal Palette, env En
 	}
 	path, ok := env.look(bin)
 	if !ok {
-		return PreviewResult{}, fmt.Errorf("%s not installed", bin)
+		return PreviewResult{}, fmt.Errorf("%s: %w", bin, errEngineMissing)
 	}
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel()
 	dir, err := fixtureDir(ctx, env)
 	if err != nil {
 		return PreviewResult{}, err
@@ -91,6 +114,8 @@ func withArg(a []string, i int, v string) []string {
 }
 
 func runEngine(ctx context.Context, bin string, args []string, cfgFile, home string) (string, error) {
+	ctx, cancel := context.WithTimeout(ctx, engineBudget)
+	defer cancel()
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Env = []string{
 		"PATH=" + os.Getenv("PATH"), "HOME=" + home, "TERM=xterm-256color", "COLORTERM=truecolor",
@@ -99,6 +124,9 @@ func runEngine(ctx context.Context, bin string, args []string, cfgFile, home str
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
 		return "", fmt.Errorf("%s: %w: %s", filepath.Base(bin), err, stderr.String())
 	}
 	return stdout.String(), nil

@@ -15,13 +15,13 @@ func TestFishHookGolden(t *testing.T) {
 		want string
 	}{
 		{"starship none", Config{Engine: EngineStarship, Greeting: "none"},
-			"if status is-interactive\n    set -gx STARSHIP_CONFIG '/c/s.toml'\n    starship init fish | source\nend\nset -g fish_greeting\n"},
+			"if status is-interactive\n    if type -q starship\n        set -gx STARSHIP_CONFIG '/c/s.toml'\n        starship init fish | source\n    end\nend\nset -g fish_greeting\n"},
 		{"starship fastfetch", Config{Engine: EngineStarship, Greeting: "fastfetch"},
-			"if status is-interactive\n    set -gx STARSHIP_CONFIG '/c/s.toml'\n    starship init fish | source\nend\nfunction fish_greeting\n    fastfetch\nend\n"},
+			"if status is-interactive\n    if type -q starship\n        set -gx STARSHIP_CONFIG '/c/s.toml'\n        starship init fish | source\n    end\nend\nfunction fish_greeting\n    fastfetch\nend\n"},
 		{"omp none", Config{Engine: EngineOMP, Greeting: "none"},
-			"if status is-interactive\n    oh-my-posh init fish --config '/c/s.toml' | source\nend\nset -g fish_greeting\n"},
+			"if status is-interactive\n    if type -q oh-my-posh\n        oh-my-posh init fish --config '/c/s.toml' | source\n    end\nend\nset -g fish_greeting\n"},
 		{"omp fastfetch", Config{Engine: EngineOMP, Greeting: "fastfetch"},
-			"if status is-interactive\n    oh-my-posh init fish --config '/c/s.toml' | source\nend\nfunction fish_greeting\n    fastfetch\nend\n"},
+			"if status is-interactive\n    if type -q oh-my-posh\n        oh-my-posh init fish --config '/c/s.toml' | source\n    end\nend\nfunction fish_greeting\n    fastfetch\nend\n"},
 	}
 	for _, c := range cases {
 		got := FishHook(c.cfg, "/c/s.toml")
@@ -113,5 +113,36 @@ func TestApplyRejectsBadInput(t *testing.T) {
 	}
 	if _, err := os.Stat(HookFile(env)); !os.IsNotExist(err) {
 		t.Error("hook must not exist after failed Apply")
+	}
+}
+
+func TestFishHookRejectsControlChars(t *testing.T) {
+	if FishHook(Config{Engine: EngineStarship}, "/a\nb") != "" {
+		t.Error("newline path must yield no hook")
+	}
+}
+
+func TestFishHookSilentWithoutEngine(t *testing.T) {
+	fish, err := exec.LookPath("fish")
+	if err != nil {
+		t.Skip("fish not installed")
+	}
+	dir := t.TempDir()
+	for _, eng := range []string{EngineStarship, EngineOMP} {
+		f := filepath.Join(dir, eng+".fish")
+		if err := os.WriteFile(f, []byte(FishHook(Config{Engine: eng, Greeting: "none"}, "/c/x.toml")), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		cmd := exec.Command(fish, "--no-config", "-i", "-c", "source "+f)
+		cmd.Env = []string{"PATH=" + t.TempDir(), "HOME=" + dir}
+		cmd.Path = fish
+		var out, errb strings.Builder
+		cmd.Stdout, cmd.Stderr = &out, &errb
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("%s: %v: %s", eng, err, errb.String())
+		}
+		if out.String() != "" || errb.String() != "" {
+			t.Errorf("%s: output %q stderr %q", eng, out.String(), errb.String())
+		}
 	}
 }

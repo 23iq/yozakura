@@ -28,6 +28,11 @@ func TestParseANSI(t *testing.T) {
 		{"markers", "%{\x1b[1m%}a%{\x1b[0m%}\\[\\]b", [][]Span{{{Text: "a", Bold: true}, {Text: "b"}}}},
 		{"lines", "a\r\n\x1b[1mb\nc", [][]Span{{{Text: "a"}}, {{Text: "b", Bold: true}}, {{Text: "c", Bold: true}}}},
 		{"truncated", "a\x1b[38;2;1", [][]Span{{{Text: "a"}}}},
+		{"colon truecolor", "\x1b[38:2::1:2:3;48:2:4:5:6mx\x1b[38:5:196my",
+			[][]Span{{{Text: "x", FG: "#010203", BG: "#040506"}, {Text: "y", FG: "#ff0000", BG: "#040506"}}}},
+		{"colon underline style", "\x1b[4:3mu", [][]Span{{{Text: "u", Underline: true}}}},
+		{"faint reverse strike ignored", "\x1b[2;7;9mz\x1b[0m", [][]Span{{{Text: "z"}}}},
+		{"two byte esc", "a\x1bcb\x1b=c\x1b(Bd", [][]Span{{{Text: "abcd"}}}},
 		{"nerd glyph", "\x1b[1m\U0000e0b0\x1b[0m", [][]Span{{{Text: "\U0000e0b0", Bold: true}}}},
 	}
 	for _, c := range cases {

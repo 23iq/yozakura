@@ -2,6 +2,7 @@ package termlook
 
 import (
 	"context"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -96,7 +97,7 @@ func TestPreviewFallsBackWithoutEngine(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if res.Exact || res.Engine != eng || len(res.Left) != 1 || len(res.Right) == 0 {
+		if res.Exact || res.Reason != "engine_missing" || res.Engine != eng || len(res.Left) != 1 || len(res.Right) == 0 {
 			t.Errorf("%s: %+v", eng, res)
 		}
 	}
@@ -116,8 +117,8 @@ func TestPreviewRealStarship(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Exact {
-		t.Fatal("expected an exact preview")
+	if !res.Exact || res.Reason != "" {
+		t.Fatalf("expected an exact preview, reason %q", res.Reason)
 	}
 	left := plain(res.Left[0])
 	for _, want := range []string{"yozakura", "main", "❯"} {
@@ -136,6 +137,25 @@ func TestPreviewRealStarship(t *testing.T) {
 			if strings.ContainsRune(s.Text, 0x1b) {
 				t.Errorf("escape leaked: %q", s.Text)
 			}
+		}
+	}
+}
+
+func TestPreviewReasons(t *testing.T) {
+	env := testEnv(t)
+	env.LookPath = func(b string) (string, bool) {
+		if b == "starship" {
+			return "/bin/true", true
+		}
+		return "", false
+	}
+	res, _ := Preview(context.Background(), Config{Engine: EngineStarship}, presetByID(t, "zen"), fixturePalette(t), env, 80)
+	if res.Exact || res.Reason != "git_missing" {
+		t.Errorf("reason = %q", res.Reason)
+	}
+	for err, want := range map[error]string{context.DeadlineExceeded: "timeout", errEngineMissing: "engine_missing", os.ErrClosed: "error"} {
+		if got := reasonOf(err); got != want {
+			t.Errorf("reasonOf(%v) = %s", err, got)
 		}
 	}
 }
