@@ -26,7 +26,8 @@ from common import BASELINES, REPO, fail, find_qt6_tool, find_tool, info, ok, sk
 
 BASELINE = BASELINES / "qmllint.json"
 # Not Quickshell QML (SDDM greeter theme): parse-checked only.
-LINT_EXCLUDE = ("assets/sddm/",)
+# tools/render: harness-only render sheets (their qs.* tree lives in the test harness).
+LINT_EXCLUDE = ("assets/sddm/", "tools/render/")
 # Only these qmllint levels gate; "info" (e.g. unused-imports) is advisory.
 GATING = {"warning", "critical"}
 

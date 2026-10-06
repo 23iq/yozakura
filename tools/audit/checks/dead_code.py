@@ -103,9 +103,10 @@ def run(cfg: dict) -> list[Issue]:
 
     scope = tuple(c.get("scope", ["modules/", "config/"]))
     ignore = set(c.get("ignore", {}))
+    dirs = tuple(p for p in ignore if p.endswith("/"))  # "dir/" ignores the whole tree
     issues = []
     for f in files:
-        if f in alive or not f.startswith(scope) or f in ignore:
+        if f in alive or not f.startswith(scope) or f in ignore or (dirs and f.startswith(dirs)):
             continue
         users = sorted(incoming.get(f, set()))
         if users:
