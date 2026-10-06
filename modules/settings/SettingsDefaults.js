@@ -18,6 +18,7 @@
 .import "../../config/defaults/notifications.js" as NotificationsDefaults
 .import "../../config/defaults/apps.js" as AppsDefaults
 .import "../../config/defaults/specials.js" as SpecialsDefaults
+.import "../../config/defaults/terminal.js" as TerminalDefaults
 .import "SchemaUtil.js" as SchemaUtil
 
 // Default value of any settings key, read from config/defaults/*.js (the
@@ -44,6 +45,7 @@ var DOMAINS = {
     "notifications": NotificationsDefaults.data,
     "apps": AppsDefaults.data,
     "specials": SpecialsDefaults.data,
+    "terminal": TerminalDefaults.data,
     "wallpaper": {
         "matugenScheme": "scheme-tonal-spot",
         "activeColorPreset": "",

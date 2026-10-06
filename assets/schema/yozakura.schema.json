@@ -7508,44 +7508,92 @@
       "x-file": "config/terminal.json",
       "properties": {
         "enabled": {
-          "title": "Enabled",
+          "title": "Use this prompt in fish",
           "type": "boolean",
           "default": false,
-          "description": "Write the prompt config and the fish hook (fish conf.d). Off removes the hook; config.fish is never touched. Machine-local: presets never switch the prompt on or off.",
+          "description": "Adds a small hook in fish's conf.d. Your config.fish is never touched; turning this off removes the hook.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.enabled",
+            "control": "toggle",
+            "keywords": "prompt fish enable hook conf.d"
+          },
           "x-local": true
         },
         "engine": {
-          "title": "Engine",
+          "title": "Prompt engine",
           "type": "string",
           "default": "starship",
-          "description": "Prompt engine. Machine-local: presets never switch engines.",
+          "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.engine",
+            "control": "selector",
+            "keywords": "prompt engine starship oh-my-posh omp"
+          },
           "enum": [
             "starship",
             "ohmyposh"
           ],
+          "x-enumLabels": {
+            "starship": "Starship",
+            "ohmyposh": "Oh My Posh"
+          },
           "x-local": true
         },
         "prompt": {
           "title": "Prompt",
           "type": "string",
           "default": "sakura-powerline",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.prompt",
+            "entry": "terminal.look",
+            "entryTitle": "Prompt",
+            "keywords": "prompt starship oh-my-posh fish powerline nerd font preview theme shell look"
+          },
           "description": "Prompt preset id (assets/terminal/prompts/<id>.json; list them with `yozakura term list`)."
         },
         "greeting": {
           "title": "Greeting",
           "type": "string",
           "default": "none",
-          "description": "What fish prints when a terminal opens.",
+          "description": "What fish shows when a terminal opens.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.greeting",
+            "control": "selector",
+            "keywords": "greeting fastfetch welcome fish_greeting"
+          },
           "enum": [
             "none",
             "fastfetch"
-          ]
+          ],
+          "x-enumLabels": {
+            "none": "Nothing",
+            "fastfetch": "fastfetch"
+          }
         },
         "padding": {
-          "title": "Padding",
+          "title": "Window padding",
           "type": "number",
           "default": 12,
-          "description": "Kitty window padding.",
+          "description": "Space between the kitty window edge and the text.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.padding",
+            "control": "slider",
+            "step": 1,
+            "unit": "px",
+            "keywords": "kitty padding margin window spacing",
+            "min": 0,
+            "max": 64
+          },
           "minimum": 0,
           "maximum": 64,
           "x-unit": "px"
@@ -7554,7 +7602,15 @@
           "title": "Cursor shape",
           "type": "string",
           "default": "beam",
-          "description": "Kitty cursor shape.",
+          "description": "The kitty cursor.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.cursor",
+            "control": "custom",
+            "component": "CursorShapeChips",
+            "keywords": "kitty cursor shape block beam underline caret"
+          },
           "enum": [
             "block",
             "beam",
@@ -7562,10 +7618,17 @@
           ]
         },
         "cursorBlink": {
-          "title": "Cursor blink",
+          "title": "Blinking cursor",
           "type": "boolean",
           "default": true,
-          "description": "Blink the kitty cursor."
+          "description": "Blink the kitty cursor while you're not typing.",
+          "x-settings": {
+            "category": "terminal",
+            "section": "look",
+            "label": "prefs.term.look.blink",
+            "control": "toggle",
+            "keywords": "kitty cursor blink blinking"
+          }
         }
       },
       "additionalProperties": false

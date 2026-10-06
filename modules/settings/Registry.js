@@ -49,6 +49,8 @@ var EDITORS = {
     "UpdatesStatus": "editors/UpdatesStatus.qml",
     "OcrLanguages": "editors/OcrLanguages.qml",
     "TerminalGlassLink": "editors/TerminalGlassLink.qml",
+    "TerminalLookEditor": "editors/TerminalLookEditor.qml",
+    "CursorShapeChips": "editors/CursorShapeChips.qml",
     "AppThemingEditor": "editors/AppThemingEditor.qml",
     "NotificationsStatus": "editors/NotificationsStatus.qml"
 };

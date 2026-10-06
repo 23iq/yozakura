@@ -172,6 +172,7 @@ MIRROR = [
     "modules/services/ai/Automations.js",
     "modules/routines",
     "modules/extras",
+    "modules/terminal",
     "modules/theme/Styling.qml",
     "modules/theme/Glass.qml",
     "modules/theme/GlassModel.js",
@@ -527,6 +528,7 @@ QtObject {
     signal queued(var ids)
     function entry(id) { return null }
     function displayName(id) { return id }
+    function cardState(id) { return "selectable" }
     function load() {}
     function refresh() {}
     function install(ids, confirmMultilib) {}
@@ -535,7 +537,30 @@ QtObject {
     function dismissUnavailable() {}
     function cancel(job) {}
     function retryWithUpgrade(job) {}
+    function setLoginShell(shell) {}
     function fetchLog(job, cb) { cb("", "") }
+}"""
+# Terminal look (modules/terminal): idle stand-in; tests/lib/terminal_env.py swaps in the real one.
+TERMINAL_LOOK_STUB = """pragma Singleton
+QtObject {
+    property var presets: []
+    property var status: null
+    property var previews: ({})
+    property string error: ""
+    property string engine: "starship"
+    property string prompt: "sakura-powerline"
+    property bool fishInstalled: true
+    property string fontFamily: "monospace"
+    property real fontPixelSize: 15
+    function load() {}
+    function refreshStatus() {}
+    function previewOf(id, engine) { return undefined }
+    function ensure(id, engine) {}
+    function invalidate() {}
+    function choose(id) {}
+    function installEngine(engine) {}
+    function makeFishDefault() {}
+    function apply() {}
 }"""
 # Exclusive mode card (modules/settings/system): idle stand-in; tests/lib/exclusive_env.py swaps in the real one.
 EXCLUSIVE_STUB = """pragma Singleton
@@ -594,6 +619,7 @@ class SettingsEnv:
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
                                               "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "TerminalLookService": TERMINAL_LOOK_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -617,7 +643,7 @@ class SettingsEnv:
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
                   "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
-                  "modules/extras", "modules/settings/extras"]:
+                  "modules/extras", "modules/settings/extras", "modules/terminal"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

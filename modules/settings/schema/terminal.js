@@ -10,8 +10,92 @@ var category = {
     "icon": "terminal",
     "title": "prefs.cat.terminal",
     "description": "prefs.cat.terminal.desc",
-    "keywords": "terminal kitty command apps launch shell theming gtk qt discord spotify telegram firefox papirus neovim sddm",
+    "keywords": "terminal prompt starship oh-my-posh fish cursor padding kitty command apps launch shell theming gtk qt discord spotify telegram firefox papirus neovim sddm",
     "sections": [
+        {
+            "id": "look",
+            "title": "prefs.term.section.look",
+            "entries": [
+                {
+                    "id": "terminal.look",
+                    "type": "custom",
+                    "component": "TerminalLookEditor",
+                    "keys": ["terminal.prompt", "terminal.enabled"],
+                    "label": "prefs.term.look.prompt",
+                    "description": "prefs.term.look.prompt.desc",
+                    "keywords": "prompt starship oh-my-posh fish powerline nerd font preview theme shell look"
+                },
+                {
+                    "key": "terminal.enabled",
+                    "type": "toggle",
+                    "label": "prefs.term.look.enabled",
+                    "description": "prefs.term.look.enabled.desc",
+                    "keywords": "prompt fish enable hook conf.d"
+                },
+                {
+                    "key": "terminal.engine",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "starship",
+                            "label": "prefs.term.look.engine.starship",
+                            "icon": "lightning"
+                        },
+                        {
+                            "value": "ohmyposh",
+                            "label": "prefs.term.look.engine.ohmyposh",
+                            "icon": "magicWand"
+                        }
+                    ],
+                    "label": "prefs.term.look.engine",
+                    "description": "prefs.term.look.engine.desc",
+                    "keywords": "prompt engine starship oh-my-posh omp"
+                },
+                {
+                    "key": "terminal.greeting",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "none",
+                            "label": "prefs.term.look.greeting.none"
+                        },
+                        {
+                            "value": "fastfetch",
+                            "label": "prefs.term.look.greeting.fastfetch"
+                        }
+                    ],
+                    "label": "prefs.term.look.greeting",
+                    "description": "prefs.term.look.greeting.desc",
+                    "keywords": "greeting fastfetch welcome fish_greeting"
+                },
+                {
+                    "key": "terminal.padding",
+                    "type": "slider",
+                    "min": 0,
+                    "max": 64,
+                    "step": 1,
+                    "unit": "px",
+                    "label": "prefs.term.look.padding",
+                    "description": "prefs.term.look.padding.desc",
+                    "keywords": "kitty padding margin window spacing"
+                },
+                {
+                    "key": "terminal.cursorShape",
+                    "type": "custom",
+                    "component": "CursorShapeChips",
+                    "label": "prefs.term.look.cursor",
+                    "description": "prefs.term.look.cursor.desc",
+                    "keywords": "kitty cursor shape block beam underline caret"
+                },
+                {
+                    "key": "terminal.cursorBlink",
+                    "type": "toggle",
+                    "label": "prefs.term.look.blink",
+                    "description": "prefs.term.look.blink.desc",
+                    "keywords": "kitty cursor blink blinking"
+                }
+            ]
+        },
         {
             "id": "terminal",
             "title": "system.terminal.title",

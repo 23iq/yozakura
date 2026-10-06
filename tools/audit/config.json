@@ -34,7 +34,8 @@
   "allowMissing": {},
   "allowUnused": {},
   "usedPrefixes": {
-   "notify.": "summaryKey/bodyKey/labelKey/args of backend notify.request (timers, tasks, usage, routines in backend/pkg/svc), translated by modules/notifications/NotifyRequest.js"
+   "notify.": "summaryKey/bodyKey/labelKey/args of backend notify.request (timers, tasks, usage, routines in backend/pkg/svc), translated by modules/notifications/NotifyRequest.js",
+   "term.prompt.": "prompt preset descriptions of the backend term.presets (assets/terminal/prompts/*.json description keys), shown by modules/terminal/PromptGallery.qml"
   },
   "keyDataFiles": [
    "assets/commands/commands.json"
