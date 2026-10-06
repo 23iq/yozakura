@@ -1,8 +1,11 @@
 package yozakura
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
+
+	yipc "yozakura/backend/pkg/yozd/ipc"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -10,11 +13,11 @@ import (
 const mcpOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,
  "modes":[{"width":2560,"height":1440,"refresh":144},{"width":2560,"height":1440,"refresh":165},{"width":1920,"height":1080,"refresh":60}]}]`
 
-func TestDisplaysApplyNeverPersistsWithoutKeep(t *testing.T) {
+func TestDisplaysApplyNeverKeepsWithoutKeep(t *testing.T) {
 	d, _, ipc := newDeps(t)
 	ipc.result["displays.list"] = mcpOutputs
 	ipc.result["displays.apply"] = `{"session":"s1","revertIn":15,"live":true}`
-	ipc.result["displays.keep"] = `{"ok":true}`
+	ipc.result["displays.keep"] = `{"ok":true,"saved":true}`
 	ipc.result["displays.revert"] = `{"ok":true}`
 
 	m := structured(t, callTool(t, d, "displays_apply", `{"outputs":[{"name":"DP-1","mode":"2560x1440@165"}]}`))
@@ -24,21 +27,21 @@ func TestDisplaysApplyNeverPersistsWithoutKeep(t *testing.T) {
 	for _, c := range ipc.calls {
 		assert.NotEqual(t, "displays.keep", c.Method, "no keep without keep:true")
 	}
-	_, err := os.Stat(d.ConfigFile("displays"))
-	assert.True(t, os.IsNotExist(err), "layout not saved")
 
+	// keep: the daemon saves the layout (MCP writes nothing itself)
 	m = structured(t, callTool(t, d, "displays_apply", `{"keep":true,"outputs":[{"name":"DP-1","mode":"1920x1080","scale":1.25}]}`))
 	assert.Equal(t, "kept", m["state"])
+	assert.Equal(t, true, m["saved"])
 	assert.Equal(t, "displays.keep", ipc.calls[len(ipc.calls)-1].Method)
-	saved, err := os.ReadFile(d.ConfigFile("displays"))
-	assert.NoError(t, err)
-	assert.Contains(t, string(saved), `"id": "LG|27GP|1"`)
-	assert.Contains(t, string(saved), `"scale": 1.25`)
+	_, err := os.Stat(d.ConfigFile("displays"))
+	assert.True(t, os.IsNotExist(err), "the daemon saves, not the MCP server")
 
 	m = structured(t, callTool(t, d, "displays_confirm", `{"session":"s1","keep":false}`))
 	assert.Equal(t, "reverted", m["state"])
-	m = structured(t, callTool(t, d, "displays_confirm", `{"session":"s1","keep":true}`))
+	// any session (also one started elsewhere or before a restart) is saved by the daemon
+	m = structured(t, callTool(t, d, "displays_confirm", `{"session":"gone","keep":true}`))
 	assert.Equal(t, "kept", m["state"])
+	assert.Equal(t, true, m["saved"])
 }
 
 func TestDisplaysApplyRejects(t *testing.T) {
@@ -148,26 +151,22 @@ func TestConfigSetKeyboardIndexUsesCompositorValues(t *testing.T) {
 const twoOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,"modes":[{"width":2560,"height":1440,"refresh":165},{"width":2560,"height":1440,"refresh":144}]},
  {"id":"DEL|U27|2","name":"HDMI-A-1","enabled":true,"width":1920,"height":1080,"refresh":60,"x":2560,"scale":1,"modes":[{"width":1920,"height":1080,"refresh":60}]}]`
 
-func TestDisplaysConfirmSavesOnlyTouchedOutputs(t *testing.T) {
-	d, _, ipc := newDeps(t)
-	ipc.result["displays.list"] = twoOutputs
-	ipc.result["displays.apply"] = `{"session":"s-two","revertIn":15,"live":true}`
-	ipc.result["displays.keep"] = `{"ok":true}`
+func TestPersistMonitorsMergesTouchedOutputs(t *testing.T) {
+	d, _, _ := newDeps(t)
+	_, store, err := d.catalog()
+	assert.NoError(t, err)
+	var outs []yipc.Output
+	assert.NoError(t, json.Unmarshal([]byte(twoOutputs), &outs))
 	// an existing entry with a field this code does not know
 	assert.NoError(t, os.WriteFile(d.ConfigFile("displays"), []byte(`{"monitors":[{"id":"LG|27GP|1","name":"DP-1","note":"mine","refresh":144}]}`), 0o644))
 
-	structured(t, callTool(t, d, "displays_apply", `{"outputs":[{"name":"DP-1","mode":"2560x1440@165"}]}`))
-	m := structured(t, callTool(t, d, "displays_confirm", `{"session":"s-two","keep":true}`))
-	assert.Equal(t, true, m["saved"])
+	cfg := OutputConfigOf(outs[0])
+	cfg.Refresh = 165
+	assert.NoError(t, PersistMonitors(store, []yipc.OutputConfig{cfg}, outs))
 	saved, _ := os.ReadFile(d.ConfigFile("displays"))
 	assert.Contains(t, string(saved), `"refresh": 165`)
 	assert.Contains(t, string(saved), `"note": "mine"`, "unknown fields survive")
 	assert.NotContains(t, string(saved), "HDMI-A-1", "untouched output is not written")
-
-	// unknown session (server restarted): kept live, not saved
-	m = structured(t, callTool(t, d, "displays_confirm", `{"session":"gone","keep":true}`))
-	assert.Equal(t, false, m["saved"])
-	assert.Contains(t, m["note"], "not saved")
 }
 
 func TestKeyboardSetValidatesBeforeWriting(t *testing.T) {

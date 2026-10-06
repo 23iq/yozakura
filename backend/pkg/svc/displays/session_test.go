@@ -63,10 +63,10 @@ func TestSessionKeepStopsTimer(t *testing.T) {
 	a := &fakeApplier{}
 	m := NewManager(a)
 	s, _ := m.Start(t0, snap, cand)
-	if _, err := m.Keep("nope"); err == nil {
+	if _, _, err := m.Keep("nope"); err == nil {
 		t.Fatal("unknown id must fail")
 	}
-	if kept, err := m.Keep(s.ID); err != nil || kept.State != StateKept || kept.ID != s.ID {
+	if kept, _, err := m.Keep(s.ID); err != nil || kept.State != StateKept || kept.ID != s.ID {
 		t.Fatalf("keep = %+v, %v", kept, err)
 	}
 	if m.Tick(t0.Add(time.Hour)) != nil || len(a.applied) != 1 {
@@ -105,7 +105,7 @@ func TestSecondStartRevertsFirst(t *testing.T) {
 	if !reflect.DeepEqual(a.applied, want) {
 		t.Fatalf("applied = %+v\nwant %+v", a.applied, want)
 	}
-	if _, err := m.Keep(first.ID); err == nil {
+	if _, _, err := m.Keep(first.ID); err == nil {
 		t.Fatal("the replaced session must be gone")
 	}
 }
@@ -134,11 +134,32 @@ func TestNotSupportedSessionIsNotLive(t *testing.T) {
 	if err != nil || s.Live || s.State != StatePending {
 		t.Fatalf("session = %+v, %v", s, err)
 	}
-	if exp := m.Tick(t0.Add(RevertAfter)); exp == nil || exp.State != StateReverted {
-		t.Fatalf("expired = %+v", exp)
+	// a deferred (Mango) change has no countdown: it waits for keep/revert
+	if exp := m.Tick(t0.Add(time.Hour)); exp != nil {
+		t.Fatalf("non-live session expired: %+v", exp)
+	}
+	if m.Remaining(t0) != 0 {
+		t.Fatal("non-live session has no countdown")
+	}
+	if err := m.Revert(s.ID); err != nil {
+		t.Fatal(err)
 	}
 	if a.calls != 1 {
 		t.Fatalf("non-live revert must not apply: %d calls", a.calls)
+	}
+}
+
+func TestKeepIsIdempotent(t *testing.T) {
+	m := NewManager(&fakeApplier{})
+	s, _ := m.Start(t0, snap, cand)
+	if _, again, err := m.Keep(s.ID); err != nil || again {
+		t.Fatalf("first keep: again=%v err=%v", again, err)
+	}
+	if k, again, err := m.Keep(s.ID); err != nil || !again || k.State != StateKept {
+		t.Fatalf("second keep: %+v again=%v err=%v", k, again, err)
+	}
+	if err := m.Revert(s.ID); err == nil {
+		t.Fatal("a kept session cannot be reverted")
 	}
 }
 

@@ -47,6 +47,7 @@ func fixture(t *testing.T) (hypr, data, home string) {
 		`# monitor = DP-7,preferred,auto,1`,
 		`monitor = DP-3,1920x1080@144.00Hz,2560x0,1.25,transform,1,vrr,2,bitdepth,10`,
 		`monitor=,preferred,auto,auto`,
+		`monitor = desc:LG Electronics 27GP,preferred,auto,1`,
 		`monitor = DP-4,1920x1080@144.00Hz,2560x0,1.25,transform,1,vrr,2`,
 		`monitorv2 {`,
 		`source = ~/.local/share/` + brand.AppID + `/hyprland.conf`,
@@ -69,11 +70,13 @@ func TestScanConflicts(t *testing.T) {
 		rel, _ := filepath.Rel(hypr, c.File)
 		keys = append(keys, rel+":"+strconv.Itoa(c.Line))
 	}
-	want := []string{"conf/hyprland.conf:2", "conf/hyprland.conf:3", "conf/hyprland.conf:4", "hyprland.lua:8", "monitors.lua:1", "monitors.lua:2"}
+	// the catch-all fallback (empty name) and desc: rules are not conflicts:
+	// they never override a connector-named generated rule
+	want := []string{"conf/hyprland.conf:2", "conf/hyprland.conf:5", "hyprland.lua:8", "monitors.lua:1", "monitors.lua:2"}
 	if !reflect.DeepEqual(keys, want) {
 		t.Fatalf("conflicts = %v, want %v", keys, want)
 	}
-	if got[4].Text != `hl.monitor({ output = "DP-1", mode = "2560x1440@240", position = "0x0", scale = 1 })` {
+	if got[3].Text != `hl.monitor({ output = "DP-1", mode = "2560x1440@240", position = "0x0", scale = 1 })` {
 		t.Fatalf("text = %q", got[3].Text)
 	}
 }
@@ -92,13 +95,14 @@ func TestMoveConflictsIdempotent(t *testing.T) {
 	if !reflect.DeepEqual(res.Outputs, wantOut) {
 		t.Fatalf("outputs = %+v\nwant %+v", res.Outputs, wantOut)
 	}
-	if len(res.Moved) != 3 || len(res.Skipped) != 3 || res.Skipped[0].Reason != "unsupported: bitdepth" {
+	if len(res.Moved) != 3 || len(res.Skipped) != 2 || res.Skipped[0].Reason != "unsupported: bitdepth" {
 		t.Fatalf("moved %d skipped %d: %+v", len(res.Moved), len(res.Skipped), res.Skipped)
 	}
 	conf, _ := os.ReadFile(filepath.Join(hypr, "conf", "hyprland.conf"))
 	if !strings.Contains(string(conf), "# "+brand.AppID+": moved monitor = DP-4,") ||
 		!strings.Contains(string(conf), "\nmonitor = DP-3,") ||
-		!strings.Contains(string(conf), "\nmonitor=,preferred,auto,auto\n") {
+		!strings.Contains(string(conf), "\nmonitor=,preferred,auto,auto\n") ||
+		!strings.Contains(string(conf), "\nmonitor = desc:LG Electronics 27GP,") {
 		t.Fatalf("conf after move:\n%s", conf)
 	}
 	lua, _ := os.ReadFile(filepath.Join(hypr, "monitors.lua"))
@@ -111,7 +115,7 @@ func TestMoveConflictsIdempotent(t *testing.T) {
 	}
 
 	again, err := MoveConflicts(hypr, data, home)
-	if err != nil || len(again.Moved) != 0 || len(again.Outputs) != 0 || len(again.Skipped) != 3 {
+	if err != nil || len(again.Moved) != 0 || len(again.Outputs) != 0 || len(again.Skipped) != 2 {
 		t.Fatalf("second move = %+v, %v", again, err)
 	}
 	conf2, _ := os.ReadFile(filepath.Join(hypr, "conf", "hyprland.conf"))

@@ -3160,6 +3160,7 @@
   "prefs.displays.apply_failed": "Could not apply the layout",
   "prefs.displays.conflicts.desc": "They can override the layout set here. Move them and Yozakura takes over those monitors.",
   "prefs.displays.conflicts.move": "Move them here",
+  "prefs.displays.conflicts.skipped": "These rules could not be moved; edit them by hand:",
   "prefs.displays.deferred.title": "Applies after you keep it",
   "prefs.displays.deferred.desc": "This compositor cannot preview a layout. Keep it to apply it, or revert.",
   "prefs.displays.revert": "Revert",

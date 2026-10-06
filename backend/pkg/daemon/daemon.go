@@ -17,6 +17,7 @@ import (
 	"yozakura/backend/pkg/apphooks"
 	exclusivemode "yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/mcp/yozakura"
 	"yozakura/backend/pkg/mods"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/svc"
@@ -55,6 +56,7 @@ import (
 	voicesvc "yozakura/backend/pkg/svc/voice"
 	"yozakura/backend/pkg/svc/wallpaper"
 	"yozakura/backend/pkg/svc/weather"
+	yipc "yozakura/backend/pkg/yozd/ipc"
 )
 
 // Daemon is the unified yozakura process. It owns the IPC server, all
@@ -150,6 +152,14 @@ func New() (*Daemon, error) {
 	d.displays = displays.NewService(d.paths)
 	d.displays.SetExclusiveCheck(func() bool {
 		return exclusivemode.Active(d.displays.HyprDir())
+	})
+	// a kept layout is saved here, whoever keeps it (shell, CLI, MCP)
+	d.displays.SetPersist(func(cand []yipc.OutputConfig, outs []yipc.Output) error {
+		store, err := exclusive.Store()
+		if err != nil {
+			return err
+		}
+		return yozakura.PersistMonitors(store, cand, outs)
 	})
 	d.displays.Register(d.srv)
 	var layoutSrc keyboard.StateSource

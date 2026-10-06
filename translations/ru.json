@@ -3160,6 +3160,7 @@
   "prefs.displays.apply_failed": "Не удалось применить раскладку",
   "prefs.displays.conflicts.desc": "Они могут переопределять раскладку отсюда. Перенесите их, и этими мониторами займётся Yozakura.",
   "prefs.displays.conflicts.move": "Перенести сюда",
+  "prefs.displays.conflicts.skipped": "Эти правила не удалось перенести; измените их вручную:",
   "prefs.displays.deferred.title": "Применится после подтверждения",
   "prefs.displays.deferred.desc": "Этот композитор не умеет показывать раскладку заранее. Оставьте её, чтобы применить, или верните прежнюю.",
   "prefs.displays.revert": "Вернуть",

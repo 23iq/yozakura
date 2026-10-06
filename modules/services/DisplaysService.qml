@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.modules.services
+import qs.modules.globals
 import qs.config
 import "DisplayModel.js" as DisplayModel
 
@@ -30,7 +31,12 @@ Singleton {
     // Monitor rules in the user's compositor config, [{file, line, text}] from displays.conflicts
     property var conflicts: []
 
-    // Configs of the pending apply: saved as the layout once it is kept
+    // Rules the last move left in place, [{file, line, text, reason}]
+    property var moveSkipped: []
+
+    // Configs of this shell's pending apply. The backend saves a kept
+    // layout itself (whoever keeps it); only the dry run's mock cannot, so
+    // there the shell saves it into the dry run's config copy.
     property var _candidate: []
 
     signal applyFailed(string message)
@@ -87,8 +93,12 @@ Singleton {
                 console.warn("DisplaysService: keep failed", JSON.stringify(error));
                 return;
             }
-            const saved = Config.displaysReady ? Array.from(Config.displays.monitors) : [];
-            root.saveCurrent(DisplayModel.mergeSaved(saved, root._candidate));
+            const candidate = root._candidate;
+            root._candidate = [];
+            if (DryRun.active && candidate.length > 0) {
+                const saved = Config.displaysReady ? Array.from(Config.displays.monitors) : [];
+                root.saveCurrent(DisplayModel.mergeSaved(saved, candidate));
+            }
         });
     }
 
@@ -141,6 +151,7 @@ Singleton {
                 console.warn("DisplaysService: moveConflicts failed", JSON.stringify(error));
                 return;
             }
+            root.moveSkipped = result.skipped || [];
             const imported = (result.outputs || []).map(w => DisplayModel.fromWire(w, root.outputs));
             const saved = Config.displaysReady ? Array.from(Config.displays.monitors) : [];
             const merged = DisplayModel.mergeSaved(saved, imported);
@@ -159,8 +170,11 @@ Singleton {
             "remaining": data.remaining || 0,
             "live": data.live !== false
         };
-        if (prev === "pending" && data.state !== "pending")
+        if (prev === "pending" && data.state !== "pending") {
+            if (data.state === "reverted")
+                root._candidate = [];
             root.refresh();
+        }
     }
 
     function _onIdentify(data) {

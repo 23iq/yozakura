@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"yozakura/backend/pkg/catalog"
 	yipc "yozakura/backend/pkg/yozd/ipc"
@@ -17,7 +16,7 @@ import (
 // Shared by the `display` CLI and the displays_* MCP tools: build an output
 // config from the current state plus a change, start a confirm-or-revert
 // session in the daemon (displays service) and persist a kept layout into
-// displays.monitors like the Settings page does.
+// displays.monitors (the daemon does on keep, whoever keeps).
 
 // OutputChange is a partial change to one output; nil/empty fields keep the
 // current value.
@@ -186,22 +185,21 @@ func StartDisplayApply(c Caller, cfgs []yipc.OutputConfig) (DisplaySession, erro
 	return s, nil
 }
 
-// KeepDisplays confirms a session and saves the layout (store may be nil to
-// skip saving).
-func KeepDisplays(c Caller, store *catalog.Store, session string, cfgs []yipc.OutputConfig, outs []yipc.Output) error {
+// KeepDisplays confirms a session; the daemon saves the kept layout into
+// displays.monitors itself (saved reports it).
+func KeepDisplays(c Caller, session string) (saved bool, err error) {
 	if c == nil {
-		return errNoDaemon
+		return false, errNoDaemon
 	}
-	if _, err := c.Call("displays.keep", map[string]any{"session": session}); err != nil {
-		return err
+	raw, err := c.Call("displays.keep", map[string]any{"session": session})
+	if err != nil {
+		return false, err
 	}
-	if store == nil {
-		return nil
+	var r struct {
+		Saved bool `json:"saved"`
 	}
-	if err := PersistMonitors(store, cfgs, outs); err != nil {
-		return fmt.Errorf("kept, but saving the layout failed: %v", err)
-	}
-	return nil
+	_ = json.Unmarshal(raw, &r)
+	return r.Saved, nil
 }
 
 // RevertDisplays cancels a session.
@@ -264,31 +262,4 @@ func PersistMonitors(store *catalog.Store, cfgs []yipc.OutputConfig, outs []yipc
 	}
 	_, err = store.Set("displays.monitors", saved, false)
 	return err
-}
-
-// pendingDisplays remembers what each displays_apply session touched, so a
-// later displays_confirm saves exactly those outputs. The MCP server is one
-// long-lived process; a restart loses it (the confirm then keeps live only).
-var pendingDisplays = struct {
-	sync.Mutex
-	m map[string]pendingApply
-}{m: map[string]pendingApply{}}
-
-type pendingApply struct {
-	cfgs []yipc.OutputConfig
-	outs []yipc.Output
-}
-
-func rememberSession(id string, cfgs []yipc.OutputConfig, outs []yipc.Output) {
-	pendingDisplays.Lock()
-	defer pendingDisplays.Unlock()
-	pendingDisplays.m[id] = pendingApply{cfgs, outs}
-}
-
-func takeSession(id string) (pendingApply, bool) {
-	pendingDisplays.Lock()
-	defer pendingDisplays.Unlock()
-	p, ok := pendingDisplays.m[id]
-	delete(pendingDisplays.m, id)
-	return p, ok
 }

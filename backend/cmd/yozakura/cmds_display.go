@@ -10,7 +10,6 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"yozakura/backend/pkg/catalog"
 	"yozakura/backend/pkg/mcp/yozakura"
 	yipc "yozakura/backend/pkg/yozd/ipc"
 )
@@ -25,13 +24,13 @@ Monitors. list shows each connector with its mode, scale and position. set
 changes one monitor live and asks to keep it: unless you answer y within 15
 seconds (or pass --yes) the change is reverted, so a bad mode never sticks.
 Without a terminal and without --yes the change is reverted after the
-timeout. A kept change is saved as the monitor layout (displays.monitors).
+timeout. A kept change is saved as the monitor layout (displays.monitors)
+by the running backend.
 `
 
 // displayEnv holds the side effects of `display`, injectable for tests.
 type displayEnv struct {
 	c       usageCaller
-	store   func() (*catalog.Store, error)
 	confirm func(prompt string, timeout time.Duration) (keep, answered bool)
 	sleep   func(time.Duration)
 	tty     bool
@@ -41,13 +40,6 @@ func defaultDisplayEnv(in io.Reader, out io.Writer) displayEnv {
 	tty := isTerminal(out) && isTerminalFile(in)
 	return displayEnv{
 		c: newClient(),
-		store: func() (*catalog.Store, error) {
-			e, err := loadConfigEnv()
-			if err != nil {
-				return nil, err
-			}
-			return e.store, nil
-		},
 		confirm: func(prompt string, timeout time.Duration) (bool, bool) {
 			fmt.Fprint(out, prompt)
 			line := make(chan string, 1)
@@ -268,15 +260,12 @@ func displaySet(env displayEnv, name string, a cliArgs, out, errOut io.Writer) i
 		fmt.Fprintln(out, "Reverted.")
 		return 3
 	}
-	var store *catalog.Store
-	if env.store != nil {
-		var serr error
-		if store, serr = env.store(); serr != nil {
-			fmt.Fprintf(errOut, "Warning: the layout will not be saved: %v\n", serr)
-		}
-	}
-	if err := yozakura.KeepDisplays(env.c, store, sess.Session, []yipc.OutputConfig{cfg}, outs); err != nil {
+	saved, err := yozakura.KeepDisplays(env.c, sess.Session)
+	if err != nil {
 		return fail(err)
+	}
+	if !saved {
+		fmt.Fprintln(errOut, "Warning: kept, but the layout was not saved.")
 	}
 	fmt.Fprintln(out, "Kept.")
 	return 0

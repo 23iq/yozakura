@@ -24,17 +24,19 @@ Scope {
         }
     }
 
+    // targetScreen is an initial property: the window is created on its
+    // screen instead of being moved there after creation
     Loader {
         active: DisplaysService.pending && DisplaysService.session.live
-        source: "DisplayConfirmOverlay.qml"
-        onItemChanged: if (item)
-            item.targetScreen = root.modelData
+        Component.onCompleted: setSource("DisplayConfirmOverlay.qml", {
+            "targetScreen": root.modelData
+        })
     }
 
     Loader {
         active: DisplaysService.identified.length > 0 || lingering.running
-        source: "DisplayIdentifyOverlay.qml"
-        onItemChanged: if (item)
-            item.targetScreen = root.modelData
+        Component.onCompleted: setSource("DisplayIdentifyOverlay.qml", {
+            "targetScreen": root.modelData
+        })
     }
 }

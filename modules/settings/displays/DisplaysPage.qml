@@ -135,6 +135,7 @@ Flickable {
             width: parent.width
             visible: DisplaysService.conflicts.length > 0
             count: DisplaysService.conflicts.length
+            skipped: DisplaysService.moveSkipped
             onMoveRequested: DisplaysService.moveConflicts()
         }
 

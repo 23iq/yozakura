@@ -354,8 +354,9 @@ function mergeSaved(saved, imported) {
                     at = j;
             }
         }
+        // by connector name only when the ids cannot tell two monitors apart
         for (var k = 0; k < merged.length && at < 0; k++) {
-            if (merged[k].name === cfg.name)
+            if (merged[k].name === cfg.name && (!merged[k].id || !cfg.id || merged[k].id === cfg.id))
                 at = k;
         }
         if (at >= 0)

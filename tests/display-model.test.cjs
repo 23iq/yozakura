@@ -135,6 +135,16 @@ test('mergeSaved matches by id then name, appends new', () => {
     assert.deepEqual(r.map(c => [c.name, c.x]), [['DP-7', 9], ['DP-2', 5], ['HDMI-1', 0]]);
 });
 
+test('mergeSaved: a name match never replaces another monitor (different id)', () => {
+    // monitor B was on DP-1 before; monitor C now sits on DP-1: both are kept
+    const saved = [cfg('DP-1', 'B', { x: 1 })];
+    const r = plain(M.mergeSaved(saved, [cfg('DP-1', 'C', { x: 7 })]));
+    assert.deepEqual(r.map(c => [c.id, c.x]), [['B', 1], ['C', 7]]);
+    // an entry without id still matches by name
+    const r2 = plain(M.mergeSaved([cfg('DP-1', '', { x: 1 })], [cfg('DP-1', 'C', { x: 7 })]));
+    assert.deepEqual(r2.map(c => [c.id, c.x]), [['C', 7]]);
+});
+
 test('keyboard shortName', () => {
     assert.equal(Kb.shortName('us'), 'EN');
     assert.equal(Kb.shortName('ru'), 'RU');

@@ -6,7 +6,9 @@
 //
 //	list           → []ipc.Output
 //	apply          {outputs: []OutputConfig} → {session, revertIn, live}
-//	keep / revert  {session}
+//	keep           {session} → {ok, saved}: the candidate is saved into
+//	               displays.monitors (whoever keeps: shell, CLI, MCP)
+//	revert         {session}
 //	identify       → {outputs: [{name, index}]} (also as an event)
 //	conflicts      → [{file, line, text}]
 //	moveConflicts  → {outputs, moved, skipped}
@@ -51,6 +53,13 @@ type Service struct {
 	// no longer loaded then, so they cannot conflict.
 	exclusive func() bool
 
+	// persist saves a kept candidate (displays.monitors); outs are the
+	// outputs at apply time (stable ids). nil: nothing is saved.
+	persist func(cand []yipc.OutputConfig, outs []yipc.Output) error
+	sessMu  sync.Mutex
+	sessOut map[string][]yipc.Output // session id → outputs at apply
+	saved   map[string]bool          // session id → its keep saved it
+
 	timerMu sync.Mutex
 	timerOn bool
 	stop    chan struct{}
@@ -83,6 +92,11 @@ func (s *Service) HyprDir() string { return s.hyprDir }
 // SetExclusiveCheck installs the exclusive-mode probe; while it reports true
 // the conflict scan finds nothing.
 func (s *Service) SetExclusiveCheck(f func() bool) { s.exclusive = f }
+
+// SetPersist installs the saver of kept layouts.
+func (s *Service) SetPersist(f func(cand []yipc.OutputConfig, outs []yipc.Output) error) {
+	s.persist = f
+}
 
 // Register exposes the service over IPC.
 func (s *Service) Register(srv *ipc.Server) {
@@ -153,6 +167,10 @@ func (s *Service) apply(params json.RawMessage) (any, error) {
 	}
 	sess, err := s.mgr.Start(s.now(), snapshotFor(current, p.Outputs), p.Outputs)
 	if sess != nil {
+		s.sessMu.Lock()
+		// one session at a time: older entries are gone with it
+		s.sessOut = map[string][]yipc.Output{sess.ID: current}
+		s.sessMu.Unlock()
 		s.publishSession(sess)
 	}
 	if err != nil {
@@ -195,12 +213,24 @@ func (s *Service) keep(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, fmt.Errorf("displays.keep: %w", err)
 	}
-	kept, err := s.mgr.Keep(p.Session)
+	kept, again, err := s.mgr.Keep(p.Session)
 	if err != nil {
 		return nil, err
 	}
+	s.sessMu.Lock()
+	defer s.sessMu.Unlock()
+	if again {
+		return map[string]any{"ok": true, "saved": s.saved[kept.ID]}, nil
+	}
 	s.publishSession(kept)
-	return map[string]any{"ok": true}, nil
+	if s.persist == nil {
+		return map[string]any{"ok": true, "saved": false}, nil
+	}
+	if err := s.persist(kept.Candidate, s.sessOut[kept.ID]); err != nil {
+		return nil, fmt.Errorf("displays.keep: kept, but saving the layout failed: %w", err)
+	}
+	s.saved = map[string]bool{kept.ID: true}
+	return map[string]any{"ok": true, "saved": true}, nil
 }
 
 func (s *Service) revert(params json.RawMessage) (any, error) {
@@ -244,7 +274,7 @@ func (s *Service) runTimer() {
 		}
 		s.timerMu.Lock()
 		cur := s.mgr.Current()
-		if cur == nil || cur.State != StatePending {
+		if cur == nil || cur.State != StatePending || !cur.Live {
 			s.timerOn = false
 			s.timerMu.Unlock()
 			return

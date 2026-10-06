@@ -2,6 +2,7 @@ package exclusive
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -103,7 +104,7 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 		t.Skip("no shell source:", err)
 	}
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
-	kb := &ipc.KeyboardSettings{Layouts: []string{"us", "ru"}, Variants: []string{"", "phonetic"}, Options: []string{"grp:alt_shift_toggle"}, RepeatRate: 40}
+	kb := &ipc.KeyboardSettings{Layouts: []string{"us", "ru"}, Variants: []string{"", "phonetic"}, Options: []string{"grp:win_space_toggle", "caps:escape"}, RepeatRate: 40}
 	mon := []ipc.OutputConfig{{Name: "DP-1", Enabled: true, Width: 2560, Height: 1440, Refresh: 144, Scale: 1}}
 	previous, err := importSettings(mon, kb)
 	if err != nil {
@@ -120,6 +121,13 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 	}
 	if v, _, _ := store.Get("keyboard.repeatRate"); v != float64(40) && v != 40 {
 		t.Fatalf("rate %v", v)
+	}
+	// the switch option becomes switchBind (rendered once), not a raw option
+	if v, _, _ := store.Get("keyboard.switchBind"); v != "super_space" {
+		t.Fatalf("switchBind %v", v)
+	}
+	if v, _, _ := store.Get("keyboard.options"); fmt.Sprint(v) != "[caps:escape]" {
+		t.Fatalf("options %v", v)
 	}
 	if m, _, _ := store.Get("displays.monitors"); len(m.([]any)) != 1 {
 		t.Fatalf("monitors %v", m)
@@ -138,6 +146,9 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 	}
 	if v, _, _ := store.Get("keyboard.managed"); v != false {
 		t.Fatalf("managed not reverted: %v", v)
+	}
+	if v, _, _ := store.Get("keyboard.switchBind"); v != "alt_shift" {
+		t.Fatalf("switchBind not reverted to the default: %v", v)
 	}
 	// repeat only (no layouts in the user's config): still managed
 	prev2, err := importSettings(nil, &ipc.KeyboardSettings{RepeatRate: 50})

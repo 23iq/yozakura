@@ -407,14 +407,6 @@ func (s *Server) Start() error {
 	}
 }
 
-// RemoveSocket unlinks the socket Start bound, only if it is still ours (a
-// successor may have replaced it). Call it on shutdown.
-func (s *Server) RemoveSocket() bool {
-	s.sockMu.Lock()
-	defer s.sockMu.Unlock()
-	return instancelock.RemoveIfOwned(s.socketPath, s.sockID)
-}
-
 func (s *Server) resolveID(id string) (string, error) {
 	if id != "" {
 		return id, nil
@@ -1417,12 +1409,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 			notif := Notification{
 				JSONRPC: "2.0",
 				Method:  "State.Dump",
-				State: &StateDump{
-					Windows:        s.cache.GetWindows(),
-					Workspaces:     s.cache.GetWorkspaces(),
-					Monitors:       s.cache.GetMonitors(),
-					KeyboardLayout: s.getKeyboardLayout(),
-				},
+				State:   s.stateDump(false),
 			}
 			if data, err := json.Marshal(notif); err == nil {
 				data = append(data, '\n')
@@ -1444,14 +1431,6 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 		enc.Encode(resp)
 	}
-}
-
-type StateDump struct {
-	Windows        []ipc.Window           `json:"windows"`
-	Workspaces     []ipc.Workspace        `json:"workspaces"`
-	Monitors       []ipc.Monitor          `json:"monitors"`
-	OverviewOpen   *bool                  `json:"overview_open,omitempty"`
-	KeyboardLayout map[string]interface{} `json:"keyboard_layout,omitempty"` // keyboard_layout.go
 }
 
 type Notification struct {
@@ -1479,13 +1458,7 @@ func (s *Server) broadcastEvent(method string, params interface{}) {
 		JSONRPC: "2.0",
 		Method:  method,
 		Params:  params,
-		State: &StateDump{
-			Windows:        s.cache.GetWindows(),
-			Workspaces:     s.cache.GetWorkspaces(),
-			Monitors:       s.cache.GetMonitors(),
-			OverviewOpen:   s.getOverviewOpen(),
-			KeyboardLayout: s.getKeyboardLayout(),
-		},
+		State:   s.stateDump(true),
 	}
 
 	data, err := json.Marshal(notif)

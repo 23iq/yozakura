@@ -28,7 +28,8 @@ type Applier interface {
 
 // Session is one apply → confirm → revert cycle. Live is false when the
 // compositor cannot apply outputs at runtime (Mango): the change only takes
-// effect once the shell persists it, and reverting applies nothing.
+// effect once it is kept (saved), so it has no countdown and reverting
+// applies nothing.
 type Session struct {
 	ID                  string
 	Snapshot, Candidate []ipc.OutputConfig
@@ -91,22 +92,27 @@ func (m *Manager) Start(now time.Time, snap, cand []ipc.OutputConfig) (*Session,
 func (m *Manager) Tick(now time.Time) *Session {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.cur == nil || m.cur.State != StatePending || now.Before(m.cur.Deadline) {
+	if m.cur == nil || m.cur.State != StatePending || !m.cur.Live || now.Before(m.cur.Deadline) {
 		return nil
 	}
 	_ = m.revertLocked()
 	return m.copyLocked()
 }
 
-// Keep confirms the pending session id and returns it.
-func (m *Manager) Keep(id string) (*Session, error) {
+// Keep confirms the pending session id and returns it. Keeping a session
+// that is already kept succeeds with again=true (the shell's prompt and a
+// CLI may both answer the same session).
+func (m *Manager) Keep(id string) (s *Session, again bool, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.cur != nil && m.cur.ID == id && m.cur.State == StateKept {
+		return m.copyLocked(), true, nil
+	}
 	if err := m.pendingLocked(id); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	m.cur.State = StateKept
-	return m.copyLocked(), nil
+	return m.copyLocked(), false, nil
 }
 
 // Revert re-applies the snapshot of the pending session id.
@@ -130,7 +136,7 @@ func (m *Manager) Current() *Session {
 func (m *Manager) Remaining(now time.Time) int {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	if m.cur == nil || m.cur.State != StatePending {
+	if m.cur == nil || m.cur.State != StatePending || !m.cur.Live {
 		return 0
 	}
 	left := m.cur.Deadline.Sub(now).Seconds()

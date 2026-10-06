@@ -79,14 +79,15 @@ check(h.find(win, "card").property("visible") is True, "confirm card shows while
 check(ev("card.total") == 15, "the ring's total is captured when the session starts")
 check(ev("card.remaining") == 15 and h.find(win, "countdownText").property("text") == "15", "countdown starts at 15")
 
-# Keep -> displays.keep and the layout is saved
-ev("BackendService.replies = Object.assign({}, BackendService.replies, {'displays.keep': {}})")
+# Keep -> displays.keep; the backend saves the layout, the shell writes nothing
+# (a stale candidate must never overwrite what the backend saved)
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'displays.keep': {'ok': true, 'saved': true}})")
 check(h.find(win, "keepButton") is not None, "Keep button exists")
+before = ev("JSON.stringify(Config.displays.monitors)")
 ev("DisplaysService.keep()")
 check(len(calls("displays.keep")) == 1 and calls("displays.keep")[0]["params"]["session"] == "s1", "Keep calls displays.keep with the session")
-saved = json.loads(ev("JSON.stringify(Config.displays.monitors)"))
-check(len(saved) == 2 and {s["name"]: s["refresh"] for s in saved}.get("DP-1") == 240, "Keep writes displays.monitors")
-check("displays" in json.loads(ev("JSON.stringify(Config.saved)")), "displays domain saved to disk")
+check(ev("JSON.stringify(Config.displays.monitors)") == before, "the shell does not persist the candidate")
+check("displays" not in json.loads(ev("JSON.stringify(Config.saved)")), "no displays save from the shell")
 
 # Revert calls displays.revert (state pending again)
 ev("DisplaysService.session = {id: 's2', state: 'pending', remaining: 9, live: true}")
@@ -132,6 +133,11 @@ ev("DisplaysService.session = {id: '', state: '', remaining: 0, live: true}")
 ev("BackendService.replies = Object.assign({}, BackendService.replies, {'displays.moveConflicts': {outputs: [], moved: [], skipped: []}})")
 ev("DisplaysService.moveConflicts()")
 check(len(calls("displays.moveConflicts")) == 1, "the banner action calls displays.moveConflicts")
+# a rule the move could not take stays listed, with the reason
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'displays.moveConflicts': {outputs: [], moved: [], skipped: [{file: '/h/hypr/monitors.conf', line: 3, text: 'monitor=DP-1,preferred,auto,1,bitdepth,10', reason: 'unsupported: bitdepth'}]}})")
+ev("DisplaysService.moveConflicts()")
+msg = ev("message", h.find(win, "conflictBanner"))
+check("monitors.conf:3" in msg and "unsupported: bitdepth" in msg, f"the banner lists skipped rules and why, got {msg!r}")
 
 # Identify
 ev("DisplaysService.identify()")

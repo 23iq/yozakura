@@ -6,7 +6,6 @@ import (
 	"errors"
 	"testing"
 	"time"
-	"yozakura/backend/pkg/catalog"
 	yipc "yozakura/backend/pkg/yozd/ipc"
 
 	"github.com/stretchr/testify/assert"
@@ -37,12 +36,11 @@ func displayTestEnv(t *testing.T, tty bool, answer bool) (displayEnv, *recCaller
 	sandbox(t)
 	rc := &recCaller{results: map[string]string{
 		"displays.list": dp1, "displays.apply": `{"session":"s1","revertIn":15,"live":true}`,
-		"displays.keep": `{"ok":true}`, "displays.revert": `{"ok":true}`,
+		"displays.keep": `{"ok":true,"saved":true}`, "displays.revert": `{"ok":true}`,
 	}}
 	var slept time.Duration
 	env := displayEnv{
 		c: rc, tty: tty,
-		store:   func() (*catalog.Store, error) { e, err := loadConfigEnv(); return e.store, err },
 		confirm: func(string, time.Duration) (bool, bool) { return answer, true },
 		sleep:   func(d time.Duration) { slept = d },
 	}
@@ -65,11 +63,12 @@ func TestDisplaySetArgs(t *testing.T) {
 	assert.Equal(t, 1.0, cfgs[0].Scale)
 	assert.Equal(t, map[string]any{"session": "s1"}, rc.params["displays.keep"])
 
-	// kept layout is saved into displays.monitors
-	code, got, _ := run(t, cfg, "get", "displays.monitors", "--json")
-	assert.Equal(t, 0, code)
-	assert.Contains(t, got, `"id": "LG|27GP|123"`)
-	assert.Contains(t, got, `"refresh": 239.97`)
+	// the backend saves the kept layout (displays.keep reports saved)
+	assert.NotContains(t, errOut.String(), "not saved")
+	rc.results["displays.keep"] = `{"ok":true,"saved":false}`
+	errOut.Reset()
+	assert.Equal(t, 0, runDisplay([]string{"set", "DP-1", "--scale", "1.25", "--yes"}, env, &out, &errOut), errOut.String())
+	assert.Contains(t, errOut.String(), "not saved")
 }
 
 func TestDisplaySetConfirmAndRevert(t *testing.T) {

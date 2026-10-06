@@ -124,11 +124,36 @@ func conflictLines(lines []string, lua bool) []int {
 			inBlock = true
 		case inBlock && (t == "" || t == c+" OVERRIDES" || t == brand.ConfigOverridesNote(c, "source")):
 			inBlock = false
-		case !inBlock && re.MatchString(line):
+		case !inBlock && re.MatchString(line) && !generalRule(line, lua):
 			out = append(out, i)
 		}
 	}
 	return out
+}
+
+// generalRule reports a rule that names no connector: Hyprland's catch-all
+// fallback (`monitor = ,preferred,auto,auto`) and `desc:` rules. The
+// generated config names every connector, so they never override it and
+// are left alone (not conflicts, never moved).
+func generalRule(line string, lua bool) bool {
+	var name string
+	if lua {
+		found := false
+		for _, m := range luaFieldRe.FindAllStringSubmatch(line, -1) {
+			if m[1] == "output" {
+				name, found = strings.Trim(m[2], `"'`), true
+			}
+		}
+		if !found {
+			return false // e.g. a multi-line call: output is on a later line
+		}
+	} else {
+		_, value, _ := strings.Cut(line, "=")
+		value, _, _ = strings.Cut(value, "#")
+		name, _, _ = strings.Cut(value, ",")
+	}
+	name = strings.TrimSpace(name)
+	return name == "" || strings.HasPrefix(name, "desc:")
 }
 
 // ParseMonitorLine parses `monitor = NAME,MODE,POS,SCALE[,transform,N][,vrr,N]`

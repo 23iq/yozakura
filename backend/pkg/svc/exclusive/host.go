@@ -10,6 +10,7 @@ import (
 	"yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/mcp/yozakura"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/svc/compositor"
 	"yozakura/backend/pkg/svc/yozdcli"
 	"yozakura/backend/pkg/yozd/ipc"
 )
@@ -39,7 +40,7 @@ func Host() exclusive.Options {
 	}
 }
 
-var importedKeys = []string{"displays.monitors", "keyboard.layouts", "keyboard.options", "keyboard.repeatRate", "keyboard.repeatDelay", "keyboard.managed"}
+var importedKeys = []string{"displays.monitors", "keyboard.layouts", "keyboard.options", "keyboard.switchBind", "keyboard.repeatRate", "keyboard.repeatDelay", "keyboard.managed"}
 
 // importSettings writes the parsed monitors and keyboard into the config
 // and returns the explicit values it replaced (nil = was default). On an
@@ -85,25 +86,30 @@ func writeImport(store *catalog.Store, monitors []ipc.OutputConfig, kb *ipc.Keyb
 		}
 		return nil
 	}
-	if len(kb.Layouts) > 0 {
-		layouts := make([]any, len(kb.Layouts))
-		for i, l := range kb.Layouts {
-			v := ""
-			if i < len(kb.Variants) {
-				v = kb.Variants[i]
-			}
-			layouts[i] = map[string]any{"layout": l, "variant": v}
+	// the same split as the keyboard takeover: a layout-switch option
+	// becomes keyboard.switchBind (rendered once), the rest stay options
+	k := compositor.KeyboardFromSettings(*kb)
+	if len(k.Layouts) > 0 {
+		layouts := make([]any, len(k.Layouts))
+		for i, l := range k.Layouts {
+			layouts[i] = map[string]any{"layout": l.Layout, "variant": l.Variant}
 		}
 		if err := set("keyboard.layouts", layouts); err != nil {
 			return err
 		}
 	}
 	if len(kb.Options) > 0 {
-		opts := make([]any, len(kb.Options))
-		for i, o := range kb.Options {
+		opts := make([]any, len(k.Options))
+		for i, o := range k.Options {
 			opts[i] = o
 		}
 		if err := set("keyboard.options", opts); err != nil {
+			return err
+		}
+	}
+	// no switch option in the user's config: no switch key ("none")
+	if len(kb.Layouts) > 0 || len(kb.Options) > 0 {
+		if err := set("keyboard.switchBind", k.SwitchBind); err != nil {
 			return err
 		}
 	}
