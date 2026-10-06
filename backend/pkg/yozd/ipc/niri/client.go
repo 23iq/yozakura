@@ -17,6 +17,9 @@ import (
 type Niri struct {
 	socketPath string
 	mu         sync.Mutex
+
+	kbMu    sync.Mutex // guards kbNames
+	kbNames []string   // layout names from the last KeyboardLayouts reply or event
 }
 
 func New() (*Niri, error) {
@@ -906,7 +909,10 @@ func (n *Niri) handleEvent(name string, data json.RawMessage, event *ipc.Event) 
 			event.Payload["id"] = fmt.Sprintf("%d", id)
 		}
 	case "KeyboardLayoutsChanged", "KeyboardLayoutSwitched":
-		event.Type = ipc.EventConfigReloaded
+		if p, ok := n.keyboardEventPayload(name, data); ok {
+			event.Type = ipc.EventKeyboardLayout
+			event.Payload = p
+		}
 	case "OverviewOpenedOrClosed":
 		event.Type = ipc.EventOverviewChanged
 		var d struct {

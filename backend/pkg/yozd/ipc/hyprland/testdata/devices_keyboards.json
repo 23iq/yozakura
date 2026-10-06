@@ -1,0 +1,4 @@
+{"mice":[],"keyboards":[
+{"address":"0x1","name":"power-button","rules":"","model":"","layout":"us","variant":"","options":"","active_keymap":"English (US)","main":false},
+{"address":"0x2","name":"arbiter-keyboard","rules":"","model":"","layout":"us,ru","variant":"","options":"","active_keymap":"Russian","capsLock":false,"numLock":false,"main":true}
+]}

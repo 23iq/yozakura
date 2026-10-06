@@ -30,6 +30,10 @@ type Compositor struct {
 	Outputs          []ipc.Output
 	ApplyOutputCalls []ipc.OutputConfig
 
+	// Keyboard is returned by ActiveLayout; ApplyKeyboardCalls records ApplyKeyboard.
+	Keyboard           ipc.KeyboardLayoutState
+	ApplyKeyboardCalls []ipc.KeyboardSettings
+
 	calls struct {
 		listWindows     int
 		focusWindow     []string

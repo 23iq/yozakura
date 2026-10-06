@@ -1007,6 +1007,11 @@ func (h *Hyprland) Subscribe() (<-chan ipc.Event, error) {
 					event.Payload["monitor"] = data[0]
 					event.Payload["workspace"] = data[1]
 				}
+			case "activelayout":
+				if p, ok := parseActiveLayoutEvent(parts[1]); ok {
+					event.Type = ipc.EventKeyboardLayout
+					event.Payload = p
+				}
 			case "windowtitle":
 				event.Type = ipc.EventWindowTitleChanged
 				event.Payload["address"] = "0x" + parts[1]
@@ -1028,17 +1033,10 @@ func (h *Hyprland) SwitchKeyboardLayout(action string) error {
 }
 
 func (h *Hyprland) SetKeyboardLayouts(layouts string, variants string) error {
-	if _, err := h.dispatch(fmt.Sprintf("keyword input:kb_layout %s", layouts)); err != nil {
-		return err
-	}
-	if variants != "" {
-		if _, err := h.dispatch(fmt.Sprintf("keyword input:kb_variant %s", variants)); err != nil {
-			return err
-		}
-	} else {
-		h.dispatch("keyword input:kb_variant ") // clear
-	}
-	return nil
+	return h.ApplyKeyboard(ipc.KeyboardSettings{
+		Layouts:  strings.Split(layouts, ","),
+		Variants: strings.Split(variants, ","),
+	})
 }
 
 func (h *Hyprland) GetCapabilities() (ipc.Capabilities, error) {

@@ -91,6 +91,10 @@ const (
 	EventFocusedMonitorChanged EventType = "focused_monitor_changed"
 	// EventOverviewChanged is fired when the compositor overview opens or closes.
 	EventOverviewChanged EventType = "overview_changed"
+	// EventKeyboardLayout is fired when the active keyboard layout changes.
+	// Payload: {"name": "...", "index": n}; either may be absent when the
+	// compositor reports only one of them.
+	EventKeyboardLayout EventType = "keyboard_layout"
 )
 
 // Event represents a compositor event.
