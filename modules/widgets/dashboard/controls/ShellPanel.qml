@@ -829,19 +829,23 @@ Item {
                             label: ""
                             options: [
                                 {
-                                    label: I18n.t("common.default"),
-                                    value: "default"
+                                    label: I18n.t("prefs.notch.style.attached"),
+                                    value: "attached"
                                 },
                                 {
                                     label: I18n.t("shell.dock.island"),
                                     value: "island"
+                                },
+                                {
+                                    label: I18n.t("prefs.notch.style.pill"),
+                                    value: "pill"
                                 }
                             ]
-                            value: Config.notch.theme ?? "default"
+                            value: Config.notch.style ?? "attached"
                             onValueSelected: newValue => {
-                                if (newValue !== Config.notch.theme) {
+                                if (newValue !== Config.notch.style) {
                                     GlobalStates.markShellChanged();
-                                    Config.notch.theme = newValue;
+                                    Config.notch.style = newValue;
                                 }
                             }
                         }

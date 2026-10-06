@@ -6,27 +6,6 @@
   "type": "object",
   "x-file": "config/notch.json",
   "properties": {
-    "theme": {
-      "title": "Style",
-      "type": "string",
-      "default": "default",
-      "description": "Attached to the screen edge, or a floating island.",
-      "x-settings": {
-        "category": "notch",
-        "section": "notch",
-        "label": "prefs.notch.theme",
-        "control": "selector",
-        "keywords": "notch style island attached floating"
-      },
-      "enum": [
-        "default",
-        "island"
-      ],
-      "x-enumLabels": {
-        "default": "Default",
-        "island": "Island"
-      }
-    },
     "position": {
       "title": "Position",
       "type": "string",
@@ -46,6 +25,29 @@
       "x-enumLabels": {
         "top": "Top",
         "bottom": "Bottom"
+      }
+    },
+    "align": {
+      "title": "Alignment",
+      "type": "string",
+      "default": "center",
+      "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "prefs.notch.align",
+        "control": "selector",
+        "keywords": "notch align alignment left right corner start center end"
+      },
+      "enum": [
+        "start",
+        "center",
+        "end"
+      ],
+      "x-enumLabels": {
+        "start": "Start",
+        "center": "Center",
+        "end": "End"
       }
     },
     "hoverRegionHeight": {
@@ -230,21 +232,59 @@
       "title": "Style",
       "type": "string",
       "default": "attached",
-      "description": "Notch look: attached to the screen edge or floating as an island.",
+      "description": "Attached to the screen edge, a floating island, or a pill that shrinks to a dot when idle.",
+      "x-settings": {
+        "category": "notch",
+        "section": "notch",
+        "label": "prefs.notch.theme",
+        "control": "selector",
+        "keywords": "notch style island attached floating pill dot minimal"
+      },
       "enum": [
         "attached",
-        "floating"
-      ]
+        "island",
+        "pill"
+      ],
+      "x-enumLabels": {
+        "attached": "Attached",
+        "island": "Island",
+        "pill": "Pill"
+      }
     },
     "activities": {
       "title": "Activities",
       "type": "array",
       "default": [],
-      "description": "Live activities (ids) the notch may show, in priority order; empty = none.",
+      "description": "Order, side and on/off of the island's activities ({id, side, enabled}); missing ids use the registry defaults.",
       "items": {
-        "type": "string"
-      },
-      "uniqueItems": true
+        "type": "object",
+        "properties": {
+          "id": {
+            "enum": [
+              "media",
+              "privacy",
+              "osd",
+              "battery",
+              "bluetooth",
+              "timers",
+              "tasks",
+              "extras"
+            ]
+          },
+          "side": {
+            "enum": [
+              "leading",
+              "trailing"
+            ]
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
     },
     "osd": {
       "title": "Osd",

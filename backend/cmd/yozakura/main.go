@@ -128,6 +128,7 @@ func main() {
 	}
 	markExistingInstallOnboarded()
 	markLegacyKeyboard()
+	migrateNotchStyle()
 	markLegacyAppHooks()
 	ensureConfigFiles()
 
@@ -281,6 +282,13 @@ func markExistingInstallOnboarded() {
 func markLegacyKeyboard() {
 	if _, err := migrate.EnsureKeyboardManaged(*paths.New()); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: cannot update keyboard.json: %v\n", err)
+	}
+}
+
+// migrateNotchStyle moves the legacy notch.theme to notch.style once.
+func migrateNotchStyle() {
+	if _, err := migrate.EnsureNotchStyle(*paths.New()); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: cannot update notch.json: %v\n", err)
 	}
 }
 

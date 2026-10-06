@@ -13,7 +13,7 @@ import (
 var LookKeys = []string{
 	"bar.position", "bar.layout.style", "bar.frameEnabled", "bar.frameThickness", "bar.containBar", "bar.compact",
 	"bar.panels",
-	"notch.theme", "notch.position", "notch.keepHidden",
+	"notch.style", "notch.align", "notch.position", "notch.keepHidden",
 	"dock.enabled", "dock.theme", "dock.position", "dock.height", "dock.iconSize",
 	"theme.lightMode", "theme.oledMode", "theme.roundness", "theme.font", "theme.enableCorners",
 	"theme.glass.enabled", "theme.glass.amount", "theme.animDuration",

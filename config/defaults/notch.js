@@ -1,8 +1,9 @@
 .pragma library
 
 var data = {
-    "theme": "default",
     "position": "top",
+    // start | center | end along the edge (modules/shell/EdgeLayout.js)
+    "align": "center",
     "hoverRegionHeight": 8,
     "keepHidden": false,
     "noMediaDisplay": "userHost",
@@ -16,7 +17,9 @@ var data = {
     "expandedArtworkSize": 64,
     "microphoneNoticeDuration": 1800,
     "visualizer": true,
-    // attached | floating; activities: live activities shown on the notch.
+    // attached | island | pill (modules/notch/styles/NotchStyles.js);
+    // activities: order/side/enabled of the island's activities
+    // ({id, side, enabled}, modules/widgets/defaultview/activities/ActivityRegistry.js).
     "style": "attached",
     "activities": [],
     "osd": false

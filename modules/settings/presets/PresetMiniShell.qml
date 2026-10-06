@@ -379,7 +379,7 @@ Item {
     // Notch
     Rectangle {
         visible: !root.v("notch.keepHidden", false)
-        readonly property bool island: root.v("notch.theme", "default") === "island"
+        readonly property bool island: root.v("notch.style", "attached") !== "attached"
         readonly property bool atBottom: root.v("notch.position", "top") === "bottom"
         readonly property real edgeY: atBottom ? root.height - root.insetBottom : root.insetTop
         width: root.width * 0.2

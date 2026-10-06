@@ -10,10 +10,10 @@
       "title": "Notch style",
       "type": "string",
       "default": "card",
-      "description": "Look of notch-born toasts: a full card or a compact pill.",
+      "description": "Look of notifications in the notch: a full card or a compact one-line row that expands on hover.",
       "enum": [
         "card",
-        "pill"
+        "compact"
       ]
     },
     "presentation": {

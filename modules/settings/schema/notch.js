@@ -15,21 +15,25 @@ var category = {
             "title": "prefs.notch.section.notch",
             "entries": [
                 {
-                    "key": "notch.theme",
+                    "key": "notch.style",
                     "type": "selector",
                     "options": [
                         {
-                            "value": "default",
-                            "label": "common.default"
+                            "value": "attached",
+                            "label": "prefs.notch.style.attached"
                         },
                         {
                             "value": "island",
                             "label": "shell.dock.island"
+                        },
+                        {
+                            "value": "pill",
+                            "label": "prefs.notch.style.pill"
                         }
                     ],
                     "label": "prefs.notch.theme",
                     "description": "prefs.notch.theme.desc",
-                    "keywords": "notch style island attached floating"
+                    "keywords": "notch style island attached floating pill dot minimal"
                 },
                 {
                     "key": "notch.position",
@@ -49,6 +53,27 @@ var category = {
                     "label": "prefs.notch.position",
                     "description": "prefs.notch.position.desc",
                     "keywords": "notch position top bottom edge"
+                },
+                {
+                    "key": "notch.align",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "start",
+                            "label": "prefs.notch.align.start"
+                        },
+                        {
+                            "value": "center",
+                            "label": "prefs.notch.align.center"
+                        },
+                        {
+                            "value": "end",
+                            "label": "prefs.notch.align.end"
+                        }
+                    ],
+                    "label": "prefs.notch.align",
+                    "description": "prefs.notch.align.desc",
+                    "keywords": "notch align alignment left right corner start center end"
                 },
                 {
                     "key": "notch.expandOn",
