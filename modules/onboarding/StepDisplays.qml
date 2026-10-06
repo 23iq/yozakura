@@ -60,7 +60,7 @@ Item {
     readonly property string seededKey: "onboarding.keyboardSeeded"
 
     function seedKeyboard(locale) {
-        if (!wizard || !Config.keyboardReady || !KeyboardService.known || !StateService.initialized || StateService.get(root.seededKey, false) === true)
+        if (!wizard || !Config.keyboardReady || !KeyboardService.known || KeyboardService.unreadable || !StateService.initialized || StateService.get(root.seededKey, false) === true)
             return;
         StateService.set(root.seededKey, true);
         const cur = KeyboardService.effective.layouts;

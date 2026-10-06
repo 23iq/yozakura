@@ -270,16 +270,20 @@ function effective(managed, cfg, current) {
     return base;
 }
 
+// Whether a user edit changes something the compositor sees.
+function touchesCompositor(patch) {
+    return COMPOSITOR_KEYS.some(function (k) {
+        return patch && patch[k] !== undefined;
+    });
+}
+
 // The keyboard-domain writes for a user edit `patch` ({layouts: [...]},
 // {repeatRate: 40}, ...). The first edit of a compositor key while
 // unmanaged first copies the compositor's values in and sets managed, so
 // nothing the user had is lost; showIndicator alone never takes over.
 function planEdit(managed, current, patch) {
     var out = {};
-    var touches = COMPOSITOR_KEYS.some(function (k) {
-        return patch && patch[k] !== undefined;
-    });
-    if (touches && !managed) {
+    if (touchesCompositor(patch) && !managed) {
         var cur = _currentValues(current);
         Object.keys(cur).forEach(function (k) {
             out[k] = cur[k];

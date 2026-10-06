@@ -25,6 +25,13 @@ Singleton {
     property var current: null
     // The UI may edit: managed, or the compositor's values are known
     readonly property bool known: root.managed || root.current !== null
+    // The compositor cannot report its settings (nothing in its config):
+    // taking over replaces them, so it needs an explicit takeOver()
+    readonly property bool unreadable: !root.managed && root.current !== null && !root.current.available
+    // Edits waiting for keyboard.current (a takeover re-reads it first)
+    property var _queue: []
+    property bool _reading: false
+    property int _retries: 0
     // What the UI shows: the domain once managed, the compositor's values before
     readonly property var effective: KeyboardModel.effective(root.managed, Config.keyboardReady ? Config.keyboard : null, root.current)
 
@@ -69,36 +76,76 @@ Singleton {
         return root.managed ? root.input() : null;
     }
 
-    // Reads the compositor's settings (read only); then calls done().
-    function refreshCurrent(done) {
+    // Reads the compositor's settings (read only), retrying on errors; then
+    // runs the queued edits.
+    function refreshCurrent() {
+        if (root._reading)
+            return;
+        root._reading = true;
         BackendService.call("keyboard.current", {}, (result, error) => {
+            root._reading = false;
             if (error || !result) {
                 console.warn("KeyboardService: current failed", JSON.stringify(error));
+                if (root._retries++ < 10)
+                    retryTimer.restart();
                 return;
             }
+            root._retries = 0;
             root.current = result;
-            if (done)
-                done();
+            root._flush();
         });
     }
 
     // Every user change of the keyboard goes through here (settings page,
     // onboarding): `patch` holds the new values ({layouts: [...]},
-    // {repeatRate: 40}, {showIndicator: false}). An edit made before the
-    // compositor's values are known waits for them.
+    // {repeatRate: 40}, {showIndicator: false}). The first change of a
+    // compositor key re-reads the compositor's settings right before taking
+    // them over; edits made meanwhile are queued, never dropped.
     function edit(patch) {
         if (!Config.keyboardReady)
             return;
-        if (!root.known) {
-            root.refreshCurrent(() => root.edit(patch));
+        if (root._reading || root._queue.length > 0 || (!root.managed && KeyboardModel.touchesCompositor(patch))) {
+            root._queue = root._queue.concat([patch]);
+            root.refreshCurrent();
             return;
         }
+        root._write(patch);
+    }
+
+    // Explicit takeover where the compositor's settings cannot be read
+    // (unreadable): the configured values replace them from now on.
+    function takeOver() {
+        if (Config.keyboardReady && !root.managed)
+            root._write({
+                "managed": true
+            });
+    }
+
+    function _flush() {
+        const queue = root._queue;
+        root._queue = [];
+        for (const patch of queue) {
+            if (root.unreadable && KeyboardModel.touchesCompositor(patch)) {
+                console.warn("KeyboardService: the compositor's settings cannot be read; takeOver() first");
+                continue;
+            }
+            root._write(patch);
+        }
+    }
+
+    function _write(patch) {
         const writes = KeyboardModel.planEdit(root.managed, root.current, patch);
         Config.pauseAutoSave = true;
         for (const key in writes)
             Config.keyboard[key] = writes[key];
         Config.pauseAutoSave = false;
         Config.saveKeyboard();
+    }
+
+    Timer {
+        id: retryTimer
+        interval: 1000
+        onTriggered: root.refreshCurrent()
     }
 
     function loadCatalog() {

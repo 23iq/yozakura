@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/services/KeyboardModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions, defaultsForLocale, effective, planEdit, fromConfig};')();
+const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions, defaultsForLocale, effective, planEdit, fromConfig, touchesCompositor};')();
 const migSrc = fs.readFileSync(path.join(__dirname, '..', 'config/KeyboardMigration.js'), 'utf8').replace('.pragma library', '');
 const Mig = new Function(migSrc + '; return {legacyManaged};')();
 const defSrc = fs.readFileSync(path.join(__dirname, '..', 'config/defaults/keyboard.js'), 'utf8').replace('.pragma library', '');
@@ -147,4 +147,12 @@ test('migration: files that already carry managed are left alone', () => {
     assert.strictEqual(Mig.legacyManaged({ managed: true }, DEFAULTS), null);
     assert.strictEqual(Mig.legacyManaged([], DEFAULTS), null);
     assert.strictEqual(Mig.legacyManaged(null, DEFAULTS), null);
+});
+
+test('touchesCompositor: only keys the compositor sees', () => {
+    assert.strictEqual(M.touchesCompositor({ repeatRate: 1 }), true);
+    assert.strictEqual(M.touchesCompositor({ layouts: [] }), true);
+    assert.strictEqual(M.touchesCompositor({ showIndicator: false }), false);
+    assert.strictEqual(M.touchesCompositor({ managed: true }), false);
+    assert.deepStrictEqual(M.planEdit(false, { available: false }, { managed: true }), { managed: true }, 'explicit takeover');
 });

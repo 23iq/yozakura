@@ -117,9 +117,9 @@ func writeImport(store *catalog.Store, monitors []ipc.OutputConfig, kb *ipc.Keyb
 			return err
 		}
 	}
-	// The exclusive config replaces the user's own: the imported keyboard
-	// is only kept if Yozakura renders it (keyboard.managed).
-	if len(kb.Layouts) > 0 {
+	// The exclusive config replaces the user's own: whatever keyboard value
+	// was imported is only kept if Yozakura renders it (keyboard.managed).
+	if len(kb.Layouts) > 0 || len(kb.Options) > 0 || kb.RepeatRate > 0 || kb.RepeatDelay > 0 {
 		return set("keyboard.managed", true)
 	}
 	return nil

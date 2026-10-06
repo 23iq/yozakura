@@ -194,7 +194,7 @@ func keyboardTools(d Deps) []mcp.ToolDef {
 			noArgs, toolOpts{readOnly: true}, d.keyboardGet),
 		define("keyboard_set", "Set keyboard layouts",
 			`Change the keyboard layouts. "add" / "remove": a layout like "ru" or "us:intl"; "switchBind": alt_shift, super_space, caps, ctrl_shift or none; "next": true switches to the next layout now. Give one or more.`,
-			`{"type":"object","properties":{"add":{"type":"string"},"remove":{"type":"string"},"switchBind":{"type":"string","enum":["alt_shift","super_space","caps","ctrl_shift","none"]},"next":{"type":"boolean"}},"additionalProperties":false}`,
+			`{"type":"object","properties":{"add":{"type":"string"},"remove":{"type":"string"},"switchBind":{"type":"string","enum":["alt_shift","super_space","caps","ctrl_shift","none"]},"next":{"type":"boolean"},"replace":{"type":"boolean","description":"Only when the compositor's keyboard settings cannot be read and the user agreed to replace them."}},"additionalProperties":false}`,
 			toolOpts{idempotent: true}, d.keyboardSet),
 	}
 }
@@ -218,7 +218,7 @@ func (d Deps) keyboardGet(_ context.Context, _ json.RawMessage) (*mcp.CallToolRe
 func (d Deps) keyboardSet(_ context.Context, args json.RawMessage) (*mcp.CallToolResult, error) {
 	var a struct {
 		Add, Remove, SwitchBind string
-		Next                    bool
+		Next, Replace           bool
 	}
 	if err := decode(args, &a); err != nil {
 		return nil, err
@@ -248,7 +248,7 @@ func (d Deps) keyboardSet(_ context.Context, args json.RawMessage) (*mcp.CallToo
 		return nil, err
 	}
 	if a.Add != "" || a.Remove != "" || a.SwitchBind != "" {
-		if err := ManageKeyboard(store, d.callerOrNil()); err != nil {
+		if err := ManageKeyboard(store, d.callerOrNil(), a.Replace); err != nil {
 			return nil, err
 		}
 	}

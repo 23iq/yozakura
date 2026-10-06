@@ -136,6 +136,7 @@ check(item(page, "opt:caps:swapescape") is not None, "open group lists its optio
 
 # Repeat sliders
 h.find(win, "rateSlider").moved.emit(40)
+QTest.qWait(450)  # saved after the slider debounce
 check(ev("Config.keyboard.repeatRate") == 40, "rate slider writes repeatRate")
 
 # debounced apply

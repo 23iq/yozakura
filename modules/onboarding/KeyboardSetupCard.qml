@@ -84,7 +84,8 @@ StyledRect {
 
     Column {
         id: column
-        // edits build on the layouts shown: wait until they are known
+        // edits build on the layouts shown: wait until they are known (the
+        // note's takeover button stays usable when they cannot be read)
         enabled: KeyboardService.known
         x: root.pad
         y: root.pad
@@ -106,6 +107,7 @@ StyledRect {
 
         Row {
             objectName: "draftRow"
+            enabled: !KeyboardService.unreadable
             visible: !!root.draftCodes
             width: parent.width
             spacing: 12
@@ -132,6 +134,7 @@ StyledRect {
         Flow {
             id: chips
             objectName: "layoutChips"
+            enabled: !KeyboardService.unreadable
             width: parent.width
             spacing: 8
 
@@ -210,6 +213,7 @@ StyledRect {
         LayoutPicker {
             id: picker
             objectName: "layoutPicker"
+            enabled: !KeyboardService.unreadable
             x: -20
             width: parent.width + 40
             visible: root.picking
@@ -224,6 +228,7 @@ StyledRect {
 
         Row {
             visible: root.layouts.length > 1
+            enabled: !KeyboardService.unreadable
             width: parent.width
             spacing: 12
             Text {

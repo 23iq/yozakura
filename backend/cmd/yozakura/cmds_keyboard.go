@@ -11,9 +11,9 @@ import (
 )
 
 const keyboardHelp = `Usage: {bin} keyboard [list] [--json]
-       {bin} keyboard add <layout>[:<variant>]
-       {bin} keyboard remove <layout>[:<variant>]
-       {bin} keyboard switch-bind alt_shift|super_space|caps|ctrl_shift|none
+       {bin} keyboard add <layout>[:<variant>] [--replace]
+       {bin} keyboard remove <layout>[:<variant>] [--replace]
+       {bin} keyboard switch-bind alt_shift|super_space|caps|ctrl_shift|none [--replace]
        {bin} keyboard next
 
 Keyboard layouts (keyboard.layouts / keyboard.switchBind; the running shell
@@ -22,7 +22,8 @@ remove drops it (the last one stays), switch-bind picks the key combination
 that cycles layouts and next switches to the next layout right now.
 Until the first change Yozakura leaves the keyboard to your compositor config
 and list shows its settings; the first add/remove/switch-bind takes them over
-(keyboard.managed) and needs the shell running.
+(keyboard.managed) and needs the shell running. When the compositor cannot
+report its settings, --replace confirms they may be replaced.
 `
 
 type keyboardEnv struct {
@@ -42,7 +43,7 @@ func defaultKeyboardEnv() keyboardEnv {
 
 // runKeyboard implements `yozakura keyboard ...`.
 func runKeyboard(args []string, env keyboardEnv, out, errOut io.Writer) int {
-	a := parseCLI(args, []string{"json", "help", "h"}, nil)
+	a := parseCLI(args, []string{"json", "help", "h", "replace"}, nil)
 	if a.has("help") || a.has("h") || (len(a.pos) > 0 && a.pos[0] == "help") {
 		fmt.Fprint(out, branded(keyboardHelp))
 		return 0
@@ -56,9 +57,9 @@ func runKeyboard(args []string, env keyboardEnv, out, errOut io.Writer) int {
 	case sub == "list" && len(rest) == 0:
 		err = keyboardList(env, a.has("json"), out)
 	case (sub == "add" || sub == "remove") && len(rest) == 1:
-		err = keyboardEdit(env, sub == "add", rest[0], out)
+		err = keyboardEdit(env, sub == "add", rest[0], a.has("replace"), out)
 	case (sub == "switch-bind" || sub == "switchbind") && len(rest) == 1:
-		err = keyboardSwitchBind(env, rest[0], out)
+		err = keyboardSwitchBind(env, rest[0], a.has("replace"), out)
 	case sub == "next" && len(rest) == 0:
 		if _, err = env.c.Call("keyboard.next", nil); err == nil {
 			return 0
@@ -105,7 +106,7 @@ func keyboardList(env keyboardEnv, asJSON bool, out io.Writer) error {
 	return nil
 }
 
-func keyboardEdit(env keyboardEnv, add bool, spec string, out io.Writer) error {
+func keyboardEdit(env keyboardEnv, add bool, spec string, replace bool, out io.Writer) error {
 	l, err := yozakura.ParseLayoutSpec(spec)
 	if err != nil {
 		return err
@@ -119,7 +120,7 @@ func keyboardEdit(env keyboardEnv, add bool, spec string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := yozakura.ManageKeyboard(store, env.c); err != nil {
+	if err := yozakura.ManageKeyboard(store, env.c, replace); err != nil {
 		return err
 	}
 	st, err := yozakura.ReadKeyboard(store, nil)
@@ -147,7 +148,7 @@ func keyboardEdit(env keyboardEnv, add bool, spec string, out io.Writer) error {
 	return nil
 }
 
-func keyboardSwitchBind(env keyboardEnv, bind string, out io.Writer) error {
+func keyboardSwitchBind(env keyboardEnv, bind string, replace bool, out io.Writer) error {
 	if !yozakura.ValidSwitchBind(bind) {
 		return fmt.Errorf("switch-bind must be one of %s", strings.Join(yozakura.SwitchBinds, ", "))
 	}
@@ -155,7 +156,7 @@ func keyboardSwitchBind(env keyboardEnv, bind string, out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	if err := yozakura.ManageKeyboard(store, env.c); err != nil {
+	if err := yozakura.ManageKeyboard(store, env.c, replace); err != nil {
 		return err
 	}
 	if _, err := store.Set("keyboard.switchBind", bind, false); err != nil {

@@ -4,9 +4,15 @@ import (
 	"bytes"
 	"testing"
 	"yozakura/backend/pkg/catalog"
+	"yozakura/backend/pkg/mcp/yozakura"
 
 	"github.com/stretchr/testify/assert"
 )
+
+// keyboardEnvWith is a keyboard env over rc for an already sandboxed test.
+func keyboardEnvWith(rc *recCaller) (keyboardEnv, *recCaller) {
+	return keyboardEnv{c: rc, store: func() (*catalog.Store, error) { e, err := loadConfigEnv(); return e.store, err }}, rc
+}
 
 func keyboardTestEnv(t *testing.T) (keyboardEnv, *recCaller) {
 	sandbox(t)
@@ -106,9 +112,63 @@ func TestKeyboardCLIFailsClosedWhenUnreadable(t *testing.T) {
 	_, got, _ = run(t, cfg, "get", "keyboard.managed")
 	assert.Equal(t, "false\n", got)
 
-	// niri / Mango cannot report them: the configured values are kept
+	// unreadable compositor settings: replacing them needs --replace
 	rc.results["keyboard.current"] = `{"available":false,"layouts":[],"switchBind":"none","options":[]}`
-	assert.Equal(t, 0, runKeyboard([]string{"switch-bind", "caps"}, env, &out, &errOut), errOut.String())
+	errOut.Reset()
+	assert.Equal(t, 1, runKeyboard([]string{"switch-bind", "caps"}, env, &out, &errOut))
+	assert.Contains(t, errOut.String(), "--replace")
+	_, got, _ = run(t, cfg, "get", "keyboard.managed")
+	assert.Equal(t, "false\n", got)
+	assert.Equal(t, 0, runKeyboard([]string{"switch-bind", "caps", "--replace"}, env, &out, &errOut), errOut.String())
 	_, got, _ = run(t, cfg, "get", "keyboard.layouts", "--json")
 	assert.Contains(t, got, `"layout": "us"`)
+	_, got, _ = run(t, cfg, "get", "keyboard.managed")
+	assert.Equal(t, "true\n", got)
+}
+
+// `config set keyboard.*` takes the compositor's settings over first (one
+// atomic write), after validating the value; showIndicator never does.
+func TestConfigSetKeyboardTakesOver(t *testing.T) {
+	_, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":[],"repeatRate":111,"repeatDelay":175}`
+	old := keyboardDaemon
+	keyboardDaemon = func() yozakura.Caller { return rc }
+	t.Cleanup(func() { keyboardDaemon = old })
+	get := func(key string) string { _, got, _ := run(t, cfg, "get", key); return got }
+
+	code, _, _ := run(t, cfg, "set", "keyboard.showIndicator", "false")
+	assert.Equal(t, 0, code)
+	assert.Equal(t, "false\n", get("keyboard.managed"), "showIndicator stays unmanaged")
+
+	code, _, _ = run(t, cfg, "set", "keyboard.repeatRate", "500")
+	assert.Equal(t, 1, code, "out of range")
+	assert.Equal(t, "false\n", get("keyboard.managed"), "a failing set never takes over")
+
+	code, _, errS := run(t, cfg, "set", "keyboard.repeatRate", "50")
+	assert.Equal(t, 0, code, errS)
+	assert.Equal(t, "true\n", get("keyboard.managed"))
+	assert.Equal(t, "50\n", get("keyboard.repeatRate"))
+	assert.Equal(t, "175\n", get("keyboard.repeatDelay"), "the compositor's other values are copied in")
+	_, got, _ := run(t, cfg, "get", "keyboard.layouts", "--json")
+	assert.Contains(t, got, `"layout": "ru"`)
+
+	// a later edit (UI, CLI) keeps 50: the compositor is not read again
+	env, _ := keyboardEnvWith(rc)
+	var out, errOut bytes.Buffer
+	assert.Equal(t, 0, runKeyboard([]string{"add", "us:intl"}, env, &out, &errOut), errOut.String())
+	assert.Equal(t, "50\n", get("keyboard.repeatRate"))
+}
+
+func TestConfigToggleManagedTakesOver(t *testing.T) {
+	_, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"de","variant":""}],"switchBind":"caps","options":[],"repeatRate":30,"repeatDelay":300}`
+	old := keyboardDaemon
+	keyboardDaemon = func() yozakura.Caller { return rc }
+	t.Cleanup(func() { keyboardDaemon = old })
+	code, _, errS := run(t, cfg, "toggle", "keyboard.managed")
+	assert.Equal(t, 0, code, errS)
+	_, got, _ := run(t, cfg, "get", "keyboard.switchBind")
+	assert.Equal(t, "caps\n", got)
+	_, got, _ = run(t, cfg, "get", "keyboard.repeatDelay")
+	assert.Equal(t, "300\n", got)
 }

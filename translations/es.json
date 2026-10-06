@@ -3201,6 +3201,8 @@
   "prefs.keyboard.all_options": "Todas las opciones",
   "prefs.keyboard.typing": "Repetición de teclas",
   "prefs.keyboard.unmanaged": "Se usan los ajustes de teclado de tu compositor. Cambia cualquier cosa aquí para que Yozakura los gestione.",
+  "prefs.keyboard.unreadable": "Yozakura no puede leer los ajustes de teclado de tu compositor. Cambiar algo aquí los reemplaza.",
+  "prefs.keyboard.take_over": "Dejar que Yozakura gestione el teclado",
   "prefs.keyboard.typing.desc": "Qué tan rápido se repite una tecla mantenida.",
   "prefs.keyboard.repeat_rate": "Velocidad de repetición",
   "prefs.keyboard.repeat_rate.desc": "Caracteres por segundo con la tecla mantenida.",

@@ -113,15 +113,59 @@ func (s *Store) Get(key string) (value any, explicit bool, err error) {
 
 // Set validates and writes a value; it returns what changed.
 func (s *Store) Set(key string, value any, force bool) ([]Change, error) {
-	ref, err := s.Cat.Lookup(key)
+	domain, leaves, err := s.resolve(key, value, force)
 	if err != nil {
 		return nil, err
+	}
+	return s.apply(domain, leaves)
+}
+
+// Check validates a value exactly like Set without writing it.
+func (s *Store) Check(key string, value any, force bool) error {
+	_, _, err := s.resolve(key, value, force)
+	return err
+}
+
+// KV is one key and its new value (SetAll).
+type KV struct {
+	Key   string
+	Value any
+}
+
+// SetAll validates every value first and then writes them all in one
+// atomic write: nothing is written when any value is invalid. All keys must
+// belong to one domain.
+func (s *Store) SetAll(values []KV) ([]Change, error) {
+	domain := ""
+	var all []Leaf
+	for _, kv := range values {
+		d, leaves, err := s.resolve(kv.Key, kv.Value, false)
+		if err != nil {
+			return nil, err
+		}
+		if domain != "" && d != domain {
+			return nil, fmt.Errorf("SetAll: %s is not in domain %s", kv.Key, domain)
+		}
+		domain = d
+		all = append(all, leaves...)
+	}
+	if domain == "" {
+		return nil, nil
+	}
+	return s.apply(domain, all)
+}
+
+// resolve validates a value for key and returns its domain and leaves.
+func (s *Store) resolve(key string, value any, force bool) (string, []Leaf, error) {
+	ref, err := s.Cat.Lookup(key)
+	if err != nil {
+		return "", nil, err
 	}
 	e := ref.Entry
 	if ref.Index >= 0 {
 		whole, _, err := s.Get(e.Key)
 		if err != nil {
-			return nil, err
+			return "", nil, err
 		}
 		arr, _ := clone(whole).([]any)
 		switch {
@@ -130,15 +174,15 @@ func (s *Store) Set(key string, value any, force bool) ([]Change, error) {
 		case ref.Index == len(arr):
 			arr = append(arr, value)
 		default:
-			return nil, fmt.Errorf("%s has %d items; index %d is out of range", e.Key, len(arr), ref.Index)
+			return "", nil, fmt.Errorf("%s has %d items; index %d is out of range", e.Key, len(arr), ref.Index)
 		}
 		value = arr
 	}
 	leaves, err := s.Cat.Assign(e.Key, value, force)
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
-	return s.apply(e.Domain, leaves)
+	return e.Domain, leaves, nil
 }
 
 func (s *Store) apply(domain string, leaves []Leaf) ([]Change, error) {

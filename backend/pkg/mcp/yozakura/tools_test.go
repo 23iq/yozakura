@@ -97,7 +97,10 @@ func readFile(t *testing.T, name string) string {
 func newDeps(t *testing.T) (Deps, *fakeRunner, *fakeIPC) {
 	dir := t.TempDir()
 	r := &fakeRunner{out: map[string]string{}, errs: map[string]error{}, bins: map[string]bool{}}
-	ipc := &fakeIPC{result: map[string]string{}}
+	ipc := &fakeIPC{result: map[string]string{
+		// the compositor reports the default keyboard (keyboard takeover)
+		"keyboard.current": `{"available":true,"layouts":[{"layout":"us","variant":""}],"switchBind":"alt_shift","options":[],"repeatRate":25,"repeatDelay":600}`,
+	}}
 	return Deps{
 		Run:               r,
 		IPC:               ipc,

@@ -3203,6 +3203,8 @@
   "prefs.keyboard.all_options": "Все параметры",
   "prefs.keyboard.typing": "Повтор клавиш",
   "prefs.keyboard.unmanaged": "Используются настройки клавиатуры вашего композитора. Измените что-нибудь здесь, чтобы ими управляла Yozakura.",
+  "prefs.keyboard.unreadable": "Yozakura не может прочитать настройки клавиатуры вашего композитора. Любое изменение здесь заменит их.",
+  "prefs.keyboard.take_over": "Передать управление клавиатурой Yozakura",
   "prefs.keyboard.typing.desc": "Как быстро повторяется зажатая клавиша.",
   "prefs.keyboard.repeat_rate": "Скорость повтора",
   "prefs.keyboard.repeat_rate.desc": "Символов в секунду при зажатой клавише.",

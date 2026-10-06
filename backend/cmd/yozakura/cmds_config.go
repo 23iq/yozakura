@@ -9,6 +9,7 @@ import (
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/catalog"
+	"yozakura/backend/pkg/mcp/yozakura"
 	"yozakura/backend/pkg/paths"
 )
 
@@ -55,6 +56,10 @@ func loadConfigEnv() (*configEnv, error) {
 }
 
 // runConfig implements `yozakura config ...`; out/errOut are injectable for tests.
+// keyboardDaemon reaches the running backend for the keyboard takeover of
+// `config set keyboard.*` (yozakura.PrepareConfigSet); replaced in tests.
+var keyboardDaemon = func() yozakura.Caller { return newClient() }
+
 func runConfig(args []string, out, errOut io.Writer) int {
 	if len(args) == 0 || args[0] == "help" || args[0] == "-h" || args[0] == "--help" {
 		fmt.Fprint(out, branded(configUsage))
@@ -186,7 +191,7 @@ func (c *configEnv) get(args []string, out io.Writer) error {
 }
 
 func (c *configEnv) set(args []string, out io.Writer) error {
-	a := parseCLI(args, []string{"json", "force", "dry-run"}, []string{"add", "remove"})
+	a := parseCLI(args, []string{"json", "force", "dry-run", "replace"}, []string{"add", "remove"})
 	addV, add := a.value("add")
 	remV, remove := a.value("remove")
 	if len(a.pos) < 1 || (!add && !remove && len(a.pos) < 2) {
@@ -222,6 +227,9 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 		}
 		fmt.Fprintf(out, "%s: %s -> %s (dry run, not written)\n", catalog.NormalizeKey(key), shown(e, old), shown(e, value))
 		return nil
+	}
+	if err := yozakura.PrepareConfigSet(c.store, keyboardDaemon(), key, value, a.has("force"), a.has("replace")); err != nil {
+		return err
 	}
 	changes, err := c.store.Set(key, value, a.has("force"))
 	if err != nil {
@@ -297,6 +305,9 @@ func (c *configEnv) toggle(args []string, out io.Writer) error {
 		return err
 	}
 	b, _ := v.(bool)
+	if err := yozakura.PrepareConfigSet(c.store, keyboardDaemon(), ref.Entry.Key, !b, false, false); err != nil {
+		return err
+	}
 	changes, err := c.store.Set(ref.Entry.Key, !b, false)
 	if err != nil {
 		return err

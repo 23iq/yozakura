@@ -83,11 +83,26 @@ ev("indicatorToggled(true)", h.find(win, "layoutList"))
 QTest.qWait(600)
 check(calls("keyboard.apply") == [], "the indicator toggle applies nothing")
 
-# The first change takes over the compositor's values, then applies once
+# The first change: the slider is saved after its 350 ms debounce, the
+# takeover re-reads the compositor first; a failed read is retried and the
+# edit is kept (queued), never dropped or built on the defaults.
+reads = len(calls("keyboard.current"))
+saves = len(js("Config.saved"))
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'keyboard.current': {error: 'down'}})")
+h.find(win, "rateSlider").moved.emit(119)
 h.find(win, "rateSlider").moved.emit(120)
+check(ev("value", h.find(win, "rateSlider")) == 120, "the slider shows the value being dragged")
+check(len(js("Config.saved")) == saves, "slider moves are not saved before the debounce")
+QTest.qWait(450)
+check(len(calls("keyboard.current")) > reads, "the takeover re-reads the compositor's settings")
+check(ev("Config.keyboard.managed") is False and len(js("Config.saved")) == saves, "a failed read takes nothing over")
+check(len(js("KeyboardService._queue")) == 1, "the edit waits in the queue")
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'keyboard.current': %s})" % json.dumps(CURRENT))
+QTest.qWait(1200)  # retry
 check(ev("Config.keyboard.managed") is True, "the first change sets keyboard.managed")
 check([l["layout"] for l in js("Array.from(Config.keyboard.layouts)")] == ["us", "ru"], "us,ru is copied in, never lost")
 check(ev("Config.keyboard.repeatDelay") == 175 and ev("Config.keyboard.repeatRate") == 120, "the change lands on the compositor's values")
+check(len(js("Config.saved")) == saves + 1, "two slider moves give one save")
 QTest.qWait(900)
 applied = calls("keyboard.apply")
 check(len(applied) == 1, f"applied exactly once, got {len(applied)}")
@@ -97,6 +112,23 @@ if applied:
           and p["switchBind"] == "alt_shift", f"apply carries us,ru 120/175 alt_shift, got {p}")
 check(ev("KeyboardService.compositorInput() !== null"), "managed: the keyboard is rendered into the compositor config")
 check(h.find(win, "unmanagedNote").property("visible") is False, "the note goes once managed")
+
+# A compositor that cannot report its settings: a change would replace them,
+# so the page says so, its controls wait and only the explicit takeover
+# (button) sets managed.
+ev("Config.keyboard.managed = false")
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'keyboard.current': {available: false, layouts: [], switchBind: 'none', options: []}})")
+ev("KeyboardService.refreshCurrent()")
+QTest.qWait(50)
+check(ev("KeyboardService.unreadable") is True, "unreadable compositor settings are flagged")
+check(ev("unreadable", h.find(win, "unmanagedNote")) is True and h.find(win, "takeOverButton").property("visible") is True,
+      "the note warns and offers the takeover")
+check(ev("enabled", h.find(win, "typingCard")) is False, "controls wait for the takeover")
+ev("KeyboardService.edit({repeatRate: 77})")
+QTest.qWait(50)
+check(ev("Config.keyboard.managed") is False and ev("Config.keyboard.repeatRate") != 77, "an edit never replaces unreadable settings implicitly")
+h.eval(h.find(win, "takeOverButton"), "clicked()")
+check(ev("Config.keyboard.managed") is True, "the explicit takeover sets managed")
 
 if failures:
     sys.exit(1)

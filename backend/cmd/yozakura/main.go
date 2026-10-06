@@ -121,6 +121,7 @@ func main() {
 		migrateDaemonFiles() // the shell start owns the daemon's files
 	}
 	markExistingInstallOnboarded()
+	markLegacyKeyboard()
 	ensureConfigFiles()
 
 	if len(args) == 0 {
@@ -265,6 +266,14 @@ func hasPendingMigration() bool {
 func markExistingInstallOnboarded() {
 	if _, err := migrate.EnsureOnboardingFlag(*paths.New()); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: cannot update general.json: %v\n", err)
+	}
+}
+
+// markLegacyKeyboard gives a keyboard.json from before keyboard.managed its
+// value (pure defaults: unmanaged), before the shell or CLI read it.
+func markLegacyKeyboard() {
+	if _, err := migrate.EnsureKeyboardManaged(*paths.New()); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: cannot update keyboard.json: %v\n", err)
 	}
 }
 

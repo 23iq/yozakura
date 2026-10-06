@@ -139,6 +139,17 @@ func TestImportAndUnimportThroughConfig(t *testing.T) {
 	if v, _, _ := store.Get("keyboard.managed"); v != false {
 		t.Fatalf("managed not reverted: %v", v)
 	}
+	// repeat only (no layouts in the user's config): still managed
+	prev2, err := importSettings(nil, &ipc.KeyboardSettings{RepeatRate: 50})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v, _, _ := store.Get("keyboard.managed"); v != true {
+		t.Fatalf("a repeat-only import must be managed, got %v", v)
+	}
+	if err := unimportSettings(prev2); err != nil {
+		t.Fatal(err)
+	}
 }
 
 type fakeYozd struct {

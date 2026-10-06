@@ -3201,6 +3201,8 @@
   "prefs.keyboard.all_options": "All options",
   "prefs.keyboard.typing": "Key repeat",
   "prefs.keyboard.unmanaged": "Using your compositor's keyboard settings. Change anything here to let Yozakura manage them.",
+  "prefs.keyboard.unreadable": "Yozakura can't read your compositor's keyboard settings. Changing anything here replaces them.",
+  "prefs.keyboard.take_over": "Let Yozakura manage the keyboard",
   "prefs.keyboard.typing.desc": "How fast a held key repeats.",
   "prefs.keyboard.repeat_rate": "Repeat rate",
   "prefs.keyboard.repeat_rate.desc": "Characters per second while a key is held.",

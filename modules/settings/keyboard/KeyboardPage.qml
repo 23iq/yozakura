@@ -29,6 +29,24 @@ Flickable {
     }
 
     readonly property var kb: KeyboardService.effective
+    // Edits build on the values shown: wait until they are known, and until
+    // an unreadable compositor setup was explicitly taken over
+    readonly property bool editable: KeyboardService.known && !KeyboardService.unreadable
+    // Slider values not saved yet (-1: none); saved together after 350 ms
+    property int pendingRate: -1
+    property int pendingDelay: -1
+
+    function saveRepeat() {
+        const patch = {};
+        if (page.pendingRate >= 0)
+            patch.repeatRate = page.pendingRate;
+        if (page.pendingDelay >= 0)
+            patch.repeatDelay = page.pendingDelay;
+        page.pendingRate = -1;
+        page.pendingDelay = -1;
+        if (Object.keys(patch).length > 0)
+            KeyboardService.edit(patch);
+    }
 
     function setLayouts(list) {
         KeyboardService.edit({
@@ -45,6 +63,14 @@ Flickable {
     Component.onCompleted: {
         KeyboardService.loadCatalog();
         KeyboardService.refreshCurrent();
+    }
+
+    Component.onDestruction: page.saveRepeat()
+
+    Timer {
+        id: repeatSave
+        interval: 350
+        onTriggered: page.saveRepeat()
     }
 
     Column {
@@ -68,7 +94,7 @@ Flickable {
         LayoutList {
             objectName: "layoutList"
             width: parent.width
-            enabled: KeyboardService.known
+            enabled: page.editable
             layouts: page.kb.layouts
             catalog: KeyboardService.catalog
             activeIndex: KeyboardService.active.index
@@ -82,7 +108,7 @@ Flickable {
         KeyboardOptions {
             objectName: "optionsCard"
             width: parent.width
-            enabled: KeyboardService.known
+            enabled: page.editable
             catalog: KeyboardService.catalog
             switchBind: page.kb.switchBind
             options: page.kb.options
@@ -95,15 +121,17 @@ Flickable {
         TypingCard {
             objectName: "typingCard"
             width: parent.width
-            enabled: KeyboardService.known
-            repeatRate: page.kb.repeatRate
-            repeatDelay: page.kb.repeatDelay
-            onRateMoved: v => KeyboardService.edit({
-                    "repeatRate": v
-                })
-            onDelayMoved: v => KeyboardService.edit({
-                    "repeatDelay": v
-                })
+            enabled: page.editable
+            repeatRate: page.pendingRate >= 0 ? page.pendingRate : page.kb.repeatRate
+            repeatDelay: page.pendingDelay >= 0 ? page.pendingDelay : page.kb.repeatDelay
+            onRateMoved: v => {
+                page.pendingRate = v;
+                repeatSave.restart();
+            }
+            onDelayMoved: v => {
+                page.pendingDelay = v;
+                repeatSave.restart();
+            }
         }
     }
 }

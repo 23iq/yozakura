@@ -2,7 +2,9 @@ package yozakura
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	"yozakura/backend/pkg/catalog"
 )
@@ -52,14 +54,25 @@ func CurrentKeyboard(c Caller) (CompositorKeyboard, error) {
 	return cur, nil
 }
 
+// ErrKeyboardUnreadable: the compositor cannot report its keyboard
+// settings, so taking over replaces them; the caller must confirm (replace).
+var ErrKeyboardUnreadable = errors.New("the compositor's keyboard settings cannot be read; changing them here replaces them (run again with --replace, MCP: replace=true)")
+
+// KeyboardTakeoverKeys are the keyboard keys that reach the compositor
+// (showIndicator is the shell's own).
+var KeyboardTakeoverKeys = map[string]bool{
+	"layouts": true, "switchBind": true, "options": true, "repeatRate": true, "repeatDelay": true,
+}
+
 // ManageKeyboard prepares an explicit keyboard edit: when the keyboard is
 // not managed yet it copies the compositor's current settings into the
-// keyboard domain, then sets keyboard.managed. It fails (writing nothing)
-// when the current settings cannot be read, so they are never replaced by
-// the defaults; a compositor that cannot report them (niri, Mango) keeps
-// the configured values. Values outside the catalog range are left as
-// configured.
-func ManageKeyboard(store *catalog.Store, c Caller) error {
+// keyboard domain and sets keyboard.managed, in one atomic write. It fails
+// (writing nothing) when the daemon cannot be asked, so the user's settings
+// are never replaced by the defaults; when the compositor cannot report
+// them it fails with ErrKeyboardUnreadable unless replace is set (then the
+// configured values are taken). A repeat value outside the catalog range
+// keeps the configured one.
+func ManageKeyboard(store *catalog.Store, c Caller, replace bool) error {
 	managed, err := KeyboardManaged(store)
 	if err != nil || managed {
 		return err
@@ -68,28 +81,57 @@ func ManageKeyboard(store *catalog.Store, c Caller) error {
 	if err != nil {
 		return fmt.Errorf("cannot read the compositor's keyboard settings (%v); is the shell running?", err)
 	}
+	var kv []catalog.KV
 	if cur.Available {
-		if err := SaveLayouts(store, cur.Layouts); err != nil {
-			return err
-		}
-		if ValidSwitchBind(cur.SwitchBind) {
-			if _, err := store.Set("keyboard.switchBind", cur.SwitchBind, false); err != nil {
-				return err
-			}
+		layouts := make([]any, 0, len(cur.Layouts))
+		for _, l := range cur.Layouts {
+			layouts = append(layouts, map[string]any{"layout": l.Layout, "variant": l.Variant})
 		}
 		opts := make([]any, 0, len(cur.Options))
 		for _, o := range cur.Options {
 			opts = append(opts, o)
 		}
-		if _, err := store.Set("keyboard.options", opts, false); err != nil {
-			return err
+		kv = append(kv, catalog.KV{Key: "keyboard.layouts", Value: layouts}, catalog.KV{Key: "keyboard.options", Value: opts})
+		if ValidSwitchBind(cur.SwitchBind) {
+			kv = append(kv, catalog.KV{Key: "keyboard.switchBind", Value: cur.SwitchBind})
 		}
 		for key, v := range map[string]int{"keyboard.repeatRate": cur.RepeatRate, "keyboard.repeatDelay": cur.RepeatDelay} {
-			if v > 0 {
-				_, _ = store.Set(key, float64(v), false) // out of range: keep the configured value
+			if inRange(store, key, float64(v)) {
+				kv = append(kv, catalog.KV{Key: key, Value: float64(v)})
 			}
 		}
+	} else if !replace {
+		return ErrKeyboardUnreadable
 	}
-	_, err = store.Set("keyboard.managed", true, false)
+	kv = append(kv, catalog.KV{Key: "keyboard.managed", Value: true})
+	_, err = store.SetAll(kv)
 	return err
+}
+
+// inRange reports whether v lies in the catalog range of key.
+func inRange(store *catalog.Store, key string, v float64) bool {
+	e, ok := store.Cat.Entry(key)
+	if !ok {
+		return false
+	}
+	return (e.Min == nil || v >= *e.Min) && (e.Max == nil || v <= *e.Max)
+}
+
+// PrepareConfigSet runs before a generic config write (`config set`,
+// config_set, `config toggle`): a keyboard key that reaches the compositor,
+// or keyboard.managed=true, first takes the keyboard over (ManageKeyboard).
+// The value is validated before, so a failing command never flips managed.
+func PrepareConfigSet(store *catalog.Store, c Caller, key string, value any, force, replace bool) error {
+	ref, err := store.Cat.Lookup(key)
+	if err != nil || ref.Entry.Domain != "keyboard" {
+		return nil // the write itself reports a bad key
+	}
+	name := strings.SplitN(strings.TrimPrefix(ref.Entry.Key, "keyboard."), ".", 2)[0]
+	if !KeyboardTakeoverKeys[name] && !(name == "managed" && value == true) {
+		return nil
+	}
+	if err := store.Check(key, value, force); err != nil {
+		return err
+	}
+	return ManageKeyboard(store, c, replace)
 }

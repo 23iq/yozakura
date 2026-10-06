@@ -99,6 +99,37 @@ func TestKeyboardSetTakesOverCompositorSettings(t *testing.T) {
 	d2, _, ipc2 := newDeps(t)
 	ipc2.down = true
 	assert.True(t, callTool(t, d2, "keyboard_set", `{"switchBind":"caps"}`).IsError, "unreadable compositor: nothing written")
+
+	d3, _, ipc3 := newDeps(t)
+	ipc3.result["keyboard.current"] = `{"available":false,"layouts":[],"switchBind":"none","options":[]}`
+	assert.True(t, callTool(t, d3, "keyboard_set", `{"switchBind":"caps"}`).IsError, "unreadable settings need replace")
+	m = structured(t, callTool(t, d3, "config_get", `{"key":"keyboard.managed"}`))
+	assert.Equal(t, false, m["value"])
+	m = structured(t, callTool(t, d3, "keyboard_set", `{"switchBind":"caps","replace":true}`))
+	assert.Equal(t, "caps", m["switchBind"])
+	m = structured(t, callTool(t, d3, "config_get", `{"key":"keyboard.managed"}`))
+	assert.Equal(t, true, m["value"])
+}
+
+func TestConfigSetKeyboardTakesOver(t *testing.T) {
+	d, _, ipc := newDeps(t)
+	ipc.result["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":[],"repeatRate":111,"repeatDelay":175}`
+	get := func(key string) any {
+		return structured(t, callTool(t, d, "config_get", `{"key":"`+key+`"}`))["value"]
+	}
+	structured(t, callTool(t, d, "config_set", `{"key":"keyboard.showIndicator","value":false}`))
+	assert.Equal(t, false, get("keyboard.managed"), "showIndicator stays unmanaged")
+	assert.True(t, callTool(t, d, "config_set", `{"key":"keyboard.repeatRate","value":500}`).IsError)
+	assert.Equal(t, false, get("keyboard.managed"), "a failing set never takes over")
+
+	structured(t, callTool(t, d, "config_set", `{"key":"keyboard.repeatRate","value":50}`))
+	assert.Equal(t, true, get("keyboard.managed"))
+	assert.EqualValues(t, 50, get("keyboard.repeatRate"))
+	assert.EqualValues(t, 175, get("keyboard.repeatDelay"))
+	assert.Len(t, get("keyboard.layouts"), 2)
+	ipc.result["keyboard.catalog"] = `{"layouts":[{"name":"us","variants":[]},{"name":"ru","variants":[]},{"name":"de","variants":[]}]}`
+	structured(t, callTool(t, d, "keyboard_set", `{"add":"de"}`))
+	assert.EqualValues(t, 50, get("keyboard.repeatRate"), "later edits keep 50")
 }
 
 const twoOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,"modes":[{"width":2560,"height":1440,"refresh":165},{"width":2560,"height":1440,"refresh":144}]},

@@ -156,9 +156,13 @@ Until the user changes the keyboard in Yozakura (`keyboard.managed` false)
 nothing keyboard-related is rendered or applied and the compositor's own
 settings stay in effect (`keyboard list` shows them, read via the backend's
 `keyboard.current`); the first `keyboard add/remove/switch-bind` (or MCP
-`keyboard_set`, or an edit in Settings > Keyboard / onboarding) copies them
-into the domain and sets `managed` first. An empty `displays.monitors`
-likewise renders no monitor lines.
+`keyboard_set`, `config set keyboard.<key>` / MCP `config_set`, or an edit in
+Settings > Keyboard / onboarding) copies them into the domain and sets
+`managed` first, in one write. Hyprland reports them live (`getoption`); on
+niri / MangoWC they are read from the user's config file. When they cannot be
+read at all, the takeover replaces them and needs `--replace` (MCP
+`"replace": true`, UI: the "Let Yozakura manage the keyboard" button). An
+empty `displays.monitors` likewise renders no monitor lines.
 
 Keybind advisor (`backend/pkg/binds`; edits `binds.json` only, never the
 compositor config; `--json` everywhere):

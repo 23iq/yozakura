@@ -123,3 +123,30 @@ func TestEqualJSONComparesWholeValues(t *testing.T) {
 	assert.False(t, equalJSON([]any{long}, []any{long, "y"}))
 	assert.True(t, equalJSON(map[string]any{"a": long}, map[string]any{"a": long}))
 }
+
+// SetAll validates everything before one write: an invalid value writes
+// nothing, valid ones land together.
+func TestStoreSetAllIsAllOrNothing(t *testing.T) {
+	s := newStore(t)
+	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(50)}, {"keyboard.repeatDelay", float64(5)}}); err == nil {
+		t.Fatal("out-of-range delay must fail")
+	}
+	if _, err := os.Stat(s.File("keyboard")); err == nil {
+		t.Fatal("a failing SetAll must write nothing")
+	}
+	if err := s.Check("keyboard.repeatRate", float64(500), false); err == nil {
+		t.Fatal("Check must validate the range")
+	}
+	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(50)}, {"keyboard.managed", true}}); err != nil {
+		t.Fatal(err)
+	}
+	if v, _, _ := s.Get("keyboard.repeatRate"); v != float64(50) {
+		t.Fatalf("rate %v", v)
+	}
+	if v, _, _ := s.Get("keyboard.managed"); v != true {
+		t.Fatalf("managed %v", v)
+	}
+	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(60)}, {"bar.position", "top"}}); err == nil {
+		t.Fatal("keys of two domains must fail")
+	}
+}

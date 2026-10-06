@@ -60,7 +60,7 @@ func configTools(d Deps) []mcp.ToolDef {
 			toolOpts{readOnly: true}, d.configGet),
 		define("config_set", "Change config",
 			`Change a config key; the shell applies it live and it persists. The value is validated against the catalog: JSON type, allowed values (enum), numeric range, array items; objects may be partial (merged member by member). Returns each changed key with old and new value. Examples: {"key":"bar.position","value":"bottom"}, {"domain":"theme","key":"roundness","value":12}, {"key":"bar.layout.left","value":["launcher","workspaces","clock"]}, {"key":"bar.activities","value":{"enabled":false}}. Invalid keys get "did you mean" suggestions.`,
-			`{"type":"object","properties":{`+keyProp+`,"value":{"description":"New value (JSON) of the key's type."},"force":{"type":"boolean","description":"Skip enum/range checks (type is still checked). Only when the user explicitly asks for an out-of-range value."}},"required":["key","value"],"additionalProperties":false}`,
+			`{"type":"object","properties":{`+keyProp+`,"value":{"description":"New value (JSON) of the key's type."},"force":{"type":"boolean","description":"Skip enum/range checks (type is still checked). Only when the user explicitly asks for an out-of-range value."},"replace":{"type":"boolean","description":"keyboard.* only: when the compositor's keyboard settings cannot be read, replace them anyway (only if the user agreed)."}},"required":["key","value"],"additionalProperties":false}`,
 			toolOpts{idempotent: true}, d.configSet),
 	}
 }
@@ -233,10 +233,11 @@ func (d Deps) configGet(_ context.Context, args json.RawMessage) (*mcp.CallToolR
 
 func (d Deps) configSet(_ context.Context, args json.RawMessage) (*mcp.CallToolResult, error) {
 	var a struct {
-		Domain string
-		Key    string
-		Value  json.RawMessage
-		Force  bool
+		Domain  string
+		Key     string
+		Value   json.RawMessage
+		Force   bool
+		Replace bool
 	}
 	if err := decode(args, &a); err != nil {
 		return nil, err
@@ -250,6 +251,10 @@ func (d Deps) configSet(_ context.Context, args json.RawMessage) (*mcp.CallToolR
 	}
 	_, store, err := d.catalog()
 	if err != nil {
+		return nil, err
+	}
+	// keyboard: take the compositor's settings over first (ruling K-1)
+	if err := PrepareConfigSet(store, d.callerOrNil(), fullKey(a.Domain, a.Key), value, a.Force, a.Replace); err != nil {
 		return nil, err
 	}
 	changes, err := store.Set(fullKey(a.Domain, a.Key), value, a.Force)
