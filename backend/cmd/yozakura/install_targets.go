@@ -63,15 +63,11 @@ func overridesNote(comment, keyword string) string {
 	return brand.ConfigOverridesNote(comment, keyword)
 }
 
-func dataRel() string { return "/.local/share/" + brand.AppID + "/" }
+func dataRel() string { return brand.DataRel() }
 
-func hyprConfBlock() string {
-	return blockMarker("#") + "\nsource = ~" + dataRel() + "hyprland.conf\n\n# OVERRIDES\n" + overridesNote("#", "source") + "\n"
-}
+func hyprConfBlock() string { return brand.HyprConfBlock() }
 
-func hyprLuaBlock() string {
-	return blockMarker("--") + "\n" + luaLoadLine() + "\n\n-- OVERRIDES\n" + overridesNote("--", "source") + "\n"
-}
+func hyprLuaBlock() string { return brand.HyprLuaBlock() }
 
 // simpleTarget describes a compositor whose integration is a single
 // include/source line in one config file. Hyprland is the exception with

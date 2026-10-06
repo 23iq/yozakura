@@ -53,7 +53,7 @@ func movedPrefix(lua bool) string { return comment(lua) + " " + brand.AppID + ":
 // resolves into dataDir (the generated configs).
 func ScanConflicts(hyprDir, dataDir string) ([]Conflict, error) {
 	out := []Conflict{}
-	err := walkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
+	err := WalkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
 		for _, n := range conflictLines(lines, lua) {
 			out = append(out, Conflict{File: path, Line: n + 1, Text: strings.TrimSpace(lines[n])})
 		}
@@ -62,9 +62,9 @@ func ScanConflicts(hyprDir, dataDir string) ([]Conflict, error) {
 	return out, err
 }
 
-// walkConfigs calls fn with the lines of every .conf/.lua file under root
+// WalkConfigs calls fn with the lines of every .conf/.lua file under root
 // (sorted), following file symlinks except into dataDir.
-func walkConfigs(root, dataDir string, fn func(path string, lua bool, lines []string) error) error {
+func WalkConfigs(root, dataDir string, fn func(path string, lua bool, lines []string) error) error {
 	realData, err := filepath.EvalSymlinks(dataDir)
 	if err != nil {
 		realData = dataDir

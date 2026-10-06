@@ -18,7 +18,7 @@ import (
 // the walk goes on: Moved and Outputs only list rules that really changed.
 func MoveConflicts(hyprDir, dataDir, home string) (MoveResult, error) {
 	res := MoveResult{Outputs: []ipc.OutputConfig{}, Moved: []Conflict{}, Skipped: []Conflict{}}
-	err := walkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
+	err := WalkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
 		idx := conflictLines(lines, lua)
 		if len(idx) == 0 {
 			return nil

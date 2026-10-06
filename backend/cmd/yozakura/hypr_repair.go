@@ -20,10 +20,7 @@ func legacyLuaLoadLine() string {
 
 // luaLoadLine loads the generated config only when it exists. It stays a
 // single line so removeBlock can drop it exactly.
-func luaLoadLine() string {
-	v := brand.AppID
-	return fmt.Sprintf(`local %s = loadfile(os.getenv("HOME") .. "%shyprland.lua") if %s then %s() end`, v, dataRel(), v, v)
-}
+func luaLoadLine() string { return brand.HyprLuaLoadLine() }
 
 // repairHyprlandEntry keeps an existing Hyprland integration loadable: it
 // guards the legacy include line in ~/.config/hypr/hyprland.lua and, when a
