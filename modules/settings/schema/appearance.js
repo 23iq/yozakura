@@ -95,6 +95,82 @@ var category = {
                     "label": "settings.theme.enable_corners",
                     "description": "prefs.appearance.corners.desc",
                     "keywords": "screen corners rounded display edges"
+                },
+                {
+                    "key": "theme.shape.corners",
+                    "type": "selector",
+                    "label": "prefs.appearance.corner_style",
+                    "description": "prefs.appearance.corner_style.desc",
+                    "keywords": "corner style shape squircle cut chamfer tab rounded",
+                    "options": [
+                        { "value": "round", "label": "prefs.appearance.corner_style.round" },
+                        { "value": "squircle", "label": "prefs.appearance.corner_style.squircle" },
+                        { "value": "cut", "label": "prefs.appearance.corner_style.cut" },
+                        { "value": "tab", "label": "prefs.appearance.corner_style.tab" }
+                    ]
+                },
+                {
+                    "key": "theme.shape.popupCorners",
+                    "type": "selector",
+                    "label": "prefs.appearance.popup_corners",
+                    "description": "prefs.appearance.popup_corners.desc",
+                    "keywords": "popup menu corner style shape squircle cut tab",
+                    "options": [
+                        { "value": "", "label": "prefs.appearance.popup_corners.inherit" },
+                        { "value": "round", "label": "prefs.appearance.corner_style.round" },
+                        { "value": "squircle", "label": "prefs.appearance.corner_style.squircle" },
+                        { "value": "cut", "label": "prefs.appearance.corner_style.cut" },
+                        { "value": "tab", "label": "prefs.appearance.corner_style.tab" }
+                    ]
+                },
+                {
+                    "key": "theme.shape.cutSize",
+                    "type": "slider",
+                    "min": 2,
+                    "max": 32,
+                    "step": 1,
+                    "unit": "px",
+                    "visibleWhen": { "any": [{ "key": "theme.shape.corners", "equals": "cut" }, { "key": "theme.shape.popupCorners", "equals": "cut" }] },
+                    "label": "prefs.appearance.cut_size",
+                    "description": "prefs.appearance.cut_size.desc",
+                    "keywords": "cut chamfer size corner"
+                }
+            ]
+        },
+        {
+            "id": "popups",
+            "title": "prefs.appearance.section.popups",
+            "entries": [
+                {
+                    "key": "theme.popup.entry",
+                    "type": "selector",
+                    "label": "prefs.appearance.popup_entry",
+                    "description": "prefs.appearance.popup_entry.desc",
+                    "keywords": "popup menu animation entry open fade scale slide morph unfold",
+                    "options": [
+                        { "value": "fade-scale", "label": "prefs.appearance.popup_entry.fade_scale" },
+                        { "value": "slide-from-anchor", "label": "prefs.appearance.popup_entry.slide" },
+                        { "value": "morph-from-bar", "label": "prefs.appearance.popup_entry.morph" },
+                        { "value": "unfold", "label": "prefs.appearance.popup_entry.unfold" }
+                    ]
+                },
+                {
+                    "key": "theme.popup.tail",
+                    "type": "toggle",
+                    "label": "prefs.appearance.popup_tail",
+                    "description": "prefs.appearance.popup_tail.desc",
+                    "keywords": "popup tail arrow pointer callout"
+                },
+                {
+                    "key": "theme.popup.gap",
+                    "type": "slider",
+                    "min": 0,
+                    "max": 32,
+                    "step": 1,
+                    "unit": "px",
+                    "label": "prefs.appearance.popup_gap",
+                    "description": "prefs.appearance.popup_gap.desc",
+                    "keywords": "popup gap distance margin offset bar"
                 }
             ]
         },

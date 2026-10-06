@@ -8043,34 +8043,152 @@
           "description": "Corner shape of the shell's surfaces.",
           "properties": {
             "corners": {
-              "title": "Corners",
+              "title": "Corner style",
               "type": "string",
               "default": "round",
-              "description": "Corner style of surfaces: round (rounded), cut (chamfered) or square.",
+              "description": "Shape of the corners of panels, popups and buttons.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "shape",
+                "label": "prefs.appearance.corner_style",
+                "control": "selector",
+                "keywords": "corner style shape squircle cut chamfer tab rounded"
+              },
               "enum": [
                 "round",
+                "squircle",
                 "cut",
-                "square"
-              ]
+                "tab"
+              ],
+              "x-enumLabels": {
+                "round": "Round",
+                "squircle": "Squircle",
+                "cut": "Cut",
+                "tab": "Tab"
+              }
             },
             "popupCorners": {
               "title": "Popup corners",
               "type": "string",
               "default": "",
-              "description": "Corner style of popups and menus; empty follows shape.corners.",
+              "description": "Corner style of popups and menus.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "shape",
+                "label": "prefs.appearance.popup_corners",
+                "control": "selector",
+                "keywords": "popup menu corner style shape squircle cut tab"
+              },
               "enum": [
                 "",
                 "round",
+                "squircle",
                 "cut",
-                "square"
-              ]
+                "tab"
+              ],
+              "x-enumLabels": {
+                "": "Same as surfaces",
+                "round": "Round",
+                "squircle": "Squircle",
+                "cut": "Cut",
+                "tab": "Tab"
+              }
             },
             "cutSize": {
               "title": "Cut size",
               "type": "number",
               "default": 10,
-              "description": "Chamfer size of cut corners.",
+              "description": "Size of the chamfer on cut corners.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "shape",
+                "label": "prefs.appearance.cut_size",
+                "control": "slider",
+                "step": 1,
+                "unit": "px",
+                "keywords": "cut chamfer size corner",
+                "visibleWhen": {
+                  "any": [
+                    {
+                      "key": "theme.shape.corners",
+                      "equals": "cut"
+                    },
+                    {
+                      "key": "theme.shape.popupCorners",
+                      "equals": "cut"
+                    }
+                  ]
+                },
+                "min": 2,
+                "max": 32
+              },
               "minimum": 2,
+              "maximum": 32,
+              "x-unit": "px"
+            }
+          },
+          "additionalProperties": false
+        },
+        "popup": {
+          "title": "Popup",
+          "type": "object",
+          "description": "Bar popups and menus: entry motion, tail and gap.",
+          "properties": {
+            "entry": {
+              "title": "Popup animation",
+              "type": "string",
+              "default": "fade-scale",
+              "description": "How bar popups and menus appear.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "popups",
+                "label": "prefs.appearance.popup_entry",
+                "control": "selector",
+                "keywords": "popup menu animation entry open fade scale slide morph unfold"
+              },
+              "enum": [
+                "fade-scale",
+                "slide-from-anchor",
+                "morph-from-bar",
+                "unfold"
+              ],
+              "x-enumLabels": {
+                "fade-scale": "Fade and scale",
+                "slide-from-anchor": "Slide from anchor",
+                "morph-from-bar": "Morph from bar",
+                "unfold": "Unfold"
+              }
+            },
+            "tail": {
+              "title": "Popup tail",
+              "type": "boolean",
+              "default": false,
+              "description": "Point popups at the item that opened them.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "popups",
+                "label": "prefs.appearance.popup_tail",
+                "control": "toggle",
+                "keywords": "popup tail arrow pointer callout"
+              }
+            },
+            "gap": {
+              "title": "Popup gap",
+              "type": "number",
+              "default": 8,
+              "description": "Distance between a popup and the item that opened it.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "popups",
+                "label": "prefs.appearance.popup_gap",
+                "control": "slider",
+                "step": 1,
+                "unit": "px",
+                "keywords": "popup gap distance margin offset bar",
+                "min": 0,
+                "max": 32
+              },
+              "minimum": 0,
               "maximum": 32,
               "x-unit": "px"
             }
