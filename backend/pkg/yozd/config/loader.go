@@ -209,6 +209,12 @@ func mergeConfig(dst, src *TOMLConfig) {
 		}
 	}
 
+	// Monitors describe one physical layout: the later file replaces the
+	// earlier one instead of adding to it.
+	if len(src.Monitors) > 0 {
+		dst.Monitors = src.Monitors
+	}
+
 	if len(src.Keybinds) > 0 {
 		dst.Keybinds = append(dst.Keybinds, src.Keybinds...)
 	}

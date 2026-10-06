@@ -206,12 +206,14 @@ type LayerRule struct {
 
 // ConfigUniversal holds the entire configuration state
 type ConfigUniversal struct {
-	Appearance  ConfigAppearance `json:"appearance"`
-	Keybinds    ConfigKeybinds   `json:"keybinds"`
-	WindowRules []WindowRule     `json:"window_rules"`
-	LayerRules  []LayerRule      `json:"layer_rules"`
-	Exec        []string         `json:"exec,omitempty"`
-	ExecOnce    []string         `json:"exec_once,omitempty"`
+	Appearance  ConfigAppearance  `json:"appearance"`
+	Keybinds    ConfigKeybinds    `json:"keybinds"`
+	WindowRules []WindowRule      `json:"window_rules"`
+	LayerRules  []LayerRule       `json:"layer_rules"`
+	Exec        []string          `json:"exec,omitempty"`
+	ExecOnce    []string          `json:"exec_once,omitempty"`
+	Monitors    []OutputConfig    `json:"monitors,omitempty"`
+	Keyboard    *KeyboardSettings `json:"keyboard,omitempty"`
 }
 
 // ConfigGenerator transforms a universal configuration into compositor-specific hyprlang syntax
@@ -227,6 +229,10 @@ type ConfigGenerator interface {
 	// GenerateLayerRules outputs the layer rule declarations
 	GenerateLayerRules(rules []LayerRule) string
 	GenerateStartup(exec []string, execOnce []string) string
+	// GenerateOutputs outputs the monitor declarations ("" for none)
+	GenerateOutputs(monitors []OutputConfig) string
+	// GenerateKeyboard outputs the XKB and key repeat settings ("" for nil)
+	GenerateKeyboard(keyboard *KeyboardSettings) string
 }
 
 // LuaConfigGenerator transforms a universal configuration into Hyprland Lua syntax
@@ -236,6 +242,8 @@ type LuaConfigGenerator interface {
 	GenerateWindowRulesLua(rules []WindowRule) string
 	GenerateLayerRulesLua(rules []LayerRule) string
 	GenerateStartupLua(exec []string, execOnce []string) string
+	GenerateOutputsLua(monitors []OutputConfig) string
+	GenerateKeyboardLua(keyboard *KeyboardSettings) string
 }
 
 // SetAppearanceKey sets one dot-notated appearance key (e.g. "gaps.inner")

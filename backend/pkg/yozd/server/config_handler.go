@@ -74,6 +74,8 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 	if h.generator == nil {
 		return fmt.Errorf("ConfigGenerator not supported for this compositor")
 	}
+	outputsStr := h.generator.GenerateOutputs(payload.Monitors)
+	keyboardStr := h.generator.GenerateKeyboard(payload.Keyboard)
 	startupStr := h.generator.GenerateStartup(payload.Exec, payload.ExecOnce)
 	appStr := h.generator.GenerateAppearance(payload.Appearance)
 	bindStr := h.generator.GenerateKeybinds(payload.Keybinds)
@@ -82,6 +84,8 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 
 	var fullConfig strings.Builder
 	fullConfig.WriteString(bannerFor(h.generator))
+	fullConfig.WriteString(outputsStr)
+	fullConfig.WriteString(keyboardStr)
 	fullConfig.WriteString(startupStr)
 	if startupStr != "" {
 		fullConfig.WriteString("\n")
@@ -110,6 +114,8 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 	fmt.Printf("Config written to: %s\n", configPath)
 
 	if h.luaGen != nil && h.paths.alt != "" {
+		luaOutputs := h.luaGen.GenerateOutputsLua(payload.Monitors)
+		luaKeyboard := h.luaGen.GenerateKeyboardLua(payload.Keyboard)
 		luaStartup := h.luaGen.GenerateStartupLua(payload.Exec, payload.ExecOnce)
 		luaApp := h.luaGen.GenerateAppearanceLua(payload.Appearance)
 		luaBinds := h.luaGen.GenerateKeybindsLua(payload.Keybinds)
@@ -118,6 +124,9 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 
 		var luaConfig strings.Builder
 		luaConfig.WriteString(luaBanner)
+		luaConfig.WriteString("\n")
+		luaConfig.WriteString(luaOutputs)
+		luaConfig.WriteString(luaKeyboard)
 		if luaStartup != "" {
 			luaConfig.WriteString("\n")
 			luaConfig.WriteString(luaStartup)

@@ -9,6 +9,7 @@ type TOMLConfig struct {
 	Appearance  *AppearanceConfig  `toml:"appearance,omitempty"`
 	General     *GeneralConfig     `toml:"general,omitempty"`
 	Input       *InputConfig       `toml:"input,omitempty"`
+	Monitors    []MonitorConfig    `toml:"monitors,omitempty"`
 	Keybinds    []KeybindConfig    `toml:"keybinds,omitempty"`
 	WindowRules []WindowRuleConfig `toml:"window_rules,omitempty"`
 	LayerRules  []LayerRuleConfig  `toml:"layer_rules,omitempty"`
@@ -94,8 +95,12 @@ type InputConfig struct {
 
 // KeyboardConfig holds keyboard layout configuration.
 type KeyboardConfig struct {
-	Layouts  string `toml:"layouts,omitempty"`
-	Variants string `toml:"variants,omitempty"`
+	Layouts     string `toml:"layouts,omitempty"`
+	Variants    string `toml:"variants,omitempty"`
+	Options     string `toml:"options,omitempty"`
+	Model       string `toml:"model,omitempty"`
+	RepeatRate  int    `toml:"repeat_rate,omitempty"`
+	RepeatDelay int    `toml:"repeat_delay,omitempty"`
 }
 
 // KeybindConfig mirrors ipc.Keybind with TOML tags.
@@ -178,6 +183,13 @@ func (c *TOMLConfig) ToIPCConfig() ipc.ConfigUniversal {
 
 	if c.General != nil && c.General.Layout != "" {
 		cfg.Appearance.Layout = &c.General.Layout
+	}
+
+	for _, m := range c.Monitors {
+		cfg.Monitors = append(cfg.Monitors, m.toIPC())
+	}
+	if c.Input != nil && c.Input.Keyboard != nil {
+		cfg.Keyboard = c.Input.Keyboard.toIPC()
 	}
 
 	if len(c.Keybinds) > 0 {

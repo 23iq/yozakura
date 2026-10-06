@@ -110,26 +110,36 @@ func scaleStr(s float64) string {
 	return fmtNum(s)
 }
 
-// buildHyprMonitorCmd builds the raw hyprctl request for cfg. cfg must have
-// passed Validate: Name is the only free-form field and is %q-quoted in Lua.
-func buildHyprMonitorCmd(cfg ipc.OutputConfig, lua bool) string {
+// hyprMonitorConf is the value of a hyprlang `monitor = ...` line (and of
+// `keyword monitor ...`). cfg must have passed Validate.
+func hyprMonitorConf(cfg ipc.OutputConfig) string {
 	if !cfg.Enabled {
-		if lua {
-			return fmt.Sprintf("eval hl.monitor({ output = %q, disabled = true })", cfg.Name)
-		}
-		return "keyword monitor " + cfg.Name + ",disable"
+		return cfg.Name + ",disable"
 	}
-	if lua {
-		scale := scaleStr(cfg.Scale)
-		if cfg.Scale <= 0 {
-			scale = `"auto"`
-		}
-		return fmt.Sprintf("eval hl.monitor({ output = %q, mode = %q, position = %q, scale = %s, transform = %d, vrr = %d })",
-			cfg.Name, cfg.ModeString(), cfg.PositionString(), scale, cfg.Transform, cfg.VRR)
+	return fmt.Sprintf("%s,%s,%s,%s,transform,%d,vrr,%d",
+		cfg.Name, cfg.ModeString(), cfg.PositionString(), scaleStr(cfg.Scale), cfg.Transform, cfg.VRR)
+}
+
+// hyprMonitorLua is the `hl.monitor({ ... })` call for cfg. cfg must have
+// passed Validate: Name is the only free-form field and is %q-quoted.
+func hyprMonitorLua(cfg ipc.OutputConfig) string {
+	if !cfg.Enabled {
+		return fmt.Sprintf("hl.monitor({ output = %q, disabled = true })", cfg.Name)
 	}
 	scale := scaleStr(cfg.Scale)
-	return fmt.Sprintf("keyword monitor %s,%s,%s,%s,transform,%d,vrr,%d",
+	if cfg.Scale <= 0 {
+		scale = `"auto"`
+	}
+	return fmt.Sprintf("hl.monitor({ output = %q, mode = %q, position = %q, scale = %s, transform = %d, vrr = %d })",
 		cfg.Name, cfg.ModeString(), cfg.PositionString(), scale, cfg.Transform, cfg.VRR)
+}
+
+// buildHyprMonitorCmd builds the raw hyprctl request for cfg.
+func buildHyprMonitorCmd(cfg ipc.OutputConfig, lua bool) string {
+	if lua {
+		return "eval " + hyprMonitorLua(cfg)
+	}
+	return "keyword monitor " + hyprMonitorConf(cfg)
 }
 
 // ListOutputs returns every monitor, including disabled ones.

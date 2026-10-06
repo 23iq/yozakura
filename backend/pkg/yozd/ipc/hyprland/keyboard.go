@@ -42,12 +42,54 @@ func parseHyprActiveLayout(data []byte) (ipc.KeyboardLayoutState, error) {
 	return st, nil
 }
 
+// hyprKeyboardEntry is one `input` key of the full keyboard settings.
+type hyprKeyboardEntry struct {
+	key, value string
+	str        bool // string value (quoted in Lua)
+}
+
+// hyprKeyboardEntries lists the input keys for s (already normalized and
+// validated), shared by the live commands and the generated configs. Empty
+// options are kept (they clear options); model and key repeat are set only
+// when non-zero.
+func hyprKeyboardEntries(s ipc.KeyboardSettings) []hyprKeyboardEntry {
+	layouts, variants, options := s.Joined()
+	e := []hyprKeyboardEntry{
+		{"kb_layout", layouts, true},
+		{"kb_variant", variants, true},
+		{"kb_options", options, true},
+	}
+	if s.Model != "" {
+		e = append(e, hyprKeyboardEntry{"kb_model", s.Model, true})
+	}
+	if s.RepeatRate > 0 {
+		e = append(e, hyprKeyboardEntry{"repeat_rate", fmt.Sprint(s.RepeatRate), false})
+	}
+	if s.RepeatDelay > 0 {
+		e = append(e, hyprKeyboardEntry{"repeat_delay", fmt.Sprint(s.RepeatDelay), false})
+	}
+	return e
+}
+
+// hyprKeyboardLua is the `hl.config({ input = { ... } })` call for s.
+func hyprKeyboardLua(s ipc.KeyboardSettings) string {
+	parts := make([]string, 0, 6)
+	for _, e := range hyprKeyboardEntries(s) {
+		if e.str {
+			parts = append(parts, fmt.Sprintf("%s = %q", e.key, e.value))
+		} else {
+			parts = append(parts, e.key+" = "+e.value)
+		}
+	}
+	return "hl.config({ input = { " + strings.Join(parts, ", ") + " } })"
+}
+
 // buildHyprKeyboardCmds builds the raw hyprctl requests for s (already
 // normalized and validated). Tokens are xkb names; Lua values are %q-quoted.
 // full=false emits only kb_layout and kb_variant, leaving options, model and
 // key repeat untouched; full=true also sets them (empty options clear them).
 func buildHyprKeyboardCmds(s ipc.KeyboardSettings, lua, full bool) []string {
-	layouts, variants, options := s.Joined()
+	layouts, variants, _ := s.Joined()
 	if !full {
 		if lua {
 			return []string{fmt.Sprintf("eval hl.config({ input = { kb_layout = %q, kb_variant = %q } })", layouts, variants)}
@@ -55,31 +97,11 @@ func buildHyprKeyboardCmds(s ipc.KeyboardSettings, lua, full bool) []string {
 		return []string{"keyword input:kb_layout " + layouts, "keyword input:kb_variant " + variants}
 	}
 	if lua {
-		cmd := fmt.Sprintf("eval hl.config({ input = { kb_layout = %q, kb_variant = %q, kb_options = %q", layouts, variants, options)
-		if s.Model != "" {
-			cmd += fmt.Sprintf(", kb_model = %q", s.Model)
-		}
-		if s.RepeatRate > 0 {
-			cmd += fmt.Sprintf(", repeat_rate = %d", s.RepeatRate)
-		}
-		if s.RepeatDelay > 0 {
-			cmd += fmt.Sprintf(", repeat_delay = %d", s.RepeatDelay)
-		}
-		return []string{cmd + " } })"}
+		return []string{"eval " + hyprKeyboardLua(s)}
 	}
-	cmds := []string{
-		"keyword input:kb_layout " + layouts,
-		"keyword input:kb_variant " + variants,
-		"keyword input:kb_options " + options,
-	}
-	if s.Model != "" {
-		cmds = append(cmds, "keyword input:kb_model "+s.Model)
-	}
-	if s.RepeatRate > 0 {
-		cmds = append(cmds, fmt.Sprintf("keyword input:repeat_rate %d", s.RepeatRate))
-	}
-	if s.RepeatDelay > 0 {
-		cmds = append(cmds, fmt.Sprintf("keyword input:repeat_delay %d", s.RepeatDelay))
+	var cmds []string
+	for _, e := range hyprKeyboardEntries(s) {
+		cmds = append(cmds, "keyword input:"+e.key+" "+e.value)
 	}
 	return cmds
 }
