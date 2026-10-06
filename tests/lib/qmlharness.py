@@ -41,6 +41,7 @@ Set QML_HARNESS_KEEP=1 to keep the temp tree for debugging.
 from __future__ import annotations
 
 import atexit
+import json
 import os
 import re
 import shutil
@@ -103,6 +104,24 @@ def brand_qml(home: str = HARNESS_HOME) -> str:
     return text
 
 
+def dryrun_qml(env: dict[str, str] | None = None) -> str:
+    """The real modules/globals/DryRun.qml without Quickshell: env lookups
+    of <PREFIX>NAME come from `env` ({"DRYRUN": "1", ...}; inactive by
+    default) and the journal file is a stub recording `written`."""
+    env = env or {}
+    text = (REPO / "modules/globals/DryRun.qml").read_text()
+    text = re.sub(r"^import Quickshell(\.Io)?\s*$", "", text, flags=re.M)
+    text = text.replace("Singleton {", "QtObject {", 1)
+    text = re.sub(r'Quickshell\.env\(BrandActions\.envPrefix \+ "(\w+)"\)',
+                  lambda m: json.dumps(env.get(m.group(1), "")), text)
+    text = re.sub(r'Quickshell\.env\([^()]*\)', json.dumps(env.get("XDG_CONFIG_HOME", "")), text)
+    text = text.replace("property FileView journalView: FileView {",
+                        "property QtObject journalView: QtObject {\n        property string path\n"
+                        "        property bool printErrors\n        property string written: \"\"\n"
+                        "        function setText(t) { written = t }", 1)
+    return text
+
+
 class Harness:
     def __init__(self, name: str = "qml", *, keep: bool | None = None):
         self.app = QGuiApplication.instance() or QGuiApplication([])
@@ -161,7 +180,8 @@ class Harness:
         """Create or extend stub module `name` with {TypeName: qml body}.
 
         `qs.modules.globals` always gets the real Brand singleton (app ids
-        and dirs, see brand_qml()) unless the test passes its own Brand.
+        and dirs, see brand_qml()) and an inactive DryRun (dryrun_qml())
+        unless the test passes its own.
         """
         d = self.root / name.replace(".", "/")
         d.mkdir(parents=True, exist_ok=True)
@@ -169,6 +189,8 @@ class Harness:
             shutil.copy(REPO / "modules/globals/BrandActions.js", d / "BrandActions.js")
             if "Brand" not in files and not (d / "Brand.qml").exists():
                 files = {**files, "Brand": brand_qml()}
+            if "DryRun" not in files and not (d / "DryRun.qml").exists():
+                files = {**files, "DryRun": dryrun_qml()}
         for type_name, body in files.items():
             singleton = body.lstrip().startswith("pragma Singleton")
             (d / f"{type_name}.qml").write_text(_qml_body(body, singleton))

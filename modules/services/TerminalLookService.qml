@@ -4,6 +4,7 @@ import Quickshell
 import qs.config
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.globals
 import "../terminal/TermModel.js" as TermModel
 
 // Terminal look: the prompt presets, rendered previews and fish/engine
@@ -157,6 +158,7 @@ Singleton {
     function enablePrompt(id) {
         if (!Config.terminal)
             return;
+        DryRun.journal("enable prompt " + id + " (" + root.engine + ")");
         Config.terminal.prompt = id;
         Config.terminal.enabled = true;
         Config.saveTerminal();

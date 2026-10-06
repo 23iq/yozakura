@@ -132,6 +132,10 @@ FileView {
         interval: 100
         repeat: false
         onTriggered: {
+            // Dry run: the terminal configs (and their live reload) stay as
+            // they are (not journaled: a follow-up of the journaled change).
+            if (DryRun.active)
+                return;
             if (colors.appThemed("kitty"))
                 kittyGenerator.generate(colors);
             // Same opacity/font inputs as kitty.
@@ -242,6 +246,10 @@ FileView {
                 restart();
                 return;
             }
+            // Dry run: no app theme file is written (not journaled: a
+            // follow-up of the journaled change, also runs at startup).
+            if (DryRun.active)
+                return;
             const names = AppThemes.generatorsFor(Config.apps ? Config.apps.theming : null);
             for (let i = 0; i < names.length; i++) {
                 const generator = colors[names[i]];

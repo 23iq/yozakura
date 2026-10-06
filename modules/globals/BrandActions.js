@@ -14,8 +14,10 @@ var repoSlug = "23iq/yozakura";
 // lines still name it.
 var daemon = "yozd";
 var legacyDaemon = "axctl";
+// Prefix of the app's env vars (mirrors backend/pkg/brand.EnvPrefix).
+var envPrefix = appId.toUpperCase() + "_";
 // Env var through which the backend exports the resolved daemon executable.
-var daemonBinEnv = appId.toUpperCase() + "_DAEMON_BIN";
+var daemonBinEnv = envPrefix + "DAEMON_BIN";
 
 // Keybind/IPC action id: "<app>.<name>".
 function action(name) {

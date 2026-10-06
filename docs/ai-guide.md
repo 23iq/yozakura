@@ -182,6 +182,12 @@ Quick commands (the launcher's `>` commands, one registry
 Tokyo"`, `yozakura cmd wallpaper random`, `yozakura cmd theme light` run
 one. UI commands need the running shell; config and CLI ones do not.
 `yozakura onboarding` reopens the welcome / setup wizard.
+`yozakura onboarding --dry-run [--keep]` runs it in a separate Quickshell
+(`onboarding-dryrun.qml`) where every button is safe: config/cache/state
+are temp copies (XDG dirs), mutating daemon calls are mocked by
+`BackendService` (`modules/services/DryRunBackend.js`: fake 15 s display
+session, fake installs, `YOZAKURA_DRYRUN_FAIL=id1,id2` fails those) and the
+journal of what it would have done is printed on exit (`modules/globals/DryRun.qml`).
 
 Timers, stopwatch and reminders (daemon `timers` service, persisted in
 `~/.local/share/yozakura/timers.json`, counted by wall clock so they survive

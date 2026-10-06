@@ -46,7 +46,17 @@ Singleton {
     }
 
     // Runs `<app> preset <args>`; cb(ok, stdout, stderr).
+    // Dry run: changes are journaled; they only run when the config dir is
+    // the dry run's temp copy (the preview then really shows the preset).
     function run(args, cb) {
+        if (DryRun.active && args[0] !== "list") {
+            DryRun.journal(args[0] === "apply" ? "apply preset " + args.slice(1).join(" ") : "preset " + args.join(" "));
+            if (!DryRun.sandboxed) {
+                if (cb)
+                    Qt.callLater(() => cb(true, "", ""));
+                return;
+            }
+        }
         const p = procFactory.createObject(root, {
             command: [Brand.appId, "preset"].concat(args),
             done: cb || null
@@ -55,6 +65,9 @@ Singleton {
     }
 
     function notify(ok, summary, body, err) {
+        // a dry-run instance never claims the notification server
+        if (DryRun.active)
+            return;
         Notifications.notifyInternal({
             summary: ok ? summary : "Error",
             body: ok ? body : (err || body).trim().replace(/^Error: /, ""),

@@ -104,6 +104,11 @@ func main() {
 			os.Exit(runTask(args[1:], os.Stdout, os.Stderr))
 		case "sys":
 			os.Exit(runSys(args[1:], defaultSysEnv(os.Stdout), os.Stdout, os.Stderr))
+		case "onboarding":
+			// before migrations: a dry run never touches the user's files
+			if isDryRunArgs(args[1:]) {
+				os.Exit(runOnboardingDryRun(args[1:], defaultDryRunEnv(), os.Stdout, os.Stderr))
+			}
 		}
 	}
 
@@ -594,6 +599,7 @@ Commands:
                                      "preset <name>"; {bin} cmd list)
     launch <desktop-id>              Start an installed app like the launcher does
     onboarding                       Open the welcome / setup wizard again
+    onboarding --dry-run [--keep]    Click through the wizard without changing anything
     reload                           Restart {name}
     quit                             Stop {name}
     screen [on|off]                  Control DPMS

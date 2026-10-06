@@ -119,6 +119,9 @@ Item {
                     font.pixelSize: Styling.fontSize(0)
                     color: Colors.overSurfaceVariant
                 }
+                DryRunBadge {
+                    anchors.verticalCenter: parent.verticalCenter
+                }
             }
 
             ProgressDots {

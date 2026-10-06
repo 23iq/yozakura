@@ -58,7 +58,8 @@ FileView {
         }
     }
     onLoadFailed: error => {
-        if (error.toString().includes("FileNotFound") && !file.ready) {
+        // Quickshell passes the FileViewError value (a number), not its name.
+        if ((error === FileViewError.FileNotFound || String(error).includes("FileNotFound")) && !file.ready) {
             file.handleMissing(() => {
                 file.ready = true;
             });

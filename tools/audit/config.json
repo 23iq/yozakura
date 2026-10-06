@@ -2,6 +2,7 @@
  "deadCode": {
   "entryPoints": [
    "shell.qml",
+   "onboarding-dryrun.qml",
    "assets/sddm/yozakura/Main.qml",
    "config/meta/Meta.js"
   ],

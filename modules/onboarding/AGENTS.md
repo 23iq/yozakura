@@ -22,6 +22,7 @@ onboarding/
 ├── OllamaPullRow          StepAi: "pull a model" chips under Ollama (ExtrasService.ollamaPull)
 ├── SummaryCard / ExclusiveChoice   parts of StepFinish
 ├── PresetCard / PresetPreview   static mini desktop from a preset's bar.json/theme.json
+├── DryRunBadge / DryRunWallpapers   dry run only (see DRY RUN)
 └── ChoiceRow / NavButton / SectionLabel / StepScaffold / ProgressDots / SakuraLogo / TourTask
 ```
 State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
@@ -51,7 +52,19 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
 - Display changes go through `DisplaysService.apply` (live, 15 s keep/revert prompt);
   OnboardingWindow unmaps while a live change is pending so the prompt is on top.
 
+## DRY RUN
+`<app> onboarding --dry-run [--keep]` (`backend/cmd/yozakura/cmds_onboarding_dryrun.go`)
+starts `onboarding-dryrun.qml` (repo root: only the wizard, peek pill,
+display prompt and `DryRunWallpapers`) with `<PREFIX>DRYRUN=1` and the XDG
+config/cache/state dirs on temp copies. `DryRun` (modules/globals) is the
+switch + journal; `BackendService` answers the methods of the table in
+`modules/services/DryRunBackend.js` itself (reads still reach the daemon).
+A new mutating daemon method goes in that table; a QML `Process` /
+CLI call that changes the system on the wizard path checks `DryRun.active`
+and journals instead (see PresetsService, CompositorTomlWriter, Colors
+generators, GlobalShortcuts). `DryRunBadge` marks the card and the pill.
+
 ## VERIFY
-`tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-apps-ui.test.py`
+`tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-apps-ui.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs`
 (`tests/lib/onboarding_env.py`), renders:
 `tools/render/onboarding_render.py [--mode dark|light|both] [--lang ru] --out DIR`.

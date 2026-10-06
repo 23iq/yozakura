@@ -21,6 +21,9 @@ QtObject {
     }
 
     function run() {
+        // dry run: the login screen theme is left alone
+        if (DryRun.active)
+            return;
         // Settings > Terminal & Apps can switch the SDDM sync off (apps.theming.sddm).
         if (Config.apps && Config.apps.theming && Config.apps.theming.sddm === false)
             return;

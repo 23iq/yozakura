@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.globals
+import "DryRunBackend.js" as DryRunBackend
 
 pragma Singleton
 
@@ -21,6 +22,11 @@ pragma Singleton
 // singleton. If the socket is missing we just keep retrying the
 // connection — the user is expected to run `yozakura` (or autostart it)
 // before the shell starts.
+//
+// Dry run (DryRun.active, `<app> onboarding --dry-run`): mutating methods
+// (DryRunBackend.js table) never reach the socket; they are answered by the
+// mock, journaled, and their fake events are pushed to the subscribers.
+// Reads still go to the real daemon (their answers pass DryRunBackend.overlay).
 Singleton {
     id: root
 
@@ -61,6 +67,16 @@ Singleton {
 
     function call(method, params, callback) {
         if (!params) params = {};
+        if (DryRun.active) {
+            if (DryRunBackend.isMutating(method, params)) {
+                root._dryCall(method, params, callback);
+                return;
+            }
+            if (callback !== undefined) {
+                const cb = callback;
+                callback = (result, error) => cb(error ? result : DryRunBackend.overlay(root._dry, method, result), error);
+            }
+        }
         const id = root.nextId++;
         const msg = JSON.stringify({id, method, params});
         if (callback !== undefined) root.pending[id] = callback;
@@ -76,6 +92,46 @@ Singleton {
     function notify(method, params) {
         if (!params) params = {};
         root.call(method, params, undefined);
+    }
+
+    // ---- dry run ----
+    property var _dry: DryRun.active ? DryRunBackend.create(DryRun.failIds) : null
+
+    function _dryCall(method, params, callback) {
+        const out = DryRunBackend.handle(root._dry, method, params, Date.now());
+        DryRun.journal(out.line);
+        Qt.callLater(() => {
+            if (callback)
+                callback(out.result, out.error);
+            out.events.forEach(e => root._emitLocal(e.service, e.data));
+            if (DryRunBackend.hasPending(root._dry))
+                dryClock.start();
+        });
+    }
+
+    // Delivers a faked event to every subscription of its service group.
+    function _emitLocal(service, data) {
+        const group = String(service).split(".")[0];
+        const keys = Object.keys(root.subscriptions);
+        for (let i = 0; i < keys.length; i++) {
+            const sub = root.subscriptions[keys[i]];
+            if (sub && sub.ok && sub.active && sub.socket.callback && sub.socket.services.indexOf(group) >= 0)
+                sub.socket.callback(service, data);
+        }
+    }
+
+    Timer {
+        id: dryClock
+        interval: 250
+        repeat: true
+        onTriggered: {
+            DryRunBackend.due(root._dry, Date.now()).forEach(e => {
+                DryRun.journal(e.line);
+                root._emitLocal(e.service, e.data);
+            });
+            if (!DryRunBackend.hasPending(root._dry))
+                stop();
+        }
     }
 
     function tryConnect() {
@@ -100,7 +156,9 @@ Singleton {
     // Adds a subscription. Returns an integer handle.
     function addSubscription(services, callback) {
         const key = root.nextSubId++;
-        const obj = subSocketFactory.createObject(root, {services: services, callback: callback});
+        const dry = root._dry;
+        const cb = dry ? (service, data) => callback(service, DryRunBackend.overlayEvent(dry, service, data)) : callback;
+        const obj = subSocketFactory.createObject(root, {services: services, callback: cb});
         root.subscriptions[key] = {socket: obj, active: true, ok: true};
         if (root.socketAvailable) Qt.callLater(() => { if (root.subscriptions[key] && root.subscriptions[key].ok) obj.connected = true; });
         return key;

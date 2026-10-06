@@ -1557,6 +1557,7 @@
   "prefs.color_role.remove_stop": "Remove gradient stop",
   "prefs.color_role.alpha": "Opacity",
   "onboarding.setup": "Setup",
+  "onboarding.dryrun.badge": "DRY RUN — nothing is changed",
   "onboarding.skip_setup": "Skip setup",
   "onboarding.peek.label": "Setup · step %1/%2",
   "onboarding.peek.back": "Back to setup",

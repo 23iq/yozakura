@@ -310,6 +310,11 @@ Singleton {
     function _flushWrite() {
         if (!WriteGate.request(root._gate, DisplaysService.pending))
             return;
+        // Dry run: the CLI call below bypasses BackendService's interception.
+        if (DryRun.active) {
+            DryRun.journal("write the compositor config");
+            return;
+        }
         if (ipcProcess.running) {
             _writeQueued = true;
             return;

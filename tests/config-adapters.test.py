@@ -67,6 +67,8 @@ QtObject {
 }""",
     "JsonAdapter": "QtObject {}",
     "JsonObject": "QtObject {}",
+    # Quickshell's loadFailed passes this enum's value (a number), not a name.
+    "FileViewError": "QtObject { enum Value { Success, Unknown, NotPermitted, FileNotFound, NotAFile } }",
     "FileView": """QtObject {
     property string path
     property bool atomicWrites
@@ -77,7 +79,7 @@ QtObject {
     property int writes: 0
     property int reloads: 0
     signal loaded
-    signal loadFailed(string error)
+    signal loadFailed(var error)
     signal fileChanged
     signal adapterUpdated
     function text() { return content; }
@@ -286,6 +288,11 @@ h.eval(mf2, "loadFailed('FileNotFound')")
 h.eval(ms2, "log.last.exited(1, 0)")
 check(json.loads(h.eval(mf2, "content") or "null") == {"a": 1} and h.eval(mf2, "ready") is True,
       "missing file without a preset: defaults written, domain ready")
+ms3 = missing_scene("enumerr")
+mf3 = h.eval(ms3, "file")
+h.eval(mf3, "loadFailed(3)")  # FileViewError.FileNotFound in the stub
+h.eval(ms3, "log.last.exited(1, 0)")
+check(h.eval(mf3, "ready") is True, "missing file reported as the FileViewError value: domain ready")
 
 # ---- Config.qml wiring (own harness: the repo layout under qs/) ----
 w = Harness("config-wiring")

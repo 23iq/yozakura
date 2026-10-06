@@ -23,8 +23,9 @@ QtObject {
     // High-performance Pipe Listener (Daemon mode)
     property Process pipeListener: Process {
         command: ["sh", "-c", 'd="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"; p="$d/$1"; mkdir -p "$d"; rm -f "$p"; mkfifo "$p"; exec tail -f "$p"', "ipc-pipe", root.ipcName]
-        running: true
-        
+        // a dry-run instance must not take over the live shell's FIFO
+        running: !DryRun.active
+
         stdout: SplitParser {
             onRead: data => {
                 const cmd = data.trim();
@@ -42,6 +43,10 @@ QtObject {
     function run(command) {
         console.log("IPC run command received:", command);
         root.commandRan(command);
+        // Dry run: the live shell runs the real commands (same "ui" stream);
+        // the wizard only needs commandRan for its keybind tour.
+        if (DryRun.active)
+            return;
         switch (command) {
             // Launcher (Standalone Notch Module)
             case "launcher": toggleLauncher(); break;

@@ -1557,6 +1557,7 @@
   "prefs.color_role.remove_stop": "Удалить точку",
   "prefs.color_role.alpha": "Непрозрачность",
   "onboarding.setup": "Настройка",
+  "onboarding.dryrun.badge": "ПРОБНЫЙ ЗАПУСК — ничего не меняется",
   "onboarding.skip_setup": "Пропустить настройку",
   "onboarding.peek.label": "Настройка · шаг %1/%2",
   "onboarding.peek.back": "Вернуться к настройке",

@@ -1557,6 +1557,7 @@
   "prefs.color_role.remove_stop": "Quitar parada",
   "prefs.color_role.alpha": "Opacidad",
   "onboarding.setup": "Configuración",
+  "onboarding.dryrun.badge": "SIMULACIÓN — no se cambia nada",
   "onboarding.skip_setup": "Omitir configuración",
   "onboarding.peek.label": "Configuración · paso %1/%2",
   "onboarding.peek.back": "Volver a la configuración",

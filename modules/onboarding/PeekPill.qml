@@ -51,6 +51,9 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 size: Math.round(Styling.fontSize(0) * 2.2)
             }
+            DryRunBadge {
+                anchors.verticalCenter: parent.verticalCenter
+            }
             Text {
                 objectName: "peekLabel"
                 anchors.verticalCenter: parent.verticalCenter
