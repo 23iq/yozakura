@@ -218,26 +218,6 @@ LayoutPreview {
         }
     }
 
-    // Why a drop is refused (the notch only fits top/bottom)
-    Rectangle {
-        objectName: "screenMockHint"
-        visible: root.dragPart !== "" && root.dragTarget !== "" && !root.dropValid
-        anchors.horizontalCenter: root.screen.horizontalCenter
-        y: root.sy + root.sh / 2 - height / 2
-        width: hint.implicitWidth + 20
-        height: hint.implicitHeight + 10
-        radius: height / 2
-        color: Colors.error
-        Text {
-            id: hint
-            anchors.centerIn: parent
-            text: I18n.t("prefs.layout.drop.notch_edge")
-            font.family: Styling.defaultFont
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overError
-        }
-    }
-
     // The parts
     Repeater {
         model: PartMeta.ORDER

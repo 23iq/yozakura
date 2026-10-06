@@ -16,8 +16,8 @@
 var PARTS = ["bar", "dock", "notch"]; // also the stacking order, edge inward
 var CONTENT = ["activities", "clock", "tray"];
 var EDGES = PanelLayout.EDGES;
-// Widen when the notch supports the side edges.
-var NOTCH_EDGES = ["top", "bottom"];
+// The notch runs upright on the side edges (NotchPlacement, NotchShape.js)
+var NOTCH_EDGES = EDGES.slice();
 var ALIGNS = ["start", "center", "end"];
 var NOTCH_STYLES = ["attached", "island", "pill"];
 var DOCK_STYLES = ["default", "floating", "integrated"];

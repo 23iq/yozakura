@@ -3,7 +3,7 @@ tests/lib/settings_env.py (real Config defaults, SettingsStore, ShellLayout
 and LayoutModel): dragging the bar chip to the left edge writes
 bar.position; dropping the notch on the shelf hides it (notch.enabled) and
 the inspector notes where its activities went; a notch dropped on a side
-edge is refused; the inspector switch shows it again and its style picker
+edge moves there (upright); the inspector switch shows it again and its style picker
 writes notch.style. Nothing logs a QML error.
 """
 import json
@@ -102,10 +102,12 @@ check(get("bar.position") == "left", f"bar dragged to the left: {get('bar.positi
 bar = find("partChip_bar")
 check(h.eval(bar, "vertical") is True, "the bar chip turns vertical")
 
-# The notch refuses a side edge
+# The notch goes to a side edge too (upright)
 drag(point(find("partChip_notch"), 0.5, 0.5), point(screen, 0.97, 0.5))
-check(get("notch.position") == "top", "notch stays on a top/bottom edge")
-check(get("notch.enabled") is True, "a refused drop changes nothing")
+check(get("notch.position") == "right", f"notch dragged to the right: {get('notch.position')}")
+check(get("notch.enabled") is True, "a side edge keeps the notch on")
+check(h.eval(find("partChip_notch"), "vertical") is True, "the notch chip turns vertical")
+check(find("screenMockHint") is None, "no refusal hint")
 
 # Drop the notch on the shelf: hidden, and its activities go to the bar's
 # corner (vertical bar)

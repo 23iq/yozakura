@@ -94,7 +94,7 @@ test('parts on one edge stack bar, dock, notch from the screen edge in', () => {
     for (const [bar, notch, dock] of combos) for (const e of EDGES) {
         const l = M.fromConfig(cfg({
             bar: { position: e, layout: { style: bar ? 'classic' : 'none' } },
-            notch: { enabled: notch, position: e === 'left' || e === 'right' ? 'top' : e },
+            notch: { enabled: notch, position: e },
             dock: { enabled: dock, position: e }
         }));
         const s = plain(M.stacking(l));
@@ -111,14 +111,15 @@ test('parts on one edge stack bar, dock, notch from the screen edge in', () => {
 
 test('edges, styles and aligns offered per part', () => {
     assert.deepEqual(plain(M.edgesOf('bar')), EDGES);
-    assert.deepEqual(plain(M.edgesOf('notch')), ['top', 'bottom']);
+    assert.deepEqual(plain(M.edgesOf('notch')), EDGES);
     assert.ok(M.stylesOf('bar').includes('islands') && !M.stylesOf('bar').includes('none'));
     assert.deepEqual(plain(M.stylesOf('notch')), ['attached', 'island', 'pill']);
     assert.deepEqual(plain(M.stylesOf('dock')), ['default', 'floating', 'integrated']);
     assert.deepEqual(plain(M.alignsOf('notch')), ['start', 'center', 'end']);
     assert.deepEqual(plain(M.alignsOf('dock')), []);
     assert.ok(M.alignsOf('bar').includes('fill'));
-    assert.equal(M.canDrop('notch', 'left'), false);
+    assert.equal(M.canDrop('notch', 'left'), true);
+    assert.equal(M.canDrop('notch', 'right'), true);
     assert.equal(M.canDrop('bar', 'left'), true);
     assert.equal(M.canDrop('bogus', 'top'), false);
 });
@@ -132,7 +133,8 @@ test('edits write only existing keys: legacy bar, notch and dock', () => {
     assert.deepEqual(plain(M.edit(off, 'bar', 'enabled', true)), [{ key: 'bar.layout.style', value: 'classic' }]);
     assert.deepEqual(plain(M.edit(c, 'notch', 'enabled', false)), [{ key: 'notch.enabled', value: false }]);
     assert.deepEqual(plain(M.edit(c, 'notch', 'edge', 'bottom')), [{ key: 'notch.position', value: 'bottom' }]);
-    assert.deepEqual(plain(M.edit(c, 'notch', 'edge', 'left')), []);
+    assert.deepEqual(plain(M.edit(c, 'notch', 'edge', 'left')), [{ key: 'notch.position', value: 'left' }]);
+    assert.deepEqual(plain(M.edit(c, 'notch', 'edge', 'middle')), []);
     assert.deepEqual(plain(M.edit(c, 'notch', 'align', 'start')), [{ key: 'notch.align', value: 'start' }]);
     assert.deepEqual(plain(M.edit(c, 'dock', 'style', 'floating')), [{ key: 'dock.theme', value: 'floating' }]);
     assert.deepEqual(plain(M.edit(c, 'dock', 'edge', 'right')), [{ key: 'dock.position', value: 'right' }]);
