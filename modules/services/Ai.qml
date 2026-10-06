@@ -6,7 +6,6 @@ import qs.modules.services
 import qs.modules.globals
 import qs.modules.settings.store
 import "ai"
-import "ai/EngineSelection.js" as Selection
 import "ai/ContextMath.js" as ContextMath
 import "ai/ToolHints.js" as ToolHints
 
@@ -39,7 +38,8 @@ Singleton {
 
     readonly property var models: catalog ? catalog.models : []
     readonly property var currentModel: catalog ? catalog.find(currentModelId) : null
-    readonly property var quickModel: catalog ? catalog.find(Config.ai.quickAsk.model || Config.ai.defaultModel || currentModelId) : null
+    // Quick ask follows the Assistant's last pick unless ai.quickAsk.model names one.
+    readonly property var quickModel: catalog ? catalog.find(Config.ai.quickAsk.model || engineMemory.engine("assistant") || currentModelId) : null
     readonly property var activeChat: mode === "agent" ? null : chat
     readonly property var activeAgent: mode === "agent" && agents ? agents.active : null
     readonly property bool busy: runner.starting || contextState.compacting || (activeAgent ? ["running", "starting", "waiting"].indexOf(activeAgent.status) >= 0 : (activeChat ? activeChat.busy : false))
@@ -47,6 +47,8 @@ Singleton {
     // The Code space's project folder (CodeProject): new sessions, the
     // project bar and the task board all use it.
     readonly property string projectDir: project.dir
+    // Folder CLI agents of the visible space run in (and list models for).
+    readonly property string agentCwd: space === "code" ? projectDir : (Quickshell.env("HOME") || "")
     readonly property var agentSettings: {
         const id = activeAgent ? activeAgent.agent : (currentModel?.agent || Config.ai.agents.defaultAgent);
         const cfg = Config.ai.agents[id] || {};
@@ -56,9 +58,10 @@ Singleton {
             yolo: false,
             systemPrompt: ""
         } : {};
+        const picked = engineMemory.agentModel(space, id);
         const s = Object.assign({
             agent: id,
-            model: cfg.model || "",
+            model: picked !== undefined ? picked : (cfg.model || ""),
             effort: "",
             cwd: Config.ai.agents.defaultCwd || "",
             systemPrompt: "",
@@ -96,6 +99,8 @@ Singleton {
     property CodeProject project: CodeProject {
         owner: root
     }
+    // Last picked engine / agent model per space, persisted (EngineMemory.qml).
+    property EngineMemory engineMemory: EngineMemory {}
     // Provider connections (Connect sheet, settings page, onboarding).
     property ProviderSetup providers: ProviderSetup {
         catalog: root.catalog
@@ -143,7 +148,8 @@ Singleton {
         drafts = poolC.createObject(root, {
             makeSession: (kind, persist) => _newSession(kind, persist)
         });
-        currentModelId = Selection.initial(Config.ai.defaultModel, StateService.initialized ? StateService.get("lastAiModel", "") : "");
+        engineMemory.init();
+        currentModelId = engineMemory.engine("assistant");
         recentModelIds = StateService.initialized ? StateService.get("aiRecentModels", []) : [];
         effort.init();
         project.init();
@@ -293,7 +299,7 @@ Singleton {
             mode = "chat";
         }
         currentModelId = m.id;
-        StateService.set(space === "code" ? "lastAiCodeModel" : "lastAiModel", m.id);
+        engineMemory.remember(space, m.id);
         recentModelIds = [m.id].concat(recentModelIds.filter(x => x !== m.id)).slice(0, 8);
         StateService.set("aiRecentModels", recentModelIds);
         _reconfigure();
@@ -309,6 +315,19 @@ Singleton {
             SettingsStore.set("ai.defaultModel", id);
     }
 
+    // Picker child row "Claude › Haiku": the agent and its native model in
+    // one step ("" = the agent's default), with the level last used for it.
+    // Remembered for the space, so new sessions and restarts keep it.
+    function pickAgentModel(agent, model) {
+        if (!setModel("agent:" + agent))
+            return false;
+        const remembered = effort.rememberedFor(agent, model || "");
+        return configureAgent({
+            model: model || "",
+            effort: remembered !== null ? remembered : ""
+        });
+    }
+
     // Session settings of the visible agent (the session, or its next
     // launch). The Code project is not a session setting: `cwd` goes to
     // chooseProject. Refused with a visible notice while a turn runs.
@@ -322,6 +341,8 @@ Singleton {
         }
         if (busy)
             return refuseBusy();
+        if (fields.model !== undefined)
+            engineMemory.rememberAgentModel(space, agentSettings.agent, fields.model);
         if (activeAgent)
             agents.update(activeAgent.id, fields);
         else {
@@ -371,7 +392,8 @@ Singleton {
     function newConversation() {
         _ensureInit();
         _openingChatId = "";
-        const id = space === "code" ? currentModelId : (Config.ai.defaultModel || currentModelId);
+        // The space's last pick, not the engine of a resumed old session.
+        const id = engineMemory.engine(space) || currentModelId;
         _newSerial++;
         noticeError = "";
         if (id.startsWith("agent:")) {

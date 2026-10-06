@@ -8,7 +8,8 @@ import qs.config
 import qs.modules.aicenter.common
 
 // One model of the picker: icon, name, detail line, capability badges and
-// marks for the current engine (check) and the space default (pin).
+// marks for the current engine (check) and the space default (pin). A CLI
+// agent is a group: `expandable` shows a caret and a tap expands its models.
 StyledRect {
     id: root
 
@@ -17,6 +18,8 @@ StyledRect {
     property bool current: false
     property bool isDefault: false
     property bool showBadges: true
+    property bool expandable: false
+    property bool expanded: false
 
     signal activated
 
@@ -90,7 +93,15 @@ StyledRect {
             color: Colors.primary
         }
         Text {
-            visible: root.current
+            objectName: "pickerCaret"
+            visible: root.expandable
+            text: root.expanded ? Icons.caretDown : Icons.caretRight
+            font.family: Icons.font
+            font.pixelSize: 12
+            color: Colors.outline
+        }
+        Text {
+            visible: root.current && !(root.expandable && root.expanded)
             text: Icons.accept
             font.family: Icons.font
             font.pixelSize: 13

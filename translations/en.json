@@ -1282,7 +1282,7 @@
   "ai.quick_enabled": "Quick ask in the notch",
   "ai.quick_keys": "Enter ask · Ctrl+Enter continue in the sidebar · Esc close",
   "ai.quick_model": "Quick ask model",
-  "ai.quick_model_hint": "Model id (e.g. ollama:qwen3.5:9b); empty = current model",
+  "ai.quick_model_hint": "Model id (e.g. ollama:qwen3.5:9b); empty = the model last picked in the Assistant",
   "ai.quick_placeholder": "Ask quickly…",
   "ai.regex": "When copied text matches (regex)",
   "ai.retry": "Regenerate",
@@ -2433,7 +2433,7 @@
   "ai.picker_recent": "Recent",
   "ai.picker_not_connected": "Not connected",
   "ai.refresh_models": "Refresh models",
-  "ai.picker_hint": "↑↓ move · Enter pick · Esc close",
+  "ai.picker_hint": "↑↓ move · → expand · Enter pick · Esc close",
   "prefs.ai.strip_effort": "Reasoning effort",
   "prefs.ai.strip_effort.desc": "Effort selector next to the model (only for models that support it).",
   "prefs.ai.section.model_effort": "AI bar: models and effort",
@@ -3033,5 +3033,10 @@
   "notify.usage.window.week_sonnet": "weekly Sonnet",
   "notify.routine.failed": "Routine %1 failed",
   "notify.routine.stopped": "Stopped",
-  "notify.routine.step": "Step %2 (%3): %4"
+  "notify.routine.step": "Step %2 (%3): %4",
+  "ai.picker_agent_default": "Agent default",
+  "ai.picker_efforts": "effort: %1",
+  "ai.picker_models_failed": "Could not list models",
+  "ai.picker_no_agent_models": "No models reported",
+  "ai.picker_manual_model": "Other model id… (Enter)"
 }

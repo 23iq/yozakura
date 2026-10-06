@@ -3,16 +3,25 @@ const { test } = require('node:test');
 const { loadLibrary } = require('./lib/qmljs.cjs');
 const S = loadLibrary('modules/services/ai/EngineSelection.js');
 
-test('explicit default wins over last selection and discovery order', () => {
-    assert.equal(S.initial('agent:codex', 'ollama:qwen'), 'agent:codex');
-    assert.equal(S.initial('', 'ollama:qwen'), 'ollama:qwen');
-    assert.equal(S.initial('', ''), '');
+test('the last pick wins over the configured default (set once, stays)', () => {
+    assert.equal(S.start('agent:codex', { id: 'agent:claude', base: 'agent:codex' }), 'agent:claude');
+    assert.equal(S.start('', 'ollama:qwen'), 'ollama:qwen', 'legacy string pick');
+    assert.equal(S.start('agent:codex', 'ollama:qwen'), 'ollama:qwen', 'a legacy pick beats the default');
+    assert.equal(S.start('agent:codex', null), 'agent:codex', 'nothing picked: the default');
+    assert.equal(S.start('', null), '');
+});
+
+test('a default changed (pinned) after the pick is the newer choice', () => {
+    assert.equal(S.start('openai:a', { id: 'agent:claude', base: 'agent:codex' }), 'openai:a');
+    assert.equal(S.start('', { id: 'agent:claude', base: 'agent:codex' }), 'agent:claude', 'clearing the default keeps the pick');
 });
 
 test('code space starts with the last agent or the default agent', () => {
-    assert.equal(S.initialCode('agent:codex', 'claude'), 'agent:codex');
-    assert.equal(S.initialCode('openai:gpt', 'claude'), 'agent:claude');
-    assert.equal(S.initialCode('', ''), 'agent:claude');
+    assert.equal(S.startCode('claude', { id: 'agent:codex', base: 'agent:claude' }), 'agent:codex');
+    assert.equal(S.startCode('claude', 'agent:codex'), 'agent:codex');
+    assert.equal(S.startCode('claude', 'openai:gpt'), 'agent:claude');
+    assert.equal(S.startCode('', ''), 'agent:claude');
+    assert.equal(S.startCode('opencode', { id: 'agent:codex', base: 'agent:claude' }), 'agent:opencode');
 });
 
 test('unavailable explicit engine is retained without choosing a replacement', () => {

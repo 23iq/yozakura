@@ -1282,7 +1282,7 @@
   "ai.quick_enabled": "Быстрый вопрос в «чёлке»",
   "ai.quick_keys": "Enter — спросить · Ctrl+Enter — продолжить в панели · Esc — закрыть",
   "ai.quick_model": "Модель быстрого вопроса",
-  "ai.quick_model_hint": "Id модели (напр. ollama:qwen3.5:9b); пусто = текущая",
+  "ai.quick_model_hint": "Id модели (напр. ollama:qwen3.5:9b); пусто = модель, последней выбранная в Ассистенте",
   "ai.quick_placeholder": "Быстрый вопрос…",
   "ai.regex": "Если скопированный текст совпадает (regex)",
   "ai.retry": "Повторить",
@@ -2433,7 +2433,7 @@
   "ai.picker_recent": "Недавние",
   "ai.picker_not_connected": "Не подключены",
   "ai.refresh_models": "Обновить модели",
-  "ai.picker_hint": "↑↓ выбор · Enter взять · Esc закрыть",
+  "ai.picker_hint": "↑↓ выбор · → раскрыть · Enter взять · Esc закрыть",
   "prefs.ai.strip_effort": "Усилие рассуждения",
   "prefs.ai.strip_effort.desc": "Переключатель усилий рядом с моделью (только для моделей, которые это поддерживают).",
   "prefs.ai.section.model_effort": "Панель ИИ: модели и усилия",
@@ -3033,5 +3033,10 @@
   "notify.usage.window.week_sonnet": "неделя, Sonnet",
   "notify.routine.failed": "Сценарий «%1» завершился с ошибкой",
   "notify.routine.stopped": "Остановлен",
-  "notify.routine.step": "Шаг %2 (%3): %4"
+  "notify.routine.step": "Шаг %2 (%3): %4",
+  "ai.picker_agent_default": "По умолчанию у агента",
+  "ai.picker_efforts": "усилие: %1",
+  "ai.picker_models_failed": "Не удалось получить список моделей",
+  "ai.picker_no_agent_models": "Агент не сообщил моделей",
+  "ai.picker_manual_model": "Другой id модели… (Enter)"
 }

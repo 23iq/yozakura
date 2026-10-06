@@ -13,7 +13,7 @@ var keys = {
         "description": "Extra chat models added to the model picker."
     },
     "defaultModel": {
-        "description": "Default assistant engine or API model ID; empty uses the last explicit choice."
+        "description": "Initial assistant engine or API model ID. The last model picked in the bar wins afterwards (remembered per space); changing this setting later makes it the newer choice."
     },
     "sidebarWidth": {
         "min": 240,

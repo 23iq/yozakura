@@ -26,7 +26,11 @@ QtObject {
     property var chosenProjects: []
     function chooseProject(dir) { chosenProjects = chosenProjects.concat([dir]); projectDir = dir; return true; }
     function refuseBusy() { noticeError = "ai.busy_notice"; return false; }
-    readonly property var agentSettings: ({agent: "claude", cwd: projectDir, model: "", effort: "", systemPrompt: ""})
+    property string pickedAgentModel: ""
+    readonly property var agentSettings: ({agent: "claude", cwd: projectDir, model: pickedAgentModel, effort: "", systemPrompt: ""})
+    readonly property string agentCwd: GlobalStates.aiSpace === "code" ? projectDir : "/home/user"
+    property var agentPicks: []
+    function pickAgentModel(agent, model) { agentPicks = agentPicks.concat([agent + "/" + model]); mode = "agent"; pickedAgentModel = model; return true; }
     property QtObject drafts: QtObject {
         property var summaries: []
         property var saved: ({})
@@ -119,6 +123,7 @@ QtObject {
         readonly property string effortLabel: level || autoHint
         readonly property string summary: (root.mode === "agent" ? "Claude Code" : "Anthropic") + " · " + modelLabel + (effortLabel ? " · " + effortLabel : "")
         property var chosen: []
+        function rememberedFor(agent, model) { return null; }
         function set(v) {
             chosen = chosen.concat([v]);
             level = v;

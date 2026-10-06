@@ -1,14 +1,24 @@
 .pragma library
 
-// Engine of a space at startup. Assistant: the configured default, then the
-// last explicit choice. Code (CLI agents only): the last agent, then the
-// default agent.
-function initial(primary, last) {
-    return primary || last || "";
+// Engine a space starts with (startup, new chats). `pick` is the last
+// explicit choice ({id, base}, base = the configured default when it was
+// made; a legacy string has no base). The user's latest pick wins; the
+// configured default applies when nothing was picked yet, or when it was
+// changed (pinned/edited) after that pick, so editing the setting is the
+// newer explicit choice.
+function start(defaultId, pick) {
+    var p = typeof pick === "string" ? { id: pick } : (pick || {});
+    if (!p.id)
+        return defaultId || "";
+    if (p.base !== undefined && defaultId && p.base !== defaultId)
+        return defaultId;
+    return p.id;
 }
 
-function initialCode(last, defaultAgent) {
-    return last && last.indexOf("agent:") === 0 ? last : "agent:" + (defaultAgent || "claude");
+// Code (CLI agents only): the same rule over agents, never an HTTP model.
+function startCode(defaultAgent, pick) {
+    var id = start("agent:" + (defaultAgent || "claude"), pick);
+    return id.indexOf("agent:") === 0 ? id : "agent:" + (defaultAgent || "claude");
 }
 
 // Space of a history entry: HTTP chats and assistant agent sessions (legacy

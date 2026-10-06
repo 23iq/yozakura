@@ -1,4 +1,4 @@
-"""Real assistant facade: explicit default, separate engines and addressed cancellation."""
+"""Real assistant facade: last pick over the default, separate engines and addressed cancellation."""
 import json
 import subprocess
 import sys
@@ -60,7 +60,7 @@ for src in (repo / "modules/services/ai").glob("*"):
 path = h.copy("modules/services/Ai.qml", dest="modules/services", strip_singleton=True)
 obj = h.load(path)
 h.eval(obj, "_ensureInit()")
-assert h.eval(obj, "currentModelId") == "agent:codex", "configured primary wins over last API model"
+assert h.eval(obj, "currentModelId") == "ollama:qwen", "the last pick wins over the configured default (EngineMemory)"
 h.eval(obj, '''catalog.setAgents([{id:'codex',label:'Codex',available:true,capabilities:{images:true}}]);
 catalog.apiModels=[{id:'openai:a',model:'a',provider:'openai',name:'A',kind:'api',available:true}];
 agents.sessions=[{id:'first',agent:'codex',status:'running',mode:'shell',model:'native',cwd:'/tmp',effort:'high'}];

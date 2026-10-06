@@ -1,4 +1,5 @@
 .pragma library
+.import "AgentPickerRows.js" as AgentRows
 
 // Rows of the model picker (pure, node-tested). Input: catalog entries
 // ({id, name, model, provider, kind, available, ...}) and options:
@@ -12,9 +13,14 @@
 //   showUnconnected  list them at the end with a Connect action
 //   order            provider ids in display order (others follow by id)
 //   labels           {providerId: label} for search
+//   agentCatalogs    {agentId: agents.models result} (CLI agents' own models)
+//   expanded         {agentId: true} agents whose models are listed
+//   currentId, currentAgentModel  the visible engine and agent model
 // Output: [{type: "header", key, group}
-//          | {type: "model", key, group, entry, recent}
+//          | {type: "model", key, group, entry, recent, expandable, expanded}
+//          | agent child rows (AgentPickerRows.js: agentModel/agentStatus/agentManual)
 //          | {type: "provider", key, group: "unconnected", provider}]
+// A search also matches agent models ("haiku" finds Claude > Haiku).
 // Header groups: "recent", "agent", a provider id, "unconnected".
 
 var RECENT_MAX = 4;
@@ -46,9 +52,26 @@ function _kindOk(m, kind) {
 
 function filter(models, o) {
     var words = _words(o.query);
+    var catalogs = o.agentCatalogs || {};
     return (models || []).filter(function (m) {
-        return m && _kindOk(m, o.kind || "all") && _matches(words, _hay(m, o.labels));
+        return m && _kindOk(m, o.kind || "all") && (_matches(words, _hay(m, o.labels)) || AgentRows.childMatches(m, catalogs[m.agent], words));
     });
+}
+
+// The model row of `entry` followed by its agent children, if any.
+function _push(rows, entry, group, o, recent) {
+    var kids = AgentRows.children(entry, (o.agentCatalogs || {})[entry.agent], {
+        query: o.query,
+        expanded: o.expanded,
+        group: group,
+        currentId: o.currentId,
+        currentAgentModel: o.currentAgentModel
+    });
+    var searching = _words(o.query).length > 0;
+    rows.push({ type: "model", key: "m:" + entry.id, group: group, entry: entry, recent: recent, expandable: AgentRows.expandable(entry),
+        expanded: kids.length > 0 || (!searching && !!(o.expanded || {})[entry.agent]) });
+    for (var i = 0; i < kids.length; i++)
+        rows.push(kids[i]);
 }
 
 function _groupRank(group, order) {
@@ -87,7 +110,7 @@ function build(models, opts) {
             return ra - rb || String(a.name).localeCompare(String(b.name));
         });
         for (var f = 0; f < flat.length; f++)
-            rows.push({ type: "model", key: "m:" + flat[f].id, group: "", entry: flat[f], recent: recent.indexOf(flat[f].id) >= 0 });
+            _push(rows, flat[f], "", o, recent.indexOf(flat[f].id) >= 0);
     } else {
         var groups = {};
         var names = [];
@@ -108,7 +131,7 @@ function build(models, opts) {
             });
             rows.push({ type: "header", key: "h:" + names[n], group: names[n] });
             for (var k = 0; k < items.length; k++)
-                rows.push({ type: "model", key: "m:" + items[k].id, group: names[n], entry: items[k], recent: recent.indexOf(items[k].id) >= 0 });
+                _push(rows, items[k], names[n], o, recent.indexOf(items[k].id) >= 0);
         }
     }
     if (o.showUnconnected !== false && o.kind !== "agent") {
@@ -125,10 +148,10 @@ function build(models, opts) {
     return rows;
 }
 
-// Whether a row can be focused/activated (headers cannot; unavailable
-// models can be focused but not picked).
+// Whether a row can be focused/activated (headers and agent status/manual
+// rows cannot; unavailable models can be focused but not picked).
 function selectable(row) {
-    return !!row && row.type !== "header";
+    return !!row && row.type !== "header" && row.type !== "agentStatus" && row.type !== "agentManual";
 }
 
 // Next selectable index from `index` in direction `step` (+1/-1), clamped.
@@ -143,8 +166,12 @@ function step(rows, index, dir) {
     }
 }
 
-// First selectable index, preferring the row of `currentId`.
+// First selectable index, preferring the current agent model, then the
+// row of `currentId`.
 function initialIndex(rows, currentId) {
+    for (var c = 0; c < rows.length; c++)
+        if (rows[c].type === "agentModel" && rows[c].current)
+            return c;
     var first = -1;
     for (var i = 0; i < rows.length; i++) {
         if (!selectable(rows[i]))

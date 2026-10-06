@@ -70,16 +70,10 @@ QtObject {
 
     function enter(to) {
         const o = owner;
-        const last = StateService.initialized ? StateService.get(to === "code" ? "lastAiCodeModel" : "lastAiModel", "") : "";
+        const id = o.engineMemory.engine(to);
         o.agents.activeId = "";
-        if (to === "code") {
-            o.currentModelId = Selection.initialCode(last, Config.ai.agents.defaultAgent);
-            o.mode = "agent";
-        } else {
-            const id = Selection.initial(Config.ai.defaultModel, last);
-            o.currentModelId = id;
-            o.mode = id.startsWith("agent:") ? "agent" : "chat";
-        }
+        o.currentModelId = id;
+        o.mode = to === "code" || id.startsWith("agent:") ? "agent" : "chat";
         restoreLast(to);
     }
 

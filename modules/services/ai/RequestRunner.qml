@@ -191,8 +191,11 @@ QtObject {
             return error("ai.engine_unavailable");
         if (!supportsAttachments(m, attachments))
             return error("ai.unsupported_attachment");
+        // Following the Assistant (ai.quickAsk.model empty): its agent model too.
+        const picked = !Config.ai.quickAsk.model && m.kind === "agent" ? owner.engineMemory.agentModel("assistant", m.agent) : undefined;
         const s = promptSession(m, {
-            system: Config.ai.systemPrompt
+            system: Config.ai.systemPrompt,
+            nativeModel: picked || ""
         });
         if (!s.send(text, attachments || [])) {
             s.destroy();

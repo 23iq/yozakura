@@ -611,7 +611,7 @@
           "title": "Quick ask model",
           "type": "string",
           "default": "",
-          "description": "Model id (e.g. ollama:qwen3.5:9b); empty = current model",
+          "description": "Model id (e.g. ollama:qwen3.5:9b); empty = the model last picked in the Assistant",
           "x-settings": {
             "category": "ai",
             "section": "quickask",

@@ -1282,7 +1282,7 @@
   "ai.quick_enabled": "Pregunta rápida en el notch",
   "ai.quick_keys": "Enter preguntar · Ctrl+Enter seguir en la barra lateral · Esc cerrar",
   "ai.quick_model": "Modelo de la pregunta rápida",
-  "ai.quick_model_hint": "Id del modelo (p. ej. ollama:qwen3.5:9b); vacío = modelo actual",
+  "ai.quick_model_hint": "Id del modelo (p. ej. ollama:qwen3.5:9b); vacío = el último modelo elegido en el Asistente",
   "ai.quick_placeholder": "Pregunta rápido…",
   "ai.regex": "Cuando el texto copiado coincide (regex)",
   "ai.retry": "Regenerar",
@@ -2433,7 +2433,7 @@
   "ai.picker_recent": "Recientes",
   "ai.picker_not_connected": "Sin conectar",
   "ai.refresh_models": "Actualizar modelos",
-  "ai.picker_hint": "↑↓ mover · Enter elegir · Esc cerrar",
+  "ai.picker_hint": "↑↓ mover · → desplegar · Enter elegir · Esc cerrar",
   "prefs.ai.strip_effort": "Esfuerzo de razonamiento",
   "prefs.ai.strip_effort.desc": "Selector de esfuerzo junto al modelo (solo en modelos que lo admiten).",
   "prefs.ai.section.model_effort": "Barra de IA: modelos y esfuerzo",
@@ -3033,5 +3033,10 @@
   "notify.usage.window.week_sonnet": "semanal de Sonnet",
   "notify.routine.failed": "La rutina %1 falló",
   "notify.routine.stopped": "Detenida",
-  "notify.routine.step": "Paso %2 (%3): %4"
+  "notify.routine.step": "Paso %2 (%3): %4",
+  "ai.picker_agent_default": "Predeterminado del agente",
+  "ai.picker_efforts": "esfuerzo: %1",
+  "ai.picker_models_failed": "No se pudieron listar los modelos",
+  "ai.picker_no_agent_models": "El agente no informó modelos",
+  "ai.picker_manual_model": "Otro id de modelo… (Enter)"
 }

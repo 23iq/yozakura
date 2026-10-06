@@ -46,10 +46,22 @@ RowLayout {
     readonly property string modelLabel: Prefs.agentModelLabel(root.catalog, root.model) || (root.catalog.loading ? "…" : I18n.t("ai.tasks.default_model"))
     readonly property string effortLabel: root.effort || (root.modelEntry ? root.modelEntry.defaultEffort || "" : "") || I18n.t("ai.effort_level.auto")
 
+    // Default: ai.tasks.defaultAgents when set, else the agent and model
+    // last picked in the Code space (Ai.engineMemory), else the first agent.
     function resetAgents() {
         const ids = root.available.map(a => a.id);
         const wanted = (root.cfg.defaultAgents || []).filter(id => ids.indexOf(id) >= 0);
-        root.agents = wanted.length ? wanted : ids.slice(0, 1);
+        const memory = Ai.engineMemory || null;
+        const picked = memory ? String(memory.engine("code") || "").replace(/^agent:/, "") : "";
+        root.agents = wanted.length ? wanted : (ids.indexOf(picked) >= 0 ? [picked] : ids.slice(0, 1));
+        root.useRemembered();
+    }
+    function useRemembered() {
+        const memory = Ai.engineMemory || null;
+        const picked = root.single && memory ? memory.agentModel("code", root.single) : undefined;
+        root.model = picked || "";
+        const level = root.single && Ai.effort ? Ai.effort.rememberedFor(root.single, root.model) : null;
+        root.effort = level || "";
     }
     function toggleAgent(id) {
         const list = root.agents.slice();
@@ -59,8 +71,7 @@ RowLayout {
         else if (i < 0 && list.length < 4)
             list.push(id);
         root.agents = list;
-        root.model = "";
-        root.effort = "";
+        root.useRemembered();
     }
     function options() {
         return {

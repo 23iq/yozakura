@@ -251,3 +251,20 @@ func TestServiceMethods(t *testing.T) {
 }
 
 func boolPtr(b bool) *bool { return &b }
+
+// The model picked in the AI bar (agents.create "model") is what the CLI
+// is launched with (Claude's --model; Codex's turn parameter is covered by
+// TestCodexTurnCarriesModelAndEffort). Validation runs the fake CLI's
+// catalog discovery first, which falls back to a manual model.
+func TestManagerCreateModelReachesTheCLI(t *testing.T) {
+	m, _, f := newTestManager(t, "claude_write_bash.jsonl")
+	meta, err := m.Create(CreateParams{Agent: "claude", Mode: ModeAssistant, Model: "haiku"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if meta.Model != "haiku" {
+		t.Fatalf("session model = %q", meta.Model)
+	}
+	_ = m.Send(meta.ID, "hi", nil)
+	waitFor(t, "claude launch", func() bool { return strings.Contains(strings.Join(f.args(), "\n"), "--model\nhaiku") })
+}
