@@ -172,8 +172,11 @@ def build(preset: str, mode: str, ai_stub: str) -> Path:
     _qmldirs(qs)
     # Config (qs.config)
     shutil.rmtree(qs / "config", ignore_errors=True)
+    # Motion.qml imports the budget by relative path.
+    (qs / "config/motion").mkdir(parents=True)
+    shutil.copy(REPO / "config/motion/MotionBudget.js", qs / "config/motion/MotionBudget.js")
     _module(tmp, "qs.config", {"Config": "pragma Singleton\nimport QtQuick\nimport qs.modules.theme\nQtObject {\n"
-                               "    property int animDuration: 0\n    property string defaultFont: theme.font\n"
+                               "    property int animDuration: 0\n    property bool motionDrivesShell: false\n    property var motionProfile: null\n    property string defaultFont: theme.font\n"
                                + _theme_config(preset) + AI_CONFIG +
                                "    function resolveColor(v) { if (!v) return 'transparent'; if (String(v).startsWith('#')) return v; return Colors[v] || 'transparent'; }\n}\n"})
     en = json.loads((REPO / "translations/en.json").read_text())
