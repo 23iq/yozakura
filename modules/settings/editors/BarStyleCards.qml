@@ -1,70 +1,59 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import qs.modules.theme
 import qs.modules.services
 import qs.config
-import qs.modules.settings
 import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
-import "../BarModules.js" as BarModules
-import "../Ui.js" as Ui
+import "../../bar/panels/PanelStyles.js" as PanelStyles
+import "../../bar/panels/PanelLayout.js" as PanelLayout
 
-// Classic vs islands, each previewed with your current module layout.
+// The bar's look (bar.layout.style): full, floating, islands, pills,
+// dock-like or none, each previewed with your modules on your bar's edge.
 Item {
     id: root
 
     property var entry
-    readonly property var layout: BarModules.layoutOf(Config.bar.layout)
-    readonly property int columns: width < 520 ? 1 : 2
+    readonly property string current: Config.bar.layout && Config.bar.layout.style ? Config.bar.layout.style : "classic"
+    readonly property int columns: width < 520 ? 2 : 3
 
     implicitHeight: grid.implicitHeight
+
+    function previewOf(style) {
+        const p = JSON.parse(JSON.stringify(PanelLayout.fromLegacy(Config.bar)));
+        p.style = style;
+        p.align = PanelStyles.get(style).floating ? "center" : "fill";
+        p.autohide = "never";
+        return [p];
+    }
 
     Grid {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: 10
 
         Repeater {
-            model: [
-                {
-                    "id": "classic",
-                    "title": "shell.bar_style_classic",
-                    "subtitle": "prefs.bar.style.classic.desc"
-                },
-                {
-                    "id": "islands",
-                    "title": "shell.bar_style_islands",
-                    "subtitle": "prefs.bar.style.islands.desc"
-                }
-            ]
+            model: PanelStyles.barStyles()
 
             delegate: ChoiceCard {
                 id: card
                 required property var modelData
                 width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: 92
-                selected: root.layout.style === modelData.id
-                title: I18n.t(modelData.title)
-                subtitle: I18n.t(modelData.subtitle)
+                previewHeight: Math.round(width * 9 / 16) - 8
+                selected: root.current === modelData.id
+                icon: modelData.icon
+                title: I18n.t(modelData.label)
+                subtitle: I18n.t(modelData.desc)
                 onClicked: SettingsStore.set("bar.layout.style", modelData.id)
 
-                ScreenBackdrop {
+                PanelsSchematic {
                     anchors.fill: parent
-
-                    MiniBar {
-                        x: 10
-                        y: 10
-                        width: parent.width - 20
-                        unit: 16
-                        illustrative: true
-                        style: card.modelData.id
-                        leftIds: root.layout.left
-                        rightIds: root.layout.right
-                        drawerIds: root.layout.drawer
-                    }
+                    panels: root.previewOf(card.modelData.id)
+                    showWindows: false
+                    selected: -1
+                    unit: Math.max(8, Math.round(width * 0.075))
                 }
             }
         }
