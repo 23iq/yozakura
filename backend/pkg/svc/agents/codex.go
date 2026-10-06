@@ -147,6 +147,11 @@ func (codexAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, e
 	// Pipelined handshake (the server processes requests in order).
 	_ = c.rpc.Call("initialize", map[string]any{"clientInfo": map[string]any{"name": brand.AppID, "title": brand.DisplayName, "version": "1.0"}}, nil)
 	_ = c.rpc.Notify("initialized", nil)
+	if o.Mode != "oneshot" {
+		// Limits show before the first turn, then refresh while alive.
+		c.readLimits()
+		go c.pollLimits()
+	}
 	params := map[string]any{"cwd": o.Cwd, "approvalPolicy": c.approval(), "approvalsReviewer": "user", "sandbox": c.sandbox()}
 	if o.Model != "" {
 		params["model"] = o.Model
