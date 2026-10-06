@@ -25,10 +25,14 @@ func (OSFS) Glob(p string) ([]string, error) { return filepath.Glob(p) }
 
 // Platform describes the host distro, GPU and available installers.
 type Platform struct {
-	Distro                                         string // arch|fedora|nixos|other
-	GPU                                            string // nvidia|amd|intel|none
-	HasParu, HasYay, HasFlatpak, HasNpm, HasPkexec bool
-	Multilib                                       bool
+	Distro     string `json:"distro"` // arch|fedora|nixos|other
+	GPU        string `json:"gpu"`    // nvidia|amd|intel|none
+	HasParu    bool   `json:"hasParu"`
+	HasYay     bool   `json:"hasYay"`
+	HasFlatpak bool   `json:"hasFlatpak"`
+	HasNpm     bool   `json:"hasNpm"`
+	HasPkexec  bool   `json:"hasPkexec"`
+	Multilib   bool   `json:"multilib"`
 }
 
 // DetectPlatform probes distro, GPU, installers and pacman multilib. look

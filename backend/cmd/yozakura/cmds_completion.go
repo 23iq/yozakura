@@ -11,7 +11,7 @@ import (
 // topCommands are completed after the binary name (keep in sync with showHelp).
 var topCommands = []string{
 	"config", "preset", "special", "binds", "cmd", "timer", "stopwatch", "remind", "focus", "routine", "task", "completion", "run", "toggle", "launch", "lock", "reload", "quit", "screen", "suspend",
-	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "usage", "providers", "display", "keyboard", "ipc", "install", "remove",
+	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "usage", "providers", "extras", "display", "keyboard", "ipc", "install", "remove",
 	"colorpicker", "lockwall", "thumbs", "dthumbs", "update", "doctor", "refresh", "onboarding", "help", "version", "goodbye",
 }
 
@@ -24,6 +24,7 @@ const (
 	remindSubs   = "list cancel help"
 	displaySubs  = "list set identify help"
 	keyboardSubs = "list add remove switch-bind next help"
+	extrasSubs   = "list install status help"
 )
 
 // Completion scripts complete config keys and values from the live catalog
@@ -73,6 +74,8 @@ _{bin}() {
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{displaySubs}" -- "$cur")) ;;
     keyboard)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{keyboardSubs}" -- "$cur")) ;;
+    extras)
+        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{extrasSubs}" -- "$cur")) ;;
     stopwatch)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{swSubs}" -- "$cur")) ;;
     remind)
@@ -113,6 +116,7 @@ _{bin}() {
     timer) (( CURRENT == 3 )) && compadd -- {timerSubs} ;;
     display) (( CURRENT == 3 )) && compadd -- {displaySubs} ;;
     keyboard) (( CURRENT == 3 )) && compadd -- {keyboardSubs} ;;
+    extras) (( CURRENT == 3 )) && compadd -- {extrasSubs} ;;
     stopwatch) (( CURRENT == 3 )) && compadd -- {swSubs} ;;
     remind) (( CURRENT == 3 )) && compadd -- {remindSubs} ;;
     wallpaper|lockwall) _files ;;
@@ -154,6 +158,7 @@ complete -c {bin} -n '__{bin}_at completion "" 2' -a 'bash zsh fish'
 complete -c {bin} -n '__{bin}_at timer "" 2' -a '{timerSubs}'
 complete -c {bin} -n '__{bin}_at display "" 2' -a '{displaySubs}'
 complete -c {bin} -n '__{bin}_at keyboard "" 2' -a '{keyboardSubs}'
+complete -c {bin} -n '__{bin}_at extras "" 2' -a '{extrasSubs}'
 complete -c {bin} -n '__{bin}_at stopwatch "" 2' -a '{swSubs}'
 complete -c {bin} -n '__{bin}_at remind "" 2' -a '{remindSubs}'
 complete -c {bin} -n '__{bin}_at cmd "" 2' -a '(begin; {bin} cmd __ids 2>/dev/null; echo list; end)'
@@ -186,6 +191,7 @@ func completionScript(shell string) (string, error) {
 		"{remindSubs}", remindSubs,
 		"{displaySubs}", displaySubs,
 		"{keyboardSubs}", keyboardSubs,
+		"{extrasSubs}", extrasSubs,
 	).Replace(tpl), nil
 }
 

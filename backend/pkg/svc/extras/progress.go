@@ -55,13 +55,30 @@ var (
 	rePacmanDl = regexp.MustCompile(`^(\S+) downloading\.\.\.$`)
 	// "checking package integrity...", "resolving dependencies..."
 	rePacmanPhase = regexp.MustCompile(`^[a-z][a-z ]+\.\.\.$`)
-	rePercent     = regexp.MustCompile(`(\d{1,3})%\s*$`)
+	// ollama: "pulling 8eeb52dfb3bb:  45% ▕████    ▏ 2.1 GB/4.7 GB  12 MB/s"
+	reOllamaPull = regexp.MustCompile(`^pulling ([0-9a-f]+):\s+(\d{1,3})%`)
+	reANSI       = regexp.MustCompile(`\x1b\[[0-9;?]*[A-Za-z]`)
+	rePercent    = regexp.MustCompile(`(\d{1,3})%\s*$`)
 )
+
+// privileged reports whether jobs of kind run through pkexec or a
+// polkit-aware helper, so "Request dismissed" / "Not authorized" lines mean
+// the user declined authentication.
+func privileged(k JobKind) bool {
+	switch k {
+	case KindSystem, KindAUR, KindMultilib, KindUpgrade, KindLogin:
+		return true
+	}
+	return false
+}
 
 // ParseLine extracts progress from one output line of a job of the given
 // kind. pct is 0-100 or -1 when unknown; ok is false for lines carrying no
 // progress information.
 func ParseLine(kind JobKind, line string) (pct int, phase string, ok bool) {
+	if kind == KindOllama {
+		line = reANSI.ReplaceAllString(line, "")
+	}
 	line = strings.TrimSpace(line)
 	if line == "" {
 		return -1, "", false
@@ -93,6 +110,15 @@ func ParseLine(kind JobKind, line string) (pct int, phase string, ok bool) {
 	case KindFlatpak:
 		if m := reFlatpakStep.FindStringSubmatch(line); m != nil {
 			return stepPct(m[2], m[3], m[4]), clip(m[1] + " " + m[2] + "/" + m[3]), true
+		}
+		return -1, "", false
+	case KindOllama:
+		if m := reOllamaPull.FindStringSubmatch(line); m != nil {
+			return pctOf(m[2]), clip("pulling " + m[1]), true
+		}
+		if strings.HasPrefix(line, "pulling manifest") || strings.HasPrefix(line, "verifying") ||
+			strings.HasPrefix(line, "writing manifest") || strings.HasPrefix(line, "success") {
+			return -1, clip(line), true
 		}
 		return -1, "", false
 	case KindNpm:

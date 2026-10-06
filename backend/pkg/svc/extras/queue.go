@@ -61,7 +61,7 @@ type qjob struct {
 // upgrade) must never be killed mid-transaction.
 func (j *qjob) cancellable() bool {
 	switch j.Kind {
-	case KindFlatpak, KindNpm, KindScript, KindShell:
+	case KindFlatpak, KindNpm, KindScript, KindShell, KindOllama:
 		return true
 	}
 	return false
@@ -326,7 +326,9 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 	if names == "" {
 		names = strings.Join(j.Entries, ", ")
 	}
-	if ok {
+	if ok && j.Kind == KindLogin {
+		q.notify("Login shell changed", "Log out and in again to use it.")
+	} else if ok {
 		q.notify(names+" installed", "")
 	} else {
 		q.notify("Installing "+names+" failed", reasonText(reason)+" Open Extras to retry.")

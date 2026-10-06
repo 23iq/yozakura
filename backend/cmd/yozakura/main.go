@@ -90,6 +90,8 @@ func main() {
 			os.Exit(runDisplay(args[1:], defaultDisplayEnv(os.Stdin, os.Stdout), os.Stdout, os.Stderr))
 		case "keyboard":
 			os.Exit(runKeyboard(args[1:], defaultKeyboardEnv(), os.Stdout, os.Stderr))
+		case "extras":
+			os.Exit(runExtras(args[1:], ipcExtras{newClient(), socketPath()}, os.Stdout, os.Stderr))
 		case "task", "tasks":
 			os.Exit(runTask(args[1:], os.Stdout, os.Stderr))
 		case "sys":
@@ -634,6 +636,8 @@ Commands:
                                      ({bin} keyboard help)
     providers [list|test <p>|ollama] AI chat providers: connected ones and their models,
                                      test one, installed Ollama models ({bin} providers help)
+    extras [list|install <id>...|status <id>]
+                                     Apps and tools the shell can install ({bin} extras help)
     help                             Show this help message
     version, -v, --version           Show {name} version
     goodbye                          Uninstall {name}

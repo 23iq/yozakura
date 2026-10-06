@@ -13,6 +13,7 @@ import (
 	"time"
 	"yozakura/backend/pkg/brand"
 
+	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/mods"
 	"yozakura/backend/pkg/paths"
@@ -24,6 +25,7 @@ import (
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
 	"yozakura/backend/pkg/svc/displays"
+	"yozakura/backend/pkg/svc/extras"
 	"yozakura/backend/pkg/svc/focus"
 	"yozakura/backend/pkg/svc/fsbrowse"
 	"yozakura/backend/pkg/svc/gamemode"
@@ -200,6 +202,15 @@ func New() (*Daemon, error) {
 	notifySvc := notifysvc.NewService()
 	notifySvc.Register(d.srv)
 	d.notify = notifySvc
+
+	// Extras & apps catalog: detection, serial install queue, progress events.
+	extras.RegisterPost("apphook", func(id string) error {
+		_, err := apphooks.ApplyByID(apphooks.DefaultEnv(), id)
+		return err
+	})
+	extras.NewService(func(title, body string) {
+		_, _ = notifySvc.Send(notifysvc.SendParams{Summary: title, Body: body, AppIcon: "system-software-install"})
+	}).Register(d.srv)
 
 	// Timers, stopwatch, reminders (persisted, wall clock); finished
 	// timers notify through notify.Send. The scheduler starts in Run.

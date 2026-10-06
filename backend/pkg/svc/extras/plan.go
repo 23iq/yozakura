@@ -23,6 +23,8 @@ const (
 	KindShell    JobKind = "shell"
 	KindMultilib JobKind = "multilib"
 	KindUpgrade  JobKind = "upgrade"
+	KindOllama   JobKind = "ollama"     // ollama pull <model>
+	KindLogin    JobKind = "loginshell" // privileged chsh
 )
 
 // ScriptFile is the Argv placeholder the queue replaces with the path of the
@@ -33,7 +35,7 @@ const flathubRepo = "https://dl.flathub.org/repo/flathub.flatpakrepo"
 
 // kindOrder breaks ties between independent jobs.
 var kindOrder = map[JobKind]int{KindMultilib: 0, KindUpgrade: 0, KindSystem: 1, KindAUR: 2,
-	KindFlatpak: 3, KindNpm: 4, KindScript: 5, KindShell: 6}
+	KindFlatpak: 3, KindNpm: 4, KindScript: 5, KindShell: 6, KindOllama: 7, KindLogin: 8}
 
 // Job is one serial unit of work: one command (after optional Pre commands)
 // installing one or more catalog entries.

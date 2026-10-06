@@ -52,7 +52,11 @@ func (q *Queue) execute(ctx context.Context, j *qjob) (state, reason string) {
 		seen := ""
 		code, err := q.run.Run(ctx, cmd, jobEnv, func(line string) {
 			fmt.Fprintln(logw, line)
-			if r := lineReason(line); r != "" && (seen == "" || r == ReasonAuthCancelled) {
+			r := lineReason(line)
+			if r == ReasonAuthCancelled && !privileged(j.Kind) {
+				r = "" // e.g. an npm 401 "not authorized" is a plain error
+			}
+			if r != "" && (seen == "" || r == ReasonAuthCancelled) {
 				seen = r
 			}
 			q.progress(j, line)

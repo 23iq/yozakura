@@ -83,6 +83,7 @@ func Tools(d Deps) []mcp.ToolDef {
 	out = append(out, keyboardTools(d)...)
 	out = append(out, focusTools(d)...)
 	out = append(out, providerTools(d)...)
+	out = append(out, extrasTools(d)...)
 	out = append(out, visionTools(d)...)
 	return out
 }
