@@ -27,6 +27,47 @@ var category = {
             ]
         },
         {
+            "id": "appearance",
+            "title": "prefs.launcher.section.appearance",
+            "entries": [
+                {
+                    "key": "layout.launcher.resultStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "list",
+                            "label": "prefs.launcher.style.list"
+                        },
+                        {
+                            "value": "cards",
+                            "label": "prefs.launcher.style.cards"
+                        },
+                        {
+                            "value": "grid",
+                            "label": "prefs.launcher.style.grid"
+                        }
+                    ],
+                    "label": "prefs.launcher.result_style",
+                    "description": "prefs.launcher.result_style.desc",
+                    "keywords": "results look style list cards grid icons layout"
+                },
+                {
+                    "key": "layout.launcher.preview",
+                    "type": "toggle",
+                    "label": "prefs.launcher.preview",
+                    "description": "prefs.launcher.preview.desc",
+                    "keywords": "preview pane file image text calculator side"
+                },
+                {
+                    "key": "layout.launcher.compactWhenEmpty",
+                    "type": "toggle",
+                    "label": "prefs.launcher.compact_when_empty",
+                    "description": "prefs.launcher.compact_when_empty.desc",
+                    "keywords": "compact empty search field minimal small collapse"
+                }
+            ]
+        },
+        {
             "id": "behavior",
             "title": "prefs.launcher.section.behavior",
             "entries": [

@@ -19,12 +19,33 @@ Item {
     id: root
 
     readonly property bool isCompact: currentTab === 0 || currentTab === 2
-    implicitWidth: isCompact ? 464 : 900
-    implicitHeight: isCompact ? 296 : 392
+    // compactWhenEmpty: only the search field until the first keystroke
+    readonly property bool bare: Config.layout.launcher.compactWhenEmpty && currentTab === 0 && searchText.length === 0
+    readonly property bool previewing: currentTab === 0 && searchView.previewOpen
+    implicitWidth: !bare && (!isCompact || previewing) ? Metrics.launcherWideW : Metrics.launcherCompactW
+    implicitHeight: bare ? Metrics.rowHeight : isCompact ? Metrics.launcherCompactH : Metrics.launcherWideH
+    clip: bare || sizeMorph.running || heightMorph.running
+
+    Behavior on implicitWidth {
+        enabled: Motion.morph.duration > 0
+        NumberAnimation {
+            id: sizeMorph
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
+    Behavior on implicitHeight {
+        enabled: Motion.morph.duration > 0
+        NumberAnimation {
+            id: heightMorph
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
 
     focus: true
 
-    property int leftPanelWidth: isCompact ? 464 : 300
+    property int leftPanelWidth: isCompact ? Metrics.launcherCompactW : Metrics.launcherLeftPanelW
     property int currentTab: GlobalStates.widgetsTabCurrentIndex  // 0=search, 1=clip, 2=emoji, 3=tmux, 4=notes
     // Set after Backspace left a tab, until the prefix is edited away.
     property bool prefixDisabled: false

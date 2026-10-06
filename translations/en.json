@@ -3417,5 +3417,15 @@
   "prefs.layout.host.sheet": "Sheet",
   "prefs.layout.preview.launcher": "Launcher",
   "prefs.layout.preview.dashboard": "Dashboard",
-  "prefs.layout.preview.osd": "OSD"
+  "prefs.layout.preview.osd": "OSD",
+  "prefs.launcher.section.appearance": "Appearance",
+  "prefs.launcher.style.list": "List",
+  "prefs.launcher.style.cards": "Cards",
+  "prefs.launcher.style.grid": "Grid",
+  "prefs.launcher.result_style": "Result style",
+  "prefs.launcher.result_style.desc": "List rows, taller cards, or an app icon grid (other results use the list).",
+  "prefs.launcher.preview": "Preview pane",
+  "prefs.launcher.preview.desc": "Show a preview of the selected file, calculator result or clipboard entry.",
+  "prefs.launcher.compact_when_empty": "Compact when empty",
+  "prefs.launcher.compact_when_empty.desc": "Show only the search field until you start typing."
 }

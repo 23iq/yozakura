@@ -39,23 +39,50 @@
           "title": "Result style",
           "type": "string",
           "default": "list",
-          "description": "How launcher results are laid out.",
+          "description": "List rows, taller cards, or an app icon grid (other results use the list).",
+          "x-settings": {
+            "category": "launcher",
+            "section": "appearance",
+            "label": "prefs.launcher.result_style",
+            "control": "selector",
+            "keywords": "results look style list cards grid icons layout"
+          },
           "enum": [
             "list",
+            "cards",
             "grid"
-          ]
+          ],
+          "x-enumLabels": {
+            "list": "List",
+            "cards": "Cards",
+            "grid": "Grid"
+          }
         },
         "preview": {
-          "title": "Preview",
+          "title": "Preview pane",
           "type": "boolean",
           "default": true,
-          "description": "Show a preview pane next to the selected launcher result."
+          "description": "Show a preview of the selected file, calculator result or clipboard entry.",
+          "x-settings": {
+            "category": "launcher",
+            "section": "appearance",
+            "label": "prefs.launcher.preview",
+            "control": "toggle",
+            "keywords": "preview pane file image text calculator side"
+          }
         },
         "compactWhenEmpty": {
           "title": "Compact when empty",
           "type": "boolean",
           "default": false,
-          "description": "Collapse the launcher to its search field until something is typed."
+          "description": "Show only the search field until you start typing.",
+          "x-settings": {
+            "category": "launcher",
+            "section": "appearance",
+            "label": "prefs.launcher.compact_when_empty",
+            "control": "toggle",
+            "keywords": "compact empty search field minimal small collapse"
+          }
         }
       },
       "additionalProperties": false

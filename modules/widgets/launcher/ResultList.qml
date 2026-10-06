@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import "ResultStyles.js" as ResultStyles
 
 // The launcher result list: rows of ResultRow, a sliding selection
 // highlight, and one row at a time expanded into its ResultOptions.
@@ -19,7 +20,9 @@ ListView {
     property int optionIndex: 0
     property bool enableScrollAnimation: true
     property string emptyText: ""
-    readonly property int rowHeight: 48
+    // "list" or "cards" (ResultStyles.effective picks; grid has its own view)
+    property string style: "list"
+    readonly property int rowHeight: ResultStyles.rowHeight(style, Metrics.rowHeight)
     readonly property int expandedExtra: expandedIndex >= 0 ? 4 + expandedOptions.length * 36 + 8 : 0
     readonly property bool isScrolling: dragging || flicking
 
@@ -64,10 +67,10 @@ ListView {
     onExpandedIndexChanged: Qt.callLater(() => list.reveal(list.expandedIndex))
 
     Behavior on contentY {
-        enabled: Config.animDuration > 0 && list.enableScrollAnimation && !list.moving
+        enabled: Motion.enter.duration > 0 && list.enableScrollAnimation && !list.moving
         NumberAnimation {
-            duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
+            duration: Motion.enter.duration / 2
+            easing.type: Motion.enter.easing
         }
     }
 
@@ -78,17 +81,17 @@ ListView {
         visible: list.selectedIndex >= 0 && list.count > 0
 
         Behavior on y {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration / 2
-                easing.type: Easing.OutCubic
+                duration: Motion.enter.duration / 2
+                easing.type: Motion.enter.easing
             }
         }
         Behavior on height {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                duration: Motion.morph.duration
+                easing.type: Motion.morph.easing
             }
         }
 
@@ -109,22 +112,38 @@ ListView {
         height: list.heightOf(index)
 
         Behavior on height {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                duration: Motion.morph.duration
+                easing.type: Motion.morph.easing
             }
         }
 
-        ResultRow {
+        Loader {
             id: resultRow
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
             height: list.rowHeight
-            item: cell.modelData
-            selected: list.selectedIndex === cell.index
-            expanded: cell.expanded
+            sourceComponent: list.style === "cards" ? cardLook : rowLook
+        }
+
+        Component {
+            id: rowLook
+            ResultRow {
+                item: cell.modelData
+                selected: list.selectedIndex === cell.index
+                expanded: cell.expanded
+            }
+        }
+
+        Component {
+            id: cardLook
+            ResultCard {
+                item: cell.modelData
+                selected: list.selectedIndex === cell.index
+                expanded: cell.expanded
+            }
         }
 
         MouseArea {
@@ -156,10 +175,10 @@ ListView {
             onHovered: index => list.optionHovered(index)
             onTriggered: index => list.optionTriggered(index)
             Behavior on opacity {
-                enabled: Config.animDuration > 0
+                enabled: Motion.enter.duration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Easing.OutQuart
+                    duration: Motion.enter.duration
+                    easing.type: Motion.enter.easing
                 }
             }
         }
@@ -176,7 +195,7 @@ ListView {
             anchors.horizontalCenter: parent.horizontalCenter
             text: Icons.magnifyingGlass
             font.family: Icons.font
-            font.pixelSize: 26
+            font.pixelSize: Metrics.iconSize - 6
             color: Colors.outline
         }
         Text {
