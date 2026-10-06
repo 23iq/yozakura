@@ -37,6 +37,7 @@ import (
 	"yozakura/backend/pkg/svc/screenshot"
 	"yozakura/backend/pkg/svc/sleep"
 	"yozakura/backend/pkg/svc/systemmonitor"
+	"yozakura/backend/pkg/svc/tasks"
 	"yozakura/backend/pkg/svc/timers"
 	"yozakura/backend/pkg/svc/transfers"
 	"yozakura/backend/pkg/svc/usage"
@@ -71,6 +72,7 @@ type Daemon struct {
 	notify     *notifysvc.Service
 	timers     *timers.Service
 	usage      *usage.Service
+	tasks      *tasks.Manager
 
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
@@ -208,6 +210,8 @@ func New() (*Daemon, error) {
 	agentsMgr := agents.NewManager(filepath.Join(p.DataDir, "agents"))
 	agents.NewService(agentsMgr).Register(d.srv)
 	d.agents = agentsMgr
+	// AI-first coding tasks: worktrees, verify loop, review/accept.
+	d.tasks = newTasks(d.srv, p, agentsMgr, notifySvc, uiSvc)
 	// Chat providers: Ollama probe, connection tests, model capability table.
 	providers.NewService(p).Register(d.srv)
 	// Local speech-to-text (whisper.cpp server started on demand).
@@ -324,6 +328,7 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 			time.Sleep(250 * time.Millisecond)
 		}
 		d.timers.Start()
+		d.tasks.Start()
 	}()
 
 	if err := d.spawnQS(qsBin, shellQML); err != nil {
@@ -456,6 +461,9 @@ func (d *Daemon) shutdown() {
 	}
 	if d.clipboard != nil {
 		d.clipboard.Close()
+	}
+	if d.tasks != nil {
+		d.tasks.Close() // before agents: their exits must not fail the runs
 	}
 	if d.agents != nil {
 		d.agents.Shutdown()

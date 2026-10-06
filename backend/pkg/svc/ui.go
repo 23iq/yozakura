@@ -48,6 +48,13 @@ func (u *UIService) toggle(params RawParams) (any, error) {
 	return "ok", nil
 }
 
+// Run pushes a UI command (same as `<app> run <cmd>`) from inside the daemon.
+func (u *UIService) Run(cmd string) {
+	for _, sub := range u.subs {
+		sub.Send("ui.command", cmd)
+	}
+}
+
 func (u *UIService) subscribe(sub *ipc.Subscriber) {
 	u.subs[subID(sub)] = sub
 }

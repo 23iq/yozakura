@@ -61,6 +61,7 @@ type Manager struct {
 	coalesce  time.Duration
 	extraEnv  []string
 	versions  map[string]string
+	hooks     hooks // listeners + permission hook (hooks.go)
 }
 
 // NewManager loads persisted sessions from dir (created on demand).
@@ -73,6 +74,7 @@ func NewManager(dir string) *Manager {
 		coalesce:  60 * time.Millisecond,
 		versions:  map[string]string{},
 	}
+	m.broadcast = m.withListeners(m.broadcast)
 	m.load()
 	return m
 }
@@ -87,7 +89,7 @@ func (m *Manager) SetMCPProvider(fn func() []MCPServer) {
 // SetBroadcast sets the subscription fan-out (service, data).
 func (m *Manager) SetBroadcast(fn func(service string, data any)) {
 	m.mu.Lock()
-	m.broadcast = fn
+	m.broadcast = m.withListeners(fn)
 	m.mu.Unlock()
 }
 
