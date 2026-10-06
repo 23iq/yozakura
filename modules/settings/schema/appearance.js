@@ -175,6 +175,26 @@ var category = {
             ]
         },
         {
+            "id": "signatures",
+            "title": "prefs.appearance.section.signatures",
+            "entries": [
+                {
+                    "key": "theme.signatures.brushHighlight",
+                    "type": "toggle",
+                    "label": "prefs.appearance.sig_brush",
+                    "description": "prefs.appearance.sig_brush.desc",
+                    "keywords": "signature brush ink stroke highlight selection sumi-e"
+                },
+                {
+                    "key": "theme.signatures.petals",
+                    "type": "toggle",
+                    "label": "prefs.appearance.sig_petals",
+                    "description": "prefs.appearance.sig_petals.desc",
+                    "keywords": "signature petals sakura falling lockscreen particles"
+                }
+            ]
+        },
+        {
             "id": "effects",
             "title": "prefs.appearance.section.effects",
             "entries": [

@@ -348,13 +348,27 @@
           "title": "Brush highlight",
           "type": "boolean",
           "default": false,
-          "description": "Paint selection and focus highlights as a brush stroke."
+          "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "signatures",
+            "label": "prefs.appearance.sig_brush",
+            "control": "toggle",
+            "keywords": "signature brush ink stroke highlight selection sumi-e"
+          }
         },
         "petals": {
-          "title": "Petals",
+          "title": "Falling petals",
           "type": "boolean",
           "default": false,
-          "description": "Drift sakura petals across the shell's surfaces."
+          "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "signatures",
+            "label": "prefs.appearance.sig_petals",
+            "control": "toggle",
+            "keywords": "signature petals sakura falling lockscreen particles"
+          }
         }
       },
       "additionalProperties": false

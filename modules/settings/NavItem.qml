@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.signatures
 import "Ui.js" as Ui
 
 // One sidebar category: icon tile + label, with a selection pill.
@@ -23,6 +24,10 @@ Item {
 
     Accessible.role: Accessible.PageTab
     Accessible.name: I18n.t(category.title)
+
+    BrushHighlight {
+        shown: item.selected
+    }
 
     Rectangle {
         anchors.fill: parent

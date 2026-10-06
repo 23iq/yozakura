@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.modules.components.signatures
 import "indicators/IndicatorStyles.js" as Styles
 
 // Active workspace indicator of the bar's workspace strip. Owns the box
@@ -44,6 +45,11 @@ Item {
             duration: Config.animDuration
             easing.type: Easing.OutSine
         }
+    }
+
+    BrushHighlight {
+        shown: root.styleId !== "brush"
+        spread: 2
     }
 
     // Unsized: the style binds its own geometry to `indicator`.

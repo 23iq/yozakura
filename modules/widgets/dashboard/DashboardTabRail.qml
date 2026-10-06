@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.config
+import qs.modules.components.signatures
 import "DashboardTabs.js" as DashboardTabs
 
 // Dashboard tab rail: the visible tabs (layout.dashboard.tabs order), the
@@ -42,6 +43,8 @@ Item {
         radius: Styling.radius(4)
         visible: root.railPos >= 0
         z: 0
+
+        BrushHighlight {}
 
         property real targetY: Math.max(0, root.railPos) * (width + root.tabSpacing)
         property real animatedY1: targetY
