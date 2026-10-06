@@ -83,6 +83,10 @@ func (s *Service) one(params json.RawMessage, revert bool) (any, error) {
 		return nil, errors.New("id is required")
 	}
 	h, ok := apphooks.Get(p.ID)
+	if !ok && revert {
+		// apps without a hook have nothing to revert: idempotent
+		return apphooks.Status{ID: p.ID, State: apphooks.StateAbsent}, nil
+	}
 	if !ok {
 		return nil, errors.New("unknown app: " + p.ID)
 	}

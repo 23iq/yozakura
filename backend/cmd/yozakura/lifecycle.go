@@ -94,9 +94,9 @@ func installerURL() string {
 // revertAppHooks takes the shell out of the apps it connected to (terminals,
 // Vesktop, Qt env file), reporting what it could not undo.
 func revertAppHooks(w io.Writer, env apphooks.Env, hooks []apphooks.Hook) {
-	for _, st := range apphooks.RevertAll(env, hooks) {
-		if st.State == apphooks.StateError || st.State == apphooks.StateManaged {
-			fmt.Fprintf(w, "Could not disconnect %s: %s\n", st.ID, st.Reason)
+	for _, o := range apphooks.RevertAll(env, hooks) {
+		if o.Err != nil {
+			fmt.Fprintf(w, "Could not disconnect %s: %s\n", o.Status.ID, o.Err)
 		}
 	}
 }

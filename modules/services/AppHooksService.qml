@@ -86,8 +86,8 @@ Singleton {
     function _togglesChanged() {
         const now = root.enabledIds;
         for (const id of root._seen) {
-            if (now.indexOf(id) < 0 && root.status[id] !== undefined)
-                root.revert(id);
+            if (now.indexOf(id) < 0)
+                root.revert(id); // idempotent; the backend ignores apps without a hook
         }
         root._seen = now;
         root.ensureEnabled();

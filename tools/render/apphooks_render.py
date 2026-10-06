@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -44,6 +45,15 @@ def main() -> int:
     return 0
 
 
+def find_item(root, name):
+    """Loader content is no QObject child: walk the visual tree."""
+    for c in root.childItems():
+        found = c if c.objectName() == name else find_item(c, name)
+        if found is not None:
+            return found
+    return None
+
+
 def render(mode: str, state: dict, out: Path, w: int, h: int) -> None:
     env = AppHooksEnv(f"apphooks-{mode}", palette=palette(mode, state), user_config=True, wallpaper=state,
                       overrides={"theme": {"lightMode": mode == "light"}})
@@ -56,6 +66,11 @@ Window {{
     SettingsShell {{ objectName: "shell"; anchors.fill: parent }}
 }}""")
     env.h.eval(env.h.find(win, "shell"), 'select("terminal")')
+    # The harness' Process stub never exits, so the editor's install probe would
+    # show "Checking..." forever; feed it a probe result like the real script's.
+    now = int(time.time()) - 600
+    env.h.eval(find_item(win.contentItem(), "appThemingEditor"), """status = AppThemes.parseStatus(AppThemes.APPS.map(
+        a => a.id + "|" + (a.id === "qt" ? "0|0" : "1|" + (a.id === "ghostty" ? 0 : %d))).join("\\n"))""" % now)
     page = env.h.find(win, "settingsPage").property("item")
     env.h.eval(page, "contentY = 1000000")  # the theming section is last
     QTest.mouseMove(win, QPoint(60, h - 30))

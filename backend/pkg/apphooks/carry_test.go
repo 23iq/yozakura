@@ -141,7 +141,7 @@ func (h recHook) Revert(Env) (Status, error) {
 func TestRevertAllContinuesPastFailure(t *testing.T) {
 	n := 0
 	res := RevertAll(Env{}, []Hook{recHook{"a", os.ErrPermission, &n}, recHook{"b", nil, &n}})
-	if n != 2 || len(res) != 2 || res[0].State != StateError || res[1].State != StateDisconnected {
+	if n != 2 || len(res) != 2 || res[0].Err == nil || res[1].Err != nil || res[1].Status.State != StateDisconnected {
 		t.Fatalf("%d %v", n, res)
 	}
 }
@@ -149,5 +149,36 @@ func TestRevertAllContinuesPastFailure(t *testing.T) {
 func TestApplyByIDUnknown(t *testing.T) {
 	if _, err := ApplyByID(Env{}, "nope"); err == nil {
 		t.Fatal("want error")
+	}
+}
+
+func TestStaleCreatedMarkCleared(t *testing.T) {
+	f := newFake(t)
+	conf := filepath.Join(f.env.ConfigHome, "kitty", "kitty.conf")
+	write(t, conf, "")
+	setMark(f.env, createdKey("kitty", conf), true) // stale: file pre-exists
+	h := kittyHook{}
+	if _, err := h.Apply(f.env); err != nil {
+		t.Fatal(err)
+	}
+	if hasMark(f.env, createdKey("kitty", conf)) {
+		t.Fatal("stale mark kept")
+	}
+	if _, err := h.Revert(f.env); err != nil || read(t, conf) != "" {
+		t.Fatalf("file lost: %q", read(t, conf))
+	}
+}
+
+func TestStateMigratesFromCache(t *testing.T) {
+	f := newFake(t)
+	write(t, filepath.Join(f.env.CacheDir, "apphooks-state.json"), `{"created:x:/p": true}`)
+	if !hasMark(f.env, "created:x:/p") {
+		t.Fatal("mark not migrated")
+	}
+	if read(t, filepath.Join(f.env.CacheDir, "apphooks-state.json")) != "<missing>" {
+		t.Fatal("old copy kept")
+	}
+	if read(t, filepath.Join(f.env.DataDir, "apphooks-state.json")) == "<missing>" {
+		t.Fatal("not in data dir")
 	}
 }

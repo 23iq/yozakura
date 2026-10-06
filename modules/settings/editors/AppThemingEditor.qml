@@ -17,6 +17,7 @@ import "../Ui.js" as Ui
 // last written, plus "Regenerate now" (Colors.regenerateApps()).
 Item {
     id: root
+    objectName: "appThemingEditor"
 
     property var entry
     // AppThemes.parseStatus() of the last probe

@@ -16,18 +16,30 @@ import (
 // pre-existing file back byte for byte and only delete what we made.
 var stateMu sync.Mutex
 
-func stateFile(env Env) string { return filepath.Join(env.CacheDir, "apphooks-state.json") }
+func stateFile(env Env) string { return filepath.Join(env.DataDir, "apphooks-state.json") }
 
+// loadMarks reads the sidecar, moving a copy an earlier version left in the
+// cache dir over once.
 func loadMarks(env Env) map[string]bool {
 	marks := map[string]bool{}
-	if data, err := os.ReadFile(stateFile(env)); err == nil {
+	data, err := os.ReadFile(stateFile(env))
+	if err != nil && env.CacheDir != "" {
+		old := filepath.Join(env.CacheDir, "apphooks-state.json")
+		if od, oerr := os.ReadFile(old); oerr == nil {
+			if _ = os.MkdirAll(env.DataDir, 0o755); fsutil.WriteFile(stateFile(env), od, 0o644) == nil {
+				_ = os.Remove(old)
+			}
+			data, err = od, nil
+		}
+	}
+	if err == nil {
 		_ = json.Unmarshal(data, &marks)
 	}
 	return marks
 }
 
 func hasMark(env Env, key string) bool {
-	if env.CacheDir == "" {
+	if env.DataDir == "" {
 		return false
 	}
 	stateMu.Lock()
@@ -36,7 +48,7 @@ func hasMark(env Env, key string) bool {
 }
 
 func setMark(env Env, key string, on bool) {
-	if env.CacheDir == "" {
+	if env.DataDir == "" {
 		return
 	}
 	stateMu.Lock()
@@ -55,7 +67,7 @@ func setMark(env Env, key string, on bool) {
 		return
 	}
 	data, _ := json.MarshalIndent(marks, "", "  ")
-	_ = os.MkdirAll(env.CacheDir, 0o755)
+	_ = os.MkdirAll(env.DataDir, 0o755)
 	_ = fsutil.WriteFile(stateFile(env), data, 0o644)
 }
 
@@ -83,9 +95,7 @@ func writeBlockFile(env Env, id, path string, existed bool, out string) error {
 	if err := WriteFileSafe(path, []byte(out)); err != nil {
 		return err
 	}
-	if !existed {
-		setMark(env, createdKey(id, path), true)
-	}
+	setMark(env, createdKey(id, path), !existed) // a stale mark must not survive
 	return nil
 }
 
@@ -95,10 +105,12 @@ func writeBlockFile(env Env, id, path string, existed bool, out string) error {
 func revertBlockFile(env Env, id, path string) (bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		setMark(env, createdKey(id, path), false)
 		return false, nil
 	}
 	out, changed := RemoveBlock(string(data), env.AppID)
 	if !changed {
+		setMark(env, createdKey(id, path), false) // nothing of ours left
 		return false, nil
 	}
 	if isManaged(path) {

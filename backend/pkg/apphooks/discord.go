@@ -226,6 +226,10 @@ func (h discordHook) editOne(env Env, f string, add bool) (bool, error) {
 	l, _ := o.themes()
 	name := themeName(env)
 	if contains(l, name) == add {
+		if !add { // nothing of ours left: drop the bookkeeping
+			setMark(env, hadKeyMark(h.ID(), f), false)
+			setMark(env, createdKey(h.ID(), f), false)
+		}
 		return false, nil
 	}
 	_, hadKey := o.vals["enabledThemes"]
@@ -265,8 +269,8 @@ func (h discordHook) write(env Env, path string, o *object, nl, existed, add boo
 	if err := WriteFileSafe(path, o.marshal(nl)); err != nil {
 		return err
 	}
-	if add && !existed {
-		setMark(env, createdKey(h.ID(), path), true)
+	if add {
+		setMark(env, createdKey(h.ID(), path), !existed)
 	}
 	return nil
 }

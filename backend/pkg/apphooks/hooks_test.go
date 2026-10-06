@@ -18,7 +18,7 @@ func newFake(t *testing.T) *fake {
 	f := &fake{}
 	f.env = Env{
 		Home: home, ConfigHome: filepath.Join(home, ".config"),
-		CacheDir: filepath.Join(home, ".cache", "yozakura"), AppID: "yozakura",
+		CacheDir: filepath.Join(home, ".cache", "yozakura"), DataDir: filepath.Join(home, ".local", "share", "yozakura"), AppID: "yozakura",
 		Running: func(string) bool { return f.running },
 		Signal:  func(p string, s syscall.Signal) { f.signals = append(f.signals, p) },
 	}

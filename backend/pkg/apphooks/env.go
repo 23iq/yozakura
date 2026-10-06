@@ -25,9 +25,13 @@ func DefaultEnv() Env {
 	if cache == "" {
 		cache = filepath.Join(home, ".cache")
 	}
+	data := os.Getenv("XDG_DATA_HOME")
+	if data == "" {
+		data = filepath.Join(home, ".local", "share")
+	}
 	return Env{
 		Home: home, ConfigHome: cfg,
-		CacheDir: filepath.Join(cache, brand.AppID), AppID: brand.AppID,
+		CacheDir: filepath.Join(cache, brand.AppID), DataDir: filepath.Join(data, brand.AppID), AppID: brand.AppID,
 		Running: func(proc string) bool { return len(pids(proc)) > 0 },
 		Signal: func(proc string, sig syscall.Signal) {
 			for _, pid := range pids(proc) {
@@ -85,16 +89,22 @@ func Statuses(env Env) map[string]Status {
 	return out
 }
 
-// RevertAll reverts every hook (uninstall) and returns the outcome per id,
-// in id order. A failing hook does not stop the others.
-func RevertAll(env Env, hooks []Hook) []Status {
-	out := make([]Status, 0, len(hooks))
+// Outcome is one hook's result of RevertAll.
+type Outcome struct {
+	Status Status
+	Err    error
+}
+
+// RevertAll reverts every hook (uninstall) and returns the outcome per hook,
+// in order. A failing hook does not stop the others.
+func RevertAll(env Env, hooks []Hook) []Outcome {
+	out := make([]Outcome, 0, len(hooks))
 	for _, h := range hooks {
 		st, err := h.Revert(env)
-		if err != nil && st.State != StateError && st.State != StateManaged {
-			st.State, st.Reason = StateError, err.Error()
+		if err != nil && st.Reason == "" {
+			st.Reason = err.Error()
 		}
-		out = append(out, st)
+		out = append(out, Outcome{st, err})
 	}
 	return out
 }

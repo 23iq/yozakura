@@ -36,6 +36,7 @@ type Env struct {
 	Home       string
 	ConfigHome string
 	CacheDir   string // ~/.cache/<app>
+	DataDir    string // ~/.local/share/<app>: Apply/Revert bookkeeping
 	AppID      string
 	Running    func(proc string) bool
 	Signal     func(proc string, sig syscall.Signal)
