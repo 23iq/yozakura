@@ -13,6 +13,8 @@ import qs.modules.corners
 import qs.modules.globals
 import qs.config
 import qs.modules.bar.panels
+import qs.modules.bar.workspaces
+import "../specials/Specials.js" as Specials
 
 Item {
     id: root
@@ -80,9 +82,14 @@ Item {
         return true;
     }
 
-    // Monitor reference and refrence to toplevels on monitor
+    // Monitor reference and the toplevels it shows: an open special
+    // workspace covers the active one, so its windows count instead.
     readonly property var compositorMonitor: YozdService.monitorFor(screen)
-    readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !YozdService.clients.values) ? [] : YozdService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
+    readonly property string openSpecial: CompositorData.specialWorkspaceNames[screen.name] || ""
+    // Plain `var` views of YozdService's list holders.
+    readonly property var _clients: YozdService.clients
+    readonly property var _workspaces: YozdService.workspaces
+    readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !_clients || !_clients.values) ? [] : Specials.visibleClients(_clients.values, _workspaces ? _workspaces.values : [], compositorMonitor.activeWorkspace.id, openSpecial)
 
     // Check if there are any windows on the current monitor and workspace
     readonly property bool hasWindows: toplevels.length > 0

@@ -346,6 +346,19 @@ function windowSpecial(client, workspaces) {
     return "";
 }
 
+// The clients a monitor shows: those on its open special (Hyprland keeps
+// the normal workspace active underneath one) or else on its active
+// workspace. `specialName` is the open special's name without "special:".
+function visibleClients(clients, workspaces, activeWorkspaceId, specialName) {
+    if (specialName)
+        return list(clients).filter(function (c) {
+            return windowSpecial(c, workspaces) === specialName;
+        });
+    return list(clients).filter(function (c) {
+        return c && c.workspace && c.workspace.id === activeWorkspaceId;
+    });
+}
+
 // [{address, class, special}] from YozdService clients + workspaces.
 function windowsOf(clients, workspaces) {
     return list(clients).map(function (c) {

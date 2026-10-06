@@ -153,3 +153,17 @@ test('launcher search ranks exact, prefix, word and substring matches', () => {
     eq(S.search(items, '  '), []);
     eq(S.search(items, 'my-tel').map(i => i.id), ['a'], 'Hyprland name matches too');
 });
+
+test('visible clients follow an open special over the active workspace', () => {
+    const clients = [
+        { address: 'a', workspace: { id: 1 } },
+        { address: 'b', workspace: { id: -98 } },
+        { address: 'c', workspace: { id: -97, name: 'special:Dev' } },
+        { address: 'd', workspace: { id: 2 } },
+    ];
+    const workspaces = [{ id: -98, name: 'special:Telegram' }];
+    eq(S.visibleClients(clients, workspaces, 1, '').map(c => c.address), ['a']);
+    eq(S.visibleClients(clients, workspaces, 1, 'Telegram').map(c => c.address), ['b']);
+    eq(S.visibleClients(clients, workspaces, 1, 'Dev').map(c => c.address), ['c']);
+    eq(S.visibleClients(clients, workspaces, 1, 'Empty'), [], 'an empty special shows nothing');
+});

@@ -16,10 +16,10 @@ Singleton {
     property bool specialRefreshPending: false
 
     function refreshSpecialWorkspaces() {
-        // Also tracked for the special workspaces feature (SpecialsService
-        // launches a special's apps when it opens), indicator or not.
-        const specials = Config.specialsReady && Config.specials.enabled && Config.specials.workspaces.length > 0;
-        if (YozdService.compositorName !== "hyprland" || !(Config.workspaces.showSpecialWorkspace || specials)) {
+        // Tracked whenever on Hyprland, indicator or not: SpecialsService
+        // launches a special's apps when it opens and the dock hides over
+        // an open special's windows.
+        if (YozdService.compositorName !== "hyprland") {
             root.specialWorkspaceNames = {};
             return;
         }
@@ -74,17 +74,6 @@ Singleton {
     Connections {
         target: YozdService
         function onCompositorNameChanged() { specialRefreshTimer.restart(); }
-    }
-
-    Connections {
-        target: Config.workspaces
-        function onShowSpecialWorkspaceChanged() { specialRefreshTimer.restart(); }
-    }
-
-    Connections {
-        target: Config.specials
-        function onEnabledChanged() { specialRefreshTimer.restart(); }
-        function onWorkspacesChanged() { specialRefreshTimer.restart(); }
     }
 
     property var windowList: []
