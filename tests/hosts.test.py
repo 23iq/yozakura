@@ -24,6 +24,7 @@ h.singleton("qs.config", "Config", """QtObject {
         property QtObject launcher: QtObject { property string host: "spotlight" }
         property QtObject dashboard: QtObject { property string host: "sheet" }
         property QtObject sheet: QtObject { property string side: "auto" }
+        property QtObject cheatsheet: QtObject { property string host: "sheet" }
     }
     property QtObject bar: QtObject { property string position: "top"; property bool frameEnabled: false }
     property QtObject dock: QtObject { property string position: "bottom"; property int height: 64; property bool enabled: true }
@@ -49,7 +50,7 @@ h.module("qs.modules.components", {"StyledRect": "Item { property string variant
 h.module("qs.modules.services", {"FocusGrab": "QtObject { property var windows; property bool active; signal cleared }"})
 h.singleton("qs.modules.services", "Visibilities", """QtObject {
     id: vroot
-    property Component flags: Component { QtObject { property bool launcher; property bool dashboard; property bool powermenu; property bool tools; property bool aiquick } }
+    property Component flags: Component { QtObject { property bool launcher; property bool dashboard; property bool powermenu; property bool tools; property bool aiquick; property bool keybinds } }
     property string focused: "A"
     property var screens: ({})
     function getForScreen(n) {
@@ -58,13 +59,14 @@ h.singleton("qs.modules.services", "Visibilities", """QtObject {
         return screens[n];
     }
     function setActiveModule(m) {
-        for (const k in screens) { screens[k].launcher = false; screens[k].dashboard = false; }
+        for (const k in screens) { screens[k].launcher = false; screens[k].dashboard = false; screens[k].keybinds = false; }
         if (m) getForScreen(focused)[m] = true;
     }
 }""")
 VIEW = "Item { objectName: 'view'; focus: true; implicitWidth: 464; implicitHeight: 296; property string screenName }"
 h.module("qs.modules.widgets.launcher", {"LauncherView": VIEW})
 h.module("qs.modules.widgets.dashboard", {"DashboardView": VIEW.replace("464", "900")})
+h.module("qs.modules.keybinds", {"CheatsheetView": VIEW.replace("'view'", "'cheatsheet'")})
 
 h.copy("modules/shell/EdgeService.qml", "qs/modules/shell")
 h.module("qs.modules.shell", {})
@@ -176,6 +178,16 @@ assert ev(spot, "progress") == 1 and abs(f.property("scale") - 1) < 1e-6
 h.eval(root, 'Visibilities.setActiveModule("")')
 pump(400)
 assert ev(spot, "progress") == 0 and not ev(spot, "visible")
+
+# The keybind cheatsheet routes through layout.cheatsheet.host ("keybinds" flag).
+h.eval(root, 'Config.animDuration = 0; Visibilities.setActiveModule("keybinds")')
+sheet = ev(hsA, "sheet")
+assert ev(sheet, "isOpen") and ev(sheet, "view.objectName") == "cheatsheet", "cheatsheet in the sheet"
+h.eval(root, 'Visibilities.setActiveModule("")')
+assert not ev(sheet, "isOpen")
+h.eval(root, 'Config.layout.cheatsheet.host = "fullscreen"; Visibilities.setActiveModule("keybinds")')
+assert not ev(sheet, "isOpen") and not ev(spot, "isOpen"), "fullscreen is the cheatsheet window"
+h.eval(root, 'Visibilities.setActiveModule("")')
 
 # Unknown host falls back to the notch: nothing opens here.
 h.eval(root, 'Config.layout.launcher.host = "bogus"; Visibilities.setActiveModule("launcher")')
