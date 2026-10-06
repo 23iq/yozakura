@@ -59,7 +59,8 @@ func ResolveSystemPkgs(c *extras.Catalog, p extras.Platform, ids []string) (pkgs
 			return nil, nil, err
 		}
 		for _, name := range list {
-			if !ValidPkg(name) {
+			// dnf reads a leading "@" as a group or module.
+			if !ValidPkg(name) || (p.Distro == "fedora" && strings.HasPrefix(name, "@")) {
 				return nil, nil, fmt.Errorf("%s: bad package name %q", id, name)
 			}
 			if !seenPkg[name] {
@@ -119,35 +120,38 @@ func contains(list []string, s string) bool {
 	return false
 }
 
-const multilibInclude = "Include = /etc/pacman.d/mirrorlist"
-
-// EnableMultilib uncomments the [multilib] section header of pacman.conf and
-// the commented Include lines right under it. When the section is already
-// enabled it returns conf unchanged and false; when no commented section
-// exists, a standard one is appended.
-func EnableMultilib(conf []byte) ([]byte, bool) {
+// EnableMultilib uncomments the "#[multilib]" section header of pacman.conf
+// and the commented Include/Server lines right under it. When the section is
+// already enabled it returns conf unchanged and false. It fails when there is
+// no commented header or nothing under it to uncomment.
+func EnableMultilib(conf []byte) ([]byte, bool, error) {
 	lines := strings.Split(string(conf), "\n")
 	for _, l := range lines {
 		if strings.TrimSpace(l) == "[multilib]" {
-			return conf, false
+			return conf, false, nil
 		}
 	}
 	for i, l := range lines {
-		if uncomment(l) != "[multilib]" {
+		if !strings.HasPrefix(strings.TrimSpace(l), "#") || uncomment(l) != "[multilib]" {
 			continue
 		}
 		lines[i] = "[multilib]"
+		repos := 0
 		for j := i + 1; j < len(lines); j++ {
 			body := uncomment(lines[j])
-			if !strings.HasPrefix(lines[j], "#") || !strings.HasPrefix(body, "Include") {
+			if !strings.HasPrefix(strings.TrimSpace(lines[j]), "#") ||
+				!(strings.HasPrefix(body, "Include") || strings.HasPrefix(body, "Server")) {
 				break
 			}
 			lines[j] = body
+			repos++
 		}
-		return []byte(strings.Join(lines, "\n")), true
+		if repos == 0 {
+			return conf, false, errors.New("pacman.conf: no Include/Server line under #[multilib]")
+		}
+		return []byte(strings.Join(lines, "\n")), true, nil
 	}
-	out := strings.TrimRight(string(conf), "\n") + "\n\n[multilib]\n" + multilibInclude + "\n"
-	return []byte(out), true
+	return conf, false, errors.New("pacman.conf: no #[multilib] section to enable")
 }
 
 func uncomment(line string) string {

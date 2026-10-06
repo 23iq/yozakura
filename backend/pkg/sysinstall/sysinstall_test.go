@@ -34,6 +34,7 @@ func testCatalog() *extras.Catalog {
 			{ID: "arch-only", Category: "x", Only: []string{"arch"}, Install: extras.Install{Arch: &extras.Method{Pkgs: []string{"cuda"}}}},
 			{ID: "steam", Category: "x", Multilib: true, Install: extras.Install{Arch: &extras.Method{Pkgs: []string{"steam"}}}},
 			{ID: "dash", Category: "x", Install: extras.Install{Arch: &extras.Method{Pkgs: []string{"-foo"}}}},
+			{ID: "group", Category: "x", Install: extras.Install{Fedora: &extras.Method{Pkgs: []string{"@development-tools"}}}},
 			{ID: "badunit", Category: "x", Install: extras.Install{Arch: &extras.Method{Pkgs: []string{"a"}}, Service: "-x"}},
 		},
 	}
@@ -91,6 +92,7 @@ func TestResolveErrors(t *testing.T) {
 		{arch, []string{"dash"}, "bad package"},
 		{arch, []string{"badunit"}, "bad unit"},
 		{arch, nil, "no ids"},
+		{extras.Platform{Distro: "fedora"}, []string{"group"}, "bad package"},
 		{extras.Platform{Distro: "arch"}, []string{"steam"}, "multilib"},
 	}
 	for _, tc := range cases {
@@ -131,9 +133,9 @@ Include = /etc/pacman.d/mirrorlist
 `
 
 func TestEnableMultilib(t *testing.T) {
-	out, changed := EnableMultilib([]byte(pacmanConf))
-	if !changed {
-		t.Fatal("expected change")
+	out, changed, err := EnableMultilib([]byte(pacmanConf))
+	if err != nil || !changed {
+		t.Fatalf("changed=%v err=%v", changed, err)
 	}
 	s := string(out)
 	if !strings.Contains(s, "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n") {
@@ -142,16 +144,29 @@ func TestEnableMultilib(t *testing.T) {
 	if !strings.Contains(s, "#[multilib-testing]\n#Include") || !strings.Contains(s, "# A trailing comment") {
 		t.Fatalf("touched other lines:\n%s", s)
 	}
-	again, changed := EnableMultilib(out)
-	if changed || string(again) != s {
+	again, changed, err := EnableMultilib(out)
+	if err != nil || changed || string(again) != s {
 		t.Fatal("already enabled must be unchanged")
 	}
 }
 
-func TestEnableMultilibMissingBlockAppends(t *testing.T) {
-	out, changed := EnableMultilib([]byte("[options]\n[core]\nInclude = /etc/pacman.d/mirrorlist"))
-	if !changed || !strings.HasSuffix(string(out), "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist\n") {
-		t.Fatalf("changed=%v out=%q", changed, out)
+func TestEnableMultilibServerLines(t *testing.T) {
+	out, changed, err := EnableMultilib([]byte("#[multilib]\n#Server = https://m/$repo\n# Include = /x\n\n#Include = /y\n"))
+	if err != nil || !changed || string(out) != "[multilib]\nServer = https://m/$repo\nInclude = /x\n\n#Include = /y\n" {
+		t.Fatalf("out=%q changed=%v err=%v", out, changed, err)
+	}
+}
+
+func TestEnableMultilibRefuses(t *testing.T) {
+	for _, conf := range []string{
+		"[options]\n[core]\nInclude = /etc/pacman.d/mirrorlist",
+		"#[multilib]\n\n#Include = /etc/pacman.d/mirrorlist\n",
+		"#[multilib]\n#SigLevel = Never\n",
+		"[multilib-testing]\n",
+	} {
+		if out, changed, err := EnableMultilib([]byte(conf)); err == nil || changed || string(out) != conf {
+			t.Errorf("%q: changed=%v err=%v", conf, changed, err)
+		}
 	}
 }
 

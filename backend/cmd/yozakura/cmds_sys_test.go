@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"os"
-	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"yozakura/backend/pkg/extrascatalog"
 	"yozakura/backend/pkg/svc/extras"
 	"yozakura/backend/pkg/sysinstall"
 )
@@ -20,12 +20,7 @@ type sysFake struct {
 
 func newSysFake(t *testing.T) (*sysFake, sysEnv) {
 	t.Helper()
-	repo, err := filepath.Abs("../../..")
-	if err != nil {
-		t.Fatal(err)
-	}
 	f := &sysFake{files: map[string]string{
-		"/home/alice/.local/share/yozakura/shell_repo": repo + "\n",
 		"/etc/shells": "/bin/bash\n/usr/bin/fish\n",
 	}}
 	read := func(p string) ([]byte, error) {
@@ -37,15 +32,13 @@ func newSysFake(t *testing.T) (*sysFake, sysEnv) {
 	env := sysEnv{
 		euid:   0,
 		getenv: func(k string) string { return map[string]string{"PKEXEC_UID": "1000"}[k] },
-		exe:    func() (string, error) { return "/usr/local/bin/yozakura", nil },
-		lookup: func(uid string) (string, string, error) {
+		lookup: func(uid string) (string, error) {
 			if uid == "1000" {
-				return "alice", "/home/alice", nil
+				return "alice", nil
 			}
-			return "", "", errors.New("no user")
+			return "", errors.New("no user")
 		},
-		exists:   fileExists,
-		readFile: read,
+		catalog:  extrascatalog.Load,
 		platform: func() extras.Platform { return extras.Platform{Distro: "arch", GPU: "nvidia"} },
 		helper: sysinstall.Helper{
 			Out: &bytes.Buffer{},
@@ -55,6 +48,7 @@ func newSysFake(t *testing.T) (*sysFake, sysEnv) {
 			},
 			ReadFile:  read,
 			WriteFile: func(string, []byte) error { return nil },
+			RealPath:  func(p string) (string, error) { return p, nil },
 		},
 	}
 	return f, env
@@ -77,37 +71,26 @@ func TestSysRefusesNonRoot(t *testing.T) {
 	}
 }
 
-func TestSysInstallUsesInvokerShellRepo(t *testing.T) {
+func TestSysInstallUsesEmbeddedCatalog(t *testing.T) {
 	f, env := newSysFake(t)
 	if code, msg := runSysT([]string{"install", "ollama"}, env); code != 0 {
 		t.Fatalf("code=%d msg=%q", code, msg)
 	}
-	want := [][]string{{"pacman", "-S", "--needed", "--noconfirm", "ollama-cuda"}, {"systemctl", "enable", "--now", "ollama"}}
+	want := [][]string{{"pacman", "-S", "--needed", "--noconfirm", "--", "ollama-cuda"}, {"systemctl", "enable", "--now", "--", "ollama"}}
 	if !reflect.DeepEqual(f.calls, want) {
 		t.Fatalf("calls = %v", f.calls)
 	}
 }
 
-func TestSysCatalogIgnoresEnvironment(t *testing.T) {
-	f, env := newSysFake(t)
-	delete(f.files, "/home/alice/.local/share/yozakura/shell_repo")
-	repo, _ := filepath.Abs("../../..")
-	env.getenv = func(k string) string {
-		return map[string]string{"PKEXEC_UID": "1000", "YOZAKURA_SHELL": repo, "XDG_DATA_HOME": "/tmp"}[k]
+func TestDefaultSysEnvEmbedsCatalog(t *testing.T) {
+	t.Setenv("YOZAKURA_SHELL", t.TempDir())
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	c, err := defaultSysEnv(&bytes.Buffer{}).catalog()
+	if err != nil {
+		t.Fatal(err)
 	}
-	if code, msg := runSysT([]string{"install", "ollama"}, env); code != 1 || !strings.Contains(msg, "catalog not found") {
-		t.Fatalf("code=%d msg=%q", code, msg)
-	}
-}
-
-func TestSysCatalogFromExecutableDir(t *testing.T) {
-	f, env := newSysFake(t)
-	delete(f.files, "/home/alice/.local/share/yozakura/shell_repo")
-	repo, _ := filepath.Abs("../../..")
-	env.exe = func() (string, error) { return filepath.Join(repo, "backend", "yozakura"), nil }
-	env.getenv = func(string) string { return "" }
-	if code, msg := runSysT([]string{"install", "ollama"}, env); code != 0 {
-		t.Fatalf("code=%d msg=%q", code, msg)
+	if _, ok := c.Get("ollama"); !ok {
+		t.Fatal("embedded catalog lacks ollama")
 	}
 }
 

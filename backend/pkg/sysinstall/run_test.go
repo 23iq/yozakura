@@ -17,6 +17,7 @@ type fakeSys struct {
 	files  map[string][]byte
 	writes map[string][]byte
 	fail   string
+	links  map[string]string
 }
 
 func (f *fakeSys) helper(out *bytes.Buffer) Helper {
@@ -37,6 +38,12 @@ func (f *fakeSys) helper(out *bytes.Buffer) Helper {
 			return nil, os.ErrNotExist
 		},
 		WriteFile: func(p string, d []byte) error { f.writes[p] = d; return nil },
+		RealPath: func(p string) (string, error) {
+			if r, ok := f.links[p]; ok {
+				return r, nil
+			}
+			return p, nil
+		},
 	}
 }
 
@@ -47,8 +54,8 @@ func TestInstallArch(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := [][]string{
-		{"pacman", "-S", "--needed", "--noconfirm", "ollama-cuda", "cuda"},
-		{"systemctl", "enable", "--now", "ollama"},
+		{"pacman", "-S", "--needed", "--noconfirm", "--", "ollama-cuda", "cuda"},
+		{"systemctl", "enable", "--now", "--", "ollama"},
 	}
 	if !reflect.DeepEqual(f.calls, want) {
 		t.Fatalf("calls = %v", f.calls)
@@ -58,7 +65,7 @@ func TestInstallArch(t *testing.T) {
 func TestInstallFedoraAndFailureStopsUnits(t *testing.T) {
 	f := &fakeSys{fail: "dnf"}
 	err := f.helper(&bytes.Buffer{}).Install(testCatalog(), extras.Platform{Distro: "fedora"}, []string{"ollama"})
-	if err == nil || len(f.calls) != 1 || f.calls[0][0] != "dnf" || f.calls[0][1] != "install" {
+	if err == nil || len(f.calls) != 1 || f.calls[0][0] != "dnf" || !reflect.DeepEqual(f.calls[0], []string{"dnf", "install", "-y", "--", "ollama"}) {
 		t.Fatalf("err=%v calls=%v", err, f.calls)
 	}
 }
@@ -86,26 +93,50 @@ func TestUpgrade(t *testing.T) {
 }
 
 func TestEnableMultilibVerb(t *testing.T) {
-	f := &fakeSys{files: map[string][]byte{PacmanConf: []byte(pacmanConf)}}
+	f := &fakeSys{
+		files: map[string][]byte{"/etc/real.conf": []byte(pacmanConf)},
+		links: map[string]string{PacmanConf: "/etc/real.conf"},
+	}
 	if err := f.helper(&bytes.Buffer{}).EnableMultilib("arch", "/etc/pacman.conf.bak"); err != nil {
 		t.Fatal(err)
 	}
 	if string(f.writes["/etc/pacman.conf.bak"]) != pacmanConf {
 		t.Fatal("backup missing")
 	}
-	if !strings.Contains(string(f.writes[PacmanConf]), "\n[multilib]\n") {
-		t.Fatal("conf not rewritten")
+	if !strings.Contains(string(f.writes["/etc/real.conf"]), "\n[multilib]\n") || f.writes[PacmanConf] != nil {
+		t.Fatalf("symlink target not rewritten: %v", f.writes)
 	}
-	if !reflect.DeepEqual(f.calls, [][]string{{"pacman", "-Sy"}}) {
-		t.Fatalf("calls = %v", f.calls)
+	if len(f.calls) != 0 {
+		t.Fatalf("must not sync: %v", f.calls)
 	}
 
-	f = &fakeSys{files: map[string][]byte{PacmanConf: f.writes[PacmanConf]}}
+	enabled := f.writes["/etc/real.conf"]
+	f = &fakeSys{files: map[string][]byte{PacmanConf: enabled}}
 	if err := f.helper(&bytes.Buffer{}).EnableMultilib("arch", "/b"); err != nil || len(f.calls) != 0 || len(f.writes) != 0 {
 		t.Fatalf("already enabled: err=%v calls=%v writes=%v", err, f.calls, f.writes)
 	}
 	if err := f.helper(&bytes.Buffer{}).EnableMultilib("fedora", "/b"); err == nil {
 		t.Fatal("fedora must fail")
+	}
+}
+
+func TestEnableMultilibKeepsExistingBackup(t *testing.T) {
+	f := &fakeSys{files: map[string][]byte{PacmanConf: []byte(pacmanConf), "/b": []byte("original")}}
+	if err := f.helper(&bytes.Buffer{}).EnableMultilib("arch", "/b"); err != nil {
+		t.Fatal(err)
+	}
+	if _, wrote := f.writes["/b"]; wrote {
+		t.Fatal("existing backup overwritten")
+	}
+	if f.writes[PacmanConf] == nil {
+		t.Fatal("conf not written")
+	}
+}
+
+func TestEnableMultilibVerbRefusesUnknownLayout(t *testing.T) {
+	f := &fakeSys{files: map[string][]byte{PacmanConf: []byte("[options]\n")}}
+	if err := f.helper(&bytes.Buffer{}).EnableMultilib("arch", "/b"); err == nil || len(f.writes) != 0 {
+		t.Fatalf("err=%v writes=%v", err, f.writes)
 	}
 }
 
@@ -134,6 +165,13 @@ func TestExecRunnerStreamsAndFixesEnv(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("output %q lacks %q", got, want)
 		}
+	}
+	out.Reset()
+	if err := run("env"); err != nil {
+		t.Fatal(err)
+	}
+	if got := strings.Fields(out.String()); !reflect.DeepEqual(got, childEnv) {
+		t.Errorf("child env = %q, want %q", got, childEnv)
 	}
 	if err := run("false"); err == nil {
 		t.Error("exit status not propagated")

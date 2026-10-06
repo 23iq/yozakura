@@ -11,14 +11,14 @@ GOFLAGS ?=
 PY ?= python3
 
 .PHONY: all build vet lint run nix clean dev install \
-	schema check parse-qml lint-qml fmt-check fmt lint-go lint-sh lint-py \
+	schema extras-catalog check parse-qml lint-qml fmt-check fmt lint-go lint-sh lint-py \
 	test test-js test-py test-go audit baseline
 
 all: build
 
 ## build: compile the Go backend into $(BINARY) and the compositor daemon
 ##        into $(DAEMON), side by side at the repo root
-build:
+build: extras-catalog
 	@cd $(BACKEND_DIR) && $(GO) build $(GOFLAGS) -o ../$(BINARY) ./cmd/$(BINARY)
 	@cd $(BACKEND_DIR) && $(GO) build $(GOFLAGS) -o ../$(DAEMON) ./cmd/$(DAEMON)
 	@echo "Built ./$(BINARY) ./$(DAEMON)"
@@ -32,9 +32,15 @@ vet:
 ##         schema, and the config adapters config/adapters/*.qml from
 ##         config/defaults + config/meta/AdapterTypes.js + config/CoreBinds.js;
 ##         the schema-fresh audit fails when either is stale
-schema:
+schema: extras-catalog
 	@node tools/schema/gen_schema.cjs
 	@node tools/config/gen_adapters.cjs
+
+## extras-catalog: copy assets/catalog/extras.json into the backend, where
+##         `yozakura sys` (root) embeds it; a Go test fails when it is stale
+extras-catalog:
+	@cmp -s assets/catalog/extras.json $(BACKEND_DIR)/pkg/extrascatalog/extras.json || \
+		cp assets/catalog/extras.json $(BACKEND_DIR)/pkg/extrascatalog/extras.json
 
 ## lint: all linters (QML, Go, shell, Python) without tests/audit
 lint: lint-qml lint-go lint-sh lint-py

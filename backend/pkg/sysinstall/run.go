@@ -22,6 +22,7 @@ type Helper struct {
 	Run       Runner
 	ReadFile  func(path string) ([]byte, error)
 	WriteFile func(path string, data []byte) error
+	RealPath  func(path string) (string, error) // resolves symlinks
 }
 
 // Paths of the system files the helper touches.
@@ -39,9 +40,9 @@ func (h Helper) Install(c *extras.Catalog, p extras.Platform, ids []string) erro
 	}
 	switch p.Distro {
 	case "arch":
-		err = h.Run("pacman", append([]string{"-S", "--needed", "--noconfirm"}, pkgs...)...)
+		err = h.Run("pacman", append([]string{"-S", "--needed", "--noconfirm", "--"}, pkgs...)...)
 	case "fedora":
-		err = h.Run("dnf", append([]string{"install", "-y"}, pkgs...)...)
+		err = h.Run("dnf", append([]string{"install", "-y", "--"}, pkgs...)...)
 	default:
 		return fmt.Errorf("unsupported distro %q", p.Distro)
 	}
@@ -49,7 +50,7 @@ func (h Helper) Install(c *extras.Catalog, p extras.Platform, ids []string) erro
 		return err
 	}
 	for _, u := range units {
-		if err := h.Run("systemctl", "enable", "--now", u); err != nil {
+		if err := h.Run("systemctl", "enable", "--now", "--", u); err != nil {
 			return err
 		}
 	}
@@ -67,28 +68,42 @@ func (h Helper) Upgrade(distro string) error {
 	return fmt.Errorf("unsupported distro %q", distro)
 }
 
-// EnableMultilib enables [multilib] in pacman.conf (keeping a backup at
-// backup) and syncs the databases. Already enabled is a no-op.
+// EnableMultilib enables [multilib] in pacman.conf, keeping the original
+// at backup (written once, never overwritten). It does not sync: a sync
+// without upgrade is a partial upgrade; the caller's `sys upgrade` (-Syu)
+// handles the "target not found" that follows. Already enabled is a no-op.
 func (h Helper) EnableMultilib(distro, backup string) error {
 	if distro != "arch" {
 		return fmt.Errorf("multilib is arch only (distro %q)", distro)
 	}
-	conf, err := h.ReadFile(PacmanConf)
+	conf, err := h.RealPath(PacmanConf)
 	if err != nil {
 		return err
 	}
-	next, changed := EnableMultilib(conf)
+	data, err := h.ReadFile(conf)
+	if err != nil {
+		return err
+	}
+	next, changed, err := EnableMultilib(data)
+	if err != nil {
+		return err
+	}
 	if !changed {
 		fmt.Fprintln(h.Out, "multilib already enabled")
 		return nil
 	}
-	if err := h.WriteFile(backup, conf); err != nil {
+	if _, err := h.ReadFile(backup); errors.Is(err, os.ErrNotExist) {
+		if err := h.WriteFile(backup, data); err != nil {
+			return fmt.Errorf("backup %s: %w", backup, err)
+		}
+	} else if err != nil {
 		return fmt.Errorf("backup %s: %w", backup, err)
 	}
-	if err := h.WriteFile(PacmanConf, next); err != nil {
+	if err := h.WriteFile(conf, next); err != nil {
 		return err
 	}
-	return h.Run("pacman", "-Sy")
+	fmt.Fprintln(h.Out, "multilib enabled")
+	return nil
 }
 
 // Chsh sets the login shell of user, which must already be authorised by
