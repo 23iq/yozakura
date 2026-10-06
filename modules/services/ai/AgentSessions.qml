@@ -191,7 +191,7 @@ QtObject {
             if (o.activate !== false)
                 root.activeId = meta.id;
             root.timeline(meta.id);
-            root._rememberDir(meta.cwd);
+            root.rememberDir(meta.cwd);
             root.sessionCreated(meta);
             const accepted = !o.onCreated || o.onCreated(meta) !== false;
             if (o.prompt && accepted)
@@ -199,7 +199,7 @@ QtObject {
         });
     }
 
-    function _rememberDir(dir) {
+    function rememberDir(dir) {
         if (!dir)
             return;
         const list = (Config.ai.agents.recentDirs || []).filter(d => d !== dir);

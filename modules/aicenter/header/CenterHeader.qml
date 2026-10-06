@@ -40,7 +40,7 @@ RowLayout {
     }
 
     SpaceSwitch {
-        iconsOnly: root.width < 330
+        iconsOnly: root.width < (root.code ? 400 : 330)
     }
     Item {
         Layout.fillWidth: true

@@ -44,6 +44,9 @@ Singleton {
     readonly property var activeAgent: mode === "agent" && agents ? agents.active : null
     readonly property bool busy: runner.starting || contextState.compacting || (activeAgent ? ["running", "starting", "waiting"].indexOf(activeAgent.status) >= 0 : (activeChat ? activeChat.busy : false))
     readonly property string sessionKey: activeAgent ? "agent:" + activeAgent.id : (mode === "agent" ? "new:" + space + ":" + currentModelId + ":" + _newSerial : (activeChat ? "chat:" + activeChat.chatId : ""))
+    // The Code space's project folder (CodeProject): new sessions, the
+    // project bar and the task board all use it.
+    readonly property string projectDir: project.dir
     readonly property var agentSettings: {
         const id = activeAgent ? activeAgent.agent : (currentModel?.agent || Config.ai.agents.defaultAgent);
         const cfg = Config.ai.agents[id] || {};
@@ -60,7 +63,9 @@ Singleton {
             cwd: Config.ai.agents.defaultCwd || "",
             systemPrompt: "",
             yolo: !!cfg.yolo
-        }, _agentOverrides[space + ":" + id] || {}, assistant, activeAgent || {});
+        }, _agentOverrides[space + ":" + id] || {}, assistant, space === "code" ? {
+            cwd: projectDir
+        } : {}, activeAgent || {});
         // New sessions start with the level last chosen for this model.
         if (!s.effort && !activeAgent) {
             const remembered = effort.rememberedFor(id, s.model);
@@ -86,6 +91,9 @@ Singleton {
         owner: root
     }
     property ContextState contextState: ContextState {
+        owner: root
+    }
+    property CodeProject project: CodeProject {
         owner: root
     }
     // Provider connections (Connect sheet, settings page, onboarding).
@@ -138,6 +146,7 @@ Singleton {
         currentModelId = Selection.initial(Config.ai.defaultModel, StateService.initialized ? StateService.get("lastAiModel", "") : "");
         recentModelIds = StateService.initialized ? StateService.get("aiRecentModels", []) : [];
         effort.init();
+        project.init();
         drafts.selected.connect(s => {
             mode = "chat";
             chat = s;
@@ -300,9 +309,19 @@ Singleton {
             SettingsStore.set("ai.defaultModel", id);
     }
 
-    function configureAgent(fields) {
+    // Session settings of the visible agent (the session, or its next
+    // launch). The Code project is not a session setting: `cwd` goes to
+    // chooseProject. Refused with a visible notice while a turn runs.
+    function configureAgent(input) {
+        const fields = Object.assign({}, input);
+        if (fields.cwd !== undefined && space === "code") {
+            const ok = chooseProject(fields.cwd);
+            delete fields.cwd;
+            if (Object.keys(fields).length === 0)
+                return ok;
+        }
         if (busy)
-            return false;
+            return refuseBusy();
         if (activeAgent)
             agents.update(activeAgent.id, fields);
         else {
@@ -313,6 +332,34 @@ Singleton {
         }
         return true;
     }
+
+    // Makes `dir` the Code project. A session open in another folder keeps
+    // running in the history; the view moves to the project's board / a
+    // new session there.
+    function chooseProject(dir) {
+        _ensureInit();
+        const chosen = project.set(dir);
+        if (!chosen) {
+            noticeError = I18n.t("ai.project_invalid");
+            return false;
+        }
+        noticeError = "";
+        if (space === "code" && activeAgent && activeAgent.cwd !== chosen) {
+            agents.activeId = "";
+            mode = "agent";
+            _newSerial++;
+        }
+        return true;
+    }
+
+    // A change refused because a turn is running: say so instead of
+    // silently ignoring it. Cleared when the turn ends.
+    function refuseBusy() {
+        noticeError = I18n.t("ai.busy_notice");
+        return false;
+    }
+    onBusyChanged: if (!busy && noticeError === I18n.t("ai.busy_notice"))
+        noticeError = ""
 
     // Shows a space: "assistant" | "code" (legacy: chat/shell -> assistant,
     // agent -> code). Each space keeps its own engine and conversation.
@@ -347,6 +394,9 @@ Singleton {
             mode = "agent";
             if (agents.active)
                 currentModelId = "agent:" + agents.active.agent;
+            // A Code session shows its own folder as the project.
+            if (GlobalStates.aiSpace === "code" && agents.active && agents.active.cwd)
+                project.set(agents.active.cwd);
         } else if (!drafts.select(id)) {
             _openingChatId = id;
             store.load(id);

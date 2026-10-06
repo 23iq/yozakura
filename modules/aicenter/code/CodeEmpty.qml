@@ -15,9 +15,9 @@ Item {
 
     readonly property var agents: Ai.agents ? Ai.agents.agents : []
 
-    ColumnLayout {
-        anchors.centerIn: parent
-        width: Math.min(parent.width - 2 * BarLook.pad, 520)
+    CenteredScroll {
+        anchors.fill: parent
+        maxContentWidth: 520
         spacing: BarLook.groupGap
 
         ColumnLayout {
@@ -46,6 +46,10 @@ Item {
                 font.family: Config.theme.font
                 font.pixelSize: BarLook.font(-1)
                 color: Colors.outline
+            }
+            UsingModel {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: parent.width
             }
         }
 

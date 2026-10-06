@@ -73,3 +73,15 @@ test('agent efforts come from the agent catalog, remembered per native model', (
     mem = EP.remember(mem, 'agent:codex/default', '');
     assert.equal(EP.remembered(mem, 'codex', ''), '');
 });
+
+test('the model an agent will use is known before the first turn', () => {
+    const codex = { models: [{ id: 'gpt-5.5', name: 'GPT-5.5', isDefault: true }, { id: 'gpt-5.5-mini', name: 'GPT-5.5 mini' }] };
+    assert.equal(EP.agentModelLabel(codex, ''), 'GPT-5.5');
+    assert.equal(EP.agentModelLabel(codex, 'gpt-5.5-mini'), 'GPT-5.5 mini');
+    const claude = { models: [{ id: 'default', name: 'Default (recommended)', isDefault: true, resolved: 'Opus 5.5' }, { id: 'sonnet', name: 'Sonnet 5.5' }] };
+    assert.equal(EP.agentModelLabel(claude, ''), 'Opus 5.5');
+    assert.equal(EP.agentModelLabel(claude, 'default'), 'Opus 5.5');
+    // a manual model id not in the catalog, and a catalog still loading
+    assert.equal(EP.agentModelLabel(claude, 'claude-x'), 'claude-x');
+    assert.equal(EP.agentModelLabel({ models: [] }, ''), '');
+});

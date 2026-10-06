@@ -2,6 +2,7 @@ import QtQuick
 import qs.config
 import qs.modules.services
 import "EffortPrefs.js" as Prefs
+import "Providers.js" as Providers
 
 // Reasoning effort of the visible engine, remembered per model
 // (StateService `aiModelEfforts`, see EffortPrefs.js). Changing it in a chat
@@ -25,6 +26,14 @@ QtObject {
     readonly property var levels: !entry ? [] : (isAgent ? Prefs.agentLevels(agentCatalog, owner.agentSettings.model) : Prefs.httpLevels(entry))
     readonly property string level: !entry ? "" : (isAgent ? (owner.agentSettings.effort || "") : Prefs.httpLevel(entry, memory, Config.ai.effort.defaultLevel))
     readonly property string autoHint: isAgent ? Prefs.agentDefault(agentCatalog, owner.agentSettings.model) : ""
+    // What a new turn will use, shown before the first message: the model
+    // ("Opus 5.5", resolved from the catalog default for agents) and the
+    // concrete effort level ("" when the engine has none or decides alone).
+    readonly property string modelLabel: !entry ? "" : (isAgent ? (Prefs.agentModelLabel(agentCatalog, owner.agentSettings.model) || (agentCatalog && agentCatalog.loading ? "…" : "")) : (entry.name || entry.model || ""))
+    readonly property string effortLabel: level || autoHint
+    // "Codex · GPT-5.5 · medium" / "Anthropic · Claude Sonnet 4.5".
+    readonly property string summary: !entry ? "" : [isAgent ? entry.name : (Providers.provider(entry.provider).label || entry.provider), modelLabel, effortLabel].filter(x => !!x).join(" · ")
+    readonly property string _catalogKey: isAgent ? (owner.agentSettings.agent || "") + "|" + (owner.agentSettings.cwd || "") : ""
 
     function init() {
         memory = StateService.initialized ? StateService.get("aiModelEfforts", {}) : {};
@@ -49,11 +58,13 @@ QtObject {
         if (!owner.agents.modelCatalogs.has(s.agent, s.cwd))
             owner.agents.refreshModels(s.agent, s.cwd);
     }
-    onEntryChanged: ensureAgentCatalog()
+    on_CatalogKeyChanged: ensureAgentCatalog()
 
     function set(value) {
-        if (!entry || owner.busy)
+        if (!entry)
             return false;
+        if (owner.busy)
+            return owner.refuseBusy();
         const key = Prefs.memoryKey(entry, isAgent ? owner.agentSettings.model : "");
         memory = Prefs.remember(memory, key, value);
         if (StateService.initialized)

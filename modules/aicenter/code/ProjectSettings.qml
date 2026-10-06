@@ -40,7 +40,8 @@ IconButton {
         id: popup
         y: parent.height + 4
         x: Math.min(0, (root.parent ? root.parent.width : 0) - root.x - width)
-        width: 400
+        // Never wider than the project bar (the compact AI bar).
+        width: Math.min(400, root.parent ? root.parent.width : 400)
         padding: 12
         background: StyledRect {
             variant: "popup"

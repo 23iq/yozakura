@@ -18,6 +18,9 @@ StyledRect {
 
     property string dir: ""
     property string fallbackBranch: ""
+    // Narrow bar: the branch icon and changed files only (the popover shows
+    // the branch and ahead/behind).
+    property bool compact: false
     readonly property var git: TasksService.gits[root.dir] || null
     readonly property string branch: root.git ? (root.git.detached ? (root.git.head || "").slice(0, 7) : root.git.branch || "") : root.fallbackBranch
     readonly property int changed: root.git ? root.git.changed || 0 : 0
@@ -61,6 +64,7 @@ StyledRect {
     RowLayout {
         id: row
         anchors.centerIn: parent
+        width: Math.min(implicitWidth, root.width - 14)
         spacing: 5
         Text {
             text: Icons.gitBranch
@@ -70,6 +74,8 @@ StyledRect {
         }
         Text {
             objectName: "gitBranch"
+            visible: !root.compact
+            Layout.fillWidth: true
             Layout.maximumWidth: 160
             text: root.branch
             elide: Text.ElideMiddle
@@ -78,7 +84,7 @@ StyledRect {
             color: Colors.overSurface
         }
         Text {
-            visible: !!root.git && (root.git.ahead > 0 || root.git.behind > 0)
+            visible: !root.compact && !!root.git && (root.git.ahead > 0 || root.git.behind > 0)
             text: root.git ? (root.git.ahead > 0 ? "↑" + root.git.ahead : "") + (root.git.behind > 0 ? " ↓" + root.git.behind : "") : ""
             font.family: Config.theme.monoFont
             font.pixelSize: BarLook.mono(-4)
@@ -86,6 +92,7 @@ StyledRect {
         }
         StyledRect {
             visible: root.changed > 0
+            Layout.minimumWidth: implicitWidth
             implicitWidth: changedText.implicitWidth + 10
             implicitHeight: changedText.implicitHeight + 2
             radius: height / 2
@@ -143,7 +150,9 @@ StyledRect {
     Popup {
         id: popup
         y: parent.height + 4
-        width: 380
+        // Inside the project bar: shifted left when it would overflow.
+        width: Math.min(380, root.parent ? root.parent.width : 380)
+        x: Math.max(-root.x, Math.min(0, (root.parent ? root.parent.width : 0) - root.x - width))
         padding: 10
         background: StyledRect {
             variant: "popup"
@@ -152,6 +161,15 @@ StyledRect {
         }
         contentItem: ColumnLayout {
             spacing: 8
+            Text {
+                objectName: "gitPopupBranch"
+                Layout.fillWidth: true
+                text: root.branch + (root.git && root.git.ahead > 0 ? "  ↑" + root.git.ahead : "") + (root.git && root.git.behind > 0 ? "  ↓" + root.git.behind : "")
+                elide: Text.ElideMiddle
+                font.family: Config.theme.monoFont
+                font.pixelSize: BarLook.mono(-2)
+                color: Colors.overSurface
+            }
             Text {
                 Layout.fillWidth: true
                 text: root.git ? I18n.t("ai.git.summary").replace("%1", root.git.staged || 0).replace("%2", root.git.unstaged || 0).replace("%3", root.git.untracked || 0) + (root.git.conflicts > 0 ? " · " + I18n.t("ai.git.conflicts").replace("%1", root.git.conflicts) : "") : ""

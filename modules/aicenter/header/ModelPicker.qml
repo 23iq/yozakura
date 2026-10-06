@@ -69,8 +69,12 @@ Popup {
             close();
             return true;
         }
-        if (row.type !== "model" || row.entry.available === false || Ai.busy)
+        if (row.type !== "model" || row.entry.available === false)
             return false;
+        if (Ai.busy) {
+            close();
+            return Ai.refuseBusy();
+        }
         picked(row.entry.id);
         close();
         return true;
@@ -88,8 +92,9 @@ Popup {
             Ai.agents.refresh();
     }
 
+    // Kept inside the bar at any size (the panel centres it, `y` below the header).
     width: Math.min(parent ? parent.width - 24 : 460, 460)
-    height: Math.min(520, list.contentHeight + top.implicitHeight + footer.implicitHeight + 40)
+    height: Math.min(520, parent ? parent.height - y - 12 : 520, list.contentHeight + top.implicitHeight + footer.implicitHeight + 40)
     padding: 8
     modal: true
     focus: true
@@ -262,6 +267,7 @@ Popup {
                 Layout.fillWidth: true
             }
             Text {
+                visible: root.width >= 400
                 text: I18n.t("ai.picker_hint")
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-5)

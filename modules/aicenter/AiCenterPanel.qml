@@ -34,7 +34,8 @@ StyledRect {
     // The one modal overlay on top of the bar: "" (none) | history (the
     // drawer, when the history is not docked) | settings (Code session
     // settings) | usage | connect (the Connect sheet) | changes (the
-    // changes drawer in narrow sizes). Opening one closes the other.
+    // changes drawer in narrow sizes) | folder (the Code project picker).
+    // Opening one closes the other.
     property string overlay: ""
     readonly property bool historyOpen: overlay === "history"
     readonly property bool settingsOpen: overlay === "settings"
@@ -104,6 +105,8 @@ StyledRect {
         overlay = name;
         if (previous === "connect" && connectSheet.opened)
             connectSheet.close();
+        if (previous === "folder" && folderPicker.opened)
+            folderPicker.close();
         if (name === "")
             focusComposer();
     }
@@ -113,6 +116,10 @@ StyledRect {
     function closeOverlay(name) {
         if (overlay === name)
             setOverlay("");
+    }
+    function openFolderPicker() {
+        setOverlay("folder");
+        folderPicker.open(root.project);
     }
     function openConnect(provider) {
         setOverlay("connect");
@@ -172,6 +179,7 @@ StyledRect {
         function onFocusRequested() {
             root.codeChat = false;
             root.closeOverlay("history");
+            root.closeOverlay("folder");
         }
     }
     Shortcut {
@@ -224,6 +232,7 @@ StyledRect {
         ProjectBar {
             Layout.fillWidth: true
             visible: root.code
+            onPickRequested: root.openFolderPicker()
         }
         RowLayout {
             Layout.fillWidth: true
@@ -262,6 +271,8 @@ StyledRect {
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    // Short bars: views never spill over the composer.
+                    clip: true
                     Loader {
                         id: workspaceLoader
                         anchors.fill: parent
@@ -410,6 +421,15 @@ StyledRect {
         visible: root.settingsOpen && root.code
         z: 11
         onCloseRequested: root.closeOverlay("settings")
+        onBrowseRequested: root.openFolderPicker()
+    }
+    FolderPicker {
+        id: folderPicker
+        anchors.fill: parent
+        anchors.margins: 10
+        z: 13
+        onChosen: dir => Ai.chooseProject(dir)
+        onCloseRequested: root.closeOverlay("folder")
     }
     ConnectSheet {
         id: connectSheet
@@ -431,8 +451,8 @@ StyledRect {
     ModelPicker {
         id: picker
         parent: root
-        x: (root.width - width) / 2
-        y: 60
+        x: Math.round(Math.max(12, (root.width - width) / 2))
+        y: Math.min(60, Math.max(8, root.height * 0.08))
         filterKind: root.code ? "agent" : "all"
         onPicked: id => Ai.setModel(id)
         onConnectRequested: provider => Ai.openProviderSettings(provider)

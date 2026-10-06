@@ -48,9 +48,9 @@ Item {
         return t;
     }
 
-    ColumnLayout {
-        anchors.centerIn: parent
-        width: Math.min(parent.width - 2 * BarLook.pad, 560)
+    CenteredScroll {
+        anchors.fill: parent
+        maxContentWidth: 560
         spacing: BarLook.groupGap
 
         ColumnLayout {
@@ -81,6 +81,11 @@ Item {
                 font.family: Config.theme.font
                 font.pixelSize: BarLook.font(-1)
                 color: Colors.outline
+            }
+            UsingModel {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.maximumWidth: parent.width
+                visible: !root.noModels
             }
         }
 

@@ -13,9 +13,9 @@ Item {
     property var templates: []
     signal templateChosen(string command)
 
-    ColumnLayout {
-        anchors.centerIn: parent
-        width: Math.min(parent.width - 2 * BarLook.pad, 520)
+    CenteredScroll {
+        anchors.fill: parent
+        maxContentWidth: 520
         spacing: BarLook.groupGap
 
         ColumnLayout {

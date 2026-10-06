@@ -12,6 +12,7 @@ import qs.config
 StyledRect {
     id: root
     signal closeRequested
+    signal browseRequested
     readonly property var settings: Ai.agentSettings || ({})
     readonly property bool isAgent: Ai.currentModel && Ai.currentModel.kind === "agent"
     readonly property var catalog: isAgent && Ai.agents ? Ai.agents.settingsFor(settings.agent, settings.cwd) : ({
@@ -20,7 +21,13 @@ StyledRect {
     readonly property var models: catalog.models || []
     readonly property var selectedModel: models.find(m => settings.model ? m.id === settings.model : m.isDefault === true) || null
     readonly property var efforts: selectedModel ? (selectedModel.efforts || []) : []
-    variant: "pane"
+    // "Engine default · Opus 5.5": what the default resolves to.
+    readonly property var defaultModel: models.find(m => m.isDefault === true) || null
+    readonly property string defaultModelName: defaultModel ? (defaultModel.resolved || defaultModel.name || defaultModel.id) : ""
+    readonly property string defaultEffort: selectedModel ? selectedModel.defaultEffort || "" : ""
+    // Opaque: it covers the transcript.
+    variant: "bg"
+    enableShadow: true
     radius: Styling.radius(-2)
 
     function refresh() {
@@ -31,11 +38,13 @@ StyledRect {
     onSettingsChanged: refresh()
 
     ScrollView {
+        id: scroll
         anchors.fill: parent
         anchors.margins: 12
         clip: true
+        contentWidth: availableWidth
         ColumnLayout {
-            width: parent.width
+            width: scroll.availableWidth
             spacing: 10
             RowLayout {
                 Layout.fillWidth: true
@@ -79,7 +88,7 @@ StyledRect {
                 model: [
                     {
                         id: "",
-                        name: I18n.t("ai.model_default")
+                        name: I18n.t("ai.model_default") + (root.defaultModelName ? " · " + root.defaultModelName : "")
                     }
                 ].concat(root.models)
                 currentIndex: Math.max(0, model.findIndex(m => m.id === (root.settings.model || "")))
@@ -118,7 +127,7 @@ StyledRect {
                 model: [
                     {
                         id: "",
-                        name: I18n.t("ai.model_default")
+                        name: I18n.t("ai.model_default") + (root.defaultEffort ? " · " + root.defaultEffort : "")
                     }
                 ].concat(root.efforts.map(e => ({
                             id: e,
@@ -152,7 +161,6 @@ StyledRect {
             TextField {
                 Layout.fillWidth: true
                 visible: root.isAgent
-                enabled: !Ai.busy
                 text: root.settings.cwd || ""
                 readOnly: Ai.activeAgent !== null
                 color: Colors.overSurface
@@ -164,17 +172,13 @@ StyledRect {
                     cwd: text
                 })
             }
+            // The project of the Code space; changing it opens a new session there.
             Chip {
-                enabled: !Ai.busy
+                objectName: "settingsBrowse"
                 glyph: Icons.folderOpen
                 label: I18n.t("ai.browse")
-                visible: root.isAgent && Ai.activeAgent === null
-                onClicked: Ai.context.pickDirectory(root.settings.cwd || "", dir => {
-                    if (dir)
-                        Ai.configureAgent({
-                            cwd: dir
-                        });
-                })
+                visible: root.isAgent
+                onClicked: root.browseRequested()
             }
             Switch {
                 id: approvalSwitch

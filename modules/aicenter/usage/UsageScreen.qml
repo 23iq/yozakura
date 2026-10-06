@@ -40,7 +40,8 @@ StyledRect {
             m: I18n.t("ai.usage.unit_m")
         })
 
-    variant: "popup"
+    // Opaque: it covers the conversation.
+    variant: "bg"
     radius: Styling.radius(0)
 
     function refresh() {
@@ -103,8 +104,14 @@ StyledRect {
                 font.pixelSize: BarLook.font(1)
                 color: Colors.primary
             }
+            // The compact bar keeps the range tabs, not the title.
+            Item {
+                Layout.fillWidth: true
+                visible: root.width < 400
+            }
             Text {
                 Layout.fillWidth: true
+                visible: root.width >= 400
                 text: I18n.t("ai.usage.title")
                 elide: Text.ElideRight
                 font.family: Config.theme.font

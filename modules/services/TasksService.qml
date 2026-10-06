@@ -69,6 +69,9 @@ Singleton {
         root.select(id, run === undefined ? -1 : run);
         if (Ai.space !== "code")
             Ai.setSpace("code");
+        // The board shows one project: the task's.
+        if (root.selected && root.selected.projectDir)
+            Ai.chooseProject(root.selected.projectDir);
         if (Ai.activeAgent)
             Ai.newConversation();
         if (!GlobalStates.assistantVisible)

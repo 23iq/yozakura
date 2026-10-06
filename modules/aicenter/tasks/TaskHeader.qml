@@ -103,6 +103,9 @@ ColumnLayout {
         }
         UiText {
             visible: !!root.run
+            Layout.fillWidth: true
+            Layout.maximumWidth: implicitWidth
+            elide: Text.ElideRight
             text: root.run ? [TaskModel.agentLabel(root.run.agent, Ai.agents ? Ai.agents.agents : []), root.run.model, root.run.effort].filter(Boolean).join(" · ") : ""
             muted: true
             size: -3

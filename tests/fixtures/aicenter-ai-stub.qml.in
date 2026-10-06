@@ -21,7 +21,12 @@ QtObject {
     readonly property var activeChat: mode === "agent" ? null : chat
     readonly property string sessionKey: activeAgent ? "agent:" + activeAgent.id : "chat:" + chat.id
     property string noticeError: ""
-    readonly property var agentSettings: ({agent: "claude", cwd: "/home/user/src/yozakura", model: "", effort: "", systemPrompt: ""})
+    // Code project (CodeProject stand-in): chooseProject records each choice.
+    property string projectDir: "/home/user/src/yozakura"
+    property var chosenProjects: []
+    function chooseProject(dir) { chosenProjects = chosenProjects.concat([dir]); projectDir = dir; return true; }
+    function refuseBusy() { noticeError = "ai.busy_notice"; return false; }
+    readonly property var agentSettings: ({agent: "claude", cwd: projectDir, model: "", effort: "", systemPrompt: ""})
     property QtObject drafts: QtObject {
         property var summaries: []
         property var saved: ({})
@@ -110,6 +115,9 @@ QtObject {
         property var levels: ["off", "low", "medium", "high", "max"]
         property string level: ""
         property string autoHint: ""
+        property string modelLabel: root.mode === "agent" ? "Opus 5.5" : "Claude Sonnet 4.5"
+        readonly property string effortLabel: level || autoHint
+        readonly property string summary: (root.mode === "agent" ? "Claude Code" : "Anthropic") + " · " + modelLabel + (effortLabel ? " · " + effortLabel : "")
         property var chosen: []
         function set(v) {
             chosen = chosen.concat([v]);
@@ -285,7 +293,8 @@ QtObject {
         }
         function refresh() {
         }
-        function settingsFor(agent, cwd) { return {models: [{id: "sonnet", name: "Sonnet", isDefault: true, efforts: ["low", "high"]}], manualModel: true}; }
+        function settingsFor(agent, cwd) { return {models: [{id: "default", name: "Default (recommended)", resolved: "Opus 5.5", isDefault: true, defaultEffort: "high", efforts: ["low", "high"]}, {id: "sonnet", name: "Sonnet", efforts: ["low", "high"]}], manualModel: true}; }
+        function rememberDir(dir) {}
         function refreshModels(agent, cwd) {}
         property QtObject modelCatalogs: QtObject {
             property var catalogs: ({})

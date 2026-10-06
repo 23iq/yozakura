@@ -9,7 +9,8 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 
-// Code space: project ▾ (recent folders, open folder…), git summary with
+// Code space: project ▾ (recent folders, "Open folder…" = pickRequested,
+// the in-bar FolderPicker), git summary with
 // Commit (GitSummary), the agent instructions file (missing: "Create with
 // agent" starts an `instructions` template task) and the project's task
 // settings (ProjectSettings).
@@ -18,9 +19,10 @@ RowLayout {
     objectName: "projectBar"
 
     readonly property string home: Quickshell.env("HOME")
-    readonly property string project: (Ai.agentSettings && Ai.agentSettings.cwd) || home
+    readonly property string project: (Ai.agentSettings && Ai.agentSettings.cwd) || Ai.projectDir || home
     readonly property var recents: (Config.ai.agents.recentDirs || []).filter(d => d !== project).slice(0, 6)
-    readonly property bool locked: Ai.busy
+    signal pickRequested
+    readonly property bool narrow: width < 420
 
     spacing: 6
 
@@ -30,15 +32,10 @@ RowLayout {
     function baseName(p) {
         return (p || "").split("/").filter(Boolean).pop() || "~";
     }
-    // A different project starts a new session there.
+    // A different project: its board, or a new session there (Ai.chooseProject).
     function choose(dir) {
-        if (!dir || dir === project)
-            return;
-        if (Ai.activeAgent)
-            Ai.newConversation();
-        Ai.configureAgent({
-            cwd: dir
-        });
+        if (dir)
+            Ai.chooseProject(dir);
     }
 
     ProjectInfo {
@@ -64,18 +61,17 @@ RowLayout {
         objectName: "projectButton"
         Layout.fillWidth: true
         Layout.maximumWidth: implicitWidth
+        Layout.minimumWidth: Math.min(implicitWidth, 120)
         implicitWidth: projectRow.implicitWidth + 16
         implicitHeight: 28
         radius: Styling.radius(-4)
         variant: projectHover.hovered || menu.visible ? "focus" : "common"
-        opacity: root.locked ? 0.6 : 1
         HoverHandler {
             id: projectHover
-            cursorShape: root.locked ? Qt.ArrowCursor : Qt.PointingHandCursor
+            cursorShape: Qt.PointingHandCursor
         }
         TapHandler {
-            enabled: !root.locked
-            onTapped: menu.open()
+            onTapped: root.recents.length > 0 ? menu.open() : root.pickRequested()
         }
         RowLayout {
             id: projectRow
@@ -108,7 +104,7 @@ RowLayout {
         Popup {
             id: menu
             y: parent.height + 4
-            width: Math.max(260, parent.width)
+            width: Math.min(Math.max(260, parent.width), root.width)
             padding: 6
             background: StyledRect {
                 variant: "popup"
@@ -169,28 +165,37 @@ RowLayout {
                     }
                 }
                 Chip {
+                    objectName: "projectOpenFolder"
                     Layout.topMargin: 2
                     glyph: Icons.plus
                     label: I18n.t("ai.open_folder")
                     variant: "transparent"
                     onClicked: {
                         menu.close();
-                        Ai.context.pickDirectory(root.project, dir => root.choose(dir));
+                        root.pickRequested();
                     }
                 }
             }
         }
     }
 
+    // Branch and instructions shrink (elide) before the project name.
     GitSummary {
         objectName: "projectBranch"
+        Layout.fillWidth: true
+        Layout.maximumWidth: implicitWidth
+        Layout.minimumWidth: Math.min(implicitWidth, 84)
+        compact: root.narrow
         dir: root.project
         fallbackBranch: info.branch
     }
     Chip {
         objectName: "projectInstructions"
+        Layout.fillWidth: true
+        Layout.maximumWidth: implicitWidth
+        Layout.minimumWidth: 34
         glyph: root.instructions ? Icons.fileText : Icons.warning
-        label: root.instructions || I18n.t("ai.no_instructions")
+        label: root.narrow ? "" : (root.instructions || I18n.t("ai.no_instructions"))
         maxLabelWidth: 140
         variant: "transparent"
         opacity: root.instructions ? 1 : 0.7
@@ -203,7 +208,8 @@ RowLayout {
         Popup {
             id: instructionsMenu
             y: parent.height + 4
-            width: 300
+            x: Math.min(0, root.width - parent.x - width)
+            width: Math.min(300, root.width)
             padding: 10
             background: StyledRect {
                 variant: "popup"

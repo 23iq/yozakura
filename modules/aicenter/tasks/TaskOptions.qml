@@ -7,11 +7,12 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 import "../../services/tasks/TaskModel.js" as TaskModel
+import "../../services/ai/EffortPrefs.js" as Prefs
 
 // Options of a new task, above the composer in the Code space: agents
 // (several = best-of-N), model and effort (one agent), Plan first, Work in
 // the current branch, templates (`/`), and the switch to an interactive
-// agent chat. `submit()` turns the composer text into tasks.create.
+// agent chat. The chips wrap in narrow sizes. `submit()` turns the composer text into tasks.create.
 RowLayout {
     id: root
     objectName: "taskOptions"
@@ -41,6 +42,9 @@ RowLayout {
     }
     readonly property var modelEntry: (root.catalog.models || []).find(m => root.model ? m.id === root.model : m.isDefault) || null
     readonly property var efforts: root.modelEntry ? root.modelEntry.efforts || [] : []
+    // What the task will run with, before it starts ("Opus 5.5", "medium").
+    readonly property string modelLabel: Prefs.agentModelLabel(root.catalog, root.model) || (root.catalog.loading ? "…" : I18n.t("ai.tasks.default_model"))
+    readonly property string effortLabel: root.effort || (root.modelEntry ? root.modelEntry.defaultEffort || "" : "") || I18n.t("ai.effort_level.auto")
 
     function resetAgents() {
         const ids = root.available.map(a => a.id);
@@ -92,99 +96,105 @@ RowLayout {
         root.resetAgents()
     onSingleChanged: if (root.single && Ai.agents)
         Ai.agents.refreshModels(root.single, root.project)
+    onProjectChanged: if (root.single && Ai.agents && !Ai.agents.modelCatalogs.has(root.single, root.project))
+        Ai.agents.refreshModels(root.single, root.project)
     Component.onCompleted: root.resetAgents()
 
     spacing: 4
 
-    Repeater {
-        model: root.chat ? [] : root.available
-        delegate: Chip {
-            id: agentChip
-            required property var modelData
-            objectName: "taskAgent_" + modelData.id
-            label: agentChip.modelData.label
-            active: root.agents.indexOf(agentChip.modelData.id) >= 0
-            onClicked: root.toggleAgent(agentChip.modelData.id)
-        }
-    }
-    UiText {
-        visible: !root.chat && root.agents.length > 1
-        text: I18n.t("ai.tasks.best_of").replace("%1", root.agents.length)
-        muted: true
-        size: -3
-    }
-    Chip {
-        objectName: "taskModel"
-        visible: !root.chat && root.single.length > 0 && (root.catalog.models || []).length > 0
-        label: root.modelEntry ? root.modelEntry.name || root.modelEntry.id : I18n.t("ai.tasks.default_model")
-        trailingIcon: Icons.caretDown
-        variant: "transparent"
-        onClicked: modelMenu.open()
-        OptionMenu {
-            id: modelMenu
-            y: -implicitHeight - 6
-            current: root.model
-            options: [
-                {
-                    "value": "",
-                    "label": I18n.t("ai.tasks.default_model")
-                }
-            ].concat((root.catalog.models || []).map(m => ({
-                        "value": m.id,
-                        "label": m.name || m.id,
-                        "detail": m.description || ""
-                    })))
-            onPicked: value => {
-                root.model = value;
-                root.effort = "";
+    // Wraps onto a second line in the compact bar.
+    Flow {
+        objectName: "taskOptionChips"
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignVCenter
+        spacing: 4
+        Repeater {
+            model: root.chat ? [] : root.available
+            delegate: Chip {
+                id: agentChip
+                required property var modelData
+                objectName: "taskAgent_" + modelData.id
+                label: agentChip.modelData.label
+                active: root.agents.indexOf(agentChip.modelData.id) >= 0
+                onClicked: root.toggleAgent(agentChip.modelData.id)
             }
         }
-    }
-    Chip {
-        objectName: "taskEffort"
-        visible: !root.chat && root.single.length > 0 && root.efforts.length > 0
-        glyph: Icons.brain
-        label: root.effort || I18n.t("ai.effort_level.auto")
-        trailingIcon: Icons.caretDown
-        variant: "transparent"
-        onClicked: effortMenu.open()
-        OptionMenu {
-            id: effortMenu
-            y: -implicitHeight - 6
-            width: 180
-            current: root.effort
-            options: [
-                {
-                    "value": "",
-                    "label": I18n.t("ai.effort_level.auto")
-                }
-            ].concat(root.efforts.map(e => ({
-                        "value": e,
-                        "label": e
-                    })))
-            onPicked: value => root.effort = value
+        UiText {
+            visible: !root.chat && root.agents.length > 1
+            text: I18n.t("ai.tasks.best_of").replace("%1", root.agents.length)
+            muted: true
+            size: -3
         }
-    }
-    Chip {
-        objectName: "taskPlanFirst"
-        visible: !root.chat
-        glyph: Icons.listChecks
-        label: I18n.t("ai.tasks.plan_first")
-        active: root.planFirst
-        onClicked: root.planFirst = !root.planFirst
-    }
-    Chip {
-        objectName: "taskInPlace"
-        visible: !root.chat
-        glyph: Icons.gitBranch
-        label: I18n.t("ai.tasks.in_place")
-        active: root.inPlace
-        enabled: root.agents.length <= 1
-        opacity: enabled ? 1 : 0.5
-        onClicked: root.inPlace = !root.inPlace
-    }
-    Item {
-        Layout.fillWidth: true
+        Chip {
+            objectName: "taskModel"
+            visible: !root.chat && root.single.length > 0 && ((root.catalog.models || []).length > 0 || root.catalog.loading === true)
+            label: root.modelLabel
+            trailingIcon: Icons.caretDown
+            variant: "transparent"
+            onClicked: modelMenu.open()
+            OptionMenu {
+                id: modelMenu
+                y: -implicitHeight - 6
+                current: root.model
+                options: [
+                    {
+                        "value": "",
+                        "label": I18n.t("ai.tasks.default_model")
+                    }
+                ].concat((root.catalog.models || []).map(m => ({
+                            "value": m.id,
+                            "label": m.name || m.id,
+                            "detail": m.description || ""
+                        })))
+                onPicked: value => {
+                    root.model = value;
+                    root.effort = "";
+                }
+            }
+        }
+        Chip {
+            objectName: "taskEffort"
+            visible: !root.chat && root.single.length > 0 && root.efforts.length > 0
+            glyph: Icons.brain
+            label: root.effortLabel
+            trailingIcon: Icons.caretDown
+            variant: "transparent"
+            onClicked: effortMenu.open()
+            OptionMenu {
+                id: effortMenu
+                y: -implicitHeight - 6
+                width: 180
+                current: root.effort
+                options: [
+                    {
+                        "value": "",
+                        "label": I18n.t("ai.effort_level.auto")
+                    }
+                ].concat(root.efforts.map(e => ({
+                            "value": e,
+                            "label": e
+                        })))
+                onPicked: value => root.effort = value
+            }
+        }
+        Chip {
+            objectName: "taskPlanFirst"
+            visible: !root.chat
+            glyph: Icons.listChecks
+            label: I18n.t("ai.tasks.plan_first")
+            active: root.planFirst
+            onClicked: root.planFirst = !root.planFirst
+        }
+        Chip {
+            objectName: "taskInPlace"
+            visible: !root.chat
+            glyph: Icons.gitBranch
+            label: I18n.t("ai.tasks.in_place")
+            active: root.inPlace
+            enabled: root.agents.length <= 1
+            opacity: enabled ? 1 : 0.5
+            onClicked: root.inPlace = !root.inPlace
+        }
     }
     UiText {
         Layout.maximumWidth: 260

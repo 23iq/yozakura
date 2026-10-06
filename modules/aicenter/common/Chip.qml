@@ -7,6 +7,8 @@ import qs.modules.components
 import qs.config
 
 // Pill used for model/agent switchers, context attachments and suggestions.
+// Given less than its implicit width (Layout.fillWidth + maximumWidth:
+// implicitWidth in a row) the label elides instead of overflowing.
 AbstractButton {
     id: root
 
@@ -37,6 +39,7 @@ AbstractButton {
         RowLayout {
             id: row
             anchors.centerIn: parent
+            width: Math.min(implicitWidth, parent.width)
             spacing: 6
 
             Image {
@@ -63,6 +66,7 @@ AbstractButton {
                 font.weight: Font.Medium
                 color: Styling.srItem(root.variant)
                 elide: Text.ElideMiddle
+                Layout.fillWidth: true
                 Layout.maximumWidth: root.maxLabelWidth
             }
 

@@ -48,6 +48,18 @@ function agentLevels(catalog, model) {
     return m && m.efforts ? m.efforts.slice() : [];
 }
 
+// Display name of the model an agent runs with, known before the first
+// turn: the chosen one, else the catalog default resolved to its concrete
+// model (Claude's "default" -> "Opus 5.5"). "" while the catalog loads.
+function agentModelLabel(catalog, model) {
+    var m = agentModel(catalog, model);
+    if (!m)
+        return model || "";
+    if (m.isDefault && m.resolved)
+        return m.resolved;
+    return m.name || m.id;
+}
+
 // The agent's default level for a model (shown for "auto").
 function agentDefault(catalog, model) {
     var m = agentModel(catalog, model);

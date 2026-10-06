@@ -38,7 +38,9 @@ RowLayout {
     readonly property bool isAgent: model !== null && model.kind === "agent"
     readonly property var settings: Ai.agentSettings || ({})
     readonly property string engineLabel: !model ? I18n.t("ai.choose_model") : (isAgent ? model.name : (Providers.provider(model.provider).label || model.provider))
-    readonly property var parts: !model ? [] : (isAgent ? [settings.model || I18n.t("ai.model_default")] : [model.name])
+    // The concrete model before the first message: agents resolve their
+    // catalog default ("Codex · GPT-5.5"), "…" while the catalog loads.
+    readonly property var parts: !model ? [] : (isAgent ? [(Ai.effort && Ai.effort.modelLabel) || settings.model || I18n.t("ai.model_default")] : [model.name])
     readonly property string agentStatus: Ai.activeAgent ? Ai.activeAgent.status : ""
 
     spacing: 8
@@ -97,7 +99,8 @@ RowLayout {
         status: root.agentStatus || "idle"
     }
     Text {
-        visible: root.agentStatus === "waiting"
+        // The dot alone in the compact bar: the model name needs the room.
+        visible: root.agentStatus === "waiting" && root.width >= 400
         text: I18n.t("ai.status_waiting")
         font.family: Config.theme.font
         font.pixelSize: BarLook.font(-4)

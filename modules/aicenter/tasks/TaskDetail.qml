@@ -130,34 +130,45 @@ StyledRect {
             }
         }
 
-        RowLayout {
+        // Runs and tabs scroll sideways when the bar is narrow.
+        Flickable {
+            id: tabsView
             Layout.fillWidth: true
-            spacing: 4
-            Repeater {
-                model: (root.task ? root.task.runs || [] : []).length > 1 ? root.task.runs : []
-                delegate: Chip {
-                    id: runChip
-                    required property var modelData
-                    required property int index
-                    readonly property int runIndex: runChip.modelData.index !== undefined ? runChip.modelData.index : runChip.index
-                    objectName: "runChip_" + runIndex
-                    label: (runIndex + 1) + " · " + TaskModel.agentLabel(runChip.modelData.agent, Ai.agents ? Ai.agents.agents : [])
-                    active: root.run === runIndex
-                    onClicked: TasksService.selectedRun = runIndex
+            implicitHeight: tabsRow.implicitHeight
+            contentWidth: tabsRow.width
+            flickableDirection: Flickable.HorizontalFlick
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+            RowLayout {
+                id: tabsRow
+                width: Math.max(tabsView.width, implicitWidth)
+                spacing: 4
+                Repeater {
+                    model: (root.task ? root.task.runs || [] : []).length > 1 ? root.task.runs : []
+                    delegate: Chip {
+                        id: runChip
+                        required property var modelData
+                        required property int index
+                        readonly property int runIndex: runChip.modelData.index !== undefined ? runChip.modelData.index : runChip.index
+                        objectName: "runChip_" + runIndex
+                        label: (runIndex + 1) + " · " + TaskModel.agentLabel(runChip.modelData.agent, Ai.agents ? Ai.agents.agents : [])
+                        active: root.run === runIndex
+                        onClicked: TasksService.selectedRun = runIndex
+                    }
                 }
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            Repeater {
-                model: root.tabs
-                delegate: Chip {
-                    id: tabChip
-                    required property string modelData
-                    objectName: "tab_" + modelData
-                    label: I18n.t("ai.tasks.tab." + tabChip.modelData)
-                    variant: root.tab === tabChip.modelData ? "primary" : "transparent"
-                    onClicked: root.tab = tabChip.modelData
+                Item {
+                    Layout.fillWidth: true
+                }
+                Repeater {
+                    model: root.tabs
+                    delegate: Chip {
+                        id: tabChip
+                        required property string modelData
+                        objectName: "tab_" + modelData
+                        label: I18n.t("ai.tasks.tab." + tabChip.modelData)
+                        variant: root.tab === tabChip.modelData ? "primary" : "transparent"
+                        onClicked: root.tab = tabChip.modelData
+                    }
                 }
             }
         }
@@ -199,7 +210,7 @@ StyledRect {
             }
             ChecksView {
                 run: root.current
-                maxAttempts: TasksService.projects[root.task ? root.task.projectDir : ""] ? TasksService.projects[root.task.projectDir].maxAttempts : 0
+                maxAttempts: TasksService.projects[root.task ? root.task.projectDir : ""] ? TasksService.projects[root.task.projectDir].maxAttempts || 0 : 0
             }
             DebugView {
                 taskId: root.task ? root.task.id : ""

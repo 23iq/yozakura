@@ -62,8 +62,11 @@ StyledRect {
             font.pixelSize: BarLook.font(-3)
             color: root.level && root.level !== "off" && root.level !== "none" ? Colors.primary : Colors.outline
         }
+        // The level a turn will use: chosen, else the engine's own default
+        // (outlined brain = auto); the popup spells out "Auto (medium)".
         Text {
-            text: root.label(root.level)
+            objectName: "composerEffortLabel"
+            text: !root.level && Ai.effort && Ai.effort.autoHint ? root.label(Ai.effort.autoHint) : root.label(root.level)
             font.family: Config.theme.font
             font.pixelSize: BarLook.font(-3)
             color: Colors.overSurfaceVariant
