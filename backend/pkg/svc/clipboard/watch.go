@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+
+	"yozakura/backend/pkg/envclean"
 )
 
 // watchProc runs `wl-paste --watch` and handles every clipboard change
@@ -53,6 +55,7 @@ func (w *watchProc) run(sub eventSender) {
 		default:
 		}
 		cmd := exec.Command("wl-paste", "--watch", "sh", "-c", "cat >/dev/null; echo REFRESH_LIST")
+		cmd.Env = envclean.ChildEnv()
 		// Put the watcher in its own process group so we can kill the
 		// entire group (sh + wl-paste + descendants) on stop. Without
 		// this, killing only `sh` leaves wl-paste as a zombie/orphan

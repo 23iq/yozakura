@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/paths"
 )
 
@@ -120,6 +121,7 @@ func (m *Manager) Start() error {
 // startDaemonLocked launches the daemon; the caller holds daemonMu.
 func (m *Manager) startDaemonLocked() (*exec.Cmd, error) {
 	cmd := exec.Command(m.bin, "-c", m.tomlPath, "daemon")
+	cmd.Env = envclean.ChildEnv()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdout = io.Discard
 	cmd.Stderr = io.Discard

@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/envclean"
 	"yozakura/backend/pkg/migrate"
 
 	"yozakura/backend/pkg/daemon"
@@ -24,6 +25,7 @@ var version = "dev"
 
 func main() {
 	ensureSelfOnPath()
+	envclean.CleanProcess()
 	args := os.Args[1:]
 
 	if len(args) >= 1 {

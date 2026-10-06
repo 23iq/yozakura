@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/envclean"
 
 	"yozakura/backend/pkg/apphooks"
 	exclusivemode "yozakura/backend/pkg/exclusive"
@@ -477,7 +478,7 @@ func (d *Daemon) spawnQS(qsBin, shellQML string) error {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	env := os.Environ()
+	env := envclean.ChildEnv()
 	if os.Getenv("MALLOC_CONF") == "" {
 		env = append(env, "MALLOC_CONF=dirty_decay_ms:1000,muzzy_decay_ms:1000")
 	}
