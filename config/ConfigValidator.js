@@ -3,9 +3,68 @@
 .import "../modules/desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
 .import "../modules/lockscreen/styles/LockStyleRegistry.js" as LockStyles
 .import "meta/Enums.js" as Enums
+.import "meta/KeyAliases.js" as KeyAliases
 
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
+}
+
+// Key-alias migration (config/meta/KeyAliases.js) over the raw, not yet
+// validated, domain objects {domain: object|null}; mutates them. Copies
+// each present `from` value to an absent `to` (through `transform`), then
+// removes `from`. A target domain without a file (null) keeps the source
+// for a later run. Returns the names of the changed domains.
+function migrateAliases(raws, list) {
+    var changed = [];
+    function mark(d) {
+        if (changed.indexOf(d) === -1)
+            changed.push(d);
+    }
+    (list || KeyAliases.aliases).forEach(function (a) {
+        var from = String(a.from).split(".");
+        var to = String(a.to).split(".");
+        var src = raws[from[0]];
+        var dst = raws[to[0]];
+        if (!isObject(src) || !isObject(dst))
+            return;
+        var parent = walk(src, from.slice(1, -1), false);
+        var leaf = from[from.length - 1];
+        if (!parent || !(leaf in parent))
+            return;
+        var value = parent[leaf];
+        delete parent[leaf];
+        mark(from[0]);
+        var target = walk(dst, to.slice(1, -1), false);
+        if (target && target[to[to.length - 1]] !== undefined)
+            return;
+        try {
+            value = a.transform ? a.transform(value) : value;
+        } catch (e) {
+            console.warn("config alias " + a.from + " -> " + a.to + ": " + e);
+            return;
+        }
+        walk(dst, to.slice(1, -1), true)[to[to.length - 1]] = value;
+        mark(to[0]);
+    });
+    return changed;
+}
+
+function isObject(v) {
+    return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
+// The object at `path` under `obj`; `create` adds missing levels.
+function walk(obj, path, create) {
+    var cur = obj;
+    for (var i = 0; i < path.length; i++) {
+        if (!isObject(cur[path[i]])) {
+            if (!create)
+                return null;
+            cur[path[i]] = {};
+        }
+        cur = cur[path[i]];
+    }
+    return cur;
 }
 
 function validate(current, defaults, keyName) {

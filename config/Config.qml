@@ -93,6 +93,9 @@ Singleton {
 
     property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady && displaysReady && keyboardReady && terminalReady && layoutReady
 
+    // Renamed keys move between files before the first validation.
+    readonly property AliasGate aliasGate: AliasGate {}
+
     // Compatibility aliases
     property alias loader: themeLoader
     property alias keybindsLoader: keybinds.loader
