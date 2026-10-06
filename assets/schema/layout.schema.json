@@ -115,6 +115,27 @@
             "sheet": "Sheet"
           }
         },
+        "home": {
+          "title": "Home view",
+          "type": "string",
+          "default": "composed",
+          "description": "What the widgets tab shows: a composed overview (clock, player, toggles, calendar, notifications) or the editable widget grid.",
+          "x-settings": {
+            "category": "dashboard",
+            "section": "home",
+            "label": "prefs.dashboard.home",
+            "control": "selector",
+            "keywords": "dashboard home view composed bento grid widgets layout overview"
+          },
+          "enum": [
+            "composed",
+            "bento"
+          ],
+          "x-enumLabels": {
+            "composed": "Composed",
+            "bento": "Widget grid"
+          }
+        },
         "tabs": {
           "title": "Dashboard tabs",
           "type": "array",

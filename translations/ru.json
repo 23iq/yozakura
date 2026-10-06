@@ -3623,5 +3623,20 @@
   "prefs.surfaces.shadow_x.desc": "Сдвигает тень оболочки влево или вправо.",
   "prefs.surfaces.shadow_y": "Смещение тени оболочки по Y",
   "prefs.surfaces.shadow_y.desc": "Сдвигает тень оболочки вверх или вниз.",
-  "prefs.overview.section.wallpaper": "Обои"
+  "prefs.overview.section.wallpaper": "Обои",
+  "dashboard.home.wifi": "Wi-Fi",
+  "dashboard.home.bluetooth": "Bluetooth",
+  "dashboard.home.silence": "Тишина",
+  "dashboard.home.awake": "Не спать",
+  "dashboard.home.game": "Игра",
+  "dashboard.home.volume": "Громкость",
+  "dashboard.home.light": "Яркость",
+  "dashboard.home.notifications": "Уведомления",
+  "dashboard.home.no_notifications": "Нет уведомлений",
+  "dashboard.home.more": "ещё %1",
+  "prefs.dashboard.section.home": "Главный вид",
+  "prefs.dashboard.home": "Главный вид",
+  "prefs.dashboard.home.desc": "Что показывает вкладка виджетов: собранный обзор (часы, плеер, переключатели, календарь, уведомления) или редактируемую сетку виджетов.",
+  "prefs.dashboard.home.composed": "Собранный",
+  "prefs.dashboard.home.bento": "Сетка виджетов"
 }

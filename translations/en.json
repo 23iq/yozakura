@@ -3607,5 +3607,20 @@
   "prefs.surfaces.shadow_x.desc": "Moves the shell shadow left or right.",
   "prefs.surfaces.shadow_y": "Shell shadow offset Y",
   "prefs.surfaces.shadow_y.desc": "Moves the shell shadow up or down.",
-  "prefs.overview.section.wallpaper": "Wallpaper"
+  "prefs.overview.section.wallpaper": "Wallpaper",
+  "dashboard.home.wifi": "Wi-Fi",
+  "dashboard.home.bluetooth": "Bluetooth",
+  "dashboard.home.silence": "Silence",
+  "dashboard.home.awake": "Awake",
+  "dashboard.home.game": "Game",
+  "dashboard.home.volume": "Volume",
+  "dashboard.home.light": "Light",
+  "dashboard.home.notifications": "Notifications",
+  "dashboard.home.no_notifications": "No notifications",
+  "dashboard.home.more": "%1 more",
+  "prefs.dashboard.section.home": "Home view",
+  "prefs.dashboard.home": "Home view",
+  "prefs.dashboard.home.desc": "What the widgets tab shows: a composed overview (clock, player, toggles, calendar, notifications) or the editable widget grid.",
+  "prefs.dashboard.home.composed": "Composed",
+  "prefs.dashboard.home.bento": "Widget grid"
 }

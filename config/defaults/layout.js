@@ -12,6 +12,9 @@ var data = {
     },
     "dashboard": {
         "host": "notch",
+        // Home view of the widgets tab: composed (fixed two-column layout,
+        // modules/widgets/dashboard/home) or bento (the editable widget grid).
+        "home": "composed",
         "tabs": [
             {
                 "id": "widgets",

@@ -11,6 +11,7 @@ JsonAdapter {
     }
     property JsonObject dashboard: JsonObject {
         property string host: "notch"
+        property string home: "composed"
         property list<var> tabs: [
             {
                 "id": "widgets",

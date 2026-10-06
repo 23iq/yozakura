@@ -3607,5 +3607,20 @@
   "prefs.surfaces.shadow_x.desc": "Mueve la sombra del shell a la izquierda o a la derecha.",
   "prefs.surfaces.shadow_y": "Desplazamiento Y de la sombra del shell",
   "prefs.surfaces.shadow_y.desc": "Mueve la sombra del shell hacia arriba o hacia abajo.",
-  "prefs.overview.section.wallpaper": "Fondo de pantalla"
+  "prefs.overview.section.wallpaper": "Fondo de pantalla",
+  "dashboard.home.wifi": "Wi-Fi",
+  "dashboard.home.bluetooth": "Bluetooth",
+  "dashboard.home.silence": "Silencio",
+  "dashboard.home.awake": "Despierto",
+  "dashboard.home.game": "Juego",
+  "dashboard.home.volume": "Volumen",
+  "dashboard.home.light": "Brillo",
+  "dashboard.home.notifications": "Notificaciones",
+  "dashboard.home.no_notifications": "Sin notificaciones",
+  "dashboard.home.more": "%1 más",
+  "prefs.dashboard.section.home": "Vista de inicio",
+  "prefs.dashboard.home": "Vista de inicio",
+  "prefs.dashboard.home.desc": "Qué muestra la pestaña de widgets: una vista compuesta (reloj, reproductor, interruptores, calendario, notificaciones) o la cuadrícula editable de widgets.",
+  "prefs.dashboard.home.composed": "Compuesta",
+  "prefs.dashboard.home.bento": "Cuadrícula de widgets"
 }

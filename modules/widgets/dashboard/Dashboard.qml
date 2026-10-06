@@ -12,6 +12,7 @@ import qs.modules.widgets.dashboard.widgets
 import qs.modules.widgets.dashboard.controls
 import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.widgets.dashboard.metrics
+import qs.modules.widgets.dashboard.home
 import qs.config
 import "DashboardTabs.js" as DashboardTabs
 
@@ -33,12 +34,17 @@ NotchAnimationBehavior {
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: (state.currentTab === 0 ? 780 : 400) + tabWidth + 16 // the widgets tab (bento) is wider
+    // layout.dashboard.home: the widgets tab shows the composed home view or the bento grid.
+    readonly property bool homeComposed: (Config.layout.dashboard.home ?? "composed") !== "bento"
+    // The widgets tab is as wide and tall as its view (composed home, or the bento grid), so nothing is clipped.
+    readonly property Item widgetsItem: widgetsTabLoader.item as Item
+    readonly property real widgetsWidth: homeComposed && widgetsItem ? widgetsItem.implicitWidth + 2 : 780 // + the rail separator
+    readonly property real widgetsHeight: widgetsItem ? widgetsItem.implicitHeight : 430
+    readonly property real nonAnimWidth: (state.currentTab === 0 ? widgetsWidth : 400) + tabWidth + 16
+
+    onHomeComposedChanged: bentoEditing = false
 
     implicitWidth: nonAnimWidth
-    // The widgets tab is as tall as its bento grid, so no tile is clipped.
-    readonly property Item widgetsItem: widgetsTabLoader.item as Item
-    readonly property real widgetsHeight: widgetsItem ? widgetsItem.implicitHeight : 430
     implicitHeight: state.currentTab === 0 ? Math.max(300, widgetsHeight) : 430
 
     // Track which tabs have been loaded (for lazy loading)
@@ -172,7 +178,7 @@ NotchAnimationBehavior {
             tabSpacing: root.tabSpacing
             order: root.tabOrder
             currentTab: root.state.currentTab
-            canEdit: root.state.currentTab === 0
+            canEdit: root.state.currentTab === 0 && !root.homeComposed
             editing: root.bentoEditing
             onNavigate: index => stack.navigateToTab(index)
             onEditToggled: root.bentoEditing = !root.bentoEditing
@@ -278,7 +284,7 @@ NotchAnimationBehavior {
                 TabLoader {
                     id: widgetsTabLoader
                     property int index: 0
-                    sourceComponent: unifiedLauncherComponent
+                    sourceComponent: root.homeComposed ? homeComponent : unifiedLauncherComponent
                     z: visible ? 1 : 0
                 }
 
@@ -412,6 +418,11 @@ NotchAnimationBehavior {
             onEditingRequested: on => root.bentoEditing = on
             onCommit: cells => Config.layout.dashboard.grid.cells = cells
         }
+    }
+
+    Component {
+        id: homeComponent
+        HomeView {}
     }
 
     Component {

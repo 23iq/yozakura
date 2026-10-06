@@ -11,6 +11,31 @@ var category = {
     "keywords": "dashboard tabs widgets hub panel memory",
     "sections": [
         {
+            "id": "home",
+            "title": "prefs.dashboard.section.home",
+            "entries": [
+                {
+                    "key": "layout.dashboard.home",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "composed",
+                            "label": "prefs.dashboard.home.composed",
+                            "icon": "squaresFour"
+                        },
+                        {
+                            "value": "bento",
+                            "label": "prefs.dashboard.home.bento",
+                            "icon": "dotsNine"
+                        }
+                    ],
+                    "label": "prefs.dashboard.home",
+                    "description": "prefs.dashboard.home.desc",
+                    "keywords": "dashboard home view composed bento grid widgets layout overview"
+                }
+            ]
+        },
+        {
             "id": "tabs",
             "title": "prefs.dashboard.section.tabs",
             "entries": [
