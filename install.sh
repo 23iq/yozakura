@@ -34,7 +34,7 @@ LOG_FILE="$LOG_DIR/install.log"
 DEPS_PATH="backend/pkg/deps/packages.tsv"
 FEDORA_COPR="lionheartp/Hyprland"
 PHOSPHOR_VERSION="2.1.2"
-SYS_BIN="/usr/local/bin"
+SYS_BIN="${YOZAKURA_SYS_BIN:-/usr/local/bin}"
 # Root-owned copy of the binary that pkexec runs for the setup wizard's app
 # installs: user-level code cannot replace it (unlike ~/.local/bin).
 SYS_HELPER="/usr/local/lib/$APP_ID/$APP_ID-sys"
@@ -43,8 +43,8 @@ COMPOSITORS=(hyprland niri mango)
 
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0
-COMPOSITOR="" PREV_INSTALL=0 FAILED=()
-TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 KEEPALIVE_PID=""
+COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
+TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
 
@@ -514,7 +514,8 @@ Install:
 Environment: YOZAKURA_REPO_URL (git remote or path), YOZAKURA_RAW_BASE (where
 the package list is fetched from), YOZAKURA_FLAKE (NixOS), YOZAKURA_GPU
 (NVIDIA, AMD or Intel: overrides the graphics detection), YOZAKURA_OS_RELEASE
-(an os-release file to read instead of /etc/os-release).
+(an os-release file to read instead of /etc/os-release), YOZAKURA_SYS_BIN
+(where the binaries are linked when needed, default /usr/local/bin).
 Log: $LOG_FILE
 EOF
 }
@@ -589,10 +590,26 @@ ask() {
 need_sudo() {
   [[ "$SUDO_OK" == 1 ]] && return 0
   has_cmd sudo || die "sudo is not installed." "Install it as root (pacman -S sudo / dnf install sudo), or use --no-deps."
+  [[ -n "$TTY" ]] || sudo -n true 2>/dev/null || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
+  SUDO_FAILED=0
+  try_sudo || die "sudo authentication failed."
+}
+
+# try_sudo: need_sudo that reports instead of ending the install; a refused
+# password is not asked for again.
+try_sudo() {
+  [[ "$SUDO_OK" == 1 ]] && return 0
+  [[ "$SUDO_FAILED" == 0 ]] && has_cmd sudo || return 1
   if ! sudo -n true 2>/dev/null; then
-    [[ -n "$TTY" ]] || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
+    if [[ -z "$TTY" ]]; then
+      SUDO_FAILED=1
+      return 1
+    fi
     info "sudo may ask for your password."
-    sudo -v || die "sudo authentication failed."
+    if ! sudo -v; then
+      SUDO_FAILED=1
+      return 1
+    fi
   fi
   SUDO_OK=1
   # Keep the timestamp fresh for long package and build steps.
@@ -907,7 +924,7 @@ show_plan() {
     case "$DISTRO" in
     arch | fedora)
       local via="pacman -Syu"
-      [[ "$ASSUME_YES" == 0 && -n "$TTY" ]] && via+=", which asks to confirm"
+      [[ "$DISTRO" == arch && "$ASSUME_YES" == 0 && -n "$TTY" ]] && via+=", which asks to confirm"
       [[ "$DISTRO" == fedora ]] && via="dnf, COPR $FEDORA_COPR"
       if [[ ${#PKGS[@]} -eq 0 ]]; then
         ui_box_kv "Packages" "all installed"
@@ -1160,17 +1177,28 @@ install_binaries() {
 
 # The setup wizard installs apps through pkexec and $SYS_HELPER: a
 # root-owned copy, so code running as the user cannot swap what runs as root.
+# helper_stale: the helper is missing or differs from the installed binary
+# (asked before the build too, so sudo is requested up front).
+helper_stale() { [[ ! -x "$SYS_HELPER" ]] || ! cmp -s "$BIN_DIR/$APP_ID" "$SYS_HELPER"; }
+
+# helper_sudo: sudo up front for the helper, with the other gates, so no
+# password prompt waits after the build. A refusal is only a warning.
+helper_sudo() {
+  helper_stale || return 0
+  try_sudo || warn "Without sudo the system helper for the setup wizard's app installs is skipped."
+  return 0
+}
+
 install_sys_helper() {
   local bin="$BIN_DIR/$APP_ID" fix
   [[ -x "$bin" ]] || return 0
-  [[ -x "$SYS_HELPER" ]] && cmp -s "$bin" "$SYS_HELPER" && return 0
+  helper_stale || return 0
   fix="sudo install -D -o root -g root -m 0755 $bin $SYS_HELPER"
-  if ! has_cmd sudo || { [[ "$SUDO_OK" == 0 && -z "$TTY" ]] && ! sudo -n true 2>/dev/null; }; then
+  if ! try_sudo; then
     warn "sudo cannot run here; the setup wizard cannot install apps until: $fix"
     FAILED+=("system helper")
     return 0
   fi
-  need_sudo
   run_optional "system helper" "System helper for installing apps from the setup wizard (root-owned copy)" "Retry later: $fix" \
     sudo install -D -o root -g root -m 0755 "$bin" "$SYS_HELPER"
 }
@@ -1221,6 +1249,7 @@ compositor_setup() {
   # first start, once the new generated config exists (backend/pkg/migrate).
   if [[ "$COMPOSITOR" == hyprland ]] && legacy_hypr_block; then
     info "Your Hyprland config loads ${LEGACY_ID^}; the first start of '$APP_ID' switches it over (.pre-$APP_ID backups)."
+    LEGACY_PENDING=1
     return 0
   fi
   "$BIN_DIR/$APP_ID" install "$COMPOSITOR" >>"$LOG_FILE" 2>&1 || die "'$APP_ID install $COMPOSITOR' failed." "See $LOG_FILE"
@@ -1235,6 +1264,10 @@ compositor_setup() {
 # binaries do not know the flag; then it is skipped with a note.
 exclusive_setup() {
   [[ "$EXCLUSIVE" == 1 && "$COMP_CONFIG" == 1 ]] || return 0
+  if [[ "$LEGACY_PENDING" == 1 ]]; then
+    warn "--exclusive skipped: the ${LEGACY_ID^} block is switched over first; re-run '$APP_ID install hyprland --exclusive' after the first start."
+    return 0
+  fi
   if [[ "$COMPOSITOR" != hyprland ]]; then
     warn "--exclusive is for Hyprland only; skipped for $(comp_name "$COMPOSITOR")."
     return 0
@@ -1291,7 +1324,13 @@ legacy_notes() {
   return 0
 }
 
-has_nvcc() { has_cmd nvcc || [[ -x /opt/cuda/bin/nvcc || -x /usr/local/cuda/bin/nvcc ]]; }
+# CUDA_PATH (set by the cuda package's profile) narrows the search to it.
+has_nvcc() {
+  local d
+  has_cmd nvcc && return 0
+  for d in ${CUDA_PATH:-/opt/cuda /usr/local/cuda}; do [[ -x "$d/bin/nvcc" ]] && return 0; done
+  return 1
+}
 
 # voice_backend: the whisper.cpp build for this GPU. CUDA (the script's own
 # default) needs NVIDIA plus the toolkit, Vulkan an AMD or Intel GPU and a
@@ -1445,7 +1484,7 @@ offer_reboot() {
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
   info "Rebooting..."
-  systemctl reboot
+  systemctl reboot || warn "Could not reboot; reboot yourself to start $DISPLAY_NAME."
 }
 
 finish() {
@@ -1500,6 +1539,7 @@ main() {
     step "Updating $DISPLAY_NAME"
     LINK_BINS=0
     [[ "$BIN_DIR" != "$SYS_BIN" && -e "$SYS_BIN/$APP_ID" && "$(readlink -f "$SYS_BIN/$APP_ID")" != "$(readlink -f "$BIN_DIR/$APP_ID")" ]] && LINK_BINS=1
+    helper_sudo
     sync_repo
     build_backend
     install_binaries
@@ -1544,6 +1584,7 @@ main() {
 
   step "$DISPLAY_NAME"
   [[ "$LINK_BINS" == 1 ]] && need_sudo
+  helper_sudo
   sync_repo
   build_backend
   install_binaries

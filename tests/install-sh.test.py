@@ -27,10 +27,11 @@ TOOLS = (
     "touch env tr wc"
 ).split()
 
-LOGGER = '{ printf "%s" "${0##*/}"; printf "\\t%s" "$@"; printf "\\n"; } >>"$STUB_LOG"\n'
+LOGGER = '{ printf "%s" "${0##*/}"; [[ $# -eq 0 ]] || printf "\\t%s" "$@"; printf "\\n"; } >>"$STUB_LOG"\n'
 
 STUBS = {
-    "sudo": "exit 0\n",
+    # STUB_SUDO_DENY: no cached credentials and no password accepted.
+    "sudo": '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\nexit 0\n',
     "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n',
     "git": 'case "$*" in *--abbrev-ref*) echo main ;; *--short*) echo abc1234 ;; esac\n',
     "make": (
@@ -51,8 +52,15 @@ FEDORA_STUBS = {
     "rpm": 'shift; for p in "$@"; do echo "package $p is not installed"; done\n',
     "dnf": '[[ "$1" == --version ]] && echo "dnf5 version 5.2"\nexit 0\n',
 }
-# The built binary: knows install/doctor/version, not --exclusive yet.
-FAKE_BIN = "#!/bin/bash\n" + LOGGER + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine" ;; esac\n'
+# The built binary: knows install/doctor/version; --exclusive only with
+# FAKE_EXCLUSIVE (Part E builds).
+FAKE_BIN = (
+    "#!/bin/bash\n"
+    + LOGGER
+    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine" ;; esac\n'
+    + '[[ "$*" == "install --help" && -n "${FAKE_EXCLUSIVE:-}" ]] && echo "  --exclusive  own the whole config"\n'
+    + "exit 0\n"
+)
 SCRIPTS = {
     # Fails like a voice build without network; knows --vulkan) like Part B's.
     "voice_setup.sh": 'case "$1" in --vulkan) ;; esac\necho "fatal: unable to access github.com" >&2\nexit 1\n',
@@ -91,6 +99,8 @@ class Sandbox:
             self._script(self.src / "scripts" / name, "#!/bin/bash\n" + LOGGER + body)
         self.os_release = self.root / "os-release"
         self.os_release.write_text(OS_RELEASE[distro])
+        (self.root / "sysbin").mkdir()
+        self.extra_env = {}
 
     @staticmethod
     def _script(path, body):
@@ -110,6 +120,9 @@ class Sandbox:
             "YOZAKURA_OS_RELEASE": str(self.os_release),
             "YOZAKURA_RAW_BASE": "file:///nonexistent",
             "YOZAKURA_GPU": "AMD",
+            "YOZAKURA_SYS_BIN": str(self.root / "sysbin"),
+            "CUDA_PATH": str(self.root / "no-cuda"),
+            **self.extra_env,
         }
 
     def run(self, *args, answers=None):
@@ -288,8 +301,85 @@ def test_attended_install_menu_and_reboot():
         sb.cleanup()
 
 
+def test_headless_without_yes_upgrades_noconfirm():
+    sb = Sandbox("arch")
+    try:
+        rc, err, _ = sb.run("--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"headless install exit {rc}", err)
+        ups = pacman_upgrades(sb)
+        check(len(ups) == 1 and "--noconfirm" in ups[0], f"headless upgrade lacks --noconfirm: {ups}")
+        check(["reboot"] not in sb.calls("systemctl"), "headless run rebooted")
+    finally:
+        sb.cleanup()
+
+
+def test_exclusive_needs_a_binary_that_knows_it():
+    sb = Sandbox("arch")
+    try:
+        rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-deps", "--exclusive")
+        installs = [c for c in sb.calls("yozakura") if c[:1] == ["install"]]
+        check(rc == 0 and "--exclusive skipped" in err, "no skip warning for a binary without --exclusive", err)
+        check(["install", "hyprland", "--exclusive"] not in installs, f"--exclusive run anyway: {installs}")
+        sb.extra_env["FAKE_EXCLUSIVE"] = "1"
+        rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-deps", "--exclusive")
+        installs = [c for c in sb.calls("yozakura") if c[:1] == ["install"]]
+        check(rc == 0 and ["install", "hyprland", "--exclusive"] in installs, f"--exclusive not run: {installs}", err)
+    finally:
+        sb.cleanup()
+
+
+def test_fedora_menu_has_no_mango():
+    sb = Sandbox("fedora")
+    try:
+        rc, err, shown = sb.run("--no-sddm", "--dry-run", answers="1\n")
+        check(rc == 0 and "Choose your compositor" in err, "no compositor menu on Fedora", err + shown)
+        check(not re.search(r"\d\s+Mango", err), "Fedora menu offers Mango", err)
+        check("Mango is not listed" in err, "Fedora menu does not say why Mango is missing", err)
+        check("[1-2," in shown, "Fedora menu prompt is not 1-2", shown)
+        check("asks to confirm" not in err, "Fedora plan says dnf asks to confirm", err)
+    finally:
+        sb.cleanup()
+
+
+def test_voice_and_depth_flags_on_nvidia():
+    sb = Sandbox("arch")
+    try:
+        sb.extra_env["YOZAKURA_GPU"] = "NVIDIA"
+        rc, err, _ = sb.run("--compositor", "niri", "-y", "--no-deps", "--with-voice", "--with-depth")
+        check(rc == 0, f"nvidia install exit {rc}", err)
+        check(sb.calls("voice_setup.sh") == [["--cpu"]], f"NVIDIA without nvcc not --cpu: {sb.calls('voice_setup.sh')}")
+        check(sb.calls("depth_setup.sh") == [["--gpu"]], f"NVIDIA depth not --gpu: {sb.calls('depth_setup.sh')}")
+        cuda = sb.root / "cuda"
+        Sandbox._script(cuda / "bin/nvcc", "#!/bin/bash\n")
+        sb.extra_env["CUDA_PATH"] = str(cuda)
+        sb.run("--compositor", "niri", "-y", "--no-deps", "--with-voice")
+        check(sb.calls("voice_setup.sh") == [[]], f"NVIDIA with nvcc not CUDA (no flag): {sb.calls('voice_setup.sh')}")
+    finally:
+        sb.cleanup()
+
+
+def test_helper_without_sudo_is_a_warning():
+    sb = Sandbox("arch")
+    try:
+        # Binaries on PATH: nothing else needs sudo; sudo itself refuses.
+        sb.extra_env.update(STUB_SUDO_DENY="1", YOZAKURA_BIN_DIR=str(sb.bin))
+        rc, err, _ = sb.run("--compositor", "niri", "-y", "--no-deps")
+        check(rc == 0, f"install without sudo exit {rc}", err)
+        check("sudo cannot run here" in err, "no warning about the missing helper", err)
+        check("system helper: failed (see log)" in err, "summary lacks the helper", err)
+        check(not [c for c in sb.calls("sudo") if c[:1] == ["install"]], "helper installed without sudo")
+        check(["install", "niri"] in sb.calls("yozakura"), "install stopped at the helper", sb.log.read_text())
+    finally:
+        sb.cleanup()
+
+
 def main():
     for test in (
+        test_headless_without_yes_upgrades_noconfirm,
+        test_exclusive_needs_a_binary_that_knows_it,
+        test_fedora_menu_has_no_mango,
+        test_voice_and_depth_flags_on_nvidia,
+        test_helper_without_sudo_is_a_warning,
         test_dry_run_niri_plan,
         test_fedora_mango_falls_back_and_niri_hint,
         test_yes_install_optional_failure_does_not_abort,
