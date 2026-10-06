@@ -62,8 +62,9 @@ type Entry struct {
 	Detect      DetectSpec `json:"detect"`
 	Install     Install    `json:"install"`
 	Requires    []string   `json:"requires,omitempty"`
-	Post        []string   `json:"post,omitempty"` // "apphook:<id>"
-	Only        []string   `json:"only,omitempty"` // distros; empty = all
+	Post        []string   `json:"post,omitempty"`     // "apphook:<id>"
+	Only        []string   `json:"only,omitempty"`     // distros; empty = all
+	Multilib    bool       `json:"multilib,omitempty"` // arch pkgs need [multilib]
 }
 
 // Category groups entries; Name is an i18n key.

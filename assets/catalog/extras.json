@@ -585,6 +585,7 @@
     {
       "id": "steam",
       "category": "games",
+      "multilib": true,
       "name": "Steam",
       "icon": "gamepad",
       "detect": {

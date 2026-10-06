@@ -88,6 +88,8 @@ func main() {
 			os.Exit(runProviders(args[1:], newClient(), os.Stdout, os.Stderr))
 		case "task", "tasks":
 			os.Exit(runTask(args[1:], os.Stdout, os.Stderr))
+		case "sys":
+			os.Exit(runSys(args[1:], defaultSysEnv(os.Stdout), os.Stdout, os.Stderr))
 		}
 	}
 
