@@ -110,7 +110,7 @@ Item {
                 variant: "primary"
                 height: parent.height
                 radius: parent.radius
-                width: parent.width * (root.active ? root.pomo.progress : 1)
+                width: parent.width * (root.active ? (root.pomo.progress ?? 0) : 1)
             }
         }
 
