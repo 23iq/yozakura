@@ -53,11 +53,23 @@ Item {
     readonly property bool mediaHoverExpanded: controller.expanded
     readonly property bool expandedState: !interactionSuspended && (controller.expanded || header.hoverTrigger !== "" || notificationHover.hovered || notifications.navigating)
 
+    // Opening a segment's panel widens the notch and moves the segment off
+    // the pointer; its side of the header keeps the panel so it does not
+    // close and reopen in a loop.
+    readonly property bool sideHold: {
+        const open = controller.openPanel;
+        if (open === "")
+            return false;
+        if (header.trailingZoneHovered && open === controller.panelFor("privacy"))
+            return true;
+        return header.leadingZoneHovered && (open === controller.panelFor("timers") || open === controller.panelFor("tasks"));
+    }
+
     NotchPanelController {
         id: controller
         mode: Config.notch.expandOn ?? "hover"
         hoverTarget: controller.panelFor(header.hoverTrigger)
-        hold: panelHover.hovered || (controller.openPanel === "media" && (header.selectorOpen || Visibilities.playerMenuOpen))
+        hold: panelHover.hovered || root.sideHold || (controller.openPanel === "media" && (header.selectorOpen || Visibilities.playerMenuOpen))
         suspended: root.interactionSuspended
         available: root.panelAvailability
     }

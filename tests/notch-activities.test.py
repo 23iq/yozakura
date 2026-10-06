@@ -150,6 +150,17 @@ assert h.eval(view, "implicitWidth") >= 440
 h.eval(view, "header.tasksSegment.hoverOverride = false; header.trailingSegment.hoverOverride = true")
 QTest.qWait(60)
 assert h.eval(view, "controller.openPanel") == "privacy", "moving to the privacy segment switches panels"
+# Opening widens the notch and moves the segment off the pointer: its side
+# of the header keeps the panel (no open/close loop), the other side does not
+h.eval(view, "header.trailingZoneOverride = true; header.trailingSegment.hoverOverride = false")
+QTest.qWait(80)
+assert h.eval(view, "controller.openPanel") == "privacy", "the trailing side holds the privacy panel"
+h.eval(view, "header.trailingZoneOverride = false; header.leadingZoneOverride = true")
+QTest.qWait(80)
+assert h.eval(view, "controller.openPanel") == "", "the other side does not hold it"
+h.eval(view, "header.leadingZoneOverride = false; header.trailingSegment.hoverOverride = true")
+QTest.qWait(60)
+assert h.eval(view, "controller.openPanel") == "privacy"
 h.eval(view, "header.trailingSegment.hoverOverride = false")
 QTest.qWait(80)
 assert h.eval(view, "controller.openPanel") == "", "leaving closes"

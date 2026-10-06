@@ -45,6 +45,12 @@ Item {
             return "media";
         return "";
     }
+    // Pointer between an edge and the summary (the segments' side); the
+    // overrides force it (tests)
+    property bool leadingZoneOverride: false
+    property bool trailingZoneOverride: false
+    readonly property bool leadingZoneHovered: leadingZoneHover.hovered || root.leadingZoneOverride
+    readonly property bool trailingZoneHovered: trailingZoneHover.hovered || root.trailingZoneOverride
     // A segment was clicked (the view decides: open its panel or activate)
     signal segmentClicked(string trigger, var activity, int button)
     // The media title was clicked
@@ -183,6 +189,26 @@ Item {
         CompactPlayer {
             player: root.player
             notchHovered: root.mediaHovered || root.selectorOpen
+        }
+    }
+
+    // Side zones (see leadingZoneHovered); last so childItems order holds
+    Item {
+        anchors.left: parent.left
+        anchors.right: separator1.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        HoverHandler {
+            id: leadingZoneHover
+        }
+    }
+    Item {
+        anchors.left: separator2.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        HoverHandler {
+            id: trailingZoneHover
         }
     }
 }
