@@ -26,6 +26,10 @@ type Compositor struct {
 
 	layouts []ipc.Layout
 
+	// Outputs is returned by ListOutputs; ApplyOutputCalls records ApplyOutput.
+	Outputs          []ipc.Output
+	ApplyOutputCalls []ipc.OutputConfig
+
 	calls struct {
 		listWindows     int
 		focusWindow     []string
