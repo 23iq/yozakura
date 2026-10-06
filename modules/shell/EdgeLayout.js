@@ -111,6 +111,21 @@ function spotlightRect(e, size) {
     };
 }
 
+// Center of a radial menu of outer `radius` opened at `point`, moved just
+// enough that the whole ring stays inside `area` ({x, y, w, h}, usually the
+// work area); centered in it when the area is smaller than the ring.
+function radialCenter(point, radius, area) {
+    function axis(v, lo, len) {
+        if (len < radius * 2)
+            return lo + len / 2;
+        return _clamp(v, lo + radius, lo + len - radius);
+    }
+    return {
+        x: Math.round(axis(point.x, area.x, area.w)),
+        y: Math.round(axis(point.y, area.y, area.h))
+    };
+}
+
 function _occupied(e, edge, withNotch) {
     return !!((e.bar && e.bar.visible && e.bar.pos === edge) || (e.dock && e.dock.visible && e.dock.pos === edge) || (withNotch && e.notch && e.notch.visible && e.notch.pos === edge));
 }
