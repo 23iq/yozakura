@@ -49,6 +49,27 @@ JsonAdapter {
         property bool autoStart: false
         property bool syncSpotify: false
     }
+    property JsonObject timers: JsonObject {
+        property string notchStyle: "ring"
+        property bool showSeconds: true
+        property bool pulseOnFinish: true
+        property bool alarmPanel: true
+        property bool sound: true
+        property string soundFile: ""
+        property int alarmRepeat: 3
+        property int alarmInterval: 4
+        property bool phaseSound: true
+        property bool showStopwatch: true
+        property int reminderLead: 15
+        property string clockClick: "popup"
+        property string noteTitle: ""
+    }
+    property JsonObject focus: JsonObject {
+        property int minutes: 50
+        property bool dnd: true
+        property bool hideBadges: true
+        property bool summary: true
+    }
     property JsonObject clipboard: JsonObject {
         property bool tmpfs: false
     }

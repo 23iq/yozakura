@@ -36,8 +36,8 @@ test('triggers map to panels', () => {
 
 test('availability follows the context', () => {
     const a = plain(P.availability({ player: true, transfers: 0, timers: 2, privacy: 1, voice: false }));
-    assert.deepEqual(a, { media: true, transfers: false, timers: true, privacy: true, voice: false });
-    assert.deepEqual(plain(P.availability({})), { media: false, transfers: false, timers: false, privacy: false, voice: false });
+    assert.deepEqual(a, { media: true, transfers: false, timers: true, privacy: true, voice: false, timerHub: false, alarm: false });
+    assert.deepEqual(plain(P.availability({})), { media: false, transfers: false, timers: false, privacy: false, voice: false, timerHub: false, alarm: false });
 });
 
 test('auto and modal panels (voice)', () => {
@@ -76,4 +76,15 @@ test('width templates reserve the widest size/speed shape', () => {
     assert.equal(t('2 · 7.3 MB/s'), '0 · 0000 MB/s');
     assert.equal(t('5%'), '000%');
     assert.equal(t('18:42'), '00:00');
+});
+
+test('timers hub (auto + modal) and alarm (auto) panels', () => {
+    assert.equal(P.isAuto('timerHub'), true);
+    assert.equal(P.isModal('timerHub'), true);
+    assert.equal(P.isAuto('alarm'), true);
+    assert.equal(P.isModal('alarm'), false, 'the alarm never grabs the keyboard');
+    assert.equal(P.autoPanel({ timerHub: true, alarm: true }, ''), 'timerHub', 'typing wins over the alarm');
+    assert.equal(P.autoPanel({ timerHub: false, alarm: true }, ''), 'alarm');
+    assert.equal(P.autoPanel({ voice: true, timerHub: true }, ''), 'voice');
+    assert.equal(P.widthFor('timerHub', 400), 460);
 });

@@ -58,6 +58,7 @@ function build(repo) {
         if (a.flags) out.flags = a.flags;
         if (a.hold) out.hold = true;
         if (a.hidden) out.hidden = true;
+        if (a.slot) out.slot = true;
         if (a.args) {
             out.args = a.args.map(f => ({
                 key: f.key,

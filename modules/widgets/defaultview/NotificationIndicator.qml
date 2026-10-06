@@ -60,11 +60,13 @@ Item {
         Text {
             id: iconText
             anchors.centerIn: parent
-            text: Notifications.silent ? Icons.bellZ : (Notifications.list.length > 0 ? Icons.bellRinging : Icons.bell)
+            // Focus mode (system.focus.hideBadges) hides the unread state
+            readonly property bool unread: Notifications.list.length > 0 && !FocusMode.hideBadges
+            text: Notifications.silent ? Icons.bellZ : (iconText.unread ? Icons.bellRinging : Icons.bell)
             textFormat: Text.RichText
             font.family: Icons.font
             font.pixelSize: 18
-            color: hovered ? Styling.srItem("overprimary") : (Notifications.list.length > 0 ? Colors.error : Colors.overBackground)
+            color: root.hovered ? Styling.srItem("overprimary") : (iconText.unread ? Colors.error : Colors.overBackground)
 
             HoverHandler {
                 onHoveredChanged: root.hovered = hovered

@@ -127,6 +127,19 @@
       },
       "description": "Prefix that sends the query to the AI quick ask."
     },
+    "timers": {
+      "title": "Launcher prefix",
+      "type": "string",
+      "default": "t",
+      "description": "Type it and a space in the launcher: t 10m tea",
+      "x-settings": {
+        "category": "timers",
+        "section": "input",
+        "label": "prefs.timers.prefix",
+        "control": "text",
+        "keywords": "launcher prefix timers t"
+      }
+    },
     "launcher": {
       "title": "Launcher",
       "type": "object",
@@ -137,6 +150,7 @@
           "default": [
             "calculator",
             "commands",
+            "timers",
             "apps",
             "specials",
             "wallpapers",
@@ -147,6 +161,7 @@
             "enum": [
               "calculator",
               "commands",
+              "timers",
               "apps",
               "specials",
               "wallpapers",
@@ -182,6 +197,7 @@
             "enum": [
               "calculator",
               "commands",
+              "timers",
               "apps",
               "specials",
               "wallpapers",

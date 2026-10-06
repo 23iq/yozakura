@@ -399,7 +399,7 @@ test('conflicts never drop a bind: both stay with their own combo', () => {
 // --- Groups follow the action ----------------------------------------------------
 
 test('groups: apps first, layout controls and raw dispatchers have their own', () => {
-    eq(Model.GROUPS.map(g => g.id), ['apps', 'windows', 'layout', 'workspaces', 'shell', 'ai', 'screenshots', 'media', 'system', 'other']);
+    eq(Model.GROUPS.map(g => g.id), ['apps', 'windows', 'layout', 'workspaces', 'shell', 'ai', 'utilities', 'screenshots', 'media', 'system', 'other']);
     for (const id of ['scrolling.promote', 'scrolling.resize-column', 'monocle.focus'])
         assert.strictEqual(Actions.groupOf(id), 'layout', id);
     assert.strictEqual(Actions.groupOf('brightness.up'), 'system');
@@ -496,4 +496,51 @@ test('a new bind needs keys, an action and its fields before saving', () => {
     assert.strictEqual(Model.missingPart(k, [{ id: 'window.close', args: {} }]), '');
     assert.strictEqual(Model.missingPart(k, [{ id: 'workspace.switch', args: Actions.defaultArgs('workspace.switch') }]), '');
     assert.strictEqual(Model.missingPart(k, [{ id: 'legacy.dispatcher', args: { dispatcher: 'pin', argument: '', flags: '' } }]), '');
+});
+
+// --- Utilities group: slots and default binds ---------------------------------
+
+test('utilities: slot actions show as unassigned rows until a bind runs them', () => {
+    const slots = Actions.ACTION_CATALOG.filter(a => a.slot).map(a => a.id);
+    for (const name of ['timer-input', 'quick-note', 'timers', 'stopwatch-toggle', 'focus-toggle', 'timer-stop'])
+        assert.ok(slots.includes(app + '.' + name), name);
+    assert.ok(!slots.includes('utilities.routine'), 'routines stay hidden until svc/routines exists');
+    const rows = Model.buildRows({ root: {}, custom: [], disabled: [] });
+    const free = plain(Model.slotRows(rows));
+    eq(free.map(r => r.actions[0].id), slots);
+    for (const r of free) {
+        assert.strictEqual(r.kind, 'slot');
+        assert.strictEqual(r.group, 'utilities');
+        eq(r.keys, [{ modifiers: [], key: '' }]);
+    }
+    // A custom bind running the stopwatch takes its slot away
+    const bound = Model.buildRows({ root: {}, custom: [{ name: '', keys: [{ modifiers: ['SUPER'], key: 'W' }], actions: [{ id: app + '.stopwatch-toggle', args: {}, layouts: [] }], enabled: true }], disabled: [] });
+    const left = plain(Model.slotRows(bound)).map(r => r.actions[0].id);
+    assert.ok(!left.includes(app + '.stopwatch-toggle'));
+    assert.strictEqual(left.length, slots.length - 1);
+    // Empty keys never conflict
+    eq(plain(Model.findConflicts(free.concat(free), [])), {});
+});
+
+test('utilities: SUPER+SHIFT+T and SUPER+SHIFT+N are defaults only because no core bind uses them', () => {
+    const core = Core.BINDS.map(e => Keys.comboId(e.modifiers, e.key));
+    const defaults = plain(CustomDefaults.binds());
+    for (const [name, key] of [['timer-input', 'T'], ['quick-note', 'N']]) {
+        const combo = Keys.comboId(['SUPER', 'SHIFT'], key);
+        assert.ok(!core.includes(combo), `${combo} is a core bind`);
+        const d = defaults.find(b => b.actions[0].argument === app + ' run ' + name);
+        assert.ok(d, name + ' default');
+        assert.strictEqual(Keys.comboId(d.keys[0].modifiers, d.keys[0].key), combo);
+    }
+    // The migration adds them only when the combo is free
+    const taken = [{ name: 'Mine', keys: [{ modifiers: ['SUPER', 'SHIFT'], key: 'T' }], actions: [{ id: 'command.run', args: { command: 'foot' }, layouts: [] }], enabled: true }];
+    const added = plain(Actions.addNewDefaults(taken, CustomDefaults.binds(), [app + '.timer-input', app + '.quick-note']));
+    eq(added.binds.slice(1).map(b => b.actions[0].id), [app + '.quick-note']);
+});
+
+test('utilities: parametrised actions run the shell command', () => {
+    eq(plain(Actions.resolveAction({ id: 'utilities.timer', args: { spec: '10m tea' } })), { dispatcher: 'exec', argument: app + " run 'timer:10m tea'", flags: '' });
+    eq(plain(Actions.resolveAction({ id: 'utilities.timer', args: { spec: '' } })).argument, '');
+    eq(plain(Actions.resolveAction({ id: 'utilities.routine', args: { routine: 'morning' } })).argument, app + " run 'routine:morning'");
+    assert.ok(Actions.getActionById('utilities.routine').hidden);
 });

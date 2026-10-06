@@ -12,7 +12,9 @@ Notch's own geometry animation; panels crossfade over
 |---|---|---|---|
 | `media` | media title | `MediaPanel.qml` | the player card (`ExpandedMedia`) |
 | `transfers` | downloads segment (`tasks`) | `TransfersPanel.qml` | transfers grouped by source: icon, name, bar, sizes · speed, ETA/state, open folder / pause / resume / cancel; combined progress, speed and ETA in the title |
-| `timers` | timers segment | `TimerPanel.qml` | timers with ring + remaining; click opens the timer |
+| `timers` | timers segment | `TimerPanel.qml` (+ `TimerList`, `TimerRow`, `StopwatchRow`, `ReminderRow`) | every timer (pause/resume, +1 min, reset, cancel; Stop / +5 min when ringing), stopwatch with laps, reminders; title: focus mode, stopwatch, new timer |
+| `timerHub` | none (`auto`, `modal`; `TimersService.openHub`) | `TimerHubPanel.qml` (+ `QuickInputField`) | quick input with live preview (`timers.parse`, Enter = `timers.quick`; `focus 50`, `note …`), note mode for the quick note bind, the timer list |
+| `alarm` | none (`auto`; while a timer rings, `system.timers.alarmPanel`) | `AlarmPanel.qml` | pulsing alarm, what finished, Stop / +5 min |
 | `privacy` | privacy segment | `PrivacyPanel.qml` | recording (stop), microphone apps (mute toggle), camera and screen-sharing apps |
 | `voice` | none (`auto`, `modal`) | `VoicePanel.qml` (+ `VoiceBars.qml`) | voice input while listening/transcribing, then the result (`VoiceService.panelOpen`, on the screen it started on); dismissing it cancels the session |
 

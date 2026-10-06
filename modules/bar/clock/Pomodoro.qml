@@ -1,582 +1,297 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
-import Quickshell
 import Quickshell.Io
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
-import qs.modules.services.activities
 import qs.config
+import "../../services/timers/TimerFormat.js" as TimerFormat
 
+// Pomodoro card of the clock popup: a view over the backend Pomodoro
+// (timers.pomodoro in svc/timers, one source of truth with the notch, the
+// CLI and the AI). Idle: work/break lengths (system.pomodoro.workTime /
+// restTime, -/+ 1 min) and Start; running: time left of the phase, pause,
+// -1/+1 min, reset, cancel. The backend fires the phases and sends the
+// notifications; TimersService pauses at each phase when autoStart is off.
 Item {
     id: root
     implicitHeight: content.implicitHeight + 24
     width: 300
 
-    // --- State & Logic ---
-    property bool isRunning: false
-    property bool isWorkSession: true
-    property bool alarmActive: false
-    
-    // --- IPC & Notifications ---
+    readonly property var pomo: TimersService.pomodoro
+    readonly property bool active: root.pomo !== null
+    readonly property bool running: root.active && root.pomo.state === "running"
+    readonly property bool ringing: root.active && root.pomo.ringing
+    readonly property bool workPhase: !root.active || (root.pomo.pomodoro && root.pomo.pomodoro.phase === "work")
+    readonly property var cfg: Config.system.pomodoro
+
+    signal requestPopupOpen
+
     IpcHandler {
         target: "pomodoro"
         function check() {
             root.requestPopupOpen();
         }
         function stop() {
-            root.stopAlarm();
-            root.isRunning = false;
+            if (root.active)
+                TimersService.cancel(root.pomo.id);
         }
     }
 
-    signal requestPopupOpen()
-
-    // Live activity (TimerActivity): remaining time next to the notch
-    readonly property var activityState: ({
-            running: root.isRunning,
-            alarm: root.alarmActive,
-            remaining: root.timeLeft,
-            total: root.totalTime,
-            title: root.isWorkSession ? I18n.t("activities.pomodoro_work") : I18n.t("activities.pomodoro_rest")
-        })
-    function openActivity() {
-        root.requestPopupOpen();
-    }
-    Component.onCompleted: TimerActivity.attach(root)
-    Component.onDestruction: TimerActivity.detach(root)
-
-    // Internal countdown state
-    property int timeLeft: Config.system.pomodoro.workTime
-    property int totalTime: Config.system.pomodoro.workTime
-    property real visualProgress: 1.0
-
-    readonly property var spotifyPlayer: {
-        for (let player of MprisController.filteredPlayers) {
-            if (player.dbusName.toLowerCase().includes("spotify")) {
-                return player;
-            }
-        }
-        return null;
-    }
-
+    // system.pomodoro.syncSpotify: Spotify plays during work, pauses otherwise
+    readonly property var spotifyPlayer: MprisController.filteredPlayers.find(p => p.dbusName.toLowerCase().includes("spotify")) || null
+    readonly property bool spotifyShouldPlay: root.running && root.workPhase
+    onSpotifyShouldPlayChanged: root.updateSpotify()
     function updateSpotify() {
-        if (!Config.system.pomodoro.syncSpotify || !root.spotifyPlayer) return;
-        
-        let spotify = root.spotifyPlayer;
-        if (root.isRunning && root.isWorkSession) {
-            if (!spotify.isPlaying && spotify.canPlay) spotify.play();
-        } else {
-            if (spotify.isPlaying && spotify.canPause) spotify.pause();
-        }
-    }
-
-    onIsRunningChanged: {
-        updateSpotify();
-        // Re-sync the timer inputs when the countdown restarts
-        if (isRunning) resyncTimerInputs();
-    }
-    onIsWorkSessionChanged: updateSpotify()
-    
-    Connections {
-        target: Config.system.pomodoro
-        function onSyncSpotifyChanged() {
-            root.updateSpotify();
-        }
-    }
-
-    readonly property bool isResuming: !isRunning && !alarmActive && timeLeft > 0 && 
-                                      timeLeft < (isWorkSession ? Config.system.pomodoro.workTime : Config.system.pomodoro.restTime)
-
-    function toggleTimer() {
-        if (alarmActive) {
-            stopAlarm();
-            nextSession();
+        const s = root.spotifyPlayer;
+        if (!root.cfg.syncSpotify || !s || !root.active)
             return;
-        }
-        
-        if (!isRunning) {
-            let configTime = isWorkSession ? Config.system.pomodoro.workTime : Config.system.pomodoro.restTime;
-            // If we are at the beginning of a session, ensure totalTime is synced
-            if (timeLeft === configTime) {
-                totalTime = timeLeft;
-            }
-            isRunning = true;
-        } else {
-            isRunning = false;
-        }
-        resyncTimerInputs();
+        if (root.spotifyShouldPlay && !s.isPlaying && s.canPlay)
+            s.play();
+        else if (!root.spotifyShouldPlay && s.isPlaying && s.canPause)
+            s.pause();
     }
 
-    // Smooth progress animation
-    NumberAnimation {
-        id: progressAnim
-        target: root
-        property: "visualProgress"
-        from: root.totalTime > 0 ? root.timeLeft / root.totalTime : 0
-        to: 0
-        duration: root.timeLeft * 1000
-        running: root.isRunning && root.timeLeft > 0
+    function adjust(key, delta) {
+        root.cfg[key] = Math.max(60, Math.min(key === "workTime" ? 14400 : 7200, root.cfg[key] + delta));
     }
 
-    // Reset visual progress when not running and time is adjusted
-    onTimeLeftChanged: {
-        if (!isRunning && !alarmActive) {
-            visualProgress = totalTime > 0 ? timeLeft / totalTime : 0;
-        }
-    }
-
-
-    function resyncTimerInputs() {
-        minIn.resync();
-        secIn.resync();
-    }
-
-    function resetTimer() {
-        stopAlarm();
-        isRunning = false;
-        isWorkSession = true;
-        timeLeft = Config.system.pomodoro.workTime;
-        totalTime = timeLeft;
-        visualProgress = 1.0;
-        resyncTimerInputs();
-    }
-
-    function startAlarm() {
-        let finishedSession = isWorkSession ? "Work" : "Rest";
-        isRunning = false;
-        alarmActive = true;
-        visualProgress = 0; // Ensure it's exactly 0
-        resyncTimerInputs();
-        
-        if (alarmSoundLoader.item) {
-            alarmSoundLoader.item.loops = Config.system.pomodoro.autoStart ? 2 : 255; // Infinite approx
-            // Play alarm if going to rest (Work finished) OR if spotify sync is disabled/spotify not found
-            if (root.isWorkSession || !(Config.system.pomodoro.syncSpotify && root.spotifyPlayer)) {
-                alarmSoundLoader.active = true;
-                alarmSoundLoader.item.play();
-            } else if (Config.system.pomodoro.autoStart) {
-                // If no sound and auto, clear alarm state immediately
-                alarmActive = false;
-            }
-        } else {
-            alarmSoundLoader.active = true;
-        }
-
-        if (Config.system.pomodoro.autoStart) {
-            nextSession();
-        }
-
-        // Routed through Yozakura's Notifications service so the timer alert
-        // is tracked and dismissable like every other Yozakura notification
-        // (notify-send was leaking into the system daemon with no way to
-        // discard it). Action handlers preserve the previous --action
-        // behavior: "check" opens the popup, "stop" halts the alarm.
-        Notifications.notifyInternal({
-            summary: "Pomodoro",
-            body: finishedSession + " session finished!",
-            appName: "Pomodoro",
-            urgency: "normal",
-            expireTimeout: 60000,
-            replaceKey: "pomodoro-" + finishedSession,
-            actions: [
-                { identifier: "check", text: "Check" },
-                { identifier: "stop",  text: "Stop"  }
-            ],
-            actionHandlers: {
-                "check": function () {
-                    root.requestPopupOpen();
-                },
-                "stop": function () {
-                    root.stopAlarm();
-                    root.isRunning = false;
-                }
-            }
-        });
-    }
-
-    function stopAlarm() {
-        if (alarmSoundLoader.item) {
-            alarmSoundLoader.item.stop();
-        }
-        alarmActive = false;
-    }
-
-    function nextSession() {
-        isWorkSession = !isWorkSession;
-        timeLeft = isWorkSession ? Config.system.pomodoro.workTime : Config.system.pomodoro.restTime;
-        totalTime = timeLeft;
-        visualProgress = 1.0;
-        resyncTimerInputs();
-        if (Config.system.pomodoro.autoStart) {
-            isRunning = true;
-        }
-    }
-
-    Loader {
-        id: alarmSoundLoader
-        active: false
-        source: "PomodoroSound.qml"
-        onLoaded: {
-            item.alarmActive = Qt.binding(() => root.alarmActive);
-            item.autoStart = Qt.binding(() => Config.system.pomodoro.autoStart);
-            item.stopAlarmRequested.connect(root.stopAlarm);
-            
-            item.loops = Config.system.pomodoro.autoStart ? 2 : 255;
-            if (root.alarmActive && (root.isWorkSession || !(Config.system.pomodoro.syncSpotify && root.spotifyPlayer))) {
-                item.play();
-            } else if (Config.system.pomodoro.autoStart && root.alarmActive) {
-                root.alarmActive = false;
-            }
-        }
-    }
-
-    Timer {
-        id: countdownTimer
-        interval: 1000
-        running: root.isRunning && root.timeLeft > 0
-        repeat: true
-        onTriggered: {
-            if (root.timeLeft > 0) {
-                root.timeLeft--;
-                if (root.timeLeft === 0) {
-                    startAlarm();
-                }
-            }
-        }
-    }
-
-    // --- UI Layout ---
     ColumnLayout {
         id: content
         anchors.fill: parent
         anchors.margins: 12
         spacing: 12
 
-        // Top Row: Small Configs
         RowLayout {
             Layout.fillWidth: true
-            
-            StyledRect {
-                variant: "common"
-                Layout.preferredHeight: 28
-                Layout.preferredWidth: 110
-                radius: Styling.radius(-4)
-                
-                Text {
-                    anchors.centerIn: parent
-                    text: root.isWorkSession ? I18n.t("pomodoro.work_session") : I18n.t("pomodoro.rest_session")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    font.weight: Font.Bold
-                    color: mouseAreaToggle.containsMouse ? Styling.srItem("overprimary") : Colors.overBackground
-                }
-                
-                MouseArea {
-                    id: mouseAreaToggle
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    enabled: !root.isRunning && !root.alarmActive
-                    onClicked: {
-                        root.isWorkSession = !root.isWorkSession;
-                        let configTime = root.isWorkSession ? Config.system.pomodoro.workTime : Config.system.pomodoro.restTime;
-                        root.timeLeft = configTime;
-                        root.totalTime = configTime;
-                        root.resyncTimerInputs();
-                    }
-                }
+            spacing: 8
+
+            Text {
+                text: Icons.countdown
+                font.family: Icons.font
+                font.pixelSize: Styling.fontSize(1)
+                color: Styling.srItem("overprimary")
             }
-
-            Item { Layout.fillWidth: true }
-
-            // Reset
-            StyledRect {
-                variant: "common"
-                implicitWidth: 28; implicitHeight: 28
-                radius: Styling.radius(-4)
-                Text {
-                    anchors.centerIn: parent
-                    text: Icons.arrowCounterClockwise
-                    font.family: Icons.font; font.pixelSize: 14
-                    color: Colors.overBackground
-                }
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.resetTimer()
-                }
-            }
-        }
-
-        // Stack-like view for Timer Inputs
-        Item {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 60
-            clip: true
-
-            ColumnLayout {
-                id: timerInputs
-                anchors.centerIn: parent
-                spacing: 4
-
-                RowLayout {
-                    spacing: 4
-                    Layout.alignment: Qt.AlignHCenter
-                    
-                    TimerInput {
-                        id: minIn
-                        value: Math.floor(root.timeLeft / 60)
-                        onValueUpdated: val => {
-                            let newSeconds = (val * 60) + (root.timeLeft % 60);
-                            root.timeLeft = newSeconds;
-                            if (!root.isRunning) {
-                                root.totalTime = newSeconds;
-                                if (root.isWorkSession) Config.system.pomodoro.workTime = newSeconds;
-                                else Config.system.pomodoro.restTime = newSeconds;
-                            }
-                        }
-                    }
-                    
-                    Text {
-                        text: ":"
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(8)
-                        font.weight: Font.Bold
-                        color: root.alarmActive ? Styling.srItem("overprimary") : Colors.overBackground
-                        Layout.topMargin: -6
-                    }
-                    
-                    TimerInput {
-                        id: secIn
-                        value: root.timeLeft % 60
-                        onValueUpdated: val => {
-                            let newSeconds = (Math.floor(root.timeLeft / 60) * 60) + val;
-                            root.timeLeft = newSeconds;
-                            if (!root.isRunning) {
-                                root.totalTime = newSeconds;
-                                if (root.isWorkSession) Config.system.pomodoro.workTime = newSeconds;
-                                else Config.system.pomodoro.restTime = newSeconds;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Inverse Progress Bar
-            StyledRect {
-                variant: "common"
-                anchors.bottom: parent.bottom
-                anchors.horizontalCenter: parent.horizontalCenter
-                height: 4
-                width: 180
-                radius: 2
-                opacity: root.isRunning || root.alarmActive || root.visualProgress < 1.0 ? 1.0 : 0.3
-                
-                Rectangle {
-                    height: parent.height
-                    width: root.visualProgress * parent.width
-                    radius: parent.radius
-                    color: Styling.srItem("overprimary")
-                }
-            }
-        }
-
-        // Quick Adjust & Start
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 12
-
-            ControlBtn {
-                text: I18n.t("pomodoro.minus_1m")
-                onClicked: {
-                    if (root.timeLeft >= 60) {
-                        root.timeLeft -= 60;
-                        if (!root.isRunning) {
-                            root.totalTime = root.timeLeft;
-                            if (root.isWorkSession) Config.system.pomodoro.workTime = root.timeLeft;
-                            else Config.system.pomodoro.restTime = root.timeLeft;
-                        }
-                        root.resyncTimerInputs();
-                    }
-                }
-            }
-
-            StyledRect {
-                id: playBtn
-                variant: root.alarmActive ? "primary" : (root.isRunning ? "focus" : "common")
+            Text {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 40
-                radius: Styling.radius(0)
-                
-                Text {
-                    anchors.centerIn: parent
-                    text: root.alarmActive ? I18n.t("pomodoro.stop_alarm") : (root.isRunning ? I18n.t("pomodoro.pause") : (root.isResuming ? I18n.t("pomodoro.resume") : (root.isWorkSession ? I18n.t("pomodoro.start_work") : I18n.t("pomodoro.start_rest"))))
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
-                    font.weight: Font.Black
-                    font.letterSpacing: 1
-                    color: playBtn.item
-                }
-                
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.toggleTimer()
-                }
+                text: root.active ? (root.workPhase ? I18n.t("pomodoro.work_session") : I18n.t("pomodoro.rest_session")) : I18n.t("timers.pomodoro")
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                font.weight: Font.Bold
+                color: Colors.overBackground
             }
-
-            ControlBtn {
-                text: I18n.t("pomodoro.plus_1m")
-                onClicked: {
-                    root.timeLeft += 60;
-                    if (!root.isRunning) {
-                        root.totalTime = root.timeLeft;
-                        if (root.isWorkSession) Config.system.pomodoro.workTime = root.timeLeft;
-                        else Config.system.pomodoro.restTime = root.timeLeft;
-                    }
-                    root.resyncTimerInputs();
-                }
+            Text {
+                visible: root.active && !!root.pomo.pomodoro
+                text: root.active && root.pomo.pomodoro ? I18n.t("timers.round", root.pomo.pomodoro.round) : ""
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-2)
+                color: Colors.outline
             }
         }
 
-        // Settings Row
+        // Big time: the phase left, or the work length when idle
+        Text {
+            objectName: "pomodoroTime"
+            Layout.alignment: Qt.AlignHCenter
+            text: root.ringing ? I18n.t("activities.pomodoro_done") : TimerFormat.clock(root.active ? root.pomo.leftMs : root.cfg.workTime * 1000)
+            font.family: Config.theme.monoFont
+            font.pixelSize: Styling.fontSize(8)
+            font.weight: Font.Bold
+            color: root.ringing ? Colors.error : Colors.overBackground
+        }
+
+        StyledRect {
+            variant: "common"
+            Layout.fillWidth: true
+            Layout.preferredHeight: 4
+            radius: 2
+            StyledRect {
+                variant: "primary"
+                height: parent.height
+                radius: parent.radius
+                width: parent.width * (root.active ? root.pomo.progress : 1)
+            }
+        }
+
+        // Idle: lengths
+        RowLayout {
+            visible: !root.active
+            Layout.fillWidth: true
+            spacing: 8
+            LengthStepper {
+                Layout.fillWidth: true
+                label: I18n.t("pomodoro.work_session")
+                seconds: root.cfg.workTime
+                onStep: delta => root.adjust("workTime", delta)
+            }
+            LengthStepper {
+                Layout.fillWidth: true
+                label: I18n.t("pomodoro.rest_session")
+                seconds: root.cfg.restTime
+                onStep: delta => root.adjust("restTime", delta)
+            }
+        }
+
+        // Running: adjust, main button, reset/cancel
         RowLayout {
             Layout.fillWidth: true
+            spacing: 8
+
+            PomoButton {
+                visible: root.active && !root.ringing
+                text: I18n.t("pomodoro.minus_1m")
+                onClicked: TimersService.add(root.pomo.id, "-1m")
+            }
+            PomoButton {
+                objectName: "pomodoroMain"
+                Layout.fillWidth: true
+                primary: true
+                text: root.ringing ? I18n.t("pomodoro.stop_alarm") : (root.running ? I18n.t("pomodoro.pause") : (root.active ? I18n.t("pomodoro.resume") : I18n.t("pomodoro.start_work")))
+                onClicked: {
+                    if (root.ringing)
+                        TimersService.dismiss(root.pomo.id);
+                    else if (root.active)
+                        TimersService.toggle(root.pomo.id);
+                    else
+                        TimersService.startPomodoro(root.cfg.workTime, root.cfg.restTime);
+                }
+            }
+            PomoButton {
+                visible: root.active && !root.ringing
+                text: I18n.t("pomodoro.plus_1m")
+                onClicked: TimersService.add(root.pomo.id, "+1m")
+            }
+            PomoButton {
+                visible: root.active
+                icon: Icons.cancel
+                onClicked: TimersService.cancel(root.pomo.id)
+            }
+        }
+
+        RowLayout {
             Layout.alignment: Qt.AlignHCenter
             spacing: 20
-
-            // Auto Toggle
-            RowLayout {
-                spacing: 8
-                Text {
-                    text: I18n.t("common.auto")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.outline
-                }
-                Item {
-                    Layout.preferredWidth: 36; Layout.preferredHeight: 20
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 10
-                        color: Config.system.pomodoro.autoStart ? Styling.srItem("overprimary") : Colors.surfaceBright
-                        opacity: Config.system.pomodoro.autoStart ? 1.0 : 0.4
-                        Rectangle {
-                            x: Config.system.pomodoro.autoStart ? parent.width - 18 : 2
-                            y: 2; width: 16; height: 16; radius: 8
-                            color: Colors.background
-                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutQuart } }
-                        }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: Config.system.pomodoro.autoStart = !Config.system.pomodoro.autoStart
-                    }
-                }
+            PomoSwitch {
+                text: I18n.t("common.auto")
+                checked: root.cfg.autoStart
+                onToggled: root.cfg.autoStart = !root.cfg.autoStart
             }
-
-            // Sync Spotify Toggle
-            RowLayout {
-                spacing: 8
-                Text {
-                    text: I18n.t("pomodoro.sync_spotify")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.outline
-                }
-                Item {
-                    Layout.preferredWidth: 36; Layout.preferredHeight: 20
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: 10
-                        color: Config.system.pomodoro.syncSpotify ? Styling.srItem("overprimary") : Colors.surfaceBright
-                        opacity: Config.system.pomodoro.syncSpotify ? 1.0 : 0.4
-                        Rectangle {
-                            x: Config.system.pomodoro.syncSpotify ? parent.width - 18 : 2
-                            y: 2; width: 16; height: 16; radius: 8
-                            color: Colors.background
-                            Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutQuart } }
-                        }
-                    }
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: Config.system.pomodoro.syncSpotify = !Config.system.pomodoro.syncSpotify
-                    }
+            PomoSwitch {
+                text: I18n.t("pomodoro.sync_spotify")
+                checked: root.cfg.syncSpotify
+                onToggled: {
+                    root.cfg.syncSpotify = !root.cfg.syncSpotify;
+                    root.updateSpotify();
                 }
             }
         }
     }
 
-    // --- Sub-components ---
-    component TimerInput: TextField {
-        id: tIn
-        property int value: 0
-        property bool blinkPhase: false
-        signal valueUpdated(int newValue)
-        
-
-        text: value.toString().padStart(2, '0')
-        
-        font.family: Config.theme.monoFont
-        font.pixelSize: Styling.fontSize(8)
-        font.weight: Font.Bold
-        color: root.alarmActive ? (tIn.blinkPhase ? Styling.srItem("overprimary") : Colors.overBackground) : Colors.overBackground
-        
-        background: Item {}
-        padding: 0; leftPadding: 0; rightPadding: 0
-        horizontalAlignment: TextInput.AlignHCenter
-        maximumLength: 2
-        validator: IntValidator { bottom: 0; top: 99 }
-        selectByMouse: true
-        
-        onTextEdited: {
-            let v = parseInt(text);
-            if (!isNaN(v)) {
-                tIn.valueUpdated(v);
-            }
-        }
-        
-        onEditingFinished: resync()
-        onActiveFocusChanged: if (!activeFocus) resync()
-
-
-        function resync() {
-            text = Qt.binding(() => tIn.value.toString().padStart(2, '0'));
-        }
-        
-        Layout.preferredWidth: 60
-        
-        Timer {
-            interval: 500
-            running: root.alarmActive
-            repeat: true
-            onTriggered: tIn.blinkPhase = !tIn.blinkPhase
-        }
-    }
-
-    component ControlBtn: StyledRect {
-        id: cBtn
-        property string text: ""
-        signal clicked()
-        
+    component LengthStepper: StyledRect {
+        id: stepper
+        property string label: ""
+        property int seconds: 0
+        signal step(int delta)
         variant: "common"
-        implicitWidth: 44; implicitHeight: 40
+        implicitHeight: 36
         radius: Styling.radius(-4)
-        
+        RowLayout {
+            anchors.fill: parent
+            anchors.margins: 4
+            PomoButton {
+                text: "−"
+                implicitWidth: 26
+                implicitHeight: 26
+                onClicked: stepper.step(-60)
+            }
+            Text {
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                text: stepper.label + " " + TimerFormat.compact(stepper.seconds * 1000)
+                elide: Text.ElideRight
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-2)
+                color: Colors.overBackground
+            }
+            PomoButton {
+                text: "+"
+                implicitWidth: 26
+                implicitHeight: 26
+                onClicked: stepper.step(60)
+            }
+        }
+    }
+
+    component PomoButton: StyledRect {
+        id: btn
+        property string text: ""
+        property string icon: ""
+        property bool primary: false
+        signal clicked
+        variant: btn.primary ? "primary" : (area.containsMouse ? "focus" : "common")
+        implicitWidth: 44
+        implicitHeight: 40
+        radius: Styling.radius(-4)
         Text {
             anchors.centerIn: parent
-            text: cBtn.text
-            font.family: Config.theme.font
+            text: btn.icon !== "" ? btn.icon : btn.text
+            font.family: btn.icon !== "" ? Icons.font : Config.theme.font
             font.pixelSize: Styling.fontSize(-1)
-            color: mouseA.containsMouse ? Styling.srItem("overprimary") : Colors.overBackground
+            font.weight: btn.primary ? Font.Black : Font.Normal
+            color: btn.item
         }
-        
         MouseArea {
-            id: mouseA
+            id: area
             anchors.fill: parent
             hoverEnabled: true
-            onClicked: cBtn.clicked()
+            cursorShape: Qt.PointingHandCursor
+            onClicked: btn.clicked()
+        }
+    }
+
+    component PomoSwitch: Item {
+        id: sw
+        property string text: ""
+        property bool checked: false
+        signal toggled
+        implicitWidth: swRow.implicitWidth
+        implicitHeight: swRow.implicitHeight
+        RowLayout {
+            id: swRow
+            spacing: 8
+            Text {
+                text: sw.text
+                font.family: Config.theme.font
+                font.pixelSize: Styling.fontSize(-1)
+                color: Colors.outline
+            }
+            StyledRect {
+                variant: sw.checked ? "primary" : "common"
+                Layout.preferredWidth: 36
+                Layout.preferredHeight: 20
+                radius: 10
+                StyledRect {
+                    variant: "internalbg"
+                    x: sw.checked ? parent.width - width - 2 : 2
+                    y: 2
+                    width: 16
+                    height: 16
+                    radius: 8
+                    Behavior on x {
+                        enabled: Config.animDuration > 0
+                        NumberAnimation {
+                            duration: 200
+                            easing.type: Easing.OutQuart
+                        }
+                    }
+                }
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: sw.toggled()
         }
     }
 }

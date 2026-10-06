@@ -159,11 +159,20 @@ Item {
             }
         }
 
+        // system.timers.clockClick: the left button opens the clock popup
+        // or the notch timers hub, the right button the other one
         MouseArea {
             anchors.fill: parent
             hoverEnabled: false
             cursorShape: Qt.PointingHandCursor
-            onClicked: clockPopup.toggle()
+            acceptedButtons: Qt.LeftButton | Qt.RightButton
+            onClicked: mouse => {
+                const timersFirst = (Config.system?.timers?.clockClick ?? "popup") === "timers";
+                if ((mouse.button === Qt.RightButton) === timersFirst)
+                    clockPopup.toggle();
+                else
+                    TimersService.toggleHub("timer", root.bar?.screen?.name ?? "");
+            }
         }
     }
 

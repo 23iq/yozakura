@@ -219,6 +219,15 @@ Scope {
                 current.migrations = migrations.concat(["window-fullscreen"]);
                 needsUpdate = true;
             }
+            // Utilities defaults (timer input, quick note): only on free combos
+            const done = Array.isArray(current.migrations) ? current.migrations : [];
+            if (done.indexOf("utilities-binds") === -1) {
+                const added = KeybindActions.addNewDefaults(current.custom, CustomBindDefaults.binds(), [BrandActions.action("timer-input"), BrandActions.action("quick-note")]);
+                if (added.changed)
+                    current.custom = added.binds;
+                current.migrations = done.concat(["utilities-binds"]);
+                needsUpdate = true;
+            }
 
             if (current.custom && current.custom.length > 0) {
                 const normalized = KeybindActions.normalizeCustomBinds(current.custom);

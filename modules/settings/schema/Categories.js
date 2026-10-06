@@ -16,6 +16,7 @@
 .import "terminal.js" as Terminal
 .import "notifications.js" as Notifications
 .import "specials.js" as Specials
+.import "timers.js" as Timers
 
 // Settings information architecture: sidebar groups and categories.
 //
@@ -44,7 +45,7 @@ var groups = [
     {
         "id": "system",
         "title": "prefs.group.system",
-        "categories": ["windows", "terminal", "input", "voice", "system", "updates"]
+        "categories": ["windows", "terminal", "input", "voice", "timers", "system", "updates"]
     },
     {
         "id": "connect",
@@ -117,6 +118,7 @@ var categories = [
     Input.category,
     System.category,
     Voice.category,
+    Timers.category,
     Updates.category,
     legacy("network", "wifiHigh", "prefs.cat.network", "prefs.cat.network.desc", "dashboard/controls/WifiPanel.qml", "", "network wifi internet ethernet connection", []),
     legacy("bluetooth", "bluetooth", "prefs.cat.bluetooth", "prefs.cat.bluetooth.desc", "dashboard/controls/BluetoothPanel.qml", "", "bluetooth devices pairing headphones", []),

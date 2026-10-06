@@ -25,6 +25,7 @@ var GROUPS = [
     { "id": "workspaces", "icon": "squaresFour", "title": "binds.group.workspaces", "desc": "binds.group.workspaces.desc" },
     { "id": "shell", "icon": "widgets", "title": "binds.group.shell", "desc": "binds.group.shell.desc" },
     { "id": "ai", "icon": "sparkle", "title": "binds.group.ai", "desc": "binds.group.ai.desc" },
+    { "id": "utilities", "icon": "timer", "title": "binds.group.utilities", "desc": "binds.group.utilities.desc" },
     { "id": "screenshots", "icon": "camera", "title": "binds.group.screenshots", "desc": "binds.group.screenshots.desc" },
     { "id": "media", "icon": "musicNotes", "title": "binds.group.media", "desc": "binds.group.media.desc" },
     { "id": "system", "icon": "monitor", "title": "binds.group.system", "desc": "binds.group.system.desc" },
@@ -196,6 +197,40 @@ function buildRows(data) {
     for (var j = 0; j < specials.length; j++)
         out.push(specials[j]);
     return out;
+}
+
+// Unassigned slots: catalog actions marked `slot` (KeybindActions.js) that
+// no row runs yet, as rows of kind "slot" with one empty key ("Not set").
+// The editor turns a clicked slot into a custom bind (KeybindsStore.claim).
+function slotRows(rows) {
+    var used = {};
+    (rows || []).forEach(function (r) {
+        (r.actions || []).forEach(function (a) {
+            used[BrandActions.normalizeAction(a.id)] = true;
+        });
+    });
+    return Actions.ACTION_CATALOG.filter(function (a) {
+        return a.slot && !a.hidden && !used[a.id];
+    }).map(function (a) {
+        return {
+            "uid": "slot:" + a.id,
+            "kind": "slot",
+            "path": "",
+            "index": -1,
+            "keys": [{
+                    "modifiers": [],
+                    "key": ""
+                }],
+            "actions": [{
+                    "id": a.id,
+                    "args": Actions.defaultArgs(a.id),
+                    "layouts": []
+                }],
+            "enabled": true,
+            "name": "",
+            "group": a.group
+        };
+    });
 }
 
 // --- Text ------------------------------------------------------------------

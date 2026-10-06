@@ -168,6 +168,29 @@ yozakura stopwatch start|pause|resume|toggle|lap|reset|status
 yozakura remind 18:00 call mom            # or: remind in 20m stretch; remind list; remind cancel r4
 ```
 
+AI coding tasks (daemon `tasks` service, state in
+`~/.local/share/yozakura/tasks/`; each run works in its own git worktree under
+`~/.local/share/yozakura/worktrees/<project>/<id>` on branch `yoz/<id>`; when the
+agent finishes, the project check runs and failures go back to it, then the
+task waits for review; accept squashes it into the current branch):
+
+```bash
+yozakura task new "Add a --json flag to list" --agent claude,codex [--plan] [--in-place] [--template tests]
+yozakura task list [--json]               # id, status, agents, title
+yozakura task show k1abc                  # runs, checks, changed files, plan
+yozakura task run k1abc                   # approve the plan (plan mode)
+yozakura task followup k1abc "also update the docs" [--run 1]
+yozakura task accept k1abc [--run 1] [-m "feat: ..."]   # one commit on the current branch
+yozakura task discard k1abc               # remove worktrees and branches
+yozakura task project . --check "make check" --max-attempts 2   # or --auto (detect)
+yozakura task templates                   # /review /tests /fix-check /explain /refactor + your own
+```
+
+Templates: `assets/ai/task-templates/*.md` (bundled),
+`~/.config/yozakura/task-templates/*.md` (global), `<project>/.yozakura/templates/*.md`
+(project); front matter `name`, `description`, `mode`; placeholders
+`{{input}} {{selection}} {{file}} {{clipboard}} {{diff}} {{staged}} {{branch}} {{project}} {{check}}`.
+
 Completion: `yozakura completion bash|zsh|fish` (keys, values and preset
 names are completed live from the catalog):
 
@@ -215,6 +238,8 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `stopwatch_control` | no | `{"action":"lap"}`; start, pause, resume, toggle, lap, reset, status |
 | `reminder_add`, `reminder_cancel` | no | `{"when":"in 20m","message":"stretch"}`, `{"when":"7:30pm"}`; cancel by id or message |
 | `usage_summary` | yes | AI token usage/cost from the ledger: `{"range":"week","groupBy":"model","limits":true}` (same data as `yozakura usage`) |
+| `task_list`, `task_status` | yes | coding tasks handed to CLI agents: status, runs, check results, summary, proposed commit message |
+| `task_create` | no | `{"dir":"/home/me/proj","prompt":"Add tests for the parser","agents":["claude","codex"],"mode":"plan"}`: delegate coding work (worktree per run, verify loop); the user reviews and accepts it in the AI bar |
 | `binds_search`, `binds_list`, `binds_check`, `binds_suggest` | yes | bind advisor: `{"query":"раскладка"}` -> results with a ready `action` ({id, args}); every bind with its source; is a combo free; free combos for an action |
 | `binds_set`, `binds_remove`, `binds_undo` | no | `{"combo":"SUPER+F","action":"window.fullscreen"}` (confirm with the user first); writes `binds.json` only, returns `undo: {tool, args}` |
 
@@ -298,6 +323,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
     **Model, effort, context** (AI bar strip `◆ engine · model ▾  level ▾ … 62k/200k`): the reasoning effort is picked inline and remembered per model (`StateService` `aiModelEfforts`; `config set ai.effort.defaultLevel high` for untouched models, `auto` sends nothing); levels map per family in `modules/services/ai/Effort.js` (CLI agents use their own catalog values). Capabilities and windows come from `assets/ai/models.json` and the backend Ollama probe (`providers.ollama.probe`); Ollama chats send `num_ctx` (`ai.ollama.numCtx`). Unknown windows: `ai.context.overrides`. HTTP chats compact older turns into a summary (Compact button from `ai.context.warnAt`, automatic at `ai.context.autoCompactAt` when `ai.context.autoCompact`; `ai.context.keepTurns`, `ai.context.compactModel`); agents report `usage.contextTokens/contextWindow` on `done` events and compact themselves.
     **Providers** (Connect sheet: picker footer "Connect provider", "not connected" rows, the Assistant "Connect a model" CTA, Settings → AI providers, onboarding): pick a preset (`modules/services/ai/ProviderPresets.js`), enter the key and/or base URL, Test (`providers.test`, free listing; Ollama: `providers.ollama.probe`), Save. Keys live in the KeyStore; Ollama/LM Studio need no key and count as connected while reachable (`ai.ollama.endpoint`, `ai.lmstudio.endpoint`, re-probed every `ai.providers.probeInterval` s while the bar is open). Rules in `ProviderConnect.js`, actions in `ProviderSetup.qml` (`Ai.providers`), UI in `modules/aicenter/providers/`. Requests: `ai.providers.timeout`, `ai.providers.retries`, `ai.providers.customHeaders` (Custom endpoint), `ai.providers.openrouterAttribution`, `ai.ollama.keepAlive`; hide a provider with `ai.providers.hidden`.
 46. **Pomodoro length**: `config set system.pomodoro.workTime 1800` (seconds).
+46. **Pomodoro, timers, focus**: `config set system.pomodoro.workTime 1800` (seconds); notch look `system.timers.notchStyle ring|text`, `system.timers.showSeconds`, alarm `system.timers.sound`/`soundFile`/`alarmRepeat` (0 = until stopped); focus mode length `system.focus.minutes` (+ `dnd`, `hideBadges`, `summary`); clock click `system.timers.clockClick popup|timers`; launcher prefix `prefix.timers` ("t 10m tea"). Binds (group "Utilities"): `yozakura run timer-input|quick-note|timers|stopwatch-toggle|focus-toggle|timer-stop`, `yozakura run 'timer:10m tea'`; defaults SUPER+SHIFT+T (timer input) and SUPER+SHIFT+N (quick note to the Notes "Inbox").
 47. **Lighter on the GPU**: `config set performance.rotateCoverArt false`, `performance.windowPreview`, `performance.blurTransition`.
 48. **Turn a group off in one go**: `config set bar.activities '{"enabled":false}'`.
 49. **Notifications as corner toasts**: `config set notifications.presentation corner` (`notch` = born from the notch, `auto` = by the preset's bar style), `config set notifications.position bottom-right`, `config set notifications.timeout 8000`, `config set notifications.maxVisible 2`, only on one monitor: `config set notifications.screens '["DP-1"]'`.
@@ -385,7 +411,7 @@ combo.
 | Presets | `backend/pkg/presets` (aspects registry: `aspects.go`), settings studio `modules/settings/presets/` + `modules/settings/store/PresetStudio.qml`, quick switcher `modules/services/PresetsService.qml` (all run `yozakura preset`) | `tools/render/presets_render.py` | `backend/pkg/presets/*_test.go`, `tests/preset-studio*.test.*` |
 | AI bar | `modules/aicenter/` (`transcript/` one transcript for every engine, `assistant/`, `code/`, `header/`, `composer/`), `modules/services/Ai.qml`, `modules/services/ai/` (`SpaceState.qml` spaces), `backend/pkg/svc/agents` | `ai.*` | `tests/ai-*.test.*` |
 | Voice | `modules/services/voice/`, `backend/pkg/svc/voice` | `voice.*` | `tests/voice*.test.*` |
-| Timers, stopwatch, reminders | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go` | `system.pomodoro.*` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go` |
+| Timers, stopwatch, reminders, focus | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go`; shell: `modules/services/TimersService.qml` (thin client), `FocusMode.qml`, `QuickNote.qml`, `UtilityCommands.qml`, `modules/services/timers/*.js`, notch `activities/TimerActivity.qml` + `panels/Timer*`, `AlarmPanel`, `QuickInputField`, launcher `providers/TimersProvider.qml` | `system.pomodoro.*`, `system.timers.*`, `system.focus.*`, `prefix.timers` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go`, `tests/timers-*.test.*`, `tests/timer-panels.test.py`, `tests/notify-request.test.cjs` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |
 | Keybinds | `config/KeybindActions.js`, `modules/services/GlobalShortcuts.qml` | `binds.json` | |
 | Bind advisor | `backend/pkg/binds` (search, list, check, suggest, set/remove/undo), catalog `tools/schema/bind_actions.cjs` -> `assets/schema/bind-actions.json`, CLI `cmds_binds.go`, MCP `bind_tools.go`, yozd `Config.ListBinds` (`pkg/yozd/server/binds.go`, `ipc/*/binds.go`) | `binds.json` | `backend/pkg/binds/binds_test.go`, `tests/bind-actions.test.cjs` |

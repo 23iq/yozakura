@@ -9,6 +9,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import "../notifications/NotificationPolicy.js" as Policy
+import "../notifications/NotifyRequest.js" as NotifyRequest
 
 Singleton {
     id: root
@@ -451,7 +452,8 @@ Singleton {
             "desktopEntry": "",
             "urgency": newNotifObject.urgency,
             "expireTimeout": options.expireTimeout || -1,
-            "popup": options.popup
+            "popup": options.popup,
+            "hints": options.hints
         });
 
         root.list = [...root.list, newNotifObject];
@@ -745,46 +747,18 @@ Singleton {
 
     property int notifyIpcHandle: -1
 
-    // handleNotifyRequest converts a CLI-driven notify.send event into a
-    // tracked notification. Actions whose source object carries a
-    // `clipboard` field get a synthetic handler that runs wl-copy when
-    // the user clicks them, so cross-process flows (colorpicker formats)
-    // keep working without the CLI blocking on stdin.
+    // handleNotifyRequest converts a backend notify.request (CLI `notify
+    // send`, timers...) into a tracked notification; NotifyRequest.js wires
+    // `clipboard` actions (wl-copy) and `call` actions (backend IPC call).
     function handleNotifyRequest(data) {
-        if (!data) return;
-        const rawActions = data.actions || [];
-        const actionHandlers = {};
-        const actions = [];
-        for (let i = 0; i < rawActions.length; i++) {
-            const a = rawActions[i];
-            if (!a || !a.identifier) continue;
-            actions.push({
-                identifier: a.identifier,
-                text: a.text || a.identifier
-            });
-            if (a.clipboard !== undefined && a.clipboard !== null) {
-                const value = a.clipboard;
-                actionHandlers[a.identifier] = function (_id) {
-                    // The value is untrusted notification data: argv only.
-                    Quickshell.execDetached(["wl-copy", "--type", "text/plain", "--", String(value)]);
-                };
-            }
-        }
-
-        const opts = {
-            summary: data.summary || "",
-            body: data.body || "",
-            appName: data.appName || "Yozakura",
-            appIcon: data.appIcon || "",
-            image: data.image || "",
-            urgency: data.urgency || "normal",
-            expireTimeout: data.expireTimeout || 5000,
-            replaceKey: data.replaceKey || "",
-            actions: actions,
-            actionHandlers: actionHandlers,
-            popup: true
-        };
-        root.notifyInternal(opts);
+        if (!data)
+            return;
+        root.notifyInternal(NotifyRequest.build(data, {
+            // The value is untrusted notification data: argv only.
+            "copy": value => Quickshell.execDetached(["wl-copy", "--type", "text/plain", "--", value]),
+            "call": (method, params) => BackendService.call(method, params),
+            "tr": key => I18n.t(key)
+        }));
     }
 
     Timer {
