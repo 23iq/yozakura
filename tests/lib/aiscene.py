@@ -122,6 +122,14 @@ AI_CONFIG = """
             property int timeout: 600; property int retries: 1; property list<string> hidden: []; property int probeInterval: 60
             property list<var> customHeaders: []; property bool openrouterAttribution: true
         }
+        property QtObject tasks: QtObject {
+            property list<string> defaultAgents: ["claude"]; property bool planFirst: false; property bool inPlace: false
+            property int maxParallel: 2; property string fallbackAgent: ""; property bool notifications: true
+            property list<string> notifyEvents: ["permission", "plan", "review", "failed", "limit"]; property string mergeMode: "squash"
+            property string boardLayout: "auto"; property bool showCosts: true; property bool showElapsed: true; property bool showBranch: true
+            property int doneLimit: 20; property bool autoOpenReview: true; property bool confirmAccept: true; property bool confirmDiscard: true
+            property bool commitWithAi: true
+        }
         property QtObject picker: QtObject { property bool showCapabilities: true; property bool groupByProvider: true; property bool showUnconnected: true; property bool showRecent: true }
         property QtObject mcp: QtObject { property bool yozakura: true; property bool importClaude: true; property bool importCodex: true; property bool importOpencode: true; property list<var> disabled: [] }
         property QtObject selection: QtObject {
@@ -178,9 +186,20 @@ QtObject {
     function call(m, p, cb) {
         calls = calls.concat([{method: m, params: p}]);
         const r = responses[m];
-        if (r !== undefined && cb) cb(typeof r === "function" ? r(p) : r, null);
+        const v = typeof r === "function" ? r(p) : r;
+        // {__error: "text"} answers with an IPC error
+        if (r !== undefined && cb) {
+            if (v && v.__error) cb(null, {message: v.__error});
+            else cb(v, null);
+        }
     }
-    function addSubscription(s, cb) { return 1; }
+    property var subscribers: []
+    function addSubscription(s, cb) { subscribers = subscribers.concat([{services: s, cb: cb}]); return subscribers.length; }
+    // Push a subscription event ("tasks.updated", data) to every subscriber of its service.
+    function emit(kind, data) {
+        for (const sub of subscribers)
+            if (sub.services.indexOf(kind.split(".")[0]) >= 0) sub.cb(kind, data);
+    }
 }
 """)
     # KeyStore: an in-memory key cache with the real API.
@@ -230,7 +249,7 @@ QtObject {
 """)
     (qs / "modules/settings/store/qmldir").write_text("module qs.modules.settings.store\nsingleton SettingsStore 1.0 SettingsStore.qml\n")
     (services / "Ai.qml").write_text(ai_stub)
-    (services / "qmldir").write_text("module qs.modules.services\nsingleton Ai 1.0 Ai.qml\nsingleton I18n 1.0 I18n.qml\nsingleton BackendService 1.0 BackendService.qml\nsingleton KeyStore 1.0 KeyStore.qml\n")
+    (services / "qmldir").write_text("module qs.modules.services\nsingleton Ai 1.0 Ai.qml\nsingleton I18n 1.0 I18n.qml\nsingleton BackendService 1.0 BackendService.qml\nsingleton KeyStore 1.0 KeyStore.qml\nsingleton TasksService 1.0 TasksService.qml\n")
     (qs / "modules/globals/GlobalStates.qml").write_text("""pragma Singleton
 import QtQuick
 QtObject {

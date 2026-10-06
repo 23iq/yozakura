@@ -17,6 +17,7 @@ StyledRect {
 
     property var diffs: []        // [{path, diff, key}] from AgentTimeline state
     property string selected: ""
+    property bool closable: true
     signal closeRequested
 
     readonly property var files: {
@@ -90,6 +91,7 @@ StyledRect {
                 color: Colors.outline
             }
             IconButton {
+                visible: root.closable
                 glyph: Icons.cancel
                 tooltip: I18n.t("ai.close")
                 onClicked: root.closeRequested()

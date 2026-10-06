@@ -9,8 +9,10 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 
-// Code space: project ▾ (recent folders, open folder…), git branch and the
-// agent instructions file of the project the session works in.
+// Code space: project ▾ (recent folders, open folder…), git summary with
+// Commit (GitSummary), the agent instructions file (missing: "Create with
+// agent" starts an `instructions` template task) and the project's task
+// settings (ProjectSettings).
 RowLayout {
     id: root
     objectName: "projectBar"
@@ -42,6 +44,20 @@ RowLayout {
     ProjectInfo {
         id: info
         dir: root.project
+    }
+    onProjectChanged: TasksService.refreshAll(root.project)
+    Component.onCompleted: TasksService.refreshAll(root.project)
+
+    readonly property string instructions: (TasksService.projects[root.project] ? TasksService.projects[root.project].instructions : "") || info.instructions
+    property string createError: ""
+    function createInstructions() {
+        const agents = (Config.ai.tasks.defaultAgents || []).filter(Boolean);
+        TasksService.create({
+            "dir": root.project,
+            "template": "instructions",
+            "prompt": "",
+            "agent": agents[0] || Config.ai.agents.defaultAgent || "claude"
+        }, (task, error) => root.createError = error || "");
     }
 
     StyledRect {
@@ -166,26 +182,70 @@ RowLayout {
         }
     }
 
-    Chip {
+    GitSummary {
         objectName: "projectBranch"
-        visible: info.branch.length > 0
-        glyph: Icons.gitBranch
-        label: info.branch
-        mono: true
-        maxLabelWidth: 160
-        variant: "transparent"
+        dir: root.project
+        fallbackBranch: info.branch
     }
     Chip {
         objectName: "projectInstructions"
-        glyph: info.instructions ? Icons.fileText : Icons.warning
-        label: info.instructions || I18n.t("ai.no_instructions")
+        glyph: root.instructions ? Icons.fileText : Icons.warning
+        label: root.instructions || I18n.t("ai.no_instructions")
         maxLabelWidth: 140
         variant: "transparent"
-        opacity: info.instructions ? 1 : 0.7
-        onClicked: if (info.instructions)
-            Qt.openUrlExternally("file://" + root.project + "/" + info.instructions)
+        opacity: root.instructions ? 1 : 0.7
+        onClicked: {
+            if (root.instructions)
+                Qt.openUrlExternally("file://" + root.project + "/" + root.instructions);
+            else
+                instructionsMenu.open();
+        }
+        Popup {
+            id: instructionsMenu
+            y: parent.height + 4
+            width: 300
+            padding: 10
+            background: StyledRect {
+                variant: "popup"
+                radius: Styling.radius(-2)
+                enableShadow: true
+            }
+            contentItem: ColumnLayout {
+                spacing: 8
+                Text {
+                    Layout.fillWidth: true
+                    text: I18n.t("ai.tasks.instructions_missing")
+                    wrapMode: Text.Wrap
+                    font.family: Config.theme.font
+                    font.pixelSize: BarLook.font(-2)
+                    color: Colors.overSurface
+                }
+                Text {
+                    Layout.fillWidth: true
+                    visible: root.createError.length > 0
+                    text: root.createError
+                    wrapMode: Text.Wrap
+                    font.family: Config.theme.font
+                    font.pixelSize: BarLook.font(-3)
+                    color: Colors.error
+                }
+                Chip {
+                    objectName: "createInstructions"
+                    glyph: Icons.sparkle
+                    label: I18n.t("ai.tasks.create_instructions")
+                    active: true
+                    onClicked: {
+                        instructionsMenu.close();
+                        root.createInstructions();
+                    }
+                }
+            }
+        }
     }
     Item {
         Layout.fillWidth: true
+    }
+    ProjectSettings {
+        dir: root.project
     }
 }

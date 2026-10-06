@@ -1,0 +1,221 @@
+pragma ComponentBehavior: Bound
+import QtQuick
+import QtQuick.Layouts
+import qs.modules.theme
+import qs.modules.components
+import qs.modules.services
+import qs.config
+import qs.modules.aicenter.common
+import "../../services/tasks/TaskModel.js" as TaskModel
+
+// Options of a new task, above the composer in the Code space: agents
+// (several = best-of-N), model and effort (one agent), Plan first, Work in
+// the current branch, templates (`/`), and the switch to an interactive
+// agent chat. `submit()` turns the composer text into tasks.create.
+RowLayout {
+    id: root
+    objectName: "taskOptions"
+
+    property string project: ""
+    property bool chat: false
+    signal chatToggled(bool chat)
+    signal templateChosen(string command)
+    // An asynchronous create failed: give the text back to the composer.
+    signal restore(string text, var attachments)
+
+    readonly property var cfg: Config.ai.tasks
+    readonly property var available: (Ai.agents ? Ai.agents.agents : []).filter(a => a.available)
+    property var agents: []
+    property string model: ""
+    property string effort: ""
+    property bool planFirst: root.cfg.planFirst
+    property bool inPlace: root.cfg.inPlace
+    property string error: ""
+    readonly property var templates: TasksService.templates[root.project] || []
+    readonly property string single: root.agents.length === 1 ? root.agents[0] : ""
+    readonly property var catalog: {
+        Ai.agents && Ai.agents.modelCatalogs ? Ai.agents.modelCatalogs.catalogs : null;
+        return root.single && Ai.agents ? Ai.agents.settingsFor(root.single, root.project) : {
+            "models": []
+        };
+    }
+    readonly property var modelEntry: (root.catalog.models || []).find(m => root.model ? m.id === root.model : m.isDefault) || null
+    readonly property var efforts: root.modelEntry ? root.modelEntry.efforts || [] : []
+
+    function resetAgents() {
+        const ids = root.available.map(a => a.id);
+        const wanted = (root.cfg.defaultAgents || []).filter(id => ids.indexOf(id) >= 0);
+        root.agents = wanted.length ? wanted : ids.slice(0, 1);
+    }
+    function toggleAgent(id) {
+        const list = root.agents.slice();
+        const i = list.indexOf(id);
+        if (i >= 0 && list.length > 1)
+            list.splice(i, 1);
+        else if (i < 0 && list.length < 4)
+            list.push(id);
+        root.agents = list;
+        root.model = "";
+        root.effort = "";
+    }
+    function options() {
+        return {
+            "dir": root.project,
+            "agents": root.agents,
+            "model": root.model,
+            "effort": root.effort,
+            "planFirst": root.planFirst,
+            "inPlace": root.inPlace,
+            "templates": root.templates
+        };
+    }
+    // Returns false (composer keeps the text) when the input is not a task yet.
+    function submit(text, attachments) {
+        const o = Object.assign(root.options(), {
+            "text": text,
+            "attachments": attachments
+        });
+        const err = TaskModel.createError(o);
+        root.error = err ? I18n.t("ai.tasks.create_error." + err) : "";
+        if (err)
+            return false;
+        TasksService.create(TaskModel.createParams(o), (task, error) => {
+            if (error) {
+                root.error = error;
+                root.restore(text, attachments);
+            }
+        });
+        return true;
+    }
+
+    onAvailableChanged: if (root.agents.length === 0 || root.agents.some(id => !root.available.some(a => a.id === id)))
+        root.resetAgents()
+    onSingleChanged: if (root.single && Ai.agents)
+        Ai.agents.refreshModels(root.single, root.project)
+    Component.onCompleted: root.resetAgents()
+
+    spacing: 4
+
+    Repeater {
+        model: root.chat ? [] : root.available
+        delegate: Chip {
+            id: agentChip
+            required property var modelData
+            objectName: "taskAgent_" + modelData.id
+            label: agentChip.modelData.label
+            active: root.agents.indexOf(agentChip.modelData.id) >= 0
+            onClicked: root.toggleAgent(agentChip.modelData.id)
+        }
+    }
+    UiText {
+        visible: !root.chat && root.agents.length > 1
+        text: I18n.t("ai.tasks.best_of").replace("%1", root.agents.length)
+        muted: true
+        size: -3
+    }
+    Chip {
+        objectName: "taskModel"
+        visible: !root.chat && root.single.length > 0 && (root.catalog.models || []).length > 0
+        label: root.modelEntry ? root.modelEntry.name || root.modelEntry.id : I18n.t("ai.tasks.default_model")
+        trailingIcon: Icons.caretDown
+        variant: "transparent"
+        onClicked: modelMenu.open()
+        OptionMenu {
+            id: modelMenu
+            y: -implicitHeight - 6
+            current: root.model
+            options: [
+                {
+                    "value": "",
+                    "label": I18n.t("ai.tasks.default_model")
+                }
+            ].concat((root.catalog.models || []).map(m => ({
+                        "value": m.id,
+                        "label": m.name || m.id,
+                        "detail": m.description || ""
+                    })))
+            onPicked: value => {
+                root.model = value;
+                root.effort = "";
+            }
+        }
+    }
+    Chip {
+        objectName: "taskEffort"
+        visible: !root.chat && root.single.length > 0 && root.efforts.length > 0
+        glyph: Icons.brain
+        label: root.effort || I18n.t("ai.effort_level.auto")
+        trailingIcon: Icons.caretDown
+        variant: "transparent"
+        onClicked: effortMenu.open()
+        OptionMenu {
+            id: effortMenu
+            y: -implicitHeight - 6
+            width: 180
+            current: root.effort
+            options: [
+                {
+                    "value": "",
+                    "label": I18n.t("ai.effort_level.auto")
+                }
+            ].concat(root.efforts.map(e => ({
+                        "value": e,
+                        "label": e
+                    })))
+            onPicked: value => root.effort = value
+        }
+    }
+    Chip {
+        objectName: "taskPlanFirst"
+        visible: !root.chat
+        glyph: Icons.listChecks
+        label: I18n.t("ai.tasks.plan_first")
+        active: root.planFirst
+        onClicked: root.planFirst = !root.planFirst
+    }
+    Chip {
+        objectName: "taskInPlace"
+        visible: !root.chat
+        glyph: Icons.gitBranch
+        label: I18n.t("ai.tasks.in_place")
+        active: root.inPlace
+        enabled: root.agents.length <= 1
+        opacity: enabled ? 1 : 0.5
+        onClicked: root.inPlace = !root.inPlace
+    }
+    Item {
+        Layout.fillWidth: true
+    }
+    UiText {
+        Layout.maximumWidth: 260
+        visible: root.error.length > 0
+        text: root.error
+        color: Colors.error
+        size: -3
+    }
+    IconButton {
+        objectName: "taskTemplates"
+        visible: !root.chat && root.templates.length > 0
+        glyph: Icons.lightningBolt
+        tooltip: I18n.t("ai.tasks.templates") + " (/)"
+        onClicked: templateMenu.open()
+        OptionMenu {
+            id: templateMenu
+            y: -implicitHeight - 6
+            x: -width + parent.width
+            options: root.templates.map(t => ({
+                        "value": t.id,
+                        "label": "/" + t.id,
+                        "detail": t.description || t.name || "",
+                        "mono": true
+                    }))
+            onPicked: value => root.templateChosen("/" + value + " ")
+        }
+    }
+    IconButton {
+        objectName: "taskChatToggle"
+        glyph: root.chat ? Icons.kanban : Icons.chatDots
+        tooltip: I18n.t(root.chat ? "ai.tasks.to_tasks" : "ai.tasks.to_chat")
+        onClicked: root.chatToggled(!root.chat)
+    }
+}

@@ -107,6 +107,10 @@ ColumnLayout {
                 label: "shell.activities_timers"
             },
             {
+                key: "tasks",
+                label: "shell.activities_tasks"
+            },
+            {
                 key: "notificationProgress",
                 label: "shell.activities_notification_progress"
             },

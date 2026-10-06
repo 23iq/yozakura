@@ -277,6 +277,9 @@ func (m *Manager) Configure(s Settings) Settings {
 func (m *Manager) projectLocked(dir string) Project {
 	p := m.projects[dir]
 	p.Dir = dir
+	if p.MergeMode == "" {
+		p.MergeMode = m.settings.MergeMode
+	}
 	return p.withDefaults()
 }
 

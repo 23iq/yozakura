@@ -12,7 +12,7 @@ import "../../services/ai/EngineSelection.js" as Selection
 
 // History of one space with search and pinning (pinned first, then most
 // recent): Assistant = chats and assistant agent sessions, Code = agent
-// sessions grouped by project. Keyboard: type to search, Up/Down, Enter
+// sessions grouped by project (sessions of tasks live on the task board). Keyboard: type to search, Up/Down, Enter
 // opens, Esc closes.
 StyledRect {
     id: root
@@ -25,7 +25,7 @@ StyledRect {
 
     property string space: "assistant"
     property int selectedIndex: 0
-    readonly property var entries: Selection.sessions(Ai.store ? Ai.store.chats : [], Ai.drafts ? Ai.drafts.summaries : [], Ai.agents ? Ai.agents.sessions : [], search.text, space).map(e => Object.assign({}, e, {
+    readonly property var entries: Selection.sessions(Ai.store ? Ai.store.chats : [], Ai.drafts ? Ai.drafts.summaries : [], Ai.agents ? Ai.agents.sessions.filter(s => !TasksService.sessionIds[s.id]) : [], search.text, space).map(e => Object.assign({}, e, {
             subtitle: (e.subtitle || "").replace(Quickshell.env("HOME"), "~")
         }))
     // Code groups sessions under a header row per project.

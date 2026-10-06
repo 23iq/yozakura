@@ -145,6 +145,8 @@ var types = {
         "context.overrides": "list<var>",
         "context.warnAt": "int",
         "maxToolRounds": "int",
+        "tasks.doneLimit": "int",
+        "tasks.maxParallel": "int",
         "ollama.numCtx": "int",
         "providers.customHeaders": "list<var>",
         "providers.hidden": "list<string>",

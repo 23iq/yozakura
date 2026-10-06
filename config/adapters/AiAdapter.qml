@@ -240,6 +240,25 @@ JsonAdapter {
         property list<var> customHeaders: []
         property bool openrouterAttribution: true
     }
+    property JsonObject tasks: JsonObject {
+        property list<string> defaultAgents: ["claude"]
+        property bool planFirst: false
+        property bool inPlace: false
+        property int maxParallel: 2
+        property string fallbackAgent: ""
+        property bool notifications: true
+        property list<string> notifyEvents: ["permission", "plan", "review", "failed", "limit"]
+        property string mergeMode: "squash"
+        property string boardLayout: "auto"
+        property bool showCosts: true
+        property bool showElapsed: true
+        property bool showBranch: true
+        property int doneLimit: 20
+        property bool autoOpenReview: true
+        property bool confirmAccept: true
+        property bool confirmDiscard: true
+        property bool commitWithAi: true
+    }
     property JsonObject picker: JsonObject {
         property bool showCapabilities: true
         property bool groupByProvider: true

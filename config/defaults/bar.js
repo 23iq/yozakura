@@ -31,6 +31,7 @@ var data = {
             "recording": true,
             "privacy": true,
             "timers": true,
+            "tasks": true,
             "notificationProgress": true,
             "jobView": true,
             "browserDownloads": true,

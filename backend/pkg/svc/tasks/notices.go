@@ -164,24 +164,29 @@ func (m *Manager) noticeForTaskLocked(t *Task, fx *effects) {
 	}
 	key := "task-" + t.ID
 	p := notify.SendParams{AppIcon: "dialog-information", ReplaceKey: key, Body: t.Title, Urgency: "normal"}
+	kind := ""
 	switch t.Status {
 	case StatusAwaitingPlan:
+		kind = "plan"
 		p.Summary = "Plan ready"
 		p.Actions = []notify.SendAction{{Identifier: "run", Text: "Run", Call: &notify.ActionCall{Method: "tasks.run",
 			Params: map[string]any{"id": t.ID}}}, openAction(t.ID)}
 	case StatusReview:
+		kind = "review"
 		p.Summary = "Ready for review"
 		if c := lastCheck(t); c != "" {
 			p.Body += "\nCheck: " + c
 		}
 		p.Actions = []notify.SendAction{openAction(t.ID)}
 	case StatusFailed:
+		kind = "failed"
 		p.Summary, p.AppIcon, p.Urgency = "Task failed", "dialog-error", "critical"
 		if t.Error != "" {
 			p.Body += "\n" + oneLine(t.Error, 200)
 		}
 		p.Actions = []notify.SendAction{openAction(t.ID)}
 	case StatusWaitingLimit:
+		kind = "limit"
 		p.Summary = "Waiting for the usage limit"
 		for _, r := range t.Runs {
 			if r.ResetsAt > 0 {
@@ -198,6 +203,9 @@ func (m *Manager) noticeForTaskLocked(t *Task, fx *effects) {
 		return
 	}
 	m.notified[t.ID] = t.Status
+	if !m.settings.notifyKind(kind) {
+		return
+	}
 	fx.add(m.send(p))
 }
 

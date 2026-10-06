@@ -133,7 +133,7 @@ func (m *Manager) handle(ev agents.Event) {
 			r.Pending = append(r.Pending, ev.ID)
 			r.Status = StatusWaiting
 			changed = true
-			if m.settings.notifyOn() {
+			if m.settings.notifyKind("permission") {
 				fx.add(m.permissionNotice(t, r, ev))
 			}
 		}

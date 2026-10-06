@@ -116,6 +116,25 @@ var data = {
         "customHeaders": [],
         "openrouterAttribution": true
     },
+    "tasks": {
+        "defaultAgents": ["claude"],
+        "planFirst": false,
+        "inPlace": false,
+        "maxParallel": 2,
+        "fallbackAgent": "",
+        "notifications": true,
+        "notifyEvents": ["permission", "plan", "review", "failed", "limit"],
+        "mergeMode": "squash",
+        "boardLayout": "auto",
+        "showCosts": true,
+        "showElapsed": true,
+        "showBranch": true,
+        "doneLimit": 20,
+        "autoOpenReview": true,
+        "confirmAccept": true,
+        "confirmDiscard": true,
+        "commitWithAi": true
+    },
     "picker": {
         "showCapabilities": true,
         "groupByProvider": true,

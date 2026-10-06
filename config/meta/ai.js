@@ -115,5 +115,22 @@ var keys = {
     },
     "lmstudio": {
         "description": "LM Studio (local OpenAI-compatible server)."
+    },
+    "tasks": {
+        "description": "Code space tasks: agents run prompts in git worktrees, a check verifies the result, the user reviews and accepts (backend svc/tasks)."
+    },
+    "tasks.defaultAgents": {
+        "items": {
+            "enum": ["claude", "codex", "opencode"]
+        },
+        "uniqueItems": true,
+        "description": "Agents preselected for a new task (several = best-of-N)."
+    },
+    "tasks.notifyEvents": {
+        "items": {
+            "enum": ["permission", "plan", "review", "failed", "limit"]
+        },
+        "uniqueItems": true,
+        "description": "Task events that send a desktop notification."
     }
 };

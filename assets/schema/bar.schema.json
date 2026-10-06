@@ -325,6 +325,12 @@
               "default": true,
               "description": "Track this activity source."
             },
+            "tasks": {
+              "title": "Tasks",
+              "type": "boolean",
+              "default": true,
+              "description": "Track this activity source."
+            },
             "notificationProgress": {
               "title": "Notification progress",
               "type": "boolean",

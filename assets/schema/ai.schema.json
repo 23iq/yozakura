@@ -1643,6 +1643,322 @@
       },
       "additionalProperties": false
     },
+    "tasks": {
+      "title": "Tasks",
+      "type": "object",
+      "description": "Code space tasks: agents run prompts in git worktrees, a check verifies the result, the user reviews and accepts (backend svc/tasks).",
+      "properties": {
+        "defaultAgents": {
+          "title": "Default agents",
+          "type": "array",
+          "default": [
+            "claude"
+          ],
+          "items": {
+            "enum": [
+              "claude",
+              "codex",
+              "opencode"
+            ]
+          },
+          "description": "Agents selected for a new task; several run the same task in parallel and you pick the best result",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "new_tasks",
+            "label": "prefs.ai.tasks.default_agents",
+            "control": "multiselect",
+            "keywords": "agent default best of n parallel claude codex opencode"
+          },
+          "uniqueItems": true,
+          "x-itemLabels": {
+            "claude": "Claude Code",
+            "codex": "Codex",
+            "opencode": "OpenCode"
+          }
+        },
+        "planFirst": {
+          "title": "Plan first by default",
+          "type": "boolean",
+          "default": false,
+          "description": "The agent writes a plan you can edit before it changes any file",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "new_tasks",
+            "label": "prefs.ai.tasks.plan_first",
+            "control": "toggle",
+            "keywords": "plan first steps approve"
+          }
+        },
+        "inPlace": {
+          "title": "Work in the current branch by default",
+          "type": "boolean",
+          "default": false,
+          "description": "Off: every task gets its own git worktree and branch, your checkout stays untouched",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "new_tasks",
+            "label": "prefs.ai.tasks.in_place",
+            "control": "toggle",
+            "keywords": "worktree current branch checkout in place"
+          }
+        },
+        "maxParallel": {
+          "title": "Tasks at the same time",
+          "type": "number",
+          "default": 2,
+          "description": "Further tasks wait in the queue",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "queue",
+            "label": "prefs.ai.tasks.max_parallel",
+            "control": "number",
+            "keywords": "parallel concurrent slots queue",
+            "min": 1,
+            "max": 8
+          },
+          "minimum": 1,
+          "maximum": 8
+        },
+        "fallbackAgent": {
+          "title": "Fallback agent",
+          "type": "string",
+          "default": "",
+          "description": "Continues a task when its agent hits a usage limit; none = wait for the reset",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "queue",
+            "label": "prefs.ai.tasks.fallback",
+            "control": "selector",
+            "keywords": "fallback limit usage rate agent"
+          },
+          "enum": [
+            "",
+            "claude",
+            "codex",
+            "opencode"
+          ],
+          "x-enumLabels": {
+            "": "None (wait)",
+            "claude": "Claude Code",
+            "codex": "Codex",
+            "opencode": "OpenCode"
+          }
+        },
+        "notifications": {
+          "title": "Desktop notifications",
+          "type": "boolean",
+          "default": true,
+          "description": "Notify when a task needs you, with Allow / Deny / Open buttons",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "notifications",
+            "label": "prefs.ai.tasks.notify",
+            "control": "toggle",
+            "keywords": "notification desktop alert"
+          }
+        },
+        "notifyEvents": {
+          "title": "Notify about",
+          "type": "array",
+          "default": [
+            "permission",
+            "plan",
+            "review",
+            "failed",
+            "limit"
+          ],
+          "items": {
+            "enum": [
+              "permission",
+              "plan",
+              "review",
+              "failed",
+              "limit"
+            ]
+          },
+          "description": "Events that send a notification",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "notifications",
+            "label": "prefs.ai.tasks.notify_events",
+            "control": "multiselect",
+            "keywords": "notification permission plan review failed limit",
+            "enabledWhen": {
+              "key": "ai.tasks.notifications",
+              "equals": true
+            }
+          },
+          "uniqueItems": true,
+          "x-itemLabels": {
+            "permission": "Permission requests",
+            "plan": "Plan ready",
+            "review": "Ready for review",
+            "failed": "Failed tasks",
+            "limit": "Usage limit waits"
+          }
+        },
+        "mergeMode": {
+          "title": "Accept as",
+          "type": "string",
+          "default": "squash",
+          "description": "How an accepted task lands on your branch (projects can override it)",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "review",
+            "label": "prefs.ai.tasks.merge_mode",
+            "control": "selector",
+            "keywords": "merge squash commit accept"
+          },
+          "enum": [
+            "squash",
+            "merge"
+          ],
+          "x-enumLabels": {
+            "squash": "One commit",
+            "merge": "Merge commit"
+          }
+        },
+        "boardLayout": {
+          "title": "Board layout",
+          "type": "string",
+          "default": "auto",
+          "description": "Auto: columns when the bar is wide, a list otherwise",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "board",
+            "label": "prefs.ai.tasks.layout",
+            "control": "selector",
+            "keywords": "board columns list kanban layout"
+          },
+          "enum": [
+            "auto",
+            "columns",
+            "list"
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "columns": "Columns",
+            "list": "List"
+          }
+        },
+        "showCosts": {
+          "title": "Show cost",
+          "type": "boolean",
+          "default": true,
+          "description": "Cost or tokens on cards and in the task header, when the agent reports them",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "board",
+            "label": "prefs.ai.tasks.show_costs",
+            "control": "toggle",
+            "keywords": "cost tokens price card"
+          }
+        },
+        "showElapsed": {
+          "title": "Show elapsed time",
+          "type": "boolean",
+          "default": true,
+          "description": "How long each task has been running",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "board",
+            "label": "prefs.ai.tasks.show_elapsed",
+            "control": "toggle",
+            "keywords": "time elapsed duration card"
+          }
+        },
+        "showBranch": {
+          "title": "Show branch",
+          "type": "boolean",
+          "default": true,
+          "description": "The worktree branch badge on cards",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "board",
+            "label": "prefs.ai.tasks.show_branch",
+            "control": "toggle",
+            "keywords": "branch worktree badge card"
+          }
+        },
+        "doneLimit": {
+          "title": "Finished tasks shown",
+          "type": "number",
+          "default": 20,
+          "description": "Newest finished tasks in the Done section",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "board",
+            "label": "prefs.ai.tasks.done_limit",
+            "control": "number",
+            "step": 5,
+            "keywords": "done finished history count",
+            "min": 0,
+            "max": 200,
+            "specialValues": [
+              {
+                "value": 0,
+                "label": "All"
+              }
+            ]
+          },
+          "minimum": 0,
+          "maximum": 200
+        },
+        "autoOpenReview": {
+          "title": "Open finished tasks",
+          "type": "boolean",
+          "default": true,
+          "description": "Show the review of a task as soon as it is ready when no other task is open",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "review",
+            "label": "prefs.ai.tasks.auto_open_review",
+            "control": "toggle",
+            "keywords": "review open automatically finished"
+          }
+        },
+        "confirmAccept": {
+          "title": "Confirm before accepting",
+          "type": "boolean",
+          "default": true,
+          "description": "Ask once more before a task is committed to your branch",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "review",
+            "label": "prefs.ai.tasks.confirm_accept",
+            "control": "toggle",
+            "keywords": "confirm accept commit"
+          }
+        },
+        "confirmDiscard": {
+          "title": "Confirm before discarding",
+          "type": "boolean",
+          "default": true,
+          "description": "Ask before a task's worktree and branch are deleted",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "review",
+            "label": "prefs.ai.tasks.confirm_discard",
+            "control": "toggle",
+            "keywords": "confirm discard delete worktree"
+          }
+        },
+        "commitWithAi": {
+          "title": "Commit messages by AI",
+          "type": "boolean",
+          "default": true,
+          "description": "The Commit popover of the project bar can write the message from the diff",
+          "x-settings": {
+            "category": "ai-code",
+            "section": "review",
+            "label": "prefs.ai.tasks.commit_ai",
+            "control": "toggle",
+            "keywords": "commit message ai write git"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "picker": {
       "title": "Picker",
       "type": "object",

@@ -63,7 +63,7 @@ func TestTemplates(t *testing.T) {
 	for _, tp := range list {
 		ids[tp.ID] = tp
 	}
-	for _, id := range []string{"review", "tests", "fix-check", "explain", "refactor", "deploy"} {
+	for _, id := range []string{"review", "tests", "fix-check", "explain", "refactor", "instructions", "deploy"} {
 		if _, ok := ids[id]; !ok {
 			t.Errorf("template %s missing", id)
 		}
@@ -137,5 +137,33 @@ func TestProjectConfig(t *testing.T) {
 	}
 	if s := e.m.Configure(Settings{MaxParallel: 0}); s.MaxParallel != 2 || s.LimitBackoff != 1800 {
 		t.Fatalf("defaults: %+v", s)
+	}
+}
+
+func TestSettingsMuteAndMergeMode(t *testing.T) {
+	e := newEnv(t, writer)
+	s := e.m.Configure(Settings{Mute: []string{"review"}, MergeMode: "merge"})
+	if !s.notifyKind("plan") || s.notifyKind("review") {
+		t.Fatalf("mute: %+v", s)
+	}
+	v, err := e.m.Project(e.repo)
+	if err != nil || v.MergeMode != "merge" {
+		t.Fatalf("default merge mode: %+v %v", v, err)
+	}
+	squash := "squash"
+	if v, _ = e.m.SetProject(ProjectPatch{Dir: e.repo, MergeMode: &squash}); v.MergeMode != "squash" {
+		t.Fatalf("project override: %+v", v)
+	}
+	tk, err := e.m.Create(CreateParams{Dir: e.repo, Prompt: "Add a hello file", Agent: "claude"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	waitTask(t, e.m, tk.ID, "review", statusIs(StatusReview))
+	if e.notes.find("Ready for review") != nil {
+		t.Fatal("muted review notification was sent")
+	}
+	off := false
+	if s = e.m.Configure(Settings{Notify: &off}); s.notifyKind("permission") {
+		t.Fatal("notify off still sends")
 	}
 }

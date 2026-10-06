@@ -15,6 +15,8 @@ Item {
     property string agentId: ""         // agent session id (CLI)
     property string style: "compact"
     property string agentLabel: ""
+    // Scroll memory key; "" = the open conversation (Ai.sessionKey).
+    property string persistKey: ""
 
     readonly property string kind: agentId ? "agent" : "chat"
     readonly property var timeline: agentId && Ai.agents ? Ai.agents.timeline(agentId) : null
@@ -36,7 +38,7 @@ Item {
     }
     function restoreScroll() {
         saveScroll();
-        scrollKey = Ai.sessionKey;
+        scrollKey = root.persistKey || Ai.sessionKey;
         restoringScroll = true;
         Qt.callLater(() => {
             scrollPosition = Ai.drafts ? Ai.drafts.scroll(scrollKey) : 0;
@@ -46,11 +48,13 @@ Item {
         });
     }
     Component.onCompleted: restoreScroll()
+    onPersistKeyChanged: restoreScroll()
     Component.onDestruction: saveScroll()
     Connections {
         target: Ai
         function onSessionKeyChanged() {
-            root.restoreScroll();
+            if (!root.persistKey)
+                root.restoreScroll();
         }
     }
 

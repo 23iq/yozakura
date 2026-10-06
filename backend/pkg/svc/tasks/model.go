@@ -157,6 +157,12 @@ type Settings struct {
 	FallbackAgent string `json:"fallbackAgent"` // used when an agent hits its limit
 	LimitBackoff  int    `json:"limitBackoff"`  // seconds when the reset time is unknown (default 1800)
 	Notify        *bool  `json:"notify"`        // desktop notifications (default on)
+	// Mute lists notification kinds that stay silent: permission, plan,
+	// review, failed, limit.
+	Mute []string `json:"mute,omitempty"`
+	// MergeMode is the accept mode of projects that do not set one
+	// (squash | merge; default squash).
+	MergeMode string `json:"mergeMode,omitempty"`
 }
 
 func (s Settings) withDefaults() Settings {
@@ -170,6 +176,19 @@ func (s Settings) withDefaults() Settings {
 }
 
 func (s Settings) notifyOn() bool { return s.Notify == nil || *s.Notify }
+
+// notifyKind reports whether notifications of one kind are sent.
+func (s Settings) notifyKind(kind string) bool {
+	if !s.notifyOn() {
+		return false
+	}
+	for _, k := range s.Mute {
+		if k == kind {
+			return false
+		}
+	}
+	return true
+}
 
 func (p Project) withDefaults() Project {
 	if p.MaxAttempts <= 0 {

@@ -11,7 +11,7 @@ import qs.modules.aicenter.chat
 
 // Message input: multi-line text, context chips, attach menu, send/stop.
 // Enter sends and Shift+Enter adds a line (ai.behavior.enterToSend off:
-// Ctrl+Enter sends, Enter adds a line), Ctrl+Shift+S/V/R/O/W attach context,
+// Enter adds a line); Ctrl+Enter always sends, Ctrl+Shift+S/V/R/O/W attach context,
 // Ctrl+. stops, Esc clears attachments, then text, then closes.
 StyledRect {
     id: root
@@ -22,6 +22,10 @@ StyledRect {
     property alias text: input.text
     property bool compact: false
     property var submitHandler: null
+    // Extra `/` commands ([{cmd, desc}], e.g. task templates) and whether
+    // the built-in /new /clear /model are offered.
+    property var extraCommands: []
+    property bool builtinCommands: true
 
     signal submitted(string text, var attachments)
     signal stopRequested
@@ -34,6 +38,12 @@ StyledRect {
     border.color: input.activeFocus ? Colors.primary : Qt.rgba(Colors.outlineVariant.r, Colors.outlineVariant.g, Colors.outlineVariant.b, 0.6)
 
     function focusInput() {
+        input.forceActiveFocus();
+    }
+    // Replace the text and put the cursor at its end (template commands).
+    function insert(text) {
+        input.text = text;
+        input.cursorPosition = text.length;
         input.forceActiveFocus();
     }
 
@@ -78,7 +88,7 @@ StyledRect {
         }
     ]
     readonly property bool enterSends: BarLook.behavior.enterToSend !== false
-    readonly property var slashMatches: input.text.startsWith("/") && input.text.indexOf(" ") < 0 ? slashCommands.filter(c => c.cmd.startsWith(input.text)) : []
+    readonly property var slashMatches: input.text.startsWith("/") && input.text.indexOf(" ") < 0 ? (builtinCommands ? slashCommands : []).concat(extraCommands).filter(c => c.cmd.startsWith(input.text)) : []
     readonly property var contextKeys: ({
             [Qt.Key_S]: "selection",
             [Qt.Key_V]: "clipboard",
@@ -154,7 +164,7 @@ StyledRect {
                 Keys.onPressed: event => {
                     const ctrl = (event.modifiers & Qt.ControlModifier) !== 0;
                     const shift = (event.modifiers & Qt.ShiftModifier) !== 0;
-                    if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !shift && ctrl !== root.enterSends) {
+                    if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !shift && (ctrl || root.enterSends)) {
                         if (root.slashMatches.length === 1 && input.text !== root.slashMatches[0].cmd)
                             input.text = root.slashMatches[0].cmd;
                         root.submit();

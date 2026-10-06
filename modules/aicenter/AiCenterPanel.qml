@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
@@ -15,13 +16,17 @@ import qs.modules.aicenter.agent
 import qs.modules.aicenter.composer
 import qs.modules.aicenter.sessions
 import qs.modules.aicenter.providers
+import qs.modules.aicenter.tasks
+import "../services/tasks/TaskModel.js" as TaskModel
 
 // The AI bar. Two spaces (GlobalStates.aiSpace): Assistant (any engine,
 // compact transcript) and Code (CLI agents in a project: project bar,
 // detailed transcript, changes, session settings). Three sizes: compact
 // (overlay history), wide (history column; Code also docks the changes)
-// and fullscreen (same, readable centre column). Sessions and drafts live
-// in Ai; this view only presents them.
+// and fullscreen (same, readable centre column). Code without an open
+// session shows the task board (TaskWorkspace) and the composer creates
+// tasks (TaskOptions); its chat toggle brings back the interactive agent
+// chat. Sessions and drafts live in Ai; this view only presents them.
 StyledRect {
     id: root
     property bool frameWrapped: false
@@ -31,7 +36,10 @@ StyledRect {
     property bool changesDrawerOpen: false
     readonly property bool code: GlobalStates.aiSpace === "code"
     readonly property bool wide: GlobalStates.assistantWide || GlobalStates.assistantFullscreen
-    readonly property bool historyDocked: wide && width >= 760
+    property bool codeChat: false
+    readonly property bool taskMode: code && Ai.activeAgent === null && !codeChat
+    readonly property string project: (Ai.agentSettings && Ai.agentSettings.cwd) || Quickshell.env("HOME")
+    readonly property bool historyDocked: wide && width >= 760 && !taskMode
     readonly property bool changesDocked: code && wide && width >= 1100 && Ai.activeAgent !== null
     readonly property bool hasConversation: Ai.activeAgent !== null || (Ai.mode !== "agent" && Ai.activeChat !== null && Ai.activeChat.rows.count > 0)
     property string draftKey: ""
@@ -48,6 +56,13 @@ StyledRect {
 
     function focusComposer() {
         composer.focusInput();
+    }
+    function leaveComposer() {
+        const board = workspaceLoader.item as Item;
+        if (root.taskMode && board && !board.activeFocus)
+            board.forceActiveFocus();
+        else
+            GlobalStates.hideAssistant();
     }
     function saveDraft() {
         if (!restoringDraft && draftKey && Ai.drafts)
@@ -115,6 +130,13 @@ StyledRect {
     Shortcut {
         sequence: "Ctrl+N"
         onActivated: Ai.newConversation()
+    }
+    Connections {
+        target: TasksService
+        function onFocusRequested() {
+            root.codeChat = false;
+            root.historyOpen = false;
+        }
     }
     Shortcut {
         sequence: "Ctrl+K"
@@ -196,15 +218,16 @@ StyledRect {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.alignment: Qt.AlignHCenter
-                Layout.maximumWidth: GlobalStates.assistantFullscreen ? 960 : Number.POSITIVE_INFINITY
+                Layout.maximumWidth: GlobalStates.assistantFullscreen && !root.taskMode ? 960 : Number.POSITIVE_INFINITY
                 Layout.minimumWidth: Math.min(320, root.width - 20)
                 spacing: 6
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Loader {
+                        id: workspaceLoader
                         anchors.fill: parent
-                        sourceComponent: root.hasConversation ? transcriptC : (root.code ? codeEmptyC : welcomeC)
+                        sourceComponent: root.hasConversation ? transcriptC : (root.code ? (root.codeChat ? codeEmptyC : tasksC) : welcomeC)
                     }
                 }
                 Text {
@@ -226,8 +249,27 @@ StyledRect {
                     sessionKey: Ai.sessionKey
                     onCompactRequested: Ai.contextState.compact(null)
                 }
+                TaskOptions {
+                    id: taskOptions
+                    Layout.fillWidth: true
+                    Layout.leftMargin: 4
+                    Layout.rightMargin: 4
+                    visible: root.code && Ai.activeAgent === null
+                    project: root.project
+                    chat: root.codeChat
+                    onChatToggled: chat => {
+                        root.codeChat = chat;
+                        root.focusComposer();
+                    }
+                    onTemplateChosen: command => composer.insert(command)
+                    onRestore: (text, attachments) => {
+                        composer.text = text;
+                        composer.attachments = attachments;
+                    }
+                }
                 ComposerStatus {
                     Layout.fillWidth: true
+                    visible: !root.taskMode
                     Layout.leftMargin: 4
                     Layout.rightMargin: 4
                     contextUsed: Ai.contextState ? Ai.contextState.used : 0
@@ -243,12 +285,14 @@ StyledRect {
                     objectName: "workspaceComposer"
                     Layout.fillWidth: true
                     busy: Ai.busy
-                    placeholder: Ai.activeAgent ? I18n.t("ai.agent_followup") : (root.code ? I18n.t("ai.code_placeholder") : I18n.t("ai.ask_anything"))
-                    submitHandler: (text, attachments) => root.send(text, attachments)
+                    placeholder: Ai.activeAgent ? I18n.t("ai.agent_followup") : (root.taskMode ? I18n.t("ai.tasks.placeholder") : (root.code ? I18n.t("ai.code_placeholder") : I18n.t("ai.ask_anything")))
+                    submitHandler: (text, attachments) => root.taskMode ? taskOptions.submit(text, attachments) : root.send(text, attachments)
+                    extraCommands: root.taskMode ? TaskModel.slashCommands(TasksService.templates[root.project] || []) : []
+                    builtinCommands: !root.taskMode
                     onTextChanged: root.saveDraft()
                     onAttachmentsChanged: root.saveDraft()
                     onStopRequested: Ai.stop()
-                    onEscapePressed: GlobalStates.hideAssistant()
+                    onEscapePressed: root.leaveComposer()
                 }
             }
             ChangesPane {
@@ -281,6 +325,16 @@ StyledRect {
     Component {
         id: codeEmptyC
         CodeEmpty {}
+    }
+    Component {
+        id: tasksC
+        TaskWorkspace {
+            project: root.project
+            wide: root.wide
+            onNewTaskRequested: root.focusComposer()
+            onTemplateChosen: command => composer.insert(command)
+            onEscapeRequested: GlobalStates.hideAssistant()
+        }
     }
 
     SessionDrawer {
