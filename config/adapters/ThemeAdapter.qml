@@ -21,6 +21,7 @@ JsonAdapter {
     property bool enableCorners: true
     property int animDuration: 300
     property string density: "cozy"
+    property string language: "ink"
     property JsonObject shape: JsonObject {
         property string corners: "round"
         property string popupCorners: ""

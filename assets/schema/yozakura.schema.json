@@ -8969,6 +8969,18 @@
             "roomy"
           ]
         },
+        "language": {
+          "title": "Language",
+          "type": "string",
+          "default": "ink",
+          "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles) or classic (the surface variants exactly as configured).",
+          "enum": [
+            "ink",
+            "glass",
+            "tiles",
+            "classic"
+          ]
+        },
         "shape": {
           "title": "Shape",
           "type": "object",

@@ -43,7 +43,8 @@ function byId(id) {
 }
 
 // The pre-bento widgets tab: player | quick controls over calendar and
-// specials | notification history | brightness, volume and mic levels.
+// notification history | brightness, volume and mic levels (three rows;
+// special workspaces are added from the picker).
 // Narrower grids are clamped and stacked by BentoGrid.normalize.
 function defaultGrid(cols) {
     return [
@@ -51,7 +52,6 @@ function defaultGrid(cols) {
         { widget: "quickControls", x: 1, y: 0, w: 2, h: 1 },
         { widget: "calendar", x: 1, y: 1, w: 1, h: 2 },
         { widget: "notifications", x: 2, y: 1, w: 1, h: 2 },
-        { widget: "specials", x: 1, y: 3, w: 2, h: 1 },
         { widget: "levels", x: 3, y: 0, w: 1, h: 3 }
     ];
 }

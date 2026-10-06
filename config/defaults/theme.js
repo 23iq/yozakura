@@ -23,6 +23,8 @@ var data = {
     "animDuration": 300,
     // Metrics density: compact | cozy | roomy (cozy = the historical sizes).
     "density": "cozy",
+    // Visual language (modules/theme/VisualLanguage.js): ink | glass | tiles | classic.
+    "language": "ink",
     // Corner shape: round | squircle | cut | tab; popupCorners "" follows corners.
     "shape": {
         "corners": "round",

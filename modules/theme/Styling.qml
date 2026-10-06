@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.config
 import "TypeRoles.js" as TypeRoles
+import "VisualLanguage.js" as VisualLanguage
 
 QtObject {
     readonly property string defaultFont: Config.defaultFont
@@ -26,7 +27,12 @@ QtObject {
         return Math.max(Config.theme.monoFontSize + offset, 8);
     }
 
+    // The variant's sr* config as drawn by the visual language (theme.language).
     function getStyledRectConfig(variant) {
+        return VisualLanguage.apply(Config.theme.language, variant, rawStyledRectConfig(variant));
+    }
+
+    function rawStyledRectConfig(variant) {
         switch (variant) {
         case "transparent":
             // Internal variant: uses bg config but with opacity, border and radius forced to 0

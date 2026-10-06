@@ -33,10 +33,13 @@ NotchAnimationBehavior {
     readonly property int tabSpacing: 8
 
     readonly property int tabWidth: 48
-    readonly property real nonAnimWidth: (state.currentTab === 0 ? 600 : 400) + tabWidth + 16 // unified launcher tab is wider
+    readonly property real nonAnimWidth: (state.currentTab === 0 ? 780 : 400) + tabWidth + 16 // the widgets tab (bento) is wider
 
     implicitWidth: nonAnimWidth
-    implicitHeight: 430
+    // The widgets tab is as tall as its bento grid, so no tile is clipped.
+    readonly property Item widgetsItem: widgetsTabLoader.item as Item
+    readonly property real widgetsHeight: widgetsItem ? widgetsItem.implicitHeight : 430
+    implicitHeight: state.currentTab === 0 ? Math.max(300, widgetsHeight) : 430
 
     // Track which tabs have been loaded (for lazy loading)
     property var loadedTabs: ({0: true}) // Tab 0 (widgets) loaded by default
@@ -273,6 +276,7 @@ NotchAnimationBehavior {
 
                 // Tab 0: Unified Launcher
                 TabLoader {
+                    id: widgetsTabLoader
                     property int index: 0
                     sourceComponent: unifiedLauncherComponent
                     z: visible ? 1 : 0
