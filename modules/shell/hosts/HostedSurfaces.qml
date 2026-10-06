@@ -5,10 +5,11 @@ import qs.modules.services
 import qs.modules.shell.hosts
 import qs.modules.widgets.dashboard
 import qs.modules.widgets.launcher
+import qs.modules.keybinds
 
-// Per-screen owner of the spotlight and sheet hosts. Watches this screen's
-// Visibilities flags through HostRouter and opens/closes the host that shows
-// the module; hosts and views are created on first use and kept, like the
+// Per-screen owner of the spotlight and sheet hosts (launcher, dashboard,
+// keybind cheatsheet). Watches this screen's Visibilities flags through
+// HostRouter and opens/closes the host that shows the module; hosts and views are created on first use and kept, like the
 // notch's persistent views. A host's requestClose clears the flags.
 Scope {
     id: root
@@ -30,7 +31,7 @@ Scope {
     }
 
     function viewFor(module: string): var {
-        const loader = module === "dashboard" ? dashboardLoader : launcherLoader;
+        const loader = module === "dashboard" ? dashboardLoader : module === "cheatsheet" ? cheatsheetLoader : launcherLoader;
         loader.active = true;
         return loader.item;
     }
@@ -66,6 +67,17 @@ Scope {
         active: false
         sourceComponent: Component {
             DashboardView {
+                visible: false
+                screenName: root.screen ? root.screen.name : ""
+            }
+        }
+    }
+
+    Loader {
+        id: cheatsheetLoader
+        active: false
+        sourceComponent: Component {
+            CheatsheetView {
                 visible: false
                 screenName: root.screen ? root.screen.name : ""
             }

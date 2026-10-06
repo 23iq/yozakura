@@ -33,6 +33,15 @@ JsonAdapter {
     property JsonObject sheet: JsonObject {
         property string side: "auto"
     }
+    property JsonObject powermenu: JsonObject {
+        property string style: "notch"
+    }
+    property JsonObject tools: JsonObject {
+        property string style: "notch"
+    }
+    property JsonObject cheatsheet: JsonObject {
+        property string host: "fullscreen"
+    }
     property JsonObject osd: JsonObject {
         property string position: "auto"
         property string style: "pill"

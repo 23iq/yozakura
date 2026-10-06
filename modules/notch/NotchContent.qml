@@ -500,6 +500,9 @@ Item {
         }
 
         function onPowermenuChanged() {
+            // other layout.powermenu.style values open in the menu overlay
+            if (HostRouter.hostFor("powermenu") !== "notch")
+                return;
             if (screenVisibilities.powermenu) {
                 persistentPowerMenuViewLoader.active = true;
                 Qt.callLater(() => {
@@ -541,6 +544,9 @@ Item {
         }
 
         function onToolsChanged() {
+            // other layout.tools.style values open in the menu overlay
+            if (HostRouter.hostFor("tools") !== "notch")
+                return;
             if (screenVisibilities.tools) {
                 persistentToolsMenuViewLoader.active = true;
                 Qt.callLater(() => {

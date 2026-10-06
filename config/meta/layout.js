@@ -53,6 +53,27 @@ var keys = {
         "enum": ["auto", "left", "right"],
         "description": "Edge the side sheet slides from; auto follows the bar."
     },
+    "powermenu": {
+        "description": "Power menu look."
+    },
+    "powermenu.style": {
+        "enum": ["notch", "fullscreen", "radial"],
+        "description": "Power menu look: a row in the notch, large buttons over a dimmed screen, or a ring at the cursor. Shutdown, reboot and logout are held to confirm."
+    },
+    "tools": {
+        "description": "Tools menu look."
+    },
+    "tools.style": {
+        "enum": ["notch", "radial"],
+        "description": "Tools menu look: a row in the notch or a ring at the cursor."
+    },
+    "cheatsheet": {
+        "description": "Keybind cheatsheet placement."
+    },
+    "cheatsheet.host": {
+        "enum": ["fullscreen", "spotlight", "sheet"],
+        "description": "Where the keybind cheatsheet opens: full screen, centered over a dimmed screen (spotlight) or as a side sheet. Unknown values fall back to fullscreen."
+    },
     "osd": {
         "description": "On-screen display for volume and brightness."
     },

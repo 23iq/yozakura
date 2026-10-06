@@ -411,7 +411,12 @@ func (m *Manager) Apply(name string) (Preset, []catalog.Problem, error) {
 		return Preset{}, nil, err
 	}
 	defer unlock()
-	return m.apply(name)
+	p, problems, err := m.apply(name)
+	if err == nil {
+		// A real apply keeps it: a running preview's backup is dropped.
+		m.dropSession(PreviewSession)
+	}
+	return p, problems, err
 }
 
 func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {

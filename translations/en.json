@@ -3570,9 +3570,18 @@
   "prefs.icons_type.case.upper": "UPPER",
   "prefs.icons_type.case.lower": "lower",
   "prefs.icons_type.case.title": "Title",
-  "prefs.appearance.section.signatures": "Signatures",
-  "prefs.appearance.sig_brush": "Brush highlight",
-  "prefs.appearance.sig_brush.desc": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
-  "prefs.appearance.sig_petals": "Falling petals",
-  "prefs.appearance.sig_petals.desc": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver."
+  "powermenu.hold_hint": "Hold to confirm shutdown, reboot and log out",
+  "prefs.menus.section": "Menus",
+  "prefs.menus.style.notch": "Notch",
+  "prefs.menus.style.fullscreen": "Full screen",
+  "prefs.menus.style.radial": "Radial",
+  "prefs.menus.powermenu_style": "Power menu",
+  "prefs.menus.powermenu_style.desc": "In the notch, large buttons over a dimmed screen, or a ring at the pointer. Shutdown, reboot and log out are held to confirm.",
+  "prefs.menus.tools_style": "Tools menu",
+  "prefs.menus.tools_style.desc": "Screenshot, recording and picker tools in the notch or on a ring at the pointer.",
+  "prefs.layout.host.fullscreen": "Full screen",
+  "prefs.layout.cheatsheet_host": "Keybind cheatsheet",
+  "prefs.layout.cheatsheet_host.desc": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
+  "presets.tab.sets": "Sets",
+  "presets.gallery.search": "Search presets... (hover to preview, Enter keeps, Esc reverts)"
 }

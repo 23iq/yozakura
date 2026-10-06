@@ -14,6 +14,7 @@ import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.notch
 import qs.modules.widgets.overview
 import qs.modules.widgets.presets
+import qs.modules.widgets.menus
 import qs.modules.services
 import qs.modules.corners
 import qs.modules.frame
@@ -174,6 +175,16 @@ ShellRoot {
         model: Quickshell.screens
 
         HostedSurfaces {
+            required property ShellScreen modelData
+            screen: modelData
+        }
+    }
+
+    // Power/tools menus off the notch (layout.powermenu/tools.style)
+    Variants {
+        model: Quickshell.screens
+
+        MenuOverlayHost {
             required property ShellScreen modelData
             screen: modelData
         }

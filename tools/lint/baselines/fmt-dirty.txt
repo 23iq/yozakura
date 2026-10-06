@@ -143,9 +143,6 @@ modules/widgets/overview/OverviewPopup.qml
 modules/widgets/overview/OverviewView.qml
 modules/widgets/overview/OverviewWindow.qml
 modules/widgets/overview/ScrollingWorkspace.qml
-modules/widgets/powermenu/PowerMenuView.qml
 modules/widgets/presets/PresetsButton.qml
-modules/widgets/presets/PresetsTab.qml
-modules/widgets/tools/ToolsMenu.qml
 modules/widgets/tools/ToolsMenuView.qml
 shell.qml

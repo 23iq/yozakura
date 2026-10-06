@@ -4,12 +4,12 @@ import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
-import qs.modules.settings.store
 import qs.config
 import qs.modules.keybinds
 
-// Full-screen keybind cheatsheet on one screen: a frosted scrim (the layer
-// namespace gets the compositor blur) with the cheatsheet panel. Opens on
+// Full-screen keybind cheatsheet on one screen (layout.cheatsheet.host
+// "fullscreen"): a frosted scrim (the layer namespace gets the compositor
+// blur) with the cheatsheet view. Opens on
 // the focused screen through Visibilities ("keybinds" module, `<app> run
 // keybinds`); Esc, a click outside or "Edit" close it.
 PanelWindow {
@@ -43,25 +43,12 @@ PanelWindow {
     Component.onCompleted: {
         Qt.callLater(() => {
             root.shown = Qt.binding(() => root.open);
-            panel.focusSearch();
+            panel.forceActiveFocus();
         });
-        KeybindsStore.refreshNative();
     }
 
     function close() {
-        if (Visibilities.currentActiveModule === "keybinds")
-            Visibilities.setActiveModule("");
-    }
-
-    function edit(uid) {
-        KeybindsStore.requestEdit(uid);
-        const row = KeybindsStore.row(uid);
-        GlobalStates.settingsCategory = "input";
-        if (GlobalStates.settingsWindowVisible)
-            SettingsStore.navigate("input", row ? row.group : "", "");
-        else
-            GlobalShortcuts.toggleSettings();
-        close();
+        panel.close();
     }
 
     FocusGrab {
@@ -88,9 +75,8 @@ PanelWindow {
         }
     }
 
-    CheatsheetPanel {
+    CheatsheetView {
         id: panel
-        objectName: "cheatsheetPanel"
         anchors.fill: parent
         anchors.leftMargin: Math.max(32, (parent.width - 1600) / 2)
         anchors.rightMargin: anchors.leftMargin
@@ -122,7 +108,5 @@ PanelWindow {
                 easing.type: Easing.OutCubic
             }
         }
-        onCloseRequested: root.close()
-        onEditRequested: uid => root.edit(uid)
     }
 }

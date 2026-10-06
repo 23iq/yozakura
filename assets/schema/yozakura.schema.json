@@ -5693,6 +5693,97 @@
           },
           "additionalProperties": false
         },
+        "powermenu": {
+          "title": "Powermenu",
+          "type": "object",
+          "description": "Power menu look.",
+          "properties": {
+            "style": {
+              "title": "Power menu",
+              "type": "string",
+              "default": "notch",
+              "description": "In the notch, large buttons over a dimmed screen, or a ring at the pointer. Shutdown, reboot and log out are held to confirm.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "menus",
+                "label": "prefs.menus.powermenu_style",
+                "control": "selector",
+                "keywords": "power menu shutdown reboot logout style radial fullscreen notch hold confirm"
+              },
+              "enum": [
+                "notch",
+                "fullscreen",
+                "radial"
+              ],
+              "x-enumLabels": {
+                "notch": "Notch",
+                "fullscreen": "Full screen",
+                "radial": "Radial"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "tools": {
+          "title": "Tools",
+          "type": "object",
+          "description": "Tools menu look.",
+          "properties": {
+            "style": {
+              "title": "Tools menu",
+              "type": "string",
+              "default": "notch",
+              "description": "Screenshot, recording and picker tools in the notch or on a ring at the pointer.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "menus",
+                "label": "prefs.menus.tools_style",
+                "control": "selector",
+                "keywords": "tools menu screenshot record color picker ocr style radial notch cursor"
+              },
+              "enum": [
+                "notch",
+                "radial"
+              ],
+              "x-enumLabels": {
+                "notch": "Notch",
+                "radial": "Radial"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "cheatsheet": {
+          "title": "Cheatsheet",
+          "type": "object",
+          "description": "Keybind cheatsheet placement.",
+          "properties": {
+            "host": {
+              "title": "Keybind cheatsheet",
+              "type": "string",
+              "default": "fullscreen",
+              "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
+              "x-settings": {
+                "category": "layout",
+                "section": "hosts",
+                "label": "prefs.layout.cheatsheet_host",
+                "control": "selector",
+                "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
+              },
+              "enum": [
+                "fullscreen",
+                "spotlight",
+                "sheet"
+              ],
+              "x-enumLabels": {
+                "fullscreen": "Full screen",
+                "spotlight": "Spotlight",
+                "sheet": "Sheet"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
         "osd": {
           "title": "Osd",
           "type": "object",
