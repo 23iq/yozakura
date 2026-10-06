@@ -42,6 +42,8 @@ Item {
         // first visit only; afterwards the remembered selection wins
         autoPreselect: root.saved === undefined
         categories: ["browsers", "chat", "games", "media", "work", "files"]
+        // four per row: more of the catalog in view on small screens
+        minCardWidth: 220
         sideMargin: 0
         topMargin: 0
         onSelectedChanged: {
