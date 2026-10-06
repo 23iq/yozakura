@@ -31,14 +31,18 @@ StyledRect {
     property string decision: ""        // allow | allow_session | auto | deny
     property string undo: ""            // JSON descriptor, "" = not undoable
     property bool expanded: BarLook.toolsExpanded
-    property bool undone: false
+    // "" | pending | done | error:<message> (Ai.undoStates via the row)
+    property string undoState: ""
+    readonly property bool undone: undoState === "done"
+    readonly property bool undoBusy: undoState === "pending"
+    readonly property string undoError: undoState.indexOf("error:") === 0 ? undoState.substring(6) : ""
 
     signal undoRequested(var descriptor)
 
     readonly property var undoInfo: Transcript.undoOf({
         undo: undo
     })
-    readonly property bool canUndo: undoInfo !== null && status === "done" && !undone
+    readonly property bool canUndo: undoInfo !== null && status === "done" && !undone && !undoBusy
     readonly property var diffStats: diff ? Diff.stats(Diff.parse(diff, path)) : null
     readonly property string summary: Transcript.inputSummary(input)
     readonly property bool failed: status === "error" || status === "denied" || isError
@@ -67,7 +71,8 @@ StyledRect {
                 pencil: Icons.pencil,
                 terminal: Icons.terminal,
                 globe: Icons.globe,
-                plug: Icons.plug
+                plug: Icons.plug,
+                shieldWarning: Icons.shieldWarning
             })[Timeline.categoryIcon(c)] || Icons.wrench;
     }
 
@@ -144,7 +149,7 @@ StyledRect {
                 objectName: "actionUndo"
                 visible: root.canUndo
                 glyph: Icons.arrowCounterClockwise
-                label: root.undoInfo && root.undoInfo.label ? root.undoInfo.label : I18n.t("ai.undo")
+                label: root.undoError ? I18n.t("ai.undo_retry") : (root.undoInfo && root.undoInfo.label ? root.undoInfo.label : I18n.t("ai.undo"))
                 maxLabelWidth: 120
                 variant: "transparent"
                 onClicked: root.undoRequested(root.undoInfo)
@@ -157,6 +162,21 @@ StyledRect {
                 iconSize: 11
                 onClicked: root.expanded = !root.expanded
             }
+        }
+
+        Text {
+            objectName: "actionUndoError"
+            visible: root.undoError.length > 0
+            Layout.fillWidth: true
+            Layout.leftMargin: 24
+            text: I18n.t("ai.undo_failed") + " " + root.undoError
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            maximumLineCount: 3
+            elide: Text.ElideRight
+            font.family: Config.theme.font
+            font.pixelSize: BarLook.font(-3)
+            color: Colors.error
         }
 
         Text {

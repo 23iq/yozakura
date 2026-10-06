@@ -135,8 +135,9 @@ Singleton {
     }
 
     // One finished HTTP request: model is the catalog entry, usage
-    // {inputTokens (incl. cached), outputTokens, cachedTokens}.
-    function recordHttp(model, usage, sessionId) {
+    // {inputTokens (incl. cached), outputTokens, cachedTokens}; space is
+    // what it was for: assistant (chat), code, compaction or automation.
+    function recordHttp(model, usage, sessionId, space) {
         if (!model || !usage || !model.provider || model.kind === "agent")
             return;
         const input = Math.max(0, Math.round(usage.inputTokens || 0));
@@ -147,7 +148,7 @@ Singleton {
             provider: model.provider,
             model: model.model || "",
             sessionId: sessionId || "",
-            space: "assistant",
+            space: space || "assistant",
             engine: "http",
             inputTokens: input,
             outputTokens: output,

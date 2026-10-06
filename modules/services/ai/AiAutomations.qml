@@ -49,6 +49,7 @@ QtObject {
                 return;
             }
             Ai.runPrompt(prompt, {
+                space: "automation",
                 model: a.model,
                 attachments: attachments || []
             }, (text, error) => {

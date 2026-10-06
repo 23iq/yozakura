@@ -138,8 +138,10 @@ function apply(state, ev) {
         var ti = state.byKey[tkey];
         var upd = { output: ev.output || "", isError: !!ev.isError };
         var tname = ti !== undefined ? state.blocks[ti].tool : (ev.tool || "");
+        // The backend sends the undo descriptor apart (the output may be
+        // truncated); older logs only have it inside the output.
         if (ToolMedia.isYozakuraTool(tname))
-            upd.undo = _json(ToolMedia.undoFrom("yozakura", upd.output, upd.isError));
+            upd.undo = _json(ev.undo && !upd.isError ? ToolMedia.undoFrom("yozakura", JSON.stringify({ undo: ev.undo }), false) : ToolMedia.undoFrom("yozakura", upd.output, upd.isError));
         if (ti !== undefined) {
             if (state.blocks[ti].status !== "denied")
                 upd.status = ev.isError ? "error" : "done";
@@ -260,6 +262,8 @@ function categoryIcon(category) {
         return "globe";
     case "mcp":
         return "plug";
+    case "sandbox":
+        return "shieldWarning";
     default:
         return "wrench";
     }

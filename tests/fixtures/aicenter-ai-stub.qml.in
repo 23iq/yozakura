@@ -312,7 +312,14 @@ QtObject {
     signal connectProviderRequested(string provider)
     function openProviderSettings(p) { settingsOpened++; connectProvider = p || ""; connectProviderRequested(connectProvider); }
     property var undone: []
-    function undoAction(u) { undone = undone.concat([u.tool]); }
+    property var undoStates: ({})
+    property string undoFails: ""
+    function undoAction(u, cb, key) {
+        undone = undone.concat([u.tool]);
+        const next = Object.assign({}, undoStates);
+        next[key] = undoFails ? "error:" + undoFails : "done";
+        undoStates = next;
+    }
     function setModel(id) {
     }
     function newConversation() {

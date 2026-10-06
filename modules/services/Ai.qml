@@ -357,21 +357,40 @@ Singleton {
         runner.stopSession(kind, id);
     }
 
+    // Undo progress of transcript rows by Transcript.undoKey: "pending",
+    // "done" or "error:<message>" (Retry allowed). Rows read it through
+    // TranscriptModel, so it outlives their delegates.
+    property var undoStates: ({})
+    function _setUndoState(key, state) {
+        if (!key)
+            return;
+        const next = Object.assign({}, undoStates);
+        next[key] = state;
+        undoStates = next;
+    }
+
     // Reverts a tool call: `undo` is the descriptor a tool returned
-    // ({server, tool, args, label}), run as another MCP call.
-    function undoAction(undo, cb) {
+    // ({server, tool, args, label}), run as another MCP call. It is the
+    // user's own action, so it works with the built-in server turned off
+    // for AI engines. A row is marked undone only once the call succeeded.
+    function undoAction(undo, cb, key) {
         if (!mcp || !undo || !undo.tool) {
             if (cb)
                 cb(false);
             return;
         }
+        if (key && (undoStates[key] === "pending" || undoStates[key] === "done"))
+            return;
+        _setUndoState(key, "pending");
         mcp.call(undo.server || "yozakura", undo.tool, undo.args || {}, result => {
             const failed = !result || result.isError;
+            const message = failed ? (result && result.text ? String(result.text) : I18n.t("ai.undo_failed")) : "";
             if (failed)
-                noticeError = result ? result.text : I18n.t("ai.undo_failed");
+                noticeError = message;
+            _setUndoState(key, failed ? "error:" + message : "done");
             if (cb)
                 cb(!failed);
-        });
+        }, true);
     }
 
     // Snapshot for the Assistant's suggestion chips.

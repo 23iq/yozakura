@@ -157,6 +157,7 @@ QtObject {
         session.numCtx = request.numCtx;
         session.tools = [];
         session.maxRounds = 1;
+        session.usageSpace = opts.space || "assistant";
         return session;
     }
 

@@ -125,7 +125,7 @@ IconButton {
                     objectName: "maxAttempts"
                     from: 0
                     to: 10
-                    value: root.info ? root.info.maxAttempts : 2
+                    value: root.info?.maxAttempts ?? 2
                     onValueModified: root.set({
                         "maxAttempts": value
                     })
@@ -141,7 +141,7 @@ IconButton {
                     from: 30
                     to: 7200
                     stepSize: 30
-                    value: root.info ? root.info.checkTimeout : 600
+                    value: root.info?.checkTimeout ?? 600
                     onValueModified: root.set({
                         "checkTimeout": value
                     })

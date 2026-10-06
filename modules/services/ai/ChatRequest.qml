@@ -30,6 +30,8 @@ QtObject {
     // Ledger session id (UsageService): each finished request with usage
     // is recorded once.
     property string usageSession: ""
+    // Ledger space of this request (assistant | code | compaction | automation).
+    property string usageSpace: "assistant"
 
     readonly property bool running: curl.running
     property bool aborted: false
@@ -169,7 +171,7 @@ QtObject {
             }
             root.cleanup.running = true;
             if (acc.usage)
-                UsageService.recordHttp(root.model, acc.usage, root.usageSession);
+                UsageService.recordHttp(root.model, acc.usage, root.usageSession, root.usageSpace);
             root.finished({
                 text: acc.text,
                 thinking: acc.thinking,

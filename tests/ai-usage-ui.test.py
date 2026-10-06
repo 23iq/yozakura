@@ -174,6 +174,8 @@ ev("UsageService.recordHttp(Ai.models[1], {inputTokens: 100, outputTokens: 5, ca
 rec = json.loads(ev("JSON.stringify(BackendService.last('usage.record'))"))
 assert rec == {"provider": "anthropic", "model": "claude-sonnet-4-5", "sessionId": "c1", "space": "assistant", "engine": "http",
                "inputTokens": 100, "outputTokens": 5, "cachedTokens": 60}, rec
+ev("UsageService.recordHttp(Ai.models[1], {inputTokens: 40, outputTokens: 2}, 'c1', 'compaction')")
+assert json.loads(ev("JSON.stringify(BackendService.last('usage.record'))"))["space"] == "compaction", "background requests keep their purpose"
 n = len(json.loads(ev("calls('usage.record')")))
 ev("UsageService.recordHttp(Ai.models[0], {inputTokens: 100, outputTokens: 5}, 'a')")  # agents record in the backend
 ev("UsageService.recordHttp(Ai.models[1], {inputTokens: 0, outputTokens: 0}, 'c1')")
@@ -259,6 +261,26 @@ pump(200)
 assert shown("usageScreen")
 click(find("headerUsage"))
 assert not shown("usageScreen")
+# ── one overlay at a time: Connect replaces Usage and sits on top ───────
+click(find("headerUsage"))
+pump(200)
+assert shown("usageScreen") and ev("panel.overlay") == "usage"
+ev("Ai.connectProviderRequested('')")
+pump(200)
+assert ev("panel.overlay") == "connect", ev("panel.overlay")
+assert not shown("usageScreen"), "opening Connect closes the Usage screen"
+assert find("connectSheet").property("opened") and shown("connectSheet")
+assert find("connectSheet").property("z") > find("usageScreen").property("z")
+ev("panel.toggleOverlay('usage')")  # the sheet covers the header
+pump(200)
+assert ev("panel.overlay") == "usage" and shown("usageScreen")
+assert not find("connectSheet").property("opened"), "another overlay closes the Connect sheet"
+ev("panel.toggleHistory()")
+pump(200)
+assert ev("panel.overlay") == "history" and not shown("usageScreen")
+ev("panel.closeOverlay('history')")
+pump(200)
+assert ev("panel.overlay") == ""
 ev("Config.ai.usage.headerButton = false")
 pump()
 assert not shown("headerUsage")

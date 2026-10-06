@@ -34,6 +34,9 @@ Singleton {
         property int historyPriority: 0
         property string replaceKey: ""
         property var localActionHandlers: ({})
+        // What backend actions do, as data (NotifyRequest.js): saved with
+        // the notification, so its buttons work after a restore.
+        property var actionData: ({})
         property Timer timer
 
         // Propiedades para cache de imágenes
@@ -99,6 +102,7 @@ Singleton {
             "urgency": notif.urgency,
             "historyPriority": notif.historyPriority,
             "replaceKey": notif.replaceKey,
+            "actionData": notif.actionData,
             "cachedAppIcon": notif.cachedAppIcon,
             "cachedImage": notif.cachedImage,
             "isCached": notif.isCached
@@ -244,6 +248,8 @@ Singleton {
             "urgency": json.urgency,
             "historyPriority": json.historyPriority || 0,
             "replaceKey": json.replaceKey || "",
+            "actionData": json.actionData || {},
+            "localActionHandlers": NotifyRequest.handlers(json.actionData, root.requestDeps()),
             "cachedAppIcon": json.cachedAppIcon || "",
             "cachedImage": json.cachedImage || "",
             "isCached": json.isCached || true  // Default to true for loaded notifications
@@ -443,6 +449,7 @@ Singleton {
             "historyPriority": options.historyPriority || 0,
             "replaceKey": options.replaceKey || "",
             "localActionHandlers": options.actionHandlers || {},
+            "actionData": options.actionData || {},
             "popup": false,
             "isCached": false
         });
@@ -451,7 +458,7 @@ Singleton {
             "appName": newNotifObject.appName,
             "desktopEntry": "",
             "urgency": newNotifObject.urgency,
-            "expireTimeout": options.expireTimeout || -1,
+            "expireTimeout": typeof options.expireTimeout === "number" ? options.expireTimeout : -1,
             "popup": options.popup,
             "hints": options.hints
         });
@@ -753,12 +760,21 @@ Singleton {
     function handleNotifyRequest(data) {
         if (!data)
             return;
-        root.notifyInternal(NotifyRequest.build(data, {
+        root.notifyInternal(NotifyRequest.build(data, root.requestDeps()));
+    }
+
+    // What NotifyRequest actions run. A failed call (already answered,
+    // task gone) shows a short quiet notice.
+    function requestDeps() {
+        return {
             // The value is untrusted notification data: argv only.
             "copy": value => Quickshell.execDetached(["wl-copy", "--type", "text/plain", "--", value]),
-            "call": (method, params) => BackendService.call(method, params),
+            "call": (method, params) => BackendService.call(method, params, (res, err) => {
+                if (err)
+                    root.notifyInternal(NotifyRequest.failureNotice(err, key => I18n.t(key)));
+            }),
             "tr": key => I18n.t(key)
-        }));
+        };
     }
 
     Timer {

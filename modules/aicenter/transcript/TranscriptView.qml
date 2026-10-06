@@ -26,6 +26,7 @@ Item {
         kind: root.kind
         source: root.agentId ? (root.timeline ? root.timeline.model : null) : (root.session ? root.session.rows : null)
         showThinking: BarLook.showThinking
+        undoStates: Ai.undoStates
     }
 
     // Scroll position per session (Ai.drafts), restored when switching back.
@@ -110,7 +111,7 @@ Item {
             previousKind: root.model.kindAt(index - 1)
             onRetryRequested: source => root.session.retry(source)
             onDecided: (source, ref, decision) => root.decide(source, ref, decision)
-            onUndoRequested: descriptor => Ai.undoAction(descriptor)
+            onUndoRequested: (descriptor, key) => Ai.undoAction(descriptor, null, key)
         }
 
         ScrollBar.vertical: ScrollBar {

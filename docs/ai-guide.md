@@ -257,7 +257,7 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `binds_search`, `binds_list`, `binds_check`, `binds_suggest` | yes | bind advisor: `{"query":"раскладка"}` -> results with a ready `action` ({id, args}); every bind with its source; is a combo free; free combos for an action |
 | `binds_set`, `binds_remove`, `binds_undo` | no | `{"combo":"SUPER+F","action":"window.fullscreen"}` (confirm with the user first); writes `binds.json` only, returns `undo: {tool, args}` |
 | `routines_list` | yes | saved routines with their steps |
-| `routine_save`, `routine_run`, `routine_delete` | no | `{"name":"Night","steps":[{"kind":"tool","tool":"nightlight_set","args":{"enabled":true}},{"kind":"delay","ms":1000}]}` ("save this as a routine"); run returns a per-step report; delete always asks |
+| `routine_save`, `routine_run`, `routine_delete` | no | `{"name":"Night","steps":[{"kind":"tool","tool":"nightlight_set","args":{"enabled":true}},{"kind":"delay","ms":1000}]}` ("save this as a routine"); run returns a per-step report; delete always asks, and so do save/run of a routine with confirm-required steps (`app_close`, `binds_*`, `command.run`, `window.close`, quit), even in YOLO: the backend runs such a routine for an AI only after the user allowed that call (`routines.grant`) |
 | `notes_search`, `notes_read` | yes | the Notes tab (`<data dir>-notes/index.json` + `notes/<id>.md|.html`) |
 | `notes_create`, `notes_append` | no | `{"id":"Inbox","text":"buy milk","bullet":true}` (`create: true` makes a missing note) |
 | `apps_find` | yes | installed `.desktop` apps by name/id |

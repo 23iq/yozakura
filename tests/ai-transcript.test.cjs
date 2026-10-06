@@ -92,3 +92,14 @@ test('helpers: speaker groups and input summaries', () => {
     assert.equal(T.inputSummary('{}'), '');
     assert.equal(T.inputSummary('plain'), 'plain');
 });
+
+test('undo keys are per tool call and rows carry an undo state', () => {
+    const undo = JSON.stringify({ tool: 'timer_cancel', args: { id: 't1' } });
+    assert.equal(T.undoKey({ ref: 'c1', undo }), 'c1|' + undo);
+    assert.notEqual(T.undoKey({ ref: 'c1', undo }), T.undoKey({ ref: 'c2', undo }), 'same undo, other call');
+    assert.equal(T.undoKey({ ref: 'c1', undo: '' }), '', 'not undoable');
+    const rows = T.build('chat', [{ role: 'assistant', content: '', toolCalls: JSON.stringify([
+        { id: 'c1', name: 'timer_start', tool: 'timer_start', status: 'done', undo: { tool: 'timer_cancel', args: { id: 't1' } } }]) }]);
+    const action = rows.find(r => r.kind === 'action');
+    assert.equal(action.undoState, '', 'normalised rows start without an undo state');
+});

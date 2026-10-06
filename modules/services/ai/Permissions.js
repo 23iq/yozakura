@@ -9,14 +9,89 @@
 // are read-only but always ask, like in the Go agents policy.
 var PRIVATE = { clipboard_read: true, clipboard_history: true, notifications_list: true, screen_look: true };
 
-// Yozakura tools that always ask, even with "allow for this session" or a
-// permissive policy (same list as the Go agents policy): they rewrite the
-// user's keybinds, close windows or delete routines. Their card has no
-// "for session" choice.
+// Yozakura tools that always ask, even with "allow for this session", a
+// permissive policy or YOLO (same list as routines.ConfirmTools in Go):
+// they rewrite the user's keybinds, close windows or delete routines.
+// Their card has no "for session" choice.
 var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_delete: true };
 
-function mustConfirm(tool) {
-    return !!tool && tool.server === "yozakura" && CONFIRM[String(tool.name || "")] === true;
+// Routine steps as sensitive as a confirm tool (routines/confirm.go): an
+// arbitrary command line, a raw dispatcher, closing the focused window and
+// quitting the shell (<app>.quit).
+var CONFIRM_ACTIONS = { "command.run": true, "legacy.dispatcher": true, "window.close": true };
+var ROUTINE_ACTION = "utilities.routine";
+var ROUTINE_TOOLS = { routine_run: true, routine_save: true, routine_delete: true, routines_list: true };
+
+function _findRoutine(routines, ref) {
+    var r = String(ref || "");
+    for (var i = 0; i < routines.length; i++)
+        if (routines[i] && routines[i].id === r)
+            return routines[i];
+    for (var j = 0; j < routines.length; j++)
+        if (routines[j] && String(routines[j].name || "").toLowerCase() === r.toLowerCase())
+            return routines[j];
+    return null;
+}
+
+// What in `steps` needs the user's confirmation before an AI saves or runs
+// it (nested routines through `routines`; unknown ones count).
+function routineConfirmSteps(steps, routines, depth, visited) {
+    var out = [];
+    var seen = visited || {};
+    var list = Array.isArray(routines) ? routines : [];
+    (Array.isArray(steps) ? steps : []).forEach(function (s) {
+        if (!s)
+            return;
+        var tool = String(s.tool || "").trim();
+        var action = String(s.action || "").trim();
+        if (s.kind === "tool" && (CONFIRM[tool] || ROUTINE_TOOLS[tool]))
+            out.push(tool);
+        if (s.kind !== "action")
+            return;
+        if (CONFIRM_ACTIONS[action] || /\.quit$/.test(action))
+            out.push(action);
+        if (action !== ROUTINE_ACTION)
+            return;
+        var ref = String((s.args && s.args.routine) || "").trim();
+        var sub = (depth || 0) < 3 ? _findRoutine(list, ref) : null;
+        if (!sub) {
+            out.push("routine " + ref);
+        } else if (!seen[sub.id]) {
+            seen[sub.id] = true;
+            out = out.concat(routineConfirmSteps(sub.steps, list, (depth || 0) + 1, seen));
+        }
+    });
+    return out;
+}
+
+// tool: {name, server}; args: the call's arguments; routines: the saved
+// routines (RoutinesService.routines). Saving or running a routine that
+// closes windows, edits keybinds or runs a command line asks too; a run of
+// a routine the shell does not know asks.
+function mustConfirm(tool, args, routines) {
+    if (!tool || tool.server !== "yozakura")
+        return false;
+    var name = String(tool.name || "");
+    if (CONFIRM[name] === true)
+        return true;
+    var a = args || {};
+    if (name === "routine_save")
+        return routineConfirmSteps(a.steps, routines).length > 0;
+    if (name === "routine_run") {
+        var r = _findRoutine(Array.isArray(routines) ? routines : [], a.id);
+        if (!r)
+            return true;
+        var visited = {};
+        visited[r.id] = true;
+        return routineConfirmSteps(r.steps, routines, 0, visited).length > 0;
+    }
+    return false;
+}
+
+// The backend runs an AI's routine_run of such a routine only after the
+// user allowed it: the shell grants that one run (routines.grant {id}).
+function needsGrant(tool) {
+    return !!tool && tool.server === "yozakura" && tool.name === "routine_run";
 }
 
 var READ_VERBS = /^(get|list|read|search|find|query|show|describe|status|fetch_status|schema|view|lookup|count)([_\-.]|$)/;
@@ -52,11 +127,12 @@ function ruleKey(tool) {
     return (tool.server ? tool.server + "/" : "") + (tool.name || "");
 }
 
-// policy: {yolo, autoApprove: ["read"], sessionRules: {key: true}}
+// tool: {name, server, annotations, args}
+// policy: {yolo, autoApprove: ["read"], sessionRules: {key: true}, routines}
 // returns "allow" | "ask"
 function decide(tool, policy) {
     var p = policy || {};
-    if (mustConfirm(tool))
+    if (mustConfirm(tool, tool && tool.args, p.routines))
         return "ask";
     if (p.yolo)
         return "allow";

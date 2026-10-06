@@ -127,7 +127,9 @@ StyledRect {
                     root.error = I18n.t("ai.git.nothing");
                     return;
                 }
-                Ai.runPrompt("Write a git commit message for the changes below: a summary line of at most 72 characters in the imperative mood, then (only if useful) a blank line and a short body. Reply with the message only, no code fences.\n\n" + diff, {}, (reply, err) => {
+                Ai.runPrompt("Write a git commit message for the changes below: a summary line of at most 72 characters in the imperative mood, then (only if useful) a blank line and a short body. Reply with the message only, no code fences.\n\n" + diff, {
+                    space: "code"
+                }, (reply, err) => {
                     root.writing = false;
                     if (err)
                         root.error = err;

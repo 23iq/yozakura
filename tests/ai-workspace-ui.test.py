@@ -102,7 +102,7 @@ pump()
 chat_list = workspace.findChild(QObject, 'workspaceChatList')
 assert abs(chat_list.property('contentY') - 200) < 1, 'session switching must restore manual scroll'
 evaluate(workspace, 'chooseAgent()')
-workspace.setProperty('settingsOpen', True)
+evaluate(workspace, 'setOverlay("settings")')
 pump()
 effort_choice = workspace.findChild(QObject, 'workspaceEffortChoice')
 assert effort_choice.property('visible'), 'native default model should expose declared efforts'

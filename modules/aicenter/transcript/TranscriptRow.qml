@@ -30,6 +30,7 @@ Item {
     required property string decision
     required property string options
     required property string undo
+    required property string undoState
     required property string ref
     required property int source
     required property double ts
@@ -41,7 +42,7 @@ Item {
 
     signal retryRequested(int source)
     signal decided(int source, string ref, string decision)
-    signal undoRequested(var descriptor)
+    signal undoRequested(var descriptor, string key)
 
     readonly property bool groupStart: Transcript.startsGroup(previousKind, kind)
 
@@ -125,10 +126,11 @@ Item {
             path: root.path
             decision: root.decision
             undo: root.undo
-            onUndoRequested: descriptor => {
-                undone = true;
-                root.undoRequested(descriptor);
-            }
+            undoState: root.undoState
+            onUndoRequested: descriptor => root.undoRequested(descriptor, Transcript.undoKey({
+                    ref: root.ref,
+                    undo: root.undo
+                }))
         }
     }
     Component {

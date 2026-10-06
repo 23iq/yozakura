@@ -7,12 +7,13 @@
 //   {kind: user|assistant|thinking|action|permission|diff|error|notice|compacted,
 //    key, text, engine (model name), status, streaming, attachments (JSON), title, tool,
 //    category, input (JSON string), output, isError, path, diff, decision,
-//    options (JSON), undo (JSON string, "" = not undoable), ref, source, ts}
+//    options (JSON), undo (JSON string, "" = not undoable), undoState, ref, source, ts}
 //
 // `source` is the index of the originating row/block (retry, permission
 // answers), `ref` the tool call / permission request id. `undo` is filled by
 // tools that can be reverted ({server, tool, args, label}); ActionRow shows
-// an Undo button for it.
+// an Undo button for it. `undoState` ("" | pending | done | error:<text>)
+// comes from Ai.undoStates by undoKey(), so it survives delegate reuse.
 //
 // patch() turns two row lists into minimal ListModel operations, so a
 // streamed token updates one row only.
@@ -22,7 +23,7 @@ var KINDS = ["user", "assistant", "thinking", "action", "permission", "diff", "e
 var FIELDS = {
     kind: "", key: "", text: "", engine: "", status: "", streaming: false, attachments: "[]",
     title: "", tool: "", category: "", input: "", output: "", isError: false, path: "", diff: "",
-    decision: "", options: "", undo: "", ref: "", source: 0, ts: 0
+    decision: "", options: "", undo: "", undoState: "", ref: "", source: 0, ts: 0
 };
 
 function _json(v, empty) {
@@ -211,6 +212,12 @@ function startsGroup(prevKind, kind) {
 function undoOf(r) {
     var u = _parse(r && r.undo, null);
     return u && typeof u === "object" && u.tool ? u : null;
+}
+
+// Key of a row's undo in Ai.undoStates ("" = not undoable): the tool call
+// id plus the descriptor, unique per call.
+function undoKey(r) {
+    return r && r.undo ? String(r.ref || r.key || "") + "|" + r.undo : "";
 }
 
 // One-line summary of a tool input ("$ make check", a path, or compact JSON).

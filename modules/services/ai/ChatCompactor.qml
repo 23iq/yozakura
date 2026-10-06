@@ -37,7 +37,8 @@ QtObject {
             system: Compaction.PROMPT,
             messages: Compaction.request(rows, p),
             tools: [],
-            usageSession: session.chatId || ""
+            usageSession: session.chatId || "",
+            usageSpace: "compaction"
         });
         _request = req;
         req.finished.connect(result => {

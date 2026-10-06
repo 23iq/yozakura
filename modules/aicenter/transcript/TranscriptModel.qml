@@ -11,6 +11,9 @@ QtObject {
     property var source: null           // ListModel
     property string kind: "chat"        // chat | agent
     property bool showThinking: true
+    // Undo progress by Transcript.undoKey (Ai.undoStates): copied into the
+    // rows, so a recycled delegate never offers a finished Undo again.
+    property var undoStates: ({})
 
     readonly property ListModel rows: ListModel {}
     // Normalised rows of each source item (index = source index).
@@ -21,9 +24,28 @@ QtObject {
     }
 
     function _normalize(i) {
-        return Transcript.normalize(kind, source.get(i), i, {
+        const list = Transcript.normalize(kind, source.get(i), i, {
             showThinking: showThinking
         });
+        for (const r of list)
+            if (r.undo)
+                r.undoState = undoStates[Transcript.undoKey(r)] || "";
+        return list;
+    }
+
+    function _applyUndoStates() {
+        for (let i = 0; i < rows.count; i++) {
+            const r = rows.get(i);
+            if (!r.undo)
+                continue;
+            const state = undoStates[Transcript.undoKey(r)] || "";
+            if (r.undoState !== state)
+                rows.setProperty(i, "undoState", state);
+        }
+        for (const list of _items)
+            for (const r of list)
+                if (r.undo)
+                    r.undoState = undoStates[Transcript.undoKey(r)] || "";
     }
 
     function _offset(i) {
@@ -82,6 +104,7 @@ QtObject {
     onSourceChanged: rebuild()
     onKindChanged: rebuild()
     onShowThinkingChanged: rebuild()
+    onUndoStatesChanged: _applyUndoStates()
 
     readonly property Connections _watch: Connections {
         target: root.source

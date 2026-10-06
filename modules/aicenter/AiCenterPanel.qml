@@ -31,11 +31,16 @@ import qs.modules.aicenter.usage
 StyledRect {
     id: root
     property bool frameWrapped: false
-    property bool historyOpen: false
-    property bool settingsOpen: false
+    // The one modal overlay on top of the bar: "" (none) | history (the
+    // drawer, when the history is not docked) | settings (Code session
+    // settings) | usage | connect (the Connect sheet) | changes (the
+    // changes drawer in narrow sizes). Opening one closes the other.
+    property string overlay: ""
+    readonly property bool historyOpen: overlay === "history"
+    readonly property bool settingsOpen: overlay === "settings"
+    readonly property bool usageOpen: overlay === "usage"
+    readonly property bool changesDrawerOpen: overlay === "changes"
     property bool changesOpen: true
-    property bool changesDrawerOpen: false
-    property bool usageOpen: false
     readonly property bool code: GlobalStates.aiSpace === "code"
     readonly property bool wide: GlobalStates.assistantWide || GlobalStates.assistantFullscreen
     property bool codeChat: false
@@ -89,16 +94,38 @@ StyledRect {
         }
         return true;
     }
+    // Shows overlay `name` ("" closes the current one); the previous one
+    // closes (the Connect sheet through its own close()). Closing every
+    // overlay gives the focus back to the composer.
+    function setOverlay(name) {
+        const previous = overlay;
+        if (previous === name)
+            return;
+        overlay = name;
+        if (previous === "connect" && connectSheet.opened)
+            connectSheet.close();
+        if (name === "")
+            focusComposer();
+    }
+    function toggleOverlay(name) {
+        setOverlay(overlay === name ? "" : name);
+    }
+    function closeOverlay(name) {
+        if (overlay === name)
+            setOverlay("");
+    }
+    function openConnect(provider) {
+        setOverlay("connect");
+        connectSheet.open(provider);
+    }
     function toggleHistory() {
         if (historyDocked) {
             sessionList.focusSearch();
             return;
         }
-        historyOpen = !historyOpen;
+        toggleOverlay("history");
         if (historyOpen)
             drawer.focusSearch();
-        else
-            focusComposer();
     }
     function useSuggestion(text, context) {
         if (context)
@@ -111,7 +138,15 @@ StyledRect {
         restoreDraft();
     }
     Component.onDestruction: saveDraft()
-    onCodeChanged: settingsOpen = false
+    onCodeChanged: {
+        closeOverlay("settings");
+        closeOverlay("changes");
+    }
+    // A docked column replaces its drawer.
+    onHistoryDockedChanged: if (historyDocked)
+        closeOverlay("history")
+    onChangesDockedChanged: if (changesDocked)
+        closeOverlay("changes")
     readonly property UsageStripState usageStrip: UsageStripState {}
     Connections {
         target: Ai
@@ -125,9 +160,7 @@ StyledRect {
             root.focusComposer();
         }
         function onConnectProviderRequested(provider) {
-            root.historyOpen = false;
-            root.settingsOpen = false;
-            connectSheet.open(provider);
+            root.openConnect(provider);
         }
     }
     Shortcut {
@@ -138,7 +171,7 @@ StyledRect {
         target: TasksService
         function onFocusRequested() {
             root.codeChat = false;
-            root.historyOpen = false;
+            root.closeOverlay("history");
         }
     }
     Shortcut {
@@ -178,14 +211,14 @@ StyledRect {
             settingsOpen: root.settingsOpen
             showChanges: root.code && Ai.activeAgent !== null && root.diffs.length > 0
             usageOpen: root.usageOpen
-            onUsageToggled: root.usageOpen = !root.usageOpen
+            onUsageToggled: root.toggleOverlay("usage")
             onHistoryToggled: root.toggleHistory()
-            onSettingsToggled: root.settingsOpen = !root.settingsOpen
+            onSettingsToggled: root.toggleOverlay("settings")
             onChangesToggled: {
                 if (root.changesDocked)
                     root.changesOpen = !root.changesOpen;
                 else
-                    root.changesDrawerOpen = !root.changesDrawerOpen;
+                    root.toggleOverlay("changes");
             }
         }
         ProjectBar {
@@ -289,7 +322,7 @@ StyledRect {
                     limitLevel: root.usageStrip.limitLevel
                     limitTooltip: root.usageStrip.limitTooltip
                     limitDetail: root.usageStrip.limitDetail
-                    onUsageRequested: root.usageOpen = true
+                    onUsageRequested: root.setOverlay("usage")
                     onPickRequested: picker.open()
                     onCompactRequested: Ai.contextState.compact(null)
                 }
@@ -357,19 +390,16 @@ StyledRect {
         space: GlobalStates.aiSpace
         visible: root.historyOpen && !root.historyDocked
         z: 10
-        onCloseRequested: {
-            root.historyOpen = false;
-            root.focusComposer();
-        }
+        onCloseRequested: root.closeOverlay("history")
     }
     ChangesPane {
         anchors.fill: parent
         anchors.margins: 10
         // In narrow sizes the changes action opens this drawer.
-        visible: root.changesDrawerOpen && !root.changesDocked && root.code && Ai.activeAgent !== null && !root.historyOpen && !root.settingsOpen
+        visible: root.changesDrawerOpen && !root.changesDocked && root.code && Ai.activeAgent !== null
         z: 9
         diffs: root.diffs
-        onCloseRequested: root.changesDrawerOpen = false
+        onCloseRequested: root.closeOverlay("changes")
     }
     AgentSettings {
         anchors.top: parent.top
@@ -379,14 +409,15 @@ StyledRect {
         width: Math.min(parent.width - 20, 380)
         visible: root.settingsOpen && root.code
         z: 11
-        onCloseRequested: root.settingsOpen = false
+        onCloseRequested: root.closeOverlay("settings")
     }
     ConnectSheet {
         id: connectSheet
         anchors.fill: parent
         anchors.margins: 10
-        z: 12
-        onCloseRequested: root.focusComposer()
+        z: 13
+        // Closed by itself (Esc, saved) or replaced by another overlay.
+        onCloseRequested: root.closeOverlay("connect")
     }
     UsageScreen {
         // Below the header, so its usage button toggles the screen.
@@ -395,10 +426,7 @@ StyledRect {
         anchors.topMargin: 10 + header.height + 8
         visible: root.usageOpen
         z: 12
-        onCloseRequested: {
-            root.usageOpen = false;
-            root.focusComposer();
-        }
+        onCloseRequested: root.closeOverlay("usage")
     }
     ModelPicker {
         id: picker

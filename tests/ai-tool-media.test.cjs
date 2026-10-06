@@ -92,3 +92,43 @@ test('agent timelines pick up undo from our tool results', () => {
     Timeline.apply(state, { kind: 'tool_result', id: 't2', output: '{"undo":{"tool":"rm"}}' });
     assert.equal(state.blocks[state.byKey['tool:t2']].undo, '', 'other tools never get an undo');
 });
+
+test('routines that close windows, edit keybinds or run commands always ask', () => {
+    const routines = [
+        { id: 'closer', name: 'Closer', steps: [{ kind: 'tool', tool: 'app_close', args: { app: 'x' } }] },
+        { id: 'calm', name: 'Calm', steps: [{ kind: 'tool', tool: 'dnd_set', args: { enabled: true } }] },
+        { id: 'wrap', name: 'Wrap', steps: [{ kind: 'action', action: 'utilities.routine', args: { routine: 'closer' } }] }
+    ];
+    const policy = { yolo: true, autoApprove: ['read', 'write', 'mcp'], sessionRules: { 'yozakura/routine_run': true, 'yozakura/routine_save': true }, routines };
+    const run = id => P.decide({ name: 'routine_run', server: 'yozakura', args: { id } }, policy);
+    assert.equal(run('closer'), 'ask');
+    assert.equal(run('Wrap'), 'ask', 'nested routines count');
+    assert.equal(run('calm'), 'allow');
+    assert.equal(run('ghost'), 'ask', 'an unknown routine asks');
+    const save = steps => P.decide({ name: 'routine_save', server: 'yozakura', args: { name: 'x', steps } }, policy);
+    assert.equal(save([{ kind: 'tool', tool: 'volume_set', args: {} }]), 'allow');
+    assert.equal(save([{ kind: 'action', action: 'command.run', args: { command: 'rm -rf ~' } }]), 'ask');
+    assert.equal(save([{ kind: 'action', action: 'window.close' }]), 'ask');
+    assert.equal(save([{ kind: 'action', action: 'yozakura.quit' }]), 'ask');
+    assert.equal(save([{ kind: 'tool', tool: 'binds_set', args: {} }]), 'ask');
+    assert.equal(save([{ kind: 'action', action: 'utilities.routine', args: { routine: 'closer' } }]), 'ask');
+    assert.equal(P.mustConfirm({ name: 'routine_run', server: 'yozakura' }, { id: 'calm' }, routines), false);
+    assert.equal(P.mustConfirm({ name: 'routine_run', server: 'other' }, { id: 'closer' }, routines), false);
+    assert.equal(P.needsGrant({ name: 'routine_run', server: 'yozakura' }), true);
+    assert.equal(P.needsGrant({ name: 'routine_save', server: 'yozakura' }), false);
+    // cycles end
+    const loop = [{ id: 'a', steps: [{ kind: 'action', action: 'utilities.routine', args: { routine: 'a' } }] }];
+    assert.deepEqual(plain(P.routineConfirmSteps(loop[0].steps, loop, 0, { a: true })), []);
+});
+
+test('the backend undo descriptor wins over a truncated output', () => {
+    const state = Timeline.newState();
+    Timeline.apply(state, { kind: 'tool_call', id: 'u1', tool: 'mcp__yozakura__volume_set', input: {} });
+    Timeline.apply(state, { kind: 'tool_result', id: 'u1', output: '{"text":"xxxx… (truncated)', undo: { tool: 'volume_set', args: { percent: 40 }, label: 'Restore' } });
+    const undo = JSON.parse(state.blocks[state.byKey['tool:u1']].undo);
+    assert.equal(undo.tool, 'volume_set');
+    assert.equal(undo.label, 'Restore');
+    Timeline.apply(state, { kind: 'tool_call', id: 'u2', tool: 'mcp__yozakura__volume_set', input: {} });
+    Timeline.apply(state, { kind: 'tool_result', id: 'u2', isError: true, output: 'x', undo: { tool: 'volume_set' } });
+    assert.equal(state.blocks[state.byKey['tool:u2']].undo, '', 'failed calls have no undo');
+});

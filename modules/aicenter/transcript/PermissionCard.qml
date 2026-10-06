@@ -59,7 +59,8 @@ StyledRect {
             pencil: Icons.pencil,
             terminal: Icons.terminal,
             globe: Icons.globe,
-            plug: Icons.plug
+            plug: Icons.plug,
+            shieldWarning: Icons.shieldWarning
         }[name] || Icons.wrench;
     }
 

@@ -39,6 +39,8 @@ QtObject {
     // Unified effort level (Effort.js) and Ollama num_ctx for requests.
     property string effort: ""
     property int numCtx: 0
+    // Ledger space of its requests (RequestRunner.runPrompt sets automation/code).
+    property string usageSpace: "assistant"
     // Conversation size after the last turn (prompt + answer tokens) and
     // the last request's usage {inputTokens, outputTokens, cachedTokens}.
     property int contextTokens: 0
@@ -264,6 +266,7 @@ QtObject {
             effort: effort,
             numCtx: numCtx,
             usageSession: chatId,
+            usageSpace: usageSpace,
             messages: toMessages(),
             tools: _round <= maxRounds ? tools.map(t => ({
                         name: t.name,
@@ -370,11 +373,6 @@ QtObject {
         for (const c of calls) {
             if (c.status !== "pending")
                 continue;
-            // Calls that always ask get a card without "for session".
-            c.confirm = Permissions.mustConfirm({
-                name: c.tool,
-                server: c.server
-            });
             const def = _toolDef(c.name);
             if (!def) {
                 c.status = "error";
@@ -382,12 +380,19 @@ QtObject {
                 c.result = "Unknown tool: " + c.name;
                 continue;
             }
+            // Calls that always ask get a card without "for session".
+            c.confirm = Permissions.mustConfirm({
+                name: def.tool,
+                server: def.server
+            }, c.args, RoutinesService.routines);
             const decision = Permissions.decide({
                 name: def.tool,
                 server: def.server,
-                annotations: def.annotations
+                annotations: def.annotations,
+                args: c.args
             }, Object.assign({}, policy, {
-                sessionRules: _sessionRules
+                sessionRules: _sessionRules,
+                routines: RoutinesService.routines
             }));
             if (decision === "allow")
                 _runCall(index, c.id);
@@ -468,14 +473,30 @@ QtObject {
         const c = calls.find(x => x.id === id);
         if (!c || c.status !== "ask")
             return;
+        const tool = {
+            name: c.tool,
+            server: c.server
+        };
         if (decision === "deny") {
             _setCall(index, id, {
                 status: "denied",
                 isError: true,
                 result: "The user denied this tool call."
             });
+        } else if (c.confirm && Permissions.needsGrant(tool)) {
+            // The backend runs this routine for an AI once the user allowed it.
+            _setCall(index, id, {
+                status: "running"
+            });
+            const generation = _generation;
+            BackendService.call("routines.grant", {
+                id: String((c.args || {}).id || "")
+            }, () => {
+                if (generation === _generation)
+                    _runCall(index, id);
+            });
         } else {
-            if (decision === "allow_session")
+            if (decision === "allow_session" && !c.confirm)
                 _sessionRules[Permissions.ruleKey({
                         server: c.server,
                         name: c.tool

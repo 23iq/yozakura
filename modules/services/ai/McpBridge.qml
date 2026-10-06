@@ -128,15 +128,18 @@ QtObject {
         return out;
     }
 
-    function call(server, tool, args, cb) {
+    // builtin: a user action (Undo) on the built-in server, allowed even
+    // when that server is off for AI engines.
+    function call(server, tool, args, cb, builtin) {
         BackendService.call("mcp.call", {
             server: server,
             tool: tool,
-            arguments: args || {}
+            arguments: args || {},
+            builtin: !!builtin
         }, (res, err) => {
             if (err)
                 cb({
-                    text: String(err),
+                    text: err.message || String(err),
                     isError: true
                 });
             else

@@ -40,6 +40,7 @@ Item {
     function settingsOpened() { return Ai.settingsOpened; }
     function stream(text) { Ai.chat.rows.setProperty(Ai.chat.rows.count - 1, "content", text); }
     function undone() { return JSON.stringify(Ai.undone); }
+    function setUndoFails(text) { Ai.undoFails = text; }
     function addUndoable() {
         Ai.chat.append({role: "user", content: "Start a tea timer"});
         Ai.chat.append({role: "assistant", content: "Started.", toolCalls: [
@@ -168,11 +169,28 @@ undoable = [r for r in rows if r.property("canUndo")]
 assert len(undoable) == 1
 undo_chip = find("actionUndo", undoable[0])
 assert undo_chip.property("visible")
+# A failed undo shows why and offers a retry.
+ev(top, "setUndoFails('timer already finished')")
 ev(undoable[0], "undoRequested(undoInfo)")
 pump()
-assert json.loads(ev(top, "undone()")) == ["timer_cancel"]
+assert undoable[0].property("canUndo"), "a failed undo can be retried"
+assert find("actionUndoError", undoable[0]).property("visible")
+assert "timer already finished" in find("actionUndoError", undoable[0]).property("text")
+assert undo_chip.property("label") == "Retry undo", undo_chip.property("label")
+assert not find("actionTitle", undoable[0]).property("text").startswith("Undone")
+ev(top, "setUndoFails('')")
+ev(undoable[0], "undoRequested(undoInfo)")
+pump()
+assert json.loads(ev(top, "undone()")) == ["timer_cancel", "timer_cancel"]
 assert not undoable[0].property("canUndo"), "undo is offered once"
+assert not find("actionUndoError", undoable[0]).property("visible")
 assert find("actionTitle", undoable[0]).property("text").startswith("Undone")
+# The state lives in the row model: rebuilt rows (recycled delegates) stay undone.
+ev(find("workspaceChatList").parentItem(), "model.rebuild()")
+pump(200)
+rows = find_all("actionRow")
+assert len(rows) == 2 and not any(r.property("canUndo") for r in rows), "a rebuilt transcript keeps the undo done"
+undoable = rows
 other = [r for r in rows if not r.property("canUndo")][0]
 assert not other.property("expanded"), "tool details start collapsed (ai.behavior.collapseTools)"
 ev(other, "expanded = true")
