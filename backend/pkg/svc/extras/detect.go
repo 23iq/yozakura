@@ -20,11 +20,11 @@ const (
 
 // Status is the detected state of one entry.
 type Status struct {
-	ID      string
-	State   State
-	Source  string // pkg|flatpak|npm|bin|path
-	Version string
-	Reason  string
+	ID      string `json:"id"`
+	State   State  `json:"state"`
+	Source  string `json:"source,omitempty"` // pkg|flatpak|npm|bin|path
+	Version string `json:"version,omitempty"`
+	Reason  string `json:"reason,omitempty"`
 }
 
 // Probe queries the host; every method must degrade to "not found".

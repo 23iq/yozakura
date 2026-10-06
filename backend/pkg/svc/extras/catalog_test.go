@@ -81,19 +81,6 @@ func TestValidateRejects(t *testing.T) {
 	}
 }
 
-func readJSONKeys(t *testing.T) map[string]string {
-	t.Helper()
-	data, err := os.ReadFile(filepath.Join(repoRoot, "translations", "en.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	m := map[string]string{}
-	if err := json.Unmarshal(data, &m); err != nil {
-		t.Fatal(err)
-	}
-	return m
-}
-
 func TestIconsExist(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(repoRoot, "modules", "theme", "Icons.qml"))
 	if err != nil {
