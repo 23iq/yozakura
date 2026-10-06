@@ -12,8 +12,25 @@ import "OnboardingModel.js" as Model
 // per suggested model (OnboardingModel.OLLAMA_MODELS). A chip queues
 // `ollama pull` in the backend (ExtrasService.ollamaPull) and then shows
 // the download's progress, a check when done, or a retry when it failed.
+// Models pulled before are found by probing the server (marked done); a
+// server that does not answer gets a "start Ollama" hint.
 StyledRect {
     id: root
+
+    // providers.ollama.probe answer (null until it arrives)
+    property var probe: null
+    readonly property var pulled: Model.pulledModels(root.probe)
+    readonly property bool stopped: !!root.probe && !root.probe.reachable
+
+    Component.onCompleted: {
+        const endpoint = Config.ai && Config.ai.ollama ? Config.ai.ollama.endpoint || "" : "";
+        BackendService.call("providers.ollama.probe", {
+            "endpoint": endpoint
+        }, (res, err) => {
+            if (!err && res)
+                root.probe = res;
+        });
+    }
 
     variant: "common"
     enableShadow: false
@@ -47,7 +64,8 @@ StyledRect {
                     color: Colors.overBackground
                 }
                 Text {
-                    text: I18n.t("onboarding.ai.pull.desc")
+                    objectName: "pullHint"
+                    text: root.stopped ? I18n.t("onboarding.ai.pull.start") : I18n.t("onboarding.ai.pull.desc")
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overSurfaceVariant
@@ -65,7 +83,7 @@ StyledRect {
                 delegate: Item {
                     id: chip
                     required property var modelData
-                    readonly property var pull: Model.pullState(ExtrasService.pullProgress(chip.modelData.id), ExtrasService.pulls[chip.modelData.id] !== undefined)
+                    readonly property var pull: Model.pullState(ExtrasService.pullProgress(chip.modelData.id), ExtrasService.pulls[chip.modelData.id] !== undefined, root.pulled.includes(chip.modelData.id))
                     readonly property string phase: chip.pull.state
                     readonly property bool actionable: chip.phase === "idle" || chip.phase === "failed"
                     readonly property color tone: chip.phase === "failed" ? Colors.error : Colors.primary

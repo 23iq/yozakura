@@ -3354,7 +3354,6 @@
   "onboarding.finish.unchanged": "Como estaban",
   "onboarding.finish.look_current": "Tu aspecto actual",
   "onboarding.finish.apps_none": "Nada nuevo",
-  "onboarding.finish.installing": "Instalando… %1 de %2 listas",
   "onboarding.finish.installed_n.one": "%1 instalada",
   "onboarding.finish.installed_n.other": "%1 instaladas",
   "onboarding.finish.failed_n.one": "%1 con error",
@@ -3370,5 +3369,10 @@
   "onboarding.finish.exclusive.desc": "Se desactivan otras barras, docks y demonios de notificaciones. Se aplica al empezar.",
   "onboarding.finish.exclusive.undo": "Puedes deshacerlo cuando quieras en Ajustes → Sistema o con %1.",
   "onboarding.finish.start": "Empezar a usar %1",
-  "onboarding.finish.specials": "Espacios especiales"
+  "onboarding.finish.specials": "Espacios especiales",
+  "onboarding.ai.pull.start": "Ollama aún no está en marcha: inícialo con «ollama serve» y luego descarga un modelo.",
+  "onboarding.finish.exclusive.failed": "No se pudo hacer de %1 el único shell",
+  "onboarding.finish.exclusive.failed.body": "%1 — consulta Ajustes → Sistema.",
+  "onboarding.finish.installing_n.one": "%1 instalándose",
+  "onboarding.finish.installing_n.other": "%1 instalándose"
 }

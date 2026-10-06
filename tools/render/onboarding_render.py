@@ -42,7 +42,8 @@ def extras_replies() -> dict:
               for e in cat["entries"]}
     return {"extras.catalog": {**cat, "platform": PLATFORM}, "extras.status": status,
             "extras.ollamaPull": {"jobs": [{"id": "pull-1", "kind": "ollama", "entries": []}]},
-            "exclusive.status": STATUS_OFF, "exclusive.plan": PLAN}
+            "exclusive.status": STATUS_OFF, "exclusive.plan": PLAN,
+            "providers.ollama.probe": {"reachable": True, "models": [{"id": "llama3.2:latest"}]}}
 
 OUTPUTS = [
     {"id": "AOC-Q27-1", "name": "DP-1", "make": "AOC", "model": "Q27G2", "enabled": True,
@@ -131,10 +132,19 @@ Window {{
                 win.grabWindow().save(str(path))
                 print(path)
 
+            # every size starts from a fresh install state (apps preselected again)
+            h.eval(win, "ExtrasService.jobs = ({}); ExtrasService.progress = ({}); ExtrasService.pulls = ({});"
+                        " (function () { const c = Object.assign({}, wizard.choices); delete c.apps; delete c.installs;"
+                        " wizard.choices = c })()")
             count = h.eval(win, "wizard.count")
             for i in range(count):
                 h.eval(win, f"wizard.go({i})")
                 sid = h.eval(win, "wizard.step.id")
+                if sid == "apps":  # the catalog and its status first: the preselection shows
+                    for _ in range(50):
+                        if h.eval(win, "!!ExtrasService.catalog && Object.keys(ExtrasService.status).length > 0"):
+                            break
+                        QTest.qWait(100)
                 shot(f"{i + 1:02d}-{sid}", 2600 if i == 0 else 1100)
                 if sid == "displays":
                     item = h.find(win, "stepLoader").property("item")

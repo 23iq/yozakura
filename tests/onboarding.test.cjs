@@ -134,4 +134,7 @@ test('pullState: Ollama model chips follow their pull job', () => {
     eq(M.pullState({ state: 'done', percent: 100 }, true), { state: 'done', percent: 100 });
     eq(M.pullState({ state: 'failed', percent: 10 }, true), { state: 'failed', percent: -1 });
     eq(M.pullState({ state: 'cancelled', percent: 10 }, true), { state: 'idle', percent: -1 });
+    eq(M.pullState(null, false, true), { state: 'done', percent: 100 }, 'pulled before');
+    eq(M.pulledModels({ models: [{ id: 'llama3.2:latest' }, { id: 'gemma3:4b' }] }), ['llama3.2', 'gemma3']);
+    eq(M.pulledModels(null), []);
 });

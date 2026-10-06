@@ -131,10 +131,20 @@ var OLLAMA_MODELS = [
     { "id": "gemma3", "label": "Gemma 3", "size": "3.3 GB" }
 ];
 
+// Base names of the models a providers.ollama.probe answer lists
+// ("llama3.2:latest" -> "llama3.2").
+function pulledModels(probe) {
+    return ((probe && probe.models) || []).map(function (m) {
+        return String(m.id || m.name || "").split(":")[0];
+    });
+}
+
 // Chip state of one model pull from its job progress (null: never asked
-// for in this session): "idle" | "pulling" (percent, -1 unknown) | "done"
-// | "failed".
-function pullState(progress, requested) {
+// for in this session) or an earlier pull (`pulled`): "idle" | "pulling"
+// (percent, -1 unknown) | "done" | "failed".
+function pullState(progress, requested, pulled) {
+    if (pulled && (!progress || progress.state !== "running"))
+        return { "state": "done", "percent": 100 };
     if (!progress)
         return { "state": requested ? "pulling" : "idle", "percent": -1 };
     if (progress.state === "done")

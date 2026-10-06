@@ -56,7 +56,8 @@ STATUS["firefox"] = {"id": "firefox", "state": "installed", "source": "pkg"}
 env = OnboardingEnv("onboarding-apps-ui", overrides={"theme": {"animDuration": 0}},
                     replies={"extras.catalog": {**CATALOG, "platform": {"distro": "arch"}}, "extras.status": STATUS,
                              "extras.ollamaPull": {"jobs": [{"id": "ollama-1", "kind": "ollama", "entries": []}]},
-                             "exclusive.status": STATUS_OFF, "exclusive.plan": PLAN, "exclusive.enable": STATUS_OFF})
+                             "exclusive.status": STATUS_OFF,
+                             "providers.ollama.probe": {"reachable": True, "models": [{"id": "gemma3:latest"}]}, "exclusive.plan": PLAN, "exclusive.enable": STATUS_OFF})
 h = env.h
 win = h.load("""
 import QtQuick
@@ -119,6 +120,10 @@ go("apps")
 check(json.loads(ev("JSON.stringify(wizard.choices.apps)")) == ["steam"], "a revisit keeps the remembered selection")
 check(h.eval(vfind("card-vesktop"), "selected") is False and h.eval(vfind("card-steam"), "selected") is True,
       "the cards show the remembered selection, no second preselection")
+ev('wizard.remember("apps", ["firefox", "steam"])')
+go("ai")
+go("apps")
+check(json.loads(ev("JSON.stringify(wizard.choices.apps)")) == ["steam"], "a restored pick installed meanwhile is dropped")
 h.eval(vfind("card-vesktop"), "toggled()")
 h.eval(vfind("installButton"), "clicked()")
 inst = calls("extras.install")
@@ -139,6 +144,12 @@ check(ev("Config.ai.enabled") is False, "the master switch writes ai.enabled")
 h.eval(vfind("aiMaster"), "toggled(true)")
 ev('BackendService.emit("extras.status", Object.assign({}, ExtrasService.status, {ollama: {id: "ollama", state: "installed"}}))')
 QTest.qWait(60)
+check(len(calls("providers.ollama.probe")) == 1, "the pull row probes the Ollama server")
+check(h.eval(vfind("pullChip:gemma3"), "phase") == "done", "a model pulled before is marked done")
+row = h.eval(vfind("pullChip:gemma3"), "parent.parent.parent")
+h.eval(row, "probe = ({reachable: false, models: []})")
+check("ollama serve" in h.eval(vfind("pullHint"), "text"), "a stopped server gets the start hint")
+h.eval(row, "probe = ({reachable: true, models: [{id: 'gemma3:latest'}]})")
 chip = vfind("pullChip:llama3.2")
 check(chip is not None and vfind("pullChip:qwen2.5-coder") is not None and vfind("pullChip:gemma3") is not None,
       "installed Ollama offers llama3.2 / qwen2.5-coder / gemma3")
@@ -165,7 +176,12 @@ term = vfind("summary:terminal")
 check(term is not None and h.eval(term, "value") == "kitty · Plain", f"summary shows terminal + prompt, got {term and h.eval(term, 'value')}")
 apps = vfind("summary:apps")
 check(apps is not None and h.eval(apps, "busy") is True, "apps card shows live progress while installing")
-check(apps is not None and "0 of 2" in h.eval(apps, "value"), f"apps card counts the queued apps, got {apps and h.eval(apps, 'value')}")
+check(apps is not None and h.eval(apps, "value") == "2 installing", f"apps card counts the queued apps, got {apps and h.eval(apps, 'value')}")
+ev('BackendService.emit("extras.progress", {job: "j2", kind: "flatpak", entries: ["steam"], state: "failed", percent: 0, phase: "", reason: "network"})')
+ev("ExtrasService.offline = false")
+QTest.qWait(30)
+apps = vfind("summary:apps")
+check(h.eval(apps, "value") == "1 failed · 1 installing", f"failures show while others install, got {h.eval(apps, 'value')}")
 check(h.eval(vfind("backgroundNote"), "visible") is True, "installs-continue note while installing")
 check(h.eval(h.find(win, "onboardingNext"), "visible") is False, "the summary has its own Start button")
 # exclusive mode: only on Hyprland with a reported status
@@ -184,11 +200,33 @@ ev('ExclusiveService.status = Object.assign({}, ExclusiveService.status, {compos
 QTest.qWait(30)
 
 closed = []
+
+
+def reopen_at_finish():
+    ev("flowLoader.active = false")
+    ev("OnboardingService.open()")
+    ev("flowLoader.active = true")
+    QTest.qWait(50)
+    h.find(win, "flow").closeRequested.connect(lambda: (closed.append(1), ev("OnboardingService.complete()")))
+    go("finish")
+    QTest.qWait(30)
+
+
 h.find(win, "flow").closeRequested.connect(lambda: (closed.append(1), ev("OnboardingService.complete()")))
+ev("wizard.skipRequested = true")
+h.eval(h.find(win, "skipConfirm"), "clicked()")
+QTest.qWait(30)
+check(closed == [1] and calls("exclusive.enable") == [], "Skip on the summary never enables exclusive mode")
+reopen_at_finish()
+h.eval(vfind("exclusiveToggle"), "toggled(true)")
+ev('BackendService.replies = Object.assign({}, BackendService.replies, {"exclusive.enable": {error: "config errors: monitor"}})')
 h.eval(vfind("finishStart"), "clicked()")
 QTest.qWait(30)
-check(closed == [1], "Start using finishes the wizard")
-check(len(calls("exclusive.enable")) == 1, "the only-shell choice is applied on finish")
+check(closed == [1, 1], "Start using finishes the wizard")
+check(len(calls("exclusive.enable")) == 1, "Start applies the only-shell choice, once")
+sent = json.loads(ev("JSON.stringify(Notifications.sent)"))
+check(len(sent) == 1 and "only shell" in sent[0]["summary"] and "config errors: monitor" in sent[0]["body"],
+      f"a failed enable after the wizard closed is notified, got {sent}")
 check(ev("StateService.state.onboarding") is None, "finishing clears the saved wizard state")
 check(calls("extras.cancel") == [] and ev("ExtrasService.busy") is True, "installs keep running after the wizard")
 

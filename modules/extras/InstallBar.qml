@@ -65,6 +65,15 @@ StyledRect {
         }
     }
 
+    // solid base under the (possibly translucent) popup fill: card text
+    // scrolling underneath never shows through
+    Rectangle {
+        anchors.fill: parent
+        radius: root.radius
+        color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 1)
+        z: -1
+    }
+
     Rectangle {
         anchors.fill: parent
         radius: root.radius

@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import qs.modules.services
+import qs.modules.globals
 import qs.modules.settings.store
 import "OnboardingSteps.js" as Steps
 import "OnboardingModel.js" as Model
@@ -77,14 +78,28 @@ QtObject {
     }
 
     // Finish or skip: keep what was chosen so far (it is already live).
-    // Installs keep running in the backend queue. Exclusive mode, when it
-    // was switched on in the summary, is enabled on the way out.
+    // Installs keep running in the backend queue.
     function finish() {
         if (SettingsStore.hasChanges)
             SettingsStore.apply();
-        if (isLast && wantsExclusive)
-            ExclusiveService.enable();
         finished();
+    }
+
+    // "Start using" and the summary's Settings links: finish and apply the
+    // only-shell choice (Skip / Esc never do). A failure surfaces as a
+    // notification: the wizard is gone by then.
+    function start() {
+        if (isLast && wantsExclusive)
+            ExclusiveService.enable(ok => {
+                if (!ok)
+                    Notifications.notifyInternal({
+                        "summary": I18n.t("onboarding.finish.exclusive.failed", Brand.displayName),
+                        "body": I18n.t("onboarding.finish.exclusive.failed.body", ExclusiveService.error),
+                        "appName": Brand.displayName,
+                        "urgency": "critical"
+                    });
+            });
+        finish();
     }
 
     // ---- installs and exclusive mode ---------------------------------------

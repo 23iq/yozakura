@@ -3364,7 +3364,6 @@
   "onboarding.finish.unchanged": "Без изменений",
   "onboarding.finish.look_current": "Текущее оформление",
   "onboarding.finish.apps_none": "Ничего нового",
-  "onboarding.finish.installing": "Установка… готово %1 из %2",
   "onboarding.finish.installed_n.one": "Установлено: %1",
   "onboarding.finish.installed_n.few": "Установлено: %1",
   "onboarding.finish.installed_n.many": "Установлено: %1",
@@ -3384,5 +3383,12 @@
   "onboarding.finish.exclusive.desc": "Другие панели, доки и демоны уведомлений отключаются. Применяется при старте.",
   "onboarding.finish.exclusive.undo": "Отменить можно в любой момент: Настройки → Система или командой %1.",
   "onboarding.finish.start": "Начать работу с %1",
-  "onboarding.finish.specials": "Особые рабочие столы"
+  "onboarding.finish.specials": "Особые рабочие столы",
+  "onboarding.ai.pull.start": "Ollama ещё не запущена — запустите «ollama serve», затем скачайте модель.",
+  "onboarding.finish.exclusive.failed": "Не удалось сделать %1 единственной оболочкой",
+  "onboarding.finish.exclusive.failed.body": "%1 — подробности в Настройки → Система.",
+  "onboarding.finish.installing_n.one": "Устанавливается: %1",
+  "onboarding.finish.installing_n.few": "Устанавливается: %1",
+  "onboarding.finish.installing_n.many": "Устанавливается: %1",
+  "onboarding.finish.installing_n.other": "Устанавливается: %1"
 }

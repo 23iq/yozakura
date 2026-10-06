@@ -3354,7 +3354,6 @@
   "onboarding.finish.unchanged": "As they were",
   "onboarding.finish.look_current": "Your current look",
   "onboarding.finish.apps_none": "Nothing new",
-  "onboarding.finish.installing": "Installing… %1 of %2 ready",
   "onboarding.finish.installed_n.one": "%1 installed",
   "onboarding.finish.installed_n.other": "%1 installed",
   "onboarding.finish.failed_n.one": "%1 failed",
@@ -3370,5 +3369,10 @@
   "onboarding.finish.exclusive.desc": "Other bars, docks and notification daemons are switched off. Applied when you start.",
   "onboarding.finish.exclusive.undo": "Undo it any time in Settings → System or with %1.",
   "onboarding.finish.start": "Start using %1",
-  "onboarding.finish.specials": "Special workspaces"
+  "onboarding.finish.specials": "Special workspaces",
+  "onboarding.ai.pull.start": "Ollama is not running yet — start it with “ollama serve”, then pull a model.",
+  "onboarding.finish.exclusive.failed": "Couldn't make %1 the only shell",
+  "onboarding.finish.exclusive.failed.body": "%1 — see Settings → System.",
+  "onboarding.finish.installing_n.one": "%1 installing",
+  "onboarding.finish.installing_n.other": "%1 installing"
 }

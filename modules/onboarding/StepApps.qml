@@ -26,8 +26,9 @@ Item {
     Component.onCompleted: {
         ExtrasService.load();
         if (root.saved !== undefined) {
+            // installed or installing meanwhile: no longer a pick
             const sel = {};
-            root.saved.forEach(id => sel[id] = true);
+            root.saved.filter(id => !["installed", "installing"].includes(ExtrasService.cardState(id))).forEach(id => sel[id] = true);
             host.selected = sel;
         }
         root._live = true;

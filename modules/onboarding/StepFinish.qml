@@ -24,13 +24,18 @@ Item {
     readonly property bool installing: ExtrasService.busy
     readonly property bool compact: height < 560
 
+    // "2 installed · 1 failed · 1 installing"
     function installLine(s, none) {
-        if (s.installing > 0)
-            return I18n.t("onboarding.finish.installing", s.installed, s.total);
         if (s.total === 0)
             return none;
-        const done = I18n.tn("onboarding.finish.installed_n", s.installed);
-        return s.failed > 0 ? done + " · " + I18n.tn("onboarding.finish.failed_n", s.failed) : done;
+        const parts = [];
+        if (s.installed > 0)
+            parts.push(I18n.tn("onboarding.finish.installed_n", s.installed));
+        if (s.failed > 0)
+            parts.push(I18n.tn("onboarding.finish.failed_n", s.failed));
+        if (s.installing > 0)
+            parts.push(I18n.tn("onboarding.finish.installing_n", s.installing));
+        return parts.length > 0 ? parts.join(" · ") : none;
     }
 
     readonly property var cards: {
@@ -99,7 +104,7 @@ Item {
     function openSettings(category) {
         if (category !== "")
             GlobalStates.settingsCategory = category;
-        root.wizard.finish();
+        root.wizard.start();
         if (!GlobalStates.settingsWindowVisible)
             GlobalShortcuts.toggleSettings();
     }
@@ -283,7 +288,7 @@ Item {
             width: implicitWidth + 36
             height: Math.round(implicitHeight * 1.2)
             text: I18n.t("onboarding.finish.start", Brand.displayName)
-            onClicked: root.wizard.finish()
+            onClicked: root.wizard.start()
         }
         NavButton {
             objectName: "finishOpenSettings"
