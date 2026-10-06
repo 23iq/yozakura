@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components
 import "KitStates.js" as KitStates
+import qs.modules.components.kit
 
 // Icon + label toggle. Inactive: the language's "common" box (a ghost in
 // ink); `active`: accent tint with accent icon and label.

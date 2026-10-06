@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.components.kit
 
 // A hairline (overBackground at 8%), horizontal by default.
 Rectangle {

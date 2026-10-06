@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.components.kit
 
 // The section label used everywhere: label-role text with an optional
 // trailing quiet text action (`action: "Clear"` -> `triggered()`).

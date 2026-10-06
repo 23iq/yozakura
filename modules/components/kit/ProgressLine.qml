@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 
 // A thin progress line: track + accent fill (`value` 0..1).
 Rectangle {

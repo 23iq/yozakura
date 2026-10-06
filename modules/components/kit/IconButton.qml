@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components
 import "KitStates.js" as KitStates
+import qs.modules.components.kit
 
 // Round icon button. Sizes "s" (36) / "m" (40). Normal is the language's
 // "common" box (a ghost in ink), hover / `highlighted` the focus look,

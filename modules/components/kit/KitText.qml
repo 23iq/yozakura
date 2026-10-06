@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.components.kit
 
 // Text in one of the kit's type roles (Type.roles): `KitText { role: "title" }`.
 // Numbers are tabular in the display role (or with `tabular: true`).

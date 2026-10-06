@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.modules.theme
+import qs.modules.components.kit
 
 // A rounded-square image (album art, thumbnails, app art) with a quiet
 // placeholder: an `icon` glyph or `placeholderText` (initials) while the

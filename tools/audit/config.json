@@ -112,5 +112,10 @@
    "config/CustomBindDefaults.js::BrandActions.appId": "compositor bind command line; the only spliced value is the constant app id",
    "modules/widgets/dashboard/wallpapers/WallpaperFolders.js::names.map": "find predicates built from the constant EXTENSIONS list; the folders are passed as \"$@\""
   }
+ },
+ "qsScanner": {
+  "ignore": {
+   "modules/components/kit": "shared UI kit with no shell consumer yet; the first `import qs.modules.components.kit` in a scanned file makes the scanner reach it"
+  }
  }
 }

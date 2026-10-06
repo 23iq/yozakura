@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 
 // A small outlined keycap for shortcut hints: `KeyHint { text: "Esc" }` or
 // `KeyHint { icon: Icons.arrowUp }`.

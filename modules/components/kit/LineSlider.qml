@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 
 // A 3px line slider: track, accent fill, a knob that shows while hovered or
 // dragged. Drag or click to set, the wheel adjusts by `step`. Optional
@@ -107,10 +108,10 @@ Item {
                 function track(m: var) {
                     root.setFraction(root.vertical ? 1 - (m.y - Space.xs) / area.height : (m.x - Space.xs) / area.width);
                 }
-                onPressed: m => track(m)
+                onPressed: m => mouse.track(m)
                 onPositionChanged: m => {
-                    if (pressed)
-                        track(m);
+                    if (mouse.pressed)
+                        mouse.track(m);
                 }
                 onWheel: w => {
                     const d = (w.angleDelta.y !== 0 ? w.angleDelta.y : w.angleDelta.x) > 0 ? 1 : -1;

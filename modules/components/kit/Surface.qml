@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.components
+import qs.modules.components.kit
 
 // The one box of a window or popup: the theme's "popup" (or "bg") surface
 // with the standard padding (`variant: "bg"` for a full window). Children

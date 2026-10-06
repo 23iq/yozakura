@@ -1,6 +1,7 @@
 """Shared UI kit (modules/components/kit): every component loads in each
 visual language, sizes follow the Type roles and Space scale (density
 included), and the interactive states switch the look."""
+import functools
 import sys
 from pathlib import Path
 
@@ -51,8 +52,8 @@ for lang, density in CASES:
     env = KitEnv(f"kit-{lang}-{density}", overrides={"theme": {"language": lang, "density": density}})
     h = env.h
     win = env.load(SCENE)
-    get = lambda name: h.find(win, name)  # noqa: E731
-    space = lambda key: h.eval(win, f"Space.{key}")  # noqa: E731
+    get = functools.partial(h.find, win)
+    space = functools.partial(lambda hh, w, key: hh.eval(w, f"Space.{key}"), h, win)
     tag = f"{lang}/{density}"
 
     # Type roles

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.components
 import "KitStates.js" as KitStates
+import qs.modules.components.kit
 
 // One row of a list: a leading slot (icon / Avatar / Art), a title with an
 // optional one-line subtitle (elided) and a trailing slot. Rows are ghosts

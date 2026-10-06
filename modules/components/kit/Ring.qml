@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Shapes
+import qs.modules.components.kit
 
 // A progress ring (`value` 0..1) with its children centered inside
 // (pomodoro time, hold-to-confirm glyph). Same stroke as the line controls.
