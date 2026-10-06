@@ -17,13 +17,14 @@ import "TransferModel.js" as Transfers
 //   transfers   de-duplicated transfers for detailed views (TransferModel.js)
 // Presentation (notch.liveActivities.presentation): "notch" renders them inside
 // the notch (modules/widgets/defaultview/activities), "islands" next to it
-// (modules/bar/activities), "off" disables every provider.
+// (modules/bar/activities), "off" disables every provider. With the notch
+// off they move to the bar or the corner pills (ShellLayout, "corner").
 Singleton {
     id: root
 
     readonly property var settings: Model.normalizeConfig(Config.notch ? Config.notch.liveActivities : undefined)
     readonly property bool isEnabled: settings.enabled && settings.presentation !== "off"
-    readonly property string presentation: isEnabled ? settings.presentation : "off"
+    readonly property string presentation: isEnabled ? ShellLayout.activityPresentation(settings.presentation) : "off"
     readonly property int maxVisible: settings.maxVisible
     readonly property bool showSpeed: settings.downloads.showSpeed
 

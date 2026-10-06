@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.bar
 import qs.modules.notch
+import qs.modules.services
 import qs.modules.services.activities
 import "ActivityLayout.js" as Layout
 
@@ -25,7 +26,8 @@ Item {
         barEnabled: barEnabled,
         barStyle: bar && bar.styleMeta.activity === "tab" ? "islands" : "classic",
         barPosition: bar ? bar.barPosition : "top",
-        notchPosition: Config.notchPosition || "top",
+        // With the notch off they sit in the middle of the bar's edge
+        notchPosition: ShellLayout.notchEnabled ? (Config.notchPosition || "top") : (bar ? bar.barPosition : "top"),
         notchTheme: Config.notchTheme || "default"
     })
 
@@ -63,7 +65,7 @@ Item {
     }
 
     // ── Free span along the edge ──
-    readonly property real notchWidth: notchItem ? notchItem.width : 0
+    readonly property real notchWidth: notchItem && ShellLayout.notchEnabled ? notchItem.width : 0
     readonly property real notchStart: (width - notchWidth) / 2
     readonly property real notchEnd: (width + notchWidth) / 2
     readonly property real margin: Math.max(8, roundFillet)
@@ -86,7 +88,7 @@ Item {
     readonly property real spacing: Math.max(4, Math.round(thickness / 6))
 
     // Retract with the notch, and while it is opened (launcher, dashboard...)
-    readonly property bool revealed: notch !== null && notch.reveal && !notch.screenNotchOpen
+    readonly property bool revealed: notch !== null && !notch.screenNotchOpen && (ShellLayout.notchEnabled ? notch.reveal : (!bar || bar.reveal))
 
     // ── Lifetime: only alive while something is (or was just) showing ──
     property bool lingering: false

@@ -53,6 +53,7 @@ var EDITORS = {
     "CursorShapeChips": "editors/CursorShapeChips.qml",
     "AppThemingEditor": "editors/AppThemingEditor.qml",
     "NotificationsStatus": "editors/NotificationsStatus.qml",
+    "LayoutBuilder": "layout/LayoutBuilder.qml",
     "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml"
 };
 
