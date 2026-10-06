@@ -84,6 +84,20 @@ function sheetSide(e, pref) {
     return "right";
 }
 
+// Full-height side sheet inside the work area, on sheetSide(e, pref).
+function sheetRect(e, pref, width) {
+    var w = workArea(e);
+    var side = sheetSide(e, pref);
+    var rw = Math.min(width, w.w);
+    return {
+        x: side === "right" ? w.x + w.w - rw : w.x,
+        y: w.y,
+        w: rw,
+        h: w.h,
+        side: side
+    };
+}
+
 function spotlightRect(e, size) {
     var w = workArea(e);
     var rw = Math.min(size.w, w.w);

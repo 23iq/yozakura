@@ -61,6 +61,10 @@ Singleton {
         return EdgeLayout.sheetSide(envFor(screen), pref || "auto");
     }
 
+    function sheetRect(screen, pref, width) {
+        return EdgeLayout.sheetRect(envFor(screen), pref || "auto", width);
+    }
+
     function spotlightRect(screen, size) {
         return EdgeLayout.spotlightRect(envFor(screen), size);
     }
