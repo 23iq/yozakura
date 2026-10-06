@@ -130,7 +130,7 @@
       "icon": "code",
       "hidden": true,
       "detect": {
-        "bins": [
+        "allBins": [
           "node",
           "npm"
         ]
@@ -212,11 +212,10 @@
       "icon": "cpu",
       "hidden": true,
       "detect": {
-        "bins": [
+        "allBins": [
           "cmake",
           "ninja",
-          "gcc",
-          "git"
+          "g++"
         ]
       },
       "install": {
@@ -651,7 +650,23 @@
         "arch": {
           "pkgs": [
             "steam"
-          ]
+          ],
+          "gpu": {
+            "amd": [
+              "steam",
+              "lib32-vulkan-radeon",
+              "vulkan-radeon"
+            ],
+            "intel": [
+              "steam",
+              "lib32-vulkan-intel",
+              "vulkan-intel"
+            ],
+            "nvidia": [
+              "steam",
+              "lib32-nvidia-utils"
+            ]
+          }
         },
         "flatpak": "com.valvesoftware.Steam"
       }

@@ -23,6 +23,7 @@ const (
 	ReasonDBLocked      = "db_locked"
 	ReasonDiskFull      = "disk_full"
 	ReasonDependency    = "dependency_failed"
+	ReasonNoAuthAgent   = "no_auth_agent"
 	ReasonError         = "error"
 )
 
@@ -184,9 +185,13 @@ func pkgPercent(phase string, pkgs []string) int {
 func lineReason(line string) string {
 	l := strings.ToLower(line)
 	switch {
+	case strings.Contains(l, "no authentication agent"):
+		return ReasonNoAuthAgent
 	case strings.Contains(l, "request dismissed"), strings.Contains(l, "not authorized"):
 		return ReasonAuthCancelled
-	case strings.Contains(l, "target not found"):
+	// before the network check: a 404 on a mirror is a stale database
+	case strings.Contains(l, "target not found"), strings.Contains(l, "returned error: 404"),
+		strings.Contains(l, "invalid or corrupted package"):
 		return ReasonNeedsSync
 	case strings.Contains(l, "could not resolve host"), strings.Contains(l, "failed to connect"),
 		strings.Contains(l, "failed retrieving file"), strings.Contains(l, "network is unreachable"),

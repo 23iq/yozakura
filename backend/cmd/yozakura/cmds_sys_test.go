@@ -3,10 +3,14 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"yozakura/backend/pkg/extrascatalog"
 	"yozakura/backend/pkg/svc/extras"
@@ -139,5 +143,36 @@ func TestSysVerbs(t *testing.T) {
 	}
 	if code, _ := runSysT([]string{"upgrade"}, env); code != 0 || !reflect.DeepEqual(f.calls, [][]string{{"pacman", "-Syu", "--noconfirm"}}) {
 		t.Fatalf("upgrade calls = %v", f.calls)
+	}
+}
+
+// The privileged helper survives its parent (the daemon) going away: with
+// SIGPIPE ignored a write to the closed output pipe is an error, not death,
+// so pacman (whose output it relays) is never killed mid-transaction.
+func TestSysSurvivesClosedStdout(t *testing.T) {
+	if os.Getenv("YZ_SIGPIPE_CHILD") == "1" {
+		ignoreSIGPIPE()
+		for i := 0; i < 3; i++ {
+			fmt.Println("progress line")
+			time.Sleep(5 * time.Millisecond)
+		}
+		_ = os.WriteFile(os.Getenv("YZ_SIGPIPE_MARK"), []byte("alive"), 0o644)
+		os.Exit(0)
+	}
+	mark := filepath.Join(t.TempDir(), "mark")
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	pr.Close() // the reader (the daemon) is gone
+	cmd := exec.Command(os.Args[0], "-test.run=^TestSysSurvivesClosedStdout$")
+	cmd.Env = append(os.Environ(), "YZ_SIGPIPE_CHILD=1", "YZ_SIGPIPE_MARK="+mark)
+	cmd.Stdout = pw
+	if err := cmd.Run(); err != nil {
+		t.Fatalf("child died: %v", err)
+	}
+	pw.Close()
+	if b, _ := os.ReadFile(mark); string(b) != "alive" {
+		t.Fatal("child did not finish after its stdout reader went away")
 	}
 }

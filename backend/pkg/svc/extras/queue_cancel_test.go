@@ -3,7 +3,9 @@ package extras
 import (
 	"errors"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestQueueCancel(t *testing.T) {
@@ -115,5 +117,56 @@ func TestQueueAuthCancelledCancelsBatch(t *testing.T) {
 	}
 	if strings.Join(f.calls, "|") != "pkexec y sys install a b|npm o" {
 		t.Errorf("calls = %v", f.calls)
+	}
+}
+
+// Shutdown (daemon reload) never interrupts a running system/AUR install:
+// it waits for it to finish and drops the queued jobs, logging both.
+func TestQueueShutdownWaitsForRootJob(t *testing.T) {
+	release := make(chan struct{})
+	f := &fakeRunner{started: make(chan string, 4), steps: map[string]fakeStep{
+		"pkexec y sys install a": {until: release},
+	}}
+	q, r := newTestQueue(t, f)
+	q.Enqueue([]Job{job("a", KindSystem, "pkexec", "y", "sys", "install", "a"), job("n", KindNpm, "npm", "n")})
+	<-f.started
+	var logs []string
+	var logMu sync.Mutex
+	done := make(chan struct{})
+	go func() {
+		q.Shutdown(func(l string) { logMu.Lock(); logs = append(logs, l); logMu.Unlock() })
+		close(done)
+	}()
+	select {
+	case <-done:
+		t.Fatal("shutdown must wait for the running system install")
+	case <-time.After(50 * time.Millisecond):
+	}
+	close(release)
+	<-done
+	fin := r.final()
+	if fin["a"].State != JobDone || fin["n"].State != JobCancelled {
+		t.Fatalf("final = %+v", fin)
+	}
+	logMu.Lock()
+	defer logMu.Unlock()
+	joined := strings.Join(logs, "\n")
+	if !strings.Contains(joined, "waiting for a to finish") || !strings.Contains(joined, "dropping queued n") {
+		t.Fatalf("logs = %q", joined)
+	}
+	if strings.Join(f.calls, "|") != "pkexec y sys install a" {
+		t.Fatalf("calls = %v", f.calls)
+	}
+}
+
+// A running user-level job is stopped on shutdown.
+func TestQueueShutdownStopsUserJob(t *testing.T) {
+	f := &fakeRunner{started: make(chan string, 4), steps: map[string]fakeStep{"slow": {block: true}}}
+	q, r := newTestQueue(t, f)
+	q.Enqueue([]Job{job("s", KindShell, "slow")})
+	<-f.started
+	q.Shutdown(func(string) {})
+	if fin := r.final(); fin["s"].State != JobCancelled {
+		t.Fatalf("final = %+v", fin)
 	}
 }

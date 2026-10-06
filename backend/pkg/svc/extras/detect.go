@@ -56,6 +56,10 @@ func Detect(c *Catalog, p Platform, probe Probe) map[string]Status {
 
 func detectEntry(e Entry, p Platform, probe Probe, pkgs, flat map[string]bool, fonts []string) Status {
 	st := Status{ID: e.ID}
+	if allBins(e, p, probe, pkgs) {
+		st.State, st.Source = StateInstalled, "bin"
+		return st
+	}
 	if src := firstSource(e, probe, pkgs, flat, fonts); src != "" {
 		st.State, st.Source = StateInstalled, src
 		return st
@@ -70,6 +74,35 @@ func detectEntry(e Entry, p Platform, probe Probe, pkgs, flat map[string]bool, f
 	}
 	st.State = StateMissing
 	return st
+}
+
+// allBins reports a bundle (detect.allBins) as complete: every binary is
+// on PATH and, when the distro method has a variant for this GPU, every
+// package of that variant is installed.
+func allBins(e Entry, p Platform, probe Probe, pkgs map[string]bool) bool {
+	if len(e.Detect.AllBins) == 0 {
+		return false
+	}
+	for _, b := range e.Detect.AllBins {
+		if !probe.LookPath(b) {
+			return false
+		}
+	}
+	var m *Method
+	switch p.Distro {
+	case "arch":
+		m = e.Install.Arch
+	case "fedora":
+		m = e.Install.Fedora
+	}
+	if m != nil {
+		for _, pkg := range m.GPU[p.GPU] {
+			if !pkgs[pkg] {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func firstSource(e Entry, probe Probe, pkgs, flat map[string]bool, fonts []string) string {

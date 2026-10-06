@@ -13,7 +13,8 @@ import (
 type fakeStep struct {
 	lines []string
 	code  int
-	block bool // wait for cancel
+	block bool          // wait for cancel
+	until chan struct{} // wait for this (not for cancel)
 }
 
 type fakeRunner struct {
@@ -39,6 +40,10 @@ func (f *fakeRunner) Run(ctx context.Context, argv, env []string, line func(stri
 	}
 	for _, l := range st.lines {
 		line(l)
+	}
+	if st.until != nil {
+		<-st.until
+		return 0, nil
 	}
 	if st.block {
 		<-ctx.Done()

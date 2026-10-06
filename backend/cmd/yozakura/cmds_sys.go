@@ -6,9 +6,11 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"os/signal"
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"syscall"
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/extrascatalog"
@@ -64,6 +66,12 @@ func defaultSysEnv(out io.Writer) sysEnv {
 	}
 }
 
+// ignoreSIGPIPE keeps the helper alive when the daemon reading its output
+// goes away (reload, crash): writes then fail with EPIPE instead of killing
+// the process, and ExecRunner keeps draining the child's pipe, so the
+// package manager is never cut off mid-transaction.
+func ignoreSIGPIPE() { signal.Ignore(syscall.SIGPIPE) }
+
 var reUID = regexp.MustCompile(`^[0-9]+$`)
 
 // runSys dispatches the privileged verbs. It refuses to run unless root.
@@ -76,6 +84,7 @@ func runSys(args []string, env sysEnv, out, errOut io.Writer) int {
 		fmt.Fprintln(errOut, "Error: sys must run as root (via pkexec)")
 		return 1
 	}
+	ignoreSIGPIPE()
 	verb, rest := args[0], args[1:]
 	var err error
 	switch verb {

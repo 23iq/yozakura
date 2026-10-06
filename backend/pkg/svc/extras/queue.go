@@ -300,14 +300,14 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 		j.prog.Percent = 100
 	}
 	final := j.prog
-	if reason == ReasonAuthCancelled {
+	if reason == ReasonAuthCancelled || reason == ReasonNoAuthAgent {
 		keep := q.pending[:0]
 		for _, p := range q.pending {
 			if p.batch != j.batch {
 				keep = append(keep, p)
 				continue
 			}
-			p.prog.State, p.prog.Reason = JobCancelled, ReasonAuthCancelled
+			p.prog.State, p.prog.Reason = JobCancelled, reason
 			dropped = append(dropped, p.prog)
 		}
 		q.pending = keep
@@ -352,6 +352,8 @@ func reasonText(r string) string {
 	switch r {
 	case ReasonAuthCancelled:
 		return "Authentication was cancelled."
+	case ReasonNoAuthAgent:
+		return "No password prompt is available (start a polkit agent)."
 	case ReasonNeedsSync:
 		return "Package databases are out of date; update the system and retry."
 	case ReasonNetwork:

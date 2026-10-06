@@ -33,7 +33,10 @@ type ScriptSpec struct {
 
 // DetectSpec describes how to tell an entry is already installed.
 type DetectSpec struct {
-	Bins    []string `json:"bins,omitempty"`
+	Bins []string `json:"bins,omitempty"` // any one of them
+	// AllBins: installed only when every one is on PATH (a bundle); with a
+	// GPU variant of the distro method its packages must be installed too.
+	AllBins []string `json:"allBins,omitempty"`
 	Flatpak string   `json:"flatpak,omitempty"`
 	Pkgs    []string `json:"pkgs,omitempty"`
 	Paths   []string `json:"paths,omitempty"` // globs, "~" allowed

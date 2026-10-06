@@ -74,6 +74,7 @@ type Daemon struct {
 	network    *network.Service
 	compositor *compositor.Service
 	displays   *displays.Service
+	extras     *extras.Service
 	caffeine   *caffeine.Service
 	gamemode   *gamemode.Service
 	powerprof  *powerprofile.Service
@@ -226,9 +227,10 @@ func New() (*Daemon, error) {
 		_, err := apphooks.ApplyByID(apphooks.DefaultEnv(), id)
 		return err
 	})
-	extras.NewService(func(title, body string) {
+	d.extras = extras.NewService(func(title, body string) {
 		_, _ = notifySvc.Send(notifysvc.SendParams{Summary: title, Body: body, AppIcon: "system-software-install"})
-	}).Register(d.srv)
+	})
+	d.extras.Register(d.srv)
 
 	exclusive.NewService().Register(d.srv)
 
@@ -513,6 +515,10 @@ func (d *Daemon) shutdown() {
 	// Refuse new IPC first: a request arriving mid-teardown could otherwise
 	// start agent processes or MCP servers after their owners shut down.
 	d.srv.Close()
+	if d.extras != nil {
+		// a running pacman/AUR install is waited for, never cut off
+		d.extras.Close()
+	}
 	if d.qsCmd != nil && d.qsCmd.Process != nil {
 		_ = d.qsCmd.Process.Signal(syscall.SIGTERM)
 		if d.qsDone != nil {

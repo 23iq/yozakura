@@ -28,3 +28,15 @@ func TestRealOllamaGPUOnlyOnArch(t *testing.T) {
 		t.Fatalf("fedora gpu = %+v", e.Install.Fedora)
 	}
 }
+
+// Steam needs the 32-bit Vulkan/GL driver of the GPU or games do not start.
+func TestRealSteamGPUVariants(t *testing.T) {
+	e, _ := loadReal(t).Get("steam")
+	want := map[string]string{"amd": "lib32-vulkan-radeon", "intel": "lib32-vulkan-intel", "nvidia": "lib32-nvidia-utils"}
+	for gpu, pkg := range want {
+		got := e.Install.Arch.GPU[gpu]
+		if len(got) == 0 || got[0] != "steam" || !contains(got, pkg) {
+			t.Errorf("steam %s = %v, want steam + %s", gpu, got, pkg)
+		}
+	}
+}

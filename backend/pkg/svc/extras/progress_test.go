@@ -46,6 +46,11 @@ func TestFailureReasons(t *testing.T) {
 		"installing firefox":                                          "",
 		"Error executing command as another user: Request dismissed":  ReasonAuthCancelled,
 		"Error executing command as another user: Not authorized":     ReasonAuthCancelled,
+		// a stale database: the mirror no longer has that version
+		"error: failed retrieving file 'x-1-1.pkg.tar.zst' from mirror : The requested URL returned error: 404": ReasonNeedsSync,
+		"error: x: signature from \"y\" is invalid":                                                             "",
+		"error: x-1-1.pkg.tar.zst: invalid or corrupted package (checksum)":                                     ReasonNeedsSync,
+		"Error executing command as another user: No authentication agent found.":                               ReasonNoAuthAgent,
 	}
 	for l, want := range lines {
 		if got := lineReason(l); got != want {
