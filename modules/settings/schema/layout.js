@@ -72,6 +72,20 @@ var category = {
                     "label": "prefs.layout.sheet_side",
                     "description": "prefs.layout.sheet_side.desc",
                     "keywords": "sheet side left right edge vertical bar"
+                },
+                {
+                    "key": "layout.cheatsheet.host",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "fullscreen",
+                            "label": "prefs.layout.host.fullscreen",
+                            "icon": "arrowsOut"
+                        }
+                    ].concat(HOSTS.slice(1)),
+                    "label": "prefs.layout.cheatsheet_host",
+                    "description": "prefs.layout.cheatsheet_host.desc",
+                    "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
                 }
             ]
         }

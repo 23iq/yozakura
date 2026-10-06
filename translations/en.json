@@ -3527,5 +3527,19 @@
   "prefs.appearance.popup_tail": "Popup tail",
   "prefs.appearance.popup_tail.desc": "Point popups at the item that opened them.",
   "prefs.appearance.popup_gap": "Popup gap",
-  "prefs.appearance.popup_gap.desc": "Distance between a popup and the item that opened it."
+  "prefs.appearance.popup_gap.desc": "Distance between a popup and the item that opened it.",
+  "powermenu.hold_hint": "Hold to confirm shutdown, reboot and log out",
+  "prefs.menus.section": "Menus",
+  "prefs.menus.style.notch": "Notch",
+  "prefs.menus.style.fullscreen": "Full screen",
+  "prefs.menus.style.radial": "Radial",
+  "prefs.menus.powermenu_style": "Power menu",
+  "prefs.menus.powermenu_style.desc": "In the notch, large buttons over a dimmed screen, or a ring at the pointer. Shutdown, reboot and log out are held to confirm.",
+  "prefs.menus.tools_style": "Tools menu",
+  "prefs.menus.tools_style.desc": "Screenshot, recording and picker tools in the notch or on a ring at the pointer.",
+  "prefs.layout.host.fullscreen": "Full screen",
+  "prefs.layout.cheatsheet_host": "Keybind cheatsheet",
+  "prefs.layout.cheatsheet_host.desc": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
+  "presets.tab.sets": "Sets",
+  "presets.gallery.search": "Search presets... (hover to preview, Enter keeps, Esc reverts)"
 }

@@ -3527,5 +3527,19 @@
   "prefs.appearance.popup_tail": "Flecha de ventana emergente",
   "prefs.appearance.popup_tail.desc": "Apunta las ventanas emergentes al elemento que las abrió.",
   "prefs.appearance.popup_gap": "Separación de ventanas emergentes",
-  "prefs.appearance.popup_gap.desc": "Distancia entre una ventana emergente y el elemento que la abrió."
+  "prefs.appearance.popup_gap.desc": "Distancia entre una ventana emergente y el elemento que la abrió.",
+  "powermenu.hold_hint": "Mantén pulsado para confirmar apagar, reiniciar y cerrar sesión",
+  "prefs.menus.section": "Menús",
+  "prefs.menus.style.notch": "Notch",
+  "prefs.menus.style.fullscreen": "Pantalla completa",
+  "prefs.menus.style.radial": "Radial",
+  "prefs.menus.powermenu_style": "Menú de energía",
+  "prefs.menus.powermenu_style.desc": "En el notch, botones grandes sobre la pantalla atenuada o un anillo junto al puntero. Apagar, reiniciar y cerrar sesión se confirman manteniendo pulsado.",
+  "prefs.menus.tools_style": "Menú de herramientas",
+  "prefs.menus.tools_style.desc": "Captura, grabación y selector de color en el notch o en un anillo junto al puntero.",
+  "prefs.layout.host.fullscreen": "Pantalla completa",
+  "prefs.layout.cheatsheet_host": "Chuleta de atajos",
+  "prefs.layout.cheatsheet_host.desc": "Dónde se abre la chuleta de atajos: sobre toda la pantalla, centrada o como hoja lateral.",
+  "presets.tab.sets": "Conjuntos",
+  "presets.gallery.search": "Buscar presets... (pasa el cursor para previsualizar, Enter aplica, Esc revierte)"
 }

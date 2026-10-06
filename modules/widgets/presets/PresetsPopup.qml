@@ -1,16 +1,14 @@
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
-import qs.config
 import qs.modules.widgets.presets
 
+// Preset switcher (bar button, `<app> run presets`): the thumbnail gallery
+// over a dimmed screen. Hover previews live; Enter keeps, Esc/close reverts.
 PanelWindow {
     id: presetsPopup
 
@@ -75,10 +73,10 @@ PanelWindow {
         opacity: presetsOpen ? 0.5 : 0
 
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
             }
         }
 
@@ -90,144 +88,54 @@ PanelWindow {
         }
     }
 
-    // Main content column (search + presets)
-    Item {
-        id: mainContainer
+    // The gallery card, centered (search, tabs, thumbnails)
+    StyledRect {
+        id: panel
+        variant: "popup"
         anchors.centerIn: parent
-        width: presetsContainer.width + (scrollbarContainer.visible ? scrollbarContainer.width + 8 : 0)
-        height: presetsContainer.height
-
+        width: gallery.implicitWidth
+        height: gallery.implicitHeight
+        radius: Styling.radius(20)
+        enableShadow: true
         opacity: presetsOpen ? 1 : 0
-        scale: presetsOpen ? 1 : 0.9
+        scale: presetsOpen ? 1 : 0.94
 
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
             }
         }
 
         Behavior on scale {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Easing.OutBack
-                easing.overshoot: 1.2
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
+                easing.overshoot: Motion.enter.overshoot
             }
         }
 
-        // Presets container
-        Item {
-            id: presetsContainer
-            anchors.centerIn: parent
-            width: presetsLoader.item ? presetsLoader.item.implicitWidth + 48 : 400
-            height: presetsLoader.item ? presetsLoader.item.implicitHeight + 48 : 300
-
-            // Background panel
-            StyledRect {
-                id: presetsBackground
-                variant: "bg"
-                anchors.fill: parent
-                radius: Styling.radius(20)
-
-                layer.enabled: true
-                layer.effect: Shadow {}
-            }
-
-            // Loader for PresetsTab
-            Loader {
-                id: presetsLoader
-                anchors.centerIn: parent
-                active: presetsOpen
-
-                sourceComponent: PresetsTab {}
-            }
+        // A click on the card must not reach the backdrop
+        MouseArea {
+            anchors.fill: parent
         }
 
-        // External scrollbar (if needed)
-        StyledRect {
-            id: scrollbarContainer
-            visible: presetsLoader.item && presetsLoader.item.needsScrollbar
-            variant: "bg"
-            anchors.left: presetsContainer.right
-            anchors.leftMargin: 8
-            anchors.verticalCenter: presetsContainer.verticalCenter
-            width: 32
-            height: Math.max(presetsContainer.height * 0.6, 200)
-            radius: Styling.radius(0)
-
-            layer.enabled: true
-            layer.effect: Shadow {}
-
-            MouseArea {
-                anchors.fill: parent
-                acceptedButtons: Qt.NoButton
-                onWheel: wheel => {
-                    if (presetsLoader.item && presetsLoader.item.flickable) {
-                        const flickable = presetsLoader.item.flickable;
-                        const delta = wheel.angleDelta.y > 0 ? -150 : 150;
-                        flickable.contentY = Math.max(0, Math.min(flickable.contentY + delta, flickable.contentHeight - flickable.height));
-                    }
-                }
-            }
-
-            ScrollBar {
-                id: externalScrollBar
-                anchors.centerIn: parent
-                height: parent.height - 16
-                width: 12
-                orientation: Qt.Vertical
-                policy: ScrollBar.AlwaysOn
-
-                position: presetsLoader.item && presetsLoader.item.flickable ? presetsLoader.item.flickable.visibleArea.yPosition : 0
-                size: presetsLoader.item && presetsLoader.item.flickable ? presetsLoader.item.flickable.visibleArea.heightRatio : 1
-
-                // Notify flickable when manually scrolling
-                onActiveChanged: {
-                    if (presetsLoader.item) {
-                        presetsLoader.item.isManualScrolling = active;
-                    }
-                }
-
-                onPositionChanged: {
-                    if (active && presetsLoader.item && presetsLoader.item.flickable) {
-                        presetsLoader.item.flickable.contentY = position * presetsLoader.item.flickable.contentHeight;
-                    }
-                }
-
-                contentItem: Rectangle {
-                    implicitWidth: 12
-                    radius: Styling.radius(-10)
-                    color: externalScrollBar.pressed ? Styling.srItem("overprimary") : (externalScrollBar.hovered ? Qt.lighter(Styling.srItem("overprimary"), 1.2) : Styling.srItem("overprimary"))
-
-                    Behavior on color {
-                        enabled: Config.animDuration > 0
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                        }
-                    }
-                }
-
-                background: Rectangle {
-                    implicitWidth: 12
-                    radius: Styling.radius(-10)
-                    color: Colors.surfaceContainer
-                    opacity: 0.3
-                }
-            }
+        PresetsGallery {
+            id: gallery
+            anchors.fill: parent
+            focus: true
+            onCloseRequested: Visibilities.setActiveModule("")
         }
     }
 
-    // Ensure focus when presets opens
     onPresetsOpenChanged: {
-        if (presetsOpen) {
-            Qt.callLater(() => {
-                if (presetsLoader.item) {
-                    presetsLoader.item.resetSearch();
-                    presetsLoader.item.focusSearchInput();
-                }
-            });
-        }
+        if (presetsOpen)
+            Qt.callLater(() => gallery.forceActiveFocus());
+    }
+    Component.onCompleted: {
+        if (presetsOpen)
+            Qt.callLater(() => gallery.forceActiveFocus());
     }
 }

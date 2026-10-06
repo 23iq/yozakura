@@ -3543,5 +3543,19 @@
   "prefs.appearance.popup_tail": "Хвостик всплывающего окна",
   "prefs.appearance.popup_tail.desc": "Указывать всплывающим окном на элемент, который его открыл.",
   "prefs.appearance.popup_gap": "Отступ всплывающих окон",
-  "prefs.appearance.popup_gap.desc": "Расстояние между всплывающим окном и элементом, который его открыл."
+  "prefs.appearance.popup_gap.desc": "Расстояние между всплывающим окном и элементом, который его открыл.",
+  "powermenu.hold_hint": "Удерживайте, чтобы подтвердить выключение, перезагрузку и выход",
+  "prefs.menus.section": "Меню",
+  "prefs.menus.style.notch": "Вырез",
+  "prefs.menus.style.fullscreen": "Во весь экран",
+  "prefs.menus.style.radial": "Круговое",
+  "prefs.menus.powermenu_style": "Меню питания",
+  "prefs.menus.powermenu_style.desc": "В вырезе, крупные кнопки поверх затемнённого экрана или кольцо у указателя. Выключение, перезагрузка и выход подтверждаются удержанием.",
+  "prefs.menus.tools_style": "Меню инструментов",
+  "prefs.menus.tools_style.desc": "Скриншоты, запись и пипетка в вырезе или на кольце у указателя.",
+  "prefs.layout.host.fullscreen": "Во весь экран",
+  "prefs.layout.cheatsheet_host": "Шпаргалка по сочетаниям",
+  "prefs.layout.cheatsheet_host.desc": "Где открывается шпаргалка: на весь экран, по центру или боковой шторкой.",
+  "presets.tab.sets": "Наборы",
+  "presets.gallery.search": "Поиск пресетов... (наведите для просмотра, Enter применяет, Esc отменяет)"
 }
