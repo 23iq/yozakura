@@ -100,6 +100,12 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Settings UI** | `modules/settings/schema/*.js` | Declare a setting (one entry + translations); see `modules/settings/AGENTS.md` |
 | **Settings catalog** | `config/meta/*.js` + `tools/schema/` -> `assets/schema/` | Descriptions/enums/ranges of keys the settings UI does not declare; `make schema`; read by `backend/pkg/catalog` (CLI + MCP) |
 | **Config CLI / MCP** | `backend/cmd/yozakura/cmds_config.go`, `cmds_preset.go`, `backend/pkg/mcp/yozakura/` | `yozakura config ...`, `yozakura preset ...`, `yozakura mcp` |
+| **Displays / Keyboard** | `backend/pkg/svc/displays`, `backend/pkg/svc/keyboard`, `modules/services/DisplaysService.qml`, `modules/settings/{displays,keyboard}/` | `yozakura display ...`, `yozakura keyboard ...`; live apply with 15 s keep/revert |
+| **Extras catalog** | `assets/catalog/extras.json`, `backend/pkg/svc/extras`, `modules/extras/` | `yozakura extras ...`; installs queue in the backend, never run from QML |
+| **App hooks / env** | `backend/pkg/apphooks`, `backend/pkg/svc/apphooks`, `backend/pkg/envclean` | Third-party app theming hooks; PATH-like var dedupe |
+| **Terminal prompt** | `backend/pkg/termlook`, `backend/pkg/svc/term`, `assets/terminal/prompts/` | `yozakura term ...`; fish + Starship / oh-my-posh |
+| **Exclusive mode** | `backend/pkg/exclusive`, `backend/pkg/svc/exclusive` | `yozakura install hyprland --exclusive` / `--restore` |
+| **Installer** | `install.sh`, `backend/cmd/yozakura/cmds_onboarding_dryrun.go` | Core-only, compositor choice, `--dry-run`; wizard `onboarding --dry-run` |
 
 ## CODE MAP
 

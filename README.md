@@ -102,20 +102,21 @@ user; it asks for sudo once:
 curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bash
 ```
 
-It first shows the whole plan (distro, GPU, login manager, every package it
-will install, services, files it touches, optional features) and asks once;
-answer `c` to choose the optional features. Then it installs everything the
-shell uses, including Hyprland and its login-screen session, Quickshell,
-matugen, the PipeWire stack, portals (`xdg-desktop-portal-hyprland` + `-gtk`),
-a polkit agent, NetworkManager, BlueZ and fonts; clones the sources to
-`~/.local/src/yozakura`; builds `yozakura` and its compositor daemon `yozd`
-there (`make build`, vendored Go modules); installs both to `~/.local/bin`;
-adds the Yozakura block to your Hyprland config; and ends with
-`yozakura doctor` and the next steps. Everything it runs is logged to
+It installs the core only: the shell, one compositor and a login screen.
+It asks which compositor you want (Hyprland, niri or Mango; `--compositor
+NAME` skips the question), shows the whole plan (distro, GPU, login manager,
+packages, services, files it touches) and asks once. Then it installs the
+packages (Quickshell, matugen, the PipeWire stack, portals, a polkit agent,
+NetworkManager, BlueZ, fonts), clones the sources to `~/.local/src/yozakura`,
+builds `yozakura` and its compositor daemon `yozd` there (`make build`),
+installs both to `~/.local/bin`, adds the Yozakura block to your compositor
+config and ends with `yozakura doctor`; it offers a reboot. On the first
+login the setup wizard opens by itself: apps, AI, voice, terminal prompt and
+the rest are chosen there. Everything the installer runs is logged to
 `~/.cache/yozakura/install.log`.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bash -s -- --dry-run   # just the plan
+curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bash -s -- --dry-run   # walk the whole flow, change nothing
 curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bash -s -- --yes --with-voice
 ```
 
@@ -126,10 +127,13 @@ curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bas
 | `--with-sddm` | SDDM with the Yozakura login theme. On by default when no login manager is installed; SDDM is enabled for the next boot |
 | `--no-voice` / `--no-depth` / `--no-sddm` | Turn a feature off |
 | `-y`, `--yes` | Do not ask; go with the plan (unattended installs) |
-| `--dry-run` | Print the plan and exit without changing anything |
+| `--dry-run` | Walk the whole install (questions, plan, every step) showing what would run; changes nothing, no sudo |
 | `--no-deps` | Skip packages and services: only clone, build and install the binaries |
 | `--no-aur` | Arch: no AUR helper; the Phosphor icon font is installed per user instead |
-| `--no-hyprland` | Leave `~/.config/hypr` alone |
+| `--compositor NAME` | `hyprland` (default), `niri` or `mango` (Arch only) |
+| `--exclusive` | Hyprland: Yozakura manages the whole Hyprland config (backup first; `yozakura install --restore` undoes it) |
+| `--no-compositor-config` (`--no-hyprland`) | Leave the compositor's config files alone |
+| `--reboot` / `--no-reboot` | Reboot at the end without asking / do not offer it |
 | `--verbose` | Show command output instead of spinners |
 | `--dir PATH` / `--bin-dir PATH` / `--branch NAME` | Source checkout, binary location, git branch |
 

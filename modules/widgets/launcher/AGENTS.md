@@ -47,7 +47,7 @@ it shows in the launcher (`> id`), `<app> cmd id` and the MCP tools.
 
 ## CONFIG
 `Config.prefix.*`: tab prefixes (cc/ee/tt/nn), provider prefixes
-(`calculator` "=", `commands` ">", `files` "ff", `ai` "?", `wallpapers` "ww")
+(`calculator` "=", `commands` ">", `routines` "@", `files` "ff", `ai` "?", `wallpapers` "ww")
 and `prefix.launcher` (order, disabled, aiOnTab, filesInMixed, fileBackend,
 fileMaxResults, fileExcludes, currencyRefreshHours). Settings: category
 "launcher" (`modules/settings/schema/launcher.js`, editor
