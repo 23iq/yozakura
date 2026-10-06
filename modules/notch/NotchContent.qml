@@ -18,6 +18,7 @@ import qs.modules.shell
 import "./NotchNotificationView.qml"
 import qs.modules.bar.panels
 import qs.modules.shell.hosts
+import "NotchShape.js" as NotchShape
 
 Item {
     id: root
@@ -39,6 +40,34 @@ Item {
     // Get the bar position for this screen
     readonly property string barPosition: (barPanelRef && barPanelRef.barPosition !== undefined) ? barPanelRef.barPosition : Panels.primaryEdge
     readonly property string notchPosition: Config.notchPosition !== undefined ? Config.notchPosition : "top"
+    // Side edge: the notch stands upright and opens toward the center
+    readonly property bool vertical: NotchShape.vertical(notchPosition)
+    readonly property int frameOffset: (Config.bar && Config.bar.frameEnabled && !root.activeWindowFullscreen) ? ((Config.bar.frameThickness !== undefined) ? Config.bar.frameThickness : 6) : 0
+    // Space between the screen edge and the notch: the island floats; a
+    // side notch already sits past the frame (EdgeLayout.notchRect)
+    readonly property int edgeGap: (Config.notchTheme === "island" ? 4 : 0) + (vertical ? 0 : frameOffset)
+    readonly property int popupGap: 4
+    // {x, y} of a `w` x `h` child of `box` against the notch edge (`gap`
+    // from it), centered along it
+    function edgePlace(box, w, h, gap) {
+        return NotchShape.viewPos(root.notchPosition, {
+            w: box.width,
+            h: box.height
+        }, {
+            w: w,
+            h: h
+        }, gap);
+    }
+    // Notch region on its edge (align, bar/dock/frame insets, hover strip)
+    readonly property NotchPlacement placement: NotchPlacement {
+        env: EdgeService.envFor(root.screen)
+        width: notchRegionContainer.width
+        height: notchRegionContainer.height
+        revealed: root.reveal
+        hoverDepth: Math.max((Config.notch && Config.notch.hoverRegionHeight !== undefined) ? Config.notch.hoverRegionHeight : 8, 8)
+    }
+    // Hidden: slid back behind its edge
+    readonly property var hideOffset: NotchShape.hideOffset(notchPosition, vertical ? notchContainer.width : notchContainer.height)
 
     // Get the bar panel for this screen to check its state
     readonly property var barPanelRef: Visibilities.barPanels[screen.name]
@@ -215,15 +244,22 @@ Item {
     Item {
         id: notchHoverRegion
 
-        // Width follows the notch, height is small hover region when hidden
-        width: notchRegionContainer.width + 20
-        height: root.reveal ? notchRegionContainer.height : Math.max((Config.notch && Config.notch.hoverRegionHeight !== undefined) ? Config.notch.hoverRegionHeight : 8, 8)
+        // On the notch's edge; a thin strip while hidden, the whole notch
+        // once revealed (NotchShape.hoverStrip)
+        x: root.placement.hoverStrip.x
+        y: root.placement.hoverStrip.y
+        width: root.placement.hoverStrip.w
+        height: root.placement.hoverStrip.h
 
-        x: notchRegionContainer.x - 10
-        y: root.notchPosition === "top" ? 0 : parent.height - height
-
+        Behavior on width {
+            enabled: Config.animDuration > 0 && root.vertical
+            NumberAnimation {
+                duration: Config.animDuration / 4
+                easing.type: Easing.OutCubic
+            }
+        }
         Behavior on height {
-            enabled: Config.animDuration > 0
+            enabled: Config.animDuration > 0 && !root.vertical
             NumberAnimation {
                 duration: Config.animDuration / 4
                 easing.type: Easing.OutCubic
@@ -240,15 +276,14 @@ Item {
     Item {
         id: notchRegionContainer
         
-        width: Math.max(notchAnimationContainer.width, notificationPopupContainer.visible ? notificationPopupContainer.width : 0)
-        height: notchAnimationContainer.height + (notificationPopupContainer.visible ? notificationPopupContainer.height + notificationPopupContainer.anchors.topMargin : 0)
+        readonly property bool popupShown: notificationPopupContainer.visible
+        // The popup stacks below a top/bottom notch, beside a side one
+        width: root.vertical ? notchAnimationContainer.width + (popupShown ? notificationPopupContainer.width + root.popupGap : 0) : Math.max(notchAnimationContainer.width, popupShown ? notificationPopupContainer.width : 0)
+        height: root.vertical ? Math.max(notchAnimationContainer.height, popupShown ? notificationPopupContainer.height : 0) : notchAnimationContainer.height + (popupShown ? notificationPopupContainer.height + root.popupGap : 0)
 
-        // Along the edge: notch.align through EdgeLayout.notchRect
-        x: EdgeService.notchRect(root.screen, {
-            along: width,
-            across: height
-        }).x
-        y: root.notchPosition === "top" ? 0 : parent.height - height
+        // On its edge, aligned (notch.align), past a side bar (EdgeLayout)
+        x: root.placement.x
+        y: root.placement.y
 
         // HoverHandler to detect when mouse is over the revealed notch
         HoverHandler {
@@ -259,12 +294,12 @@ Item {
         // Animation container for reveal/hide
         Item {
             id: notchAnimationContainer
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: root.notchPosition === "top" ? parent.top : undefined
-            anchors.bottom: root.notchPosition === "bottom" ? parent.bottom : undefined
+            // Hugs the edge, centered along it
+            x: root.edgePlace(parent, width, height, 0).x
+            y: root.edgePlace(parent, width, height, 0).y
 
-            width: notchContainer.width
-            height: notchContainer.height + (root.notchPosition === "top" ? notchContainer.anchors.topMargin : notchContainer.anchors.bottomMargin)
+            width: notchContainer.width + (root.vertical ? root.edgeGap : 0)
+            height: notchContainer.height + (root.vertical ? 0 : root.edgeGap)
 
             // Opacity animation
             opacity: root.reveal ? 1 : 0
@@ -276,14 +311,16 @@ Item {
                 }
             }
 
-            // Slide animation (slide up when hidden)
+            // Slide behind the edge when hidden
             transform: Translate {
-                y: {
-                    if (root.reveal) return 0;
-                    if (root.notchPosition === "top")
-                        return -(Math.max(notchContainer.height, 50) + 16);
-                    else
-                        return (Math.max(notchContainer.height, 50) + 16);
+                x: root.reveal ? 0 : root.hideOffset.x
+                y: root.reveal ? 0 : root.hideOffset.y
+                Behavior on x {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration / 2
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 Behavior on y {
                     enabled: Config.animDuration > 0
@@ -300,14 +337,8 @@ Item {
                 screenName: root.screen.name
                 unifiedEffectActive: root.unifiedEffectActive
                 parentHovered: root.isMouseOverNotch
-                anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: root.notchPosition === "top" ? parent.top : undefined
-                anchors.bottom: root.notchPosition === "bottom" ? parent.bottom : undefined
-
-                readonly property int frameOffset: (Config.bar && Config.bar.frameEnabled && !root.activeWindowFullscreen) ? ((Config.bar.frameThickness !== undefined) ? Config.bar.frameThickness : 6) : 0
-
-                anchors.topMargin: (root.notchPosition === "top" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0) + (root.notchPosition === "top" ? frameOffset : 0)
-                anchors.bottomMargin: (root.notchPosition === "bottom" ? (Config.notchTheme === "default" ? 0 : (Config.notchTheme === "island" ? 4 : 0)) : 0) + (root.notchPosition === "bottom" ? frameOffset : 0)
+                x: root.edgePlace(parent, width, height, root.edgeGap).x
+                y: root.edgePlace(parent, width, height, root.edgeGap).y
 
                 // layer.enabled: true
                 // layer.effect: Shadow {}
@@ -334,11 +365,16 @@ Item {
         StyledRect {
             id: notificationPopupContainer
             variant: "bg"
-            anchors.top: root.notchPosition === "top" ? notchAnimationContainer.bottom : undefined
-            anchors.bottom: root.notchPosition === "bottom" ? notchAnimationContainer.top : undefined
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.topMargin: root.notchPosition === "top" ? 4 : 0
-            anchors.bottomMargin: root.notchPosition === "bottom" ? 4 : 0
+            // Toward the screen center from the notch: the far side of the region
+            readonly property var at: NotchShape.viewPos(NotchShape.opposite(root.notchPosition), {
+                w: notchRegionContainer.width,
+                h: notchRegionContainer.height
+            }, {
+                w: width,
+                h: height
+            }, 0)
+            x: at.x
+            y: at.y
             
             width: Math.round(popupHovered ? 420 + 48 : 320 + 48)
             height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + 32 : notificationPopup.implicitHeight + 32) : 0
@@ -358,12 +394,14 @@ Item {
             }
 
             transform: Translate {
-                y: {
-                    if (root.reveal) return 0;
-                    if (root.notchPosition === "top")
-                        return -(notchContainer.height + 16);
-                    else
-                        return (notchContainer.height + 16);
+                x: root.reveal ? 0 : root.hideOffset.x
+                y: root.reveal ? 0 : root.hideOffset.y
+                Behavior on x {
+                    enabled: Config.animDuration > 0
+                    NumberAnimation {
+                        duration: Config.animDuration / 2
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 Behavior on y {
                     enabled: Config.animDuration > 0

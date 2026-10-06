@@ -12,11 +12,14 @@ import "NotchActivities.js" as NotchActivities
 // fixed per content shape (label templates, tabular figures) so ticking
 // timers never move the notch; it animates with the notch on change.
 // `side` "leading" sits at the left edge, "trailing" at the right edge.
+// `vertical` (a side notch): the same parts stack top to bottom, the label
+// as short lines (NotchActivities.stackedLabel); nothing is rotated.
 Item {
     id: segment
 
     property var items: []
     property string side: "leading"
+    property bool vertical: false
     // Animation length of the notch's own geometry
     property int motionDuration: 0
 
@@ -38,16 +41,26 @@ Item {
 
     // Target width: the notch's contentWidth uses this, the visual width
     // animates towards it with the notch
-    readonly property real targetWidth: segment.shown ? row.implicitWidth + segment.innerGap : 0
+    readonly property real targetWidth: segment.vertical ? row.implicitWidth : segment.shown ? row.implicitWidth + segment.innerGap : 0
+    // Vertical: the length along the edge, animated like the width
+    readonly property real targetHeight: segment.vertical ? (segment.shown ? row.implicitHeight + segment.innerGap : 0) : segment.indicatorSize + 4
     width: targetWidth
+    height: targetHeight
     Behavior on width {
-        enabled: segment.motionDuration > 0
+        enabled: segment.motionDuration > 0 && !segment.vertical
         NumberAnimation {
             duration: segment.motionDuration
             easing.type: Easing.OutCubic
         }
     }
-    implicitHeight: segment.indicatorSize + 4
+    Behavior on height {
+        enabled: segment.motionDuration > 0 && segment.vertical
+        NumberAnimation {
+            duration: segment.motionDuration
+            easing.type: Easing.OutCubic
+        }
+    }
+    implicitHeight: targetHeight
     clip: true
 
     // Keep the last content while retracting
@@ -63,10 +76,13 @@ Item {
         return c !== undefined ? c : Colors.primary;
     }
 
-    Row {
+    Grid {
         id: row
-        anchors.verticalCenter: parent.verticalCenter
-        x: segment.side === "leading" ? 0 : segment.width - row.implicitWidth
+        columns: segment.vertical ? 1 : 99
+        horizontalItemAlignment: Grid.AlignHCenter
+        verticalItemAlignment: Grid.AlignVCenter
+        x: segment.vertical || segment.side === "leading" ? 0 : segment.width - row.implicitWidth
+        y: !segment.vertical ? (segment.height - row.implicitHeight) / 2 : segment.side === "leading" ? 0 : segment.height - row.implicitHeight
         spacing: segment.gap
         opacity: segment.shown ? 1 : 0
         Behavior on opacity {
@@ -77,7 +93,6 @@ Item {
         }
 
         ActivityIndicator {
-            anchors.verticalCenter: parent.verticalCenter
             kind: segment.showItem ? segment.showItem.indicator : "glyph"
             icon: segment.showItem ? segment.showItem.icon : ""
             image: segment.showItem ? segment.showItem.image : ""
@@ -90,8 +105,7 @@ Item {
         Item {
             id: labelBox
             readonly property string label: segment.showItem ? String(segment.showItem.label || "") : ""
-            visible: NotchActivities.hasLabel(segment.showItem)
-            anchors.verticalCenter: parent.verticalCenter
+            visible: !segment.vertical && NotchActivities.hasLabel(segment.showItem)
             width: Math.ceil(Math.max(template.advanceWidth, labelText.implicitWidth))
             height: labelText.implicitHeight
 
@@ -115,11 +129,30 @@ Item {
             }
         }
 
+        // Vertical label: short stacked lines, tabular figures
+        Column {
+            visible: segment.vertical && NotchActivities.hasLabel(segment.showItem)
+            Repeater {
+                model: segment.vertical && segment.showItem ? NotchActivities.stackedLabel(segment.showItem.label) : []
+                delegate: Text {
+                    required property string modelData
+                    anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
+                    text: modelData
+                    color: Colors.overBackground
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-4)
+                    font.weight: Font.DemiBold
+                    font.features: ({
+                            "tnum": 1
+                        })
+                }
+            }
+        }
+
         Repeater {
             model: segment.shownContent ? segment.shownContent.extras : []
             delegate: ActivityIndicator {
                 required property var modelData
-                anchors.verticalCenter: parent ? parent.verticalCenter : undefined
                 kind: "glyph"
                 icon: modelData.icon
                 image: modelData.image
@@ -129,7 +162,6 @@ Item {
         }
 
         NotchActivityBadge {
-            anchors.verticalCenter: parent.verticalCenter
             count: segment.shownContent ? segment.shownContent.badge : 0
         }
     }

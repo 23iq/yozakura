@@ -11,7 +11,9 @@ import "activities/ActivityRegistry.js" as Registry
 // time, the panel of the segment the pointer rests on (notch.expandOn
 // "hover") or that was clicked ("click"); see panels/NotchPanels.js. The
 // notch morphs between the collapsed and panel sizes with its own
-// geometry animation; panels crossfade while it does.
+// geometry animation; panels crossfade while it does. On a side edge
+// (notch.position left/right) the header stands upright on the edge and
+// panels and notifications open beside it, toward the screen center.
 Item {
     id: root
     focus: false
@@ -29,7 +31,9 @@ Item {
     property bool interactionSuspended: false
     readonly property var activePlayer: MprisController.activePlayer
     readonly property bool hasActiveNotifications: Notifications.notchPopupList.length > 0 && Notifications.showsOnScreen(root.screenName)
-    readonly property bool isBottom: Config.notchPosition === "bottom"
+    readonly property string edge: Config.notchPosition ?? "top"
+    readonly property bool isBottom: edge === "bottom"
+    readonly property bool vertical: edge === "left" || edge === "right"
     // The media summary is the "media" activity (notch.activities)
     readonly property bool mediaEnabled: Registry.isEnabled(Config.notch ? Config.notch.activities : [], "media")
     readonly property bool hasActivities: header.hasActivities
@@ -101,9 +105,14 @@ Item {
     // implicitHeight of the open panel (set by its Loader)
     property real openPanelHeight: 0
     readonly property real panelWidth: controller.expanded ? controller.widthFor(controller.openPanel, Config.notch.expandedMediaWidth) : 0
+    // Width of the panel on screen (kept while it closes, so it is clipped
+    // rather than squeezed beside an upright header)
+    readonly property real shownPanelWidth: root.shownPanel !== "" ? controller.widthFor(root.shownPanel, Config.notch.expandedMediaWidth) : 0
+    readonly property real notificationWidth: hasActiveNotifications ? (expandedState ? 452 : 352) : 0
+    readonly property real bodyHeight: (controller.expanded ? root.openPanelHeight : 0) + notificationSlot.height
 
-    implicitWidth: Math.max(header.contentWidth, root.panelWidth, hasActiveNotifications ? (expandedState ? 452 : 352) : 0)
-    implicitHeight: header.implicitHeight + (controller.expanded ? root.openPanelHeight : 0) + notificationSlot.height
+    implicitWidth: root.vertical ? header.contentWidth + Math.max(root.panelWidth, root.notificationWidth) : Math.max(header.contentWidth, root.panelWidth, root.notificationWidth)
+    implicitHeight: root.vertical ? Math.max(header.implicitHeight, root.bodyHeight) : header.implicitHeight + root.bodyHeight
 
     // Escape closes a clicked-open panel (when the notch layer has focus)
     Keys.onEscapePressed: event => {
@@ -122,10 +131,13 @@ Item {
 
     IslandHeader {
         id: header
-        width: parent.width
+        objectName: "islandHeader"
+        vertical: root.vertical
+        width: root.vertical ? contentWidth : parent.width
         height: implicitHeight
-        anchors.top: root.isBottom ? undefined : parent.top
-        anchors.bottom: root.isBottom ? parent.bottom : undefined
+        // On the screen edge; centered along a side edge
+        x: root.edge === "right" ? root.width - width : 0
+        y: root.vertical ? (root.height - height) / 2 : root.isBottom ? root.height - height : 0
         player: root.mediaEnabled ? root.activePlayer : null
         hovered: root.expandedState
         mediaExpanded: controller.openPanel === "media"
@@ -149,17 +161,19 @@ Item {
     }
     Item {
         id: body
-        width: parent.width
-        height: panelSlot.height + notificationSlot.height
-        anchors.top: root.isBottom ? undefined : header.bottom
-        anchors.bottom: root.isBottom ? header.top : undefined
+        objectName: "islandBody"
+        width: root.vertical ? Math.max(0, parent.width - header.width) : parent.width
+        height: root.vertical ? parent.height : panelSlot.height + notificationSlot.height
+        // Beside the header, toward the screen center
+        x: root.edge === "left" ? header.width : 0
+        y: root.vertical ? 0 : root.isBottom ? root.height - header.height - height : header.height
 
         Item {
             id: panelSlot
-            width: parent.width
-            // Follows the notch's animated height, so the panel is revealed
-            // with the silhouette
-            height: root.shownPanel !== "" ? Math.max(0, root.height - header.implicitHeight - notificationSlot.height) : 0
+            // Follows the notch's animated size (height; width beside an
+            // upright header), so the panel is revealed with the silhouette
+            width: root.vertical ? (root.shownPanel !== "" ? parent.width : 0) : parent.width
+            height: root.vertical ? Math.max(0, parent.height - notificationSlot.height) : root.shownPanel !== "" ? Math.max(0, root.height - header.implicitHeight - notificationSlot.height) : 0
             clip: true
             HoverHandler {
                 id: panelHover
@@ -174,9 +188,10 @@ Item {
                     readonly property bool current: root.shownPanel === panelLoader.modelData.id
                     readonly property NotchPanel panel: panelLoader.item as NotchPanel
 
-                    width: panelSlot.width
+                    width: root.vertical ? root.shownPanelWidth : panelSlot.width
                     // Anchor at the edge next to the header
-                    y: root.isBottom ? panelSlot.height - height : 0
+                    x: root.edge === "right" ? panelSlot.width - width : 0
+                    y: root.vertical ? (panelSlot.height - height) / 2 : root.isBottom ? panelSlot.height - height : 0
                     height: panelLoader.panel ? panelLoader.panel.implicitHeight : 0
                     active: panelLoader.current || panelLoader.opacity > 0.01
                     source: controller.urlFor(panelLoader.modelData)

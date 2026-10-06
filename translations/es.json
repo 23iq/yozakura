@@ -1209,7 +1209,7 @@
   "prefs.notch.section.activities": "Actividades",
   "prefs.notch.theme": "Estilo",
   "prefs.notch.position": "Posición",
-  "prefs.notch.position.desc": "El borde de la pantalla donde va el notch.",
+  "prefs.notch.position.desc": "El borde de la pantalla donde va el notch. En un borde lateral queda vertical y se abre hacia el centro.",
   "prefs.notch.theme.desc": "Pegado al borde de la pantalla, una isla flotante o una píldora que se reduce a un punto en reposo.",
   "prefs.notch.style.attached": "Pegado",
   "prefs.notch.style.pill": "Píldora",

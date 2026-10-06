@@ -48,11 +48,21 @@ var category = {
                             "value": "bottom",
                             "label": "common.bottom",
                             "icon": "arrowDown"
+                        },
+                        {
+                            "value": "left",
+                            "label": "common.left",
+                            "icon": "arrowLeft"
+                        },
+                        {
+                            "value": "right",
+                            "label": "common.right",
+                            "icon": "arrowRight"
                         }
                     ],
                     "label": "prefs.notch.position",
                     "description": "prefs.notch.position.desc",
-                    "keywords": "notch position top bottom edge"
+                    "keywords": "notch position top bottom left right side vertical edge"
                 },
                 {
                     "key": "notch.align",

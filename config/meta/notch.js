@@ -7,7 +7,7 @@ var description = "The notch (dynamic island): style, edge, hover/click expansio
 
 var keys = {
     "position": {
-        "enum": Enums.VERTICAL_EDGES
+        "enum": Enums.EDGES
     },
     "align": {
         "enum": Enums.ALIGNS,
