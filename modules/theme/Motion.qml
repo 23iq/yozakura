@@ -18,11 +18,11 @@ Singleton {
     readonly property int exitEasing: root.easingOf(root.easingName)
     readonly property real _overshoot: 1.2
 
-    // Typed (not a bare QtObject) so qmllint knows duration/easing/overshoot.
+    // Typed token so consumers (and qmllint) see duration/easing/overshoot.
     component Token: QtObject {
-        property int duration
-        property int easing
-        property real overshoot
+        property int duration: 0
+        property int easing: Easing.OutCubic
+        property real overshoot: 1.0
     }
 
     readonly property Token enter: Token {

@@ -5,9 +5,9 @@ Central interactive hub of Yozakura. Tabbed interface with LRU-based lazy-loadin
 
 ## STRUCTURE
 - **Root**: `Dashboard.qml` — Orchestrates LRU logic, tab layout, and open/close animations.
-- **Side Tabs**: Vertical navigation bar on the left for switching main views.
+- **Side Tabs**: `DashboardTabRail` (visible tabs in `layout.dashboard.tabs` order, bento edit toggle, settings). Tabs are registered in `DashboardTabs.js`; a tab's index there is stable (`GlobalStates.dashboardCurrentTab`), the config only sets rail order/visibility (settings editor `modules/settings/editors/DashboardTabsEditor.qml`).
 - **Sub-tabs** (each a directory):
-  - `widgets/`: `WidgetsTab` — Main grid: `FullPlayer`, `Calendar`, `NotificationHistory`, weather, quick toggles.
+  - `widgets/`: bento grid. `WidgetRegistry.js` (host-agnostic widgets `{id, url, labelKey, icon, minW/H, maxW/H, defaultW/H}`, `defaultGrid(cols)`; a widget fills its tile and may declare `cellW`, `cellH`, `compact`), `BentoGrid.js` (pure layout: normalize/move/resize/add/remove; `tests/bento-grid.test.cjs`), `BentoView` (grid + edit mode, saves `layout.dashboard.grid` through `commit`), `BentoTile`, `BentoToolbar`, `WidgetPicker` (`tests/bento-edit.test.py`). Widgets: `FullPlayer`, `QuickControls`, `Calendar`, `SpecialsPanel`, `NotificationHistory`, `LevelsColumn`, `WeatherWidget`, `MetricsSummary`.
   - `controls/`: Legacy settings panels — `ShellPanel`, `ThemePanel`, `VariantEditor` — hosted by the schema-driven settings window (`modules/settings`) until each category is migrated (Windows, System, Terminal & Apps, Voice, Updates and Notifications are schema pages now: `modules/settings/schema/{system,terminal,voice,updates,notifications}.js`).
   - `assistant/`: `AssistantTab` (1196 lines) — AI chat interface.
   - `clipboard/`: `ClipboardTab` — Searchable clipboard history. `ClipboardTabBase` holds state/actions, `ClipboardTab` the layout and keys; parts: `ClipboardSearchBar`, `ClipboardList` + `ClipboardItemDelegate` (row, icon, options menu, confirm actions), `ClipboardPreviewPanel` (image/text/link/file previews, metadata); pure helpers in `ClipboardView.js` (`tests/clipboard-view.test.cjs`), behaviour in `tests/clipboard-tab.test.py`.

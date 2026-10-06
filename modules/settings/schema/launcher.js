@@ -128,6 +128,20 @@ var category = {
                     "keywords": "currency rates exchange refresh offline cache"
                 }
             ]
+        },
+        {
+            "id": "dashboard",
+            "title": "prefs.dashboard.section.tabs",
+            "entries": [
+                {
+                    "key": "layout.dashboard.tabs",
+                    "type": "custom",
+                    "component": "DashboardTabsEditor",
+                    "label": "prefs.dashboard.tabs",
+                    "description": "prefs.dashboard.tabs.desc",
+                    "keywords": "dashboard tabs order hide show reorder widgets wallpapers metrics rail"
+                }
+            ]
         }
     ]
 };
