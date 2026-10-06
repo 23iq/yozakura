@@ -123,6 +123,23 @@ yozakura special app remove Talk vesktop | special remove Talk
 yozakura special import-binds [--dry-run] # move hand-written special binds out of ~/.config/hypr/custom
 ```
 
+Monitors and keyboard layouts (talk to the running backend; `--json` on lists):
+
+```bash
+yozakura display list
+yozakura display set DP-1 --mode 2560x1440@165 --scale 1   # also --rotate 90, --vrr on, --pos 1920x0, --disable
+yozakura display set DP-1 --mode preferred --yes           # --yes keeps without asking
+yozakura keyboard list | add ru | add us:intl | remove ru
+yozakura keyboard switch-bind alt_shift|super_space|caps|ctrl_shift|none
+yozakura keyboard next                                     # switch layout now
+```
+
+`display set` applies live, prints `Keep? (y/N, auto-revert in 15 s)` on a
+terminal and reverts unless you answer y (a kept change is saved to
+`displays.monitors`). Without a terminal and without `--yes` it reverts after
+the timeout and exits 3. `keyboard` writes `keyboard.layouts` /
+`keyboard.switchBind` through the same validated layer as `config set`.
+
 Keybind advisor (`backend/pkg/binds`; edits `binds.json` only, never the
 compositor config; `--json` everywhere):
 
@@ -266,6 +283,9 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `system_info`, `network_status`, `bluetooth_status`, `brightness_get` | yes | battery, CPU/RAM/GPU load and temps, disks, uptime; Wi-Fi/ethernet (+ nearby networks, `known`); paired Bluetooth devices; brightness per display |
 | `bluetooth_connect`/`_disconnect`, `wifi_connect` (saved networks only), `wifi_toggle`, `audio_output_set` | no | each returns an undo |
 | `brightness_set`, `nightlight_set`, `caffeine_set` | no | `{"percent":40}` / `{"delta":-10}`, `{"enabled":true,"temperature":3500}`, `{"enabled":true}`; undo restores |
+| `displays_list` | yes | connected monitors with connector name, current mode, scale, rotation, VRR and every supported mode (`displays.list`) |
+| `displays_apply`, `displays_confirm` | no | `{"outputs":[{"name":"DP-1","mode":"2560x1440@165","scale":1}]}`: applied live through the confirm session and **reverted after 15 s unless** `"keep":true` is passed (or `displays_confirm {"session":..., "keep":true}`); ask the user before keeping |
+| `keyboard_get`, `keyboard_set` | yes / no | layouts, switch binding, active layout; `{"add":"ru"}`, `{"remove":"ru"}`, `{"switchBind":"super_space"}`, `{"next":true}` (undo included) |
 | `focus_start`, `focus_stop` | no | focus mode (`ui.run focus:<min>` / `focus-stop`) |
 | `focus_status` | yes | focus mode on/off, start, end and minutes left (the shell mirrors its state with `focus.set`; `focus.get` adds the timer's progress) |
 | `providers_list`, `ollama_models` | yes | chat providers with a stored key + the local servers (Ollama, LM Studio): reachable or not, model ids (`providers.list`, free listing requests, keys never returned); installed Ollama models with capabilities (`providers.ollama.probe`, never loads a model) |
@@ -377,6 +397,9 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 65. **Start apps hidden at login**: `special set Chat --preload on` (`specials.preloadDelay`).
 66. **Bind conflicts**: the special binds are rows of the keybinds model (cheatsheet, editor conflicts); `special add/set` prints clashes with `binds.json`.
 67. **Turn the feature off** (keeps the list): `config set specials.enabled false`.
+68. **Set my monitor to 165 Hz**: `display list` (connector name and modes), then `display set DP-1 --mode 2560x1440@165`, answer `y` within 15 s (or add `--yes`). MCP: `displays_apply {"outputs":[{"name":"DP-1","mode":"2560x1440@165"}]}` reverts after 15 s unless the user confirmed and you pass `"keep":true` (or `displays_confirm`).
+69. **Add Russian layout / change the switch key**: `keyboard add ru` (`keyboard add us:intl` for a variant), `keyboard switch-bind super_space`, `keyboard list`; same as `config set keyboard.layouts ...` but with XKB-catalog checks. MCP: `keyboard_set {"add":"ru"}`.
+70. **Rotate or scale a monitor**: `display set HDMI-A-1 --rotate 90 --scale 1.5`; `--vrr on` for adaptive sync, `--pos 2560x0` to place it right of a 2560 px wide monitor.
 
 ### Keybinds
 Keybinds live in `~/.config/yozakura/binds.json` (hot-reloaded), edited in
@@ -440,6 +463,7 @@ combo.
 | AI bar | `modules/aicenter/` (`transcript/` one transcript for every engine, `assistant/`, `code/`, `header/`, `composer/`), `modules/services/Ai.qml`, `modules/services/ai/` (`SpaceState.qml` spaces), `backend/pkg/svc/agents` | `ai.*` | `tests/ai-*.test.*` |
 | Voice | `modules/services/voice/`, `backend/pkg/svc/voice` | `voice.*` | `tests/voice*.test.*` |
 | Timers, stopwatch, reminders, focus | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go`; shell: `modules/services/TimersService.qml` (thin client), `FocusMode.qml`, `QuickNote.qml`, `UtilityCommands.qml`, `modules/services/timers/*.js`, notch `activities/TimerActivity.qml` + `panels/Timer*`, `AlarmPanel`, `QuickInputField`, launcher `providers/TimersProvider.qml` | `system.pomodoro.*`, `system.timers.*`, `system.focus.*`, `prefix.timers` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go`, `tests/timers-*.test.*`, `tests/timer-panels.test.py`, `tests/notify-request.test.cjs` |
+| Displays and keyboard | `backend/pkg/svc/displays` (confirm session, conflicts), `backend/pkg/svc/keyboard` (XKB catalog, active layout), CLI `cmds_display.go`/`cmds_keyboard.go`, MCP `display_apply_tools.go`/`monitor_layout.go`/`keyboard_tools.go`; shell `modules/services/DisplaysService.qml`, settings `modules/settings/displays/`, `modules/settings/keyboard/` | `displays.monitors`, `keyboard.*` | `backend/pkg/svc/displays/*_test.go`, `cmds_display_test.go`, `cmds_keyboard_test.go`, `display_apply_tools_test.go` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |
 | Keybinds | `config/KeybindActions.js`, `modules/services/GlobalShortcuts.qml` | `binds.json` | |
 | Routines | `backend/pkg/svc/routines` (model/run/IPC), `pkg/daemon/routines.go`, CLI `cmds_routine.go`, MCP `routine_tools.go`; shell `modules/services/RoutinesService.qml`, `modules/routines/RoutineModel.js`, settings `editors/RoutinesEditor.qml` + `editors/routines/`, launcher `providers/RoutinesProvider.qml`, keybind slots `modules/keybinds/RoutineSlots.js` | `routines.json` | `backend/pkg/svc/routines/*_test.go`, `tests/routines.test.cjs`, `tests/routines-ui.test.py`, `tests/ai-automation-routine.test.py` |

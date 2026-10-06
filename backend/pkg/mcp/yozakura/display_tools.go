@@ -16,7 +16,7 @@ import (
 // backlight or DDC/CI monitors), night light and caffeine (keep awake).
 
 func displayTools(d Deps) []mcp.ToolDef {
-	return []mcp.ToolDef{
+	return append(displayLayoutTools(d), []mcp.ToolDef{
 		define("brightness_get", "Get brightness",
 			`Screen brightness per display in percent (laptop backlight and external monitors over DDC/CI), with the display id usable as "monitor" in brightness_set.`,
 			noArgs, toolOpts{readOnly: true}, d.brightnessGet),
@@ -32,7 +32,7 @@ func displayTools(d Deps) []mcp.ToolDef {
 			`Keep the computer awake (no screen blanking, locking or suspend while idle) or allow idling again; omit "enabled" to toggle.`,
 			`{"type":"object","properties":{"enabled":{"type":"boolean"}},"additionalProperties":false}`,
 			toolOpts{idempotent: true}, d.caffeineSet),
-	}
+	}...)
 }
 
 // Display is one brightness-controllable output.

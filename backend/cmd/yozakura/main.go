@@ -86,6 +86,10 @@ func main() {
 			os.Exit(runFocus(args[1:], newClient(), os.Stdout, os.Stderr))
 		case "providers", "provider":
 			os.Exit(runProviders(args[1:], newClient(), os.Stdout, os.Stderr))
+		case "display", "displays":
+			os.Exit(runDisplay(args[1:], defaultDisplayEnv(os.Stdin, os.Stdout), os.Stdout, os.Stderr))
+		case "keyboard":
+			os.Exit(runKeyboard(args[1:], defaultKeyboardEnv(), os.Stdout, os.Stderr))
 		case "task", "tasks":
 			os.Exit(runTask(args[1:], os.Stdout, os.Stderr))
 		case "sys":
@@ -624,6 +628,10 @@ Commands:
     usage [today|week|month] [--by provider|model|day]
                                      AI token usage and cost (--json for raw)
     usage limits                     AI subscription limits (Claude, Codex)
+    display [list|set|identify]      Monitors: mode, refresh rate, scale, rotation; set asks to
+                                     keep (auto-revert in 15 s) ({bin} display help)
+    keyboard [list|add|remove|next]  Keyboard layouts and the layout switch key
+                                     ({bin} keyboard help)
     providers [list|test <p>|ollama] AI chat providers: connected ones and their models,
                                      test one, installed Ollama models ({bin} providers help)
     help                             Show this help message
