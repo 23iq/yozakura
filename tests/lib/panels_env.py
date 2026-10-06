@@ -40,6 +40,7 @@ MIRROR_DIRS = [
 ]
 MIRROR_FILES = [
     "modules/theme/Styling.qml",
+    "modules/theme/TypeRoles.js",
     "modules/theme/Icons.qml",
     "modules/theme/BarMetrics.qml",
     "modules/theme/Metrics.qml",

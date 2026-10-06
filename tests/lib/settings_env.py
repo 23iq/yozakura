@@ -174,6 +174,7 @@ MIRROR = [
     "modules/extras",
     "modules/terminal",
     "modules/theme/Styling.qml",
+    "modules/theme/TypeRoles.js",
     "modules/theme/Metrics.qml",
     "modules/theme/DensityMetrics.js",
     "modules/theme/Motion.qml",
