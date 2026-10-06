@@ -102,6 +102,14 @@ func dedupeModes(in []string) []ipc.Mode {
 
 func fmtNum(f float64) string { return strconv.FormatFloat(f, 'f', -1, 64) }
 
+// scaleStr is the scale as a bare number, or "auto" when unset.
+func scaleStr(s float64) string {
+	if s <= 0 {
+		return "auto"
+	}
+	return fmtNum(s)
+}
+
 // buildHyprMonitorCmd builds the raw hyprctl request for cfg. cfg must have
 // passed Validate: Name is the only free-form field and is %q-quoted in Lua.
 func buildHyprMonitorCmd(cfg ipc.OutputConfig, lua bool) string {
@@ -112,17 +120,14 @@ func buildHyprMonitorCmd(cfg ipc.OutputConfig, lua bool) string {
 		return "keyword monitor " + cfg.Name + ",disable"
 	}
 	if lua {
-		scale := "\"auto\""
-		if cfg.Scale > 0 {
-			scale = fmtNum(cfg.Scale)
+		scale := scaleStr(cfg.Scale)
+		if cfg.Scale <= 0 {
+			scale = `"auto"`
 		}
 		return fmt.Sprintf("eval hl.monitor({ output = %q, mode = %q, position = %q, scale = %s, transform = %d, vrr = %d })",
 			cfg.Name, cfg.ModeString(), cfg.PositionString(), scale, cfg.Transform, cfg.VRR)
 	}
-	scale := "auto"
-	if cfg.Scale > 0 {
-		scale = fmtNum(cfg.Scale)
-	}
+	scale := scaleStr(cfg.Scale)
 	return fmt.Sprintf("keyword monitor %s,%s,%s,%s,transform,%d,vrr,%d",
 		cfg.Name, cfg.ModeString(), cfg.PositionString(), scale, cfg.Transform, cfg.VRR)
 }

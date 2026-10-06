@@ -89,3 +89,19 @@ func TestOutputConfigValidateRejectsInjection(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestOutputIDPartialEDIDFallsBackToName(t *testing.T) {
+	if got := ipc.OutputID("Acme", "M1", "", "DP-2"); got != "DP-2" {
+		t.Fatal(got)
+	}
+	if got := ipc.OutputID("A", "B", "C", "DP-2"); got != "A|B|C" {
+		t.Fatal(got)
+	}
+}
+
+func TestApplyOutputDisableIgnoresModeFields(t *testing.T) {
+	cfg := ipc.OutputConfig{Name: "HDMI-A-1", Width: -5, Height: 7, Refresh: -1, Scale: 99, Transform: 42}
+	if got := buildHyprMonitorCmd(cfg, true); got != `eval hl.monitor({ output = "HDMI-A-1", disabled = true })` {
+		t.Fatal(got)
+	}
+}

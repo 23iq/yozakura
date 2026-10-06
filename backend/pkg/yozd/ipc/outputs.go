@@ -60,9 +60,9 @@ type OutputManager interface {
 var connectorRe = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
 
 // OutputID is the stable identity of a monitor: "make|model|serial" when
-// the EDID provides them, else the connector name.
+// when the EDID provides all three, else the connector name.
 func OutputID(make, model, serial, name string) string {
-	if make == "" && model == "" && serial == "" {
+	if make == "" || model == "" || serial == "" {
 		return name
 	}
 	return make + "|" + model + "|" + serial
