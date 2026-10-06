@@ -29,6 +29,11 @@ Item {
     property bool scrollable: true
     // Shown above the grid (Settings: the page header)
     property Component header: null
+    // Shown below the grid
+    property Component footer: null
+    property alias showChips: grid.showChips
+    property alias minCardWidth: grid.minCardWidth
+    property alias sections: grid.sections
     property real maxContentWidth: 1040
     property real sideMargin: 32
     property real topMargin: 36
@@ -49,7 +54,14 @@ Item {
         if (!root.autoPreselect || root._preselected || !ExtrasService.catalog || Object.keys(ExtrasService.status).length === 0)
             return;
         root._preselected = true;
-        grid.selected = ExtrasModel.preselect(ExtrasService.catalog, ExtrasService.status, "onboarding");
+        const pre = ExtrasModel.preselect(ExtrasService.catalog, ExtrasService.status, "onboarding");
+        // only what this host offers: hidden picks would install unseen
+        if (root.categories.length > 0)
+            for (const id in pre) {
+                if (!root.categories.includes(ExtrasService.entry(id)?.category))
+                    delete pre[id];
+            }
+        grid.selected = pre;
     }
 
     Component.onCompleted: root._maybePreselect()
@@ -99,6 +111,13 @@ Item {
                 mode: root.mode
                 categories: root.categories
                 onLogRequested: (job, name) => logPopup.show(job, name)
+            }
+
+            Loader {
+                width: parent.width
+                active: root.footer !== null
+                visible: active
+                sourceComponent: root.footer
             }
         }
     }

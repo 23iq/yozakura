@@ -6,11 +6,13 @@
 
 Uses your real config (read-only), palette, wallpaper and binds.json (see
 settings_render.py), the real environment probe (installed terminals,
-agents, whisper) and the real prompt previews (terminal_render.py); the
+the real extras catalog (a sample install state: Firefox, Claude Code and
+Ollama installed) and the real prompt previews (terminal_render.py); the
 monitors are a sample pair (one 60 Hz panel that can do 165 Hz). Nothing is
-applied. Writes <out>/<WxH>/<NN>-<step>-<mode>.png plus a few in-progress
-states (wallpaper tab, preset picked, monitor details, tour half done,
-voice setup running).
+applied or installed. Writes <out>/<WxH>/<NN>-<step>-<mode>.png plus a few
+in-progress states (wallpaper tab, preset picked, monitor details, apps
+installing, a model pull, tour half done, summary with installs running and
+the exclusive toggle on, summary when done).
 """
 from __future__ import annotations
 
@@ -28,6 +30,19 @@ from PySide6.QtTest import QTest  # noqa: E402
 from onboarding_env import OnboardingEnv  # noqa: E402
 from settings_env import USER_BINDS, default_binds  # noqa: E402
 from terminal_env import PRESETS, STATUS, sample_previews  # noqa: E402
+from extras_env import PLATFORM, full_catalog  # noqa: E402
+from exclusive_env import PLAN, STATUS_OFF  # noqa: E402
+
+INSTALLED = {"firefox", "claude-code", "ollama", "fish", "kitty"}
+
+
+def extras_replies() -> dict:
+    cat = full_catalog()
+    status = {e["id"]: {"id": e["id"], "state": "installed" if e["id"] in INSTALLED else "missing"}
+              for e in cat["entries"]}
+    return {"extras.catalog": {**cat, "platform": PLATFORM}, "extras.status": status,
+            "extras.ollamaPull": {"jobs": [{"id": "pull-1", "kind": "ollama", "entries": []}]},
+            "exclusive.status": STATUS_OFF, "exclusive.plan": PLAN}
 
 OUTPUTS = [
     {"id": "AOC-Q27-1", "name": "DP-1", "make": "AOC", "model": "Q27G2", "enabled": True,
@@ -82,7 +97,7 @@ def main() -> int:
         presets, previews = prompt_previews(pal)
         env = OnboardingEnv(f"onboarding-{mode}", lang=args.lang, palette=pal, user_config=True,
                             overrides={"theme": {"lightMode": mode == "light"}}, wallpaper=state, binds=binds,
-                            outputs=OUTPUTS)
+                            outputs=OUTPUTS, replies=extras_replies())
         win = env.load(f"""
 import QtQuick
 import QtQuick.Window
@@ -135,11 +150,27 @@ Window {{
                     h.eval(win, 'wizard.remember("lookTab", "wallpaper")')
                     shot(f"{i + 1:02d}-{sid}-wallpaper", 900)
                     h.eval(win, 'wizard.remember("lookTab", "style")')
+                elif sid == "apps":
+                    h.eval(win, 'ExtrasService.install(["vesktop", "steam", "spotify"], true);'
+                                ' BackendService.emit("extras.progress", {job: "r1", kind: "system",'
+                                ' entries: ["vesktop"], state: "running", percent: 46, phase: "Downloading vesktop"});'
+                                ' BackendService.emit("extras.progress", {job: "r2", kind: "flatpak",'
+                                ' entries: ["steam", "spotify"], state: "queued", percent: 0, phase: ""})')
+                    shot(f"{i + 1:02d}-{sid}-installing", 700)
                 elif sid == "ai":
-                    h.eval(win, "wizard.voiceStatus = 'running'; wizard.voiceProgress = 0.42;"
-                                " wizard.voiceLine = 'Building (CUDA, 16 jobs; this takes a few minutes)'")
-                    shot(f"{i + 1:02d}-{sid}-voice-setup", 700)
-                    h.eval(win, "wizard.voiceStatus = ''")
+                    h.eval(win, 'ExtrasService.ollamaPull("qwen2.5-coder"); BackendService.emit("extras.progress",'
+                                ' {job: "pull-1", kind: "ollama", entries: [], state: "running", percent: 38, phase: ""})')
+                    h.eval(h.find(win, "stepLoader").property("item"),
+                           '(function f(it) { if (it.objectName === "catalogFlick") { it.contentY = it.contentHeight - it.height; return true }'
+                           ' for (const c of it.children) if (f(c)) return true; return false })(this)')
+                    shot(f"{i + 1:02d}-{sid}-pulling", 700)
+                elif sid == "finish":
+                    h.eval(win, 'wizard.remember("exclusive", true)')
+                    shot(f"{i + 1:02d}-{sid}-installing", 700)
+                    h.eval(win, 'wizard.remember("exclusive", false);'
+                                ' ["r1", "r2", "pull-1"].forEach(j => BackendService.emit("extras.progress", Object.assign({},'
+                                ' ExtrasService.jobs[j], {state: "done", percent: 100})))')
+                    shot(f"{i + 1:02d}-{sid}-done", 700)
                 elif sid == "keybinds":
                     h.eval(win, 'GlobalShortcuts.run("keybinds")')
                     h.eval(win, 'OnboardingService.peek = false')

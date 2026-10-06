@@ -1,6 +1,6 @@
 // Onboarding wizard: step registry (files, translations), detection probe
-// parsing, keybind tour helpers, preset mini-preview looks and voice setup
-// progress (modules/onboarding/*.js).
+// parsing, keybind tour helpers, preset mini-preview looks and the Ollama
+// pull chips (modules/onboarding/*.js).
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
@@ -64,27 +64,19 @@ test('every onboarding.* key used in QML exists in every language', () => {
     assert.ok(used.size > 20);
     for (const [l, tr] of langs)
         for (const k of used)
-            assert.ok(tr[k], `${l}: missing ${k}`);
+            assert.ok(tr[k] || tr[k + '.other'], `${l}: missing ${k}`); // I18n.tn keys: <key>.other
 });
 
 test('the detection probe runs and its output parses', () => {
-    // The data dir is $1, never part of the script.
-    const script = M.detectScript();
-    assert.ok(!script.includes('/nonexistent'));
-    const out = execFileSync('bash', ['-c', script, 'detect', "/nonexistent/it's $(id)"], { encoding: 'utf8' });
+    const out = execFileSync('bash', ['-c', M.detectScript(), 'detect'], { encoding: 'utf8' });
     const d = M.parseDetect(out);
     assert.ok(d.complete);
-    assert.strictEqual(d.whisper.installed, false);
     assert.ok(Array.isArray(plain(d.terminals)));
 });
 
-test('parseDetect keeps known terminals/agents in preference order', () => {
-    const d = M.parseDetect('term=foot\nterm=kitty\nterm=evilterm\nterm=kitty\nagent=claude:/usr/bin/claude\nagent=rm:/bin/rm\n' +
-        'agent=ollama:/usr/bin/ollama\nwhisper=bin\nwhisper=model\ngpu=cuda\ngarbage\ndone=1\n');
-    eq(d.terminals, ['kitty', 'foot']);
-    eq(d.agents, { claude: '/usr/bin/claude', ollama: '/usr/bin/ollama' });
-    eq(d.whisper, { installed: true, model: true });
-    assert.ok(d.cuda && d.complete);
+test('parseDetect keeps known terminals in preference order', () => {
+    const d = M.parseDetect('term=foot\nterm=kitty\nterm=evilterm\nterm=kitty\nagent=claude:/usr/bin/claude\ngarbage\ndone=1\n');
+    eq(d, { terminals: ['kitty', 'foot'], complete: true });
     assert.strictEqual(M.parseDetect('').complete, false);
 });
 
@@ -133,27 +125,13 @@ test('presetLook reads bar/theme and falls back to current values', () => {
     assert.strictEqual(M.presetLook({ position: 'diagonal' }, {}, {}).position, 'top');
 });
 
-test('voice setup progress follows the script stages and never goes back', () => {
-    let p = M.voiceProgress('\x1b[0;34m::\x1b[0m Cloning whisper.cpp v1.9.4', 0);
-    assert.strictEqual(p.stage, 'fetch');
-    assert.strictEqual(p.text, 'Cloning whisper.cpp v1.9.4');
-    p = M.voiceProgress(':: Building (CUDA, 16 jobs; this takes a few minutes)', p.progress);
-    assert.strictEqual(p.stage, 'build');
-    const later = M.voiceProgress('-- some cmake noise', p.progress);
-    assert.strictEqual(later.progress, p.progress);
-    assert.strictEqual(M.voiceProgress(':: Done. Enable voice input in Settings', 0.7).progress, 1);
-    // The script's own info lines match a stage.
-    const script = fs.readFileSync(path.join(repo, 'scripts/voice_setup.sh'), 'utf8');
-    for (const m of ['Cloning', 'Configuring', 'Building', 'Installed whisper', 'Downloading', 'Done.'])
-        assert.ok(script.includes(m), 'voice_setup.sh no longer prints ' + m);
-});
-
-test('ollamaState: running (probe), installed but stopped, missing', () => {
-    const detected = M.parseDetect('agent=ollama:/usr/bin/ollama');
-    const running = M.ollamaState(detected, { reachable: true, models: [{ id: 'a', capabilities: ['completion'] }, { id: 'e', capabilities: ['embedding'] }] });
-    assert.equal(running.state, 'running');
-    assert.equal(running.count, 1);
-    assert.equal(M.ollamaState(M.parseDetect(''), { reachable: true, models: [] }).state, 'running', 'a server without the binary (container, remote) counts');
-    assert.equal(M.ollamaState(detected, { reachable: false }).state, 'installed');
-    assert.equal(M.ollamaState(M.parseDetect(''), null).state, 'missing');
+test('pullState: Ollama model chips follow their pull job', () => {
+    eq(M.OLLAMA_MODELS.map(m => m.id), ['llama3.2', 'qwen2.5-coder', 'gemma3']);
+    eq(M.pullState(null, false), { state: 'idle', percent: -1 });
+    eq(M.pullState(null, true), { state: 'pulling', percent: -1 }, 'asked for, no event yet');
+    eq(M.pullState({ state: 'queued', percent: 0 }, true), { state: 'pulling', percent: -1 });
+    eq(M.pullState({ state: 'running', percent: 42 }, true), { state: 'pulling', percent: 42 });
+    eq(M.pullState({ state: 'done', percent: 100 }, true), { state: 'done', percent: 100 });
+    eq(M.pullState({ state: 'failed', percent: 10 }, true), { state: 'failed', percent: -1 });
+    eq(M.pullState({ state: 'cancelled', percent: 10 }, true), { state: 'idle', percent: -1 });
 });

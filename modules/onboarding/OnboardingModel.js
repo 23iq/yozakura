@@ -1,36 +1,11 @@
 .pragma library
 
 // Pure helpers of the onboarding wizard (tested in tests/onboarding.test.cjs):
-// environment detection (one shell probe, parsed here), the keybind tour,
-// preset mini-preview looks and voice setup progress.
+// terminal detection (one shell probe, parsed here), the keybind tour,
+// preset mini-preview looks and the Ollama model chips of the AI step.
 
 // Terminals offered in the system step, in preference order.
 var TERMINALS = ["kitty", "foot", "alacritty", "ghostty", "wezterm", "konsole", "gnome-terminal", "xfce4-terminal", "st"];
-
-// AI agents/runtimes detected in the AI step. `config` is the ai.agents.<id>
-// block the toggle writes (none for Ollama: it is detected by probing its
-// server, see ollamaState(); no key or opt-in is needed).
-var AGENTS = [
-    { "id": "claude", "label": "Claude Code", "icon": "sparkle", "config": "claude", "install": "onboarding.ai.claude.install" },
-    { "id": "codex", "label": "Codex", "icon": "code", "config": "codex", "install": "onboarding.ai.codex.install" },
-    { "id": "opencode", "label": "OpenCode", "icon": "terminalWindow", "config": "opencode", "install": "onboarding.ai.opencode.install" },
-    { "id": "ollama", "label": "Ollama", "icon": "cube", "config": "", "install": "onboarding.ai.ollama.install" }
-];
-
-// Ollama in the AI step: "running" (the backend probe reached the server;
-// `count` chat models), "installed" (the binary exists but the server does
-// not answer) or "missing".
-function ollamaState(detected, probe) {
-    if (probe && probe.reachable) {
-        var models = (probe.models || []).filter(function (m) {
-            var caps = m.capabilities || [];
-            return caps.indexOf("embedding") < 0 || caps.indexOf("completion") >= 0;
-        });
-        return { "state": "running", "count": models.length };
-    }
-    var installed = !!(detected && detected.agents && detected.agents.ollama !== undefined);
-    return { "state": installed ? "installed" : "missing", "count": 0 };
-}
 
 // Interactive keybind tour: `command` is the GlobalShortcuts.run() command
 // the bound action dispatches, `action` the action-id suffix of the bind.
@@ -41,18 +16,11 @@ var TOUR = [
     { "id": "overview", "command": "overview", "action": "overview", "icon": "squaresFour", "title": "onboarding.tour.overview", "hint": "onboarding.tour.overview.hint" }
 ];
 
-// Shell probe run once when the wizard opens. Prints key=value lines.
-// Run as `bash -c SCRIPT NAME DATA_DIR`: the data dir is $1.
+// Shell probe run once when the wizard opens (`bash -c SCRIPT`). Prints
+// key=value lines.
 function detectScript() {
     return [
         "for t in " + TERMINALS.join(" ") + "; do command -v \"$t\" >/dev/null 2>&1 && echo \"term=$t\"; done",
-        "for a in " + AGENTS.map(function (a) {
-            return a.id;
-        }).join(" ") + "; do p=$(command -v \"$a\" 2>/dev/null) && echo \"agent=$a:$p\"; done",
-        "d=\"$1/whisper\"",
-        "[ -x \"$d/bin/whisper-server\" ] && echo whisper=bin",
-        "ls \"$d/models\"/ggml-*.bin >/dev/null 2>&1 && echo whisper=model",
-        "command -v nvcc >/dev/null 2>&1 && echo gpu=cuda",
         "echo done=1"
     ].join("\n");
 }
@@ -60,12 +28,6 @@ function detectScript() {
 function parseDetect(text) {
     var out = {
         "terminals": [],
-        "agents": {},
-        "whisper": {
-            "installed": false,
-            "model": false
-        },
-        "cuda": false,
         "complete": false
     };
     String(text || "").split("\n").forEach(function (raw) {
@@ -77,18 +39,6 @@ function parseDetect(text) {
         var val = line.substring(eq + 1);
         if (key === "term" && TERMINALS.indexOf(val) !== -1 && out.terminals.indexOf(val) === -1) {
             out.terminals.push(val);
-        } else if (key === "agent") {
-            var c = val.indexOf(":");
-            var id = c > 0 ? val.substring(0, c) : val;
-            if (agent(id))
-                out.agents[id] = c > 0 ? val.substring(c + 1) : "";
-        } else if (key === "whisper") {
-            if (val === "bin")
-                out.whisper.installed = true;
-            else if (val === "model")
-                out.whisper.model = true;
-        } else if (key === "gpu") {
-            out.cuda = val === "cuda";
         } else if (key === "done") {
             out.complete = true;
         }
@@ -97,14 +47,6 @@ function parseDetect(text) {
         return TERMINALS.indexOf(a) - TERMINALS.indexOf(b);
     });
     return out;
-}
-
-function agent(id) {
-    for (var i = 0; i < AGENTS.length; i++) {
-        if (AGENTS[i].id === id)
-            return AGENTS[i];
-    }
-    return null;
 }
 
 // Screen diagonal in inches (one decimal) from the physical size the
@@ -182,35 +124,24 @@ function presetLook(bar, theme, fallback) {
     };
 }
 
-// scripts/voice_setup.sh prints "info" lines on stderr; map them to a
-// 0..1 progress and a short stage name for the progress bar.
-var VOICE_STAGES = [
-    { "match": /Removing previous build|Cloning|Updating whisper/, "stage": "fetch", "progress": 0.1 },
-    { "match": /Configuring/, "stage": "configure", "progress": 0.2 },
-    { "match": /Building/, "stage": "build", "progress": 0.3 },
-    { "match": /Installed whisper/, "stage": "installed", "progress": 0.6 },
-    { "match": /Model present|Downloading/, "stage": "model", "progress": 0.7 },
-    { "match": /^Done\.|:: Done\./, "stage": "done", "progress": 1 }
+// Models the AI step offers to pull once Ollama is installed.
+var OLLAMA_MODELS = [
+    { "id": "llama3.2", "label": "Llama 3.2", "size": "2 GB" },
+    { "id": "qwen2.5-coder", "label": "Qwen 2.5 Coder", "size": "4.7 GB" },
+    { "id": "gemma3", "label": "Gemma 3", "size": "3.3 GB" }
 ];
 
-function stripAnsi(s) {
-    return String(s || "").replace(/\x1b\[[0-9;]*m/g, "");
-}
-
-function voiceProgress(line, previous) {
-    var text = stripAnsi(line).replace(/^::\s*/, "").trim();
-    var p = previous || 0;
-    for (var i = 0; i < VOICE_STAGES.length; i++) {
-        if (VOICE_STAGES[i].match.test(text))
-            return {
-                "stage": VOICE_STAGES[i].stage,
-                "progress": Math.max(p, VOICE_STAGES[i].progress),
-                "text": text
-            };
-    }
-    return {
-        "stage": "",
-        "progress": p,
-        "text": text
-    };
+// Chip state of one model pull from its job progress (null: never asked
+// for in this session): "idle" | "pulling" (percent, -1 unknown) | "done"
+// | "failed".
+function pullState(progress, requested) {
+    if (!progress)
+        return { "state": requested ? "pulling" : "idle", "percent": -1 };
+    if (progress.state === "done")
+        return { "state": "done", "percent": 100 };
+    if (progress.state === "failed")
+        return { "state": "failed", "percent": -1 };
+    if (progress.state === "cancelled")
+        return { "state": "idle", "percent": -1 };
+    return { "state": "pulling", "percent": progress.state === "running" && progress.percent >= 0 ? progress.percent : -1 };
 }

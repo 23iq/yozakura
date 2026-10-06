@@ -1,15 +1,13 @@
 import QtQuick
-import Quickshell
 import Quickshell.Io
 import qs.modules.services
-import qs.modules.globals
 import qs.modules.settings.store
-import qs.config
 import "OnboardingSteps.js" as Steps
 import "OnboardingModel.js" as Model
 
-// Wizard state shared by the steps: navigation, environment detection,
-// the preset choice, the keybind tour and the voice setup job. Owned by
+// Wizard state shared by the steps: navigation, terminal detection, the
+// preset choice, the keybind tour, the installs queued from the wizard and
+// the exclusive-mode choice (applied on finish). Owned by
 // OnboardingService, which persists `step id` + `choices` (StateService) so
 // a shell reload or crash resumes the wizard where it was. Settings go
 // through SettingsStore (live preview; staged domains are applied when the
@@ -79,37 +77,44 @@ QtObject {
     }
 
     // Finish or skip: keep what was chosen so far (it is already live).
+    // Installs keep running in the backend queue. Exclusive mode, when it
+    // was switched on in the summary, is enabled on the way out.
     function finish() {
-        cancelVoiceSetup();
         if (SettingsStore.hasChanges)
             SettingsStore.apply();
+        if (isLast && wantsExclusive)
+            ExclusiveService.enable();
         finished();
     }
+
+    // ---- installs and exclusive mode ---------------------------------------
+    // Every catalog id queued while the wizard is open (apps, agents, voice).
+    readonly property var installs: choices.installs || []
+    property Connections _extras: Connections {
+        target: ExtrasService
+        function onQueued(ids) {
+            const all = root.installs.slice();
+            ids.forEach(id => {
+                if (!all.includes(id))
+                    all.push(id);
+            });
+            root.remember("installs", all);
+        }
+    }
+    readonly property bool exclusiveOffered: ExclusiveService.supported && ExclusiveService.status.compositor === "hyprland" && !ExclusiveService.active
+    readonly property bool wantsExclusive: choices.exclusive === true && exclusiveOffered && ExclusiveService.blocked === ""
 
     // ---- detection -------------------------------------------------------
     property var detected: Model.parseDetect("")
     readonly property bool detecting: detectProc.running && !detected.complete
     property Process detectProc: Process {
-        command: ["bash", "-c", Model.detectScript(), "detect", Brand.dataDir]
+        command: ["bash", "-c", Model.detectScript()]
         stdout: StdioCollector {
             onStreamFinished: root.applyDetect(text)
         }
     }
     function detect() {
         detectProc.running = true;
-        probeOllama();
-    }
-    // Ollama server state (backend probe: lists models, loads none).
-    property var ollamaProbe: null
-    readonly property var ollama: Model.ollamaState(detected, ollamaProbe)
-    function probeOllama() {
-        const endpoint = Config.ai && Config.ai.ollama ? Config.ai.ollama.endpoint || "" : "";
-        BackendService.call("providers.ollama.probe", {
-            endpoint: endpoint
-        }, (res, err) => {
-            if (!err && res)
-                root.ollamaProbe = res;
-        });
     }
     function applyDetect(text) {
         detected = Model.parseDetect(text);
@@ -157,57 +162,5 @@ QtObject {
     }
     function resetTour() {
         tour = ({});
-    }
-
-    // ---- voice setup -----------------------------------------------------
-    readonly property string voiceScript: decodeURIComponent(Qt.resolvedUrl("../../scripts/voice_setup.sh").toString().replace("file://", ""))
-    readonly property bool voiceInstalled: detected.whisper.installed && detected.whisper.model
-    readonly property bool voiceRunning: voiceProc.running
-    property real voiceProgress: 0
-    property string voiceLine: ""
-    // "" | "running" | "done" | "failed" | "cancelled"
-    property string voiceStatus: ""
-    property bool _voiceCancelled: false
-
-    function startVoiceSetup() {
-        if (voiceProc.running)
-            return;
-        _voiceCancelled = false;
-        voiceProgress = 0.02;
-        voiceLine = "";
-        voiceStatus = "running";
-        voiceProc.running = true;
-    }
-    function cancelVoiceSetup() {
-        if (!voiceProc.running)
-            return;
-        _voiceCancelled = true;
-        voiceProc.running = false;
-    }
-    function _voiceOutput(line) {
-        const p = Model.voiceProgress(line, voiceProgress);
-        voiceProgress = p.progress;
-        if (p.text !== "")
-            voiceLine = p.text;
-    }
-
-    property Process voiceProc: Process {
-        command: ["bash", root.voiceScript]
-        stdout: SplitParser {
-            onRead: data => root._voiceOutput(data)
-        }
-        stderr: SplitParser {
-            onRead: data => root._voiceOutput(data)
-        }
-        onExited: code => {
-            if (root._voiceCancelled)
-                root.voiceStatus = "cancelled";
-            else if (code === 0) {
-                root.voiceStatus = "done";
-                root.voiceProgress = 1;
-                root.detect();
-            } else
-                root.voiceStatus = "failed";
-        }
     }
 }

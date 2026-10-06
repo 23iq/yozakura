@@ -7,8 +7,9 @@ stand-ins for the shell services the wizard talks to: PresetsService
 (built-in presets from assets/presets), GlobalShortcuts (records run() and
 emits commandRan), TerminalLookService (enablePrompt() writes terminal.prompt like
 the real one), the real OnboardingService, Visibilities, I18n with the
-language catalog, and a Quickshell.Io FileView that reads files
-synchronously.
+language catalog, the real ExtrasService (catalog/status replies from
+extras_env unless given) and ExclusiveService, and a Quickshell.Io FileView
+that reads files synchronously.
 
 Used by tests/onboarding-ui.test.py and tools/render/onboarding_render.py.
 """
@@ -20,6 +21,7 @@ import os
 import shutil
 
 from displays_env import OUTPUTS as DISPLAY_OUTPUTS
+from extras_env import CATALOG as EXTRAS_CATALOG, PLATFORM as EXTRAS_PLATFORM, STATUS as EXTRAS_STATUS
 from keyboard_env import KeyboardEnv
 from qmlharness import REPO
 from settings_env import APP_SEARCH_STUB, TERMINAL_LOOK_STUB, YOZD_STUB, global_states_qml
@@ -113,7 +115,10 @@ class OnboardingEnv(KeyboardEnv):
     def __init__(self, name: str = "onboarding", *, lang: str = "en", presets: list | None = None,
                  wallpaper: dict | None = None, outputs: list | None = None, replies: dict | None = None, **kw):
         outputs = DISPLAY_OUTPUTS if outputs is None else outputs
-        replies = {"displays.list": outputs, "displays.conflicts": [], **(replies or {})}
+        replies = {"displays.list": outputs, "displays.conflicts": [],
+                   "extras.catalog": {**EXTRAS_CATALOG, "platform": EXTRAS_PLATFORM},
+                   "extras.status": EXTRAS_STATUS, "extras.install": {"jobs": []},
+                   **(replies or {})}
         super().__init__(name, wallpaper=wallpaper, outputs=outputs, replies=replies, **kw)
         h = self.h
         h.module("Quickshell.Io", QUICKSHELL_IO)
@@ -122,6 +127,8 @@ class OnboardingEnv(KeyboardEnv):
         # the real service: it owns the wizard state under test
         services["OnboardingService"] = (REPO / "modules/services/OnboardingService.qml").read_text()
         services["AppSearch"] = APP_SEARCH_STUB
+        for real in ("ExtrasService", "ExclusiveService"):
+            services[real] = (REPO / f"modules/services/{real}.qml").read_text()
         services["YozdService"] = YOZD_STUB
         services["I18n"] = i18n_qml(lang)
         services["PresetsService"] = f"""pragma Singleton

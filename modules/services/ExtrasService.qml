@@ -23,6 +23,8 @@ Singleton {
     property var jobs: ({})
     // entry id -> latest Progress of the job that installs it
     property var progress: ({})
+    // Ollama model -> job id of its pull ("" while the request is pending)
+    property var pulls: ({})
     property bool loading: false
     // A job failed for lack of network: installs stay disabled until a
     // connectivity probe ("Check again", refresh()) succeeds.
@@ -234,6 +236,37 @@ Singleton {
             if (error)
                 root.error = ExtrasModel.parseError(error).message;
         });
+    }
+
+    // Queue `ollama pull <model>`; `pulls` maps the model to its job id
+    // ("" until the backend answers), its progress is jobs[pulls[model]].
+    function ollamaPull(model) {
+        const asked = root.pulls[model] !== undefined;
+        if (root.offline || (asked && !["failed", "cancelled"].includes(root.pullProgress(model)?.state)))
+            return;
+        root._setPull(model, "");
+        BackendService.call("extras.ollamaPull", {
+            "model": model
+        }, (result, error) => {
+            if (error) {
+                const p = Object.assign({}, root.pulls);
+                delete p[model];
+                root.pulls = p;
+                root.error = ExtrasModel.parseError(error).message;
+                return;
+            }
+            const job = result && result.jobs && result.jobs.length > 0 ? result.jobs[0].id : "";
+            root._setPull(model, job);
+        });
+    }
+    function pullProgress(model) {
+        const job = root.pulls[model];
+        return job ? (root.jobs[job] ?? null) : null;
+    }
+    function _setPull(model, job) {
+        const p = Object.assign({}, root.pulls);
+        p[model] = job;
+        root.pulls = p;
     }
 
     // cb(text, error)

@@ -28,6 +28,10 @@ Column {
     property int gap: 14
     // Chip filter ("" = every offered category)
     property string category: ""
+    // Own headed sections instead of one per category (onboarding AI step):
+    // [{title, icon, hint, categories: [ids], footer: Component}], the
+    // footer (optional) sits under the section's cards.
+    property var sections: []
     readonly property string query: search.text
     signal logRequested(string job, string name)
 
@@ -36,7 +40,11 @@ Column {
     readonly property real cardWidth: Math.floor((width - (columns - 1) * gap) / columns)
     readonly property var entries: ExtrasModel.visibleEntries(root.catalog, ExtrasService.status, root.query, root.category !== "" ? root.category : root.categories, e => I18n.t("extras." + e.id + ".desc"))
     readonly property bool grouped: root.mode === "settings" && root.category === "" && root.query.trim() === ""
-    readonly property var groups: root.grouped ? ExtrasModel.groupByCategory(root.catalog, root.entries) : [
+    readonly property var groups: root.sections.length > 0 ? root.sections.map(s => ({
+                "category": null,
+                "section": s,
+                "entries": root.entries.filter(e => s.categories.includes(e.category))
+            })).filter(g => g.entries.length > 0) : root.grouped ? ExtrasModel.groupByCategory(root.catalog, root.entries) : [
         {
             "category": null,
             "entries": root.entries
@@ -174,6 +182,7 @@ Column {
             id: group
             required property var modelData
             readonly property var cat: group.modelData.category
+            readonly property var sec: group.modelData.section ?? null
 
             width: root.width
             spacing: 12
@@ -199,6 +208,39 @@ Column {
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: group.modelData.entries.length
+                    font.family: Config.theme.font
+                    font.pixelSize: Styling.fontSize(-2)
+                    color: Colors.overSurfaceVariant
+                }
+            }
+
+            Column {
+                visible: !!group.sec
+                width: parent.width
+                spacing: 3
+                Row {
+                    spacing: 8
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: group.sec ? (Icons[group.sec.icon] ?? "") : ""
+                        font.family: Icons.font
+                        font.pixelSize: Styling.fontSize(1)
+                        color: Colors.primary
+                    }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: group.sec ? group.sec.title : ""
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(1)
+                        font.weight: Font.DemiBold
+                        color: Colors.overBackground
+                    }
+                }
+                Text {
+                    visible: text !== ""
+                    width: parent.width
+                    text: group.sec ? (group.sec.hint ?? "") : ""
+                    wrapMode: Text.WordWrap
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overSurfaceVariant
@@ -231,6 +273,13 @@ Column {
                         onShowLog: root.logRequested(card.progress.job, card.modelData.name)
                     }
                 }
+            }
+
+            Loader {
+                width: parent.width
+                active: !!group.sec && !!group.sec.footer
+                visible: active
+                sourceComponent: group.sec ? (group.sec.footer ?? null) : null
             }
         }
     }

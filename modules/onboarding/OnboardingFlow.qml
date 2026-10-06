@@ -224,10 +224,11 @@ Item {
                 NavButton {
                     id: next
                     objectName: "onboardingNext"
+                    // the summary step has its own big "Start using" button
+                    visible: !root.wizard.isLast
                     kind: "filled"
-                    trailingIcon: root.wizard.isLast ? "" : "caretRight"
-                    icon: root.wizard.isLast ? "checkCircle" : ""
-                    text: root.wizard.isFirst ? I18n.t("onboarding.get_started") : (root.wizard.isLast ? I18n.t("onboarding.finish") : I18n.t("onboarding.continue"))
+                    trailingIcon: "caretRight"
+                    text: root.wizard.isFirst ? I18n.t("onboarding.get_started") : I18n.t("onboarding.continue")
                     onClicked: root.wizard.next()
                 }
             }
@@ -254,7 +255,6 @@ Item {
             root.loadStep();
         }
     }
-    Component.onDestruction: root.wizard.cancelVoiceSetup()
 
     Timer {
         // first step once the card exists
