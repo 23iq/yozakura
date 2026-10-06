@@ -3009,7 +3009,7 @@
   "prefs.ai.usage_clear_now": "Borrar",
   "prefs.ai.usage_cleared": "Historial de uso borrado.",
   "launcher.provider.routines": "Rutinas",
-  "launcher.provider.routines.desc": "Ejecuta una rutina guardada por su nombre",
+  "launcher.provider.routines.desc": "Ejecuta una rutina guardada por su nombre (@ busca solo rutinas)",
   "routines.launcher.steps": "%1 pasos",
   "routines.launcher.hint": "Ejecutar",
   "routines.bind_missing": "La rutina \"%1\" ya no existe: elige otra",

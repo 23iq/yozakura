@@ -3009,7 +3009,7 @@
   "prefs.ai.usage_clear_now": "Delete",
   "prefs.ai.usage_cleared": "Usage history cleared.",
   "launcher.provider.routines": "Routines",
-  "launcher.provider.routines.desc": "Run a saved routine by name",
+  "launcher.provider.routines.desc": "Run a saved routine by name (@ searches only routines)",
   "routines.launcher.steps": "%1 steps",
   "routines.launcher.hint": "Run",
   "routines.bind_missing": "Routine \"%1\" no longer exists: pick another one",

@@ -19,7 +19,7 @@ var category = {
                     "id": "launcher.providers",
                     "type": "custom",
                     "component": "LauncherProvidersEditor",
-                    "keys": ["prefix.launcher.order", "prefix.launcher.disabled", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
+                    "keys": ["prefix.launcher.order", "prefix.launcher.disabled", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
                     "label": "prefs.launcher.providers",
                     "description": "prefs.launcher.providers.desc",
                     "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"

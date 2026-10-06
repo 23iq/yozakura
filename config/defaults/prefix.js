@@ -11,8 +11,9 @@ var data = {
     "files": "ff",
     "ai": "?",
     "timers": "t",
+    "routines": "@",
     "launcher": {
-        "order": ["calculator", "commands", "timers", "apps", "specials", "routines", "wallpapers", "files", "ai"],
+        "order": ["routines", "calculator", "commands", "timers", "apps", "specials", "wallpapers", "files", "ai"],
         "disabled": [],
         "aiOnTab": true,
         "filesInMixed": true,

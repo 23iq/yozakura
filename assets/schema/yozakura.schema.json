@@ -6461,6 +6461,20 @@
             "keywords": "launcher prefix timers t"
           }
         },
+        "routines": {
+          "title": "Routines",
+          "type": "string",
+          "default": "@",
+          "x-settings": {
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+          },
+          "description": "Prefix that searches only saved routines (e.g. \"@backup\"; empty lists them all)."
+        },
         "launcher": {
           "title": "Launcher",
           "type": "object",
@@ -6469,12 +6483,12 @@
               "title": "Order",
               "type": "array",
               "default": [
+                "routines",
                 "calculator",
                 "commands",
                 "timers",
                 "apps",
                 "specials",
-                "routines",
                 "wallpapers",
                 "files",
                 "ai"

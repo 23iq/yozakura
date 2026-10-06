@@ -3009,7 +3009,7 @@
   "prefs.ai.usage_clear_now": "Удалить",
   "prefs.ai.usage_cleared": "История расхода очищена.",
   "launcher.provider.routines": "Сценарии",
-  "launcher.provider.routines.desc": "Запуск сохранённого сценария по имени",
+  "launcher.provider.routines.desc": "Запуск сохранённого сценария по имени (@ ищет только сценарии)",
   "routines.launcher.steps": "Шагов: %1",
   "routines.launcher.hint": "Запустить",
   "routines.bind_missing": "Сценария «%1» больше нет: выберите другой",

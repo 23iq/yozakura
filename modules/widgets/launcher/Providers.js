@@ -55,12 +55,12 @@ var PROVIDERS = [
         "mixed": true
     },
     {
-        // Saved routines (svc/routines): mixed results only
+        // Saved routines (svc/routines): first in mixed results, "@" searches only them
         "id": "routines",
         "kind": "inline",
         "file": "providers/RoutinesProvider.qml",
         "icon": "lightning",
-        "prefix": "",
+        "prefix": "routines",
         "mixed": true
     },
     {
@@ -141,11 +141,26 @@ function isEnabled(id, disabled) {
     return _list(disabled).indexOf(id) === -1 && byId(id) !== null;
 }
 
+// Saved orders from before routines moved to the front: the old default,
+// and the old default without routines (appended last by ordered()).
+var OLD_DEFAULT_ORDER = ["calculator", "commands", "timers", "apps", "specials", "routines", "wallpapers", "files", "ai"];
+
+// A saved order equal to an old default gets routines moved to the front;
+// a customised order is left alone.
+function migrateOrder(list) {
+    const same = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
+    const old = OLD_DEFAULT_ORDER;
+    const noRoutines = old.filter(id => id !== "routines");
+    if (same(list, old) || same(list, noRoutines))
+        return ["routines"].concat(noRoutines);
+    return list;
+}
+
 // Inline provider ids in the configured order: unknown ids are dropped,
 // providers missing from the order (new ones) are appended in registry order.
 function ordered(order) {
     const out = [];
-    _list(order).forEach(id => {
+    migrateOrder(_list(order)).forEach(id => {
         const p = byId(id);
         if (p && p.kind === "inline" && out.indexOf(id) === -1)
             out.push(id);

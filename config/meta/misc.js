@@ -147,6 +147,9 @@ var prefix = {
         "timers": {
             "description": "Prefix for timers, reminders and the stopwatch (e.g. \"t 10m tea\", \"t 18:00 call mom\", \"t sw\")."
         },
+        "routines": {
+            "description": "Prefix that searches only saved routines (e.g. \"@backup\"; empty lists them all)."
+        },
         "launcher.order": {
             "items": {"enum": Enums.LAUNCHER_PROVIDERS},
             "uniqueItems": true,

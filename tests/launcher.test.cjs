@@ -44,10 +44,14 @@ test('routing: prefixes win, word prefixes need a space, mixed otherwise', () =>
     assert.deepEqual(r('= 2+2').providers, [{ id: 'calculator', query: '2+2' }]);
     assert.deepEqual(r('ff notes').providers, [{ id: 'files', query: 'notes' }]);
     assert.deepEqual(r('ww sakura').providers, [{ id: 'wallpapers', query: 'sakura' }]);
+    assert.deepEqual(r('@backup'), { mode: 'prefix', providers: [{ id: 'routines', query: 'backup' }] });
+    assert.deepEqual(r('@').providers, [{ id: 'routines', query: '' }]);
+    assert.equal(r('a@b.com').mode, 'mixed');
+    assert.equal(r('@x', ['routines']).mode, 'mixed');
     assert.equal(r('ffmpeg').mode, 'mixed');
     assert.deepEqual(r('').providers.map(p => p.id), ['apps']);
     const mixed = r('firefox').providers.map(p => p.id);
-    assert.deepEqual(mixed, ['calculator', 'commands', 'apps', 'specials', 'routines', 'files', 'ai']);
+    assert.deepEqual(mixed, ['routines', 'calculator', 'commands', 'apps', 'specials', 'files', 'ai']);
     assert.ok(!mixed.includes('wallpapers'));
     // a disabled provider's prefix is plain text
     assert.equal(r('> dnd', ['commands']).mode, 'mixed');
@@ -163,4 +167,15 @@ test('file search: backend choice, command, parsing', () => {
     assert.equal(F.pretty('/home/u/src', '/home/u'), '~/src');
     assert.equal(F.iconName({ name: 'a.png', isDir: false }), 'image');
     assert.equal(F.iconName({ name: 'x', isDir: true }), 'folder');
+});
+
+test('routines first by default; an untouched old default order is migrated, a custom one kept', () => {
+    assert.equal(P.ordered(PREFIX.launcher.order)[0], 'routines');
+    const old = ['calculator', 'commands', 'timers', 'apps', 'specials', 'routines', 'wallpapers', 'files', 'ai'];
+    assert.deepEqual(plain(P.ordered(old)), plain(PREFIX.launcher.order));
+    const older = old.filter(id => id !== 'routines');
+    assert.equal(P.ordered(older)[0], 'routines');
+    const custom = ['apps', 'calculator', 'commands', 'timers', 'specials', 'routines', 'wallpapers', 'files', 'ai'];
+    assert.deepEqual(plain(P.ordered(custom)), custom);
+    assert.equal(P.ordered(['ai', 'routines', 'apps']).indexOf('routines'), 1);
 });

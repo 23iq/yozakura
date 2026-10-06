@@ -4,17 +4,19 @@ import qs.modules.services
 import "../../../routines/RoutineModel.js" as RoutineModel
 
 // Saved routines by name or keyword ("morning"): Enter runs it (the
-// backend notifies when a step fails). Mixed results only; nothing when no
-// routine exists.
+// backend notifies when a step fails). First in mixed results; the "@"
+// prefix searches only routines and lists them all when the query is empty.
+// Nothing when no routine exists.
 LauncherProvider {
     id: routines
 
     mixedLimit: 3
 
     function compute(text, searchMode) {
-        if (String(text || "").trim() === "")
+        const prefixed = searchMode === "prefix";
+        if (String(text || "").trim() === "" && !prefixed)
             return [];
-        return RoutineModel.search(RoutinesService.routines, text, 8).map(r => ({
+        return RoutineModel.search(RoutinesService.routines, text, prefixed ? 50 : 8).map(r => ({
                     "key": r.id,
                     "title": r.name,
                     "subtitle": I18n.t("routines.launcher.steps", (r.steps || []).length),
