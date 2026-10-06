@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.modules.theme
 import qs.config
+import qs.modules.shell.osd.styles
 
 Item {
     id: root
@@ -77,6 +78,11 @@ Item {
             color: root.popupOpen ? buttonBg.item : Styling.srItem("overprimary")
         }
 
+        OsdBarInline {
+            anchors.fill: parent
+            radius: parent.radius ?? 0
+        }
+
         MouseArea {
             anchors.fill: parent
             hoverEnabled: false
@@ -90,6 +96,17 @@ Item {
                     controlsPopup.toggle();
                 }
             }
+        }
+    }
+
+    // A click on the OSD opens the controls popup of its screen.
+    Connections {
+        target: OsdService
+
+        function onControlsRequested(screenName) {
+            const mine = root.bar && root.bar.screen ? root.bar.screen.name : "";
+            if (screenName === "" || mine === "" || screenName === mine)
+                controlsPopup.open();
         }
     }
 

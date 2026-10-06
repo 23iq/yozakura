@@ -79,7 +79,8 @@ var types = {
     },
     "layout": {
         "dashboard.grid.cols": "int",
-        "dashboard.grid.cells": "list<var>"
+        "dashboard.grid.cells": "list<var>",
+        "osd.timeout": "int"
     },
     "notch": {
         "activities": "list<var>",

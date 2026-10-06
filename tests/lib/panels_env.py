@@ -127,6 +127,7 @@ class PanelsEnv:
         self.h.module("qs.modules.globals", {"GlobalStates": stubs.GLOBAL_STATES})
         for module, types in stubs.quickshell_modules(icon_path).items():
             self.h.module(module, types)
+        self.h.module("qs.modules.shell.osd.styles", {"OsdBarInline": "Item { property real radius: 0 }"})
         self.h.module("qs.modules.widgets.overview", {"OverviewThumb": "Item {}"})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.services.activities", {

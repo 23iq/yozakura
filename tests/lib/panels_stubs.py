@@ -125,6 +125,16 @@ def services(icon_path) -> dict:
         apps.append(f'{{ appId: "{app}", pinned: {str(app in PINNED).lower()}, toplevels: [{tl}], '
                     f'toplevelCount: {len(tops)} }}')
     return {
+        "OsdService": """pragma Singleton
+QtObject {
+    signal controlsRequested(string screenName)
+    signal inlineRequest(string kind)
+    signal level(string kind, real value, bool muted, string device)
+    property int timeout: 2500
+    property real lastValue: 0
+    property bool lastMuted: false
+    function registerInline(on) {}
+}""",
         "Visibilities": """pragma Singleton
 QtObject {
     id: v

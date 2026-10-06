@@ -1,15 +1,21 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
-import qs.modules.components
 import qs.modules.theme
+import qs.modules.shell.osd
 import qs.modules.services
 import qs.modules.globals
+import qs.modules.shell
 import qs.config
-import "MicrophoneVolume.js" as MicrophoneVolume
+import "OsdStyles.js" as OsdStyles
 
+// On-screen display window: one per screen, covering it, with an input mask
+// of just the OSD itself. The style (pill, edge, island) is a separate
+// component loaded from OsdStyles; where it sits comes from EdgeService so it
+// never lands on the bar. Scrolling over it changes the level, clicking opens
+// the bar controls, hovering keeps it up. bar-inline renders in the bar
+// instead (styles/OsdBarInline.qml) and leaves this window empty.
 PanelWindow {
     id: root
 
@@ -21,205 +27,136 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
 
+    anchors.top: true
     anchors.bottom: true
     anchors.left: true
     anchors.right: true
 
-    WlrLayershell.margins.bottom: 100
-
     color: "transparent"
+    visible: (GlobalStates.osdVisible && OsdService.route.window) || holder.opacity > 0
+    mask: Region {
+        item: holder
+    }
 
-    visible: GlobalStates.osdVisible
-
-    // Internal state for responsiveness
+    property string kind: "volume"
     property real osdValue: 0
     property bool osdMuted: false
-    readonly property bool microphoneAvailable: !!Audio.source?.ready && !!Audio.source?.audio
-    property var microphoneVolumeBaseline: null
+    property string device: ""
 
-    function resetMicrophoneVolumeBaseline() {
-        microphoneVolumeBaseline = MicrophoneVolume.observe(null, Audio.source,
-            Audio.source?.audio?.volume, microphoneAvailable);
+    readonly property string styleName: OsdService.route.style
+    readonly property string edgeName: OsdStyles.edgePref(root.styleName, Config.layout.osd.position, Config.notch.position)
+    readonly property bool vertical: EdgeService.osdPlacement(root.targetScreen, root.edgeName, {
+        "w": 1,
+        "h": 1
+    }).vertical
+    readonly property var size: OsdStyles.sizeFor(root.styleName, root.vertical, Metrics.osdW)
+    readonly property var place: EdgeService.osdPlacement(root.targetScreen, root.edgeName, root.size)
+    // Direction the OSD slides in from, towards its own edge.
+    readonly property point slide: ({
+            "top": Qt.point(0, -1),
+            "bottom": Qt.point(0, 1),
+            "left": Qt.point(-1, 0),
+            "right": Qt.point(1, 0)
+        })[root.place.edge] ?? Qt.point(0, 1)
+
+    function show(): void {
+        GlobalStates.osdVisible = true;
+        hideTimer.restart();
     }
 
-    Component.onCompleted: resetMicrophoneVolumeBaseline()
-    onMicrophoneAvailableChanged: resetMicrophoneVolumeBaseline()
-
-    // Centering wrapper
     Item {
-        anchors.fill: parent
+        id: holder
+        x: root.place.x + root.slide.x * 14 * (1 - opacity)
+        y: root.place.y + root.slide.y * 14 * (1 - opacity)
+        width: root.size.w
+        height: root.size.h
+        opacity: GlobalStates.osdVisible && OsdService.route.window ? 1 : 0
 
-        StyledRect {
-            id: osdRect
-            variant: "popup"
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            implicitWidth: 220
-            implicitHeight: 52
-            radius: Styling.radius(16)
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 24
-                anchors.topMargin: 8
-                anchors.bottomMargin: 8
-                spacing: 14
-
-                Text {
-                    id: iconText
-                    text: {
-                        if (GlobalStates.osdIndicator === "volume") {
-                            return Audio.volumeIcon(root.osdValue, root.osdMuted);
-                        } else if (GlobalStates.osdIndicator === "mic") {
-                            return root.osdMuted ? Icons.micSlash : Icons.mic;
-                        } else {
-                            return Icons.sun;
-                        }
-                    }
-                    font.family: Icons.font
-                    font.pixelSize: 22
-                    color: Colors.overBackground
-                    Layout.alignment: Qt.AlignVCenter
-
-                    rotation: GlobalStates.osdIndicator === "brightness" ? (root.osdValue * 180) : 0
-                    scale: GlobalStates.osdIndicator === "brightness" ? (0.8 + (root.osdValue * 0.2)) : 1
-
-                    Behavior on rotation {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-
-                    Behavior on scale {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation {
-                            duration: Config.animDuration
-                            easing.type: Easing.OutQuart
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    spacing: 0
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 0
-
-                        Text {
-                            text: {
-                                if (GlobalStates.osdIndicator === "volume")
-                                    return I18n.t("osd.volume");
-                                if (GlobalStates.osdIndicator === "mic")
-                                    return I18n.t("osd.mic");
-                                if (GlobalStates.osdIndicator === "brightness")
-                                    return I18n.t("osd.brightness");
-                                return "";
-                            }
-                            font.family: Config.theme.font
-                            font.pixelSize: 15
-                            font.bold: false
-                            color: Colors.overBackground
-                            Layout.alignment: Qt.AlignBottom
-                        }
-
-                        Item {
-                            Layout.fillWidth: true
-                        }
-
-                        Text {
-                            text: Math.round(root.osdValue * 100)
-                            font.family: Config.theme.font
-                            font.pixelSize: 15
-                            font.bold: false
-                            color: Colors.overBackground
-                            Layout.alignment: Qt.AlignBottom
-                        }
-                    }
-
-                    StyledSlider {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 12
-                        value: root.osdValue
-                        wavy: false
-                        enabled: false
-                        thickness: 3
-                        handleSpacing: 0
-                        progressColor: root.osdMuted ? Colors.outline : Styling.srItem("overprimary")
-                        backgroundColor: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.2)
-                    }
-                }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: GlobalStates.osdVisible ? OsdMotion.enterMs : OsdMotion.exitMs
+                easing.type: GlobalStates.osdVisible ? OsdMotion.enterEasing : OsdMotion.exitEasing
             }
         }
-    }
 
-    // Close on click or hover
-    MouseArea {
-        anchors.fill: parent
-        onEntered: {
-            hideTimer.stop();
-            hideTimer.triggered();
+        Loader {
+            id: styleLoader
+            anchors.fill: parent
+            source: OsdService.route.window ? OsdStyles.fileFor(root.styleName) : ""
+            onLoaded: item.shown = Qt.binding(() => GlobalStates.osdVisible)
+
+            Binding {
+                target: styleLoader.item
+                property: "kind"
+                value: root.kind
+            }
+            Binding {
+                target: styleLoader.item
+                property: "value"
+                value: root.osdValue
+            }
+            Binding {
+                target: styleLoader.item
+                property: "muted"
+                value: root.osdMuted
+            }
+            Binding {
+                target: styleLoader.item
+                property: "device"
+                value: root.device
+            }
+            Binding {
+                target: styleLoader.item
+                property: "vertical"
+                value: root.vertical
+            }
         }
-        hoverEnabled: true
+
+        MouseArea {
+            id: input
+            anchors.fill: parent
+            hoverEnabled: true
+            onContainsMouseChanged: containsMouse ? hideTimer.stop() : hideTimer.restart()
+            onWheel: wheel => {
+                OsdService.adjust(root.kind, OsdStyles.wheelStep(wheel.angleDelta.y), root.targetScreen);
+                hideTimer.restart();
+            }
+            onClicked: {
+                GlobalStates.osdVisible = false;
+                OsdService.openControls(root.targetScreen ? root.targetScreen.name : "");
+            }
+        }
     }
 
     Timer {
         id: hideTimer
-        interval: 2500
+        interval: OsdService.timeout
         onTriggered: GlobalStates.osdVisible = false
     }
 
-    Connections {
-        target: GlobalStates
-        function onOsdVisibleChanged() {
-            if (GlobalStates.osdVisible) {
-                hideTimer.restart();
-            }
-        }
-    }
-
-    // Services connections - Direct and responsive
-    Connections {
-        target: Audio
-        function onSourceChanged() {
-            root.resetMicrophoneVolumeBaseline();
-        }
-        function onVolumeChanged(volume, muted, node) {
-            root.osdValue = volume;
-            root.osdMuted = muted;
-            GlobalStates.osdIndicator = "volume";
-            GlobalStates.osdVisible = true;
-            hideTimer.restart();
-        }
-        function onMicVolumeChanged(volume, muted, node) {
-            if (node !== Audio.source) return;
-            root.microphoneVolumeBaseline = MicrophoneVolume.observe(root.microphoneVolumeBaseline,
-                node, volume, root.microphoneAvailable);
-            if (!root.microphoneVolumeBaseline.show) return;
-            root.osdValue = volume;
-            root.osdMuted = muted;
-            GlobalStates.osdIndicator = "mic";
-            GlobalStates.osdVisible = true;
-            hideTimer.restart();
-        }
+    // A device name is shown briefly, then the label returns.
+    Timer {
+        id: deviceTimer
+        interval: 1500
+        onTriggered: root.device = ""
     }
 
     Connections {
-        target: Brightness
-        function onBrightnessChanged(value, screen) {
-            // Check if the change happened on THIS screen or if it's a sync change
-            if (!screen || !root.targetScreen || screen.name === root.targetScreen.name || Brightness.syncBrightness) {
-                root.osdValue = value;
-                root.osdMuted = false;
-                GlobalStates.osdIndicator = "brightness";
-                GlobalStates.osdVisible = true;
-                hideTimer.restart();
+        target: OsdService
+
+        function onLevel(kind, value, muted, device) {
+            if (kind === "brightness" && OsdService.lastScreen && root.targetScreen && OsdService.lastScreen !== root.targetScreen.name && !Brightness.syncBrightness)
+                return;
+            root.kind = kind;
+            root.osdValue = value;
+            root.osdMuted = muted;
+            GlobalStates.osdIndicator = kind;
+            if (device !== "") {
+                root.device = device;
+                deviceTimer.restart();
             }
+            if (OsdService.route.window)
+                root.show();
         }
     }
 }

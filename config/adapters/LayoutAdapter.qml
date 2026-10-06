@@ -36,5 +36,6 @@ JsonAdapter {
     property JsonObject osd: JsonObject {
         property string position: "auto"
         property string style: "pill"
+        property int timeout: 2500
     }
 }
