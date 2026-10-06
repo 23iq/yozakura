@@ -106,3 +106,29 @@ test('renderList keeps disconnected monitors and uses saved list without outputs
     const r = plain(M.renderList(saved, [out('DP-5', 'A')]));
     assert.deepEqual(r.map(c => c.name), ['DP-5', 'HDMI-1']);
 });
+
+const Gate = loadLibrary(path.join(__dirname, '../modules/services/WriteGate.js'));
+const Kb = loadLibrary(path.join(__dirname, '../modules/services/KeyboardModel.js'));
+
+test('write gate defers while pending and releases once after', () => {
+    const g = Gate.create();
+    assert.equal(Gate.request(g, false), true);
+    assert.equal(Gate.release(g, false), false);
+    assert.equal(Gate.request(g, true), false);
+    assert.equal(Gate.request(g, true), false);
+    assert.equal(Gate.release(g, true), false, 'still pending');
+    assert.equal(Gate.release(g, false), true);
+    assert.equal(Gate.release(g, false), false, 'only once');
+});
+
+test('mergeSaved matches by id then name, appends new', () => {
+    const saved = [cfg('DP-1', 'A', { x: 0 }), cfg('DP-2', 'B', { x: 1 })];
+    const r = plain(M.mergeSaved(saved, [cfg('DP-7', 'A', { x: 9 }), cfg('HDMI-1', 'C'), cfg('DP-2', '', { x: 5 })]));
+    assert.deepEqual(r.map(c => [c.name, c.x]), [['DP-7', 9], ['DP-2', 5], ['HDMI-1', 0]]);
+});
+
+test('keyboard shortName', () => {
+    assert.equal(Kb.shortName('us'), 'EN');
+    assert.equal(Kb.shortName('ru'), 'RU');
+    assert.equal(Kb.shortName(undefined), '');
+});

@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.modules.services
 import qs.config
+import "KeyboardModel.js" as KeyboardModel
 
 // Keyboard layouts: the XKB catalog, the active layout (live, from the
 // backend `keyboard` service) and instant application of the keyboard config
@@ -26,10 +27,8 @@ Singleton {
     readonly property string shortLabel: root.active.short || ""
     readonly property bool indicatorVisible: Config.keyboardReady && Config.keyboard.showIndicator && Config.keyboard.layouts.length > 1
 
-    // `us` shows as EN, anything else as its upper-cased code
     function shortName(layout) {
-        const code = String(layout || "").toLowerCase();
-        return code === "us" ? "EN" : code.toUpperCase();
+        return KeyboardModel.shortName(layout);
     }
 
     // The keyboard domain as the backend expects it (compositor payload and keyboard.apply)

@@ -11,6 +11,7 @@ import qs.modules.bar.panels
 import "../../config/CoreBinds.js" as CoreBinds
 import "../specials/Specials.js" as Specials
 import "DisplayModel.js" as DisplayModel
+import "WriteGate.js" as WriteGate
 
 /**
  * CompositorTomlWriter - Thin IPC client.
@@ -287,7 +288,13 @@ Singleton {
         console.warn("CompositorTomlWriter: daemon unreachable, wrote fallback [target] only");
     }
 
+    // A pending (unconfirmed) display change must not be undone by a rewrite
+    // of the saved layout: writes wait until the session leaves pending.
+    property var _gate: WriteGate.create()
+
     function callWrite() {
+        if (!WriteGate.request(root._gate, DisplaysService.pending))
+            return;
         writeDebounce.restart();
     }
 
@@ -301,12 +308,16 @@ Singleton {
     }
 
     function _flushWrite() {
+        if (!WriteGate.request(root._gate, DisplaysService.pending))
+            return;
         if (ipcProcess.running) {
             _writeQueued = true;
             return;
         }
         _writeQueued = false;
-        const payload = JSON.stringify(gatherInput());
+        const input = gatherInput();
+        root._lastDisplays = JSON.stringify(input.displays);
+        const payload = JSON.stringify(input);
         // The daemon exposes a unix socket; Quickshell.Io.Process doesn't
         // speak the JSON-RPC framing directly, so we run the yozakura CLI
         // with a transient request. If the daemon is down (e.g. socket
@@ -434,10 +445,8 @@ Singleton {
     // config: only a different rendered list does.
     property string _lastDisplays: ""
     function _onOutputsChanged() {
-        const json = JSON.stringify(root.displayList());
-        if (json === root._lastDisplays)
+        if (JSON.stringify(root.displayList()) === root._lastDisplays)
             return;
-        root._lastDisplays = json;
         root.callWrite();
     }
 
@@ -448,6 +457,14 @@ Singleton {
     property Connections displaysConnections: Connections {
         target: Config.displaysReady ? Config.displays : null
         function onMonitorsChanged() { root.callWrite(); }
+    }
+
+    property Connections pendingConnections: Connections {
+        target: DisplaysService
+        function onPendingChanged() {
+            if (WriteGate.release(root._gate, DisplaysService.pending))
+                root.callWrite();
+        }
     }
 
     property Connections outputsConnections: Connections {

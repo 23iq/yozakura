@@ -336,3 +336,32 @@ function arrange(outputs, movedName, x, y) {
     });
     return result;
 }
+
+// Merges imported configs into the saved list: an entry replaces the saved
+// one with the same id (when it has one) or else the same name; new ones are
+// appended. Returns a new list.
+function mergeSaved(saved, imported) {
+    var merged = (saved || []).slice();
+    (imported || []).forEach(function (cfg) {
+        var at = -1;
+        if (cfg.id) {
+            for (var i = 0; i < merged.length && at < 0; i++) {
+                if (merged[i].id === cfg.id && merged[i].name === cfg.name)
+                    at = i;
+            }
+            for (var j = 0; j < merged.length && at < 0; j++) {
+                if (merged[j].id === cfg.id)
+                    at = j;
+            }
+        }
+        for (var k = 0; k < merged.length && at < 0; k++) {
+            if (merged[k].name === cfg.name)
+                at = k;
+        }
+        if (at >= 0)
+            merged[at] = cfg;
+        else
+            merged.push(cfg);
+    });
+    return merged;
+}

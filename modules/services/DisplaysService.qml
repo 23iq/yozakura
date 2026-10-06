@@ -134,14 +134,8 @@ Singleton {
                 return;
             }
             const imported = (result.outputs || []).map(w => DisplayModel.fromWire(w, root.outputs));
-            const merged = Config.displaysReady ? Array.from(Config.displays.monitors) : [];
-            for (const cfg of imported) {
-                const i = merged.findIndex(m => m.name === cfg.name);
-                if (i >= 0)
-                    merged[i] = cfg;
-                else
-                    merged.push(cfg);
-            }
+            const saved = Config.displaysReady ? Array.from(Config.displays.monitors) : [];
+            const merged = DisplayModel.mergeSaved(saved, imported);
             root.saveCurrent(merged);
             root.scanConflicts();
         });
