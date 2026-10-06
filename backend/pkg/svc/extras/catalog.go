@@ -29,8 +29,8 @@ type ScriptSpec struct {
 	Args []string `json:"args,omitempty"`
 }
 
-// Detect describes how to tell an entry is already installed.
-type Detect struct {
+// DetectSpec describes how to tell an entry is already installed.
+type DetectSpec struct {
 	Bins    []string `json:"bins,omitempty"`
 	Flatpak string   `json:"flatpak,omitempty"`
 	Pkgs    []string `json:"pkgs,omitempty"`
@@ -51,19 +51,19 @@ type Install struct {
 
 // Entry is one installable item.
 type Entry struct {
-	ID          string   `json:"id"`
-	Category    string   `json:"category"`
-	Name        string   `json:"name"`
-	Icon        string   `json:"icon"`
-	Description string   `json:"description,omitempty"`
-	Size        string   `json:"size,omitempty"`
-	Recommended bool     `json:"recommended,omitempty"`
-	Hidden      bool     `json:"hidden,omitempty"`
-	Detect      Detect   `json:"detect"`
-	Install     Install  `json:"install"`
-	Requires    []string `json:"requires,omitempty"`
-	Post        []string `json:"post,omitempty"` // "apphook:<id>"
-	Only        []string `json:"only,omitempty"` // distros; empty = all
+	ID          string     `json:"id"`
+	Category    string     `json:"category"`
+	Name        string     `json:"name"`
+	Icon        string     `json:"icon"`
+	Description string     `json:"description,omitempty"`
+	Size        string     `json:"size,omitempty"`
+	Recommended bool       `json:"recommended,omitempty"`
+	Hidden      bool       `json:"hidden,omitempty"`
+	Detect      DetectSpec `json:"detect"`
+	Install     Install    `json:"install"`
+	Requires    []string   `json:"requires,omitempty"`
+	Post        []string   `json:"post,omitempty"` // "apphook:<id>"
+	Only        []string   `json:"only,omitempty"` // distros; empty = all
 }
 
 // Category groups entries; Name is an i18n key.
