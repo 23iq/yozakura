@@ -57,7 +57,7 @@
       "description": "Height of the edge area that reveals a hidden notch.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "advanced",
         "label": "prefs.notch.hover_region",
         "control": "slider",
         "step": 1,
@@ -134,7 +134,7 @@
       "description": "Don't grow the notch into a media preview on hover.",
       "x-settings": {
         "category": "notch",
-        "section": "notch",
+        "section": "advanced",
         "label": "shell.notch.disable_hover_expansion",
         "control": "toggle",
         "keywords": "hover expand grow media preview"

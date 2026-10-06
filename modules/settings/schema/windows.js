@@ -1,9 +1,8 @@
 .pragma library
-.import "motion.js" as Motion
 
 // Windows: the compositor (Hyprland) appearance - layout, gaps, borders
 // (palette roles, gradients, music-reactive pulse), rounding, dimming,
-// shadows, blur - plus the motion profile (motion.js).
+// shadows, blur. Window rounding and motion live on Look (appearance.js).
 // Entry format: see modules/settings/AGENTS.md.
 
 var category = {
@@ -172,31 +171,9 @@ var category = {
             ]
         },
         {
-            "id": "shape",
-            "title": "prefs.windows.section.shape",
+            "id": "dim",
+            "title": "prefs.windows.section.dim",
             "entries": [
-                {
-                    "key": "compositor.syncRoundness",
-                    "type": "toggle",
-                    "label": "prefs.windows.sync_rounding",
-                    "description": "prefs.windows.sync_rounding.desc",
-                    "keywords": "sync rounding roundness corners shell theme"
-                },
-                {
-                    "key": "compositor.rounding",
-                    "type": "slider",
-                    "min": 0,
-                    "max": 40,
-                    "step": 1,
-                    "unit": "px",
-                    "visibleWhen": {
-                        "key": "compositor.syncRoundness",
-                        "equals": false
-                    },
-                    "label": "prefs.windows.rounding",
-                    "description": "prefs.windows.rounding.desc",
-                    "keywords": "rounding radius corners round"
-                },
                 {
                     "key": "compositor.dimInactive",
                     "type": "toggle",
@@ -655,5 +632,5 @@ var category = {
                 }
             ]
         }
-    ].concat(Motion.sections)
+    ]
 };

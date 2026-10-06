@@ -19,7 +19,6 @@ var EDITORS = {
     "FolderList": "editors/FolderList.qml",
     "SpecialsEditor": "editors/SpecialsEditor.qml",
     "ComingSoonRow": "editors/ComingSoonRow.qml",
-    "DepthClockLink": "editors/DepthClockLink.qml",
     "ClockStyleGallery": "editors/ClockStyleGallery.qml",
     "ColorRoleSwatches": "editors/ColorRoleSwatches.qml",
     "DesktopWidgetsEditor": "editors/DesktopWidgetsEditor.qml",

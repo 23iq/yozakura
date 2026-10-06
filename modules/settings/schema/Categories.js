@@ -20,6 +20,9 @@
 .import "timers.js" as Timers
 .import "routines.js" as Routines
 .import "layout.js" as Layout
+.import "dashboard.js" as Dashboard
+.import "osd.js" as Osd
+.import "menus.js" as Menus
 .import "Advanced.js" as Advanced
 
 // Settings information architecture: the sidebar tree and its pages.
@@ -55,7 +58,7 @@ var groups = [
         "id": "island",
         "icon": "dotsThree",
         "title": "prefs.group.island",
-        "categories": ["notch", "overview"]
+        "categories": ["notch"]
     },
     {
         "id": "dock",
@@ -73,13 +76,13 @@ var groups = [
         "id": "dashboard",
         "icon": "robot",
         "title": "prefs.group.dashboard",
-        "categories": ["sidebar", "ai", "ai-providers", "ai-code"]
+        "categories": ["dashboard", "sidebar", "ai", "ai-providers", "ai-code"]
     },
     {
         "id": "popups",
         "icon": "bell",
         "title": "prefs.group.popups",
-        "categories": ["notifications"]
+        "categories": ["notifications", "osd", "menus"]
     },
     {
         "id": "lockscreen",
@@ -91,7 +94,7 @@ var groups = [
         "id": "desktop",
         "icon": "monitor",
         "title": "prefs.group.desktop",
-        "categories": ["desktop"]
+        "categories": ["desktop", "overview"]
     },
     {
         "id": "look",
@@ -168,6 +171,9 @@ var categories = [
     Desktop.category,
     Lockscreen.category,
     Notifications.category,
+    Osd.category,
+    Menus.category,
+    Dashboard.category,
     Specials.category,
     Windows.category,
     Terminal.category,

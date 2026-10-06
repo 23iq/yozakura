@@ -1,6 +1,5 @@
 .pragma library
 .import "../../notifications/NotificationPolicy.js" as Policy
-.import "osd.js" as Osd
 
 // Notifications: presentation (notch-born or corner toasts), timing,
 // grouping, sound, per-app rules and Do Not Disturb. Behaviour:
@@ -301,5 +300,5 @@ var category = {
                 }
             ]
         }
-    ].concat(Osd.sections)
+    ]
 };

@@ -144,14 +144,14 @@
       }
     },
     "animDuration": {
-      "title": "Animation",
+      "title": "Shell base duration",
       "type": "number",
       "default": 300,
       "description": "Speed of every animation. Off disables them.",
       "x-settings": {
         "category": "appearance",
-        "section": "motion",
-        "label": "settings.theme.animation",
+        "section": "advanced",
+        "label": "prefs.motion.shell_base",
         "control": "slider",
         "preview": "MotionPreview",
         "step": 25,
@@ -284,7 +284,7 @@
           "default": "fade-scale",
           "description": "How bar popups and menus appear.",
           "x-settings": {
-            "category": "appearance",
+            "category": "menus",
             "section": "popups",
             "label": "prefs.appearance.popup_entry",
             "control": "selector",
@@ -309,7 +309,7 @@
           "default": false,
           "description": "Point popups at the item that opened them.",
           "x-settings": {
-            "category": "appearance",
+            "category": "menus",
             "section": "popups",
             "label": "prefs.appearance.popup_tail",
             "control": "toggle",
@@ -322,7 +322,7 @@
           "default": 8,
           "description": "Distance between a popup and the item that opened it.",
           "x-settings": {
-            "category": "appearance",
+            "category": "menus",
             "section": "popups",
             "label": "prefs.appearance.popup_gap",
             "control": "slider",

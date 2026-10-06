@@ -137,8 +137,8 @@
           },
           "description": "Order and visibility of the dashboard tabs. Drag the grip or use the arrows; widgets are arranged from the dashboard itself with the pencil button.",
           "x-settings": {
-            "category": "launcher",
-            "section": "dashboard",
+            "category": "dashboard",
+            "section": "tabs",
             "label": "prefs.dashboard.tabs",
             "control": "custom",
             "component": "DashboardTabsEditor",
@@ -212,7 +212,7 @@
           "default": "auto",
           "description": "Screen edge of the indicator; Auto picks the edge away from the bar.",
           "x-settings": {
-            "category": "notifications",
+            "category": "osd",
             "section": "osd",
             "label": "prefs.osd.position",
             "control": "selector",
@@ -243,7 +243,7 @@
           "default": "pill",
           "description": "How the volume and brightness indicator looks and where it lives.",
           "x-settings": {
-            "category": "notifications",
+            "category": "osd",
             "section": "osd",
             "label": "prefs.osd.style",
             "control": "selector",
@@ -268,7 +268,7 @@
           "default": 2500,
           "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
           "x-settings": {
-            "category": "notifications",
+            "category": "osd",
             "section": "osd",
             "label": "prefs.osd.timeout",
             "control": "slider",

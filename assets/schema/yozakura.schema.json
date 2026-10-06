@@ -3580,8 +3580,8 @@
           "default": 16,
           "description": "Radius of window corners.",
           "x-settings": {
-            "category": "windows",
-            "section": "shape",
+            "category": "appearance",
+            "section": "advanced",
             "label": "prefs.windows.rounding",
             "control": "slider",
             "step": 1,
@@ -3589,6 +3589,7 @@
             "keywords": "rounding radius corners round",
             "visibleWhen": {
               "key": "compositor.syncRoundness",
+              "advanced": true,
               "equals": false
             },
             "min": 0,
@@ -3604,8 +3605,8 @@
           "default": true,
           "description": "Round window corners like the rest of the shell (Appearance › Shape).",
           "x-settings": {
-            "category": "windows",
-            "section": "shape",
+            "category": "appearance",
+            "section": "advanced",
             "label": "prefs.windows.sync_rounding",
             "control": "toggle",
             "keywords": "sync rounding roundness corners shell theme"
@@ -3731,7 +3732,7 @@
           "description": "Darken every window except the focused one.",
           "x-settings": {
             "category": "windows",
-            "section": "shape",
+            "section": "dim",
             "label": "prefs.windows.dim_inactive",
             "control": "toggle",
             "keywords": "dim inactive unfocused darken focus"
@@ -3744,7 +3745,7 @@
           "description": "How dark unfocused windows get.",
           "x-settings": {
             "category": "windows",
-            "section": "shape",
+            "section": "dim",
             "label": "prefs.windows.dim_strength",
             "control": "slider",
             "step": 0.01,
@@ -4361,7 +4362,7 @@
           "default": "smooth",
           "description": "How windows, workspaces and the shell animate. Each card plays the profile's real curves.",
           "x-settings": {
-            "category": "windows",
+            "category": "appearance",
             "section": "motion",
             "label": "prefs.motion.profile",
             "control": "custom",
@@ -4384,7 +4385,7 @@
           "default": 1,
           "description": "Multiplies every animation duration of the profile (below 1 is faster).",
           "x-settings": {
-            "category": "windows",
+            "category": "appearance",
             "section": "motion",
             "label": "prefs.motion.duration_scale",
             "control": "slider",
@@ -4407,8 +4408,8 @@
           "default": "auto",
           "description": "Animation when switching workspaces. Slides follow the bar's direction.",
           "x-settings": {
-            "category": "windows",
-            "section": "motion",
+            "category": "appearance",
+            "section": "advanced",
             "label": "prefs.motion.workspace_style",
             "control": "selector",
             "keywords": "workspace switch animation slide fade",
@@ -4436,8 +4437,8 @@
           "default": "auto",
           "description": "Slowly rotates gradient borders in a loop.",
           "x-settings": {
-            "category": "windows",
-            "section": "motion",
+            "category": "appearance",
+            "section": "advanced",
             "label": "prefs.motion.border_loop",
             "control": "selector",
             "keywords": "border gradient rotate loop spin animation",
@@ -4463,8 +4464,8 @@
           "default": 0,
           "description": "Higher is slower (100 is the slowest).",
           "x-settings": {
-            "category": "windows",
-            "section": "motion",
+            "category": "appearance",
+            "section": "advanced",
             "label": "prefs.motion.border_loop_speed",
             "control": "slider",
             "step": 1,
@@ -4505,8 +4506,8 @@
           "default": true,
           "description": "The profile also sets the speed and easing of the shell's own animations.",
           "x-settings": {
-            "category": "windows",
-            "section": "motion",
+            "category": "appearance",
+            "section": "advanced",
             "label": "prefs.motion.shell",
             "control": "toggle",
             "keywords": "shell animations speed easing follow profile"
@@ -4763,14 +4764,13 @@
           "title": "Depth clock",
           "type": "boolean",
           "default": false,
-          "description": "A large clock that sits behind the subject of your wallpaper.",
+          "description": "A big clock drawn behind the subject of your wallpaper.",
           "x-settings": {
-            "category": "wallpapers",
-            "section": "more",
-            "label": "prefs.wall.depth_clock",
-            "control": "custom",
-            "component": "DepthClockLink",
-            "keywords": "depth clock subject behind wallpaper widget"
+            "category": "desktop",
+            "section": "clock",
+            "label": "prefs.desktop.depth_clock",
+            "control": "toggle",
+            "keywords": "clock time wallpaper depth subject behind big widget"
           }
         },
         "depthClockStyle": {
@@ -5555,8 +5555,8 @@
               },
               "description": "Order and visibility of the dashboard tabs. Drag the grip or use the arrows; widgets are arranged from the dashboard itself with the pencil button.",
               "x-settings": {
-                "category": "launcher",
-                "section": "dashboard",
+                "category": "dashboard",
+                "section": "tabs",
                 "label": "prefs.dashboard.tabs",
                 "control": "custom",
                 "component": "DashboardTabsEditor",
@@ -5630,7 +5630,7 @@
               "default": "auto",
               "description": "Screen edge of the indicator; Auto picks the edge away from the bar.",
               "x-settings": {
-                "category": "notifications",
+                "category": "osd",
                 "section": "osd",
                 "label": "prefs.osd.position",
                 "control": "selector",
@@ -5661,7 +5661,7 @@
               "default": "pill",
               "description": "How the volume and brightness indicator looks and where it lives.",
               "x-settings": {
-                "category": "notifications",
+                "category": "osd",
                 "section": "osd",
                 "label": "prefs.osd.style",
                 "control": "selector",
@@ -5686,7 +5686,7 @@
               "default": 2500,
               "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
               "x-settings": {
-                "category": "notifications",
+                "category": "osd",
                 "section": "osd",
                 "label": "prefs.osd.timeout",
                 "control": "slider",
@@ -5912,7 +5912,7 @@
           "description": "Height of the edge area that reveals a hidden notch.",
           "x-settings": {
             "category": "notch",
-            "section": "notch",
+            "section": "advanced",
             "label": "prefs.notch.hover_region",
             "control": "slider",
             "step": 1,
@@ -5989,7 +5989,7 @@
           "description": "Don't grow the notch into a media preview on hover.",
           "x-settings": {
             "category": "notch",
-            "section": "notch",
+            "section": "advanced",
             "label": "shell.notch.disable_hover_expansion",
             "control": "toggle",
             "keywords": "hover expand grow media preview"
@@ -6703,8 +6703,8 @@
           "default": false,
           "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
           "x-settings": {
-            "category": "system",
-            "section": "performance",
+            "category": "dashboard",
+            "section": "memory",
             "label": "performance.dashboard_persist",
             "control": "toggle",
             "keywords": "dashboard tabs keep loaded memory"
@@ -6716,8 +6716,8 @@
           "default": 2,
           "description": "Most dashboard tabs kept in memory at once.",
           "x-settings": {
-            "category": "system",
-            "section": "performance",
+            "category": "dashboard",
+            "section": "advanced",
             "label": "prefs.sys.dashboard_max_tabs",
             "control": "number",
             "keywords": "dashboard tabs memory limit",
@@ -6745,66 +6745,71 @@
           "title": "Clipboard",
           "type": "string",
           "default": "cc",
-          "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
           "x-settings": {
-            "category": "system",
-            "section": "prefixes",
-            "label": "system.prefixes.clipboard",
-            "control": "text",
-            "keywords": "launcher prefix shortcut clipboard"
-          }
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+          },
+          "description": "Prefix for clipboard history."
         },
         "emoji": {
           "title": "Emoji",
           "type": "string",
           "default": "ee",
-          "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
           "x-settings": {
-            "category": "system",
-            "section": "prefixes",
-            "label": "system.prefixes.emoji",
-            "control": "text",
-            "keywords": "launcher prefix shortcut emoji"
-          }
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+          },
+          "description": "Prefix for the emoji picker."
         },
         "tmux": {
           "title": "Tmux",
           "type": "string",
           "default": "tt",
-          "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
           "x-settings": {
-            "category": "system",
-            "section": "prefixes",
-            "label": "system.prefixes.tmux",
-            "control": "text",
-            "keywords": "launcher prefix shortcut tmux"
-          }
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+          },
+          "description": "Prefix for tmux sessions."
         },
         "wallpapers": {
           "title": "Wallpapers",
           "type": "string",
           "default": "ww",
-          "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
           "x-settings": {
-            "category": "system",
-            "section": "prefixes",
-            "label": "system.prefixes.wallpapers",
-            "control": "text",
-            "keywords": "launcher prefix shortcut wallpapers"
-          }
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+          },
+          "description": "Prefix for wallpapers."
         },
         "notes": {
           "title": "Notes",
           "type": "string",
           "default": "nn",
-          "description": "Type it in the launcher to jump to this mode (no spaces, up to 8 characters).",
           "x-settings": {
-            "category": "system",
-            "section": "prefixes",
-            "label": "system.prefixes.notes",
-            "control": "text",
-            "keywords": "launcher prefix shortcut notes"
-          }
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+          },
+          "description": "Prefix for notes."
         },
         "calculator": {
           "title": "Calculator",
@@ -6816,7 +6821,7 @@
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
             "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix that shows only calculator, unit and currency results (e.g. \"= 5 kg in lb\")."
         },
@@ -6830,7 +6835,7 @@
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
             "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for shell commands from assets/commands/commands.json (e.g. \"> preset Neon Tokyo\", \"> dnd\")."
         },
@@ -6844,7 +6849,7 @@
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
             "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix for file search in the home directory (fd or plocate)."
         },
@@ -6858,22 +6863,23 @@
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
             "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix that sends the query to the AI quick ask."
         },
         "timers": {
-          "title": "Launcher prefix",
+          "title": "Timers",
           "type": "string",
           "default": "t",
-          "description": "Type it and a space in the launcher: t 10m tea",
           "x-settings": {
-            "category": "timers",
-            "section": "input",
-            "label": "prefs.timers.prefix",
-            "control": "text",
-            "keywords": "launcher prefix timers t"
-          }
+            "category": "launcher",
+            "section": "providers",
+            "label": "prefs.launcher.providers",
+            "entry": "launcher.providers",
+            "entryTitle": "Search providers",
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+          },
+          "description": "Prefix for timers, reminders and the stopwatch (e.g. \"t 10m tea\", \"t 18:00 call mom\", \"t sw\")."
         },
         "routines": {
           "title": "Routines",
@@ -6885,7 +6891,7 @@
             "label": "prefs.launcher.providers",
             "entry": "launcher.providers",
             "entryTitle": "Search providers",
-            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+            "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
           },
           "description": "Prefix that searches only saved routines (e.g. \"@backup\"; empty lists them all)."
         },
@@ -6926,7 +6932,7 @@
                 "label": "prefs.launcher.providers",
                 "entry": "launcher.providers",
                 "entryTitle": "Search providers",
-                "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+                "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
               },
               "description": "Order of result groups when no prefix is typed (provider ids).",
               "uniqueItems": true
@@ -6941,7 +6947,7 @@
                 "label": "prefs.launcher.providers",
                 "entry": "launcher.providers",
                 "entryTitle": "Search providers",
-                "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes"
+                "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
               },
               "description": "Launcher providers (and prefix tabs) that are turned off.",
               "items": {
@@ -6996,7 +7002,7 @@
               "description": "fd searches live; plocate uses its database (fast, may lag behind)",
               "x-settings": {
                 "category": "launcher",
-                "section": "behavior",
+                "section": "advanced",
                 "label": "prefs.launcher.file_backend",
                 "control": "selector",
                 "keywords": "fd plocate locate find search tool"
@@ -7019,7 +7025,7 @@
               "description": "Maximum results after the files prefix",
               "x-settings": {
                 "category": "launcher",
-                "section": "behavior",
+                "section": "advanced",
                 "label": "prefs.launcher.file_max",
                 "control": "slider",
                 "step": 5,
@@ -7054,7 +7060,7 @@
               "description": "Rates are cached and work offline; refreshed when older than this",
               "x-settings": {
                 "category": "launcher",
-                "section": "behavior",
+                "section": "advanced",
                 "label": "prefs.launcher.currency_refresh",
                 "control": "slider",
                 "step": 1,
@@ -7611,8 +7617,8 @@
               "default": "ring",
               "description": "A ring that empties as time runs out, or just the time",
               "x-settings": {
-                "category": "timers",
-                "section": "notch",
+                "category": "notch",
+                "section": "timers",
                 "label": "prefs.timers.style",
                 "control": "selector",
                 "keywords": "notch ring progress text countdown display"
@@ -8206,14 +8212,14 @@
           }
         },
         "animDuration": {
-          "title": "Animation",
+          "title": "Shell base duration",
           "type": "number",
           "default": 300,
           "description": "Speed of every animation. Off disables them.",
           "x-settings": {
             "category": "appearance",
-            "section": "motion",
-            "label": "settings.theme.animation",
+            "section": "advanced",
+            "label": "prefs.motion.shell_base",
             "control": "slider",
             "preview": "MotionPreview",
             "step": 25,
@@ -8346,7 +8352,7 @@
               "default": "fade-scale",
               "description": "How bar popups and menus appear.",
               "x-settings": {
-                "category": "appearance",
+                "category": "menus",
                 "section": "popups",
                 "label": "prefs.appearance.popup_entry",
                 "control": "selector",
@@ -8371,7 +8377,7 @@
               "default": false,
               "description": "Point popups at the item that opened them.",
               "x-settings": {
-                "category": "appearance",
+                "category": "menus",
                 "section": "popups",
                 "label": "prefs.appearance.popup_tail",
                 "control": "toggle",
@@ -8384,7 +8390,7 @@
               "default": 8,
               "description": "Distance between a popup and the item that opened it.",
               "x-settings": {
-                "category": "appearance",
+                "category": "menus",
                 "section": "popups",
                 "label": "prefs.appearance.popup_gap",
                 "control": "slider",
@@ -13269,6 +13275,21 @@
       "description": "Popups, history and do not disturb."
     },
     {
+      "id": "osd",
+      "title": "On-screen display",
+      "description": "Volume and brightness indicator: style, edge and timing."
+    },
+    {
+      "id": "menus",
+      "title": "Menus",
+      "description": "How the bar's popups and menus open."
+    },
+    {
+      "id": "dashboard",
+      "title": "Dashboard",
+      "description": "Tabs of the dashboard and how many stay loaded."
+    },
+    {
       "id": "specials",
       "title": "Special workspaces",
       "description": "Scratchpads with their own apps and keys"
@@ -13404,8 +13425,7 @@
       "id": "island",
       "title": "Island",
       "categories": [
-        "notch",
-        "overview"
+        "notch"
       ]
     },
     {
@@ -13426,6 +13446,7 @@
       "id": "dashboard",
       "title": "Dashboard",
       "categories": [
+        "dashboard",
         "sidebar",
         "ai",
         "ai-providers",
@@ -13436,7 +13457,9 @@
       "id": "popups",
       "title": "Popups",
       "categories": [
-        "notifications"
+        "notifications",
+        "osd",
+        "menus"
       ]
     },
     {
@@ -13450,7 +13473,8 @@
       "id": "desktop",
       "title": "Desktop",
       "categories": [
-        "desktop"
+        "desktop",
+        "overview"
       ]
     },
     {

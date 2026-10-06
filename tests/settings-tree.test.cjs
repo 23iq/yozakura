@@ -38,7 +38,7 @@ test('group ids resolve to their first page', () => {
     assert.equal(Categories.resolve('island').id, 'notch');
     assert.equal(Categories.resolve('look').id, 'appearance');
     assert.equal(Categories.resolve('popups').id, 'notifications');
-    assert.equal(Categories.resolve('dashboard').id, 'sidebar');
+    assert.equal(Categories.resolve('dashboard').id, 'dashboard');
     assert.equal(Categories.resolve('layout').id, 'layout');
     assert.equal(Categories.resolve('system').id, 'system');
     assert.equal(Categories.resolve('nope'), null);

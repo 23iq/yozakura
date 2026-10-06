@@ -327,7 +327,7 @@ h.eval(ev('w.findItem("glassLink")'), "clicked()")
 settle(400)
 check(ev("currentCategory") == "appearance", "glass link opens Appearance")
 
-# Windows page: color-role control, motion cards, nested pulse key, preview
+# Windows page: color-role control, nested pulse key, preview
 ev('select("windows")')
 settle(400)
 FIND = """(function(name) {
@@ -352,6 +352,15 @@ ev("SettingsStore.set('compositor.borderPulse.enabled', true)")
 settle(50)
 check(h.eval(row("compositor.borderPulse.intensity"), "shown") is True, "pulse intensity shown when enabled")
 check(ev("Config.compositor.borderPulse.source") == "cava", "nested pulse write keeps siblings")
+ev("SettingsStore.set('compositor.gapsIn', 7)")
+settle(50)
+readout = ev('w.findItem("windowsReadout")')
+check(readout is not None and "7" in readout.property("text"), "preview readout follows the gaps")
+check(ev('w.findItem("motionCard:springs")') is None, "motion lives on Look, not Windows")
+
+# Look > Motion: the one motion section (profile + speed)
+ev('select("appearance")')
+settle(400)
 card = ev('w.findItem("motionCard:springs")')
 check(card is not None, "motion profile cards rendered")
 h.eval(card, "clicked()")
@@ -359,10 +368,6 @@ check(ev("Config.compositor.motionProfile") == "springs", "motion card selects t
 ev("SettingsStore.set('compositor.motionProfile', 'off')")
 settle(50)
 check(h.eval(row("compositor.motionDurationScale"), "shown") is False, "speed hidden for the off profile")
-ev("SettingsStore.set('compositor.gapsIn', 7)")
-settle(50)
-readout = ev('w.findItem("windowsReadout")')
-check(readout is not None and "7" in readout.property("text"), "preview readout follows the gaps")
 # Leave the page before the engine is torn down: PySide destroys the Config/
 # Colors singletons first and the live preview bindings would read them dead.
 ev('select("about")')

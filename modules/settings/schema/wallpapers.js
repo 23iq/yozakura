@@ -106,14 +106,6 @@ var category = {
                     "label": "prefs.wall.rotation",
                     "description": "prefs.wall.rotation.desc",
                     "keywords": "auto rotate slideshow cycle timer change interval"
-                },
-                {
-                    "key": "desktop.depthClock",
-                    "type": "custom",
-                    "component": "DepthClockLink",
-                    "label": "prefs.wall.depth_clock",
-                    "description": "prefs.wall.depth_clock.desc",
-                    "keywords": "depth clock subject behind wallpaper widget"
                 }
             ]
         }

@@ -94,6 +94,7 @@ var category = {
                 },
                 {
                     "key": "notch.disableHoverExpansion",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "shell.notch.disable_hover_expansion",
                     "description": "prefs.notch.hover_expansion.desc",
@@ -108,6 +109,7 @@ var category = {
                 },
                 {
                     "key": "notch.hoverRegionHeight",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 40,
@@ -211,6 +213,31 @@ var category = {
                     "label": "shell.activities",
                     "description": "prefs.notch.activities.desc",
                     "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+                }
+            ]
+        },
+        {
+            "id": "timers",
+            "title": "prefs.notch.section.timers",
+            "entries": [
+                {
+                    "key": "system.timers.notchStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "ring",
+                            "label": "prefs.timers.style.ring",
+                            "icon": "circleNotch"
+                        },
+                        {
+                            "value": "text",
+                            "label": "prefs.timers.style.text",
+                            "icon": "textT"
+                        }
+                    ],
+                    "label": "prefs.timers.style",
+                    "description": "prefs.timers.style.desc",
+                    "keywords": "notch ring progress text countdown display"
                 }
             ]
         }
