@@ -49,6 +49,8 @@ MIRROR_FILES = [
     "modules/shell/PanelShadows.qml",
     "modules/notch/Notch.qml",
     "modules/notch/NotchViewTransition.qml",
+    "modules/shell/hosts/HostRouter.qml",
+    "modules/shell/hosts/HostRouter.js",
     "modules/widgets/dashboard/LauncherButton.qml",
     "modules/widgets/powermenu/PowerButton.qml",
     "modules/widgets/presets/PresetsButton.qml",
