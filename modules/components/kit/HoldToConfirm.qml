@@ -1,18 +1,18 @@
 import QtQuick
-import QtQuick.Shapes
 import qs.modules.theme
+import qs.modules.components.kit
 
-// Hold-to-confirm ring for destructive actions (shutdown, reboot, logout).
-// press() starts filling the ring over `holdMs` (Motion.emphasis x 1.33,
-// at most 600 ms and never shorter than 400 ms, so it is a real hold even
-// with animations off); release() before it is full cancels and winds the
-// ring back. With focus, holding Enter/Space works the same way.
+// Hold-to-confirm for destructive actions (shutdown, reboot, logout): a
+// kit Ring that fills around its target while held. press() starts filling
+// over `holdMs` (Motion.emphasis x 1.33, at most 600 ms and never shorter
+// than 400 ms, so it is a real hold even with animations off); release()
+// before it is full cancels and winds the ring back. With focus, holding
+// Enter/Space works the same way. The ring shows only while it moves.
 Item {
     id: root
 
-    property color color: Colors.primary
-    property color trackColor: Qt.rgba(color.r, color.g, color.b, 0.18)
-    property real lineWidth: 3
+    property color color: Type.accent
+    property real lineWidth: Space.stroke
     readonly property int holdMs: Math.min(600, Math.max(400, Math.round(Motion.emphasis.duration * 1.33)))
     readonly property bool holding: fill.running
     property real progress: 0
@@ -77,38 +77,11 @@ Item {
             root.release();
     }
 
-    Shape {
+    Ring {
         anchors.fill: parent
         visible: root.progress > 0
-        preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            fillColor: "transparent"
-            strokeColor: root.trackColor
-            strokeWidth: root.lineWidth
-            PathAngleArc {
-                centerX: root.width / 2
-                centerY: root.height / 2
-                radiusX: Math.max(0, Math.min(root.width, root.height) / 2 - root.lineWidth / 2)
-                radiusY: radiusX
-                startAngle: 0
-                sweepAngle: 360
-            }
-        }
-
-        ShapePath {
-            fillColor: "transparent"
-            strokeColor: root.color
-            strokeWidth: root.lineWidth
-            capStyle: ShapePath.RoundCap
-            PathAngleArc {
-                centerX: root.width / 2
-                centerY: root.height / 2
-                radiusX: Math.max(0, Math.min(root.width, root.height) / 2 - root.lineWidth / 2)
-                radiusY: radiusX
-                startAngle: -90
-                sweepAngle: 360 * root.progress
-            }
-        }
+        value: root.progress
+        thickness: root.lineWidth
+        color: root.color
     }
 }
