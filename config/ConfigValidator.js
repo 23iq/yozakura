@@ -11,8 +11,10 @@ function clone(obj) {
 
 // Key-alias migration (config/meta/KeyAliases.js) over the raw, not yet
 // validated, domain objects {domain: object|null}; mutates them. Copies
-// each present `from` value to an absent `to` (through `transform`), then
-// removes `from`. A target domain without a file (null) keeps the source
+// each present `from` value to an absent `to` (through `transform`; an
+// undefined result writes nothing), then removes `from`. A `to` that holds
+// one of the alias's `replaces` values (its untouched default) counts as
+// absent. A target domain without a file (null) keeps the source
 // for a later run. Returns the names of the changed domains.
 function migrateAliases(raws, list) {
     var changed = [];
@@ -35,7 +37,8 @@ function migrateAliases(raws, list) {
         delete parent[leaf];
         mark(from[0]);
         var target = walk(dst, to.slice(1, -1), false);
-        if (target && target[to[to.length - 1]] !== undefined)
+        var current = target ? target[to[to.length - 1]] : undefined;
+        if (current !== undefined && (a.replaces || []).indexOf(current) === -1)
             return;
         try {
             value = a.transform ? a.transform(value) : value;
@@ -43,6 +46,8 @@ function migrateAliases(raws, list) {
             console.warn("config alias " + a.from + " -> " + a.to + ": " + e);
             return;
         }
+        if (value === undefined)
+            return;
         walk(dst, to.slice(1, -1), true)[to[to.length - 1]] = value;
         mark(to[0]);
     });
@@ -166,7 +171,7 @@ function validate(current, defaults, keyName) {
         return defaults;
     }
 
-    // bar.activities.maxVisible: at least one island, never a wall of them
+    // notch.liveActivities.maxVisible: at least one island, never a wall of them
     if (keyName === "maxVisible" && typeof defaults === "number") {
         if (!isFinite(current)) {
             return defaults;
@@ -181,7 +186,7 @@ function validate(current, defaults, keyName) {
         }
     }
 
-    // bar.activities.presentation
+    // notch.liveActivities.presentation
     if (keyName === "presentation" && defaults === "notch") {
         if (Enums.ACTIVITY_PRESENTATIONS.indexOf(current) === -1) {
             return defaults;

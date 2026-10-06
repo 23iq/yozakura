@@ -5,8 +5,9 @@ import qs.modules.services
 Item {
     id: root
 
-    implicitWidth: 900
-    implicitHeight: 56 + 48 * 6
+    // Sized by the dashboard itself (its widgets tab follows the bento grid).
+    implicitWidth: dashboardItem.implicitWidth
+    implicitHeight: dashboardItem.implicitHeight
     property string screenName: ""
 
     readonly property int leftPanelWidth: 270

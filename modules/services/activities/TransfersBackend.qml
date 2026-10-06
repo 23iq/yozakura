@@ -12,7 +12,7 @@ import "ActivityModel.js" as Model
 Singleton {
     id: root
 
-    readonly property var settings: Model.normalizeConfig(Config.bar ? Config.bar.activities : undefined)
+    readonly property var settings: Model.normalizeConfig(Config.notch ? Config.notch.liveActivities : undefined)
 
     // Sources the backend should run: every registered backend-backed
     // provider that is enabled

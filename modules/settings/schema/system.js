@@ -1,6 +1,6 @@
 .pragma library
 
-// System: language, weather, launcher prefixes, performance, idle
+// System: language, weather, performance, idle
 // listeners, power/sleep commands, monitored disks and clipboard storage.
 // Entry format: see modules/settings/AGENTS.md.
 
@@ -23,18 +23,6 @@ function command(key, label, description, placeholder, keywords) {
         "label": label,
         "description": description,
         "keywords": keywords
-    };
-}
-
-function prefix(name, label) {
-    return {
-        "key": "prefix." + name,
-        "type": "text",
-        "monospace": true,
-        "pattern": "^\\S{1,8}$",
-        "label": label,
-        "description": "prefs.sys.prefix.desc",
-        "keywords": "launcher prefix shortcut " + name
     };
 }
 
@@ -107,17 +95,6 @@ var category = {
             ]
         },
         {
-            "id": "prefixes",
-            "title": "settings.system.prefixes",
-            "entries": [
-                prefix("clipboard", "system.prefixes.clipboard"),
-                prefix("emoji", "system.prefixes.emoji"),
-                prefix("tmux", "system.prefixes.tmux"),
-                prefix("wallpapers", "system.prefixes.wallpapers"),
-                prefix("notes", "system.prefixes.notes")
-            ]
-        },
-        {
             "id": "performance",
             "title": "settings.system.performance",
             "entries": [
@@ -126,21 +103,7 @@ var category = {
                 toggle("performance.wavyLine", "performance.wavy_line", "system.performance.wavy_line_desc", "wavy line progress media animation"),
                 toggle("performance.rotateCoverArt", "performance.rotate_cover", "prefs.sys.rotate_cover.desc", "cover art album vinyl rotation spin"),
                 toggle("performance.pauseWallpaperOnFullscreen", "system.performance.pause_wallpaper_fullscreen", "system.performance.pause_wallpaper_fullscreen_desc", "video wallpaper fullscreen game pause"),
-                toggle("performance.pauseWallpaperWhenCovered", "system.performance.pause_wallpaper_covered", "system.performance.pause_wallpaper_covered_desc", "video wallpaper covered tiled windows gaps monocle pause"),
-                toggle("performance.dashboardPersistTabs", "performance.dashboard_persist", "prefs.sys.dashboard_persist.desc", "dashboard tabs keep loaded memory"),
-                {
-                    "key": "performance.dashboardMaxPersistentTabs",
-                    "type": "number",
-                    "min": 1,
-                    "max": 10,
-                    "visibleWhen": {
-                        "key": "performance.dashboardPersistTabs",
-                        "equals": true
-                    },
-                    "label": "prefs.sys.dashboard_max_tabs",
-                    "description": "prefs.sys.dashboard_max_tabs.desc",
-                    "keywords": "dashboard tabs memory limit"
-                }
+                toggle("performance.pauseWallpaperWhenCovered", "system.performance.pause_wallpaper_covered", "system.performance.pause_wallpaper_covered_desc", "video wallpaper covered tiled windows gaps monocle pause")
             ]
         },
         {

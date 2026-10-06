@@ -111,6 +111,21 @@ function spotlightRect(e, size) {
     };
 }
 
+// Center of a radial menu of outer `radius` opened at `point`, moved just
+// enough that the whole ring stays inside `area` ({x, y, w, h}, usually the
+// work area); centered in it when the area is smaller than the ring.
+function radialCenter(point, radius, area) {
+    function axis(v, lo, len) {
+        if (len < radius * 2)
+            return lo + len / 2;
+        return _clamp(v, lo + radius, lo + len - radius);
+    }
+    return {
+        x: Math.round(axis(point.x, area.x, area.w)),
+        y: Math.round(axis(point.y, area.y, area.h))
+    };
+}
+
 function _occupied(e, edge, withNotch) {
     return !!((e.bar && e.bar.visible && e.bar.pos === edge) || (e.dock && e.dock.visible && e.dock.pos === edge) || (withNotch && e.notch && e.notch.visible && e.notch.pos === edge));
 }
@@ -177,7 +192,8 @@ function notchOpenDir(pos) {
 // the edge. Center is the screen center; start/end hug the ends left free
 // by a bar or dock on the perpendicular edges. A start notch keeps its
 // start when it grows, an end notch its end, a centered one its center,
-// so panels always grow toward the middle of the screen.
+// so panels always grow toward the middle of the screen. A side notch is
+// offset by the bar, dock and frame on its own edge.
 function notchRect(e, size) {
     var n = e.notch || {};
     var pos = OPPOSITE[n.pos] ? n.pos : "top";
@@ -206,7 +222,11 @@ function notchRect(e, size) {
         start = (total - along) / 2;
     start = Math.round(_clamp(start, Math.min(min, total - along), Math.max(0, max - along)));
     var across = Math.min(size.across, vertical ? s.w : s.h);
-    if (vertical)
-        return { x: pos === "left" ? 0 : s.w - across, y: start, w: across, h: along, vertical: true, dir: notchOpenDir(pos) };
+    if (vertical) {
+        // A side notch sits beside a bar/dock/frame on its own edge (a
+        // horizontal bar keeps a gap for a top/bottom notch instead).
+        var own = Math.min(reserved(pos), s.w - across);
+        return { x: pos === "left" ? own : s.w - own - across, y: start, w: across, h: along, vertical: true, dir: notchOpenDir(pos) };
+    }
     return { x: start, y: pos === "top" ? 0 : s.h - across, w: along, h: across, vertical: false, dir: notchOpenDir(pos) };
 }

@@ -18,12 +18,18 @@ Item {
     property bool panelOpen: false
     property bool revealed: true
     property string screenName: ""
+    // Upright header of a side-edge notch: segments and the rail
+    // (IslandRail) stack along the edge; the summary row is not used
+    property bool vertical: false
+    readonly property real thickness: Config.notchTheme === "island" ? BarMetrics.notchIslandHeight : BarMetrics.notchRestHeight
+    readonly property real railPadding: Math.round(Styling.fontSize(-4))
+    readonly property IslandRail rail: railLoader.item as IslandRail
     readonly property bool selectorOpen: summaryLoader.item?.selectorOpen ?? false
     readonly property bool selectorHovered: summaryLoader.item?.selectorHovered ?? false
-    readonly property bool mediaHovered: !!root.player && summaryHover.hovered && (!selectorHovered || mediaExpanded)
+    readonly property bool mediaHovered: !!root.player && (root.vertical ? (root.rail ? root.rail.mediaHovered : false) : summaryHover.hovered && (!selectorHovered || mediaExpanded))
     readonly property real microphoneWidth: MicrophoneStatus.available && MicrophoneStatus.muted ? Styling.fontSize(4) : 0
     readonly property int motionDuration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
-    // Live activities flank the content (bar.activities.presentation
+    // Live activities flank the content (notch.liveActivities.presentation
     // "notch"): leading segments per task panel (timers, downloads), a
     // trailing privacy segment. Each segment opens its own panel. Order,
     // side and on/off come from notch.activities (ActivityRegistry.js).
@@ -41,6 +47,7 @@ Item {
     readonly property NotchActivitySegment tasksSegment: tasksLoader.item as NotchActivitySegment
     readonly property NotchActivitySegment trailingSegment: trailingLoader.item as NotchActivitySegment
     readonly property real activitiesWidth: (root.timersSegment ? root.timersSegment.targetWidth : 0) + (root.tasksSegment ? root.tasksSegment.targetWidth : 0) + (root.trailingSegment ? root.trailingSegment.targetWidth : 0)
+    readonly property real activitiesHeight: (root.timersSegment ? root.timersSegment.targetHeight : 0) + (root.tasksSegment ? root.tasksSegment.targetHeight : 0) + (root.trailingSegment ? root.trailingSegment.targetHeight : 0)
     // Trigger (see panels/NotchPanels.js) under the pointer, "" when none
     readonly property string hoverTrigger: {
         if (root.timersSegment && root.timersSegment.hovered)
@@ -63,23 +70,29 @@ Item {
     signal segmentClicked(string trigger, var activity, int button)
     // The media title was clicked
     signal mediaClicked
-    readonly property real contentWidth: 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + microphoneWidth + 36 + activitiesWidth
-    implicitHeight: Config.notchTheme === "island" ? BarMetrics.notchIslandHeight : BarMetrics.notchRestHeight
+    readonly property real contentWidth: root.vertical ? root.thickness : 200 + userInfo.width + separator1.width + separator2.width + notifIndicator.width + microphoneWidth + 36 + activitiesWidth
+    implicitHeight: root.vertical ? root.railPadding * 2 + root.activitiesHeight + (root.rail ? root.rail.implicitHeight : 0) : root.thickness
 
     // Edge anchoring avoids a second positioner layout pass at the end of a
     // microphone transition. The bell follows only the animated capsule edge.
-    Row {
+    Grid {
         id: leadingRow
-        anchors.left: parent.left
+        columns: root.vertical ? 1 : 2
+        horizontalItemAlignment: Grid.AlignHCenter
+        verticalItemAlignment: Grid.AlignVCenter
+        anchors.left: root.vertical ? undefined : parent.left
         anchors.leftMargin: 8
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
+        anchors.top: root.vertical ? parent.top : undefined
+        anchors.topMargin: root.railPadding
+        anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
 
         Loader {
             id: timersLoader
             active: root.activitiesOn
-            anchors.verticalCenter: parent.verticalCenter
             sourceComponent: NotchActivitySegment {
                 side: "leading"
+                vertical: root.vertical
                 items: root.timerTasks
                 motionDuration: root.motionDuration
                 tooltipEnabled: !root.panelOpen
@@ -89,9 +102,9 @@ Item {
         Loader {
             id: tasksLoader
             active: root.activitiesOn
-            anchors.verticalCenter: parent.verticalCenter
             sourceComponent: NotchActivitySegment {
                 side: "leading"
+                vertical: root.vertical
                 items: root.otherTasks
                 motionDuration: root.motionDuration
                 tooltipEnabled: !root.panelOpen
@@ -102,11 +115,14 @@ Item {
     Loader {
         id: trailingLoader
         active: root.activitiesOn
-        anchors.right: parent.right
+        anchors.right: root.vertical ? undefined : parent.right
         anchors.rightMargin: 8
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenter: root.vertical ? undefined : parent.verticalCenter
+        anchors.top: root.vertical ? railLoader.bottom : undefined
+        anchors.horizontalCenter: root.vertical ? parent.horizontalCenter : undefined
         sourceComponent: NotchActivitySegment {
             side: "trailing"
+            vertical: root.vertical
             items: root.trailingItems
             motionDuration: root.motionDuration
             tooltipEnabled: !root.panelOpen
@@ -114,13 +130,28 @@ Item {
         }
     }
 
+    // Upright: avatar, media disc, mic and bell along the edge
+    Loader {
+        id: railLoader
+        active: root.vertical
+        anchors.top: leadingRow.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        sourceComponent: IslandRail {
+            player: root.player
+            motionDuration: root.motionDuration
+            onMediaClicked: root.mediaClicked()
+        }
+    }
+
     UserInfo {
         id: userInfo
+        visible: !root.vertical
         anchors.left: leadingRow.right
         anchors.verticalCenter: parent.verticalCenter
     }
     Separator {
         id: separator1
+        visible: !root.vertical
         vert: true
         anchors.left: userInfo.right
         anchors.leftMargin: 4
@@ -128,11 +159,13 @@ Item {
     }
     NotificationIndicator {
         id: notifIndicator
+        visible: !root.vertical
         anchors.right: trailingLoader.left
         anchors.verticalCenter: parent.verticalCenter
     }
     Item {
         id: micIndicator
+        visible: !root.vertical
         anchors.right: notifIndicator.left
         anchors.rightMargin: 4
         anchors.verticalCenter: parent.verticalCenter
@@ -161,6 +194,7 @@ Item {
     }
     Separator {
         id: separator2
+        visible: !root.vertical
         vert: true
         anchors.right: micIndicator.left
         anchors.rightMargin: 4
@@ -168,6 +202,8 @@ Item {
     }
     Loader {
         id: summaryLoader
+        active: !root.vertical
+        visible: !root.vertical
         anchors.left: separator1.right
         anchors.leftMargin: 4
         anchors.right: separator2.left
@@ -208,6 +244,7 @@ Item {
         anchors.bottom: parent.bottom
         HoverHandler {
             id: leadingZoneHover
+            enabled: !root.vertical
         }
     }
     Item {
@@ -217,6 +254,7 @@ Item {
         anchors.bottom: parent.bottom
         HoverHandler {
             id: trailingZoneHover
+            enabled: !root.vertical
         }
     }
 }

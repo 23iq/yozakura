@@ -9,10 +9,22 @@ var data = {
     "monoFont": "Iosevka Nerd Font Mono",
     "monoFontSize": 14,
     "tintIcons": false,
+    // Icon font weight: regular | bold | fill (modules/theme/IconWeights.js).
+    "icons": {
+        "weight": "bold"
+    },
+    // Type roles: body follows `font`; heading "" = the body font;
+    // headingCase: none | upper | lower | title.
+    "type": {
+        "heading": "",
+        "headingCase": "none"
+    },
     "enableCorners": true,
     "animDuration": 300,
     // Metrics density: compact | cozy | roomy (cozy = the historical sizes).
     "density": "cozy",
+    // Visual language (modules/theme/VisualLanguage.js): ink | glass | tiles | classic.
+    "language": "ink",
     // Corner shape: round | squircle | cut | tab; popupCorners "" follows corners.
     "shape": {
         "corners": "round",
@@ -56,17 +68,12 @@ var data = {
         "referenceAmount": -1,
         "tintRole": "primary",
         "highlightRole": "overBackground",
+        // Shell-only overrides; blur and shadow values belong to the
+        // compositor (compositor.blur*, shadowRange: KeyAliases.js).
         "advanced": {
             "opacity": -1,
-            "blurSize": -1,
-            "blurPasses": -1,
-            "vibrancy": -1,
-            "noise": -1,
-            "contrast": -1,
-            "brightness": -1,
             "tintStrength": -1,
-            "borderHighlight": -1,
-            "shadowSoftness": -1
+            "borderHighlight": -1
         },
         "surfaces": {
             "windows": { "amount": -1, "activeOpacity": -1, "inactiveOpacity": -1 },

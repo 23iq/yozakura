@@ -116,8 +116,8 @@
       "default": 16,
       "description": "Radius of window corners.",
       "x-settings": {
-        "category": "windows",
-        "section": "shape",
+        "category": "appearance",
+        "section": "advanced",
         "label": "prefs.windows.rounding",
         "control": "slider",
         "step": 1,
@@ -125,6 +125,7 @@
         "keywords": "rounding radius corners round",
         "visibleWhen": {
           "key": "compositor.syncRoundness",
+          "advanced": true,
           "equals": false
         },
         "min": 0,
@@ -140,8 +141,8 @@
       "default": true,
       "description": "Round window corners like the rest of the shell (Appearance › Shape).",
       "x-settings": {
-        "category": "windows",
-        "section": "shape",
+        "category": "appearance",
+        "section": "advanced",
         "label": "prefs.windows.sync_rounding",
         "control": "toggle",
         "keywords": "sync rounding roundness corners shell theme"
@@ -267,7 +268,7 @@
       "description": "Darken every window except the focused one.",
       "x-settings": {
         "category": "windows",
-        "section": "shape",
+        "section": "dim",
         "label": "prefs.windows.dim_inactive",
         "control": "toggle",
         "keywords": "dim inactive unfocused darken focus"
@@ -280,7 +281,7 @@
       "description": "How dark unfocused windows get.",
       "x-settings": {
         "category": "windows",
-        "section": "shape",
+        "section": "dim",
         "label": "prefs.windows.dim_strength",
         "control": "slider",
         "step": 0.01,
@@ -897,7 +898,7 @@
       "default": "smooth",
       "description": "How windows, workspaces and the shell animate. Each card plays the profile's real curves.",
       "x-settings": {
-        "category": "windows",
+        "category": "appearance",
         "section": "motion",
         "label": "prefs.motion.profile",
         "control": "custom",
@@ -920,7 +921,7 @@
       "default": 1,
       "description": "Multiplies every animation duration of the profile (below 1 is faster).",
       "x-settings": {
-        "category": "windows",
+        "category": "appearance",
         "section": "motion",
         "label": "prefs.motion.duration_scale",
         "control": "slider",
@@ -943,8 +944,8 @@
       "default": "auto",
       "description": "Animation when switching workspaces. Slides follow the bar's direction.",
       "x-settings": {
-        "category": "windows",
-        "section": "motion",
+        "category": "appearance",
+        "section": "advanced",
         "label": "prefs.motion.workspace_style",
         "control": "selector",
         "keywords": "workspace switch animation slide fade",
@@ -972,8 +973,8 @@
       "default": "auto",
       "description": "Slowly rotates gradient borders in a loop.",
       "x-settings": {
-        "category": "windows",
-        "section": "motion",
+        "category": "appearance",
+        "section": "advanced",
         "label": "prefs.motion.border_loop",
         "control": "selector",
         "keywords": "border gradient rotate loop spin animation",
@@ -999,8 +1000,8 @@
       "default": 0,
       "description": "Higher is slower (100 is the slowest).",
       "x-settings": {
-        "category": "windows",
-        "section": "motion",
+        "category": "appearance",
+        "section": "advanced",
         "label": "prefs.motion.border_loop_speed",
         "control": "slider",
         "step": 1,
@@ -1041,8 +1042,8 @@
       "default": true,
       "description": "The profile also sets the speed and easing of the shell's own animations.",
       "x-settings": {
-        "category": "windows",
-        "section": "motion",
+        "category": "appearance",
+        "section": "advanced",
         "label": "prefs.motion.shell",
         "control": "toggle",
         "keywords": "shell animations speed easing follow profile"

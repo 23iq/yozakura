@@ -24,7 +24,7 @@ const at = (cells, id) => plain(cells.find(c => c.widget === id));
 // ------------------------------------------------------------ registry
 
 test('every registry widget is complete, host-agnostic and its file exists', () => {
-    assert.deepEqual(plain(R.ids()), ['player', 'quickControls', 'calendar', 'specials', 'notifications', 'levels', 'weather', 'metricsSummary']);
+    assert.deepEqual(plain(R.ids()), ['player', 'quickControls', 'calendar', 'specials', 'notifications', 'levels', 'weather', 'metricsSummary', 'pomodoro', 'worldClocks', 'agenda']);
     for (const w of R.widgets) {
         assert.ok(w.labelKey && w.icon && w.url, w.id);
         assert.ok(fs.existsSync(path.join(dir, w.url)), w.url);
@@ -34,13 +34,13 @@ test('every registry widget is complete, host-agnostic and its file exists', () 
     assert.equal(R.byId('nope'), null);
 });
 
-test('the default grid reproduces the old widgets tab (player | controls+calendar+specials | notifications | levels)', () => {
+test('the default grid is three rows: player | controls over calendar and notifications | levels', () => {
     const cells = R.defaultGrid(4);
-    assert.deepEqual(plain(cells.map(c => c.widget)), ['player', 'quickControls', 'calendar', 'notifications', 'specials', 'levels']);
+    assert.deepEqual(plain(cells.map(c => c.widget)), ['player', 'quickControls', 'calendar', 'notifications', 'levels']);
     assert.ok(!overlaps(cells));
     assert.deepEqual(at(cells, 'player'), { widget: 'player', x: 0, y: 0, w: 1, h: 3 });
     assert.deepEqual(at(cells, 'levels'), { widget: 'levels', x: 3, y: 0, w: 1, h: 3 });
-    assert.ok(at(cells, 'calendar').y < at(cells, 'specials').y);
+    assert.equal(Math.max(...cells.map(c => c.y + c.h)), 3);
     // narrower hosts still get a valid grid
     for (const cols of [1, 2, 3, 6])
         assert.ok(!overlaps(G.normalize(R.defaultGrid(cols), cols, R)), String(cols));
@@ -147,7 +147,7 @@ test('add places a new widget at its default size below, once; remove drops it',
     assert.deepEqual(plain(G.add(out, 'ghost', 4, R)), plain(out));
     const removed = G.remove(out, 'weather');
     assert.equal(removed.length, base.length);
-    assert.equal(G.rows(base), 4);
+    assert.equal(G.rows(base), 3);
     assert.equal(G.rows([]), 0);
 });
 

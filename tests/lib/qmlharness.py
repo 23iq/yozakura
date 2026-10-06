@@ -141,6 +141,11 @@ class Harness:
         self._keep = keep
         if not keep:
             atexit.register(shutil.rmtree, self.root, True)
+        # Inert stand-ins for the decorative signatures (modules/components/
+        # signatures); envs that exercise the real ones mirror the files over them.
+        self.module("qs.modules.components.signatures", {
+            "Signatures": "pragma Singleton\nQtObject { property bool brush: false; property bool petals: false }",
+            "BrushHighlight": "Item { property bool shown: true; property real spread: 4; property real strength: 0.3 }"})
 
     def exit(self, code: int) -> None:
         """Leave now: type check + temp cleanup, then os._exit(code).

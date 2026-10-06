@@ -42,8 +42,6 @@ modules/bar/BarContent.qml
 modules/bar/IntegratedDock.qml
 modules/bar/IntegratedDockAppButton.qml
 modules/bar/LayoutSelectorButton.qml
-modules/bar/clock/Clock.qml
-modules/bar/clock/Pomodoro.qml
 modules/bar/clock/PomodoroSound.qml
 modules/bar/systray/SysTray.qml
 modules/bar/systray/SystrayMenuItem.qml
@@ -145,9 +143,6 @@ modules/widgets/overview/OverviewPopup.qml
 modules/widgets/overview/OverviewView.qml
 modules/widgets/overview/OverviewWindow.qml
 modules/widgets/overview/ScrollingWorkspace.qml
-modules/widgets/powermenu/PowerMenuView.qml
 modules/widgets/presets/PresetsButton.qml
-modules/widgets/presets/PresetsTab.qml
-modules/widgets/tools/ToolsMenu.qml
 modules/widgets/tools/ToolsMenuView.qml
 shell.qml

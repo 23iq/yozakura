@@ -243,6 +243,10 @@ var keys = {
         "enum": ["compact", "cozy", "roomy"],
         "description": "Size density of bar, notch, dock and panels: compact, cozy (the historical sizes) or roomy."
     },
+    "language": {
+        "enum": ["ink", "glass", "tiles", "classic"],
+        "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles) or classic (the surface variants exactly as configured)."
+    },
     "shape": {
         "description": "Corner shape of the shell's surfaces."
     },
@@ -259,6 +263,23 @@ var keys = {
         "max": 32,
         "unit": "px",
         "description": "Chamfer size of cut corners."
+    },
+    "icons": {
+        "description": "Icon font settings."
+    },
+    "icons.weight": {
+        "enum": ["regular", "bold", "fill"],
+        "description": "Weight of the Phosphor icon font: regular (thin strokes), bold (default) or fill (solid glyphs)."
+    },
+    "type": {
+        "description": "Type roles: heading font and case. Body text uses theme.font."
+    },
+    "type.heading": {
+        "description": "Font family of page, section and panel titles; empty uses theme.font."
+    },
+    "type.headingCase": {
+        "enum": ["none", "upper", "lower", "title"],
+        "description": "Letter case applied to titles: none, upper, lower or title."
     },
     "popup": {
         "description": "Bar popups and menus: entry motion, tail and gap."

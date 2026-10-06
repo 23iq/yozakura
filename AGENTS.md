@@ -236,7 +236,7 @@ make install    # sudo install of ./yozakura to /usr/local/bin
 ## NOTES
 - Config keys are declared once, in `config/defaults/<domain>.js`; `config/adapters/` is generated
   (`make schema`, `tools/config/gen_adapters.cjs`). Use `pauseAutoSave` for bulk edits.
-- Large files (>800 lines, `make audit` lists them): `ShellPanel`, `ThemePanel`, `PresetsTab`, `ModsPanel`, `MetricsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
+- Large files (>800 lines, `make audit` lists them): `PresetsTab`, `MetricsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
 - The `qs.` import prefix is a Quickshell VFS construct, not a physical directory.
 - `screenshotToolMode` in `GlobalStates.qml` is **DEPRECATED**.
 - **No QML disk cache for the shell.** Quickshell serves `import qs.*` files from its VFS

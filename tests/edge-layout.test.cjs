@@ -73,8 +73,10 @@ test('notch rect touches its edge, stays on screen and leaves bars and docks alo
         assert.equal(r.vertical ? r.h : r.w, 300, tag);
         if (notch === 'top') assert.equal(r.y, 0, tag);
         if (notch === 'bottom') assert.equal(r.y + r.h, 1080, tag);
-        if (notch === 'left') assert.equal(r.x, 0, tag);
-        if (notch === 'right') assert.equal(r.x + r.w, 1920, tag);
+        // a side notch sits next to a bar or dock on its own edge
+        const own = (bar === notch ? 40 : 0) + (dock === notch ? 64 : 0);
+        if (notch === 'left') assert.equal(r.x, own, tag);
+        if (notch === 'right') assert.equal(r.x + r.w, 1920 - own, tag);
         // the ends stay clear of a bar or dock on the perpendicular edges
         const along = r.vertical ? [r.y, r.y + r.h] : [r.x, r.x + r.w];
         const lo = r.vertical ? 'top' : 'left', hi = r.vertical ? 'bottom' : 'right';
@@ -115,4 +117,34 @@ test('a side notch reserves its thickness on that edge', () => {
     const e = envN('top', 'bottom', 'right', 'center');
     assert.equal(L.insets(e).right, 36);
     assert.equal(L.workArea(e).w, 1920 - 36);
+});
+
+test('a side notch is offset by the bar, dock and frame on its edge and never overlaps them', () => {
+    const rects = (e, edge, size) => ({
+        left: { x: 0, y: 0, w: size, h: e.screen.h }, right: { x: e.screen.w - size, y: 0, w: size, h: e.screen.h },
+        top: { x: 0, y: 0, w: e.screen.w, h: size }, bottom: { x: 0, y: e.screen.h - size, w: e.screen.w, h: size }
+    })[edge];
+    const overlaps = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+    for (const notch of ['left', 'right']) for (const bar of EDGES) for (const dock of EDGES) for (const align of ALIGNS) {
+        const e = envN(bar, dock, notch, align);
+        e.frame = 6;
+        const tag = `${notch}/${bar}/${dock}/${align}`;
+        for (const size of [{ along: 220, across: 36 }, { along: 600, across: 420 }]) {
+            const r = L.notchRect(e, size);
+            assert.ok(inside(r, e.screen), tag);
+            assert.equal(r.dir, notch === 'left' ? 'right' : 'left', tag);
+            assert.ok(!overlaps(r, rects(e, bar, 6 + 40)), `bar ${tag}`);
+            assert.ok(!overlaps(r, rects(e, dock, 6 + (bar === dock ? 40 : 0) + 64)), `dock ${tag}`);
+        }
+    }
+    // hidden bar: back to the frame
+    const e = envN('left', 'bottom', 'left', 'center');
+    e.bar.visible = false;
+    assert.equal(L.notchRect(e, { along: 200, across: 36 }).x, 0);
+});
+test('a top or bottom notch stays flush with its edge (the bar keeps a gap for it)', () => {
+    for (const bar of EDGES) {
+        assert.equal(L.notchRect(envN(bar, 'left', 'top', 'center'), { along: 200, across: 36 }).y, 0, bar);
+        assert.equal(L.notchRect(envN(bar, 'left', 'bottom', 'center'), { along: 200, across: 36 }).y, 1080 - 36, bar);
+    }
 });

@@ -200,10 +200,10 @@ func TestConfigSetValidation(t *testing.T) {
 	assert.True(t, dom.IsError)
 	assert.Contains(t, dom.Text(), "unknown config domain")
 
-	obj := callTool(t, d, "config_set", `{"domain":"bar","key":"activities","value":{"enabled":false,"maxVisible":3}}`)
+	obj := callTool(t, d, "config_set", `{"domain":"notch","key":"liveActivities","value":{"enabled":false,"maxVisible":3}}`)
 	assert.False(t, obj.IsError, obj.Text())
-	assert.Contains(t, obj.Text(), "bar.activities.maxVisible")
-	badObj := callTool(t, d, "config_set", `{"domain":"bar","key":"activities","value":{"enabled":"no"}}`)
+	assert.Contains(t, obj.Text(), "notch.liveActivities.maxVisible")
+	badObj := callTool(t, d, "config_set", `{"domain":"notch","key":"liveActivities","value":{"enabled":"no"}}`)
 	assert.True(t, badObj.IsError)
 
 	items := callTool(t, d, "config_set", `{"key":"bar.layout.left","value":["launcher","nope"]}`)
@@ -229,11 +229,12 @@ func TestConfigGetSchemaDescribeSearch(t *testing.T) {
 	assert.Contains(t, res.Text(), `"isDefault": true`)
 	res = callTool(t, d, "config_get", `{"domain":"bar"}`)
 	assert.Contains(t, res.Text(), `"position": "left"`)
+	res = callTool(t, d, "config_get", `{"domain":"notch"}`)
 	assert.Contains(t, res.Text(), `"deluge": "********"`, "credentials are masked")
 	res = callTool(t, d, "config_schema", `{}`)
 	assert.Contains(t, res.Text(), `"domain": "theme"`)
-	res = callTool(t, d, "config_schema", `{"domain":"bar","prefix":"activities"}`)
-	assert.Contains(t, res.Text(), `"key": "activities.enabled"`)
+	res = callTool(t, d, "config_schema", `{"domain":"notch","prefix":"liveActivities"}`)
+	assert.Contains(t, res.Text(), `"key": "liveActivities.enabled"`)
 	assert.Contains(t, res.Text(), `"description"`)
 
 	res = callTool(t, d, "config_describe", `{"key":"bar.layout.style"}`)
@@ -294,7 +295,7 @@ func TestPresetTools(t *testing.T) {
 func TestConfigGlassKeys(t *testing.T) {
 	d, _, _ := newDeps(t)
 	res := callTool(t, d, "config_schema", `{"domain":"theme","prefix":"glass"}`)
-	for _, k := range []string{"glass.amount", "glass.enabled", "glass.advanced.blurSize", "glass.surfaces.dock.amount", "glass.surfaces.windows.inactiveOpacity"} {
+	for _, k := range []string{"glass.amount", "glass.enabled", "glass.advanced.opacity", "glass.surfaces.dock.amount", "glass.surfaces.windows.inactiveOpacity"} {
 		assert.Contains(t, res.Text(), `"key": "`+k+`"`)
 	}
 	ok := callTool(t, d, "config_set", `{"domain":"theme","key":"glass.amount","value":0.6}`)

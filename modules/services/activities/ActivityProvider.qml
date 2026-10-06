@@ -9,23 +9,23 @@ import "ActivityModel.js" as Model
 // documented in ActivityModel.js) and handles clicks in `activate()`.
 //
 // Do expensive work (processes, PipeWire tracking, timers) only while
-// `active`: it follows bar.activities.enabled and
-// bar.activities.sources[configKey].
+// `active`: it follows notch.liveActivities.enabled and
+// notch.liveActivities.sources[configKey].
 Singleton {
     id: provider
 
     // Provider id, copied into each activity's `source`
     property string source: ""
-    // Key under bar.activities.sources that toggles this provider
+    // Key under notch.liveActivities.sources that toggles this provider
     property string configKey: source
 
-    readonly property bool active: Model.sourceEnabled(Config.bar ? Config.bar.activities : undefined, configKey)
+    readonly property bool active: Model.sourceEnabled(Config.notch ? Config.notch.liveActivities : undefined, configKey)
 
     // Plain JS objects; reassign the whole list on change
     property var activities: []
     // Downloads/copies/updates (TransferModel.js shape). ActivityService
     // de-duplicates them across providers and shows them as one "downloads"
-    // activity (or one per transfer when bar.activities.downloads.aggregate
+    // activity (or one per transfer when notch.liveActivities.downloads.aggregate
     // is off).
     property var transfers: []
     // True for providers fed by the backend "transfers" service

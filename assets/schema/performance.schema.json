@@ -90,8 +90,8 @@
       "default": false,
       "description": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "dashboard",
+        "section": "memory",
         "label": "performance.dashboard_persist",
         "control": "toggle",
         "keywords": "dashboard tabs keep loaded memory"
@@ -103,8 +103,8 @@
       "default": 2,
       "description": "Most dashboard tabs kept in memory at once.",
       "x-settings": {
-        "category": "system",
-        "section": "performance",
+        "category": "dashboard",
+        "section": "advanced",
         "label": "prefs.sys.dashboard_max_tabs",
         "control": "number",
         "keywords": "dashboard tabs memory limit",

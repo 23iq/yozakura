@@ -11,9 +11,17 @@ JsonAdapter {
     property string monoFont: "Iosevka Nerd Font Mono"
     property int monoFontSize: 14
     property bool tintIcons: false
+    property JsonObject icons: JsonObject {
+        property string weight: "bold"
+    }
+    property JsonObject type: JsonObject {
+        property string heading: ""
+        property string headingCase: "none"
+    }
     property bool enableCorners: true
     property int animDuration: 300
     property string density: "cozy"
+    property string language: "ink"
     property JsonObject shape: JsonObject {
         property string corners: "round"
         property string popupCorners: ""
@@ -50,15 +58,8 @@ JsonAdapter {
         property string highlightRole: "overBackground"
         property JsonObject advanced: JsonObject {
             property real opacity: -1
-            property real blurSize: -1
-            property real blurPasses: -1
-            property real vibrancy: -1
-            property real noise: -1
-            property real contrast: -1
-            property real brightness: -1
             property real tintStrength: -1
             property real borderHighlight: -1
-            property real shadowSoftness: -1
         }
         property JsonObject surfaces: JsonObject {
             property JsonObject windows: JsonObject {

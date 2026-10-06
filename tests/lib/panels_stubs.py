@@ -232,6 +232,8 @@ QtObject {
 }""",
         "NumeralFonts": """pragma Singleton
 QtObject { function family(t) { return "" } function weight(t) { return Font.Normal } }""",
+        "GameModeClient": """pragma Singleton
+QtObject { property bool toggled: false }""",
         "PowerProfileClient": """pragma Singleton
 QtObject {
     property string currentProfile: "balanced"; property var availableProfiles: ["power-saver", "balanced", "performance"]

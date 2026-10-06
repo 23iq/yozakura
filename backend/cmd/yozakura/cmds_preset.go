@@ -25,6 +25,8 @@ Commands:
                                          --json adds tags, a content hash and the look
                                          (values the thumbnails are drawn from)
     apply <name>                         Copy the preset over the live config (hot-applies)
+    apply --preview <name>               Show it for a look (the switcher's hover);
+    revert                               bring back the look from before the first preview
     save <name> [--domains a,b] [--force]
                                          Save the live config (+ matugen scheme) as a user preset
     update <name> [--domains a,b]        Overwrite a user preset with the live config
@@ -94,7 +96,9 @@ func runPreset(args []string, out, errOut io.Writer) int {
 	case "list", "ls", "-l", "--list":
 		err = presetListCmd(m, rest, out)
 	case "apply", "load":
-		err = presetApplyCmd(m, strings.Join(rest, " "), out, errOut)
+		err = presetApplyArgs(m, rest, out, errOut)
+	case "revert":
+		err = presetRevertCmd(m, out)
 	case "save":
 		err = presetSaveCmd(m, rest, out)
 	case "diff":

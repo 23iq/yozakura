@@ -5,7 +5,7 @@ private Xvfb with generated Config/Colors/I18n/GlobalStates (see
 tests/lib/settings_env.py) and checks: every category page loads without
 QML errors, typed rows write through SettingsStore and stage the matching
 GlobalStates domain, modified/reset, visibleWhen, nested keys, the bar
-layout editor, wallpaper folders, search navigation and the legacy tab map.
+layout editor, wallpaper folders, search navigation and page requests from the shell (settingsCategory).
 """
 import json
 import sys
@@ -87,7 +87,7 @@ def check(cond: bool, what: str) -> None:
 
 
 # Every category renders without QML errors.
-order = ["appearance", "wallpapers", "surfaces", "bar", "bar-classic", "notch", "dock", "dock-classic", "overview", "desktop",
+order = ["appearance", "wallpapers", "bar", "notch", "dock", "overview", "desktop", "dashboard", "osd", "menus",
          "lockscreen", "notifications", "windows", "input", "terminal", "system", "voice", "updates", "about"]
 for cat in order:
     ev(f'select("{cat}")')
@@ -238,10 +238,10 @@ settle(400)
 check(ev("currentCategory") == "bar", "navigate switches category")
 check(ev("SettingsStore.highlightedEntry") == "workspaces.numeralStyle", "entry highlighted")
 
-# Legacy numeric tab (e.g. microphone activity opening the mixer)
-ev("GlobalStates.settingsCurrentTab = 2")
+# Another part of the shell asks for a page (microphone activity -> Sound)
+ev("GlobalStates.settingsCategory = 'sound'")
 settle(100)
-check(ev("currentCategory") == "sound" and ev("GlobalStates.settingsCurrentTab") == 0, "legacy tab mapped")
+check(ev("currentCategory") == "sound", "settingsCategory opens the page")
 
 # System: list editor (idle listeners), string list of paths (disks)
 ev('select("system")')
@@ -327,7 +327,7 @@ h.eval(ev('w.findItem("glassLink")'), "clicked()")
 settle(400)
 check(ev("currentCategory") == "appearance", "glass link opens Appearance")
 
-# Windows page: color-role control, motion cards, nested pulse key, preview
+# Windows page: color-role control, nested pulse key, preview
 ev('select("windows")')
 settle(400)
 FIND = """(function(name) {
@@ -352,6 +352,15 @@ ev("SettingsStore.set('compositor.borderPulse.enabled', true)")
 settle(50)
 check(h.eval(row("compositor.borderPulse.intensity"), "shown") is True, "pulse intensity shown when enabled")
 check(ev("Config.compositor.borderPulse.source") == "cava", "nested pulse write keeps siblings")
+ev("SettingsStore.set('compositor.gapsIn', 7)")
+settle(50)
+readout = ev('w.findItem("windowsReadout")')
+check(readout is not None and "7" in readout.property("text"), "preview readout follows the gaps")
+check(ev('w.findItem("motionCard:springs")') is None, "motion lives on Look, not Windows")
+
+# Look > Motion: the one motion section (profile + speed)
+ev('select("appearance")')
+settle(400)
 card = ev('w.findItem("motionCard:springs")')
 check(card is not None, "motion profile cards rendered")
 h.eval(card, "clicked()")
@@ -359,10 +368,6 @@ check(ev("Config.compositor.motionProfile") == "springs", "motion card selects t
 ev("SettingsStore.set('compositor.motionProfile', 'off')")
 settle(50)
 check(h.eval(row("compositor.motionDurationScale"), "shown") is False, "speed hidden for the off profile")
-ev("SettingsStore.set('compositor.gapsIn', 7)")
-settle(50)
-readout = ev('w.findItem("windowsReadout")')
-check(readout is not None and "7" in readout.property("text"), "preview readout follows the gaps")
 # Leave the page before the engine is torn down: PySide destroys the Config/
 # Colors singletons first and the live preview bindings would read them dead.
 ev('select("about")')

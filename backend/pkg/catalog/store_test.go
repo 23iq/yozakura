@@ -69,14 +69,14 @@ func TestStoreArrayItems(t *testing.T) {
 
 func TestStoreReset(t *testing.T) {
 	s := newStore(t)
-	_, err := s.Set("bar.activities", map[string]any{"enabled": false, "maxVisible": 2.0}, false)
+	_, err := s.Set("notch.liveActivities", map[string]any{"enabled": false, "maxVisible": 2.0}, false)
 	must(t, err)
 	_, err = s.Set("bar.position", "bottom", false)
 	must(t, err)
-	ch, err := s.Reset("bar.activities")
+	ch, err := s.Reset("notch.liveActivities")
 	must(t, err)
 	assert.Len(t, ch, 2)
-	v, _, _ := s.Get("bar.activities.maxVisible")
+	v, _, _ := s.Get("notch.liveActivities.maxVisible")
 	assert.Equal(t, 4.0, v)
 	_, err = s.Reset("bar.layout.left.0")
 	assert.Error(t, err)

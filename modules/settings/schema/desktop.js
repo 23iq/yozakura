@@ -287,19 +287,6 @@ var category = {
                     "keywords": "icon label text colour color font"
                 }
             ]
-        },
-        {
-            "id": "overview",
-            "title": "prefs.desktop.section.overview",
-            "entries": [
-                {
-                    "key": "desktop.blurWallpaperOnOverview",
-                    "type": "toggle",
-                    "label": "prefs.desktop.overview_blur",
-                    "description": "prefs.desktop.overview_blur.desc",
-                    "keywords": "overview blur wallpaper niri workspaces"
-                }
-            ]
         }
     ]
 };

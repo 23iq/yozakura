@@ -1,9 +1,19 @@
 pragma Singleton
 import QtQuick
 import qs.config
+import "TypeRoles.js" as TypeRoles
+import "VisualLanguage.js" as VisualLanguage
 
 QtObject {
     readonly property string defaultFont: Config.defaultFont
+
+    // Type roles (theme.type): body = theme.font; heading falls back to it.
+    readonly property string bodyFont: Config.theme.font
+    readonly property string headingFont: TypeRoles.headingFamily(Config.theme.type, Config.theme.font)
+
+    function heading(text) {
+        return TypeRoles.applyCase(text, Config.theme.type ? Config.theme.type.headingCase : "none");
+    }
 
     function radius(offset) {
         return Config.roundness > 0 ? Math.max(Config.roundness + offset, 0) : 0;
@@ -17,7 +27,12 @@ QtObject {
         return Math.max(Config.theme.monoFontSize + offset, 8);
     }
 
+    // The variant's sr* config as drawn by the visual language (theme.language).
     function getStyledRectConfig(variant) {
+        return VisualLanguage.apply(Config.theme.language, variant, rawStyledRectConfig(variant));
+    }
+
+    function rawStyledRectConfig(variant) {
         switch (variant) {
         case "transparent":
             // Internal variant: uses bg config but with opacity, border and radius forced to 0

@@ -137,8 +137,8 @@
           },
           "description": "Order and visibility of the dashboard tabs. Drag the grip or use the arrows; widgets are arranged from the dashboard itself with the pencil button.",
           "x-settings": {
-            "category": "launcher",
-            "section": "dashboard",
+            "category": "dashboard",
+            "section": "tabs",
             "label": "prefs.dashboard.tabs",
             "control": "custom",
             "component": "DashboardTabsEditor",
@@ -201,6 +201,97 @@
       },
       "additionalProperties": false
     },
+    "powermenu": {
+      "title": "Powermenu",
+      "type": "object",
+      "description": "Power menu look.",
+      "properties": {
+        "style": {
+          "title": "Power menu",
+          "type": "string",
+          "default": "notch",
+          "description": "In the notch, large buttons over a dimmed screen, or a ring at the pointer. Shutdown, reboot and log out are held to confirm.",
+          "x-settings": {
+            "category": "menus",
+            "section": "menus",
+            "label": "prefs.menus.powermenu_style",
+            "control": "selector",
+            "keywords": "power menu shutdown reboot logout style radial fullscreen notch hold confirm"
+          },
+          "enum": [
+            "notch",
+            "fullscreen",
+            "radial"
+          ],
+          "x-enumLabels": {
+            "notch": "Notch",
+            "fullscreen": "Full screen",
+            "radial": "Radial"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "tools": {
+      "title": "Tools",
+      "type": "object",
+      "description": "Tools menu look.",
+      "properties": {
+        "style": {
+          "title": "Tools menu",
+          "type": "string",
+          "default": "notch",
+          "description": "Screenshot, recording and picker tools in the notch or on a ring at the pointer.",
+          "x-settings": {
+            "category": "menus",
+            "section": "menus",
+            "label": "prefs.menus.tools_style",
+            "control": "selector",
+            "keywords": "tools menu screenshot record color picker ocr style radial notch cursor"
+          },
+          "enum": [
+            "notch",
+            "radial"
+          ],
+          "x-enumLabels": {
+            "notch": "Notch",
+            "radial": "Radial"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "cheatsheet": {
+      "title": "Cheatsheet",
+      "type": "object",
+      "description": "Keybind cheatsheet placement.",
+      "properties": {
+        "host": {
+          "title": "Keybind cheatsheet",
+          "type": "string",
+          "default": "fullscreen",
+          "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.cheatsheet_host",
+            "control": "selector",
+            "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
+          },
+          "enum": [
+            "fullscreen",
+            "spotlight",
+            "sheet"
+          ],
+          "x-enumLabels": {
+            "fullscreen": "Full screen",
+            "spotlight": "Spotlight",
+            "sheet": "Sheet"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "osd": {
       "title": "Osd",
       "type": "object",
@@ -212,7 +303,7 @@
           "default": "auto",
           "description": "Screen edge of the indicator; Auto picks the edge away from the bar.",
           "x-settings": {
-            "category": "notifications",
+            "category": "osd",
             "section": "osd",
             "label": "prefs.osd.position",
             "control": "selector",
@@ -243,7 +334,7 @@
           "default": "pill",
           "description": "How the volume and brightness indicator looks and where it lives.",
           "x-settings": {
-            "category": "notifications",
+            "category": "osd",
             "section": "osd",
             "label": "prefs.osd.style",
             "control": "selector",
@@ -268,7 +359,7 @@
           "default": 2500,
           "description": "How long the indicator stays up. Scroll over it to adjust, click to open the controls.",
           "x-settings": {
-            "category": "notifications",
+            "category": "osd",
             "section": "osd",
             "label": "prefs.osd.timeout",
             "control": "slider",

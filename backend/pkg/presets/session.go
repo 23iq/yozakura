@@ -82,7 +82,7 @@ func (m *Manager) begin(kind, name string) (*Session, []catalog.Problem, error) 
 	if m.StateDir == "" {
 		return nil, nil, fmt.Errorf("no state directory for preset sessions")
 	}
-	for _, k := range []string{TrySession, EditSession} {
+	for _, k := range []string{TrySession, EditSession, PreviewSession} {
 		if s, _ := m.Session(k); s != nil {
 			return nil, nil, fmt.Errorf("a preset %s of %q is in progress; finish it first", k, s.Preset)
 		}

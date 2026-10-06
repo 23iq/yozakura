@@ -48,11 +48,21 @@ var category = {
                             "value": "bottom",
                             "label": "common.bottom",
                             "icon": "arrowDown"
+                        },
+                        {
+                            "value": "left",
+                            "label": "common.left",
+                            "icon": "arrowLeft"
+                        },
+                        {
+                            "value": "right",
+                            "label": "common.right",
+                            "icon": "arrowRight"
                         }
                     ],
                     "label": "prefs.notch.position",
                     "description": "prefs.notch.position.desc",
-                    "keywords": "notch position top bottom edge"
+                    "keywords": "notch position top bottom left right side vertical edge"
                 },
                 {
                     "key": "notch.align",
@@ -94,6 +104,7 @@ var category = {
                 },
                 {
                     "key": "notch.disableHoverExpansion",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "shell.notch.disable_hover_expansion",
                     "description": "prefs.notch.hover_expansion.desc",
@@ -108,6 +119,7 @@ var category = {
                 },
                 {
                     "key": "notch.hoverRegionHeight",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 40,
@@ -181,13 +193,6 @@ var category = {
                     "keywords": "island activities order reorder drag side left right enable media osd volume brightness battery charging bluetooth extras install timers privacy"
                 },
                 {
-                    "key": "notch.osd",
-                    "type": "toggle",
-                    "label": "prefs.notch.osd",
-                    "description": "prefs.notch.osd.desc",
-                    "keywords": "osd volume brightness island notch"
-                },
-                {
                     "key": "notifications.notchStyle",
                     "type": "selector",
                     "options": [
@@ -205,12 +210,37 @@ var category = {
                     "keywords": "notification notch compact card one line"
                 },
                 {
-                    "key": "bar.activities",
+                    "key": "notch.liveActivities",
                     "type": "custom",
                     "component": "ActivitiesEditor",
                     "label": "shell.activities",
                     "description": "prefs.notch.activities.desc",
                     "keywords": "live activities recording microphone camera privacy screen share pomodoro timer progress downloads steam torrent qbittorrent transmission deluge aria2 syncthing curl wget yt-dlp copy rsync pacman flatpak heroic lutris presentation"
+                }
+            ]
+        },
+        {
+            "id": "timers",
+            "title": "prefs.notch.section.timers",
+            "entries": [
+                {
+                    "key": "system.timers.notchStyle",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "ring",
+                            "label": "prefs.timers.style.ring",
+                            "icon": "circleNotch"
+                        },
+                        {
+                            "value": "text",
+                            "label": "prefs.timers.style.text",
+                            "icon": "textT"
+                        }
+                    ],
+                    "label": "prefs.timers.style",
+                    "description": "prefs.timers.style.desc",
+                    "keywords": "notch ring progress text countdown display"
                 }
             ]
         }

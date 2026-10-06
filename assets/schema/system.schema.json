@@ -346,8 +346,8 @@
           "default": "ring",
           "description": "A ring that empties as time runs out, or just the time",
           "x-settings": {
-            "category": "timers",
-            "section": "notch",
+            "category": "notch",
+            "section": "timers",
             "label": "prefs.timers.style",
             "control": "selector",
             "keywords": "notch ring progress text countdown display"

@@ -174,6 +174,8 @@ MIRROR = [
     "modules/extras",
     "modules/terminal",
     "modules/theme/Styling.qml",
+    "modules/theme/TypeRoles.js",
+    "modules/theme/VisualLanguage.js",
     "modules/theme/Metrics.qml",
     "modules/theme/DensityMetrics.js",
     "modules/theme/Motion.qml",
@@ -400,7 +402,6 @@ QtObject {{
     property bool compositorHasChanges: false
     property int applied: 0
     property int discarded: 0
-    property int settingsCurrentTab: 0
     property string compositorLayout: "dwindle"
     property string settingsCategory: "appearance"
     property bool settingsWindowVisible: true
@@ -657,7 +658,8 @@ class SettingsEnv:
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
                   "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
-                  "modules/extras", "modules/settings/extras", "modules/terminal"]:
+                  "modules/extras", "modules/settings/extras", "modules/terminal",
+                  "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on
