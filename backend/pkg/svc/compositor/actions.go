@@ -74,6 +74,15 @@ var catalog = []ActionSpec{
 	{ID: brand.Action("voice-ai"), Label: "Voice to AI (hold)", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("voice", "press", "ai")},
 	{ID: brand.Action("dictation"), Label: "Dictation (hold)", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("voice", "press", "dictation")},
 
+	{ID: brand.Action("timer-input"), Label: "Timer Quick Input", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "timer-input")},
+	{ID: brand.Action("quick-note"), Label: "Quick Note", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "quick-note")},
+	{ID: brand.Action("timers"), Label: "Open Timers", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "timers")},
+	{ID: brand.Action("stopwatch-toggle"), Label: "Start/Pause Stopwatch", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "stopwatch-toggle")},
+	{ID: brand.Action("focus-toggle"), Label: "Toggle Focus Mode", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "focus-toggle")},
+	{ID: brand.Action("timer-stop"), Label: "Stop Alarm", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "timer-stop")},
+	{ID: "utilities.timer", Label: "Start Timer", Category: "Utilities", Dispatcher: "exec", Args: []ActionArg{{Key: "spec", Label: "Timer", Placeholder: "10m tea", DefaultValue: "25m"}}, ArgumentFn: func(args map[string]any) string { return runParam("timer:", stringArg(args, "spec")) }},
+	{ID: "utilities.routine", Label: "Run Routine", Category: "Utilities", Dispatcher: "exec", Args: []ActionArg{{Key: "routine", Label: "Routine", Placeholder: "morning", DefaultValue: ""}}, ArgumentFn: func(args map[string]any) string { return runParam("routine:", stringArg(args, "routine")) }, Hidden: true},
+
 	{ID: "window.close", Label: "Close Window", Category: "Window", Dispatcher: "killactive", Argument: ""},
 	{ID: "window.focus", Label: "Focus Window", Category: "Window", Dispatcher: "movefocus", Args: []ActionArg{{Key: "direction", Label: "Direction", Placeholder: "up/down/left/right", DefaultValue: "up"}}, ArgumentFn: func(args map[string]any) string { return directionToLetter(stringArg(args, "direction")) }},
 	{ID: "window.move", Label: "Move Window", Category: "Window", Dispatcher: "movewindow", Args: []ActionArg{{Key: "direction", Label: "Direction", Placeholder: "up/down/left/right", DefaultValue: "left"}}, ArgumentFn: func(args map[string]any) string { return directionToLetter(stringArg(args, "direction")) }},
@@ -403,6 +412,16 @@ func shellWord(s string) string {
 		return s
 	}
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// runParam is `<app> run '<prefix><value>'` (the shell's UtilityCommands),
+// "" without a value.
+func runParam(prefix, value string) string {
+	v := strings.TrimSpace(value)
+	if v == "" {
+		return ""
+	}
+	return brand.Command("run", shellWord(prefix+v))
 }
 
 // LaunchCommand is the exec line of an "apps.launch" bind: `<app> launch

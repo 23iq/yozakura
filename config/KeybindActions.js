@@ -40,6 +40,12 @@ function launchCommand(app) {
     return id ? BrandActions.command("launch", shellWord(id)) : "";
 }
 
+// `<app> run '<prefix><value>'` (UtilityCommands), "" without a value.
+function runParam(prefix, value) {
+    const v = String(value || "").trim();
+    return v ? BrandActions.command("run", shellWord(prefix + v)) : "";
+}
+
 function directionToLetter(direction) {
     const dir = String(direction || "").toLowerCase();
     if (dir === "up" || dir === "u") return "u";
@@ -82,6 +88,23 @@ var ACTION_CATALOG = [
     // `yozakura voice release` (backend/pkg/svc/compositor/holdbinds.go).
     { id: BrandActions.action("voice-ai"), label: "Voice to AI (hold)", category: BrandActions.displayName, group: "ai", hold: true, dispatcher: "exec", argument: BrandActions.command("voice", "press", "ai") },
     { id: BrandActions.action("dictation"), label: "Dictation (hold)", category: BrandActions.displayName, group: "ai", hold: true, dispatcher: "exec", argument: BrandActions.command("voice", "press", "dictation") },
+
+    // Utilities (modules/services/UtilityCommands.qml). `slot`: shown as an
+    // unassigned row in the bind editor and cheatsheet while no bind runs it.
+    { id: BrandActions.action("timer-input"), label: "Timer Quick Input", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "timer-input"), slot: true },
+    { id: BrandActions.action("quick-note"), label: "Quick Note", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "quick-note"), slot: true },
+    { id: BrandActions.action("timers"), label: "Open Timers", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "timers"), slot: true },
+    { id: BrandActions.action("stopwatch-toggle"), label: "Start/Pause Stopwatch", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "stopwatch-toggle"), slot: true },
+    { id: BrandActions.action("focus-toggle"), label: "Toggle Focus Mode", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "focus-toggle"), slot: true },
+    { id: BrandActions.action("timer-stop"), label: "Stop Alarm", category: BrandActions.displayName, group: "utilities", dispatcher: "exec", argument: BrandActions.command("run", "timer-stop"), slot: true },
+    // Parametrised: a quick input line ("10m tea", "pomo 50 10", "18:00 call")
+    { id: "utilities.timer", label: "Start Timer", category: "Utilities", group: "utilities", dispatcher: "exec", args: [{ key: "spec", label: "Timer", placeholder: "10m tea", defaultValue: "25m" }], argumentBuilder: function (args) {
+        return runParam("timer:", args.spec);
+    } },
+    // A routine (svc/routines, sub-project E): hidden until routines exist.
+    { id: "utilities.routine", label: "Run Routine", category: "Utilities", group: "utilities", dispatcher: "exec", args: [{ key: "routine", label: "Routine", placeholder: "morning", defaultValue: "" }], argumentBuilder: function (args) {
+        return runParam("routine:", args.routine);
+    }, hidden: true },
 
     { id: "window.close", label: "Close Window", category: "Window", group: "windows", dispatcher: "killactive", argument: "" },
     { id: "window.focus", label: "Focus Window", category: "Window", group: "windows", dispatcher: "movefocus", args: [{ key: "direction", label: "Direction", placeholder: "up/down/left/right", defaultValue: "up" }], argumentBuilder: function (args) {

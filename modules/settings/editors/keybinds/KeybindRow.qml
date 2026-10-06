@@ -74,7 +74,13 @@ Item {
                 anchors.fill: parent
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: KeybindsStore.expandedUid = root.expanded ? "" : root.bind.uid
+                // An unassigned slot first becomes a custom bind
+                onClicked: {
+                    if (root.bind.kind === "slot")
+                        KeybindsStore.claim(root.bind.uid);
+                    else
+                        KeybindsStore.expandedUid = root.expanded ? "" : root.bind.uid;
+                }
             }
 
             RowLayout {

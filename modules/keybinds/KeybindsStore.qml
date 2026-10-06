@@ -33,7 +33,8 @@ Singleton {
     // re-read when the desktop entries change.
     readonly property var rows: {
         AppSearch.list;
-        return BindModel.withApps(BindModel.buildRows(data), root.appInfo);
+        const built = BindModel.buildRows(data);
+        return BindModel.withApps(built.concat(BindModel.slotRows(built)), root.appInfo);
     }
     property var hyprBinds: []
     readonly property var nativeBinds: BindModel.nativeBinds(hyprBinds, rows)
@@ -343,8 +344,20 @@ Singleton {
         root.refreshNative();
     }
 
+    // An unassigned slot becomes a custom bind of its action (keys still
+    // empty) and opens for editing; returns the new uid (other uids as is).
+    function claim(uid) {
+        const r = root.row(uid);
+        if (!r || r.kind !== "slot")
+            return uid;
+        const added = root.addCustom(r.actions[0].id);
+        root.expandedUid = added;
+        return added;
+    }
+
     // Opens the settings editor on a row (cheatsheet "Edit in settings").
     function requestEdit(uid) {
+        uid = root.claim(uid);
         root.pendingEdit = uid;
         root.editRequested(uid);
     }

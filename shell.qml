@@ -340,6 +340,8 @@ ShellRoot {
             _ = GameModeClient.toggled;
             _ = VoiceService.state; // voice input: subscribes to the backend voice service
             _ = SpecialsService.active; // special workspaces: launch-on-open, renames, preload
+            _ = TimersService.ready; // timers: notch activity, alarm sound, hub
+            _ = FocusMode.active; // focus mode: ends with its timer, restores DND
         }
     }
 }

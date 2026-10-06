@@ -68,6 +68,19 @@
       }
     },
     {
+      "id": "utilities",
+      "labels": {
+        "en": "Utilities",
+        "es": "Utilidades",
+        "ru": "Утилиты"
+      },
+      "descriptions": {
+        "en": "Timers, stopwatch, focus mode, quick note and routines.",
+        "es": "Temporizadores, cronómetro, modo concentración, nota rápida y rutinas.",
+        "ru": "Таймеры, секундомер, режим фокуса, быстрая заметка и сценарии."
+      }
+    },
+    {
       "id": "windows",
       "labels": {
         "en": "Windows",
@@ -210,9 +223,9 @@
     {
       "id": "yozakura.ai-agent",
       "labels": {
-        "en": "AI agent mode",
-        "es": "Modo agente de IA",
-        "ru": "Режим агента ИИ"
+        "en": "AI agent (Code space)",
+        "es": "Agente de IA (espacio Código)",
+        "ru": "ИИ-агент (пространство «Код»)"
       },
       "category": "Yozakura",
       "group": "ai",
@@ -222,14 +235,26 @@
     {
       "id": "yozakura.ai-shell",
       "labels": {
-        "en": "AI shell control",
-        "es": "Control del shell por IA",
-        "ru": "Управление оболочкой через ИИ"
+        "en": "AI assistant (desktop control)",
+        "es": "Asistente de IA (control del escritorio)",
+        "ru": "ИИ-ассистент (управление рабочим столом)"
       },
       "category": "Yozakura",
       "group": "ai",
       "dispatcher": "exec",
       "argument": "yozakura run ai-shell"
+    },
+    {
+      "id": "yozakura.ai-code",
+      "labels": {
+        "en": "AI Code space",
+        "es": "Espacio Código de la IA",
+        "ru": "Пространство «Код» ИИ"
+      },
+      "category": "Yozakura",
+      "group": "ai",
+      "dispatcher": "exec",
+      "argument": "yozakura run ai-code"
     },
     {
       "id": "yozakura.dnd-toggle",
@@ -484,6 +509,133 @@
       "dispatcher": "exec",
       "argument": "yozakura voice press dictation",
       "hold": true
+    },
+    {
+      "id": "yozakura.timer-input",
+      "labels": {
+        "en": "Timer quick input",
+        "es": "Entrada rápida de temporizador",
+        "ru": "Быстрый ввод таймера"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run timer-input",
+      "slot": true
+    },
+    {
+      "id": "yozakura.quick-note",
+      "labels": {
+        "en": "Quick note",
+        "es": "Nota rápida",
+        "ru": "Быстрая заметка"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run quick-note",
+      "slot": true
+    },
+    {
+      "id": "yozakura.timers",
+      "labels": {
+        "en": "Open timers",
+        "es": "Abrir temporizadores",
+        "ru": "Открыть таймеры"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run timers",
+      "slot": true
+    },
+    {
+      "id": "yozakura.stopwatch-toggle",
+      "labels": {
+        "en": "Start/pause stopwatch",
+        "es": "Iniciar/pausar cronómetro",
+        "ru": "Запустить/приостановить секундомер"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run stopwatch-toggle",
+      "slot": true
+    },
+    {
+      "id": "yozakura.focus-toggle",
+      "labels": {
+        "en": "Toggle focus mode",
+        "es": "Alternar modo concentración",
+        "ru": "Включить/выключить режим фокуса"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run focus-toggle",
+      "slot": true
+    },
+    {
+      "id": "yozakura.timer-stop",
+      "labels": {
+        "en": "Stop alarm",
+        "es": "Detener alarma",
+        "ru": "Остановить сигнал"
+      },
+      "category": "Yozakura",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "argument": "yozakura run timer-stop",
+      "slot": true
+    },
+    {
+      "id": "utilities.timer",
+      "labels": {
+        "en": "Start timer",
+        "es": "Iniciar temporizador",
+        "ru": "Запустить таймер"
+      },
+      "category": "Utilities",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "args": [
+        {
+          "key": "spec",
+          "labels": {
+            "en": "Timer",
+            "es": "Temporizador",
+            "ru": "Таймер"
+          },
+          "placeholder": "10m tea",
+          "kind": "text",
+          "default": "25m"
+        }
+      ]
+    },
+    {
+      "id": "utilities.routine",
+      "labels": {
+        "en": "Run routine",
+        "es": "Ejecutar rutina",
+        "ru": "Запустить сценарий"
+      },
+      "category": "Utilities",
+      "group": "utilities",
+      "dispatcher": "exec",
+      "hidden": true,
+      "args": [
+        {
+          "key": "routine",
+          "labels": {
+            "en": "Routine",
+            "es": "Rutina",
+            "ru": "Сценарий"
+          },
+          "placeholder": "morning",
+          "kind": "text",
+          "default": ""
+        }
+      ]
     },
     {
       "id": "window.close",

@@ -66,6 +66,28 @@ var PANELS = [
         maxRows: 0,
         auto: true,
         modal: true
+    },
+    {
+        // Timers hub: quick input (timers / quick note) + the list
+        // (TimersService.openHub: binds, clock click, timers segment)
+        id: "timerHub",
+        trigger: "",
+        url: "TimerHubPanel.qml",
+        requires: "timerHub",
+        width: 460,
+        maxRows: 5,
+        auto: true,
+        modal: true
+    },
+    {
+        // A timer is ringing: Stop / +5 min (system.timers.alarmPanel)
+        id: "alarm",
+        trigger: "",
+        url: "AlarmPanel.qml",
+        requires: "alarm",
+        width: 0,
+        maxRows: 0,
+        auto: true
     }
 ];
 

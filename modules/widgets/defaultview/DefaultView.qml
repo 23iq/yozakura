@@ -38,7 +38,9 @@ Item {
         transfers: header.activitiesOn ? ActivityService.transfers.length : 0,
         timers: header.activitiesOn ? ActivityService.tasks.filter(a => a.source === "timers").length : 0,
         privacy: header.activitiesOn ? ActivityService.privacy.length : 0,
-        voice: VoiceService.panelOpen && (VoiceService.panelScreen === "" || VoiceService.panelScreen === root.screenName)
+        voice: VoiceService.panelOpen && (VoiceService.panelScreen === "" || VoiceService.panelScreen === root.screenName),
+        timerHub: TimersService.hubOpen && (TimersService.hubScreen === "" || TimersService.hubScreen === root.screenName),
+        alarm: TimersService.ringing > 0 && (Config.system?.timers?.alarmPanel ?? true) && (TimersService.alarmScreen === "" || TimersService.alarmScreen === root.screenName)
     })
     readonly property bool clickMode: controller.clickMode
     readonly property bool panelExpanded: controller.expanded

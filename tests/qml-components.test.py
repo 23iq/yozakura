@@ -6,6 +6,7 @@ import os, pathlib, tempfile, shutil
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401  (never a live window)
+from lib import timers_stubs  # noqa: E402
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlEngine, QQmlComponent
 from PySide6.QtCore import QUrl, QPointF, Qt
@@ -58,6 +59,7 @@ QtObject { property bool playerMenuOpen: false }''',
  'VoiceService':'''pragma Singleton
 import QtQuick
 QtObject { property bool panelOpen: false; property string panelScreen: "" }''',
+ **{n: 'import QtQuick\n' + b if not b.startswith('pragma') else b.replace('pragma Singleton\n', 'pragma Singleton\nimport QtQuick\n', 1) for n, b in timers_stubs.services().items()},
  'CavaService':'''pragma Singleton
 import QtQuick
 QtObject { property bool available: true; property var values: [0.5, 1, 0.25]; property int consumerCount: 0; property var keys: ({}); function setConsumer(k, a) { if (!k) return; keys[k] = a; var n = 0; for (var x in keys) if (keys[x]) n++; consumerCount = n; } function levels(n) { var out = []; for (var i = 0; i < n; i++) out.push(values[i % values.length]); return out; } }'''})
@@ -97,6 +99,7 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  panels_src=repo/'modules/widgets/defaultview/panels'
  module('qs.modules.widgets.defaultview.panels', {f.stem: f.read_text() for f in sorted(panels_src.glob('*.qml'))})
  shutil.copy(panels_src/'NotchPanels.js', dv/'panels')
+ timers_stubs.copy_js(p)
  for n in ['UserInfo','NotificationIndicator']:
   (children/(n+'.qml')).write_text('import QtQuick\nItem { width: 20; height: 20 }')
  (children/'CompactPlayer.qml').write_text('import QtQuick\nItem { property var player; property bool notchHovered }')

@@ -2,7 +2,7 @@
 
 // Catalog metadata of config/defaults/system.js (format: config/meta/Meta.js).
 
-var description = "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro timer and clipboard storage.";
+var description = "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro, timers/alarms/focus mode and clipboard storage.";
 
 var keys = {
     "disks": {
@@ -56,6 +56,13 @@ var keys = {
     },
     "pomodoro.syncSpotify": {
         "description": "Pause/resume Spotify with the pomodoro periods."
+    },
+    "timers.soundFile": {
+        "format": "path",
+        "description": "Alarm sound file for finished timers (empty: the built-in tone)."
+    },
+    "timers.noteTitle": {
+        "description": "Title of the Notes inbox note the quick note bind appends to (empty: \"Inbox\" in the UI language)."
     },
     "clipboard.tmpfs": {
         "description": "Keep unpinned clipboard history in RAM (wiped on reboot)."

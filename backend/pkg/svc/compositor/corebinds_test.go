@@ -34,10 +34,25 @@ func TestRenderSystemBindsKnownThenUnknownSorted(t *testing.T) {
 // Every app action of the shell's catalog resolves (a missing entry drops
 // the bind from the TOML silently).
 func TestAppActionsResolve(t *testing.T) {
-	for _, name := range []string{"ai-quickask", "ai-selection", "ai-region", "ai-agent", "ai-shell", "ai-code", "dnd-toggle", "keybinds", "desktop-edit", "terminal"} {
+	for _, name := range []string{"ai-quickask", "ai-selection", "ai-region", "ai-agent", "ai-shell", "ai-code", "dnd-toggle", "keybinds", "desktop-edit", "terminal", "timer-input", "quick-note", "timers", "stopwatch-toggle", "focus-toggle", "timer-stop"} {
 		r := ResolveAction(Action{ID: "yozakura." + name})
 		if r == nil || r.Argument != "yozakura run "+name {
 			t.Errorf("%s: got %+v", name, r)
 		}
+	}
+}
+
+// Parametrised utility actions run `<app> run '<prefix><value>'`.
+func TestUtilityParamActions(t *testing.T) {
+	r := ResolveAction(Action{ID: "utilities.timer", Args: map[string]any{"spec": "10m tea"}})
+	if r == nil || r.Argument != "yozakura run 'timer:10m tea'" {
+		t.Fatalf("timer: got %+v", r)
+	}
+	r = ResolveAction(Action{ID: "utilities.routine", Args: map[string]any{"routine": "morning"}})
+	if r == nil || r.Argument != "yozakura run 'routine:morning'" {
+		t.Fatalf("routine: got %+v", r)
+	}
+	if r := ResolveAction(Action{ID: "utilities.timer", Args: map[string]any{"spec": " "}}); r == nil || r.Argument != "" {
+		t.Fatalf("empty spec: got %+v", r)
 	}
 }

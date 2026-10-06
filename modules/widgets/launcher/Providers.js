@@ -29,6 +29,15 @@ var PROVIDERS = [
         "mixed": true
     },
     {
+        // Timers, reminders, stopwatch ("t 10m tea"): prefix only
+        "id": "timers",
+        "kind": "inline",
+        "file": "providers/TimersProvider.qml",
+        "icon": "timer",
+        "prefix": "timers",
+        "mixed": false
+    },
+    {
         "id": "apps",
         "kind": "inline",
         "file": "providers/AppsProvider.qml",

@@ -6,6 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO, Harness  # noqa: E402
+from lib import timers_stubs  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 h = Harness("notch-activities")
@@ -36,6 +37,7 @@ h.module("qs.modules.services", {
     "MprisController": "pragma Singleton\nQtObject { property var activePlayer: null }",
     "Notifications": "pragma Singleton\nQtObject { property var popupList: [] }",
     "Visibilities": "pragma Singleton\nQtObject { property bool playerMenuOpen: false }",
+    **timers_stubs.services(),
     "VoiceService": "pragma Singleton\nQtObject { property bool panelOpen: false; property string panelScreen: \"\"; property string state: \"listening\"; property string target: \"ai\"; property var bands: []; property int dismissals: 0; function dismiss() { dismissals++; panelOpen = false; } }",
 })
 h.singleton("qs.modules.services.activities", "ActivityService", """QtObject {
@@ -63,6 +65,7 @@ h.copy("modules/widgets/defaultview/IslandMedia.js", siblings=False)
 panels_src = REPO / "modules/widgets/defaultview/panels"
 pd = h.module("qs.modules.widgets.defaultview.panels", {f.stem: f.read_text() for f in sorted(panels_src.glob("*.qml")) if f.stem != "MediaPanel"})
 (pd / "NotchPanels.js").write_text((panels_src / "NotchPanels.js").read_text())
+timers_stubs.copy_js(h.root)
 (h.root / "qs/modules/services/voice").mkdir(parents=True, exist_ok=True)
 (h.root / "qs/modules/services/voice/VoiceModel.js").write_text((REPO / "modules/services/voice/VoiceModel.js").read_text())
 (pd / "MediaPanel.qml").write_text("import QtQuick\nNotchPanel { implicitHeight: 120 }\n")
