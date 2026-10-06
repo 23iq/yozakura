@@ -154,6 +154,10 @@ var types = {
         "quickAsk.width": "int",
         "sidebarWidth": "int",
         "unloadAfterMinutes": "int",
+        "usage.criticalAt": "int",
+        "usage.decimals": "int",
+        "usage.hiddenProviders": "list<string>",
+        "usage.warnAt": "int",
         "wideWidth": "int"
     }
 };

@@ -5,8 +5,9 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
 import qs.modules.aicenter.common
+import qs.config
 
-// [Assistant | Code] … history, new, size, gear (Code), changes (Code), close.
+// [Assistant | Code] … usage, history, new, size, gear (Code), changes (Code), close.
 // The engine chip lives in the composer strip (ComposerStatus).
 RowLayout {
     id: root
@@ -15,6 +16,8 @@ RowLayout {
     property bool historyPinned: false     // persistent history column shown
     property bool settingsOpen: false
     property bool showChanges: false
+    property bool usageOpen: false
+    signal usageToggled
     signal historyToggled
     signal settingsToggled
     signal changesToggled
@@ -41,6 +44,14 @@ RowLayout {
     }
     Item {
         Layout.fillWidth: true
+    }
+    IconButton {
+        objectName: "headerUsage"
+        visible: Config.ai.usage.headerButton !== false
+        glyph: Icons.chartBar
+        tooltip: I18n.t("ai.usage.title")
+        active: root.usageOpen
+        onClicked: root.usageToggled()
     }
     IconButton {
         objectName: "headerHistory"

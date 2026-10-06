@@ -52,10 +52,13 @@ type LimitsStore struct {
 	mu     sync.Mutex
 	limits map[string]Limits
 	state  map[string]*windowState // provider/window
+	// thresholds that notify (sorted); empty: notifications off
+	thresholds []float64
 }
 
 func NewLimitsStore() *LimitsStore {
-	return &LimitsStore{limits: map[string]Limits{}, state: map[string]*windowState{}}
+	return &LimitsStore{limits: map[string]Limits{}, state: map[string]*windowState{},
+		thresholds: append([]float64(nil), Thresholds...)}
 }
 
 // Set merges l into the store: windows are replaced by id, others kept.
@@ -120,7 +123,7 @@ func (s *LimitsStore) check(provider string, w Window) (Alert, bool) {
 	if !w.ResetsAt.IsZero() && !st.resetsAt.IsZero() {
 		d := w.ResetsAt.Sub(st.resetsAt)
 		newWindow = d > resetSlack || d < -resetSlack
-	} else if w.UsedPercent < Thresholds[0] {
+	} else if w.UsedPercent < s.firstThreshold() {
 		newWindow = true
 	}
 	if newWindow {
@@ -130,7 +133,7 @@ func (s *LimitsStore) check(provider string, w Window) (Alert, bool) {
 		st.resetsAt = w.ResetsAt
 	}
 	crossed := 0.0
-	for _, t := range Thresholds {
+	for _, t := range s.thresholds {
 		if w.UsedPercent >= t {
 			crossed = t
 		}
@@ -140,6 +143,13 @@ func (s *LimitsStore) check(provider string, w Window) (Alert, bool) {
 	}
 	st.notified = crossed
 	return Alert{Provider: provider, Window: w.ID, Threshold: crossed, Used: w.UsedPercent, ResetsAt: w.ResetsAt}, true
+}
+
+func (s *LimitsStore) firstThreshold() float64 {
+	if len(s.thresholds) == 0 {
+		return Thresholds[0]
+	}
+	return s.thresholds[0]
 }
 
 // Get returns the limits of provider, or all providers sorted when provider

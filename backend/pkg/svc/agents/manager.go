@@ -62,6 +62,7 @@ type Manager struct {
 	extraEnv  []string
 	versions  map[string]string
 	hooks     hooks // listeners + permission hook (hooks.go)
+	usage     UsageSink
 }
 
 // NewManager loads persisted sessions from dir (created on demand).

@@ -1766,6 +1766,222 @@
             }
           },
           "additionalProperties": false
+        },
+        "usage": {
+          "title": "Usage",
+          "type": "object",
+          "properties": {
+            "headerButton": {
+              "title": "Usage button in the header",
+              "type": "boolean",
+              "default": true,
+              "description": "Show a button that opens the Usage screen (tokens, costs and subscription limits).",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_header_button",
+                "control": "toggle",
+                "keywords": "usage button header chart cost screen"
+              }
+            },
+            "claudeLimits": {
+              "title": "Claude subscription limits",
+              "type": "boolean",
+              "default": true,
+              "description": "Read your Claude Pro/Max usage (5-hour and weekly windows) with the Claude Code login, at most every 5 minutes while the AI bar is open. Read only.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_claude_limits",
+                "control": "toggle",
+                "keywords": "claude subscription limits pro max usage oauth"
+              }
+            },
+            "notify": {
+              "title": "Limit notifications",
+              "type": "boolean",
+              "default": true,
+              "description": "Notify once per window when a subscription limit reaches the warning and critical levels.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_notify",
+                "control": "toggle",
+                "keywords": "subscription limit notification alert warning threshold"
+              }
+            },
+            "warnAt": {
+              "title": "Warning level",
+              "type": "number",
+              "default": 80,
+              "description": "Limits turn amber (and notify) from this share of the window.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_warn_at",
+                "control": "slider",
+                "step": 5,
+                "unit": "%",
+                "keywords": "limit warning amber threshold percent",
+                "min": 50,
+                "max": 100
+              },
+              "minimum": 50,
+              "maximum": 100
+            },
+            "criticalAt": {
+              "title": "Critical level",
+              "type": "number",
+              "default": 90,
+              "description": "Limits turn red and send a second notification from this share of the window.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_critical_at",
+                "control": "slider",
+                "step": 5,
+                "unit": "%",
+                "keywords": "limit critical red second threshold percent",
+                "min": 50,
+                "max": 100
+              },
+              "minimum": 50,
+              "maximum": 100
+            },
+            "limitWindow": {
+              "title": "Limit shown in the strip",
+              "type": "string",
+              "default": "auto",
+              "description": "Which subscription window the strip shows for Claude Code and Codex. Automatic picks the fullest one.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_limit_window",
+                "control": "selector",
+                "keywords": "subscription limit window five hour weekly strip",
+                "visibleWhen": {
+                  "key": "ai.strip.limit",
+                  "equals": true
+                }
+              },
+              "enum": [
+                "auto",
+                "5h",
+                "week"
+              ],
+              "x-enumLabels": {
+                "auto": "Automatic",
+                "5h": "5-hour window",
+                "week": "Weekly"
+              }
+            },
+            "stripTokens": {
+              "title": "Tokens next to the cost",
+              "type": "boolean",
+              "default": true,
+              "description": "The strip shows the conversation's tokens as well as its cost, e.g. “12k · ≈ $0.12”.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_strip_tokens",
+                "control": "toggle",
+                "keywords": "usage tokens strip session count",
+                "visibleWhen": {
+                  "key": "ai.strip.cost",
+                  "equals": true
+                }
+              }
+            },
+            "currencyStyle": {
+              "title": "Cost format",
+              "type": "string",
+              "default": "symbol",
+              "description": "Costs are in US dollars (provider list prices).",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_currency",
+                "control": "selector",
+                "keywords": "cost currency dollar usd format price"
+              },
+              "enum": [
+                "symbol",
+                "code"
+              ],
+              "x-enumLabels": {
+                "symbol": "$1.23",
+                "code": "1.23 USD"
+              }
+            },
+            "decimals": {
+              "title": "Cost decimals",
+              "type": "number",
+              "default": 2,
+              "description": "Smaller amounts show as “<$0.01”.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_decimals",
+                "control": "slider",
+                "step": 1,
+                "keywords": "cost decimals precision cents",
+                "min": 2,
+                "max": 4
+              },
+              "minimum": 2,
+              "maximum": 4
+            },
+            "defaultRange": {
+              "title": "Usage screen opens on",
+              "type": "string",
+              "default": "today",
+              "description": "Period selected when the Usage screen opens.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_default_range",
+                "control": "selector",
+                "keywords": "usage screen range today week month"
+              },
+              "enum": [
+                "today",
+                "week",
+                "month"
+              ],
+              "x-enumLabels": {
+                "today": "Today",
+                "week": "Week",
+                "month": "Month"
+              }
+            },
+            "sparklines": {
+              "title": "Daily charts",
+              "type": "boolean",
+              "default": true,
+              "description": "Small per-day charts on the Usage screen (week and month).",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_sparklines",
+                "control": "toggle",
+                "keywords": "usage chart sparkline per day graph"
+              }
+            },
+            "hiddenProviders": {
+              "title": "Hidden providers",
+              "type": "array",
+              "default": [],
+              "description": "Provider ids left out of the Usage screen (they are still recorded), e.g. ollama.",
+              "x-settings": {
+                "category": "ai",
+                "section": "usage_limits",
+                "label": "prefs.ai.usage_hidden",
+                "control": "list",
+                "keywords": "hide providers usage screen ollama local"
+              }
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false

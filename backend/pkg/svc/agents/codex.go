@@ -7,7 +7,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/svc/usage"
 )
 
 // Codex: `codex app-server` (stdio JSON-RPC, protocol v2). One thread per
@@ -123,10 +125,13 @@ type codexConn struct {
 	deltas map[string]bool // agentMessage ids that streamed deltas
 	sep    bool            // a message ended; separate the next one
 	usage  *Usage
+	cum    *usage.Cumulative // thread totals -> per-turn usage
+	model  string            // model the thread runs (start/resume result)
+	total  *[3]int64         // latest thread totals: input, output, cached
 }
 
 func (codexAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, error) {
-	c := &codexConn{opts: o, sink: sink, deltas: map[string]bool{}}
+	c := &codexConn{opts: o, sink: sink, deltas: map[string]bool{}, cum: usage.NewCumulative()}
 	args, env, err := codexArgs(o)
 	if err != nil {
 		return nil, err
@@ -179,10 +184,12 @@ func (c *codexConn) openThread(params map[string]any, resumeID string) error {
 			Thread struct {
 				ID string `json:"id"`
 			} `json:"thread"`
+			Model string `json:"model"`
 		}
 		_ = json.Unmarshal(res, &r)
 		c.mu.Lock()
 		c.thread = r.Thread.ID
+		c.model = r.Model
 		c.ready = true
 		q := c.queue
 		c.queue = nil
@@ -340,14 +347,16 @@ func (c *codexConn) onNotify(method string, params json.RawMessage) {
 		WillRetry  bool `json:"willRetry"`
 		TokenUsage struct {
 			Total struct {
-				InputTokens  int64 `json:"inputTokens"`
-				OutputTokens int64 `json:"outputTokens"`
+				InputTokens       int64 `json:"inputTokens"`
+				OutputTokens      int64 `json:"outputTokens"`
+				CachedInputTokens int64 `json:"cachedInputTokens"`
 			} `json:"total"`
 			Last struct {
 				TotalTokens int64 `json:"totalTokens"`
 			} `json:"last"`
 			ModelContextWindow int64 `json:"modelContextWindow"`
 		} `json:"tokenUsage"`
+		RateLimits *codexRateSnapshot `json:"rateLimits"`
 	}
 	_ = json.Unmarshal(params, &p)
 	switch method {
@@ -379,6 +388,20 @@ func (c *codexConn) onNotify(method string, params json.RawMessage) {
 		// what currently fills the context window.
 		c.usage = &Usage{InputTokens: p.TokenUsage.Total.InputTokens, OutputTokens: p.TokenUsage.Total.OutputTokens,
 			ContextTokens: p.TokenUsage.Last.TotalTokens, ContextWindow: p.TokenUsage.ModelContextWindow}
+		tot := p.TokenUsage.Total
+		c.total = &[3]int64{tot.InputTokens, tot.OutputTokens, tot.CachedInputTokens}
+		c.mu.Lock()
+		inTurn := c.turn != ""
+		c.mu.Unlock()
+		if !inTurn && c.cum != nil {
+			// A resumed thread reports its restored totals before the
+			// first turn: they are the baseline, not this turn's usage.
+			c.cum.Delta(usage.Record{InputTokens: tot.InputTokens, OutputTokens: tot.OutputTokens, CachedTokens: tot.CachedInputTokens})
+		}
+	case "account/rateLimits/updated":
+		if p.RateLimits != nil {
+			reportLimits(c.sink, codexLimits(*p.RateLimits))
+		}
 	case "error":
 		if !p.WillRetry && p.Error.Message != "" {
 			c.sink.Emit(Event{Kind: KindError, Message: p.Error.Message})
@@ -391,6 +414,14 @@ func (c *codexConn) onNotify(method string, params json.RawMessage) {
 		c.turn = ""
 		c.mu.Unlock()
 		c.sep = false
+		if c.usage != nil && c.total != nil {
+			u := *c.usage
+			c.mu.Lock()
+			model := c.model
+			c.mu.Unlock()
+			u.Turn = turnFrom(c.cum, model, c.total[0], c.total[1], c.total[2], 0)
+			c.usage = &u
+		}
 		c.sink.Emit(Event{Kind: KindDone, Usage: c.usage})
 	}
 }

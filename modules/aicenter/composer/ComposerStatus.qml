@@ -11,7 +11,8 @@ import "../../services/ai/Providers.js" as Providers
 // Strip above the composer: `◆ engine · model ▾` (opens the model picker),
 // `· effort ▾` (EffortChip, inline selector), agent status, the context
 // window meter (ContextMeter, Compact button), session cost (costText) and
-// the subscription limit (limitFraction 0..1 + limitText). Each item can be
+// the subscription limit (limitFraction 0..1 + limitText, limitLevel); both
+// usage items open the Usage screen (usageRequested). Each item can be
 // hidden in the settings (ai.strip.*).
 RowLayout {
     id: root
@@ -22,11 +23,16 @@ RowLayout {
     property bool canCompact: false
     property bool compacting: false
     property string costText: ""
+    property string costDetail: ""
     property real limitFraction: -1
     property string limitText: ""
+    property string limitLevel: "ok"
+    property string limitTooltip: ""
+    property string limitDetail: ""
 
     signal pickRequested
     signal compactRequested
+    signal usageRequested
 
     readonly property var model: Ai.currentModel
     readonly property bool isAgent: model !== null && model.kind === "agent"
@@ -112,20 +118,22 @@ RowLayout {
         compacting: root.compacting
         onCompactRequested: root.compactRequested()
     }
-    Text {
+    UsageSlot {
         objectName: "composerCost"
         visible: Config.ai.strip.cost !== false && root.costText.length > 0
         text: root.costText
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-4)
-        color: Colors.outline
+        tooltip: I18n.t("ai.usage.session")
+        detail: root.costDetail
+        onClicked: root.usageRequested()
     }
-    Text {
+    UsageSlot {
         objectName: "composerLimit"
         visible: Config.ai.strip.limit !== false && root.limitFraction >= 0
         text: root.limitText || Math.round(root.limitFraction * 100) + "%"
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-4)
-        color: root.limitFraction >= 0.8 ? Colors.warning : Colors.outline
+        fraction: root.limitFraction
+        level: root.limitLevel
+        tooltip: root.limitTooltip
+        detail: root.limitDetail
+        onClicked: root.usageRequested()
     }
 }
