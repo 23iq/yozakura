@@ -36,7 +36,7 @@ func TestCodexCatalogWithoutThread(t *testing.T) {
 	}
 }
 func TestClaudeCatalogEffortFromInstalledProtocol(t *testing.T) {
-	o := catalogFake(t, "<\n{\"type\":\"control_response\",\"response\":{\"subtype\":\"success\",\"request_id\":\"catalog\",\"response\":{\"models\":[{\"value\":\"default\",\"displayName\":\"Default\",\"supportsEffort\":true,\"supportedEffortLevels\":[\"low\",\"high\"]},{\"value\":\"fast\",\"displayName\":\"Fast\"}]}}}\n=hold\n")
+	o := catalogFake(t, "<\n{\"type\":\"control_response\",\"response\":{\"subtype\":\"success\",\"request_id\":\"catalog\",\"response\":{\"models\":[{\"value\":\"default\",\"displayName\":\"Default\",\"description\":\"Opus 5.5 · Best for everyday tasks\",\"resolvedModel\":\"claude-opus-5-5\",\"supportsEffort\":true,\"supportedEffortLevels\":[\"low\",\"high\"]},{\"value\":\"fast\",\"displayName\":\"Fast\"}]}}}\n=hold\n")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	cat, err := (claudeAdapter{}).Models(ctx, o)
@@ -45,6 +45,12 @@ func TestClaudeCatalogEffortFromInstalledProtocol(t *testing.T) {
 	}
 	if !cat.ManualModel || len(cat.Models) != 2 || len(cat.Models[0].Efforts) != 2 || len(cat.Models[1].Efforts) != 0 {
 		t.Fatalf("catalog=%+v", cat)
+	}
+	if cat.Models[0].Resolved != "Opus 5.5" || cat.Models[1].Resolved != "" {
+		t.Fatalf("resolved=%q/%q", cat.Models[0].Resolved, cat.Models[1].Resolved)
+	}
+	if got := claudeResolvedName("", "claude-x"); got != "claude-x" {
+		t.Fatalf("fallback=%q", got)
 	}
 }
 func TestDiscoveryTimeout(t *testing.T) {

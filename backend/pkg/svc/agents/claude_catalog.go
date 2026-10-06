@@ -34,11 +34,13 @@ func (claudeAdapter) Models(ctx context.Context, o StartOptions) (ModelCatalog, 
 				RequestID string `json:"request_id"`
 				Response  struct {
 					Models []struct {
-						Value   string   `json:"value"`
-						Name    string   `json:"displayName"`
-						Effort  bool     `json:"supportsEffort"`
-						Levels  []string `json:"supportedEffortLevels"`
-						Default string   `json:"defaultEffort"`
+						Value       string   `json:"value"`
+						Name        string   `json:"displayName"`
+						Description string   `json:"description"`
+						ResolvedID  string   `json:"resolvedModel"`
+						Effort      bool     `json:"supportsEffort"`
+						Levels      []string `json:"supportedEffortLevels"`
+						Default     string   `json:"defaultEffort"`
 					} `json:"models"`
 				} `json:"response"`
 			} `json:"response"`
@@ -52,6 +54,9 @@ func (claudeAdapter) Models(ctx context.Context, o StartOptions) (ModelCatalog, 
 		} else {
 			for _, entry := range response.Response.Response.Models {
 				model := ModelInfo{ID: entry.Value, Name: entry.Name, Efforts: []string{}, DefaultEffort: entry.Default, IsDefault: entry.Value == "default"}
+				if model.IsDefault {
+					model.Resolved = claudeResolvedName(entry.Description, entry.ResolvedID)
+				}
 				if entry.Effort && effortFlag && len(entry.Levels) > 0 {
 					model.Efforts = entry.Levels
 				}
@@ -84,4 +89,15 @@ func (claudeAdapter) Models(ctx context.Context, o StartOptions) (ModelCatalog, 
 	case <-ctx.Done():
 		return fallback, errors.New("claude code model discovery timed out")
 	}
+}
+
+// claudeResolvedName is the concrete model behind Claude's "default" alias:
+// the head of its description ("Opus 5.5 · Best for everyday, complex
+// tasks"), else the resolved model id.
+func claudeResolvedName(description, resolvedID string) string {
+	head, _, _ := strings.Cut(description, "·")
+	if head = strings.TrimSpace(head); head != "" && len(head) <= 40 {
+		return head
+	}
+	return resolvedID
 }

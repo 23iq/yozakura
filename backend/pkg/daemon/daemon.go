@@ -22,6 +22,7 @@ import (
 	"yozakura/backend/pkg/svc/clipboard"
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
+	"yozakura/backend/pkg/svc/fsbrowse"
 	"yozakura/backend/pkg/svc/gamemode"
 	"yozakura/backend/pkg/svc/keystore"
 	"yozakura/backend/pkg/svc/linkpreview"
@@ -139,6 +140,7 @@ func New() (*Daemon, error) {
 
 	linkSvc := linkpreview.NewService()
 	linkSvc.Register(d.srv)
+	fsbrowse.NewService().Register(d.srv)
 
 	gmSvc := gamemode.NewService(d.paths)
 	gmSvc.Register(d.srv)

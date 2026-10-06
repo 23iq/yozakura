@@ -16,6 +16,9 @@ type ModelInfo struct {
 	Efforts       []string `json:"efforts"`
 	DefaultEffort string   `json:"defaultEffort"`
 	IsDefault     bool     `json:"isDefault,omitempty"`
+	// Resolved names the concrete model behind an alias such as Claude's
+	// "default" ("Opus 5.5"), so the UI can show it before the first turn.
+	Resolved string `json:"resolved,omitempty"`
 }
 type ModelCatalog struct {
 	Models      []ModelInfo `json:"models"`
