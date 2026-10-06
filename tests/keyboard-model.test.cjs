@@ -180,3 +180,11 @@ test('planEdit: the user\'s switch is never replaced by the default', () => {
     const three = two.concat([{ layout: 'ua', variant: '' }]);
     assert.ok(!('switchBind' in M.planEdit(true, one, { layouts: three }, cfg)));
 });
+
+test('planEdit: a grp: option is the user\'s own switch, no alt_shift on top', () => {
+    const one = { available: true, layouts: [{ layout: 'us', variant: '' }], switchBind: 'none', options: ['grp:lwin_toggle'], repeatRate: 25, repeatDelay: 600 };
+    const two = [{ layout: 'us', variant: '' }, { layout: 'ru', variant: '' }];
+    assert.strictEqual(M.planEdit(false, one, { layouts: two }).switchBind, 'none');
+    const cfg = { layouts: [{ layout: 'us', variant: '' }], switchBind: 'none', options: ['grp:menu_toggle'] };
+    assert.ok(!('switchBind' in M.planEdit(true, one, { layouts: two }, cfg)));
+});

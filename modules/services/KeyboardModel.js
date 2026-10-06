@@ -283,12 +283,16 @@ function touchesCompositor(patch) {
 // nothing the user had is lost; showIndicator alone never takes over.
 // Going from one layout to several with no switch key (switchBind none)
 // gets alt_shift, so the new layout is reachable; a switch the user set is
-// kept. cfg is the keyboard domain (the values in effect once managed).
+// kept (also one only present as an XKB grp: option). cfg is the keyboard domain (the values in effect once managed).
 function planEdit(managed, current, patch, cfg) {
     var out = {};
     var before = effective(managed, cfg, current);
     var newLayouts = patch && patch.layouts;
-    var needSwitch = newLayouts !== undefined && patch.switchBind === undefined && _list(newLayouts).length > 1 && before.layouts.length <= 1 && before.switchBind === "none";
+    // an XKB grp: option is a switch of the user's own (unknown to the binds)
+    var ownSwitch = _list(patch && patch.options !== undefined ? patch.options : before.options).some(function (o) {
+        return String(o).indexOf("grp:") === 0;
+    });
+    var needSwitch = newLayouts !== undefined && patch.switchBind === undefined && _list(newLayouts).length > 1 && before.layouts.length <= 1 && before.switchBind === "none" && !ownSwitch;
     if (touchesCompositor(patch) && !managed) {
         var cur = _currentValues(current);
         Object.keys(cur).forEach(function (k) {

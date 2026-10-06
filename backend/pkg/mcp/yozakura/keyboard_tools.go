@@ -181,7 +181,7 @@ func CheckLayoutKnown(c Caller, l KeyboardLayout) error {
 // SaveLayouts writes keyboard.layouts through the validated config layer.
 // Going from one layout to several with no switch key (switchBind none)
 // also sets alt_shift so the new layout is reachable; a switch the user
-// chose is never replaced.
+// chose is never replaced (nor one set as an XKB grp: option).
 func SaveLayouts(store *catalog.Store, list []KeyboardLayout) error {
 	raw, _ := json.Marshal(list)
 	var v any
@@ -191,11 +191,27 @@ func SaveLayouts(store *catalog.Store, list []KeyboardLayout) error {
 	if err != nil {
 		return err
 	}
-	if len(list) > 1 && len(before.Layouts) <= 1 && before.SwitchBind == "none" {
+	if len(list) > 1 && len(before.Layouts) <= 1 && before.SwitchBind == "none" && !hasGrpOption(store) {
 		kv = append(kv, catalog.KV{Key: "keyboard.switchBind", Value: "alt_shift"})
 	}
 	_, err = store.SetAll(kv, false)
 	return err
+}
+
+// hasGrpOption reports an XKB grp: option in keyboard.options: a layout
+// switch of the user's own the switchBind names do not cover.
+func hasGrpOption(store *catalog.Store) bool {
+	v, _, err := store.Get("keyboard.options")
+	if err != nil {
+		return false
+	}
+	opts, _ := v.([]any)
+	for _, o := range opts {
+		if s, _ := o.(string); strings.HasPrefix(s, "grp:") {
+			return true
+		}
+	}
+	return false
 }
 
 func keyboardTools(d Deps) []mcp.ToolDef {

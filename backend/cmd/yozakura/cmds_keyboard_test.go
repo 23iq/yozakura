@@ -275,3 +275,13 @@ func TestKeyboardAddSecondLayoutDefaultsSwitch(t *testing.T) {
 	_, got, _ = run(t, cfg, "get", "keyboard.switchBind")
 	assert.Equal(t, "caps\n", got)
 }
+
+// A grp: option is the user's own switch: no alt_shift on top of it.
+func TestKeyboardAddKeepsGrpOptionSwitch(t *testing.T) {
+	env, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""}],"switchBind":"none","options":["grp:lwin_toggle"],"repeatRate":25,"repeatDelay":600}`
+	var out, errOut bytes.Buffer
+	assert.Equal(t, 0, runKeyboard([]string{"add", "ru"}, env, &out, &errOut), errOut.String())
+	_, got, _ := run(t, cfg, "get", "keyboard.switchBind")
+	assert.Equal(t, "none\n", got)
+}
