@@ -26,6 +26,26 @@ function rowHeight(style, base) {
     return style === "cards" ? Math.round(base * 1.5) : base;
 }
 
+// Results grouped by provider: `starts[i]` is true when row i opens a group
+// (a section label sits above it), `before[i]` counts the labels at or above
+// row i, so row i's y is i * rowHeight + before[i] * labelHeight.
+function sections(items) {
+    var starts = [];
+    var before = [];
+    var n = 0;
+    for (var i = 0; i < (items ? items.length : 0); i++) {
+        var s = i === 0 || items[i].provider !== items[i - 1].provider;
+        if (s)
+            n++;
+        starts.push(s);
+        before.push(n);
+    }
+    return {
+        "starts": starts,
+        "before": before
+    };
+}
+
 function columns(width, cell) {
     return Math.max(1, Math.floor(width / cell));
 }

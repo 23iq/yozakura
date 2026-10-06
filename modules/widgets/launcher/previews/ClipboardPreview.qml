@@ -1,6 +1,5 @@
 import QtQuick
-import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 
 // Clipboard entry preview: the full text of the entry.
 Flickable {
@@ -12,13 +11,12 @@ Flickable {
     contentHeight: body.implicitHeight
     boundsBehavior: Flickable.StopAtBounds
 
-    Text {
+    KitText {
         id: body
         width: parent.width
+        role: "body"
         text: preview.result && preview.result.data ? String(preview.result.data.preview || "") : ""
-        color: Colors.overBackground
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(0)
         wrapMode: Text.Wrap
+        elide: Text.ElideNone
     }
 }

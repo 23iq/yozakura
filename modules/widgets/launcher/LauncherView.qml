@@ -23,7 +23,7 @@ Item {
     readonly property bool bare: Config.layout.launcher.compactWhenEmpty && currentTab === 0 && searchText.length === 0
     readonly property bool previewing: currentTab === 0 && searchView.previewOpen
     implicitWidth: !bare && (!isCompact || previewing) ? Metrics.launcherWideW : Metrics.launcherCompactW
-    implicitHeight: bare ? Metrics.rowHeight : isCompact ? Metrics.launcherCompactH : Metrics.launcherWideH
+    implicitHeight: bare ? Metrics.rowHeight : isCompact && !previewing ? Metrics.launcherCompactH : Metrics.launcherWideH
     clip: bare || sizeMorph.running || heightMorph.running
 
     Behavior on implicitWidth {

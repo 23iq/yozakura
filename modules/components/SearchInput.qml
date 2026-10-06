@@ -18,6 +18,12 @@ StyledRect {
     property bool passwordMode: false  // Si true, muestra círculos en lugar del texto
     property bool centerText: false  // Si true, centra el texto horizontalmente
     property bool disableCursorNavigation: false  // Si true, Left/Right siempre emiten señales sin mover el cursor
+    // Hooks for restyled fields (kit SearchField): the text field itself,
+    // the inner padding, and optional slots before / after the text.
+    readonly property alias field: textField
+    property int padding: 8
+    property Component leading: null
+    property Component trailing: null
 
     signal searchTextChanged(string text)
     signal accepted
@@ -52,8 +58,14 @@ StyledRect {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: root.padding
         spacing: 8
+
+        Loader {
+            active: root.leading !== null
+            visible: active
+            sourceComponent: root.leading
+        }
 
         Text {
             text: root.iconText
@@ -169,6 +181,12 @@ StyledRect {
                     event.accepted = true;
                 }
             }
+        }
+
+        Loader {
+            active: root.trailing !== null
+            visible: active
+            sourceComponent: root.trailing
         }
     }
 }

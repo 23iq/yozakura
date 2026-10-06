@@ -66,6 +66,14 @@ test('tab prefixes switch only on "<prefix> " exactly', () => {
     assert.equal(P.tabProvider(4).id, 'notes');
 });
 
+test('hintPrefixes: enabled providers with a prefix, in hint order', () => {
+    assert.deepEqual(plain(P.hintPrefixes(PREFIX, [])), ['cc', 'ee', '=', '?']);
+    assert.deepEqual(plain(P.hintPrefixes(PREFIX, ['emoji'])), ['cc', '=', '?']);
+    assert.deepEqual(plain(P.hintPrefixes(Object.assign({}, PREFIX, { ai: '' }), [])), ['cc', 'ee', '=']);
+    assert.deepEqual(plain(P.hintPrefixes(PREFIX, [], ['files', 'bogus'])), ['ff']);
+    assert.deepEqual(plain(P.hintPrefixes(null, [])), []);
+});
+
 test('calculator', () => {
     const cases = { '12*7': 84, '12x7': 84, '2^10': 1024, '-3^2': -9, '2^-1': 0.5, '(1+2)*3': 9, 'sqrt(16)+1': 5,
         '10%': 0.1, '5!': 120, 'log2(8)': 3, '7 mod 3': 1, '3 ÷ 4': 0.75, '2pi': 2 * Math.PI, 'max(1, 4, 2)': 4 };

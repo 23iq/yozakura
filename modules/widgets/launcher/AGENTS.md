@@ -12,15 +12,15 @@ Tab completes a command or asks the AI, Esc closes.
 ```
 launcher/
 ├── LauncherView.qml      root: search tab + prefix tabs (StackLayout/Loaders), tab prefix detection
-├── LauncherSearch.qml    search field, selection/expansion, keyboard handling
+├── LauncherSearch.qml    kit SearchField (prefix KeyHints) + Divider, results in a kit Group, keyboard handling
 ├── LauncherResults.qml   creates the providers (by URL from Providers.js), routes the query, merges results
-├── ResultList.qml        ListView: rows, sliding highlight, expanded options
-├── ResultRow.qml         one result (icon/thumbnail/glyph, title, subtitle, badge, Enter hint)
-├── ResultIcon.qml / ResultCard.qml / ResultGrid.qml   shared icon tile, "cards" look, app icon grid (2D arrows)
-├── ResultStyles.js       layout.launcher.resultStyle: effective style (grid only for apps), grid navigation (pure)
-├── PreviewPane.qml       lazy debounced preview; previews/PreviewRegistry.js maps provider -> previews/*Preview.qml
-├── ResultOptions.qml     options of an expanded result
-├── KeyHint.qml           "Launch ⏎" hint with a keycap
+├── ResultList.qml        ListView: a SectionLabel per provider run, ResultRows, expanded ResultActions
+├── ResultRow.qml         one result as a kit ListRow (list / cards): icon, title, subtitle, badge or ↵ when selected
+├── ResultIcon.qml / ResultGrid.qml   app icon / thumbnail / glyph (kit Art), app icon grid (2D arrows)
+├── ResultStyles.js       layout.launcher.resultStyle: effective style, provider sections, grid navigation (pure)
+├── PreviewPane.qml       detail pane (layout.launcher.preview): icon, name, type, description, body, "Actions"
+│                         group; previews/PreviewRegistry.js maps provider -> previews/*Preview.qml (body)
+├── ResultActions.qml     actions of a result as kit ListRows (expanded row, detail pane)
 ├── Providers.js          provider registry + routing (pure, tests/launcher.test.cjs)
 ├── Calc.js / Units.js    safe calculator, unit + currency conversion (pure)
 ├── Commands.js           "> command" matching / args / run plan over assets/commands/commands.json (pure)

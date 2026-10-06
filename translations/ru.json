@@ -1564,6 +1564,7 @@
   "onboarding.finish.again": "Пройти настройку снова можно в Настройки > О программе или командой «%1».",
   "onboarding.preset.current": "Сейчас",
   "launcher.copy": "Копировать",
+  "launcher.actions": "Действия",
   "launcher.run": "Выполнить",
   "launcher.complete": "Дополнить",
   "launcher.open": "Открыть",

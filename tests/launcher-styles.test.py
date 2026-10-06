@@ -101,11 +101,13 @@ check(sv("v.styleName") == "list" and not h.eval(grid, "visible"), "grid falls b
 layout(resultStyle="list")
 
 # preview: opens for a calculator result, loads lazily, can be turned off
+type_text("")
 layout(preview=True)
+settle(300)
 type_fast("12*7")
 check(sv("v.previewOpen"), "preview open for the calculator result")
 check(h.eval(preview, "shown") is None or h.eval(preview, "shown") == {}, "preview content waits for the pause")
-settle(300)
+settle()
 check(h.eval(preview, "shown.title") == "= 84", "preview shows the settled result")
 check(h.eval(view, "implicitWidth") == h.eval(view, "Metrics.launcherWideW"), "view widens for the preview")
 type_fast("5 kg in lb")
@@ -113,7 +115,16 @@ check(h.eval(preview, "shown.title") == "= 84", "preview lags behind fast typing
 settle(300)
 check(h.eval(preview, "shown.title").startswith("= 11.02"), "preview follows once typing pauses")
 type_text("fire")
-check(not sv("v.previewOpen"), "no preview for apps")
+settle(300)
+check(sv("v.previewOpen"), "apps get the detail pane")
+check(h.eval(view, "implicitHeight") == h.eval(view, "Metrics.launcherWideH"), "view grows for the detail pane")
+check(h.eval(preview, "shown.title") == "Firefox", "detail shows the selected app")
+check(h.eval(preview, "actions.length") == 3 and h.eval(preview, "actions[0].id") == "", "detail lists the app actions, main first")
+h.eval(preview, "actionTriggered('')")
+check(h.eval(view, "Visibilities.module") == "", "a detail action runs the result and closes")
+h.eval(view, "Visibilities.module = 'launcher'")
+type_text("=")
+check(not sv("v.previewOpen"), "no detail for hint rows")
 layout(preview=False)
 type_text("12*7")
 check(not sv("v.previewOpen"), "preview off")
@@ -125,6 +136,15 @@ settle(300)
 check(h.eval(preview, "available"), "files have a preview")
 check(h.eval(preview, "shown.title") == "a.md", "file preview settled")
 
+# grouped list + field hints
+layout(preview=False)
+type_text("")
+field = h.find(win, "launcherSearchInput")
+check(h.eval(field, "hints.join(' ')") == "cc ee = ?", "prefix hints at the right of the field")
+type_text("fi")
+check(h.eval(results, "groups.starts[0]") is True, "the first result opens a section")
+check(h.eval(results, "rowY(0)") == h.eval(results, "labelHeight"), "rows sit below their section label")
+
 # compactWhenEmpty: only the search field until the first keystroke
 layout(compactWhenEmpty=True)
 type_text("")
@@ -134,7 +154,7 @@ check(h.eval(view, "height") == h.eval(view, "Metrics.rowHeight"), "view follows
 type_text("fire")
 settle()
 check(not h.eval(view, "bare") and h.eval(view, "height") == h.eval(view, "Metrics.launcherCompactH"), "first keystroke opens the launcher")
-layout(compactWhenEmpty=False)
+layout(compactWhenEmpty=False, preview=True)
 
 if fails:
     print(f"{len(fails)} failure(s)", file=sys.stderr)
