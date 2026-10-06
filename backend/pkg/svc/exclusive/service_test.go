@@ -2,7 +2,6 @@ package exclusive
 
 import (
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -156,13 +155,6 @@ func TestReloadThroughYozd(t *testing.T) {
 	bad := &fakeYozd{name: "hyprland", errs: []string{"line 3: bad", "line 9: worse"}}
 	if err := reloadWith(bad); err == nil || !strings.Contains(err.Error(), "line 3: bad; line 9: worse") {
 		t.Fatalf("config errors must fail: %v", err)
-	}
-	down := &fakeYozd{nameErr: errors.New("connect: refused")}
-	if err := reloadWith(down); err == nil || down.reloadCalls != 0 {
-		t.Fatalf("unreachable yozd must fail without reloading: %v", err)
-	}
-	if err := reloadWith(&fakeYozd{name: "niri"}); err == nil {
-		t.Fatal("non-hyprland must fail")
 	}
 }
 

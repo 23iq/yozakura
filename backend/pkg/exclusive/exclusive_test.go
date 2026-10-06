@@ -367,3 +367,38 @@ func TestEnableRestoreInCustomHyprDir(t *testing.T) {
 	}
 	sameTree(t, before, snapshot(t, hypr))
 }
+
+func TestEnableWithoutCompositorChecksOffline(t *testing.T) {
+	for _, tc := range []struct {
+		name, warn string
+		err        error
+		wantErr    bool
+	}{{"clean", "", nil, false}, {"warning", "checked on next start", nil, false}, {"errors", "", errors.New("line 3"), true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			home, hypr := luaHome(t)
+			sd, rec := newSystemd(), &recorder{}
+			o := testOptions(t, home, sd, rec)
+			o.Reload = func() error { return ErrNoCompositor }
+			var checked string
+			o.Offline = func(entry string) (string, error) { checked = entry; return tc.warn, tc.err }
+			before := snapshot(t, hypr)
+			st, err := Enable(o)
+			if checked != filepath.Join(hypr, "hyprland.lua") {
+				t.Fatalf("offline check got %q", checked)
+			}
+			if tc.wantErr {
+				if err == nil || !strings.Contains(err.Error(), "line 3") || st.Active {
+					t.Fatalf("errors must roll back: %v %+v", err, st)
+				}
+				sameTree(t, before, snapshot(t, hypr))
+				return
+			}
+			if err != nil || !st.Active || !strings.Contains(st.Reason, tc.warn) {
+				t.Fatalf("%v %+v", err, st)
+			}
+			if _, err := Restore(o, ""); err != nil {
+				t.Fatalf("restore without a compositor must not fail: %v", err)
+			}
+		})
+	}
+}

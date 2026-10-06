@@ -35,6 +35,7 @@ func Host() exclusive.Options {
 		Import:     importSettings,
 		Unimport:   unimportSettings,
 		Reload:     reloadCompositor,
+		Offline:    verifyConfig,
 	}
 }
 
@@ -154,18 +155,15 @@ type compositorAPI interface {
 }
 
 // reloadCompositor reloads Hyprland through yozd and fails on any config
-// error it reports. It asks yozd which compositor runs and refuses to go on
-// when yozd cannot answer or it is not Hyprland: without the reload check
-// there is no safety net, so Enable must not silently skip it.
+// error it reports. It asks yozd which compositor runs; when none does
+// (fresh install from a TTY) it returns ErrNoCompositor and Enable checks
+// the new entry offline (verifyConfig) instead.
 func reloadCompositor() error { return reloadWith(yozdcli.New()) }
 
 func reloadWith(y compositorAPI) error {
 	name, err := y.Compositor()
-	if err != nil {
-		return fmt.Errorf("cannot ask the compositor daemon which compositor runs (is Hyprland running?): %w", err)
-	}
-	if name != "hyprland" {
-		return fmt.Errorf("the compositor daemon reports %q, not hyprland", name)
+	if err != nil || name != "hyprland" {
+		return exclusive.ErrNoCompositor
 	}
 	if err := y.ReloadConfig(); err != nil {
 		return err

@@ -27,6 +27,9 @@ var (
 	ErrHomeManager  = errors.New("the Hyprland config is managed by home-manager (a link into /nix/store); enable exclusive mode through the Nix module instead")
 	ErrLinkedDir    = errors.New("~/.config/hypr is a symlink; exclusive mode only manages a real directory")
 	ErrNoBackup     = errors.New("no exclusive-mode backup found")
+	// ErrNoCompositor is what Reload returns when no Hyprland is running to
+	// reload (fresh install from a TTY): Enable then validates offline.
+	ErrNoCompositor = errors.New("no running Hyprland")
 	ErrNotActive    = errors.New("exclusive mode is not active; name a backup to restore it anyway")
 )
 
@@ -75,6 +78,10 @@ type Options struct {
 	Import   func(monitors []ipc.OutputConfig, kb *ipc.KeyboardSettings) (previous map[string]any, err error)
 	Unimport func(previous map[string]any) error
 	Reload   func() error
+	// Offline checks the new entry file when Reload says ErrNoCompositor.
+	// It returns config errors as err and a warning when it could not
+	// check (no Hyprland binary, flag unsupported). Nil: nothing is checked.
+	Offline func(entry string) (warning string, err error)
 }
 
 func (o Options) appID() string {
@@ -197,11 +204,22 @@ func enable(o Options) (Status, error) {
 	if err != nil {
 		return r.rollback(err)
 	}
-	if err := o.reload(); err != nil {
+	var warns []string
+	if err := o.reload(); errors.Is(err, ErrNoCompositor) {
+		if o.Offline != nil {
+			warn, oerr := o.Offline(filepath.Join(hypr, entry))
+			if oerr != nil {
+				return r.rollback(fmt.Errorf("config check: %w", oerr))
+			}
+			if warn != "" {
+				warns = append(warns, warn)
+			}
+		}
+	} else if err != nil {
 		return r.rollback(fmt.Errorf("hyprland reload: %w", err))
 	}
 	st := GetStatus(o)
-	st.Reason = strings.Join(unitErrs, "; ")
+	st.Reason = strings.Join(append(unitErrs, warns...), "; ")
 	return st, nil
 }
 
@@ -271,7 +289,7 @@ func Restore(o Options, from string) (Status, error) {
 		return GetStatus(o), err
 	}
 	errs := enableUnits(o, m.Units)
-	if err := o.reload(); err != nil {
+	if err := o.reload(); err != nil && !errors.Is(err, ErrNoCompositor) {
 		errs = append(errs, "hyprland reload: "+err.Error())
 	}
 	st := GetStatus(o)
