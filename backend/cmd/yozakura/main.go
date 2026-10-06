@@ -66,10 +66,20 @@ func main() {
 			os.Exit(runCompletion(args[1:], os.Stdout, os.Stderr))
 		case "cmd", "command":
 			os.Exit(runCmd(args[1:], os.Stdout, os.Stderr))
+		case "binds", "bind":
+			os.Exit(runBinds(args[1:], defaultBindsEnv(), os.Stdout, os.Stderr))
 		case "special", "specials":
 			os.Exit(runSpecial(args[1:], os.Stdout, os.Stderr))
 		case "launch":
 			os.Exit(runLaunch(args[1:], defaultLaunchEnv(), os.Stderr))
+		case "timer", "timers":
+			os.Exit(runTimer(args[1:], os.Stdout, os.Stderr))
+		case "stopwatch", "sw":
+			os.Exit(runStopwatch(args[1:], os.Stdout, os.Stderr))
+		case "remind", "reminder":
+			os.Exit(runRemind(args[1:], os.Stdout, os.Stderr))
+		case "usage":
+			os.Exit(runUsage(args[1:], newClient(), os.Stdout, os.Stderr))
 		}
 	}
 
@@ -585,12 +595,21 @@ Commands:
                                      ({bin} preset help; "{bin} preset <name>" applies)
     special <command>                Special workspaces: list, open, add, set, remove,
                                      app add|remove, import-binds ({bin} special help)
+    timer <time> [name]              Start a timer ("10m tea", "1h30", "18:00"); list, pause,
+                                     resume, add, stop, pomodoro ({bin} timer help)
+    stopwatch [start|pause|lap|reset] Stopwatch (no argument: status)
+    remind <time|in time> <text>     Reminder ("18:00 call mom", "in 20m stretch"); list, cancel
+    binds <command>                  Keybind advisor: search, list, check, suggest, set,
+                                     rm, undo ({bin} binds help)
     completion <bash|zsh|fish>       Print a shell completion script
     mods [command]                   Manage {name} modifications
     mcp [--list-tools]               Run the built-in MCP server on stdio (for AI agents)
     voice press <ai|dictation>       Voice input: start (or stop) listening
     voice release|stop|cancel        Voice input: end a hold / finish / discard
     voice status|warm|unload         Voice input: state, preload or stop whisper
+    usage [today|week|month] [--by provider|model|day]
+                                     AI token usage and cost (--json for raw)
+    usage limits                     AI subscription limits (Claude, Codex)
     help                             Show this help message
     version, -v, --version           Show {name} version
     goodbye                          Uninstall {name}

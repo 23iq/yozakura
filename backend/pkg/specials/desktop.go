@@ -101,6 +101,27 @@ func FindByName(dirs []string, name string) (Entry, bool) {
 	return Entry{}, false
 }
 
+// Entries lists every installed app (first dir wins for an id), in dir
+// then file order.
+func Entries(dirs []string) []Entry {
+	var out []Entry
+	seen := map[string]bool{}
+	for _, d := range dirs {
+		files, _ := filepath.Glob(filepath.Join(d, "*.desktop"))
+		for _, f := range files {
+			id := strings.TrimSuffix(filepath.Base(f), ".desktop")
+			if seen[id] {
+				continue
+			}
+			if e, ok := readEntry(f, id); ok {
+				seen[id] = true
+				out = append(out, e)
+			}
+		}
+	}
+	return out
+}
+
 // readEntry parses the [Desktop Entry] group; hidden/NoDisplay entries
 // still count (they are installed), entries without Exec do not.
 func readEntry(path, id string) (Entry, bool) {

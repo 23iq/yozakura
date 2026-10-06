@@ -10,8 +10,8 @@ import (
 
 // topCommands are completed after the binary name (keep in sync with showHelp).
 var topCommands = []string{
-	"config", "preset", "special", "cmd", "completion", "run", "toggle", "launch", "lock", "reload", "quit", "screen", "suspend",
-	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "ipc", "install", "remove",
+	"config", "preset", "special", "binds", "cmd", "timer", "stopwatch", "remind", "completion", "run", "toggle", "launch", "lock", "reload", "quit", "screen", "suspend",
+	"brightness", "wallpaper", "schemes", "mods", "mcp", "voice", "usage", "ipc", "install", "remove",
 	"colorpicker", "lockwall", "thumbs", "dthumbs", "update", "doctor", "refresh", "onboarding", "help", "version", "goodbye",
 }
 
@@ -19,6 +19,9 @@ const (
 	configSubs = "list get set toggle describe reset search schema path help"
 	presetSubs = "list apply save update diff show aspects mix duplicate rename delete restore trash set-info export import try edit active help"
 	keyedSubs  = "list get set toggle describe reset"
+	timerSubs  = "list pause resume reset cancel add stop pomodoro help"
+	swSubs     = "start pause resume toggle lap reset status"
+	remindSubs = "list cancel help"
 )
 
 // Completion scripts complete config keys and values from the live catalog
@@ -62,6 +65,12 @@ _{bin}() {
         fi ;;
     completion)
         (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "bash zsh fish" -- "$cur")) ;;
+    timer)
+        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{timerSubs}" -- "$cur")) ;;
+    stopwatch)
+        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{swSubs}" -- "$cur")) ;;
+    remind)
+        (( COMP_CWORD == 2 )) && COMPREPLY=($(IFS=' ' compgen -W "{remindSubs}" -- "$cur")) ;;
     wallpaper|lockwall)
         COMPREPLY=($(compgen -f -- "$cur")) ;;
     esac
@@ -95,6 +104,9 @@ _{bin}() {
         if (( CURRENT == 3 )); then compadd -- list ${(f)"$({bin} cmd __ids 2>/dev/null)"}
         else compadd -- ${(f)"$({bin} cmd __args $words[3] 2>/dev/null)"}; fi ;;
     completion) (( CURRENT == 3 )) && compadd -- bash zsh fish ;;
+    timer) (( CURRENT == 3 )) && compadd -- {timerSubs} ;;
+    stopwatch) (( CURRENT == 3 )) && compadd -- {swSubs} ;;
+    remind) (( CURRENT == 3 )) && compadd -- {remindSubs} ;;
     wallpaper|lockwall) _files ;;
     esac
 }
@@ -131,6 +143,9 @@ complete -c {bin} -n '__{bin}_at preset "apply diff export" 3' -a '(begin; {bin}
 complete -c {bin} -n '__{bin}_at preset diff 4' -a '(begin; {bin} preset __names 2>/dev/null; echo current; end)'
 complete -c {bin} -n '__{bin}_at preset import 3' -F
 complete -c {bin} -n '__{bin}_at completion "" 2' -a 'bash zsh fish'
+complete -c {bin} -n '__{bin}_at timer "" 2' -a '{timerSubs}'
+complete -c {bin} -n '__{bin}_at stopwatch "" 2' -a '{swSubs}'
+complete -c {bin} -n '__{bin}_at remind "" 2' -a '{remindSubs}'
 complete -c {bin} -n '__{bin}_at cmd "" 2' -a '(begin; {bin} cmd __ids 2>/dev/null; echo list; end)'
 complete -c {bin} -n '__fish_seen_subcommand_from cmd; and test (count (__{bin}_args)) -eq 3' -a '({bin} cmd __args (__{bin}_args)[3] 2>/dev/null)'
 complete -c {bin} -n '__fish_seen_subcommand_from wallpaper lockwall' -F
@@ -156,6 +171,9 @@ func completionScript(shell string) (string, error) {
 		"{presetSubs}", presetSubs,
 		"{keyedSubsBash}", strings.ReplaceAll(keyedSubs, " ", "|"),
 		"{keyedSubs}", keyedSubs,
+		"{timerSubs}", timerSubs,
+		"{swSubs}", swSubs,
+		"{remindSubs}", remindSubs,
 	).Replace(tpl), nil
 }
 

@@ -1409,7 +1409,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 			result = "subscribed"
 
 		default:
-			resp.Error = "method not found"
+			result, err = s.dispatchExtra(req) // binds.go
 		}
 
 		if err != nil {

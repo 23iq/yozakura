@@ -32,11 +32,14 @@ import (
 	ocrsvc "yozakura/backend/pkg/svc/ocr"
 	"yozakura/backend/pkg/svc/powerprofile"
 	"yozakura/backend/pkg/svc/preset"
+	"yozakura/backend/pkg/svc/providers"
 	recordersvc "yozakura/backend/pkg/svc/recorder"
 	"yozakura/backend/pkg/svc/screenshot"
 	"yozakura/backend/pkg/svc/sleep"
 	"yozakura/backend/pkg/svc/systemmonitor"
+	"yozakura/backend/pkg/svc/timers"
 	"yozakura/backend/pkg/svc/transfers"
+	"yozakura/backend/pkg/svc/usage"
 	voicesvc "yozakura/backend/pkg/svc/voice"
 	"yozakura/backend/pkg/svc/wallpaper"
 	"yozakura/backend/pkg/svc/weather"
@@ -65,6 +68,9 @@ type Daemon struct {
 	voice      *voicesvc.Service
 	mods       *mods.Manager
 	agents     *agents.Manager
+	notify     *notifysvc.Service
+	timers     *timers.Service
+	usage      *usage.Service
 
 	shutdownCh   chan struct{}
 	shutdownOnce sync.Once
@@ -175,11 +181,35 @@ func New() (*Daemon, error) {
 	// shelling out to notify-send. See pkg/svc/notify for the rationale.
 	notifySvc := notifysvc.NewService()
 	notifySvc.Register(d.srv)
+	d.notify = notifySvc
+
+	// Timers, stopwatch, reminders (persisted, wall clock); finished
+	// timers notify through notify.Send. The scheduler starts in Run.
+	d.timers = timers.NewService(timers.Options{
+		Path:     filepath.Join(p.DataDir, timers.FileName),
+		Notify:   func(sp notifysvc.SendParams) { _, _ = notifySvc.Send(sp) },
+		Pomodoro: func() timers.PomodoroConfig { return timers.SystemPomodoro(p.Config("system")) },
+	})
+	d.timers.Register(d.srv)
+
+	// AI usage ledger + subscription limits (see pkg/svc/usage). The
+	// agents service can feed it through usage.Recorder / usage.LimitsSink.
+	d.usage = usage.NewService(usage.Options{
+		Dir:         usage.DefaultDir(p.DataDir),
+		Prices:      usage.LoadPrices(usage.BundledPricesPath(paths.FindShellSource()), usage.OverridePricesPath(p.ConfigDir)),
+		ClaudeFetch: usage.NewClaudeFetcher().Fetch,
+		Notify: func(summary, body string) {
+			_, _ = notifySvc.Send(notifysvc.SendParams{Summary: summary, Body: body, AppIcon: "dialog-warning", ReplaceKey: "usage-limit"})
+		},
+	})
+	d.usage.Register(d.srv)
 
 	// CLI coding agents (Claude Code, Codex, OpenCode) for the AI center.
 	agentsMgr := agents.NewManager(filepath.Join(p.DataDir, "agents"))
 	agents.NewService(agentsMgr).Register(d.srv)
 	d.agents = agentsMgr
+	// Chat providers: Ollama probe, connection tests, model capability table.
+	providers.NewService(p).Register(d.srv)
 	// Local speech-to-text (whisper.cpp server started on demand).
 	d.voice = voicesvc.NewService(d.paths)
 	d.voice.Register(d.srv)
@@ -284,6 +314,16 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 				log.Printf("[yozakura] nightlight restore: %v", err)
 			}
 		}
+	}()
+
+	// Timers that expired while the daemon was down fire on the first poll;
+	// wait for the shell's notify subscription so their notifications show.
+	go func() {
+		deadline := time.Now().Add(30 * time.Second)
+		for d.notify.Subscribers() == 0 && time.Now().Before(deadline) {
+			time.Sleep(250 * time.Millisecond)
+		}
+		d.timers.Start()
 	}()
 
 	if err := d.spawnQS(qsBin, shellQML); err != nil {
@@ -434,6 +474,12 @@ func (d *Daemon) shutdown() {
 	}
 	if d.voice != nil {
 		d.voice.Close()
+	}
+	if d.timers != nil {
+		d.timers.Close()
+	}
+	if d.usage != nil {
+		d.usage.Close()
 	}
 
 	if d.sweep != nil {
