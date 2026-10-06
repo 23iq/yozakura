@@ -16,8 +16,8 @@ type hyprKeyboardJSON struct {
 }
 
 // parseHyprActiveLayout reads `j/devices` and returns the main keyboard's
-// layout state. Index is the position of the active keymap among the layouts
-// when it can be inferred, else 0.
+// layout state. Index is always 0: j/devices reports only the active keymap
+// name, not its position.
 func parseHyprActiveLayout(data []byte) (ipc.KeyboardLayoutState, error) {
 	var d struct {
 		Keyboards []hyprKeyboardJSON `json:"keyboards"`
@@ -44,8 +44,16 @@ func parseHyprActiveLayout(data []byte) (ipc.KeyboardLayoutState, error) {
 
 // buildHyprKeyboardCmds builds the raw hyprctl requests for s (already
 // normalized and validated). Tokens are xkb names; Lua values are %q-quoted.
-func buildHyprKeyboardCmds(s ipc.KeyboardSettings, lua bool) []string {
+// full=false emits only kb_layout and kb_variant, leaving options, model and
+// key repeat untouched; full=true also sets them (empty options clear them).
+func buildHyprKeyboardCmds(s ipc.KeyboardSettings, lua, full bool) []string {
 	layouts, variants, options := s.Joined()
+	if !full {
+		if lua {
+			return []string{fmt.Sprintf("eval hl.config({ input = { kb_layout = %q, kb_variant = %q } })", layouts, variants)}
+		}
+		return []string{"keyword input:kb_layout " + layouts, "keyword input:kb_variant " + variants}
+	}
 	if lua {
 		cmd := fmt.Sprintf("eval hl.config({ input = { kb_layout = %q, kb_variant = %q, kb_options = %q", layouts, variants, options)
 		if s.Model != "" {
@@ -76,8 +84,12 @@ func buildHyprKeyboardCmds(s ipc.KeyboardSettings, lua bool) []string {
 	return cmds
 }
 
-// ApplyKeyboard applies XKB settings at runtime.
+// ApplyKeyboard applies the full XKB settings at runtime.
 func (h *Hyprland) ApplyKeyboard(s ipc.KeyboardSettings) error {
+	return h.applyKeyboard(s, true)
+}
+
+func (h *Hyprland) applyKeyboard(s ipc.KeyboardSettings, full bool) error {
 	if err := s.Validate(); err != nil {
 		return err
 	}
@@ -85,7 +97,7 @@ func (h *Hyprland) ApplyKeyboard(s ipc.KeyboardSettings) error {
 	if len(s.Layouts) == 0 {
 		return fmt.Errorf("no keyboard layouts")
 	}
-	for _, cmd := range buildHyprKeyboardCmds(s, h.supportsLuaDispatchers()) {
+	for _, cmd := range buildHyprKeyboardCmds(s, h.supportsLuaDispatchers(), full) {
 		if _, err := h.dispatch(cmd); err != nil {
 			return err
 		}

@@ -3,6 +3,7 @@ package hyprland
 import (
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"yozakura/backend/pkg/yozd/ipc"
@@ -11,12 +12,12 @@ import (
 func TestBuildHyprKeyboardCmdsLua(t *testing.T) {
 	s := ipc.KeyboardSettings{Layouts: []string{"us", "ru"}, Options: []string{"grp:alt_shift_toggle"}, RepeatRate: 25, RepeatDelay: 600}.Normalize()
 	want := []string{`eval hl.config({ input = { kb_layout = "us,ru", kb_variant = ",", kb_options = "grp:alt_shift_toggle", repeat_rate = 25, repeat_delay = 600 } })`}
-	if got := buildHyprKeyboardCmds(s, true); !reflect.DeepEqual(got, want) {
+	if got := buildHyprKeyboardCmds(s, true, true); !reflect.DeepEqual(got, want) {
 		t.Fatalf("%q", got)
 	}
 	s.RepeatRate, s.RepeatDelay = 0, 0
 	want = []string{`eval hl.config({ input = { kb_layout = "us,ru", kb_variant = ",", kb_options = "grp:alt_shift_toggle" } })`}
-	if got := buildHyprKeyboardCmds(s, true); !reflect.DeepEqual(got, want) {
+	if got := buildHyprKeyboardCmds(s, true, true); !reflect.DeepEqual(got, want) {
 		t.Fatalf("%q", got)
 	}
 }
@@ -29,7 +30,7 @@ func TestBuildHyprKeyboardCmdsLegacy(t *testing.T) {
 		"keyword input:kb_options ",
 		"keyword input:repeat_rate 30",
 	}
-	if got := buildHyprKeyboardCmds(s, false); !reflect.DeepEqual(got, want) {
+	if got := buildHyprKeyboardCmds(s, false, true); !reflect.DeepEqual(got, want) {
 		t.Fatalf("%q", got)
 	}
 }
@@ -68,5 +69,27 @@ func TestApplyKeyboardRejectsInjection(t *testing.T) {
 	h := &Hyprland{}
 	if err := h.ApplyKeyboard(ipc.KeyboardSettings{Layouts: []string{`us"}}); os.exit() --`}}); err == nil {
 		t.Fatal("accepted injection")
+	}
+}
+
+func TestBuildHyprKeyboardCmdsModelLua(t *testing.T) {
+	s := ipc.KeyboardSettings{Layouts: []string{"us"}, Model: "pc105"}.Normalize()
+	want := []string{`eval hl.config({ input = { kb_layout = "us", kb_variant = "", kb_options = "", kb_model = "pc105" } })`}
+	if got := buildHyprKeyboardCmds(s, true, true); !reflect.DeepEqual(got, want) {
+		t.Fatalf("%q", got)
+	}
+}
+
+func TestSetKeyboardLayoutsLeavesOptionsAlone(t *testing.T) {
+	s := ipc.KeyboardSettings{Layouts: []string{"us", "ru"}, Options: []string{"caps:escape"}, RepeatRate: 25}.Normalize()
+	for _, lua := range []bool{true, false} {
+		for _, c := range buildHyprKeyboardCmds(s, lua, false) {
+			if strings.Contains(c, "kb_options") || strings.Contains(c, "repeat") || strings.Contains(c, "kb_model") {
+				t.Fatalf("partial apply touched other settings: %q", c)
+			}
+		}
+	}
+	if got := buildHyprKeyboardCmds(s, true, false); got[0] != `eval hl.config({ input = { kb_layout = "us,ru", kb_variant = "," } })` {
+		t.Fatalf("%q", got)
 	}
 }

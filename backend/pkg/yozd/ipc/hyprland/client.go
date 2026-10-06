@@ -1033,10 +1033,10 @@ func (h *Hyprland) SwitchKeyboardLayout(action string) error {
 }
 
 func (h *Hyprland) SetKeyboardLayouts(layouts string, variants string) error {
-	return h.ApplyKeyboard(ipc.KeyboardSettings{
+	return h.applyKeyboard(ipc.KeyboardSettings{
 		Layouts:  strings.Split(layouts, ","),
 		Variants: strings.Split(variants, ","),
-	})
+	}, false)
 }
 
 func (h *Hyprland) GetCapabilities() (ipc.Capabilities, error) {
