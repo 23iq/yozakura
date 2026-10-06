@@ -82,6 +82,8 @@ type Usage struct {
 	CostUSD       float64 `json:"costUsd"`
 	ContextTokens int64   `json:"contextTokens,omitempty"`
 	ContextWindow int64   `json:"contextWindow,omitempty"`
+	// Turn is this turn's share (the fields above may be running totals).
+	Turn *TurnUsage `json:"turn,omitempty"`
 }
 
 // SessionMeta is the persisted description of a session.

@@ -98,7 +98,7 @@ var yozakuraReadOnly = map[string]bool{
 	"config_schema": true, "config_get": true, "config_search": true, "config_describe": true, "presets_list": true,
 	"preset_diff": true, "wallpapers_list": true,
 	"windows_list": true, "workspaces_list": true, "media_status": true, "volume_get": true,
-	"specials_list": true,
+	"specials_list": true, "usage_summary": true,
 }
 
 var claudeReadTools = map[string]bool{

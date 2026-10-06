@@ -233,4 +233,18 @@ JsonAdapter {
         property bool showUnconnected: true
         property bool showRecent: true
     }
+    property JsonObject usage: JsonObject {
+        property bool headerButton: true
+        property bool claudeLimits: true
+        property bool notify: true
+        property int warnAt: 80
+        property int criticalAt: 90
+        property string limitWindow: "auto"
+        property bool stripTokens: true
+        property string currencyStyle: "symbol"
+        property int decimals: 2
+        property string defaultRange: "today"
+        property bool sparklines: true
+        property list<string> hiddenProviders: []
+    }
 }

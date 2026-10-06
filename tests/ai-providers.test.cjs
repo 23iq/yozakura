@@ -57,8 +57,16 @@ test('openai stream: text, reasoning, split tool call arguments, usage', () => {
     assert.equal(r.thinking, 'hmm');
     assert.equal(r.done, true);
     assert.deepEqual(r.tools, [{ id: 'call_1', name: 'windows_list', args: { all: true } }]);
-    assert.deepEqual(r.usage, { inputTokens: 3, outputTokens: 4 });
+    assert.deepEqual(r.usage, { inputTokens: 3, outputTokens: 4, cachedTokens: 0 });
     assert.equal(feed('openai', ['{"error":{"message":"bad key"}}']).error, 'bad key');
+});
+
+test('cached prompt tokens (OpenAI details, Gemini cachedContentTokenCount)', () => {
+    const o = feed('openai', ['data: {"choices":[],"usage":{"prompt_tokens":100,"completion_tokens":5,"prompt_tokens_details":{"cached_tokens":64}}}']);
+    assert.equal(o.usage.cachedTokens, 64);
+    assert.equal(o.usage.inputTokens, 100);
+    const g = feed('gemini', ['data: {"candidates":[{"content":{"parts":[{"text":"x"}]}}],"usageMetadata":{"promptTokenCount":50,"candidatesTokenCount":2,"cachedContentTokenCount":32}}']);
+    assert.equal(g.usage.cachedTokens, 32);
 });
 
 test('anthropic body + stream (incl. minimax bearer)', () => {

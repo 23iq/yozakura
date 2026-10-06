@@ -36,7 +36,8 @@ QtObject {
             customCurl: customCurl || "",
             system: Compaction.PROMPT,
             messages: Compaction.request(rows, p),
-            tools: []
+            tools: [],
+            usageSession: session.chatId || ""
         });
         _request = req;
         req.finished.connect(result => {

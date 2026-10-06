@@ -270,6 +270,7 @@ func (k *sessionSink) Emit(ev Event) {
 	}
 	k.s.emitLocked(ev)
 	if ev.Kind == KindDone {
+		m.recordTurnLocked(k.s, ev.Usage)
 		k.s.flushLocked()
 		k.s.meta.Updated = m.now().UnixMilli()
 		if len(k.s.pending) > 0 {

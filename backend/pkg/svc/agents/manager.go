@@ -61,6 +61,7 @@ type Manager struct {
 	coalesce  time.Duration
 	extraEnv  []string
 	versions  map[string]string
+	usage     UsageSink
 }
 
 // NewManager loads persisted sessions from dir (created on demand).

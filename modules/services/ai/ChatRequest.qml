@@ -3,6 +3,7 @@ import Quickshell
 import Quickshell.Io
 import "Providers.js" as Providers
 import qs.modules.globals
+import qs.modules.services
 
 // One streaming chat-completion request (curl). Request body and headers go
 // to 0600 files in $XDG_RUNTIME_DIR so API keys never appear in argv; a
@@ -21,6 +22,9 @@ QtObject {
     property string customCurl: ""
     property string effort: ""
     property int numCtx: 0
+    // Ledger session id (UsageService): each finished request with usage
+    // is recorded once.
+    property string usageSession: ""
 
     readonly property bool running: curl.running
     property bool aborted: false
@@ -128,6 +132,8 @@ QtObject {
                 error = curlErr.text.trim() || ("curl exited with " + code);
             else if (!error && !acc.text && !acc.thinking && acc.calls.length === 0)
                 error = Providers.errorFromBody(root._raw) || "Empty response";
+            if (acc.usage)
+                UsageService.recordHttp(root.model, acc.usage, root.usageSession);
             root.finished({
                 text: acc.text,
                 thinking: acc.thinking,

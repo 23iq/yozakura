@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"yozakura/backend/pkg/svc/usage"
 )
 
 // Claude Code: `claude -p` with stream-json in/out. One long-lived process
@@ -110,10 +112,11 @@ type claudeConn struct {
 	// context tokens of the latest main-thread request (its prompt incl.
 	// cache reads/writes + output), reported with the done event
 	lastContext int64
+	cum         *usage.Cumulative // process totals -> per-turn usage
 }
 
 func (a claudeAdapter) Start(_ context.Context, o StartOptions, sink Sink) (Conn, error) {
-	c := &claudeConn{opts: o, sink: sink, inMsg: map[string]bool{}, tools: map[string]string{}}
+	c := &claudeConn{opts: o, sink: sink, inMsg: map[string]bool{}, tools: map[string]string{}, cum: usage.NewCumulative()}
 	var cfgPath string
 	if data := claudeMCPConfig(o); data != nil {
 		path, err := writePrivateFile("mcp-*.json", data)
@@ -210,6 +213,8 @@ func (c *claudeConn) onLine(line []byte) {
 		c.onControlRequest(m)
 	case "result":
 		c.onResult(m)
+	case "rate_limit_event":
+		reportLimits(c.sink, claudeRateLimits(asMap(m["rate_limit_info"])))
 	}
 }
 
@@ -343,6 +348,9 @@ func (c *claudeConn) onResult(m map[string]any) {
 	u := asMap(m["usage"])
 	usage := &Usage{InputTokens: int64(num(u["input_tokens"])), OutputTokens: int64(num(u["output_tokens"])), CostUSD: num(m["total_cost_usd"]),
 		ContextTokens: c.lastContext, ContextWindow: claudeContextWindow(asMap(m["modelUsage"]))}
+	// modelUsage and total_cost_usd are running totals of this process.
+	model, in, out, cached := claudeTotals(asMap(m["modelUsage"]))
+	usage.Turn = turnFrom(c.cum, model, in, out, cached, usage.CostUSD)
 	if isErr, _ := m["is_error"].(bool); isErr {
 		msg, _ := m["result"].(string)
 		if msg == "" {

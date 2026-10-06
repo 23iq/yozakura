@@ -256,6 +256,7 @@ QtObject {
             system: system,
             effort: effort,
             numCtx: numCtx,
+            usageSession: chatId,
             messages: toMessages(),
             tools: _round <= maxRounds ? tools.map(t => ({
                         name: t.name,

@@ -116,6 +116,11 @@ AI_CONFIG = """
         }
         property QtObject ollama: QtObject { property int numCtx: 32768 }
         property QtObject picker: QtObject { property bool showCapabilities: true; property bool groupByProvider: true; property bool showUnconnected: true; property bool showRecent: true }
+        property QtObject usage: QtObject {
+            property bool headerButton: true; property bool claudeLimits: true; property bool notify: true; property int warnAt: 80; property int criticalAt: 90
+            property string limitWindow: "auto"; property bool stripTokens: true; property string currencyStyle: "symbol"; property int decimals: 2
+            property string defaultRange: "today"; property bool sparklines: true; property list<string> hiddenProviders: []
+        }
         property QtObject mcp: QtObject { property bool yozakura: true; property bool importClaude: true; property bool importCodex: true; property bool importOpencode: true; property list<var> disabled: [] }
         property QtObject selection: QtObject {
             property bool enabled: true; property string language: "English"; property string output: "replace"
@@ -160,7 +165,7 @@ def build(preset: str, mode: str, ai_stub: str) -> Path:
     (services / "BackendService.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { property bool socketAvailable: true; function call(m, p, cb) {} function addSubscription(s, cb) { return 1; } }\n")
     (services / "KeyStore.qml").write_text("pragma Singleton\nimport QtQuick\nQtObject { property var keyCache: ({}); function getKey(p) { return ''; } function getCustomCurl(p) { return ''; } function getEndpoint(p) { return ''; } function hasKey(p) { return false; } }\n")
     (services / "Ai.qml").write_text(ai_stub)
-    (services / "qmldir").write_text("module qs.modules.services\nsingleton Ai 1.0 Ai.qml\nsingleton I18n 1.0 I18n.qml\nsingleton BackendService 1.0 BackendService.qml\nsingleton KeyStore 1.0 KeyStore.qml\n")
+    (services / "qmldir").write_text("module qs.modules.services\nsingleton Ai 1.0 Ai.qml\nsingleton I18n 1.0 I18n.qml\nsingleton BackendService 1.0 BackendService.qml\nsingleton KeyStore 1.0 KeyStore.qml\nsingleton UsageService 1.0 UsageService.qml\n")
     (qs / "modules/globals/GlobalStates.qml").write_text("""pragma Singleton
 import QtQuick
 QtObject {

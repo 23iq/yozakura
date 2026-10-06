@@ -16,6 +16,9 @@ const (
 	GroupProvider = "provider"
 	GroupModel    = "model"
 	GroupDay      = "day"
+	// GroupProviderDay: one row per provider and day (Key = day, Provider
+	// set), chronological; the AI bar draws per-provider sparklines from it.
+	GroupProviderDay = "provider_day"
 )
 
 // SummaryQuery selects records and how to group them. From/To are only
@@ -94,8 +97,10 @@ func Summarize(recs []Record, groupBy string) ([]Row, Totals, error) {
 			k = key{k: r.Model, provider: r.Provider}
 		case GroupDay:
 			k = key{k: r.Time.Local().Format("2006-01-02")}
+		case GroupProviderDay:
+			k = key{k: r.Time.Local().Format("2006-01-02"), provider: r.Provider}
 		default:
-			return nil, Totals{}, errors.New("usage: groupBy must be provider, model or day")
+			return nil, Totals{}, errors.New("usage: groupBy must be provider, model, day or provider_day")
 		}
 		row := groups[k]
 		if row == nil {
@@ -110,8 +115,11 @@ func Summarize(recs []Record, groupBy string) ([]Row, Totals, error) {
 	}
 	sort.Slice(rows, func(i, j int) bool {
 		a, b := rows[i], rows[j]
-		if groupBy == GroupDay {
-			return a.Key < b.Key
+		if groupBy == GroupDay || groupBy == GroupProviderDay {
+			if a.Key != b.Key {
+				return a.Key < b.Key
+			}
+			return a.Provider < b.Provider
 		}
 		if a.CostUSD != b.CostUSD {
 			return a.CostUSD > b.CostUSD

@@ -108,5 +108,19 @@ var data = {
         "groupByProvider": true,
         "showUnconnected": true,
         "showRecent": true
+    },
+    "usage": {
+        "headerButton": true,
+        "claudeLimits": true,
+        "notify": true,
+        "warnAt": 80,
+        "criticalAt": 90,
+        "limitWindow": "auto",
+        "stripTokens": true,
+        "currencyStyle": "symbol",
+        "decimals": 2,
+        "defaultRange": "today",
+        "sparklines": true,
+        "hiddenProviders": []
     }
 };
