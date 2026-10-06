@@ -128,7 +128,7 @@ func TestEqualJSONComparesWholeValues(t *testing.T) {
 // nothing, valid ones land together.
 func TestStoreSetAllIsAllOrNothing(t *testing.T) {
 	s := newStore(t)
-	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(50)}, {"keyboard.repeatDelay", float64(5)}}); err == nil {
+	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(50)}, {"keyboard.repeatDelay", float64(5)}}, false); err == nil {
 		t.Fatal("out-of-range delay must fail")
 	}
 	if _, err := os.Stat(s.File("keyboard")); err == nil {
@@ -137,7 +137,7 @@ func TestStoreSetAllIsAllOrNothing(t *testing.T) {
 	if err := s.Check("keyboard.repeatRate", float64(500), false); err == nil {
 		t.Fatal("Check must validate the range")
 	}
-	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(50)}, {"keyboard.managed", true}}); err != nil {
+	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(50)}, {"keyboard.managed", true}}, false); err != nil {
 		t.Fatal(err)
 	}
 	if v, _, _ := s.Get("keyboard.repeatRate"); v != float64(50) {
@@ -146,7 +146,7 @@ func TestStoreSetAllIsAllOrNothing(t *testing.T) {
 	if v, _, _ := s.Get("keyboard.managed"); v != true {
 		t.Fatalf("managed %v", v)
 	}
-	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(60)}, {"bar.position", "top"}}); err == nil {
+	if _, err := s.SetAll([]KV{{"keyboard.repeatRate", float64(60)}, {"bar.position", "top"}}, false); err == nil {
 		t.Fatal("keys of two domains must fail")
 	}
 }

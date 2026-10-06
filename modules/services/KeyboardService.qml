@@ -76,9 +76,14 @@ Singleton {
         return root.managed ? root.input() : null;
     }
 
-    // Reads the compositor's settings (read only), retrying on errors; then
-    // runs the queued edits.
+    // Reads the compositor's settings (read only), retrying on errors (a new
+    // call starts a fresh round of retries); then runs the queued edits.
     function refreshCurrent() {
+        root._retries = 0;
+        root._read();
+    }
+
+    function _read() {
         if (root._reading)
             return;
         root._reading = true;
@@ -145,7 +150,7 @@ Singleton {
     Timer {
         id: retryTimer
         interval: 1000
-        onTriggered: root.refreshCurrent()
+        onTriggered: root._read()
     }
 
     function loadCatalog() {

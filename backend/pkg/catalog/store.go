@@ -134,12 +134,12 @@ type KV struct {
 
 // SetAll validates every value first and then writes them all in one
 // atomic write: nothing is written when any value is invalid. All keys must
-// belong to one domain.
-func (s *Store) SetAll(values []KV) ([]Change, error) {
+// belong to one domain; force skips enum/range checks like Set.
+func (s *Store) SetAll(values []KV, force bool) ([]Change, error) {
 	domain := ""
 	var all []Leaf
 	for _, kv := range values {
-		d, leaves, err := s.resolve(kv.Key, kv.Value, false)
+		d, leaves, err := s.resolve(kv.Key, kv.Value, force)
 		if err != nil {
 			return nil, err
 		}

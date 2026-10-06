@@ -204,12 +204,15 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 	}
 	e := ref.Entry
 	var value any
+	// arrErr: --add/--remove on the stored array failed; a keyboard takeover
+	// below applies them to the compositor's array instead
+	var arrErr error
 	switch {
 	case add || remove:
 		if e.Type != "array" || ref.Index >= 0 {
 			return fmt.Errorf("--add/--remove need an array key; %s is a %s", e.Key, e.Type)
 		}
-		value, err = c.editArray(e, addV, add, remV, remove)
+		value, arrErr = c.editArray(e, addV, add, remV, remove)
 	case ref.Index >= 0:
 		value, err = catalog.ParseItem(e, strings.Join(a.pos[1:], " "))
 	default:
@@ -219,6 +222,9 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 		return err
 	}
 	if a.has("dry-run") {
+		if arrErr != nil {
+			return arrErr
+		}
 		old, _, _ := c.store.Get(key)
 		if ref.Index < 0 {
 			if _, err := c.cat.Assign(e.Key, value, a.has("force")); err != nil {
@@ -228,10 +234,23 @@ func (c *configEnv) set(args []string, out io.Writer) error {
 		fmt.Fprintf(out, "%s: %s -> %s (dry run, not written)\n", catalog.NormalizeKey(key), shown(e, old), shown(e, value))
 		return nil
 	}
-	if err := yozakura.PrepareConfigSet(c.store, keyboardDaemon(), key, value, a.has("force"), a.has("replace")); err != nil {
-		return err
+	// keyboard: the first change takes the compositor's settings over in the
+	// same write; --add/--remove and [i] apply to the compositor's values
+	handled, changes, err := yozakura.KeyboardConfigSet(c.store, keyboardDaemon(), key, func(base any) (any, error) {
+		switch {
+		case add || remove:
+			return editArrayOn(base, e, addV, add, remV, remove)
+		case ref.Index >= 0:
+			return yozakura.ItemAt(base, ref.Index, value)
+		}
+		return value, nil
+	}, a.has("force"), a.has("replace"))
+	if !handled && err == nil {
+		if arrErr != nil {
+			return arrErr
+		}
+		changes, err = c.store.Set(key, value, a.has("force"))
 	}
-	changes, err := c.store.Set(key, value, a.has("force"))
 	if err != nil {
 		return err
 	}
@@ -244,6 +263,11 @@ func (c *configEnv) editArray(e *catalog.Entry, addV string, add bool, remV stri
 	if err != nil {
 		return nil, err
 	}
+	return editArrayOn(cur, e, addV, add, remV, remove)
+}
+
+// editArrayOn is the array cur after --remove / --add.
+func editArrayOn(cur any, e *catalog.Entry, addV string, add bool, remV string, remove bool) (any, error) {
 	arr, _ := cur.([]any)
 	arr = append([]any{}, arr...)
 	if remove {
@@ -305,10 +329,10 @@ func (c *configEnv) toggle(args []string, out io.Writer) error {
 		return err
 	}
 	b, _ := v.(bool)
-	if err := yozakura.PrepareConfigSet(c.store, keyboardDaemon(), ref.Entry.Key, !b, false, false); err != nil {
-		return err
+	handled, changes, err := yozakura.KeyboardConfigSet(c.store, keyboardDaemon(), ref.Entry.Key, func(any) (any, error) { return !b, nil }, false, false)
+	if !handled && err == nil {
+		changes, err = c.store.Set(ref.Entry.Key, !b, false)
 	}
-	changes, err := c.store.Set(ref.Entry.Key, !b, false)
 	if err != nil {
 		return err
 	}

@@ -132,6 +132,19 @@ func TestConfigSetKeyboardTakesOver(t *testing.T) {
 	assert.EqualValues(t, 50, get("keyboard.repeatRate"), "later edits keep 50")
 }
 
+func TestConfigSetKeyboardIndexUsesCompositorValues(t *testing.T) {
+	d, _, ipc := newDeps(t)
+	ipc.result["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":[],"repeatRate":111,"repeatDelay":175}`
+	get := func(key string) any {
+		return structured(t, callTool(t, d, "config_get", `{"key":"`+key+`"}`))["value"]
+	}
+	assert.True(t, callTool(t, d, "config_set", `{"key":"keyboard.layouts[5]","value":{"layout":"de","variant":""}}`).IsError)
+	assert.Equal(t, false, get("keyboard.managed"), "a failing indexed write takes nothing over")
+	structured(t, callTool(t, d, "config_set", `{"key":"keyboard.layouts[2]","value":{"layout":"de","variant":""}}`))
+	assert.Len(t, get("keyboard.layouts"), 3, "us,ru + de")
+	assert.Equal(t, true, get("keyboard.managed"))
+}
+
 const twoOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,"modes":[{"width":2560,"height":1440,"refresh":165},{"width":2560,"height":1440,"refresh":144}]},
  {"id":"DEL|U27|2","name":"HDMI-A-1","enabled":true,"width":1920,"height":1080,"refresh":60,"x":2560,"scale":1,"modes":[{"width":1920,"height":1080,"refresh":60}]}]`
 

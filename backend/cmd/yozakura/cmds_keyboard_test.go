@@ -172,3 +172,52 @@ func TestConfigToggleManagedTakesOver(t *testing.T) {
 	_, got, _ = run(t, cfg, "get", "keyboard.repeatDelay")
 	assert.Equal(t, "300\n", got)
 }
+
+// --add/--remove and [i] on keyboard arrays apply to the compositor's
+// values (us,ru), not the stale defaults; a failing write takes nothing over.
+func TestConfigSetKeyboardArraysUseCompositorValues(t *testing.T) {
+	_, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":["caps:escape"],"repeatRate":111,"repeatDelay":175}`
+	old := keyboardDaemon
+	keyboardDaemon = func() yozakura.Caller { return rc }
+	t.Cleanup(func() { keyboardDaemon = old })
+	layouts := func() string { _, got, _ := run(t, cfg, "get", "keyboard.layouts", "--json"); return got }
+	managed := func() string { _, got, _ := run(t, cfg, "get", "keyboard.managed"); return got }
+
+	code, _, _ := run(t, cfg, "set", "keyboard.layouts[5]", `{"layout":"de","variant":""}`)
+	assert.Equal(t, 1, code, "index out of range on us,ru")
+	assert.Equal(t, "false\n", managed(), "a failing indexed write takes nothing over")
+
+	code, _, errS := run(t, cfg, "set", "keyboard.layouts", "--add", `{"layout":"de","variant":""}`)
+	assert.Equal(t, 0, code, errS)
+	got := layouts()
+	assert.Contains(t, got, `"layout": "ru"`, "us,ru + de, not us,de")
+	assert.Contains(t, got, `"layout": "de"`)
+	assert.Equal(t, "true\n", managed())
+	_, opts, _ := run(t, cfg, "get", "keyboard.options", "--json")
+	assert.Contains(t, opts, "caps:escape")
+}
+
+func TestConfigSetKeyboardRemoveAndIndexAfterTakeover(t *testing.T) {
+	_, rc := keyboardTestEnv(t)
+	rc.results["keyboard.current"] = `{"available":true,"layouts":[{"layout":"us","variant":""},{"layout":"ru","variant":""}],"switchBind":"alt_shift","options":["caps:escape"],"repeatRate":111,"repeatDelay":175}`
+	old := keyboardDaemon
+	keyboardDaemon = func() yozakura.Caller { return rc }
+	t.Cleanup(func() { keyboardDaemon = old })
+
+	// ru is not in the stale defaults, but is in the compositor's options/layouts
+	code, _, errS := run(t, cfg, "set", "keyboard.options", "--remove", "caps:escape")
+	assert.Equal(t, 0, code, errS)
+	_, got, _ := run(t, cfg, "get", "keyboard.layouts", "--json")
+	assert.Contains(t, got, `"layout": "ru"`)
+
+	_, rc2 := keyboardTestEnv(t)
+	rc2.results["keyboard.current"] = rc.results["keyboard.current"]
+	keyboardDaemon = func() yozakura.Caller { return rc2 }
+	// index 2 appends to us,ru (out of range on the one-layout defaults)
+	code, _, errS = run(t, cfg, "set", "keyboard.layouts[2]", `{"layout":"de","variant":""}`)
+	assert.Equal(t, 0, code, errS)
+	_, got, _ = run(t, cfg, "get", "keyboard.layouts", "--json")
+	assert.Contains(t, got, `"layout": "ru"`)
+	assert.Contains(t, got, `"layout": "de"`)
+}

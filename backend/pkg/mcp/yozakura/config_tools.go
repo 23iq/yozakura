@@ -253,11 +253,18 @@ func (d Deps) configSet(_ context.Context, args json.RawMessage) (*mcp.CallToolR
 	if err != nil {
 		return nil, err
 	}
-	// keyboard: take the compositor's settings over first (ruling K-1)
-	if err := PrepareConfigSet(store, d.callerOrNil(), fullKey(a.Domain, a.Key), value, a.Force, a.Replace); err != nil {
-		return nil, err
+	key := fullKey(a.Domain, a.Key)
+	// keyboard: the first change takes the compositor's settings over, in
+	// the same write (ruling K-1)
+	handled, changes, err := KeyboardConfigSet(store, d.callerOrNil(), key, func(base any) (any, error) {
+		if ref, err := store.Cat.Lookup(key); err == nil && ref.Index >= 0 {
+			return ItemAt(base, ref.Index, value)
+		}
+		return value, nil
+	}, a.Force, a.Replace)
+	if !handled && err == nil {
+		changes, err = store.Set(key, value, a.Force)
 	}
-	changes, err := store.Set(fullKey(a.Domain, a.Key), value, a.Force)
 	if err != nil {
 		return nil, err
 	}

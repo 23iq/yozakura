@@ -73,13 +73,25 @@ var KeyboardTakeoverKeys = map[string]bool{
 // configured values are taken). A repeat value outside the catalog range
 // keeps the configured one.
 func ManageKeyboard(store *catalog.Store, c Caller, replace bool) error {
+	kv, err := takeoverValues(store, c, replace)
+	if err != nil || kv == nil {
+		return err
+	}
+	_, err = store.SetAll(kv, false)
+	return err
+}
+
+// takeoverValues are the writes that take the keyboard over (the
+// compositor's current settings + managed=true); nil when it is managed.
+// Nothing is written.
+func takeoverValues(store *catalog.Store, c Caller, replace bool) ([]catalog.KV, error) {
 	managed, err := KeyboardManaged(store)
 	if err != nil || managed {
-		return err
+		return nil, err
 	}
 	cur, err := CurrentKeyboard(c)
 	if err != nil {
-		return fmt.Errorf("cannot read the compositor's keyboard settings (%v); is the shell running?", err)
+		return nil, fmt.Errorf("cannot read the compositor's keyboard settings (%v); is the shell running?", err)
 	}
 	var kv []catalog.KV
 	if cur.Available {
@@ -95,17 +107,18 @@ func ManageKeyboard(store *catalog.Store, c Caller, replace bool) error {
 		if ValidSwitchBind(cur.SwitchBind) {
 			kv = append(kv, catalog.KV{Key: "keyboard.switchBind", Value: cur.SwitchBind})
 		}
-		for key, v := range map[string]int{"keyboard.repeatRate": cur.RepeatRate, "keyboard.repeatDelay": cur.RepeatDelay} {
-			if inRange(store, key, float64(v)) {
-				kv = append(kv, catalog.KV{Key: key, Value: float64(v)})
+		for _, r := range []struct {
+			key string
+			v   int
+		}{{"keyboard.repeatRate", cur.RepeatRate}, {"keyboard.repeatDelay", cur.RepeatDelay}} {
+			if inRange(store, r.key, float64(r.v)) {
+				kv = append(kv, catalog.KV{Key: r.key, Value: float64(r.v)})
 			}
 		}
 	} else if !replace {
-		return ErrKeyboardUnreadable
+		return nil, ErrKeyboardUnreadable
 	}
-	kv = append(kv, catalog.KV{Key: "keyboard.managed", Value: true})
-	_, err = store.SetAll(kv)
-	return err
+	return append(kv, catalog.KV{Key: "keyboard.managed", Value: true}), nil
 }
 
 // inRange reports whether v lies in the catalog range of key.
@@ -117,21 +130,82 @@ func inRange(store *catalog.Store, key string, v float64) bool {
 	return (e.Min == nil || v >= *e.Min) && (e.Max == nil || v <= *e.Max)
 }
 
-// PrepareConfigSet runs before a generic config write (`config set`,
-// config_set, `config toggle`): a keyboard key that reaches the compositor,
-// or keyboard.managed=true, first takes the keyboard over (ManageKeyboard).
-// The value is validated before, so a failing command never flips managed.
-func PrepareConfigSet(store *catalog.Store, c Caller, key string, value any, force, replace bool) error {
+// KeyboardConfigSet performs a generic config write (`config set`,
+// config_set, `config toggle`) of a keyboard key that reaches the
+// compositor, or of keyboard.managed=true, while the keyboard is not
+// managed yet: build gets the post-takeover value of the whole key (the
+// compositor's layouts, not the defaults) and returns its new whole value,
+// which is validated before the takeover and the write land together in
+// one atomic write. handled is false for any other write (managed already,
+// another key or domain, managed=false): the caller writes it as usual.
+func KeyboardConfigSet(store *catalog.Store, c Caller, key string, build func(base any) (any, error), force, replace bool) (handled bool, changes []catalog.Change, err error) {
 	ref, err := store.Cat.Lookup(key)
 	if err != nil || ref.Entry.Domain != "keyboard" {
-		return nil // the write itself reports a bad key
+		return false, nil, nil // the write itself reports a bad key
 	}
 	name := strings.SplitN(strings.TrimPrefix(ref.Entry.Key, "keyboard."), ".", 2)[0]
-	if !KeyboardTakeoverKeys[name] && !(name == "managed" && value == true) {
-		return nil
+	if !KeyboardTakeoverKeys[name] && name != "managed" {
+		return false, nil, nil
 	}
-	if err := store.Check(key, value, force); err != nil {
-		return err
+	if managed, err := KeyboardManaged(store); err != nil || managed {
+		return false, nil, err
 	}
-	return ManageKeyboard(store, c, replace)
+	if name == "managed" {
+		cur, _, err := store.Get(ref.Entry.Key)
+		if err != nil {
+			return false, nil, err
+		}
+		if v, err := build(cur); err != nil || v != true {
+			return false, nil, err
+		}
+	}
+	kv, err := takeoverValues(store, c, replace)
+	if err != nil {
+		return true, nil, err
+	}
+	base, found := any(nil), false
+	for _, x := range kv {
+		if x.Key == ref.Entry.Key {
+			base, found = x.Value, true
+		}
+	}
+	if !found {
+		if base, _, err = store.Get(ref.Entry.Key); err != nil {
+			return true, nil, err
+		}
+	}
+	whole, err := build(base)
+	if err != nil {
+		return true, nil, err
+	}
+	if err := store.Check(ref.Entry.Key, whole, force); err != nil {
+		return true, nil, err
+	}
+	replaced := false
+	for i := range kv {
+		if kv[i].Key == ref.Entry.Key {
+			kv[i].Value, replaced = whole, true
+		}
+	}
+	if !replaced {
+		kv = append(kv, catalog.KV{Key: ref.Entry.Key, Value: whole})
+	}
+	changes, err = store.SetAll(kv, force)
+	return true, changes, err
+}
+
+// ItemAt is base (an array) with item at index: replaced, or appended at
+// index == len.
+func ItemAt(base any, index int, item any) (any, error) {
+	arr, _ := base.([]any)
+	arr = append([]any{}, arr...)
+	switch {
+	case index < len(arr):
+		arr[index] = item
+	case index == len(arr):
+		arr = append(arr, item)
+	default:
+		return nil, fmt.Errorf("%d items; index %d is out of range", len(arr), index)
+	}
+	return arr, nil
 }
