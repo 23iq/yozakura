@@ -49,7 +49,9 @@ float shapeDistance(vec2 p) {
         vec2 u3 = u * u * u;
         float f = pow(u3.x * u.x + u3.y * u.y, 1.0 / SQUIRCLE_N);
         vec2 g = u3 / max(f * f * f, 1e-6);
-        return (1.0 - f) * e / max(length(g), 1e-6);
+        // first-order distance; never deeper than the straight edges (keeps
+        // it continuous where the corner box meets them)
+        return min((1.0 - f) * e / max(length(g), 1e-6), dEdge);
     }
     float rr = min(r, halfMin);
     vec2 v = rr - q;
@@ -61,7 +63,9 @@ float shapeDistance(vec2 p) {
 void main() {
     vec2 p = qt_TexCoord0 * ubuf.shapeSize;
     float d = shapeDistance(p);
-    float aa = max(fwidth(d), 1e-4);
+    // one screen pixel in item units (not fwidth(d): the distance is only
+    // first-order inside the squircle corner)
+    float aa = max(max(fwidth(p.x), fwidth(p.y)), 1e-4);
     float inside = clamp(d / aa + 0.5, 0.0, 1.0);
 
     vec4 content = texture(source, qt_TexCoord0);
