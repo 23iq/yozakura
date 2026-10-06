@@ -18,6 +18,7 @@ import (
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/svc"
 	"yozakura/backend/pkg/svc/agents"
+	apphookssvc "yozakura/backend/pkg/svc/apphooks"
 	"yozakura/backend/pkg/svc/caffeine"
 	"yozakura/backend/pkg/svc/clipboard"
 	"yozakura/backend/pkg/svc/compositor"
@@ -146,6 +147,7 @@ func New() (*Daemon, error) {
 		layoutSrc = m
 	}
 	keyboard.NewService(layoutSrc).Register(d.srv)
+	apphookssvc.NewService().Register(d.srv)
 
 	keySvc := keystore.NewService(d.paths)
 	keySvc.Register(d.srv)

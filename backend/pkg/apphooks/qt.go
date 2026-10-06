@@ -43,8 +43,10 @@ func (qtHook) owned(env Env, data []byte) bool {
 
 func (h qtHook) Status(env Env) Status {
 	st := Status{ID: h.ID(), Files: []string{h.envFile(env)}}
-	_, err := os.ReadFile(h.envFile(env))
+	data, err := os.ReadFile(h.envFile(env))
 	switch {
+	case err == nil && !h.owned(env, data):
+		st.State, st.Reason = StateManaged, "environment.d already has a file of that name; set QT_QPA_PLATFORMTHEME="+h.platformTheme()
 	case err == nil:
 		st.State = StateConnected
 		if os.Getenv("QT_QPA_PLATFORMTHEME") == "" {
@@ -85,7 +87,7 @@ func (h qtHook) Revert(env Env) (Status, error) {
 	if isManaged(h.envFile(env)) {
 		return failure(st, ErrManaged), ErrManaged
 	}
-	if err := os.Remove(h.envFile(env)); err != nil {
+	if err := removeFile(h.envFile(env)); err != nil {
 		return failure(st, err), err
 	}
 	st = h.Status(env)

@@ -122,9 +122,12 @@ func TestKittyNixStoreSymlinkManaged(t *testing.T) {
 	if err := os.Symlink("/nix/store/abc-kitty.conf", conf); err != nil {
 		t.Fatal(err)
 	}
+	if st := (kittyHook{}).Status(f.env); st.State != StateManaged {
+		t.Fatalf("status %v", st)
+	}
 	st, err := (kittyHook{}).Apply(f.env)
-	if st.State != StateManaged && err == nil {
-		t.Fatal(st)
+	if st.State != StateManaged || err != nil {
+		t.Fatalf("%v %v", st, err)
 	}
 	if _, lerr := os.Lstat(conf); lerr != nil {
 		t.Fatal("link replaced")

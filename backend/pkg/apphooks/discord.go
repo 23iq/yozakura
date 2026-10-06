@@ -181,64 +181,94 @@ func (h discordHook) Status(env Env) Status {
 	return st
 }
 
-// edit applies mutate to every settings file; it stops at the first error.
+func hadKeyMark(id, path string) string { return "hadThemes:" + id + ":" + path }
+
+// edit adds or removes our theme in every client's settings.json. A client
+// that fails (read-only, unreadable) does not stop the others; the result
+// aggregates them.
 func (h discordHook) edit(env Env, add bool) (Status, error) {
 	st := h.Status(env)
 	if st.State == StateAbsent || st.State == StateError {
 		return st, nil
 	}
 	changedAny := false
+	var firstErr error
+	allManaged := true
 	for _, f := range st.Files {
-		o, nl, existed, err := loadSettings(f)
+		changed, err := h.editOne(env, f, add)
 		if err != nil {
-			return failure(st, err), err
-		}
-		l, _ := o.themes()
-		name := themeName(env)
-		has := contains(l, name)
-		if has == add {
+			if firstErr == nil {
+				firstErr = err
+			}
+			allManaged = allManaged && errors.Is(err, ErrManaged)
 			continue
 		}
-		if add {
-			l = append(append([]string{}, l...), name)
-			o.set("enabledThemes", l)
-		} else {
-			var kept []string
-			for _, x := range l {
-				if x != name {
-					kept = append(kept, x)
-				}
-			}
-			if len(kept) == 0 {
-				o.del("enabledThemes")
-			} else {
-				o.set("enabledThemes", kept)
-			}
-		}
-		if err := h.write(f, o, nl, existed || add); err != nil {
-			return failure(st, err), err
-		}
-		changedAny = true
+		changedAny = changedAny || changed
 	}
 	out := h.Status(env)
 	out.NeedsRestart = changedAny && env.running("vesktop", "equibop", "Discord", "discord")
+	if firstErr != nil {
+		if allManaged {
+			out.State, out.Reason = StateManaged, ErrManaged.Error()
+		} else {
+			out.State, out.Reason = StateError, firstErr.Error()
+		}
+		return out, firstErr
+	}
 	return out, nil
 }
 
-func (discordHook) write(path string, o *object, nl, keep bool) error {
-	if len(o.keys) == 0 && !keep {
-		return nil
+func (h discordHook) editOne(env Env, f string, add bool) (bool, error) {
+	o, nl, existed, err := loadSettings(f)
+	if err != nil {
+		return false, err
 	}
-	if len(o.keys) == 0 {
-		if err := checkWritable(path); err != nil {
-			return err
+	l, _ := o.themes()
+	name := themeName(env)
+	if contains(l, name) == add {
+		return false, nil
+	}
+	_, hadKey := o.vals["enabledThemes"]
+	if add {
+		setMark(env, hadKeyMark(h.ID(), f), hadKey)
+		o.set("enabledThemes", append(append([]string{}, l...), name))
+	} else {
+		kept := []string{}
+		for _, x := range l {
+			if x != name {
+				kept = append(kept, x)
+			}
 		}
-		return os.Remove(path) // revert of a file we created
+		if len(kept) == 0 && !hasMark(env, hadKeyMark(h.ID(), f)) {
+			o.del("enabledThemes")
+		} else {
+			o.set("enabledThemes", kept)
+		}
+	}
+	if err := h.write(env, f, o, nl, existed, add); err != nil {
+		return false, err
+	}
+	if !add {
+		setMark(env, hadKeyMark(h.ID(), f), false)
+		setMark(env, createdKey(h.ID(), f), false)
+	}
+	return true, nil
+}
+
+func (h discordHook) write(env Env, path string, o *object, nl, existed, add bool) error {
+	if len(o.keys) == 0 && !add && hasMark(env, createdKey(h.ID(), path)) {
+		return removeFile(path) // revert of a file Apply created
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil && !isManaged(path) {
 		return err
 	}
-	return WriteFileSafe(path, o.marshal(nl))
+	if err := WriteFileSafe(path, o.marshal(nl)); err != nil {
+		return err
+	}
+	if add && !existed {
+		setMark(env, createdKey(h.ID(), path), true)
+	}
+	return nil
 }
 
 func (h discordHook) Apply(env Env) (Status, error)  { return h.edit(env, true) }

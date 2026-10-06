@@ -44,7 +44,11 @@ func (h fileHook) Status(env Env) Status {
 	case err == nil:
 		content := string(data)
 		rest, _ := RemoveBlock(content, env.AppID)
-		if _, _, ok := findBlock(content, env.AppID); ok || h.manual(env, rest) {
+		_, _, ours := findBlock(content, env.AppID)
+		if hint := h.guard(env, rest); ours && hint != "" {
+			// our block plus a second hand-written section: ambiguous, never touch
+			st.State, st.Reason = StateError, "manual: "+hint
+		} else if ours || h.manual(env, rest) {
 			st.State = StateConnected
 			st.NeedsRestart = env.running(h.procs...)
 		} else if hint := h.guard(env, content); hint != "" {
@@ -73,12 +77,12 @@ func (h fileHook) Apply(env Env) (Status, error) {
 	if st.State != StateDisconnected {
 		return st, nil
 	}
-	content := ""
+	content, existed := "", false
 	if data, err := os.ReadFile(h.file(env)); err == nil {
-		content = string(data)
+		content, existed = string(data), true
 	}
 	out, _ := UpsertBlockAt(content, env.AppID, h.body(env), h.atTop)
-	if err := WriteFileSafe(h.file(env), []byte(out)); err != nil {
+	if err := writeBlockFile(env, h.id, h.file(env), existed, out); err != nil {
 		return failure(st, err), err
 	}
 	return h.Status(env), nil
@@ -86,24 +90,7 @@ func (h fileHook) Apply(env Env) (Status, error) {
 
 func (h fileHook) Revert(env Env) (Status, error) {
 	st := h.Status(env)
-	path := h.file(env)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return st, nil
-	}
-	out, changed := RemoveBlock(string(data), env.AppID)
-	if !changed {
-		return st, nil
-	}
-	if isManaged(path) {
-		return failure(st, ErrManaged), ErrManaged
-	}
-	if strings.TrimSpace(out) == "" {
-		err = os.Remove(path) // we created it: leave nothing behind
-	} else {
-		err = WriteFileSafe(path, []byte(out))
-	}
-	if err != nil {
+	if _, err := revertBlockFile(env, h.id, h.file(env)); err != nil {
 		return failure(st, err), err
 	}
 	return h.Status(env), nil
@@ -135,7 +122,7 @@ func hasKeyValue(content, key string, values []string) bool {
 		if !ok || strings.TrimSpace(k) != key {
 			continue
 		}
-		v = strings.Trim(strings.TrimLeft(strings.TrimSpace(v), "?"), `"'`)
+		v = strings.Trim(strings.TrimLeft(strings.Trim(strings.TrimSpace(v), `"'`), "?"), `"'`)
 		for _, want := range values {
 			if v == want {
 				return true

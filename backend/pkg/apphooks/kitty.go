@@ -66,7 +66,9 @@ func (h kittyHook) Status(env Env) Status {
 			st.State = StateDisconnected
 		}
 	case errors.Is(err, os.ErrNotExist):
-		if !h.present(env) {
+		if isManaged(h.confPath(env)) {
+			st.State, st.Reason = StateManaged, "kitty.conf is read-only or in the Nix store; add: "+h.includeLine(env)
+		} else if !h.present(env) {
 			st.State, st.Files = StateAbsent, nil
 		} else {
 			st.State = StateDisconnected
@@ -82,12 +84,12 @@ func (h kittyHook) Apply(env Env) (Status, error) {
 	if st.State != StateDisconnected {
 		return st, nil
 	}
-	content := ""
+	content, existed := "", false
 	if data, err := os.ReadFile(h.confPath(env)); err == nil {
-		content = string(data)
+		content, existed = string(data), true
 	}
 	out, _ := UpsertBlock(content, env.AppID, h.includeLine(env))
-	if err := WriteFileSafe(h.confPath(env), []byte(out)); err != nil {
+	if err := writeBlockFile(env, h.ID(), h.confPath(env), existed, out); err != nil {
 		return failure(st, err), err
 	}
 	env.signal("kitty", syscall.SIGUSR1)
@@ -96,27 +98,15 @@ func (h kittyHook) Apply(env Env) (Status, error) {
 
 func (h kittyHook) Revert(env Env) (Status, error) {
 	st := h.Status(env)
-	data, err := os.ReadFile(h.confPath(env))
-	if err != nil {
-		return st, nil
-	}
-	out, changed := RemoveBlock(string(data), env.AppID)
-	if !changed {
-		return st, nil
-	}
-	if isManaged(h.confPath(env)) {
-		return failure(st, ErrManaged), ErrManaged
-	}
-	if strings.TrimSpace(out) == "" {
-		err = os.Remove(h.confPath(env)) // we created it: leave nothing behind
-	} else {
-		err = WriteFileSafe(h.confPath(env), []byte(out))
-	}
+	changed, err := revertBlockFile(env, h.ID(), h.confPath(env))
 	if err != nil {
 		return failure(st, err), err
 	}
-	env.signal("kitty", syscall.SIGUSR1)
-	return h.Status(env), nil
+	if changed {
+		env.signal("kitty", syscall.SIGUSR1)
+		return h.Status(env), nil
+	}
+	return st, nil
 }
 
 // failure turns a write error into a status.

@@ -3,11 +3,13 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
 )
@@ -89,6 +91,16 @@ func installerURL() string {
 	return strings.Replace(brand.RepoURL, "https://github.com/", "https://raw.githubusercontent.com/", 1) + "/main/install.sh"
 }
 
+// revertAppHooks takes the shell out of the apps it connected to (terminals,
+// Vesktop, Qt env file), reporting what it could not undo.
+func revertAppHooks(w io.Writer, env apphooks.Env, hooks []apphooks.Hook) {
+	for _, st := range apphooks.RevertAll(env, hooks) {
+		if st.State == apphooks.StateError || st.State == apphooks.StateManaged {
+			fmt.Fprintf(w, "Could not disconnect %s: %s\n", st.ID, st.Reason)
+		}
+	}
+}
+
 // runGoodbye uninstalls: compositor blocks (backups kept), the binary, and on
 // request the source checkout and the configuration.
 func runGoodbye() {
@@ -108,6 +120,7 @@ func runGoodbye() {
 	if isAlive() {
 		quitShell()
 	}
+	revertAppHooks(os.Stdout, apphooks.DefaultEnv(), apphooks.All())
 
 	exe := currentExecutable()
 	if fileExists("/etc/NIXOS") || strings.HasPrefix(exe, "/nix/store/") {
