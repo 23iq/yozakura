@@ -27,6 +27,7 @@ Follows parent AGENTS.md. No additional conventions.
 
 ## ANTI-PATTERNS
 
-- Never hardcode notch dimensions - use `Config.notchTheme`, `Config.roundness`, `Config.notchPosition`
+- Never hardcode notch dimensions - use `Config.notchStyle` (styles/NotchStyles.js registry: attached/island/pill), `Config.roundness`, `Config.notchPosition`, `notch.align` via `EdgeService.notchRect`
+- Notifications in the notch: `NotchNotificationCard` (card) or `CompactNotification` (compact), picked by `NotchNotificationStyles.js`; island activities order/side/enable: `modules/widgets/defaultview/activities/ActivityRegistry.js`
 - Avoid direct stack manipulation - use `Visibilities` service signals (onLauncherChanged, onDashboardChanged, etc.)
 - Don't skip `Qt.callLater()` when pushing to StackView from Connections - prevents async list modification issues
