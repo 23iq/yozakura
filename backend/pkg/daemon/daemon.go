@@ -225,6 +225,8 @@ func New() (*Daemon, error) {
 	// Yozakura tools; proxies tools for chat models and feeds CLI agents.
 	d.mcp = mcpsvc.NewService()
 	d.mcp.Register(d.srv)
+	// Routines: deterministic step lists (bind actions, built-in tools).
+	newRoutines(d.srv, p, d.mcp, notifySvc)
 	agentsMgr.SetMCPProvider(func() []agents.MCPServer {
 		specs := d.mcp.EnabledSpecs()
 		out := make([]agents.MCPServer, 0, len(specs))

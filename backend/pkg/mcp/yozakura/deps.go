@@ -46,6 +46,9 @@ type Deps struct {
 	BindsFile         string   // binds.json (special workspace bind conflicts)
 	AppDirs           []string // .desktop dirs (nil: the XDG ones)
 	UsageDir          string   // AI usage ledger (pkg/svc/usage)
+	RoutinesFile      string   // routines.json (pkg/svc/routines)
+	NotesDir          string   // the Notes tab's folder (<data dir>-notes)
+	SysRoot           string   // "" = "/" (tests point /sys and /proc elsewhere)
 	Now               func() time.Time
 }
 
@@ -64,6 +67,8 @@ func DefaultDeps() Deps {
 		StateDir:          p.StateDir,
 		BindsFile:         p.KeybindsFile(),
 		UsageDir:          usage.DefaultDir(p.DataDir),
+		RoutinesFile:      filepath.Join(p.ConfigDir, "routines.json"),
+		NotesDir:          p.DataDir + "-notes",
 		Now:               time.Now,
 	}
 }
