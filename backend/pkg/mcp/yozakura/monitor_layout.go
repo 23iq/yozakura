@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"yozakura/backend/pkg/catalog"
 	yipc "yozakura/backend/pkg/yozd/ipc"
@@ -227,26 +228,67 @@ func PersistMonitors(store *catalog.Store, cfgs []yipc.OutputConfig, outs []yipc
 		}
 	}
 	for _, c := range cfgs {
-		entry := map[string]any{
-			"id": ids[c.Name], "name": c.Name, "enabled": c.Enabled,
+		id := ids[c.Name]
+		fields := map[string]any{
+			"name": c.Name, "enabled": c.Enabled,
 			"width": c.Width, "height": c.Height, "refresh": c.Refresh,
 			"x": c.X, "y": c.Y, "autoPosition": c.AutoPosition,
 			"scale": c.Scale, "transform": c.Transform, "vrr": c.VRR,
+		}
+		if id != "" {
+			fields["id"] = id
 		}
 		replaced := false
 		for i, s := range saved {
 			m, _ := s.(map[string]any)
 			sid, _ := m["id"].(string)
 			sname, _ := m["name"].(string)
-			if (sid != "" && sid == ids[c.Name]) || (sid == "" || ids[c.Name] == "") && sname == c.Name {
-				saved[i], replaced = entry, true
+			if (sid != "" && sid == id) || ((sid == "" || id == "") && sname == c.Name) {
+				merged := map[string]any{} // keep fields this code does not know
+				for k, v := range m {
+					merged[k] = v
+				}
+				for k, v := range fields {
+					merged[k] = v
+				}
+				saved[i], replaced = merged, true
 				break
 			}
 		}
 		if !replaced {
-			saved = append(saved, entry)
+			if id == "" {
+				fields["id"] = ""
+			}
+			saved = append(saved, fields)
 		}
 	}
 	_, err = store.Set("displays.monitors", saved, false)
 	return err
+}
+
+// pendingDisplays remembers what each displays_apply session touched, so a
+// later displays_confirm saves exactly those outputs. The MCP server is one
+// long-lived process; a restart loses it (the confirm then keeps live only).
+var pendingDisplays = struct {
+	sync.Mutex
+	m map[string]pendingApply
+}{m: map[string]pendingApply{}}
+
+type pendingApply struct {
+	cfgs []yipc.OutputConfig
+	outs []yipc.Output
+}
+
+func rememberSession(id string, cfgs []yipc.OutputConfig, outs []yipc.Output) {
+	pendingDisplays.Lock()
+	defer pendingDisplays.Unlock()
+	pendingDisplays.m[id] = pendingApply{cfgs, outs}
+}
+
+func takeSession(id string) (pendingApply, bool) {
+	pendingDisplays.Lock()
+	defer pendingDisplays.Unlock()
+	p, ok := pendingDisplays.m[id]
+	delete(pendingDisplays.m, id)
+	return p, ok
 }

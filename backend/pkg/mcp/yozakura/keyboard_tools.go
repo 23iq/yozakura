@@ -208,6 +208,23 @@ func (d Deps) keyboardSet(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	if a.Add == "" && a.Remove == "" && a.SwitchBind == "" && !a.Next {
 		return nil, fmt.Errorf("give add, remove, switchBind or next")
 	}
+	// validate everything before writing anything
+	var adds, removes []KeyboardLayout
+	var err error
+	if adds, err = parseLayoutList(a.Add); err != nil {
+		return nil, err
+	}
+	if removes, err = parseLayoutList(a.Remove); err != nil {
+		return nil, err
+	}
+	for _, l := range adds {
+		if err := CheckLayoutKnown(d.callerOrNil(), l); err != nil {
+			return nil, err
+		}
+	}
+	if a.SwitchBind != "" && !ValidSwitchBind(a.SwitchBind) {
+		return nil, fmt.Errorf("switchBind must be one of %s", strings.Join(SwitchBinds, ", "))
+	}
 	_, store, err := d.catalog()
 	if err != nil {
 		return nil, err
@@ -218,28 +235,28 @@ func (d Deps) keyboardSet(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	}
 	list := before.Layouts
 	var back []map[string]any
-	if a.Add != "" {
-		l, err := ParseLayoutSpec(a.Add)
-		if err != nil {
-			return nil, err
-		}
-		if err := CheckLayoutKnown(d.callerOrNil(), l); err != nil {
-			return nil, err
-		}
+	var added []string
+	for _, l := range adds {
 		var changed bool
 		if list, changed = AddLayout(list, l); changed {
-			back = append(back, map[string]any{"remove": l.String()})
+			added = append(added, l.String())
 		}
 	}
-	if a.Remove != "" {
-		l, err := ParseLayoutSpec(a.Remove)
-		if err != nil {
-			return nil, err
-		}
+	if len(added) > 0 {
+		back = append(back, map[string]any{"remove": strings.Join(added, ",")})
+	}
+	for _, l := range removes {
+		prev := list
 		if list, err = RemoveLayout(list, l); err != nil {
 			return nil, err
 		}
-		back = append(back, map[string]any{"add": l.String()})
+		var gone []string
+		for _, x := range prev {
+			if x == l || (l.Variant == "" && x.Layout == l.Layout) {
+				gone = append(gone, x.String())
+			}
+		}
+		back = append(back, map[string]any{"add": strings.Join(gone, ",")})
 	}
 	if len(list) != len(before.Layouts) {
 		if err := SaveLayouts(store, list); err != nil {
@@ -248,9 +265,6 @@ func (d Deps) keyboardSet(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	}
 	out := map[string]any{"layouts": list}
 	if a.SwitchBind != "" {
-		if !ValidSwitchBind(a.SwitchBind) {
-			return nil, fmt.Errorf("switchBind must be one of %s", strings.Join(SwitchBinds, ", "))
-		}
 		if _, err := store.Set("keyboard.switchBind", a.SwitchBind, false); err != nil {
 			return nil, err
 		}
@@ -276,4 +290,20 @@ func (d Deps) callerOrNil() Caller {
 		return nil
 	}
 	return d.IPC
+}
+
+// parseLayoutList reads one spec or a comma separated list ("" = none).
+func parseLayoutList(s string) ([]KeyboardLayout, error) {
+	var out []KeyboardLayout
+	for _, p := range strings.Split(s, ",") {
+		if strings.TrimSpace(p) == "" {
+			continue
+		}
+		l, err := ParseLayoutSpec(p)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, l)
+	}
+	return out, nil
 }

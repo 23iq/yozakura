@@ -270,7 +270,10 @@ func displaySet(env displayEnv, name string, a cliArgs, out, errOut io.Writer) i
 	}
 	var store *catalog.Store
 	if env.store != nil {
-		store, _ = env.store()
+		var serr error
+		if store, serr = env.store(); serr != nil {
+			fmt.Fprintf(errOut, "Warning: the layout will not be saved: %v\n", serr)
+		}
 	}
 	if err := yozakura.KeepDisplays(env.c, store, sess.Session, []yipc.OutputConfig{cfg}, outs); err != nil {
 		return fail(err)

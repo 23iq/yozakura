@@ -79,3 +79,42 @@ func TestKeyboardTools(t *testing.T) {
 	structured(t, callTool(t, d, "keyboard_set", `{"remove":"ru"}`))
 	assert.True(t, callTool(t, d, "keyboard_set", `{"remove":"us"}`).IsError, "last layout")
 }
+
+const twoOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,"modes":[{"width":2560,"height":1440,"refresh":165},{"width":2560,"height":1440,"refresh":144}]},
+ {"id":"DEL|U27|2","name":"HDMI-A-1","enabled":true,"width":1920,"height":1080,"refresh":60,"x":2560,"scale":1,"modes":[{"width":1920,"height":1080,"refresh":60}]}]`
+
+func TestDisplaysConfirmSavesOnlyTouchedOutputs(t *testing.T) {
+	d, _, ipc := newDeps(t)
+	ipc.result["displays.list"] = twoOutputs
+	ipc.result["displays.apply"] = `{"session":"s-two","revertIn":15,"live":true}`
+	ipc.result["displays.keep"] = `{"ok":true}`
+	// an existing entry with a field this code does not know
+	assert.NoError(t, os.WriteFile(d.ConfigFile("displays"), []byte(`{"monitors":[{"id":"LG|27GP|1","name":"DP-1","note":"mine","refresh":144}]}`), 0o644))
+
+	structured(t, callTool(t, d, "displays_apply", `{"outputs":[{"name":"DP-1","mode":"2560x1440@165"}]}`))
+	m := structured(t, callTool(t, d, "displays_confirm", `{"session":"s-two","keep":true}`))
+	assert.Equal(t, true, m["saved"])
+	saved, _ := os.ReadFile(d.ConfigFile("displays"))
+	assert.Contains(t, string(saved), `"refresh": 165`)
+	assert.Contains(t, string(saved), `"note": "mine"`, "unknown fields survive")
+	assert.NotContains(t, string(saved), "HDMI-A-1", "untouched output is not written")
+
+	// unknown session (server restarted): kept live, not saved
+	m = structured(t, callTool(t, d, "displays_confirm", `{"session":"gone","keep":true}`))
+	assert.Equal(t, false, m["saved"])
+	assert.Contains(t, m["note"], "not saved")
+}
+
+func TestKeyboardSetValidatesBeforeWriting(t *testing.T) {
+	d, _, ipc := newDeps(t)
+	ipc.result["keyboard.catalog"] = `{"layouts":[{"name":"us","variants":[{"name":"intl"},{"name":"dvorak"}]},{"name":"ru","variants":[]}]}`
+	structured(t, callTool(t, d, "keyboard_set", `{"add":"us:intl,us:dvorak"}`))
+	// bad switchBind must not leave the add applied
+	assert.True(t, callTool(t, d, "keyboard_set", `{"add":"ru","switchBind":"hyper"}`).IsError)
+	m := structured(t, callTool(t, d, "keyboard_get", `{}`))
+	assert.Len(t, m["layouts"], 3)
+	// removing a bare layout name drops every variant; undo restores all
+	m = structured(t, callTool(t, d, "keyboard_set", `{"add":"ru"}`))
+	m = structured(t, callTool(t, d, "keyboard_set", `{"remove":"us"}`))
+	assert.Equal(t, map[string]any{"tool": "keyboard_set", "args": map[string]any{"add": "us,us:intl,us:dvorak"}}, m["undo"])
+}

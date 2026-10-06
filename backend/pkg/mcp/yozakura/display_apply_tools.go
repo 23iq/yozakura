@@ -79,6 +79,7 @@ func (d Deps) displaysApply(_ context.Context, args json.RawMessage) (*mcp.CallT
 	if err != nil {
 		return nil, err
 	}
+	rememberSession(sess.Session, cfgs, outs)
 	out := map[string]any{"session": sess.Session, "applied": cfgs, "was": before}
 	if !a.Keep {
 		out["state"] = "pending"
@@ -93,6 +94,7 @@ func (d Deps) displaysApply(_ context.Context, args json.RawMessage) (*mcp.CallT
 	if err := KeepDisplays(d.callerOrNil(), store, sess.Session, cfgs, outs); err != nil {
 		return nil, err
 	}
+	takeSession(sess.Session)
 	out["state"] = "kept"
 	return mcp.JSONResult(out), nil
 }
@@ -109,26 +111,27 @@ func (d Deps) displaysConfirm(_ context.Context, args json.RawMessage) (*mcp.Cal
 		return nil, fmt.Errorf("session is required")
 	}
 	if !a.Keep {
+		takeSession(a.Session)
 		if err := RevertDisplays(d.callerOrNil(), a.Session); err != nil {
 			return nil, err
 		}
 		return mcp.JSONResult(map[string]any{"state": "reverted"}), nil
 	}
-	// The session knows what it applied; the connected outputs now show it.
-	outs, err := ListOutputs(d.callerOrNil())
-	if err != nil {
-		return nil, err
-	}
-	cfgs := make([]yipc.OutputConfig, 0, len(outs))
-	for _, o := range outs {
-		cfgs = append(cfgs, OutputConfigOf(o))
+	p, known := takeSession(a.Session)
+	if !known {
+		// e.g. the MCP server restarted: what the session touched is unknown
+		if _, err := d.call("displays.keep", map[string]any{"session": a.Session}); err != nil {
+			return nil, err
+		}
+		return mcp.JSONResult(map[string]any{"state": "kept", "saved": false,
+			"note": "kept live, not saved: re-run displays_apply with keep:true to save the layout"}), nil
 	}
 	_, store, cerr := d.catalog()
 	if cerr != nil {
 		store = nil
 	}
-	if err := KeepDisplays(d.callerOrNil(), store, a.Session, cfgs, outs); err != nil {
+	if err := KeepDisplays(d.callerOrNil(), store, a.Session, p.cfgs, p.outs); err != nil {
 		return nil, err
 	}
-	return mcp.JSONResult(map[string]any{"state": "kept"}), nil
+	return mcp.JSONResult(map[string]any{"state": "kept", "saved": store != nil}), nil
 }
