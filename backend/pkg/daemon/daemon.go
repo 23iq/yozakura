@@ -45,6 +45,7 @@ import (
 	"yozakura/backend/pkg/svc/sleep"
 	"yozakura/backend/pkg/svc/systemmonitor"
 	"yozakura/backend/pkg/svc/tasks"
+	"yozakura/backend/pkg/svc/term"
 	"yozakura/backend/pkg/svc/timers"
 	"yozakura/backend/pkg/svc/transfers"
 	"yozakura/backend/pkg/svc/usage"
@@ -79,6 +80,7 @@ type Daemon struct {
 	agents     *agents.Manager
 	notify     *notifysvc.Service
 	timers     *timers.Service
+	term       *term.Service
 	usage      *usage.Service
 	tasks      *tasks.Manager
 
@@ -211,6 +213,10 @@ func New() (*Daemon, error) {
 	extras.NewService(func(title, body string) {
 		_, _ = notifySvc.Send(notifysvc.SendParams{Summary: title, Body: body, AppIcon: "system-software-install"})
 	}).Register(d.srv)
+
+	// Terminal prompt presets and the writer following the palette.
+	d.term = term.NewService(p)
+	d.term.Register(d.srv)
 
 	// Timers, stopwatch, reminders (persisted, wall clock); finished
 	// timers notify through notify.Send. The scheduler starts in Run.
@@ -345,6 +351,11 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 	_ = os.WriteFile(pidPath, []byte(fmt.Sprintf("%d\n", os.Getpid())), 0o644)
 	defer os.Remove(pidPath)
 	defer d.srv.Close()
+
+	if err := d.term.Start(); err != nil {
+		log.Printf("[yozakura] term: %v (continuing)", err)
+	}
+	defer d.term.Stop()
 
 	if err := d.compositor.Manager().Start(); err != nil {
 		log.Printf("[yozakura] compositor manager: %v (continuing)", err)

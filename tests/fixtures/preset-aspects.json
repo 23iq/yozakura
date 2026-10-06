@@ -43,5 +43,15 @@
       "lockscreen"
     ],
     "category": "lockscreen"
+  },
+  {
+    "id": "terminal",
+    "domains": [
+      "terminal"
+    ],
+    "keys": [
+      "apps.kitty"
+    ],
+    "category": "terminal"
   }
 ]

@@ -227,6 +227,7 @@ var ASPECT_ICONS = {
     "windows": "compositor",
     "desktop": "monitor",
     "lockscreen": "lock",
+    "terminal": "terminal",
     "other": "stack"
 };
 

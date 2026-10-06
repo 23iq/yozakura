@@ -16,6 +16,20 @@ QtObject {
         return Glass.terminalOpacity;
     }
 
+    // Settings > Terminal: padding and cursor (terminal domain, see
+    // config/defaults/terminal.js). kitty blinks when the interval is not 0.
+    function lookKeys() {
+        const t = Config.terminal;
+        const shapes = ["block", "beam", "underline"];
+        const shape = t && shapes.indexOf(t.cursorShape) >= 0 ? t.cursorShape : "beam";
+        const padding = t ? Math.max(0, Math.min(64, Math.round(Number(t.padding)))) : 12;
+        const blink = !t || t.cursorBlink;
+        let out = `window_padding_width ${isNaN(padding) ? 12 : padding}\n`;
+        out += `cursor_shape ${shape}\n`;
+        out += `cursor_blink_interval ${blink ? "-1" : "0"}\n`;
+        return out;
+    }
+
     function generate(Colors) {
         if (!Colors)
             return;
@@ -81,7 +95,9 @@ QtObject {
             conf += `font_size ${Math.max(4, Number(Config.apps.kitty.fontSize) || 11)}\n\n`;
         }
         conf += `cursor ${cursor}\n`;
-        conf += `cursor_text_color ${cursorText}\n\n`;
+        conf += `cursor_text_color ${cursorText}\n`;
+        conf += lookKeys();
+        conf += "\n";
 
         conf += `foreground ${foreground}\n`;
         conf += `background ${background}\n`;

@@ -30,6 +30,7 @@ import "defaults/specials.js" as SpecialsDefaults
 import "defaults/displays.js" as DisplaysDefaults
 import "defaults/keyboard.js" as KeyboardDefaults
 import "defaults/apps.js" as AppsDefaults
+import "defaults/terminal.js" as TerminalDefaults
 
 Singleton {
     id: root
@@ -83,9 +84,10 @@ Singleton {
     property bool displaysReady: displaysLoader.ready
     property bool keyboardReady: keyboardLoader.ready
     property bool appsReady: appsLoader.ready
+    property bool terminalReady: terminalLoader.ready
     property bool keybindsInitialLoadComplete: keybinds.initialLoadComplete
 
-    property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady && displaysReady && keyboardReady
+    property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady && displaysReady && keyboardReady && terminalReady
 
     // Compatibility aliases
     property alias loader: themeLoader
@@ -203,6 +205,13 @@ Singleton {
         name: "keyboard"
         defaults: KeyboardDefaults.data
         adapter: KeyboardAdapter {}
+    }
+    ConfigFile {
+        id: terminalLoader
+        store: root
+        name: "terminal"
+        defaults: TerminalDefaults.data
+        adapter: TerminalAdapter {}
     }
     ConfigFile {
         id: appsLoader
@@ -436,6 +445,9 @@ Singleton {
     // Keyboard layouts, switch bind and key repeat
     property KeyboardAdapter keyboard: keyboardLoader.adapter
 
+    // Terminal look: fish prompt, greeting, kitty padding and cursor
+    property TerminalAdapter terminal: terminalLoader.adapter
+
     // External app theming configuration
     property AppsAdapter apps: appsLoader.adapter
 
@@ -499,6 +511,9 @@ Singleton {
     }
     function saveKeyboard() {
         keyboardLoader.writeAdapter();
+    }
+    function saveTerminal() {
+        terminalLoader.writeAdapter();
     }
     function saveApps() {
         appsLoader.writeAdapter();

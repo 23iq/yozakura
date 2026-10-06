@@ -56,6 +56,9 @@ var types = {
     "displays": {
         "monitors": "list<var>"
     },
+    "terminal": {
+        "padding": "int"
+    },
     "keyboard": {
         "options": "list<string>",
         "repeatDelay": "int",

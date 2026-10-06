@@ -90,6 +90,8 @@ func main() {
 			os.Exit(runDisplay(args[1:], defaultDisplayEnv(os.Stdin, os.Stdout), os.Stdout, os.Stderr))
 		case "keyboard":
 			os.Exit(runKeyboard(args[1:], defaultKeyboardEnv(), os.Stdout, os.Stderr))
+		case "term":
+			os.Exit(runTerm(args[1:], ipcTerm{newClient()}, os.Stdout, os.Stderr))
 		case "extras":
 			os.Exit(runExtras(args[1:], ipcExtras{newClient(), socketPath()}, os.Stdout, os.Stderr))
 		case "task", "tasks":
@@ -638,6 +640,9 @@ Commands:
                                      test one, installed Ollama models ({bin} providers help)
     extras [list|install <id>...|status <id>]
                                      Apps and tools the shell can install ({bin} extras help)
+    term [list|set <preset>|preview <preset>|status|off]
+                                     Fish prompt (Starship / oh-my-posh) in the shell palette
+                                     ({bin} term help)
     help                             Show this help message
     version, -v, --version           Show {name} version
     goodbye                          Uninstall {name}

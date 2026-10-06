@@ -81,3 +81,8 @@ var SPECIAL_IF_RUNNING = Specials.IF_RUNNING;
 // Keyboard layout switch binds (backend/pkg/svc/compositor/devices.go maps
 // each to its XKB group toggle option).
 var KEYBOARD_SWITCH_BINDS = ["alt_shift", "super_space", "caps", "ctrl_shift", "none"];
+
+// Terminal look (backend/pkg/termlook).
+var TERMINAL_ENGINES = ["starship", "ohmyposh"];
+var TERMINAL_GREETINGS = ["none", "fastfetch"];
+var TERMINAL_CURSOR_SHAPES = ["block", "beam", "underline"];

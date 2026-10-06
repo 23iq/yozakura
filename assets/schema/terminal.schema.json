@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:terminal",
+  "title": "terminal",
+  "description": "Terminal look: the fish prompt (Starship or oh-my-posh) following the shell palette, the greeting, and kitty padding and cursor.",
+  "type": "object",
+  "x-file": "config/terminal.json",
+  "properties": {
+    "enabled": {
+      "title": "Enabled",
+      "type": "boolean",
+      "default": false,
+      "description": "Write the prompt config and the fish hook (fish conf.d). Off removes the hook; config.fish is never touched."
+    },
+    "engine": {
+      "title": "Engine",
+      "type": "string",
+      "default": "starship",
+      "description": "Prompt engine.",
+      "enum": [
+        "starship",
+        "ohmyposh"
+      ]
+    },
+    "prompt": {
+      "title": "Prompt",
+      "type": "string",
+      "default": "sakura-powerline",
+      "description": "Prompt preset id (assets/terminal/prompts/<id>.json; list them with `yozakura term list`)."
+    },
+    "greeting": {
+      "title": "Greeting",
+      "type": "string",
+      "default": "none",
+      "description": "What fish prints when a terminal opens.",
+      "enum": [
+        "none",
+        "fastfetch"
+      ]
+    },
+    "padding": {
+      "title": "Padding",
+      "type": "number",
+      "default": 12,
+      "description": "Kitty window padding.",
+      "minimum": 0,
+      "maximum": 64,
+      "x-unit": "px"
+    },
+    "cursorShape": {
+      "title": "Cursor shape",
+      "type": "string",
+      "default": "beam",
+      "description": "Kitty cursor shape.",
+      "enum": [
+        "block",
+        "beam",
+        "underline"
+      ]
+    },
+    "cursorBlink": {
+      "title": "Cursor blink",
+      "type": "boolean",
+      "default": true,
+      "description": "Blink the kitty cursor."
+    }
+  },
+  "additionalProperties": false
+}

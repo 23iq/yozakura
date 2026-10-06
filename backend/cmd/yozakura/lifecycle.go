@@ -12,6 +12,7 @@ import (
 	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/termlook"
 )
 
 // runUpdate updates a source install the same way the hosted installer
@@ -101,6 +102,14 @@ func revertAppHooks(w io.Writer, env apphooks.Env, hooks []apphooks.Hook) {
 	}
 }
 
+// removeTermHook deletes the fish prompt file the shell owns (conf.d), so
+// fish stops loading an engine config that goodbye leaves behind.
+func removeTermHook(w io.Writer, env termlook.Env) {
+	if err := termlook.Apply(termlook.Config{}, nil, nil, env); err != nil {
+		fmt.Fprintf(w, "Could not remove the fish prompt file: %s\n", err)
+	}
+}
+
 // runGoodbye uninstalls: compositor blocks (backups kept), the binary, and on
 // request the source checkout and the configuration.
 func runGoodbye() {
@@ -121,6 +130,7 @@ func runGoodbye() {
 		quitShell()
 	}
 	revertAppHooks(os.Stdout, apphooks.DefaultEnv(), apphooks.All())
+	removeTermHook(os.Stdout, termlook.Env{ConfigHome: filepath.Dir(paths.New().ConfigDir), AppID: brand.AppID})
 
 	exe := currentExecutable()
 	if fileExists("/etc/NIXOS") || strings.HasPrefix(exe, "/nix/store/") {

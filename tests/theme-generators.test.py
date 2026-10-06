@@ -91,7 +91,9 @@ h.module("Quickshell.Io", {
     "StdioCollector": "QtObject { property string text; signal streamFinished(string text) }",
 })
 h.singleton("qs.config", "Config", 'QtObject { property QtObject theme: QtObject { property string font: "Sans"; '
-            'property bool lightMode: false; property var srBg: ({ opacity: 0.9 }) } }')
+            'property bool lightMode: false; property var srBg: ({ opacity: 0.9 }) }; '
+            'property QtObject terminal: QtObject { property string cursorShape: "beam"; property real padding: 12; '
+            'property bool cursorBlink: true } }')
 h.module("qs.modules.globals", {"Brand": brand_qml(str(home)),
                                 "GlobalStates": "pragma Singleton\nQtObject { property var wallpaperManager: null }"})
 h.module("wallstub", {"Wall": "QtObject { property string currentWallpaper }"})
@@ -193,6 +195,22 @@ for gen_name, out in (("GtkGenerator", ".config/gtk-3.0/gtk.css"), ("NvChadGener
     r = subprocess.run(cmd, env=env, capture_output=True, text=True, timeout=60)
     check(f"{gen_name}: script exits 0", r.returncode == 0, r.stderr[-400:])
     check(f"{gen_name}: wrote {out}", (home / out).is_file() and len(text(home / out)) > 20)
+
+# Kitty: the terminal look keys follow Config.terminal.
+h.singleton("qs.modules.theme", "Glass", "QtObject { property real terminalOpacity: 0.9 }")
+kitty = h.load(h.copy("modules/theme/KittyGenerator.qml", siblings=False))
+h.engine.rootContext().setContextProperty("fakeColors", colors)
+h.eval(kitty, "root.generate(fakeColors)")
+kconf = h.eval(kitty, "root.writer.text")
+kconf = str(kconf)
+check("kitty: default cursor and padding", all(k in kconf for k in (
+    "cursor_shape beam\n", "window_padding_width 12\n", "cursor_blink_interval -1\n")), kconf[:300])
+check("kitty: cursor_text_color kept", "cursor_text_color " in kconf)
+h.eval(kitty, "Config.terminal.cursorBlink = false; Config.terminal.cursorShape = 'block'; Config.terminal.padding = 4")
+h.eval(kitty, "root.generate(fakeColors)")
+kconf = str(h.eval(kitty, "root.writer.text"))
+check("kitty: blink off, block, padding 4", all(k in kconf for k in (
+    "cursor_shape block\n", "window_padding_width 4\n", "cursor_blink_interval 0\n")), kconf[:300])
 
 if failures:
     print(f"theme-generators: {len(failures)} failure(s)")
