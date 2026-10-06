@@ -119,6 +119,25 @@ function normalize(raw, defaults) {
     };
 }
 
+// The right group of the default layout before the keyboard layout indicator
+// joined it. A saved layout equal to the old default is the untouched default:
+// it gets the indicator (which hides itself with one layout) and keeps the
+// legacy vertical arrangement.
+var OLD_DEFAULT_RIGHT = ["presets", "tools", "systray", "controls", "battery", "clock", "power"];
+
+function upgradeOldDefault(layout, defaults) {
+    var base = defaults || DEFAULT_LAYOUT;
+    if (sameList(layout.left, base.left) && sameList(layout.right, OLD_DEFAULT_RIGHT) && sameList(layout.drawer, base.drawer || []))
+        return {
+            "style": layout.style,
+            "left": layout.left,
+            "right": base.right.slice(),
+            "drawer": layout.drawer,
+            "warnings": layout.warnings
+        };
+    return layout;
+}
+
 function isDefaultArrangement(layout, defaults) {
     var base = defaults || DEFAULT_LAYOUT;
     return sameList(layout.left, base.left) && sameList(layout.right, base.right) && sameList(layout.drawer, base.drawer || []);
@@ -127,6 +146,7 @@ function isDefaultArrangement(layout, defaults) {
 // Groups in render order: start (left/top), center (vertical legacy only),
 // end (right/bottom) and drawer (revealed next to the end group).
 function resolveGroups(layout, orientation, defaults) {
+    layout = upgradeOldDefault(layout, defaults);
     if (orientation === "vertical" && layout.style === "classic" && isDefaultArrangement(layout, defaults)) {
         return {
             "start": LEGACY_VERTICAL.start.slice(),

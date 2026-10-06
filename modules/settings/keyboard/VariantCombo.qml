@@ -19,7 +19,7 @@ Item {
 
     readonly property var current: options.find(o => o.value === value) ?? options[0] ?? null
 
-    implicitWidth: Math.min(Math.max(row.implicitWidth + 28, 150), 240)
+    implicitWidth: Math.min(Math.max(row.implicitWidth + 28, 190), 300)
     implicitHeight: 34
     activeFocusOnTab: true
     Keys.onReturnPressed: popup.open()
@@ -67,7 +67,7 @@ Item {
     Popup {
         id: popup
         y: root.height + 6
-        width: Math.max(root.width, 220)
+        width: Math.max(root.width, 260)
         height: Math.min(list.contentHeight, 260) + 12
         padding: 6
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent

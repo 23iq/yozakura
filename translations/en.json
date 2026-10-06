@@ -3104,7 +3104,6 @@
   "prefs.keyboard.opt.compose_ralt": "Compose on Right Alt",
   "prefs.keyboard.opt.compose_ralt.desc": "Type accents and symbols with key sequences.",
   "prefs.keyboard.all_options": "All options",
-  "prefs.keyboard.n_on": "%1 on",
   "prefs.keyboard.typing": "Key repeat",
   "prefs.keyboard.typing.desc": "How fast a held key repeats.",
   "prefs.keyboard.repeat_rate": "Repeat rate",
@@ -3154,5 +3153,7 @@
   "extras.obsidian.desc": "Markdown knowledge base and notes",
   "extras.libreoffice.desc": "Full office suite",
   "extras.nautilus.desc": "GNOME file manager",
-  "extras.thunar.desc": "Lightweight Xfce file manager"
+  "extras.thunar.desc": "Lightweight Xfce file manager",
+  "prefs.keyboard.n_on.one": "%1 on",
+  "prefs.keyboard.n_on.other": "%1 on"
 }

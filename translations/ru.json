@@ -3106,7 +3106,6 @@
   "prefs.keyboard.opt.compose_ralt": "Compose на правом Alt",
   "prefs.keyboard.opt.compose_ralt.desc": "Ввод акцентов и символов последовательностями клавиш.",
   "prefs.keyboard.all_options": "Все параметры",
-  "prefs.keyboard.n_on": "включено: %1",
   "prefs.keyboard.typing": "Повтор клавиш",
   "prefs.keyboard.typing.desc": "Как быстро повторяется зажатая клавиша.",
   "prefs.keyboard.repeat_rate": "Скорость повтора",
@@ -3156,5 +3155,9 @@
   "extras.obsidian.desc": "База знаний и заметки в Markdown",
   "extras.libreoffice.desc": "Полный офисный пакет",
   "extras.nautilus.desc": "Файловый менеджер GNOME",
-  "extras.thunar.desc": "Лёгкий файловый менеджер Xfce"
+  "extras.thunar.desc": "Лёгкий файловый менеджер Xfce",
+  "prefs.keyboard.n_on.one": "включена: %1",
+  "prefs.keyboard.n_on.few": "включено: %1",
+  "prefs.keyboard.n_on.many": "включено: %1",
+  "prefs.keyboard.n_on.other": "включено: %1"
 }

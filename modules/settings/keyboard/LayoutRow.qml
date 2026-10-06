@@ -71,7 +71,7 @@ Item {
             onPressed: mouse => startY = mapToItem(row.parent, mouse.x, mouse.y).y
             onPositionChanged: mouse => {
                 if (pressed)
-                    row.dragY = mapToItem(row.parent, mouse.x, mouse.y).y - startY;
+                    row.dragY = Math.max(-row.y, Math.min(row.parent.height - row.height - row.y, mapToItem(row.parent, mouse.x, mouse.y).y - startY));
             }
             onReleased: {
                 const delta = Math.round(row.dragY / row.height);

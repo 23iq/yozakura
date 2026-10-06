@@ -94,3 +94,14 @@ test('config validator keeps layout arrays and rejects unknown styles', () => {
     const bad = plain(validator.validate({ layout: { style: 'wat' } }, barDefaults));
     assert.equal(bad.layout.style, 'classic');
 });
+
+test('a saved layout equal to the old default gets the keyboard indicator, vertical keeps the legacy arrangement', () => {
+    const old = { style: 'classic', left: ['launcher', 'workspaces', 'layoutSelector', 'pin'], right: ['presets', 'tools', 'systray', 'controls', 'battery', 'clock', 'power'], drawer: [] };
+    const v = plain(layoutLib.resolveGroups(normalize(old), 'vertical', barDefaults.layout));
+    assert.deepEqual(v.center, ['layoutSelector', 'workspaces', 'pin']);
+    assert.deepEqual(v.end, ['keyboardLayout', 'controls', 'battery', 'clock', 'power']);
+    const h = plain(layoutLib.resolveGroups(normalize(old), 'horizontal', barDefaults.layout));
+    assert.deepEqual(h.end, barDefaults.layout.right);
+    const custom = plain(layoutLib.resolveGroups(normalize({ ...old, right: ['clock'] }), 'horizontal', barDefaults.layout));
+    assert.deepEqual(custom.end, ['clock']);
+});

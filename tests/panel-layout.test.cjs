@@ -149,3 +149,12 @@ test('separators interleave modules', () => {
     assert.deepEqual(plain(BarLayout.withSeparators(['a', 'b', 'c'])), ['a', '__sep__', 'b', '__sep__', 'c']);
     assert.deepEqual(plain(BarLayout.withSeparators([])), []);
 });
+
+test('a panel holding the old default right group gets the keyboard indicator', () => {
+    const old = { position: 'right', layout: { style: 'classic', left: ['launcher', 'workspaces', 'layoutSelector', 'pin'], right: ['presets', 'tools', 'systray', 'controls', 'battery', 'clock', 'power'], drawer: [] } };
+    const g = plain(Layout.resolveGroups(Layout.fromLegacy(old)));
+    assert.deepEqual(g.center, ['layoutSelector', 'workspaces', 'pin']);
+    assert.ok(g.end.includes('keyboardLayout'));
+    const h = plain(Layout.resolveGroups(Layout.fromLegacy({ ...old, position: 'top' })));
+    assert.ok(h.end.includes('keyboardLayout'));
+});

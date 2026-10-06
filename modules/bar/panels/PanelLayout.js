@@ -285,6 +285,26 @@ function orientationOf(edge) {
     return edge === "left" || edge === "right" ? "vertical" : "horizontal";
 }
 
+// Default right group before the keyboard layout indicator existed: a panel
+// still holding it is the untouched default and gets the indicator.
+var OLD_DEFAULT_RIGHT = ["presets", "tools", "systray", "controls", "battery", "clock", "power"];
+
+function upgradeOldDefault(panel) {
+    var g = panel.groups;
+    if (sameList(g.start, DEFAULT_LAYOUT.left) && sameList(g.end, OLD_DEFAULT_RIGHT) && g.drawer.length === 0 && g.center.length === 0) {
+        var groups = {};
+        for (var k in g)
+            groups[k] = g[k];
+        groups.end = DEFAULT_LAYOUT.right.slice();
+        var out = {};
+        for (var p in panel)
+            out[p] = panel[p];
+        out.groups = groups;
+        return out;
+    }
+    return panel;
+}
+
 function isDefaultArrangement(panel) {
     var g = panel.groups;
     return sameList(g.start, DEFAULT_LAYOUT.left) && sameList(g.end, DEFAULT_LAYOUT.right) && g.drawer.length === 0 && g.center.length === 0;
@@ -293,6 +313,7 @@ function isDefaultArrangement(panel) {
 // Groups in render order. The untouched default layout on a vertical
 // classic panel keeps its historical three-group arrangement.
 function resolveGroups(panel) {
+    panel = upgradeOldDefault(panel);
     var g = panel.groups;
     if (orientationOf(panel.edge) === "vertical" && panel.style === "classic" && isDefaultArrangement(panel)) {
         var out = emptyGroups();

@@ -32,11 +32,15 @@ Flickable {
     }
 
     function setLayouts(list) {
+        if (!Config.keyboardReady)
+            return;
         Config.keyboard.layouts = list;
         save();
     }
 
     function setOptions(name, on) {
+        if (!Config.keyboardReady)
+            return;
         Config.keyboard.options = KeyboardModel.setOption(Array.from(Config.keyboard.options), name, on);
         save();
     }
@@ -82,6 +86,8 @@ Flickable {
             switchBind: Config.keyboardReady ? Config.keyboard.switchBind : "alt_shift"
             options: Config.keyboardReady ? Array.from(Config.keyboard.options) : []
             onBindPicked: bind => {
+                if (!Config.keyboardReady)
+                    return;
                 Config.keyboard.switchBind = bind;
                 page.save();
             }

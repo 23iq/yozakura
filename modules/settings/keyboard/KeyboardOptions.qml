@@ -166,7 +166,7 @@ KeyboardCard {
                         Text {
                             id: countLabel
                             anchors.centerIn: parent
-                            text: I18n.t("prefs.keyboard.n_on", group.on)
+                            text: I18n.tn("prefs.keyboard.n_on", group.on)
                             font.family: Config.theme.font
                             font.pixelSize: Styling.fontSize(-3)
                             font.weight: Font.DemiBold
