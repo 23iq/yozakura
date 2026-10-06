@@ -30,7 +30,8 @@ Steam and other 32-bit software).
 type extrasClient interface {
 	usageCaller
 	// Watch streams extras.* events to fn until fn returns true or the
-	// connection ends. It returns once the stream is set up.
+	// connection ends. The daemon sends no subscribe ack, so an event right
+	// after the dial may be missed; extrasFollow's status poll covers that.
 	Watch(fn func(name string, data json.RawMessage) (stop bool)) (stop func(), err error)
 }
 
@@ -264,25 +265,28 @@ func extrasInstall(c extrasClient, ids []string, yesMultilib bool, out, errOut i
 		fmt.Fprintln(out, "Nothing to install (already installed).")
 		return 0
 	}
-	open := map[string]bool{}
+	open := map[string][]string{}
 	for _, j := range res.Jobs {
-		open[j.ID] = true
+		open[j.ID] = j.Entries
 		fmt.Fprintf(out, "queued %s: %s\n", j.ID, strings.Join(j.Entries, " "))
 	}
 	return extrasFollow(c, open, events, out, errOut)
 }
 
-func extrasFollow(c usageCaller, open map[string]bool, events <-chan extras.Progress, out, errOut io.Writer) int {
+// extrasQuiet is how long without events before the status poll runs.
+var extrasQuiet = 10 * time.Second
+
+func extrasFollow(c usageCaller, open map[string][]string, events <-chan extras.Progress, out, errOut io.Writer) int {
 	code := 0
 	last := map[string]string{}
-	quiet := time.NewTimer(10 * time.Second)
+	quiet := time.NewTimer(extrasQuiet)
 	for len(open) > 0 {
 		select {
 		case p := <-events:
-			if !open[p.Job] {
+			if _, ok := open[p.Job]; !ok {
 				continue
 			}
-			quiet.Reset(10 * time.Second)
+			quiet.Reset(extrasQuiet)
 			switch p.State {
 			case extras.JobDone:
 				fmt.Fprintf(out, "%s: done\n", p.Job)
@@ -304,13 +308,21 @@ func extrasFollow(c usageCaller, open map[string]bool, events <-chan extras.Prog
 		case <-quiet.C:
 			// A missed terminal event must not hang the CLI: stop when the
 			// daemon reports nothing installing any more.
-			quiet.Reset(10 * time.Second)
+			quiet.Reset(extrasQuiet)
 			raw, err := c.Call("extras.status", nil)
 			if err != nil {
 				return extrasErr(errOut, err)
 			}
 			var st map[string]extras.Status
 			if json.Unmarshal(raw, &st) == nil && !anyInstalling(st) {
+				for _, entries := range open { // ended unseen: failed entries fail the run
+					for _, id := range entries {
+						if st[id].State == extras.StateFailed {
+							fmt.Fprintf(errOut, "%s: failed (%s)\n", id, st[id].Reason)
+							code = 1
+						}
+					}
+				}
 				return code
 			}
 		}

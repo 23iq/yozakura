@@ -10,11 +10,12 @@
 var PRIVATE = { clipboard_read: true, clipboard_history: true, notifications_list: true, screen_look: true };
 
 // Yozakura tools that always ask, even with "allow for this session", a
-// permissive policy or YOLO (same list as routines.ConfirmTools in Go):
-// they rewrite the user's keybinds, close windows or delete routines and
-// notes.
+// permissive policy or YOLO. MUST contain every entry of routines.ConfirmTools
+// in Go (backend/pkg/svc/routines/confirm.go; tests/ai-confirm-tools.test.cjs
+// enforces it): they rewrite the user's keybinds, close windows, delete
+// routines and notes or install software.
 // Their card has no "for session" choice.
-var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_delete: true, notes_delete: true };
+var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_delete: true, notes_delete: true, extras_install: true };
 
 // Routine steps as sensitive as a confirm tool (routines/confirm.go): an
 // arbitrary command line, a raw dispatcher, closing the focused window and

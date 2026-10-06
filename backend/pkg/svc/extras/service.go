@@ -315,8 +315,8 @@ func (s *Service) install(params json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	det := s.detected(false)
-	jobs, err := Plan(c, s.o.Platform(), det, p.IDs, s.o.Self(), PlanOptions{
+	det := s.detected(true) // never plan from a stale cache
+	jobs, err := Plan(c, s.o.Platform(), det, s.notActive(p.IDs), s.o.Self(), PlanOptions{
 		ConfirmMultilib: p.ConfirmMultilib,
 		ScriptsDir:      filepath.Join(paths.FindShellSource(), "scripts"),
 	})
@@ -324,6 +324,25 @@ func (s *Service) install(params json.RawMessage) (any, error) {
 		return nil, codeOf(err)
 	}
 	return s.enqueue(jobs), nil
+}
+
+// notActive drops ids that already belong to a queued or running job.
+func (s *Service) notActive(ids []string) []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	busy := map[string]bool{}
+	for _, entries := range s.active {
+		for _, id := range entries {
+			busy[id] = true
+		}
+	}
+	var out []string
+	for _, id := range ids {
+		if !busy[id] {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 func jobParam(params json.RawMessage) (string, error) {

@@ -312,3 +312,22 @@ func (f fakeInfo) Mode() fs.FileMode  { return f.mode }
 func (f fakeInfo) ModTime() time.Time { return time.Time{} }
 func (f fakeInfo) IsDir() bool        { return f.mode.IsDir() }
 func (f fakeInfo) Sys() any           { return f.sys }
+
+func TestServiceInstallSkipsActiveAndRedetects(t *testing.T) {
+	key := "pkexec " + self + " sys install firefox"
+	e := newSvcEnv(t, archNvidia, map[string]fakeStep{key: {block: true}})
+	e.run.started = make(chan string, 4)
+	call(t, e.s.install, `{"ids":["firefox"]}`)
+	<-e.run.started
+	n := e.probe.n.Load()
+	m, err := call(t, e.s.install, `{"ids":["firefox"]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m["jobs"].([]any)) != 0 {
+		t.Errorf("active entry queued twice: %v", m)
+	}
+	if e.probe.n.Load() == n {
+		t.Error("install did not re-detect")
+	}
+}

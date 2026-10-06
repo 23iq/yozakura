@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -130,4 +131,16 @@ func TestExtrasCompletion(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Contains(t, s, "list install status help", sh)
 	}
+}
+
+func TestExtrasInstallMissedEventFailedEntry(t *testing.T) {
+	old := extrasQuiet
+	extrasQuiet = 20 * time.Millisecond
+	defer func() { extrasQuiet = old }()
+	f := newFakeExtras()
+	f.results["extras.install"] = `{"jobs":[{"id":"system-1","kind":"system","entries":["firefox"]}]}`
+	f.results["extras.status"] = `{"firefox":{"id":"firefox","state":"failed","reason":"needs_sync"}}`
+	var out, errOut bytes.Buffer
+	assert.Equal(t, 1, runExtras([]string{"install", "firefox"}, f, &out, &errOut))
+	assert.Contains(t, errOut.String(), "firefox: failed (needs_sync)")
 }

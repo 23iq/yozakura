@@ -1,6 +1,10 @@
 package agents
 
-import "testing"
+import (
+	"testing"
+
+	"yozakura/backend/pkg/svc/routines"
+)
 
 func TestConfirmToolsAlwaysAsk(t *testing.T) {
 	p := Policy{AutoApprove: []string{CatRead, CatMCP}}
@@ -29,5 +33,17 @@ func TestConfirmToolsAlwaysAsk(t *testing.T) {
 	}
 	if c := Classify("mcp__"+YozakuraMCPName+"__screen_look", nil); c != CatMCP {
 		t.Errorf("screen_look reads private pixels and asks: %s", c)
+	}
+}
+
+func TestExtrasInstallAlwaysConfirms(t *testing.T) {
+	if !routines.ConfirmTools["extras_install"] {
+		t.Fatal("extras_install must be a confirm tool")
+	}
+	if !IsConfirmTool("mcp__" + YozakuraMCPName + "__extras_install") {
+		t.Fatal("IsConfirmTool(extras_install) = false")
+	}
+	if IsConfirmTool("mcp__" + YozakuraMCPName + "__extras_list") {
+		t.Fatal("extras_list is read-only")
 	}
 }
