@@ -28,6 +28,9 @@ type Service struct {
 
 	ollamaMu sync.Mutex
 
+	credentials func() []Credential // stored keys (SetCredentials)
+	configFile  string              // live ai config (local endpoints)
+
 	tableMu    sync.Mutex
 	tableCache *ModelTable
 	tableMtime time.Time
@@ -36,14 +39,15 @@ type Service struct {
 // NewService uses p.CacheDir for the Ollama capability cache.
 func NewService(p *paths.Paths) *Service {
 	return &Service{
-		client:   &http.Client{Timeout: 20 * time.Second},
-		cacheDir: p.CacheDir,
-		shellDir: paths.FindShellSource,
+		client:     &http.Client{Timeout: 20 * time.Second},
+		cacheDir:   p.CacheDir,
+		shellDir:   paths.FindShellSource,
+		configFile: p.Config("ai"),
 	}
 }
 
-// Register exposes providers.ollama.probe, providers.test and
-// providers.models.info.
+// Register exposes providers.ollama.probe, providers.test,
+// providers.models.info and providers.list (connected providers).
 func (s *Service) Register(srv *ipc.Server) {
 	srv.Register(&ipc.Service{
 		Name: "providers",
@@ -51,8 +55,9 @@ func (s *Service) Register(srv *ipc.Server) {
 			"ollama.probe": s.handleProbe,
 			"test":         s.handleTest,
 			"models.info":  s.handleInfo,
+			"list":         s.handleList,
 		},
-		Async: map[string]bool{"ollama.probe": true, "test": true},
+		Async: map[string]bool{"ollama.probe": true, "test": true, "list": true},
 	})
 }
 
@@ -61,6 +66,9 @@ func (s *Service) handleProbe(params json.RawMessage) (any, error) {
 		Endpoint string `json:"endpoint"`
 	}
 	_ = json.Unmarshal(params, &p)
+	if p.Endpoint == "" {
+		p.Endpoint = s.localEndpoints()["ollama"] // the user's setting
+	}
 	ctx, cancel := probeContext(context.Background(), 30*time.Second)
 	defer cancel()
 	return s.ProbeOllama(ctx, p.Endpoint), nil

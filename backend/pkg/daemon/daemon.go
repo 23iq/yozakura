@@ -22,6 +22,7 @@ import (
 	"yozakura/backend/pkg/svc/clipboard"
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
+	"yozakura/backend/pkg/svc/focus"
 	"yozakura/backend/pkg/svc/gamemode"
 	"yozakura/backend/pkg/svc/keystore"
 	"yozakura/backend/pkg/svc/linkpreview"
@@ -193,6 +194,15 @@ func New() (*Daemon, error) {
 		Pomodoro: func() timers.PomodoroConfig { return timers.SystemPomodoro(p.Config("system")) },
 	})
 	d.timers.Register(d.srv)
+	// Focus mode as the shell reports it (CLI/MCP read it).
+	focus.NewService(func(id string) (timers.Timer, bool) {
+		for _, t := range d.timers.View().Timers {
+			if t.ID == id {
+				return t, true
+			}
+		}
+		return timers.Timer{}, false
+	}).Register(d.srv)
 
 	// AI usage ledger + subscription limits (see pkg/svc/usage). The
 	// agents service can feed it through usage.Recorder / usage.LimitsSink.
@@ -215,7 +225,15 @@ func New() (*Daemon, error) {
 	// AI-first coding tasks: worktrees, verify loop, review/accept.
 	d.tasks = newTasks(d.srv, p, agentsMgr, notifySvc, uiSvc)
 	// Chat providers: Ollama probe, connection tests, model capability table.
-	providers.NewService(p).Register(d.srv)
+	provSvc := providers.NewService(p)
+	provSvc.SetCredentials(func() []providers.Credential {
+		var out []providers.Credential
+		for _, c := range keySvc.Credentials() {
+			out = append(out, providers.Credential{Provider: c.Provider, Key: c.APIKey, Endpoint: c.Endpoint})
+		}
+		return out
+	})
+	provSvc.Register(d.srv)
 	// Local speech-to-text (whisper.cpp server started on demand).
 	d.voice = voicesvc.NewService(d.paths)
 	d.voice.Register(d.srv)

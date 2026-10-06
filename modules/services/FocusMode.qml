@@ -119,7 +119,26 @@ Singleton {
         }
     }
 
+    // Mirror to the backend (focus.set) so `<app> focus status` and the
+    // focus_status MCP tool can read it.
+    function report() {
+        BackendService.notify("focus.set", {
+            "active": root.active,
+            "timerId": root.timerId,
+            "startedAt": root.startedAt
+        });
+    }
+
+    property Connections backendWatch: Connections {
+        target: BackendService
+        function onConnectedChanged() {
+            if (BackendService.connected)
+                root.report();
+        }
+    }
+
     function persist() {
+        root.report();
         if (!StateService.initialized)
             return;
         StateService.set("focusMode", {

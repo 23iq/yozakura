@@ -7,7 +7,7 @@
 // answering "I can't". Tested in tests/ai-tool-media.test.cjs.
 
 var HINTS = [
-    { tools: ["timer_start"], text: "Timers, reminders, the stopwatch and focus mode: timer_start, reminder_add, stopwatch_control, focus_start." },
+    { tools: ["timer_start"], text: "Timers, reminders, the stopwatch and focus mode: timer_start, reminder_add, stopwatch_control, focus_start, focus_status." },
     { tools: ["binds_search"], text: "Keybinds: find an action with binds_search, check a combo with binds_check, propose free combos with binds_suggest; call binds_set only after the user agrees (they confirm it). Every edit returns an undo." },
     { tools: ["routine_save"], text: "Routines: routine_save bundles several steps (bind actions, tools, delays) into one command — use it when the user says \"save this as a routine\" or wants one key to do several things; bind it with binds_set (action utilities.routine) and run it with routine_run." },
     { tools: ["notes_search"], text: "Notes: notes_search, notes_read, notes_create, notes_append (the shell's Notes tab)." },

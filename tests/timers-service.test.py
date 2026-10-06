@@ -63,6 +63,9 @@ QtObject {
     property var callbacks: []
     property var handler: null
     property var services: []
+    property bool connected: true
+    property var notified: []
+    function notify(method, params) { notified = notified.concat([{ method: method, params: JSON.parse(JSON.stringify(params || {})) }]); }
     function call(method, params, cb) { calls = calls.concat([{ method: method, params: JSON.parse(JSON.stringify(params || {})) }]); callbacks.push(cb || null); }
     function reply(i, result, error) { if (callbacks[i]) callbacks[i](result, error); }
     function last() { return calls.length ? calls[calls.length - 1] : null; }
@@ -230,6 +233,9 @@ ev(f"BackendService.reply({n}, {{ timer: {{ id: 't9' }} }}, null)")
 check("focus: remembers its timer", ev("FocusMode.timerId") == "t9")
 check("focus: persisted", ev("StateService.state.focusMode.active") and ev("StateService.state.focusMode.timerId") == "t9")
 check("focus: badges hidden", ev("FocusMode.hideBadges"))
+reported = json.loads(ev("JSON.stringify(BackendService.notified)"))
+check("focus: mirrored to the backend", reported and reported[-1]["method"] == "focus.set"
+      and reported[-1]["params"]["active"] and reported[-1]["params"]["timerId"] == "t9", reported)
 t = int(ev("Date.now()"))
 ev(f"Notifications.list = Notifications.list.concat([{{ appName: 'Telegram', time: {t + 10}, replaceKey: '' }}, {{ appName: 'Telegram', time: {t + 20} }}, {{ appName: 'Mail', time: {t + 30} }}, {{ appName: 'Yozakura', time: {t + 40}, replaceKey: 'timer-t9' }}])")
 focus_view = dict(view, ringing=1, timers=[{"id": "t9", "name": "Focus", "state": "ringing", "totalMs": 3000000, "createdAt": 5}])
@@ -237,6 +243,8 @@ emit("timers.state", focus_view)
 emit("timers.event", {"kind": "timer", "id": "t9", "name": "Focus", "done": True})
 check("focus ends on its timer event", not ev("FocusMode.active"))
 check("focus: DND restored", ev("Notifications.dnd.join(',')") == "true,false")
+reported = json.loads(ev("JSON.stringify(BackendService.notified)"))
+check("focus: the end is mirrored too", reported[-1]["params"]["active"] is False, reported[-1])
 check("focus: its ringing timer is dismissed", json.loads(calls())[-1] == {"method": "timers.dismiss", "params": {"id": "t9"}})
 QTest.qWait(900)
 sent = json.loads(ev("JSON.stringify(Notifications.sent)"))

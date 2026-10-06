@@ -64,6 +64,18 @@ func TestFocusTools(t *testing.T) {
 	res := callTool(t, d, "focus_stop", `{}`)
 	assert.False(t, res.IsError)
 	assert.Equal(t, "focus-stop", ipc.calls[2].Params.(map[string]any)["command"])
+
+	ipc.result["focus.get"] = `{"active":true,"known":true,"startedAt":1791280000000,"endsAt":1791281500000,"leftMs":600000,"minutesLeft":10,"timerId":"t9"}`
+	m = structured(t, callTool(t, d, "focus_status", `{}`))
+	assert.Equal(t, true, m["active"])
+	assert.Equal(t, float64(10), m["minutesLeft"])
+	assert.Equal(t, msToISO(1791281500000), m["endsAt"])
+	assert.Nil(t, m["note"])
+	ipc.result["focus.get"] = `{"active":false,"known":false}`
+	m = structured(t, callTool(t, d, "focus_status", `{}`))
+	assert.Equal(t, false, m["active"])
+	assert.NotNil(t, m["note"])
+	assert.Contains(t, ReadOnlyToolNames(), "focus_status")
 }
 
 func TestScreenLookReturnsImage(t *testing.T) {

@@ -111,6 +111,7 @@ var yozakuraReadOnly = map[string]bool{
 	"timer_list": true, "reminder_list": true, "binds_search": true, "binds_list": true, "binds_check": true,
 	"binds_suggest": true, "routines_list": true, "notes_search": true, "notes_read": true, "apps_find": true,
 	"system_info": true, "network_status": true, "bluetooth_status": true, "brightness_get": true,
+	"providers_list": true, "ollama_models": true, "focus_status": true,
 }
 
 // IsConfirmTool reports a tool that must always be confirmed, even with
