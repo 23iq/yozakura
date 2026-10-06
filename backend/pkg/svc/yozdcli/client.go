@@ -28,20 +28,25 @@ func New() *Client {
 	}}
 }
 
-// call runs args and turns the CLI's "Error: ..." line (printed with exit
-// status 0) into an error; "not supported" maps to ipc.ErrNotSupported.
+// call runs args and turns the CLI's error lines (printed with exit status
+// 0) into an error; "not supported" maps to ipc.ErrNotSupported.
 func (c *Client) call(args ...string) ([]byte, error) {
 	out, err := c.Run(args...)
 	if err != nil {
 		return nil, fmt.Errorf("%s %s: %w", brand.Daemon, strings.Join(args[:min(2, len(args))], " "), err)
 	}
+	// Any "Error..." line is a failure: "Error: <rpc error>" as well as
+	// "Error connecting to daemon: ..." when the daemon is down.
 	text := strings.TrimSpace(string(out))
-	if msg, ok := strings.CutPrefix(text, "Error:"); ok {
-		msg = strings.TrimSpace(msg)
-		if strings.Contains(msg, ipc.ErrNotSupported.Error()) {
+	if strings.HasPrefix(text, "Error") {
+		if strings.Contains(text, ipc.ErrNotSupported.Error()) {
 			return nil, ipc.ErrNotSupported
 		}
-		return nil, errors.New(msg)
+		msg, ok := strings.CutPrefix(text, "Error:")
+		if !ok {
+			msg = text
+		}
+		return nil, errors.New(strings.TrimSpace(msg))
 	}
 	return out, nil
 }

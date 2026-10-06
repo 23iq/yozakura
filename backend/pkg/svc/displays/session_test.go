@@ -63,11 +63,11 @@ func TestSessionKeepStopsTimer(t *testing.T) {
 	a := &fakeApplier{}
 	m := NewManager(a)
 	s, _ := m.Start(t0, snap, cand)
-	if err := m.Keep("nope"); err == nil {
+	if _, err := m.Keep("nope"); err == nil {
 		t.Fatal("unknown id must fail")
 	}
-	if err := m.Keep(s.ID); err != nil {
-		t.Fatal(err)
+	if kept, err := m.Keep(s.ID); err != nil || kept.State != StateKept || kept.ID != s.ID {
+		t.Fatalf("keep = %+v, %v", kept, err)
 	}
 	if m.Tick(t0.Add(time.Hour)) != nil || len(a.applied) != 1 {
 		t.Fatalf("kept session reverted: %+v", a.applied)
@@ -105,7 +105,7 @@ func TestSecondStartRevertsFirst(t *testing.T) {
 	if !reflect.DeepEqual(a.applied, want) {
 		t.Fatalf("applied = %+v\nwant %+v", a.applied, want)
 	}
-	if err := m.Keep(first.ID); err == nil {
+	if _, err := m.Keep(first.ID); err == nil {
 		t.Fatal("the replaced session must be gone")
 	}
 }
@@ -139,5 +139,38 @@ func TestNotSupportedSessionIsNotLive(t *testing.T) {
 	}
 	if a.calls != 1 {
 		t.Fatalf("non-live revert must not apply: %d calls", a.calls)
+	}
+}
+
+// Two applies in a row: the second snapshot is read while the first
+// candidate is live, yet reverting must restore the ORIGINAL state.
+func TestSecondApplyRevertsToOriginal(t *testing.T) {
+	a := &fakeApplier{}
+	m := NewManager(a)
+	orig := []ipc.OutputConfig{{Name: "DP-1", Enabled: true, Width: 2560, Height: 1440, Refresh: 60, Scale: 1}}
+	c1 := []ipc.OutputConfig{{Name: "DP-1", Enabled: true, Width: 2560, Height: 1440, Refresh: 240, Scale: 1}}
+	c2 := []ipc.OutputConfig{
+		{Name: "DP-1", Enabled: true, Width: 1920, Height: 1080, Refresh: 144, Scale: 1},
+		{Name: "HDMI-A-1", Enabled: false},
+	}
+	if _, err := m.Start(t0, orig, c1); err != nil {
+		t.Fatal(err)
+	}
+	// what the compositor reports while c1 is live
+	snap2 := []ipc.OutputConfig{c1[0], {Name: "HDMI-A-1", Enabled: true, Width: 1920, Height: 1080, Scale: 1}}
+	s2, err := m.Start(t0.Add(time.Second), snap2, c2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []ipc.OutputConfig{orig[0], snap2[1]}
+	if !reflect.DeepEqual(s2.Snapshot, want) {
+		t.Fatalf("snapshot = %+v\nwant %+v", s2.Snapshot, want)
+	}
+	before := len(a.applied)
+	if err := m.Revert(s2.ID); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(a.applied[before:], want) {
+		t.Fatalf("revert applied %+v, want original %+v", a.applied[before:], want)
 	}
 }

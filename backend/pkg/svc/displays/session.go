@@ -57,6 +57,9 @@ func (m *Manager) Start(now time.Time, snap, cand []ipc.OutputConfig) (*Session,
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.cur != nil && m.cur.State == StatePending {
+		// snap was read while the old candidate was live: restore the
+		// old session's snapshot for outputs it already covered.
+		snap = carrySnapshot(m.cur.Snapshot, snap, cand)
 		_ = m.revertLocked()
 	}
 	m.seq++
@@ -95,15 +98,15 @@ func (m *Manager) Tick(now time.Time) *Session {
 	return m.copyLocked()
 }
 
-// Keep confirms the pending session id.
-func (m *Manager) Keep(id string) error {
+// Keep confirms the pending session id and returns it.
+func (m *Manager) Keep(id string) (*Session, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.pendingLocked(id); err != nil {
-		return err
+		return nil, err
 	}
 	m.cur.State = StateKept
-	return nil
+	return m.copyLocked(), nil
 }
 
 // Revert re-applies the snapshot of the pending session id.
@@ -170,4 +173,24 @@ func (m *Manager) copyLocked() *Session {
 	}
 	c := *m.cur
 	return &c
+}
+
+// carrySnapshot builds the snapshot of a session that replaces a pending
+// one: per candidate output, the old (pre-change) snapshot entry wins over
+// the freshly read one, which only shows the unconfirmed candidate.
+func carrySnapshot(old, fresh, cand []ipc.OutputConfig) []ipc.OutputConfig {
+	byName := map[string]ipc.OutputConfig{}
+	for _, c := range fresh {
+		byName[c.Name] = c
+	}
+	for _, c := range old {
+		byName[c.Name] = c
+	}
+	var out []ipc.OutputConfig
+	for _, c := range cand {
+		if s, ok := byName[c.Name]; ok {
+			out = append(out, s)
+		}
+	}
+	return out
 }

@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/brand"
-	"yozakura/backend/pkg/fsutil"
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
@@ -19,6 +18,8 @@ type Conflict struct {
 	File string `json:"file"`
 	Line int    `json:"line"` // 1-based
 	Text string `json:"text"`
+	// Reason says why a rule was not moved (MoveResult.Skipped only).
+	Reason string `json:"reason,omitempty"`
 }
 
 // MoveResult lists the rules commented out (Moved, parsed into Outputs for
@@ -59,33 +60,6 @@ func ScanConflicts(hyprDir, dataDir string) ([]Conflict, error) {
 		return nil
 	})
 	return out, err
-}
-
-// MoveConflicts comments out every parsable conflict (so a second run finds
-// nothing to move) and returns the parsed configs for import. Unparsable
-// lines stay active and are reported in Skipped.
-func MoveConflicts(hyprDir, dataDir string) (MoveResult, error) {
-	res := MoveResult{Outputs: []ipc.OutputConfig{}, Moved: []Conflict{}, Skipped: []Conflict{}}
-	err := walkConfigs(hyprDir, dataDir, func(path string, lua bool, lines []string) error {
-		changed := false
-		for _, n := range conflictLines(lines, lua) {
-			c := Conflict{File: path, Line: n + 1, Text: strings.TrimSpace(lines[n])}
-			cfg, err := ParseMonitorLine(lines[n], lua)
-			if err != nil {
-				res.Skipped = append(res.Skipped, c)
-				continue
-			}
-			lines[n] = movedPrefix(lua) + lines[n]
-			changed = true
-			res.Outputs = append(res.Outputs, cfg)
-			res.Moved = append(res.Moved, c)
-		}
-		if !changed {
-			return nil
-		}
-		return fsutil.WriteFile(path, []byte(strings.Join(lines, "\n")), 0o644)
-	})
-	return res, err
 }
 
 // walkConfigs calls fn with the lines of every .conf/.lua file under root
@@ -131,7 +105,10 @@ func within(path, dir string) bool {
 }
 
 // conflictLines returns the 0-based indexes of monitor rules outside our
-// installer block (marker line through its OVERRIDES header / note).
+// installer block. The block runs from the marker line to the first blank
+// line, OVERRIDES header or overrides note, whichever comes first: the
+// installer writes "marker, load line, blank", so a block whose trailer was
+// edited away never hides the user's rules below it.
 func conflictLines(lines []string, lua bool) []int {
 	c := comment(lua)
 	re := confMonitorRe
@@ -145,7 +122,7 @@ func conflictLines(lines []string, lua bool) []int {
 		switch {
 		case t == brand.ConfigBlockMarker(c):
 			inBlock = true
-		case inBlock && (t == c+" OVERRIDES" || t == brand.ConfigOverridesNote(c, "source")):
+		case inBlock && (t == "" || t == c+" OVERRIDES" || t == brand.ConfigOverridesNote(c, "source")):
 			inBlock = false
 		case !inBlock && re.MatchString(line):
 			out = append(out, i)
@@ -189,6 +166,9 @@ func parseConfMonitor(line string) (ipc.OutputConfig, error) {
 	if err := setScale(&cfg, f[3]); err != nil {
 		return cfg, err
 	}
+	if (len(f)-4)%2 != 0 {
+		return cfg, fmt.Errorf("unsupported: %s", f[len(f)-1])
+	}
 	for i := 4; i+1 < len(f); i += 2 {
 		if err := setExtra(&cfg, f[i], f[i+1]); err != nil {
 			return cfg, err
@@ -199,13 +179,23 @@ func parseConfMonitor(line string) (ipc.OutputConfig, error) {
 
 func parseLuaMonitor(line string) (ipc.OutputConfig, error) {
 	t := strings.TrimSpace(line)
-	open, end := strings.Index(t, "{"), strings.LastIndex(t, "}")
-	if open < 0 || end < open || !strings.HasSuffix(strings.TrimSuffix(t, ";"), ")") {
+	open, end := strings.Index(t, "{"), strings.Index(t, "})")
+	if open < 0 || end < open {
+		return ipc.OutputConfig{}, fmt.Errorf("not a single-line hl.monitor call")
+	}
+	// only `;` and a `-- comment` may follow the call
+	if rest := strings.TrimPrefix(strings.TrimSpace(t[end+2:]), ";"); strings.TrimSpace(rest) != "" &&
+		!strings.HasPrefix(strings.TrimSpace(rest), "--") {
 		return ipc.OutputConfig{}, fmt.Errorf("not a single-line hl.monitor call")
 	}
 	fields := map[string]string{}
 	for _, m := range luaFieldRe.FindAllStringSubmatch(t[open+1:end], -1) {
 		fields[m[1]] = strings.Trim(m[2], `"'`)
+		switch m[1] {
+		case "output", "mode", "position", "scale", "transform", "vrr", "disabled":
+		default:
+			return ipc.OutputConfig{}, fmt.Errorf("unsupported: %s", m[1])
+		}
 	}
 	cfg := ipc.OutputConfig{Name: fields["output"], Enabled: true}
 	if cfg.Name == "" {
@@ -228,7 +218,7 @@ func parseLuaMonitor(line string) (ipc.OutputConfig, error) {
 			return cfg, err
 		}
 	}
-	for _, k := range []string{"transform", "vrr", "mirror"} {
+	for _, k := range []string{"transform", "vrr"} {
 		if v, ok := fields[k]; ok {
 			if err := setExtra(&cfg, k, v); err != nil {
 				return cfg, err
@@ -280,9 +270,9 @@ func setScale(cfg *ipc.OutputConfig, v string) error {
 	return nil
 }
 
-// setExtra handles the optional key/value pairs; transform and vrr are
-// kept, mirror cannot be represented, anything else (bitdepth, cm, sdr*)
-// is cosmetic and dropped.
+// setExtra handles the optional key/value pairs. Only transform and vrr
+// fit an OutputConfig; anything else (bitdepth, cm, sdrbrightness, mirror,
+// ...) would be lost on import, so the rule is not movable.
 func setExtra(cfg *ipc.OutputConfig, key, v string) error {
 	switch key {
 	case "transform", "vrr":
@@ -300,8 +290,8 @@ func setExtra(cfg *ipc.OutputConfig, key, v string) error {
 		} else {
 			cfg.VRR = n
 		}
-	case "mirror":
-		return fmt.Errorf("mirror rules cannot be imported")
+	default:
+		return fmt.Errorf("unsupported: %s", key)
 	}
 	return nil
 }

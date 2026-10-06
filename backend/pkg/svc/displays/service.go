@@ -19,6 +19,7 @@ package displays
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"sync"
@@ -42,11 +43,11 @@ func (a yozdApplier) Apply(c yipc.OutputConfig) error { return a.y.ApplyOutput(c
 
 // Service is the displays IPC service.
 type Service struct {
-	yozd             Yozd
-	mgr              *Manager
-	hyprDir, dataDir string
-	now              func() time.Time
-	tick             time.Duration
+	yozd                   Yozd
+	mgr                    *Manager
+	hyprDir, dataDir, home string
+	now                    func() time.Time
+	tick                   time.Duration
 
 	timerMu sync.Mutex
 	timerOn bool
@@ -60,7 +61,9 @@ type Service struct {
 
 // NewService scans ~/.config/hypr (XDG) and skips the app's data dir.
 func NewService(p *paths.Paths) *Service {
-	return newService(yozdcli.New(), filepath.Join(filepath.Dir(p.ConfigDir), "hypr"), p.DataDir)
+	s := newService(yozdcli.New(), filepath.Join(filepath.Dir(p.ConfigDir), "hypr"), p.DataDir)
+	s.home, _ = os.UserHomeDir()
+	return s
 }
 
 func newService(y Yozd, hyprDir, dataDir string) *Service {
@@ -122,6 +125,11 @@ func (s *Service) apply(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, fmt.Errorf("displays.apply: %w", err)
 	}
+	select {
+	case <-s.stop:
+		return nil, fmt.Errorf("displays.apply: shutting down")
+	default:
+	}
 	if len(p.Outputs) == 0 {
 		return nil, fmt.Errorf("displays.apply: no outputs")
 	}
@@ -178,10 +186,11 @@ func (s *Service) keep(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil {
 		return nil, fmt.Errorf("displays.keep: %w", err)
 	}
-	if err := s.mgr.Keep(p.Session); err != nil {
+	kept, err := s.mgr.Keep(p.Session)
+	if err != nil {
 		return nil, err
 	}
-	s.publishSession(s.mgr.Current())
+	s.publishSession(kept)
 	return map[string]any{"ok": true}, nil
 }
 
@@ -282,7 +291,7 @@ func (s *Service) conflicts(json.RawMessage) (any, error) {
 }
 
 func (s *Service) moveConflicts(json.RawMessage) (any, error) {
-	return MoveConflicts(s.hyprDir, s.dataDir)
+	return MoveConflicts(s.hyprDir, s.dataDir, s.home)
 }
 
 func (s *Service) subscribe(sub *ipc.Subscriber) {

@@ -39,6 +39,14 @@ func TestErrorLines(t *testing.T) {
 	if _, err := c.Outputs(); err == nil || err.Error() != "boom" {
 		t.Fatalf("want boom, got %v", err)
 	}
+	// a dead daemon must not look like success
+	c = fake("Error connecting to daemon: dial unix /run/user/1000/yozd.sock: connect: no such file or directory\n", &args)
+	if err := c.ApplyOutput(ipc.OutputConfig{Name: "DP-1"}); err == nil {
+		t.Fatal("connection error must fail")
+	}
+	if err := c.NextLayout(); err == nil {
+		t.Fatal("connection error must fail")
+	}
 }
 
 func TestActiveLayoutAndNext(t *testing.T) {

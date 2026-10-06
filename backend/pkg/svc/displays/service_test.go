@@ -176,3 +176,13 @@ func TestIdentifyOrdersByPosition(t *testing.T) {
 		t.Fatalf("event = %v", l)
 	}
 }
+
+func TestApplyAfterCloseFails(t *testing.T) {
+	y := &fakeYozd{outputs: twoOutputs()}
+	s := newService(y, "", "")
+	s.Close()
+	raw, _ := json.Marshal(map[string]any{"outputs": []ipc.OutputConfig{{Name: "DP-1", Enabled: true}}})
+	if _, err := s.apply(raw); err == nil || len(y.appliedCopy()) != 0 {
+		t.Fatalf("apply after Close: %v, applied %d", err, len(y.appliedCopy()))
+	}
+}
