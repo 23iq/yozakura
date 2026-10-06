@@ -20,6 +20,9 @@ const (
 	maxScriptBytes = 4 << 20
 )
 
+// cancelGrace is how long a cancelled job gets after SIGTERM before SIGKILL.
+var cancelGrace = 10 * time.Second
+
 // ExecRunner runs jobs as real processes in their own process group (a
 // daemon stop never signals them); cancel sends SIGTERM to the group, then
 // SIGKILL after a grace period.
@@ -41,6 +44,9 @@ func (ExecRunner) Run(ctx context.Context, argv []string, env []string, line fun
 		}
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGTERM)
 	}
+	// A child that ignores SIGTERM is killed after the grace period, so a
+	// cancelled job can never hold the queue forever.
+	cmd.WaitDelay = cancelGrace
 	// Output goes to an unlinked temp file the daemon follows, never to a
 	// pipe: when the daemon goes away (reload) mid-install, a pipe would
 	// SIGPIPE pacman/paru mid-transaction; a file just keeps the output.

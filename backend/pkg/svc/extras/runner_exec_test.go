@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestScriptFetcher(t *testing.T) {
@@ -87,5 +88,38 @@ func TestExecRunnerOutputIsAFile(t *testing.T) {
 	}
 	if strings.Join(lines, "|") != "file|a|b|last" {
 		t.Fatalf("lines = %q", lines)
+	}
+}
+
+// A cancelled job whose process ignores SIGTERM is killed after the grace
+// period instead of holding the queue forever.
+func TestExecRunnerKillsTermIgnoringChild(t *testing.T) {
+	old := cancelGrace
+	cancelGrace = 200 * time.Millisecond
+	defer func() { cancelGrace = old }()
+	ctx, cancel := context.WithCancel(context.Background())
+	started := make(chan struct{}, 1)
+	go func() {
+		<-started
+		cancel()
+	}()
+	done := make(chan struct{})
+	var code int
+	go func() {
+		defer close(done)
+		code, _ = ExecRunner{}.Run(ctx, []string{"sh", "-c", `trap '' TERM; echo up; while :; do sleep 0.05; done`}, nil, func(string) {
+			select {
+			case started <- struct{}{}:
+			default:
+			}
+		})
+	}()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not return after cancel: no SIGKILL escalation")
+	}
+	if code == 0 {
+		t.Fatalf("exit code = 0, want a signal exit")
 	}
 }
