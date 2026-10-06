@@ -27,6 +27,7 @@ import "defaults/ai.js" as AiDefaults
 import "defaults/general.js" as GeneralDefaults
 import "defaults/voice.js" as VoiceDefaults
 import "defaults/notifications.js" as NotificationsDefaults
+import "defaults/layout.js" as LayoutDefaults
 import "defaults/specials.js" as SpecialsDefaults
 import "defaults/displays.js" as DisplaysDefaults
 import "defaults/keyboard.js" as KeyboardDefaults
@@ -87,9 +88,10 @@ Singleton {
     property bool keyboardReady: keyboardLoader.ready
     property bool appsReady: appsLoader.ready
     property bool terminalReady: terminalLoader.ready
+    property bool layoutReady: layoutLoader.ready
     property bool keybindsInitialLoadComplete: keybinds.initialLoadComplete
 
-    property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady && displaysReady && keyboardReady && terminalReady
+    property bool initialLoadComplete: themeReady && barReady && workspacesReady && overviewReady && notchReady && compositorReady && performanceReady && weatherReady && desktopReady && lockscreenReady && prefixReady && systemReady && dockReady && aiReady && generalReady && voiceReady && notificationsReady && appsReady && specialsReady && displaysReady && keyboardReady && terminalReady && layoutReady
 
     // Compatibility aliases
     property alias loader: themeLoader
@@ -208,6 +210,13 @@ Singleton {
         defaults: KeyboardDefaults.data
         onBeforeValidate: root.markKeyboardManagedIfLegacy(keyboardLoader)
         adapter: KeyboardAdapter {}
+    }
+    ConfigFile {
+        id: layoutLoader
+        store: root
+        name: "layout"
+        defaults: LayoutDefaults.data
+        adapter: LayoutAdapter {}
     }
     ConfigFile {
         id: terminalLoader
@@ -468,6 +477,9 @@ Singleton {
     // Keyboard layouts, switch bind and key repeat
     property KeyboardAdapter keyboard: keyboardLoader.adapter
 
+    // Where the launcher/dashboard live, dashboard tabs and grid, sheet side, OSD
+    property LayoutAdapter layout: layoutLoader.adapter
+
     // Terminal look: fish prompt, greeting, kitty padding and cursor
     property TerminalAdapter terminal: terminalLoader.adapter
 
@@ -534,6 +546,9 @@ Singleton {
     }
     function saveKeyboard() {
         keyboardLoader.writeAdapter();
+    }
+    function saveLayout() {
+        layoutLoader.writeAdapter();
     }
     function saveTerminal() {
         terminalLoader.writeAdapter();

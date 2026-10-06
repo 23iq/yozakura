@@ -15,5 +15,9 @@ var data = {
     "mediaAnimationDuration": 160,
     "expandedArtworkSize": 64,
     "microphoneNoticeDuration": 1800,
-    "visualizer": true
+    "visualizer": true,
+    // attached | floating; activities: live activities shown on the notch.
+    "style": "attached",
+    "activities": [],
+    "osd": false
 }

@@ -18,4 +18,7 @@ JsonAdapter {
     property int expandedArtworkSize: 64
     property int microphoneNoticeDuration: 1800
     property bool visualizer: true
+    property string style: "attached"
+    property list<var> activities: []
+    property bool osd: false
 }

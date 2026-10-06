@@ -225,6 +225,32 @@
         "control": "toggle",
         "keywords": "audio visualizer cava bars music"
       }
+    },
+    "style": {
+      "title": "Style",
+      "type": "string",
+      "default": "attached",
+      "description": "Notch look: attached to the screen edge or floating as an island.",
+      "enum": [
+        "attached",
+        "floating"
+      ]
+    },
+    "activities": {
+      "title": "Activities",
+      "type": "array",
+      "default": [],
+      "description": "Live activities (ids) the notch may show, in priority order; empty = none.",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "osd": {
+      "title": "Osd",
+      "type": "boolean",
+      "default": false,
+      "description": "Show volume and brightness changes in the notch instead of the OSD overlay."
     }
   },
   "additionalProperties": false

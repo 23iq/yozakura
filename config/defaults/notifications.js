@@ -6,6 +6,8 @@
 // the notch, "corner" shows classic toasts (modules/notifications/CornerToasts.qml),
 // "auto" follows the bar style of the active preset.
 var data = {
+    // Notch toast look: card | pill.
+    "notchStyle": "card",
     "presentation": "auto",
     "position": "auto",
     "screens": [],

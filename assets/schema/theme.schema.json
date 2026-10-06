@@ -170,6 +170,77 @@
       "maximum": 2000,
       "x-unit": "ms"
     },
+    "density": {
+      "title": "Density",
+      "type": "string",
+      "default": "cozy",
+      "description": "Size density of bar, notch, dock and panels: compact, cozy (the historical sizes) or roomy.",
+      "enum": [
+        "compact",
+        "cozy",
+        "roomy"
+      ]
+    },
+    "shape": {
+      "title": "Shape",
+      "type": "object",
+      "description": "Corner shape of the shell's surfaces.",
+      "properties": {
+        "corners": {
+          "title": "Corners",
+          "type": "string",
+          "default": "round",
+          "description": "Corner style of surfaces: round (rounded), cut (chamfered) or square.",
+          "enum": [
+            "round",
+            "cut",
+            "square"
+          ]
+        },
+        "popupCorners": {
+          "title": "Popup corners",
+          "type": "string",
+          "default": "",
+          "description": "Corner style of popups and menus; empty follows shape.corners.",
+          "enum": [
+            "",
+            "round",
+            "cut",
+            "square"
+          ]
+        },
+        "cutSize": {
+          "title": "Cut size",
+          "type": "number",
+          "default": 10,
+          "description": "Chamfer size of cut corners.",
+          "minimum": 2,
+          "maximum": 32,
+          "x-unit": "px"
+        }
+      },
+      "additionalProperties": false
+    },
+    "signatures": {
+      "title": "Signatures",
+      "type": "object",
+      "description": "Decorative signatures drawn on top of the shell's surfaces.",
+      "properties": {
+        "brushHighlight": {
+          "title": "Brush highlight",
+          "type": "boolean",
+          "default": false,
+          "description": "Paint selection and focus highlights as a brush stroke."
+        },
+        "petals": {
+          "title": "Petals",
+          "type": "boolean",
+          "default": false,
+          "description": "Drift sakura petals across the shell's surfaces."
+        }
+      },
+      "additionalProperties": false
+    },
     "paletteTransitionDuration": {
       "title": "Color Fade",
       "type": "number",

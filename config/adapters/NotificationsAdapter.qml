@@ -3,6 +3,7 @@
 import Quickshell.Io
 
 JsonAdapter {
+    property string notchStyle: "card"
     property string presentation: "auto"
     property string position: "auto"
     property list<string> screens: []

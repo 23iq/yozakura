@@ -16,6 +16,7 @@
 .import "displays.js" as Displays
 .import "keyboard.js" as Keyboard
 .import "terminal.js" as Terminal
+.import "layout.js" as Layout
 
 // Catalog metadata of every config domain: the part of the settings catalog
 // that config/defaults/*.js (values, types) and modules/settings/schema/*.js
@@ -64,6 +65,7 @@ var domains = {
     "displays": Displays,
     "keyboard": Keyboard,
     "terminal": Terminal,
+    "layout": Layout,
     "general": Misc.general,
     "lockscreen": Misc.lockscreen,
     "overview": Misc.overview,

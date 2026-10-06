@@ -16,6 +16,7 @@
 var types = {
     "theme": {
         "animDuration": "int",
+        "shape.cutSize": "int",
         "fontSize": "int",
         "monoFontSize": "int",
         "paletteTransitionDuration": "int",
@@ -76,7 +77,12 @@ var types = {
         "columns": "int",
         "rows": "int"
     },
+    "layout": {
+        "dashboard.grid.cols": "int",
+        "dashboard.grid.cells": "list<var>"
+    },
     "notch": {
+        "activities": "list<var>",
         "expandedArtworkSize": "int",
         "expandedMediaWidth": "int",
         "hoverCollapseDelay": "int",

@@ -58,5 +58,19 @@ var keys = {
         "max": 10000,
         "unit": "ms",
         "description": "How long the microphone mute/unmute notice stays."
+    },
+    "style": {
+        "enum": ["attached", "floating"],
+        "description": "Notch look: attached to the screen edge or floating as an island."
+    },
+    "activities": {
+        "items": {
+            "type": "string"
+        },
+        "uniqueItems": true,
+        "description": "Live activities (ids) the notch may show, in priority order; empty = none."
+    },
+    "osd": {
+        "description": "Show volume and brightness changes in the notch instead of the OSD overlay."
     }
 };

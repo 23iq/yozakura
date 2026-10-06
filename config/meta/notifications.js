@@ -55,5 +55,9 @@ var keys = {
     },
     "dnd.schedule.days": {
         "description": "Days (0 = Sunday) a Do Not Disturb window starts on."
+    },
+    "notchStyle": {
+        "enum": ["card", "pill"],
+        "description": "Look of notch-born toasts: a full card or a compact pill."
     }
 };

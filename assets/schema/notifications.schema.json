@@ -6,6 +6,16 @@
   "type": "object",
   "x-file": "config/notifications.json",
   "properties": {
+    "notchStyle": {
+      "title": "Notch style",
+      "type": "string",
+      "default": "card",
+      "description": "Look of notch-born toasts: a full card or a compact pill.",
+      "enum": [
+        "card",
+        "pill"
+      ]
+    },
     "presentation": {
       "title": "Style",
       "type": "string",

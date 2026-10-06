@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:yozakura:config:layout",
+  "title": "layout",
+  "description": "Where the launcher and dashboard live (notch or a separate window), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.",
+  "type": "object",
+  "x-file": "config/layout.json",
+  "properties": {
+    "launcher": {
+      "title": "Launcher",
+      "type": "object",
+      "description": "Launcher placement and look.",
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "default": "notch",
+          "description": "Where the launcher opens: grown from the notch or as a centered window.",
+          "enum": [
+            "notch",
+            "window"
+          ]
+        },
+        "resultStyle": {
+          "title": "Result style",
+          "type": "string",
+          "default": "list",
+          "description": "How launcher results are laid out.",
+          "enum": [
+            "list",
+            "grid"
+          ]
+        },
+        "preview": {
+          "title": "Preview",
+          "type": "boolean",
+          "default": true,
+          "description": "Show a preview pane next to the selected launcher result."
+        },
+        "compactWhenEmpty": {
+          "title": "Compact when empty",
+          "type": "boolean",
+          "default": false,
+          "description": "Collapse the launcher to its search field until something is typed."
+        }
+      },
+      "additionalProperties": false
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "type": "object",
+      "description": "Dashboard placement, tabs and widget grid.",
+      "properties": {
+        "host": {
+          "title": "Host",
+          "type": "string",
+          "default": "notch",
+          "description": "Where the dashboard opens: grown from the notch or as a window.",
+          "enum": [
+            "notch",
+            "window"
+          ]
+        },
+        "tabs": {
+          "title": "Tabs",
+          "type": "array",
+          "default": [
+            {
+              "id": "widgets",
+              "visible": true
+            },
+            {
+              "id": "wallpapers",
+              "visible": true
+            },
+            {
+              "id": "metrics",
+              "visible": true
+            }
+          ],
+          "items": {
+            "type": "object"
+          },
+          "description": "Dashboard tabs in order: [{id, visible}]."
+        },
+        "grid": {
+          "title": "Grid",
+          "type": "object",
+          "description": "Widget grid of the dashboard.",
+          "properties": {
+            "cols": {
+              "title": "Cols",
+              "type": "number",
+              "default": 4,
+              "description": "Columns of the dashboard widget grid.",
+              "minimum": 1,
+              "maximum": 12
+            },
+            "cells": {
+              "title": "Cells",
+              "type": "array",
+              "default": [],
+              "description": "Placed dashboard cells; empty uses the registry's default grid."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sheet": {
+      "title": "Sheet",
+      "type": "object",
+      "description": "Side sheet (notifications, quick settings).",
+      "properties": {
+        "side": {
+          "title": "Side",
+          "type": "string",
+          "default": "auto",
+          "description": "Edge the side sheet slides from; auto follows the bar.",
+          "enum": [
+            "auto",
+            "left",
+            "right"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "osd": {
+      "title": "Osd",
+      "type": "object",
+      "description": "On-screen display for volume and brightness.",
+      "properties": {
+        "position": {
+          "title": "Position",
+          "type": "string",
+          "default": "auto",
+          "description": "Screen edge of the OSD; auto is opposite the bar.",
+          "enum": [
+            "auto",
+            "top",
+            "bottom",
+            "left",
+            "right"
+          ]
+        },
+        "style": {
+          "title": "Style",
+          "type": "string",
+          "default": "pill",
+          "description": "OSD look.",
+          "enum": [
+            "pill",
+            "bar",
+            "minimal"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

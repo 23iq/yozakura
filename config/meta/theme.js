@@ -238,5 +238,35 @@ var keys = {
     },
     "srFrame.inheritBg": {
         "description": "Paint the screen frame with the srBg variant instead of its own settings."
+    },
+    "density": {
+        "enum": ["compact", "cozy", "roomy"],
+        "description": "Size density of bar, notch, dock and panels: compact, cozy (the historical sizes) or roomy."
+    },
+    "shape": {
+        "description": "Corner shape of the shell's surfaces."
+    },
+    "shape.corners": {
+        "enum": ["round", "cut", "square"],
+        "description": "Corner style of surfaces: round (rounded), cut (chamfered) or square."
+    },
+    "shape.popupCorners": {
+        "enum": ["", "round", "cut", "square"],
+        "description": "Corner style of popups and menus; empty follows shape.corners."
+    },
+    "shape.cutSize": {
+        "min": 2,
+        "max": 32,
+        "unit": "px",
+        "description": "Chamfer size of cut corners."
+    },
+    "signatures": {
+        "description": "Decorative signatures drawn on top of the shell's surfaces."
+    },
+    "signatures.brushHighlight": {
+        "description": "Paint selection and focus highlights as a brush stroke."
+    },
+    "signatures.petals": {
+        "description": "Drift sakura petals across the shell's surfaces."
     }
 };

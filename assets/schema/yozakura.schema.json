@@ -32,6 +32,9 @@
     "keyboard": {
       "$ref": "#/$defs/keyboard"
     },
+    "layout": {
+      "$ref": "#/$defs/layout"
+    },
     "lockscreen": {
       "$ref": "#/$defs/lockscreen"
     },
@@ -5410,6 +5413,169 @@
       },
       "additionalProperties": false
     },
+    "layout": {
+      "$id": "urn:yozakura:config:layout",
+      "title": "layout",
+      "description": "Where the launcher and dashboard live (notch or a separate window), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.",
+      "type": "object",
+      "x-file": "config/layout.json",
+      "properties": {
+        "launcher": {
+          "title": "Launcher",
+          "type": "object",
+          "description": "Launcher placement and look.",
+          "properties": {
+            "host": {
+              "title": "Host",
+              "type": "string",
+              "default": "notch",
+              "description": "Where the launcher opens: grown from the notch or as a centered window.",
+              "enum": [
+                "notch",
+                "window"
+              ]
+            },
+            "resultStyle": {
+              "title": "Result style",
+              "type": "string",
+              "default": "list",
+              "description": "How launcher results are laid out.",
+              "enum": [
+                "list",
+                "grid"
+              ]
+            },
+            "preview": {
+              "title": "Preview",
+              "type": "boolean",
+              "default": true,
+              "description": "Show a preview pane next to the selected launcher result."
+            },
+            "compactWhenEmpty": {
+              "title": "Compact when empty",
+              "type": "boolean",
+              "default": false,
+              "description": "Collapse the launcher to its search field until something is typed."
+            }
+          },
+          "additionalProperties": false
+        },
+        "dashboard": {
+          "title": "Dashboard",
+          "type": "object",
+          "description": "Dashboard placement, tabs and widget grid.",
+          "properties": {
+            "host": {
+              "title": "Host",
+              "type": "string",
+              "default": "notch",
+              "description": "Where the dashboard opens: grown from the notch or as a window.",
+              "enum": [
+                "notch",
+                "window"
+              ]
+            },
+            "tabs": {
+              "title": "Tabs",
+              "type": "array",
+              "default": [
+                {
+                  "id": "widgets",
+                  "visible": true
+                },
+                {
+                  "id": "wallpapers",
+                  "visible": true
+                },
+                {
+                  "id": "metrics",
+                  "visible": true
+                }
+              ],
+              "items": {
+                "type": "object"
+              },
+              "description": "Dashboard tabs in order: [{id, visible}]."
+            },
+            "grid": {
+              "title": "Grid",
+              "type": "object",
+              "description": "Widget grid of the dashboard.",
+              "properties": {
+                "cols": {
+                  "title": "Cols",
+                  "type": "number",
+                  "default": 4,
+                  "description": "Columns of the dashboard widget grid.",
+                  "minimum": 1,
+                  "maximum": 12
+                },
+                "cells": {
+                  "title": "Cells",
+                  "type": "array",
+                  "default": [],
+                  "description": "Placed dashboard cells; empty uses the registry's default grid."
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "sheet": {
+          "title": "Sheet",
+          "type": "object",
+          "description": "Side sheet (notifications, quick settings).",
+          "properties": {
+            "side": {
+              "title": "Side",
+              "type": "string",
+              "default": "auto",
+              "description": "Edge the side sheet slides from; auto follows the bar.",
+              "enum": [
+                "auto",
+                "left",
+                "right"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "osd": {
+          "title": "Osd",
+          "type": "object",
+          "description": "On-screen display for volume and brightness.",
+          "properties": {
+            "position": {
+              "title": "Position",
+              "type": "string",
+              "default": "auto",
+              "description": "Screen edge of the OSD; auto is opposite the bar.",
+              "enum": [
+                "auto",
+                "top",
+                "bottom",
+                "left",
+                "right"
+              ]
+            },
+            "style": {
+              "title": "Style",
+              "type": "string",
+              "default": "pill",
+              "description": "OSD look.",
+              "enum": [
+                "pill",
+                "bar",
+                "minimal"
+              ]
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "lockscreen": {
       "$id": "urn:yozakura:config:lockscreen",
       "title": "lockscreen",
@@ -5785,6 +5951,32 @@
             "control": "toggle",
             "keywords": "audio visualizer cava bars music"
           }
+        },
+        "style": {
+          "title": "Style",
+          "type": "string",
+          "default": "attached",
+          "description": "Notch look: attached to the screen edge or floating as an island.",
+          "enum": [
+            "attached",
+            "floating"
+          ]
+        },
+        "activities": {
+          "title": "Activities",
+          "type": "array",
+          "default": [],
+          "description": "Live activities (ids) the notch may show, in priority order; empty = none.",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "osd": {
+          "title": "Osd",
+          "type": "boolean",
+          "default": false,
+          "description": "Show volume and brightness changes in the notch instead of the OSD overlay."
         }
       },
       "additionalProperties": false
@@ -5796,6 +5988,16 @@
       "type": "object",
       "x-file": "config/notifications.json",
       "properties": {
+        "notchStyle": {
+          "title": "Notch style",
+          "type": "string",
+          "default": "card",
+          "description": "Look of notch-born toasts: a full card or a compact pill.",
+          "enum": [
+            "card",
+            "pill"
+          ]
+        },
         "presentation": {
           "title": "Style",
           "type": "string",
@@ -7823,6 +8025,77 @@
           "minimum": 0,
           "maximum": 2000,
           "x-unit": "ms"
+        },
+        "density": {
+          "title": "Density",
+          "type": "string",
+          "default": "cozy",
+          "description": "Size density of bar, notch, dock and panels: compact, cozy (the historical sizes) or roomy.",
+          "enum": [
+            "compact",
+            "cozy",
+            "roomy"
+          ]
+        },
+        "shape": {
+          "title": "Shape",
+          "type": "object",
+          "description": "Corner shape of the shell's surfaces.",
+          "properties": {
+            "corners": {
+              "title": "Corners",
+              "type": "string",
+              "default": "round",
+              "description": "Corner style of surfaces: round (rounded), cut (chamfered) or square.",
+              "enum": [
+                "round",
+                "cut",
+                "square"
+              ]
+            },
+            "popupCorners": {
+              "title": "Popup corners",
+              "type": "string",
+              "default": "",
+              "description": "Corner style of popups and menus; empty follows shape.corners.",
+              "enum": [
+                "",
+                "round",
+                "cut",
+                "square"
+              ]
+            },
+            "cutSize": {
+              "title": "Cut size",
+              "type": "number",
+              "default": 10,
+              "description": "Chamfer size of cut corners.",
+              "minimum": 2,
+              "maximum": 32,
+              "x-unit": "px"
+            }
+          },
+          "additionalProperties": false
+        },
+        "signatures": {
+          "title": "Signatures",
+          "type": "object",
+          "description": "Decorative signatures drawn on top of the shell's surfaces.",
+          "properties": {
+            "brushHighlight": {
+              "title": "Brush highlight",
+              "type": "boolean",
+              "default": false,
+              "description": "Paint selection and focus highlights as a brush stroke."
+            },
+            "petals": {
+              "title": "Petals",
+              "type": "boolean",
+              "default": false,
+              "description": "Drift sakura petals across the shell's surfaces."
+            }
+          },
+          "additionalProperties": false
         },
         "paletteTransitionDuration": {
           "title": "Color Fade",

@@ -13,6 +13,16 @@ JsonAdapter {
     property bool tintIcons: false
     property bool enableCorners: true
     property int animDuration: 300
+    property string density: "cozy"
+    property JsonObject shape: JsonObject {
+        property string corners: "round"
+        property string popupCorners: ""
+        property int cutSize: 10
+    }
+    property JsonObject signatures: JsonObject {
+        property bool brushHighlight: false
+        property bool petals: false
+    }
     property int paletteTransitionDuration: 600
     property real shadowOpacity: 0.5
     property string shadowColor: "shadow"

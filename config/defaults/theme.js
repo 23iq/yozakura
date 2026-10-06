@@ -11,6 +11,19 @@ var data = {
     "tintIcons": false,
     "enableCorners": true,
     "animDuration": 300,
+    // Metrics density: compact | cozy | roomy (cozy = the historical sizes).
+    "density": "cozy",
+    // Corner shape: round | cut | square; popupCorners "" follows corners.
+    "shape": {
+        "corners": "round",
+        "popupCorners": "",
+        "cutSize": 10
+    },
+    // Decorative signatures; turned on by the default shift.
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false
+    },
     "paletteTransitionDuration": 600,
     "shadowOpacity": 0.5,
     "shadowColor": "shadow",
