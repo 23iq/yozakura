@@ -120,6 +120,13 @@ Item {
         radius: Look.chipRadius(height)
         enableBorder: input.activeFocus
 
+        // Languages without control boxes (ink): a hairline under the field
+        Divider {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            visible: Look.dividers && !Look.boxedControls
+        }
+
         Text {
             id: glyph
             anchors.left: parent.left
