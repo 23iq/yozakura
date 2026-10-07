@@ -8,7 +8,10 @@ Draws modules/notifications/CornerToast.qml with fixture notifications, once
 per visual language, over your wallpaper with your real config and palette
 (see settings_render.py). Variants: single (one toast with an image),
 actions (actions + a progress hint + a critical one), stack (a grouped app,
-for top and bottom corners). Writes <out>/toasts-<variant>-<language>.png.
+for top and bottom corners), plain (the Settings test toast, whose themed
+icon is missing, and a long one that elides). Named icons resolve through a
+Quickshell.iconPath stub over /usr/share/icons/hicolor (missing -> "").
+Writes <out>/toasts-<variant>-<language>.png.
 """
 from __future__ import annotations
 
@@ -43,6 +46,16 @@ VARIANTS = {
                 hints={"value": 35}, actions=[{"identifier": "cancel", "text": "Cancel"}])], False),
         ([notif(4, "Battery", "Battery low", "8% left. Plug in the charger soon.", 1, urgency=2)], False),
     ],
+    "plain": [
+        ([notif(10, "Yozakura", "This is a notification", "Sent from Settings › Notifications.", 0,
+                appIcon="preferences-system-notifications")], False),
+        ([notif(11, "Calendar", "Quarterly planning review with the design, platform and research teams",
+                "Agenda: roadmap for the next two quarters, hiring, the theme overhaul and the new "
+                "notification centre. Bring the numbers from the last retro and your top three risks "
+                "so we can settle owners before Friday.", 4)], True),
+        ([notif(12, "Thunderbird", "Mail", "", 12, urgency=2,
+                actions=[{"identifier": "open", "text": "Open"}])], False),
+    ],
     "stack": [
         ([notif(5, "Mail", "Kōyō", "Warm autumn palette is ready", 1),
           notif(6, "Mail", "Lazy", "Re: weekend plans", 5),
@@ -51,6 +64,15 @@ VARIANTS = {
           notif(9, "Slack", "#general", "Standup in 5 minutes", 3)], True),
     ],
 }
+
+ICON_DIR = Path("/usr/share/icons/hicolor/scalable/apps")
+QUICKSHELL_STUB = """pragma Singleton
+import QtQuick
+QtObject {
+    function iconPath(name, check) {
+        return ["firefox"].indexOf(name) >= 0 ? "%s/" + name + ".svg" : ""
+    }
+}""" % ICON_DIR
 
 SERVICES_STUB = """pragma Singleton
 import QtQuick
@@ -111,6 +133,7 @@ def env_for(lang: str, mode: str, state: dict) -> KitEnv:
     act.mkdir(parents=True, exist_ok=True)
     shutil.copy(REPO / "modules/services/activities/NotificationProgress.js", act)
     env.h.module("qs.modules.services", {"Notifications": SERVICES_STUB})
+    env.h.module("Quickshell", {"Quickshell": QUICKSHELL_STUB})
     env._qmldir(dst, "qs.modules.notifications", only=["CornerToast", "ToastCard"])
     return env
 
