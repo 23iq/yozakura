@@ -1,6 +1,7 @@
 import QtQuick
 import qs.config
 import qs.modules.components.surfaceeffects
+import qs.modules.theme
 
 // A sumi-e brush stroke filling the item along its long axis (pressed head,
 // ragged edges, dry tapered tail). Used by the ink effect's highlights and
@@ -32,6 +33,6 @@ ShaderEffect {
         from: 0.35
         to: 1
         duration: Math.max(1, Config.animDuration * 0.6)
-        easing.type: Easing.OutCubic
+        easing.type: Motion.morph.easing
     }
 }

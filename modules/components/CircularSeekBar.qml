@@ -46,8 +46,8 @@ Item {
     // Handle Animation
     property real animatedHandleOffset: isDragging ? 9 : 6
     property real animatedHandleWidth: isDragging ? lineWidth * 0.5 : lineWidth
-    Behavior on animatedHandleOffset { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-    Behavior on animatedHandleWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+    Behavior on animatedHandleOffset { NumberAnimation { duration: Motion.morph.duration; easing.type: Motion.morph.easing } }
+    Behavior on animatedHandleWidth { NumberAnimation { duration: Motion.morph.duration; easing.type: Motion.morph.easing } }
 
     // Dash Configuration (Matches CarouselProgress logic)
     property real dotSize: lineWidth
@@ -61,8 +61,8 @@ Item {
     property real currentDashLen: dashedActive ? baseDashLength : (baseDashLength + targetSpacing)
     property real currentGapLen: dashedActive ? targetSpacing : 0
     
-    Behavior on currentDashLen { NumberAnimation { duration: Config.animDuration; easing.type: Easing.InOutQuad } }
-    Behavior on currentGapLen { NumberAnimation { duration: Config.animDuration; easing.type: Easing.InOutQuad } }
+    Behavior on currentDashLen { NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing } }
+    Behavior on currentGapLen { NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing } }
 
     // Marquee Animation
     property real phase: 0

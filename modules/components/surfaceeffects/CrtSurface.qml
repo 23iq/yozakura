@@ -58,26 +58,26 @@ ShaderEffect {
             target: root
             property: "flash"
             to: 1
-            duration: 40
+            duration: Motion.emphasis.duration
         }
         NumberAnimation {
             target: root
             property: "flash"
             to: 0.25
-            duration: 50
+            duration: Motion.emphasis.duration
         }
         NumberAnimation {
             target: root
             property: "flash"
             to: 0.7
-            duration: 40
+            duration: Motion.emphasis.duration
         }
         NumberAnimation {
             target: root
             property: "flash"
             to: 0
-            duration: 160
-            easing.type: Easing.OutQuad
+            duration: Motion.emphasis.duration
+            easing.type: Motion.emphasis.easing
         }
     }
 }
