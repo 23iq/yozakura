@@ -2,14 +2,18 @@
 """Render the settings window offscreen (private Xvfb, never the live desktop).
 
     tools/render/settings_render.py [--out DIR] [--mode dark|light|both]
-                                    [--size 1180x780] [--set KEY=JSON ...] [CATEGORY ...]
+                                    [--size 1180x780] [--set KEY=JSON ...]
+                                    [--languages ink,glass,tiles] [CATEGORY ...]
 
 Uses tests/lib/settings_env.py with your real config (~/.config/yozakura),
 palette (~/.cache/yozakura/colors.json; light mode is generated with matugen
 from the current wallpaper) and wallpapers. Scheme previews come from
 `yozakura schemes` (the backend in this checkout is built on the fly).
 `--set theme.surfaceEffect='"crt"'` overrides a config key for the render
-(value parsed as JSON, plain strings allowed). Writes <out>/<category>-<mode>.png.
+(value parsed as JSON, plain strings allowed). `--languages` renders each visual
+language (theme.language) over the current wallpaper. Writes
+<out>/<category>-<mode>.png, or <out>/settings-<category>-<language>[-light].png
+with --languages.
 """
 from __future__ import annotations
 
@@ -118,6 +122,7 @@ def main() -> int:
     ap.add_argument("--size", default="1180x780")
     ap.add_argument("--scroll", type=int, default=0, help="scroll the page by N pixels")
     ap.add_argument("--search", default="", help="type a query in the search field")
+    ap.add_argument("--languages", default="", help="comma separated visual languages (ink,glass,tiles)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=JSON",
                     help="override a config key (domain.key[.sub]=value), repeatable")
     args = ap.parse_args()
@@ -127,37 +132,52 @@ def main() -> int:
     state = wallpaper_state()
     schemes = scheme_palettes(state)
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
-    for mode in modes:
-        extra = overrides_from(args.set)
-        extra["theme"] = {**extra.get("theme", {}), "lightMode": mode == "light"}
-        env = SettingsEnv(f"render-{mode}", palette=palette(mode, state), user_config=True,
-                          overrides=extra, wallpaper=state)
-        win = env.load(f"""
+    langs = [x for x in args.languages.split(",") if x] or [""]
+    wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
+    for lang in langs:
+        for mode in modes:
+            render(lang, mode, args, (w, h), state, schemes, wall, out)
+    return 0
+
+
+def render(lang: str, mode: str, args, size: tuple, state: dict, schemes: dict, wall: str, out: Path) -> None:
+    w, h = size
+    extra = overrides_from(args.set)
+    extra["theme"] = {**extra.get("theme", {}), "lightMode": mode == "light"}
+    if lang:
+        extra["theme"]["language"] = lang
+    env = SettingsEnv(f"render-{lang or 'cfg'}-{mode}", palette=palette(mode, state), user_config=True,
+                      overrides=extra, wallpaper=state)
+    backdrop = json.dumps(("file://" + wall) if wall and lang else "")
+    win = env.load(f"""
 import QtQuick
 import QtQuick.Window
 import qs.modules.settings
 import qs.modules.settings.store
 Window {{
     width: {w}; height: {h}; visible: true; color: "black"
+    Image {{ anchors.fill: parent; source: {backdrop}; fillMode: Image.PreserveAspectCrop }}
     SettingsShell {{ objectName: "shell"; anchors.fill: parent }}
 }}""")
-        shell = env.h.find(win, "shell")
-        env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
-        env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
-        for cat in args.categories:
-            env.h.eval(shell, f'select("{cat}")')
-            if args.search:
-                env.h.find(win, "settingsSearch").setProperty("text", args.search)
-            QTest.qWait(900)
-            if args.scroll:
-                page = env.h.find(win, "settingsPage").property("item")
-                page.setProperty("contentY", args.scroll)
-                QTest.qWait(300)
-            suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "")
+    shell = env.h.find(win, "shell")
+    env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
+    env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
+    for cat in args.categories:
+        env.h.eval(shell, f'select("{cat}")')
+        if args.search:
+            env.h.find(win, "settingsSearch").setProperty("text", args.search)
+        QTest.qWait(900)
+        if args.scroll:
+            page = env.h.find(win, "settingsPage").property("item")
+            page.setProperty("contentY", args.scroll)
+            QTest.qWait(300)
+        suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "")
+        if lang:
+            path = out / f"settings-{cat}{suffix}-{lang}{'' if mode == 'dark' else '-light'}.png"
+        else:
             path = out / f"{cat}{suffix}-{mode}.png"
-            win.grabWindow().save(str(path))
-            print(path)
-    return 0
+        win.grabWindow().save(str(path))
+        print(path)
 
 
 if __name__ == "__main__":
