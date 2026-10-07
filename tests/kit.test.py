@@ -143,7 +143,7 @@ for lang, density in CASES:
     # Primary chip: the filled accent text button
     pc = get("primaryChip")
     assert pc.property("look") == "primary" and pc.property("variant") == "primary", tag
-    assert pc.property("ink").name() == h.eval(win, "Type.onAccent.toString()"), tag
+    assert pc.property("ink").name() == h.eval(win, "Type.accentInk.toString()"), tag
 
     # Switch: user flips report the new value; `checked` follows the binding
     sw = get("switch")

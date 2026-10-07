@@ -56,7 +56,7 @@ Item {
             radius: Look.squareControls ? Math.max(0, track.radius - pad) : width / 2
             y: pad
             x: root.checked ? track.width - width - pad : pad
-            color: root.checked ? Type.onAccent : Type.secondary
+            color: root.checked ? Type.accentInk : Type.secondary
 
             Behavior on x {
                 enabled: Motion.enter.duration > 0
