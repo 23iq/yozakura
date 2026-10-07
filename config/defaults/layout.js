@@ -7,7 +7,7 @@ var data = {
     "launcher": {
         "host": "notch",
         "resultStyle": "list",
-        "preview": true,
+        "preview": false,
         "compactWhenEmpty": false
     },
     "dashboard": {

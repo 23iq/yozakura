@@ -5810,7 +5810,7 @@
             "preview": {
               "title": "Preview pane",
               "type": "boolean",
-              "default": true,
+              "default": false,
               "description": "Show a preview of the selected file, calculator result or clipboard entry.",
               "x-settings": {
                 "category": "launcher",
