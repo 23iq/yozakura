@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.shell
+import qs.modules.components.kit
 import qs.config
 import "NotificationPolicy.js" as Policy
 
@@ -28,7 +29,7 @@ Item {
     readonly property var anchorsInfo: Policy.anchorsOf(cornerPosition)
     readonly property bool atBottom: anchorsInfo.vertical === "bottom"
     readonly property string side: anchorsInfo.horizontal
-    readonly property int gap: 12
+    readonly property int gap: Space.m
     readonly property int toastWidth: Math.round(Math.min(width - 2 * gap, Metrics.toastW * Math.max(1, Styling.fontSize(0) / 14)))
 
     // Input region (UnifiedShellPanel mask)
@@ -51,7 +52,7 @@ Item {
         if (root.side !== "center" || !notch || (Config.notchPosition ?? "top") !== edge || !notch.reveal)
             return 0;
         const n = notch.notchContainerRef;
-        return n ? n.height + 4 : 0;
+        return n ? n.height + Space.xs : 0;
     }
     readonly property real insetTop: frameInset + Math.max(barInset("top"), notchInset("top")) + gap
     readonly property real insetBottom: frameInset + Math.max(barInset("bottom"), dockInset("bottom"), notchInset("bottom")) + gap
@@ -100,7 +101,7 @@ Item {
 
     // Horizontal entry offset: from the nearest side (center: from the edge)
     readonly property real enterX: side === "left" ? -(toastWidth * 0.6) : (side === "right" ? toastWidth * 0.6 : 0)
-    readonly property real enterY: side === "center" ? (atBottom ? 40 : -40) : 0
+    readonly property real enterY: side === "center" ? (atBottom ? Space.xxl : -Space.xxl) : 0
 
     ListView {
         id: list
@@ -110,7 +111,7 @@ Item {
         y: root.atBottom ? root.height - height - root.insetBottom : root.insetTop
         visible: root.active && count > 0
         interactive: false
-        spacing: 8
+        spacing: Space.s
         verticalLayoutDirection: root.atBottom ? ListView.BottomToTop : ListView.TopToBottom
         model: toastModel
 
@@ -122,6 +123,7 @@ Item {
         }
 
         add: Transition {
+            id: addTrans
             enabled: Motion.enter.duration > 0
             ParallelAnimation {
                 NumberAnimation {
@@ -138,6 +140,14 @@ Item {
                     duration: Motion.enter.duration
                     easing.type: Motion.enter.easing
                     easing.overshoot: Motion.enter.overshoot
+                }
+                // Centered toasts come in from the screen edge instead
+                NumberAnimation {
+                    property: "y"
+                    from: addTrans.ViewTransition.destination.y + root.enterY
+                    to: addTrans.ViewTransition.destination.y
+                    duration: root.enterY !== 0 ? Motion.enter.duration : 0
+                    easing.type: Motion.enter.easing
                 }
                 NumberAnimation {
                     property: "scale"

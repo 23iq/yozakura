@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.modules.components
 import qs.modules.components.kit
 import "ToastModel.js" as ToastModel
 
@@ -28,7 +27,7 @@ Item {
     readonly property int depth: ToastModel.stackDepth(root.notifications.length)
     readonly property int peek: Space.m
 
-    implicitHeight: card.implicitHeight + root.depth * root.peek
+    implicitHeight: card.height + root.depth * root.peek
 
     function dismiss(): void {
         if (root.notifications.length > 0)
@@ -52,45 +51,50 @@ Item {
         onHoveredChanged: root.hold(hovered)
     }
 
-    // The stack: sheets behind the card, each a little narrower and quieter,
-    // with a hairline so their edges read over any wallpaper.
+    // The stack: sheets behind the card, each a little narrower and quieter.
+    // Each sheet shows only its own `peek` strip past the one in front of it
+    // (a clip), so translucent boxes never show through each other.
     Repeater {
         model: root.depth
 
-        Surface {
+        Item {
+            id: strip
+            objectName: "toastSheet"
             required property int index
             readonly property int step: index + 1
             z: -step
             x: Space.m * step
-            y: root.stackUp ? root.depth * root.peek - root.peek * step : root.peek * step
+            y: root.stackUp ? card.y - root.peek * step : card.y + card.height + root.peek * (step - 1)
             width: root.width - 2 * Space.m * step
-            height: card.height
-            glassSurface: "popups"
-            opacity: ToastModel.sheetOpacity(step)
-            padding: 0
+            height: root.peek
+            clip: true
 
-            Rectangle {
-                anchors.fill: parent
-                radius: parent.radius
-                color: "transparent"
-                border.width: Space.hairline
-                border.color: Type.track
+            Surface {
+                y: root.stackUp ? 0 : root.peek - card.height
+                width: strip.width
+                height: card.height
+                floating: true
+                glassSurface: "popups"
+                opacity: ToastModel.sheetOpacity(strip.step)
+                padding: 0
             }
         }
     }
 
+    // The card: one floating kit Surface sized to its content. Its own box
+    // (StyledRect) draws the fill, edge and shadow; no extra layer on top.
     Surface {
         id: card
+        objectName: "toastCard"
         y: root.stackUp ? root.depth * root.peek : 0
         width: root.width
-        implicitHeight: box.implicitHeight + 2 * padding
+        height: content.implicitHeight + 2 * card.padding
+        floating: true
         glassSurface: "popups"
-        layer.enabled: true
-        layer.effect: Shadow {}
+        enableShadow: true
 
         MouseArea {
-            width: box.width
-            height: box.height
+            anchors.fill: parent
             acceptedButtons: Qt.LeftButton | Qt.MiddleButton
             cursorShape: Qt.PointingHandCursor
             onClicked: mouse => {
@@ -101,24 +105,19 @@ Item {
             }
         }
 
-        // The language's group box (ink: none, glass: a frosted card, tiles: a tile).
-        Group {
-            id: box
+        ToastCard {
+            id: content
+            objectName: "toastContent"
             width: card.width - 2 * card.padding
-
-            ToastCard {
-                id: content
-                width: parent.width
-                notification: root.latest
-                extra: root.extra
-                hovered: hover.hovered
-                onDismissRequested: root.dismiss()
-                onActionInvoked: identifier => {
-                    if (!root.latest)
-                        return;
-                    Notifications.attemptInvokeAction(root.latest.id, identifier, false);
-                    root.dismiss();
-                }
+            notification: root.latest
+            extra: root.extra
+            hovered: hover.hovered
+            onDismissRequested: root.dismiss()
+            onActionInvoked: identifier => {
+                if (!root.latest)
+                    return;
+                Notifications.attemptInvokeAction(root.latest.id, identifier, false);
+                root.dismiss();
             }
         }
     }
