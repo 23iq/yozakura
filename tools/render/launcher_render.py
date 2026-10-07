@@ -44,7 +44,7 @@ STATES = {
     "options": ("kitty", "expand(0); optionIndex = 1", 600),
 }
 
-LIST = {"resultStyle": "list", "preview": False, "compactWhenEmpty": False}
+LIST = {"resultStyle": "list", "preview": False, "compactWhenEmpty": False, "icons": True}
 # name -> (layout.launcher overrides, state, extra JS on the LauncherSearch)
 VARIANTS = {
     "list": (LIST, "mixed-command", ""),
@@ -57,6 +57,10 @@ VARIANTS = {
     "preview-image": ({**LIST, "preview": True}, "files", "select(2)"),
     "preview-calc": ({**LIST, "preview": True}, "calc", ""),
     "compact": ({**LIST, "compactWhenEmpty": True}, "empty", ""),
+    # icons: false, the text-only (command-line) list
+    "text": ({**LIST, "icons": False}, "mixed-command", ""),
+    "text-options": ({**LIST, "icons": False}, "options", ""),
+    "text-cards": ({**LIST, "resultStyle": "cards", "icons": False}, "apps", ""),
 }
 
 # Prefix tabs (tests/lib/tabs_env.py fixtures): name -> (tab, search text, JS on the tab)

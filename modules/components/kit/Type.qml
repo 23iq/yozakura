@@ -14,6 +14,7 @@ import "../../theme/TypeRoles.js" as TypeRoles
 //   label      0.78x, semibold, UPPERCASE, tracked, muted: the section label
 // The accent (primary) is reserved for active state, progress, today /
 // selected and the single primary action of a surface; never decoration.
+// Progress fills use `progress` (the accent unless theme.progressRole).
 QtObject {
     id: root
 
@@ -40,6 +41,10 @@ QtObject {
     readonly property color placeholder: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.06)
     readonly property color accent: Colors.primary
     readonly property color accentInk: Colors.overPrimary
+    // Progress fills, rings and slider fills: theme.progressRole lets a set
+    // show its palette's second accent (secondary / tertiary) there.
+    readonly property string progressRole: Config.theme.progressRole || "primary"
+    readonly property color progress: root.progressRole === "secondary" ? Colors.secondary : root.progressRole === "tertiary" ? Colors.tertiary : Colors.primary
 
     function size(role: string): int {
         const f = root.scale[role];

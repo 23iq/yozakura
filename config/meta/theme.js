@@ -50,6 +50,10 @@ var keys = {
     "tintIcons": {
         "description": "Tint app icons with the palette (monochrome look)."
     },
+    "progressRole": {
+        "enum": ["primary", "secondary", "tertiary"],
+        "description": "Palette role of progress fills, rings and slider fills; secondary or tertiary shows the palette's second accent."
+    },
     "enableCorners": {
         "description": "Draw rounded screen corners."
     },

@@ -88,7 +88,7 @@ Item {
                     width: root.vertical ? parent.width : parent.width * root.fraction
                     height: root.vertical ? parent.height * root.fraction : parent.height
                     radius: parent.radius
-                    color: Type.accent
+                    color: Type.progress
                 }
             }
 
@@ -97,7 +97,7 @@ Item {
                 width: Space.m
                 height: width
                 radius: width / 2
-                color: Type.accent
+                color: Type.progress
                 x: root.vertical ? (area.width - width) / 2 : root.fraction * area.width - width / 2
                 y: root.vertical ? (1 - root.fraction) * area.height - height / 2 : (area.height - height) / 2
                 scale: root.hovered || root.pressed ? 1 : 0

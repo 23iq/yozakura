@@ -8,6 +8,8 @@ var data = {
         "host": "notch",
         "resultStyle": "list",
         "preview": false,
+        // Leading icons on list/card result rows (false: a command-line list).
+        "icons": true,
         "compactWhenEmpty": false
     },
     "dashboard": {
