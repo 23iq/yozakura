@@ -15,8 +15,8 @@ StyledRect {
 
     variant: "bg"
     radius: Styling.radius(20)
-    layer.enabled: true
-    layer.effect: Shadow {}
+    // The rect\'s own shadow (also drawn by a corner style\'s mask)
+    enableShadow: true
 
     MouseArea {
         anchors.fill: parent
