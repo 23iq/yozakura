@@ -35,13 +35,16 @@ def tz_offsets() -> dict:
 
 def config_extra(domains: dict) -> str:
     notch = domains.get("notch", {})
+    # Like Config.qml: notch.style, else the legacy notch.theme
+    style = notch.get("style") or ("attached" if notch.get("theme", "default") == "default" else "island")
     return f"""
     property bool barReady: true
     property bool dockReady: true
     property bool notchReady: true
     property bool workspacesReady: true
     property bool showBackground: theme.srBarBg.opacity > 0
-    property string notchTheme: {json.dumps(notch.get("theme", "default"))}
+    property string notchStyle: {json.dumps(style)}
+    property string notchTheme: {json.dumps("default" if style == "attached" else "island")}
     property string notchPosition: {json.dumps(notch.get("position", "top"))}
     property QtObject pinnedApps: QtObject {{ property var apps: {json.dumps(PINNED)} }}
     function savePinnedApps() {{}}
@@ -381,7 +384,7 @@ QUICKSHELL_MODULES = {
                    "&& stdout) { stdout.text = command.slice(4).map(z => tzOffsets[z] || '+0000').join('\\n'); "
                    "stdout.streamFinished(); running = false }"
                    " }",
-        "StdioCollector": "QtObject { property string text: ''; signal streamFinished() }",
+        "StdioCollector": "QtObject { property string text: ''; property bool waitForEnd; signal streamFinished() }",
         "SplitParser": "QtObject { signal read(string data) }",
         "IpcHandler": "QtObject { property string target; property bool enabled: true }",
         "FileView": "QtObject { property string path; property bool watchChanges; property bool blockLoading; "

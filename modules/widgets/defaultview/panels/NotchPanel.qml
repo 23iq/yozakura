@@ -1,5 +1,5 @@
 import QtQuick
-import qs.modules.theme
+import qs.modules.components.kit
 
 // Base of every notch panel (registered in NotchPanels.js). The view sets
 // the properties below; a panel sizes itself through implicitHeight and
@@ -13,9 +13,11 @@ Item {
     // Registry hint: list rows before scrolling (0 = panel default)
     property int maxRows: 0
 
-    // One spacing unit for every panel: paddings and gaps derive from it
-    readonly property real unit: Math.round(Styling.fontSize(-2) / 2)
-    readonly property real padding: panel.unit * 3
+    // Kit spacing: the small gap unit, the side / bottom inset (the
+    // language's surface padding) and the smaller gap under the header
+    readonly property real unit: Space.xs
+    readonly property real padding: Look.surfacePadding
+    readonly property real topPadding: Space.s
 
     // Ask the view to close this panel (after an action that ends it)
     signal closeRequested

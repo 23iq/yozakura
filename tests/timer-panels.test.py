@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO, Harness  # noqa: E402
-from lib import timers_stubs  # noqa: E402
+from lib import kit_stubs, timers_stubs  # noqa: E402
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtQuick import QQuickItem  # noqa: E402
@@ -53,7 +53,7 @@ h.module("qs.modules.services", {
     **timers_stubs.services(),
 })
 h.module("qs.modules.bar.activities", {n: (REPO / f"modules/bar/activities/{n}.qml").read_text() for n in ["ActivityIndicator", "ActivityRing"]})
-h.module("qs.modules.widgets.defaultview.activities", {"NotchIconButton": (REPO / "modules/widgets/defaultview/activities/NotchIconButton.qml").read_text()})
+kit_stubs.install(h)
 panels = "qs/modules/widgets/defaultview/panels"
 for n in ["TimerHubPanel", "TimerPanel", "AlarmPanel"]:
     h.copy(f"modules/widgets/defaultview/panels/{n}.qml", dest=panels)
@@ -173,7 +173,7 @@ check("row buttons call the service", got == [
     ("toggle", {"id": "t1"}), ("add", {"id": "t1", "spec": "+1m"}), ("reset", {"id": "t1"}), ("cancel", {"id": "t1"}),
     ("stopwatch", {"action": "lap"}), ("stopwatch", {"action": "toggle"}), ("stopwatch", {"action": "reset"}),
     ("reminderCancel", {"id": "r1"})], got)
-check("stopwatch elapsed shown", h.eval(item(panel, "stopwatchElapsed"), "text") == "00:05")
+check("stopwatch elapsed shown", h.eval(item(panel, "stopwatchElapsed"), "title") == "00:05")
 h.eval(h.find(panel, "focusToggle"), "clicked()")
 check("focus button toggles focus mode", json.loads(ev("JSON.stringify(FocusMode.calls)"))[-1] == ["toggle", 0])
 h.eval(h.find(panel, "timerNew"), "clicked()")

@@ -32,6 +32,7 @@ var ALIGNS = ["start", "center", "end"];
 var DOCK_THEMES = ["default", "floating", "integrated"];
 var DOCK_INDICATORS = ["dot", "line", "glow", "brush"];
 var EXPAND_ON = ["hover", "click"];
+var NOTCH_MEDIA_STYLES = ["row", "artwork"];
 var ACTIVITY_PRESENTATIONS = ["notch", "islands", "off"];
 var NO_MEDIA_DISPLAY = ["userHost", "compositor", "custom"];
 var COMPOSITOR_LAYOUTS = ["dwindle", "master", "scrolling"];

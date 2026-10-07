@@ -16,6 +16,8 @@ StyledRect {
     property string subtitle: ""
     property bool selected: false
     property bool highlighted: false
+    // Tabular figures in the title (times, counters)
+    property bool tabular: false
     property Component leading: null
     property Component trailing: null
     readonly property bool hovered: mouse.containsMouse || root.highlighted
@@ -76,6 +78,7 @@ StyledRect {
             KitText {
                 width: parent.width
                 role: "body"
+                tabular: root.tabular
                 text: root.title
                 font.weight: Look.labelWeight
             }

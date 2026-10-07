@@ -10,7 +10,7 @@ Notch's own geometry animation; panels crossfade over
 
 | Panel | Trigger | File | Shows |
 |---|---|---|---|
-| `media` | media title | `MediaPanel.qml` | the player card (`ExpandedMedia`) |
+| `media` | media title | `MediaPanel.qml` | the player in `notch.mediaStyle`: `row` (`MediaRow`) or `artwork` (`MediaArtwork`, artwork-tinted card); both use `MediaSeek` + `MediaTransportControls` |
 | `transfers` | downloads segment (`tasks`) | `TransfersPanel.qml` | transfers grouped by source: icon, name, bar, sizes · speed, ETA/state, open folder / pause / resume / cancel; combined progress, speed and ETA in the title |
 | `timers` | timers segment | `TimerPanel.qml` (+ `TimerList`, `TimerRow`, `StopwatchRow`, `ReminderRow`) | every timer (pause/resume, +1 min, reset, cancel; Stop / +5 min when ringing), stopwatch with laps, reminders; title: focus mode, stopwatch, new timer |
 | `timerHub` | none (`auto`, `modal`; `TimersService.openHub`) | `TimerHubPanel.qml` (+ `QuickInputField`) | quick input with live preview (`timers.parse`, Enter = `timers.quick`; `focus 50`, `note …`), note mode for the quick note bind, the timer list |
@@ -35,9 +35,14 @@ player is shown instead); activity panels stay available.
 ## Adding a panel
 1. A QML file here whose root is `NotchPanel` (properties `screenName`,
    `revealed`, `maxRows`, `unit`/`padding` spacing, signal
-   `closeRequested`). Size yourself with `implicitHeight`; use
-   `NotchPanelTitle` for the title row and `NotchActivitiesSection` for
-   scrolling lists.
+   `closeRequested`). Size yourself with `implicitHeight`
+   (`topPadding + group.implicitHeight + padding`). Build only from the kit
+   (`qs.modules.components.kit`): one `Group` at `x: padding, y: topPadding`
+   holding a `NotchPanelTitle` (label-role title, caption summary, `IconButton`
+   size "s" children) and the content: `ListRow` rows (Art / Ring leading,
+   IconButton trailing), `NotchActivitiesSection` for scrolling lists,
+   `ProgressLine`, `Ring`. At most one `primary` action per panel.
+   Renders: `tools/render/island_render.py`.
 2. One entry in `NotchPanels.js` `PANELS`: `{ id, trigger, url, requires,
    width, maxRows }` (+ optional `auto`, `modal`, see below). `requires` names a key of the availability context
    built in `DefaultView.panelAvailability` (add it there if new), `trigger`

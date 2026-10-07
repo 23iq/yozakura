@@ -6,10 +6,10 @@ import os, pathlib, tempfile, shutil
 import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401  (never a live window)
-from lib import timers_stubs  # noqa: E402
+from lib import kit_stubs, timers_stubs  # noqa: E402
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtQml import QQmlEngine, QQmlComponent
-from PySide6.QtCore import QUrl, QPointF, Qt
+from PySide6.QtCore import QObject, QUrl, QPointF, Qt
 from PySide6.QtQuick import QQuickWindow
 from PySide6.QtTest import QTest
 from PySide6.QtQml import QQmlExpression
@@ -28,7 +28,7 @@ with tempfile.TemporaryDirectory(prefix='yozakura-components-') as tmp:
   return d
  module('qs.config',{'Config':'''pragma Singleton
 import QtQuick
-QtObject { function resolveColor(c) { return c; } property QtObject performance: QtObject { property bool blurTransition: false }; property QtObject theme: QtObject { property QtObject srBg: QtObject { property var border: ["white", 1] } }; property int animDuration: 160; property bool showBackground: true; property int roundness: 12; property string notchTheme: "island"; property string notchPosition: "top"; property QtObject bar: QtObject { property string position: "top" }; property QtObject notch: QtObject { property bool disableHoverExpansion: false; property int hoverExpandDelay: 90; property int hoverCollapseDelay: 200; property int expandedMediaWidth: 440; property int expandedArtworkSize: 64; property int microphoneNoticeDuration: 1800; property int mediaAnimationDuration: 160; property string customText: "Yozakura"; property bool visualizer: true } }'''})
+QtObject { function resolveColor(c) { return c; } property QtObject performance: QtObject { property bool blurTransition: false }; property QtObject theme: QtObject { property QtObject srBg: QtObject { property var border: ["white", 1] } }; property int animDuration: 160; property bool showBackground: true; property int roundness: 12; property string notchTheme: "island"; property string notchPosition: "top"; property QtObject bar: QtObject { property string position: "top" }; property QtObject notch: QtObject { property bool disableHoverExpansion: false; property int hoverExpandDelay: 90; property int hoverCollapseDelay: 200; property int expandedMediaWidth: 440; property int expandedArtworkSize: 64; property int microphoneNoticeDuration: 1800; property int mediaAnimationDuration: 160; property string customText: "Yozakura"; property bool visualizer: true; property string mediaStyle: "row" } }'''})
  module('qs.modules.theme',{
  'BarMetrics':(repo/'modules/theme/BarMetrics.qml').read_text(),
  'Metrics':'pragma Singleton\nimport QtQuick\nQtObject { property int spacing: 8 }',
@@ -41,7 +41,7 @@ import QtQuick
 QtObject { property color overBackground: "white"; property color criticalRed: "red"; property color primary: "blue"; property color tertiary: "green"; property color surfaceBright: "gray"; property color shadow: "black"; property color overSurfaceVariant: "silver"; property color error: "red"; property color green: "green"; property color red: "red"; property color yellow: "yellow" }''',
  'Icons':'''pragma Singleton
 import QtQuick
-QtObject { property string font: "Sans"; property string player: "P"; property string spotify: "S"; property string previous: "<"; property string next: ">"; property string play: "P"; property string pause: "II"; property string mic: "M"; property string micSlash: "X"; property string accept: "v"; property string copy: "c"; property string sync: "s"; property string downloadSimple: "d"; property string folder: "f"; property string cancel: "x"; property string stop: "S" }'''})
+QtObject { property string font: "Sans"; property string player: "P"; property string spotify: "S"; property string previous: "<"; property string next: ">"; property string play: "P"; property string pause: "II"; property string mic: "M"; property string micSlash: "X"; property string accept: "v"; property string copy: "c"; property string sync: "s"; property string downloadSimple: "d"; property string folder: "f"; property string cancel: "x"; property string stop: "S"; property string shuffle: "~" }'''})
  module('qs.modules.services',{
  'ShellLayout':'pragma Singleton\nimport QtQuick\nQtObject { property var notchSegments: [] }',
  'I18n':'''pragma Singleton
@@ -79,6 +79,7 @@ Item { property string tooltipText; property bool show }''',
 Item { property Item anchorItem; property var bar; property int contentWidth; property int contentHeight; property int popupPadding: 8; property bool isOpen: false; function toggle() { isOpen = !isOpen; } }'''})
  module('qs.modules.notch', {'NotchNotificationView':'''import QtQuick
 Item { property bool isNavigating: false; property bool notchHovered: false; implicitHeight: 80 }'''})
+ module('qs.modules.components.kit', kit_stubs.files())
  module('qs.modules.globals', {'GlobalStates': 'pragma Singleton\nimport QtQuick\nQtObject {}'})
  module('qs.modules.corners', {'RoundCorner': 'import QtQuick\nItem { enum CornerEnum { TopRight, BottomRight, TopLeft, BottomLeft } property int corner; property real size; property color color }'})
  # Live activities inside the notch: real components, stubbed service
@@ -95,7 +96,7 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  module('qs.modules.shell.hosts', {'HostRouter': 'pragma Singleton\nimport QtQuick\nQtObject { function hostFor(m) { return "notch"; } function notchOpen(v) { return !!v && !!(v.launcher || v.dashboard || v.powermenu || v.tools || v.aiquick); } }'})
  module('qs.modules.shell.rehome', {'RehomedClock': 'import QtQuick\nText { property real size }', 'RehomedTray': 'import QtQuick\nItem { property real iconSize }'})
  children=p/'children'; children.mkdir()
- names=['NotchVisualizer','AlbumBackdrop','MediaTimeline','MediaTransportControls','ExpandedMedia','MediaSummary','IslandHeader','IslandRail','IslandNotifications','DefaultView']
+ names=['NotchVisualizer','AlbumBackdrop','MediaSeek','MediaTransportControls','MediaRow','MediaArtwork','MediaSummary','IslandHeader','IslandRail','IslandNotifications','DefaultView']
  for n in ['Notch', 'NotchViewTransition', 'NotchSilhouette', 'NotchOutline']: shutil.copy(repo/'modules/notch'/(n+'.qml'), children)
  shutil.copy(repo/'modules/notch/NotchShape.js', children)
  for n in names: shutil.copy(repo/'modules/widgets/defaultview'/(n+'.qml'),children)
@@ -104,7 +105,7 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  (children/'styles').mkdir()
  shutil.copy(repo/'modules/notch/styles/NotchStyles.js', children/'styles')
  shutil.copy(notchActs/'ActivityRegistry.js', children/'activities')
- # Notch panels module; MediaPanel reaches ExpandedMedia through '..'
+ # Notch panels module; MediaPanel reaches MediaRow / MediaArtwork through '..'
  dv=p/'qs/modules/widgets/defaultview'; dv.mkdir(parents=True, exist_ok=True)
  for f in children.iterdir():
      if f.is_file(): shutil.copy(f, dv)
@@ -121,7 +122,7 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  failed=False
  for n in names:
   c=QQmlComponent(engine,QUrl.fromLocalFile(str(children/(n+'.qml'))))
-  obj=c.createWithInitialProperties({'player':None} if n in ['MediaTimeline','MediaTransportControls','ExpandedMedia','MediaSummary','IslandHeader'] else {})
+  obj=c.createWithInitialProperties({'player':None} if n in ['MediaSeek','MediaTransportControls','MediaRow','MediaArtwork','MediaSummary','IslandHeader'] else {})
   print(n+': '+('PASS' if obj else 'FAIL'))
   for e in c.errors(): print(e.toString())
   failed = failed or obj is None
@@ -181,6 +182,33 @@ QtObject { property string presentation: "notch"; property var activities: []; p
  move(summary)
  assert view.property('mediaHoverExpanded'), 'player must expand without notifications'
  window.close()
+
+ # Media panel styles (notch.mediaStyle): row and artwork, transport wired to the player
+ host=p/'mediahost'; host.mkdir()  # a fresh dir: the type loader caches listings
+ (host/'Host.qml').write_text('import QtQuick\nimport qs.config\nimport qs.modules.services\nimport qs.modules.widgets.defaultview.panels\nMediaPanel { width: 440 }')
+ c=QQmlComponent(engine,QUrl.fromLocalFile(str(host/'Host.qml')))
+ panel=c.create()
+ for e in c.errors(): print(e.toString())
+ assert panel is not None, 'MediaPanel must load'
+ evaluate(panel, 'MprisController.activePlayer = ({ trackTitle: "Song", trackArtist: "Band", trackAlbum: "LP", identity: "Spotify", isPlaying: true, canTogglePlaying: true, canGoNext: true, canGoPrevious: true, toggles: 0, togglePlaying: function() { this.toggles++ } })')
+ QTest.qWait(20)
+ def named(name):
+  return panel.findChild(QObject, name)
+ assert named('mediaTitle') is not None and named('mediaSource') is None, 'row style by default'
+ assert evaluate(named('mediaTitle'), 'role') == 'body', 'row: the title in the body role'
+ evaluate(named('mediaPlayPause'), 'clicked()')
+ assert evaluate(panel, 'MprisController.activePlayer.toggles') == 1, 'play/pause toggles the player'
+ assert evaluate(named('mediaPlayPause'), 'primary') is True, 'play/pause is the primary action'
+ evaluate(panel, 'Config.notch.mediaStyle = "artwork"')
+ QTest.qWait(20)
+ assert named('mediaSource') is not None, 'artwork style shows the source label'
+ assert evaluate(named('mediaSource'), 'text') == 'Spotify'
+ assert evaluate(named('mediaTitle'), 'role') == 'title', 'artwork: the title in the title role'
+ assert named('mediaShuffle') is not None, 'artwork style has a shuffle toggle'
+ evaluate(panel, 'Config.notch.mediaStyle = "row"')
+ evaluate(panel, 'MprisController.activePlayer = null')
+ panel.deleteLater(); QTest.qWait(20)
+ print('Media panel: row and artwork styles passed')
 
  # Visualizer registers with the shared cava service only while visible and playing.
  c=QQmlComponent(engine,QUrl.fromLocalFile(str(children/'NotchVisualizer.qml')))

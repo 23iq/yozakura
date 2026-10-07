@@ -3,9 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Qt.labs.qmlmodels
-import qs.config
-import qs.modules.theme
-import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services.activities
 import "NotchActivities.js" as NotchActivities
 
@@ -51,7 +49,7 @@ Item {
     onRowsChanged: section.sync()
     Component.onCompleted: section.sync()
 
-    readonly property real rowEstimate: Styling.fontSize(6) * 2.6
+    readonly property real rowEstimate: Space.rowHeight + Space.s
     implicitHeight: Math.min(list.contentHeight, section.rowEstimate * section.maxRows)
 
     ListView {
@@ -62,7 +60,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         ScrollIndicator.vertical: ScrollIndicator {}
         model: keyModel
-        spacing: 2
+        spacing: Space.xs
 
         delegate: DelegateChooser {
             role: "kind"
@@ -74,20 +72,15 @@ Item {
                     required property string key
                     readonly property var entry: section.byKey[headerRow.key] || null
                     width: ListView.view.width
-                    implicitHeight: headerText.implicitHeight + Math.round(Styling.fontSize(-2) / 2) * 2
+                    implicitHeight: label.implicitHeight + Space.s
                     height: implicitHeight
-                    Text {
-                        id: headerText
+                    SectionLabel {
+                        id: label
                         anchors.left: parent.left
+                        anchors.leftMargin: Space.s
+                        anchors.right: parent.right
                         anchors.bottom: parent.bottom
                         text: headerRow.entry ? headerRow.entry.label : ""
-                        textFormat: Text.PlainText
-                        color: Colors.overSurfaceVariant
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
-                        font.weight: Font.Bold
-                        font.capitalization: Font.AllUppercase
-                        font.letterSpacing: 0.6
                     }
                 }
             }

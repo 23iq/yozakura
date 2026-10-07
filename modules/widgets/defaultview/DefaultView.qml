@@ -76,6 +76,7 @@ Item {
 
     NotchPanelController {
         id: controller
+        objectName: "panelController"
         mode: Config.notch.expandOn ?? "hover"
         hoverTarget: controller.panelFor(header.hoverTrigger)
         hold: panelHover.hovered || root.sideHold || (controller.openPanel === "media" && (header.selectorOpen || Visibilities.playerMenuOpen))
@@ -252,6 +253,7 @@ Item {
             }
             IslandNotifications {
                 id: notifications
+                objectName: "islandNotifications"
                 anchors.fill: parent
                 visible: root.hasActiveNotifications
                 hovered: root.expandedState

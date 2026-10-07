@@ -3,9 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import Qt.labs.qmlmodels
-import qs.config
-import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
 
 // Timers, the stopwatch (while used) and reminders of TimersService as one
 // scrolling list (past ~`maxRows` rows). Delegates are keyed, so the
@@ -62,21 +61,18 @@ Item {
     onRowsChanged: list.sync()
     Component.onCompleted: list.sync()
 
-    readonly property real rowEstimate: Styling.fontSize(6) * 2.4
+    readonly property real rowEstimate: Space.rowHeight + Space.xs
     implicitHeight: list.empty ? emptyText.implicitHeight + list.unit * 2 : Math.min(view.contentHeight, list.rowEstimate * list.maxRows)
 
-    Text {
+    KitText {
         id: emptyText
         objectName: "timerListEmpty"
         visible: list.empty
         width: parent.width
         y: list.unit
+        role: "secondary"
         text: I18n.t("timers.empty")
-        textFormat: Text.PlainText
         wrapMode: Text.WordWrap
-        color: Colors.overSurfaceVariant
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
     }
 
     ListView {
@@ -88,7 +84,7 @@ Item {
         boundsBehavior: Flickable.StopAtBounds
         ScrollIndicator.vertical: ScrollIndicator {}
         model: keyModel
-        spacing: 2
+        spacing: Space.xs
 
         delegate: DelegateChooser {
             role: "kind"

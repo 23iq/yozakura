@@ -1,60 +1,52 @@
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 
-RowLayout {
+// Transport of the notch media panel: [shuffle] / previous / play-pause
+// (the panel's one primary action) / next as kit IconButtons.
+Row {
     id: root
 
     required property var player
-    spacing: 8
+    // Show the shuffle toggle (artwork style; only when the player has one)
+    property bool shuffle: false
+    property string size: "m"
 
-    component TransportButton: Button {
-        id: control
+    spacing: Space.s
 
-        required property string glyph
-        required property string label
-
-        implicitWidth: 36
-        implicitHeight: 36
-        padding: 0
-        opacity: enabled ? 1 : 0.3
-        Accessible.name: label
-        ToolTip.visible: hovered
-        ToolTip.delay: 1000
-        ToolTip.text: label
-
-        background: Item {}
-
-        contentItem: Text {
-            color: control.hovered || control.down ? Styling.srItem("overprimary") : Colors.overBackground
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(4)
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-            text: control.glyph
-        }
+    IconButton {
+        objectName: "mediaShuffle"
+        size: root.size
+        visible: root.shuffle && MprisController.shuffleSupported
+        active: MprisController.hasShuffle
+        icon: Icons.shuffle
+        Accessible.name: I18n.t("island.shuffle")
+        onClicked: MprisController.setShuffle(!MprisController.hasShuffle)
     }
-
-    TransportButton {
-        glyph: Icons.previous
-        label: I18n.t("island.previous")
+    IconButton {
+        objectName: "mediaPrevious"
+        size: root.size
+        icon: Icons.previous
         enabled: root.player?.canGoPrevious ?? false
+        Accessible.name: I18n.t("island.previous")
         onClicked: root.player?.previous()
     }
-
-    TransportButton {
-        glyph: root.player?.isPlaying ? Icons.pause : Icons.play
-        label: I18n.t("island.play_pause")
+    IconButton {
+        objectName: "mediaPlayPause"
+        size: root.size
+        primary: true
+        icon: root.player?.isPlaying ? Icons.pause : Icons.play
         enabled: root.player?.canTogglePlaying ?? false
+        Accessible.name: I18n.t("island.play_pause")
         onClicked: root.player?.togglePlaying()
     }
-
-    TransportButton {
-        glyph: Icons.next
-        label: I18n.t("island.next")
+    IconButton {
+        objectName: "mediaNext"
+        size: root.size
+        icon: Icons.next
         enabled: root.player?.canGoNext ?? false
+        Accessible.name: I18n.t("island.next")
         onClicked: root.player?.next()
     }
 }

@@ -5,6 +5,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 
 // The player badge keeps a stable place in the capsule; hover only changes tint.
 Item {
@@ -19,26 +20,21 @@ Item {
     AlbumBackdrop {
         anchors.fill: parent
         artwork: root.player?.trackArtUrl ?? ""
-        strength: root.mediaExpanded ? 0 : 0.6
+        strength: root.mediaExpanded ? 0 : 0.2
         Behavior on strength {
             NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Easing.OutCubic }
         }
     }
-    Text {
+    KitText {
         anchors.left: parent.left
         anchors.right: visualizerSlot.left
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.rightMargin: 6
         text: root.player ? (root.player.trackTitle || I18n.t("player.unknown")) : (Config.notch.customText || "Yozakura")
-        textFormat: Text.PlainText
-        color: Colors.overBackground
-        font.family: Styling.defaultFont
-        font.pixelSize: Styling.fontSize(0)
-        font.bold: true
-        elide: Text.ElideRight
+        role: "body"
+        font.weight: Look.activeLabelWeight
         horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
     }
     // Mini spectrum beside the title; the slot only opens while playing and
     // clips the bars, so their motion never changes the capsule size.
@@ -63,6 +59,8 @@ Item {
             width: implicitWidth
             height: 14
             barCount: 5
+            startColor: Type.secondary
+            endColor: Type.secondary
             preferredBarWidth: 3
             spacing: 2
             playing: root.player?.isPlaying ?? false
@@ -84,9 +82,9 @@ Item {
         Text {
             anchors.centerIn: parent
             text: /spotify/i.test((root.player?.dbusName ?? "") + (root.player?.identity ?? "") + (root.player?.desktopEntry ?? "")) ? Icons.spotify : Icons.player
-            color: Colors.overBackground
+            color: Type.secondary
             font.family: Icons.font
-            font.pixelSize: Styling.fontSize(4)
+            font.pixelSize: Type.iconSize("title")
             opacity: badgeHover.hovered ? 1 : 0.65
             Behavior on opacity {
                 NumberAnimation { duration: Math.min(Config.animDuration, 120) }

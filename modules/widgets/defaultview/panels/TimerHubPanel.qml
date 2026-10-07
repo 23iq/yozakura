@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.modules.widgets.defaultview.activities
+import qs.modules.components.kit
 import "../../../services/timers/TimerFormat.js" as TimerFormat
 
 // Notch panel "timerHub" (NotchPanels.js: auto + modal), opened by
@@ -14,7 +14,7 @@ NotchPanel {
 
     readonly property bool noteMode: TimersService.hubMode === "note"
 
-    implicitHeight: panel.padding * 2 + title.implicitHeight + panel.unit * 3 + field.implicitHeight + (list.visible ? panel.unit * 3 + list.implicitHeight : 0)
+    implicitHeight: panel.topPadding + group.implicitHeight + panel.padding
 
     onDismissed: TimersService.closeHub()
     onActiveFocusChanged: {
@@ -26,62 +26,62 @@ NotchPanel {
         event.accepted = true;
     }
 
-    NotchPanelTitle {
-        id: title
+    Group {
+        id: group
         x: panel.padding
-        y: panel.padding
+        y: panel.topPadding
         width: parent.width - panel.padding * 2
-        unit: panel.unit
-        icon: panel.noteMode ? Icons.notePencil : Icons.timer
-        text: panel.noteMode ? I18n.t("quicknote.title") : I18n.t("activities.timers")
-        summary: !panel.noteMode && FocusMode.active ? I18n.t("focus.left", TimerFormat.compact(FocusMode.leftMs)) : ""
 
-        NotchIconButton {
-            objectName: "hubFocus"
-            visible: !panel.noteMode
-            icon: Icons.brain
-            tone: FocusMode.active ? "primary" : "overBackground"
-            tooltip: FocusMode.active ? I18n.t("focus.stop") : I18n.t("focus.start_for", FocusMode.defaultMinutes)
-            onClicked: FocusMode.toggle(0)
-        }
-        NotchIconButton {
-            objectName: "hubStopwatch"
-            visible: !panel.noteMode && !TimersService.stopwatchActive
-            icon: Icons.watch
-            tooltip: I18n.t("timers.stopwatch_start")
-            onClicked: TimersService.stopwatchAction("start")
-        }
-        NotchIconButton {
-            objectName: "hubMode"
-            icon: panel.noteMode ? Icons.timer : Icons.notePencil
-            tooltip: panel.noteMode ? I18n.t("activities.timers") : I18n.t("quicknote.title")
-            onClicked: {
-                TimersService.hubMode = panel.noteMode ? "timer" : "note";
-                field.focusInput();
+        NotchPanelTitle {
+            width: parent.width
+            text: panel.noteMode ? I18n.t("quicknote.title") : I18n.t("activities.timers")
+            summary: !panel.noteMode && FocusMode.active ? I18n.t("focus.left", TimerFormat.compact(FocusMode.leftMs)) : ""
+
+            IconButton {
+                objectName: "hubFocus"
+                size: "s"
+                visible: !panel.noteMode
+                active: FocusMode.active
+                icon: Icons.brain
+                Accessible.name: FocusMode.active ? I18n.t("focus.stop") : I18n.t("focus.start_for", FocusMode.defaultMinutes)
+                onClicked: FocusMode.toggle(0)
+            }
+            IconButton {
+                objectName: "hubStopwatch"
+                size: "s"
+                visible: !panel.noteMode && !TimersService.stopwatchActive
+                icon: Icons.watch
+                Accessible.name: I18n.t("timers.stopwatch_start")
+                onClicked: TimersService.stopwatchAction("start")
+            }
+            IconButton {
+                objectName: "hubMode"
+                size: "s"
+                icon: panel.noteMode ? Icons.timer : Icons.notePencil
+                Accessible.name: panel.noteMode ? I18n.t("activities.timers") : I18n.t("quicknote.title")
+                onClicked: {
+                    TimersService.hubMode = panel.noteMode ? "timer" : "note";
+                    field.focusInput();
+                }
             }
         }
-    }
 
-    QuickInputField {
-        id: field
-        objectName: "quickField"
-        x: panel.padding
-        y: title.y + title.implicitHeight + panel.unit * 3
-        width: parent.width - panel.padding * 2
-        unit: panel.unit
-        mode: TimersService.hubMode
-        onDone: TimersService.closeHub()
-    }
+        QuickInputField {
+            id: field
+            objectName: "quickField"
+            width: parent.width
+            unit: panel.unit
+            mode: TimersService.hubMode
+            onDone: TimersService.closeHub()
+        }
 
-    TimerList {
-        id: list
-        objectName: "timerList"
-        visible: !panel.noteMode
-        x: panel.padding
-        y: field.y + field.implicitHeight + panel.unit * 3
-        width: parent.width - panel.padding * 2
-        height: implicitHeight
-        unit: panel.unit
-        maxRows: panel.maxRows > 0 ? panel.maxRows : 4
+        TimerList {
+            objectName: "timerList"
+            visible: !panel.noteMode
+            width: parent.width
+            height: visible ? implicitHeight : 0
+            unit: panel.unit
+            maxRows: panel.maxRows > 0 ? panel.maxRows : 4
+        }
     }
 }

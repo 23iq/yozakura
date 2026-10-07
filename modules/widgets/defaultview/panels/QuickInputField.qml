@@ -1,7 +1,7 @@
 import QtQuick
-import qs.config
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import "../../../services/timers/TimerFormat.js" as TimerFormat
 import "../../../services/timers/QuickInput.js" as QuickInput
@@ -52,7 +52,7 @@ Item {
     readonly property string error: field.submitError !== "" ? field.submitError : (field.intent.kind === "timers" && field.parsedText === field.intent.text && !field.parsed ? field.parseError : (field.intent.kind === "focus" && !field.intent.valid ? I18n.t("timers.input.invalid") : ""))
     readonly property string hint: field.mode === "note" ? I18n.t("quicknote.hint") : I18n.t("timers.input.hint")
 
-    implicitHeight: box.height + field.unit * 2 + previewRow.implicitHeight
+    implicitHeight: box.height + Space.s + previewRow.implicitHeight
 
     function focusInput() {
         input.forceActiveFocus();
@@ -111,39 +111,47 @@ Item {
         field.done();
     }
 
+    // The language's control box (a hairline while focused)
     StyledRect {
         id: box
         variant: "common"
         width: parent.width
-        height: Math.round(Styling.fontSize(0) * 2.6)
-        radius: Styling.radius(-2)
+        height: Space.controlM
+        radius: Look.chipRadius(height)
         enableBorder: input.activeFocus
+
+        // Languages without control boxes (ink): a hairline under the field
+        Divider {
+            anchors.bottom: parent.bottom
+            width: parent.width
+            visible: Look.dividers && !Look.boxedControls
+        }
 
         Text {
             id: glyph
             anchors.left: parent.left
-            anchors.leftMargin: field.unit * 3
+            anchors.leftMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
             text: field.mode === "note" ? Icons.notePencil : Icons.timer
             font.family: Icons.font
-            font.pixelSize: Styling.fontSize(1)
-            color: Colors.primary
+            font.pixelSize: Type.iconSize("body")
+            color: Type.muted
         }
 
         TextInput {
             id: input
             objectName: "quickInput"
             anchors.left: glyph.right
-            anchors.leftMargin: field.unit * 2
+            anchors.leftMargin: Space.s
             anchors.right: parent.right
-            anchors.rightMargin: field.unit * 3
+            anchors.rightMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
             clip: true
-            color: Colors.overBackground
-            selectionColor: Colors.primary
-            selectedTextColor: Colors.overPrimary
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
+            color: Type.text
+            selectionColor: Type.accent
+            selectedTextColor: Type.onAccent
+            font.family: Type.family("body")
+            font.pixelSize: Type.size("body")
             // Classified here: the `intent` binding may not have caught up yet
             onTextChanged: {
                 field.submitError = "";
@@ -159,15 +167,12 @@ Item {
                 event.accepted = true;
             }
 
-            Text {
+            KitText {
                 anchors.fill: parent
-                verticalAlignment: Text.AlignVCenter
                 visible: input.text === ""
+                role: "body"
+                color: Type.muted
                 text: field.hint
-                textFormat: Text.PlainText
-                elide: Text.ElideRight
-                color: Colors.outline
-                font: input.font
             }
         }
     }
@@ -176,28 +181,26 @@ Item {
         id: previewRow
         objectName: "quickPreview"
         anchors.top: box.bottom
-        anchors.topMargin: field.unit * 2
-        x: field.unit * 3
+        anchors.topMargin: Space.s
+        x: Space.m
         width: parent.width - x
-        spacing: field.unit * 2
+        spacing: Space.s
         readonly property bool shown: field.preview !== null || field.error !== ""
-        opacity: shown ? 1 : 0.6
 
         Text {
+            anchors.verticalCenter: parent.verticalCenter
             text: field.error !== "" ? Icons.warning : (field.preview ? field.preview.icon : Icons.info)
             font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: field.error !== "" ? Colors.error : Colors.primary
+            font.pixelSize: Type.iconSize("caption")
+            color: field.error !== "" ? Colors.error : (field.preview ? Type.accent : Type.muted)
         }
-        Text {
+        KitText {
             objectName: "quickPreviewText"
-            width: previewRow.width - Styling.fontSize(-1) - previewRow.spacing
+            anchors.verticalCenter: parent.verticalCenter
+            width: previewRow.width - Type.iconSize("caption") - previewRow.spacing
+            role: field.preview && field.error === "" ? "secondary" : "caption"
+            color: field.error !== "" ? Colors.error : (field.preview ? Type.text : Type.muted)
             text: field.error !== "" ? field.error : (field.preview ? field.preview.text : I18n.t("timers.input.examples"))
-            textFormat: Text.PlainText
-            elide: Text.ElideRight
-            color: field.error !== "" ? Colors.error : (field.preview ? Colors.overBackground : Colors.overSurfaceVariant)
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
         }
     }
 }

@@ -27,6 +27,10 @@ var keys = {
     "expandOn": {
         "enum": Enums.EXPAND_ON
     },
+    "mediaStyle": {
+        "enum": Enums.NOTCH_MEDIA_STYLES,
+        "description": "Layout of the media panel: row (art, title, controls and progress in one row) or artwork (large album art on an artwork-tinted card)."
+    },
     "hoverExpandDelay": {
         "min": 0,
         "max": 2000,

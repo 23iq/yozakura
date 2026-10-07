@@ -6544,6 +6544,27 @@
             "keywords": "audio visualizer cava bars music"
           }
         },
+        "mediaStyle": {
+          "title": "Media Panel Style",
+          "type": "string",
+          "default": "row",
+          "description": "Row: art, title and controls in one compact row. Artwork: large album art on a card tinted by the cover.",
+          "x-settings": {
+            "category": "notch",
+            "section": "media",
+            "label": "prefs.notch.media_style",
+            "control": "selector",
+            "keywords": "media player panel style row artwork album cover spotify"
+          },
+          "enum": [
+            "row",
+            "artwork"
+          ],
+          "x-enumLabels": {
+            "row": "Row",
+            "artwork": "Artwork"
+          }
+        },
         "style": {
           "title": "Style",
           "type": "string",
