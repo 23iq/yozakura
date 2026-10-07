@@ -51,14 +51,14 @@ Item {
         enabled: segment.motionDuration > 0 && !segment.vertical
         NumberAnimation {
             duration: segment.motionDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
     Behavior on height {
         enabled: segment.motionDuration > 0 && segment.vertical
         NumberAnimation {
             duration: segment.motionDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
     implicitHeight: targetHeight

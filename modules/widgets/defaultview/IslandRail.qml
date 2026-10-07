@@ -42,7 +42,7 @@ Column {
             enabled: root.motionDuration > 0
             NumberAnimation {
                 duration: root.motionDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         readonly property string art: root.player?.trackArtUrl ?? ""

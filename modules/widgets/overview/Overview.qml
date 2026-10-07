@@ -391,14 +391,14 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on y {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
             }

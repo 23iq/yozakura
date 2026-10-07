@@ -43,7 +43,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration / 2
-                easing.type: Easing.OutQuart
+                easing.type: Motion.enter.easing
             }
         }
 
@@ -74,7 +74,7 @@ Item {
                         enabled: root.animateLabelColor && Config.animDuration > 0
                         ColorAnimation {
                             duration: Config.animDuration / 2
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.morph.easing
                         }
                     }
                 }
@@ -133,7 +133,7 @@ Item {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
                                 duration: Config.animDuration / 2
-                                easing.type: Easing.OutQuart
+                                easing.type: Motion.enter.easing
                             }
                         }
 
@@ -149,7 +149,7 @@ Item {
                                 enabled: Config.animDuration > 0
                                 NumberAnimation {
                                     duration: Config.animDuration / 2
-                                    easing.type: Easing.OutBack
+                                    easing.type: Motion.morph.easing
                                     easing.overshoot: 1.5
                                 }
                             }

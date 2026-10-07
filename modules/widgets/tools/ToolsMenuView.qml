@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.theme
 
 Item {
     implicitWidth: toolsMenu.implicitWidth
@@ -11,7 +12,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -19,7 +20,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 

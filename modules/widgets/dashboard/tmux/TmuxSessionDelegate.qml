@@ -48,7 +48,7 @@ Rectangle {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -56,7 +56,7 @@ Rectangle {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -225,7 +225,7 @@ Rectangle {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                easing.type: Motion.morph.easing
             }
         }
 

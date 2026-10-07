@@ -98,7 +98,7 @@ Item {
             property: "scale"
             to: 0.97
             duration: Motion.emphasis.duration / 2
-            easing.type: Easing.OutQuad
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: content

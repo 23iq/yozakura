@@ -128,7 +128,7 @@ Rectangle {
         enabled: Config.animDuration > 0
         ColorAnimation {
             duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -136,7 +136,7 @@ Rectangle {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration / 3
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 

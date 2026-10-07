@@ -200,7 +200,7 @@ Item {
         Behavior on width {
             NumberAnimation {
                 duration: root.motionDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         Text {

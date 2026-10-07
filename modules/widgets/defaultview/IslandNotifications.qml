@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.notch
 import qs.config
+import qs.modules.theme
 
 // Notification toasts inside the resting notch (notifications.presentation
 // "notch"). The notch silhouette itself grows to hold them; the content is
@@ -34,7 +35,7 @@ Item {
         from: 0
         to: 1
         duration: Math.round(Config.animDuration * 1.25)
-        easing.type: Easing.OutBack
+        easing.type: Motion.morph.easing
         easing.overshoot: 1.05
     }
 

@@ -234,7 +234,7 @@ Rectangle {
 
                                 Behavior on opacity {
                                     NumberAnimation {
-                                        duration: 150
+                                        duration: Motion.enter.duration
                                     }
                                 }
                             }
@@ -929,7 +929,7 @@ Rectangle {
                                 enabled: Config.animDuration > 0
                                 ColorAnimation {
                                     duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
+                                    easing.type: Motion.morph.easing
                                 }
                             }
                         }
@@ -975,7 +975,7 @@ Rectangle {
                                 enabled: Config.animDuration > 0
                                 ColorAnimation {
                                     duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
+                                    easing.type: Motion.morph.easing
                                 }
                             }
                         }
