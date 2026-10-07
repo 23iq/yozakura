@@ -72,6 +72,9 @@ Item {
 
     // Get the bar panel for this screen to check its state
     readonly property var barPanelRef: Visibilities.barPanels[screen.name]
+    // The primary BarContent itself (span, groups, style): the bar panel
+    // above is the UnifiedShellPanel, which has none of that geometry
+    readonly property var barContentRef: Visibilities.bars[screen.name] ?? null
 
     // Check if bar is pinned (use bar state directly)
     readonly property bool barPinned: {
@@ -127,7 +130,7 @@ Item {
     NotchAvoidance {
         id: avoidance
         screen: root.screen
-        bar: root.barPanelRef
+        bar: root.barContentRef
         position: root.notchPosition
         grown: !notchContainer.pillCollapsed && (notchContainer.styleSpec.collapses || root.screenNotchOpen || root.hasActiveNotifications || (root.defaultView ? root.defaultView.panelExpanded : false))
         targetAlong: Math.max(root.vertical ? notchContainer.targetHeight : notchContainer.targetWidth, notificationPopupContainer.targetWidth)
