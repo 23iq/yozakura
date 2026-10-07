@@ -111,7 +111,7 @@ PanelWindow {
                 opacity: (dragArea.containsMouse || controlHover.containsMouse) ? 1.0 : 0.0
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: 200
+                        duration: Motion.enter.duration
                     }
                 }
 
