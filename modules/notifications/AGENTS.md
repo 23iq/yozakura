@@ -34,13 +34,7 @@ modules/notifications/
 ├── ToastCard.qml                  # Toast content from the kit (Art, KitText roles, ProgressLine, Chips)
 ├── ToastModel.js                  # Pure toast helpers (tests/corner-toast-model.test.cjs)
 ├── notification_utils.js          # Time formatting, body processing
-├── NotificationDelegate.qml       # Core component (471 lines)
-├── NotificationAppIcon.qml        # Icon/image with fallback chain
-├── NotificationAnimation.qml     # Dismiss animation (slide + fade)
-├── NotificationDismissButton.qml # Dismiss action button
-├── NotificationActionButtons.qml # Action button repeater
-├── NotificationGroup.qml         # Grouping logic
-└── NotificationGroupExpandButton.qml # Expand toggle
+└── NotificationAppIcon.qml        # Icon/image with fallback chain
 ```
 
 ## WHERE TO LOOK
@@ -48,9 +42,7 @@ modules/notifications/
 | Task | File | Notes |
 |------|------|-------|
 | Corner toasts | `CornerToasts.qml` | Toast stack inside the unified shell panel |
-| Core display | `NotificationDelegate.qml` | Handles both grouped and single modes |
 | Icon handling | `NotificationAppIcon.qml` | Image > appIcon > Icons fallback chain |
-| Dismissing | `NotificationAnimation.qml` | Scale + opacity + slide animation |
 | Time formatting | `notification_utils.js` | `getFriendlyNotifTimeString()`, `processNotificationBody()` |
 
 ## CONVENTIONS
