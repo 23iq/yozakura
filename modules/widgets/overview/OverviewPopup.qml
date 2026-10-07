@@ -92,7 +92,7 @@ PanelWindow {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
                 easing.type: Motion.enter.easing
             }
         }
@@ -118,7 +118,7 @@ PanelWindow {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
                 easing.type: Motion.enter.easing
             }
         }
@@ -126,7 +126,7 @@ PanelWindow {
         Behavior on scale {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
                 easing.overshoot: 1.2
             }
@@ -361,7 +361,7 @@ PanelWindow {
                     Behavior on color {
                         enabled: Config.animDuration > 0
                         ColorAnimation {
-                            duration: Config.animDuration / 2
+                            duration: Motion.exit.duration
                         }
                     }
                 }

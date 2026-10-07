@@ -153,14 +153,14 @@ Item {
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
 
         Behavior on border.width {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
     }
@@ -194,7 +194,7 @@ Item {
         Behavior on border.width {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
     }

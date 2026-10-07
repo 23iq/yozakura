@@ -149,7 +149,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.enter.duration
                     easing.type: Motion.enter.easing
                 }
             }
@@ -183,7 +183,7 @@ Item {
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.enter.duration
                         easing.type: Motion.enter.easing
                     }
                 }
@@ -197,7 +197,7 @@ Item {
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.enter.duration
                         easing.type: Motion.enter.easing
                     }
                 }
@@ -216,14 +216,14 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.enter.duration
                     easing.type: Motion.enter.easing
                 }
             }
             Behavior on spacing {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
@@ -258,7 +258,7 @@ Item {
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.enter.duration
                                 easing.type: Motion.enter.easing
                             }
                         }
@@ -272,7 +272,7 @@ Item {
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.enter.duration
                                 easing.type: Motion.enter.easing
                             }
                         }
@@ -294,21 +294,21 @@ Item {
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.enter.duration
                                 easing.type: Motion.enter.easing
                             }
                         }
                         Behavior on color {
                             enabled: Config.animDuration > 0
                             ColorAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.morph.duration
                                 easing.type: Motion.morph.easing
                             }
                         }
                         Behavior on scale {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.morph.duration
                                 easing.type: Motion.morph.easing
                                 easing.overshoot: 1.5
                             }
@@ -352,21 +352,21 @@ Item {
                 Behavior on Layout.preferredWidth {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                         easing.overshoot: 1.5
                     }
@@ -419,21 +419,21 @@ Item {
                 Behavior on Layout.preferredWidth {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                         easing.overshoot: 1.5
                     }
@@ -493,21 +493,21 @@ Item {
                 Behavior on Layout.preferredWidth {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                         easing.overshoot: 1.5
                     }
@@ -556,21 +556,21 @@ Item {
                 Behavior on Layout.preferredWidth {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on Layout.rightMargin {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }

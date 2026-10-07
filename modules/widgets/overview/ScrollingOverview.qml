@@ -231,7 +231,7 @@ Item {
         Behavior on contentY {
             enabled: Config.animDuration > 0 && !scrollingOverviewRoot.isManualScrolling
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }
@@ -322,7 +322,7 @@ Item {
                 Behavior on y {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
