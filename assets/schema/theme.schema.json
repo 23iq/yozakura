@@ -130,6 +130,29 @@
         "keywords": "icons monochrome tint color"
       }
     },
+    "progressRole": {
+      "title": "Progress color",
+      "type": "string",
+      "default": "primary",
+      "description": "Palette color of progress lines, rings and slider fills.",
+      "x-settings": {
+        "category": "appearance",
+        "section": "palette",
+        "label": "prefs.appearance.progress_role",
+        "control": "selector",
+        "keywords": "progress slider ring fill accent secondary tertiary color role"
+      },
+      "enum": [
+        "primary",
+        "secondary",
+        "tertiary"
+      ],
+      "x-enumLabels": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary"
+      }
+    },
     "icons": {
       "title": "Icons",
       "type": "object",
@@ -868,12 +891,14 @@
           "enum": [
             "overBackground",
             "primary",
+            "secondary",
             "outline",
             "surfaceBright"
           ],
           "x-enumLabels": {
             "overBackground": "Text",
             "primary": "Primary",
+            "secondary": "Secondary",
             "outline": "Outline",
             "surfaceBright": "Surface"
           }

@@ -47,6 +47,18 @@ var category = {
                     "label": "settings.theme.tint_icons",
                     "description": "prefs.appearance.tint_icons.desc",
                     "keywords": "icons monochrome tint color"
+                },
+                {
+                    "key": "theme.progressRole",
+                    "type": "selector",
+                    "label": "prefs.appearance.progress_role",
+                    "description": "prefs.appearance.progress_role.desc",
+                    "keywords": "progress slider ring fill accent secondary tertiary color role",
+                    "options": [
+                        { "value": "primary", "label": "prefs.glass.role.primary" },
+                        { "value": "secondary", "label": "prefs.glass.role.secondary" },
+                        { "value": "tertiary", "label": "prefs.glass.role.tertiary" }
+                    ]
                 }
             ]
         },

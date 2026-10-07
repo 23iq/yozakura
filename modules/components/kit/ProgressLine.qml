@@ -27,7 +27,7 @@ Rectangle {
         width: parent.width * root.fraction
         height: parent.height
         radius: parent.radius
-        color: Type.accent
+        color: Type.progress
 
         Behavior on width {
             enabled: Motion.morph.duration > 0
@@ -45,7 +45,7 @@ Rectangle {
         width: seg.width
         height: parent.height
         radius: parent.radius
-        color: Type.accent
+        color: Type.progress
     }
 
     NumberAnimation {

@@ -940,6 +940,8 @@
   "prefs.appearance.scheme": "Цветовая схема",
   "prefs.appearance.scheme.desc": "Как палитра строится из обоев. Применяется сразу.",
   "prefs.appearance.tint_icons.desc": "Перекрашивать значки приложений в цвета палитры.",
+  "prefs.appearance.progress_role": "Цвет прогресса",
+  "prefs.appearance.progress_role.desc": "Цвет палитры для линий прогресса, колец и заливки ползунков.",
   "prefs.appearance.ui_font.desc": "Используется для всего текста оболочки.",
   "prefs.appearance.mono_font.desc": "Для кода, путей и темы терминала.",
   "prefs.appearance.roundness.desc": "Радиус скругления панелей, кнопок и островов.",

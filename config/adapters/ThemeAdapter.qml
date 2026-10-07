@@ -11,6 +11,7 @@ JsonAdapter {
     property string monoFont: "Iosevka Nerd Font Mono"
     property int monoFontSize: 14
     property bool tintIcons: false
+    property string progressRole: "primary"
     property JsonObject icons: JsonObject {
         property string weight: "bold"
     }

@@ -143,6 +143,10 @@ var sections = [
                         "label": "prefs.glass.role.primary"
                     },
                     {
+                        "value": "secondary",
+                        "label": "prefs.glass.role.secondary"
+                    },
+                    {
                         "value": "outline",
                         "label": "prefs.glass.role.outline"
                     },
