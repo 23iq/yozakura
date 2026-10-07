@@ -1,10 +1,11 @@
 import QtQuick
-import qs.modules.theme
 import qs.modules.services
-import qs.config
-import "../Ui.js" as Ui
+import qs.modules.components
+import qs.modules.components.kit
 
-// Inset area that hosts a live preview, tagged "Live preview".
+// Inset area that hosts a live preview, tagged "Live preview": the theme's
+// recessed "internalbg" box with the kit's hairline, the tag a label-role
+// caption on a small plate of the same surface.
 Item {
     id: stage
 
@@ -14,50 +15,46 @@ Item {
 
     implicitHeight: stageHeight
 
-    Rectangle {
+    StyledRect {
+        id: frame
         anchors.fill: parent
-        radius: Math.min(Styling.radius(2), 18)
-        color: Ui.alpha(Colors.surfaceContainerLowest, 0.75)
-        border.width: 1
-        border.color: Ui.alpha(Colors.outlineVariant, 0.6)
+        variant: "internalbg"
+        radius: Look.chipRadius(Space.chip)
+        enableShadow: false
+        enableBorder: false
+
+        Rectangle {
+            anchors.fill: parent
+            radius: frame.radius
+            color: "transparent"
+            border.width: Space.hairline
+            border.color: Type.hairline
+        }
     }
 
     Item {
         id: area
         anchors.fill: parent
-        anchors.margins: 1
+        anchors.margins: Space.hairline
         clip: true
     }
 
-    Rectangle {
+    StyledRect {
         visible: stage.showTag
-        x: 10
-        y: 8
-        width: tag.implicitWidth + 16
-        height: 18
-        radius: 9
-        color: Ui.alpha(Colors.surfaceContainerLowest, 0.72)
+        x: Space.s
+        y: Space.s
+        width: tag.implicitWidth + Space.s * 2
+        height: tag.implicitHeight + Space.xs
+        variant: "internalbg"
+        radius: Look.chipRadius(height)
+        enableShadow: false
+        enableBorder: false
 
-        Row {
+        KitText {
             id: tag
             anchors.centerIn: parent
-            spacing: 5
-            Rectangle {
-                anchors.verticalCenter: parent.verticalCenter
-                width: 6
-                height: 6
-                radius: 3
-                color: Colors.primary
-            }
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: I18n.t("prefs.common.live_preview").toUpperCase()
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-5)
-                font.weight: Font.Bold
-                font.letterSpacing: 1.2
-                color: Ui.alpha(Colors.overSurfaceVariant, 0.9)
-            }
+            role: "label"
+            text: I18n.t("prefs.common.live_preview")
         }
     }
 }

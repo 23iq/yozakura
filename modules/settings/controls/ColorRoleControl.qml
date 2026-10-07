@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import "../Ui.js" as Ui
 import "ColorRoleModel.js" as Model
 
@@ -124,36 +125,20 @@ Item {
                             "add": false
                         }
                     ]
-                    delegate: Rectangle {
+                    delegate: IconButton {
                         id: btn
                         required property var modelData
                         readonly property bool usable: modelData.add ? root.stops.length < root.maxStops : root.stops.length > 1
-                        width: 30
-                        height: 30
-                        radius: 15
-                        color: btnArea.containsMouse && usable ? Ui.alpha(Colors.primary, 0.16) : Ui.alpha(Colors.overBackground, 0.06)
-                        opacity: usable ? 1 : 0.4
-                        Text {
-                            anchors.centerIn: parent
-                            text: Icons[btn.modelData.icon]
-                            font.family: Icons.font
-                            font.pixelSize: 14
-                            color: Colors.overBackground
-                        }
-                        MouseArea {
-                            id: btnArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            enabled: btn.usable
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (btn.modelData.add) {
-                                    root.commit(Model.addStop(root.stops, root.current, root.maxStops));
-                                    root.selected = root.current + 1;
-                                } else {
-                                    root.commit(Model.removeStop(root.stops, root.current));
-                                    root.selected = Math.max(0, root.current - 1);
-                                }
+                        size: "s"
+                        icon: Icons[btn.modelData.icon]
+                        enabled: btn.usable
+                        onClicked: {
+                            if (btn.modelData.add) {
+                                root.commit(Model.addStop(root.stops, root.current, root.maxStops));
+                                root.selected = root.current + 1;
+                            } else {
+                                root.commit(Model.removeStop(root.stops, root.current));
+                                root.selected = Math.max(0, root.current - 1);
                             }
                         }
                         Accessible.role: Accessible.Button
@@ -216,12 +201,10 @@ Item {
             width: parent.width
             spacing: 12
 
-            Text {
+            KitText {
                 anchors.verticalCenter: parent.verticalCenter
+                role: "caption"
                 text: I18n.t("prefs.color_role.alpha")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overSurfaceVariant
             }
             SliderControl {
                 width: parent.width - x
