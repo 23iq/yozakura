@@ -1,0 +1,17 @@
+{
+    "activeBorderColor": [
+        "tertiary",
+        "primary"
+    ],
+    "borderAngle": 90,
+    "inactiveBorderColor": [
+        "surfaceContainerHigh@0.7"
+    ],
+    "borderSize": 2,
+    "rounding": 22,
+    "gapsIn": 6,
+    "gapsOut": 14,
+    "shadowColor": "tertiary",
+    "shadowOpacity": 0.3,
+    "motionProfile": "gentle"
+}

@@ -1,0 +1,5 @@
+{
+    "author": "Yozakura",
+    "authorUrl": "",
+    "description": "A phosphor terminal: a tmux-like status line at the bottom with [1][2][3] tags, a dot notch, a command-line launcher, an edge OSD and a terminal lock screen."
+}

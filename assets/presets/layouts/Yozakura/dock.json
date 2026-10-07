@@ -1,0 +1,8 @@
+{
+    "enabled": true,
+    "position": "bottom",
+    "theme": "floating",
+    "indicator": "brush",
+    "hoverToReveal": true,
+    "pinnedOnStartup": false
+}

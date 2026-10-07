@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const qmljs = require('./lib/qmljs.cjs');
+const Presets = require('./lib/presetsets.cjs');
 
 const ROOT = path.join(__dirname, '..');
 const fonts = qmljs.loadLibrary(path.join(ROOT, 'modules/theme/BundledFonts.js'));
@@ -49,16 +50,12 @@ test('bundled fonts stay small (subset them with pyftsubset)', () => {
 
 test('built-in presets only name bundled, packaged or default fonts', () => {
     const allowed = new Set([...fonts.families(), ...PACKAGED, themeDefaults.font, themeDefaults.monoFont, '']);
-    const dir = path.join(ROOT, 'assets/presets');
-    for (const name of fs.readdirSync(dir)) {
-        const read = f => {
-            const p = path.join(dir, name, f);
-            return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : {};
-        };
-        const theme = read('theme.json');
-        const ws = read('workspaces.json');
+    for (const name of Presets.listSets()) {
+        const set = Presets.composeSet(name);
+        const theme = set.theme || {};
+        const ws = set.workspaces || {};
         const named = {
-            'theme.font': theme.font, 'theme.monoFont': theme.monoFont,
+            'theme.font': theme.font, 'theme.monoFont': theme.monoFont, 'theme.type.heading': (theme.type || {}).heading,
             'workspaces.numeralFont': ws.numeralFont, 'workspaces.specialWorkspaceFont': ws.specialWorkspaceFont
         };
         for (const [key, family] of Object.entries(named)) {

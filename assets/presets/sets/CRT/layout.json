@@ -1,0 +1,12 @@
+{
+    "launcher": {
+        "host": "spotlight",
+        "resultStyle": "list"
+    },
+    "dashboard": {
+        "home": "composed"
+    },
+    "osd": {
+        "style": "edge"
+    }
+}

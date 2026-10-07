@@ -1,0 +1,8 @@
+{
+    "moduleOptions": {
+        "clock": {
+            "face": "stacked",
+            "panelStyle": "bento"
+        }
+    }
+}

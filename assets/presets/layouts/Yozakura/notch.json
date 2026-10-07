@@ -1,0 +1,7 @@
+{
+    "enabled": true,
+    "position": "top",
+    "align": "start",
+    "style": "pill",
+    "mediaStyle": "row"
+}

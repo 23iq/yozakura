@@ -1,0 +1,94 @@
+{
+    "roundness": 0,
+    "font": "IBM Plex Mono",
+    "fontSize": 13,
+    "monoFont": "IBM Plex Mono",
+    "monoFontSize": 13,
+    "enableCorners": false,
+    "animDuration": 160,
+    "paletteTransitionDuration": 0,
+    "shadowOpacity": 0.0,
+    "terminalOpacity": 0.96,
+    "surfaceEffect": "crt",
+    "surfaceEffectOptions": {
+        "intensity": 0.35,
+        "flicker": false
+    },
+    "glass": {
+        "enabled": false
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "primary@0.4",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "primary",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "language": "tiles",
+    "density": "cozy",
+    "shape": {
+        "corners": "round",
+        "popupCorners": "round",
+        "cutSize": 2
+    },
+    "popup": {
+        "entry": "fade-scale",
+        "tail": false,
+        "gap": 0
+    },
+    "icons": {
+        "weight": "bold"
+    },
+    "type": {
+        "heading": "IBM Plex Mono",
+        "headingCase": "none"
+    },
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false,
+        "petalShape": "petal"
+    }
+}

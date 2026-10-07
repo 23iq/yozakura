@@ -1,0 +1,30 @@
+{
+    "frameEnabled": false,
+    "frameThickness": 6,
+    "containBar": false,
+    "position": "top",
+    "clockShowDate": false,
+    "panels": [
+        {
+            "id": "rail",
+            "edge": "left",
+            "style": "rail",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaces"
+                ],
+                "end": [
+                    "systray",
+                    "controls",
+                    "battery",
+                    "clock"
+                ],
+                "drawer": [
+                    "tools",
+                    "power"
+                ]
+            }
+        }
+    ]
+}

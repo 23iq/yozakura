@@ -48,7 +48,8 @@ Singleton {
 
     property string configDir: Brand.configDir + "/config"
     property string keybindsPath: Brand.configDir + "/binds.json"
-    property string presetDir: Qt.resolvedUrl("../assets/presets/" + Brand.displayName + " Default").toString().replace("file://", "")
+    // Dev fallback seed: the default set's own files (the backend seeds from the composed set).
+    property string presetDir: Qt.resolvedUrl("../assets/presets/sets/" + Brand.displayName).toString().replace("file://", "")
 
     property bool pauseAutoSave: false
 

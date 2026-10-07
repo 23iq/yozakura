@@ -4,7 +4,7 @@ Extends KeyboardEnv (real settings store/editors/components, generated
 Config/Colors, the real DisplaysService + KeyboardService over a scripted
 BackendService: `replies`, `calls`, `emit`) with the onboarding module and
 stand-ins for the shell services the wizard talks to: PresetsService
-(built-in presets from assets/presets), GlobalShortcuts (records run() and
+(built-in preset sets from assets/presets/sets), GlobalShortcuts (records run() and
 emits commandRan), TerminalLookService (enablePrompt() writes terminal.prompt like
 the real one), the real OnboardingService, Visibilities, I18n with the
 language catalog, the real ExtrasService (catalog/status replies from
@@ -20,6 +20,7 @@ import re
 import os
 import shutil
 
+import presetsets
 from displays_env import OUTPUTS as DISPLAY_OUTPUTS
 from extras_env import CATALOG as EXTRAS_CATALOG, PLATFORM as EXTRAS_PLATFORM, STATUS as EXTRAS_STATUS
 from keyboard_env import KeyboardEnv
@@ -28,19 +29,18 @@ from settings_env import APP_SEARCH_STUB, TERMINAL_LOOK_STUB, YOZD_STUB, global_
 
 os.environ.setdefault("QML_XHR_ALLOW_FILE_READ", "1")
 
-PRESETS_DIR = REPO / "assets" / "presets"
-
 
 def builtin_presets() -> list[dict]:
     out = []
-    for d in sorted(p for p in PRESETS_DIR.iterdir() if p.is_dir()):
+    for name in presetsets.list_sets():
+        d = presetsets.set_dir(name)
         info = {}
         try:
             info = json.loads((d / "info.json").read_text())
         except (OSError, ValueError):
             pass
-        out.append({"name": d.name, "path": str(d), "isOfficial": True,
-                    "configFiles": [f.stem + ".js" for f in d.glob("*.json") if f.name != "info.json"],
+        out.append({"name": name, "path": str(d), "isOfficial": True,
+                    "configFiles": [dom + ".js" for dom in presetsets.compose(name)],
                     "author": info.get("author", ""), "authorUrl": ""})
     return out
 

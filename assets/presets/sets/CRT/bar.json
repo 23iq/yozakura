@@ -1,0 +1,46 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": true,
+    "moduleOptions": {
+        "windowTitle": {
+            "show": "title",
+            "showIcon": false,
+            "maxWidth": 700
+        },
+        "workspaceTags": {
+            "brackets": true
+        },
+        "systemStats": {
+            "items": [
+                "cpu",
+                "ram",
+                "net"
+            ]
+        },
+        "clock": {
+            "face": "digital",
+            "pomodoroStyle": "countdown"
+        }
+    },
+    "panels": [
+        {
+            "id": "status",
+            "edge": "bottom",
+            "style": "statusline",
+            "groups": {
+                "start": [
+                    "workspaceTags"
+                ],
+                "center": [
+                    "windowTitle"
+                ],
+                "end": [
+                    "systemStats",
+                    "battery",
+                    "clock"
+                ]
+            }
+        }
+    ]
+}

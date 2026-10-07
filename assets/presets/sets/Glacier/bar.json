@@ -1,0 +1,53 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": true,
+    "moduleOptions": {
+        "windowTitle": {
+            "show": "app",
+            "showIcon": false,
+            "maxWidth": 420
+        },
+        "workspacePreviews": {
+            "count": 4
+        }
+    },
+    "panels": [
+        {
+            "id": "menubar",
+            "edge": "top",
+            "style": "menubar",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "windowTitle",
+                    "appMenu"
+                ],
+                "end": [
+                    "systray",
+                    "controls",
+                    "battery",
+                    "clock"
+                ]
+            }
+        },
+        {
+            "id": "dock",
+            "edge": "bottom",
+            "style": "dock",
+            "align": "center",
+            "autohide": "never",
+            "groups": {
+                "start": [
+                    "workspacePreviews"
+                ],
+                "center": [
+                    "taskbar"
+                ],
+                "end": [
+                    "downloads"
+                ]
+            }
+        }
+    ]
+}

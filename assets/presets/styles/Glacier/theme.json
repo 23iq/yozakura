@@ -1,0 +1,94 @@
+{
+    "roundness": 14,
+    "font": "Inter",
+    "fontSize": 13,
+    "monoFont": "JetBrains Mono",
+    "animDuration": 300,
+    "paletteTransitionDuration": 700,
+    "shadowOpacity": 0.28,
+    "terminalOpacity": 0.86,
+    "glass": {
+        "enabled": true,
+        "amount": 1,
+        "highlightRole": "overBackground",
+        "tintRole": "surfaceBright",
+        "advanced": {
+            "borderHighlight": 0.45
+        }
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.12",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.72
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.14",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.8
+    },
+    "language": "glass",
+    "density": "roomy",
+    "shape": {
+        "corners": "squircle",
+        "popupCorners": "squircle",
+        "cutSize": 10
+    },
+    "popup": {
+        "entry": "fade-scale",
+        "tail": false,
+        "gap": 10
+    },
+    "icons": {
+        "weight": "bold"
+    },
+    "type": {
+        "heading": "Inter",
+        "headingCase": "none"
+    },
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false,
+        "petalShape": "petal"
+    },
+    "surfaceEffect": "none"
+}

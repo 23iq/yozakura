@@ -1,0 +1,34 @@
+{
+    "frameEnabled": false,
+    "frameThickness": 6,
+    "containBar": false,
+    "position": "top",
+    "clockShowDate": true,
+    "panels": [
+        {
+            "id": "main",
+            "edge": "bottom",
+            "style": "dock-like",
+            "align": "center",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaces"
+                ],
+                "center": [
+                    "taskbar"
+                ],
+                "end": [
+                    "systray",
+                    "controls",
+                    "battery",
+                    "clock"
+                ],
+                "drawer": [
+                    "tools",
+                    "power"
+                ]
+            }
+        }
+    ]
+}
