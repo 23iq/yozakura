@@ -3,9 +3,9 @@ import QtQuick.Effects
 import Quickshell
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
 import qs.config
 import qs.modules.globals
-import "Ui.js" as Ui
 
 // About: name, version, a couple of useful shortcuts and the legal row.
 Item {
@@ -15,78 +15,68 @@ Item {
 
     Column {
         anchors.centerIn: parent
-        width: Math.min(parent.width - 64, 520)
-        spacing: 18
+        width: Math.min(parent.width - Space.xxl * 2, Space.px(520))
+        spacing: Space.xl
 
-        Rectangle {
+        // The mark: the brand glyph in the language's control box (no
+        // accent: it is not a state).
+        Item {
             anchors.horizontalCenter: parent.horizontalCenter
-            width: 112
-            height: 112
-            radius: Math.min(Styling.radius(12), 36)
-            gradient: Gradient {
-                GradientStop {
-                    position: 0
-                    color: Colors.primary
-                }
-                GradientStop {
-                    position: 1
-                    color: Colors.tertiary
-                }
+            width: Space.controlXL
+            height: Space.controlXL
+
+            ControlBox {
+                radius: Look.squareControls ? Space.controlRadius : Space.surfaceRadius
             }
             Image {
                 anchors.centerIn: parent
-                width: 72
-                height: 72
+                width: Math.round(parent.width * 0.6)
+                height: width
                 source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
-                sourceSize.width: 144
-                sourceSize.height: 144
+                sourceSize.width: width * 2
+                sourceSize.height: height * 2
                 fillMode: Image.PreserveAspectFit
                 mipmap: true
                 layer.enabled: true
                 layer.effect: MultiEffect {
                     brightness: 1.0
                     colorization: 1.0
-                    colorizationColor: Colors.overPrimary
+                    colorizationColor: Type.text
                 }
             }
         }
 
         Column {
             width: parent.width
-            spacing: 4
-            Text {
+            spacing: Space.xs
+
+            KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
+                role: "display"
+                tabular: false
                 text: Brand.displayName
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(16)
-                font.weight: Font.Bold
-                color: Colors.overBackground
             }
-            Text {
+            KitText {
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
+                role: "secondary"
                 text: I18n.t("prefs.about.version", Config.version)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.overSurfaceVariant
             }
         }
 
-        Text {
+        KitText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
+            role: "body"
             wrapMode: Text.WordWrap
             text: I18n.t("prefs.about.blurb")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
-            color: Ui.alpha(Colors.overBackground, 0.85)
-            lineHeight: 1.2
         }
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: 10
+            spacing: Space.s
+
             PillButton {
                 objectName: "aboutRunSetup"
                 icon: "seal"
