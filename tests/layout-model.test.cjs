@@ -32,7 +32,7 @@ const apply = (c, writes) => {
 
 test('fromConfig reads the existing keys of every part', () => {
     const l = plain(M.fromConfig(cfg({ notch: { position: 'bottom', align: 'end', style: 'pill' }, dock: { position: 'left', theme: 'floating' } })));
-    assert.deepEqual(l.bar, { enabled: true, edge: 'top', style: 'classic', align: 'fill' });
+    assert.deepEqual(l.bar, { enabled: true, edge: 'top', edges: ['top'], style: 'classic', align: 'fill' });
     assert.deepEqual(l.notch, { enabled: true, edge: 'bottom', style: 'pill', align: 'end' });
     assert.deepEqual(l.dock, { enabled: true, edge: 'left', style: 'floating', align: 'center' });
 });
@@ -41,7 +41,7 @@ test('the bar is off for style none, a missing config, or only disabled panels',
     assert.equal(M.fromConfig(cfg({ bar: { layout: { style: 'none' } } })).bar.enabled, false);
     assert.equal(M.fromConfig(cfg({ bar: { panels: [{ id: 'a', edge: 'left', style: 'classic', enabled: false }] } })).bar.enabled, false);
     const p = M.fromConfig(cfg({ bar: { panels: [{ id: 'a', edge: 'left', style: 'classic', enabled: false }, { id: 'b', edge: 'right', style: 'islands', align: 'center' }] } })).bar;
-    assert.deepEqual(plain(p), { enabled: true, edge: 'right', style: 'islands', align: 'center' });
+    assert.deepEqual(plain(p), { enabled: true, edge: 'right', edges: ['right'], style: 'islands', align: 'center' });
     const empty = plain(M.fromConfig({}));
     assert.equal(empty.notch.enabled, true);
     assert.equal(empty.bar.enabled, true);
@@ -79,7 +79,7 @@ test('notch segments and corner content follow the homes', () => {
 });
 
 test('activity presentation: configured off stays off, otherwise it follows the home', () => {
-    assert.equal(M.activityPresentation(layoutOf(true, true, true), 'notch'), 'notch');
+    assert.equal(M.activityPresentation(layoutOf(true, true, true), 'notch', 'notch'), 'notch');
     assert.equal(M.activityPresentation(layoutOf(true, true, true), 'islands'), 'islands');
     assert.equal(M.activityPresentation(layoutOf(true, false, true), 'notch'), 'islands');
     assert.equal(M.activityPresentation(layoutOf(false, false, true), 'notch'), 'corner');
@@ -88,6 +88,23 @@ test('activity presentation: configured off stays off, otherwise it follows the 
     assert.equal(M.homeOf('activities', side), 'bar');
     assert.equal(M.activityPresentation(side, 'notch'), 'corner');
     assert.deepEqual(plain(M.cornerContent(side)), ['activities']);
+});
+
+test('activities in: auto makes bar chips while a bar shares the notch edge', () => {
+    const same = layoutOf(true, true, true);
+    assert.equal(M.activityPresentation(same, 'notch', 'auto'), 'bar');
+    assert.equal(M.activityPresentation(same, 'notch'), 'bar', 'auto is the default');
+    assert.equal(M.activityPresentation(same, 'notch', 'notch'), 'notch');
+    assert.equal(M.activityPresentation(same, 'islands', 'auto'), 'islands', 'islands stay islands');
+    assert.equal(M.activityPresentation(same, 'off', 'bar'), 'off');
+    const apart = M.fromConfig(cfg({ bar: { position: 'left' }, notch: { position: 'top' } }));
+    assert.equal(M.activityPresentation(apart, 'notch', 'auto'), 'notch', 'another edge keeps the notch');
+    assert.equal(M.activityPresentation(apart, 'notch', 'bar'), 'bar', 'forced bar');
+    const sideBoth = M.fromConfig(cfg({ bar: { position: 'left' }, notch: { position: 'left' } }));
+    assert.equal(M.activityPresentation(sideBoth, 'notch', 'auto'), 'bar', 'side edges too');
+    const noBar = layoutOf(false, true, true);
+    assert.equal(M.activityPresentation(noBar, 'notch', 'auto'), 'notch');
+    assert.equal(M.activityPresentation(noBar, 'notch', 'bar'), 'notch', 'no bar: the notch keeps them');
 });
 
 test('parts on one edge stack bar, dock, notch from the screen edge in', () => {

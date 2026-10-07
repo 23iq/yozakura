@@ -261,8 +261,12 @@ Item {
         }
     }
 
-    // Side zones (see leadingZoneHovered); last so childItems order holds
+    // Side zones (see leadingZoneHovered); last so childItems order holds,
+    // stacked under the segments: a hover handler on top takes the hover
+    // from the siblings below it, so the segments would never see the
+    // pointer (no hoverTrigger, no panel)
     Item {
+        z: -1
         anchors.left: parent.left
         anchors.right: separator1.right
         anchors.top: parent.top
@@ -273,6 +277,7 @@ Item {
         }
     }
     Item {
+        z: -1
         anchors.left: separator2.left
         anchors.right: parent.right
         anchors.top: parent.top

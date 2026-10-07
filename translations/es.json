@@ -3746,5 +3746,11 @@
   "prefs.appearance.language.ink": "Tinta",
   "prefs.appearance.language.glass": "Cristal",
   "prefs.appearance.language.tiles": "Mosaicos",
-  "prefs.appearance.language.classic": "Clásico"
+  "prefs.appearance.language.classic": "Clásico",
+  "prefs.notch.activities_in": "Actividades en vivo en",
+  "prefs.notch.activities_in.auto": "Automático",
+  "prefs.notch.activities_in.notch": "Notch",
+  "prefs.notch.activities_in.bar": "Barra",
+  "prefs.notch.activities_in.desc": "Automático muestra las actividades en vivo como pequeños chips en la barra cuando el notch comparte su borde, para que el notch nunca crezca sobre tus módulos",
+  "prefs.bar.module.activities": "Actividades en vivo"
 }

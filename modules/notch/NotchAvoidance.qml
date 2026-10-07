@@ -15,7 +15,7 @@ Item {
 
     // ShellScreen (or anything with name/width/height)
     property var screen: null
-    // BarContent of the primary bar (Visibilities.barPanels), or null
+    // BarContent of the primary bar (Visibilities.bars), or null
     property var bar: null
     property string position: "top"
     // The notch shows more than its resting self

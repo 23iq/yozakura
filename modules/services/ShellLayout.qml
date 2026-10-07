@@ -47,9 +47,10 @@ Singleton {
         return Model.homeOf(contentId, root.layout);
     }
 
-    // Effective bar.activities.presentation for the configured one
+    // Effective bar.activities.presentation for the configured one; "bar"
+    // = chips in the bar (notch.activitiesIn, LayoutModel.js)
     function activityPresentation(configured: string): string {
-        return Model.activityPresentation(root.layout, configured);
+        return Model.activityPresentation(root.layout, configured, Config.notch ? Config.notch.activitiesIn : "auto");
     }
 
     // Config writes [{key, value}] setting `field` of `part` (LayoutModel.edit)

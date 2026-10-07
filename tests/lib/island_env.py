@@ -95,6 +95,7 @@ QtObject {
     property var transfers: []
     readonly property int count: activities.length
     property bool showSpeed: true
+    property int maxVisible: 4
     function activate(a, b, s) {}
     function transferAction(t, a) {}
     readonly property var icons: ICONS

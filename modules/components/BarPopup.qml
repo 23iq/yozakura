@@ -30,6 +30,9 @@ PopupWindow {
 
     // Behavior configuration
     property bool closeOnFocusLost: true
+    // False: no focus grab (a popup opened by hover must not take the
+    // pointer from the bar, or leaving its anchor could never be seen)
+    property bool claimFocus: true
 
     // Logical open state (changes immediately, not after animation)
     property bool isOpen: false
@@ -155,7 +158,7 @@ PopupWindow {
 
     FocusGrab {
         id: focusGrab
-        active: root.visible && root.focusActive
+        active: root.visible && root.focusActive && root.claimFocus
         windows: [root].concat(root.extraGrabWindows)
 
         onCleared: {

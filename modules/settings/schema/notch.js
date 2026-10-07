@@ -227,6 +227,27 @@ var category = {
                     "keywords": "notification notch compact card one line"
                 },
                 {
+                    "key": "notch.activitiesIn",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "auto",
+                            "label": "prefs.notch.activities_in.auto"
+                        },
+                        {
+                            "value": "notch",
+                            "label": "prefs.notch.activities_in.notch"
+                        },
+                        {
+                            "value": "bar",
+                            "label": "prefs.notch.activities_in.bar"
+                        }
+                    ],
+                    "label": "prefs.notch.activities_in",
+                    "description": "prefs.notch.activities_in.desc",
+                    "keywords": "live activities chips bar notch downloads timer recording grow place"
+                },
+                {
                     "key": "notch.liveActivities",
                     "type": "custom",
                     "component": "ActivitiesEditor",

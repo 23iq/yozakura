@@ -172,6 +172,19 @@ function visibleIds(ids, opts) {
     });
 }
 
+// End group ids with the live activity chips ("activities") first, when
+// the panel hosts them (`on`) and no group of `groups` places them already.
+function withActivityChips(endIds, groups, on) {
+    var ids = endIds || [];
+    if (!on)
+        return ids;
+    var g = groups || {};
+    for (var k in g)
+        if (Array.isArray(g[k]) && g[k].indexOf("activities") !== -1)
+            return ids;
+    return ["activities"].concat(ids);
+}
+
 // Pill continuity: the first item of a group gets the outer radius on its
 // start edge, the last on its end edge, everything else the inner radius.
 // A connected edge (dock or drawer attached) keeps the inner radius.

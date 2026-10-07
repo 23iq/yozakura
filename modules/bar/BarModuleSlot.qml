@@ -110,10 +110,13 @@ Loader {
     // Loader.item is a QObject; every module is an Item.
     readonly property Item moduleItem: item as Item
     readonly property SysTray tray: item as SysTray
+    // Untyped view of the item for optional module properties (`collapsed`)
+    readonly property var untypedItem: item
 
     // The tray hides itself when empty; collapse the slot so the layout does
     // not reserve spacing for it (matches the old direct-child behaviour).
-    visible: moduleItem !== null && (tray === null || tray.hasItems)
+    // A module folded to nothing (`collapsed`, e.g. activity chips) too.
+    visible: moduleItem !== null && (tray === null || tray.hasItems) && !(slot.untypedItem && slot.untypedItem.collapsed === true)
 
     // A Loader's implicit size tracks the item's *size*, not its implicit
     // size; modules sizing themselves from their parent (SysTray's

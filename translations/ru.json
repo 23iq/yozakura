@@ -3764,5 +3764,11 @@
   "prefs.appearance.language.ink": "Тушь",
   "prefs.appearance.language.glass": "Стекло",
   "prefs.appearance.language.tiles": "Плитки",
-  "prefs.appearance.language.classic": "Классика"
+  "prefs.appearance.language.classic": "Классика",
+  "prefs.notch.activities_in": "Живые активности",
+  "prefs.notch.activities_in.auto": "Авто",
+  "prefs.notch.activities_in.notch": "В вырезе",
+  "prefs.notch.activities_in.bar": "В панели",
+  "prefs.notch.activities_in.desc": "Авто показывает живые активности маленькими чипами в панели, когда вырез на том же краю, чтобы вырез не разрастался поверх модулей",
+  "prefs.bar.module.activities": "Живые активности"
 }
