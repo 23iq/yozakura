@@ -71,7 +71,7 @@ Item {
             root.openFolder(ScreenRecorder.videosDir !== "" ? ScreenRecorder.videosDir : Quickshell.env("HOME") + "/Videos/Recordings");
             break;
         case "picker":
-            Quickshell.execDetached([Brand.appId, "colorpicker"]);
+            Quickshell.execDetached([Brand.appBin, "colorpicker"]);
             break;
         case "ocr":
         case "qr":

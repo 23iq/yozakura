@@ -612,7 +612,7 @@ Singleton {
     Process {
         id: thumbnailProcess
         running: false
-        command: [Brand.appId, "dthumbs", root.desktopDir, Brand.cacheDir + "/desktop_thumbnails"]
+        command: [Brand.appBin, "dthumbs", root.desktopDir, Brand.cacheDir + "/desktop_thumbnails"]
 
         stdout: StdioCollector {
             onStreamFinished: {

@@ -167,7 +167,7 @@ Singleton {
                     root.saveCache();
                 },
                 "update": function () {
-                    TerminalService.execDetached(Brand.appId + " update; exec $SHELL");
+                    TerminalService.execDetached(Brand.appBin + " update; exec $SHELL");
                 }
             }
         });

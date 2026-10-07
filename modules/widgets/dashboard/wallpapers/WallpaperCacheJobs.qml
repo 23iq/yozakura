@@ -33,7 +33,7 @@ Scope {
         // QUICKSHELL-GIT: var dataPath = Quickshell.cacheDir;
         var dataPath = Brand.cacheDir;
 
-        lockscreenFrameProcess.command = [Brand.appId, "lockwall", filePath, dataPath];
+        lockscreenFrameProcess.command = [Brand.appBin, "lockwall", filePath, dataPath];
 
         lockscreenFrameProcess.running = true;
     }
@@ -42,7 +42,7 @@ Scope {
         id: thumbnailProcess
         running: false
         // Extra folders are appended; older binaries ignore them.
-        command: [Brand.appId, "thumbs", Brand.cacheDir + "/wallpapers.json", Brand.cacheDir, jobs.fallbackDir].concat(jobs.extraDirs)
+        command: [Brand.appBin, "thumbs", Brand.cacheDir + "/wallpapers.json", Brand.cacheDir, jobs.fallbackDir].concat(jobs.extraDirs)
 
         stdout: StdioCollector {
             onStreamFinished: {

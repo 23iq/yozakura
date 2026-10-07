@@ -69,7 +69,7 @@ Singleton {
 
     function markOffered() {
         root.answered = true;
-        const argv = [Brand.appId, "config", "set", "general.newLookOffered", "true"];
+        const argv = [Brand.appBin, "config", "set", "general.newLookOffered", "true"];
         if (root.exec) {
             root.exec(argv, null);
             return;

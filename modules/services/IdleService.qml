@@ -11,9 +11,9 @@ Singleton {
     id: root
 
     // General Idle Settings
-    property string lockCmd: Config.system.idle.general.lock_cmd ?? Brand.appId + " lock"
+    property string lockCmd: Config.system.idle.general.lock_cmd ?? Brand.appBin + " lock"
     property string beforeSleepCmd: Config.system.idle.general.before_sleep_cmd ?? "loginctl lock-session"
-    property string afterSleepCmd: Config.system.idle.general.after_sleep_cmd ?? Brand.appId + " screen on"
+    property string afterSleepCmd: Config.system.idle.general.after_sleep_cmd ?? Brand.appBin + " screen on"
 
     // Sleep/Lock monitoring is handled by the Go daemon (login1 DBus).
     // The daemon executes the configured commands itself and emits
@@ -102,7 +102,7 @@ Singleton {
         const cmd = (root.beforeSleepCmd || "").trim();
         return cmd === "loginctl lock-session"
             || cmd === "loginctl lock-sessions"
-            || cmd === Brand.appId + " lock" || cmd === Brand.legacyAppId + " lock";
+            || cmd === Brand.appId + " lock" || cmd === Brand.appBin + " lock" || cmd === Brand.legacyAppId + " lock";
     }
 
     function lockBeforeSleep() {

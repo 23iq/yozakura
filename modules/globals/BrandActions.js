@@ -18,6 +18,8 @@ var legacyDaemon = "axctl";
 var envPrefix = appId.toUpperCase() + "_";
 // Env var through which the backend exports the resolved daemon executable.
 var daemonBinEnv = envPrefix + "DAEMON_BIN";
+// Env var through which the backend exports its own executable.
+var appBinEnv = envPrefix + "BIN";
 
 // Keybind/IPC action id: "<app>.<name>".
 function action(name) {

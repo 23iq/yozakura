@@ -121,7 +121,7 @@ QtObject {
     }
 
     property Process lister: Process {
-        command: [Brand.appId, "chatlist", root.dir, "--json"]
+        command: [Brand.appBin, "chatlist", root.dir, "--json"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {

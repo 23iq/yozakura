@@ -116,8 +116,8 @@ LauncherProvider {
         else if (plan.kind === "toggle")
             Qt.callLater(() => GlobalShortcuts.toggle(plan.value));
         else if (plan.kind === "cli")
-            Quickshell.execDetached([Brand.appId].concat(plan.argv));
+            Quickshell.execDetached([Brand.appBin].concat(plan.argv));
         else if (plan.kind === "config")
-            Quickshell.execDetached([Brand.appId, "config", "set", plan.key, String(plan.value)]);
+            Quickshell.execDetached([Brand.appBin, "config", "set", plan.key, String(plan.value)]);
     }
 }

@@ -16,6 +16,9 @@ Singleton {
     // else the name on PATH.
     readonly property string daemon: BrandActions.daemon
     readonly property string daemonBin: Quickshell.env(BrandActions.daemonBinEnv) || BrandActions.daemon
+    // The app CLI to run: the executable that started this shell (exported
+    // by the backend), else the name on PATH.
+    readonly property string appBin: Quickshell.env(BrandActions.appBinEnv) || appId
     readonly property string home: Quickshell.env("HOME")
     readonly property string configDir: (Quickshell.env("XDG_CONFIG_HOME") || home + "/.config") + "/" + appId
     readonly property string dataDir: (Quickshell.env("XDG_DATA_HOME") || home + "/.local/share") + "/" + appId

@@ -337,7 +337,7 @@ Singleton {
         // file is stale), the CLI exits with code 1; we then fall back
         // to a minimal direct write so yozd still has a valid TOML
         // to watch and the rest of the shell keeps working.
-        ipcProcess.command = [Brand.appId, "ipc", "call", "compositor.write", payload];
+        ipcProcess.command = [Brand.appBin, "ipc", "call", "compositor.write", payload];
         ipcProcess.running = true;
         console.log("CompositorTomlWriter: requested compositor.write via yozakura CLI");
     }

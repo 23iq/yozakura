@@ -43,7 +43,7 @@ QtObject { property string path; property bool watchChanges; property bool print
 })
 h.module("qs.modules.globals", {
     "Brand": "pragma Singleton\nimport QtQuick\nQtObject { property string configDir: '/cfg'; "
-             "property string cacheDir: '/cache'; property string appId: 'app' }",
+             "property string cacheDir: '/cache'; property string appId: 'app'; property string appBin: 'app' }",
     "GlobalStates": "pragma Singleton\nimport QtQuick\nQtObject { property var wallpaperManager: null }",
     "ProcLog": """pragma Singleton
 import QtQuick

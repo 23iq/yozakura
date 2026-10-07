@@ -29,7 +29,7 @@ Singleton {
             return;
         failed = false;
         proc.requested = source;
-        proc.command = [Brand.appId, "schemes", source];
+        proc.command = [Brand.appBin, "schemes", source];
         proc.running = true;
     }
 

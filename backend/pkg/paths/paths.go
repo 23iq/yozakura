@@ -114,6 +114,11 @@ func DaemonBinary() string {
 // the backend exports it to Quickshell so the shell runs the same binary.
 var DaemonBinEnv = brand.EnvPrefix + "DAEMON_BIN"
 
+// AppBinEnv names the env var holding the running app executable; the
+// backend exports it so the shell calls the same binary that started it,
+// not whichever one comes first on PATH.
+var AppBinEnv = brand.EnvPrefix + "BIN"
+
 func isExecutable(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.Mode().IsRegular() && info.Mode()&0o111 != 0

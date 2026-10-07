@@ -76,7 +76,7 @@ Singleton {
             return;
         }
         const p = procFactory.createObject(root, {
-            "command": [Brand.appId, "preset"].concat(args),
+            "command": [Brand.appBin, "preset"].concat(args),
             "done": done
         });
         p.running = true;

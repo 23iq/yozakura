@@ -171,6 +171,6 @@ Singleton {
 
     function restart() {
         root.restartRequired = false;
-        Quickshell.execDetached([Brand.appId, "reload"]);
+        Quickshell.execDetached([Brand.appBin, "reload"]);
     }
 }

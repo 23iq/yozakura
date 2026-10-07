@@ -425,6 +425,9 @@ func runShell() {
 	// Quickshell and every other child run the same compositor daemon
 	// executable the backend supervises (next to this binary first).
 	os.Setenv(paths.DaemonBinEnv, paths.DaemonBinary())
+	if exe := currentExecutable(); exe != "" {
+		os.Setenv(paths.AppBinEnv, exe)
+	}
 
 	if home, err := os.UserHomeDir(); err == nil {
 		repairHyprlandEntry(home, currentExecutable())
