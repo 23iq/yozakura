@@ -74,9 +74,10 @@ Column {
                 }
                 KitText {
                     width: parent.width
-                    visible: weather.ready
+                    visible: weather.ready || weather.pending
+                    opacity: weather.ready ? 1 : 0
                     role: "caption"
-                    text: weather.details
+                    text: weather.ready ? weather.details : " "
                 }
             }
 

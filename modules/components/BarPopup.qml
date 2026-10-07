@@ -50,11 +50,30 @@ PopupWindow {
     // Bar position detection
     readonly property string barPosition: bar?.barPosition ?? "top"
 
-    // Total size including shadow margin
-    readonly property int totalWidth: contentWidth + shadowMargin * 2
-    readonly property int totalHeight: contentHeight + shadowMargin * 2
+    // Total size including shadow margin. contentWidth/Height are the size the
+    // content asks for; the popup follows them through one smooth morph while
+    // it is open (it snaps while hidden, so opening never animates).
+    readonly property int totalWidth: Math.round(shownWidth) + shadowMargin * 2
+    readonly property int totalHeight: Math.round(shownHeight) + shadowMargin * 2
     property int contentWidth: 220
     property int contentHeight: 150
+    property real shownWidth: contentWidth
+    property real shownHeight: contentHeight
+    readonly property bool morphSize: root.visible && root.isOpen && Motion.morph.duration > 0
+    Behavior on shownWidth {
+        enabled: root.morphSize
+        NumberAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
+    Behavior on shownHeight {
+        enabled: root.morphSize
+        NumberAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
 
     implicitWidth: totalWidth
     implicitHeight: totalHeight
@@ -84,8 +103,8 @@ PopupWindow {
             "height": 0
         })
     readonly property var placement: EdgeService.popupPlacement(area, anchorRect, {
-        "w": contentWidth,
-        "h": contentHeight
+        "w": Math.round(shownWidth),
+        "h": Math.round(shownHeight)
     }, barPosition, gap)
     readonly property bool opensVertically: placement.dir === "down" || placement.dir === "up"
     // Anchor center along the popup edge that faces it

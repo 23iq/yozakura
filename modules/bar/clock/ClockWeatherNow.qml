@@ -13,6 +13,9 @@ Row {
 
     property bool showCondition: false
     readonly property bool ready: WeatherService.dataAvailable
+    // While the first fetch runs the line keeps its final height (invisible),
+    // so the popup does not grow when the data lands.
+    readonly property bool pending: !ready && WeatherService.isLoading
     readonly property string details: WidgetFormat.weatherDetails({
         "max": WeatherService.maxTemp,
         "min": WeatherService.minTemp,
@@ -20,7 +23,15 @@ Row {
         "wind": WeatherService.windSpeed
     }, I18n.t)
 
-    visible: root.ready
+    visible: root.ready || root.pending
+    opacity: root.ready ? 1 : 0
+    Behavior on opacity {
+        enabled: Motion.enter.duration > 0
+        NumberAnimation {
+            duration: Motion.enter.duration
+            easing.type: Motion.enter.easing
+        }
+    }
     spacing: Space.s
 
     Text {
