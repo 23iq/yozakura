@@ -51,6 +51,16 @@ test('heading case is applied', () => {
     assert.equal(T.applyCase(null, 'upper'), '');
 });
 
+test('kit labels and titles follow the heading case', () => {
+    assert.equal(T.capitalization('label', 'none'), 'upper');
+    assert.equal(T.capitalization('label', 'bogus'), 'upper');
+    assert.equal(T.capitalization('label', 'lower'), 'lower');
+    assert.equal(T.capitalization('title', 'none'), 'mixed');
+    assert.equal(T.capitalization('title', 'upper'), 'upper');
+    assert.equal(T.capitalization('title', 'title'), 'capitalize');
+    assert.equal(T.capitalization('body', 'upper'), 'mixed');
+});
+
 test('Icons.qml inlines the same families as IconWeights.js', () => {
     const src = fs.readFileSync(path.join(ROOT, 'modules/theme/Icons.qml'), 'utf8');
     assert.ok(src.includes('|| "' + W.family('bold') + '"'));

@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.config
 import qs.modules.theme
+import "../../theme/TypeRoles.js" as TypeRoles
 
 // Type roles and ink colors of the shared kit (modules/components/kit).
 // Every text in the shell is one of six roles, sized from theme.fontSize:
@@ -69,8 +70,18 @@ QtObject {
         return role === "label" ? Math.round(root.size("label") * 0.14 * 10) / 10 : 0;
     }
 
+    // label UPPERCASE / title as typed, unless theme.type.headingCase sets a case
     function capitalization(role: string): int {
-        return role === "label" ? Font.AllUppercase : Font.MixedCase;
+        switch (TypeRoles.capitalization(role, Config.theme.type ? Config.theme.type.headingCase : "none")) {
+        case "upper":
+            return Font.AllUppercase;
+        case "lower":
+            return Font.AllLowercase;
+        case "capitalize":
+            return Font.Capitalize;
+        default:
+            return Font.MixedCase;
+        }
     }
 
     // Icon glyph size next to a role's text (Phosphor glyphs read ~1.2x).
