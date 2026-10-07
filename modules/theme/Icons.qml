@@ -337,6 +337,18 @@ QtObject {
     readonly property string treeStructure: "\uE67C"
     readonly property string starIcon: "\uE46A"
     readonly property string caretUpDown: "\uE140"
+    // Weather conditions (WeatherGlyph.js) and bento / clock panel controls
+    readonly property string cloud: "\uE1AA"
+    readonly property string cloudSun: "\uE540"
+    readonly property string cloudMoon: "\uE53E"
+    readonly property string cloudFog: "\uE53C"
+    readonly property string cloudRain: "\uE1B4"
+    readonly property string cloudSnow: "\uE1B8"
+    readonly property string cloudLightning: "\uE1B2"
+    readonly property string wind: "\uE5D2"
+    readonly property string umbrella: "\uE684"
+    readonly property string skipForward: "\uE5A6"
+    readonly property string dotsSix: "\uE794"
     // Settings
     readonly property string search: ""
     readonly property string stack: ""
