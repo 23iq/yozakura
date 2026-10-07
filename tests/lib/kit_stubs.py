@@ -41,7 +41,8 @@ TYPES = {
     "Space": SPACE,
     "Type": TYPE,
     "Look": LOOK,
-    "KitText": "Text { property string role: 'body'; property bool tabular: false; elide: Text.ElideRight }",
+    "KitText": "Text { property string role: 'body'; property bool tabular: false; "
+               "font.family: Type.family(role); font.pixelSize: Type.size(role); elide: Text.ElideRight }",
     "SectionLabel": "Item { property string text; property string action; signal triggered; implicitHeight: 14 }",
     "Divider": "Item { property bool vertical: false; implicitHeight: 1 }",
     "Group": "Column { property string label; property string actionText; property bool divider: false; "

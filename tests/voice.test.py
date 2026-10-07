@@ -21,7 +21,7 @@ from lib.qmlharness import REPO, Harness  # noqa: E402
 from lib import kit_stubs  # noqa: E402
 from PySide6.QtCore import QSize  # noqa: E402
 from PySide6.QtGui import QColor  # noqa: E402
-from PySide6.QtQuick import QQuickWindow  # noqa: E402
+from PySide6.QtQuick import QQuickItem, QQuickWindow  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 ok_all = True
@@ -232,9 +232,17 @@ for pal_name, pal in PALETTES.items():
         path = render_dir / f"voice-{name}-{pal_name}.png"
         img.save(str(path))
         bg = QColor(pal["background"])
-        distinct = sum(1 for x in range(0, img.width(), 6) for y in range(0, img.height(), 6)
+        # Sparse sampling misses short text depending on font metrics and
+        # rasterization (CI's no_speech state used to hit only 18 samples).
+        distinct = sum(1 for x in range(img.width()) for y in range(img.height())
                        if QColor(img.pixel(x, y)).rgb() != bg.rgb())
         check(f"render {name}/{pal_name}", img.width() > 0 and distinct > 20, f"{distinct} px -> {path.name}")
+        if name == "no_speech":
+            check(f"no speech message visible/{pal_name}", any(
+                item.property("text") == EN["voice.status.no_speech"]
+                and item.isVisible() and item.width() > 0 and item.height() > 0
+                for item in view_root.findChildren(QQuickItem)
+            ))
 
 check("view height fits the notch", 60 < h.eval(view_root, "view.implicitHeight") < 240,
       str(h.eval(view_root, "view.implicitHeight")))
