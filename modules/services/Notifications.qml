@@ -174,9 +174,11 @@ Singleton {
             notifObject.historyPriority = Math.max(notifObject.historyPriority, 1);
         if (d.popup && info.popup !== false) {
             notifObject.popup = true;
+            // A group under the pointer stays paused for its new arrivals
             notifObject.timer = notifTimerComponent.createObject(root, {
                 "id": notifObject.id,
-                "interval": d.timeout
+                "interval": d.timeout,
+                "isPaused": root._heldGroups[notifObject.appName] === true
             });
             if (d.sound)
                 root.rules.playSound(info.hints);
@@ -604,7 +606,10 @@ Singleton {
         return true;
     }
 
+    // App groups whose popup is hovered (pauseGroupTimers .. resumeGroupTimers)
+    property var _heldGroups: ({})
     function pauseGroupTimers(appName) {
+        root._heldGroups[appName] = true;
         root.popupList.forEach(notif => {
             if (notif.appName === appName && notif.timer) {
                 notif.timer.pause();
@@ -613,6 +618,7 @@ Singleton {
     }
 
     function resumeGroupTimers(appName) {
+        delete root._heldGroups[appName];
         root.popupList.forEach(notif => {
             if (notif.appName === appName && notif.timer) {
                 notif.timer.resume();
