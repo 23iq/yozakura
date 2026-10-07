@@ -35,6 +35,7 @@ QtObject {
     property QtObject exit: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
     property QtObject morph: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
 }"""})
+h.singleton("qs.modules.components.kit", "Space", "QtObject { property int xs: 4; property int s: 8; property int m: 12; property int xxl: 32 }")
 h.copy("modules/notifications/CornerToasts.qml", siblings=False)
 h.stub("CornerToast", "Item { property var group; property bool stackUp }")
 

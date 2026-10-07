@@ -76,8 +76,11 @@ function actionsOf(n) {
 }
 
 // Image for the toast's leading art: the notification image (a person or a
-// picture, shown round) before the app icon (a rounded square).
-function artOf(n) {
+// picture, shown round) before the app icon (a rounded square). A named
+// icon goes through `resolve` (name -> path, "" when the theme lacks it;
+// Quickshell.iconPath(name, true)) so a missing icon falls back to the
+// placeholder instead of the theme's "image-missing" picture.
+function artOf(n, resolve) {
     if (!n)
         return { "source": "", "round": false };
     var image = n.cachedImage || n.image || "";
@@ -87,7 +90,21 @@ function artOf(n) {
     if (!icon)
         return { "source": "", "round": false };
     var named = icon.indexOf("/") !== 0 && icon.indexOf(":") < 0;
-    return { "source": named ? "image://icon/" + icon : toUrl(icon), "round": false };
+    if (!named)
+        return { "source": toUrl(icon), "round": false };
+    if (typeof resolve !== "function")
+        return { "source": "image://icon/" + icon, "round": false };
+    var path = resolve(icon) || "";
+    return { "source": path ? toUrl(path) : "", "round": false };
+}
+
+// The placeholder of the art when there is no picture: the app's initial
+// ("" for a critical notification, which shows the alert glyph instead).
+function initialOf(n) {
+    if (!n || isCritical(n.urgency))
+        return "";
+    var name = String(n.appName || n.summary || "").trim();
+    return name ? name.charAt(0).toUpperCase() : "";
 }
 
 // A path becomes a file URL; URLs (file:, data:, image://) stay as they are.

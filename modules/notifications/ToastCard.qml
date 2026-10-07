@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
@@ -9,7 +10,7 @@ import "ToastModel.js" as ToastModel
 import "notification_utils.js" as NotificationUtils
 
 // The content of one corner toast, built from the kit: the sender's art
-// (the image round, else the app icon), the summary (body, semibold), the
+// (the image round, else the app icon, else the app initial), the summary (body, semibold), the
 // body (secondary, two lines), a caption with the app, the group count and
 // the time, a ProgressLine for a progress hint and the actions as quiet
 // Chips. The dismiss button shows while hovered. No box: CornerToast puts
@@ -21,7 +22,7 @@ Item {
     property int extra: 0
     property bool hovered: false
     readonly property bool critical: root.notification ? ToastModel.isCritical(root.notification.urgency) : false
-    readonly property var art: ToastModel.artOf(root.notification)
+    readonly property var art: ToastModel.artOf(root.notification, name => Quickshell.iconPath(name, true))
     readonly property real progress: ToastModel.progressOf(root.notification)
     readonly property var actions: ToastModel.actionsOf(root.notification)
     readonly property string body: root.notification ? NotificationUtils.processNotificationBody(root.notification.body || "", root.notification.appName) : ""
@@ -37,12 +38,14 @@ Item {
         spacing: Space.m
 
         Art {
+            objectName: "toastArt"
             Layout.alignment: Qt.AlignTop
             Layout.preferredWidth: Space.controlM
             Layout.preferredHeight: Space.controlM
             source: root.art.source
             radius: root.art.round ? width / 2 : Space.clampRadius(Space.controlRadius, width)
             icon: root.critical ? Icons.alert : Icons.bell
+            placeholderText: ToastModel.initialOf(root.notification)
         }
 
         ColumnLayout {
@@ -54,6 +57,9 @@ Item {
                 Layout.fillWidth: true
                 role: "body"
                 font.weight: Font.DemiBold
+                wrapMode: Text.Wrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
                 text: root.notification ? (root.notification.summary || root.notification.appName || "") : ""
             }
 
@@ -63,7 +69,8 @@ Item {
                 role: "secondary"
                 text: root.body
                 wrapMode: Text.Wrap
-                maximumLineCount: 2
+                maximumLineCount: 3
+                elide: Text.ElideRight
             }
 
             ProgressLine {

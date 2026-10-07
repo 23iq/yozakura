@@ -19,11 +19,9 @@ QtObject {
 }"""})
 h.module("qs.modules.components.kit", {
     "Space": "pragma Singleton\nQtObject { property int m: 8; property int hairline: 1 }",
-    "Type": "pragma Singleton\nQtObject { property color track: \"gray\" }",
-    "Surface": "Item { property int padding: 8; property string glassSurface; property real radius: 0 }",
-    "Group": "Item { implicitHeight: childrenRect.height }",
+    "Surface": "Item { property int padding: 8; property string glassSurface; property real radius: 0; "
+               "property bool floating; property bool enableShadow }",
 })
-h.module("qs.modules.components", {"Shadow": "Item {}"})
 h.stub("ToastCard", "Item { property var notification; property int extra; property bool hovered; "
        "signal dismissRequested; signal actionInvoked(string identifier) }")
 h.copy("modules/notifications/CornerToast.qml", siblings=False)

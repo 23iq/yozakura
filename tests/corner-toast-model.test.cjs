@@ -48,6 +48,18 @@ test('art: the image (round) before the app icon (square)', () => {
     assert.equal(M.artOf({ appIcon: '/usr/share/icons/x.png' }).source, 'file:///usr/share/icons/x.png');
     assert.equal(M.artOf({ cachedImage: 'data:image/png;base64,AA' }).source, 'data:image/png;base64,AA');
     assert.equal(M.artOf({}).source, '');
+    // A resolver: found icons become file URLs, missing ones the placeholder
+    const resolve = name => (name === 'firefox' ? '/usr/share/icons/firefox.svg' : '');
+    assert.equal(M.artOf({ appIcon: 'firefox' }, resolve).source, 'file:///usr/share/icons/firefox.svg');
+    assert.equal(M.artOf({ appIcon: 'preferences-system-notifications' }, resolve).source, '');
+    assert.equal(M.artOf({ image: '/tmp/a.png', appIcon: 'nope' }, resolve).source, 'file:///tmp/a.png');
+});
+
+test('initialOf: the app initial, none when critical', () => {
+    assert.equal(M.initialOf({ appName: 'yozakura' }), 'Y');
+    assert.equal(M.initialOf({ appName: '', summary: 'battery' }), 'B');
+    assert.equal(M.initialOf({ appName: 'Battery', urgency: 2 }), '');
+    assert.equal(M.initialOf(null), '');
 });
 
 test('sheetOpacity: the stack reads, each sheet a little quieter', () => {
