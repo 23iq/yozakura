@@ -1,18 +1,19 @@
 import QtQuick
-import QtQuick.Layouts
-import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
 import qs.config
 
-// Header of the composed dashboard: big light clock and date on the left,
-// temperature and condition on the right (hidden until the weather loads).
-RowLayout {
+// Header of the composed dashboard: the time (display) over the date
+// (secondary); the weather, temperature over condition, quiet at the right
+// (hidden until it loads).
+Item {
     id: root
 
     property date now: new Date()
     readonly property bool use12h: Config.bar.use12hFormat ?? false
 
-    spacing: Metrics.spacing
+    implicitHeight: Math.max(time.implicitHeight, weather.implicitHeight)
+    implicitWidth: time.implicitWidth + Space.xl + weather.implicitWidth
 
     Timer {
         interval: 1000
@@ -22,54 +23,44 @@ RowLayout {
         onTriggered: root.now = new Date()
     }
 
-    ColumnLayout {
-        Layout.alignment: Qt.AlignBottom
-        spacing: 0
+    Column {
+        id: time
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        spacing: Space.xs
 
-        Text {
+        KitText {
             objectName: "clock"
+            role: "display"
             text: Qt.formatTime(root.now, root.use12h ? "h:mm" : "HH:mm")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(26)
-            font.weight: Font.Light
-            font.features: {
-                "tnum": 1
-            }
-            color: Colors.overBackground
         }
 
-        Text {
+        KitText {
+            objectName: "date"
+            role: "secondary"
             text: Qt.locale(I18n.resolvedLanguage).toString(root.now, "dddd, MMMM d")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.outline
         }
     }
 
-    Item {
-        Layout.fillWidth: true
-    }
-
-    ColumnLayout {
-        Layout.alignment: Qt.AlignBottom
-        spacing: 0
+    Column {
+        id: weather
+        objectName: "weather"
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        spacing: Space.xs
         visible: WeatherService.dataAvailable
 
-        Text {
-            Layout.alignment: Qt.AlignRight
+        KitText {
+            anchors.right: parent.right
+            role: "body"
+            tabular: true
             text: Math.round(WeatherService.currentTemp) + "°"
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(4)
-            font.weight: Font.Light
-            color: Colors.overBackground
         }
 
-        Text {
-            Layout.alignment: Qt.AlignRight
+        KitText {
+            anchors.right: parent.right
+            role: "caption"
             text: WeatherService.weatherDescription
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.outline
         }
     }
 }

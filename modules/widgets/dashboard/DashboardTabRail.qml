@@ -1,16 +1,16 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.modules.services
-import qs.config
-import qs.modules.components.signatures
 import "DashboardTabs.js" as DashboardTabs
 
-// Dashboard tab rail: the visible tabs (layout.dashboard.tabs order), the
-// bento edit toggle (on the widgets tab) and the settings button.
+// Dashboard tab rail: one IconButton per visible tab (layout.dashboard.tabs
+// order, the current one `active`); at the bottom the bento edit toggle (on
+// the widgets tab in bento mode) and the settings button. Scroll to switch
+// tabs.
 Item {
     id: root
 
@@ -19,12 +19,12 @@ Item {
     property int currentTab: 0
     property bool canEdit: false
     property bool editing: false
-    property int tabSpacing: Metrics.spacing
+    property int tabSpacing: Space.s
 
     signal navigate(int index)
     signal editToggled
 
-    readonly property int railPos: order.indexOf(currentTab)
+    implicitWidth: Space.controlM
 
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -35,82 +35,16 @@ Item {
         }
     }
 
-    // Elastic highlight behind the current tab
-    StyledRect {
-        id: tabHighlight
-        variant: "primary"
-        width: parent.width
-        radius: Styling.radius(4)
-        visible: root.railPos >= 0
-        z: 0
-
-        BrushHighlight {}
-
-        property real targetY: Math.max(0, root.railPos) * (width + root.tabSpacing)
-        property real animatedY1: targetY
-        property real animatedY2: targetY
-
-        x: 0
-        y: Math.min(animatedY1, animatedY2)
-        height: Math.abs(animatedY2 - animatedY1) + width
-
-        Behavior on animatedY1 {
-            enabled: Motion.enter.duration > 0
-            NumberAnimation {
-                duration: Motion.enter.duration / 3
-                easing.type: Easing.OutSine
-            }
-        }
-        Behavior on animatedY2 {
-            enabled: Motion.morph.duration > 0
-            NumberAnimation {
-                duration: Motion.morph.duration
-                easing.type: Easing.OutSine
-            }
-        }
-
-        onTargetYChanged: {
-            animatedY1 = targetY;
-            animatedY2 = targetY;
-        }
-    }
-
-    component RailButton: Button {
+    component RailButton: IconButton {
         id: btn
 
-        property string glyph: ""
-        property bool active: false
         property string tip: ""
 
-        flat: true
-        hoverEnabled: true
-        width: root.width
-        height: width
-        Accessible.name: tip
-
-        background: Item {}
-
-        contentItem: Text {
-            text: btn.glyph
-            textFormat: Text.RichText
-            color: btn.active ? Styling.srItem("primary") : Colors.overBackground
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(6)
-            font.weight: Font.Medium
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-
-            Behavior on color {
-                enabled: Motion.enter.duration > 0
-                ColorAnimation {
-                    duration: Motion.enter.duration
-                    easing.type: Motion.enter.easing
-                }
-            }
-        }
+        anchors.horizontalCenter: parent.horizontalCenter
+        Accessible.name: btn.tip
 
         StyledToolTip {
-            show: btn.hovered
+            show: btn.hovered && btn.tip !== ""
             tooltipText: btn.tip
         }
     }
@@ -129,7 +63,7 @@ Item {
                 readonly property var tab: DashboardTabs.tabs[modelData]
 
                 objectName: "dashTab_" + (tab ? tab.id : "")
-                glyph: tab ? (Icons[tab.icon] || "") : ""
+                icon: tab ? (Icons[tab.icon] || "") : ""
                 tip: tab ? I18n.t(tab.labelKey) : ""
                 active: root.currentTab === modelData
                 onClicked: root.navigate(modelData)
@@ -143,63 +77,20 @@ Item {
         anchors.right: parent.right
         spacing: root.tabSpacing
 
-        // Bento edit toggle (✎)
-        Item {
-            width: parent.width
-            height: root.canEdit ? width : 0
-            visible: height > 0
-            clip: true
-
-            Behavior on height {
-                enabled: Motion.morph.duration > 0
-                NumberAnimation {
-                    duration: Motion.morph.duration
-                    easing.type: Motion.morph.easing
-                }
-            }
-
-            StyledRect {
-                anchors.fill: parent
-                radius: Styling.radius(4)
-                variant: root.editing ? "primary" : (editButton.hovered ? "focus" : "common")
-            }
-
-            RailButton {
-                id: editButton
-                objectName: "bentoEditToggle"
-                glyph: root.editing ? Icons.check : Icons.pencil
-                active: root.editing
-                tip: I18n.t(root.editing ? "bento.done" : "bento.edit")
-                onClicked: root.editToggled()
-            }
+        RailButton {
+            objectName: "bentoEditToggle"
+            visible: root.canEdit
+            icon: root.editing ? Icons.check : Icons.pencil
+            active: root.editing
+            tip: I18n.t(root.editing ? "bento.done" : "bento.edit")
+            onClicked: root.editToggled()
         }
 
-        // Settings
-        Item {
-            width: parent.width
-            height: width
-
-            StyledRect {
-                anchors.fill: parent
-                radius: Styling.radius(4)
-                variant: controlsButton.hovered ? "focus" : "common"
-                opacity: GlobalStates.settingsWindowVisible ? 0 : 1
-
-                Behavior on opacity {
-                    enabled: Motion.enter.duration > 0
-                    NumberAnimation {
-                        duration: Motion.enter.duration
-                        easing.type: Motion.enter.easing
-                    }
-                }
-            }
-
-            RailButton {
-                id: controlsButton
-                glyph: Icons.gear
-                active: GlobalStates.settingsWindowVisible
-                onClicked: GlobalShortcuts.toggleSettings()
-            }
+        RailButton {
+            objectName: "settingsButton"
+            icon: Icons.gear
+            active: GlobalStates.settingsWindowVisible
+            onClicked: GlobalShortcuts.toggleSettings()
         }
     }
 }

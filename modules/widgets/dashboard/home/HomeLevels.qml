@@ -1,18 +1,14 @@
-pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
-// Volume and brightness on the composed dashboard: two quiet StyledSliders
-// with an icon (click the speaker to mute) and the value. Same services as
-// LevelsColumn.qml (Audio sink, Brightness monitors with the sync option).
-ColumnLayout {
+// "Levels" on the composed dashboard: volume (click the speaker to mute)
+// and brightness as LineSliders with their values. Same services as
+// widgets/LevelsColumn.qml (Audio sink, Brightness monitors with the sync
+// option).
+Group {
     id: root
-
-    spacing: Metrics.spacing / 2
 
     readonly property var sinkAudio: Audio.sink?.audio ?? null
     readonly property var monitor: {
@@ -26,88 +22,36 @@ ColumnLayout {
         }
         return mons[0];
     }
+    readonly property bool lightReady: root.monitor !== null && root.monitor.ready
 
-    function setVolume(v) {
+    function setVolume(v: real) {
         if (root.sinkAudio && Math.abs(root.sinkAudio.volume - v) > 0.001)
             root.sinkAudio.volume = v;
     }
 
-    function setBrightness(v) {
+    function setBrightness(v: real) {
         if (Brightness.syncBrightness) {
             for (let i = 0; i < Brightness.monitors.length; i++) {
                 const mon = Brightness.monitors[i];
                 if (mon && mon.ready)
                     mon.setBrightness(v);
             }
-        } else if (root.monitor && root.monitor.ready && Math.abs(root.monitor.brightness - v) > 0.001) {
+        } else if (root.lightReady && Math.abs(root.monitor.brightness - v) > 0.001) {
             root.monitor.setBrightness(v);
         }
     }
 
-    component LevelRow: RowLayout {
-        id: row
+    label: I18n.t("dashboard.home.levels")
 
-        property string icon
-        property real level: 0
-        property bool available: true
-        property bool muted: false
-
-        signal moved(real value)
-        signal iconClicked
-
-        Layout.fillWidth: true
-        spacing: Metrics.spacing
-        opacity: row.available ? 1 : 0.5
-
-        HomeIconButton {
-            icon: row.icon
-            iconSize: Styling.fontSize(1)
-            implicitWidth: Metrics.iconSize
-            onClicked: row.iconClicked()
-        }
-
-        StyledSlider {
-            id: slider
-            Layout.fillWidth: true
-            Layout.preferredHeight: Metrics.badgeHeight
-            enabled: row.available
-            resizeParent: false
-            tooltip: false
-            progressColor: row.muted ? Colors.outline : Colors.overSurfaceVariant
-            onValueChanged: {
-                if (Math.abs(slider.value - row.level) > 0.001)
-                    row.moved(slider.value);
-            }
-        }
-
-        // The slider assigns its own value while dragged or scrolled; the
-        // service value comes back through this binding.
-        Binding {
-            target: slider
-            property: "value"
-            value: row.level
-            when: !slider.isDragging
-        }
-
-        Text {
-            Layout.preferredWidth: Metrics.iconSize
-            horizontalAlignment: Text.AlignRight
-            text: row.available ? Math.round(row.level * 100) : "–"
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            font.features: {
-                "tnum": 1
-            }
-            color: Colors.outline
-        }
-    }
-
-    LevelRow {
-        objectName: "volumeRow"
+    LineSlider {
+        id: volume
+        objectName: "volumeSlider"
+        width: parent.width
         icon: root.sinkAudio?.muted ? Icons.speakerX : Icons.speakerHigh
-        available: root.sinkAudio !== null
-        level: root.sinkAudio?.volume ?? 0
-        muted: root.sinkAudio?.muted ?? false
+        iconClickable: true
+        showValue: true
+        enabled: root.sinkAudio !== null
+        valueText: enabled ? Math.round(volume.fraction * 100) + "%" : "–"
         onMoved: v => root.setVolume(v)
         onIconClicked: {
             if (root.sinkAudio)
@@ -115,11 +59,30 @@ ColumnLayout {
         }
     }
 
-    LevelRow {
-        objectName: "lightRow"
+    // The slider sets its own value while dragged; the service value comes
+    // back through these bindings.
+    Binding {
+        target: volume
+        property: "value"
+        value: root.sinkAudio?.volume ?? 0
+        when: !volume.pressed
+    }
+
+    LineSlider {
+        id: light
+        objectName: "lightSlider"
+        width: parent.width
         icon: Icons.sun
-        available: root.monitor !== null && root.monitor.ready
-        level: root.monitor?.brightness ?? 0
+        showValue: true
+        enabled: root.lightReady
+        valueText: enabled ? Math.round(light.fraction * 100) + "%" : "–"
         onMoved: v => root.setBrightness(v)
+    }
+
+    Binding {
+        target: light
+        property: "value"
+        value: root.monitor?.brightness ?? 0
+        when: !light.pressed
     }
 }

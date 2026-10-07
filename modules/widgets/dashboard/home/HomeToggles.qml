@@ -1,62 +1,57 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
+import "HomeModel.js" as HomeModel
 
-// Quick toggles of the composed dashboard. Same service calls as
-// widgets/QuickControls.qml; Wi-Fi and Bluetooth show what they are
+// Quick toggles of the composed dashboard, wrapping Chips. Same service
+// calls as widgets/QuickControls.qml; Wi-Fi and Bluetooth show what they are
 // connected to, Silence is do-not-disturb, Awake the idle inhibitor.
 Flow {
     id: root
 
-    spacing: Metrics.spacing / 2
+    readonly property string btDevice: HomeModel.connectedDevice(BluetoothService.friendlyDeviceList)
 
-    readonly property string btDevice: {
-        const list = BluetoothService.friendlyDeviceList;
-        for (let i = 0; i < list.length; i++) {
-            if (list[i] && list[i].connected)
-                return list[i].name || "";
-        }
-        return "";
-    }
+    spacing: Space.s
 
     Component.onCompleted: BluetoothService.initialize()
 
-    ToggleChip {
+    Chip {
         objectName: "wifiChip"
         icon: NetworkService.wifiEnabled ? Icons.wifiHigh : Icons.wifiOff
-        label: NetworkService.wifiEnabled && NetworkService.networkName !== "" ? NetworkService.networkName : I18n.t("dashboard.home.wifi")
+        text: NetworkService.wifiEnabled && NetworkService.networkName !== "" ? NetworkService.networkName : I18n.t("dashboard.home.wifi")
         active: NetworkService.wifiEnabled
         onClicked: NetworkService.toggleWifi()
     }
 
-    ToggleChip {
+    Chip {
         objectName: "bluetoothChip"
         icon: !BluetoothService.enabled ? Icons.bluetoothOff : (BluetoothService.connected ? Icons.bluetoothConnected : Icons.bluetooth)
-        label: BluetoothService.enabled && root.btDevice !== "" ? root.btDevice : I18n.t("dashboard.home.bluetooth")
+        text: BluetoothService.enabled && root.btDevice !== "" ? root.btDevice : I18n.t("dashboard.home.bluetooth")
         active: BluetoothService.enabled
         onClicked: BluetoothService.toggle()
     }
 
-    ToggleChip {
+    Chip {
         objectName: "silenceChip"
         icon: Notifications.silent ? Icons.bellZ : Icons.bell
-        label: I18n.t("dashboard.home.silence")
+        text: I18n.t("dashboard.home.silence")
         active: Notifications.silent
         onClicked: Notifications.toggleDnd()
     }
 
-    ToggleChip {
+    Chip {
         objectName: "awakeChip"
         icon: Icons.caffeine
-        label: I18n.t("dashboard.home.awake")
+        text: I18n.t("dashboard.home.awake")
         active: CaffeineClient.inhibit
         onClicked: CaffeineClient.toggle()
     }
 
-    ToggleChip {
+    Chip {
         objectName: "gameChip"
         icon: Icons.gameMode
-        label: I18n.t("dashboard.home.game")
+        text: I18n.t("dashboard.home.game")
         active: GameModeClient.toggled
         onClicked: GameModeClient.toggle()
     }

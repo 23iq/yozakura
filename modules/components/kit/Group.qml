@@ -32,6 +32,9 @@ Item {
     readonly property bool boxed: Look.groupBoxed && !root.bare
     readonly property real bodyHeight: root.fill ? Math.max(0, box.height - root.padding * 2 - body.y) : body.implicitHeight
     readonly property bool ruled: root.divider && Look.groupDivider
+    // Height the group adds around its content (rule, box padding, label):
+    // content that fills a given height sizes itself to height - chrome.
+    readonly property real chrome: box.y + root.padding * 2 + (root.label !== "" ? labelItem.implicitHeight + inner.spacing : 0)
 
     signal actionTriggered
 
@@ -75,6 +78,7 @@ Item {
             spacing: Space.m
 
             SectionLabel {
+                id: labelItem
                 objectName: "groupLabel"
                 width: parent.width
                 visible: root.label !== ""

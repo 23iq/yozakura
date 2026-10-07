@@ -6,7 +6,8 @@ import qs.modules.components.kit
 // A 3px line slider: track, accent fill, a knob that shows while hovered or
 // dragged. Drag or click to set, the wheel adjusts by `step`. Optional
 // leading `icon` and value text (`showValue`, `valueText`). `vertical: true`
-// stacks value / track / icon top to bottom. `moved(value)` on user changes.
+// stacks value / track / icon top to bottom. `moved(value)` on user changes;
+// `iconClickable` makes the icon a button (`iconClicked()`, e.g. mute).
 Item {
     id: root
 
@@ -19,11 +20,13 @@ Item {
     property bool showValue: false
     property string valueText: Math.round(root.fraction * 100) + "%"
     property bool highlighted: false
+    property bool iconClickable: false
     readonly property real fraction: root.to === root.from ? 0 : Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property bool pressed: mouse.pressed
 
     signal moved(real value)
+    signal iconClicked
 
     function setFraction(f: real) {
         const v = root.from + Math.max(0, Math.min(1, f)) * (root.to - root.from);
@@ -52,6 +55,14 @@ Item {
             Layout.row: root.vertical ? 2 : 0
             Layout.column: 0
             Layout.alignment: Qt.AlignCenter
+
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -Space.xs
+                visible: root.iconClickable
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.iconClicked()
+            }
         }
 
         Item {

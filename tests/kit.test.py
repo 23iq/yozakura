@@ -19,6 +19,7 @@ Window {
     property int triggered: 0
     property int moved: 0
     property int groupAction: 0
+    property int iconClicks: 0
     Column {
         KitText { objectName: "display"; role: "display"; text: "21:47" }
         KitText { objectName: "title"; role: "title"; text: "Title" }
@@ -39,6 +40,8 @@ Window {
         LineSlider { objectName: "slider"; width: 240; icon: Icons.speakerHigh; showValue: true; value: 0.25
                      onMoved: parent.Window.window.moved++ }
         LineSlider { objectName: "vslider"; vertical: true }
+        LineSlider { objectName: "muteSlider"; width: 240; icon: Icons.speakerHigh; iconClickable: true
+                     onIconClicked: parent.Window.window.iconClicks++ }
         ProgressLine { objectName: "progress"; width: 200; value: 0.5 }
         Ring { objectName: "ring"; value: 0.4; KitText { text: "18:24" } }
         Art { objectName: "art" }
@@ -144,6 +147,9 @@ for lang, density in CASES:
     assert slider.property("value") == 0.5 and win.property("moved") == 1, tag
     h.eval(slider, "setFraction(1.7)")
     assert slider.property("value") == 1, tag
+    mute = get("muteSlider")
+    h.eval(mute, "iconClicked()")
+    assert win.property("iconClicks") == 1 and slider.property("iconClickable") is False, tag
     vs = get("vslider")
     assert vs.property("implicitHeight") > vs.property("implicitWidth"), tag
     assert get("progress").property("height") == space("stroke"), tag
@@ -178,5 +184,8 @@ for lang, density in CASES:
         assert fill.name() == h.eval(win, "Colors.surfaceContainer.toString()") and fill.alphaF() == 1, tag
         assert h.eval(win, "Look.groupOutline.a") == 0 and box.property("radius") == space("smallRadius"), tag
     assert group.property("implicitHeight") == box.property("y") + box.property("height"), tag
+    # chrome: what the group adds around its content (two items + one gap here)
+    content = 40 + space("m") + 20
+    assert abs(group.property("chrome") - (group.property("implicitHeight") - content)) < 0.5, (tag, group.property("chrome"))
 
 print("kit: ok")
