@@ -140,7 +140,7 @@ Item {
     Behavior on horizontalScrollOffset {
         enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && !root.isScrollDragging && !root.isWheelScrolling
         NumberAnimation {
-            duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
+            duration: Motion.exit.duration
             easing.type: Motion.morph.easing
         }
     }
@@ -356,14 +356,14 @@ Item {
                     Behavior on x {
                         enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && !windowDelegate.dragging && !windowDelegate.useOverridePosition
                         NumberAnimation {
-                            duration: (Config.animDuration !== undefined ? Config.animDuration : 0)
+                            duration: Motion.morph.duration
                             easing.type: Motion.morph.easing
                         }
                     }
                     Behavior on y {
                         enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && !windowDelegate.dragging && !windowDelegate.useOverridePosition
                         NumberAnimation {
-                            duration: (Config.animDuration !== undefined ? Config.animDuration : 0)
+                            duration: Motion.morph.duration
                             easing.type: Motion.morph.easing
                         }
                     }
@@ -398,7 +398,7 @@ Item {
                         Behavior on color {
                             enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
                             ColorAnimation {
-                                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
+                                duration: Motion.exit.duration
                             }
                         }
                     }

@@ -59,10 +59,7 @@ modules/globals/GlobalStates.qml
 modules/notch/Notch.qml
 modules/notch/NotchContent.qml
 modules/notch/NotchNotificationView.qml
-modules/notifications/NotificationActionButtons.qml
 modules/notifications/NotificationAppIcon.qml
-modules/notifications/NotificationDismissButton.qml
-modules/notifications/NotificationGroup.qml
 modules/services/AppSearch.qml
 modules/services/Audio.qml
 modules/services/YozdService.qml

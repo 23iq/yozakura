@@ -35,14 +35,16 @@ Column {
         KitText {
             objectName: "clockPanelDetails"
             width: parent.width
-            visible: WeatherService.dataAvailable
+            // Space is reserved while the first fetch runs: no popup jump
+            visible: WeatherService.dataAvailable || WeatherService.isLoading
+            opacity: WeatherService.dataAvailable ? 1 : 0
             role: "caption"
-            text: WidgetFormat.weatherDetails({
+            text: WeatherService.dataAvailable ? WidgetFormat.weatherDetails({
                 "max": WeatherService.maxTemp,
                 "min": WeatherService.minTemp,
                 "rain": WeatherService.rainChance,
                 "wind": WeatherService.windSpeed
-            }, I18n.t)
+            }, I18n.t) : " "
         }
     }
 

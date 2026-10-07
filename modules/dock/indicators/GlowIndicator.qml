@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 // Round dots with a soft halo; the halo only shows on the focused app.
 IndicatorBase {
@@ -23,7 +24,7 @@ IndicatorBase {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
+                    duration: Motion.exit.duration
                 }
             }
         }

@@ -37,7 +37,7 @@ Item {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
             }
         }
         onLoaded: Ui.setIfPresent(item, "maxContentWidth", Qt.binding(() => loader.width))

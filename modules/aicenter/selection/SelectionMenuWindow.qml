@@ -74,13 +74,13 @@ PanelWindow {
         }
         Behavior on scale {
             NumberAnimation {
-                duration: Config.animDuration / 3
+                duration: Motion.exit.duration
                 easing.type: Motion.morph.easing
             }
         }
         Behavior on opacity {
             NumberAnimation {
-                duration: Config.animDuration / 3
+                duration: Motion.exit.duration
             }
         }
 

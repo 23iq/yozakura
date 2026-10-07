@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 // A thin line under the icon, split into one segment per window.
 IndicatorBase {
@@ -20,7 +21,7 @@ IndicatorBase {
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
     }

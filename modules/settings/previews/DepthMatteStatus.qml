@@ -48,7 +48,7 @@ Item {
                 Behavior on width {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                     }
                 }
             }

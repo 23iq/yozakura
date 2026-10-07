@@ -31,7 +31,7 @@ Button {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 4
+                duration: Motion.exit.duration
             }
         }
     }

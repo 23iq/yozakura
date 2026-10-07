@@ -45,14 +45,14 @@ Button {
         Behavior on rotation {
             enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
             NumberAnimation {
-                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
+                duration: Motion.exit.duration
             }
         }
 
         Behavior on color {
             enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
             ColorAnimation {
-                duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
+                duration: Motion.exit.duration
             }
         }
     }

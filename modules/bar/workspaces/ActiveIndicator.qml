@@ -36,14 +36,14 @@ Item {
     Behavior on idx1 {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration / 3
+            duration: Motion.exit.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on idx2 {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }

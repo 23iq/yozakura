@@ -51,7 +51,7 @@ StyledRect {
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.enter.duration
         }
     }
     transform: Translate {
@@ -59,7 +59,7 @@ StyledRect {
         Behavior on y {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }

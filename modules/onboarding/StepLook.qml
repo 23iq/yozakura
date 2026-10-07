@@ -62,7 +62,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 1.5
+                    duration: Motion.exit.duration
                     easing.type: Motion.enter.easing
                 }
             }
@@ -77,7 +77,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 1.5
+                    duration: Motion.exit.duration
                     easing.type: Motion.enter.easing
                 }
             }

@@ -25,7 +25,7 @@ Rectangle {
     Behavior on implicitHeight {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }

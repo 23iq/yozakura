@@ -53,21 +53,21 @@ StyledRect {
     Behavior on width {
         enabled: tile.animate && !tile.dragging
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on height {
         enabled: tile.animate && !tile.dragging
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on scale {
         enabled: tile.animate
         NumberAnimation {
-            duration: Config.animDuration / 2
+            duration: Motion.exit.duration
             easing.type: Motion.morph.easing
         }
     }
@@ -191,7 +191,7 @@ StyledRect {
         Behavior on border.color {
             enabled: tile.animate
             ColorAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
     }

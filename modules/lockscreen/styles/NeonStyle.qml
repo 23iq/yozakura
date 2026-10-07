@@ -219,7 +219,7 @@ LockStyle {
                     Behavior on opacity {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
-                            duration: Config.animDuration
+                            duration: Motion.enter.duration
                         }
                     }
                 }
@@ -239,7 +239,7 @@ LockStyle {
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.enter.duration
                     }
                 }
             }

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 // Capsule dots, one per window (the original dock indicator).
 IndicatorBase {
@@ -15,7 +16,7 @@ IndicatorBase {
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
     }

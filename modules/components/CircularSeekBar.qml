@@ -61,8 +61,8 @@ Item {
     property real currentDashLen: dashedActive ? baseDashLength : (baseDashLength + targetSpacing)
     property real currentGapLen: dashedActive ? targetSpacing : 0
     
-    Behavior on currentDashLen { NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing } }
-    Behavior on currentGapLen { NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing } }
+    Behavior on currentDashLen { NumberAnimation { duration: Motion.morph.duration; easing.type: Motion.morph.easing } }
+    Behavior on currentGapLen { NumberAnimation { duration: Motion.morph.duration; easing.type: Motion.morph.easing } }
 
     // Marquee Animation
     property real phase: 0

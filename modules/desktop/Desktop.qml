@@ -109,7 +109,7 @@ PanelWindow {
                 Behavior on x {
                     enabled: !dragHandler.active && Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
@@ -117,7 +117,7 @@ PanelWindow {
                 Behavior on y {
                     enabled: !dragHandler.active && Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
@@ -173,7 +173,7 @@ PanelWindow {
                     Behavior on opacity {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
-                            duration: Config.animDuration / 2
+                            duration: Motion.exit.duration
                             easing.type: Motion.enter.easing
                         }
                     }

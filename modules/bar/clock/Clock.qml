@@ -110,6 +110,17 @@ Item {
                 fontWeight: BarLook.textWeight
             }
 
+            TextMetrics {
+                id: dateMetrics
+                font.pixelSize: root.textSize
+                font.family: BarLook.textFont
+                font.weight: BarLook.textWeight
+                font.features: {
+                    "tnum": 1
+                }
+                text: "· " + root.dayAbbrev + " 00"
+            }
+
             Text {
                 visible: root.showDate && !root.vertical
                 Layout.alignment: Qt.AlignCenter
@@ -118,6 +129,11 @@ Item {
                 font.pixelSize: root.textSize
                 font.family: BarLook.textFont
                 font.weight: BarLook.textWeight
+                font.features: {
+                    "tnum": 1
+                }
+                // Reserve two-digit day width so 9 -> 10 does not resize the island.
+                Layout.minimumWidth: Math.ceil(dateMetrics.advanceWidth)
             }
 
             PomodoroIndicator {

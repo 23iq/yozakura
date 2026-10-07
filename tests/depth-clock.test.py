@@ -51,6 +51,8 @@ roles += ["background", "overBackground", "surface", "surfaceBright", "surfaceDi
           "lightRed", "green", "lightGreen", "blue", "lightBlue", "yellow", "lightYellow", "cyan", "lightCyan", "magenta", "lightMagenta"]
 h.singleton("qs.modules.theme", "Colors", "QtObject {\n" + "\n".join(
     f'    property color {r}: "{"#3366cc" if r == "tertiary" else "#808080"}"' for r in roles) + "\n}")
+h.singleton("qs.modules.theme", "Motion",
+            "QtObject { property var enter: ({ duration: 0, easing: Easing.OutCubic, overshoot: 1 }) }")
 h.module("qs.modules.desktop.widgets", {
     "DesktopWidgets": "pragma Singleton\nQtObject { property var clockAreas: ({}); "
                       "function setClockArea(k, a) { const n = Object.assign({}, clockAreas); "

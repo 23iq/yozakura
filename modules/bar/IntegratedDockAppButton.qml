@@ -49,13 +49,13 @@ Button {
             Behavior on color {
                 enabled: Config.animDuration > 0
                 ColorAnimation {
-                    duration: Config.animDuration / 2
+                    duration: Motion.exit.duration
                 }
             }
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
+                    duration: Motion.exit.duration
                 }
             }
         }

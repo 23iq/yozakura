@@ -31,7 +31,7 @@ Item {
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
             }
         }
     }
@@ -56,7 +56,7 @@ Item {
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.enter.duration
                     }
                 }
             }

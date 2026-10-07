@@ -202,7 +202,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
+                    duration: Motion.exit.duration
                 }
             }
         }
@@ -218,7 +218,7 @@ Item {
             Behavior on rotation {
                 enabled: Config.animDuration > 0
                 RotationAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
@@ -324,7 +324,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
+                    duration: Motion.exit.duration
                 }
             }
         }

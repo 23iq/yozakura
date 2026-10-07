@@ -161,9 +161,7 @@ class DashboardEnv(KitEnv):
         notifs = SAMPLE_NOTIFICATIONS if notifications is None else notifications
         self.h.module("qs.modules.services", services(playing, notifs, art))
         self.h.module("qs.modules.globals", {"GlobalStates": global_states(wallpaper or {})})
-        self.h.module("qs.modules.notifications", {"NotificationGroup": "Item { property var notificationGroup; "
-                                                   "property bool expanded; property bool popup; implicitHeight: 48 }",
-                                                   "NotificationAppIcon": "Item { property var appIcon; property string appName; property var image; "
+        self.h.module("qs.modules.notifications", {"NotificationAppIcon": "Item { property var appIcon; property string appName; property var image; "
                                                    "property var summary; property var urgency; property real size: 28; "
                                                    "implicitWidth: size; implicitHeight: size }"})
         self.h.module("Quickshell.Services.Mpris", {

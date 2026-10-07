@@ -241,13 +241,13 @@ LockStyle {
                         Behavior on opacity {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.enter.duration
                             }
                         }
                         Behavior on scale {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
-                                duration: Config.animDuration
+                                duration: Motion.morph.duration
                                 easing.type: Motion.morph.easing
                             }
                         }
@@ -288,7 +288,7 @@ LockStyle {
                     Behavior on opacity {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
-                            duration: Config.animDuration
+                            duration: Motion.enter.duration
                         }
                     }
                 }

@@ -64,14 +64,14 @@ Item {
     Behavior on x {
         enabled: root.live === null && Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on y {
         enabled: root.live === null && Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
@@ -83,14 +83,14 @@ Item {
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.enter.duration
             easing.type: Motion.enter.easing
         }
     }
     Behavior on scale {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration / 2
+            duration: Motion.exit.duration
             easing.type: Motion.morph.easing
         }
     }
@@ -156,7 +156,7 @@ Item {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 2
+                duration: Motion.exit.duration
             }
         }
     }
@@ -272,7 +272,7 @@ Item {
         Behavior on scale {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 3
+                duration: Motion.exit.duration
             }
         }
 

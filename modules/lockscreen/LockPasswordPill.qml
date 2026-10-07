@@ -49,7 +49,7 @@ LockPasswordBase {
         Behavior on ringColor {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }
@@ -69,7 +69,7 @@ LockPasswordBase {
             Behavior on color {
                 enabled: Config.animDuration > 0
                 ColorAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.enter.duration
                 }
             }
         }
@@ -115,7 +115,7 @@ LockPasswordBase {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.enter.duration
                 }
             }
         }
@@ -138,14 +138,14 @@ LockPasswordBase {
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Motion.exit.duration
                         easing.type: Motion.morph.easing
                     }
                 }
@@ -200,7 +200,7 @@ LockPasswordBase {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
             }
         }
 

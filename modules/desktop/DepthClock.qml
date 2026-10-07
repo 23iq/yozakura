@@ -194,7 +194,7 @@ Item {
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.enter.duration
             easing.type: Motion.enter.easing
         }
     }
@@ -237,7 +237,7 @@ Item {
                 layout: root.layoutFor(entry),
                 use12h: root.use12h,
                 inkRole: root.inkRole,
-                animDuration: Config.animDuration
+                animDuration: Motion.enter.duration
             });
         }
 

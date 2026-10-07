@@ -22,7 +22,7 @@ Item {
         Behavior on y {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
                 easing.overshoot: 1.2
             }
@@ -31,7 +31,7 @@ Item {
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration / 1.5
+            duration: Motion.exit.duration
         }
     }
 
