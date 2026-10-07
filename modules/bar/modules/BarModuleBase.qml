@@ -2,6 +2,8 @@ import QtQuick
 import QtQuick.Layouts
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
+import qs.modules.bar.look
 
 // Common root of the file-based bar modules (BarModuleRegistry.js `file`).
 // BarModuleSlot sets `bar` (the panel: orientation, moduleSize, flat,
@@ -29,10 +31,13 @@ Item {
         const all = Config.bar && Config.bar.moduleOptions ? Config.bar.moduleOptions : null;
         return all && moduleKey !== "" && all[moduleKey] ? all[moduleKey] : ({});
     }
-    // Text sizes that follow the module size (dense panels stay legible)
-    readonly property int textSize: moduleSize >= 32 ? Styling.fontSize(0) : Styling.fontSize(-1)
-    readonly property int smallTextSize: Styling.fontSize(-2)
-    readonly property int iconSize: BarMetrics.iconFor(18, moduleSize)
+    // Kit type roles (BarLook): body text, or secondary on dense panels;
+    // captions for small print; one glyph size for every module
+    readonly property int textSize: BarLook.textSize(moduleSize)
+    readonly property int smallTextSize: Type.size("caption")
+    readonly property int textWeight: BarLook.textWeight
+    readonly property string textFont: BarLook.textFont
+    readonly property int iconSize: BarLook.iconSize(moduleSize)
 
     objectName: moduleKey
     implicitWidth: vertical ? moduleSize : contentLength

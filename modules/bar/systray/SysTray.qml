@@ -5,10 +5,12 @@ import qs.modules.services
 import qs.modules.theme
 import qs.modules.components
 import qs.config
+import qs.modules.components.kit
+import qs.modules.bar.look
+import "../../components/kit/KitStates.js" as KitStates
 import qs.modules.globals
 
-StyledRect {
-    variant: "bg"
+Item {
     id: root
 
     required property var bar
@@ -19,9 +21,9 @@ StyledRect {
     // Bar panels: module size, and "flat" (no pill background of its own)
     property int moduleSize: BarMetrics.moduleSize
     property bool flat: false
-    backgroundOpacity: flat ? 0 : -1
-    effectSurface: flat ? "" : "bar"
-    enableBorder: !flat
+    property bool enableShadow: false
+    // App icons read a touch larger than glyphs of the same size
+    readonly property int iconSize: Math.round(BarLook.iconSize(root.moduleSize) * 1.1)
 
     // Orientación derivada de la barra
     property bool vertical: bar.orientation === "vertical"
@@ -62,19 +64,23 @@ StyledRect {
     // Hide when no tray items
     visible: hasItems
 
-    topLeftRadius: root.vertical ? root.startRadius : root.startRadius
-    topRightRadius: root.vertical ? root.startRadius : root.endRadius
-    bottomLeftRadius: root.vertical ? root.endRadius : root.startRadius
-    bottomRightRadius: root.vertical ? root.endRadius : root.endRadius
+    ModuleBox {
+        vertical: root.vertical
+        startRadius: root.startRadius
+        endRadius: root.endRadius
+        flat: root.flat
+        shadow: root.enableShadow
+        active: overflowPopup.isOpen
+    }
 
     // Ajustes de tamaño dinámicos según orientación
     height: vertical ? implicitHeight : parent.height
     // Padding along the bar stays 16px; across it the tray matches the
-    // module thickness (20px icons + padding = BarMetrics.moduleSize)
-    readonly property int crossPadding: Math.max(4, root.moduleSize - 20)
-    Layout.preferredWidth: hasItems ? ((vertical ? columnLayout.implicitWidth + crossPadding : rowLayout.implicitWidth + 16)) : 0
-    implicitWidth: hasItems ? ((vertical ? columnLayout.implicitWidth + crossPadding : rowLayout.implicitWidth + 16)) : 0
-    implicitHeight: hasItems ? ((vertical ? columnLayout.implicitHeight + 16 : rowLayout.implicitHeight + crossPadding)) : 0
+    // module thickness (icons + padding = the module size)
+    readonly property int crossPadding: Math.max(4, root.moduleSize - root.iconSize)
+    Layout.preferredWidth: hasItems ? ((vertical ? columnLayout.implicitWidth + crossPadding : rowLayout.implicitWidth + Space.s * 2)) : 0
+    implicitWidth: hasItems ? ((vertical ? columnLayout.implicitWidth + crossPadding : rowLayout.implicitWidth + Space.s * 2)) : 0
+    implicitHeight: hasItems ? ((vertical ? columnLayout.implicitHeight + Space.s * 2 : rowLayout.implicitHeight + crossPadding)) : 0
 
     // Model mutations are deferred: committing mid-drop would destroy
     // delegates while their drop/click handlers are still on the stack
@@ -114,10 +120,10 @@ StyledRect {
         id: rowLayout
         visible: !root.vertical
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: Space.s
         anchors.topMargin: root.crossPadding / 2
         anchors.bottomMargin: root.crossPadding / 2
-        spacing: 8
+        spacing: Space.s
 
         Repeater {
             id: rowRepeater
@@ -127,6 +133,7 @@ StyledRect {
                 required property SystemTrayItem modelData
                 bar: root.bar
                 item: modelData
+                trayItemSize: root.iconSize
                 overflowPopupRef: overflowPopup
             }
         }
@@ -141,10 +148,10 @@ StyledRect {
         id: columnLayout
         visible: root.vertical
         anchors.fill: parent
-        anchors.margins: 8
+        anchors.margins: Space.s
         anchors.leftMargin: root.crossPadding / 2
         anchors.rightMargin: root.crossPadding / 2
-        spacing: 8
+        spacing: Space.s
 
         Repeater {
             id: columnRepeater
@@ -154,6 +161,7 @@ StyledRect {
                 required property SystemTrayItem modelData
                 bar: root.bar
                 item: modelData
+                trayItemSize: root.iconSize
                 overflowPopupRef: overflowPopup
             }
         }
@@ -185,47 +193,33 @@ StyledRect {
             onClicked: chevron.tray.toggleOverflow()
         }
 
-        StyledRect {
+        Rectangle {
             anchors.fill: parent
-            variant: "pane"
-            radius: Styling.radius(-6)
+            radius: Look.chipRadius(Math.min(width, height))
+            color: chevron.hot ? Look.alpha("primary", KitStates.TINT) : Look.controlFill(true)
+            opacity: chevron.hot || chevronMouse.containsMouse ? 1 : 0
 
-            Rectangle {
-                anchors.fill: parent
-                color: parent.item || "transparent"
-                opacity: chevron.hot ? 0.45 : (chevronMouse.containsMouse ? 0.25 : 0)
-                radius: parent.radius
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration / 2
-                    }
+            Behavior on opacity {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration / 2
                 }
             }
+        }
 
-            Text {
-                anchors.centerIn: parent
-                text: chevron.tray.chevronIcon
-                font.family: Icons.font
-                font.pixelSize: 14
-                color: Colors.primary
-                opacity: chevron.hot ? 1 : 0.8
-                rotation: overflowPopup.isOpen ? 180 : 0
+        Text {
+            anchors.centerIn: parent
+            text: chevron.tray.chevronIcon
+            font.family: Icons.font
+            font.pixelSize: Type.iconSize("caption")
+            color: chevron.hot ? Type.accent : Type.secondary
+            rotation: overflowPopup.isOpen ? 180 : 0
 
-                Behavior on rotation {
-                    enabled: Config.animDuration > 0
-                    RotationAnimation {
-                        duration: Config.animDuration
-                        easing.type: Easing.OutCubic
-                    }
-                }
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration / 2
-                    }
+            Behavior on rotation {
+                enabled: Config.animDuration > 0
+                RotationAnimation {
+                    duration: Config.animDuration
+                    easing.type: Easing.OutCubic
                 }
             }
         }
@@ -251,14 +245,14 @@ StyledRect {
         id: overflowPopup
         anchorItem: root.vertical ? chevronColumn : chevronRow
         bar: root.bar
-        popupPadding: 10
+        popupPadding: Look.surfacePadding
         visualMargin: 16
         clickThroughMargins: true
 
         readonly property int columns: Math.max(1, Math.min(root.overflowItems.length, 5))
         readonly property int rows: Math.max(1, Math.ceil(root.overflowItems.length / columns))
-        readonly property int gridWidth: columns * 20 + (columns - 1) * 8
-        readonly property int gridHeight: rows * 20 + (rows - 1) * 8
+        readonly property int gridWidth: columns * root.iconSize + (columns - 1) * Space.m
+        readonly property int gridHeight: rows * root.iconSize + (rows - 1) * Space.m
 
         contentWidth: (root.overflowItems.length > 0 ? gridWidth : hintLabel.implicitWidth) + popupPadding * 2
         contentHeight: (root.overflowItems.length > 0 ? gridHeight : hintLabel.implicitHeight) + popupPadding * 2
@@ -277,13 +271,13 @@ StyledRect {
 
         ColumnLayout {
             anchors.centerIn: parent
-            spacing: 8
+            spacing: Space.s
 
             Grid {
                 id: iconsGrid
                 visible: root.overflowItems.length > 0
                 columns: overflowPopup.columns
-                spacing: 8
+                spacing: Space.m
 
                 Repeater {
                     model: root.overflowItems
@@ -292,19 +286,18 @@ StyledRect {
                         required property SystemTrayItem modelData
                         bar: root.bar
                         item: modelData
+                        trayItemSize: root.iconSize
                         inOverflow: true
                         overflowPopupRef: overflowPopup
                     }
                 }
             }
 
-            Text {
+            KitText {
                 id: hintLabel
                 visible: root.overflowItems.length === 0
+                role: "caption"
                 text: I18n.t("bar.systray.overflow_empty")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.outline
             }
         }
 
@@ -324,9 +317,9 @@ StyledRect {
 
         Rectangle {
             anchors.fill: parent
-            radius: Styling.radius(8)
-            color: Colors.primary
-            opacity: popupDropArea.containsDrag ? 0.15 : 0
+            radius: Space.controlRadius
+            color: Type.accent
+            opacity: popupDropArea.containsDrag ? KitStates.TINT : 0
 
             Behavior on opacity {
                 enabled: Config.animDuration > 0

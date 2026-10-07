@@ -6,6 +6,8 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
+import qs.modules.bar.look
 import "WorkspaceSlot.js" as WorkspaceSlot
 import "indicators/IndicatorStyles.js" as IndicatorStyles
 
@@ -25,9 +27,12 @@ Button {
     required property real iconOpacityShrinked
     required property real iconMarginShrinked
 
-    // Label color of the active slot: on the indicator's fill, or accent
-    // on the bar background (underline, dot, bracket styles).
-    readonly property color activeColor: IndicatorStyles.filled(Config.workspaces.indicatorStyle) ? Styling.srItem("primary") : Colors.primary
+    // Label color of the active slot: the kit's accent state (accent on the
+    // pill's tint, the on-accent ink on a solid fill: tiles, classic, brush),
+    // accent on the bar background (underline, dot, bracket styles).
+    readonly property string indicatorStyle: Config.workspaces.indicatorStyle
+    readonly property bool solidIndicator: IndicatorStyles.filled(root.indicatorStyle) && (root.indicatorStyle !== "pill" || Look.solidActive || BarLook.classic)
+    readonly property color activeColor: root.solidIndicator ? Styling.srItem("primary") : Type.accent
 
     onPressed: YozdService.dispatch(`workspace ${root.workspaceId}`)
 
@@ -62,7 +67,7 @@ Button {
             anchors.fill: parent
             workspaceId: root.workspaceId
             opacity: WorkspaceSlot.numberVisible(Config.workspaces, slot.hasWindow) ? 1 : 0
-            color: root.active ? root.activeColor : (root.occupied ? Colors.overBackground : Colors.overSecondaryFixedVariant)
+            color: root.active ? root.activeColor : (root.occupied ? Type.text : Type.muted)
         }
 
         Rectangle {
@@ -72,7 +77,7 @@ Button {
             width: root.slotSize * 0.2
             height: width
             radius: width / 2
-            color: root.active ? root.activeColor : Colors.overBackground
+            color: root.active ? root.activeColor : Type.text
 
             Behavior on opacity {
                 enabled: Config.animDuration > 0

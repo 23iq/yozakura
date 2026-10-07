@@ -60,6 +60,9 @@ PanelStyleBase {
         Bar.BarModuleGroup {
             barRoot: dock.b
             ids: dock.ids
+            // Non-flat modules (dock-like) draw their group pills
+            outerRadius: dock.b ? dock.b.outerRadius : 0
+            innerRadius: dock.b ? dock.b.innerRadius : 0
             enableShadow: false
             separatorStyle: "line"
         }
