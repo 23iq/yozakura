@@ -109,30 +109,36 @@ function apply(lang, variant, cfg) {
 //             theme's "common" / "focus" variants as configured), `shape`
 //             ("round" | "square"), label weights, `solidActive`: active
 //             controls become a solid accent fill with the on-accent glyph
+//   window    the background of an app window (settings): null keeps the
+//             theme's "bg" surface; glass is a translucent frosted fill
 var KIT = {
     "ink": {
         group: { fill: "", fillOpacity: 0, outline: 0, highlight: 0, radius: "none", padding: "", gap: "l", inset: "l", divider: true },
         dividers: true,
         control: { fill: "overBackground", rest: 0, hoverFill: "overBackground", hover: 0.08, edge: 0, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
-        float: null
+        float: null,
+        window: null
     },
     "glass": {
         group: { fill: "surface", fillOpacity: 0.4, outline: 0.10, highlight: 0.2, radius: "card", padding: "m", gap: "m", inset: "m", divider: false },
         dividers: true,
         control: { fill: "overBackground", rest: 0.07, hoverFill: "overBackground", hover: 0.14, edge: 0.12, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
-        float: { fill: "surface", fillOpacity: 0.62, outline: 0.18, highlight: 0.28 }
+        float: { fill: "surface", fillOpacity: 0.62, outline: 0.18, highlight: 0.28 },
+        window: { fill: "surface", fillOpacity: 0.72 }
     },
     "tiles": {
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
         dividers: false,
         control: { fill: "surfaceContainerHigh", rest: 1, hoverFill: "surfaceContainerHighest", hover: 1, edge: 0, shape: "square", weight: 500, activeWeight: 600, solidActive: true },
-        float: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0 }
+        float: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0 },
+        window: null
     },
     "classic": {
         group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "l", divider: false },
         dividers: true,
         control: null,
-        float: null
+        float: null,
+        window: null
     }
 };
 

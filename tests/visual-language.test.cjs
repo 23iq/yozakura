@@ -84,3 +84,10 @@ test('kit float: glass is a translucent box with a hairline, tiles a solid tile,
     assert.equal(V.kit('ink').float, null);
     assert.equal(V.kit('classic').float, null);
 });
+
+test('kit window: only glass draws a translucent window background', () => {
+    const glass = V.kit('glass').window;
+    assert.ok(glass.fillOpacity > 0 && glass.fillOpacity < 1);
+    for (const lang of ['ink', 'tiles', 'classic'])
+        assert.equal(V.kit(lang).window, null);
+});
