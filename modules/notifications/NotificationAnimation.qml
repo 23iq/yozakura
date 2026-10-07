@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 Item {
     id: root
@@ -23,7 +24,7 @@ Item {
             property: "leftMargin"
             to: root.parentWidth / 8 + root.dismissOvershoot
             duration: Config.animDuration
-            easing.type: Easing.OutBack
+            easing.type: Motion.emphasis.easing
             easing.overshoot: 1.1
         }
 
@@ -33,7 +34,7 @@ Item {
             from: 1.0
             to: 0.8
             duration: Config.animDuration
-            easing.type: Easing.OutQuad
+            easing.type: Motion.emphasis.easing
         }
 
         NumberAnimation {
@@ -42,7 +43,7 @@ Item {
             from: 1.0
             to: 0.0
             duration: Config.animDuration
-            easing.type: Easing.OutQuad
+            easing.type: Motion.emphasis.easing
         }
 
         onFinished: {

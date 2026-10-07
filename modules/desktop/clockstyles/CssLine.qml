@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.theme
 
 // One line of text in a box of a given line height, with the glyphs placed
 // like CSS does (half-leading around ascent + descent), so designs specified
@@ -40,7 +41,7 @@ Item {
             enabled: line.colorDuration > 0
             ColorAnimation {
                 duration: line.colorDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
     }

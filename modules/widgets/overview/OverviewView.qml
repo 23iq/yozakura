@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import "OverviewStyles.js" as OverviewStyles
+import qs.modules.theme
 
 Item {
     id: root
@@ -33,7 +34,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -41,7 +42,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 

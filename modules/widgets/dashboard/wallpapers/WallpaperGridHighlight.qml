@@ -24,7 +24,7 @@ Item {
         enabled: Config.animDuration > 0 && !highlight.scrolling
         NumberAnimation {
             duration: Config.animDuration / 2
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -32,7 +32,7 @@ Item {
         enabled: Config.animDuration > 0 && !highlight.scrolling
         NumberAnimation {
             duration: Config.animDuration / 2
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 

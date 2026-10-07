@@ -40,7 +40,7 @@ Item {
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: 120
+                duration: Motion.morph.duration
             }
         }
     }

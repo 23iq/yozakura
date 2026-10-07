@@ -3,6 +3,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.theme
 
 // Floating "unsaved changes" bar. Edits are already live (the shell
 // previews them); Apply writes the config files, Discard restores the
@@ -22,7 +23,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutBack
+                easing.type: Motion.morph.easing
                 easing.overshoot: 1.2
             }
         }

@@ -35,7 +35,7 @@ Rectangle {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                easing.type: Motion.morph.easing
             }
         }
     }
@@ -44,7 +44,7 @@ Rectangle {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration / 2
-            easing.type: Easing.OutQuart
+            easing.type: Motion.enter.easing
         }
     }
 
@@ -68,14 +68,14 @@ Rectangle {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration / 3
-                easing.type: Easing.OutSine
+                easing.type: Motion.morph.easing
             }
         }
         Behavior on idx2X {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutSine
+                easing.type: Motion.morph.easing
             }
         }
     }
@@ -129,7 +129,7 @@ Rectangle {
                         enabled: Config.animDuration > 0
                         ColorAnimation {
                             duration: Config.animDuration / 2
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.morph.easing
                         }
                     }
                 }

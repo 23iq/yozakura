@@ -2,6 +2,7 @@ import QtQuick
 import qs.config
 import qs.modules.components.signatures
 import "indicators/IndicatorStyles.js" as Styles
+import qs.modules.theme
 
 // Active workspace indicator of the bar's workspace strip. Owns the box
 // (the active slot, stretched between two animated indices for the
@@ -36,14 +37,14 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration / 3
-            easing.type: Easing.OutSine
+            easing.type: Motion.morph.easing
         }
     }
     Behavior on idx2 {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutSine
+            easing.type: Motion.morph.easing
         }
     }
 

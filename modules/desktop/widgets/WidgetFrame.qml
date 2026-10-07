@@ -65,14 +65,14 @@ Item {
         enabled: root.live === null && Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
     Behavior on y {
         enabled: root.live === null && Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -84,14 +84,14 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.enter.easing
         }
     }
     Behavior on scale {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration / 2
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 

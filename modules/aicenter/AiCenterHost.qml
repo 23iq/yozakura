@@ -122,21 +122,21 @@ Item {
             enabled: BarLook.animDuration > 0 && !resizeHandle.pressed
             NumberAnimation {
                 duration: BarLook.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         Behavior on anchors.rightMargin {
             NumberAnimation {
                 id: slideR
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         Behavior on anchors.leftMargin {
             NumberAnimation {
                 id: slideL
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         Behavior on opacity {

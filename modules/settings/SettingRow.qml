@@ -46,7 +46,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
     Behavior on opacity {
@@ -65,8 +65,8 @@ Item {
         opacity: row.highlighted ? Look.activeTint : 0
         Behavior on opacity {
             NumberAnimation {
-                duration: 450
-                easing.type: Easing.OutCubic
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
             }
         }
     }
@@ -125,7 +125,7 @@ Item {
                 Accessible.name: I18n.t("common.reset_default")
                 Behavior on opacity {
                     NumberAnimation {
-                        duration: 150
+                        duration: Motion.enter.duration
                     }
                 }
             }

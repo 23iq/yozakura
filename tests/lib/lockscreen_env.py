@@ -60,6 +60,7 @@ THEME = {
 import qs.config
 QtObject { function fontSize(n) { return Config.theme.fontSize + n; } function radius(n) { return Config.roundness + n; } }""",
     "Glass": "pragma Singleton\nQtObject { function lockOpacity(x) { return x; } }",
+    "Motion": "pragma Singleton\nQtObject { property QtObject enter: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject exit: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject morph: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject emphasis: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 } }",
 }
 
 WALLPAPER = """import QtQuick

@@ -5,6 +5,7 @@ import QtQuick.Controls
 import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.theme
 
 // Renders a schema-driven category: header + one SettingsSection per
 // schema section. Nothing here is category specific.
@@ -27,7 +28,7 @@ Flickable {
         target: page
         property: "contentY"
         duration: Math.max(1, Config.animDuration * 1.5)
-        easing.type: Easing.OutCubic
+        easing.type: Motion.morph.easing
     }
 
     // Scroll to an entry (or a section) and flash it.

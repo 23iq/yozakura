@@ -325,7 +325,7 @@ Rectangle {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -482,7 +482,7 @@ Rectangle {
                 Behavior on width {
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
 
@@ -534,7 +534,7 @@ Rectangle {
                         Behavior on opacity {
                             NumberAnimation {
                                 duration: Config.animDuration / 2
-                                easing.type: Easing.OutQuart
+                                easing.type: Motion.enter.easing
                             }
                         }
                     }
@@ -578,7 +578,7 @@ Rectangle {
                 enabled: Config.animDuration > 0 && emojiList.enableScrollAnimation && !emojiList.moving
                 NumberAnimation {
                     duration: Config.animDuration / 2
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.morph.easing
                 }
             }
 
@@ -655,7 +655,7 @@ Rectangle {
                                 enabled: Config.animDuration > 0 && horizontalRecent.enableScrollAnimation && !horizontalRecent.moving
                                 NumberAnimation {
                                     duration: Config.animDuration / 2
-                                    easing.type: Easing.OutCubic
+                                    easing.type: Motion.morph.easing
                                 }
                             }
 
@@ -796,7 +796,7 @@ Rectangle {
                             Behavior on opacity {
                                 NumberAnimation {
                                     duration: Config.animDuration
-                                    easing.type: Easing.OutQuart
+                                    easing.type: Motion.enter.easing
                                 }
                             }
 
@@ -887,25 +887,25 @@ Rectangle {
                     enabled: Config.animDuration > 0 && !emojiList.moving
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on y {
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on width {
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on height {
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
 

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "ClockText.js" as ClockText
+import qs.modules.theme
 
 // Poster: condensed League Gothic hours over minutes filling the screen
 // height on the side away from the subject (behind it), with a vertical
@@ -46,7 +47,7 @@ ClockStyle {
             enabled: root.animDuration > 0
             ColorAnimation {
                 duration: root.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
     }

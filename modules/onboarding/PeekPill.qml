@@ -31,14 +31,14 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration * 1.5
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
         Behavior on y {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration * 1.5
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
 

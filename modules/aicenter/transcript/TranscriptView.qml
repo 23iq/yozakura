@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.modules.services
 import qs.modules.aicenter.common
+import qs.modules.theme
 
 // The conversation of any engine: an HTTP chat (`session`, a ChatSession)
 // or a CLI agent session (`agentId`). Styles: "compact" (Assistant) and
@@ -99,7 +100,7 @@ Item {
                 from: 0
                 to: 1
                 duration: BarLook.animDuration / 2
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
 

@@ -32,7 +32,7 @@ Item {
         from: 0
         to: 1
         duration: Math.max(1400, Config.animDuration * 6)
-        easing.type: Easing.OutCubic
+        easing.type: Motion.morph.easing
     }
 
     Column {

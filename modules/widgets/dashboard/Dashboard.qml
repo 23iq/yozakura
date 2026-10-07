@@ -263,13 +263,13 @@ NotchAnimationBehavior {
                         y: visible ? 0 : (root.state.currentTab > index ? -20 : 20)
                         Behavior on y {
                              enabled: Config.animDuration > 0
-                             NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart } 
+                             NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing } 
                         }
                     }
 
                     Behavior on opacity {
                         enabled: Config.animDuration > 0
-                        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutQuart }
+                        NumberAnimation { duration: Config.animDuration; easing.type: Motion.enter.easing }
                     }
 
                     // Forward focus
@@ -401,7 +401,7 @@ NotchAnimationBehavior {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
+            easing.type: Motion.morph.easing
             easing.overshoot: 1.1
         }
     }
@@ -410,7 +410,7 @@ NotchAnimationBehavior {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
+            easing.type: Motion.morph.easing
             easing.overshoot: 1.1
         }
     }

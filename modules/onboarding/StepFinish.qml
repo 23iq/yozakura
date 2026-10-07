@@ -262,7 +262,7 @@ Item {
         property: "contentY"
         to: Math.max(0, flick.contentHeight - flick.height)
         duration: Config.animDuration
-        easing.type: Easing.OutCubic
+        easing.type: Motion.morph.easing
     }
 
     // ---- links + start: always in view ---------------------------------------

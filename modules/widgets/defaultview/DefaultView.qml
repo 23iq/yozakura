@@ -6,6 +6,7 @@ import qs.modules.services.activities
 import qs.modules.widgets.defaultview.panels
 import qs.config
 import "activities/ActivityRegistry.js" as Registry
+import qs.modules.theme
 
 // Resting notch: the header (user/media/segments) plus, at most one at a
 // time, the panel of the segment the pointer rests on (notch.expandOn
@@ -203,7 +204,7 @@ Item {
                         enabled: root.motionDuration > 0
                         NumberAnimation {
                             duration: root.motionDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.enter.easing
                         }
                     }
 

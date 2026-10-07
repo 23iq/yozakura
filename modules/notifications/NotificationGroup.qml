@@ -149,8 +149,8 @@ Item {
         Behavior on anchors.leftMargin {
             enabled: !dragManager.dragging && Config.animDuration > 0
             NumberAnimation {
-                duration: 300
-                easing.type: Easing.OutCubic
+                duration: Motion.morph.duration
+                easing.type: Motion.morph.easing
             }
         }
 
@@ -161,7 +161,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutBack
+                easing.type: Motion.morph.easing
             }
         }
 
@@ -181,7 +181,7 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
 
@@ -269,7 +269,7 @@ Item {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
                             duration: Config.animDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.morph.easing
                         }
                     }
 

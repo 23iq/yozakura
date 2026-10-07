@@ -154,7 +154,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -326,8 +326,8 @@ Item {
                             Behavior on x {
                                 enabled: Config.animDuration > 0
                                 NumberAnimation {
-                                    duration: 200
-                                    easing.type: Easing.OutCubic
+                                    duration: Motion.morph.duration
+                                    easing.type: Motion.morph.easing
                                 }
                             }
                         }
@@ -405,7 +405,7 @@ Item {
                                     enabled: Config.animDuration > 0
                                     ColorAnimation {
                                         duration: Config.animDuration / 2
-                                        easing.type: Easing.OutQuart
+                                        easing.type: Motion.morph.easing
                                     }
                                 }
                             }
@@ -452,7 +452,7 @@ Item {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.morph.easing
                         }
                     }
 
@@ -460,7 +460,7 @@ Item {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.morph.easing
                         }
                     }
 
@@ -468,7 +468,7 @@ Item {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.enter.easing
                         }
                     }
                 }

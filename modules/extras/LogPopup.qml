@@ -55,7 +55,7 @@ Popup {
             from: 0.96
             to: 1
             duration: Math.max(1, Config.animDuration / 2)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.enter.easing
         }
     }
     exit: Transition {

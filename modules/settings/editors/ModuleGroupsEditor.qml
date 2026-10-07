@@ -324,7 +324,7 @@ Item {
             Behavior on color {
                 enabled: Config.animDuration > 0
                 ColorAnimation {
-                    duration: 120
+                    duration: Motion.morph.duration
                 }
             }
         }
@@ -369,8 +369,8 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     properties: "x,y"
-                    duration: 140
-                    easing.type: Easing.OutCubic
+                    duration: Motion.morph.duration
+                    easing.type: Motion.morph.easing
                 }
             }
 

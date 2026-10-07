@@ -195,7 +195,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.enter.easing
         }
     }
 
@@ -294,7 +294,7 @@ Item {
             enabled: Config.animDuration > 0 && root.depthActive && !root.isVideo
             NumberAnimation {
                 duration: Config.animDuration * 2
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
 

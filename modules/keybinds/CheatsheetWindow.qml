@@ -67,7 +67,7 @@ PanelWindow {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
         MouseArea {
@@ -91,7 +91,7 @@ PanelWindow {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.morph.easing
                 }
             }
         }
@@ -99,14 +99,14 @@ PanelWindow {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
         Behavior on scale {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
     }

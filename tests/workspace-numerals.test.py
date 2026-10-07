@@ -21,6 +21,7 @@ h.singleton("qs.config", "Config", """QtObject {
     property QtObject theme: QtObject { property string font: "Sans"; property int fontSize: 14 }
     property QtObject workspaces: QtObject { property string numeralStyle: "arabic"; property string numeralFont: "" }
 }""")
+h.module("qs.modules.theme", {"Motion": "pragma Singleton\nQtObject { property QtObject enter: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject exit: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject morph: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject emphasis: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 } }"})
 h.module("Quickshell", {
     "Quickshell": "pragma Singleton\nQtObject { property string shellDir: '/shell' }",
     "Singleton": "Item {}",

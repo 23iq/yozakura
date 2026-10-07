@@ -45,7 +45,7 @@ StyledRect {
         enabled: Motion.exit.duration > 0
         NumberAnimation {
             duration: Motion.exit.duration / 2
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 

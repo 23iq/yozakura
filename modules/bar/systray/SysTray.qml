@@ -219,7 +219,7 @@ Item {
                 enabled: Config.animDuration > 0
                 RotationAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.morph.easing
                 }
             }
         }

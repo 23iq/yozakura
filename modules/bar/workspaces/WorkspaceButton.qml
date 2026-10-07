@@ -82,8 +82,8 @@ Button {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: 150
-                    easing.type: Easing.OutQuad
+                    duration: Motion.enter.duration
+                    easing.type: Motion.enter.easing
                 }
             }
         }
@@ -108,29 +108,29 @@ Button {
                 Behavior on opacity {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutQuad
+                        duration: Motion.enter.duration
+                        easing.type: Motion.enter.easing
                     }
                 }
                 Behavior on anchors.bottomMargin {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutQuad
+                        duration: Motion.morph.duration
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on anchors.rightMargin {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutQuad
+                        duration: Motion.morph.duration
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on implicitSize {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: 150
-                        easing.type: Easing.OutQuad
+                        duration: Motion.morph.duration
+                        easing.type: Motion.morph.easing
                     }
                 }
             }

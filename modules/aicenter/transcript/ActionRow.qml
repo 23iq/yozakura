@@ -57,7 +57,7 @@ StyledRect {
         enabled: BarLook.animDuration > 0
         NumberAnimation {
             duration: BarLook.animDuration / 3
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 

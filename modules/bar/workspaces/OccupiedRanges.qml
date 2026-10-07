@@ -4,6 +4,7 @@ import qs.config
 import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.bar.look
+import qs.modules.theme
 
 // The quiet boxes behind runs of workspaces that have windows (`ranges`:
 // [{start, end}] slot indices), along the strip in either orientation. Kit
@@ -33,28 +34,28 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Math.max(0, Config.animDuration - 100)
-                    easing.type: Easing.OutQuad
+                    easing.type: Motion.morph.easing
                 }
             }
             Behavior on y {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Math.max(0, Config.animDuration - 100)
-                    easing.type: Easing.OutQuad
+                    easing.type: Motion.morph.easing
                 }
             }
             Behavior on width {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Math.max(0, Config.animDuration - 100)
-                    easing.type: Easing.OutQuad
+                    easing.type: Motion.morph.easing
                 }
             }
             Behavior on height {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Math.max(0, Config.animDuration - 100)
-                    easing.type: Easing.OutQuad
+                    easing.type: Motion.morph.easing
                 }
             }
 

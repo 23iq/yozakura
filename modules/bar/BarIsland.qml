@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 // One "islands" tab: a notch-shaped background hugging its content. The item
 // itself is the tab body (content + padding); the silhouette extends beyond
@@ -33,7 +34,7 @@ Item {
         enabled: island.animateSize && Config.animDuration > 0
         NumberAnimation {
             duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
     readonly property real bodyThickness: contentThickness + padding * 2

@@ -110,7 +110,7 @@ PanelWindow {
                     enabled: !dragHandler.active && Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
 
@@ -118,7 +118,7 @@ PanelWindow {
                     enabled: !dragHandler.active && Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
 
@@ -174,7 +174,7 @@ PanelWindow {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
                             duration: Config.animDuration / 2
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.enter.easing
                         }
                     }
 

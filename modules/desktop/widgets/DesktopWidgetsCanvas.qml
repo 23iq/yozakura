@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.modules.desktop.widgets
 import "WidgetGeometry.js" as Geometry
+import qs.modules.theme
 
 // The widgets of one screen (desktop.widgets placed on `screenName`), drawn
 // on the desktop layer, plus the edit desktop mode (backdrop with the snap
@@ -60,7 +61,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
     }

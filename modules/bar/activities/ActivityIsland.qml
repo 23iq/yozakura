@@ -40,7 +40,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: island.shown ? Config.animDuration : Math.round(Config.animDuration * 0.6)
-            easing.type: island.shown ? Easing.OutBack : Easing.InCubic
+            easing.type: island.shown ? Motion.enter.easing : Motion.exit.easing
             easing.overshoot: 1.15
         }
     }
