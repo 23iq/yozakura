@@ -197,6 +197,8 @@ MIRROR = [
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
     "modules/services/voice/VoiceModel.js",
+    # Presets page: the unified gallery's tabs, cards and stores
+    "modules/widgets/presets",
     "config/defaults",
     "config/ColorSpec.js",
     "config/motion",
@@ -655,6 +657,9 @@ class SettingsEnv:
             "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120 }"})
         self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
         self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets", only=["HostWidget"])
+        self._qmldir(qs / "modules/widgets/presets", "qs.modules.widgets.presets",
+                     only=["TryNewLookCard", "CurrentLookRow", "GalleryTabRow", "PresetGalleryCard"])
+        self._qmldir(qs / "modules/widgets/presets/store", "qs.modules.widgets.presets.store")
         self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
         self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")

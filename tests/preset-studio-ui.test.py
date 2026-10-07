@@ -129,6 +129,20 @@ check(w('countPrefix("presetCard:")') == 1, "search narrows the gallery")
 w('cur().query = ""')
 QTest.qWait(100)
 
+# Unified gallery: Sets | Layout | Style | Palette, the current parts row
+check(w('countPrefix("galleryTab:")') == 4, "the gallery has the four tabs")
+check(w('findItem("currentLook") !== null && findItem("currentLook").visible'), "the current layout / style / palette row shows")
+code, out, _ = sb.run(["parts", "--json"])
+if code == 0:
+    layouts = json.loads(out).get("layouts") or []
+    w('findItem("galleryTab:layout").clicked()')
+    QTest.qWait(200)
+    check(w('cur().tab') == "layout", "a tab click switches the gallery")
+    check(w('countPrefix("partCard:layout:")') == len(layouts), f"one card per layout ({len(layouts)})")
+    check(w('countPrefix("presetCard:")') == 0, "set cards hide on a part tab")
+    w('findItem("galleryTab:sets").clicked()')
+    QTest.qWait(100)
+
 # Thumbnails: rendered lazily, saved to the cache
 thumbs = BRAND_CACHE / "preset-thumbs"
 for _ in range(160):
