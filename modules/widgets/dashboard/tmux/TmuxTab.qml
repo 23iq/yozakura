@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.services
 import qs.config
+import qs.modules.theme
 import qs.modules.components.kit
 import "TmuxModel.js" as TmuxModel
 
