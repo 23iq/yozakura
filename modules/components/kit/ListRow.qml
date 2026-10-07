@@ -18,6 +18,8 @@ StyledRect {
     property bool highlighted: false
     // Tabular figures in the title (times, counters)
     property bool tabular: false
+    // The title drawn in another family (font pickers); "" = the body font
+    property string titleFamily: ""
     property Component leading: null
     property Component trailing: null
     readonly property bool hovered: mouse.containsMouse || root.highlighted
@@ -81,6 +83,7 @@ StyledRect {
                 tabular: root.tabular
                 text: root.title
                 font.weight: Look.labelWeight
+                font.family: root.titleFamily !== "" ? root.titleFamily : Type.family("body")
             }
 
             KitText {
