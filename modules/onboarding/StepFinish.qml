@@ -261,7 +261,7 @@ Item {
         target: flick
         property: "contentY"
         to: Math.max(0, flick.contentHeight - flick.height)
-        duration: Config.animDuration
+        duration: Motion.morph.duration
         easing.type: Motion.morph.easing
     }
 

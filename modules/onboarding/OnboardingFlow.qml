@@ -75,14 +75,14 @@ Item {
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
                 easing.type: Motion.enter.easing
             }
         }
         Behavior on scale {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }

@@ -172,7 +172,7 @@ Item {
                     Behavior on scale {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
-                            duration: Config.animDuration / 3
+                            duration: Motion.exit.duration
                         }
                     }
                     Text {
