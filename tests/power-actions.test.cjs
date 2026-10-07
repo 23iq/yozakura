@@ -45,3 +45,9 @@ test('the caption joins uptime and user@host, leaving out what is unknown', () =
     assert.equal(P.caption('', 'lazy', 'up %1'), '');
     assert.equal(P.caption('garbage\narch', '', 'up %1'), '');
 });
+
+test('heroScale: hero sizes on large screens, the large size elsewhere', () => {
+    assert.deepEqual({ ...P.heroScale(1440) }, { size: 'xl', label: 'title', caption: 'body' });
+    assert.deepEqual({ ...P.heroScale(1080) }, { size: 'l', label: 'body', caption: 'secondary' });
+    assert.deepEqual({ ...P.heroScale(720) }, { size: 'l', label: 'secondary', caption: 'caption' });
+});

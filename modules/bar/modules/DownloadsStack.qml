@@ -64,11 +64,16 @@ BarModuleBase {
         width: Math.round(root.moduleSize * (root.panelStyle === "dock" ? 0.8 : 0.62))
         height: width
 
-        Image {
-            anchors.fill: parent
+        // Nothing downloaded yet: the kit glyph (an icon theme may lack
+        // folder-download, which left an empty box)
+        Text {
+            objectName: "downloadsEmptyGlyph"
+            anchors.centerIn: parent
             visible: root.files.length === 0
-            source: "image://icon/folder-download"
-            sourceSize: Qt.size(width * 2, height * 2)
+            text: Icons.downloadSimple
+            font.family: Icons.font
+            font.pixelSize: root.iconSize
+            color: surface.foreground
         }
 
         Repeater {
@@ -140,11 +145,22 @@ BarModuleBase {
                 asynchronous: true
             }
         }
+        // The theme's type icon; Quickshell.iconPath(.., true) is "" when the
+        // theme lacks it, then a kit file glyph (never a blank tile)
+        readonly property string themeIcon: tile.file !== null && !Downloads.isImage(tile.file.name) ? Quickshell.iconPath(Downloads.iconFor(tile.file.name), true) : ""
         Image {
             anchors.fill: parent
-            visible: tile.file !== null && !Downloads.isImage(tile.file.name)
-            source: visible ? "image://icon/" + Downloads.iconFor(tile.file.name) : ""
+            visible: tile.themeIcon !== ""
+            source: tile.themeIcon
             sourceSize: Qt.size(tile.size * 2, tile.size * 2)
+        }
+        Text {
+            anchors.centerIn: parent
+            visible: tile.file !== null && !Downloads.isImage(tile.file.name) && tile.themeIcon === ""
+            text: Icons.file
+            font.family: Icons.font
+            font.pixelSize: root.iconSize
+            color: surface.foreground
         }
     }
 }

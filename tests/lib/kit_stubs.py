@@ -19,7 +19,7 @@ TYPE = """pragma Singleton
 QtObject {
     property color text: "white"; property color secondary: "silver"; property color muted: "gray"
     property color hairline: "#222222"; property color track: "#333333"; property color placeholder: "#111111"
-    readonly property color onAccent: Qt.color("black")
+    readonly property color accentInk: Qt.color("black")
     property color accent: "pink"
     function size(r) { return 14 } function weight(r) { return Font.Normal } function family(r) { return "Sans" }
     function color(r) { return text } function letterSpacing(r) { return 0 } function capitalization(r) { return Font.MixedCase }
@@ -49,14 +49,14 @@ TYPES = {
     "IconButton": "Item { property string icon; property string size: 'm'; property bool active: false; "
                   "property bool primary: false; property bool highlighted: false; signal clicked; "
                   "implicitWidth: size === 's' ? 36 : 40; implicitHeight: implicitWidth }",
-    "Chip": "Item { property string icon; property string text; property bool active: false; "
+    "Chip": "Item { property string icon; property string text; property bool active: false; property bool showLabel: true; readonly property real fullWidth: width; readonly property real compactWidth: width; "
             "property bool highlighted: false; signal clicked; implicitWidth: 60; implicitHeight: 32 }",
     "ListRow": "Item { id: r; property string title; property string subtitle; property bool selected; "
                "property bool highlighted; property bool tabular; property Component leading: null; "
                "property Component trailing: null; signal clicked; implicitHeight: 48; implicitWidth: 200\n"
                "Row { anchors.fill: parent; Loader { active: r.leading !== null; sourceComponent: r.leading } "
                "Loader { active: r.trailing !== null; sourceComponent: r.trailing } } }",
-    "ProgressLine": "Item { property real value: 0; implicitWidth: 160; implicitHeight: 3 }",
+    "ProgressLine": "Item { property real value: 0; property bool indeterminate: false; implicitWidth: 160; implicitHeight: 3 }",
     "Ring": "Item { property real value: 0; property real thickness: 3; property color color: 'pink'; "
             "implicitWidth: 64; implicitHeight: 64 }",
     "KeyHint": "Item { property string text; property string icon; implicitWidth: 20; implicitHeight: 20 }",
@@ -66,7 +66,7 @@ TYPES = {
               "implicitWidth: 40; implicitHeight: 40 }",
     "LineSlider": "Item { property real from: 0; property real to: 1; property real value: 0; property string icon; "
                   "signal moved(real value) }",
-    "Surface": "Item { property int padding: 16 }",
+    "Surface": "Item { property int padding: 16; property bool floating: false }",
 }
 
 

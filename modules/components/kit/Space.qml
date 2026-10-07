@@ -37,6 +37,7 @@ QtObject {
     readonly property int controlS: px(36)
     readonly property int controlM: px(40)
     readonly property int controlL: px(64)
+    readonly property int controlXL: px(96)
     readonly property int chip: px(32)
     readonly property int keyHint: px(20)
     readonly property int rowHeight: Metrics.rowHeight

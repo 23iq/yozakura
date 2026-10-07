@@ -46,6 +46,7 @@ Window {
         Ring { objectName: "ring"; value: 0.4; KitText { text: "18:24" } }
         Art { objectName: "art" }
         Surface { objectName: "surface"; Item { width: 100; height: 50 } }
+        Surface { objectName: "floatSurface"; floating: true; Item { width: 100; height: 40 } }
         Group { objectName: "group"; width: 300; label: "Notifications"; actionText: "Clear"; divider: true
                 onActionTriggered: parent.Window.window.groupAction++
                 Item { objectName: "groupItem"; width: 100; height: 40 }
@@ -76,6 +77,9 @@ for lang, density in CASES:
     assert h.eval(get("label"), "font.letterSpacing") > 0, tag
     assert h.eval(get("label"), "color.toString()") == h.eval(win, "Colors.outline.toString()"), tag
     assert h.eval(get("secondary"), "color.toString()") == h.eval(win, "Colors.overSurfaceVariant.toString()"), tag
+    # The ink on the accent is a real color (a property named on<Prop> would
+    # compile as a change handler and stay invalid).
+    assert h.eval(win, "Type.accentInk.toString()") == h.eval(win, "Colors.overPrimary.toString()"), tag
 
     # Space scale (density)
     factor = {"compact": 7 / 8, "cozy": 1}[density]
@@ -127,7 +131,7 @@ for lang, density in CASES:
     chip.setProperty("active", True)
     assert chip.property("variant") == "primary", tag
     assert chip.property("look") == ("primary" if lang == "tiles" else "active"), tag
-    assert chip.property("ink").name() == h.eval(win, "Type.%s.toString()" % ("onAccent" if lang == "tiles" else "accent")), tag
+    assert chip.property("ink").name() == h.eval(win, "Type.%s.toString()" % ("accentInk" if lang == "tiles" else "accent")), tag
 
     # ListRow: ghost at rest, focus on hover, tint when selected; slots load
     row = get("row")
@@ -153,6 +157,26 @@ for lang, density in CASES:
     vs = get("vslider")
     assert vs.property("implicitHeight") > vs.property("implicitWidth"), tag
     assert get("progress").property("height") == space("stroke"), tag
+    # Floating surfaces (OSDs): glass translucent with a hairline, tiles solid,
+    # ink / classic keep the theme surface
+    fl = get("floatSurface")
+    own = lang in ("glass", "tiles")
+    assert fl.property("ownBox") == own, tag
+    assert fl.property("backgroundOpacity") == (0 if own else -1), tag
+    if lang == "glass":
+        assert 0 < h.eval(win, "Look.floatFill.a") < 0.8 and h.eval(win, "Look.floatOutline.a") > 0, tag
+    if lang == "tiles":
+        assert h.eval(win, "Look.floatFill.a") == 1 and h.eval(win, "Look.floatOutline.a") == 0, tag
+    # Indeterminate: the sweep runs only while visible (and with motion on)
+    prog = get("progress")
+    assert prog.property("sweeping") is False, tag
+    prog.setProperty("indeterminate", True)
+    assert prog.property("sweeping") == (h.eval(win, "Motion.emphasis.duration") > 0), tag
+    prog.setProperty("visible", False)
+    assert prog.property("sweeping") is False, tag
+    prog.setProperty("visible", True)
+    prog.setProperty("indeterminate", False)
+    assert prog.property("sweeping") is False, tag
     assert get("ring").property("fraction") == 0.4, tag
 
     # Surface: the popup box with the standard padding around its content

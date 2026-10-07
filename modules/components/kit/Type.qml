@@ -38,7 +38,7 @@ QtObject {
     readonly property color track: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.14)
     readonly property color placeholder: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.06)
     readonly property color accent: Colors.primary
-    readonly property color onAccent: Colors.overPrimary
+    readonly property color accentInk: Colors.overPrimary
 
     function size(role: string): int {
         const f = root.scale[role];

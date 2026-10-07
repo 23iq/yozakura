@@ -4,6 +4,7 @@ the active workspace, and the kit controls inside the bar popups (levels as
 LineSliders, power profiles as Chips, layouts / tray menu / window menu as
 ListRows, downloads with a ProgressLine), offscreen."""
 import sys
+import tempfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
@@ -87,6 +88,33 @@ pill = find(WIN.contentItem(), "activeIndicator")
 assert H.eval(pill, f"{COUNT}(this, it => it.variant === 'primary' && it.backgroundOpacity > 0 && it.backgroundOpacity < 1)") == 1
 theme("tiles", 0.9)
 assert H.eval(pill, f"{COUNT}(this, it => it.variant === 'primary' && it.backgroundOpacity === -1)") == 1
+
+# No empty boxes: every module draws visible ink (a glyph, text or icon)
+# inside its box, with the inline OSD idle and with nothing downloaded
+INK = """(function(root) {
+    let n = 0;
+    const walk = (it, op) => {
+        if (!it || !it.visible) return;
+        const o = op * it.opacity;
+        if (o > 0.01 && it.font !== undefined && it.text) n++;
+        if (o > 0.01 && it.fillMode !== undefined && it.status === 1 && String(it.source) !== "") n++;
+        for (const c of it.children || []) walk(c, o);
+    };
+    walk(root, 1);
+    return n;
+})(this)"""
+theme("ink", 0)
+for module in ("downloads", "controlsModule", "batteryModule"):
+    assert H.eval(find(WIN.contentItem(), module), INK) >= 1, module
+EMPTY = Path(tempfile.mkdtemp(prefix="bar-look-downloads-"))
+EMPTY.mkdir(parents=True, exist_ok=True)
+H.eval(find(WIN.contentItem(), "host"), "Config.bar.moduleOptions = Object.assign({}, Config.bar.moduleOptions, "
+       f"{{ downloads: {{ folder: '{EMPTY}' }} }})")
+QTest.qWait(400)
+downloads = find(WIN.contentItem(), "downloads")
+assert H.eval(downloads, "files.length") == 0
+assert find(downloads, "downloadsEmptyGlyph").isVisible()
+assert H.eval(downloads, INK) >= 1
 
 # Popups are built from kit controls
 POPUPS = [("controlsModule", "controlsPopup", IS_SLIDER, 3), ("layoutSelectorModule", "layoutPopup", IS_ROW, -1),

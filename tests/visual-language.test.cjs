@@ -75,3 +75,12 @@ test('apply never mutates the theme config', () => {
     V.apply('tiles', 'internalbg', pane);
     assert.deepEqual(plain(pane), before);
 });
+
+test('kit float: glass is a translucent box with a hairline, tiles a solid tile, ink keeps the theme surface', () => {
+    const glass = V.kit('glass').float, tiles = V.kit('tiles').float;
+    assert.ok(glass.fillOpacity > 0 && glass.fillOpacity < 0.8 && glass.outline > 0 && glass.highlight > 0);
+    assert.equal(tiles.fillOpacity, 1);
+    assert.equal(tiles.outline, 0);
+    assert.equal(V.kit('ink').float, null);
+    assert.equal(V.kit('classic').float, null);
+});

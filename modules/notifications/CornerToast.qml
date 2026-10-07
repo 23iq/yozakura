@@ -26,7 +26,7 @@ Item {
     readonly property var latest: ToastModel.latest(root.notifications)
     readonly property int extra: Math.max(0, root.notifications.length - 1)
     readonly property int depth: ToastModel.stackDepth(root.notifications.length)
-    readonly property int peek: Space.s
+    readonly property int peek: Space.m
 
     implicitHeight: card.implicitHeight + root.depth * root.peek
 
@@ -47,7 +47,8 @@ Item {
         }
     }
 
-    // The stack: sheets behind the card, each narrower and quieter.
+    // The stack: sheets behind the card, each a little narrower and quieter,
+    // with a hairline so their edges read over any wallpaper.
     Repeater {
         model: root.depth
 
@@ -60,7 +61,16 @@ Item {
             width: root.width - 2 * Space.m * step
             height: card.height
             glassSurface: "popups"
-            opacity: 1 - 0.3 * step
+            opacity: ToastModel.sheetOpacity(step)
+            padding: 0
+
+            Rectangle {
+                anchors.fill: parent
+                radius: parent.radius
+                color: "transparent"
+                border.width: Space.hairline
+                border.color: Type.track
+            }
         }
     }
 

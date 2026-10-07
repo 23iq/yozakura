@@ -63,3 +63,33 @@ function avatarSource(row) {
         return "file://" + src;
     return row.image || /^[a-z]+:/.test(src) ? src : "image://icon/" + src;
 }
+
+// Which quick-toggle chips keep their label so the row fits `avail` px:
+// all when they fit; else every inactive chip goes icon-only at once (one
+// calm look, not a mix), then active ones from the last back if still
+// needed. `full` / `compact` are each chip's width with / without label.
+function chipLabels(full, compact, active, avail, spacing) {
+    var n = full.length;
+    var shown = [];
+    var total = Math.max(0, n - 1) * spacing;
+    var i;
+    for (i = 0; i < n; i++) {
+        shown.push(true);
+        total += full[i];
+    }
+    if (total <= avail)
+        return shown;
+    for (i = 0; i < n; i++) {
+        if (!active[i]) {
+            shown[i] = false;
+            total -= full[i] - compact[i];
+        }
+    }
+    for (i = n - 1; i >= 0 && total > avail; i--) {
+        if (shown[i]) {
+            shown[i] = false;
+            total -= full[i] - compact[i];
+        }
+    }
+    return shown;
+}

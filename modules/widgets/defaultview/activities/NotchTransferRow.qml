@@ -98,6 +98,8 @@ Column {
         x: Space.s + Space.controlS + Space.m
         width: parent.width - x - Space.s
         visible: !row.finished
+        // Unknown size: a calm sweep instead of an empty track (not while paused)
+        indeterminate: row.progressValue < 0 && row.t.state !== "paused"
         value: row.progressValue < 0 ? 0 : row.progressValue
     }
     Item {

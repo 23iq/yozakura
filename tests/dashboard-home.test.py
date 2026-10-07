@@ -62,6 +62,19 @@ check(abs(ev(dash, "implicitHeight") - max(300, ev(home, "implicitHeight"))) < 1
 chips = {n: h.find(home, n) for n in ("wifiChip", "bluetoothChip", "silenceChip", "awakeChip", "gameChip")}
 check(ev(chips["wifiChip"], "text") == "Home 5G" and ev(chips["wifiChip"], "active"), "wifi shows the SSID")
 check(ev(chips["bluetoothChip"], "text") == "Buds Pro", "bluetooth shows the connected device")
+# One row: all five chips on the same line; when the labels don't fit,
+# inactive chips go icon-only together while active ones keep their label
+QTest.qWait(50)
+ys = {ev(c, "y") for c in chips.values()}
+check(len(ys) == 1, "the five chips fit one row " + str(ys))
+row = ev(chips["wifiChip"], "parent")
+full = sum(ev(c, "fullWidth") for c in chips.values()) + 4 * ev(row, "spacing")
+if full > ev(row, "width"):
+    check(all(ev(chips[n], "showLabel") for n in ("wifiChip", "bluetoothChip")), "active chips keep labels")
+    check(not any(ev(chips[n], "showLabel") for n in ("silenceChip", "awakeChip", "gameChip")),
+          "inactive chips icon-only together")
+    check(all(abs(ev(chips[n], "width") - ev(chips[n], "compactWidth")) < 1 for n in ("silenceChip", "gameChip")),
+          "icon-only chips shrink to the icon")
 for name, state in (("wifiChip", "NetworkService.wifiEnabled"), ("bluetoothChip", "BluetoothService.enabled"),
                     ("silenceChip", "Notifications.silent"), ("awakeChip", "CaffeineClient.inhibit"),
                     ("gameChip", "GameModeClient.toggled")):

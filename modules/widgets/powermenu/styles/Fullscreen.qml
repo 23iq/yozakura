@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.widgets.powermenu
+import "../PowerActions.js" as PowerActions
 
 // layout.powermenu.style "fullscreen": over a dimmed screen, centered in
 // the work area, a quiet caption (uptime · user@host, when readable), a row
@@ -19,6 +20,8 @@ FocusScope {
     property bool shown: false
     property int currentIndex: 0
     readonly property var current: power.items[root.currentIndex] || null
+    // Hero sizes on large screens (PowerActions.heroScale)
+    readonly property var hero: PowerActions.heroScale(root.height)
 
     signal closeRequested
 
@@ -95,7 +98,7 @@ FocusScope {
             objectName: "powerCaption"
             anchors.horizontalCenter: parent.horizontalCenter
             visible: text !== ""
-            role: "caption"
+            role: root.hero.caption
             text: power.caption
         }
 
@@ -110,10 +113,10 @@ FocusScope {
                 delegate: ActionButton {
                     required property var modelData
                     required property int index
-                    width: Space.controlL + Space.xl
-                    size: "l"
+                    width: button.width + (root.hero.size === "xl" ? Space.xxl * 2 : Space.xl)
+                    size: root.hero.size
                     showLabel: true
-                    labelRole: "secondary"
+                    labelRole: root.hero.label
                     icon: modelData.icon
                     text: modelData.label
                     confirm: modelData.confirm
@@ -130,7 +133,7 @@ FocusScope {
             KitText {
                 objectName: "powerHint"
                 anchors.verticalCenter: parent.verticalCenter
-                role: "caption"
+                role: root.hero.caption
                 color: root.current && root.current.confirm ? Type.secondary : Type.muted
                 text: root.current && root.current.hold ? root.current.hold : I18n.t("powermenu.hold_hint")
             }

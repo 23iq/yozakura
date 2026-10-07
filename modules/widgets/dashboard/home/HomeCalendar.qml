@@ -130,7 +130,7 @@ Group {
                     role: cell.modelData.inMonth ? "secondary" : "caption"
                     tabular: true
                     text: cell.modelData.day
-                    color: cell.modelData.today ? (Look.solidActive ? Type.onAccent : Type.accent) : (cell.modelData.inMonth ? Type.text : Type.muted)
+                    color: cell.modelData.today ? (Look.solidActive ? Type.accentInk : Type.accent) : (cell.modelData.inMonth ? Type.text : Type.muted)
                     font.weight: cell.modelData.today ? Look.activeLabelWeight : Font.Normal
                     opacity: cell.modelData.inMonth ? 1 : 0.6
                 }

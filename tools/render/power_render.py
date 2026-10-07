@@ -44,7 +44,10 @@ SCENES = {
 }
 
 
-def scene(style: str, wall: str) -> str:
+SIZES = {"fullscreen-1440": (2560, 1440)}
+
+
+def scene(style: str, wall: str, size: tuple[int, int] = (1280, 720)) -> str:
     return f"""
 import QtQuick
 import QtQuick.Window
@@ -53,7 +56,7 @@ import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.widgets.powermenu.styles as Styles
 Window {{
-    width: 1280; height: 720; visible: true; color: "black"
+    width: {size[0]}; height: {size[1]}; visible: true; color: "black"
     Image {{ anchors.fill: parent; source: {json.dumps(wall)}; fillMode: Image.PreserveAspectCrop }}
     {SCENES[style][0]}
 }}"""
@@ -74,16 +77,17 @@ def main() -> int:
     for lang in args.languages:
         env = MenusEnv(f"power-render-{lang}", palette=palette(args.mode, state), user_config=True,
                        overrides={"theme": {"language": lang, "lightMode": args.mode == "light"}}, wallpaper=state)
-        for style in args.style or STYLES:
-            win = env.load(scene(style, url))
+        for name in [n for n in [*STYLES, *SIZES] if n.split("-")[0] in (args.style or STYLES)]:
+            style = name.split("-")[0]
+            win = env.load(scene(style, url, SIZES.get(name, (1280, 720))))
             win.requestActivate()
             s = env.h.find(win, "powerModel")
             env.h.eval(s, f"power.session = \"{SESSION}\"")
             QTest.qWait(700)
-            for name, js in (("", SCENES[style][1]), ("-holding", SCENES[style][2])):
+            for suffix, js in (("", SCENES[style][1]), ("-holding", SCENES[style][2])):
                 env.h.eval(s, js)
                 QTest.qWait(260)
-                path = out / f"power-{style}{name}-{lang}.png"
+                path = out / f"power-{name}{suffix}-{lang}.png"
                 win.grabWindow().save(str(path))
                 print(path)
             win.close()

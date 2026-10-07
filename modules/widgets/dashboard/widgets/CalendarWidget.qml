@@ -124,7 +124,7 @@ HostWidget {
                             role: grid.cellW >= Type.size("secondary") * 2 ? "secondary" : "caption"
                             tabular: true
                             text: cell.modelData.day
-                            color: cell.modelData.today ? Type.onAccent : (cell.modelData.inMonth ? Type.text : Type.muted)
+                            color: cell.modelData.today ? Type.accentInk : (cell.modelData.inMonth ? Type.text : Type.muted)
                             font.weight: cell.modelData.today ? Font.DemiBold : Font.Normal
                             opacity: cell.modelData.inMonth ? 1 : 0.6
                         }

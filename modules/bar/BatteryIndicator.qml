@@ -64,7 +64,7 @@ Item {
             width: Math.round(root.moduleSize * 0.72)
             height: width
             value: root.fraction
-            color: box.look === "primary" ? Type.onAccent : root.levelColor
+            color: box.look === "primary" ? Type.accentInk : root.levelColor
         }
 
         Text {

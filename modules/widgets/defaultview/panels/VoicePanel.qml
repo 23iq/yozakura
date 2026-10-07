@@ -135,6 +135,7 @@ NotchPanel {
         }
 
         VoiceBars {
+            objectName: "voiceBars"
             width: parent.width
             height: Space.xxl + Space.s
             visible: !root.showPreview && !root.failed

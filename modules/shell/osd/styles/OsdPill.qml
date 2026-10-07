@@ -20,6 +20,7 @@ Surface {
     property bool shown: true
 
     padding: 0
+    floating: true
     implicitWidth: OsdStyles.sizeFor("pill", false, Metrics.osdW).w
     implicitHeight: OsdStyles.sizeFor("pill", false, Metrics.osdW).h
     radius: Look.buttonRadius(height)
