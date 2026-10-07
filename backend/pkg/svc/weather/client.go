@@ -37,6 +37,7 @@ type Daily struct {
 	Temperature2mMin   []float64 `json:"temperature_2m_min"`
 	Sunrise            []string `json:"sunrise"`
 	Sunset             []string `json:"sunset"`
+	PrecipProbMax      []int    `json:"precipitation_probability_max"`
 }
 
 // Client performs weather fetches for a given location.
@@ -59,7 +60,7 @@ func (c *Client) Fetch(location string) (*WeatherResponse, error) {
 	params.Set("latitude", fmt.Sprintf("%v", lat))
 	params.Set("longitude", fmt.Sprintf("%v", lon))
 	params.Set("current_weather", "true")
-	params.Set("daily", "temperature_2m_max,temperature_2m_min,sunrise,sunset,weathercode")
+	params.Set("daily", "temperature_2m_max,temperature_2m_min,sunrise,sunset,weathercode,precipitation_probability_max")
 	params.Set("timezone", "auto")
 	params.Set("forecast_days", "7")
 
