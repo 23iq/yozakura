@@ -248,20 +248,8 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton
         drag.target: parent
 
-        onEntered: {
-            root.hovered = true;
-            // Only focus window on hover if it's in the current workspace
-            if (root.windowData) {
-                // Get current active workspace from YozdService
-                let currentWorkspace = YozdService.focusedMonitor?.activeWorkspace?.id;
-                let windowWorkspace = root.windowData?.workspace?.id;
-
-                // Only focus if the window is in the current workspace
-                if (currentWorkspace && windowWorkspace && currentWorkspace === windowWorkspace) {
-                    YozdService.dispatch(`focuswindow address:${windowData.address}`);
-                }
-            }
-        }
+        // Hover only highlights; focus happens on click.
+        onEntered: root.hovered = true
         onExited: root.hovered = false
 
         onPressed: mouse => {
