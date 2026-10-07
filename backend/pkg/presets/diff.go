@@ -111,7 +111,11 @@ func (m *Manager) flatten(domain string, doc any) map[string]any {
 			walk(prefix+"."+k, dm[k], c)
 		}
 	}
-	walk(domain, m.Cat.DomainDefault(domain), doc)
+	var def any = m.Cat.DomainDefault(domain)
+	if domain == WallpaperDomain {
+		def = map[string]any{colorPresetKey: ""} // no static color preset
+	}
+	walk(domain, def, doc)
 	for k := range out {
 		if strings.Count(k, ".") == 0 {
 			delete(out, k)

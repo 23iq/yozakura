@@ -1,0 +1,17 @@
+{
+    "launcher": {
+        "host": "notch",
+        "resultStyle": "grid"
+    },
+    "dashboard": {
+        "host": "notch",
+        "home": "bento"
+    },
+    "sheet": {
+        "side": "auto"
+    },
+    "osd": {
+        "position": "auto",
+        "style": "pill"
+    }
+}

@@ -16,7 +16,8 @@ comparisons of a preset before/after a change (`--compare A.png B.png`).
 
 The palette is generated with matugen from each wallpaper (the preset's
 light/dark mode); theme + compositor values come from the preset
-(~/.config/yozakura/presets/<NAME> or assets/presets/<NAME>).
+(~/.config/yozakura/presets/<NAME>, else the built-in set <NAME> composed
+from its layout, style and palette).
 """
 from __future__ import annotations
 
@@ -29,6 +30,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "tests" / "lib"))
 import headless  # noqa: E402
+import presetsets  # noqa: E402
 
 headless.ensure(gl=True)
 
@@ -38,7 +40,7 @@ from PySide6.QtTest import QTest  # noqa: E402
 import settings_env  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
 
-PRESET_DIRS = [Path.home() / ".config" / "yozakura" / "presets", REPO / "assets" / "presets"]
+USER_PRESETS = Path.home() / ".config" / "yozakura" / "presets"
 VARIANTS = ["bg", "popup", "internalbg", "pane", "common", "barbg", "focus", "primary"]
 
 
@@ -61,16 +63,14 @@ def palette_for(image: str, light: bool) -> dict:
 
 
 def load_preset(name: str) -> dict:
-    for d in PRESET_DIRS:
-        p = d / name
-        if p.is_dir():
-            out = {}
-            for dom in ("theme", "compositor"):
-                f = p / f"{dom}.json"
-                if f.exists():
-                    out[dom] = json.loads(f.read_text())
-            return out
-    raise SystemExit(f"preset not found: {name}")
+    user = USER_PRESETS / name
+    if user.is_dir():
+        domains = presetsets.compose_folder(user)
+    elif presetsets.set_dir(name).is_dir():
+        domains = presetsets.compose(name)
+    else:
+        raise SystemExit(f"preset not found: {name}")
+    return {dom: domains[dom] for dom in ("theme", "compositor") if dom in domains}
 
 
 def scene_qml(scene: str, w: int, h: int, wall: str) -> str:
@@ -155,7 +155,7 @@ def compare(a: str, b: str) -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
-    ap.add_argument("--preset", default="Yozakura Default")
+    ap.add_argument("--preset", default="Yozakura")
     ap.add_argument("--amounts", default="0,0.3,0.6,1", help="comma list; 'native' = the preset's own amount")
     ap.add_argument("--wallpaper", action="append", default=[], help="LABEL=PATH (repeatable)")
     ap.add_argument("--size", default="900x420")

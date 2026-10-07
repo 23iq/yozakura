@@ -4,5 +4,6 @@ var data = {
     "terminal": "kitty",
     "terminalAdvanced": false,
     "terminalCommand": "$TERMINAL -e $COMMAND",
-    "onboardingDone": false
+    "onboardingDone": false,
+    "newLookOffered": false
 }

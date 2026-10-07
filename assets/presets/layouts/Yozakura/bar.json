@@ -1,0 +1,33 @@
+{
+    "frameEnabled": false,
+    "frameThickness": 6,
+    "containBar": false,
+    "position": "top",
+    "clockShowDate": true,
+    "panels": [
+        {
+            "id": "main",
+            "edge": "top",
+            "style": "islands",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaces"
+                ],
+                "end": [
+                    "controls",
+                    "battery",
+                    "clock"
+                ],
+                "drawer": [
+                    "systray",
+                    "tools",
+                    "presets",
+                    "layoutSelector",
+                    "pin",
+                    "power"
+                ]
+            }
+        }
+    ]
+}

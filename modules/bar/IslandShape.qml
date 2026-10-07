@@ -60,6 +60,9 @@ Item {
         id: fill
         variant: "bg"
         glassSurface: "bar"
+        // The silhouette mask below shapes it (a corner style would replace
+        // that layer effect and leave the fill transparent)
+        cornerStyled: false
         anchors.fill: parent
         radius: 0
         enabled: false

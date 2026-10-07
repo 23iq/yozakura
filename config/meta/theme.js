@@ -116,6 +116,10 @@ var keys = {
         "max": 1,
         "description": "ink: amount of paper grain (full on light surfaces, faint on dark ones)."
     },
+    "signatures.petalShape": {
+        "enum": ["petal", "leaf"],
+        "description": "Shape of the falling signature particles: sakura petals or maple leaves (tinted with the palette)."
+    },
     "surfaceEffectOptions.brushHighlights": {
         "description": "ink: paint selection/focus highlights and active pills as brush strokes."
     },

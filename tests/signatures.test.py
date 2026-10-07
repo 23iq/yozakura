@@ -1,5 +1,5 @@
 """Signatures (theme.signatures.*): the brush highlight underlay and the lock
-screen petals follow their flag, are created only while enabled and shown,
+screen petals (or maple leaves) follow their flag, are created only while enabled and shown,
 and switch off in game mode and the power-saver profile; petals are capped
 at 40 particles and use palette colors."""
 import sys
@@ -33,8 +33,9 @@ def alive(obj) -> bool:
     return bool(h.eval(obj, "item !== null"))
 
 
-# Off by default (the default shift turns them on later).
-assert not alive(brush) and not alive(petals), "signatures must default to off"
+# Flags off: nothing is created (whatever the defaults are).
+set_("sig(false, false)")
+assert not alive(brush) and not alive(petals), "signatures off must create nothing"
 
 # Flags switch them on.
 set_("sig(true, false)")
@@ -55,6 +56,16 @@ em = h.eval(petals, "item.children.filter(c => c.maximumEmitted !== undefined)[0
 assert em is not None
 assert h.eval(petals, "item.children.filter(c => c.maximumEmitted !== undefined)[0].maximumEmitted") <= 40
 assert h.eval(petals, "item.tints.length") == 3
+
+# petalShape "leaf": the particles become palette-tinted maple leaves.
+PARTICLE = "item.children.filter(c => c.delegate !== undefined)[0]"
+assert not h.eval(petals, "leaves")
+assert h.eval(petals, PARTICLE + ".delegate.createObject(item).objectName") == ""
+set_("Config.theme.signatures = { brushHighlight: true, petals: true, petalShape: 'leaf' }")
+assert h.eval(petals, "leaves") and alive(petals)
+assert h.eval(petals, PARTICLE + ".delegate.createObject(item).objectName") == "mapleLeaf"
+assert h.eval(petals, "(o => item.tints.some(t => Qt.colorEqual(o.color, Qt.alpha(t, 0.6))))("
+              + PARTICLE + ".delegate.createObject(item))"), "leaves use the palette"
 
 # Game mode switches both off, and back on.
 set_("GameModeClient.toggled = true")

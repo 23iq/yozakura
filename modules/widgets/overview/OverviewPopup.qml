@@ -142,8 +142,8 @@ PanelWindow {
             height: 80
             radius: Styling.radius(24)
 
-            layer.enabled: true
-            layer.effect: Shadow {}
+            // The rect\'s own shadow (also drawn by a corner style\'s mask)
+            enableShadow: true
 
             RowLayout {
                 anchors.fill: parent
@@ -286,8 +286,8 @@ PanelWindow {
                 anchors.fill: parent
                 radius: Styling.radius(20)
 
-                layer.enabled: true
-                layer.effect: Shadow {}
+                // The rect\'s own shadow (also drawn by a corner style\'s mask)
+                enableShadow: true
             }
 
             // Loader for Overview to prevent issues during destruction
@@ -314,8 +314,8 @@ PanelWindow {
             height: Math.max(overviewContainer.height * 0.6, 200)
             radius: Styling.radius(0)
 
-            layer.enabled: true
-            layer.effect: Shadow {}
+            // The rect\'s own shadow (also drawn by a corner style\'s mask)
+            enableShadow: true
 
             MouseArea {
                 anchors.fill: parent

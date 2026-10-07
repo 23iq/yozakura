@@ -1,0 +1,28 @@
+{
+    "frameEnabled": false,
+    "frameThickness": 6,
+    "containBar": false,
+    "position": "top",
+    "clockShowDate": false,
+    "panels": [],
+    "layout": {
+        "style": "classic",
+        "left": [
+            "launcher",
+            "workspaces",
+            "layoutSelector",
+            "pin"
+        ],
+        "right": [
+            "presets",
+            "tools",
+            "systray",
+            "keyboardLayout",
+            "controls",
+            "battery",
+            "clock",
+            "power"
+        ],
+        "drawer": []
+    }
+}

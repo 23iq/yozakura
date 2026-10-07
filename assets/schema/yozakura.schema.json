@@ -4290,7 +4290,7 @@
         "motionProfile": {
           "title": "Motion profile",
           "type": "string",
-          "default": "smooth",
+          "default": "sakura",
           "description": "How windows, workspaces and the shell animate. Each card plays the profile's real curves.",
           "x-settings": {
             "category": "appearance",
@@ -5655,6 +5655,12 @@
           "type": "boolean",
           "default": false,
           "description": "The first-run setup wizard was finished or skipped. Set to false (or run `onboarding`) to show it again."
+        },
+        "newLookOffered": {
+          "title": "New look offered",
+          "type": "boolean",
+          "default": false,
+          "description": "The one-time \"Try the new look\" card was answered (tried, kept, reverted or dismissed); it is not shown again."
         }
       },
       "additionalProperties": false
@@ -9130,7 +9136,7 @@
             "popupCorners": {
               "title": "Popup corners",
               "type": "string",
-              "default": "",
+              "default": "cut",
               "description": "Corner style of popups and menus.",
               "x-settings": {
                 "category": "appearance",
@@ -9263,7 +9269,7 @@
             "brushHighlight": {
               "title": "Brush highlight",
               "type": "boolean",
-              "default": false,
+              "default": true,
               "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
@@ -9276,7 +9282,7 @@
             "petals": {
               "title": "Falling petals",
               "type": "boolean",
-              "default": false,
+              "default": true,
               "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
@@ -9284,6 +9290,27 @@
                 "label": "prefs.appearance.sig_petals",
                 "control": "toggle",
                 "keywords": "signature petals sakura falling lockscreen particles"
+              }
+            },
+            "petalShape": {
+              "title": "Falling shape",
+              "type": "string",
+              "default": "petal",
+              "description": "Sakura petals or maple leaves, tinted with the palette.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "signatures",
+                "label": "prefs.appearance.sig_petal_shape",
+                "control": "selector",
+                "keywords": "signature petals leaves maple autumn shape"
+              },
+              "enum": [
+                "petal",
+                "leaf"
+              ],
+              "x-enumLabels": {
+                "petal": "Petals",
+                "leaf": "Maple leaves"
               }
             }
           },

@@ -1,0 +1,89 @@
+{
+    "roundness": 14,
+    "font": "Manrope",
+    "fontSize": 14,
+    "monoFont": "JetBrains Mono",
+    "animDuration": 300,
+    "paletteTransitionDuration": 900,
+    "shadowOpacity": 0.35,
+    "terminalOpacity": 0.88,
+    "glass": {
+        "enabled": true,
+        "amount": 0.55
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "surfaceBright",
+            0
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.86
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "outlineVariant@0.5",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.9
+    },
+    "language": "ink",
+    "density": "roomy",
+    "shape": {
+        "corners": "round",
+        "popupCorners": "round",
+        "cutSize": 10
+    },
+    "popup": {
+        "entry": "slide-from-anchor",
+        "tail": false,
+        "gap": 8
+    },
+    "icons": {
+        "weight": "bold"
+    },
+    "type": {
+        "heading": "",
+        "headingCase": "none"
+    },
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false,
+        "petalShape": "petal"
+    },
+    "surfaceEffect": "none"
+}

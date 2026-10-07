@@ -48,7 +48,10 @@ func TestEveryKeyIsDescribed(t *testing.T) {
 
 func TestBuiltinPresetsValidate(t *testing.T) {
 	c := load(t)
-	files, _ := filepath.Glob(filepath.Join(repoRoot, "assets", "presets", "*", "*.json"))
+	// sets and their parts: assets/presets/{sets,layouts,styles,palettes}/<Name>/
+	files, _ := filepath.Glob(filepath.Join(repoRoot, "assets", "presets", "*", "*", "*.json"))
+	legacy, _ := filepath.Glob(filepath.Join(repoRoot, "assets", "presets", "*", "*.json"))
+	files = append(files, legacy...)
 	mustTrue(t, len(files) > 0)
 	for _, f := range files {
 		domain := strings.TrimSuffix(filepath.Base(f), ".json")

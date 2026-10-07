@@ -1,0 +1,13 @@
+{
+    "activeBorderColor": [
+        "primary"
+    ],
+    "inactiveBorderColor": [
+        "surfaceBright@0.5"
+    ],
+    "borderSize": 2,
+    "rounding": 2,
+    "gapsIn": 4,
+    "gapsOut": 8,
+    "motionProfile": "snappy"
+}

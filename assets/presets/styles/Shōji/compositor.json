@@ -1,0 +1,14 @@
+{
+    "activeBorderColor": [
+        "secondary"
+    ],
+    "inactiveBorderColor": [
+        "outlineVariant@0.6"
+    ],
+    "borderSize": 1,
+    "rounding": 4,
+    "gapsIn": 5,
+    "gapsOut": 10,
+    "shadowOpacity": 0.2,
+    "motionProfile": "smooth"
+}

@@ -39,6 +39,8 @@ Item {
         id: barBackground
         variant: root.variant
         glassSurface: "bar"
+        // Shaped by barMask (a corner style would replace that layer effect)
+        cornerStyled: false
         visible: root.variant !== "barbg" || Config.showBackground
         radius: root.radiusOverride >= 0 ? root.radiusOverride : Styling.radius(root.effectiveContainBar ? 4 : 0)
         enableBorder: !effectiveContainBar || (Config.bar.keepBarBorder ?? false)

@@ -65,6 +65,7 @@ func Tools(d Deps) []mcp.ToolDef {
 	var out []mcp.ToolDef
 	out = append(out, configTools(d)...)
 	out = append(out, presetTools(d)...)
+	out = append(out, presetShareTools(d)...)
 	out = append(out, desktopTools(d)...)
 	out = append(out, systemTools(d)...)
 	out = append(out, commandTools(d)...)

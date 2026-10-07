@@ -1,0 +1,17 @@
+{
+    "launcher": {
+        "host": "spotlight",
+        "resultStyle": "list"
+    },
+    "dashboard": {
+        "host": "spotlight",
+        "home": "composed"
+    },
+    "sheet": {
+        "side": "auto"
+    },
+    "osd": {
+        "position": "auto",
+        "style": "island"
+    }
+}

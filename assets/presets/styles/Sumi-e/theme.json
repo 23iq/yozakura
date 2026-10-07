@@ -1,0 +1,118 @@
+{
+    "roundness": 10,
+    "font": "Shippori Mincho",
+    "fontSize": 14,
+    "monoFont": "JetBrains Mono",
+    "animDuration": 220,
+    "paletteTransitionDuration": 500,
+    "shadowOpacity": 0.18,
+    "terminalOpacity": 1.0,
+    "surfaceEffect": "ink",
+    "surfaceEffectOptions": {
+        "intensity": 0.6,
+        "grain": 0.7,
+        "brushHighlights": true
+    },
+    "glass": {
+        "enabled": false
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.5",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.6",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srBarBg": {
+        "label": "Bar BG",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "surfaceDim",
+        "border": [
+            "surfaceBright",
+            0
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.0
+    },
+    "language": "ink",
+    "density": "cozy",
+    "shape": {
+        "corners": "squircle",
+        "popupCorners": "squircle",
+        "cutSize": 10
+    },
+    "popup": {
+        "entry": "fade-scale",
+        "tail": false,
+        "gap": 8
+    },
+    "icons": {
+        "weight": "bold"
+    },
+    "type": {
+        "heading": "Shippori Mincho",
+        "headingCase": "none"
+    },
+    "signatures": {
+        "brushHighlight": true,
+        "petals": false,
+        "petalShape": "petal"
+    }
+}

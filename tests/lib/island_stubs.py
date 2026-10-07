@@ -24,7 +24,7 @@ def island(name: str, config_extra: str = "") -> Harness:
         "BarMetrics": "pragma Singleton\nQtObject { property int notchRestHeight: 44; property int notchIslandHeight: 36 }",
     })
     h.module("qs.modules.components", {
-        "StyledRect": "Rectangle { property string variant; property bool enableBorder; property bool enableShadow; property bool animateRadius; property string glassSurface; property color item: \"white\" }",
+        "StyledRect": "Rectangle { property string variant; property bool enableBorder; property bool enableShadow; property bool cornerStyled: true; property bool animateRadius; property string glassSurface; property color item: \"white\" }",
         "StyledToolTip": "Item { property string tooltipText; property bool show }",
         "Separator": "Item { property bool vert; implicitWidth: 2; implicitHeight: 2 }",
     })

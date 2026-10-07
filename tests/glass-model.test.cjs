@@ -2,10 +2,10 @@
 // preset, legibility clamp, overrides, compositor overlay.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
 const path = require('node:path');
 
 const qmljs = require('./lib/qmljs.cjs');
+const Presets = require('./lib/presetsets.cjs');
 const repo = path.join(__dirname, '..');
 const lib = rel => qmljs.loadLibrary(path.join(repo, rel));
 const plain = v => JSON.parse(JSON.stringify(v));
@@ -22,13 +22,9 @@ const glass = over => Object.assign(plain(GLASS), over || {});
 
 function presets() {
     const out = [['defaults', ThemeDefaults, CompositorDefaults]];
-    const dir = path.join(repo, 'assets/presets');
-    for (const name of fs.readdirSync(dir).sort()) {
-        const read = f => {
-            const p = path.join(dir, name, f);
-            return fs.existsSync(p) ? JSON.parse(fs.readFileSync(p, 'utf8')) : {};
-        };
-        out.push([name, Object.assign(plain(ThemeDefaults), read('theme.json')), Object.assign(plain(CompositorDefaults), read('compositor.json'))]);
+    for (const name of Presets.listSets()) {
+        const set = Presets.composeSet(name);
+        out.push([name, Object.assign(plain(ThemeDefaults), set.theme || {}), Object.assign(plain(CompositorDefaults), set.compositor || {})]);
     }
     const sakura = require('./fixtures/glass/sakura-glass.json');
     out.push(['Sakura Glass', Object.assign(plain(ThemeDefaults), sakura.theme), Object.assign(plain(CompositorDefaults), sakura.compositor)]);

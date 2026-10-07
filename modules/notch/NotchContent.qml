@@ -390,8 +390,8 @@ Item {
                 }
             }
 
-            layer.enabled: true
-            layer.effect: Shadow {}
+            // The rect\'s own shadow (also drawn by a corner style\'s mask)
+            enableShadow: true
 
             property bool popupHovered: false
 

@@ -156,6 +156,23 @@ var category = {
                     "label": "prefs.appearance.sig_petals",
                     "description": "prefs.appearance.sig_petals.desc",
                     "keywords": "signature petals sakura falling lockscreen particles"
+                },
+                {
+                    "key": "theme.signatures.petalShape",
+                    "type": "selector",
+                    "label": "prefs.appearance.sig_petal_shape",
+                    "description": "prefs.appearance.sig_petal_shape.desc",
+                    "options": [
+                        {
+                            "value": "petal",
+                            "label": "prefs.appearance.sig_petal_shape.petal"
+                        },
+                        {
+                            "value": "leaf",
+                            "label": "prefs.appearance.sig_petal_shape.leaf"
+                        }
+                    ],
+                    "keywords": "signature petals leaves maple autumn shape"
                 }
             ]
         },

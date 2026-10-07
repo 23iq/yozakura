@@ -895,7 +895,7 @@
     "motionProfile": {
       "title": "Motion profile",
       "type": "string",
-      "default": "smooth",
+      "default": "sakura",
       "description": "How windows, workspaces and the shell animate. Each card plays the profile's real curves.",
       "x-settings": {
         "category": "appearance",

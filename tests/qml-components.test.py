@@ -68,7 +68,7 @@ import QtQuick
 QtObject { property bool available: true; property var values: [0.5, 1, 0.25]; property int consumerCount: 0; property var keys: ({}); function setConsumer(k, a) { if (!k) return; keys[k] = a; var n = 0; for (var x in keys) if (keys[x]) n++; consumerCount = n; } function levels(n) { var out = []; for (var i = 0; i < n; i++) out.push(values[i % values.length]); return out; } }'''})
  module('qs.modules.components',{
  'StyledRect':'''import QtQuick
-Item { property string variant; property string glassSurface; property real radius; property bool enableBorder; property real backgroundOpacity; property bool animateRadius; property real topLeftRadius; property real topRightRadius; property real bottomLeftRadius; property real bottomRightRadius; property color item: "white" }''',
+Item { property string variant; property string glassSurface; property real radius; property bool enableBorder; property real backgroundOpacity; property bool animateRadius; property bool cornerStyled: true; property bool enableShadow; property real topLeftRadius; property real topRightRadius; property real bottomLeftRadius; property real bottomRightRadius; property color item: "white" }''',
  'StyledSlider':'''import QtQuick
 Item { property bool resizeParent; property bool wavy; property bool playing; property real wavyAmplitude; property real wavyFrequency; property real heightMultiplier; property color progressColor; property color backgroundColor; property bool smoothDrag; property bool scroll; property bool tooltip; property bool updateOnRelease; property bool isDragging: false; property real value: 0 }''',
  'Separator':'''import QtQuick

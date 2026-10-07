@@ -1,0 +1,9 @@
+{
+    "enabled": false,
+    "iconSize": 40,
+    "spacingVertical": 16,
+    "textColor": "overBackground",
+    "depthClock": false,
+    "wallpaperTransition": "grow",
+    "wallpaperTransitionDuration": 800
+}

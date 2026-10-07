@@ -1,29 +1,31 @@
-"""Built-in presets with panel layouts, offscreen: each one's bar.panels
+"""Built-in preset sets with panel layouts (composed from their layout, style
+and palette, tests/lib/presetsets.py), offscreen: each one's bar.panels
 loads with its theme, notch and workspaces config without QML errors, the
 Shōji frame draws its double hairline (others none), workspace tags follow
 the numeral style (Neon Tokyo: roman) and a clock with
 moduleOptions.clock.showWeather false leaves the weather to its module."""
-import json
 import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import bundled_fonts  # noqa: E402
-from panels_env import REPO, PanelsEnv  # noqa: E402
+import presetsets  # noqa: E402
+from panels_env import PanelsEnv  # noqa: E402
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-PRESETS = REPO / "assets" / "presets"
 problems: list[str] = []
 qInstallMessageHandler(lambda _m, _c, msg: problems.append(msg) if any(
     k in msg for k in ("TypeError", "ReferenceError", "is not a type", "Cannot assign")) else None)
 bundled_fonts.register()
 
 
+SETS = {name: presetsets.compose(name) for name in presetsets.list_sets()}
+
+
 def read(name: str, domain: str) -> dict:
-    p = PRESETS / name / f"{domain}.json"
-    return json.loads(p.read_text()) if p.exists() else {}
+    return SETS[name].get(domain, {})
 
 
 def visual(item, name: str):
@@ -36,8 +38,8 @@ def visual(item, name: str):
     return out
 
 
-panel_presets = sorted(p.name for p in PRESETS.iterdir() if read(p.name, "bar").get("panels"))
-assert {"Neon Tokyo", "Glacier", "Kaze", "Shōji", "Metro", "CRT"} <= set(panel_presets), panel_presets
+panel_presets = sorted(name for name in SETS if read(name, "bar").get("panels"))
+assert {"Neon Tokyo", "Glacier", "Kaze", "Shōji", "Metro", "CRT", "Yozakura", "Sumi-e"} <= set(panel_presets), panel_presets
 ENVS = []
 for name in panel_presets:
     theme = read(name, "theme")
@@ -48,7 +50,7 @@ for name in panel_presets:
     QTest.qWait(250)
     host = env.h.find(win, "host")
     count = env.h.eval(host, "bars.length")
-    enabled = [p for p in read(name, "bar")["panels"] if p.get("enabled", True)]
+    enabled = [p for p in read(name, "bar")["panels"] if p.get("enabled", True) and p.get("style") != "none"]
     assert count == len(enabled), (name, count, len(enabled))
 
     lines = visual(win.contentItem(), "frameLines")

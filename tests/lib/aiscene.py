@@ -2,7 +2,7 @@
 
 Copies the real `modules/` tree into a temp `qs` import root (with qmldir
 files like Quickshell synthesises), then replaces the system-facing pieces
-with stubs: Config (theme from an assets/presets/<name>/theme.json), Colors
+with stubs: Config (theme of a built-in preset set, tests/lib/presetsets.py), Colors
 (palette from tests/fixtures/aicenter-palettes.json), the services the AI
 center talks to (Ai with scripted conversations, I18n from en.json,
 BackendService, KeyStore), GlobalStates and Quickshell's own modules.
@@ -19,6 +19,11 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
+
+try:  # loaded as tests/lib/aiscene.py (lib.aiscene) or with tests/lib on sys.path
+    from . import presetsets
+except ImportError:
+    import presetsets
 
 REPO = Path(__file__).resolve().parents[2]
 SINGLETON = re.compile(r"^\s*pragma\s+Singleton\b", re.M)
@@ -57,7 +62,7 @@ def _theme_defaults() -> dict:
 
 
 def _theme_config(preset: str) -> str:
-    theme = json.loads((REPO / "assets/presets" / preset / "theme.json").read_text())
+    theme = presetsets.read(preset, "theme")
     # Like the shell's validator: surface variants the preset leaves out (or
     # only partly sets) come from config/defaults/theme.js.
     defaults = _theme_defaults()

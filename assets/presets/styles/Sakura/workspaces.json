@@ -1,0 +1,9 @@
+{
+    "alwaysShowNumbers": false,
+    "dynamic": false,
+    "showAppIcons": true,
+    "showNumbers": false,
+    "shown": 10,
+    "numeralStyle": "arabic",
+    "indicatorStyle": "pill"
+}

@@ -1,0 +1,17 @@
+{
+    "launcher": {
+        "host": "spotlight",
+        "resultStyle": "list"
+    },
+    "dashboard": {
+        "host": "sheet",
+        "home": "composed"
+    },
+    "sheet": {
+        "side": "right"
+    },
+    "osd": {
+        "position": "auto",
+        "style": "pill"
+    }
+}

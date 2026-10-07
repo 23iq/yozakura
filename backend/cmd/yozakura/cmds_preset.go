@@ -14,8 +14,10 @@ import (
 
 const presetUsage = `Usage: {bin} preset <command> [args]
 
-Presets are directories of config domain files (built in: assets/presets,
-yours: ~/.config/{bin}/presets). "current" names the live config wherever a
+Presets (sets) are directories of config domain files (built in:
+assets/presets/sets, yours: ~/.config/{bin}/presets). A set may name a layout,
+a style and a palette in set.json (assets/presets/{layouts,styles,palettes});
+its files are those parts deep-merged in that order, then its own files. "current" names the live config wherever a
 preset name is accepted. The private domains (system, ai, prefix, weather,
 notifications, apps, general, specials) and machine-local keys (secrets, commands,
 endpoints, personal paths) are never part of a preset; applying one keeps them.
@@ -23,9 +25,14 @@ endpoints, personal paths) are never part of a preset; applying one keeps them.
 Commands:
     list [--json]                        Presets (official first); * marks the active one.
                                          --json adds tags, a content hash and the look
-                                         (values the thumbnails are drawn from)
+                                         (values the thumbnails are drawn from) and the
+                                         set's layout, style and palette
+    parts [--json]                       Layouts, styles and palettes; * marks the current ones
     apply <name>                         Copy the preset over the live config (hot-applies)
-    apply --preview <name>               Show it for a look (the switcher's hover);
+    apply --part <layout|style|palette> <name>
+                                         Merge only that part's keys into the live config
+    apply [--part <kind>] --preview <name>
+                                         Show it for a look (the switcher's hover);
     revert                               bring back the look from before the first preview
     save <name> [--domains a,b] [--force]
                                          Save the live config (+ matugen scheme) as a user preset
@@ -97,6 +104,8 @@ func runPreset(args []string, out, errOut io.Writer) int {
 		err = presetListCmd(m, rest, out)
 	case "apply", "load":
 		err = presetApplyArgs(m, rest, out, errOut)
+	case "parts":
+		err = presetPartsCmd(m, rest, out)
 	case "revert":
 		err = presetRevertCmd(m, out)
 	case "save":

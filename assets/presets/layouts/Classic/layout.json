@@ -1,0 +1,17 @@
+{
+    "launcher": {
+        "host": "notch",
+        "resultStyle": "list"
+    },
+    "dashboard": {
+        "host": "notch",
+        "home": "composed"
+    },
+    "sheet": {
+        "side": "auto"
+    },
+    "osd": {
+        "position": "auto",
+        "style": "pill"
+    }
+}

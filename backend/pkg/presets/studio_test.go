@@ -40,23 +40,29 @@ func TestLooksTagsAndHash(t *testing.T) {
 			assert.True(t, ok, "%s look has %s", p.Name, k)
 		}
 	}
-	assert.Equal(t, []string{"classic", "oled"}, byName["Neon Tokyo"].Tags, "panel styles")
-	assert.Equal(t, []string{"menubar", "dock", "light", "bar-bottom"}, byName["Glacier"].Tags, "every panel style and edge")
-	assert.Contains(t, byName["Kaze"].Tags, "bar-left", "edge from bar.panels")
-	assert.Equal(t, "classic", byName["Yozakura Default"].Look["bar.layout.style"], "missing keys resolve to defaults")
+	for _, p := range list {
+		assert.Equal(t, TagsOf(p.Look), p.Tags, p.Name)
+	}
+	assert.Equal(t, []string{"menubar", "dock", "light", "bar-bottom"}, TagsOf(map[string]any{
+		"theme.lightMode": true, "bar.panels": []any{
+			map[string]any{"style": "menubar", "edge": "top"},
+			map[string]any{"style": "dock", "edge": "bottom"},
+			map[string]any{"style": "full", "edge": "left", "enabled": false},
+		}}), "every enabled panel style and edge")
+	assert.Equal(t, []string{"classic", "oled", "bar-left"}, TagsOf(map[string]any{
+		"bar.layout.style": "classic", "bar.position": "left", "theme.oledMode": true}), "without panels")
 	assert.NotEqual(t, byName["Neon Tokyo"].Hash, byName["Sumi-e"].Hash)
 }
 
 func TestSchemeTravelsWithPresets(t *testing.T) {
 	m := newManager(t)
 	writeWallpapers(t, m, `{"currentWall": "/w/a.jpg", "matugenScheme": "scheme-fidelity", "activeColorPreset": "Nord"}`)
-	_, _, err := m.Apply("Yozakura Night")
-	assert.NoError(t, err)
+	writeLive(t, m, "theme", `{"roundness": 3}`)
 	saved, err := m.Save("Mine", nil, false)
 	assert.NoError(t, err)
 	assert.Contains(t, saved.Domains, WallpaperDomain)
 	data, _ := os.ReadFile(filepath.Join(saved.Path, "wallpaper.json"))
-	assert.JSONEq(t, `{"matugenScheme": "scheme-fidelity"}`, string(data), "only the scheme, never the wallpaper")
+	assert.JSONEq(t, `{"matugenScheme": "scheme-fidelity", "activeColorPreset": "Nord"}`, string(data), "only the scheme and color preset, never the wallpaper")
 
 	writeWallpapers(t, m, `{"currentWall": "/w/b.jpg", "matugenScheme": "scheme-neutral"}`)
 	_, _, err = m.Apply("Mine")
@@ -199,13 +205,13 @@ func TestMixAndInspect(t *testing.T) {
 func TestTrySession(t *testing.T) {
 	m := newManager(t)
 	writeWallpapers(t, m, `{"matugenScheme": "scheme-content"}`)
-	_, _, err := m.Apply("Yozakura Default")
+	_, _, err := m.Apply("Yozakura")
 	assert.NoError(t, err)
 	before, _ := m.Documents(Current)
 
 	s, _, err := m.Begin(TrySession, "Neon Tokyo")
 	assert.NoError(t, err)
-	assert.Equal(t, "Yozakura Default", s.PrevActive)
+	assert.Equal(t, "Yozakura", s.PrevActive)
 	assert.Equal(t, "Neon Tokyo", m.Active())
 	_, _, err = m.Begin(EditSession, "Neon Tokyo")
 	assert.ErrorContains(t, err, "in progress")
@@ -213,7 +219,7 @@ func TestTrySession(t *testing.T) {
 	assert.NoError(t, err)
 	after, _ := m.Documents(Current)
 	assert.Empty(t, m.compareDocs(before, after, nil), "revert restores every file")
-	assert.Equal(t, "Yozakura Default", m.Active())
+	assert.Equal(t, "Yozakura", m.Active())
 	cur, _ := m.Session(TrySession)
 	assert.Nil(t, cur)
 
@@ -228,7 +234,7 @@ func TestTrySession(t *testing.T) {
 
 func TestEditSession(t *testing.T) {
 	m := newManager(t)
-	_, _, err := m.Apply("Yozakura Default")
+	_, _, err := m.Apply("Yozakura")
 	assert.NoError(t, err)
 	_, _, err = m.Begin(EditSession, "Sumi-e")
 	assert.ErrorContains(t, err, "read-only")
@@ -250,18 +256,16 @@ func TestEditSession(t *testing.T) {
 	assert.NoError(t, err)
 	docs, _ := m.Documents("Ink 2")
 	assert.Equal(t, 7.0, docs["theme"].(map[string]any)["roundness"], "edits went into the preset")
-	assert.Equal(t, "Yozakura Default", m.Active(), "the previous look is back")
+	assert.Equal(t, "Yozakura", m.Active(), "the previous look is back")
 	v, _, _ := m.Store.Get("theme.roundness")
 	assert.NotEqual(t, 7.0, v)
 }
 
 func TestShadowedUserPreset(t *testing.T) {
 	m := newManager(t)
-	src := filepath.Join(m.OfficialDir, "Sumi-e")
 	dst := filepath.Join(m.UserDir, "Sumi-e")
 	assert.NoError(t, os.MkdirAll(dst, 0o755))
-	data, _ := os.ReadFile(filepath.Join(src, "theme.json"))
-	assert.NoError(t, os.WriteFile(filepath.Join(dst, "theme.json"), data, 0o644))
+	assert.NoError(t, os.WriteFile(filepath.Join(dst, "theme.json"), []byte("{}"), 0o644))
 	var shadowed *Preset
 	for _, p := range m.List() {
 		if !p.Official && p.Name == "Sumi-e" {
@@ -318,15 +322,21 @@ func TestSessionsAndApplyAreSerialised(t *testing.T) {
 }
 
 func TestTrialRevertRestoresColorPreset(t *testing.T) {
-	m := newManager(t)
-	writeWallpapers(t, m, `{"currentWall": "/w/a.jpg", "matugenScheme": "scheme-fidelity", "activeColorPreset": "Nord"}`)
-	target := "Glacier" // scheme-tonal-spot
-	_, _, err := m.Begin(TrySession, target)
-	assert.NoError(t, err)
-	assert.Equal(t, "", readScheme(t, m)["activeColorPreset"], "trying a scheme drops the static color preset")
-	_, err = m.End(TrySession, false, false)
-	assert.NoError(t, err)
-	got := readScheme(t, m)
-	assert.Equal(t, "Nord", got["activeColorPreset"], "reverting brings the color preset back")
-	assert.Equal(t, "scheme-fidelity", got["matugenScheme"])
+	m := fixtureManager(t)
+	writeTree(t, m.OfficialDir, map[string]string{"sets/Scheme/wallpaper.json": `{"matugenScheme": "scheme-neutral"}`})
+	for target, during := range map[string]string{
+		"Scheme": "", // a scheme alone drops the static color preset
+		"Dusk":   "Plum",
+	} {
+		writeWallpapers(t, m, `{"currentWall": "/w/a.jpg", "matugenScheme": "scheme-fidelity", "activeColorPreset": "Nord"}`)
+		_, _, err := m.Begin(TrySession, target)
+		assert.NoError(t, err)
+		assert.Equal(t, during, readScheme(t, m)["activeColorPreset"], target)
+		_, err = m.End(TrySession, false, false)
+		assert.NoError(t, err)
+		got := readScheme(t, m)
+		assert.Equal(t, "Nord", got["activeColorPreset"], "reverting brings the color preset back")
+		assert.Equal(t, "scheme-fidelity", got["matugenScheme"])
+		assert.Equal(t, "/w/a.jpg", got["currentWall"])
+	}
 }

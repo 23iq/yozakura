@@ -1,0 +1,142 @@
+{
+    "roundness": 6,
+    "font": "Space Grotesk",
+    "fontSize": 13,
+    "monoFont": "JetBrains Mono",
+    "monoFontSize": 13,
+    "animDuration": 200,
+    "paletteTransitionDuration": 450,
+    "shadowOpacity": 0.6,
+    "terminalOpacity": 0.94,
+    "glass": {
+        "enabled": true,
+        "amount": 0.5,
+        "tintRole": "primary",
+        "highlightRole": "primary"
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "primary@0.35",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "primary",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srFocus": {
+        "label": "Focus",
+        "gradient": [
+            [
+                "surfaceContainerHigh",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surfaceVariant",
+        "halftoneBackgroundColor": "surfaceBright",
+        "border": [
+            "surfaceBright",
+            0
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srPrimary": {
+        "label": "Primary",
+        "gradient": [
+            [
+                "primary",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "overPrimaryContainer",
+        "halftoneBackgroundColor": "primary",
+        "border": [
+            "primary",
+            0
+        ],
+        "itemColor": "overPrimary",
+        "opacity": 1
+    },
+    "language": "glass",
+    "density": "cozy",
+    "shape": {
+        "corners": "cut",
+        "popupCorners": "cut",
+        "cutSize": 8
+    },
+    "popup": {
+        "entry": "fade-scale",
+        "tail": true,
+        "gap": 8
+    },
+    "icons": {
+        "weight": "bold"
+    },
+    "type": {
+        "heading": "Space Grotesk",
+        "headingCase": "upper"
+    },
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false,
+        "petalShape": "petal"
+    },
+    "surfaceEffect": "none"
+}

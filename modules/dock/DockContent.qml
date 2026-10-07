@@ -291,6 +291,9 @@ Item {
                     variant: "bg"
                     glassSurface: "dock"
                     anchorEdge: root.position
+                    // Shaped by dockMask (a corner style would replace that
+                    // layer effect and leave the fill transparent)
+                    cornerStyled: false
                     // enableShadow: true
                     enableBorder: false
 

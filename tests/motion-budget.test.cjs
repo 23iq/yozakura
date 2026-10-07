@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
+const Presets = require('./lib/presetsets.cjs');
 const path = require('node:path');
 const { loadLibrary } = require('./lib/qmljs.cjs');
 const B = loadLibrary(path.join(__dirname, '../config/motion/MotionBudget.js'));
@@ -38,12 +38,11 @@ test('every motion profile is within the shell and compositor budget', () => {
     }
 });
 
-test('every bundled preset has a budget-friendly animDuration', () => {
-    const dir = path.join(__dirname, '../assets/presets');
-    for (const name of fs.readdirSync(dir)) {
-        const f = path.join(dir, name, 'theme.json');
-        if (!fs.existsSync(f)) continue;
-        const d = JSON.parse(fs.readFileSync(f, 'utf8')).animDuration;
+test('every bundled preset set has a budget-friendly animDuration', () => {
+    const sets = Presets.listSets();
+    assert.ok(sets.length >= 10);
+    for (const name of sets) {
+        const d = (Presets.composeSet(name).theme || {}).animDuration;
         if (d === undefined) continue;
         assert.ok(d >= 160 && d <= 300, `${name}: animDuration ${d}`);
     }

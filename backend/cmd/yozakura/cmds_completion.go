@@ -17,7 +17,7 @@ var topCommands = []string{
 
 const (
 	configSubs   = "list get set toggle describe reset search schema path help"
-	presetSubs   = "list apply save update diff show aspects mix duplicate rename delete restore trash set-info export import try edit active help"
+	presetSubs   = "list parts apply save update diff show aspects mix duplicate rename delete restore trash set-info export import try edit active help"
 	keyedSubs    = "list get set toggle describe reset"
 	timerSubs    = "list pause resume reset cancel add stop pomodoro help"
 	swSubs       = "start pause resume toggle lap reset status"

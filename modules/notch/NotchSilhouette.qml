@@ -78,6 +78,8 @@ Item {
         id: attachedBg
         variant: "bg"
         glassSurface: "notch"
+        // Shaped by attachedMask (a corner style would leave it transparent)
+        cornerStyled: false
         visible: false // drawn through the mask below
         anchors.fill: parent
         enabled: false
@@ -154,7 +156,6 @@ Item {
         glassSurface: "notch"
         visible: !root.attached
         anchors.fill: parent
-        layer.enabled: false
         clip: false
         enableBorder: !root.unifiedEffectActive
         animateRadius: false

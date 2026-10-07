@@ -46,7 +46,7 @@ QtObject {
 for f in ("Motion", "Metrics", "BarMetrics"):
     p = h.root / "qs/modules/theme" / f"{f}.qml"
     p.write_text("import qs.config\n" + p.read_text())
-h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius }", "Shadow": "Item {}"})
+h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }", "Shadow": "Item {}"})
 h.module("qs.modules.services", {"FocusGrab": "QtObject { property var windows; property bool active; signal cleared }"})
 h.singleton("qs.modules.services", "Visibilities", """QtObject {
     id: vroot

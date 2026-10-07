@@ -19,6 +19,9 @@ var general = {
         },
         "onboardingDone": {
             "description": "The first-run setup wizard was finished or skipped. Set to false (or run `onboarding`) to show it again."
+        },
+        "newLookOffered": {
+            "description": "The one-time \"Try the new look\" card was answered (tried, kept, reverted or dismissed); it is not shown again."
         }
     }
 };

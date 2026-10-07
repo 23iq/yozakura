@@ -51,11 +51,15 @@ func TestListFindApply(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Empty(t, problems)
 	assert.Equal(t, "Yozakura Night", m.Active())
+	composed, err := Compose(m.OfficialDir, applied.Path)
+	assert.NoError(t, err)
 	for _, d := range applied.Domains {
-		want, _ := os.ReadFile(filepath.Join(applied.Path, d+".json"))
+		if d == WallpaperDomain {
+			continue
+		}
 		got, err := os.ReadFile(m.Store.File(d))
 		assert.NoError(t, err)
-		assert.Equal(t, string(want), string(got), "files are copied verbatim")
+		assert.Equal(t, string(composed[d]), string(got), "the composed files are written verbatim")
 	}
 	for _, p := range m.List() {
 		assert.Equal(t, p.Name == "Yozakura Night", p.Active, p.Name)

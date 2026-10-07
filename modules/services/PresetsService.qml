@@ -6,6 +6,9 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.services
 import qs.modules.globals
+import qs.config
+import qs.modules.widgets.presets.store
+import "../widgets/presets/NewLookFlow.js" as NewLookFlow
 
 // Preset list + actions for the quick preset switcher (bar button popup).
 // Every operation runs `<app> preset ...` (backend/pkg/presets), the same
@@ -201,6 +204,42 @@ Singleton {
         onTriggered: root.scanPresets()
     }
 
+    // One-time startup notice for existing users: "Try the new look"
+    // (PresetNewLook); "Show me" opens the switcher, where the card waits.
+    function offerNewLook() {
+        if (DryRun.active || !StateService.initialized || StateService.get("newLookNotified", false) || PresetNewLook.answered || !NewLookFlow.shouldOffer(Config.general, root.activePreset))
+            return;
+        StateService.set("newLookNotified", true);
+        Notifications.notifyInternal({
+            summary: I18n.t("presets.newlook.title"),
+            body: I18n.t("presets.newlook.notice"),
+            appName: Brand.displayName,
+            urgency: "normal",
+            replaceKey: Brand.appId + "-new-look",
+            actions: [
+                {
+                    identifier: "later",
+                    text: I18n.t("presets.newlook.not_now")
+                },
+                {
+                    identifier: "show",
+                    text: I18n.t("presets.newlook.show")
+                }
+            ],
+            actionHandlers: {
+                "later": () => PresetNewLook.dismiss(),
+                "show": () => Visibilities.setActiveModule("presets")
+            }
+        });
+    }
+
+    // Config, state and the preset list are loaded by then.
+    Timer {
+        id: newLookDelay
+        interval: 8000
+        onTriggered: root.offerNewLook()
+    }
+
     property bool _initialized: false
 
     function initialize() {
@@ -208,5 +247,6 @@ Singleton {
             return;
         _initialized = true;
         scanPresets();
+        newLookDelay.start();
     }
 }

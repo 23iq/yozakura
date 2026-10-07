@@ -24,6 +24,23 @@ function applyCase(text, mode) {
     }
 }
 
+// Font capitalization of a kit type role under the heading case: the
+// section label is UPPERCASE unless a case is chosen, titles follow the
+// chosen case, other roles keep theirs. Returns "mixed" | "upper" |
+// "lower" | "capitalize" (Type.qml maps it to Font.*).
+function capitalization(role, mode) {
+    var m = headingCase(mode);
+    if (role !== "label" && role !== "title")
+        return "mixed";
+    if (m === "upper")
+        return "upper";
+    if (m === "lower")
+        return "lower";
+    if (m === "title")
+        return "capitalize";
+    return role === "label" ? "upper" : "mixed";
+}
+
 function headingFamily(typeCfg, bodyFont) {
     var h = typeCfg && typeCfg.heading ? String(typeCfg.heading) : "";
     return h !== "" ? h : bodyFont;

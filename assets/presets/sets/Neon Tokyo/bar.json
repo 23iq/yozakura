@@ -1,0 +1,56 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": true,
+    "moduleOptions": {
+        "windowTitle": {
+            "show": "both",
+            "showIcon": true,
+            "maxWidth": 520
+        },
+        "systemStats": {
+            "items": [
+                "cpu",
+                "ram",
+                "gpuTemp",
+                "net"
+            ]
+        },
+        "workspaceTags": {
+            "brackets": false
+        },
+        "clock": {
+            "showWeather": false
+        }
+    },
+    "panels": [
+        {
+            "id": "main",
+            "edge": "top",
+            "style": "classic",
+            "size": 26,
+            "flat": true,
+            "margin": 0,
+            "options": {
+                "surface": "bg"
+            },
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaceTags",
+                    "windowTitle"
+                ],
+                "center": [],
+                "end": [
+                    "systemStats",
+                    "weather",
+                    "systray",
+                    "controls",
+                    "battery",
+                    "clock",
+                    "power"
+                ]
+            }
+        }
+    ]
+}

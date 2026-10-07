@@ -152,6 +152,7 @@ func TestEveryToolIsWellFormed(t *testing.T) {
 	for _, want := range []string{"config_schema", "config_get", "config_set", "config_describe", "config_search",
 		"presets_list", "preset_apply", "preset_save", "preset_diff",
 		"preset_show", "preset_mix", "preset_duplicate", "preset_rename", "preset_delete",
+		"preset_export", "preset_import", "preset_parts", "preset_apply_part",
 		"wallpaper_set", "wallpapers_list", "windows_list", "workspaces_list", "window_focus",
 		"window_move_to_workspace", "workspace_switch", "notification_send", "notifications_list",
 		"clipboard_read", "clipboard_write", "clipboard_history", "screenshot", "media_control",

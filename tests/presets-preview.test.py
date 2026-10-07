@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
+from lib import kit_stubs  # noqa: E402
 from PySide6.QtCore import QCoreApplication, QElapsedTimer, QEvent, QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
@@ -21,7 +22,10 @@ QtObject {
 }""",
     "Metrics": "pragma Singleton\nQtObject { property int rowHeight: 48; property int iconSize: 32; property int spacing: 8; property int padding: 16 }",
     "Colors": "pragma Singleton\nQtObject { property color primary: 'red'; property color overBackground: 'white'; property color outline: 'gray' }",
-    "Icons": "pragma Singleton\nQtObject { property string font: 'sans'; property string magicWand: 'w'; property string magnifyingGlass: 'm' }",
+    "Icons": "pragma Singleton\nQtObject { property string font: 'sans'; property string magicWand: 'w'; property string magnifyingGlass: 'm'; "
+             "property string pencil: 'p'; property string trash: 't'; property string check: 'c'; property string plus: '+'; "
+             "property string sparkle: 's'; property string arrowCounterClockwise: 'r'; property string squaresFour: 'q'; "
+             "property string paintBrush: 'b'; property string circleHalf: 'h' }",
     "Styling": "pragma Singleton\nQtObject { function fontSize(o) { return 14 + o; } function radius(o) { return 16 + o; } function srItem(v) { return 'white'; } }",
 })
 h.module("qs.modules.services", {"I18n": "pragma Singleton\nQtObject { function t(k) { return k; } }"})
@@ -48,6 +52,17 @@ h.module("qs.modules.components", {
     signal accepted; signal escapePressed; signal leftPressed; signal rightPressed; signal upPressed; signal downPressed
     function focusInput() { forceActiveFocus(); }
 }""",
+})
+kit_stubs.install(h)
+h.module("qs.modules.components.kit", {
+    "SearchField": "FocusScope { property string text; property string glyph; property bool clearOnEscape; "
+                   "signal accepted; signal escapePressed; function focusInput() { forceActiveFocus(); } }",
+})
+h.module("qs.modules.widgets.presets.store", {
+    "PresetParts": "pragma Singleton\nQtObject { property var parts: ({ current: {} }); function refresh() {} "
+                   "function save(n) {} function rename(a, b) {} function remove(n) {} }",
+    "PresetNewLook": "pragma Singleton\nQtObject { property bool offer: false; property bool trying: false; "
+                     "property string phase: 'idle'; property int left: 0; property real fraction: 0 }",
 })
 for f in ("PresetsGallery", "PresetGalleryCard", "PresetPreviewer"):
     h.copy(f"modules/widgets/presets/{f}.qml", "qs/modules/widgets/presets")
