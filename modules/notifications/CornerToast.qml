@@ -35,16 +35,21 @@ Item {
             Notifications.discardNotifications(root.notifications.map(n => n.id));
     }
 
+    // The app group this toast paused; resumed on leave, or when the toast
+    // goes away under the pointer (no leave event then)
+    property string pausedApp: ""
+    function hold(on: bool): void {
+        if (root.pausedApp !== "")
+            Notifications.resumeGroupTimers(root.pausedApp);
+        root.pausedApp = on && root.held ? root.held.appName : "";
+        if (root.pausedApp !== "")
+            Notifications.pauseGroupTimers(root.pausedApp);
+    }
+    Component.onDestruction: hold(false)
+
     HoverHandler {
         id: hover
-        onHoveredChanged: {
-            if (!root.held)
-                return;
-            if (hovered)
-                Notifications.pauseGroupTimers(root.held.appName);
-            else
-                Notifications.resumeGroupTimers(root.held.appName);
-        }
+        onHoveredChanged: root.hold(hovered)
     }
 
     // The stack: sheets behind the card, each a little narrower and quieter,
