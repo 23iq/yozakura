@@ -392,33 +392,25 @@ FocusScope {
             // Spacer
             // Item { Layout.fillWidth: true }
 
-            // Scheme Selector a la derecha
-            Item {
-                Layout.preferredWidth: 200
-                Layout.preferredHeight: 48
+            SchemeSelector {
+                id: schemeSelector
+                Layout.preferredWidth: 220
+                Layout.alignment: Qt.AlignVCenter
 
-                SchemeSelector {
-                    id: schemeSelector
-                    anchors.top: parent.top
-                    anchors.left: parent.left
-                    anchors.right: parent.right
-                    // No height set, allows expansion based on implicitHeight
+                onSchemeSelectorClosed: {
+                    wallpapersTabRoot.focusSearch();
+                }
 
-                    onSchemeSelectorClosed: {
-                        wallpapersTabRoot.focusSearch();
-                    }
+                onEscapePressedOnScheme: {
+                    wallpapersTabRoot.focusSearch();
+                }
 
-                    onEscapePressedOnScheme: {
-                        wallpapersTabRoot.focusSearch();
-                    }
+                onTabPressed: {
+                    wallpapersTabRoot.focusNextElement();
+                }
 
-                    onTabPressed: {
-                        wallpapersTabRoot.focusNextElement();
-                    }
-
-                    onShiftTabPressed: {
-                        wallpapersTabRoot.focusPreviousElement();
-                    }
+                onShiftTabPressed: {
+                    wallpapersTabRoot.focusPreviousElement();
                 }
             }
         }
