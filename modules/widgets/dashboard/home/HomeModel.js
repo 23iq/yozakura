@@ -34,62 +34,47 @@ function connectedDevice(list) {
     return "";
 }
 
-// One notification group -> the row it shows: {title, body, app, icon,
-// image}. A group of several shows the app name and "latest · N more"
-// (`more` formats the count).
-function groupRow(group, more) {
+// One notification group -> its one-line row: {text, count, app, icon,
+// image, ids}. The line is the latest notification ("summary · body", or
+// whichever is set); `count` how many the app has; `ids` to clear them.
+function groupRow(group) {
     var list = group && group.notifications ? group.notifications : [];
     var latest = list.length > 0 ? list[list.length - 1] : null;
+    var app = group ? group.appName || "" : "";
     if (!latest)
-        return { title: group ? group.appName || "" : "", body: "", app: "", icon: "", image: "" };
-    var many = list.length > 1;
-    var line = plainLine(many ? (latest.summary || latest.body) : latest.body);
+        return { text: app, count: 0, app: app, icon: "", image: "", ids: [] };
+    var parts = [plainLine(latest.summary), plainLine(latest.body)].filter(function (s) {
+        return s !== "";
+    });
     return {
-        title: many || !latest.summary ? (group.appName || latest.appName || "") : plainLine(latest.summary),
-        body: many ? (line !== "" ? line + " · " : "") + more(list.length - 1) : line,
-        app: latest.appName || group.appName || "",
+        text: parts.length > 0 ? parts.join(" · ") : (latest.appName || app),
+        count: list.length,
+        app: latest.appName || app,
         icon: latest.cachedAppIcon || latest.appIcon || "",
-        image: latest.cachedImage || latest.image || ""
+        image: latest.cachedImage || latest.image || "",
+        ids: list.map(function (n) {
+            return n.id;
+        })
     };
 }
 
-// Image source of a row's avatar: the notification image, else the app icon
-// from the icon theme, else none (the Avatar shows the app's initials).
+// Image source of a row's app mark: the app icon from the icon theme, else
+// the notification image, else none (the Avatar shows the app's initials).
 function avatarSource(row) {
-    var src = row.image || row.icon || "";
+    var src = row.icon || row.image || "";
     if (src === "")
         return "";
     if (src.charAt(0) === "/")
         return "file://" + src;
-    return row.image || /^[a-z]+:/.test(src) ? src : "image://icon/" + src;
+    return /^[a-z]+:/.test(src) ? src : "image://icon/" + src;
 }
 
-// Which quick-toggle chips keep their label so the row fits `avail` px:
-// all when they fit; else every inactive chip goes icon-only at once (one
-// calm look, not a mix), then active ones from the last back if still
-// needed. `full` / `compact` are each chip's width with / without label.
-function chipLabels(full, compact, active, avail, spacing) {
-    var n = full.length;
-    var shown = [];
-    var total = Math.max(0, n - 1) * spacing;
-    var i;
-    for (i = 0; i < n; i++) {
-        shown.push(true);
-        total += full[i];
-    }
-    if (total <= avail)
-        return shown;
-    for (i = 0; i < n; i++) {
-        if (!active[i]) {
-            shown[i] = false;
-            total -= full[i] - compact[i];
-        }
-    }
-    for (i = n - 1; i >= 0 && total > avail; i--) {
-        if (shown[i]) {
-            shown[i] = false;
-            total -= full[i] - compact[i];
-        }
-    }
-    return shown;
+// Pipewire peak (linear amplitude 0..1) -> meter fraction on a -60..0 dB
+// scale, so speech reads as a lively bar instead of a sliver.
+function meterLevel(peak) {
+    var p = Number(peak) || 0;
+    if (p <= 0.001)
+        return 0;
+    var db = 20 * Math.log(Math.min(1, p)) / Math.LN10;
+    return Math.max(0, Math.min(1, (db + 60) / 60));
 }

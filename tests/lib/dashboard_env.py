@@ -101,6 +101,12 @@ QtObject {{
 QtObject {
     property QtObject sink: QtObject { property QtObject audio: QtObject { property real volume: 0.62; property bool muted: false } }
     property QtObject source: QtObject { property QtObject audio: QtObject { property real volume: 0.3; property bool muted: false } }
+    property var outputDevices: [sink, { "nickname": "HDMI" }]
+    property var inputDevices: [source]
+    property var defaults: []
+    function friendlyDeviceName(n) { return n === sink ? "Speakers" : (n === source ? "Microphone" : (n && n.nickname) || "Unknown") }
+    function setDefaultSink(n) { defaults = defaults.concat(["sink"]) }
+    function setDefaultSource(n) { defaults = defaults.concat(["source"]) }
 }""",
         "Brightness": """pragma Singleton
 QtObject {
@@ -158,6 +164,8 @@ class DashboardEnv(KitEnv):
                               "readonly property int Playlist: 2 }",
             "MprisPlaybackState": "QtObject { readonly property int Stopped: 0; readonly property int Playing: 1; "
                                   "readonly property int Paused: 2 }"})
+        self.h.module("Quickshell.Services.Pipewire", {
+            "PwNodePeakMonitor": "QtObject { property var node; property bool enabled: true; property real peak: 0.25 }"})
         self.h.module("qs.modules.widgets.dashboard.metrics", {"MetricsTab": "Item {}"})
         self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item {}"})
         self._qmldir(qs / "modules/notch", "qs.modules.notch", only=["NotchAnimationBehavior"])

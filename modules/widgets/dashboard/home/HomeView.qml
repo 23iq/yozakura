@@ -4,11 +4,13 @@ import qs.modules.theme
 import qs.modules.components.kit
 
 // Composed dashboard home (layout.dashboard.home = "composed"): one calm
-// surface in two columns split by a Divider, built from the kit's Groups
-// (the visual language gives them their look). Left: time, date and
-// weather, now playing, quick toggles, levels. Right: the month calendar and
-// the notifications, which take the remaining height. The view is as large
-// as its content; the dashboard follows it.
+// surface in two columns, no captions; the hierarchy comes from the layout.
+// Left: the clock (hero) with the weather, now playing around its art, a
+// row of icon toggles and the levels (volume, microphone, brightness).
+// Right: a compact month and the notifications, or the details a toggle or
+// level opened (networks, Bluetooth devices, audio devices). The view
+// offers its natural size and fills whatever it is given: free height goes
+// evenly between the left blocks and to the notifications.
 Item {
     id: root
 
@@ -16,6 +18,17 @@ Item {
     readonly property int gap: Look.groupBoxed ? Math.round(Look.groupGap / 2) : Space.xl
     readonly property int leftW: Metrics.sheetW
     readonly property int rightW: Metrics.launcherLeftPanelW
+    // What the right column shows instead of the month and notifications.
+    property string detail: ""
+
+    function openDetail(kind: string) {
+        root.detail = root.detail === kind ? "" : kind;
+    }
+
+    onVisibleChanged: {
+        if (!visible)
+            root.detail = "";
+    }
 
     implicitWidth: root.leftW + root.rightW + root.gap * 2 + Space.hairline
     implicitHeight: Math.max(Metrics.dashH, left.implicitHeight, calendar.implicitHeight + Look.groupGap + notifications.minimumHeight)
@@ -24,50 +37,50 @@ Item {
         anchors.fill: parent
         spacing: root.gap
 
-        // Header, player and toggles from the top; the levels at the bottom.
-        Item {
+        ColumnLayout {
             id: left
             Layout.preferredWidth: root.leftW
+            Layout.horizontalStretchFactor: root.leftW
+            Layout.fillWidth: true
             Layout.fillHeight: true
-            implicitHeight: top.implicitHeight + Look.groupGap + levels.implicitHeight
+            spacing: Look.groupGap
 
-            Column {
-                id: top
-                width: parent.width
-                spacing: Look.groupGap
+            Group {
+                Layout.fillWidth: true
 
-                Group {
+                HomeHeader {
+                    objectName: "header"
                     width: parent.width
-
-                    HomeHeader {
-                        objectName: "header"
-                        width: parent.width
-                    }
-                }
-
-                HomePlayer {
-                    objectName: "player"
-                    width: parent.width
-                    divider: true
-                }
-
-                Group {
-                    width: parent.width
-                    divider: true
-
-                    HomeToggles {
-                        objectName: "toggles"
-                        width: parent.width
-                    }
                 }
             }
 
-            HomeLevels {
-                id: levels
-                objectName: "levels"
-                anchors.bottom: parent.bottom
-                width: parent.width
-                divider: true
+            Item {
+                Layout.fillHeight: true
+            }
+
+            HomePlayer {
+                objectName: "player"
+                Layout.fillWidth: true
+            }
+
+            Item {
+                Layout.fillHeight: true
+            }
+
+            Group {
+                Layout.fillWidth: true
+
+                HomeToggles {
+                    objectName: "toggles"
+                    width: parent.width
+                    onDetails: kind => root.openDetail(kind)
+                }
+
+                HomeLevels {
+                    objectName: "levels"
+                    width: parent.width
+                    onDetails: kind => root.openDetail(kind)
+                }
             }
         }
 
@@ -87,20 +100,35 @@ Item {
 
         ColumnLayout {
             Layout.preferredWidth: root.rightW
+            Layout.horizontalStretchFactor: root.rightW
+            Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: Look.groupGap
 
             HomeCalendar {
                 id: calendar
                 objectName: "calendar"
+                visible: root.detail === ""
                 Layout.fillWidth: true
             }
 
             HomeNotifications {
                 id: notifications
                 objectName: "notifications"
+                visible: root.detail === ""
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.preferredHeight: notifications.minimumHeight
+            }
+
+            HomeDetail {
+                objectName: "detail"
+                visible: root.detail !== ""
+                kind: root.detail
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.preferredHeight: notifications.minimumHeight
+                onDone: root.detail = ""
             }
         }
     }

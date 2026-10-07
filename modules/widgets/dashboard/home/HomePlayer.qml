@@ -4,9 +4,11 @@ import qs.modules.services
 import qs.modules.components.kit
 import "HomeModel.js" as HomeModel
 
-// "Now playing" on the composed dashboard: the art beside the title and
-// "artist · album", the timeline (click to seek) with its times, then
-// prev / play / next where only play is the surface's primary action.
+// "Now playing" on the composed dashboard, built around the art: a large
+// Art beside the title, "artist · album" and prev / play / next (play is the
+// surface's one primary action), the timeline under them (click to seek;
+// the times show only while it is hovered). Where groups are boxes, the
+// box takes a faint blurred tint of the art.
 Group {
     id: root
 
@@ -14,8 +16,8 @@ Group {
     readonly property bool hasPlayer: root.player !== null
     readonly property real length: root.player?.length ?? 0
     readonly property real position: root.player?.position ?? 0
-
-    label: I18n.t("dashboard.home.now_playing")
+    readonly property url artUrl: root.player?.trackArtUrl ?? ""
+    readonly property bool showTimes: seekArea.containsMouse || seekArea.pressed
 
     Timer {
         running: MprisController.isPlaying && root.visible
@@ -24,101 +26,144 @@ Group {
         onTriggered: root.player?.positionChanged()
     }
 
-    Row {
+    Item {
         width: parent.width
-        spacing: Space.m
+        implicitHeight: content.implicitHeight
 
-        Art {
-            id: art
-            width: Space.controlM + Space.l
-            height: width
-            icon: Icons.musicNotes
-            source: root.player?.trackArtUrl ?? ""
+        HomeArtGlow {
+            objectName: "artGlow"
+            x: -root.padding
+            y: -root.padding
+            width: parent.width + root.padding * 2
+            height: parent.height + root.padding * 2
+            radius: Look.groupRadius
+            source: root.boxed ? root.artUrl : ""
         }
 
         Column {
-            anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - art.width - parent.spacing
-            spacing: Space.xs / 2
-
-            KitText {
-                objectName: "title"
-                width: parent.width
-                text: root.hasPlayer ? (root.player.trackTitle || root.player.identity || "") : I18n.t("player.nothing_playing")
-                font.weight: Look.labelWeight
-            }
-
-            KitText {
-                objectName: "artist"
-                width: parent.width
-                role: "secondary"
-                text: root.hasPlayer ? HomeModel.artistLine(root.player.trackArtist, root.player.trackAlbum) : I18n.t("player.enjoy_silence")
-            }
-        }
-    }
-
-    Column {
-        width: parent.width
-        spacing: Space.xs
-        visible: root.hasPlayer
-
-        ProgressLine {
-            objectName: "timeline"
+            id: content
             width: parent.width
-            value: root.length > 0 ? root.position / root.length : 0
+            spacing: Space.m
 
-            MouseArea {
-                anchors.fill: parent
-                anchors.topMargin: -Space.s
-                anchors.bottomMargin: -Space.s
-                enabled: (root.player?.canSeek ?? false) && root.length > 0
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: m => root.player.position = Math.max(0, Math.min(1, m.x / width)) * root.length
+            Row {
+                width: parent.width
+                spacing: Space.l
+
+                Art {
+                    id: art
+                    objectName: "art"
+                    width: Space.controlL + Space.xl
+                    height: width
+                    icon: Icons.musicNotes
+                    source: root.artUrl
+                }
+
+                Column {
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: parent.width - art.width - parent.spacing
+                    spacing: Space.xs / 2
+
+                    KitText {
+                        objectName: "title"
+                        width: parent.width
+                        text: root.hasPlayer ? (root.player.trackTitle || root.player.identity || "") : I18n.t("player.nothing_playing")
+                        font.weight: Look.labelWeight
+                    }
+
+                    KitText {
+                        objectName: "artist"
+                        width: parent.width
+                        role: "secondary"
+                        text: root.hasPlayer ? HomeModel.artistLine(root.player.trackArtist, root.player.trackAlbum) : I18n.t("player.enjoy_silence")
+                    }
+
+                    Item {
+                        width: 1
+                        height: Space.s
+                    }
+
+                    Row {
+                        x: -Space.s
+                        spacing: Space.xs
+                        visible: root.hasPlayer
+
+                        IconButton {
+                            size: "s"
+                            icon: Icons.previous
+                            enabled: MprisController.canGoPrevious
+                            onClicked: MprisController.previous()
+                        }
+
+                        IconButton {
+                            objectName: "playButton"
+                            size: "s"
+                            primary: true
+                            icon: MprisController.isPlaying ? Icons.pause : Icons.play
+                            enabled: MprisController.canTogglePlaying
+                            onClicked: MprisController.togglePlaying()
+                        }
+
+                        IconButton {
+                            size: "s"
+                            icon: Icons.next
+                            enabled: MprisController.canGoNext
+                            onClicked: MprisController.next()
+                        }
+                    }
+                }
             }
-        }
 
-        Item {
-            width: parent.width
-            height: elapsed.implicitHeight
+            ProgressLine {
+                id: timeline
+                objectName: "timeline"
+                width: parent.width
+                visible: root.hasPlayer
+                value: root.length > 0 ? root.position / root.length : 0
 
-            KitText {
-                id: elapsed
-                role: "caption"
-                tabular: true
-                text: HomeModel.formatTime(root.position)
+                MouseArea {
+                    id: seekArea
+                    anchors.fill: parent
+                    anchors.topMargin: -Space.s
+                    anchors.bottomMargin: -Space.l
+                    hoverEnabled: true
+                    enabled: root.hasPlayer
+                    cursorShape: (root.player?.canSeek ?? false) && root.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    onClicked: m => {
+                        if ((root.player?.canSeek ?? false) && root.length > 0)
+                            root.player.position = Math.max(0, Math.min(1, m.x / width)) * root.length;
+                    }
+                }
+
+                // The times hang under the line (in the group's breathing
+                // room) and fade in on hover.
+                Item {
+                    objectName: "times"
+                    y: parent.height + Space.xs
+                    width: parent.width
+                    height: elapsed.implicitHeight
+                    opacity: root.showTimes ? 1 : 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Motion.enter.duration / 2
+                        }
+                    }
+
+                    KitText {
+                        id: elapsed
+                        role: "caption"
+                        tabular: true
+                        text: HomeModel.formatTime(root.position)
+                    }
+
+                    KitText {
+                        anchors.right: parent.right
+                        role: "caption"
+                        tabular: true
+                        text: root.length > 0 ? HomeModel.formatTime(root.length) : "--:--"
+                    }
+                }
             }
-
-            KitText {
-                anchors.right: parent.right
-                role: "caption"
-                tabular: true
-                text: root.length > 0 ? HomeModel.formatTime(root.length) : "--:--"
-            }
-        }
-    }
-
-    Row {
-        x: (parent.width - width) / 2
-        spacing: Space.m
-
-        IconButton {
-            icon: Icons.previous
-            enabled: MprisController.canGoPrevious
-            onClicked: MprisController.previous()
-        }
-
-        IconButton {
-            objectName: "playButton"
-            primary: true
-            icon: MprisController.isPlaying ? Icons.pause : Icons.play
-            enabled: MprisController.canTogglePlaying
-            onClicked: MprisController.togglePlaying()
-        }
-
-        IconButton {
-            icon: Icons.next
-            enabled: MprisController.canGoNext
-            onClicked: MprisController.next()
         }
     }
 }

@@ -1,11 +1,13 @@
 import QtQuick
+import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.config
+import "../widgets/WidgetFormat.js" as WidgetFormat
 
-// Header of the composed dashboard: the time (display) over the date
-// (secondary); the weather, temperature over condition, quiet at the right
-// (hidden until it loads).
+// Header of the composed dashboard: the time as the hero (display) over the
+// date (secondary); the weather as a glyph and the temperature, quiet at the
+// right (hidden until it loads).
 Item {
     id: root
 
@@ -26,7 +28,7 @@ Item {
     Column {
         id: time
         anchors.left: parent.left
-        anchors.bottom: parent.bottom
+        anchors.verticalCenter: parent.verticalCenter
         spacing: Space.xs
 
         KitText {
@@ -42,25 +44,29 @@ Item {
         }
     }
 
-    Column {
+    Row {
         id: weather
         objectName: "weather"
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        spacing: Space.xs
+        anchors.top: parent.top
+        anchors.topMargin: Space.s
+        spacing: Space.s
         visible: WeatherService.dataAvailable
 
-        KitText {
-            anchors.right: parent.right
-            role: "body"
-            tabular: true
-            text: Math.round(WeatherService.currentTemp) + "°"
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Icons[WidgetFormat.weatherGlyph(WeatherService.effectiveWeatherCode ?? WeatherService.weatherCode, WeatherService.effectiveIsDay ?? true)] || Icons.sun
+            font.family: Icons.font
+            font.pixelSize: Type.iconSize("title")
+            color: Type.secondary
         }
 
         KitText {
-            anchors.right: parent.right
-            role: "caption"
-            text: WeatherService.weatherDescription
+            objectName: "temperature"
+            anchors.verticalCenter: parent.verticalCenter
+            role: "title"
+            tabular: true
+            text: WidgetFormat.temp(WeatherService.currentTemp)
         }
     }
 }
