@@ -25,6 +25,7 @@ h.module("qs.modules.theme", {
     "Colors": "pragma Singleton\nimport QtQuick\nQtObject { property color background: 'black'; property color overSurface: 'white'; "
               "property color surface: 'gray'; property color overSurfaceVariant: 'white'; property color overBackground: 'white' }",
     "Styling": "pragma Singleton\nimport QtQuick\nQtObject { function radius(x) { return x; } function srItem(x) { return 'red'; } }",
+    "Metrics": "pragma Singleton\nimport QtQuick\nQtObject { property int bentoCell: 132 }",
     "Icons": "pragma Singleton\nimport QtQuick\nQtObject { property string accept: 'v'; property string circleNotch: 'o'; property string font: 'Sans' }",
 })
 h.module("qs.modules.components", {

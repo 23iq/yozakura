@@ -92,6 +92,13 @@ var category = {
                     "keywords": "sheet side left right edge vertical bar"
                 },
                 {
+                    "key": "layout.backdrop",
+                    "type": "toggle",
+                    "label": "prefs.layout.backdrop",
+                    "description": "prefs.layout.backdrop.desc",
+                    "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
+                },
+                {
                     "key": "layout.cheatsheet.host",
                     "type": "selector",
                     "options": [

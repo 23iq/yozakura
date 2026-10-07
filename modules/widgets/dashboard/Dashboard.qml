@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Effects
 import QtQuick.Layouts
+import Quickshell
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.components.kit
@@ -40,16 +41,25 @@ NotchAnimationBehavior {
     readonly property int railWidth: tabWidth + railGap * 2 + Space.hairline
     // layout.dashboard.home: the widgets tab shows the composed home view or the bento grid.
     readonly property bool homeComposed: (Config.layout.dashboard.home ?? "composed") !== "bento"
-    // The widgets tab is as wide and tall as its view (composed home, or the bento grid), so nothing is clipped.
+    // One stable size for every tab: the widgets tab's (composed home or bento
+    // grid, always loaded while open) is the largest, so switching tabs never
+    // resizes the dashboard; the other tabs fill it.
     readonly property Item widgetsItem: widgetsTabLoader.item as Item
     readonly property real widgetsWidth: homeComposed && widgetsItem ? widgetsItem.implicitWidth : 780
     readonly property real widgetsHeight: widgetsItem ? widgetsItem.implicitHeight : 430
-    readonly property real nonAnimWidth: (state.currentTab === 0 ? widgetsWidth : 400) + railWidth
+    // Room the screen leaves for the dashboard (air on every side).
+    readonly property var screenObj: {
+        for (const s of Quickshell.screens)
+            if (s.name === root.screenName)
+                return s;
+        return null;
+    }
+    readonly property real nonAnimWidth: DashboardTabs.fitScreen(widgetsWidth + railWidth, screenObj ? screenObj.width : 0, Space.xl)
 
     onHomeComposedChanged: bentoEditing = false
 
     implicitWidth: nonAnimWidth
-    implicitHeight: state.currentTab === 0 ? Math.max(300, widgetsHeight) : 430
+    implicitHeight: DashboardTabs.fitScreen(Math.max(430, widgetsHeight), screenObj ? screenObj.height : 0, Space.xl * 2)
 
     // Track which tabs have been loaded (for lazy loading)
     property var loadedTabs: ({0: true}) // Tab 0 (widgets) loaded by default

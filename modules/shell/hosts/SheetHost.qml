@@ -17,17 +17,11 @@ SurfaceHost {
     readonly property var area: EdgeService.sheetRect(root.screen, Config.layout && Config.layout.sheet ? Config.layout.sheet.side : "auto", root.wantWidth)
     readonly property string side: root.area.side
 
-    Rectangle {
-        id: scrim
+    HostBackdrop {
         anchors.fill: parent
-        color: Colors.scrim
-        opacity: 0.3 * Math.min(1, root.progress)
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.AllButtons
-            onClicked: root.requestClose()
-        }
+        strength: 0.3
+        progress: root.progress
+        onClicked: root.requestClose()
     }
 
     Item {
