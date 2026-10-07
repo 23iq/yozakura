@@ -3,8 +3,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.settings
 import qs.modules.settings.editors
-import qs.config
-import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Exclusive mode (Hyprland): the shell becomes the only one on the session.
 // Off: what will change, with the real detected units/monitors, then a
@@ -39,7 +38,7 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 16
+        spacing: Space.l
 
         StatusLine {
             objectName: "exclusiveStatus"
@@ -75,7 +74,7 @@ Item {
         Column {
             objectName: "exclusiveSteps"
             width: parent.width
-            spacing: 14
+            spacing: Space.m
             visible: !ExclusiveService.active
 
             ExclusiveStep {
@@ -111,7 +110,7 @@ Item {
         Column {
             objectName: "exclusiveActive"
             width: parent.width
-            spacing: 14
+            spacing: Space.m
             visible: ExclusiveService.active
 
             ExclusiveStep {
@@ -136,68 +135,53 @@ Item {
             }
         }
 
-        Text {
+        KitText {
             visible: !ExclusiveService.active
             width: parent.width
+            role: "caption"
             text: I18n.t("prefs.exclusive.safety")
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
         }
 
-        Rectangle {
+        // The confirmation: a group of its own (a hairline above in ink, a
+        // card in glass, a tile in tiles) with the one primary action.
+        Group {
             objectName: "exclusiveConfirm"
             visible: root.confirming !== ""
             width: parent.width
-            height: confirmCol.implicitHeight + 28
-            radius: Math.min(Styling.radius(2), 18)
-            color: Ui.alpha(Colors.primary, 0.08)
-            border.width: 1
-            border.color: Ui.alpha(Colors.primary, 0.4)
+            divider: true
 
-            Column {
-                id: confirmCol
-                x: 16
-                y: 14
-                width: parent.width - 32
-                spacing: 10
-                Text {
-                    width: parent.width
-                    text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.title") : I18n.t("prefs.exclusive.confirm.enable.title")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
-                    font.weight: Font.DemiBold
-                    color: Colors.overBackground
-                    wrapMode: Text.WordWrap
+            KitText {
+                width: parent.width
+                role: "body"
+                text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.title") : I18n.t("prefs.exclusive.confirm.enable.title")
+                font.weight: Look.activeLabelWeight
+                wrapMode: Text.WordWrap
+            }
+            KitText {
+                width: parent.width
+                role: "secondary"
+                text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.body", ExclusiveService.status.backup ?? "") : I18n.t("prefs.exclusive.confirm.enable.body")
+                wrapMode: Text.WrapAnywhere
+            }
+            Row {
+                spacing: Space.s
+                PillButton {
+                    objectName: "exclusiveCancel"
+                    kind: "ghost"
+                    text: I18n.t("common.cancel")
+                    onClicked: root.confirming = ""
                 }
-                Text {
-                    width: parent.width
-                    text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.body", ExclusiveService.status.backup ?? "") : I18n.t("prefs.exclusive.confirm.enable.body")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurfaceVariant
-                    wrapMode: Text.WrapAnywhere
-                }
-                Row {
-                    spacing: 8
-                    PillButton {
-                        objectName: "exclusiveCancel"
-                        kind: "ghost"
-                        text: I18n.t("common.cancel")
-                        onClicked: root.confirming = ""
-                    }
-                    PillButton {
-                        objectName: "exclusiveConfirmButton"
-                        kind: "filled"
-                        enabled: !ExclusiveService.busy
-                        icon: root.confirming === "restore" ? "clockCounterClockwise" : "lightning"
-                        text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.go") : I18n.t("prefs.exclusive.confirm.enable.go")
-                        onClicked: {
-                            const run = root.confirming === "restore" ? ExclusiveService.restore : ExclusiveService.enable;
-                            root.confirming = "";
-                            run(() => ExclusiveService.loadPlan());
-                        }
+                PillButton {
+                    objectName: "exclusiveConfirmButton"
+                    kind: "filled"
+                    enabled: !ExclusiveService.busy
+                    icon: root.confirming === "restore" ? "clockCounterClockwise" : "lightning"
+                    text: root.confirming === "restore" ? I18n.t("prefs.exclusive.confirm.restore.go") : I18n.t("prefs.exclusive.confirm.enable.go")
+                    onClicked: {
+                        const run = root.confirming === "restore" ? ExclusiveService.restore : ExclusiveService.enable;
+                        root.confirming = "";
+                        run(() => ExclusiveService.loadPlan());
                     }
                 }
             }
