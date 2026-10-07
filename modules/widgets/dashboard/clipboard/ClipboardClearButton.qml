@@ -1,11 +1,11 @@
 import QtQuick
-import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
-// "Clear history" button: the first press widens it into a confirmation.
-StyledRect {
+// The history section label with its "Clear" action: the first press turns
+// it into "Clear all?", the second clears. Reachable with Tab from the
+// search field (Enter activates, Escape / Shift+Tab go back).
+SectionLabel {
     id: clearButton
 
     required property ClipboardTabBase tab
@@ -24,27 +24,13 @@ StyledRect {
         clearButton.tab.focusSearchInput();
     }
 
-    width: clearButton.tab.clearButtonConfirmState ? 120 : 48
-    height: 48
-    variant: {
-        if (clearButton.tab.clearButtonConfirmState) {
-            return "error";
-        } else if (clearButton.tab.clearButtonFocused || clearButtonMouseArea.containsMouse) {
-            return "focus";
-        } else {
-            return "pane";
-        }
-    }
+    text: I18n.t("clipboard.history")
+    action: clearButton.tab.clearButtonConfirmState ? I18n.t("clipboard.clear_all_confirm") : I18n.t("common.clear")
+    actionHighlighted: clearButton.tab.clearButtonFocused || clearButton.tab.clearButtonConfirmState
+    visible: ClipboardService.items.length > 0
     focus: clearButton.tab.clearButtonFocused
     activeFocusOnTab: true
-
-    Behavior on width {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Motion.morph.easing
-        }
-    }
+    onTriggered: clearButton.activate()
 
     onActiveFocusChanged: {
         if (activeFocus) {
@@ -52,53 +38,6 @@ StyledRect {
         } else {
             clearButton.tab.clearButtonFocused = false;
             clearButton.tab.resetClearButton();
-        }
-    }
-
-    MouseArea {
-        id: clearButtonMouseArea
-        anchors.fill: parent
-        hoverEnabled: true
-
-        onClicked: clearButton.activate()
-    }
-
-    Row {
-        anchors.fill: parent
-        anchors.margins: 8
-        spacing: 8
-
-        Text {
-            width: 32
-            height: parent.height
-            text: clearButton.tab.clearButtonConfirmState ? Icons.alert : Icons.trash
-            textFormat: Text.RichText
-            font.family: Icons.font
-            font.pixelSize: 20
-            color: clearButton.tab.clearButtonConfirmState ? clearButton.item : Styling.srItem("overprimary")
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
-        }
-
-        Text {
-            width: parent.width - 32 - parent.spacing
-            height: parent.height
-            text: I18n.t("clipboard.clear_all_confirm")
-            font.family: Config.theme.font
-            font.weight: Font.Bold
-            font.pixelSize: Config.theme.fontSize
-            color: clearButton.item
-            opacity: clearButton.tab.clearButtonConfirmState ? 1.0 : 0.0
-            visible: opacity > 0
-            verticalAlignment: Text.AlignVCenter
-
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.enter.easing
-                }
-            }
         }
     }
 

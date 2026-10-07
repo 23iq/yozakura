@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
 // Right side of the tmux tab: the selected session's pane layout above its
 // window chips, or a hint when no session (or the create row) is selected.
@@ -11,40 +11,38 @@ Item {
     required property var tab
 
     property var currentSession: previewPanel.tab.selectedIndex >= 0 && previewPanel.tab.selectedIndex < previewPanel.tab.filteredSessions.length ? previewPanel.tab.filteredSessions[previewPanel.tab.selectedIndex] : null
-    readonly property bool hasSession: {
-        if (!previewPanel.currentSession)
-            return false;
-        if (previewPanel.currentSession.isCreateButton === true)
-            return false;
-        if (previewPanel.currentSession.isCreateSpecificButton === true)
-            return false;
-        return true;
-    }
+    readonly property bool hasSession: !!previewPanel.currentSession && previewPanel.currentSession.isCreateButton !== true && previewPanel.currentSession.isCreateSpecificButton !== true
 
     // Content when a session is selected
     Item {
         anchors.fill: parent
         visible: previewPanel.hasSession
 
-        TmuxPanesPreview {
+        SectionLabel {
+            id: panesLabel
             anchors.top: parent.top
+            anchors.topMargin: Space.s
+            width: parent.width
+            text: previewPanel.currentSession ? previewPanel.currentSession.name : ""
+        }
+
+        TmuxPanesPreview {
+            anchors.top: panesLabel.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.bottom: separator.top
-            anchors.bottomMargin: 8
+            anchors.bottom: windowsLabel.top
+            anchors.topMargin: Space.m
+            anchors.bottomMargin: Space.l
             tab: previewPanel.tab
             currentSession: previewPanel.currentSession
         }
 
-        Rectangle {
-            id: separator
+        SectionLabel {
+            id: windowsLabel
             anchors.bottom: windowsSection.top
-            anchors.bottomMargin: 8
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 2
-            radius: Styling.radius(0)
-            color: Colors.surface
+            anchors.bottomMargin: Space.s
+            width: parent.width
+            text: I18n.t("tmux.windows")
         }
 
         TmuxWindowsBar {
@@ -52,7 +50,7 @@ Item {
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 32
+            height: Space.chip
             tab: previewPanel.tab
             currentSession: previewPanel.currentSession
         }
@@ -61,33 +59,27 @@ Item {
     // Empty state
     Column {
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Space.s
         visible: !previewPanel.hasSession
 
         Text {
+            anchors.horizontalCenter: parent.horizontalCenter
             text: Icons.terminalWindow
             font.family: Icons.font
-            font.pixelSize: 48
-            color: Colors.surfaceBright
-            anchors.horizontalCenter: parent.horizontalCenter
-            textFormat: Text.RichText
+            font.pixelSize: Type.iconSize("display")
+            color: Type.muted
         }
 
-        Text {
+        KitText {
+            anchors.horizontalCenter: parent.horizontalCenter
+            role: "body"
             text: I18n.t("tmux.no_session")
-            font.family: Config.theme.font
-            font.pixelSize: Config.theme.fontSize
-            font.weight: Font.Bold
-            color: Colors.overBackground
-            anchors.horizontalCenter: parent.horizontalCenter
         }
 
-        Text {
-            text: I18n.t("tmux.select_session_hint")
-            font.family: Config.theme.font
-            font.pixelSize: Config.theme.fontSize
-            color: Colors.outline
+        KitText {
             anchors.horizontalCenter: parent.horizontalCenter
+            role: "caption"
+            text: I18n.t("tmux.select_session_hint")
         }
     }
 }

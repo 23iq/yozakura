@@ -12,15 +12,15 @@ test('rows: options count and heights', () => {
     assert.equal(V.optionsCount({ isFile: true }), 5);
     assert.equal(V.optionsCount({ isImage: true }), 5);
     assert.equal(V.rowHeight({ preview: 'x' }, false), 48);
-    // three visible options either way
-    assert.equal(V.rowHeight({ preview: 'x' }, true), 48 + 4 + 108 + 8);
-    assert.equal(V.rowHeight({ isFile: true }, true), 48 + 4 + 108 + 8);
+    // every option is visible (4 for text, 5 with Open)
+    assert.equal(V.rowHeight({ preview: 'x' }, true), 48 + 4 + 144 + 8);
+    assert.equal(V.rowHeight({ isFile: true }, true), 48 + 4 + 180 + 8);
 });
 
 test('rows: y offsets only grow below an expandable expanded row', () => {
     const at = () => ({ preview: 'x' });
     assert.equal(V.rowY(3, 10, -1, true, at), 144);
-    assert.equal(V.rowY(3, 10, 1, true, at), 144 + 120);
+    assert.equal(V.rowY(3, 10, 1, true, at), 144 + 156);
     assert.equal(V.rowY(3, 10, 1, false, at), 144);
     assert.equal(V.rowY(3, 10, 5, true, at), 144);
     assert.equal(V.rowY(5, 2, -1, true, at), 96); // clamped to the model

@@ -6,7 +6,7 @@
 
 var ROW_HEIGHT = 48;
 var OPTION_HEIGHT = 36;
-var MAX_VISIBLE_OPTIONS = 3;
+var MAX_VISIBLE_OPTIONS = 5;
 
 var MONTH_KEYS = ["calendar.month.january", "calendar.month.february", "calendar.month.march", "calendar.month.april", "calendar.month.may", "calendar.month.june", "calendar.month.july", "calendar.month.august", "calendar.month.september", "calendar.month.october", "calendar.month.november", "calendar.month.december"];
 

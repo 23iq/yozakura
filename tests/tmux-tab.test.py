@@ -5,10 +5,12 @@ Loads the real tab (and its sibling components) on SettingsEnv with a fake
 from a fixture, so the test checks the exact tmux invocations too.
 """
 import json
+import shutil
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from qmlharness import REPO  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 from PySide6.QtCore import QCoreApplication, QEvent, Qt  # noqa: E402
 from PySide6.QtGui import QKeyEvent  # noqa: E402
@@ -66,8 +68,10 @@ h.module("qs.modules.services", {
                     "function setActiveModule(m) { module = m; } }",
 })
 
-h.copy("modules/widgets/dashboard/tmux/TmuxTab.qml")
-root = env.load('import QtQuick\nimport tmuxfixture\nItem { property QtObject fx: TmuxFixture; width: 900; height: 420; TmuxTab { objectName: "tab"; '
+tmux_dir = env.root / "qs/modules/widgets/dashboard/tmux"
+shutil.copytree(REPO / "modules/widgets/dashboard/tmux", tmux_dir, dirs_exist_ok=True)
+env._qmldir(tmux_dir, "qs.modules.widgets.dashboard.tmux")
+root = env.load('import QtQuick\nimport tmuxfixture\nimport qs.modules.widgets.dashboard.tmux\nItem { property QtObject fx: TmuxFixture; width: 900; height: 420; TmuxTab { objectName: "tab"; '
                 'anchors.fill: parent; leftPanelWidth: 400 } }')
 tab = h.find(root, "tab")
 # An object declared inside TmuxTab.qml: evaluates with the tab's own ids.
@@ -142,6 +146,10 @@ pump()
 rows = ev("resultsList.contentItem.children.filter(c => c.sessionData !== undefined).length")
 check("one row item per session", rows == 3, rows)
 check("rendered texts", ev("resultsList.itemAtIndex(1).sessionData.name") == "main")
+check("rows are kit ListRows, the cursor row selected",
+      ev("resultsList.itemAtIndex(1).children[0].title") == "main"
+      and ev("resultsList.itemAtIndex(1).children[0].selected")
+      and not ev("resultsList.itemAtIndex(2).children[0].selected"))
 # Pane boxes and window chips: items carrying a pane/window modelData + hovered.
 chips = h.eval(root, "(function f(i) { var n = (i.modelData !== undefined && i.hovered !== undefined"
                      " && i.modelData && i.modelData.index !== undefined) ? 1 : 0;"
@@ -158,6 +166,12 @@ ev("searchInput.shiftAccepted()")
 check("shift+enter expands the options", ev("root.expandedItemIndex") == 1 and ev("root.keyboardNavigation"))
 ev("searchInput.downPressed()")
 check("down navigates options", ev("root.selectedOptionIndex") == 1)
+pump()
+opts = json.loads(h.eval(root, "JSON.stringify((function f(i) { var r = []; if (i.shown === false) return r; if (i.title !== undefined && i.highlighted !== undefined"
+                    " && i.modelData && i.modelData.icon !== undefined) r.push(i.title + (i.highlighted ? '*' : ''));"
+                    " for (var k = 0; k < i.children.length; k++) r = r.concat(f(i.children[k])); return r; })(children[0]))"))
+check("options are compact rows, the keyboard one highlighted",
+      opts == ["Open", "Rename*", "Quit"], opts)
 ev("searchInput.accepted()")
 pump()
 check("rename option enters rename mode", ev("root.renameMode") and ev("root.sessionToRename") == "main"

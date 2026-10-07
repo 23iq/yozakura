@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.components.kit
 import qs.modules.theme
 import qs.modules.services
 import "ClipboardView.js" as ClipboardView
@@ -55,10 +56,10 @@ Item {
     // Placeholder while the image is not ready
     Rectangle {
         anchors.centerIn: parent
-        width: 120
-        height: 120
-        color: Colors.surfaceBright
-        radius: Styling.radius(4)
+        width: Space.controlXL
+        height: Space.controlXL
+        color: Type.placeholder
+        radius: Space.controlRadius
         visible: {
             if (!preview.item)
                 return false;
@@ -77,8 +78,8 @@ Item {
             text: Icons.image
             textFormat: Text.RichText
             font.family: Icons.font
-            font.pixelSize: 48
-            color: Styling.srItem("overprimary")
+            font.pixelSize: Type.iconSize("display")
+            color: Type.muted
         }
     }
 }
