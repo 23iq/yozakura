@@ -40,6 +40,15 @@ QtObject {
     readonly property int groupGap: Space[root.group.gap]
     readonly property int surfacePadding: Space[root.group.inset]
 
+    // Floating surfaces (Surface `floating`: OSDs): null keeps the theme's
+    // popup surface (ink, classic); glass is a translucent frosted box with
+    // a hairline edge and a top highlight, tiles a solid tile.
+    readonly property var float: root.spec.float || null
+    readonly property bool floatBoxed: root.float !== null
+    readonly property color floatFill: root.floatBoxed ? root.alpha(root.float.fill, root.float.fillOpacity) : "transparent"
+    readonly property color floatOutline: root.floatBoxed ? root.alpha("overBackground", root.float.outline) : "transparent"
+    readonly property color floatHighlight: Qt.rgba(1, 1, 1, root.floatBoxed ? root.float.highlight : 0)
+
     // Controls (IconButton, Chip, ListRow hover). Without a control spec
     // (classic) the theme's "common" / "focus" variants draw them.
     readonly property bool boxedControls: root.control !== null

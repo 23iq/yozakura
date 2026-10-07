@@ -25,6 +25,7 @@ Surface {
     readonly property var readout: OsdStyles.readout(root.kind, root.value, root.muted, root.device, root.currentDevice, I18n.t("osd.muted"))
 
     padding: 0
+    floating: true
     implicitHeight: root.full.height
     implicitWidth: root.shown ? root.full.width : root.full.height
     radius: Look.buttonRadius(height)

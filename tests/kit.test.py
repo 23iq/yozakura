@@ -46,6 +46,7 @@ Window {
         Ring { objectName: "ring"; value: 0.4; KitText { text: "18:24" } }
         Art { objectName: "art" }
         Surface { objectName: "surface"; Item { width: 100; height: 50 } }
+        Surface { objectName: "floatSurface"; floating: true; Item { width: 100; height: 40 } }
         Group { objectName: "group"; width: 300; label: "Notifications"; actionText: "Clear"; divider: true
                 onActionTriggered: parent.Window.window.groupAction++
                 Item { objectName: "groupItem"; width: 100; height: 40 }
@@ -156,6 +157,16 @@ for lang, density in CASES:
     vs = get("vslider")
     assert vs.property("implicitHeight") > vs.property("implicitWidth"), tag
     assert get("progress").property("height") == space("stroke"), tag
+    # Floating surfaces (OSDs): glass translucent with a hairline, tiles solid,
+    # ink / classic keep the theme surface
+    fl = get("floatSurface")
+    own = lang in ("glass", "tiles")
+    assert fl.property("ownBox") == own, tag
+    assert fl.property("backgroundOpacity") == (0 if own else -1), tag
+    if lang == "glass":
+        assert 0 < h.eval(win, "Look.floatFill.a") < 0.8 and h.eval(win, "Look.floatOutline.a") > 0, tag
+    if lang == "tiles":
+        assert h.eval(win, "Look.floatFill.a") == 1 and h.eval(win, "Look.floatOutline.a") == 0, tag
     # Indeterminate: the sweep runs only while visible (and with motion on)
     prog = get("progress")
     assert prog.property("sweeping") is False, tag
