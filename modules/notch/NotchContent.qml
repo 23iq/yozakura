@@ -233,14 +233,14 @@ Item {
             enabled: Config.animDuration > 0 && root.vertical
             NumberAnimation {
                 duration: Config.animDuration / 4
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         Behavior on height {
             enabled: Config.animDuration > 0 && !root.vertical
             NumberAnimation {
                 duration: Config.animDuration / 4
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
 
@@ -285,7 +285,7 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration / 2
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.enter.easing
                 }
             }
 
@@ -297,14 +297,14 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on y {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
             }
@@ -367,7 +367,7 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration / 2
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.enter.easing
                 }
             }
 
@@ -378,14 +378,14 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on y {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
             }
@@ -413,7 +413,7 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutBack
+                    easing.type: Motion.morph.easing
                     easing.overshoot: 1.2
                 }
             }
@@ -422,7 +422,7 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutQuart
+                    easing.type: Motion.morph.easing
                 }
             }
 
@@ -447,7 +447,7 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.enter.easing
                     }
                 }
             }

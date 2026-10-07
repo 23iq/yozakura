@@ -23,7 +23,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutBack
+            easing.type: Motion.morph.easing
             easing.overshoot: 1.2
         }
     }
@@ -313,14 +313,14 @@ Item {
                             from: notificationStack.height
                             to: 0
                             duration: Config.animDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.enter.easing
                         }
                         PropertyAnimation {
                             property: "opacity"
                             from: 0
                             to: 1
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.enter.easing
                         }
                     }
 
@@ -330,14 +330,14 @@ Item {
                             from: 0
                             to: -notificationStack.height
                             duration: Config.animDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.exit.easing
                         }
                         PropertyAnimation {
                             property: "opacity"
                             from: 1
                             to: 0
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.exit.easing
                         }
                     }
 
@@ -347,14 +347,14 @@ Item {
                             from: -notificationStack.height
                             to: 0
                             duration: Config.animDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.enter.easing
                         }
                         PropertyAnimation {
                             property: "opacity"
                             from: 0
                             to: 1
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.enter.easing
                         }
                     }
 
@@ -364,14 +364,14 @@ Item {
                             from: 0
                             to: notificationStack.height
                             duration: Config.animDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.exit.easing
                         }
                         PropertyAnimation {
                             property: "opacity"
                             from: 1
                             to: 0
                             duration: Config.animDuration
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.exit.easing
                         }
                     }
                 }
@@ -436,7 +436,7 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
 
@@ -472,7 +472,7 @@ Item {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
                             duration: Config.animDuration
-                            easing.type: Easing.OutCubic
+                            easing.type: Motion.morph.easing
                         }
                     }
 
@@ -493,7 +493,7 @@ Item {
                                 enabled: Config.animDuration > 0
                                 ColorAnimation {
                                     duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
+                                    easing.type: Motion.morph.easing
                                 }
                             }
 
@@ -504,7 +504,7 @@ Item {
                                 enabled: Config.animDuration > 0
                                 NumberAnimation {
                                     duration: Config.animDuration
-                                    easing.type: Easing.OutCubic
+                                    easing.type: Motion.morph.easing
                                 }
                             }
                         }
