@@ -128,21 +128,21 @@ Item {
         Behavior on anchors.rightMargin {
             NumberAnimation {
                 id: slideR
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }
         Behavior on anchors.leftMargin {
             NumberAnimation {
                 id: slideL
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }
         Behavior on opacity {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.enter.duration
             }
         }
 

@@ -33,13 +33,13 @@ Item {
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
-                duration: Config.animDuration / 3
+                duration: Motion.exit.duration
             }
         }
         Behavior on scale {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 3
+                duration: Motion.exit.duration
                 easing.type: Motion.morph.easing
             }
         }
