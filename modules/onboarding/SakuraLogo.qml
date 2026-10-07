@@ -45,14 +45,14 @@ Item {
             value: 0
         }
         PauseAnimation {
-            duration: 120
+            duration: Motion.emphasis.duration
         }
         NumberAnimation {
             target: root
             property: "bloom"
             to: 1
             duration: Math.max(900, Config.animDuration * 4)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
@@ -60,14 +60,14 @@ Item {
             from: 0
             to: 1
             duration: Math.max(500, Config.animDuration * 2)
-            easing.type: Easing.OutSine
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "halo"
             to: 0
             duration: Math.max(900, Config.animDuration * 3)
-            easing.type: Easing.InOutSine
+            easing.type: Motion.emphasis.easing
         }
     }
 
