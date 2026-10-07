@@ -46,7 +46,7 @@ var data = {
     "blurPopupsIgnorealpha": 0.2,
     "blurInputMethods": false,
     "blurInputMethodsIgnorealpha": 0.2,
-    "motionProfile": "smooth",
+    "motionProfile": "sakura",
     "motionDurationScale": 1.0,
     "motionWorkspaceStyle": "auto",
     "motionBorderLoop": "auto",

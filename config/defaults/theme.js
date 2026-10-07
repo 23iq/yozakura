@@ -28,7 +28,7 @@ var data = {
     // Corner shape: round | squircle | cut | tab; popupCorners "" follows corners.
     "shape": {
         "corners": "round",
-        "popupCorners": "",
+        "popupCorners": "cut",
         "cutSize": 10
     },
     // Bar popups and menus: entry motion (fade-scale | slide-from-anchor |
@@ -38,10 +38,10 @@ var data = {
         "tail": false,
         "gap": 8
     },
-    // Decorative signatures; turned on by the default shift.
+    // Decorative signatures (on since the theme overhaul default shift).
     "signatures": {
-        "brushHighlight": false,
-        "petals": false,
+        "brushHighlight": true,
+        "petals": true,
         "petalShape": "petal"
     },
     "paletteTransitionDuration": 600,

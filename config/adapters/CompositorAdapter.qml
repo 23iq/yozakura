@@ -48,7 +48,7 @@ JsonAdapter {
     property real blurPopupsIgnorealpha: 0.2
     property bool blurInputMethods: false
     property real blurInputMethodsIgnorealpha: 0.2
-    property string motionProfile: "smooth"
+    property string motionProfile: "sakura"
     property real motionDurationScale: 1
     property string motionWorkspaceStyle: "auto"
     property string motionBorderLoop: "auto"

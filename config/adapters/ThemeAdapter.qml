@@ -24,7 +24,7 @@ JsonAdapter {
     property string language: "ink"
     property JsonObject shape: JsonObject {
         property string corners: "round"
-        property string popupCorners: ""
+        property string popupCorners: "cut"
         property int cutSize: 10
     }
     property JsonObject popup: JsonObject {
@@ -33,8 +33,8 @@ JsonAdapter {
         property int gap: 8
     }
     property JsonObject signatures: JsonObject {
-        property bool brushHighlight: false
-        property bool petals: false
+        property bool brushHighlight: true
+        property bool petals: true
         property string petalShape: "petal"
     }
     property int paletteTransitionDuration: 600

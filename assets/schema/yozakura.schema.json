@@ -4290,7 +4290,7 @@
         "motionProfile": {
           "title": "Motion profile",
           "type": "string",
-          "default": "smooth",
+          "default": "sakura",
           "description": "How windows, workspaces and the shell animate. Each card plays the profile's real curves.",
           "x-settings": {
             "category": "appearance",
@@ -9136,7 +9136,7 @@
             "popupCorners": {
               "title": "Popup corners",
               "type": "string",
-              "default": "",
+              "default": "cut",
               "description": "Corner style of popups and menus.",
               "x-settings": {
                 "category": "appearance",
@@ -9269,7 +9269,7 @@
             "brushHighlight": {
               "title": "Brush highlight",
               "type": "boolean",
-              "default": false,
+              "default": true,
               "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
@@ -9282,7 +9282,7 @@
             "petals": {
               "title": "Falling petals",
               "type": "boolean",
-              "default": false,
+              "default": true,
               "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
