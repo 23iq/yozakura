@@ -1,16 +1,14 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
-import qs.modules.components.signatures
+import qs.modules.components.kit
 import "ResultStyles.js" as ResultStyles
 
-// The launcher result list: rows of ResultRow, a sliding selection
-// highlight, and one row at a time expanded into its ResultOptions.
-// Selection and expansion are owned by LauncherSearch (keyboard first);
-// the list reports hover/click.
+// The launcher result list: results grouped under a SectionLabel per
+// provider, each a ResultRow (kit ListRow, `cards` for the roomier look);
+// one row at a time expands into its ResultActions. Selection and expansion
+// are owned by LauncherSearch (keyboard first); the list reports hover/click.
 ListView {
     id: list
 
@@ -23,8 +21,12 @@ ListView {
     property string emptyText: ""
     // "list" or "cards" (ResultStyles.effective picks; grid has its own view)
     property string style: "list"
+    // Beside the detail pane (rows drop their Enter label).
+    property bool narrow: false
     readonly property int rowHeight: ResultStyles.rowHeight(style, Metrics.rowHeight)
-    readonly property int expandedExtra: expandedIndex >= 0 ? 4 + expandedOptions.length * 36 + 8 : 0
+    readonly property int labelHeight: Type.size("label") + Space.l + Space.s
+    readonly property var groups: ResultStyles.sections(items)
+    readonly property int expandedExtra: expandedIndex >= 0 ? expandedOptions.length * Space.controlS + Space.s : 0
     readonly property bool isScrolling: dragging || flicking
 
     signal hoveredRow(int index)
@@ -41,23 +43,28 @@ ListView {
     boundsBehavior: Flickable.StopAtBounds
     highlightFollowsCurrentItem: false
 
+    function startsGroup(index) {
+        return !!groups.starts[index];
+    }
+
+    // Top of row `index` itself (below its section label).
     function rowY(index) {
-        let y = index * rowHeight;
+        let y = index * rowHeight + (groups.before[index] || 0) * labelHeight;
         if (expandedIndex >= 0 && index > expandedIndex)
             y += expandedExtra;
         return y;
     }
 
     function heightOf(index) {
-        return rowHeight + (index === expandedIndex ? expandedExtra : 0);
+        return (startsGroup(index) ? labelHeight : 0) + rowHeight + (index === expandedIndex ? expandedExtra : 0);
     }
 
-    // Keeps the selected row (and its options) inside the viewport.
+    // Keeps the selected row (its label, its options) inside the viewport.
     function reveal(index) {
         if (index < 0)
             return;
-        const top = rowY(index);
-        const bottom = top + heightOf(index);
+        const top = rowY(index) - (startsGroup(index) ? labelHeight : 0);
+        const bottom = rowY(index) + rowHeight + (index === expandedIndex ? expandedExtra : 0);
         if (top < contentY)
             contentY = top;
         else if (bottom > contentY + height)
@@ -75,43 +82,12 @@ ListView {
         }
     }
 
-    highlight: Item {
-        width: list.width
-        height: list.heightOf(list.selectedIndex)
-        y: list.rowY(Math.max(0, list.selectedIndex))
-        visible: list.selectedIndex >= 0 && list.count > 0
-
-        Behavior on y {
-            enabled: Motion.enter.duration > 0
-            NumberAnimation {
-                duration: Motion.enter.duration / 2
-                easing.type: Motion.enter.easing
-            }
-        }
-        Behavior on height {
-            enabled: Motion.enter.duration > 0
-            NumberAnimation {
-                duration: Motion.morph.duration
-                easing.type: Motion.morph.easing
-            }
-        }
-
-        BrushHighlight {
-            shown: list.expandedIndex < 0 || list.selectedIndex !== list.expandedIndex
-        }
-
-        StyledRect {
-            anchors.fill: parent
-            variant: list.expandedIndex >= 0 && list.selectedIndex === list.expandedIndex ? "pane" : "primary"
-            radius: Styling.radius(4)
-        }
-    }
-
     delegate: Item {
         id: cell
         required property var modelData
         required property int index
         readonly property bool expanded: index === list.expandedIndex
+        readonly property bool labelled: list.startsGroup(index)
 
         width: list.width
         height: list.heightOf(index)
@@ -124,35 +100,29 @@ ListView {
             }
         }
 
-        Loader {
-            id: resultRow
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            height: list.rowHeight
-            sourceComponent: list.style === "cards" ? cardLook : rowLook
+        SectionLabel {
+            objectName: "resultSection"
+            visible: cell.labelled
+            x: Space.s
+            width: parent.width - Space.s * 2
+            y: list.labelHeight - height - Space.s
+            text: I18n.t("launcher.provider." + (cell.modelData.provider || ""))
         }
 
-        Component {
-            id: rowLook
-            ResultRow {
-                item: cell.modelData
-                selected: list.selectedIndex === cell.index
-                expanded: cell.expanded
-            }
-        }
-
-        Component {
-            id: cardLook
-            ResultCard {
-                item: cell.modelData
-                selected: list.selectedIndex === cell.index
-                expanded: cell.expanded
-            }
+        ResultRow {
+            id: row
+            y: cell.labelled ? list.labelHeight : 0
+            width: parent.width
+            height: list.rowHeight - (list.style === "cards" ? Space.xs : 0)
+            result: cell.modelData
+            cards: list.style === "cards"
+            narrow: list.narrow
+            selected: list.selectedIndex === cell.index
+            expanded: cell.expanded
         }
 
         MouseArea {
-            anchors.fill: resultRow
+            anchors.fill: row
             hoverEnabled: !list.isScrolling
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             cursorShape: cell.modelData.inert ? Qt.ArrowCursor : Qt.PointingHandCursor
@@ -168,15 +138,18 @@ ListView {
             }
         }
 
-        ResultOptions {
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.bottom: parent.bottom
-            anchors.margins: 8
+        ResultActions {
+            objectName: "resultOptions"
+            anchors.top: row.bottom
+            anchors.topMargin: Space.xs
+            // Option glyphs line up with the row's title.
+            x: row.iconSize + Space.m
+            width: parent.width - x
             visible: cell.expanded
             opacity: cell.expanded ? 1 : 0
             options: cell.expanded ? list.expandedOptions : []
             currentIndex: list.optionIndex
+            showKeys: false
             onHovered: index => list.optionHovered(index)
             onTriggered: index => list.optionTriggered(index)
             Behavior on opacity {
@@ -192,23 +165,20 @@ ListView {
     // Nothing matched
     Column {
         anchors.centerIn: parent
-        spacing: 6
+        spacing: Space.s
         visible: list.count === 0 && list.emptyText !== ""
-        opacity: 0.8
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: Icons.magnifyingGlass
             font.family: Icons.font
-            font.pixelSize: Metrics.iconSize - 6
-            color: Colors.outline
+            font.pixelSize: Type.iconSize("title")
+            color: Type.muted
         }
-        Text {
+        KitText {
             anchors.horizontalCenter: parent.horizontalCenter
+            role: "secondary"
             text: list.emptyText
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.outline
         }
     }
 }

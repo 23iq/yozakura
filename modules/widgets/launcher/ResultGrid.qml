@@ -2,13 +2,14 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components
-import qs.config
-import qs.modules.components.signatures
+import qs.modules.components.kit
+import "../../components/kit/KitStates.js" as KitStates
 import "ResultStyles.js" as ResultStyles
 
-// App icon grid (layout.launcher.resultStyle = "grid"). Selection is owned by
-// LauncherSearch; arrows reach it through move() (2D navigation), the grid
-// reports hover/click like ResultList.
+// App icon grid (layout.launcher.resultStyle = "grid"): icons with their
+// names, the selected cell in the kit's selected look. Selection is owned by
+// LauncherSearch; arrows reach it through nextIndex() (2D navigation), the
+// grid reports hover/click like ResultList.
 GridView {
     id: grid
 
@@ -43,40 +44,6 @@ GridView {
 
     onSelectedIndexChanged: reveal(selectedIndex)
 
-    highlight: Item {
-        width: grid.cellWidth
-        height: grid.cellHeight
-        x: Math.max(0, grid.selectedIndex) % grid.columns * grid.cellWidth
-        y: Math.floor(Math.max(0, grid.selectedIndex) / grid.columns) * grid.cellHeight
-        visible: grid.selectedIndex >= 0 && grid.count > 0
-
-        Behavior on x {
-            enabled: Motion.enter.duration > 0
-            NumberAnimation {
-                duration: Motion.enter.duration / 2
-                easing.type: Motion.enter.easing
-            }
-        }
-        Behavior on y {
-            enabled: Motion.enter.duration > 0
-            NumberAnimation {
-                duration: Motion.enter.duration / 2
-                easing.type: Motion.enter.easing
-            }
-        }
-
-        BrushHighlight {
-            anchors.margins: -2
-        }
-
-        StyledRect {
-            anchors.fill: parent
-            anchors.margins: Metrics.spacing / 4
-            variant: "primary"
-            radius: Styling.radius(4)
-        }
-    }
-
     delegate: Item {
         id: cell
         required property var modelData
@@ -86,39 +53,40 @@ GridView {
         width: grid.cellWidth
         height: grid.cellHeight
 
+        // The cell box: the kit's selected look (KitStates "active").
+        StyledRect {
+            readonly property string look: KitStates.look(false, cell.selected, false)
+            anchors.fill: parent
+            anchors.margins: Space.xs
+            variant: KitStates.variant(look, "transparent")
+            backgroundOpacity: KitStates.opacity(look, false)
+            enableBorder: false
+            radius: Look.chipRadius(height)
+        }
+
         ResultIcon {
             id: icon
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: Metrics.spacing
+            anchors.topMargin: Space.m
             item: cell.modelData
-            selected: cell.selected
             size: Math.round(Metrics.iconSize * 1.5)
         }
 
-        Text {
+        KitText {
             anchors.top: icon.bottom
-            anchors.topMargin: Metrics.spacing / 2
+            anchors.topMargin: Space.s
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: Metrics.spacing / 2
-            anchors.rightMargin: Metrics.spacing / 2
+            anchors.leftMargin: Space.s
+            anchors.rightMargin: Space.s
+            role: "secondary"
+            color: cell.selected ? Type.text : Type.secondary
             text: cell.modelData.title || ""
             horizontalAlignment: Text.AlignHCenter
-            color: cell.selected ? Styling.srItem("primary") : Colors.overBackground
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            font.weight: cell.selected ? Font.Bold : Font.Medium
-            elide: Text.ElideRight
+            verticalAlignment: Text.AlignTop
             wrapMode: Text.Wrap
             maximumLineCount: 2
-            Behavior on color {
-                enabled: Motion.enter.duration > 0
-                ColorAnimation {
-                    duration: Motion.enter.duration / 2
-                    easing.type: Motion.enter.easing
-                }
-            }
         }
 
         MouseArea {

@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
+import qs.modules.components.kit
 import qs.config
 import "Providers.js" as Providers
 import "ResultStyles.js" as ResultStyles
@@ -132,14 +133,15 @@ Item {
         Component.onCompleted: results.search(view.searchText)
     }
 
-    SearchInput {
+    SearchField {
         id: input
         objectName: "launcherSearchInput"
         width: parent.width
         anchors.top: parent.top
         text: GlobalStates.launcherSearchText
         placeholderText: I18n.t("launcher.search")
-        prefixIcon: view.modeIcon
+        glyph: view.modeIcon !== "" ? view.modeIcon : Icons.magnifyingGlass
+        hints: Providers.hintPrefixes(Config.prefix, Config.prefix.launcher.disabled)
         handleTabNavigation: true
         disableCursorNavigation: view.gridActive
 
@@ -200,70 +202,98 @@ Item {
         onEndPressed: view.select(view.items.length - 1)
     }
 
-    ResultList {
-        id: list
-        objectName: "launcherResults"
-        width: view.resultsWidth
-        visible: !view.gridActive
-        style: view.styleName === "cards" ? "cards" : "list"
+    Divider {
+        id: rule
         anchors.top: input.bottom
-        anchors.bottom: parent.bottom
-        anchors.topMargin: Metrics.spacing
-        items: view.items
-        selectedIndex: view.selectedIndex
-        expandedIndex: view.expandedIndex
-        expandedOptions: view.expandedOptions
-        optionIndex: view.optionIndex
-        emptyText: view.searchText.length > 0 && !results.busy ? I18n.t("launcher.no_results") : ""
+        width: parent.width
+    }
 
-        onHoveredRow: index => view.select(index)
-        onClickedRow: index => {
-            if (view.expandedIndex === -1)
-                view.run(index, "");
-        }
-        onRightClickedRow: index => {
-            view.select(index);
-            if (view.expandedIndex === index)
-                view.collapse();
-            else
-                view.expand(index);
-        }
-        onOptionHovered: index => view.optionIndex = index
-        onOptionTriggered: index => {
-            view.optionIndex = index;
-            view.runSelected();
+    // The results in the language's group box (none in ink, a frosted card
+    // in glass, a tile in tiles).
+    Group {
+        id: resultsBox
+        anchors.top: rule.bottom
+        anchors.topMargin: Look.groupBoxed ? Space.m : Space.xs
+        width: view.resultsWidth
+
+        Item {
+            width: parent.width
+            height: view.height - resultsBox.y - resultsBox.padding * 2
+
+            ResultList {
+                id: list
+                objectName: "launcherResults"
+                anchors.fill: parent
+                visible: !view.gridActive
+                style: view.styleName === "cards" ? "cards" : "list"
+                narrow: view.previewOpen
+                items: view.items
+                selectedIndex: view.selectedIndex
+                expandedIndex: view.expandedIndex
+                expandedOptions: view.expandedOptions
+                optionIndex: view.optionIndex
+                emptyText: view.searchText.length > 0 && !results.busy ? I18n.t("launcher.no_results") : ""
+
+                onHoveredRow: index => view.select(index)
+                onClickedRow: index => {
+                    if (view.expandedIndex === -1)
+                        view.run(index, "");
+                }
+                onRightClickedRow: index => {
+                    view.select(index);
+                    if (view.expandedIndex === index)
+                        view.collapse();
+                    else
+                        view.expand(index);
+                }
+                onOptionHovered: index => view.optionIndex = index
+                onOptionTriggered: index => {
+                    view.optionIndex = index;
+                    view.runSelected();
+                }
+            }
+
+            ResultGrid {
+                id: grid
+                objectName: "launcherGrid"
+                anchors.fill: parent
+                visible: view.gridActive
+                items: view.gridActive ? view.items : []
+                selectedIndex: view.selectedIndex
+
+                onHoveredRow: index => view.select(index)
+                onClickedRow: index => view.run(index, "")
+                onRightClickedRow: index => {
+                    view.select(index);
+                    view.expand(index);
+                }
+            }
         }
     }
 
-    ResultGrid {
-        id: grid
-        objectName: "launcherGrid"
-        width: view.resultsWidth
-        visible: view.gridActive
-        anchors.top: input.bottom
+    Divider {
+        id: split
+        vertical: true
+        anchors.top: rule.bottom
         anchors.bottom: parent.bottom
-        anchors.topMargin: Metrics.spacing
-        items: view.gridActive ? view.items : []
-        selectedIndex: view.selectedIndex
-
-        onHoveredRow: index => view.select(index)
-        onClickedRow: index => view.run(index, "")
-        onRightClickedRow: index => {
-            view.select(index);
-            view.expand(index);
-        }
+        anchors.topMargin: Space.m
+        anchors.left: resultsBox.right
+        anchors.leftMargin: Space.m
+        opacity: preview.opacity
     }
 
     PreviewPane {
         id: preview
         objectName: "launcherPreview"
-        anchors.top: input.bottom
-        anchors.topMargin: Metrics.spacing
+        anchors.top: rule.bottom
+        anchors.topMargin: Space.l
         anchors.bottom: parent.bottom
-        anchors.left: list.right
-        anchors.leftMargin: Metrics.spacing
+        anchors.left: split.right
+        anchors.leftMargin: Space.l
         anchors.right: parent.right
         selection: Config.layout.launcher.preview ? view.current : null
+        host: results
+        onActionTriggered: option => view.run(view.selectedIndex, option)
         opacity: view.previewOpen ? 1 : 0
         visible: opacity > 0
         Behavior on opacity {

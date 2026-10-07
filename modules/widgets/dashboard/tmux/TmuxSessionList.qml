@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.config
 import "TmuxModel.js" as TmuxModel
+import qs.modules.components.kit
 
 // Session list of the tmux tab: rows (TmuxSessionDelegate), the moving
 // selection highlight (it grows with the expanded options row) and an
@@ -128,6 +129,7 @@ ListView {
                 }
             }
             radius: Styling.radius(4)
+            backgroundOpacity: variant === "primary" ? Look.activeTint : -1
             visible: resultsList.tab.selectedIndex >= 0
 
             Behavior on color {

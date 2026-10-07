@@ -45,8 +45,7 @@ h.module("qs.modules.theme", {
     "Styling": "pragma Singleton\nimport QtQuick\nQtObject { function radius(x) { return 4 + x; } "
                "function srItem(x) { return '#405060'; } function fontSize(x) { return 12 + x; } }",
 })
-h.module("qs.modules.components", {
-    "SearchInput": """import QtQuick
+SEARCH_FIELD = """import QtQuick
 Item {
     property string text
     property string placeholderText
@@ -64,9 +63,16 @@ Item {
     signal escapePressed
     signal downPressed
     signal upPressed
+    property bool rule
     function focusInput() { focusCount++ }
-}""",
-    "StyledRect": "import QtQuick\nRectangle { property string variant; property color item: '#ffffff' }",
+}"""
+h.module("qs.modules.components.kit", {
+    "SearchField": SEARCH_FIELD,
+    "Look": "pragma Singleton\nimport QtQuick\nQtObject { property real activeTint: 0.16 }",
+})
+h.module("qs.modules.components", {
+    "StyledRect": "import QtQuick\nRectangle { property string variant; property color item: '#ffffff'; "
+                  "property real backgroundOpacity: -1 }",
     "Separator": "import QtQuick\nItem { property bool vert }",
 })
 h.module("qs.modules.services", {

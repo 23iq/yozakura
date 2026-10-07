@@ -1563,6 +1563,7 @@
   "onboarding.finish.again": "Run this setup again any time from Settings > About or with “%1”.",
   "onboarding.preset.current": "Current",
   "launcher.copy": "Copy",
+  "launcher.actions": "Actions",
   "launcher.run": "Run",
   "launcher.complete": "Complete",
   "launcher.open": "Open",

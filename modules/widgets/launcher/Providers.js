@@ -279,6 +279,21 @@ function startsWithTabPrefix(text, prefixes) {
     return PROVIDERS.some(p => p.kind === "tab" && prefixes[p.prefix] && (text || "").indexOf(prefixes[p.prefix] + " ") === 0);
 }
 
+// Prefixes shown as key hints at the right of the empty search field: the
+// enabled providers among `ids` (in that order) that have a prefix set.
+var HINT_IDS = ["clipboard", "emoji", "calculator", "ai"];
+
+function hintPrefixes(prefixes, disabled, ids) {
+    const out = [];
+    (ids || HINT_IDS).forEach(id => {
+        const p = byId(id);
+        const text = p && p.prefix && prefixes ? String(prefixes[p.prefix] || "").trim() : "";
+        if (text !== "" && isEnabled(id, disabled))
+            out.push(text);
+    });
+    return out;
+}
+
 // The tab provider of a StackLayout index.
 function tabProvider(index) {
     for (let i = 0; i < PROVIDERS.length; i++) {

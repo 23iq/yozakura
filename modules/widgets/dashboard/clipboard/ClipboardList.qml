@@ -5,6 +5,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import "ClipboardView.js" as ClipboardView
+import qs.modules.components.kit
 
 // History list of the clipboard tab: rows, the moving selection highlight,
 // an overlay that closes delete mode / the options menu on outside clicks,
@@ -116,6 +117,7 @@ Item {
                     }
                 }
                 radius: Styling.radius(4)
+                backgroundOpacity: variant === "primary" ? Look.activeTint : -1
                 visible: list.tab.selectedIndex >= 0
 
                 Behavior on color {

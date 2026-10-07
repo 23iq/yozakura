@@ -25,8 +25,6 @@ Item {
                 return "oversecondary";
             } else if (icon.isExpanded) {
                 return "primary";
-            } else if (icon.isSelected) {
-                return "overprimary";
             } else {
                 return "common";
             }

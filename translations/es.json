@@ -1563,6 +1563,7 @@
   "onboarding.finish.again": "Repite esta configuración cuando quieras desde Ajustes > Acerca de o con «%1».",
   "onboarding.preset.current": "Actual",
   "launcher.copy": "Copiar",
+  "launcher.actions": "Acciones",
   "launcher.run": "Ejecutar",
   "launcher.complete": "Completar",
   "launcher.open": "Abrir",

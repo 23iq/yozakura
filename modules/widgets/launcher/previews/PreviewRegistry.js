@@ -26,6 +26,26 @@ function previewFor(item) {
     return kind ? { "kind": kind, "file": KINDS[kind] } : null;
 }
 
+// Whether the selected result gets the detail pane (icon, name, type,
+// description, actions): every runnable result, never a hint row.
+function hasDetail(item) {
+    return !!item && !item.inert;
+}
+
+// The actions listed in the detail pane: the provider's options (the main
+// one has id ""), or just the main action (what Enter does) when it has none.
+function actions(item, options) {
+    if (options && options.length > 0)
+        return options;
+    if (!item || !item.hint)
+        return [];
+    return [{
+            "id": "",
+            "text": item.hint,
+            "icon": item.icon || ""
+        }];
+}
+
 function fileKind(path) {
     var name = String(path).split("/").pop().toLowerCase();
     var dot = name.lastIndexOf(".");

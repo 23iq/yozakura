@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.config
 import "../../theme/VisualLanguage.js" as VisualLanguage
+import "KitStates.js" as KitStates
 import qs.modules.components.kit
 
 // The visual language (theme.language) as the kit draws it: group boxes,
@@ -53,6 +54,10 @@ QtObject {
             return "transparent";
         return hovered ? root.alpha(root.control.hoverFill, root.control.hover) : root.alpha(root.control.fill, root.control.rest);
     }
+
+    // Opacity of the accent tint that marks a selected / active item
+    // (KitStates "active"): for lists that draw their own selection box.
+    readonly property real activeTint: KitStates.opacity("active", false)
 
     // Icon buttons: round, or the control radius in square languages.
     function buttonRadius(h: real): real {

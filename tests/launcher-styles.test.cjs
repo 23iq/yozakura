@@ -54,6 +54,29 @@ test('previewFor: provider support, inert rows excluded', () => {
     assert.equal(P.previewFor(null), null);
 });
 
+test('hasDetail: every runnable result, never hint rows', () => {
+    assert.equal(P.hasDetail({ provider: 'apps', title: 'Firefox' }), true);
+    assert.equal(P.hasDetail({ provider: 'calculator', key: 'hint', inert: true }), false);
+    assert.equal(P.hasDetail(null), false);
+});
+
+test('actions: provider options, else the main action from the hint', () => {
+    const opts = [{ id: '', text: 'Launch' }, { id: 'pin', text: 'Pin' }];
+    assert.equal(P.actions({ hint: 'Launch' }, opts), opts);
+    assert.equal(JSON.stringify(P.actions({ hint: 'Run', icon: 'x' }, [])), '[{"id":"","text":"Run","icon":"x"}]');
+    assert.equal(P.actions({}, []).length, 0);
+    assert.equal(P.actions(null, null).length, 0);
+});
+
+test('sections: a label above each provider run', () => {
+    const items = [{ provider: 'calculator' }, { provider: 'apps' }, { provider: 'apps' }, { provider: 'files' }];
+    const s = S.sections(items);
+    assert.deepEqual([...s.starts], [true, true, false, true]);
+    assert.deepEqual([...s.before], [1, 2, 2, 3]);
+    assert.equal(S.sections([]).starts.length, 0);
+    assert.equal(S.sections(null).before.length, 0);
+});
+
 test('fileKind and firstLines', () => {
     assert.equal(P.fileKind('/x/a.PNG'), 'image');
     assert.equal(P.fileKind('/x/a.md'), 'text');

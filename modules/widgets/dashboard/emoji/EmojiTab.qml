@@ -1,5 +1,5 @@
 import QtQuick
-import QtQuick.Effects
+import qs.modules.components.kit
 import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
@@ -389,10 +389,10 @@ Rectangle {
             anchors.top: parent.top
             spacing: 8
 
-            SearchInput {
+            SearchField {
                 id: searchInput
                 width: parent.width - (clearButton.visible ? clearButton.width + parent.spacing : 0)
-                height: 48
+                rule: true
                 text: root.searchText
                 placeholderText: I18n.t("emoji.search")
                 prefixIcon: root.prefixIcon
