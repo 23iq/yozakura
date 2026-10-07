@@ -7,6 +7,7 @@ JsonAdapter {
         property string host: "notch"
         property string resultStyle: "list"
         property bool preview: false
+        property bool icons: true
         property bool compactWhenEmpty: false
     }
     property JsonObject dashboard: JsonObject {

@@ -3373,6 +3373,8 @@
   "prefs.launcher.result_style.desc": "List rows, taller cards, or an app icon grid (other results use the list).",
   "prefs.launcher.preview": "Preview pane",
   "prefs.launcher.preview.desc": "Show a preview of the selected file, calculator result or clipboard entry.",
+  "prefs.launcher.icons": "Result icons",
+  "prefs.launcher.icons.desc": "Show an icon before each result. Off gives a text-only, command-line list.",
   "prefs.launcher.compact_when_empty": "Compact when empty",
   "prefs.launcher.compact_when_empty.desc": "Show only the search field until you start typing.",
   "settings.shell.overview_style_grid": "Grid",

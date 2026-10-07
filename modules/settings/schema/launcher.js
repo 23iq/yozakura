@@ -59,6 +59,13 @@ var category = {
                     "keywords": "preview pane file image text calculator side"
                 },
                 {
+                    "key": "layout.launcher.icons",
+                    "type": "toggle",
+                    "label": "prefs.launcher.icons",
+                    "description": "prefs.launcher.icons.desc",
+                    "keywords": "icons text only command line minimal rows"
+                },
+                {
                     "key": "layout.launcher.compactWhenEmpty",
                     "type": "toggle",
                     "label": "prefs.launcher.compact_when_empty",

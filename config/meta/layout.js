@@ -22,6 +22,9 @@ var keys = {
     "launcher.preview": {
         "description": "Show a preview pane next to the selected launcher result."
     },
+    "launcher.icons": {
+        "description": "Show the leading icon on launcher result rows; off gives a text-only, command-line list (the grid style always shows icons)."
+    },
     "launcher.compactWhenEmpty": {
         "description": "Collapse the launcher to its search field until something is typed."
     },

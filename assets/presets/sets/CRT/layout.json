@@ -1,7 +1,8 @@
 {
     "launcher": {
         "host": "spotlight",
-        "resultStyle": "list"
+        "resultStyle": "list",
+        "icons": false
     },
     "dashboard": {
         "home": "composed"

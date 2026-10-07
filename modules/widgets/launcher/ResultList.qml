@@ -111,6 +111,7 @@ ListView {
 
         ResultRow {
             id: row
+            objectName: "resultRow"
             y: cell.labelled ? list.labelHeight : 0
             width: parent.width
             height: list.rowHeight - (list.style === "cards" ? Space.xs : 0)
@@ -143,7 +144,7 @@ ListView {
             anchors.top: row.bottom
             anchors.topMargin: Space.xs
             // Option glyphs line up with the row's title.
-            x: row.iconSize + Space.m
+            x: row.textInset
             width: parent.width - x
             visible: cell.expanded
             opacity: cell.expanded ? 1 : 0

@@ -5826,6 +5826,19 @@
                 "keywords": "preview pane file image text calculator side"
               }
             },
+            "icons": {
+              "title": "Result icons",
+              "type": "boolean",
+              "default": true,
+              "description": "Show an icon before each result. Off gives a text-only, command-line list.",
+              "x-settings": {
+                "category": "launcher",
+                "section": "appearance",
+                "label": "prefs.launcher.icons",
+                "control": "toggle",
+                "keywords": "icons text only command line minimal rows"
+              }
+            },
             "compactWhenEmpty": {
               "title": "Compact when empty",
               "type": "boolean",
