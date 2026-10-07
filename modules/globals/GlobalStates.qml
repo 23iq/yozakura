@@ -171,6 +171,20 @@ Singleton {
         launcherSelectedIndex = -1;
     }
 
+    // Clears the query once the launcher has finished closing, so the closing
+    // launcher keeps its results instead of flashing the full app list.
+    function clearLauncherStateAfter(ms) {
+        launcherResetTimer.interval = Math.max(0, ms);
+        launcherResetTimer.restart();
+    }
+
+    property Timer launcherResetTimer: Timer {
+        onTriggered: {
+            if (Visibilities.currentActiveModule !== "launcher")
+                root.clearLauncherState();
+        }
+    }
+
     // Persistent dashboard state across monitors  
     property int dashboardCurrentTab: 0
     

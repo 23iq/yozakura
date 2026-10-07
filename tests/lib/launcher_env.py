@@ -168,6 +168,8 @@ class LauncherEnv(SettingsEnv):
     property int launcherSelectedIndex: -1
     property int widgetsTabCurrentIndex: 0
     function clearLauncherState() { launcherSearchText = ""; launcherSelectedIndex = -1 }
+    property int resetAfter: -1
+    function clearLauncherStateAfter(ms) { resetAfter = ms }
 """, 1)
         self.h.module("qs.modules.globals", {"GlobalStates": gs})
         self.h.module("Quickshell", QUICKSHELL)

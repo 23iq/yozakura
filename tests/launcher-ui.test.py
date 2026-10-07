@@ -8,6 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from launcher_env import LauncherEnv  # noqa: E402
 
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 env = LauncherEnv("launcher-ui")
@@ -184,6 +185,18 @@ h.eval(view, 'Config.prefix.launcher = Object.assign({}, Config.prefix.launcher,
 h.eval(view, 'Config.prefix.launcher = Object.assign({}, Config.prefix.launcher, {order: ["ai", "apps"]})')
 type_text("firef")
 check([r["p"] for r in items()][:2] == ["ai", "apps"], f"order respected: {items()}")
+
+# Esc closes but keeps the query (and its results) through the close
+# animation; the reset is deferred instead of flashing the full app list.
+h.eval(view, 'Visibilities.module = "launcher"; currentTab = 0')
+type_text("fire")
+h.eval(view, "focusSearchInput()")
+settle(120)
+QTest.keyClick(win, Qt.Key_Escape)
+settle()
+check(h.eval(view, "Visibilities.module") == "", "Esc closes the launcher")
+check(h.eval(view, "GlobalStates.launcherSearchText") == "fire", "Esc keeps the query while closing")
+check(h.eval(view, "GlobalStates.resetAfter") > 0, "Esc schedules the reset after the close animation")
 
 if fails:
     print(f"{len(fails)} failure(s)", file=sys.stderr)

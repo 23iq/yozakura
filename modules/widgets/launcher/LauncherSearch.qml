@@ -158,11 +158,14 @@ Item {
                 view.expand(view.selectedIndex);
         }
         onTabPressed: view.tab()
+        clearOnEscape: false
         onEscapePressed: {
-            if (view.expandedIndex >= 0)
+            if (view.expandedIndex >= 0) {
                 view.collapse();
-            else
+            } else {
                 view.close();
+                GlobalStates.clearLauncherStateAfter(Motion.exit.duration + Motion.morph.duration);
+            }
         }
         onLeftPressed: {
             if (view.gridActive)
