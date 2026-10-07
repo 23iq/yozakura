@@ -9,7 +9,7 @@ Text {
     color: clock.textColor
     font.family: clock.fontFamily
     font.pixelSize: clock.fontSize
-    font.bold: true
+    font.weight: clock.fontWeight
     font.features: {
         "tnum": 1
     }

@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.theme
 import qs.modules.globals
 import qs.config
+import qs.modules.bar.look
 
 Button {
     id: root
@@ -32,33 +33,15 @@ Button {
     // Check if buttonIcon is a single character (icon font) or a file path
     readonly property bool isIconPath: buttonIcon.length > 1
 
-    background: StyledRect {
+    // The bar module look (group box piece, hover, pressed = hover)
+    background: ModuleBox {
         id: bg
-        variant: "bg"
-        enableShadow: root.enableShadow && Config.showBackground && !root.flat
-        backgroundOpacity: root.flat ? 0 : -1
-        effectSurface: root.flat ? "" : "bar"
-        enableBorder: !root.flat
-
-        // Map start/end to corners based on vertical property
-        topLeftRadius: root.vertical ? root.startRadius : root.startRadius
-        topRightRadius: root.vertical ? root.startRadius : root.endRadius
-        bottomLeftRadius: root.vertical ? root.endRadius : root.startRadius
-        bottomRightRadius: root.vertical ? root.endRadius : root.endRadius
-
-        Rectangle {
-            anchors.fill: parent
-            color: parent.item || "transparent"
-            opacity: root.pressed ? 0.5 : (root.hovered ? 0.25 : 0)
-            radius: parent.radius ?? 0
-
-            Behavior on opacity {
-                enabled: (Config.animDuration ?? 0) > 0
-                NumberAnimation {
-                    duration: (Config.animDuration ?? 0) / 2
-                }
-            }
-        }
+        vertical: root.vertical
+        startRadius: root.startRadius
+        endRadius: root.endRadius
+        flat: root.flat
+        shadow: root.enableShadow && Config.showBackground
+        hovered: root.hovered || root.pressed
     }
 
     contentItem: Item {
@@ -69,8 +52,8 @@ Button {
             text: root.buttonIcon
             textFormat: Text.RichText
             font.family: Icons.font
-            font.pixelSize: BarMetrics.iconFor(18, root.size)
-            color: root.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.overBackground)
+            font.pixelSize: BarLook.iconSize(root.size)
+            color: bg.ink
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
         }

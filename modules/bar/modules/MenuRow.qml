@@ -1,11 +1,13 @@
-import QtQuick
-import QtQuick.Layouts
-import qs.config
-import qs.modules.theme
-import qs.modules.components
+pragma ComponentBehavior: Bound
 
-// One action row of a bar module popup: icon, label, optional shortcut hint.
-StyledRect {
+import QtQuick
+import qs.modules.theme
+import qs.modules.components.kit
+
+// One action row of a bar module popup: a kit ListRow with the action's
+// glyph, its label and an optional shortcut hint. `danger` tints the glyph
+// with the error color (destructive actions).
+ListRow {
     id: row
 
     property string icon: ""
@@ -14,51 +16,25 @@ StyledRect {
     property bool danger: false
     signal triggered
 
-    readonly property bool hovered: mouse.containsMouse
+    width: parent ? parent.width : implicitWidth
+    implicitHeight: Space.controlM
+    title: row.label
+    onClicked: row.triggered()
 
-    variant: hovered ? (danger ? "error" : "focus") : "common"
-    enableShadow: false
-    radius: Styling.radius(-2)
-    Layout.fillWidth: true
-    Layout.preferredHeight: 34
-    Layout.preferredWidth: content.implicitWidth + 28
-
-    RowLayout {
-        id: content
-        anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
-        spacing: 10
-
-        Text {
-            text: Icons[row.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: 15
-            color: row.item
-        }
-        Text {
-            Layout.fillWidth: true
-            text: row.label
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
-            font.weight: Font.Medium
-            color: row.item
-        }
-        Text {
-            visible: row.hint !== ""
-            text: row.hint
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: row.item
-            opacity: 0.6
-        }
+    leading: Text {
+        text: Icons[row.icon] ?? ""
+        font.family: Icons.font
+        font.pixelSize: Type.iconSize("body")
+        color: row.danger ? Colors.error : Type.secondary
     }
 
-    MouseArea {
-        id: mouse
-        anchors.fill: parent
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-        onClicked: row.triggered()
+    trailing: row.hint !== "" ? hintComponent : null
+
+    Component {
+        id: hintComponent
+        KitText {
+            role: "caption"
+            text: row.hint
+        }
     }
 }

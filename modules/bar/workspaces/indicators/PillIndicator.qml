@@ -1,7 +1,11 @@
 import QtQuick
 import qs.modules.components
+import qs.modules.components.kit
+import qs.modules.bar.look
+import "../../../components/kit/KitStates.js" as KitStates
 
-// "pill": a filled rounded highlight (the classic look); round when the
+// "pill": the kit's accent state behind the active workspace (an accent
+// tint; a solid accent fill in tiles and classic); round when the
 // workspace is empty, following the bar roundness when it has windows.
 StyledRect {
     id: root
@@ -11,6 +15,8 @@ StyledRect {
     readonly property real thickness: indicator ? indicator.slotSize - margin * 2 : 0
 
     variant: "primary"
+    enableBorder: false
+    backgroundOpacity: Look.solidActive || BarLook.classic ? -1 : KitStates.TINT
     x: margin
     y: margin
     width: indicator ? Math.max(0, indicator.width - margin * 2) : 0

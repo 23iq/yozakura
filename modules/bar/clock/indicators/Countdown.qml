@@ -31,7 +31,7 @@ Item {
         color: root.indicator.phaseColor
         font.family: root.indicator.fontFamily
         font.pixelSize: root.indicator.fontSize
-        font.bold: true
+        font.weight: root.indicator.fontWeight
         font.features: {
             "tnum": 1
         }

@@ -5,6 +5,8 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
+import qs.modules.components.kit
+import qs.modules.bar.look
 
 // Bar clock: the weather symbol (or day name), a clock face
 // (bar.moduleOptions.clock.face, ClockFaces.js; a vertical bar shows digital
@@ -35,7 +37,9 @@ Item {
     // bar.moduleOptions.clock.showWeather: false leaves the weather to its own module
     readonly property bool weatherAvailable: WeatherService.dataAvailable && root.options.showWeather !== false
     readonly property string pomodoroStyle: root.options.pomodoroStyle ?? "ring"
-    readonly property color fg: root.popupOpen ? buttonBg.item : Colors.overBackground
+    readonly property color fg: box.ink
+    // Kit type: the module text role, its font and weight (BarLook)
+    readonly property int textSize: BarLook.textSize(root.moduleSize)
     readonly property var dayKeys: ["sun", "mon", "tue", "wed", "thu", "fri", "sat"]
     readonly property string dayAbbrev: I18n.t("calendar.day." + root.dayKeys[root.now.getDay()])
     readonly property int pad: Math.round(24 * root.moduleSize / 36)
@@ -47,36 +51,22 @@ Item {
         onHoveredChanged: root.isHovered = hovered
     }
 
-    StyledRect {
+    Item {
         id: buttonBg
-        variant: root.popupOpen ? "primary" : "bg"
+
         anchors.fill: parent
-        enableShadow: root.layerEnabled && !root.flat
-        backgroundOpacity: root.flat && !root.popupOpen ? 0 : -1
-        effectSurface: root.flat ? "" : "bar"
-        enableBorder: !root.flat || root.popupOpen
-
-        topLeftRadius: root.startRadius
-        topRightRadius: root.vertical ? root.startRadius : root.endRadius
-        bottomLeftRadius: root.vertical ? root.endRadius : root.startRadius
-        bottomRightRadius: root.endRadius
-
         implicitWidth: root.vertical ? root.moduleSize : layout.implicitWidth + root.pad
         implicitHeight: root.vertical ? layout.implicitHeight + root.pad : root.moduleSize
 
-        Rectangle {
-            anchors.fill: parent
-            color: Styling.srItem("overprimary")
-            opacity: root.popupOpen ? 0 : (root.isHovered ? 0.25 : 0)
-            radius: parent.radius ?? 0
-
-            Behavior on opacity {
-                enabled: Motion.enter.duration > 0
-                NumberAnimation {
-                    duration: Motion.enter.duration
-                    easing.type: Motion.enter.easing
-                }
-            }
+        ModuleBox {
+            id: box
+            vertical: root.vertical
+            startRadius: root.startRadius
+            endRadius: root.endRadius
+            flat: root.flat
+            shadow: root.layerEnabled
+            active: root.popupOpen
+            hovered: root.isHovered
         }
 
         GridLayout {
@@ -94,14 +84,16 @@ Item {
                 Layout.alignment: Qt.AlignCenter
                 text: root.weatherAvailable ? WeatherService.weatherSymbol : root.dayAbbrev
                 color: root.fg
-                font.pixelSize: root.weatherAvailable ? Styling.fontSize(2) : Config.theme.fontSize
-                font.family: Config.theme.font
-                font.bold: !root.weatherAvailable
+                font.pixelSize: root.weatherAvailable ? BarLook.iconSize(root.moduleSize) : root.textSize
+                font.family: BarLook.textFont
+                font.weight: BarLook.textWeight
             }
 
-            Separator {
-                visible: lead.visible
-                vert: !root.vertical
+            Divider {
+                visible: lead.visible && Look.dividers
+                vertical: !root.vertical
+                Layout.preferredWidth: root.vertical ? root.textSize : Space.hairline
+                Layout.preferredHeight: root.vertical ? Space.hairline : root.textSize
                 Layout.alignment: Qt.AlignCenter
             }
 
@@ -113,6 +105,9 @@ Item {
                 use12h: root.use12h
                 now: root.now
                 textColor: root.fg
+                fontSize: root.textSize
+                fontFamily: BarLook.textFont
+                fontWeight: BarLook.textWeight
             }
 
             Text {
@@ -120,9 +115,9 @@ Item {
                 Layout.alignment: Qt.AlignCenter
                 text: "· " + root.dayAbbrev + " " + root.now.getDate()
                 color: root.fg
-                font.pixelSize: Config.theme.fontSize
-                font.family: Config.theme.font
-                font.bold: true
+                font.pixelSize: root.textSize
+                font.family: BarLook.textFont
+                font.weight: BarLook.textWeight
             }
 
             PomodoroIndicator {
@@ -131,8 +126,9 @@ Item {
                 style: root.pomodoroStyle
                 slot: "inline"
                 vertical: root.vertical
-                fontSize: Config.theme.fontSize
-                fontFamily: Config.theme.font
+                fontSize: root.textSize
+                fontFamily: BarLook.textFont
+                fontWeight: BarLook.textWeight
             }
         }
 
@@ -142,7 +138,7 @@ Item {
             style: root.pomodoroStyle
             slot: "overlay"
             vertical: root.vertical
-            fontSize: Config.theme.fontSize
+            fontSize: root.textSize
         }
 
         // system.timers.clockClick: the left button opens the clock panel

@@ -23,7 +23,7 @@ Column {
             color: root.clock.textColor
             font.family: root.clock.fontFamily
             font.pixelSize: Math.round(root.clock.fontSize * (index === 2 ? 0.6 : (root.clock.vertical ? 1 : 0.8)))
-            font.bold: true
+            font.weight: root.clock.fontWeight
             font.features: {
                 "tnum": 1
             }

@@ -5,7 +5,7 @@ import "ClockFaces.js" as ClockFaces
 
 // The bar clock time, drawn by one face of ClockFaces.js (faces/*.qml).
 // Faces read this item as `clock`: parts {hours, minutes, suffix}, kanji,
-// textColor, fontSize, fontFamily, vertical.
+// textColor, fontSize, fontFamily, fontWeight, vertical.
 Item {
     id: root
 
@@ -16,6 +16,7 @@ Item {
     property color textColor: "white"
     property int fontSize: Config.theme.fontSize
     property string fontFamily: Config.theme.font
+    property int fontWeight: Font.Medium
 
     readonly property var entry: ClockFaces.resolve(root.face, root.vertical)
     readonly property string faceId: root.entry.id

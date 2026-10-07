@@ -63,6 +63,7 @@ MIRROR_FILES = [
     "modules/shell/EdgeLayout.js",
     "modules/shell/LayoutModel.js",
     "modules/notch/NotchReveal.js",
+    "modules/services/activities/TransferModel.js",
     "modules/services/ShellLayout.qml",
     "modules/notch/Notch.qml",
     "modules/notch/NotchViewTransition.qml",

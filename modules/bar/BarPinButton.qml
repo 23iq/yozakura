@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.bar.look
 
 // Pin/unpin toggle for the bar's auto-hide. `barRoot` is BarContent.
 Button {
@@ -20,39 +21,23 @@ Button {
     implicitWidth: moduleSize
     implicitHeight: moduleSize
 
-    background: StyledRect {
+    // Pinned is the active (accent) state of the module
+    background: ModuleBox {
         id: pinButtonBg
-        variant: pinButton.barRoot.pinned ? "primary" : "bg"
-        enableShadow: pinButton.enableShadow && !pinButton.flat
-        backgroundOpacity: pinButton.flat && !pinButton.barRoot.pinned ? 0 : -1
-        effectSurface: pinButton.flat ? "" : "bar"
-        enableBorder: !pinButton.flat || pinButton.barRoot.pinned
-
-        topLeftRadius: pinButton.startRadius
-        topRightRadius: pinButton.vertical ? pinButton.startRadius : pinButton.endRadius
-        bottomLeftRadius: pinButton.vertical ? pinButton.endRadius : pinButton.startRadius
-        bottomRightRadius: pinButton.endRadius
-
-        Rectangle {
-            anchors.fill: parent
-            color: Styling.srItem("overprimary")
-            opacity: pinButton.barRoot.pinned ? 0 : (pinButton.pressed ? 0.5 : (pinButton.hovered ? 0.25 : 0))
-            radius: (parent.radius !== undefined ? parent.radius : 0)
-
-            Behavior on opacity {
-                enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
-                NumberAnimation {
-                    duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
-                }
-            }
-        }
+        vertical: pinButton.vertical
+        startRadius: pinButton.startRadius
+        endRadius: pinButton.endRadius
+        flat: pinButton.flat
+        shadow: pinButton.enableShadow
+        active: pinButton.barRoot.pinned
+        hovered: pinButton.hovered || pinButton.pressed
     }
 
     contentItem: Text {
         text: Icons.pin
         font.family: Icons.font
-        font.pixelSize: BarMetrics.iconFor(18, pinButton.moduleSize)
-        color: pinButton.barRoot.pinned ? pinButtonBg.item : (pinButton.pressed ? Colors.background : (Styling.srItem("overprimary") || Colors.overBackground))
+        font.pixelSize: BarLook.iconSize(pinButton.moduleSize)
+        color: pinButtonBg.ink
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 

@@ -18,6 +18,7 @@ Item {
     property color textColor: Colors.overBackground
     property int fontSize: 14
     property string fontFamily: ""
+    property int fontWeight: Font.Medium
     // the Pomodoro row (TimersService.pomodoro); tests may pass their own
     property var pomodoro: TimersService.pomodoro
 

@@ -1,7 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
+import qs.modules.components.kit
 import qs.config
 import qs.modules.theme
 import qs.modules.services
@@ -37,9 +37,9 @@ BarModuleBase {
         id: label
         anchors.centerIn: parent
         text: root.vertical ? (Icons.list ?? "") : I18n.t("bar.app_menu.window")
-        font.family: root.vertical ? Icons.font : Config.theme.font
+        font.family: root.vertical ? Icons.font : root.textFont
         font.pixelSize: root.vertical ? root.iconSize : root.textSize
-        font.weight: Font.Medium
+        font.weight: root.textWeight
         color: surface.foreground
     }
 
@@ -53,16 +53,17 @@ BarModuleBase {
 
     BarPopup {
         id: popup
+        objectName: "appMenuPopup"
         anchorItem: surface
         bar: root.bar
-        contentWidth: menu.implicitWidth + popupPadding * 2
+        popupPadding: Look.surfacePadding
+        contentWidth: Math.max(260, moveTo.implicitWidth) + popupPadding * 2
         contentHeight: menu.implicitHeight + popupPadding * 2
 
-        ColumnLayout {
+        Column {
             id: menu
-            anchors.centerIn: parent
-            spacing: 2
-            width: Math.max(implicitWidth, 240)
+            width: parent.width
+            spacing: Space.xs
 
             MenuRow {
                 icon: "arrowsOut"
@@ -89,57 +90,41 @@ BarModuleBase {
                 onTriggered: root.run("centerwindow")
             }
 
-            Text {
-                Layout.topMargin: 8
-                Layout.leftMargin: 12
-                text: I18n.t("bar.app_menu.move_to")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                font.weight: Font.Bold
-                color: Colors.overSurfaceVariant
-            }
+            // Move to another workspace: one chip per workspace, the
+            // window's own selected
+            Group {
+                id: moveTo
+                width: parent.width
+                label: I18n.t("bar.app_menu.move_to")
+                divider: true
 
-            GridLayout {
-                Layout.margins: 6
-                columns: 5
-                rowSpacing: 4
-                columnSpacing: 4
+                Grid {
+                    columns: 5
+                    spacing: Space.s
 
-                Repeater {
-                    model: root.workspaces
-                    delegate: StyledRect {
-                        id: chip
-                        required property int index
-                        readonly property int ws: index + 1
-                        readonly property bool current: ws === root.currentWorkspace
-                        variant: current ? "primary" : (chipMouse.containsMouse ? "focus" : "common")
-                        enableShadow: false
-                        radius: Styling.radius(-4)
-                        Layout.preferredWidth: 38
-                        Layout.preferredHeight: 30
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: chip.ws
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: Font.Bold
-                            color: chip.item
-                        }
-                        MouseArea {
-                            id: chipMouse
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            enabled: root.address !== "" && !chip.current
-                            onClicked: root.run(`movetoworkspacesilent ${chip.ws}, address:${root.address}`)
+                    Repeater {
+                        model: root.workspaces
+                        delegate: Chip {
+                            required property int index
+                            readonly property int ws: index + 1
+                            width: Space.controlM
+                            text: String(ws)
+                            active: ws === root.currentWorkspace
+                            enabled: root.address !== ""
+                            onClicked: {
+                                if (!active)
+                                    root.run(`movetoworkspacesilent ${ws}, address:${root.address}`);
+                            }
                         }
                     }
                 }
             }
 
+            Divider {
+                width: parent.width
+            }
+
             MenuRow {
-                Layout.topMargin: 4
                 icon: "cancel"
                 label: I18n.t("bar.app_menu.close")
                 danger: true

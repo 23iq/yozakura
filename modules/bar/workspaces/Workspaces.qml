@@ -11,6 +11,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
 import qs.config
+import qs.modules.bar.look
 import "../../specials/Specials.js" as Specials
 
 Item {
@@ -212,19 +213,13 @@ Item {
     readonly property bool effectiveContainBar: Config.bar.containBar && ((Config.bar.frameEnabled !== undefined ? Config.bar.frameEnabled : false))
     property bool shadowEnabled: Config.showBackground && (!effectiveContainBar || Config.bar.keepBarShadow)
 
-    StyledRect {
+    ModuleBox {
         id: bgRect
-        variant: "bg"
-        anchors.fill: parent
-        enableShadow: workspacesWidget.shadowEnabled && !workspacesWidget.flat
-        backgroundOpacity: workspacesWidget.flat ? 0 : -1
-        effectSurface: workspacesWidget.flat ? "" : "bar"
-        enableBorder: !workspacesWidget.flat
-
-        topLeftRadius: orientation === "vertical" ? workspacesWidget.startRadius : workspacesWidget.startRadius
-        topRightRadius: orientation === "vertical" ? workspacesWidget.startRadius : workspacesWidget.endRadius
-        bottomLeftRadius: orientation === "vertical" ? workspacesWidget.endRadius : workspacesWidget.startRadius
-        bottomRightRadius: orientation === "vertical" ? workspacesWidget.endRadius : workspacesWidget.endRadius
+        vertical: orientation === "vertical"
+        startRadius: workspacesWidget.startRadius
+        endRadius: workspacesWidget.endRadius
+        flat: workspacesWidget.flat
+        shadow: workspacesWidget.shadowEnabled
     }
 
     WheelHandler {
@@ -261,108 +256,15 @@ Item {
         }
     }
 
-    Item {
-        id: rowLayout
+    OccupiedRanges {
         parent: regularWorkspaces
-        visible: orientation === "horizontal"
         z: 1
-
         anchors.fill: parent
         anchors.margins: widgetPadding
-
-        Repeater {
-            model: occupiedRanges
-
-            StyledRect {
-                variant: "focus"
-                required property int index
-                required property var modelData
-                z: 1
-                width: (modelData.end - modelData.start + 1) * workspaceButtonWidth
-                height: workspaceButtonWidth
-
-                radius: workspacesWidget.startRadius > 0 ? Math.max(workspacesWidget.startRadius - widgetPadding, 0) : 0
-
-                opacity: Config.theme.srFocus.opacity
-
-                x: modelData.start * workspaceButtonWidth
-                y: 0
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Math.max(0, Config.animDuration - 100)
-                        easing.type: Easing.OutQuad
-                    }
-                }
-                Behavior on x {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Math.max(0, Config.animDuration - 100)
-                        easing.type: Easing.OutQuad
-                    }
-                }
-                Behavior on width {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Math.max(0, Config.animDuration - 100)
-                        easing.type: Easing.OutQuad
-                    }
-                }
-            }
-        }
-    }
-
-    Item {
-        id: columnLayout
-        parent: regularWorkspaces
-        visible: orientation === "vertical"
-        z: 1
-
-        anchors.fill: parent
-        anchors.margins: widgetPadding
-
-        Repeater {
-            model: occupiedRanges
-
-            StyledRect {
-                variant: "focus"
-                required property int index
-                required property var modelData
-                z: 1
-                width: workspaceButtonWidth
-                height: (modelData.end - modelData.start + 1) * workspaceButtonWidth
-
-                radius: workspacesWidget.startRadius > 0 ? Math.max(workspacesWidget.startRadius - widgetPadding, 0) : 0
-
-                opacity: Config.theme.srFocus.opacity
-
-                x: 0
-                y: modelData.start * workspaceButtonWidth
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Math.max(0, Config.animDuration - 100)
-                        easing.type: Easing.OutQuad
-                    }
-                }
-                Behavior on y {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Math.max(0, Config.animDuration - 100)
-                        easing.type: Easing.OutQuad
-                    }
-                }
-                Behavior on height {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Math.max(0, Config.animDuration - 100)
-                        easing.type: Easing.OutQuad
-                    }
-                }
-            }
-        }
+        vertical: workspacesWidget.orientation === "vertical"
+        ranges: workspacesWidget.occupiedRanges
+        slot: workspacesWidget.workspaceButtonWidth
+        radius: workspacesWidget.startRadius > 0 ? Math.max(workspacesWidget.startRadius - widgetPadding, 0) : 0
     }
 
     // Active workspace indicator (style: workspaces.indicatorStyle)

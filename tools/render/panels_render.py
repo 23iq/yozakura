@@ -5,9 +5,17 @@ tiled windows in the work area the panels reserve.
 
     tools/render/panels_render.py LAYOUT.json [...] [--out DIR] [--mode dark|light|both]
                                   [--size 2560x1440] [--sheet SHEET.png] [--repo PATH]
+    tools/render/panels_render.py --bar-matrix [--bar-surface] [--only TEXT] --out DIR
+
+--bar-matrix renders the bar matrix of bar_matrix.py (every bar style on the
+top and left edges x ink/glass/tiles, cropped to the strip, and every bar
+popup opened), 1600x900 dark, no windows; --bar-surface gives the strip a
+visible background (srBarBg) so the groups show the language's group box.
 
 A LAYOUT.json holds config overrides per domain: {"name": "...", "bar":
-{...}, "notch": {...}, "theme": {...}, "dock": {...}}. Theme and palette
+{...}, "notch": {...}, "theme": {...}, "dock": {...}}, optional "actions"
+and "crop" ({"edge": "top|left|...", "size": px} or {"around": [objectName,
+...], "pad": px}). Theme and palette
 come from your config (~/.config/yozakura, ~/.cache/yozakura/colors.json;
 light mode is generated with matugen). Writes <out>/<name>-<mode>.png and,
 with --sheet, a labelled contact sheet of every render.
@@ -27,9 +35,10 @@ import headless  # noqa: E402
 
 headless.ensure(gl=True)
 
+import bar_matrix  # noqa: E402
 import bundled_fonts  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
-from PySide6.QtCore import QRectF, Qt  # noqa: E402
+from PySide6.QtCore import QRect, QRectF, Qt  # noqa: E402
 from PySide6.QtGui import QColor, QFont, QImage, QPainter  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_render import color_source, palette, wallpaper_state  # noqa: E402
@@ -60,7 +69,8 @@ def render(layout: dict, mode: str, size: tuple[int, int], out: Path, state: dic
     theme = {**user_domain("theme"), **layout.get("theme", {}), "lightMode": mode == "light"}
     bar = {**user_domain("bar"), **layout.get("bar", {})}
     notch = {**user_domain("notch"), **layout.get("notch", {})}
-    extra = {k: v for k, v in layout.items() if k not in ("name", "bar", "theme", "notch", "dock", "label", "actions")}
+    extra = {k: v for k, v in layout.items()
+             if k not in ("name", "bar", "theme", "notch", "dock", "label", "actions", "crop")}
     bundled_fonts.register(repo)
     env = PanelsEnv(f"panels-{layout.get('name', 'layout')}-{mode}", repo=repo, bar=bar, theme=theme,
                     notch=notch, dock=layout.get("dock"), palette=palette(mode, state), extra=extra)
@@ -74,11 +84,36 @@ def render(layout: dict, mode: str, size: tuple[int, int], out: Path, state: dic
             continue
         env.h.eval(obj, action["eval"])
         QTest.qWait(action.get("wait", 400))
-    path = out / f"{layout.get('name', 'layout')}-{mode}.png"
-    win.grabWindow().save(str(path))
+    suffix = "" if layout.get("crop") else f"-{mode}"
+    path = out / f"{layout.get('name', 'layout')}{suffix}.png"
+    image = win.grabWindow()
+    rect = crop_rect(win, layout.get("crop"), image.width(), image.height())
+    (image.copy(rect) if rect is not None else image).save(str(path))
     print(path, flush=True)
     win.close()
     return path
+
+
+def crop_rect(win, crop: dict | None, width: int, height: int) -> QRect | None:
+    """The part of the scene a layout's "crop" keeps: an edge strip, or the
+    union of named items (a module and its open popup) plus padding."""
+    if not crop:
+        return None
+    if "edge" in crop:
+        n = int(crop.get("size", 96))
+        return {"top": QRect(0, 0, width, n), "bottom": QRect(0, height - n, width, n),
+                "left": QRect(0, 0, n, height), "right": QRect(width - n, 0, n, height)}[crop["edge"]]
+    box = None
+    for name in crop.get("around", []):
+        item = find_item(win.contentItem(), name)
+        if item is None or not item.isVisible():
+            continue
+        r = item.mapRectToScene(QRectF(0, 0, item.width(), item.height()))
+        box = r if box is None else box.united(r)
+    if box is None:
+        return None
+    pad = int(crop.get("pad", 24))
+    return box.toAlignedRect().adjusted(-pad, -pad, pad, pad).intersected(QRect(0, 0, width, height))
 
 
 def contact_sheet(paths: list[tuple[str, Path]], dest: Path, cols: int = 2, thumb_w: int = 1280) -> None:
@@ -112,7 +147,10 @@ def contact_sheet(paths: list[tuple[str, Path]], dest: Path, cols: int = 2, thum
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("layouts", nargs="+")
+    ap.add_argument("layouts", nargs="*")
+    ap.add_argument("--bar-matrix", action="store_true", help="the bar styles x edges x languages + popups matrix")
+    ap.add_argument("--bar-surface", action="store_true", help="matrix: a visible strip background")
+    ap.add_argument("--only", default="", help="matrix: only layouts whose name contains this text")
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "panels"))
     ap.add_argument("--mode", default="both", choices=["dark", "light", "both"])
     ap.add_argument("--size", default="2560x1440")
@@ -126,11 +164,15 @@ def main() -> int:
     state = wallpaper_state()
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
     done = []
-    for f in args.layouts:
-        layout = json.loads(Path(f).read_text())
-        layout.setdefault("name", Path(f).stem)
+    layouts = [{"name": Path(f).stem, **json.loads(Path(f).read_text())} for f in args.layouts]
+    if args.bar_matrix:
+        modes, size = ["dark"], (1600, 900)
+        layouts += [lay for lay in bar_matrix.strips(args.bar_surface) + bar_matrix.popups(args.bar_surface)
+                    if args.only in lay["name"]]
+    for layout in layouts:
         for mode in modes:
-            path = render(layout, mode, size, out, state, Path(args.repo), not args.no_windows)
+            windows = not (args.no_windows or args.bar_matrix)
+            path = render(layout, mode, size, out, state, Path(args.repo), windows)
             done.append((f"{layout.get('label', layout['name'])} — {mode}", path))
     if args.sheet:
         contact_sheet(done, Path(args.sheet))
