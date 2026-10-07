@@ -30,7 +30,7 @@ Item {
     Behavior on specialBlur {
         NumberAnimation {
             duration: Config.animDuration > 0 ? Math.max(0, Config.workspaces.specialWorkspaceAnimationDuration) : 0
-            easing.type: Easing.OutQuad
+            easing.type: Motion.morph.easing
         }
     }
 

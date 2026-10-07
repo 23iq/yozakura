@@ -2,6 +2,7 @@ import QtQuick
 import qs.config
 import qs.modules.services
 import "WorkspaceNumerals.js" as Numerals
+import qs.modules.theme
 
 // Number of a workspace slot in the configured numeral system; fills the
 // slot. Systems without fit hints (arabic) keep the classic text metrics.
@@ -80,8 +81,8 @@ Item {
     Behavior on opacity {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: 150
-            easing.type: Easing.OutQuad
+            duration: Motion.enter.duration
+            easing.type: Motion.enter.easing
         }
     }
 }

@@ -250,7 +250,7 @@ StyledRect {
                     enabled: BarLook.animDuration > 0
                     NumberAnimation {
                         duration: BarLook.animDuration / 2
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on opacity {

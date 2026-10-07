@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.config
+import qs.modules.theme
 
 // Modules listed in bar.layout.drawer. Collapsed to nothing until `expanded`,
 // then slides out of the end group (right/bottom) towards the screen center.
@@ -25,7 +26,7 @@ Item {
         enabled: drawer.animationDuration > 0
         NumberAnimation {
             duration: drawer.animationDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
     // True from the moment `expanded` flips until the slide settles
