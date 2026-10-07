@@ -10,7 +10,6 @@ import qs.modules.components.kit
 import qs.modules.settings
 import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
-import "../Ui.js" as Ui
 
 // Settings "Presets" category: the preset studio. Gallery (live
 // thumbnails on the current wallpaper; apply, try, duplicate, rename,
@@ -201,22 +200,11 @@ Item {
             });
         }
     }
-    Rectangle {
+    PresetDropOverlay {
+        id: dropOverlay
+        objectName: "presetDropOverlay"
         anchors.fill: parent
-        anchors.margins: 12
         visible: drop.containsDrag
-        radius: Math.min(Styling.radius(6), 26)
-        color: Ui.alpha(Colors.primary, 0.1)
-        border.width: 2
-        border.color: Colors.primary
-        Text {
-            anchors.centerIn: parent
-            text: I18n.t("prefs.presets.drop")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(4)
-            font.weight: Font.Bold
-            color: Colors.primary
-        }
     }
 
     PresetNameDialog {

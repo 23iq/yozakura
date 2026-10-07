@@ -3,13 +3,16 @@
 
     tools/render/presets_render.py [--out DIR] [--mode dark|light|both]
                                    [--size 1280x900] [--editor NAME] [--builtin NAME]
+                                   [--languages ink,glass,tiles]
 
 Views: gallery, mixer, editor of a user preset, editor of a built-in
 preset, the "editing preset" banner on another page and the trial pill.
 The studio runs the real `<app> preset` CLI of this checkout against a
 private copy of your presets (tests/lib/preset_sandbox.py); wallpaper,
 palette and scheme previews come from your setup like settings_render.py.
-Writes <out>/<view>-<mode>.png.
+Writes <out>/<view>-<mode>.png, or <out>/settings-presets-<view>-<language>[-light].png
+with --languages (each visual language over the current wallpaper). The
+"drop" view shows the bundle drag-and-drop overlay.
 """
 from __future__ import annotations
 
@@ -43,6 +46,7 @@ def main() -> int:
     ap.add_argument("--size", default="1280x900")
     ap.add_argument("--editor", default="", help="user preset for the editor view (default: first user preset)")
     ap.add_argument("--builtin", default="Neon Tokyo", help="built-in preset for the read-only editor view")
+    ap.add_argument("--languages", default="", help="comma separated visual languages (ink,glass,tiles)")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
@@ -54,12 +58,14 @@ def main() -> int:
     except (OSError, ValueError):
         scheme = None
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
-    for mode in modes:
-        render_mode(mode, args, state, schemes, scheme, out, (w, h))
+    for lang in [x for x in args.languages.split(",") if x] or [""]:
+        for mode in modes:
+            render_mode(mode, args, state, schemes, scheme, out, (w, h), lang)
     return 0
 
 
-def render_mode(mode: str, args, state: dict, schemes: dict, scheme: str | None, out: Path, size: tuple[int, int]) -> None:
+def render_mode(mode: str, args, state: dict, schemes: dict, scheme: str | None, out: Path, size: tuple[int, int],
+                lang: str = "") -> None:
     w, h = size
     sb = PresetSandbox(Path(tempfile.mkdtemp(prefix="presets-render-")), user_presets=USER_PRESETS,
                        wallpapers={"matugenScheme": scheme or "scheme-tonal-spot", "currentWall": state.get("current", "")})
@@ -68,8 +74,11 @@ def render_mode(mode: str, args, state: dict, schemes: dict, scheme: str | None,
     if not editor:
         sb.run(["duplicate", args.builtin, "My look"])
         editor = "My look"
-    env = SettingsEnv(f"presets-{mode}", palette=palette(mode, state), user_config=True,
-                      overrides={"theme": {"lightMode": mode == "light"}}, wallpaper=state)
+    theme = {"lightMode": mode == "light", **({"language": lang} if lang else {})}
+    env = SettingsEnv(f"presets-{lang}-{mode}", palette=palette(mode, state), user_config=True,
+                      overrides={"theme": theme}, wallpaper=state)
+    wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
+    backdrop = json.dumps(("file://" + wall) if wall and lang else "")
     # Brand.cacheDir of the harness (thumbnail PNG cache).
     (BRAND_CACHE / "preset-thumbs").mkdir(parents=True, exist_ok=True)
     bridge = sb.bridge()  # keep a reference: the QML context does not own it
@@ -81,6 +90,7 @@ import qs.modules.settings
 import qs.modules.settings.store
 Window {{
     width: {w}; height: {h}; visible: true; color: "black"
+    Image {{ anchors.fill: parent; source: {backdrop}; fillMode: Image.PreserveAspectCrop }}
     SettingsShell {{ objectName: "shell"; anchors.fill: parent }}
 }}""")
     shell = env.h.find(win, "shell")
@@ -95,12 +105,15 @@ Window {{
     def snap(name: str, wait: int = 2500) -> None:
         QTest.mouseMove(win, QPoint(120, h - 30))  # over the sidebar: no card hover in the shot
         QTest.qWait(wait)
-        path = out / f"{name}-{mode}.png"
+        path = out / (f"settings-presets-{name}-{lang}{'' if mode == 'dark' else '-light'}.png" if lang else f"{name}-{mode}.png")
         win.grabWindow().save(str(path))
         print(path)
 
     ev(shell, 'select("presets")')
     snap("gallery", 4000)
+    ev(env.h.find(win, "presetDropOverlay"), "visible = true")
+    snap("drop", 600)
+    ev(env.h.find(win, "presetDropOverlay"), "visible = false")
     ev(page(), 'show("mixer")')
     names = [p["name"] for p in sb.json("list", "--json")]
     pick = {a: names[(i * 4 + 2) % len(names)] for i, a in enumerate(["layout", "colors", "windows", "desktop", "lockscreen"])}
