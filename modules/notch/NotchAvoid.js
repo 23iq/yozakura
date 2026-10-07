@@ -12,7 +12,9 @@
 //            top bar, above a bottom one), growing away from the edge
 //            instead of sideways over the bar.
 // A side notch (left/right) is already laid out beside a bar on its edge
-// (EdgeLayout.notchRect), so it never needs to move. Positions are along
+// (EdgeLayout.notchRect), so it never needs to move. A notch the pointer
+// grew (`anchored`) never moves either: what the pointer is on stays under
+// it (a dock-like bar parts around it instead, DockSplit.js). Positions are along
 // the edge (x for top/bottom, y for left/right), in screen pixels.
 // Unit tested in tests/notch-avoid.test.cjs.
 
@@ -65,11 +67,12 @@ function freeSlots(total, spans) {
 // o: { pos, transient, occupied, total (edge length), start, length (the
 // grown notch along the edge, where it would sit), barDepth (bar + its
 // margins + frame from the screen edge), edgeGap (notch's own gap to the
-// edge), gap (space left between bar and dropped notch) }.
+// edge), gap (space left between bar and dropped notch), anchored (the
+// pointer grew it: it stays where it is) }.
 // Returns { mode, along, across } (across: px away from the edge).
 function avoid(o) {
     var none = { mode: "edge", along: 0, across: 0 };
-    if (!o || !o.transient || VERTICAL[o.pos] || !o.occupied || !o.occupied.length || !(o.length > 0))
+    if (!o || !o.transient || o.anchored || VERTICAL[o.pos] || !o.occupied || !o.occupied.length || !(o.length > 0))
         return none;
     var a = o.start;
     var b = o.start + o.length;

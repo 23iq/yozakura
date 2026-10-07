@@ -27,6 +27,12 @@ Item {
     property var defaultView: null
     property bool isExpanded: stackViewInternal.depth > 1
     property bool parentHovered: false
+    // Pointer presence that grows a collapsed pill (NotchContent: after
+    // notch.hoverExpandDelay of dwell)
+    property bool hoverIntent: isHovered || parentHovered
+    // Length along the edge the grown notch claims from a dock on its edge
+    // (DockPanel parts around it); 0 while resting
+    property real edgeClaim: 0
     property bool isHovered: false
 
     onParentHoveredChanged: updateChildHover()
@@ -56,7 +62,7 @@ Item {
     readonly property var styleSpec: NotchStyles.spec(Config.notchStyle)
     readonly property var restingView: stackViewInternal.currentItem
     readonly property bool pillCollapsed: NotchStyles.collapsed(styleSpec, {
-        hovered: isHovered || parentHovered,
+        hovered: hoverIntent,
         open: screenNotchOpen || isExpanded,
         expanded: !!(restingView && restingView.expandedState),
         notifications: hasActiveNotifications,

@@ -124,6 +124,7 @@ Item {
         id: hoverHold
         over: root.isMouseOverNotch
         delay: Config.notch ? Config.notch.hoverCollapseDelay : 200
+        intentDelay: Config.notch ? Config.notch.hoverExpandDelay : 90
     }
 
     // A grown notch never covers the bar's own modules (NotchAvoid.js)
@@ -132,6 +133,7 @@ Item {
         screen: root.screen
         bar: root.barContentRef
         position: root.notchPosition
+        pointer: hoverHold.held
         grown: !notchContainer.pillCollapsed && (notchContainer.styleSpec.collapses || root.screenNotchOpen || root.hasActiveNotifications || (root.defaultView ? root.defaultView.panelExpanded : false))
         targetAlong: Math.max(root.vertical ? notchContainer.targetHeight : notchContainer.targetWidth, notificationPopupContainer.targetWidth)
         restAlong: notchContainer.restAlong
@@ -361,6 +363,12 @@ Item {
                 screenName: root.screen.name
                 unifiedEffectActive: root.unifiedEffectActive
                 parentHovered: hoverHold.held
+                hoverIntent: hoverHold.intent
+                // Length a dock on its edge parts for (DockPanel): only
+                // for what the pointer grew; a notch growing by itself
+                // (notification, activity, shortcut) never moves the bar
+                // under a pointer aiming at it, it drops past it instead
+                edgeClaim: avoidance.anchored ? avoidance.targetAlong : 0
                 x: root.edgePlace(parent, width, height, root.edgeGap).x
                 y: root.edgePlace(parent, width, height, root.edgeGap).y
 

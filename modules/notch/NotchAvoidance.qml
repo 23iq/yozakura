@@ -20,6 +20,18 @@ Item {
     property string position: "top"
     // The notch shows more than its resting self
     property bool grown: false
+    // The pointer is on the notch (held presence)
+    property bool pointer: false
+    // The pointer grew it: it stays put until it rests again (NotchAvoid
+    // `anchored`). Latched when it grows, so hovering a notch that grew by
+    // itself (and moved) never pulls it back under the pointer.
+    property bool _latched: false
+    property bool _latchSet: false
+    readonly property bool anchored: grown && (_latchSet ? _latched : pointer)
+    onGrownChanged: {
+        root._latched = root.grown && root.pointer;
+        root._latchSet = root.grown;
+    }
     // Target size along the edge of the grown notch, and of the resting one
     property real targetAlong: 0
     property real restAlong: 0
@@ -36,7 +48,8 @@ Item {
         inset: bar.aligned ? 0 : bar.frameOffset + bar.sideMargin,
         startReach: bar.styleItem ? bar.styleItem.startReach : 0,
         endReach: bar.styleItem ? bar.styleItem.endReach : 0,
-        center: !!bar.centerIds && bar.centerIds.length > 0
+        // a parted dock keeps its center group on a side (DockSplit.js)
+        center: !!bar.centerIds && bar.centerIds.length > 0 && !(bar.styleItem && bar.styleItem.parted === true)
     }) : []
     readonly property var targetRect: EdgeService.notchRect(screen, {
         along: targetAlong,
@@ -45,6 +58,7 @@ Item {
     readonly property var result: NotchAvoid.avoid({
         pos: position,
         transient: grown,
+        anchored: anchored,
         occupied: occupied,
         total: vertical ? (screen ? screen.height : 0) : (screen ? screen.width : 0),
         start: vertical ? targetRect.y : targetRect.x,

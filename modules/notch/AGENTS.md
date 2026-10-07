@@ -12,7 +12,7 @@ Dynamic island UI with StackView navigation, themes (default/island), and notifi
 | `NotchSilhouette.qml` / `NotchOutline.qml` | Background (attached mask + outline, island) on any edge; mask/outline drawn for top and turned for a side edge |
 | `NotchShape.js` | Pure edge math: radii, corner sizes, hide offset, view placement, hover strip (`tests/notch-shape.test.cjs`) |
 | `NotchPlacement.qml` | Region rect on its edge via `EdgeLayout.notchRect` (align, side bar/dock/frame offset) + hover strip |
-| `NotchAvoid.js` / `NotchAvoidance.qml` | A grown notch (hover, panel, notification, activity, hosted view) never covers the modules of a bar on its edge: stays, slides between the bar groups, or drops past the bar; hover stem from the resting place (`tests/notch-avoid.test.cjs`, `tests/notch-hover-avoid.test.py`) |
+| `NotchAvoid.js` / `NotchAvoidance.qml` | A grown notch (hover, panel, notification, activity, hosted view) never covers the modules of a bar on its edge: stays, slides between the bar groups, or drops past the bar; one the pointer grew stays put (`anchored`), a dock-like bar parts around it (`modules/bar/panels/styles/DockSplit.js`); hover stem from the resting place (`tests/notch-avoid.test.cjs`, `tests/dock-split.test.cjs`, `tests/notch-hover-avoid.test.py`) |
 | `NotchHoverHold.qml` | Pointer presence over the whole silhouette (+ tolerance) held for `notch.hoverCollapseDelay`; drives the pill and holds open panels |
 | `NotchAnimationBehavior.qml` | Reusable animation behavior component |
 | `NotchNotificationView.qml` | Notification display with StackView navigation, timestamps, hover states |

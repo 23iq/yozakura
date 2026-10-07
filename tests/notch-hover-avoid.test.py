@@ -1,5 +1,6 @@
 """Notch hover and bar avoidance offscreen:
-- NotchHoverHold: on at once, held for the collapse delay after leaving;
+- NotchHoverHold: on at once, held for the collapse delay after leaving,
+  intent only after a dwell;
 - a HoverHandler on the notch container stays hovered while the pointer is
   on a child MouseArea / button (real pointer moves);
 - DefaultView: the pointer anywhere on the notch holds an open panel; a
@@ -51,6 +52,22 @@ QTest.qWait(40)
 assert h.eval(hold, "held"), "coming back restarts the delay"
 QTest.qWait(60)
 assert not h.eval(hold, "held"), "released after the delay"
+
+# intent: presence that dwelled, not a pointer crossing on its way to the bar
+hold.setProperty("intentDelay", 50)
+hold.setProperty("over", True)
+assert h.eval(hold, "held") and not h.eval(hold, "intent"), "no intent on arrival"
+hold.setProperty("over", False)
+QTest.qWait(80)
+assert not h.eval(hold, "intent") and not h.eval(hold, "held"), "crossing never grows the pill"
+hold.setProperty("over", True)
+QTest.qWait(80)
+assert h.eval(hold, "intent"), "dwelling does"
+hold.setProperty("over", False)
+QTest.qWait(30)
+assert h.eval(hold, "intent"), "kept while held"
+QTest.qWait(60)
+assert not h.eval(hold, "intent")
 
 # ── container hover survives child controls ──
 win = h.load("""
@@ -161,4 +178,19 @@ a.setProperty("grown", False)
 assert h.eval(a, "returning"), "sliding back is flagged (hover from a still pointer does not re-open)"
 QTest.qWait(250)
 assert not h.eval(a, "returning")
+
+# ── the pointer anchors what it grew ──
+h.eval(av, "Config.animDuration = 0")
+a.setProperty("pointer", True)
+a.setProperty("grown", True)
+assert h.eval(a, "anchored") and h.eval(a, "result.mode") == "edge", "grown under the pointer: stays on the edge"
+a.setProperty("pointer", False)
+assert h.eval(a, "anchored"), "latched until it rests"
+a.setProperty("grown", False)
+a.setProperty("grown", True)
+assert not h.eval(a, "anchored") and h.eval(a, "result.mode") == "drop", "grown by itself: drops"
+a.setProperty("pointer", True)
+assert h.eval(a, "result.mode") == "drop", "hovering a dropped notch never pulls it back"
+a.setProperty("grown", False)
+a.setProperty("pointer", False)
 print("notch hover/avoid: hold, container hover, notch-wide hold, peek, avoidance passed")

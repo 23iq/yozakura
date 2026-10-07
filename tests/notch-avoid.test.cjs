@@ -74,3 +74,16 @@ test('free slots fill the gaps between overlapping spans', () => {
     same(A.freeSlots(100, [[60, 80], [0, 10], [5, 20]]), [[20, 60], [80, 100]]);
     same(A.freeSlots(100, []), [[0, 100]]);
 });
+
+test('a notch the pointer grew stays where it is', () => {
+    const occ = A.occupied({ lo: 560, hi: 1360 });
+    same(A.avoid({ ...base, anchored: true, occupied: occ, ...centered(440) }), { mode: 'edge', along: 0, across: 0 });
+    const strip = A.occupied({ lo: 0, hi: 1920, inset: 8, startReach: 700, endReach: 100 });
+    same(A.avoid({ ...base, anchored: true, occupied: strip, ...centered(700) }), { mode: 'edge', along: 0, across: 0 }, 'no slide either');
+});
+
+test('a parted dock (two runs reaching the gap) leaves the notch on the edge', () => {
+    // 1040 px dock centered on 1920: runs reach 312 px from each end, 416 px gap
+    const occ = A.occupied({ lo: 440, hi: 1480, inset: 0, startReach: 312, endReach: 312 });
+    same(A.avoid({ ...base, occupied: occ, ...centered(400) }), { mode: 'edge', along: 0, across: 0 });
+});
