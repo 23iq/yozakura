@@ -12,6 +12,8 @@ Dynamic island UI with StackView navigation, themes (default/island), and notifi
 | `NotchSilhouette.qml` / `NotchOutline.qml` | Background (attached mask + outline, island) on any edge; mask/outline drawn for top and turned for a side edge |
 | `NotchShape.js` | Pure edge math: radii, corner sizes, hide offset, view placement, hover strip (`tests/notch-shape.test.cjs`) |
 | `NotchPlacement.qml` | Region rect on its edge via `EdgeLayout.notchRect` (align, side bar/dock/frame offset) + hover strip |
+| `NotchAvoid.js` / `NotchAvoidance.qml` | A grown notch (hover, panel, notification, activity, hosted view) never covers the modules of a bar on its edge: stays, slides between the bar groups, or drops past the bar; hover stem from the resting place (`tests/notch-avoid.test.cjs`, `tests/notch-hover-avoid.test.py`) |
+| `NotchHoverHold.qml` | Pointer presence over the whole silhouette (+ tolerance) held for `notch.hoverCollapseDelay`; drives the pill and holds open panels |
 | `NotchAnimationBehavior.qml` | Reusable animation behavior component |
 | `NotchNotificationView.qml` | Notification display with StackView navigation, timestamps, hover states |
 
@@ -33,5 +35,6 @@ Follows parent AGENTS.md. No additional conventions.
 - Side edges (`notch.position` left/right): never rotate content. The header re-lays upright (`IslandHeader.vertical`, `IslandRail`, stacked segment labels via `NotchActivities.stackedLabel`) and panels/views open beside it toward the center
 - Never hardcode notch dimensions - use `Config.notchStyle` (styles/NotchStyles.js registry: attached/island/pill), `Config.roundness`, `Config.notchPosition`, `notch.align` via `EdgeService.notchRect`
 - Notifications in the notch: `NotchNotificationCard` (card) or `CompactNotification` (compact), picked by `NotchNotificationStyles.js`; island activities order/side/enable: `modules/widgets/defaultview/activities/ActivityRegistry.js`
+- Hover: never a hover-enabled `MouseArea` over the notch to detect presence (children take it); use the container `HoverHandler` (`NotchContent`) and the held state. Size, radius and avoidance moves share `Motion.morph`; no per-state easing switches
 - Avoid direct stack manipulation - use `Visibilities` service signals (onLauncherChanged, onDashboardChanged, etc.)
 - Don't skip `Qt.callLater()` when pushing to StackView from Connections - prevents async list modification issues

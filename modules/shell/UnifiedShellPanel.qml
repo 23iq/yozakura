@@ -139,12 +139,16 @@ PanelWindow {
     mask: Region {
         // Full-screen capture when any module/popup is open
         item: unifiedPanel.needsFullScreenInput ? fullScreenMask : null
-        regions: [unifiedPanel.notchRegion, unifiedPanel.dockRegion, unifiedPanel.assistantRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
+        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.assistantRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
     }
 
     readonly property Region notchRegion: Region {
         // A disabled notch takes input only while it shows a view
         item: ShellLayout.notchEnabled || notchContent.reveal ? notchContent.notchHitbox : null
+    }
+    // A notch moved off the bar: the bridge from its edge down to it
+    readonly property Region notchStemRegion: Region {
+        item: notchContent.notchStemHitbox
     }
     readonly property Region dockRegion: Region {
         // Only include the dock hitbox if the dock is actually enabled and visible on this screen.

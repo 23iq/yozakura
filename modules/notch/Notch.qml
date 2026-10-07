@@ -107,6 +107,8 @@ Item {
             }, inset);
         view.x = Qt.binding(() => at().x);
         view.y = Qt.binding(() => at().y);
+        if (!expanded && view.hasOwnProperty("collapsingStyle"))
+            view.collapsingStyle = Qt.binding(() => notchContainer.styleSpec.collapses);
         if (!expanded && view.hasOwnProperty("interactionSuspended")) {
             view.interactionSuspended = Qt.binding(() => screenNotchOpen || stackViewInternal.busy || notchContainer.isExpanded);
         }
@@ -126,13 +128,22 @@ Item {
         w: vertical ? Math.max(bodyWidth, thickness) : bodyWidth,
         h: vertical ? targetContentHeight : Math.max(targetContentHeight, thickness)
     }, totalCornerWidth / 2)
-    implicitWidth: pillCollapsed ? capsule.w : outerSize.w
-    implicitHeight: pillCollapsed ? capsule.h : outerSize.h
+    // Target (not animated) size, for placement decisions (NotchAvoidance)
+    readonly property real targetWidth: pillCollapsed ? capsule.w : outerSize.w
+    readonly property real targetHeight: pillCollapsed ? capsule.h : outerSize.h
+    // Resting footprint along the edge: the capsule of a collapsing style
+    readonly property real restAlong: styleSpec.collapses ? (vertical ? capsule.h : capsule.w) : (vertical ? targetHeight : targetWidth)
+    implicitWidth: targetWidth
+    implicitHeight: targetHeight
 
-    readonly property int geometryAnimationDuration: vertical || (styleSpec.collapses && !isExpanded) ? motionMorph.duration : isExpanded || screenNotchOpen || stackViewInternal.busy ? Config.animDuration : Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
-    // A side notch morphs with the motion profile (Motion.morph)
-    readonly property int geometryEasing: vertical ? motionMorph.easing : isExpanded ? Easing.OutBack : stackViewInternal.busy ? Easing.InOutCubic : Easing.OutCubic
-    readonly property real geometryOvershoot: vertical ? motionMorph.overshoot : isExpanded ? 1.2 : 1.0
+    // One morph for every size change (Motion.morph): easing and overshoot
+    // never switch with the state, so a change that lands mid-animation
+    // retargets smoothly instead of restarting with another curve. The
+    // resting notch's own media changes keep notch.mediaAnimationDuration.
+    readonly property bool restingMorph: !styleSpec.collapses && !vertical && !isExpanded && !screenNotchOpen && !stackViewInternal.busy
+    readonly property int geometryAnimationDuration: restingMorph ? Math.min(motionMorph.duration, Math.max(0, Config.notch.mediaAnimationDuration)) : motionMorph.duration
+    readonly property int geometryEasing: motionMorph.easing
+    readonly property real geometryOvershoot: motionMorph.overshoot
 
     Behavior on implicitWidth {
         enabled: Config.animDuration > 0

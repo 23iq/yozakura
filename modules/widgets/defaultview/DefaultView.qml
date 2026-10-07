@@ -38,6 +38,25 @@ Item {
     // The media summary is the "media" activity (notch.activities)
     readonly property bool mediaEnabled: Registry.isEnabled(Config.notch ? Config.notch.activities : [], "media")
     readonly property bool hasActivities: header.hasActivities
+    // Pointer on the notch (set through Notch.updateChildHover)
+    readonly property bool pointerHeld: root.notchHovered || root.parentHoverActive
+    // A collapsing style (pill) answers a notification with a peek: just
+    // the card, born from the capsule, without the whole header; the
+    // pointer (or an open panel / live activity) brings the header back.
+    // collapsingStyle: set by the Notch (notch.style spec)
+    property bool collapsingStyle: false
+    readonly property bool peek: root.collapsingStyle && !root.vertical && root.hasActiveNotifications && !root.pointerHeld && !controller.expanded && !header.hasActivities && !notifications.navigating
+    // Header depth: the target drives the notch size (its own morph), the
+    // animated one places the body inside the morphing silhouette
+    readonly property real headerTarget: root.peek ? 0 : header.implicitHeight
+    property real headerExtent: root.headerTarget
+    Behavior on headerExtent {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
 
     // ── panels ──
     readonly property var panelAvailability: controller.availability({
@@ -80,7 +99,10 @@ Item {
         objectName: "panelController"
         mode: Config.notch.expandOn ?? "hover"
         hoverTarget: controller.panelFor(header.hoverTrigger)
-        hold: panelHover.hovered || root.sideHold || (controller.openPanel === "media" && (header.selectorOpen || Visibilities.playerMenuOpen))
+        // The pointer anywhere on the notch (held by NotchContent for
+        // notch.hoverCollapseDelay) keeps the panel: crossing the bell, the
+        // avatar or a button on the way never collapses it
+        hold: root.pointerHeld || panelHover.hovered || root.sideHold || (controller.openPanel === "media" && (header.selectorOpen || Visibilities.playerMenuOpen))
         suspended: root.interactionSuspended
         available: root.panelAvailability
     }
@@ -88,9 +110,12 @@ Item {
     // Panel on screen: the open one, or the last one while the notch closes
     property string lastPanel: ""
     readonly property int motionDuration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
+    // Kept until the silhouette finished shrinking: a pill or a side notch
+    // morphs with Motion.morph (Notch.geometryAnimationDuration), so the
+    // panel never vanishes from a notch that is still closing around it
     Timer {
         id: closeTimer
-        interval: root.motionDuration
+        interval: root.collapsingStyle || root.vertical ? Math.max(root.motionDuration, Config.animDuration > 0 ? Motion.morph.duration : 0) : root.motionDuration
     }
     Connections {
         target: controller
@@ -113,8 +138,8 @@ Item {
     readonly property real notificationWidth: hasActiveNotifications ? (expandedState ? 452 : 352) : 0
     readonly property real bodyHeight: (controller.expanded ? root.openPanelHeight : 0) + notificationSlot.height
 
-    implicitWidth: root.vertical ? header.contentWidth + Math.max(root.panelWidth, root.notificationWidth) : Math.max(header.contentWidth, root.panelWidth, root.notificationWidth)
-    implicitHeight: root.vertical ? Math.max(header.implicitHeight, root.bodyHeight) : header.implicitHeight + root.bodyHeight
+    implicitWidth: root.vertical ? header.contentWidth + Math.max(root.panelWidth, root.notificationWidth) : root.peek ? root.notificationWidth : Math.max(header.contentWidth, root.panelWidth, root.notificationWidth)
+    implicitHeight: root.vertical ? Math.max(header.implicitHeight, root.bodyHeight) : root.headerTarget + root.bodyHeight
 
     // Escape closes a clicked-open panel (when the notch layer has focus)
     Keys.onEscapePressed: event => {
@@ -140,6 +165,16 @@ Item {
         // On the screen edge; centered along a side edge
         x: root.edge === "right" ? root.width - width : 0
         y: root.vertical ? (root.height - height) / 2 : root.isBottom ? root.height - height : 0
+        // Fades out for a notification peek, back in with the pointer
+        opacity: root.peek ? 0 : 1
+        visible: opacity > 0.01
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: root.peek ? Motion.exit.duration : Motion.enter.duration
+                easing.type: root.peek ? Motion.exit.easing : Motion.enter.easing
+            }
+        }
         player: root.mediaEnabled ? root.activePlayer : null
         hovered: root.expandedState
         mediaExpanded: controller.openPanel === "media"
@@ -168,14 +203,14 @@ Item {
         height: root.vertical ? parent.height : panelSlot.height + notificationSlot.height
         // Beside the header, toward the screen center
         x: root.edge === "left" ? header.width : 0
-        y: root.vertical ? 0 : root.isBottom ? root.height - header.height - height : header.height
+        y: root.vertical ? 0 : root.isBottom ? root.height - root.headerExtent - height : root.headerExtent
 
         Item {
             id: panelSlot
             // Follows the notch's animated size (height; width beside an
             // upright header), so the panel is revealed with the silhouette
             width: root.vertical ? (root.shownPanel !== "" ? parent.width : 0) : parent.width
-            height: root.vertical ? Math.max(0, parent.height - notificationSlot.height) : root.shownPanel !== "" ? Math.max(0, root.height - header.implicitHeight - notificationSlot.height) : 0
+            height: root.vertical ? Math.max(0, parent.height - notificationSlot.height) : root.shownPanel !== "" ? Math.max(0, root.height - root.headerExtent - notificationSlot.height) : 0
             clip: true
             HoverHandler {
                 id: panelHover

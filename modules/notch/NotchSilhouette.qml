@@ -41,36 +41,27 @@ Item {
     property real br: radii.br
     property real outer: outerRadius
     Behavior on tl {
-        RadiusAnimation {
-            bouncy: root.open
-        }
+        RadiusAnimation {}
     }
     Behavior on tr {
-        RadiusAnimation {
-            bouncy: root.open
-        }
+        RadiusAnimation {}
     }
     Behavior on bl {
-        RadiusAnimation {
-            bouncy: root.open
-        }
+        RadiusAnimation {}
     }
     Behavior on br {
-        RadiusAnimation {
-            bouncy: root.open
-        }
+        RadiusAnimation {}
     }
     Behavior on outer {
-        RadiusAnimation {
-            bouncy: root.open
-        }
+        RadiusAnimation {}
     }
 
+    // Radii morph with the size (Motion.morph), never on a curve of their
+    // own: a bouncier corner than the silhouette reads as a wobble
     component RadiusAnimation: NumberAnimation {
-        property bool bouncy: false
-        duration: Config.animDuration > 0 ? Config.animDuration : 0
-        easing.type: bouncy ? Easing.OutBack : Easing.OutQuart
-        easing.overshoot: bouncy ? 1.2 : 1.0
+        duration: Config.animDuration > 0 ? Motion.morph.duration : 0
+        easing.type: Motion.morph.easing
+        easing.overshoot: Motion.morph.overshoot
     }
 
     // ── attached: edge-flowing surface, masked by body + concave corners ──
