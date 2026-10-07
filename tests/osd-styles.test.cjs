@@ -40,9 +40,11 @@ test('every style on every bar edge stays on screen and off the bar', () => {
         if (pref === 'auto' && style !== 'island') assert.notEqual(p.edge, bar, tag);
     }
 });
-test('edge style is vertical on side edges and horizontal on top/bottom', () => {
-    const v = S.sizeFor('edge', true, 220), h = S.sizeFor('edge', false, 220);
-    assert.ok(v.h > v.w && h.w > h.h);
+test('edge and pill styles stand upright on side edges and lie flat on top/bottom', () => {
+    for (const style of ['edge', 'pill']) {
+        const v = S.sizeFor(style, true, 220), h = S.sizeFor(style, false, 220);
+        assert.ok(v.h > v.w && h.w > h.h, style);
+    }
 });
 test('island follows the notch edge when auto', () => {
     assert.equal(S.edgePref('island', 'auto', 'bottom'), 'bottom');

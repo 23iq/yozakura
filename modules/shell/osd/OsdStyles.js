@@ -50,7 +50,7 @@ function sizeFor(style, vertical, osdW) {
     case "island":
         return { "w": Math.round(w * 0.82), "h": 44 };
     default:
-        return { "w": w, "h": 52 };
+        return vertical ? { "w": 52, "h": Math.round(w * 0.9) } : { "w": w, "h": 52 };
     }
 }
 

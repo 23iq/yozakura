@@ -7,7 +7,7 @@
 Draws each style of modules/shell/osd/styles (pill, edge, island,
 bar-inline) in the states volume / brightness / muted / device switch, once
 per visual language, over your wallpaper with your real config and palette
-(see settings_render.py). The edge style shows its vertical (left/right
+(see settings_render.py). The edge and pill styles show their vertical (left/right
 edge) and horizontal (top/bottom edge) forms. Writes
 <out>/osd-<style>-<language>.png.
 """
@@ -36,7 +36,7 @@ STATES = [
 
 # One OSD in a state: the style's component at its window size.
 CELL = {
-    "pill": "OsdPill { width: implicitWidth; height: implicitHeight; %s }",
+    "pill": "OsdPill { vertical: %s; width: implicitWidth; height: implicitHeight; %s }",
     "edge": "OsdEdge { vertical: %s; width: implicitWidth; height: implicitHeight; %s }",
     "island": "OsdIsland { width: implicitWidth; height: implicitHeight; %s }",
     # The bar's controls button, grown by the inline OSD (ControlsButton).
@@ -60,15 +60,15 @@ def cells(style: str) -> str:
     out = []
     for i, st in enumerate(STATES):
         p = props(st)
-        if style == "edge":
-            out.append(CELL["edge"] % ("true", p))
+        if style in ("edge", "pill"):
+            out.append(CELL[style] % ("true", p))
         elif style == "bar-inline":
             out.append(CELL["bar-inline"] % (i, i, p.replace('; currentDevice: "Speakers"', "")))
         else:
             out.append(CELL[style] % p)
-    if style == "edge":
+    if style in ("edge", "pill"):
         # Horizontal form (top/bottom edge) in a second row.
-        row = "\n".join(CELL["edge"] % ("false", props(st)) for st in STATES)
+        row = "\n".join(CELL[style] % ("false", props(st)) for st in STATES)
         return f"Row {{ spacing: Space.xl\n{chr(10).join(out)}\n}}\nGrid {{ columns: 2; spacing: Space.xl\n{row}\n}}"
     return "\n".join(out)
 
