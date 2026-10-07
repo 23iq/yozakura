@@ -93,3 +93,27 @@ function caption(procText, user, upLabel) {
         parts.push(user + "@" + host);
     return parts.join(" · ");
 }
+
+// Sizes of the fullscreen menu for a screen `height` px tall: the kit
+// IconButton size, the label role and the caption / hint role. Large
+// screens (>= 1200 px, e.g. 2560x1440) get the hero size so the actions
+// read from a distance; smaller ones the regular large size.
+function heroScale(height) {
+    if (height >= 1200)
+        return {
+            "size": "xl",
+            "label": "title",
+            "caption": "body"
+        };
+    if (height >= 900)
+        return {
+            "size": "l",
+            "label": "body",
+            "caption": "secondary"
+        };
+    return {
+        "size": "l",
+        "label": "secondary",
+        "caption": "caption"
+    };
+}

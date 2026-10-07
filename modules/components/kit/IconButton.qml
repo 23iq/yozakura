@@ -4,7 +4,8 @@ import qs.modules.components
 import "KitStates.js" as KitStates
 import qs.modules.components.kit
 
-// Icon button. Sizes "s" (36) / "m" (40) / "l" (64, a hero action). Rest and hover / `highlighted`
+// Icon button. Sizes "s" (36) / "m" (40) / "l" (64, a hero action) / "xl" (96, hero
+// actions on large screens). Rest and hover / `highlighted`
 // are the language's control box (Look: a ghost in ink, translucent with a
 // hairline in glass, a solid squarer tile in tiles), `active` an accent tint
 // with an accent glyph (a solid accent fill in tiles), `primary` the one
@@ -24,7 +25,11 @@ StyledRect {
 
     signal clicked
 
-    implicitWidth: root.size === "s" ? Space.controlS : (root.size === "l" ? Space.controlL : Space.controlM)
+    implicitWidth: ({
+            "s": Space.controlS,
+            "l": Space.controlL,
+            "xl": Space.controlXL
+        })[root.size] || Space.controlM
     implicitHeight: implicitWidth
     variant: KitStates.variant(root.look, "common")
     backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
@@ -54,7 +59,7 @@ StyledRect {
         anchors.centerIn: parent
         text: root.icon
         font.family: Icons.font
-        font.pixelSize: root.size === "l" ? Type.iconSize("title") + 4 : Type.iconSize("body") + (root.size === "s" ? -1 : 2)
+        font.pixelSize: root.size === "xl" ? Math.round(Type.size("display") * 0.95) : (root.size === "l" ? Type.iconSize("title") + 4 : Type.iconSize("body") + (root.size === "s" ? -1 : 2))
         color: {
             const k = KitStates.ink(root.look);
             return k === "accentInk" ? Type.accentInk : (k === "accent" ? Type.accent : Type.text);
