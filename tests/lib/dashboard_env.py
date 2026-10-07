@@ -78,7 +78,7 @@ QtObject {
 QtObject {{
     id: n
     property string presentation: "notch"; property string cornerPosition: "top-right"
-    property bool silent: false; property int cleared: 0; property var sent: []
+    property bool silent: false; property int cleared: 0; property var sent: []; property var discarded: []
     property var list: {json.dumps(notifs)}
     property var groupsByAppName: {{
         const g = {{}};
@@ -91,6 +91,7 @@ QtObject {{
     property var appNameList: Object.keys(groupsByAppName)
     function toggleDnd() {{ silent = !silent }}
     function discardAllNotifications() {{ cleared++; list = [] }}
+    function discardNotifications(ids) {{ discarded = discarded.concat([ids]) }}
     function hideAllPopups() {{}}
     function notifyInternal(o) {{ sent = sent.concat([o]); return null }}
 }}""",
@@ -151,6 +152,12 @@ class DashboardEnv(KitEnv):
             elif src.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dst)
+        # The device panels the home's details load by URL (real ones need
+        # the full network / Bluetooth services).
+        for panel in ("WifiPanel", "BluetoothPanel"):
+            stub = qs / "modules/widgets/dashboard/controls" / (panel + ".qml")
+            stub.parent.mkdir(parents=True, exist_ok=True)
+            stub.write_text("import QtQuick\nItem { objectName: %r; property int maxContentWidth: 480 }\n" % panel)
         notifs = SAMPLE_NOTIFICATIONS if notifications is None else notifications
         self.h.module("qs.modules.services", services(playing, notifs, art))
         self.h.module("qs.modules.globals", {"GlobalStates": global_states(wallpaper or {})})

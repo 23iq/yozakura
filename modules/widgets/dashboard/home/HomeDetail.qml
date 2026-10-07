@@ -20,7 +20,12 @@ Group {
     signal done
 
     fill: true
-    label: root.kind !== "" ? I18n.t("dashboard.home.detail." + root.kind) : ""
+    label: ({
+            "wifi": I18n.t("dashboard.home.detail.wifi"),
+            "bluetooth": I18n.t("dashboard.home.detail.bluetooth"),
+            "output": I18n.t("dashboard.home.detail.output"),
+            "input": I18n.t("dashboard.home.detail.input")
+        })[root.kind] ?? ""
     actionText: I18n.t("bento.done")
     onActionTriggered: root.done()
 

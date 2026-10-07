@@ -30,6 +30,9 @@ Column {
     readonly property bool lightReady: root.monitor !== null && root.monitor.ready
     readonly property real sliderW: root.width - Space.controlS - Space.xs
 
+    // The detail open in the home (its chevron shows active).
+    property string detail: ""
+
     signal details(string kind)
 
     function setLevel(audio: var, v: real) {
@@ -80,6 +83,7 @@ Column {
             objectName: "outputDevices"
             size: "s"
             icon: Icons.caretRight
+            active: root.detail === "output"
             onClicked: root.details("output")
         }
     }
@@ -103,6 +107,7 @@ Column {
             objectName: "inputDevices"
             size: "s"
             icon: Icons.caretRight
+            active: root.detail === "input"
             onClicked: root.details("input")
         }
     }

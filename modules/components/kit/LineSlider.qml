@@ -107,7 +107,7 @@ Item {
                     height: root.vertical ? parent.height * f : parent.height
                     radius: parent.radius
                     color: Type.text
-                    opacity: 0.45
+                    opacity: 0.35
                 }
             }
 

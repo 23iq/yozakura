@@ -61,6 +61,7 @@ Item {
             HomePlayer {
                 objectName: "player"
                 Layout.fillWidth: true
+                divider: true
             }
 
             Item {
@@ -69,6 +70,7 @@ Item {
 
             Group {
                 Layout.fillWidth: true
+                divider: true
 
                 HomeToggles {
                     objectName: "toggles"
@@ -79,6 +81,7 @@ Item {
                 HomeLevels {
                     objectName: "levels"
                     width: parent.width
+                    detail: root.detail
                     onDetails: kind => root.openDetail(kind)
                 }
             }
@@ -116,6 +119,7 @@ Item {
                 id: notifications
                 objectName: "notifications"
                 visible: root.detail === ""
+                divider: true
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.preferredHeight: notifications.minimumHeight

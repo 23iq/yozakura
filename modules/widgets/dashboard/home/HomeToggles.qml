@@ -21,7 +21,7 @@ Item {
 
     signal details(string kind)
 
-    function state(on: bool, name: string, extra: string): string {
+    function tip(on: bool, name: string, extra: string): string {
         return name + " · " + I18n.t(on ? "dashboard.home.on" : "dashboard.home.off") + (on && extra !== "" ? " · " + extra : "");
     }
 
@@ -38,7 +38,7 @@ Item {
             objectName: "wifiToggle"
             icon: NetworkService.wifiEnabled ? Icons.wifiHigh : Icons.wifiOff
             active: NetworkService.wifiEnabled
-            tooltipText: root.state(NetworkService.wifiEnabled, I18n.t("dashboard.home.wifi"), NetworkService.networkName)
+            tooltipText: root.tip(NetworkService.wifiEnabled, I18n.t("dashboard.home.wifi"), NetworkService.networkName)
             onClicked: NetworkService.toggleWifi()
             onMore: root.details("wifi")
         }
@@ -47,7 +47,7 @@ Item {
             objectName: "bluetoothToggle"
             icon: !BluetoothService.enabled ? Icons.bluetoothOff : (BluetoothService.connected ? Icons.bluetoothConnected : Icons.bluetooth)
             active: BluetoothService.enabled
-            tooltipText: root.state(BluetoothService.enabled, I18n.t("dashboard.home.bluetooth"), root.btDevice)
+            tooltipText: root.tip(BluetoothService.enabled, I18n.t("dashboard.home.bluetooth"), root.btDevice)
             onClicked: BluetoothService.toggle()
             onMore: root.details("bluetooth")
         }
@@ -57,7 +57,7 @@ Item {
             icon: root.micOn ? Icons.mic : Icons.micSlash
             active: root.micOn
             enabled: root.micAudio !== null
-            tooltipText: root.state(root.micOn, I18n.t("dashboard.home.microphone"), "")
+            tooltipText: root.tip(root.micOn, I18n.t("dashboard.home.microphone"), "")
             onClicked: {
                 if (root.micAudio)
                     root.micAudio.muted = !root.micAudio.muted;
@@ -69,7 +69,7 @@ Item {
             objectName: "silenceToggle"
             icon: Notifications.silent ? Icons.bellZ : Icons.bell
             active: Notifications.silent
-            tooltipText: root.state(Notifications.silent, I18n.t("dashboard.home.silence"), "")
+            tooltipText: root.tip(Notifications.silent, I18n.t("dashboard.home.silence"), "")
             onClicked: Notifications.toggleDnd()
         }
 
@@ -77,7 +77,7 @@ Item {
             objectName: "nightToggle"
             icon: Icons.nightLight
             active: NightLightClient.active
-            tooltipText: root.state(NightLightClient.active, I18n.t("dashboard.home.night_light"), "")
+            tooltipText: root.tip(NightLightClient.active, I18n.t("dashboard.home.night_light"), "")
             onClicked: NightLightClient.toggle()
         }
 
@@ -85,7 +85,7 @@ Item {
             objectName: "awakeToggle"
             icon: Icons.caffeine
             active: CaffeineClient.inhibit
-            tooltipText: root.state(CaffeineClient.inhibit, I18n.t("dashboard.home.awake"), "")
+            tooltipText: root.tip(CaffeineClient.inhibit, I18n.t("dashboard.home.awake"), "")
             onClicked: CaffeineClient.toggle()
         }
 
@@ -93,7 +93,7 @@ Item {
             objectName: "gameToggle"
             icon: Icons.gameMode
             active: GameModeClient.toggled
-            tooltipText: root.state(GameModeClient.toggled, I18n.t("dashboard.home.game"), "")
+            tooltipText: root.tip(GameModeClient.toggled, I18n.t("dashboard.home.game"), "")
             onClicked: GameModeClient.toggle()
         }
     }
