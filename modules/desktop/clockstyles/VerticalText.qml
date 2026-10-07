@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import "ClockText.js" as ClockText
+import qs.modules.theme
 
 // Upright vertical CJK text (CSS writing-mode: vertical-rl for one line).
 // Qt has no vertical text layout: one cell per character, stacked.
@@ -45,7 +46,7 @@ Column {
                     enabled: column.colorDuration > 0
                     ColorAnimation {
                         duration: column.colorDuration
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.morph.easing
                     }
                 }
             }

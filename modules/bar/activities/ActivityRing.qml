@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Shapes
 import qs.config
+import qs.modules.theme
 
 // Thin progress ring: a faint full track plus the `progress` arc (0..1),
 // clockwise from 12 o'clock. A negative progress (unknown total) shows a
@@ -21,7 +22,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.enter.easing
         }
     }
 

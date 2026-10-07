@@ -48,19 +48,19 @@ Item {
     property real _barAnimProgress: barReveal ? 1.0 : 0.0
     Behavior on _barAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
 
     property real _dockAnimProgress: dockReveal ? 1.0 : 0.0
     Behavior on _dockAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
 
     property real _notchAnimProgress: notchReveal ? 1.0 : 0.0
     Behavior on _notchAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
 
     // Frame growth swallowing contained panels (bar.containBar), per edge,
@@ -72,19 +72,19 @@ Item {
     property real rightContain: frameEnabled ? (containTargets.right || 0) : 0
     Behavior on topContain {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
     Behavior on bottomContain {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
     Behavior on leftContain {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
     Behavior on rightContain {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration / 2; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration / 2; easing.type: Motion.morph.easing }
     }
     function containFor(side) {
         switch (side) {
@@ -102,7 +102,7 @@ Item {
     property real _sidebarAnimProgress: sidebarActive ? 1.0 : 0.0
     Behavior on _sidebarAnimProgress {
         enabled: Config.animDuration > 0
-        NumberAnimation { duration: Config.animDuration; easing.type: Easing.OutCubic }
+        NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing }
     }
 
     // Sidebar expansion logic (synchronized with sidebar active and pinned)

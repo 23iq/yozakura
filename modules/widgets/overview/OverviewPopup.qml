@@ -93,7 +93,7 @@ PanelWindow {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                easing.type: Motion.enter.easing
             }
         }
 
@@ -119,7 +119,7 @@ PanelWindow {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                easing.type: Motion.enter.easing
             }
         }
 
@@ -127,7 +127,7 @@ PanelWindow {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutBack
+                easing.type: Motion.morph.easing
                 easing.overshoot: 1.2
             }
         }

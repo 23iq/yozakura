@@ -45,7 +45,7 @@ Item {
         target: root
         property: "progress"
         to: 1
-        easing.type: Easing.Linear
+        easing.type: Motion.morph.easing
         onFinished: {
             if (root.progress < 1)
                 return;
@@ -59,7 +59,7 @@ Item {
         target: root
         property: "progress"
         to: 0
-        easing.type: Easing.OutCubic
+        easing.type: Motion.morph.easing
     }
 
     Keys.onPressed: event => {

@@ -27,7 +27,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutBack
+                easing.type: Motion.morph.easing
             }
         }
     }

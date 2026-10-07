@@ -3,6 +3,7 @@ import QtQuick
 import qs.config
 import qs.modules.components.kit
 import "../../../services/voice/VoiceModel.js" as VoiceModel
+import qs.modules.theme
 
 // Live microphone spectrum in the cava/visualizer style: rounded bars
 // growing from the centre in the kit accent (an active state).
@@ -65,8 +66,8 @@ Item {
             Behavior on height {
                 enabled: Config.animDuration > 0 && root.mode !== "busy"
                 NumberAnimation {
-                    duration: 60
-                    easing.type: Easing.OutQuad
+                    duration: Motion.morph.duration
+                    easing.type: Motion.morph.easing
                 }
             }
             Behavior on opacity {

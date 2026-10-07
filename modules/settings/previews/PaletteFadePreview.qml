@@ -44,7 +44,7 @@ PreviewStage {
                     enabled: root.duration > 0
                     ColorAnimation {
                         duration: root.duration
-                        easing.type: Easing.InOutSine
+                        easing.type: Motion.morph.easing
                     }
                 }
                 border.width: 1

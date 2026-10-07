@@ -27,14 +27,14 @@ StyledRect {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration * 1.5
-            easing.type: Easing.OutCubic
+            easing.type: Motion.enter.easing
         }
     }
     Behavior on scale {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration * 1.5
-            easing.type: Easing.OutBack
+            easing.type: Motion.morph.easing
             easing.overshoot: 1.3
         }
     }

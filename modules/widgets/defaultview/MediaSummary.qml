@@ -22,7 +22,7 @@ Item {
         artwork: root.player?.trackArtUrl ?? ""
         strength: root.mediaExpanded ? 0 : 0.2
         Behavior on strength {
-            NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Motion.morph.easing }
         }
     }
     KitText {
@@ -48,10 +48,10 @@ Item {
         height: miniVisualizer.height
         clip: true
         Behavior on width {
-            NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Motion.morph.easing }
         }
         Behavior on anchors.rightMargin {
-            NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Easing.OutCubic }
+            NumberAnimation { duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration)); easing.type: Motion.morph.easing }
         }
         NotchVisualizer {
             id: miniVisualizer

@@ -218,7 +218,7 @@ Item {
                 from: 1.0
                 to: 0.0
                 duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                easing.type: Motion.morph.easing
             }
 
             StackView {

@@ -97,7 +97,7 @@ Item {
             enabled: Motion.enter.duration > 0
             NumberAnimation {
                 duration: Motion.enter.duration / 2
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
     }

@@ -75,7 +75,7 @@ PanelWindow {
         Behavior on scale {
             NumberAnimation {
                 duration: Config.animDuration / 3
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
         Behavior on opacity {

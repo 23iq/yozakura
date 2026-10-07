@@ -232,7 +232,7 @@ Item {
             enabled: Config.animDuration > 0 && !scrollingOverviewRoot.isManualScrolling
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutQuart
+                easing.type: Motion.morph.easing
             }
         }
 
@@ -323,7 +323,7 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
             }

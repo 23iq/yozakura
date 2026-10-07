@@ -60,8 +60,8 @@ StyledRect {
             Behavior on fraction {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: 1000
-                    easing.type: Easing.Linear
+                    duration: Motion.morph.duration
+                    easing.type: Motion.morph.easing
                 }
             }
 

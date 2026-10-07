@@ -150,7 +150,7 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutQuart
+                    easing.type: Motion.enter.easing
                 }
             }
         }
@@ -184,7 +184,7 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.enter.easing
                     }
                 }
             }
@@ -198,7 +198,7 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.enter.easing
                     }
                 }
             }
@@ -217,14 +217,14 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutQuart
+                    easing.type: Motion.enter.easing
                 }
             }
             Behavior on spacing {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutQuart
+                    easing.type: Motion.morph.easing
                 }
             }
 
@@ -259,7 +259,7 @@ Item {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
                                 duration: Config.animDuration
-                                easing.type: Easing.OutQuart
+                                easing.type: Motion.enter.easing
                             }
                         }
                     }
@@ -273,7 +273,7 @@ Item {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
                                 duration: Config.animDuration
-                                easing.type: Easing.OutQuart
+                                easing.type: Motion.enter.easing
                             }
                         }
                     }
@@ -295,21 +295,21 @@ Item {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
                                 duration: Config.animDuration
-                                easing.type: Easing.OutQuart
+                                easing.type: Motion.enter.easing
                             }
                         }
                         Behavior on color {
                             enabled: Config.animDuration > 0
                             ColorAnimation {
                                 duration: Config.animDuration
-                                easing.type: Easing.OutQuart
+                                easing.type: Motion.morph.easing
                             }
                         }
                         Behavior on scale {
                             enabled: Config.animDuration > 0
                             NumberAnimation {
                                 duration: Config.animDuration
-                                easing.type: Easing.OutBack
+                                easing.type: Motion.morph.easing
                                 easing.overshoot: 1.5
                             }
                         }
@@ -353,21 +353,21 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutBack
+                        easing.type: Motion.morph.easing
                         easing.overshoot: 1.5
                     }
                 }
@@ -420,21 +420,21 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutBack
+                        easing.type: Motion.morph.easing
                         easing.overshoot: 1.5
                     }
                 }
@@ -494,21 +494,21 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutBack
+                        easing.type: Motion.morph.easing
                         easing.overshoot: 1.5
                     }
                 }
@@ -557,21 +557,21 @@ Item {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on Layout.rightMargin {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on color {
                     enabled: Config.animDuration > 0
                     ColorAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutQuart
+                        easing.type: Motion.morph.easing
                     }
                 }
                 HoverHandler {

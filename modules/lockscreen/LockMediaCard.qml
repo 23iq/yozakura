@@ -59,7 +59,7 @@ LockMediaBase {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
                         duration: Config.animDuration
-                        easing.type: Easing.OutCubic
+                        easing.type: Motion.enter.easing
                     }
                 }
             }
@@ -184,8 +184,8 @@ LockMediaBase {
                     Behavior on width {
                         enabled: Config.animDuration > 0
                         NumberAnimation {
-                            duration: 900
-                            easing.type: Easing.Linear
+                            duration: Motion.morph.duration
+                            easing.type: Motion.morph.easing
                         }
                     }
                 }

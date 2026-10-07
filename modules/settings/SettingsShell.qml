@@ -139,7 +139,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
     }
@@ -184,7 +184,7 @@ Item {
                 from: 1
                 to: 0
                 duration: Math.max(1, Config.animDuration)
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
 

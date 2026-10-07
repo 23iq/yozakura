@@ -141,7 +141,7 @@ Item {
         enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && !root.isScrollDragging && !root.isWheelScrolling
         NumberAnimation {
             duration: (Config.animDuration !== undefined ? Config.animDuration : 0) / 2
-            easing.type: Easing.OutQuart
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -357,14 +357,14 @@ Item {
                         enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && !windowDelegate.dragging && !windowDelegate.useOverridePosition
                         NumberAnimation {
                             duration: (Config.animDuration !== undefined ? Config.animDuration : 0)
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.morph.easing
                         }
                     }
                     Behavior on y {
                         enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0 && !windowDelegate.dragging && !windowDelegate.useOverridePosition
                         NumberAnimation {
                             duration: (Config.animDuration !== undefined ? Config.animDuration : 0)
-                            easing.type: Easing.OutQuart
+                            easing.type: Motion.morph.easing
                         }
                     }
 

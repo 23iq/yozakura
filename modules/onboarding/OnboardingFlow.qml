@@ -76,14 +76,14 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.enter.easing
             }
         }
         Behavior on scale {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
 
@@ -181,7 +181,7 @@ Item {
                     from: root.wizard.direction * 48
                     to: 0
                     duration: Config.animDuration * 1.4
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.emphasis.easing
                 }
                 NumberAnimation {
                     target: scaffold
@@ -189,7 +189,7 @@ Item {
                     from: 0
                     to: 1
                     duration: Config.animDuration * 1.4
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.emphasis.easing
                 }
             }
         }

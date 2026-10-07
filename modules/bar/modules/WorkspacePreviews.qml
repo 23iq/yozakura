@@ -52,8 +52,8 @@ BarModuleBase {
                 Behavior on scale {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: 120
-                        easing.type: Easing.OutCubic
+                        duration: Motion.morph.duration
+                        easing.type: Motion.morph.easing
                     }
                 }
 

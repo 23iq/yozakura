@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.modules.services
 import "DockMagnify.js" as DockMagnify
+import qs.modules.theme
 
 // Pinned + running apps (TaskbarApps). On a dock panel: big icons with
 // running dots, magnification and launch bounce (dock.magnification,
@@ -76,8 +77,8 @@ BarModuleBase {
                 Behavior on magnify {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: 90
-                        easing.type: Easing.OutCubic
+                        duration: Motion.morph.duration
+                        easing.type: Motion.morph.easing
                     }
                 }
             }

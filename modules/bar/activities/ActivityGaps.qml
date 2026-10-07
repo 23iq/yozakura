@@ -203,7 +203,7 @@ Item {
                 enabled: Config.animDuration > 0 && isl.presence > 0.05
                 NumberAnimation {
                     duration: Config.animDuration
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.morph.easing
                 }
             }
 
@@ -259,7 +259,7 @@ Item {
             enabled: Config.animDuration > 0 && overflowIsland.presence > 0.05
             NumberAnimation {
                 duration: Config.animDuration
-                easing.type: Easing.OutCubic
+                easing.type: Motion.morph.easing
             }
         }
 
