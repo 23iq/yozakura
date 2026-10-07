@@ -3,8 +3,10 @@
 the desktop): off, confirmation, active and restored states.
 
     tools/render/exclusive_render.py [--out DIR] [--mode dark|light|both] [--size 1180x1000]
+                                     [--languages ink,glass,tiles]
 
-Writes <out>/<view>-<mode>.png. Palette and wallpaper come from your setup
+Writes <out>/<view>-<mode>.png, or <out>/settings-exclusive-<view>-<language>[-light].png
+with --languages (each visual language over the current wallpaper). Palette and wallpaper come from your setup
 like settings_render.py; the backend is scripted (tests/lib/exclusive_env.py).
 """
 from __future__ import annotations
@@ -32,19 +34,24 @@ def main() -> int:
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "exclusive"))
     ap.add_argument("--mode", default="both", choices=["dark", "light", "both"])
     ap.add_argument("--size", default="1180x1000")
+    ap.add_argument("--languages", default="", help="comma separated visual languages (ink,glass,tiles)")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
-    for mode in (["dark", "light"] if args.mode == "both" else [args.mode]):
-        render(mode, state, out, w, h)
+    for lang in [x for x in args.languages.split(",") if x] or [""]:
+        for mode in (["dark", "light"] if args.mode == "both" else [args.mode]):
+            render(mode, state, out, w, h, lang)
     return 0
 
 
-def render(mode: str, state: dict, out: Path, w: int, h: int) -> None:
-    env = ExclusiveEnv(f"exclusive-{mode}", palette=palette(mode, state), user_config=True, wallpaper=state,
-                       overrides={"theme": {"lightMode": mode == "light"}})
+def render(mode: str, state: dict, out: Path, w: int, h: int, lang: str = "") -> None:
+    theme = {"lightMode": mode == "light", **({"language": lang} if lang else {})}
+    env = ExclusiveEnv(f"exclusive-{lang}-{mode}", palette=palette(mode, state), user_config=True, wallpaper=state,
+                       overrides={"theme": theme})
+    wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
+    backdrop = json.dumps(("file://" + wall) if wall and lang else "")
     win = env.load(f"""
 import QtQuick
 import QtQuick.Window
@@ -53,6 +60,7 @@ import qs.modules.services
 Window {{
     id: w
     width: {w}; height: {h}; visible: true; color: "black"
+    Image {{ anchors.fill: parent; source: {backdrop}; fillMode: Image.PreserveAspectCrop }}
     // Repeater delegates have no QObject parent: search the visual tree.
     function findItem(name, from) {{
         var item = from || w.contentItem;
@@ -73,7 +81,7 @@ Window {{
         ev(env.h.find(win, "settingsPage").property("item"), 'reveal("exclusive", "system.exclusive")')
         QTest.mouseMove(win, QPoint(60, h - 30))
         QTest.qWait(wait)
-        path = out / f"{name}-{mode}.png"
+        path = out / (f"settings-exclusive-{name}-{lang}{'' if mode == 'dark' else '-light'}.png" if lang else f"{name}-{mode}.png")
         win.grabWindow().save(str(path))
         print(path)
 

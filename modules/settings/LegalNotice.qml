@@ -1,13 +1,12 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import qs.modules.theme
 import qs.modules.services
-import qs.config
-import "Ui.js" as Ui
+import qs.modules.components.kit
 
 // One small legal row ("AGPL-3.0 · Licenses & credits"). Clicking it shows
-// NOTICE inline; the full license text opens in the default viewer.
+// NOTICE inline (in the language's control box); the full license text
+// opens in the default viewer.
 Column {
     id: root
     objectName: "aboutLegalNotice"
@@ -17,21 +16,20 @@ Column {
     readonly property string noticePath: decodeURIComponent(Qt.resolvedUrl("../../NOTICE").toString().replace("file://", ""))
     readonly property string licensePath: decodeURIComponent(Qt.resolvedUrl("../../LICENSE").toString().replace("file://", ""))
 
-    spacing: 10
+    spacing: Space.m
 
     FileView {
         path: root.expanded ? root.noticePath : ""
         onLoaded: root.notice = text()
     }
 
-    Text {
+    KitText {
         objectName: "aboutLegal"
         anchors.horizontalCenter: parent.horizontalCenter
+        role: "caption"
         text: I18n.t("prefs.about.legal")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         font.underline: legalArea.containsMouse
-        color: legalArea.containsMouse ? Colors.primary : Colors.overSurfaceVariant
+        color: legalArea.containsMouse || activeFocus ? Type.text : Type.muted
         activeFocusOnTab: true
         Keys.onReturnPressed: root.expanded = !root.expanded
         Keys.onSpacePressed: root.expanded = !root.expanded
@@ -39,36 +37,35 @@ Column {
         MouseArea {
             id: legalArea
             anchors.fill: parent
-            anchors.margins: -6
+            anchors.margins: -Space.s
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: root.expanded = !root.expanded
         }
     }
 
-    Rectangle {
+    Item {
         visible: root.expanded
         width: parent.width
-        height: Math.min(noticeText.implicitHeight + 24, 220)
-        radius: Styling.radius(4)
-        color: Ui.alpha(Colors.overBackground, 0.05)
+        height: Math.min(noticeText.implicitHeight + Space.m * 2, Space.px(220))
 
+        ControlBox {
+            radius: Look.chipRadius(Space.chip)
+        }
         Flickable {
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: Space.m
             clip: true
             contentHeight: noticeText.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
 
-            Text {
+            KitText {
                 id: noticeText
                 objectName: "aboutNoticeText"
                 width: parent.width
+                role: "caption"
                 wrapMode: Text.WordWrap
                 text: root.notice
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.overSurfaceVariant
             }
         }
     }

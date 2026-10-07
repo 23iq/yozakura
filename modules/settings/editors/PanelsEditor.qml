@@ -4,13 +4,12 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.config
-import qs.modules.settings
+import qs.modules.components.kit
 import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../PanelsModel.js" as PanelsModel
 import "../../bar/panels/PanelStyles.js" as PanelStyles
-import "../Ui.js" as Ui
 
 // bar.panels editor: a live schematic of the whole screen, the panel list
 // (add / remove), and for the selected panel its edge, style (visual cards),
@@ -38,7 +37,7 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 16
+        spacing: Space.l
 
         // ── Whole-screen schematic ──
         PreviewStage {
@@ -61,30 +60,29 @@ Item {
         // ── Panel list ──
         Flow {
             width: parent.width
-            spacing: 8
+            spacing: Space.s
 
             Repeater {
                 model: root.panels
-                delegate: PillButton {
+                delegate: Chip {
                     required property var modelData
                     required property int index
-                    kind: index === root.current ? "filled" : "ghost"
-                    icon: PanelStyles.get(modelData.style).icon
+                    active: index === root.current
+                    icon: Icons[PanelStyles.get(modelData.style).icon] ?? ""
                     text: modelData.id + " · " + I18n.t("common." + modelData.edge)
                     onClicked: root.selected = index
                 }
             }
-            PillButton {
-                icon: "plus"
+            Chip {
+                icon: Icons.plus
                 text: I18n.t("prefs.bar.panels.add")
                 onClicked: {
                     root.commit(PanelsModel.addPanel(root.panels, "classic"));
                     root.selected = root.panels.length;
                 }
             }
-            PillButton {
-                icon: "trash"
-                kind: "ghost"
+            Chip {
+                icon: Icons.trash
                 text: I18n.t("prefs.bar.panels.remove")
                 enabled: root.panels.length > 1
                 onClicked: {
@@ -97,7 +95,7 @@ Item {
         // ── Edge + behaviour ──
         Flow {
             width: parent.width
-            spacing: 12
+            spacing: Space.l
             visible: root.panel !== null
 
             Labeled {
@@ -197,13 +195,10 @@ Item {
         id: labeled
         property string label
         default property alias control: holder.data
-        spacing: 6
-        Text {
+        spacing: Space.s
+        KitText {
+            role: "label"
             text: labeled.label
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            font.weight: Font.Bold
-            color: Ui.alpha(Colors.overSurfaceVariant, 0.9)
         }
         Item {
             id: holder

@@ -7,6 +7,7 @@ import qs.modules.settings
 import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
+import qs.modules.components.kit
 
 // Dark / OLED / Light, each previewed with the palette the current
 // wallpaper + scheme produce in that mode (SchemePreviews).
@@ -56,7 +57,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: [

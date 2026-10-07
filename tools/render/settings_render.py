@@ -114,6 +114,18 @@ def overrides_from(sets: list[str]) -> dict:
     return out
 
 
+def find_visual(item, name: str):
+    """First item named `name` in the visual tree (Repeater delegates have
+    no QObject parent, so findChild misses them)."""
+    if item.objectName() == name:
+        return item
+    for child in item.childItems():
+        found = find_visual(child, name)
+        if found is not None:
+            return found
+    return None
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("categories", nargs="*", default=["appearance", "bar", "wallpapers"])
@@ -123,6 +135,8 @@ def main() -> int:
     ap.add_argument("--scroll", type=int, default=0, help="scroll the page by N pixels")
     ap.add_argument("--search", default="", help="type a query in the search field")
     ap.add_argument("--languages", default="", help="comma separated visual languages (ink,glass,tiles)")
+    ap.add_argument("--eval", default="", metavar="OBJECT:EXPR",
+                    help="evaluate EXPR on the named item after the page loads (e.g. open a popup)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=JSON",
                     help="override a config key (domain.key[.sub]=value), repeatable")
     args = ap.parse_args()
@@ -171,6 +185,10 @@ Window {{
             page = env.h.find(win, "settingsPage").property("item")
             page.setProperty("contentY", args.scroll)
             QTest.qWait(300)
+        if args.eval:
+            name, _, expr = args.eval.partition(":")
+            env.h.eval(find_visual(win.contentItem(), name), expr)
+            QTest.qWait(700)
         suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "")
         if lang:
             path = out / f"settings-{cat}{suffix}-{lang}{'' if mode == 'dark' else '-light'}.png"
