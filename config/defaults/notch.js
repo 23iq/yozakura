@@ -29,6 +29,11 @@ var data = {
     // ({id, side, enabled}, modules/widgets/defaultview/activities/ActivityRegistry.js).
     "style": "attached",
     "activities": [],
+    // Where live activities show while the notch shares its edge with a
+    // bar: auto (as chips in the bar, the notch never grows for them) |
+    // notch (header segments) | bar (always as bar chips when there is a
+    // bar). modules/shell/LayoutModel.js activityPresentation
+    "activitiesIn": "auto",
     // Live activity sources (recording, downloads, timers, ...) shown in the
     // island or as bar islands (modules/services/activities).
     "liveActivities": {

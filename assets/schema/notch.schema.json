@@ -334,6 +334,29 @@
         ]
       }
     },
+    "activitiesIn": {
+      "title": "Live Activities In",
+      "type": "string",
+      "default": "auto",
+      "description": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
+      "x-settings": {
+        "category": "notch",
+        "section": "activities",
+        "label": "prefs.notch.activities_in",
+        "control": "selector",
+        "keywords": "live activities chips bar notch downloads timer recording grow place"
+      },
+      "enum": [
+        "auto",
+        "notch",
+        "bar"
+      ],
+      "x-enumLabels": {
+        "auto": "Auto",
+        "notch": "Notch",
+        "bar": "Bar"
+      }
+    },
     "liveActivities": {
       "title": "Live Activities",
       "type": "object",

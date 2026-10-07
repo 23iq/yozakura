@@ -22,6 +22,7 @@ JsonAdapter {
     property string mediaStyle: "row"
     property string style: "attached"
     property list<var> activities: []
+    property string activitiesIn: "auto"
     property var liveActivities: ({
             "enabled": true,
             "presentation": "notch",

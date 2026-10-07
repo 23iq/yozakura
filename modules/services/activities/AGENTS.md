@@ -6,6 +6,9 @@ downloads/copies/updates) collected from **providers** and shown by the
 notch (`notch.liveActivities.presentation: "notch"`, default,
 `modules/widgets/defaultview/activities/`) or as islands next to it
 (`"islands"`, `modules/bar/activities/`). `"off"` stops every provider.
+While a bar shares the notch's edge (`notch.activitiesIn` "auto", or "bar")
+the effective presentation is `"bar"`: chips in the bar's end group whose
+popups reuse the notch panels (`modules/bar/modules/ActivityChips.qml`).
 
 ## DATA FLOW
 ```

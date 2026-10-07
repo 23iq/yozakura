@@ -55,6 +55,12 @@ function _bar(bar) {
     return {
         "enabled": on,
         "edge": p.edge || "top",
+        // Edges holding an enabled panel (the notch may share any of them)
+        "edges": panels.filter(function (x) {
+            return x.enabled;
+        }).map(function (x) {
+            return x.edge;
+        }),
         "style": PanelStyles.has(style) && !PanelStyles.isHidden(style) ? style : "classic",
         "align": p.align || "fill"
     };
@@ -124,14 +130,31 @@ function cornerContent(layout) {
     return out;
 }
 
+// A bar panel sits on the notch's edge (the notch would grow over it)
+function barSharesNotchEdge(layout) {
+    if (!_on(layout, "bar") || !_on(layout, "notch"))
+        return false;
+    var edges = layout.bar.edges || [layout.bar.edge];
+    return edges.indexOf(layout.notch.edge) !== -1;
+}
+
 // Effective bar.activities.presentation: "off" stays off; a notch home
 // keeps the configured one, a bar home is "islands", else "corner".
-function activityPresentation(layout, configured) {
+// `placeIn` (notch.activitiesIn): "auto" (default) turns the notch's own
+// activities into bar chips ("bar") while a bar shares the notch's edge,
+// "bar" whenever a bar is on, "notch" never.
+function activityPresentation(layout, configured, placeIn) {
     if (configured === "off")
         return "off";
     var home = homeOf("activities", layout);
-    if (home === "notch")
-        return configured === "islands" ? "islands" : "notch";
+    if (home === "notch") {
+        if (configured === "islands")
+            return "islands";
+        var where = placeIn === "notch" || placeIn === "bar" ? placeIn : "auto";
+        if (where === "bar" ? _on(layout, "bar") : where === "auto" && barSharesNotchEdge(layout))
+            return "bar";
+        return "notch";
+    }
     return home === "bar" && _barHoldsActivities(layout) ? "islands" : "corner";
 }
 
