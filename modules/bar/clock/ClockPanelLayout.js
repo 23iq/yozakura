@@ -1,8 +1,17 @@
 .pragma library
 
-// Default bento grid of the bar clock panel (ClockPanel.qml), in widgets of
-// the shared WidgetRegistry; bar.moduleOptions.clock.panel.cells overrides it.
+// The bar clock popup (ClockPanel.qml): its style
+// (bar.moduleOptions.clock.panelStyle) and, for the bento style, the default
+// grid in widgets of the shared WidgetRegistry
+// (bar.moduleOptions.clock.panel.cells overrides it).
 var COLS = 2;
+var STYLES = ["column", "wide", "bento"];
+
+// The panel style of moduleOptions; unknown or missing is "column".
+function styleOf(options) {
+    var s = options && options.clock ? options.clock.panelStyle : "";
+    return STYLES.indexOf(s) >= 0 ? s : "column";
+}
 
 function defaultGrid(cols) {
     return [

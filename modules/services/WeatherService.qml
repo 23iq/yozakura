@@ -14,6 +14,8 @@ Singleton {
     property real minTemp: 0
     property int weatherCode: 0
     property real windSpeed: 0
+    // Today's chance of rain in % (-1: unknown)
+    property int rainChance: -1
     property bool dataAvailable: false
     property bool isLoading: false
     property bool hasFailed: false
@@ -409,6 +411,9 @@ Singleton {
                 if (daily.temperature_2m_min && daily.temperature_2m_min.length > 0) {
                     root.minTemp = convertTemp(parseFloat(daily.temperature_2m_min[0]));
                 }
+
+                const rain = daily.precipitation_probability_max;
+                root.rainChance = rain && rain.length > 0 && rain[0] !== null ? parseInt(rain[0]) : -1;
 
                 if (daily.sunrise && daily.sunrise.length > 0) {
                     root.sunrise = String(daily.sunrise[0]).split("T")[1];

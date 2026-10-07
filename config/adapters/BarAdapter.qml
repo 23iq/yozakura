@@ -50,6 +50,7 @@ JsonAdapter {
                 "showWeather": true,
                 "face": "digital",
                 "pomodoroStyle": "ring",
+                "panelStyle": "column",
                 "panel": {
                     "cells": []
                 }

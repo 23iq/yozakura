@@ -1,229 +1,129 @@
+pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
-import QtQuick.Effects
-import Quickshell.Widgets
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
 import qs.modules.notifications
-import qs.config
 import qs.modules.globals
+import qs.modules.components.kit
 
-Item {
+// Bento widget "notifications": the history as one ListRow per group (app
+// icon, summary, one elided line; a group of several shows the app name and
+// "latest · N more"). Click runs the notification's default action, the
+// trailing x discards the group; the section label's "Clear" (or Ctrl+L on
+// the widgets tab) discards everything. A "Silent" chip under the list
+// toggles do-not-disturb. Scrolls when long.
+HostWidget {
     id: root
-    property var cascadeItems: []
-    property int cascadeIndex: -1
+
+    readonly property var groups: Notifications.groupsByAppName
+    // A one-column tile keeps the text: a short label, no app icon and no
+    // per-row x ("Clear" and Ctrl+L still clear).
+    readonly property bool narrow: root.width < Space.rowHeight * 4
 
     Shortcut {
         sequence: "Ctrl+L"
         enabled: GlobalStates.dashboardOpen && GlobalStates.dashboardCurrentTab === 0 && GlobalStates.widgetsTabCurrentIndex === 0
-        onActivated: discardAllWithAnimation()
+        onActivated: Notifications.discardAllNotifications()
     }
 
-    function discardAllWithAnimation() {
-        const children = notificationList.contentItem.children;
-        if (children.length === 0) {
-            Notifications.discardAllNotifications();
-            return;
-        }
-
-        // Capture the current items to avoid issues if they change during animation
-        cascadeItems = [];
-        for (let i = 0; i < children.length; i++) {
-            if (children[i] && children[i].destroyWithAnimation) {
-                cascadeItems.push(children[i]);
-            }
-        }
-
-        if (cascadeItems.length === 0) {
-            Notifications.discardAllNotifications();
-            return;
-        }
-
-        cascadeIndex = cascadeItems.length - 1; // Start from last
-        cascadeTimer.restart();
-    }
-
-    Timer {
-        id: cascadeTimer
-        interval: 100 // 0.1 seconds delay between each animation
-        repeat: true
-        onTriggered: {
-            if (cascadeIndex >= 0) {
-                const item = cascadeItems[cascadeIndex];
-                if (item && item.destroyWithAnimation) {
-                    item.destroyWithAnimation(true);
-                }
-                cascadeIndex--;
-            } else {
-                // All animations started, schedule final discard
-                stop();
-                cascadeItems = []; // Clear
-                const totalDelay = Config.animDuration + 50;
-                discardAllTimer.interval = totalDelay;
-                discardAllTimer.restart();
-            }
-        }
-    }
-
-    Timer {
-        id: discardAllTimer
-        interval: Config.animDuration + 50 // Animation duration + small buffer
-        repeat: false
-        onTriggered: Notifications.discardAllNotifications()
-    }
-
-    ColumnLayout {
+    Group {
+        id: group
         anchors.fill: parent
-        spacing: 0
+        fill: true
+        bare: !root.framed
+        label: I18n.t(root.narrow ? "bento.label.inbox" : "bento.widget.notifications")
+        actionText: list.count > 0 ? I18n.t("common.clear") : ""
+        onActionTriggered: Notifications.discardAllNotifications()
 
-        StyledRect {
-            id: notificationPane
-            variant: "pane"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            radius: Styling.radius(4)
-            clip: true
+        Item {
+            width: parent.width
+            height: group.bodyHeight - silent.height - Space.m
 
-            ColumnLayout {
+            ListView {
+                id: list
+                objectName: "notifList"
                 anchors.fill: parent
-                anchors.margins: 4
-                spacing: 4
+                clip: true
+                spacing: Space.xs
+                boundsBehavior: Flickable.StopAtBounds
+                model: Notifications.appNameList
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.maximumHeight: 32
-                    spacing: 4
+                delegate: ListRow {
+                    id: entry
+                    required property string modelData
+                    readonly property var appGroup: root.groups[entry.modelData] ?? null
+                    readonly property var notifs: entry.appGroup ? entry.appGroup.notifications : []
+                    readonly property var latest: entry.notifs.length > 0 ? entry.notifs[entry.notifs.length - 1] : null
+                    readonly property bool many: entry.notifs.length > 1
 
-                    StyledRect {
-                        id: titleRect
-                        variant: "internalbg"
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        radius: Styling.radius(0)
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: I18n.t("notifications.panel_title")
-                            font.family: Config.defaultFont
-                            font.pixelSize: Config.theme.fontSize
-                            font.weight: Font.Bold
-                            color: titleRect.item
-                            horizontalAlignment: Text.AlignHCenter
-                        }
+                    width: ListView.view.width
+                    title: entry.many || !entry.latest?.summary ? (entry.appGroup?.appName ?? "") : entry.latest.summary
+                    subtitle: {
+                        const l = entry.latest;
+                        if (!l)
+                            return "";
+                        const line = (entry.many ? (l.summary || l.body) : l.body) || "";
+                        const flat = line.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+                        return entry.many ? flat + " · " + I18n.t("dashboard.home.more", entry.notifs.length - 1) : flat;
+                    }
+                    leading: root.narrow ? null : appIcon
+                    trailing: root.narrow ? null : dismiss
+                    onClicked: {
+                        if (entry.latest)
+                            Notifications.activateNotification(entry.latest.id);
                     }
 
-                    StyledRect {
-                        id: dndToggle
-                        variant: Notifications.silent ? "primary" : (dndHover.containsMouse ? "focus" : "internalbg")
-                        Layout.preferredWidth: 32
-                        Layout.fillHeight: true
-                        radius: Notifications.silent ? Styling.radius(-4) : Styling.radius(0)
-
-                        readonly property color dndItem: Notifications.silent ? itemColor : Styling.srItem("overprimary")
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: Notifications.silent ? Icons.bellZ : Icons.bell
-                            textFormat: Text.RichText
-                            font.family: Icons.font
-                            font.pixelSize: 18
-                            color: dndToggle.dndItem
-                        }
-
-                        MouseArea {
-                            id: dndHover
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: Notifications.toggleDnd()
+                    Component {
+                        id: appIcon
+                        NotificationAppIcon {
+                            width: Space.controlS
+                            height: Space.controlS
+                            size: Space.controlS
+                            radius: Space.round(Space.controlS)
+                            appName: entry.latest ? entry.latest.appName : ""
+                            appIcon: entry.latest ? (entry.latest.cachedAppIcon || entry.latest.appIcon) : ""
+                            image: entry.latest ? (entry.latest.cachedImage || entry.latest.image) : ""
+                            summary: entry.latest ? entry.latest.summary : ""
                         }
                     }
-
-                    StyledRect {
-                        id: clearButton
-                        variant: broomHover.pressed ? "error" : (broomHover.containsMouse ? "focus" : "internalbg")
-                        Layout.preferredWidth: 32
-                        Layout.fillHeight: true
-                        radius: Styling.radius(0)
-
-                        readonly property color clearItem: broomHover.pressed ? itemColor : Styling.srItem("overerror")
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: Icons.broom
-                            textFormat: Text.RichText
-                            font.family: Icons.font
-                            font.pixelSize: 18
-                            color: clearButton.clearItem
-                        }
-
-                        MouseArea {
-                            id: broomHover
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: discardAllWithAnimation()
-                        }
-                    }
-                }
-
-                ClippingRectangle {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    color: "transparent"
-                    radius: Styling.radius(0)
-
-                    Flickable {
-                        anchors.fill: parent
-                        contentWidth: width
-                        contentHeight: notificationList.contentHeight
-                        clip: true
-
-                        ListView {
-                            id: notificationList
-                            width: parent.width
-                            height: contentHeight
-                            spacing: 4
-                            model: Notifications.appNameList
-                            interactive: false
-                            cacheBuffer: 200
-                            reuseItems: true
-
-                            delegate: NotificationGroup {
-                                required property int index
-                                required property string modelData
-                                width: notificationList.width
-                                notificationGroup: Notifications.groupsByAppName[modelData]
-                                expanded: false
-                                popup: false
-                            }
+                    Component {
+                        id: dismiss
+                        IconButton {
+                            size: "s"
+                            icon: Icons.cancel
+                            onClicked: Notifications.discardNotifications(entry.notifs.map(n => n.id))
                         }
                     }
                 }
             }
 
             Column {
+                objectName: "emptyState"
                 anchors.centerIn: parent
-                spacing: 16
-                visible: Notifications.appNameList.length === 0
+                spacing: Space.s
+                visible: list.count === 0
 
-                Image {
-                    mipmap: true
-                    source: Qt.resolvedUrl("../../../../assets/yozakura/yozakura-icon.svg")
-                    opacity: 0.25
-                    sourceSize.width: 64
-                    sourceSize.height: 64
-                    fillMode: Image.PreserveAspectFit
+                Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    layer.enabled: true
-                    layer.effect: MultiEffect {
-                        brightness: 1.0
-                        colorization: 1.0
-                        colorizationColor: Styling.srItem("pane")
-                    }
+                    text: Icons.bellZ
+                    font.family: Icons.font
+                    font.pixelSize: Type.iconSize("title")
+                    color: Type.muted
+                }
+                KitText {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    role: "caption"
+                    text: I18n.t("dashboard.home.no_notifications")
                 }
             }
+        }
+
+        Chip {
+            id: silent
+            icon: Notifications.silent ? Icons.bellZ : Icons.bell
+            text: I18n.t("bento.notifications.silent")
+            active: Notifications.silent
+            onClicked: Notifications.toggleDnd()
         }
     }
 }

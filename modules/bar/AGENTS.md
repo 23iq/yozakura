@@ -27,7 +27,7 @@ Primary system panel supporting horizontal (top/bottom) and vertical (left/right
   - `ActivityLayout.js` (pure, tested): placement mode — `tab` (notch-shaped tab from the edge: islands bar on the notch edge, or bar on another edge), `pill` (classic bar on the notch edge), `floating` (notch theme "island"); privacy prefers the right side, tasks the left, spill-over, then "+N".
   - `ActivityGaps.qml` (layout + retract-aware delegates), `ActivityIsland.qml` (body per mode, grow/retract), `ActivityContent/Indicator/Ring.qml`.
 - **Widgets**:
-  - `clock/`: bar clock (faces, Pomodoro indicators) and its bento `ClockPanel` popup.
+  - `clock/`: bar clock (faces, Pomodoro indicators) and its `ClockPanel` popup in three styles (`bar.moduleOptions.clock.panelStyle`, `ClockPanelLayout.styleOf`): `ClockPanelColumn` (header + `PomodoroRow` + world + agenda), `ClockPanelWide`, `ClockPanelBento` (editable grid); kit only; `tests/clock-panel.test.py`, `tools/render/clockpanel_render.py`.
   - `systray/`: SNI-based system tray.
   - `workspaces/`: Compositor workspace visualization and navigation. `Workspaces.qml` lays out `WorkspaceButton` slots (layer visibility in `WorkspaceSlot.js`); `WorkspaceNumberLabel` renders the number in `workspaces.numeralStyle`. Numeral systems live in the `WorkspaceNumerals.js` registry (format, auto font, optical fit hints); add an entry there to add a system (settings, validation and the font probe in `services/NumeralFonts.qml` pick it up). The active slot is marked by `ActiveIndicator.qml` (stretchy two-index box) in `workspaces.indicatorStyle`: one QML per style in `workspaces/indicators/` + an entry in the `IndicatorStyles.js` registry (pill, underline, dot, brush, bracket). Tests: `tests/workspace-numerals.test.*`, `tests/workspace-slot.test.cjs`, `tests/workspace-indicators.test.py`, `tests/surface-effects.test.cjs`.
   - `IntegratedDock.qml`: Taskbar-style dock embedded directly into bar layout.
@@ -41,7 +41,7 @@ Primary system panel supporting horizontal (top/bottom) and vertical (left/right
 | **Adding widgets** | `modules/<Name>.qml` + `BarModuleRegistry.js` | file module on `BarModuleBase`; place it via `bar.panels[].groups` |
 | **Adding a panel style** | `panels/styles/<Name>Panel.qml` + `panels/PanelStyles.js` | implement `PanelStyleBase` |
 | **Integrated dock** | `IntegratedDock.qml` | App switching within bar |
-| **Clock** | `clock/Clock.qml` | Faces (`ClockFaces.js` + `faces/`), Pomodoro indicators (`PomodoroStyles.js` + `indicators/`), bento `ClockPanel` popup |
+| **Clock** | `clock/Clock.qml` | Faces (`ClockFaces.js` + `faces/`), Pomodoro indicators (`PomodoroStyles.js` + `indicators/`), `ClockPanel` popup (column / wide / bento) |
 
 ## CONVENTIONS
 - **Adaptive styling**: Widgets use `startRadius`/`endRadius` for "pill" continuity based on group position.

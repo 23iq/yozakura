@@ -66,3 +66,9 @@ function kanjiTime(h, m, use12h) {
     var text = kanjiNumeral(hour) + "時 " + kanjiMinutes(m);
     return use12h ? (h < 12 ? "午前 " : "午後 ") + text : text;
 }
+
+// Weekday in kanji (0 = Sunday): 日曜日 .. 土曜日 (the wide clock panel's
+// quiet accent).
+function kanjiWeekday(day) {
+    return "日月火水木金土".charAt(((Math.floor(day) % 7) + 7) % 7) + "曜日";
+}

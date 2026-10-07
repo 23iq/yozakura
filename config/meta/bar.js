@@ -158,6 +158,10 @@ var keys = {
         "enum": ["ring", "underline", "countdown", "island"],
         "description": "Running Pomodoro on the clock: a progress ring, a progress line along the button, the mm:ss countdown, or nothing on the bar (the notch timers activity shows it)."
     },
+    "moduleOptions.clock.panelStyle": {
+        "enum": ["column", "wide", "bento"],
+        "description": "Clock popup layout: a narrow column (time and weather, Pomodoro, world clocks, agenda), a wide two-pane card (time and weather beside a large Pomodoro ring, world clocks below), or the editable bento grid of widgets (moduleOptions.clock.panel.cells)."
+    },
     "moduleOptions.clock.panel": {
         "description": "Clock popup panel."
     },

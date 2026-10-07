@@ -51,6 +51,7 @@ var data = {
             "showWeather": true,
             "face": "digital",
             "pomodoroStyle": "ring",
+            "panelStyle": "column",
             // cells: [] = the default clock panel grid.
             "panel": {
                 "cells": []

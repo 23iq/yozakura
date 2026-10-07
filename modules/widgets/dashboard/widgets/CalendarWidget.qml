@@ -2,12 +2,16 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import "CalendarModel.js" as CalendarModel
 
-// Month view; with a calendar source (khal) also the next events, beside
-// the month on a wide widget or under it on a tall one (not when `compact`).
-// Host-agnostic (see HostWidget): the dashboard bento grid and the desktop
-// both place it. Scroll over it to browse months; click the title to return.
+// Month view under the month's name (the Group label; "Today" returns from
+// another month); with a calendar source (khal) also the next events,
+// beside the month on a wide widget or under it on a tall one (not when
+// `compact`). A short tile drops the weekday header, a very narrow one
+// shows today as a day card instead of the month. Host-agnostic (see
+// HostWidget): the dashboard bento grid, the dashboard home and the desktop
+// place it. Scroll over it to browse months.
 HostWidget {
     id: root
 
@@ -19,7 +23,12 @@ HostWidget {
     readonly property int rows: CalendarModel.rowsNeeded(shown, firstDay)
     readonly property bool showEvents: (options.showEvents ?? true) && !compact && events.available && !preview
     readonly property bool wide: width > height * 1.45
-    readonly property real gap: Math.round(12 * k)
+    readonly property real bodyW: group.width - group.padding * 2
+    readonly property real monthW: root.showEvents && root.wide ? (root.bodyW - Space.l) * 0.56 : root.bodyW
+    readonly property real monthH: root.showEvents && !root.wide ? (group.bodyHeight - Space.l) * 0.66 : group.bodyHeight
+    readonly property bool showWeekdays: root.monthH / (root.rows + 1) >= Type.size("caption") * 1.3
+    // Too narrow for a readable month: today as a day card instead.
+    readonly property bool dayCard: root.monthW / 7 < Type.size("caption") * 1.6
 
     CalendarEvents {
         id: events
@@ -40,150 +49,130 @@ HostWidget {
 
     WheelHandler {
         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        enabled: !root.dayCard
         onWheel: event => root.monthShift += event.angleDelta.y > 0 ? -1 : 1
     }
 
-    Item {
-        id: month
-        x: root.pad
-        y: root.pad
-        width: root.showEvents && root.wide ? (root.width - 2 * root.pad - root.gap) * 0.56 : root.width - 2 * root.pad
-        height: root.showEvents && !root.wide ? (root.height - 2 * root.pad - root.gap) * 0.66 : root.height - 2 * root.pad
+    Group {
+        id: group
+        anchors.fill: parent
+        fill: true
+        bare: !root.framed
+        label: root.shown.toLocaleDateString(Qt.locale(), "MMMM yyyy")
+        actionText: root.monthShift !== 0 ? I18n.t("bento.calendar.today") : ""
+        onActionTriggered: root.monthShift = 0
 
-        Text {
-            id: title
+        Item {
             width: parent.width
-            text: root.shown.toLocaleDateString(Qt.locale(), "MMMM yyyy")
-            elide: Text.ElideRight
-            font.family: root.font
-            font.pixelSize: root.px(1)
-            font.weight: Font.DemiBold
-            font.capitalization: Font.Capitalize
-            color: root.ink
+            height: group.bodyHeight
 
-            MouseArea {
-                anchors.fill: parent
-                onClicked: root.monthShift = 0
-            }
-        }
+            Column {
+                visible: root.dayCard
+                width: root.monthW
+                spacing: Space.xs
 
-        Grid {
-            id: grid
-            anchors.top: title.bottom
-            anchors.topMargin: Math.round(8 * root.k)
-            columns: 7
-            readonly property real cellW: month.width / 7
-            readonly property real cellH: (month.height - title.height - Math.round(8 * root.k)) / (root.rows + 1)
-
-            Repeater {
-                model: CalendarModel.weekdayOrder(root.firstDay)
-                Text {
-                    required property int modelData
-                    width: grid.cellW
-                    height: grid.cellH
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                    text: Qt.locale().dayName(modelData, Locale.NarrowFormat)
-                    font.family: root.font
-                    font.pixelSize: root.px(-3)
-                    font.weight: Font.Bold
-                    color: root.inkSoft
+                KitText {
+                    objectName: "calendarDay"
+                    role: "display"
+                    text: root.now.getDate()
+                }
+                KitText {
+                    width: parent.width
+                    role: "body"
+                    text: Qt.locale().dayName(root.now.getDay(), Locale.LongFormat)
                 }
             }
 
-            Repeater {
-                model: root.cells.slice(0, root.rows * 7)
-                Item {
-                    id: cell
-                    required property var modelData
-                    width: grid.cellW
-                    height: grid.cellH
+            Grid {
+                id: grid
+                visible: !root.dayCard
+                columns: 7
+                readonly property real cellW: root.monthW / 7
+                readonly property real cellH: root.monthH / (root.rows + (root.showWeekdays ? 1 : 0))
 
-                    Rectangle {
-                        anchors.centerIn: parent
-                        width: Math.min(parent.width, parent.height) * 0.86
-                        height: width
-                        radius: Math.min(width / 2, Styling.radius(0))
-                        color: Colors.primary
-                        visible: cell.modelData.today
+                Repeater {
+                    model: root.showWeekdays ? CalendarModel.weekdayOrder(root.firstDay) : []
+                    KitText {
+                        required property int modelData
+                        width: grid.cellW
+                        height: grid.cellH
+                        horizontalAlignment: Text.AlignHCenter
+                        role: "caption"
+                        text: Qt.locale().dayName(modelData, Locale.NarrowFormat)
                     }
-                    Text {
-                        anchors.centerIn: parent
-                        text: cell.modelData.day
-                        font.family: root.font
-                        font.pixelSize: root.px(-2)
-                        font.weight: cell.modelData.today ? Font.Bold : Font.Normal
-                        color: cell.modelData.today ? Colors.overPrimary : root.ink
-                        opacity: cell.modelData.inMonth ? 1 : 0.32
+                }
+
+                Repeater {
+                    model: root.cells.slice(0, root.rows * 7)
+                    Item {
+                        id: cell
+                        required property var modelData
+                        width: grid.cellW
+                        height: grid.cellH
+
+                        // Today: the accent (the one marked day).
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: Math.min(parent.width, parent.height) * 0.9
+                            height: width
+                            radius: Look.buttonRadius(height)
+                            color: Type.accent
+                            visible: cell.modelData.today
+                        }
+                        KitText {
+                            anchors.centerIn: parent
+                            role: grid.cellW >= Type.size("secondary") * 2 ? "secondary" : "caption"
+                            tabular: true
+                            text: cell.modelData.day
+                            color: cell.modelData.today ? Type.onAccent : (cell.modelData.inMonth ? Type.text : Type.muted)
+                            font.weight: cell.modelData.today ? Font.DemiBold : Font.Normal
+                            opacity: cell.modelData.inMonth ? 1 : 0.6
+                        }
                     }
                 }
             }
-        }
-    }
 
-    Column {
-        id: agenda
-        visible: root.showEvents
-        x: root.wide ? month.x + month.width + root.gap : root.pad
-        y: root.wide ? root.pad : month.y + month.height + root.gap
-        width: root.wide ? root.width - x - root.pad : root.width - 2 * root.pad
-        height: root.height - y - root.pad
-        spacing: Math.round(6 * root.k)
-        clip: true
+            Column {
+                id: agenda
+                visible: root.showEvents
+                x: root.wide ? root.monthW + Space.l : 0
+                y: root.wide ? 0 : root.monthH + Space.l
+                width: root.wide ? parent.width - x : parent.width
+                height: parent.height - y
+                spacing: Space.s
+                clip: true
 
-        Text {
-            text: I18n.t("desktop.widgets.calendar.upcoming")
-            font.family: root.font
-            font.pixelSize: root.px(-3)
-            font.weight: Font.Bold
-            font.capitalization: Font.AllUppercase
-            font.letterSpacing: 1
-            color: root.inkSoft
-        }
-
-        Text {
-            visible: events.events.length === 0
-            width: parent.width
-            text: I18n.t("desktop.widgets.calendar.no_events")
-            wrapMode: Text.WordWrap
-            font.family: root.font
-            font.pixelSize: root.px(-2)
-            color: root.inkSoft
-        }
-
-        Repeater {
-            model: events.events
-            Row {
-                id: ev
-                required property var modelData
-                width: agenda.width
-                spacing: Math.round(8 * root.k)
-
-                Rectangle {
-                    width: Math.max(2, Math.round(3 * root.k))
-                    height: evText.height
-                    radius: width / 2
-                    color: Colors.primary
+                SectionLabel {
+                    width: parent.width
+                    text: I18n.t("desktop.widgets.calendar.upcoming")
                 }
-                Column {
-                    id: evText
-                    width: parent.width - parent.spacing - Math.max(2, Math.round(3 * root.k))
-                    Text {
-                        width: parent.width
-                        text: ev.modelData.title
-                        elide: Text.ElideRight
-                        font.family: root.font
-                        font.pixelSize: root.px(-2)
-                        font.weight: Font.Medium
-                        color: root.ink
-                    }
-                    Text {
-                        width: parent.width
-                        text: ev.modelData.time !== "" ? ev.modelData.date + " · " + ev.modelData.time : ev.modelData.date
-                        elide: Text.ElideRight
-                        font.family: root.font
-                        font.pixelSize: root.px(-4)
-                        color: root.inkSoft
+
+                KitText {
+                    visible: events.events.length === 0
+                    width: parent.width
+                    role: "caption"
+                    wrapMode: Text.WordWrap
+                    text: I18n.t("desktop.widgets.calendar.no_events")
+                }
+
+                Repeater {
+                    model: events.events
+                    Column {
+                        id: ev
+                        required property var modelData
+                        width: agenda.width
+                        spacing: 1
+
+                        KitText {
+                            width: parent.width
+                            role: "body"
+                            text: ev.modelData.title
+                        }
+                        KitText {
+                            width: parent.width
+                            role: "caption"
+                            text: ev.modelData.time !== "" ? ev.modelData.date + " · " + ev.modelData.time : ev.modelData.date
+                        }
                     }
                 }
             }

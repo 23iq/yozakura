@@ -16,21 +16,27 @@ import qs.modules.components.kit
 //   glass  a frosted translucent card, light top edge and a faint outline
 //   tiles  a solid square-ish tile, separated from its neighbours by gaps
 // `padding` is the inner padding of the box (0 when there is none).
+// `fill: true` stretches the box to the Group's height (a bento tile) and
+// `bodyHeight` is then the room left for the content under the label;
+// `bare: true` drops the box (a host that already draws the surface).
 Item {
     id: root
 
     property string label: ""
     property string actionText: ""
     property bool divider: false
-    property int padding: Look.groupPadding
+    property bool fill: false
+    property bool bare: false
+    property int padding: root.bare ? 0 : Look.groupPadding
     default property alias content: body.data
-    readonly property bool boxed: Look.groupBoxed
+    readonly property bool boxed: Look.groupBoxed && !root.bare
+    readonly property real bodyHeight: root.fill ? Math.max(0, box.height - root.padding * 2 - body.y) : body.implicitHeight
     readonly property bool ruled: root.divider && Look.groupDivider
 
     signal actionTriggered
 
     implicitWidth: inner.implicitWidth + root.padding * 2
-    implicitHeight: box.y + box.height
+    implicitHeight: box.y + (root.fill ? inner.implicitHeight + root.padding * 2 : box.height)
 
     Divider {
         id: rule
@@ -45,15 +51,15 @@ Item {
         objectName: "groupBox"
         y: root.ruled ? Space.l + rule.height : 0
         width: parent.width
-        height: inner.implicitHeight + root.padding * 2
+        height: root.fill ? Math.max(0, root.height - y) : inner.implicitHeight + root.padding * 2
         radius: Look.groupRadius
-        color: Look.groupFill
-        border.width: Look.groupOutline.a > 0 ? Space.hairline : 0
+        color: root.bare ? "transparent" : Look.groupFill
+        border.width: !root.bare && Look.groupOutline.a > 0 ? Space.hairline : 0
         border.color: Look.groupOutline
 
         // Light catching the top edge (glass).
         Rectangle {
-            visible: Look.groupHighlight.a > 0
+            visible: !root.bare && Look.groupHighlight.a > 0
             x: box.radius
             y: box.border.width
             width: box.width - box.radius * 2

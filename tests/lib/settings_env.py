@@ -222,6 +222,7 @@ MIRROR = [
     "modules/widgets/dashboard/widgets/CalendarEvents.qml",
     "modules/widgets/dashboard/widgets/CalendarModel.js",
     "modules/widgets/dashboard/widgets/WeatherWidget.qml",
+    "modules/widgets/dashboard/widgets/WidgetFormat.js",
     "modules/widgets/dashboard/widgets/WidgetRegistry.js",
     # Lock screen style gallery: the real lock screen view and its styles.
     "modules/lockscreen",

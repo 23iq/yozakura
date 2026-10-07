@@ -1,95 +1,63 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
 import qs.modules.specials
-import qs.config
+import qs.modules.components.kit
 
-// Dashboard list of the special workspaces (modules/specials): icon in its
-// accent, name, window count, open state; click opens it (its apps are
-// launched first) and closes the dashboard. Hidden content on compositors
-// without special workspaces: a short hint instead.
-StyledRect {
+// Dashboard list of the special workspaces (modules/specials): one ListRow
+// each (its glyph, name, window count; an open one is selected); click opens
+// it (its apps are launched first) and closes the dashboard. A wide tile
+// lays them in columns; rows that do not fit are dropped. On compositors without special workspaces:
+// a short hint instead.
+HostWidget {
     id: root
 
-    variant: "pane"
-    implicitHeight: Math.max(150, column.implicitHeight + 24)
-
     readonly property var items: SpecialsService.active ? SpecialsService.items : []
+    readonly property int cols: Math.max(1, Math.floor((group.width + Space.s) / (Space.rowHeight * 4)))
+    readonly property int capacity: root.cols * Math.max(1, Math.floor((group.bodyHeight + Space.xs) / (Space.rowHeight + Space.xs)))
 
-    ColumnLayout {
-        id: column
-        x: 12
-        y: 12
-        width: parent.width - 24
-        spacing: 6
+    Group {
+        id: group
+        anchors.fill: parent
+        fill: true
+        bare: !root.framed
+        label: I18n.t("bento.label.specials")
 
-        Text {
-            text: I18n.t("specials.dashboard.title")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            font.weight: Font.Bold
-            color: Colors.overSurfaceVariant
-        }
-
-        Text {
+        KitText {
             visible: root.items.length === 0
-            Layout.fillWidth: true
-            text: I18n.t(SpecialsService.supported ? "specials.dashboard.empty" : "specials.dashboard.unsupported")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.outline
+            width: parent.width
+            role: "caption"
             wrapMode: Text.WordWrap
+            text: I18n.t(SpecialsService.supported ? "specials.dashboard.empty" : "specials.dashboard.unsupported")
         }
 
-        Repeater {
-            model: root.items
-            delegate: StyledRect {
-                id: row
-                required property var modelData
-                readonly property bool open: SpecialsService.isOpen(modelData)
-                readonly property int count: SpecialsService.countOf(modelData)
-                readonly property color tint: Colors[modelData.accent] ?? Colors.primary
-                objectName: "special:" + modelData.id
-                Layout.fillWidth: true
-                implicitHeight: 40
-                variant: area.containsMouse ? "focus" : "internalbg"
-                radius: Styling.radius(-2)
+        Grid {
+            width: parent.width
+            columns: root.cols
+            rowSpacing: Space.xs
+            columnSpacing: Space.s
 
-                RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 12
-                    spacing: 10
-                    Text {
-                        text: Icons[row.modelData.icon] || Icons.stack
-                        font.family: Icons.font
-                        font.pixelSize: 17
-                        color: row.tint
+            Repeater {
+                model: root.items.slice(0, root.capacity)
+
+                ListRow {
+                    id: row
+                    required property var modelData
+                    readonly property int count: SpecialsService.countOf(modelData)
+                    objectName: "special:" + modelData.id
+                    width: (group.width - group.padding * 2 - Space.s * (root.cols - 1)) / root.cols
+                    title: modelData.name
+                    subtitle: I18n.tn("specials.windows", row.count)
+                    selected: SpecialsService.isOpen(modelData)
+                    leading: Component {
+                        Text {
+                            text: Icons[row.modelData.icon] || Icons.stack
+                            font.family: Icons.font
+                            font.pixelSize: Type.iconSize("body")
+                            color: Colors[row.modelData.accent] ?? Type.secondary
+                        }
                     }
-                    Text {
-                        Layout.fillWidth: true
-                        text: row.modelData.name
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        font.weight: row.open ? Font.Bold : Font.Normal
-                        color: Colors.overBackground
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        text: I18n.t("specials.windows", row.count)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
-                        color: row.open ? row.tint : Colors.outline
-                    }
-                }
-                MouseArea {
-                    id: area
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
                     onClicked: {
                         const id = row.modelData.id;
                         Qt.callLater(() => {

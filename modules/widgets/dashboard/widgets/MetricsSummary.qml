@@ -1,112 +1,84 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Layouts
-import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
-// Bento widget "metricsSummary": CPU, RAM and GPU load as labelled bars.
+// Bento widget "metricsSummary": CPU, RAM and GPU load, each a label with
+// its value over a ProgressLine; side by side on a wide tile, stacked
+// otherwise (a small tile keeps the rows that fit).
 // Keeps SystemResources polling while it is shown.
-StyledRect {
+HostWidget {
     id: root
 
-    property real cellW: 0
-    property real cellH: 0
-    property bool compact: false
-
     readonly property string consumerKey: "bento-metrics-" + Math.random().toString(36).slice(2)
+    readonly property real rowH: Type.size("secondary") * 1.4 + Space.xs + Space.stroke
+    readonly property bool wide: root.width >= root.height * 1.8
+    readonly property int capacity: root.wide ? 3 : Math.max(1, Math.floor((group.bodyHeight + Space.m) / (root.rowH + Space.m)))
     readonly property var rows: {
         const out = [
             {
-                "icon": Icons.cpu,
                 "label": "CPU",
                 "value": SystemResources.cpuUsage
             },
             {
-                "icon": Icons.ram,
                 "label": "RAM",
                 "value": SystemResources.ramUsage
             }
         ];
         if (SystemResources.gpuDetected)
             out.push({
-                "icon": Icons.gpu,
                 "label": "GPU",
                 "value": SystemResources.gpuUsage
             });
-        return out;
+        return out.slice(0, root.capacity);
     }
-
-    variant: "pane"
-    radius: Styling.radius(4)
 
     onVisibleChanged: SystemResources.setConsumer(consumerKey, visible)
     Component.onCompleted: SystemResources.setConsumer(consumerKey, visible)
     Component.onDestruction: SystemResources.setConsumer(consumerKey, false)
 
-    ColumnLayout {
+    Group {
+        id: group
         anchors.fill: parent
-        anchors.margins: Metrics.padding * 0.75
-        spacing: Metrics.spacing / 2
+        fill: true
+        bare: !root.framed
+        label: I18n.t("bento.label.system")
 
-        Repeater {
-            model: root.rows
+        Grid {
+            width: parent.width
+            columns: root.wide ? root.rows.length : 1
+            columnSpacing: Space.l
+            rowSpacing: Space.m
 
-            delegate: RowLayout {
-                id: row
+            Repeater {
+                model: root.rows
 
-                required property var modelData
+                Column {
+                    id: row
+                    required property var modelData
+                    width: root.wide ? (parent.width - Space.l * (root.rows.length - 1)) / root.rows.length : parent.width
+                    spacing: Space.xs
 
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                spacing: Metrics.spacing
+                    Item {
+                        width: parent.width
+                        height: name.implicitHeight
 
-                Text {
-                    text: row.modelData.icon
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(2)
-                    color: Colors.primary
-                }
-
-                Text {
-                    visible: !root.compact || root.width > Metrics.bentoCell * 1.5
-                    text: row.modelData.label
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    font.weight: Font.DemiBold
-                    color: Colors.overBackground
-                }
-
-                StyledRect {
-                    Layout.fillWidth: true
-                    implicitHeight: Metrics.spacing
-                    variant: "internalbg"
-                    radius: height / 2
-
-                    StyledRect {
-                        variant: "primary"
-                        radius: height / 2
-                        height: parent.height
-                        width: parent.width * Math.max(0, Math.min(1, row.modelData.value / 100))
-
-                        Behavior on width {
-                            enabled: Motion.morph.duration > 0
-                            NumberAnimation {
-                                duration: Motion.morph.duration
-                                easing.type: Motion.morph.easing
-                            }
+                        KitText {
+                            id: name
+                            role: "secondary"
+                            text: row.modelData.label
+                        }
+                        KitText {
+                            anchors.right: parent.right
+                            role: "caption"
+                            tabular: true
+                            text: Math.round(row.modelData.value) + "%"
                         }
                     }
-                }
-
-                Text {
-                    Layout.minimumWidth: Metrics.iconSize + Metrics.spacing
-                    horizontalAlignment: Text.AlignRight
-                    text: Math.round(row.modelData.value) + "%"
-                    font.family: Config.theme.monoFont || Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overBackground
+                    ProgressLine {
+                        width: parent.width
+                        value: row.modelData.value / 100
+                    }
                 }
             }
         }

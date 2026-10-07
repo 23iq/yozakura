@@ -4,10 +4,12 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 
 // One bento tile: loads a registry widget (WidgetRegistry.js) and, in edit
 // mode, lets it be dragged (whole tile), resized (bottom-right handle) and
-// removed (x). It only reports pointer offsets; BentoView owns the grid.
+// removed (x); the chrome buttons are kit IconButtons. It only reports
+// pointer offsets; BentoView owns the grid.
 Item {
     id: tile
 
@@ -174,60 +176,42 @@ Item {
                 tile.dragEnded()
         }
 
+        // Drag hint, top-left (the whole tile drags)
+        IconButton {
+            anchors.top: parent.top
+            anchors.left: parent.left
+            anchors.margins: Space.xs
+            size: "s"
+            icon: Icons.dotsSix
+            active: tile.dragging
+            highlighted: tile.selected
+        }
+
         // Remove (x), top-right
-        StyledRect {
+        IconButton {
             objectName: "bentoRemove"
             anchors.top: parent.top
             anchors.right: parent.right
-            anchors.margins: Metrics.spacing / 2
-            width: Metrics.badgeHeight
-            height: Metrics.badgeHeight
-            radius: height / 2
-            variant: removeArea.containsMouse ? "error" : "common"
-            Accessible.role: Accessible.Button
+            anchors.margins: Space.xs
+            size: "s"
+            icon: Icons.cancel
             Accessible.name: I18n.t("bento.remove")
-
-            Text {
-                anchors.centerIn: parent
-                text: Icons.cancel
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: removeArea.containsMouse ? Styling.srItem("error") : Colors.overBackground
-            }
-
-            MouseArea {
-                id: removeArea
-                anchors.fill: parent
-                anchors.margins: -Metrics.spacing / 2
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: tile.removeRequested()
-            }
+            onClicked: tile.removeRequested()
         }
 
         // Resize handle, bottom-right
-        StyledRect {
+        IconButton {
             id: handle
+            objectName: "bentoResize"
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: Metrics.spacing / 2
-            width: Metrics.badgeHeight
-            height: Metrics.badgeHeight
-            radius: Styling.radius(-2)
-            variant: sizeDrag.active || handleHover.hovered ? "primary" : "common"
-            Accessible.role: Accessible.Button
+            anchors.margins: Space.xs
+            size: "s"
+            icon: Icons.arrowsOutSimple
+            active: sizeDrag.active
             Accessible.name: I18n.t("bento.resize")
 
-            Text {
-                anchors.centerIn: parent
-                text: Icons.arrowsOutSimple
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: sizeDrag.active || handleHover.hovered ? Styling.srItem("primary") : Colors.overBackground
-            }
-
             HoverHandler {
-                id: handleHover
                 cursorShape: Qt.SizeFDiagCursor
             }
 
