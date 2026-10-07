@@ -1,9 +1,8 @@
 import QtQuick
-import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import qs.modules.settings.store
-import "Ui.js" as Ui
 
 // Floating "unsaved changes" bar. Edits are already live (the shell
 // previews them); Apply writes the config files, Discard restores the
@@ -13,8 +12,8 @@ Item {
 
     readonly property bool shown: SettingsStore.hasChanges
 
-    implicitWidth: Math.min(row.implicitWidth + 36, parent ? parent.width - 32 : 600)
-    implicitHeight: 56
+    implicitWidth: Math.min(row.implicitWidth + Space.l * 2, parent ? parent.width - Space.xxl : 600)
+    implicitHeight: Space.controlL
     opacity: shown ? 1 : 0
     visible: opacity > 0
     transform: Translate {
@@ -35,58 +34,30 @@ Item {
         }
     }
 
-    Rectangle {
+    Surface {
         anchors.fill: parent
-        radius: height / 2
-        color: Colors.surfaceContainerHighest
-        border.width: 1
-        border.color: Ui.alpha(Colors.primary, 0.35)
+        padding: 0
+        radius: Look.chipRadius(height) > 0 ? height / 2 : 0
     }
 
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 14
+        spacing: Space.m
 
-        Rectangle {
-            anchors.verticalCenter: parent.verticalCenter
-            width: 8
-            height: 8
-            radius: 4
-            color: Colors.primary
-            SequentialAnimation on opacity {
-                running: bar.shown && Config.animDuration > 0
-                loops: Animation.Infinite
-                NumberAnimation {
-                    to: 0.35
-                    duration: 900
-                    easing.type: Easing.InOutSine
-                }
-                NumberAnimation {
-                    to: 1
-                    duration: 900
-                    easing.type: Easing.InOutSine
-                }
-            }
-        }
         Column {
             anchors.verticalCenter: parent.verticalCenter
-            Text {
+            KitText {
+                role: "body"
                 text: I18n.t("common.unsaved_changes")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                font.weight: Font.Bold
-                color: Colors.overBackground
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: I18n.t("prefs.changes.live")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.overSurfaceVariant
             }
         }
         Item {
-            width: 6
+            width: Space.s
             height: 1
         }
         PillButton {

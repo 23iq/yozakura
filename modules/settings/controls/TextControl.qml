@@ -1,9 +1,8 @@
 import QtQuick
-import qs.modules.theme
 import qs.config
-import "../Ui.js" as Ui
+import qs.modules.components.kit
 
-// Single-line text field. `edited(text)` on Enter / focus loss.
+// Single-line text field in a FieldBox. `edited(text)` on Enter / focus loss.
 Item {
     id: root
 
@@ -15,33 +14,38 @@ Item {
     signal edited(string text)
 
     implicitWidth: 280
-    implicitHeight: 36
+    implicitHeight: box.implicitHeight
 
     onTextChanged: if (!field.activeFocus)
         field.text = text
 
-    Rectangle {
+    FieldBox {
+        id: box
         anchors.fill: parent
-        radius: Math.min(Styling.radius(0), height / 2)
-        color: Ui.alpha(Colors.overBackground, 0.06)
-        border.width: field.activeFocus || root.invalid ? 2 : 1
-        border.color: root.invalid ? Colors.error : (field.activeFocus ? Colors.primary : Ui.alpha(Colors.outline, 0.35))
+        hovered: hover.hovered
+        focused: field.activeFocus
+        invalid: root.invalid
+    }
+
+    HoverHandler {
+        id: hover
+        cursorShape: Qt.IBeamCursor
     }
 
     TextInput {
         id: field
         anchors.fill: parent
-        anchors.leftMargin: 14
-        anchors.rightMargin: 14
+        anchors.leftMargin: Space.m
+        anchors.rightMargin: Space.m
         verticalAlignment: TextInput.AlignVCenter
         text: root.text
         clip: true
         selectByMouse: true
-        font.family: root.monospace ? Config.theme.monoFont : Config.theme.font
-        font.pixelSize: Styling.fontSize(0)
-        color: Colors.overBackground
-        selectionColor: Ui.alpha(Colors.primary, 0.4)
-        selectedTextColor: Colors.overBackground
+        font.family: root.monospace ? Config.theme.monoFont : Type.bodyFont
+        font.pixelSize: Type.size("secondary")
+        color: Type.text
+        selectionColor: Qt.rgba(Type.accent.r, Type.accent.g, Type.accent.b, 0.3)
+        selectedTextColor: Type.text
         onEditingFinished: if (text !== root.text)
             root.edited(text)
         Keys.onEscapePressed: {
@@ -49,14 +53,13 @@ Item {
             focus = false;
         }
 
-        Text {
+        KitText {
             anchors.fill: parent
-            verticalAlignment: Text.AlignVCenter
+            role: "secondary"
             text: root.placeholder
-            font: field.font
-            color: Ui.alpha(Colors.overSurfaceVariant, 0.6)
+            font.family: field.font.family
+            color: Type.muted
             visible: field.text === "" && !field.activeFocus
-            elide: Text.ElideRight
         }
     }
 }

@@ -2,9 +2,11 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import qs.modules.settings
 import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
@@ -97,91 +99,38 @@ Item {
 
         Column {
             id: column
-            width: Math.min(page.width - 64, 1080)
+            width: Math.min(page.width - Space.xxl * 2, 1080)
             x: (page.width - width) / 2
-            y: 36
-            spacing: 24
+            y: Space.xxl
+            spacing: Space.xl
 
-            // Header
-            Item {
+            // Header: the page header with the studio's two actions.
+            PageHeader {
                 width: parent.width
-                height: Math.max(56, headText.implicitHeight)
+                category: page.category
+                description: I18n.t("prefs.presets.studio.desc")
 
-                Rectangle {
-                    id: tile
-                    width: 56
-                    height: 56
-                    radius: Math.min(Styling.radius(4), 20)
-                    gradient: Gradient {
-                        GradientStop {
-                            position: 0
-                            color: Ui.alpha(Colors.primary, 0.28)
-                        }
-                        GradientStop {
-                            position: 1
-                            color: Ui.alpha(Colors.tertiary, 0.14)
-                        }
-                    }
-                    border.width: 1
-                    border.color: Ui.alpha(Colors.primary, 0.3)
-                    Text {
-                        anchors.centerIn: parent
-                        text: Icons[page.category.icon] ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: 26
-                        color: Colors.primary
-                    }
+                PillButton {
+                    objectName: "saveCurrentLook"
+                    Layout.alignment: Qt.AlignTop
+                    kind: "filled"
+                    icon: "plus"
+                    text: I18n.t("prefs.presets.save_current")
+                    onClicked: page.saveCurrent()
                 }
-                Column {
-                    id: headText
-                    anchors.left: tile.right
-                    anchors.leftMargin: 18
-                    anchors.right: headActions.left
-                    anchors.rightMargin: 12
-                    spacing: 4
-                    Text {
-                        width: parent.width
-                        text: I18n.t(page.category.title)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(12)
-                        font.weight: Font.Bold
-                        color: Colors.overBackground
-                        elide: Text.ElideRight
-                    }
-                    Text {
-                        width: parent.width
-                        text: I18n.t("prefs.presets.studio.desc")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.overSurfaceVariant
-                        wrapMode: Text.WordWrap
-                    }
-                }
-                Row {
-                    id: headActions
-                    anchors.right: parent.right
-                    anchors.top: parent.top
-                    spacing: 8
-                    PillButton {
-                        objectName: "saveCurrentLook"
-                        kind: "filled"
-                        icon: "plus"
-                        text: I18n.t("prefs.presets.save_current")
-                        onClicked: page.saveCurrent()
-                    }
-                    PillButton {
-                        objectName: "importPreset"
-                        icon: "downloadSimple"
-                        text: I18n.t("prefs.presets.import")
-                        onClicked: PresetStudio.pickImport()
-                    }
+                PillButton {
+                    objectName: "importPreset"
+                    Layout.alignment: Qt.AlignTop
+                    icon: "downloadSimple"
+                    text: I18n.t("prefs.presets.import")
+                    onClicked: PresetStudio.pickImport()
                 }
             }
 
             // Tabs
             Row {
                 visible: page.view !== "editor"
-                spacing: 4
+                spacing: Space.xs
                 Repeater {
                     model: [
                         {
@@ -195,42 +144,13 @@ Item {
                             "label": "prefs.presets.tab.mixer"
                         }
                     ]
-                    Rectangle {
-                        id: tab
+                    Chip {
                         required property var modelData
-                        readonly property bool on: page.view === modelData.id
                         objectName: "presetTab:" + modelData.id
-                        width: tabRow.implicitWidth + 32
-                        height: 38
-                        radius: height / 2
-                        color: on ? Colors.primary : (tabArea.containsMouse ? Ui.alpha(Colors.overBackground, 0.08) : Ui.alpha(Colors.overBackground, 0.04))
-                        Row {
-                            id: tabRow
-                            anchors.centerIn: parent
-                            spacing: 8
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: Icons[tab.modelData.icon] ?? ""
-                                font.family: Icons.font
-                                font.pixelSize: 15
-                                color: tab.on ? Colors.overPrimary : Colors.overSurfaceVariant
-                            }
-                            Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: I18n.t(tab.modelData.label)
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-1)
-                                font.weight: Font.DemiBold
-                                color: tab.on ? Colors.overPrimary : Colors.overBackground
-                            }
-                        }
-                        MouseArea {
-                            id: tabArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: page.show(tab.modelData.id)
-                        }
+                        icon: Icons[modelData.icon] ?? ""
+                        text: I18n.t(modelData.label)
+                        active: page.view === modelData.id
+                        onClicked: page.show(modelData.id)
                     }
                 }
             }

@@ -1,11 +1,14 @@
 import QtQuick
 import qs.modules.theme
-import qs.config
-import "../Ui.js" as Ui
+import qs.modules.components
+import qs.modules.components.kit
 
 // Selectable card: a preview area (default children) above a caption.
-// Used by every "pick one of these looks" editor.
-Item {
+// Used by every "pick one of these looks" editor. At rest / hovered it is
+// the language's control box (Look); `selected` is the kit's accent tint
+// with an accent check (KitStates "active"). Keyboard focus shows the
+// hover look.
+StyledRect {
     id: card
 
     property bool selected: false
@@ -14,105 +17,81 @@ Item {
     property string icon: ""
     property real previewHeight: 96
     default property alias preview: previewArea.data
+    readonly property bool hovered: area.containsMouse || card.activeFocus
     signal clicked
 
     implicitWidth: 180
-    implicitHeight: previewHeight + caption.implicitHeight + 22
+    implicitHeight: previewHeight + caption.implicitHeight + Space.s * 2 + Space.s
     activeFocusOnTab: true
     Keys.onSpacePressed: clicked()
     Keys.onReturnPressed: clicked()
+
+    variant: card.selected ? "primary" : (card.hovered ? "focus" : "common")
+    backgroundOpacity: card.selected ? (card.hovered ? Look.activeTint * 1.5 : Look.activeTint) : (Look.boxedControls ? 0 : -1)
+    enableBorder: !card.selected && !Look.boxedControls
+    radius: Look.chipRadius(height)
 
     Accessible.role: Accessible.RadioButton
     Accessible.name: title
     Accessible.checked: selected
 
-    Rectangle {
-        id: frame
-        anchors.fill: parent
-        radius: Math.min(Styling.radius(4), 22)
-        color: card.selected ? Ui.alpha(Colors.primary, 0.1) : (area.containsMouse ? Ui.alpha(Colors.overBackground, 0.08) : Ui.alpha(Colors.overBackground, 0.035))
-        border.width: card.selected || card.activeFocus ? 2 : 1
-        border.color: card.selected || card.activeFocus ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.8)
-        Behavior on color {
-            enabled: Config.animDuration > 0
-            ColorAnimation {
-                duration: Config.animDuration / 2
-            }
-        }
+    ControlBox {
+        shown: !card.selected
+        radius: card.radius
+        hovered: card.hovered
     }
 
     Item {
         id: previewArea
-        x: 8
-        y: 8
-        width: parent.width - 16
+        x: Space.s
+        y: Space.s
+        width: parent.width - Space.s * 2
         height: card.previewHeight
         clip: true
     }
 
     Row {
         id: caption
-        x: 14
+        x: Space.m
         anchors.top: previewArea.bottom
-        anchors.topMargin: 8
-        width: parent.width - 28
-        spacing: 7
+        anchors.topMargin: Space.s
+        width: parent.width - Space.m * 2
+        spacing: Space.s
 
         Text {
+            id: lead
             visible: card.icon !== ""
             anchors.verticalCenter: titleCol.verticalCenter
             text: Icons[card.icon] ?? ""
             font.family: Icons.font
-            font.pixelSize: 14
-            color: card.selected ? Colors.primary : Colors.overSurfaceVariant
+            font.pixelSize: Type.iconSize("secondary")
+            color: card.selected ? Type.accent : Type.secondary
         }
         Column {
             id: titleCol
-            width: parent.width - (card.icon !== "" ? 21 : 0) - (card.selected ? 22 : 0)
-            Text {
+            width: parent.width - (lead.visible ? lead.width + parent.spacing : 0) - (check.visible ? check.width + parent.spacing : 0)
+            KitText {
                 width: parent.width
+                role: "secondary"
+                color: Type.text
+                font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                font.weight: Font.DemiBold
-                color: Colors.overBackground
-                elide: Text.ElideRight
             }
-            Text {
+            KitText {
                 width: parent.width
                 visible: card.subtitle !== ""
+                role: "caption"
                 text: card.subtitle
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.overSurfaceVariant
-                elide: Text.ElideRight
-            }
-        }
-    }
-
-    // Check badge
-    Rectangle {
-        anchors.right: parent.right
-        anchors.rightMargin: 12
-        anchors.verticalCenter: caption.verticalCenter
-        width: 18
-        height: 18
-        radius: 9
-        color: Colors.primary
-        scale: card.selected ? 1 : 0
-        Behavior on scale {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration / 2
-                easing.type: Easing.OutBack
             }
         }
         Text {
-            anchors.centerIn: parent
+            id: check
+            visible: card.selected
+            anchors.verticalCenter: titleCol.verticalCenter
             text: Icons.accept
             font.family: Icons.font
-            font.pixelSize: 11
-            color: Colors.overPrimary
+            font.pixelSize: Type.iconSize("secondary")
+            color: Type.accent
         }
     }
 

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.config
 import qs.modules.settings.store
@@ -110,18 +111,18 @@ Item {
         enableBorder: false
     }
 
-    // Sidebar backdrop: a slightly lifted plane.
+    // Sidebar plane: the language's group fill (ink: none), and a hairline
+    // against the page.
     Rectangle {
         id: sidebarBg
         width: sidebar.width
         height: parent.height
-        color: Ui.alpha(Colors.surfaceContainerLow, 0.55)
+        color: Look.groupFill
 
-        Rectangle {
+        Divider {
             anchors.right: parent.right
-            width: 1
+            vertical: true
             height: parent.height
-            color: Ui.alpha(Colors.outlineVariant, 0.5)
         }
     }
 

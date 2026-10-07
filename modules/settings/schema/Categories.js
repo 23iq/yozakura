@@ -271,6 +271,40 @@ function sidebar() {
     });
 }
 
+// The sidebar's labelled blocks (SectionLabels) over the element pages:
+// the shell's parts, its style, then the computer itself. Every group sits
+// in exactly one block, in `groups` order (tests/settings-tree.test.cjs).
+var SIDEBAR_SECTIONS = [
+    {
+        "id": "shell",
+        "title": "prefs.sidebar.shell",
+        "groups": ["layout", "bar", "island", "dock", "launcher", "dashboard", "popups", "lockscreen", "desktop"]
+    },
+    {
+        "id": "style",
+        "title": "prefs.sidebar.style",
+        "groups": ["look", "presets"]
+    },
+    {
+        "id": "computer",
+        "title": "prefs.sidebar.computer",
+        "groups": ["system"]
+    }
+];
+
+function sidebarSections() {
+    var tree = sidebar();
+    return SIDEBAR_SECTIONS.map(function (sec) {
+        return {
+            "id": sec.id,
+            "title": sec.title,
+            "groups": tree.filter(function (g) {
+                return sec.groups.indexOf(g.id) >= 0;
+            })
+        };
+    });
+}
+
 // Categories in sidebar order (keyboard navigation).
 function ordered() {
     var out = [];
