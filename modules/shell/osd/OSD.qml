@@ -136,7 +136,12 @@ PanelWindow {
     Timer {
         id: hideTimer
         interval: OsdService.timeout
-        onTriggered: GlobalStates.osdVisible = false
+        // Never under the pointer: a change or a wheel step while hovered
+        // restarts the timer, leaving the OSD hides it
+        onTriggered: {
+            if (!input.containsMouse)
+                GlobalStates.osdVisible = false;
+        }
     }
 
     // A device name is shown briefly, then the label returns.
