@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
@@ -43,15 +44,29 @@ Item {
         width: parent.width
         height: Space.rowHeight + Space.l
 
-        KitText {
-            visible: sidebar.compact
-            anchors.centerIn: parent
-            role: "title"
-            text: "桜"
+        // The sakura mark in the accent, then the name; the mark alone when compact.
+        Image {
+            id: mark
+            x: sidebar.compact ? (parent.width - width) / 2 : Space.l + Space.s
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.round(Type.iconSize("title") * 1.3)
+            height: width
+            source: Qt.resolvedUrl("../../assets/yozakura/yozakura-icon.svg")
+            sourceSize.width: width * 2
+            sourceSize.height: height * 2
+            fillMode: Image.PreserveAspectFit
+            mipmap: true
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                brightness: 1.0
+                colorization: 1.0
+                colorizationColor: Type.accent
+            }
         }
         Column {
             visible: !sidebar.compact
-            x: Space.l + Space.s
+            anchors.left: mark.right
+            anchors.leftMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
             spacing: 0
             KitText {
