@@ -202,7 +202,7 @@ Item {
             Behavior on slotX {
                 enabled: Config.animDuration > 0 && isl.presence > 0.05
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
@@ -258,7 +258,7 @@ Item {
         Behavior on slotX {
             enabled: Config.animDuration > 0 && overflowIsland.presence > 0.05
             NumberAnimation {
-                duration: Config.animDuration
+                duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }

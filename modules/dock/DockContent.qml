@@ -168,14 +168,14 @@ Item {
         Behavior on x {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 4
+                duration: Motion.exit.duration
                 easing.type: Motion.morph.easing
             }
         }
         Behavior on y {
             enabled: Config.animDuration > 0
             NumberAnimation {
-                duration: Config.animDuration / 4
+                duration: Motion.exit.duration
                 easing.type: Motion.morph.easing
             }
         }
@@ -183,7 +183,7 @@ Item {
         Behavior on width {
             enabled: Config.animDuration > 0 && root.isVertical
             NumberAnimation {
-                duration: Config.animDuration / 4
+                duration: Motion.exit.duration
                 easing.type: Motion.morph.easing
             }
         }
@@ -191,7 +191,7 @@ Item {
         Behavior on height {
             enabled: Config.animDuration > 0 && !root.isVertical
             NumberAnimation {
-                duration: Config.animDuration / 4
+                duration: Motion.exit.duration
                 easing.type: Motion.morph.easing
             }
         }
@@ -235,14 +235,14 @@ Item {
             Behavior on x {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 4
+                    duration: Motion.exit.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on y {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 4
+                    duration: Motion.exit.duration
                     easing.type: Motion.morph.easing
                 }
             }
@@ -252,7 +252,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 2
+                    duration: Motion.exit.duration
                     easing.type: Motion.enter.easing
                 }
             }
@@ -264,14 +264,14 @@ Item {
                 Behavior on x {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Motion.exit.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on y {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Motion.exit.duration
                         easing.type: Motion.morph.easing
                     }
                 }
@@ -452,14 +452,14 @@ Item {
                             Behavior on rotation {
                                 enabled: Config.animDuration > 0
                                 NumberAnimation {
-                                    duration: Config.animDuration / 2
+                                    duration: Motion.exit.duration
                                 }
                             }
 
                             Behavior on color {
                                 enabled: Config.animDuration > 0
                                 ColorAnimation {
-                                    duration: Config.animDuration / 2
+                                    duration: Motion.exit.duration
                                 }
                             }
                         }
@@ -590,14 +590,14 @@ Item {
                             Behavior on rotation {
                                 enabled: Config.animDuration > 0
                                 NumberAnimation {
-                                    duration: Config.animDuration / 2
+                                    duration: Motion.exit.duration
                                 }
                             }
 
                             Behavior on color {
                                 enabled: Config.animDuration > 0
                                 ColorAnimation {
-                                    duration: Config.animDuration / 2
+                                    duration: Motion.exit.duration
                                 }
                             }
                         }

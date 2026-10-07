@@ -66,7 +66,7 @@ Item {
     Behavior on animatedProgress {
         enabled: root.smoothDrag && Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
@@ -74,28 +74,28 @@ Item {
     Behavior on wavyAmplitude {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on wavyFrequency {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on heightMultiplier {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on size {
         enabled: Config.animDuration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
@@ -118,7 +118,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.enter.duration
                     easing.type: Motion.enter.easing
                 }
             }
@@ -135,14 +135,14 @@ Item {
                 Behavior on width {
                     enabled: root.smoothDrag
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on height {
                     enabled: root.smoothDrag
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
@@ -216,7 +216,7 @@ Item {
             Behavior on opacity {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.enter.duration
                     easing.type: Motion.enter.easing
                 }
             }
@@ -233,14 +233,14 @@ Item {
                 Behavior on width {
                     enabled: root.smoothDrag
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }
                 Behavior on height {
                     enabled: root.smoothDrag
                     NumberAnimation {
-                        duration: Config.animDuration
+                        duration: Motion.morph.duration
                         easing.type: Motion.morph.easing
                     }
                 }

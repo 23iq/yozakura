@@ -119,28 +119,28 @@ FocusScope {
             Behavior on t1x {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 3
+                    duration: Motion.exit.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on t1y {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 3
+                    duration: Motion.exit.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on t1w {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 3
+                    duration: Motion.exit.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on t1h {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration / 3
+                    duration: Motion.exit.duration
                     easing.type: Motion.morph.easing
                 }
             }
@@ -154,28 +154,28 @@ FocusScope {
             Behavior on t2x {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on t2y {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on t2w {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
             Behavior on t2h {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
@@ -273,7 +273,7 @@ FocusScope {
                                 Behavior on color {
                                     enabled: Config.animDuration > 0
                                     ColorAnimation {
-                                        duration: Config.animDuration / 2
+                                        duration: Motion.exit.duration
                                         easing.type: Motion.morph.easing
                                     }
                                 }
@@ -296,7 +296,7 @@ FocusScope {
                                 Behavior on color {
                                     enabled: Config.animDuration > 0
                                     ColorAnimation {
-                                        duration: Config.animDuration / 2
+                                        duration: Motion.exit.duration
                                         easing.type: Motion.morph.easing
                                     }
                                 }

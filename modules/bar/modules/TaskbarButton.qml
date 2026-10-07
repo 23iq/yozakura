@@ -129,7 +129,7 @@ Item {
                 Behavior on width {
                     enabled: Config.animDuration > 0
                     NumberAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Motion.exit.duration
                         easing.type: Motion.morph.easing
                     }
                 }
