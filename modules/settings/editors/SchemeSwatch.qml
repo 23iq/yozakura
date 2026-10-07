@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs.modules.theme
 import qs.modules.settings.store
@@ -74,6 +76,7 @@ Item {
         }
 
         Column {
+            id: roles
             visible: strip.ready
             anchors.left: hero.right
             anchors.leftMargin: strip.inset
@@ -85,11 +88,12 @@ Item {
             Repeater {
                 model: ["secondaryContainer", "tertiary", "surfaceContainerHighest"]
                 Rectangle {
+                    id: swatch
                     required property string modelData
-                    width: parent.width
+                    width: roles.width
                     height: (strip.height - strip.inset * 2 - Space.xs * 2) / 3
-                    radius: Space.clampRadius(Space.smallRadius, height)
-                    color: strip.c(modelData, "transparent")
+                    radius: Space.clampRadius(Space.smallRadius, swatch.height)
+                    color: strip.c(swatch.modelData, "transparent")
                 }
             }
         }
