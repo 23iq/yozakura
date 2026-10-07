@@ -217,6 +217,7 @@
   "bluetooth.open_manager": "Abrir Blueman",
   "bluetooth.paired": "Vinculado",
   "bluetooth.scan": "Buscar dispositivos",
+  "bluetooth.scanning": "Buscando…",
   "calendar.day.fri": "Vi",
   "calendar.day.mon": "Lu",
   "calendar.day.sat": "Sá",
