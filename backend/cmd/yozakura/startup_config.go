@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -35,6 +36,7 @@ func ensureConfigFiles() {
 
 func seedConfig(p *paths.Paths, official string) error {
 	files, ref, setErr := presets.DefaultSet(official)
+	files = offeredLook(files)
 	fresh, err := daemon.EnsureConfigFiles(p, files)
 	if err != nil || !fresh {
 		return err
@@ -44,4 +46,20 @@ func seedConfig(p *paths.Paths, official string) error {
 	}
 	return presets.SeedNewInstall(filepath.Join(p.ConfigDir, "presets"), filepath.Join(p.CacheDir, "wallpapers.json"),
 		presets.DefaultPreset, ref, files)
+}
+
+// offeredLook marks the "Try the new look" card answered in the seeded
+// general.json: a new install already starts from the default set.
+func offeredLook(files map[string][]byte) map[string][]byte {
+	if files == nil {
+		files = map[string][]byte{}
+	}
+	general := map[string]any{}
+	if data, ok := files["general"]; ok {
+		_ = json.Unmarshal(data, &general)
+	}
+	general["newLookOffered"] = true
+	data, _ := json.MarshalIndent(general, "", "  ")
+	files["general"] = append(data, '\n')
+	return files
 }

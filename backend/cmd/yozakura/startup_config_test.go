@@ -45,12 +45,16 @@ func TestSeedConfigNewAndExistingInstall(t *testing.T) {
 	assert.JSONEq(t, `{"layout": "Yozakura", "style": "Sakura", "palette": "Plum"}`, string(parts))
 	wall, _ := os.ReadFile(filepath.Join(p.CacheDir, "wallpapers.json"))
 	assert.JSONEq(t, `{"matugenScheme": "scheme-content", "activeColorPreset": "Plum"}`, string(wall))
+	general, _ := os.ReadFile(p.Config("general"))
+	assert.JSONEq(t, `{"newLookOffered": true}`, string(general), "a new install is not offered the new look")
 
 	// An existing install: nothing is seeded or marked.
 	dir2 := t.TempDir()
 	p2 := &paths.Paths{ConfigDir: filepath.Join(dir2, "cfg"), CacheDir: filepath.Join(dir2, "cache")}
 	writeFiles(t, p2.ConfigDir, map[string]string{"config/theme.json": `{"roundness": 2}`})
 	assert.NoError(t, seedConfig(p2, official))
+	_, err = os.Stat(p2.Config("general"))
+	assert.True(t, os.IsNotExist(err), "an existing install still gets the offer")
 	_, err = os.Stat(p2.Config("bar"))
 	assert.True(t, os.IsNotExist(err))
 	_, err = os.Stat(filepath.Join(p2.ConfigDir, "presets", "active_preset"))
