@@ -62,6 +62,14 @@ var MODULES = [
         "file": "modules/DownloadsStack.qml"
     },
     {
+        // Live activity chips; put first in the end group by BarContent
+        // while the notch shares this panel's edge (notch.activitiesIn)
+        "id": "activities",
+        "icon": "circleNotch",
+        "label": "prefs.bar.module.activities",
+        "file": "modules/ActivityChips.qml"
+    },
+    {
         "id": "workspacePreviews",
         "icon": "columns",
         "label": "prefs.bar.module.workspacePreviews",

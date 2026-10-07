@@ -105,3 +105,11 @@ test('a saved layout equal to the old default gets the keyboard indicator, verti
     const custom = plain(layoutLib.resolveGroups(normalize({ ...old, right: ['clock'] }), 'horizontal', barDefaults.layout));
     assert.deepEqual(custom.end, ['clock']);
 });
+
+test('activity chips go first in the end group unless placed already', () => {
+    const ids = (v) => JSON.parse(JSON.stringify(v));
+    assert.deepEqual(ids(layoutLib.withActivityChips(['controls', 'clock'], { end: ['controls', 'clock'] }, true)), ['activities', 'controls', 'clock']);
+    assert.deepEqual(ids(layoutLib.withActivityChips(['controls'], { end: ['controls'] }, false)), ['controls']);
+    assert.deepEqual(ids(layoutLib.withActivityChips(['clock'], { start: ['activities'], end: ['clock'] }, true)), ['clock'], 'user placed them');
+    assert.deepEqual(ids(layoutLib.withActivityChips([], {}, true)), ['activities']);
+});

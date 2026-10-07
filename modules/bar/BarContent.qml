@@ -6,6 +6,7 @@ import qs.modules.bar.workspaces
 import qs.modules.bar.panels
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.services.activities
 import qs.modules.globals
 import qs.config
 import "BarLayout.js" as BarLayout
@@ -113,9 +114,11 @@ Item {
     readonly property var centerIds: BarLayout.visibleIds(layoutGroups.center, {
         showPinButton: pinButtonVisible
     })
-    readonly property var endIds: BarLayout.visibleIds(layoutGroups.end, {
+    // Live activities as chips (ActivityService.presentation "bar") lead the
+    // end group of the panel on the notch's edge (ActivityChips.qml)
+    readonly property var endIds: BarLayout.withActivityChips(BarLayout.visibleIds(layoutGroups.end, {
         showPinButton: pinButtonVisible
-    })
+    }), layoutGroups, isPrimary && ActivityService.presentation === "bar")
     readonly property var drawerIds: BarLayout.visibleIds(layoutGroups.drawer, {
         showPinButton: pinButtonVisible
     })
