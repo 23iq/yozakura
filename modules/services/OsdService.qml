@@ -27,8 +27,19 @@ Singleton {
     readonly property int timeout: Config.layout && Config.layout.osd && Config.layout.osd.timeout > 0 ? Config.layout.osd.timeout : 2500
 
     // Hosts register here: the bar widget (bar-inline) and the notch (island).
-    property int inlineHosts: 0
+    // inlineScreens (screen name -> hosts) is the one record; inlineHosts is
+    // its total.
+    property var inlineScreens: ({})
+    readonly property int inlineHosts: {
+        let n = 0;
+        for (const name in root.inlineScreens)
+            n += root.inlineScreens[name];
+        return n;
+    }
     property bool islandHandled: false
+    // Event routing (is any inline host out there?). Each window decides for
+    // its own screen with routeForScreen: a monitor without a host keeps its
+    // pill while the others show the level inline.
     readonly property var route: OsdStyles.resolve(root.style, {
         "inlineAvailable": root.inlineHosts > 0,
         "islandHandled": root.islandHandled
@@ -44,8 +55,19 @@ Singleton {
     property string _sinkName: ""
     property var _micBaseline: null
 
-    function registerInline(on: bool): void {
-        root.inlineHosts = Math.max(0, root.inlineHosts + (on ? 1 : -1));
+    function registerInline(on: bool, screenName: string): void {
+        const name = screenName || "";
+        const next = Object.assign({}, root.inlineScreens);
+        next[name] = Math.max(0, (next[name] || 0) + (on ? 1 : -1));
+        root.inlineScreens = next;
+    }
+
+    // A host on another monitor must not suppress this screen's window.
+    function routeForScreen(screenName: string): var {
+        return OsdStyles.resolve(root.style, {
+            "inlineAvailable": (root.inlineScreens[screenName || ""] || 0) > 0 || (root.inlineScreens[""] || 0) > 0,
+            "islandHandled": root.islandHandled
+        });
     }
 
     function report(kind: string, value: real, muted: bool, device: string, screenName: string): void {

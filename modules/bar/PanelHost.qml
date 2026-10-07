@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.shell
 import qs.modules.bar.panels
 import "panels/PanelLayout.js" as PanelLayout
 
@@ -71,6 +72,23 @@ Item {
         }
         return z;
     }
+
+    // Placement consumers use measured depth rather than the old single-bar
+    // defaults. Hidden panels still define the work area, as reservations do.
+    // Until every spec has its BarContent (startup, a rebuild, an inactive
+    // host) nothing is published, so EdgeService keeps its config fallback
+    // instead of reading an empty list as "this screen has no panels".
+    readonly property var placementPanels: {
+        if (specs.length === 0 || bars.length !== specs.length)
+            return null;
+        return bars.map(b => ({
+                    "pos": b.barPosition,
+                    "size": b.edgeDepth
+                }));
+    }
+    onPlacementPanelsChanged: EdgeService.setPanels(screen.name, placementPanels)
+    Component.onCompleted: EdgeService.setPanels(screen.name, placementPanels)
+    Component.onDestruction: EdgeService.setPanels(screen.name, null)
 
     // Input regions of every panel (the shell window's mask)
     readonly property var hitRegions: bars.filter(b => b && b.hitRegion).map(b => b.hitRegion)

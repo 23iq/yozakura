@@ -18,6 +18,7 @@ h.module("Quickshell", {
     "Singleton": "QtObject {}",
     "ShellScreen": "QtObject { property string name; property int width; property int height }",
 })
+h.singleton("Quickshell", "Quickshell", 'QtObject { property var screens: [{name: "A"}, {name: "B"}] }')
 h.singleton("qs.config", "Config", """QtObject {
     property int animDuration: 0
     property QtObject layout: QtObject {
@@ -77,7 +78,7 @@ item = re.sub(r"\n    anchors \{[^}]*\}", "", item, count=1)
 item = "\n".join(ln for ln in item.split("\n") if not re.match(r'\s*(color: "transparent"|exclusionMode:|WlrLayershell\.)', ln))
 HOSTS = "qs/modules/shell/hosts"
 h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
-for f in ("HostFrame", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces"):
+for f in ("HostFrame", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS, replace={"layer.enabled: true": "layer.enabled: false"})
 h.module("qs.modules.shell.hosts", {})
 
@@ -93,6 +94,28 @@ Window {
     property ShellScreen b: ShellScreen { name: "B"; width: 1920; height: 1080 }
     HostedSurfaces { objectName: "hsA"; screen: a }
     HostedSurfaces { objectName: "hsB"; screen: b }
+    Item {
+        id: container
+        objectName: "notchContainer"
+        property int pushes: 0
+        property bool isShowingDefault: true
+        property bool isShowingNotifications: false
+        property QtObject stackView: QtObject {
+            property int depth: 1
+            property Item currentItem: null
+            function pop() { depth = 1; currentItem = null; }
+        }
+        function pushView(v) { pushes++; stackView.depth++; stackView.currentItem = v; }
+    }
+    NotchHostedSurfaces { objectName: "nhA"; screen: a; vis: Visibilities.getForScreen("A"); container: container }
+    Item {
+        id: otherContainer
+        property bool isShowingDefault: true
+        property bool isShowingNotifications: false
+        property QtObject stackView: QtObject { property int depth: 1; property Item currentItem: null; function pop() { depth = 1; currentItem = null; } }
+        function pushView(v) { stackView.depth++; stackView.currentItem = v; }
+    }
+    NotchHostedSurfaces { objectName: "nhB"; screen: b; vis: Visibilities.getForScreen("B"); container: otherContainer }
 }""", auto_stub=False)
 root.requestActivate()
 vis = h.eval(root, "Visibilities")
@@ -192,5 +215,42 @@ h.eval(root, 'Visibilities.setActiveModule("")')
 # Unknown host falls back to the notch: nothing opens here.
 h.eval(root, 'Config.layout.launcher.host = "bogus"; Visibilities.setActiveModule("launcher")')
 assert not ev(spot, "isOpen")
+# Rerouting the already-open module must push/pop the notch without changing flags.
+h.eval(root, 'Config.layout.launcher.host = "spotlight"; Visibilities.focused = "A"; Visibilities.setActiveModule("launcher")')
+pump(10)
+nhA, nhB = h.find(root, "nhA"), h.find(root, "nhB")
+c = h.find(root, "notchContainer")
+for module, outside in (("launcher", "spotlight"), ("dashboard", "sheet")):
+    h.eval(root, f'Config.layout.{module}.host = "{outside}"; Visibilities.setActiveModule("{module}")')
+    pump(10)
+    assert not ev(nhA, "host.isOpen")
+    h.eval(root, f'Config.layout.{module}.host = "notch"')
+    pump(10)
+    assert ev(nhA, "host.isOpen") and ev(c, "stackView.depth") == 2, module
+    assert ev(c, "stackView.currentItem.activeFocus"), module
+    assert not ev(nhB, "host.isOpen"), "reroute leaked to other monitor"
+    assert ev(vis, f'getForScreen("A").{module}'), "reroute changed visibility"
+    count = ev(c, "pushes")
+    h.eval(root, 'Config.layout.sheet.side = "left"')
+    pump(10)
+    assert ev(c, "pushes") == count, "unrelated config duplicated stack view"
+    h.eval(root, f'Config.layout.{module}.host = "{outside}"')
+    pump(10)
+    assert not ev(nhA, "host.isOpen") and ev(c, "stackView.depth") == 1, module
+    assert ev(ev(hsA, outside), "isOpen"), "outside host did not reopen"
+h.eval(root, 'Config.layout.dashboard.host = "notch"')
+pump(10)
+# Another path pops the notch stack under an open module: it is put back.
+h.eval(root, 'container.stackView.pop()')
+pump(20)
+assert ev(nhA, "host.isOpen") and ev(c, "stackView.depth") == 2, "routed module lost its view"
+# A foreign view on top is never popped by this host's close().
+h.eval(root, 'container.stackView.currentItem = Qt.createQmlObject("import QtQuick; Item {}", container); container.stackView.depth = 3')
+h.eval(nhA, "host.close()")
+assert ev(c, "stackView.depth") == 3, "close() popped a view it does not own"
+h.eval(root, 'container.stackView.depth = 1; container.stackView.currentItem = null')
+h.eval(root, 'Visibilities.setActiveModule("")')
+pump(10)
+assert not ev(nhA, "host.isOpen") and ev(c, "stackView.depth") == 1
 print("hosts: ok")
 h.exit(0)

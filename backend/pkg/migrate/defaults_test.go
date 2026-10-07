@@ -63,3 +63,18 @@ func TestDefaultsShiftSkipsMalformed(t *testing.T) {
 	got, _ := os.ReadFile(p.Config("theme"))
 	assert.Equal(t, `{not json`, string(got))
 }
+
+func TestDefaultsShiftEmptyGridsBecomeDefaultGrids(t *testing.T) {
+	p := shiftPaths(t)
+	assert.NoError(t, os.WriteFile(p.Config("bar"), []byte(`{"moduleOptions": {"clock": {"panel": {"cells": []}}}}`), 0o644))
+	assert.NoError(t, os.WriteFile(p.Config("layout"), []byte(`{"dashboard": {"grid": {"cols": 4, "cells": [{"widget": "player", "x": 0, "y": 0, "w": 1, "h": 1}]}}}`), 0o644))
+
+	changed, err := EnsureDefaultsShift(p)
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"bar.moduleOptions.clock.panel.cells"}, changed)
+	bar, _ := os.ReadFile(p.Config("bar"))
+	assert.Contains(t, string(bar), `"widget": "weather"`)
+	assert.Contains(t, string(bar), `"widget": "worldClocks"`)
+	layout, _ := os.ReadFile(p.Config("layout"))
+	assert.NotContains(t, string(layout), "quickControls", "a placed grid is the user's")
+}

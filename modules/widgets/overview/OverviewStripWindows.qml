@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Wayland
+import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
 import qs.config

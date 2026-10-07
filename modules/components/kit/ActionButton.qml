@@ -36,6 +36,23 @@ FocusScope {
             hold.release();
     }
 
+    onActiveFocusChanged: {
+        if (!activeFocus)
+            root.release();
+    }
+    onHighlightedChanged: {
+        if (!highlighted)
+            root.release();
+    }
+    onVisibleChanged: {
+        if (!visible)
+            root.release();
+    }
+    onEnabledChanged: {
+        if (!enabled)
+            root.release();
+    }
+
     implicitWidth: Math.max(button.width, root.showLabel ? label.implicitWidth : 0)
     implicitHeight: button.height + (root.showLabel ? Space.l + label.implicitHeight : 0)
 

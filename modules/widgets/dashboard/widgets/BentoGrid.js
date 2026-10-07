@@ -95,7 +95,9 @@ function normalize(cells, cols, registry) {
             out.push(c);
         }
     }
-    if (out.length === 0) {
+    // [] is an intentional empty layout; only missing or corrupt data
+    // falls back to the registry defaults.
+    if (out.length === 0 && !(Array.isArray(cells) && cells.length === 0)) {
         var def = registry.defaultGrid(n);
         for (var j = 0; j < def.length; j++)
             out.push(_sanitize(def[j], n, registry));

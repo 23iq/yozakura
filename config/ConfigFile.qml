@@ -41,6 +41,10 @@ FileView {
         }
     }
 
+    // Values the key aliases moved into this still missing file; laid over the
+    // preset copy by the validation that follows it (see handleMissing).
+    property var pendingOverlay: undefined
+
     // Emitted at the start of every load, before validation (legacy fixes).
     signal beforeValidate
 
@@ -63,8 +67,8 @@ FileView {
     onLoadFailed: error => {
         // Quickshell passes the FileViewError value (a number), not its name.
         if ((error === FileViewError.FileNotFound || String(error).includes("FileNotFound")) && !file.ready) {
-            if (file.store.aliasGate)
-                file.store.aliasGate.skip(file.name);
+            if (file.store.aliasGate && file.store.aliasGate.skip(file))
+                return;
             file.handleMissing(() => {
                 file.ready = true;
             });
@@ -88,14 +92,19 @@ FileView {
         if (!raw || raw.trim().length === 0) {
             // File is missing or empty — create with defaults
             console.log(name + ".json missing or empty, creating default...");
-            file.setText(JSON.stringify(defaults, null, 2));
+            file.setText(JSON.stringify(ConfigValidator.validate(migrated, defaults), null, 2));
             onComplete();
             return;
         }
 
         try {
             var current = JSON.parse(raw);
-            var validated = ConfigValidator.validate(migrated !== undefined ? migrated : current, defaults);
+            var source = current;
+            if (file.pendingOverlay !== undefined) {
+                source = ConfigValidator.overlay(current, file.pendingOverlay);
+                file.pendingOverlay = undefined;
+            }
+            var validated = ConfigValidator.validate(migrated !== undefined ? migrated : source, defaults);
 
             if (JSON.stringify(current) !== JSON.stringify(validated)) {
                 console.log("Merging and updating " + name + ".json...");
@@ -151,7 +160,9 @@ FileView {
     }
 
     // Missing file: copy it from the default preset or create it with defaults.
-    function handleMissing(onComplete) {
+    // `migrated`: values the key aliases moved into it; they win over the
+    // preset's and are kept when the defaults are used.
+    function handleMissing(onComplete, migrated) {
         var presetPath = store.presetDir + "/" + name + ".json";
         var targetPath = store.configDir + "/" + name + ".json";
         console.log(name + ".json not found, checking preset: " + presetPath);
@@ -160,10 +171,11 @@ FileView {
             whenDone: exitCode => {
                 // Copied: the reload validates it. Otherwise use the defaults.
                 if (exitCode === 0) {
+                    file.pendingOverlay = migrated;
                     file.reload();
                 } else {
                     console.log("Using defaults for " + name + ".json");
-                    file.setText(JSON.stringify(defaults, null, 2));
+                    file.setText(JSON.stringify(migrated !== undefined ? ConfigValidator.validate(migrated, defaults) : defaults, null, 2));
                     onComplete();
                 }
             }

@@ -7,6 +7,7 @@ const { loadLibrary } = require('./lib/qmljs.cjs');
 const dir = path.join(__dirname, '../modules/widgets/dashboard/widgets');
 const R = loadLibrary(path.join(dir, 'WidgetRegistry.js'));
 const G = loadLibrary(path.join(dir, 'BentoGrid.js'));
+const Defaults = loadLibrary(path.join(__dirname, '../config/defaults/layout.js'));
 const T = loadLibrary(path.join(__dirname, '../modules/widgets/dashboard/DashboardTabs.js'));
 const plain = v => JSON.parse(JSON.stringify(v));
 
@@ -48,9 +49,9 @@ test('the default grid is three rows: player | controls over calendar and notifi
 
 // ------------------------------------------------------------ normalize
 
-test('empty or corrupt input gives the default grid', () => {
+test('uninitialized or corrupt input gives the default grid', () => {
     const def = plain(G.normalize(R.defaultGrid(4), 4, R));
-    for (const bad of [[], null, undefined, 'x', 42, { a: 1 }, [null, 3, 'a'], [{ widget: 'ghost', x: 0, y: 0, w: 1, h: 1 }]])
+    for (const bad of [null, undefined, 'x', 42, { a: 1 }, [null, 3, 'a'], [{ widget: 'ghost', x: 0, y: 0, w: 1, h: 1 }]])
         assert.deepEqual(plain(G.normalize(bad, 4, R)), def, JSON.stringify(bad));
 });
 
@@ -103,6 +104,16 @@ test('normalize is idempotent', () => {
     assert.deepEqual(plain(G.normalize(once, 4, R)), once);
     const def = plain(G.normalize(R.defaultGrid(4), 4, R));
     assert.deepEqual(plain(G.normalize(def, 4, R)), def);
+});
+
+
+test('initial configured grid matches the registry default', () => {
+    assert.deepEqual(plain(Defaults.data.dashboard.grid.cells), plain(R.defaultGrid(4)));
+});
+
+test('an intentionally empty grid stays empty and adding creates only the chosen widget', () => {
+    assert.deepEqual(plain(G.normalize([], 4, R)), []);
+    assert.deepEqual(plain(G.add([], 'weather', 4, R).map(c => c.widget)), ['weather']);
 });
 
 // ------------------------------------------------------------ edits

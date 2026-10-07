@@ -4,7 +4,7 @@ import Quickshell
 import qs.config
 import qs.modules.theme
 import "EdgeLayout.js" as EdgeLayout
-import "LayoutModel.js" as LayoutModel
+import "../bar/panels/PanelLayout.js" as PanelLayout
 
 // Builds the EdgeLayout environment for a screen from Config.bar/dock/notch
 // and exposes the placement helpers bound to it. All edge-aware UI (popups,
@@ -12,6 +12,42 @@ import "LayoutModel.js" as LayoutModel
 // in QML.
 Singleton {
     id: root
+
+    // The rendered panels publish their measured style/content depth. Config
+    // is the fallback before the per-screen PanelHost has been constructed.
+    property var panelGeometry: ({})
+
+    function setPanels(name, panels) {
+        const next = Object.assign({}, panelGeometry);
+        if (panels === null)
+            delete next[name];
+        else
+            next[name] = panels;
+        panelGeometry = next;
+    }
+
+    function panelsFor(screen, visible) {
+        const name = screen ? screen.name : "";
+        const measured = panelGeometry[name];
+        if (measured !== undefined)
+            return measured.map(p => ({
+                        pos: p.pos,
+                        size: p.size,
+                        visible: visible
+                    }));
+        const all = PanelLayout.normalize(Config.bar).panels;
+        const screens = Quickshell.screens;
+        let index = 0;
+        for (let i = 0; screens && i < screens.length; i++) {
+            if (screens[i].name === name)
+                index = i;
+        }
+        return PanelLayout.forScreen(all, name, index).map(p => ({
+                    pos: p.edge,
+                    size: PanelLayout.estimateDepth(p, BarMetrics.moduleSize),
+                    visible: visible
+                }));
+    }
 
     // `screen` is a ShellScreen (or anything with width/height).
     // Optional `visibility` overrides {bar, dock, notch} -> bool (default true,
@@ -28,13 +64,7 @@ Singleton {
                 "h": screen ? screen.height : 0
             },
             "frame": frame,
-            "bar": {
-                "pos": bar && bar.position ? bar.position : "top",
-                "size": BarMetrics.moduleSize,
-                "visible": (vis.bar ?? true) && LayoutModel.fromConfig({
-                    "bar": bar
-                }).bar.enabled
-            },
+            "panels": panelsFor(screen, vis.bar ?? true),
             "dock": {
                 "pos": dock && dock.position ? dock.position : "bottom",
                 "size": dock && dock.height ? dock.height : 0,

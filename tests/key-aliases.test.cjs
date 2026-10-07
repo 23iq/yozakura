@@ -52,7 +52,7 @@ test('never overwrites an existing target; the old key still goes', () => {
     assert.equal(raws.bar.activities, undefined);
 });
 
-test('a target domain that has no file keeps the source for a later run', () => {
+test('an unreadable target domain keeps the raw source untouched', () => {
     const raws = { bar: { activities: { maxVisible: 3 } }, notch: null };
     assert.deepEqual(plain(validator.migrateAliases(raws, ALIASES)), []);
     assert.deepEqual(plain(raws.bar.activities), { maxVisible: 3 });
@@ -120,4 +120,12 @@ test('real aliases: notch.osd off leaves the OSD style alone', () => {
     const raws = { notch: { osd: false }, layout: { osd: { style: 'corner' } } };
     validator.migrateAliases(raws);
     assert.deepEqual(plain(raws), { notch: {}, layout: { osd: { style: 'corner' } } });
+});
+
+test('overlay lays migrated values over a document without touching either input', () => {
+    const base = { a: { x: 1, y: 2 }, list: [1], keep: true };
+    const over = { a: { y: 9 }, list: [2, 3], n: { deep: 1 } };
+    assert.deepEqual(plain(validator.overlay(base, over)), { a: { x: 1, y: 9 }, list: [2, 3], keep: true, n: { deep: 1 } });
+    assert.deepEqual(base, { a: { x: 1, y: 2 }, list: [1], keep: true });
+    assert.deepEqual(over, { a: { y: 9 }, list: [2, 3], n: { deep: 1 } });
 });

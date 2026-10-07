@@ -169,7 +169,7 @@ var keys = {
         "items": {
             "type": "object"
         },
-        "description": "Placed clock panel widgets: [{widget, x, y, w, h}] on a 2-column grid; any bento widget id (weather, pomodoro, agenda, worldClocks, calendar, ...). Empty or invalid uses the default panel. Edited in place from the panel (pencil button)."
+        "description": "Placed clock panel widgets: [{widget, x, y, w, h}] on a 2-column grid; any bento widget id (weather, pomodoro, agenda, worldClocks, calendar, ...). An empty list keeps the panel empty; an uninitialized value uses the default panel. Edited in place from the panel (pencil button)."
     },
     "moduleOptions.worldClocks.zones": {
         "items": {

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 
 	"yozakura/backend/pkg/catalog"
 )
@@ -24,7 +25,7 @@ func (m *Manager) stripLocal(domain string, data []byte) ([]byte, error) {
 	if !m.Cat.HasDomain(domain) {
 		return data, nil
 	}
-	locals := m.Cat.LocalEntries(domain)
+	locals := m.localPaths(domain)
 	if len(locals) == 0 {
 		return data, nil
 	}
@@ -34,7 +35,7 @@ func (m *Manager) stripLocal(domain string, data []byte) ([]byte, error) {
 	}
 	changed := false
 	for _, e := range locals {
-		if catalog.DeleteOrdered(doc, e.Path) {
+		if catalog.DeleteOrdered(doc, e) {
 			changed = true
 		}
 	}
@@ -44,13 +45,46 @@ func (m *Manager) stripLocal(domain string, data []byte) ([]byte, error) {
 	return marshalDoc(doc)
 }
 
+// retiredMoves are the config/meta/KeyAliases.js moves of whole key trees
+// between domains (old domain -> {old prefix, new domain, new prefix}). A
+// machine-local key under the new prefix is also recognized under the old
+// one, so the paths come from the catalog and cannot go stale on their own;
+// TestRetiredMovesMatchKeyAliases keeps this table equal to the JS aliases.
+var retiredMoves = map[string][]retiredMove{
+	"bar": {{Old: []string{"activities"}, NewDomain: "notch", New: []string{"liveActivities"}}},
+}
+
+type retiredMove struct {
+	Old       []string
+	NewDomain string
+	New       []string
+}
+
+// localPaths lists the machine-local paths of a domain, plus the retired
+// ones: CLI save/export can run before the shell migrates the live config,
+// and old preset directories remain readable.
+func (m *Manager) localPaths(domain string) [][]string {
+	var paths [][]string
+	for _, e := range m.Cat.LocalEntries(domain) {
+		paths = append(paths, e.Path)
+	}
+	for _, mv := range retiredMoves[domain] {
+		for _, e := range m.Cat.LocalEntries(mv.NewDomain) {
+			if len(e.Path) >= len(mv.New) && slices.Equal(e.Path[:len(mv.New)], mv.New) {
+				paths = append(paths, append(slices.Clone(mv.Old), e.Path[len(mv.New):]...))
+			}
+		}
+	}
+	return paths
+}
+
 // keepLocal copies the machine-local values of the live file of a domain
 // into a document about to be written over it.
 func (m *Manager) keepLocal(domain string, data []byte) ([]byte, error) {
 	if !m.Cat.HasDomain(domain) {
 		return data, nil
 	}
-	locals := m.Cat.LocalEntries(domain)
+	locals := m.localPaths(domain)
 	if len(locals) == 0 {
 		return data, nil
 	}
@@ -64,7 +98,7 @@ func (m *Manager) keepLocal(domain string, data []byte) ([]byte, error) {
 	}
 	var doc *catalog.Object
 	for _, e := range locals {
-		v, ok := catalog.GetOrdered(live, e.Path)
+		v, ok := catalog.GetOrdered(live, e)
 		if !ok {
 			continue
 		}
@@ -73,7 +107,7 @@ func (m *Manager) keepLocal(domain string, data []byte) ([]byte, error) {
 				return data, err
 			}
 		}
-		catalog.SetOrdered(doc, e.Path, v)
+		catalog.SetOrdered(doc, e, v)
 	}
 	if doc == nil {
 		return data, nil

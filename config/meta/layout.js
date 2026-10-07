@@ -51,7 +51,7 @@ var keys = {
         "description": "Columns of the dashboard widget grid."
     },
     "dashboard.grid.cells": {
-        "description": "Placed dashboard widgets: [{widget, x, y, w, h}] in grid cells. widget = player | quickControls | calendar | specials | notifications | levels | weather | metricsSummary (modules/widgets/dashboard/widgets/WidgetRegistry.js). Empty or invalid uses the default grid; overlaps are pushed down and compacted. Edited in place from the dashboard (pencil button)."
+        "description": "Placed dashboard widgets: [{widget, x, y, w, h}] in grid cells. widget = player | quickControls | calendar | specials | notifications | levels | weather | metricsSummary (modules/widgets/dashboard/widgets/WidgetRegistry.js). An empty list keeps the dashboard empty; an uninitialized value uses the default grid. Overlaps are pushed down and compacted. Edited in place from the dashboard (pencil button)."
     },
     "sheet": {
         "description": "Side sheet (notifications, quick settings)."

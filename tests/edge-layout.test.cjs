@@ -148,3 +148,16 @@ test('a top or bottom notch stays flush with its edge (the bar keeps a gap for i
         assert.equal(L.notchRect(envN(bar, 'left', 'bottom', 'center'), { along: 200, across: 36 }).y, 1080 - 36, bar);
     }
 });
+
+test('multiple panel depths replace the legacy bar on each occupied edge', () => {
+    const e = env('top', 'bottom', 'top');
+    e.dock.visible = e.notch.visible = false;
+    e.panels = [{ pos: 'right', size: 92, visible: true }, { pos: 'right', size: 60, visible: true }, { pos: 'left', size: 30, visible: true }];
+    assert.deepEqual(JSON.parse(JSON.stringify(L.insets(e))), { top: 0, right: 92, bottom: 0, left: 30 });
+    assert.equal(L.sheetSide(e, 'auto'), 'left');
+    assert.equal(L.sheetRect(e, 'right', 400).x, 1920 - 92 - 400);
+    e.notch = {pos: "left", align: "start", visible: false};
+    assert.equal(L.notchRect(e, {along: 100, across: 20}).x, 30);
+    e.panels = [];
+    assert.equal(L.workArea(e).y, 0);
+});

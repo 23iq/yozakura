@@ -103,6 +103,7 @@ Item {
             radius: Math.max(root.startRadius, root.endRadius)
             vertical: root.vertical
             screen: root.bar ? root.bar.screen : null
+            available: root.visible && !!root.bar && root.bar.reveal
         }
 
         MouseArea {

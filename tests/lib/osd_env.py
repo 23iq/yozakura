@@ -32,10 +32,11 @@ QtObject {
     signal inlineRequest(string kind)
     property int timeout: 2500
     property real lastValue: 0
+    property string lastScreen: ""
     property bool lastMuted: false
     property int inlineHosts: 0
     property var adjusted: []
-    function registerInline(on) { inlineHosts += on ? 1 : -1 }
+    function registerInline(on, screenName) { inlineHosts += on ? 1 : -1 }
     function adjust(kind, delta, screen) { adjusted = adjusted.concat([[kind, delta]]) }
     function currentDevice(kind) { return kind === "mic" ? "Built-in Microphone" : "Speakers" }
 }"""

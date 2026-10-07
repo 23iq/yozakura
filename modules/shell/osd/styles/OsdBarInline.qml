@@ -23,6 +23,31 @@ Item {
     property bool shown: false
     property real radius: 0
     property var screen: null
+    // Set by the bar host, independently of this item's shown/visible state.
+    property bool available: true
+    property bool _mounted: false
+    property bool _registered: false
+    property string _registeredScreen: ""
+
+    function syncRegistration(): void {
+        if (!root._mounted)
+            return;
+        if (root._registered)
+            OsdService.registerInline(false, root._registeredScreen);
+        root._registered = root.available;
+        root._registeredScreen = root.screen ? root.screen.name : "";
+        if (root._registered)
+            OsdService.registerInline(true, root._registeredScreen);
+        else
+            root.shown = false;
+    }
+
+    function accepts(kind: string): bool {
+        return root.available && !(kind === "brightness" && OsdService.lastScreen && root.screen && OsdService.lastScreen !== root.screen.name && !Brightness.syncBrightness);
+    }
+
+    onAvailableChanged: syncRegistration()
+    onScreenChanged: syncRegistration()
     // Extra length the host grows by while shown (animated).
     readonly property int length: Math.round(Metrics.osdW * 0.7)
     property real reveal: root.shown ? root.length : 0
@@ -111,6 +136,8 @@ Item {
         target: OsdService
 
         function onInlineRequest(kind) {
+            if (!root.accepts(kind))
+                return;
             root.kind = kind;
             root.value = OsdService.lastValue;
             root.muted = OsdService.lastMuted;
@@ -120,13 +147,21 @@ Item {
         }
 
         function onLevel(kind, value, muted, device) {
-            if (root.shown) {
+            // Follow the level of what is showing; a different kind arrives
+            // as its own inlineRequest, which also restarts the settle timer.
+            if (root.shown && kind === root.kind && root.accepts(kind)) {
                 root.value = value;
                 root.muted = muted;
             }
         }
     }
 
-    Component.onCompleted: OsdService.registerInline(true)
-    Component.onDestruction: OsdService.registerInline(false)
+    Component.onCompleted: {
+        root._mounted = true;
+        root.syncRegistration();
+    }
+    Component.onDestruction: {
+        if (root._registered)
+            OsdService.registerInline(false, root._registeredScreen);
+    }
 }

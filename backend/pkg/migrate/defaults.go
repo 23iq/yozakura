@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"yozakura/backend/pkg/catalog"
@@ -33,6 +34,28 @@ var DefaultShifts = []DefaultShift{
 	{"theme", []string{"signatures", "brushHighlight"}, false, true},
 	{"theme", []string{"signatures", "petals"}, false, true},
 	{"compositor", []string{"motionProfile"}, "smooth", "sakura"},
+	// An empty cells list used to mean "the default grid"; it now means an
+	// intentionally empty panel, so the saved old default becomes the grid.
+	{"bar", []string{"moduleOptions", "clock", "panel", "cells"}, []any{}, bentoCells(
+		[5]any{"weather", 0, 0, 2, 2}, [5]any{"pomodoro", 0, 2, 1, 2},
+		[5]any{"agenda", 1, 2, 1, 2}, [5]any{"worldClocks", 0, 4, 2, 1})},
+	{"layout", []string{"dashboard", "grid", "cells"}, []any{}, bentoCells(
+		[5]any{"player", 0, 0, 1, 3}, [5]any{"quickControls", 1, 0, 2, 1},
+		[5]any{"calendar", 1, 1, 1, 2}, [5]any{"notifications", 2, 1, 1, 2},
+		[5]any{"levels", 3, 0, 1, 3})},
+}
+
+// bentoCells builds {widget, x, y, w, h} cells (config/defaults/*.js order).
+func bentoCells(cells ...[5]any) []any {
+	out := make([]any, 0, len(cells))
+	for _, c := range cells {
+		o := catalog.NewObject()
+		for i, k := range []string{"widget", "x", "y", "w", "h"} {
+			o.Set(k, c[i])
+		}
+		out = append(out, o)
+	}
+	return out
 }
 
 // EnsureDefaultsShift applies DefaultShifts once and records it. It
@@ -94,7 +117,7 @@ func shiftFile(path, domain string) ([]string, error) {
 		if s.Domain != domain {
 			continue
 		}
-		if cur, ok := catalog.GetOrdered(doc, s.Path); ok && cur == s.Old {
+		if cur, ok := catalog.GetOrdered(doc, s.Path); ok && reflect.DeepEqual(cur, s.Old) {
 			catalog.SetOrdered(doc, s.Path, s.New)
 			keys = append(keys, domain+"."+strings.Join(s.Path, "."))
 		}

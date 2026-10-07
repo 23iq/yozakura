@@ -340,3 +340,16 @@ func TestTrialRevertRestoresColorPreset(t *testing.T) {
 		assert.Equal(t, "/w/a.jpg", got["currentWall"])
 	}
 }
+
+func TestMixIncludesLayoutDomain(t *testing.T) {
+	m := newManager(t)
+	source, err := m.Documents("Sumi-e")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, source["layout"])
+	mixed, err := m.Mix("Island layout", map[string]string{"layout": "Sumi-e"}, "", false)
+	assert.NoError(t, err)
+	docs, err := m.Documents(mixed.Name)
+	assert.NoError(t, err)
+	assert.Equal(t, source["layout"], docs["layout"])
+	assert.Equal(t, "layout", AspectOf("layout.launcher.host"))
+}

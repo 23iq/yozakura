@@ -64,7 +64,7 @@ def main() -> int:
     for lang in args.languages:
         for style in args.styles.split(","):
             theme = {"language": lang, "lightMode": args.mode == "light", "animDuration": 0}
-            bar = {"moduleOptions": {"clock": {"panelStyle": style, "panel": {"cells": []}},
+            bar = {"moduleOptions": {"clock": {"panelStyle": style},
                                      "worldClocks": {"zones": ZONES}}}
             env = WidgetsEnv(f"clockpanel-render-{lang}-{style}", palette=palette(args.mode, state), user_config=True,
                              overrides={"theme": theme, "bar": bar}, wallpaper=state)

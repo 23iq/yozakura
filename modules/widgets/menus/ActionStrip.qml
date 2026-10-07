@@ -40,6 +40,18 @@ FocusScope {
         return buttons.itemAt(i);
     }
 
+    function cancelHolds() {
+        for (let i = 0; i < buttons.count; i++) {
+            const button = root.itemAt(i);
+            if (button)
+                button.release();
+        }
+    }
+
+    // Navigating and hiding release the hold in ActionButton; the strip's
+    // own focus loss and a dismissal that keeps it visible are handled here.
+    onDismissed: root.cancelHolds()
+
     // Plain items fire on press; confirm items start / stop the hold.
     function activate(i, pressed) {
         const d = root.itemAt(i);
@@ -60,6 +72,8 @@ FocusScope {
     }
 
     onActiveFocusChanged: {
+        if (!activeFocus)
+            root.cancelHolds();
         if (activeFocus && !root.isAction(root.currentIndex))
             root.move(1);
     }

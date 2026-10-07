@@ -52,9 +52,14 @@ var data = {
             "face": "digital",
             "pomodoroStyle": "ring",
             "panelStyle": "column",
-            // cells: [] = the default clock panel grid.
+            // Initial clock grid; an empty cells list keeps the panel empty.
             "panel": {
-                "cells": []
+                "cells": [
+                    { "widget": "weather", "x": 0, "y": 0, "w": 2, "h": 2 },
+                    { "widget": "pomodoro", "x": 0, "y": 2, "w": 1, "h": 2 },
+                    { "widget": "agenda", "x": 1, "y": 2, "w": 1, "h": 2 },
+                    { "widget": "worldClocks", "x": 0, "y": 4, "w": 2, "h": 1 }
+                ]
             }
         },
         "worldClocks": {

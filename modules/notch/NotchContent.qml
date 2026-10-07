@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Effects
 import Quickshell
@@ -5,12 +7,10 @@ import Quickshell.Io
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.widgets.defaultview
-import qs.modules.widgets.dashboard
 import qs.modules.widgets.powermenu
 import qs.modules.widgets.tools
 import qs.modules.services
 import qs.modules.components
-import qs.modules.widgets.launcher
 import qs.modules.bar.workspaces
 import qs.modules.aicenter.quickask
 import qs.config
@@ -85,7 +85,7 @@ Item {
         // Fallback to config only if panel ref is missing
         return (Config.bar && Config.bar.pinnedOnStartup !== undefined) ? Config.bar.pinnedOnStartup : true;
     }
-    
+
     // Check if bar is hovering (for synchronized reveal when bar is at same side)
     readonly property bool barHoverActive: {
         if (barPosition !== notchPosition)
@@ -190,7 +190,10 @@ Item {
     // Default view component - user@host text
     Component {
         id: defaultViewComponent
-        DefaultView { screenName: root.screen.name; revealed: root.reveal }
+        DefaultView {
+            screenName: root.screen.name
+            revealed: root.reveal
+        }
     }
 
     // The resting notch view (DefaultView, panels registry: NotchPanels.js)
@@ -204,37 +207,32 @@ Item {
             root.defaultView.dismissPanel();
     }
 
-    // Shows the launcher/dashboard when layout.<module>.host is "notch"
-    NotchHost {
-        id: notchHost
+    NotchHostedSurfaces {
+        screen: root.screen
+        vis: root.screenVisibilities
         container: notchContainer
-    }
-
-    // Persistent views to avoid creation lag when opening the notch
-    Loader {
-        id: persistentLauncherViewLoader
-        active: false
-        sourceComponent: Component { LauncherView { visible: false } }
-    }
-
-    Loader {
-        id: persistentDashboardViewLoader
-        active: false
-        sourceComponent: Component { DashboardView { visible: false; screenName: root.screen.name } }
     }
 
     // Persistent power menu view
     Loader {
         id: persistentPowerMenuViewLoader
         active: false
-        sourceComponent: Component { PowerMenuView { visible: false } }
+        sourceComponent: Component {
+            PowerMenuView {
+                visible: false
+            }
+        }
     }
 
     // Persistent tools menu view
     Loader {
         id: persistentToolsMenuViewLoader
         active: false
-        sourceComponent: Component { ToolsMenuView { visible: false } }
+        sourceComponent: Component {
+            ToolsMenuView {
+                visible: false
+            }
+        }
     }
 
     // AI quick ask: a notch module (focusable input inside the island);
@@ -242,7 +240,11 @@ Item {
     Loader {
         id: persistentQuickAskLoader
         active: false
-        sourceComponent: Component { QuickAskCard { visible: false } }
+        sourceComponent: Component {
+            QuickAskCard {
+                visible: false
+            }
+        }
     }
 
     // Notification view component
@@ -288,7 +290,7 @@ Item {
 
     Item {
         id: notchRegionContainer
-        
+
         readonly property bool popupShown: notificationPopupContainer.visible
         // The popup stacks below a top/bottom notch, beside a side one
         width: root.vertical ? notchAnimationContainer.width + (popupShown ? notificationPopupContainer.width + root.popupGap : 0) : Math.max(notchAnimationContainer.width, popupShown ? notificationPopupContainer.width : 0)
@@ -407,7 +409,7 @@ Item {
             }, 0)
             x: at.x
             y: at.y
-            
+
             // Target width (animated below); 0 while hidden
             readonly property real targetWidth: shouldShowNotificationPopup ? Math.round(popupHovered ? 420 + 48 : 320 + 48) : 0
             width: Math.round(popupHovered ? 420 + 48 : 320 + 48)
@@ -510,28 +512,9 @@ Item {
         }
     }
 
-
     // Listen for dashboard and powermenu state changes
     Connections {
         target: screenVisibilities
-
-        function onLauncherChanged() {
-            if (root.screenVisibilities.launcher && HostRouter.hostFor("launcher") === "notch") {
-                persistentLauncherViewLoader.active = true;
-                Qt.callLater(() => notchHost.open(persistentLauncherViewLoader.item, root.screen));
-            } else if (!root.screenVisibilities.launcher) {
-                notchHost.close();
-            }
-        }
-
-        function onDashboardChanged() {
-            if (root.screenVisibilities.dashboard && HostRouter.hostFor("dashboard") === "notch") {
-                persistentDashboardViewLoader.active = true;
-                Qt.callLater(() => notchHost.open(persistentDashboardViewLoader.item, root.screen));
-            } else if (!root.screenVisibilities.dashboard) {
-                notchHost.close();
-            }
-        }
 
         function onPowermenuChanged() {
             // other layout.powermenu.style values open in the menu overlay

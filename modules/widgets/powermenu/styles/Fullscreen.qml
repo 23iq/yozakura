@@ -42,7 +42,18 @@ FocusScope {
         actions.itemAt(root.currentIndex).forceActiveFocus();
     }
 
+    function cancelHolds() {
+        for (let i = 0; i < actions.count; i++) {
+            const action = actions.itemAt(i) as ActionButton;
+            if (action)
+                action.release();
+        }
+    }
+
+    onCloseRequested: root.cancelHolds()
     onShownChanged: {
+        if (!shown)
+            root.cancelHolds();
         if (shown)
             power.refresh();
     }

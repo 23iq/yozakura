@@ -14,8 +14,8 @@ function clone(obj) {
 // each present `from` value to an absent `to` (through `transform`; an
 // undefined result writes nothing), then removes `from`. A `to` that holds
 // one of the alias's `replaces` values (its untouched default) counts as
-// absent. A target domain without a file (null) keeps the source
-// for a later run. Returns the names of the changed domains.
+// absent. A target domain that could not be read (null) keeps the source
+// untouched; AliasGate supplies {} for files confirmed missing. Returns the names of the changed domains.
 function migrateAliases(raws, list) {
     var changed = [];
     function mark(d) {
@@ -52,6 +52,16 @@ function migrateAliases(raws, list) {
         mark(to[0]);
     });
     return changed;
+}
+
+// `over` laid onto a copy of `base`: objects merge, anything else replaces.
+function overlay(base, over) {
+    if (!isObject(over))
+        return clone(over);
+    var out = isObject(base) ? clone(base) : {};
+    for (var k in over)
+        out[k] = isObject(over[k]) ? overlay(out[k], over[k]) : clone(over[k]);
+    return out;
 }
 
 function isObject(v) {

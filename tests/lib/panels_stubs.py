@@ -148,8 +148,9 @@ QtObject {
     signal level(string kind, real value, bool muted, string device)
     property int timeout: 2500
     property real lastValue: 0
+    property string lastScreen: ""
     property bool lastMuted: false
-    function registerInline(on) {}
+    function registerInline(on, screenName) {}
 }""",
         "Visibilities": """pragma Singleton
 QtObject {

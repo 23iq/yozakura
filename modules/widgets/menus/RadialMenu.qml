@@ -61,11 +61,32 @@ Item {
         return it ? it.hold : null;
     }
 
+    function cancelHolds() {
+        for (let i = 0; i < ring.count; i++) {
+            const button = root.itemAt(i);
+            if (button)
+                button.release();
+        }
+    }
+
+    // Navigating and hiding release the hold in ActionButton; the ring's own
+    // focus loss, a dismissal and its closing animation are handled here.
+    onDismissed: root.cancelHolds()
+
     // Plain items fire on press; confirm items start / stop the hold.
     function activate(index, pressed) {
         const it = root.itemAt(index);
         if (it)
             pressed ? it.press() : it.release();
+    }
+
+    onActiveFocusChanged: {
+        if (!activeFocus)
+            root.cancelHolds();
+    }
+    onShownChanged: {
+        if (!shown)
+            root.cancelHolds();
     }
 
     Keys.onPressed: event => {

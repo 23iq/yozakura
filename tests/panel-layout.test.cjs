@@ -158,3 +158,10 @@ test('a panel holding the old default right group gets the keyboard indicator', 
     const h = plain(Layout.resolveGroups(Layout.fromLegacy({ ...old, position: 'top' })));
     assert.ok(h.end.includes('keyboardLayout'));
 });
+
+test('estimateDepth: explicit thickness, then size, then the style size; plus the explicit margin', () => {
+    assert.equal(Layout.estimateDepth({ style: 'classic', thickness: 40, size: 0, margin: 6 }, 30), 46);
+    assert.equal(Layout.estimateDepth({ style: 'classic', thickness: 0, size: 32, margin: -1 }, 30), 32);
+    assert.equal(Layout.estimateDepth({ style: 'menubar', thickness: 0, size: 0, margin: -1 }, 30), 26);
+    assert.equal(Layout.estimateDepth({ style: 'classic', thickness: 0, size: 0, margin: 4 }, 30), 34);
+});

@@ -40,6 +40,12 @@ top = ev(env, host, "zones.top")
 assert top == ev(env, host, "primary.barTargetHeight + primary.baseOuterMargin") and top > 0, top
 assert ev(env, host, "zones.bottom") == 0
 assert ev(env, host, "hitRegions.length") == 1
+assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).top") == top
+# Content/style changes must update the measured placement depth too.
+ev(env, host, "Config.bar.panels = [{id: 'rail', edge: 'right', thickness: 80, margin: 12}]")
+QTest.qWait(150)
+assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).right") == 92
+assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).top") == 0
 win.close()
 
 # Mac: menubar + floating dock; both edges reserved, dock sized to content
@@ -58,6 +64,8 @@ assert ev(env, host, dock + ".spanLength") < 1600, "a dock does not fill the edg
 assert ev(env, host, dock + ".barHitbox.width") == ev(env, host, dock + ".spanLength")
 assert ev(env, host, "zones.bottom") == ev(env, host, dock + ".edgeDepth")
 assert ev(env, host, "hitRegions.length") == 2
+assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).top") == menubar_h
+assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).bottom") == ev(env, host, dock + ".edgeDepth")
 win.close()
 
 # Zen: the panel hides itself and reserves nothing

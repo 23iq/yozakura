@@ -347,6 +347,16 @@ function edgeZones(entries) {
     return z;
 }
 
+// Depth from the screen edge a panel occupies before it is rendered (the
+// config-only estimate; BarContent.edgeDepth is the measured value). Same
+// terms: thickness (explicit, else the style's size, else `moduleSize`) plus
+// the explicit margin (a style-default margin, -1, is only known once rendered).
+function estimateDepth(panel, moduleSize) {
+    var styleSize = PanelStyles.get(panel.style).size;
+    var thickness = panel.thickness > 0 ? panel.thickness : (panel.size > 0 ? panel.size : (styleSize || moduleSize));
+    return thickness + Math.max(0, panel.margin);
+}
+
 // Whether a panel reserves its space right now.
 function reserves(panel, pinned) {
     if (!panel.reserve)

@@ -23,7 +23,7 @@ type Aspect struct {
 // Aspects is the registry used by the mixer, the editor and `preset mix`.
 // Adding an aspect is one entry here plus its label in translations.
 var Aspects = []Aspect{
-	{ID: "layout", Domains: []string{"bar", "notch", "dock", "overview", "workspaces"}, Category: "bar"},
+	{ID: "layout", Domains: []string{"bar", "notch", "dock", "overview", "workspaces", "layout"}, Category: "bar"},
 	{ID: "colors", Domains: []string{"theme", WallpaperDomain}, Category: "appearance"},
 	{ID: "windows", Domains: []string{"compositor", "performance"}, Keys: []string{"theme.animDuration", "theme.paletteTransitionDuration"}, Category: "windows"},
 	{ID: "desktop", Domains: []string{"desktop"}, Category: "desktop"},

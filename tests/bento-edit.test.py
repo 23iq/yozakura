@@ -22,7 +22,7 @@ h.singleton("qs.config", "Config", """QtObject {
     property QtObject theme: QtObject { property string font: "Sans"; property string monoFont: "Mono"; property int fontSize: 14 }
     property QtObject layout: QtObject {
         property QtObject dashboard: QtObject {
-            property QtObject grid: QtObject { property int cols: 4; property var cells: [] }
+            property QtObject grid: QtObject { property int cols: 4; property var cells: null }
         }
     }
 }""")
@@ -154,13 +154,13 @@ check(not h.eval(item("bentoToolbar"), "visible"), "no toolbar outside edit mode
 ev('Config.layout.dashboard.grid.cells = [{"widget": "ghost", "x": 0}, 42, "x"]')
 QTest.qWait(20)
 check(h.eval(tile("a"), "x") == 0 and h.eval(tile("b"), "x") == 110, "corrupt grid -> default")
-ev("Config.layout.dashboard.grid.cells = []")
+ev("Config.layout.dashboard.grid.cells = null")
 
 # Overlapping saved grid is compacted.
 ev('Config.layout.dashboard.grid.cells = [{"widget": "a", "x": 0, "y": 0, "w": 2, "h": 1}, {"widget": "b", "x": 1, "y": 0, "w": 2, "h": 1}]')
 QTest.qWait(20)
 check(h.eval(tile("b"), "y") == 108, "overlap pushed down")
-ev("Config.layout.dashboard.grid.cells = []")
+ev("Config.layout.dashboard.grid.cells = null")
 QTest.qWait(20)
 
 # Edit mode: chrome + toolbar, widget input blocked; leaving without changes saves nothing.
@@ -227,5 +227,14 @@ check(json.loads(ev("JSON.stringify(working)")) == [{"widget": "a", "x": 0, "y":
                                                      {"widget": "b", "x": 1, "y": 0, "w": 2, "h": 1}], "reset to default")
 h.eval(item("bentoDone"), "activated()")
 check(ev("editing") is False and h.eval(win, "commits") == 2, "Done saves")
+
+# Clearing all tiles, committing, and adding after reopening preserves the empty layout.
+ev("editing = true; removeTile('a'); removeTile('b'); editing = false")
+check(saved() == [], "empty layout persisted")
+check(json.loads(ev("JSON.stringify(shown)")) == [], "empty layout remains empty after Done")
+ev("editing = true; addWidget('c')")
+check(json.loads(ev("JSON.stringify(working.map(c => c.widget))")) == ["c"], "add after clear adds only c")
+ev("editing = false")
+check([c["widget"] for c in saved()] == ["c"], "only chosen widget saved")
 
 print("bento-edit: ok")

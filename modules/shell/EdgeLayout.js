@@ -10,11 +10,24 @@
 var OPPOSITE = { top: "bottom", bottom: "top", left: "right", right: "left" };
 var VERTICAL = { left: true, right: true };
 
+// Panels sharing an edge overlap; use their deepest extent once. An explicit
+// empty list means this screen has no panels, even if a legacy bar is enabled.
+function panelDepth(e, edge) {
+    var panels = e.panels !== undefined ? e.panels : [e.bar];
+    var depth = 0;
+    for (var i = 0; i < panels.length; i++) {
+        var p = panels[i];
+        if (p && p.visible && p.pos === edge)
+            depth = Math.max(depth, p.size || 0);
+    }
+    return depth;
+}
+
 function insets(e) {
     var f = e.frame || 0;
     var r = { top: f, right: f, bottom: f, left: f };
-    if (e.bar && e.bar.visible)
-        r[e.bar.pos] += e.bar.size;
+    for (var edge in r)
+        r[edge] += panelDepth(e, edge);
     if (e.dock && e.dock.visible)
         r[e.dock.pos] += e.dock.size;
     if (e.notch && e.notch.visible)
@@ -80,7 +93,7 @@ function popupPlacement(anchor, size, edge, e, gap) {
 function sheetSide(e, pref) {
     if (pref === "left" || pref === "right")
         return pref;
-    if (e.bar && e.bar.visible && e.bar.pos === "right")
+    if (panelDepth(e, "right") > 0)
         return "left";
     return "right";
 }
@@ -127,7 +140,7 @@ function radialCenter(point, radius, area) {
 }
 
 function _occupied(e, edge, withNotch) {
-    return !!((e.bar && e.bar.visible && e.bar.pos === edge) || (e.dock && e.dock.visible && e.dock.pos === edge) || (withNotch && e.notch && e.notch.visible && e.notch.pos === edge));
+    return !!((panelDepth(e, edge) > 0) || (e.dock && e.dock.visible && e.dock.pos === edge) || (withNotch && e.notch && e.notch.visible && e.notch.pos === edge));
 }
 
 // Edge for an OSD: the preference, or the first free edge (bottom first).
@@ -204,8 +217,7 @@ function notchRect(e, size) {
     var hi = vertical ? "bottom" : "right";
     function reserved(edge) {
         var r = e.frame || 0;
-        if (e.bar && e.bar.visible && e.bar.pos === edge)
-            r += e.bar.size;
+        r += panelDepth(e, edge);
         if (e.dock && e.dock.visible && e.dock.pos === edge)
             r += e.dock.size;
         return r;

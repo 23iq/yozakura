@@ -17,7 +17,7 @@ Column {
     property bool use12h: false
     property bool editing: false
 
-    readonly property var savedCells: Config.bar.moduleOptions?.clock?.panel?.cells ?? []
+    readonly property var savedCells: Config.bar.moduleOptions?.clock?.panel?.cells ?? null
     readonly property var registry: ({
             "ids": WidgetRegistry.ids,
             "byId": WidgetRegistry.byId,

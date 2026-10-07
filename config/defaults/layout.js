@@ -31,10 +31,16 @@ var data = {
                 "visible": true
             }
         ],
-        // cells: [] = the registry's default grid.
+        // Initial grid; an empty cells list is an intentionally empty dashboard.
         "grid": {
             "cols": 4,
-            "cells": []
+            "cells": [
+                { "widget": "player", "x": 0, "y": 0, "w": 1, "h": 3 },
+                { "widget": "quickControls", "x": 1, "y": 0, "w": 2, "h": 1 },
+                { "widget": "calendar", "x": 1, "y": 1, "w": 1, "h": 2 },
+                { "widget": "notifications", "x": 2, "y": 1, "w": 1, "h": 2 },
+                { "widget": "levels", "x": 3, "y": 0, "w": 1, "h": 3 }
+            ]
         }
     },
     "sheet": {

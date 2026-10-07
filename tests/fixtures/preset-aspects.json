@@ -6,7 +6,8 @@
       "notch",
       "dock",
       "overview",
-      "workspaces"
+      "workspaces",
+      "layout"
     ],
     "category": "bar"
   },

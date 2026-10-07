@@ -115,10 +115,15 @@ test('clock panel default grid uses registered widgets and fits 2 columns', () =
     const ids = cells.map(c => c.widget);
     assert.deepEqual(plain(ids), ['weather', 'pomodoro', 'agenda', 'worldClocks']);
     const reg = { ids: registry.ids, byId: registry.byId, defaultGrid: panel.defaultGrid };
-    const norm = grid.normalize([], panel.COLS, reg);
+    const norm = grid.normalize(undefined, panel.COLS, reg);
     assert.equal(norm.length, 4, 'nothing dropped by normalize');
     for (const c of norm)
         assert.ok(c.x + c.w <= panel.COLS, c.widget);
+});
+
+test('configured clock defaults match the panel layout', () => {
+    const defaults = load('../config/defaults/bar.js');
+    assert.deepEqual(plain(defaults.data.moduleOptions.clock.panel.cells), plain(panel.defaultGrid(panel.COLS)));
 });
 
 test('new widgets are registered host-agnostic', () => {

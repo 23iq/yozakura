@@ -29,7 +29,43 @@ JsonAdapter {
         ]
         property JsonObject grid: JsonObject {
             property int cols: 4
-            property list<var> cells: []
+            property list<var> cells: [
+                {
+                    "widget": "player",
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 3
+                },
+                {
+                    "widget": "quickControls",
+                    "x": 1,
+                    "y": 0,
+                    "w": 2,
+                    "h": 1
+                },
+                {
+                    "widget": "calendar",
+                    "x": 1,
+                    "y": 1,
+                    "w": 1,
+                    "h": 2
+                },
+                {
+                    "widget": "notifications",
+                    "x": 2,
+                    "y": 1,
+                    "w": 1,
+                    "h": 2
+                },
+                {
+                    "widget": "levels",
+                    "x": 3,
+                    "y": 0,
+                    "w": 1,
+                    "h": 3
+                }
+            ]
         }
     }
     property JsonObject sheet: JsonObject {

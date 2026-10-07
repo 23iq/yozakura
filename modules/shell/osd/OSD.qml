@@ -33,7 +33,7 @@ PanelWindow {
     anchors.right: true
 
     color: "transparent"
-    visible: (GlobalStates.osdVisible && OsdService.route.window) || holder.opacity > 0
+    visible: (GlobalStates.osdVisible && root.route.window) || holder.opacity > 0
     mask: Region {
         item: holder
     }
@@ -43,7 +43,8 @@ PanelWindow {
     property bool osdMuted: false
     property string device: ""
 
-    readonly property string styleName: OsdService.route.style
+    readonly property var route: OsdService.routeForScreen(root.targetScreen ? root.targetScreen.name : "")
+    readonly property string styleName: root.route.style
     readonly property string edgeName: OsdStyles.edgePref(root.styleName, Config.layout.osd.position, Config.notch.position)
     readonly property bool vertical: EdgeService.osdPlacement(root.targetScreen, root.edgeName, {
         "w": 1,
@@ -70,7 +71,7 @@ PanelWindow {
         y: root.place.y + root.slide.y * 14 * (1 - opacity)
         width: root.size.w
         height: root.size.h
-        opacity: GlobalStates.osdVisible && OsdService.route.window ? 1 : 0
+        opacity: GlobalStates.osdVisible && root.route.window ? 1 : 0
 
         Behavior on opacity {
             NumberAnimation {
@@ -82,7 +83,7 @@ PanelWindow {
         Loader {
             id: styleLoader
             anchors.fill: parent
-            source: OsdService.route.window ? OsdStyles.fileFor(root.styleName) : ""
+            source: root.route.window ? OsdStyles.fileFor(root.styleName) : ""
             onLoaded: item.shown = Qt.binding(() => GlobalStates.osdVisible)
 
             Binding {
@@ -165,7 +166,7 @@ PanelWindow {
                 root.device = device;
                 deviceTimer.restart();
             }
-            if (OsdService.route.window)
+            if (root.route.window)
                 root.show();
         }
     }

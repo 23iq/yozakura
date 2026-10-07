@@ -27,7 +27,7 @@ Item {
             "defaultGrid": WidgetRegistry.defaultGrid
         })
     property int cols: 4
-    property var cells: []
+    property var cells: null
     property bool editing: false
     property real cellH: Metrics.bentoCell
     property real gap: Metrics.spacing
@@ -101,7 +101,7 @@ Item {
     }
 
     function resetLayout() {
-        apply(BentoGrid.normalize([], cols, registry));
+        apply(BentoGrid.normalize(registry.defaultGrid(cols), cols, registry));
     }
 
     function selectNext(delta) {

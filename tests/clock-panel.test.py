@@ -22,7 +22,7 @@ from PySide6.QtTest import QTest  # noqa: E402,I001
 ZONES = [{"label": "Tokyo", "zone": "Asia/Tokyo"}]
 env = WidgetsEnv("clock-panel", overrides={
     "theme": {"animDuration": 0},
-    "bar": {"use12hFormat": False, "moduleOptions": {"clock": {"face": "digital", "panelStyle": "column", "panel": {"cells": []}},
+    "bar": {"use12hFormat": False, "moduleOptions": {"clock": {"face": "digital", "panelStyle": "column"},
                                                      "worldClocks": {"zones": ZONES}}}})
 h = env.h
 
@@ -143,7 +143,8 @@ calls = json.loads(h.eval(panel, "JSON.stringify(TimersService.calls)"))
 check(calls[-1] == {"method": "toggle", "params": {"id": "p"}}, "pause toggles the Pomodoro")
 check(h.eval(item("clockPanelWorld"), "visible"), "wide world clocks")
 
-# Bento: the default cards, edited and saved into moduleOptions.
+# Bento: missing saved layout uses default cards, edited into moduleOptions.
+h.eval(win, "var opts = JSON.parse(JSON.stringify(Config.bar.moduleOptions)); delete opts.clock.panel; Config.bar.moduleOptions = opts")
 style("bento")
 check(h.eval(panel, "panelStyle") == "bento", "bento style")
 for wid in ("weather", "pomodoro", "agenda", "worldClocks"):
@@ -158,6 +159,27 @@ QTest.qWait(20)
 opts = json.loads(h.eval(panel, "JSON.stringify(Config.bar.moduleOptions)"))
 check(opts["clock"]["face"] == "digital" and len(opts["clock"]["panel"]["cells"]) == 5, "cells saved into moduleOptions")
 check(opts["clock"]["panelStyle"] == "bento" and opts["worldClocks"]["zones"][0]["zone"] == "Asia/Tokyo", "other options kept")
+
+# Removing every clock tile is an intentional empty grid, including after
+# rebuilding the popup. Adding from it must not restore the defaults.
+bento = item("clockPanelBento")
+h.eval(item("clockPanelEdit"), "clicked()")
+h.eval(bento, "working.slice().forEach(c => removeTile(c.widget))")
+h.eval(item("clockPanelEdit"), "clicked()")
+QTest.qWait(20)
+opts = json.loads(h.eval(panel, "JSON.stringify(Config.bar.moduleOptions)"))
+check(opts["clock"]["panel"]["cells"] == [], "empty clock grid saved")
+check(h.eval(bento, "shown.length") == 0, "empty clock grid stays empty after Done")
+style("column")
+style("bento")
+bento = item("clockPanelBento")
+check(h.eval(bento, "shown.length") == 0, "empty clock grid survives popup rebuild")
+h.eval(item("clockPanelEdit"), "clicked()")
+h.eval(bento, "addWidget('calendar')")
+check(json.loads(h.eval(bento, "JSON.stringify(working.map(c => c.widget))")) == ["calendar"], "clock add creates only chosen tile")
+h.eval(bento, "resetLayout()")
+check(h.eval(bento, "working.length") == 4, "clock reset restores useful default grid")
+h.eval(item("clockPanelEdit"), "clicked()")
 
 print("clock-panel: ok")
 h.exit(0)

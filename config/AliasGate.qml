@@ -16,8 +16,9 @@ QtObject {
     readonly property var domains: KeyAliases.domains(aliases)
     property int timeout: 3000
     property bool done: domains.length === 0
-    // name -> ConfigFile (read) or null (missing file)
+    // name -> ConfigFile, including files reported missing
     property var arrived: ({})
+    property var missing: ({})
 
     property Timer releaseTimer: Timer {
         interval: gate.timeout
@@ -34,14 +35,16 @@ QtObject {
         return true;
     }
 
-    // A gated file is missing: it has nothing to migrate.
-    function skip(name) {
-        if (done || domains.indexOf(name) === -1)
-            return;
-        if (!(name in arrived))
-            arrived[name] = null;
+    // Keep a missing destination in the gate so migration can create it
+    // before its source is validated against the new defaults.
+    function skip(file) {
+        if (done || domains.indexOf(file.name) === -1)
+            return false;
+        arrived[file.name] = file;
+        missing[file.name] = true;
         releaseTimer.start();
         check();
+        return true;
     }
 
     function check() {
@@ -63,6 +66,10 @@ QtObject {
             const f = arrived[name];
             if (!f)
                 continue;
+            if (missing[name]) {
+                raws[name] = {};
+                continue;
+            }
             try {
                 raws[name] = JSON.parse(f.text());
             } catch (e) {
@@ -74,7 +81,12 @@ QtObject {
             console.log("Config key aliases migrated in: " + changed.join(", "));
         for (const name in arrived) {
             const f = arrived[name];
-            if (f)
+            if (f && missing[name]) {
+                // Preset or defaults first; what the aliases moved in goes on top.
+                f.handleMissing(() => {
+                    f.ready = true;
+                }, changed.indexOf(name) === -1 ? undefined : raws[name]);
+            } else if (f)
                 f.validate(() => {
                     f.ready = true;
                 }, raws[name] || undefined);

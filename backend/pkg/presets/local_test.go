@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -218,4 +219,54 @@ func TestPresetNeverSwitchesPromptOrEngine(t *testing.T) {
 	assert.NotContains(t, string(data), "enabled")
 	assert.NotContains(t, string(data), "engine")
 	assert.Contains(t, string(data), "pure")
+}
+
+// Old config and saved presets can be read before the shell migrates aliases.
+func TestLegacyDownloadCredentialsNeverTravel(t *testing.T) {
+	m := newManager(t)
+	legacy := `{"position":"left","activities":{"downloads":{"showSpeed":true,"endpoints":{"qbittorrent":"http://me:pw@nas.home:8080"},"secrets":{"qbittorrent":"hunter2"}}}}`
+	writeLive(t, m, "bar", legacy)
+	saved, err := m.Save("Legacy", nil, false)
+	assert.NoError(t, err)
+	assertNoLeak(t, "legacy save", readBoth(saved.Path))
+	file := filepath.Join(t.TempDir(), "legacy.json")
+	_, err = m.Export(Current, file)
+	assert.NoError(t, err)
+	data, err := os.ReadFile(file)
+	assert.NoError(t, err)
+	assertNoLeak(t, "legacy current export", data)
+	assert.NoError(t, os.WriteFile(filepath.Join(saved.Path, "bar.json"), []byte(legacy), 0o644))
+	_, err = m.Export("Legacy", file)
+	assert.NoError(t, err)
+	data, err = os.ReadFile(file)
+	assert.NoError(t, err)
+	assertNoLeak(t, "legacy preset export", data)
+	assert.Contains(t, string(data), `"showSpeed": true`)
+}
+
+// The Go table of retired key trees must be an alias of KeyAliases.js, so a
+// retirement recorded in one place cannot silently miss the other.
+func TestRetiredMovesMatchKeyAliases(t *testing.T) {
+	src, err := os.ReadFile(filepath.Join("..", "..", "..", "config", "meta", "KeyAliases.js"))
+	assert.NoError(t, err)
+	for domain, moves := range retiredMoves {
+		for _, mv := range moves {
+			from := domain + "." + strings.Join(mv.Old, ".")
+			to := mv.NewDomain + "." + strings.Join(mv.New, ".")
+			re := regexp.MustCompile(`"from":\s*"` + regexp.QuoteMeta(from) + `",\s*"to":\s*"` + regexp.QuoteMeta(to) + `"`)
+			assert.Truef(t, re.Match(src), "KeyAliases.js has no alias %s -> %s", from, to)
+		}
+	}
+}
+
+// Applying a preset over a live file the shell has not migrated yet keeps
+// the legacy credentials in place (they move on the shell's next start).
+func TestKeepLocalPreservesUnmigratedLegacyCredentials(t *testing.T) {
+	m := newManager(t)
+	live := `{"position":"left","activities":{"downloads":{"secrets":{"qbittorrent":"hunter2"}}}}`
+	writeLive(t, m, "bar", live)
+	out, err := m.keepLocal("bar", []byte(`{"position":"top"}`))
+	assert.NoError(t, err)
+	assert.Contains(t, string(out), "hunter2")
+	assert.Contains(t, string(out), `"position": "top"`)
 }
