@@ -11,7 +11,6 @@ const ROOT = path.join(__dirname, '../modules');
 // file (relative to modules/) -> why its literals stay.
 const ALLOW = {
     'components/surfaceeffects/CrtSurface.qml': 'CRT flicker timings are effect-internal',
-    'notch/NotchSilhouette.qml': 'bouncy corner radius, the overshoot is part of the shape',
     'settings/previews/TransitionPreview.qml': 'previews the wallpaper transition curves',
 };
 
