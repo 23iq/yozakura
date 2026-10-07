@@ -248,6 +248,7 @@ Item {
         PresetGallery {
             onOpenPreset: name => page.show("editor:" + name)
             onCardAction: (name, id) => page.handle(name, id)
+            onSaveRequested: page.saveCurrent()
         }
     }
     Component {

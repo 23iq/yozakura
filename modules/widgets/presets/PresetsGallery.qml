@@ -3,14 +3,19 @@ import QtQuick
 import qs.config
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.settings.store
+import qs.modules.widgets.presets.store
 import "GalleryTabs.js" as GalleryTabs
+import "../../settings/presets/PresetModel.js" as PresetModel
 
-// The preset switcher: search, tabs (GalleryTabs.js, one model per tab) and
-// a grid of thumbnail cards. Moving over a card (pointer or arrows) previews
-// it live; Enter or a click keeps it, Escape reverts; closing the switcher
-// any other way reverts too (PresetPreviewer).
+// The preset switcher: the one-time new look card, the current layout /
+// style / palette with "Save as…", search, tabs (GalleryTabs.js: Sets |
+// Layout | Style | Palette, one model per tab) and a grid of thumbnail
+// cards. Moving over a card (pointer or arrows) previews it live; Enter or
+// a click keeps it, Escape reverts; closing the switcher any other way
+// reverts too (PresetPreviewer). A user set card has rename (also F2) and delete.
 FocusScope {
     id: root
 
@@ -20,7 +25,8 @@ FocusScope {
     property int currentIndex: 0
     property bool moved: false
     readonly property var cards: GalleryTabs.cards(root.tab, {
-        "presets": PresetStudio.presets
+        "presets": PresetStudio.presets,
+        "parts": PresetParts.parts
     }, root.query)
     readonly property var current: root.cards[root.currentIndex] || null
 
@@ -41,10 +47,13 @@ FocusScope {
     }
     onQueryChanged: root.moved = true
     onActiveFocusChanged: {
-        if (activeFocus)
+        if (activeFocus && !prompt.open)
             search.focusInput();
     }
-    Component.onCompleted: PresetStudio.refresh()
+    Component.onCompleted: {
+        PresetStudio.refresh();
+        PresetParts.refresh();
+    }
 
     function select(index) {
         if (index < 0 || index >= root.cards.length)
@@ -52,7 +61,24 @@ FocusScope {
         root.moved = true;
         root.currentIndex = index;
         grid.positionViewAtIndex(index, GridView.Contain);
-        previewer.hover(root.cards[index]);
+        // The new look trial owns the preview session while it runs.
+        if (!PresetNewLook.trying)
+            previewer.hover(root.cards[index]);
+    }
+
+    function manage(mode) {
+        const c = root.current;
+        if (c && c.editable)
+            prompt.ask(mode, c.name, mode === "rename" ? c.name : "");
+    }
+
+    function promptDone(mode, target, value) {
+        if (mode === "save")
+            PresetParts.save(value);
+        else if (mode === "rename")
+            PresetParts.rename(target, value);
+        else if (mode === "delete")
+            PresetParts.remove(target);
     }
 
     function move(delta) {
@@ -60,7 +86,7 @@ FocusScope {
     }
 
     function accept() {
-        if (!root.current)
+        if (!root.current || PresetNewLook.trying)
             return;
         previewer.keep(root.current);
         root.closeRequested();
@@ -85,6 +111,8 @@ FocusScope {
             root.accept();
         else if (k === Qt.Key_Escape)
             root.cancel();
+        else if (k === Qt.Key_F2)
+            root.manage("rename");
         else
             return;
         event.accepted = true;
@@ -99,7 +127,25 @@ FocusScope {
         x: Metrics.padding
         y: Metrics.padding
         width: root.width - Metrics.padding * 2
-        spacing: Metrics.spacing
+        spacing: Space.m
+
+        TryNewLookCard {
+            width: parent.width
+        }
+
+        CurrentLookRow {
+            width: parent.width
+            visible: !prompt.open
+            onSaveRequested: prompt.ask("save", "", PresetModel.uniqueName(PresetStudio.presets, I18n.t("prefs.presets.my_look")))
+        }
+
+        GalleryPrompt {
+            id: prompt
+            width: parent.width
+            presets: PresetStudio.presets
+            onSubmitted: (mode, target, value) => root.promptDone(mode, target, value)
+            onClosed: search.focusInput()
+        }
 
         SearchInput {
             id: search
@@ -116,38 +162,11 @@ FocusScope {
             onDownPressed: root.move(root.columns)
         }
 
-        Row {
-            visible: GalleryTabs.TABS.length > 1
-            spacing: Metrics.spacing
-
-            Repeater {
-                model: GalleryTabs.TABS
-
-                delegate: StyledRect {
-                    id: chip
-                    required property var modelData
-                    variant: root.tab === modelData.id ? "primary" : "common"
-                    radius: height / 2
-                    width: chipLabel.implicitWidth + Metrics.padding * 2
-                    height: Metrics.rowHeight * 0.7
-
-                    Text {
-                        id: chipLabel
-                        anchors.centerIn: parent
-                        text: I18n.t(chip.modelData.labelKey)
-                        color: Colors.overBackground
-                        font.family: Config.defaultFont
-                        font.pixelSize: Styling.fontSize(-1)
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: {
-                            root.tab = chip.modelData.id;
-                            root.moved = false;
-                        }
-                    }
-                }
+        GalleryTabRow {
+            tab: root.tab
+            onSelected: id => {
+                root.tab = id;
+                root.moved = false;
             }
         }
     }
@@ -181,6 +200,14 @@ FocusScope {
                 card: cell.modelData
                 selected: root.currentIndex === cell.index
                 onHovered: root.select(cell.index)
+                onRenameRequested: {
+                    root.select(cell.index);
+                    root.manage("rename");
+                }
+                onDeleteRequested: {
+                    root.select(cell.index);
+                    root.manage("delete");
+                }
                 onClicked: {
                     root.select(cell.index);
                     root.accept();

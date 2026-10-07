@@ -6,13 +6,18 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.store
+import qs.modules.widgets.presets
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
 
-// Gallery: search, filter chips and a responsive grid of preset cards.
+// Gallery: the one-time new look card, the current layout / style /
+// palette with "Save as…", the tabs of the popup switcher (Sets | Layout |
+// Style | Palette, GalleryTabs.js), search, filter chips (sets) and a
+// responsive grid of preset cards (sets) or part cards (PartGrid).
 Column {
     id: root
 
+    property string tab: "sets"
     property string query: ""
     property string filter: "all"
     readonly property var shown: PresetModel.filter(PresetStudio.presets, query, filter)
@@ -20,8 +25,23 @@ Column {
 
     signal openPreset(string name)
     signal cardAction(string name, string id)
+    signal saveRequested
 
     spacing: 16
+
+    TryNewLookCard {
+        width: parent.width
+    }
+
+    CurrentLookRow {
+        width: parent.width
+        onSaveRequested: root.saveRequested()
+    }
+
+    GalleryTabRow {
+        tab: root.tab
+        onSelected: id => root.tab = id
+    }
 
     Row {
         width: parent.width
@@ -42,6 +62,7 @@ Column {
 
         Row {
             id: filters
+            visible: root.tab === "sets"
             anchors.verticalCenter: parent.verticalCenter
             spacing: 6
             Repeater {
@@ -77,8 +98,16 @@ Column {
         }
     }
 
+    PartGrid {
+        width: parent.width
+        visible: root.tab !== "sets"
+        tab: root.tab
+        query: root.query
+    }
+
     Flow {
         id: grid
+        visible: root.tab === "sets"
         width: parent.width
         spacing: 14
 
@@ -107,7 +136,7 @@ Column {
     }
 
     Text {
-        visible: PresetStudio.loaded && root.shown.length === 0
+        visible: root.tab === "sets" && PresetStudio.loaded && root.shown.length === 0
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
         topPadding: 30

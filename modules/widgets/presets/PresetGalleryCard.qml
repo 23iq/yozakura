@@ -2,12 +2,14 @@ import QtQuick
 import qs.config
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.settings.presets
 
 // One gallery card: the preset's thumbnail (PresetThumb, the miniature shell
 // on the current wallpaper) and its name. Hover selects and previews it,
-// a click keeps it.
+// a click keeps it. A user set (card.editable) shows rename and delete
+// while selected.
 StyledRect {
     id: root
 
@@ -16,6 +18,8 @@ StyledRect {
 
     signal hovered
     signal clicked
+    signal renameRequested
+    signal deleteRequested
 
     variant: selected ? "focus" : "common"
     radius: Styling.radius(4)
@@ -74,5 +78,27 @@ StyledRect {
         cursorShape: Qt.PointingHandCursor
         onEntered: root.hovered()
         onClicked: root.clicked()
+    }
+
+    Row {
+        anchors.top: thumb.top
+        anchors.right: thumb.right
+        anchors.margins: Space.xs
+        spacing: Space.xs
+        visible: root.selected && !!(root.card && root.card.editable)
+
+        IconButton {
+            objectName: "cardRename"
+            size: "s"
+            icon: Icons.pencil
+            onClicked: root.renameRequested()
+        }
+
+        IconButton {
+            objectName: "cardDelete"
+            size: "s"
+            icon: Icons.trash
+            onClicked: root.deleteRequested()
+        }
     }
 }
