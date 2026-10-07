@@ -169,9 +169,12 @@ func (m *Manager) Duplicate(src, name string) (Preset, error) {
 	if err := m.checkNewName(name); err != nil {
 		return Preset{}, err
 	}
-	files, err := m.readDir(p.Path, p.Domains)
+	files, err := m.dirFiles(p.Path)
 	if err != nil {
 		return Preset{}, err
+	}
+	if ref, ok, _ := ReadSetRef(p.Path); ok {
+		files[setDomain] = encodeSetRef(ref) // the copy keeps naming its parts
 	}
 	inf, _ := readInfo(p.Path)
 	inf.Author, inf.AuthorURL = "User", ""

@@ -160,6 +160,27 @@ func (m *Manager) Import(file, name string, force bool) (Preset, []catalog.Probl
 	return p, problems, err
 }
 
+// CheckBundle validates a bundle file against the catalog without
+// installing it: unknown domains are an error, invalid values problems
+// (excluded domains, which an import skips, are not reported).
+func (m *Manager) CheckBundle(file string) ([]catalog.Problem, error) {
+	b, err := ReadBundle(file)
+	if err != nil {
+		return nil, err
+	}
+	var problems []catalog.Problem
+	for _, d := range b.DomainNames() {
+		if Excluded[d] {
+			continue
+		}
+		if !m.knownDomain(d) {
+			return nil, fmt.Errorf("bundle has unknown config domain %q", d)
+		}
+		problems = append(problems, m.validate(d, b.Domains[d])...)
+	}
+	return problems, nil
+}
+
 // DomainNames lists the domains in the bundle (sorted).
 func (b *Bundle) DomainNames() []string {
 	out := make([]string, 0, len(b.raw))

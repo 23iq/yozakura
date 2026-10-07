@@ -18,7 +18,7 @@ import (
 	"strings"
 	"sync"
 
-	"yozakura/backend/pkg/catalog"
+	"yozakura/backend/pkg/presets"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 )
@@ -96,11 +96,11 @@ func (s *Service) scan() []Preset {
 	seen := map[string]*Preset{}
 
 	for _, root := range []struct {
-		dir     string
+		dir      string
 		official bool
 	}{
 		{userDir, false},
-		{officialDir, true},
+		{presets.OfficialSetsDir(officialDir), true},
 	} {
 		if root.dir == "" {
 			continue
@@ -113,26 +113,14 @@ func (s *Service) scan() []Preset {
 			if !e.IsDir() {
 				continue
 			}
-			sub, err := os.ReadDir(filepath.Join(root.dir, e.Name()))
+			// A set's files are composed from its parts (legacy: its own).
+			composed, err := presets.Compose(officialDir, filepath.Join(root.dir, e.Name()))
 			if err != nil {
 				continue
 			}
 			files := []string{}
-			for _, f := range sub {
-				if f.IsDir() {
-					continue
-				}
-				name := f.Name()
-				if !strings.HasSuffix(name, ".json") {
-					continue
-				}
-				if name == "info.json" {
-					continue
-				}
-				if isExcluded(name) {
-					continue
-				}
-				files = append(files, strings.TrimSuffix(name, ".json")+".js")
+			for _, d := range sortedDomains(composed) {
+				files = append(files, d+".js")
 			}
 			if len(files) == 0 {
 				continue
@@ -169,9 +157,14 @@ func (s *Service) scan() []Preset {
 	return out
 }
 
-// isExcluded reports a domain file presets never carry (catalog.LocalDomains).
-func isExcluded(name string) bool {
-	return catalog.LocalDomains[strings.TrimSuffix(name, ".json")]
+// sortedDomains lists the composed domains (excluded ones never appear).
+func sortedDomains(files map[string][]byte) []string {
+	out := make([]string, 0, len(files))
+	for d := range files {
+		out = append(out, d)
+	}
+	sort.Strings(out)
+	return out
 }
 
 type infoFile struct {

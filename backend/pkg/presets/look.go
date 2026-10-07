@@ -3,8 +3,6 @@ package presets
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"os"
-	"path/filepath"
 	"strings"
 )
 
@@ -23,7 +21,7 @@ var LookKeys = []string{
 	"desktop.depthClock", "desktop.depthClockStyle", "desktop.depthClockPosition",
 	"workspaces.numeralStyle", "workspaces.shown",
 	"lockscreen.position",
-	"wallpaper.matugenScheme",
+	"wallpaper.matugenScheme", "wallpaper.activeColorPreset",
 }
 
 // LookOf resolves LookKeys in a set of documents (missing = default).
@@ -38,6 +36,10 @@ func (m *Manager) LookOf(docs map[string]any) map[string]any {
 		}
 		if key == "wallpaper.matugenScheme" {
 			out[key] = DefaultScheme
+			continue
+		}
+		if key == "wallpaper."+colorPresetKey {
+			out[key] = ""
 			continue
 		}
 		if _, ok := defaults[parts[0]]; !ok {
@@ -119,16 +121,12 @@ func panelTags(v any) (styles, edges []string) {
 	return styles, edges
 }
 
-// hashDir fingerprints a preset's files (thumbnail cache key).
-func hashDir(dir string, domains []string) string {
+// hashFiles fingerprints a preset's composed files (thumbnail cache key).
+func hashFiles(files map[string][]byte) string {
 	h := sha256.New()
-	for _, d := range domains {
-		data, err := os.ReadFile(filepath.Join(dir, d+".json"))
-		if err != nil {
-			continue
-		}
+	for _, d := range sortedKeys(files) {
 		h.Write([]byte(d + "\x00"))
-		h.Write(data)
+		h.Write(files[d])
 		h.Write([]byte{0})
 	}
 	return hex.EncodeToString(h.Sum(nil))[:16]

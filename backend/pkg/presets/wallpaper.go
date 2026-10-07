@@ -13,8 +13,11 @@ import (
 // WallpaperKeys are carried: the wallpaper itself stays the user's.
 const WallpaperDomain = "wallpaper"
 
-// WallpaperKeys are the wallpapers.json keys a preset carries.
-var WallpaperKeys = []string{"matugenScheme"}
+// WallpaperKeys are the wallpapers.json keys a preset carries: the
+// matugen scheme and the static color preset ("" = generated colors).
+var WallpaperKeys = []string{"matugenScheme", colorPresetKey}
+
+const colorPresetKey = "activeColorPreset"
 
 // DefaultScheme is the shell's matugen scheme when none is set.
 const DefaultScheme = "scheme-tonal-spot"
@@ -38,6 +41,12 @@ func validateWallpaper(doc any) []catalog.Problem {
 	}
 	var out []catalog.Problem
 	for k, v := range m {
+		if k == colorPresetKey {
+			if _, ok := v.(string); !ok {
+				out = append(out, catalog.Problem{Key: WallpaperDomain + "." + k, Message: "must be a string (a color preset name, \"\" for none)"})
+			}
+			continue
+		}
 		if k != "matugenScheme" {
 			out = append(out, catalog.Problem{Key: WallpaperDomain + "." + k, Message: "not carried by presets; ignored"})
 			continue
@@ -97,31 +106,45 @@ func (m *Manager) currentWallpaper() []byte {
 	if s, _ := out["matugenScheme"].(string); s == "" {
 		out["matugenScheme"] = DefaultScheme
 	}
+	if _, ok := out[colorPresetKey].(string); !ok {
+		out[colorPresetKey] = "" // explicit, so a revert drops a previewed one
+	}
 	data, _ := json.MarshalIndent(out, "", "  ")
 	return append(data, '\n')
 }
 
 // applyWallpaper merges a preset's wallpaper.json into the live
-// wallpapers.json; a valid scheme also drops an active static color preset
-// (like choosing a scheme in the settings). The shell watches the file.
+// wallpapers.json. A changed valid scheme drops an active static color
+// preset (like choosing a scheme in the settings) unless the document
+// names the color preset itself, which is then set after the scheme. The
+// shell watches the file.
 func (m *Manager) applyWallpaper(doc any) error {
 	if m.WallpaperFile == "" {
 		return nil
 	}
 	src, _ := doc.(map[string]any)
 	scheme, _ := src["matugenScheme"].(string)
-	if !contains(MatugenSchemes, scheme) {
+	preset, hasPreset := src[colorPresetKey].(string)
+	if !contains(MatugenSchemes, scheme) && !hasPreset {
 		return nil
 	}
 	o, err := m.readWallpapers()
 	if err != nil {
 		return err
 	}
-	if cur, _ := o.Get("matugenScheme"); cur == scheme {
+	changed := false
+	if cur, _ := o.Get("matugenScheme"); contains(MatugenSchemes, scheme) && cur != scheme {
+		o.Set("matugenScheme", scheme)
+		o.Set(colorPresetKey, "")
+		changed = true
+	}
+	if cur, ok := o.Get(colorPresetKey); hasPreset && (!ok || cur != preset) {
+		o.Set(colorPresetKey, preset)
+		changed = true
+	}
+	if !changed {
 		return nil
 	}
-	o.Set("matugenScheme", scheme)
-	o.Set("activeColorPreset", "")
 	data, err := json.MarshalIndent(o, "", "    ")
 	if err != nil {
 		return err

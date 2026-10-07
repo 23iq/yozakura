@@ -9,7 +9,7 @@ import (
 func TestPreviewChainsAndReverts(t *testing.T) {
 	m := newManager(t)
 	writeWallpapers(t, m, `{"matugenScheme": "scheme-content"}`)
-	_, _, err := m.Apply("Yozakura Default")
+	_, _, err := m.Apply("Yozakura")
 	assert.NoError(t, err)
 	before, _ := m.Documents(Current)
 
@@ -19,7 +19,7 @@ func TestPreviewChainsAndReverts(t *testing.T) {
 	// A second hover previews on top: the backup stays the original look.
 	s, err := m.Preview("Yozakura Night")
 	assert.NoError(t, err)
-	assert.Equal(t, "Yozakura Default", s.PrevActive)
+	assert.Equal(t, "Yozakura", s.PrevActive)
 	assert.Equal(t, "Yozakura Night", s.Preset)
 
 	_, _, err = m.Begin(TrySession, "Neon Tokyo")
@@ -30,7 +30,7 @@ func TestPreviewChainsAndReverts(t *testing.T) {
 	assert.True(t, reverted)
 	after, _ := m.Documents(Current)
 	assert.Empty(t, m.compareDocs(before, after, nil), "revert restores every file")
-	assert.Equal(t, "Yozakura Default", m.Active())
+	assert.Equal(t, "Yozakura", m.Active())
 
 	// Nothing to revert is not an error (Esc without a hover).
 	reverted, err = m.Revert()
@@ -40,7 +40,7 @@ func TestPreviewChainsAndReverts(t *testing.T) {
 
 func TestApplyDuringPreviewKeeps(t *testing.T) {
 	m := newManager(t)
-	_, _, err := m.Apply("Yozakura Default")
+	_, _, err := m.Apply("Yozakura")
 	assert.NoError(t, err)
 	_, err = m.Preview("Neon Tokyo")
 	assert.NoError(t, err)

@@ -59,9 +59,13 @@ func TestScanFindsOfficialAndUser(t *testing.T) {
 		"bar.json":   "{}",
 		"info.json":  `{"author": "Alice"}`,
 	})
-	writePresetFiles(t, filepath.Join(shellAssets, "assets", "presets", "Yozakura Default"), map[string]string{
+	writePresetFiles(t, filepath.Join(shellAssets, "assets", "presets", "layouts", "Top"), map[string]string{
+		"bar.json": "{}",
+	})
+	// A set composed from parts: its files are the union of theirs.
+	writePresetFiles(t, filepath.Join(shellAssets, "assets", "presets", "sets", "Yozakura"), map[string]string{
+		"set.json":   `{"layout": "Top"}`,
 		"theme.json": "{}",
-		"bar.json":   "{}",
 		"info.json":  `{"author": "Yozakura"}`,
 		// Excluded file — must not appear in ConfigFiles.
 		"system.json": "{}",
@@ -83,10 +87,13 @@ func TestScanFindsOfficialAndUser(t *testing.T) {
 	if byName["MyCustom"].Author != "Alice" {
 		t.Errorf("MyCustom author mismatch: %s", byName["MyCustom"].Author)
 	}
-	if !byName["Yozakura Default"].Official {
-		t.Error("Yozakura Default should be official")
+	if !byName["Yozakura"].Official {
+		t.Error("Yozakura should be official")
 	}
-	for _, f := range byName["Yozakura Default"].ConfigFiles {
+	if got := strings.Join(byName["Yozakura"].ConfigFiles, ","); got != "bar.js,theme.js" {
+		t.Errorf("composed ConfigFiles = %s", got)
+	}
+	for _, f := range byName["Yozakura"].ConfigFiles {
 		base := strings.TrimSuffix(f, ".js")
 		if base == "system" || base == "ai" || base == "prefix" || base == "weather" {
 			t.Errorf("excluded file leaked into ConfigFiles: %s", f)

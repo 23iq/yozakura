@@ -30,6 +30,10 @@ type Session struct {
 	// PrevColorPreset is the static color preset active before the session
 	// (applying a scheme drops it; a revert brings it back).
 	PrevColorPreset string `json:"prevColorPreset,omitempty"`
+	// PrevParts are the part markers before the session (nil: older record).
+	PrevParts *SetRef `json:"prevParts,omitempty"`
+	// Part is the kind of the previewed part ("" when Preset is a set).
+	Part string `json:"part,omitempty"`
 }
 
 func (m *Manager) sessionFile(kind string) string {
@@ -97,7 +101,7 @@ func (m *Manager) begin(kind, name string) (*Session, []catalog.Problem, error) 
 	if err != nil {
 		return nil, nil, err
 	}
-	s := &Session{Kind: kind, Preset: p.Name, PrevActive: m.Active(), Started: time.Now(), PrevColorPreset: m.colorPreset()}
+	s := m.newSession(kind, p.Name)
 	for _, d := range p.Domains {
 		if d == WallpaperDomain || !m.Cat.HasDomain(d) {
 			continue
@@ -174,6 +178,11 @@ func (m *Manager) revert(s *Session) error {
 	}
 	if err := m.restoreColorPreset(s.PrevColorPreset); err != nil {
 		return err
+	}
+	if s.PrevParts != nil {
+		if err := m.setCurrentParts(*s.PrevParts); err != nil {
+			return err
+		}
 	}
 	return m.setActive(s.PrevActive)
 }

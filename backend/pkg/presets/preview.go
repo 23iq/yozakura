@@ -11,9 +11,28 @@ import (
 // and Revert brings the backed-up look back. A real Apply ends it.
 const PreviewSession = "preview"
 
+// previewTarget is what a preview applies: a set or a part.
+type previewTarget struct {
+	name    string
+	part    string // part kind; "" for a set
+	domains []string
+	apply   func() error
+}
+
 // Preview applies a preset for a look, keeping the config from before the
 // first preview of a chain so Revert can restore it.
 func (m *Manager) Preview(name string) (*Session, error) {
+	return m.preview(func() (previewTarget, error) {
+		p, err := m.Find(name)
+		return previewTarget{name: p.Name, domains: p.Domains, apply: func() error {
+			_, _, err := m.apply(p.Name)
+			return err
+		}}, err
+	})
+}
+
+// preview runs a preview step (sets and parts share the session).
+func (m *Manager) preview(resolve func() (previewTarget, error)) (*Session, error) {
 	unlock, err := m.lock()
 	if err != nil {
 		return nil, err
@@ -22,7 +41,7 @@ func (m *Manager) Preview(name string) (*Session, error) {
 	if m.StateDir == "" {
 		return nil, fmt.Errorf("no state directory for preset previews")
 	}
-	p, err := m.Find(name)
+	t, err := resolve()
 	if err != nil {
 		return nil, err
 	}
@@ -37,13 +56,13 @@ func (m *Manager) Preview(name string) (*Session, error) {
 				return nil, fmt.Errorf("a preset %s of %q is in progress; finish it first", k, other.Preset)
 			}
 		}
-		s = &Session{Kind: PreviewSession, PrevActive: m.Active(), Started: time.Now(), PrevColorPreset: m.colorPreset()}
+		s = m.newSession(PreviewSession, "")
 		if _, err := m.Export(Current, m.backupFile(PreviewSession)); err != nil {
 			return nil, fmt.Errorf("backing up the live config: %w", err)
 		}
 	}
-	s.Preset = p.Name
-	for _, d := range p.Domains {
+	s.Preset, s.Part = t.name, t.part
+	for _, d := range t.domains {
 		if d == WallpaperDomain || !m.Cat.HasDomain(d) || contains(s.Created, d) {
 			continue
 		}
@@ -54,7 +73,7 @@ func (m *Manager) Preview(name string) (*Session, error) {
 	if err := m.writeSession(s); err != nil {
 		return nil, err
 	}
-	if _, _, err := m.apply(p.Name); err != nil {
+	if err := t.apply(); err != nil {
 		if first {
 			_ = m.revert(s)
 			m.dropSession(PreviewSession)
@@ -62,6 +81,13 @@ func (m *Manager) Preview(name string) (*Session, error) {
 		return nil, err
 	}
 	return s, nil
+}
+
+// newSession starts a session record with what a revert restores.
+func (m *Manager) newSession(kind, preset string) *Session {
+	parts := m.CurrentParts()
+	return &Session{Kind: kind, Preset: preset, PrevActive: m.Active(), Started: time.Now(),
+		PrevColorPreset: m.colorPreset(), PrevParts: &parts}
 }
 
 // Revert ends a preview and restores the look from before it. It reports

@@ -1,8 +1,9 @@
-// Package presets manages theme/layout presets on disk: a preset is a
-// directory of config domain files (bar.json, theme.json, ...) plus an
-// optional info.json and wallpaper.json (the matugen scheme), either built
-// in (<shell>/assets/presets/<Name>/) or the user's
-// ($XDG_CONFIG_HOME/<app>/presets/<Name>/). The CLI (`yozakura preset`),
+// Package presets manages theme/layout presets on disk: a preset (a set)
+// is a directory of config domain files (bar.json, theme.json, ...) plus an
+// optional info.json, wallpaper.json (the palette generator settings) and
+// set.json (the layout, style and palette parts it is composed from, see
+// sets.go), either built in (<shell>/assets/presets/sets/<Name>/) or the
+// user's ($XDG_CONFIG_HOME/<app>/presets/<Name>/). The CLI (`yozakura preset`),
 // the MCP tools and the settings window's preset studio all go through this
 // package, so they behave identically.
 package presets
@@ -32,8 +33,9 @@ const Current = "current"
 const Defaults = "defaults"
 
 // DefaultPreset is the built-in preset a stale active marker falls back to
-// (e.g. one naming a preset that was removed from the shell).
-const DefaultPreset = "Yozakura Default"
+// (e.g. one naming a preset that was removed from the shell, such as the
+// former "Yozakura Default").
+const DefaultPreset = "Yozakura"
 
 // Preset is one preset directory.
 type Preset struct {
@@ -52,6 +54,11 @@ type Preset struct {
 	Tags     []string       `json:"tags"`
 	Hash     string         `json:"hash"`
 	Look     map[string]any `json:"look,omitempty"`
+	// Layout, Style and Palette are the parts named by set.json ("" for a
+	// legacy self-contained set).
+	Layout  string `json:"layout"`
+	Style   string `json:"style"`
+	Palette string `json:"palette"`
 }
 
 // Manager reads and writes presets.
@@ -99,8 +106,8 @@ func (m *Manager) exists(name string) bool {
 	if filepath.Base(name) != name || strings.HasPrefix(name, ".") {
 		return false
 	}
-	for _, dir := range []string{m.OfficialDir, m.UserDir} {
-		if dir != "" && len(domainsIn(filepath.Join(dir, name))) > 0 {
+	for _, dir := range []string{m.officialSets(), m.UserDir} {
+		if dir != "" && isSetDir(filepath.Join(dir, name)) {
 			return true
 		}
 	}
@@ -124,7 +131,7 @@ func (m *Manager) List() []Preset {
 	for _, root := range []struct {
 		dir      string
 		official bool
-	}{{m.OfficialDir, true}, {m.UserDir, false}} {
+	}{{m.officialSets(), true}, {m.UserDir, false}} {
 		if root.dir == "" {
 			continue
 		}
@@ -138,8 +145,7 @@ func (m *Manager) List() []Preset {
 				continue
 			}
 			p := Preset{Name: e.Name(), Path: filepath.Join(root.dir, e.Name()), Official: root.official, Author: "Unknown"}
-			p.Domains = domainsIn(p.Path)
-			if len(p.Domains) == 0 {
+			if !fillSet(&p, m.OfficialDir) {
 				continue
 			}
 			if info, ok := readInfo(p.Path); ok {
@@ -151,7 +157,6 @@ func (m *Manager) List() []Preset {
 				p.Follows = info.Follows
 			}
 			p.Active = p.Name == active
-			p.Hash = hashDir(p.Path, p.Domains)
 			p.Tags = []string{}
 			group = append(group, p)
 		}
@@ -184,20 +189,6 @@ func (m *Manager) WithLooks(list []Preset) []Preset {
 		list[i].Tags = TagsOf(list[i].Look)
 	}
 	return list
-}
-
-func domainsIn(dir string) []string {
-	files, _ := filepath.Glob(filepath.Join(dir, "*.json"))
-	var out []string
-	for _, f := range files {
-		d := strings.TrimSuffix(filepath.Base(f), ".json")
-		if d == "info" || Excluded[d] {
-			continue
-		}
-		out = append(out, d)
-	}
-	sort.Strings(out)
-	return out
 }
 
 type info struct {
@@ -311,7 +302,7 @@ func (m *Manager) rawDocuments(ref string) (map[string][]byte, error) {
 	}
 	if st, err := os.Stat(ref); err == nil {
 		if st.IsDir() {
-			return m.readDir(ref, domainsIn(ref))
+			return m.dirFiles(ref)
 		}
 		b, err := ReadBundle(ref)
 		if err != nil {
@@ -331,36 +322,7 @@ func (m *Manager) rawDocuments(ref string) (map[string][]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return m.readDir(p.Path, p.Domains)
-}
-
-// readDir reads a preset directory's domain files without machine-local keys.
-func (m *Manager) readDir(dir string, domains []string) (map[string][]byte, error) {
-	raw, err := readDir(dir, domains)
-	if err != nil {
-		return nil, err
-	}
-	for d, data := range raw {
-		if raw[d], err = m.stripLocal(d, data); err != nil {
-			return nil, fmt.Errorf("%s/%s.json: %w", dir, d, err)
-		}
-	}
-	return raw, nil
-}
-
-func readDir(dir string, domains []string) (map[string][]byte, error) {
-	out := map[string][]byte{}
-	for _, d := range domains {
-		data, err := os.ReadFile(filepath.Join(dir, d+".json"))
-		if err != nil {
-			return nil, err
-		}
-		if !json.Valid(data) {
-			return nil, fmt.Errorf("%s/%s.json is not valid JSON", dir, d)
-		}
-		out[d] = data
-	}
-	return out, nil
+	return m.dirFiles(p.Path)
 }
 
 // lookDomains are the catalog domains a preset may carry.
@@ -424,7 +386,7 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 	if err != nil {
 		return Preset{}, nil, err
 	}
-	raw, err := m.readDir(p.Path, p.Domains)
+	raw, err := m.dirFiles(p.Path)
 	if err != nil {
 		return p, nil, err
 	}
@@ -436,6 +398,9 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 		return p, problems, err
 	}
 	if err := m.setActive(p.Name); err != nil {
+		return p, problems, err
+	}
+	if err := m.setCurrentParts(SetRef{Layout: p.Layout, Style: p.Style, Palette: p.Palette}); err != nil {
 		return p, problems, err
 	}
 	p.Active = true
@@ -549,12 +514,16 @@ func (m *Manager) Save(name string, domains []string, force bool) (Preset, error
 	if err := m.checkNewName(name); err != nil {
 		return Preset{}, err
 	}
-	if len(domains) == 0 {
+	whole := len(domains) == 0
+	if whole {
 		domains = append(m.lookDomains(), WallpaperDomain)
 	}
 	files, err := m.liveFiles(domains)
 	if err != nil {
 		return Preset{}, err
+	}
+	if ref, ok := m.knownParts(); ok && whole {
+		files[setDomain] = encodeSetRef(ref)
 	}
 	inf := info{Author: "User"}
 	if old, err := m.findUser(name); err == nil && force {
