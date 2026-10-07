@@ -3749,5 +3749,11 @@
   "presets.newlook.keep": "Оставить",
   "presets.newlook.revert": "Вернуть",
   "presets.newlook.notice": "Ваш облик не изменён. Откройте переключатель пресетов, чтобы попробовать новый на 30 секунд.",
-  "presets.newlook.show": "Показать"
+  "presets.newlook.show": "Показать",
+  "prefs.appearance.language": "Визуальный стиль",
+  "prefs.appearance.language.desc": "Как панели рисуют содержимое: тонкие линии туши, матовые стеклянные карточки, сплошные плитки или классические варианты поверхностей",
+  "prefs.appearance.language.ink": "Тушь",
+  "prefs.appearance.language.glass": "Стекло",
+  "prefs.appearance.language.tiles": "Плитки",
+  "prefs.appearance.language.classic": "Классика"
 }

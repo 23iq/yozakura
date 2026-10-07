@@ -3731,5 +3731,11 @@
   "presets.newlook.keep": "Conservar",
   "presets.newlook.revert": "Revertir",
   "presets.newlook.notice": "Tu aspecto no ha cambiado. Abre el selector de presets para probar el nuevo durante 30 segundos.",
-  "presets.newlook.show": "Muéstramelo"
+  "presets.newlook.show": "Muéstramelo",
+  "prefs.appearance.language": "Estilo visual",
+  "prefs.appearance.language.desc": "Cómo dibuja cada panel su contenido: líneas de tinta, tarjetas de cristal, mosaicos sólidos o las variantes clásicas",
+  "prefs.appearance.language.ink": "Tinta",
+  "prefs.appearance.language.glass": "Cristal",
+  "prefs.appearance.language.tiles": "Mosaicos",
+  "prefs.appearance.language.classic": "Clásico"
 }

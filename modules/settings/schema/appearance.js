@@ -25,6 +25,19 @@ var category = {
                     "label": "prefs.appearance.mode",
                     "description": "prefs.appearance.mode.desc",
                     "keywords": "dark light oled amoled black night day"
+                },
+                {
+                    "key": "theme.language",
+                    "type": "selector",
+                    "label": "prefs.appearance.language",
+                    "description": "prefs.appearance.language.desc",
+                    "keywords": "visual language style ink glass tiles solid classic look kit",
+                    "options": [
+                        { "value": "ink", "label": "prefs.appearance.language.ink" },
+                        { "value": "glass", "label": "prefs.appearance.language.glass" },
+                        { "value": "tiles", "label": "prefs.appearance.language.tiles" },
+                        { "value": "classic", "label": "prefs.appearance.language.classic" }
+                    ]
                 }
             ]
         },

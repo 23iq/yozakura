@@ -282,16 +282,29 @@
       ]
     },
     "language": {
-      "title": "Language",
+      "title": "Visual style",
       "type": "string",
       "default": "ink",
-      "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles) or classic (the surface variants exactly as configured).",
+      "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, or the classic surface variants",
+      "x-settings": {
+        "category": "appearance",
+        "section": "mode",
+        "label": "prefs.appearance.language",
+        "control": "selector",
+        "keywords": "visual language style ink glass tiles solid classic look kit"
+      },
       "enum": [
         "ink",
         "glass",
         "tiles",
         "classic"
-      ]
+      ],
+      "x-enumLabels": {
+        "ink": "Ink",
+        "glass": "Glass",
+        "tiles": "Tiles",
+        "classic": "Classic"
+      }
     },
     "shape": {
       "title": "Shape",

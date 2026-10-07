@@ -3731,5 +3731,11 @@
   "presets.newlook.keep": "Keep",
   "presets.newlook.revert": "Revert",
   "presets.newlook.notice": "Your look is unchanged. Open the preset switcher to try the new one for 30 seconds.",
-  "presets.newlook.show": "Show me"
+  "presets.newlook.show": "Show me",
+  "prefs.appearance.language": "Visual style",
+  "prefs.appearance.language.desc": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, or the classic surface variants",
+  "prefs.appearance.language.ink": "Ink",
+  "prefs.appearance.language.glass": "Glass",
+  "prefs.appearance.language.tiles": "Tiles",
+  "prefs.appearance.language.classic": "Classic"
 }
