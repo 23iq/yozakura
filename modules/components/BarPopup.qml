@@ -173,7 +173,7 @@ PopupWindow {
             variant: root.variant
             glassSurface: "popups"
             enableShadow: true
-            radius: Styling.radius(8)
+            radius: Styling.radius(0) // the kit surface radius (Space.surfaceRadius)
             anchorEdge: motion.anchorEdge
 
             Item {

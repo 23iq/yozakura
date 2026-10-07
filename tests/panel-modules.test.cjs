@@ -55,10 +55,19 @@ test('downloads helpers', () => {
     assert.equal(Downloads.iconFor('x.pdf'), 'application-pdf');
     assert.equal(Downloads.iconFor('noext'), 'text-x-generic');
     assert.equal(Downloads.isPartial('big.iso.part'), true);
-    const fan = plain(Downloads.fan(4, 50, 1));
-    assert.equal(fan.length, 4);
-    assert.ok(fan[3].y < fan[0].y && fan[3].x > fan[0].x, 'rises and curls right');
-    assert.ok(plain(Downloads.fan(3, 50, -1))[2].x < 0);
+});
+
+test('downloads list: active transfers and row subtitles', () => {
+    const t = (id, state, kind, startedAt) => ({ id, state, kind, startedAt });
+    const active = plain(Downloads.active([
+        t('a', 'running', 'download', 1), t('b', 'done', 'download', 5), t('c', 'paused', 'download', 3),
+        t('d', 'running', 'upload', 9), t('e', 'queued', undefined, 2), null
+    ]));
+    assert.deepEqual(active.map(x => x.id), ['c', 'e', 'a'], 'in flight downloads only, newest first');
+    assert.deepEqual(plain(Downloads.active(undefined)), []);
+    assert.equal(Downloads.transferLine('340 MB / 720 MB', '47%'), '340 MB / 720 MB · 47%');
+    assert.equal(Downloads.transferLine('', '47%'), '47%');
+    assert.equal(Downloads.transferLine('12 MB', ''), '12 MB');
 });
 
 test('app names', () => {

@@ -8,10 +8,12 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
+import qs.modules.components.kit
 import qs.modules.globals
 
 MouseArea {
     id: root
+    objectName: "trayItem"
 
     required property var bar
     required property SystemTrayItem item
@@ -120,13 +122,13 @@ MouseArea {
         // Nested inside the overflow popup it must not close it
         groupId: root.inOverflow ? "systrayMenu" : "bar"
 
-        // Use a reasonable width for the menu
-        contentWidth: 220
-        // Height adapts to content, with a max limit if needed.
-        // Must include vertical padding (8 top + 8 bottom = 16)
-        contentHeight: Math.min(itemsColumn.implicitHeight + 16, 400)
+        objectName: "systrayMenu"
+        // Kit menu: rows on the popup surface, a tight padding
+        popupPadding: Space.s
+        contentWidth: 240 + popupPadding * 2
+        // Height adapts to content, with a max limit
+        contentHeight: Math.min(itemsColumn.implicitHeight + popupPadding * 2, 420)
 
-        popupPadding: 8
         // 8px standard margin + 8px SysTray container padding to ensure correct offset from the main bar
         visualMargin: 16
 
@@ -152,7 +154,7 @@ MouseArea {
             ColumnLayout {
                 id: itemsColumn
                 width: parent.width
-                spacing: 2
+                spacing: 0
 
                 Repeater {
                     model: menuOpener.children ? menuOpener.children.values : []
@@ -161,7 +163,7 @@ MouseArea {
                         required property var modelData
 
                         Layout.fillWidth: true
-                        spacing: 2
+                        spacing: 0
 
                         property bool submenuExpanded: false
 
@@ -195,7 +197,7 @@ MouseArea {
                         ColumnLayout {
                             visible: submenuExpanded && modelData.hasChildren
                             Layout.fillWidth: true
-                            spacing: 2
+                            spacing: 0
 
                             QsMenuOpener {
                                 id: subMenuOpener

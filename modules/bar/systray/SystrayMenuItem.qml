@@ -1,22 +1,24 @@
-import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
-import qs.modules.theme
-import qs.config
+pragma ComponentBehavior: Bound
 
-Button {
+import QtQuick
+import qs.modules.theme
+import qs.modules.components.kit
+
+// One entry of a tray item's menu: a kit ListRow (check / radio mark or the
+// entry's icon, its label, a caret for submenus) or a Divider.
+Item {
     id: root
 
     property string textStr: ""
 
-    // Clean text logic from ContextMenu.qml
+    // Labels may carry a ":/// " prefix from some SNI implementations
     readonly property string cleanText: {
         let t = textStr;
-        if (!t) return "";
+        if (!t)
+            return "";
         t = String(t);
-        if (t.startsWith(":/// ")) {
+        if (t.startsWith(":/// "))
             t = t.substring(5);
-        }
         return t.trim();
     }
 
@@ -30,135 +32,88 @@ Button {
     property int buttonType: 0
     // Qt.Unchecked = 0, Qt.PartiallyChecked = 1, Qt.Checked = 2
     property int checkState: 0
+    readonly property bool checked: root.buttonType > 0 && root.checkState !== Qt.Unchecked
+
+    signal clicked
 
     implicitWidth: 200
-    implicitHeight: isSeparator ? 10 : 36
-    enabled: !isSeparator
+    implicitHeight: root.isSeparator ? Space.s * 2 + Space.hairline : Space.controlS
 
-    // Reset default styling
-    padding: 0
-    background: Rectangle {
-        color: {
-            if (root.isSeparator) return "transparent"
-            return root.hovered ? Styling.srItem("overprimary") : "transparent"
-        }
-        radius: Styling.radius(0)
+    Divider {
+        visible: root.isSeparator && Look.dividers
+        anchors.verticalCenter: parent.verticalCenter
+        x: Space.s
+        width: parent.width - Space.s * 2
+    }
 
-        // Separator line
-        Rectangle {
-            visible: root.isSeparator
-            height: 1
-            color: Colors.surfaceBright
-            anchors.centerIn: parent
-            width: parent.width - 16
+    ListRow {
+        anchors.fill: parent
+        anchors.leftMargin: root.depth * Space.m
+        visible: !root.isSeparator
+        enabled: !root.isSeparator
+        title: root.cleanText
+        onClicked: root.clicked()
+
+        leading: root.buttonType > 0 || root.iconSource !== "" ? markComponent : null
+        trailing: root.hasSubmenu ? caretComponent : null
+    }
+
+    Component {
+        id: markComponent
+
+        Item {
+            implicitWidth: Type.iconSize("body")
+            implicitHeight: implicitWidth
+
+            // Check / radio: an accent mark when on, a quiet outline when off
+            Text {
+                anchors.centerIn: parent
+                visible: root.buttonType > 0
+                text: root.checked ? (root.buttonType === 2 ? Icons.circle : (root.checkState === Qt.PartiallyChecked ? Icons.minus : Icons.check)) : ""
+                font.family: Icons.font
+                font.pixelSize: Type.iconSize("secondary")
+                color: Type.accent
+            }
+
+            Rectangle {
+                anchors.centerIn: parent
+                visible: root.buttonType > 0 && !root.checked
+                width: Type.size("secondary")
+                height: width
+                radius: root.buttonType === 2 ? width / 2 : Space.smallRadius / 2
+                color: "transparent"
+                border.width: Space.hairline
+                border.color: Type.muted
+            }
+
+            Text {
+                anchors.centerIn: parent
+                visible: root.buttonType === 0 && !root.isImageIcon && root.iconSource !== ""
+                text: visible ? root.iconSource : ""
+                font.family: Icons.font
+                font.pixelSize: Type.iconSize("body")
+                color: Type.secondary
+            }
+
+            Image {
+                anchors.fill: parent
+                visible: root.buttonType === 0 && root.isImageIcon
+                source: visible ? root.iconSource : ""
+                sourceSize: Qt.size(width * 2, height * 2)
+                fillMode: Image.PreserveAspectFit
+                mipmap: true
+            }
         }
     }
 
-    contentItem: RowLayout {
-        spacing: 8
-        visible: !root.isSeparator
+    Component {
+        id: caretComponent
 
-        // Add margins for content
-        anchors.fill: parent
-        anchors.leftMargin: 8 + root.depth * 12
-        anchors.rightMargin: 8
-
-        // Check/Radio indicator
-        Item {
-            visible: root.buttonType > 0
-            Layout.preferredWidth: 16
-            Layout.preferredHeight: 16
-
-            // Checkbox
-            Rectangle {
-                visible: root.buttonType === 1
-                anchors.centerIn: parent
-                width: 14
-                height: 14
-                radius: 3
-                color: root.checkState === Qt.Unchecked ? "transparent" : Colors.primary
-                border.color: root.checkState === Qt.Unchecked ? Colors.outline : Colors.primary
-                border.width: 1.5
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: root.checkState !== Qt.Unchecked
-                    text: root.checkState === Qt.PartiallyChecked ? "\u2212" : "\u2713"
-                    color: Colors.overPrimary
-                    font.pixelSize: 10
-                    font.bold: true
-                }
-            }
-
-            // RadioButton
-            Rectangle {
-                visible: root.buttonType === 2
-                anchors.centerIn: parent
-                width: 14
-                height: 14
-                radius: 7
-                color: "transparent"
-                border.color: root.checkState === Qt.Checked ? Colors.primary : Colors.outline
-                border.width: 1.5
-
-                Rectangle {
-                    anchors.centerIn: parent
-                    visible: root.checkState === Qt.Checked
-                    width: 7
-                    height: 7
-                    radius: 4
-                    color: Colors.primary
-                }
-            }
-        }
-
-        // Icon
-        Loader {
-            Layout.preferredWidth: 16
-            Layout.preferredHeight: 16
-            visible: root.iconSource !== "" && root.buttonType === 0
-            sourceComponent: root.isImageIcon ? imageIcon : fontIcon
-
-            Component {
-                id: fontIcon
-                Text {
-                    text: root.iconSource
-                    font.family: Icons.font
-                    font.pixelSize: 14
-                    color: root.hovered ? Colors.overPrimary : Colors.overBackground
-                    horizontalAlignment: Text.AlignHCenter
-                    verticalAlignment: Text.AlignVCenter
-                }
-            }
-
-            Component {
-                id: imageIcon
-                Image {
-                    source: root.iconSource
-                    fillMode: Image.PreserveAspectFit
-                    mipmap: true
-                }
-            }
-        }
-
-        // Text
         Text {
-            Layout.fillWidth: true
-            text: root.cleanText
-            color: root.hovered ? Colors.overPrimary : Colors.overBackground
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
-            elide: Text.ElideRight
-            verticalAlignment: Text.AlignVCenter
-        }
-
-        // Submenu chevron
-        Text {
-            visible: root.hasSubmenu
-            text: root.expanded ? "\u25BE" : "\u25B8"
-            color: root.hovered ? Colors.overPrimary : Colors.overBackground
-            font.pixelSize: Styling.fontSize(0)
-            verticalAlignment: Text.AlignVCenter
+            text: root.expanded ? Icons.caretDown : Icons.caretRight
+            font.family: Icons.font
+            font.pixelSize: Type.iconSize("caption")
+            color: Type.muted
         }
     }
 }

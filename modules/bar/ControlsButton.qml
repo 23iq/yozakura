@@ -4,10 +4,14 @@ import QtQuick.Layouts
 import Quickshell
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
+import qs.modules.bar.look
 import qs.modules.theme
-import qs.config
 import qs.modules.shell.osd.styles
 
+// Bar "controls" module: a faders glyph; left click opens the levels popup
+// (volume, microphone, brightness as kit LineSliders, the glyph toggles
+// mute), right click opens pavucontrol.
 Item {
     id: root
 
@@ -20,17 +24,44 @@ Item {
     property real radius: 0
     property real startRadius: radius
     property real endRadius: radius
-    // Bar panels: module size, and "flat" (no pill background of its own)
+    // Bar panels: module size, and "flat" (no group box of its own)
     property int moduleSize: BarMetrics.moduleSize
     property bool flat: false
 
     // Popup visibility state (tracks intent, not animation)
     property bool popupOpen: controlsPopup.isOpen
+    readonly property var brightnessMonitor: Brightness.getMonitorForScreen(root.bar.screen)
 
+    objectName: "controlsModule"
     Layout.preferredWidth: root.moduleSize
     Layout.preferredHeight: root.moduleSize
     Layout.fillWidth: vertical
     Layout.fillHeight: !vertical
+
+    function volumeIcon(audio: var): string {
+        if (audio?.muted)
+            return Icons.speakerSlash;
+        const vol = audio?.volume ?? 0;
+        if (vol < 0.01)
+            return Icons.speakerX;
+        if (vol < 0.19)
+            return Icons.speakerNone;
+        if (vol < 0.49)
+            return Icons.speakerLow;
+        return Icons.speakerHigh;
+    }
+
+    function setBrightness(v: real) {
+        if (Brightness.syncBrightness) {
+            for (let i = 0; i < Brightness.monitors.length; i++) {
+                const mon = Brightness.monitors[i];
+                if (mon && mon.ready)
+                    mon.setBrightness(v);
+            }
+        } else if (root.brightnessMonitor && root.brightnessMonitor.ready) {
+            root.brightnessMonitor.setBrightness(v);
+        }
+    }
 
     StyledToolTip {
         show: root.isHovered && !root.popupOpen
@@ -41,60 +72,43 @@ Item {
         onHoveredChanged: root.isHovered = hovered
     }
 
-    // Main button
-    StyledRect {
+    Item {
         id: buttonBg
-        variant: root.popupOpen ? "primary" : "bg"
         anchors.fill: parent
-        enableShadow: root.layerEnabled && !root.flat
-        backgroundOpacity: root.flat && !root.popupOpen ? 0 : -1
-        effectSurface: root.flat ? "" : "bar"
-        enableBorder: !root.flat || root.popupOpen
 
-        topLeftRadius: root.vertical ? root.startRadius : root.startRadius
-        topRightRadius: root.vertical ? root.startRadius : root.endRadius
-        bottomLeftRadius: root.vertical ? root.endRadius : root.startRadius
-        bottomRightRadius: root.vertical ? root.endRadius : root.endRadius
-
-        Rectangle {
-            anchors.fill: parent
-            color: Styling.srItem("overprimary")
-            opacity: root.popupOpen ? 0 : (root.isHovered ? 0.25 : 0)
-            radius: parent.radius ?? 0
-
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                }
-            }
+        ModuleBox {
+            id: box
+            vertical: root.vertical
+            startRadius: root.startRadius
+            endRadius: root.endRadius
+            flat: root.flat
+            shadow: root.layerEnabled
+            active: root.popupOpen
+            hovered: root.isHovered
         }
 
         Text {
             anchors.centerIn: parent
             text: Icons.faders
             font.family: Icons.font
-            font.pixelSize: BarMetrics.iconFor(18, root.moduleSize)
-            color: root.popupOpen ? buttonBg.item : Styling.srItem("overprimary")
+            font.pixelSize: BarLook.iconSize(root.moduleSize)
+            color: box.ink
         }
 
         OsdBarInline {
             anchors.fill: parent
-            radius: parent.radius ?? 0
+            radius: Math.max(root.startRadius, root.endRadius)
         }
 
         MouseArea {
             anchors.fill: parent
-            hoverEnabled: false
             cursorShape: Qt.PointingHandCursor
             acceptedButtons: Qt.LeftButton | Qt.RightButton
             onClicked: mouse => {
-                if (mouse.button === Qt.RightButton) {
+                if (mouse.button === Qt.RightButton)
                     Quickshell.execDetached(["pavucontrol"]);
-                    return;
-                } else if (mouse.button === Qt.LeftButton) {
+                else
                     controlsPopup.toggle();
-                }
             }
         }
     }
@@ -110,166 +124,113 @@ Item {
         }
     }
 
-    // Controls popup
     BarPopup {
         id: controlsPopup
+        objectName: "controlsPopup"
         anchorItem: buttonBg
         bar: root.bar
-        popupPadding: 16
+        popupPadding: Look.surfacePadding
 
-        contentWidth: 220
-        // Fixed height calculation to prevent expansion animation on first open
-        // 3 rows * 36px + 2 gaps * 12px = 132px
-        contentHeight: 132 + popupPadding * 2
+        contentWidth: 280 + popupPadding * 2
+        contentHeight: levels.implicitHeight + popupPadding * 2
 
-        ColumnLayout {
-            id: slidersColumn
-            anchors.fill: parent
-            spacing: 12
+        // The levels as one kit group (a frosted card in glass, a tile in tiles)
+        Group {
+            id: levels
+            width: parent.width
 
-            // Volume Slider
-            ControlSliderRow {
+            LevelRow {
                 id: volumeRow
-                Layout.fillWidth: true
-                Layout.preferredHeight: 36
-                Layout.rightMargin: 8
-
-                icon: {
-                    if (Audio.sink?.audio?.muted)
-                        return Icons.speakerSlash;
-                    const vol = Audio.sink?.audio?.volume ?? 0;
-                    if (vol < 0.01)
-                        return Icons.speakerX;
-                    if (vol < 0.19)
-                        return Icons.speakerNone;
-                    if (vol < 0.49)
-                        return Icons.speakerLow;
-                    return Icons.speakerHigh;
+                icon: root.volumeIcon(Audio.sink?.audio)
+                muted: Audio.sink?.audio?.muted ?? false
+                value: Audio.sink?.audio?.volume ?? 0
+                onMoved: v => {
+                    if (Audio.sink?.audio)
+                        Audio.sink.audio.volume = v;
                 }
-                sliderValue: Audio.sink?.audio?.volume ?? 0
-                progressColor: Audio.sink?.audio?.muted ? Colors.outline : Styling.srItem("overprimary")
-                wavy: true
-                wavyAmplitude: Audio.sink?.audio?.muted ? 0.5 : 1.5 * sliderValue
-                wavyFrequency: Audio.sink?.audio?.muted ? 1.0 : 8.0 * sliderValue
-
-                onValueChanged: newValue => {
-                    if (Audio.sink?.audio) {
-                        Audio.sink.audio.volume = newValue;
-                    }
-                }
-
                 onIconClicked: {
-                    if (Audio.sink?.audio) {
+                    if (Audio.sink?.audio)
                         Audio.sink.audio.muted = !Audio.sink.audio.muted;
-                    }
                 }
 
                 Connections {
                     target: Audio.sink?.audio ?? null
                     ignoreUnknownSignals: true
                     function onVolumeChanged() {
-                        if (Audio.sink?.audio) {
-                            volumeRow.sliderValue = Audio.sink.audio.volume;
-                        }
+                        volumeRow.value = Audio.sink.audio.volume;
                     }
                 }
             }
 
-            // Microphone Slider
-            ControlSliderRow {
+            LevelRow {
                 id: micRow
-                Layout.fillWidth: true
-                Layout.preferredHeight: 36
-                Layout.rightMargin: 8
-
                 icon: Audio.source?.audio?.muted ? Icons.micSlash : Icons.mic
-                sliderValue: Audio.source?.audio?.volume ?? 0
-                progressColor: Audio.source?.audio?.muted ? Colors.outline : Styling.srItem("overprimary")
-                wavy: true
-                wavyAmplitude: Audio.source?.audio?.muted ? 0.5 : 1.5 * sliderValue
-                wavyFrequency: Audio.source?.audio?.muted ? 1.0 : 8.0 * sliderValue
-
-                onValueChanged: newValue => {
-                    if (Audio.source?.audio) {
-                        Audio.source.audio.volume = newValue;
-                    }
+                muted: Audio.source?.audio?.muted ?? false
+                value: Audio.source?.audio?.volume ?? 0
+                onMoved: v => {
+                    if (Audio.source?.audio)
+                        Audio.source.audio.volume = v;
                 }
-
                 onIconClicked: {
-                    if (Audio.source?.audio) {
+                    if (Audio.source?.audio)
                         Audio.source.audio.muted = !Audio.source.audio.muted;
-                    }
                 }
 
                 Connections {
                     target: Audio.source?.audio ?? null
                     ignoreUnknownSignals: true
                     function onVolumeChanged() {
-                        if (Audio.source?.audio) {
-                            micRow.sliderValue = Audio.source.audio.volume;
-                        }
+                        micRow.value = Audio.source.audio.volume;
                     }
                 }
             }
 
-            // Brightness Slider
-            ControlSliderRow {
+            LevelRow {
                 id: brightnessRow
-                Layout.fillWidth: true
-                Layout.preferredHeight: 36
-                Layout.rightMargin: 8
-
-                property var currentMonitor: Brightness.getMonitorForScreen(root.bar.screen)
-
                 icon: Icons.sun
-                sliderValue: currentMonitor?.brightness ?? 0.5
-                progressColor: Styling.srItem("overprimary")
-                wavy: true
-                wavyAmplitude: 1.5 * sliderValue
-                wavyFrequency: 8.0 * sliderValue
-                iconRotation: (sliderValue / 1.0) * 180
-                iconScale: 0.8 + (sliderValue / 1.0) * 0.2
-
-                onValueChanged: newValue => {
-                    if (Brightness.syncBrightness) {
-                        for (let i = 0; i < Brightness.monitors.length; i++) {
-                            let mon = Brightness.monitors[i];
-                            if (mon && mon.ready) {
-                                mon.setBrightness(newValue);
-                            }
-                        }
-                    } else if (currentMonitor && currentMonitor.ready) {
-                        currentMonitor.setBrightness(newValue);
-                    }
-                }
-
-                onIconClicked: {}
+                value: root.brightnessMonitor?.brightness ?? 0.5
+                onMoved: v => root.setBrightness(v)
 
                 Connections {
-                    target: brightnessRow.currentMonitor ?? null
+                    target: root.brightnessMonitor ?? null
                     ignoreUnknownSignals: true
                     function onBrightnessChanged() {
-                        if (brightnessRow.currentMonitor) {
-                            brightnessRow.sliderValue = brightnessRow.currentMonitor.brightness;
-                        }
+                        brightnessRow.value = root.brightnessMonitor.brightness;
                     }
                     function onReadyChanged() {
-                        if (brightnessRow.currentMonitor?.ready) {
-                            brightnessRow.sliderValue = brightnessRow.currentMonitor.brightness;
-                        }
+                        if (root.brightnessMonitor?.ready)
+                            brightnessRow.value = root.brightnessMonitor.brightness;
                     }
                 }
             }
         }
     }
 
-    Component.onCompleted: {
-        // Initialize values
-        if (Audio.sink?.audio)
-            volumeRow.sliderValue = Audio.sink.audio.volume;
-        if (Audio.source?.audio)
-            micRow.sliderValue = Audio.source.audio.volume;
-        if (brightnessRow.currentMonitor?.ready)
-            brightnessRow.sliderValue = brightnessRow.currentMonitor.brightness;
+    // One level: the glyph (a quiet button: mute toggle) + a line slider.
+    component LevelRow: RowLayout {
+        id: row
+
+        property string icon: ""
+        property bool muted: false
+        property alias value: slider.value
+        signal moved(real value)
+        signal iconClicked
+
+        width: parent ? parent.width : 0
+        spacing: Space.s
+
+        IconButton {
+            size: "s"
+            icon: row.icon
+            onClicked: row.iconClicked()
+        }
+
+        LineSlider {
+            id: slider
+            Layout.fillWidth: true
+            showValue: true
+            opacity: row.muted ? 0.5 : 1
+            onMoved: v => row.moved(v)
+        }
     }
 }

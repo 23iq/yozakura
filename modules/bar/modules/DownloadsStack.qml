@@ -7,11 +7,13 @@ import qs.config
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
+import qs.modules.services.activities
 import "Downloads.js" as Downloads
 
 // A Downloads stack (macOS dock style): the latest files piled on the
-// module; clicking fans the recent files out of it. moduleOptions.downloads:
-// folder ("" = ~/Downloads), count.
+// module; clicking opens the downloads list (DownloadsList: in progress +
+// recent files). moduleOptions.downloads: folder ("" = ~/Downloads), count.
 BarModuleBase {
     id: root
 
@@ -50,6 +52,7 @@ BarModuleBase {
         id: surface
         module: root
         hovered: mouse.containsMouse
+        active: fanPopup.isOpen
         // Docks draw the stack on the dock itself
         visible: root.panelStyle !== "dock"
     }
@@ -99,18 +102,19 @@ BarModuleBase {
 
     BarPopup {
         id: fanPopup
-        anchorItem: pile
+        objectName: "downloadsPopup"
+        anchorItem: surface
         bar: root.bar
-        variant: "transparent"
-        popupPadding: 0
-        contentWidth: fan.width
-        contentHeight: fan.height
+        popupPadding: Look.surfacePadding
+        contentWidth: 320 + popupPadding * 2
+        contentHeight: list.implicitHeight + popupPadding * 2
 
-        DownloadsFan {
-            id: fan
+        DownloadsList {
+            id: list
+            width: parent.width
             files: root.files
+            transfers: ActivityService.transfers ?? []
             folder: root.folder
-            tileSize: Math.max(44, Math.round(root.moduleSize * 0.9))
             onOpened: fanPopup.close()
         }
     }
