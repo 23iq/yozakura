@@ -8,7 +8,7 @@ import "HomeModel.js" as HomeModel
 // Art beside the title, "artist · album" and prev / play / next (play is the
 // surface's one primary action), the timeline under them (click to seek;
 // the times show only while it is hovered). Where groups are boxes, the
-// box takes a faint blurred tint of the art.
+// box takes a faint blurred tint of the art. Fills the height it gets.
 Group {
     id: root
 
@@ -18,6 +18,18 @@ Group {
     readonly property real position: root.player?.position ?? 0
     readonly property url artUrl: root.player?.trackArtUrl ?? ""
     readonly property bool showTimes: seekArea.containsMouse || seekArea.pressed
+    // Art at the natural size; given more height (fill), the art grows into
+    // it (up to under half the width) and the block stays centered.
+    readonly property real baseArt: Space.controlL + Space.xl
+    readonly property real lineH: root.hasPlayer ? Space.m + timeline.height : 0
+    readonly property real naturalHeight: root.chrome + root.baseArt + root.lineH
+    readonly property real innerW: root.width - root.padding * 2
+    // Tall enough for the art over the text (a taller host): stack them,
+    // centered, so the art can grow instead of leaving bands around it.
+    readonly property bool stacked: root.bodyHeight - root.lineH - textBlock.implicitHeight - Space.l > root.innerW * 0.42
+    readonly property real artSize: root.stacked ? Math.min(root.innerW * 0.62, root.bodyHeight - root.lineH - textBlock.implicitHeight - Space.l) : Math.max(root.baseArt, Math.min(root.bodyHeight - root.lineH, root.innerW * 0.42))
+
+    fill: true
 
     Timer {
         running: MprisController.isPlaying && root.visible
@@ -28,7 +40,7 @@ Group {
 
     Item {
         width: parent.width
-        implicitHeight: content.implicitHeight
+        height: Math.max(content.implicitHeight, root.bodyHeight)
 
         HomeArtGlow {
             objectName: "artGlow"
@@ -42,30 +54,35 @@ Group {
 
         Column {
             id: content
+            anchors.verticalCenter: parent.verticalCenter
             width: parent.width
             spacing: Space.m
 
-            Row {
+            Grid {
                 width: parent.width
+                columns: root.stacked ? 1 : 2
                 spacing: Space.l
+                horizontalItemAlignment: root.stacked ? Grid.AlignHCenter : Grid.AlignLeft
+                verticalItemAlignment: Grid.AlignVCenter
 
                 Art {
                     id: art
                     objectName: "art"
-                    width: Space.controlL + Space.xl
+                    width: root.artSize
                     height: width
                     icon: Icons.musicNotes
                     source: root.artUrl
                 }
 
                 Column {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: parent.width - art.width - parent.spacing
+                    id: textBlock
+                    width: root.stacked ? parent.width : parent.width - art.width - parent.spacing
                     spacing: Space.xs / 2
 
                     KitText {
                         objectName: "title"
                         width: parent.width
+                        horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
                         text: root.hasPlayer ? (root.player.trackTitle || root.player.identity || "") : I18n.t("player.nothing_playing")
                         font.weight: Look.labelWeight
                     }
@@ -74,6 +91,7 @@ Group {
                         objectName: "artist"
                         width: parent.width
                         role: "secondary"
+                        horizontalAlignment: root.stacked ? Text.AlignHCenter : Text.AlignLeft
                         text: root.hasPlayer ? HomeModel.artistLine(root.player.trackArtist, root.player.trackAlbum) : I18n.t("player.enjoy_silence")
                     }
 
@@ -83,7 +101,7 @@ Group {
                     }
 
                     Row {
-                        x: -Space.s
+                        x: root.stacked ? (parent.width - width) / 2 : -Space.s
                         spacing: Space.xs
                         visible: root.hasPlayer
 

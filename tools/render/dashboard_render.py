@@ -9,8 +9,8 @@ Draws the real dashboard frame (tab rail + widgets tab) on the popup
 surface over your wallpaper, with your config and palette (see
 settings_render.py) and sample data from tests/lib/dashboard_env.py: a
 playing track, three notifications (none in composed-empty). Variants:
-the composed home, without notifications, with the output devices open
-(composed-devices), the bento grid.
+the composed home, without notifications, on a taller area (composed-tall),
+with the output devices / Wi-Fi / Bluetooth details open, the bento grid.
 Writes <out>/dashboard-<variant>-<language>.png.
 """
 from __future__ import annotations
@@ -26,12 +26,15 @@ from dashboard_env import DashboardEnv  # noqa: E402
 from kit_env import LANGUAGES  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-# variant -> (layout.dashboard.home, notifications: None = the samples, home detail)
+# variant -> (layout.dashboard.home, notifications: None = the samples, home detail, height: 0 = natural)
 VARIANTS = {
-    "composed": ("composed", None, ""),
-    "composed-empty": ("composed", [], ""),
-    "composed-devices": ("composed", None, "output"),
-    "bento": ("bento", None, ""),
+    "composed": ("composed", None, "", 0),
+    "composed-empty": ("composed", [], "", 0),
+    "composed-tall": ("composed", None, "", 640),
+    "composed-devices": ("composed", None, "output", 0),
+    "composed-wifi": ("composed", None, "wifi", 0),
+    "composed-bluetooth": ("composed", None, "bluetooth", 0),
+    "bento": ("bento", None, "", 0),
 }
 
 SCENE = """
@@ -53,7 +56,8 @@ Window {
 
 
 def render(name: str, path: Path, state: dict, colors: dict, overrides: dict,
-           notifications: list[dict] | None = None, user_config: bool = True, detail: str = "") -> Path:
+           notifications: list[dict] | None = None, user_config: bool = True, detail: str = "",
+           height: int = 0) -> Path:
     """One dashboard scene: `overrides` ({domain: {...}}) over the defaults
     (and your config with user_config) and `colors` as the palette."""
     wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
@@ -64,6 +68,8 @@ def render(name: str, path: Path, state: dict, colors: dict, overrides: dict,
     win.setProperty("wallpaper", url)
     if detail:
         env.h.eval(env.h.find(win, "dashboard"), f"widgetsItem.detail = {detail!r}")
+    if height:
+        env.h.eval(env.h.find(win, "dashboard"), f"implicitHeight = {height}")
     QTest.qWait(1200)
     win.grabWindow().save(str(path))
     print(path, flush=True)
@@ -82,12 +88,12 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
     for variant in args.variants.split(","):
-        home, notifs, detail = VARIANTS[variant]
+        home, notifs, detail, height = VARIANTS[variant]
         for lang in args.languages:
             overrides = {"theme": {"language": lang, "lightMode": args.mode == "light"},
                          "layout": {"dashboard": {"home": home}}}
             render(f"dashboard-render-{variant}-{lang}", out / f"dashboard-{variant}-{lang}.png", state,
-                   palette(args.mode, state), overrides, notifs, detail=detail)
+                   palette(args.mode, state), overrides, notifs, detail=detail, height=height)
     return 0
 
 

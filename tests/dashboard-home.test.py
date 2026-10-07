@@ -8,7 +8,8 @@ volume (the icons mute, the mic shows its live level) and the brightness,
 the chevrons open the device lists; the player shows the track with play as
 the one primary action; the calendar selects today and browses months; the
 notifications are one line per app with per-app and global clear, then the
-quiet empty state; the rail switches tabs (the
+quiet empty state; the month and the player grow to fill the area; the
+Wi-Fi / Bluetooth details list networks and devices from the kit; the rail switches tabs (the
 current one active) and offers the edit toggle only in bento mode.
 """
 import sys
@@ -167,6 +168,47 @@ ev(h.find(home, "clearAll"), "clicked()")
 check(ev(nlist, "Notifications.cleared") == 1, "clear all discards everything")
 QTest.qWait(50)
 check(ev(empty, "visible"), "quiet empty state after clearing")
+
+# Filling: the month takes what the short list leaves (no empty block), and
+# on a taller area the player's art and the month's rows grow into it.
+right_col = ev(cal, "parent")
+check(abs(ev(cal, "height") + ev(right_col, "spacing") + ev(h.find(home, "notifications"), "height")
+          - ev(right_col, "height")) < 1, "calendar + notifications fill the right column")
+player = h.find(home, "player")
+art0, cell0 = ev(player, "artSize"), ev(cal, "cellH")
+check(not ev(player, "stacked"), "art beside the text at the natural size")
+ev(dash, "implicitHeight = 700")
+QTest.qWait(100)
+check(ev(player, "stacked") and ev(player, "artSize") > art0, "a taller area stacks and grows the art")
+check(ev(cal, "cellH") > cell0, "a taller area grows the month rows")
+left_col = ev(player, "parent")
+n = ev(left_col, "children.length")
+used = sum(ev(left_col, "children[%d].height" % i) for i in range(n)) + ev(left_col, "spacing") * (n - 1)
+check(abs(used - ev(left_col, "height")) < 1, "the left blocks fill their column")
+
+# Wi-Fi / Bluetooth details: the kit panels (switch, actions, rows).
+ev(toggles["wifiToggle"], "NetworkService.wifiEnabled = true")
+ev(toggles["wifiToggle"], "more()")
+QTest.qWait(200)
+wifi_rows = item(home, "networkList")
+check(ev(wifi_rows, "count") == 4, "the networks are listed")
+first_net = item(wifi_rows, "networkRow")
+check(ev(first_net, "selected") and ev(first_net, "subtitle") == "Connected · 5G", "the connected network is selected")
+net = ev(first_net, "parent")
+ev(net, "network = NetworkService.friendlyWifiNetworks[1]")
+ev(first_net, "clicked()")
+QTest.qWait(50)
+ev(item(net, "connectChip"), "clicked()")
+check(ev(net, "NetworkService.connected[0]") == "Kōyō Studio", "connect joins the network")
+sw = item(home, "panelSwitch")
+ev(sw, "toggled(false)")
+check(not ev(toggles["wifiToggle"], "NetworkService.wifiEnabled"), "the switch turns Wi-Fi off")
+ev(toggles["wifiToggle"], "NetworkService.wifiEnabled = true")
+ev(toggles["bluetoothToggle"], "more()")
+QTest.qWait(200)
+dev = item(home, "deviceRow")
+check(ev(dev, "title") == "Buds Pro" and ev(dev, "subtitle") == "Connected · 72%", "bluetooth rows show state and battery")
+ev(home, "detail = ''")
 
 # Rail: tabs as IconButtons (current active), edit only in bento mode.
 wall_tab = item(dash, "dashTab_wallpapers")

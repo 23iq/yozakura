@@ -22,7 +22,15 @@ Group {
     readonly property var cells: CalendarModel.monthGrid(root.shown, root.firstDay, root.now)
     readonly property int rows: CalendarModel.rowsNeeded(root.shown, root.firstDay)
     readonly property real cellW: width > 0 ? (width - root.padding * 2) / 7 : Space.controlS
-    readonly property real cellH: Math.round(Space.controlS * 0.75)
+    // Compact rows at the natural size; given more height (fill), the day
+    // rows grow into it so the month always fills its block.
+    readonly property real compactCellH: Math.round(Space.controlS * 0.75)
+    readonly property real eventsH: (events.available ? events.events.length : 0) * (Space.rowHeight + Space.m)
+    readonly property real fixedH: Space.controlS + Space.m + root.eventsH
+    readonly property real minimumHeight: root.chrome + root.fixedH + (root.rows + 1) * root.compactCellH
+    readonly property real cellH: Math.max(root.compactCellH, Math.floor((root.bodyHeight - root.fixedH) / (root.rows + 1)))
+
+    fill: true
 
     CalendarEvents {
         id: events

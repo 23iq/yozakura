@@ -24,6 +24,7 @@ MIRROR = [
     "modules/widgets/dashboard/DashboardTabs.js",
     "modules/widgets/dashboard/home",
     "modules/widgets/dashboard/widgets",
+    "modules/widgets/dashboard/controls",
     "modules/notch/NotchAnimationBehavior.qml",
     "modules/bar/modules/WorldClock.js",
     "modules/services/timers/TimerFormat.js",
@@ -62,17 +63,41 @@ QtObject {{
     function previous() {{ calls++ }} function next() {{ calls++ }} function togglePlaying() {{ calls++; isPlaying = !isPlaying }}
     function cyclePlayer(d) {{}} function setActivePlayer(p) {{}} function setLoopState(s) {{}} function setShuffle(s) {{}}
 }}""",
+        "WifiAccessPoint": "QtObject { property string ssid; property int strength; property bool active; "
+                           "property bool isSecure; property bool is5GHz; property bool askingPassword }",
+        "BluetoothDevice": "QtObject { property string name; property string icon; property bool connected; "
+                           "property bool paired; property bool batteryAvailable; property real battery; property int calls: 0; "
+                           "function connect() { calls++ } function disconnect() { calls++ } function forget() { calls++ } }",
         "NetworkService": """pragma Singleton
 QtObject {
     property bool wifiEnabled: true; property string networkName: "Home 5G"; property int networkStrength: 80
-    property int calls: 0
+    property string wifiStatus: wifiEnabled ? "connected" : "disabled"; property bool wifiConnecting: false
+    property bool wifiScanning: false; property bool isUpdating: false
+    property int calls: 0; property var connected: []
+    property list<QtObject> friendlyWifiNetworks: [
+        WifiAccessPoint { ssid: "Home 5G"; strength: 92; active: true; isSecure: true; is5GHz: true },
+        WifiAccessPoint { ssid: "Kōyō Studio"; strength: 64; isSecure: true },
+        WifiAccessPoint { ssid: "Café Libre"; strength: 41 },
+        WifiAccessPoint { ssid: "Neighbours"; strength: 20; isSecure: true }
+    ]
     function toggleWifi() { calls++; wifiEnabled = !wifiEnabled }
+    function enableWifi(on) { wifiEnabled = on }
+    function rescanWifi() {} function openPublicWifiPortal() {}
+    function connectToWifiNetwork(ap) { connected = connected.concat([ap.ssid]) }
+    function disconnectWifiNetwork() {} function changePassword(ap, p) {}
 }""",
         "BluetoothService": """pragma Singleton
 QtObject {
     property bool enabled: true; property bool connected: true; property int calls: 0
-    property var friendlyDeviceList: [{ "name": "Buds Pro", "connected": true }]
+    property bool discovering: false; property bool isUpdating: false
+    property list<QtObject> friendlyDeviceList: [
+        BluetoothDevice { name: "Buds Pro"; icon: "audio-headset"; connected: true; paired: true; batteryAvailable: true; battery: 72 },
+        BluetoothDevice { name: "MX Keys"; icon: "input-keyboard"; paired: true },
+        BluetoothDevice { name: "Pixel Watch"; icon: "watch" }
+    ]
     function initialize() {} function toggle() { calls++; enabled = !enabled }
+    function setEnabled(on) { enabled = on } function updateDevices() {}
+    function startDiscovery() {} function stopDiscovery() {}
 }""",
         "Notifications": f"""pragma Singleton
 QtObject {{
@@ -152,12 +177,6 @@ class DashboardEnv(KitEnv):
             elif src.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dst)
-        # The device panels the home's details load by URL (real ones need
-        # the full network / Bluetooth services).
-        for panel in ("WifiPanel", "BluetoothPanel"):
-            stub = qs / "modules/widgets/dashboard/controls" / (panel + ".qml")
-            stub.parent.mkdir(parents=True, exist_ok=True)
-            stub.write_text("import QtQuick\nItem { objectName: %r; property int maxContentWidth: 480 }\n" % panel)
         notifs = SAMPLE_NOTIFICATIONS if notifications is None else notifications
         self.h.module("qs.modules.services", services(playing, notifs, art))
         self.h.module("qs.modules.globals", {"GlobalStates": global_states(wallpaper or {})})
