@@ -32,7 +32,10 @@ StyledRect {
             root.selected(root.options[i].value);
     }
 
-    implicitWidth: Math.max(Space.px(180), row.implicitWidth + Space.m * 2)
+    // From the parts' natural widths, never from the Row: the label's width
+    // follows ours, so Row.implicitWidth -> implicitWidth -> width -> label
+    // width -> Row.implicitWidth was a polish loop that froze the shell.
+    implicitWidth: Math.max(Space.px(180), (lead.visible ? lead.implicitWidth + row.spacing : 0) + label.implicitWidth + row.spacing + caret.implicitWidth + Space.m * 2)
     implicitHeight: Space.chip
     variant: KitStates.variant(root.look, "common")
     backgroundOpacity: root.boxed ? 0 : -1
@@ -81,6 +84,7 @@ StyledRect {
             color: Type.secondary
         }
         KitText {
+            id: label
             width: row.width - caret.width - row.spacing - (lead.visible ? lead.width + row.spacing : 0)
             anchors.verticalCenter: parent.verticalCenter
             role: "secondary"
