@@ -40,15 +40,14 @@
                     "workspaceTags",
                     "windowTitle"
                 ],
-                "center": [
-                    "clock"
-                ],
+                "center": [],
                 "end": [
                     "systemStats",
                     "weather",
                     "systray",
                     "controls",
                     "battery",
+                    "clock",
                     "power"
                 ]
             }
