@@ -45,7 +45,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 │   └── defaults/*.js     # Blueprint for each config domain (bar, theme, ai, etc.)
 ├── modules/
 │   ├── bar/              # Panel widgets: clock, systray, workspaces, indicators
-│   ├── components/       # Reusable UI primitives + GLSL shaders (55 files)
+│   ├── components/       # Reusable UI primitives + GLSL shaders; kit/ = the UI kit every screen uses
 │   ├── corners/          # Rounded screen corners overlay
 │   ├── desktop/          # Desktop background + icon grid
 │   ├── dock/             # App dock (standalone or integrated into bar)
@@ -69,7 +69,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 │       ├── powermenu/    # Lock, logout, shutdown actions
 │       ├── presets/      # Theme/layout preset switcher
 │       └── tools/        # Quick utility access (OCR, recording, etc.)
-├── assets/               # Wallpapers, color presets, AI provider configs, sounds
+├── assets/               # Wallpapers, presets (sets/ + layouts/ styles/ palettes/), AI provider configs, sounds
 ├── scripts/              # Residual Python/Bash helpers (most logic in backend/)
 ├── backend/              # Go backend — single `yozakura` process supervises Quickshell, yozd and wl-paste (replaces cli.sh)
 ├── nix/                  # Nix flake, packages, and module definitions
@@ -86,6 +86,8 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Services** | `modules/services/*.qml` | 30+ singletons. System integration layer |
 | **Theme/Colors** | `modules/theme/Colors.qml` | Watches `~/.cache/yozakura/colors.json` reactively |
 | **Styling** | `modules/theme/Styling.qml` | `radius()`, `fontSize()`, `getStyledRectConfig()` |
+| **UI kit** | `modules/components/kit/` | Type, Space, Group, ListRow, SearchField, IconButton...; `Look` = `theme.language` (see UI KIT) |
+| **Presets** | `assets/presets/sets/<Name>/` | `set.json` names a layout, style and palette (`assets/presets/{layouts,styles,palettes}`), deep-merged in that order, then the set's own files |
 | **UI Primitives** | `modules/components/` | `StyledRect`, `BarPopup`, `SearchInput`, shaders |
 | **Dashboard** | `modules/widgets/dashboard/` | Tabbed hub with LRU lazy-loading |
 | **Launcher** | `modules/widgets/launcher/` | Provider search (apps, calculator/units/currency, commands, files, wallpapers, ask AI) + prefix tabs; see its AGENTS.md |
@@ -107,6 +109,18 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Exclusive mode** | `backend/pkg/exclusive`, `backend/pkg/svc/exclusive` | `yozakura install hyprland --exclusive` / `--restore` |
 | **Installer** | `install.sh`, `backend/cmd/yozakura/cmds_onboarding_dryrun.go` | Core-only, compositor choice, `--dry-run`; wizard `onboarding --dry-run` |
 
+## UI KIT
+Screens are built only from `modules/components/kit/` (`import qs.modules.components.kit`):
+`Type`/`KitText` roles, `Space` tokens, `Group`, `SectionLabel`, `Divider`, `ListRow`,
+`SearchField`, `IconButton`, `ActionButton`, `Chip`, `Switch`, `LineSlider`, `ProgressLine`,
+`Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`. No raw font sizes, paddings, hex colours or
+hand-made rows/buttons; a missing piece becomes a small generic kit component. The accent
+marks only active, progress, selected/today and one primary action per surface.
+`theme.language` (`ink` hairlines | `glass` frosted cards | `tiles` solid tiles | `classic`)
+is decided in `modules/theme/VisualLanguage.js` and read through `Look`; components never
+branch on the language name. Visual checks are offscreen only: `tools/render/*_render.py`
+(private Xvfb, `kit_render.py` = the whole kit per language); never the live display.
+
 ## CODE MAP
 
 | Symbol | Type | Location | Role |
@@ -117,7 +131,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | `Colors` | Singleton | `modules/theme/Colors.qml` | Dynamic color palette from JSON |
 | `Styling` | Singleton | `modules/theme/Styling.qml` | Shared style utilities (radius, font, variants) |
 | `Icons` | Singleton | `modules/theme/Icons.qml` | Phosphor-Bold icon font character map |
-| `StyledRect` | Component | `modules/components/StyledRect.qml` | Base themed container (300+ usages) |
+| `StyledRect` | Component | `modules/components/StyledRect.qml` | Base themed container (300+ usages); screens use the kit on top of it |
 | `GradientCache` | Singleton | `modules/components/GradientCache.qml` | GPU texture sharing optimization |
 | `UnifiedShellPanel` | Component | `modules/shell/UnifiedShellPanel.qml` | Full-screen `PanelWindow` for Bar + Notch + Dock |
 | `ShellRoot` | Component | `shell.qml` | Root window. `Variants` per screen |

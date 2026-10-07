@@ -42,6 +42,11 @@ so AI agents can drive the desktop too.
   (vertical rail), *Shōji* (corner tabs), *Metro* (two bars), *CRT*
   (statusline) and *Yozakura Default*. Their fonts ship with the shell
   (`assets/fonts/ui`, OFL).
+- Each built-in preset is a set of three parts (a layout, a style and a
+  palette, in `assets/presets/`) that can be swapped one at a time.
+- One visual language across every screen, chosen by the style: *ink*
+  (hairlines), *glass* (frosted cards) or *tiles* (solid tiles), all drawn by a
+  shared UI kit.
 - Preset studio: save your own, mix parts of several (layout from one, colors
   from another), try one on before applying, import and export.
 - Bar layouts with islands, a slide-out drawer and a compact mode; per-preset
@@ -240,6 +245,7 @@ config over, keeping `.pre-yozakura` backups.
 ```bash
 make check     # parse, lint, format, audit and tests (QML tests run headless)
 make run       # build and start from the checkout
+tools/render/kit_render.py   # draw the UI kit offscreen (private Xvfb), one PNG per visual language
 ```
 
 See [AGENTS.md](AGENTS.md) for the architecture and the definition of done.
