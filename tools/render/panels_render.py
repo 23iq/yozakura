@@ -65,15 +65,18 @@ def find_item(item, name: str):
 
 
 def render(layout: dict, mode: str, size: tuple[int, int], out: Path, state: dict, repo: Path,
-           windows: bool = True) -> Path:
-    theme = {**user_domain("theme"), **layout.get("theme", {}), "lightMode": mode == "light"}
-    bar = {**user_domain("bar"), **layout.get("bar", {})}
-    notch = {**user_domain("notch"), **layout.get("notch", {})}
+           windows: bool = True, colors: dict | None = None, user_config: bool = True) -> Path:
+    """colors: the palette (default: yours for `mode`); user_config=False
+    renders the layout over the defaults instead of over your config."""
+    mine = user_domain if user_config else (lambda _name: {})
+    theme = {**mine("theme"), **layout.get("theme", {}), "lightMode": mode == "light"}
+    bar = {**mine("bar"), **layout.get("bar", {})}
+    notch = {**mine("notch"), **layout.get("notch", {})}
     extra = {k: v for k, v in layout.items()
              if k not in ("name", "bar", "theme", "notch", "dock", "label", "actions", "crop")}
     bundled_fonts.register(repo)
     env = PanelsEnv(f"panels-{layout.get('name', 'layout')}-{mode}", repo=repo, bar=bar, theme=theme,
-                    notch=notch, dock=layout.get("dock"), palette=palette(mode, state), extra=extra)
+                    notch=notch, dock=layout.get("dock"), palette=colors or palette(mode, state), extra=extra)
     win = env.scene(size[0], size[1], wallpaper=color_source(state), windows=windows)
     QTest.qWait(1200)
     # "actions": [{"object": "<objectName>", "eval": "<expression>"}] (hover, open popups...)

@@ -50,6 +50,23 @@ Window {
 }"""
 
 
+def render(name: str, path: Path, state: dict, colors: dict, overrides: dict,
+           notifications: list[dict] | None = None, user_config: bool = True) -> Path:
+    """One dashboard scene: `overrides` ({domain: {...}}) over the defaults
+    (and your config with user_config) and `colors` as the palette."""
+    wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
+    url = ("file://" + wall) if wall else ""
+    env = DashboardEnv(name, notifications=notifications, art=url, palette=colors, user_config=user_config,
+                       overrides=overrides, wallpaper=state)
+    win = env.load(SCENE)
+    win.setProperty("wallpaper", url)
+    QTest.qWait(1200)
+    win.grabWindow().save(str(path))
+    print(path, flush=True)
+    win.close()
+    return path
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("languages", nargs="*", default=LANGUAGES)
@@ -60,22 +77,13 @@ def main() -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
-    wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
-    url = ("file://" + wall) if wall else ""
     for variant in args.variants.split(","):
         home, notifs = VARIANTS[variant]
         for lang in args.languages:
             overrides = {"theme": {"language": lang, "lightMode": args.mode == "light"},
                          "layout": {"dashboard": {"home": home}}}
-            env = DashboardEnv(f"dashboard-render-{variant}-{lang}", notifications=notifs, art=url,
-                               palette=palette(args.mode, state), user_config=True, overrides=overrides,
-                               wallpaper=state)
-            win = env.load(SCENE)
-            win.setProperty("wallpaper", url)
-            QTest.qWait(1200)
-            path = out / f"dashboard-{variant}-{lang}.png"
-            win.grabWindow().save(str(path))
-            print(path)
+            render(f"dashboard-render-{variant}-{lang}", out / f"dashboard-{variant}-{lang}.png", state,
+                   palette(args.mode, state), overrides, notifs)
     return 0
 
 
