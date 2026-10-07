@@ -40,6 +40,9 @@ var data = {
     "sheet": {
         "side": "auto"
     },
+    // Dim (and let the compositor blur) the screen behind the spotlight and
+    // sheet hosts. Off: no scrim, a click outside still closes.
+    "backdrop": false,
     // notch: in the notch; fullscreen: big buttons over a dimmed screen;
     // radial: a ring at the cursor (modules/widgets/powermenu/styles).
     "powermenu": {

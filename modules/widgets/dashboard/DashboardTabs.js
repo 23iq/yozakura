@@ -70,3 +70,11 @@ function step(order, current, delta, wrap) {
         return order[Math.max(0, Math.min(order.length - 1, next))];
     return order[((next % order.length) + order.length) % order.length];
 }
+
+// The dashboard's size clamped into the room a screen leaves (`margin` px of
+// air on every side); `room` <= 0 (screen unknown) leaves it as is.
+function fitScreen(size, room, margin) {
+    if (!(room > 0))
+        return size;
+    return Math.max(1, Math.min(size, room - margin * 2));
+}

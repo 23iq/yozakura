@@ -2,7 +2,8 @@ import QtQuick
 import qs.modules.shell
 import qs.modules.theme
 
-// Centered in the focused screen's free work area over a dimmed backdrop;
+// Centered in the focused screen's free work area (optionally over a dimmed
+// backdrop, layout.backdrop);
 // fades in and scales 0.96 -> 1 (Motion.enter).
 SurfaceHost {
     id: root
@@ -15,17 +16,11 @@ SurfaceHost {
         "h": (root.view ? root.view.implicitHeight : 0) + frame.padding * 2
     })
 
-    Rectangle {
-        id: scrim
+    HostBackdrop {
         anchors.fill: parent
-        color: Colors.scrim
-        opacity: 0.5 * Math.min(1, root.progress)
-
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.AllButtons
-            onClicked: root.requestClose()
-        }
+        strength: 0.5
+        progress: root.progress
+        onClicked: root.requestClose()
     }
 
     HostFrame {
