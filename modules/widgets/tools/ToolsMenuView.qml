@@ -1,7 +1,6 @@
 import QtQuick
 import qs.modules.components
 import qs.modules.services
-import qs.config
 import qs.modules.theme
 
 Item {
@@ -9,17 +8,17 @@ Item {
     implicitHeight: toolsMenu.implicitHeight
 
     Behavior on implicitWidth {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
 
     Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }

@@ -94,31 +94,32 @@ Item {
         }
     }
 
+    // Off while dragging: the pointer drives x/y, an animation would lag it
     Behavior on x {
-        enabled: Config.animDuration > 0 && !root.useOverridePosition
+        enabled: Motion.morph.duration > 0 && !root.useOverridePosition && !root.pressed
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on y {
-        enabled: Config.animDuration > 0 && !root.useOverridePosition
+        enabled: Motion.morph.duration > 0 && !root.useOverridePosition && !root.pressed
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on width {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
     Behavior on height {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
