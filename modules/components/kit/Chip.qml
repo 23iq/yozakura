@@ -19,7 +19,7 @@ StyledRect {
     readonly property bool boxed: Look.boxedControls && (root.look === "normal" || root.look === "hover")
     readonly property color ink: {
         const k = KitStates.ink(root.look);
-        return k === "onAccent" ? Type.onAccent : (k === "accent" ? Type.accent : Type.text);
+        return k === "accentInk" ? Type.accentInk : (k === "accent" ? Type.accent : Type.text);
     }
 
     signal clicked

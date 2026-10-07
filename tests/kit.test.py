@@ -76,6 +76,9 @@ for lang, density in CASES:
     assert h.eval(get("label"), "font.letterSpacing") > 0, tag
     assert h.eval(get("label"), "color.toString()") == h.eval(win, "Colors.outline.toString()"), tag
     assert h.eval(get("secondary"), "color.toString()") == h.eval(win, "Colors.overSurfaceVariant.toString()"), tag
+    # The ink on the accent is a real color (a property named on<Prop> would
+    # compile as a change handler and stay invalid).
+    assert h.eval(win, "Type.accentInk.toString()") == h.eval(win, "Colors.overPrimary.toString()"), tag
 
     # Space scale (density)
     factor = {"compact": 7 / 8, "cozy": 1}[density]
@@ -127,7 +130,7 @@ for lang, density in CASES:
     chip.setProperty("active", True)
     assert chip.property("variant") == "primary", tag
     assert chip.property("look") == ("primary" if lang == "tiles" else "active"), tag
-    assert chip.property("ink").name() == h.eval(win, "Type.%s.toString()" % ("onAccent" if lang == "tiles" else "accent")), tag
+    assert chip.property("ink").name() == h.eval(win, "Type.%s.toString()" % ("accentInk" if lang == "tiles" else "accent")), tag
 
     # ListRow: ghost at rest, focus on hover, tint when selected; slots load
     row = get("row")

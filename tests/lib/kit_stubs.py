@@ -19,7 +19,7 @@ TYPE = """pragma Singleton
 QtObject {
     property color text: "white"; property color secondary: "silver"; property color muted: "gray"
     property color hairline: "#222222"; property color track: "#333333"; property color placeholder: "#111111"
-    readonly property color onAccent: Qt.color("black")
+    readonly property color accentInk: Qt.color("black")
     property color accent: "pink"
     function size(r) { return 14 } function weight(r) { return Font.Normal } function family(r) { return "Sans" }
     function color(r) { return text } function letterSpacing(r) { return 0 } function capitalization(r) { return Font.MixedCase }

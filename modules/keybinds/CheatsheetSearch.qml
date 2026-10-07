@@ -56,7 +56,7 @@ Item {
         font.weight: Type.weight("title")
         color: Type.text
         selectionColor: Type.accent
-        selectedTextColor: Type.onAccent
+        selectedTextColor: Type.accentInk
         cursorDelegate: Rectangle {
             width: Space.hairline * 2
             color: Type.accent

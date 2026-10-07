@@ -30,7 +30,7 @@ test('active is a tint, primary a fill, the rest keep the variant opacity', () =
 });
 
 test('glyph ink follows the look', () => {
-    assert.equal(K.ink('primary'), 'onAccent');
+    assert.equal(K.ink('primary'), 'accentInk');
     assert.equal(K.ink('active'), 'accent');
     assert.equal(K.ink('hover'), 'text');
 });

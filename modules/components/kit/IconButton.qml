@@ -57,7 +57,7 @@ StyledRect {
         font.pixelSize: root.size === "l" ? Type.iconSize("title") + 4 : Type.iconSize("body") + (root.size === "s" ? -1 : 2)
         color: {
             const k = KitStates.ink(root.look);
-            return k === "onAccent" ? Type.onAccent : (k === "accent" ? Type.accent : Type.text);
+            return k === "accentInk" ? Type.accentInk : (k === "accent" ? Type.accent : Type.text);
         }
     }
 

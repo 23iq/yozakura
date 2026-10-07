@@ -37,9 +37,9 @@ function opacity(lk, hovered) {
     return -1;
 }
 
-// Glyph / label ink: "onAccent" on the filled primary, "accent" on a tint.
+// Glyph / label ink: "accentInk" on the filled primary, "accent" on a tint.
 function ink(lk) {
     if (lk === "primary")
-        return "onAccent";
+        return "accentInk";
     return lk === "active" ? "accent" : "text";
 }

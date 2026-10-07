@@ -149,7 +149,7 @@ Item {
             clip: true
             color: Type.text
             selectionColor: Type.accent
-            selectedTextColor: Type.onAccent
+            selectedTextColor: Type.accentInk
             font.family: Type.family("body")
             font.pixelSize: Type.size("body")
             // Classified here: the `intent` binding may not have caught up yet

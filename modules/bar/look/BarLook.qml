@@ -52,7 +52,7 @@ QtObject {
     // Ink of a module's content in a KitStates look
     function ink(look: string): color {
         if (look === "primary")
-            return Type.onAccent;
+            return Type.accentInk;
         return look === "active" ? Type.accent : Type.text;
     }
 }
