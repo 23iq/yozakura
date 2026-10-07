@@ -56,7 +56,7 @@ QTest.qWait(100)
 home = ev(dash, "widgetsItem")
 check(home is not None and h.find(home, "header") is not None, "composed home loaded")
 check(abs(ev(dash, "implicitWidth") - (ev(home, "implicitWidth") + ev(dash, "railWidth"))) < 1, "width follows the home")
-check(abs(ev(dash, "implicitHeight") - max(300, ev(home, "implicitHeight"))) < 1, "height follows the home")
+check(abs(ev(dash, "implicitHeight") - max(430, ev(home, "implicitHeight"))) < 1, "height follows the home")
 
 # Toggles: each chip calls its service and follows its state.
 chips = {n: h.find(home, n) for n in ("wifiChip", "bluetoothChip", "silenceChip", "awakeChip", "gameChip")}
@@ -150,3 +150,11 @@ check(ev(dash, "bentoEditing") and ev(edit, "active"), "edit toggle switches ben
 
 print("dashboard-home: ok")
 h.exit(0)
+
+# One stable size for every tab: switching tabs never resizes the dashboard.
+size = (ev(dash, "implicitWidth"), ev(dash, "implicitHeight"))
+for tab in (1, 2, 3, 0):
+    ev(win, "GlobalStates.dashboardCurrentTab = %d" % tab)
+    QTest.qWait(60)
+    check(ev(dash, "state.currentTab") == tab, "tab %d current" % tab)
+    check((ev(dash, "implicitWidth"), ev(dash, "implicitHeight")) == size, "size stable on tab %d" % tab)

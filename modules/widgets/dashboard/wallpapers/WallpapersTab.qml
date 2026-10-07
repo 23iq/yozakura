@@ -9,6 +9,7 @@ import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.config
+import "WallpaperGrid.js" as WallpaperGrid
 
 // Componente principal para el selector de fondos de pantalla.
 FocusScope {
@@ -63,7 +64,8 @@ FocusScope {
     property var activeFilters: []  // Lista de tipos de archivo seleccionados para filtrar
 
     // Configuración interna del grid
-    readonly property int gridColumns: 7
+    // Reflows with the tab's width (cells about three quarters of a bento cell).
+    readonly property int gridColumns: WallpaperGrid.columnsFor(wallpaperGridContainer.width, Metrics.bentoCell * 0.75)
     readonly property int wallpaperMargin: 4
 
     // Array de elementos focusables para navegación cíclica
