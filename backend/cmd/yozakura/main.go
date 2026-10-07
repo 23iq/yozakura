@@ -130,6 +130,7 @@ func main() {
 	markLegacyKeyboard()
 	migrateNotchStyle()
 	markLegacyAppHooks()
+	shiftDefaults()
 	ensureConfigFiles()
 
 	if len(args) == 0 {
@@ -297,12 +298,6 @@ func migrateNotchStyle() {
 func markLegacyAppHooks() {
 	if _, err := migrate.EnsureAppHooksConsent(*paths.New(), apphooks.DefaultEnv()); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: app theming migration: %v\n", err)
-	}
-}
-
-func ensureConfigFiles() {
-	if err := daemon.EnsureConfigFiles(paths.New(), defaultPresetDir()); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: failed to ensure config: %v\n", err)
 	}
 }
 
@@ -502,10 +497,6 @@ func shellDir() string {
 		return dir
 	}
 	return filepath.Join(os.Getenv("HOME"), ".local/src", brand.AppID)
-}
-
-func defaultPresetDir() string {
-	return filepath.Join(shellDir(), "assets", "presets", brand.DisplayName+" Default")
 }
 
 func runDetached(cmd string) {

@@ -613,26 +613,33 @@ func pidFile() string {
 	return "/tmp/" + brand.AppID + ".pid"
 }
 
-// EnsureConfigFiles copies preset JSON defaults if missing (legacy ensure_config_files).
-func EnsureConfigFiles(p *paths.Paths, presetDir string) error {
-	domains := []string{"theme", "bar", "workspaces", "overview", "notch", "compositor", "performance", "weather", "desktop", "lockscreen", "prefix", "system", "dock", "ai", "general"}
+// EnsureConfigFiles seeds a new install (no theme.json yet, reported as
+// fresh) with the default set's domain files (files, by domain). An
+// existing install is left alone: a missing file there means defaults,
+// and seeding it from a newer default set would change the user's look.
+func EnsureConfigFiles(p *paths.Paths, files map[string][]byte) (fresh bool, err error) {
+	domains := []string{"theme", "bar", "workspaces", "overview", "notch", "compositor", "performance", "weather", "desktop", "lockscreen", "prefix", "system", "dock", "ai", "general", "layout"}
 	configDir := filepath.Join(p.ConfigDir, "config")
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
-		return err
+		return false, err
+	}
+	_, statErr := os.Stat(filepath.Join(configDir, "theme.json"))
+	fresh = os.IsNotExist(statErr)
+	if !fresh {
+		return false, nil
 	}
 	for _, domain := range domains {
 		dst := filepath.Join(configDir, domain+".json")
 		if _, err := os.Stat(dst); err == nil {
 			continue
 		}
-		src := filepath.Join(presetDir, domain+".json")
-		data, err := os.ReadFile(src)
-		if err != nil {
+		data, ok := files[domain]
+		if !ok {
 			continue
 		}
 		if err := os.WriteFile(dst, data, 0o644); err != nil {
-			return err
+			return fresh, err
 		}
 	}
-	return nil
+	return fresh, nil
 }

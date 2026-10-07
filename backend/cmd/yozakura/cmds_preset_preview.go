@@ -9,19 +9,31 @@ import (
 	"yozakura/backend/pkg/presets"
 )
 
-// presetApplyArgs implements `preset apply [--preview] <name>`. A preview
-// is undone by `preset revert`; a plain apply during one keeps it.
+// presetApplyArgs implements `preset apply [--part <kind>] [--preview]
+// <name>`. A preview is undone by `preset revert`; a plain apply during
+// one keeps it.
 func presetApplyArgs(m *presets.Manager, args []string, out, errOut io.Writer) error {
-	preview := false
+	preview, part := false, ""
 	var names []string
-	for _, a := range args {
-		if a == "--preview" {
+	for i := 0; i < len(args); i++ {
+		switch a := args[i]; {
+		case a == "--preview":
 			preview = true
-		} else {
+		case a == "--part" && i+1 < len(args):
+			part = args[i+1]
+			i++
+		case strings.HasPrefix(a, "--part="):
+			part = strings.TrimPrefix(a, "--part=")
+		case a == "--part":
+			return fmt.Errorf("--part needs a kind (%s)", strings.Join(presets.PartKinds, ", "))
+		default:
 			names = append(names, a)
 		}
 	}
 	name := strings.Join(names, " ")
+	if part != "" {
+		return presetApplyPartCmd(m, part, name, preview, out, errOut)
+	}
 	if !preview {
 		return presetApplyCmd(m, name, out, errOut)
 	}
