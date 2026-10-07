@@ -103,12 +103,21 @@ Item {
         onActivated: shell.step(-1)
     }
 
+    // Window background: the theme's "bg" surface, or the language's
+    // translucent window fill (glass) over the desktop.
     StyledRect {
         anchors.fill: parent
+        visible: !Look.windowTranslucent
         variant: "bg"
         glassSurface: "settings"
         radius: 0
         enableBorder: false
+    }
+    Rectangle {
+        objectName: "windowGlass"
+        anchors.fill: parent
+        visible: Look.windowTranslucent
+        color: Look.windowFill
     }
 
     // Sidebar plane: the language's group fill (ink: none), and a hairline

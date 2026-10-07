@@ -1,6 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 
 // Clipboard history tab (launcher prefix / dashboard). State and actions are
@@ -38,7 +38,7 @@ ClipboardTabBase {
     RowLayout {
         id: mainLayout
         anchors.fill: parent
-        spacing: 8
+        spacing: Space.l
 
         // Left column: search + list
         Item {
@@ -49,7 +49,6 @@ ClipboardTabBase {
                 id: searchInput
                 tab: root
                 width: parent.width
-                height: 48
                 anchors.top: parent.top
             }
 
@@ -60,12 +59,13 @@ ClipboardTabBase {
                 width: parent.width
                 anchors.top: searchInput.bottom
                 anchors.bottom: parent.bottom
-                anchors.topMargin: 8
+                anchors.topMargin: Space.s
             }
         }
 
-        Separator {
-            vert: true
+        Divider {
+            vertical: true
+            Layout.fillHeight: true
         }
 
         // Preview panel (full height, rest of the width)

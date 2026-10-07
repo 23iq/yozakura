@@ -1,15 +1,15 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
-import qs.modules.theme
-import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.services
 import qs.config
+import qs.modules.theme
+import "notes_utils.js" as NotesUtils
 
 // Left panel of the notes tab: search field with the list keyboard handling
 // (navigate, expand options, rename, reorder, Tab to the editor) and the
-// notes list with its animated selection highlight.
+// notes list (kit ListRows, the keyboard cursor is the selected row).
 Item {
     id: panel
 
@@ -33,16 +33,29 @@ Item {
         });
     }
 
-    // Height of a row: 48, or 48 + its options list when expanded
-    function rowHeight(i) {
-        const tab = panel.tab;
-        if (i === tab.expandedItemIndex && !tab.deleteMode && !tab.renameMode) {
-            var isCreateBtn = i >= 0 && i < tab.filteredNotes.length && tab.filteredNotes[i].isCreateButton;
-            var optionCount = isCreateBtn ? 2 : 3;
-            var listHeight = 36 * optionCount;
-            return 48 + 4 + listHeight + 8;
+    readonly property int rowH: Space.rowHeight
+
+    // Height of a row (with its options list when expanded)
+    function rowHeight(note, expanded) {
+        return NotesUtils.rowHeight(note, expanded, panel.rowH, Space.controlS, Space.xs);
+    }
+
+    // Scroll so the expanded row and its options are visible (rows above are collapsed)
+    function revealExpanded() {
+        const i = panel.tab.expandedItemIndex;
+        if (i < 0 || i >= panel.model.count)
+            return;
+        const note = panel.tab.filteredNotes[i];
+        const y = NotesUtils.scrollToShow(i * panel.rowH, panel.rowHeight(note, true), resultsList.contentY, resultsList.height, resultsList.contentHeight);
+        if (y !== -1)
+            resultsList.contentY = y;
+    }
+
+    Connections {
+        target: panel.tab
+        function onExpandedItemIndexChanged() {
+            Qt.callLater(panel.revealExpanded);
         }
-        return 48;
     }
 
     // Search input
@@ -50,7 +63,6 @@ Item {
         id: searchInput
         rule: true
         width: parent.width
-        height: 48
         anchors.top: parent.top
         text: panel.tab.searchText
         placeholderText: I18n.t("notes.search")
@@ -164,13 +176,22 @@ Item {
         }
     }
 
+    SectionLabel {
+        id: section
+        anchors.top: searchInput.bottom
+        anchors.topMargin: Space.l
+        x: Space.s
+        width: parent.width - Space.s * 2
+        text: I18n.t("launcher.provider.notes")
+    }
+
     // Results list
     ListView {
         id: resultsList
         width: parent.width
-        anchors.top: searchInput.bottom
+        anchors.top: section.bottom
         anchors.bottom: parent.bottom
-        anchors.topMargin: 8
+        anchors.topMargin: Space.s
         clip: true
         model: panel.model
         currentIndex: panel.tab.selectedIndex
@@ -194,79 +215,12 @@ Item {
         }
 
         ScrollBar.vertical: ScrollBar {
-            active: true
+            active: resultsList.moving
         }
-
-        highlight: Item {
-            id: highlightItem
-            width: resultsList.width
-            height: panel.rowHeight(resultsList.currentIndex)
-
-            y: {
-                var yPos = 0;
-                for (var i = 0; i < resultsList.currentIndex && i < panel.model.count; i++) {
-                    yPos += panel.rowHeight(i);
-                }
-                return yPos;
-            }
-
-            Behavior on y {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.morph.easing
-                }
-            }
-
-            Behavior on height {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Motion.morph.easing
-                }
-            }
-
-            onHeightChanged: {
-                if (panel.tab.expandedItemIndex >= 0 && highlightItem.height > 48) {
-                    Qt.callLater(() => {
-                        panel.tab.adjustScrollForExpandedItem(panel.tab.expandedItemIndex);
-                    });
-                }
-            }
-
-            StyledRect {
-                anchors.fill: parent
-                variant: {
-                    const tab = panel.tab;
-                    if (tab.deleteMode) {
-                        return "error";
-                    } else if (tab.renameMode) {
-                        return "secondary";
-                    } else if (tab.expandedItemIndex >= 0 && tab.selectedIndex === tab.expandedItemIndex) {
-                        return "pane";
-                    } else {
-                        return "primary";
-                    }
-                }
-                radius: Styling.radius(4)
-                backgroundOpacity: variant === "primary" ? Look.activeTint : -1
-                visible: panel.tab.selectedIndex >= 0
-
-                Behavior on color {
-                    enabled: Config.animDuration > 0
-                    ColorAnimation {
-                        duration: Config.animDuration / 2
-                        easing.type: Motion.morph.easing
-                    }
-                }
-            }
-        }
-
-        highlightFollowsCurrentItem: false
 
         delegate: NoteListItem {
             tab: panel.tab
-            listView: resultsList
+            panel: panel
         }
     }
 }

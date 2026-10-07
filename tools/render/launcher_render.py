@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings_render import REPO, palette, wallpaper_state  # noqa: E402  (also enters the private Xvfb)
 
 from kit_env import LANGUAGES  # noqa: E402
-from launcher_env import LauncherEnv  # noqa: E402
+from tabs_env import TABS, TabsEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 # name -> (search text, extra JS on the LauncherSearch, wait ms)
@@ -44,7 +44,7 @@ STATES = {
     "options": ("kitty", "expand(0); optionIndex = 1", 600),
 }
 
-LIST = {"resultStyle": "list", "preview": False, "compactWhenEmpty": False}
+LIST = {"resultStyle": "list", "preview": False, "compactWhenEmpty": False, "icons": True}
 # name -> (layout.launcher overrides, state, extra JS on the LauncherSearch)
 VARIANTS = {
     "list": (LIST, "mixed-command", ""),
@@ -57,6 +57,31 @@ VARIANTS = {
     "preview-image": ({**LIST, "preview": True}, "files", "select(2)"),
     "preview-calc": ({**LIST, "preview": True}, "calc", ""),
     "compact": ({**LIST, "compactWhenEmpty": True}, "empty", ""),
+    # icons: false, the text-only (command-line) list
+    "text": ({**LIST, "icons": False}, "mixed-command", ""),
+    "text-options": ({**LIST, "icons": False}, "options", ""),
+    "text-cards": ({**LIST, "resultStyle": "cards", "icons": False}, "apps", ""),
+}
+
+# Prefix tabs (tests/lib/tabs_env.py fixtures): name -> (tab, search text, JS on the tab)
+TAB_STATES = {
+    "tab-clipboard": ("clipboard", "", ""),
+    "tab-clipboard-options": ("clipboard", "", "selectedIndex = 1; expandedItemIndex = 1; selectedOptionIndex = 1"),
+    "tab-clipboard-delete": ("clipboard", "", "selectedIndex = 2; enterDeleteMode(allItems[2].id)"),
+    "tab-emoji": ("emoji", "", "selectedIndex = 0; selectedRecentIndex = 1"),
+    "tab-emoji-search": ("emoji", "cat", ""),
+    "tab-emoji-clear": ("emoji", "", "clearButtonConfirmState = true"),
+    "tab-emoji-tones": ("emoji", "waving", "toggleOptions(0, true); selectedOptionIndex = 2"),
+    "tab-tmux": ("tmux", "", "selectedIndex = 1"),
+    "tab-tmux-options": ("tmux", "", "selectedIndex = 1; expandedItemIndex = 1; selectedOptionIndex = 1"),
+    "tab-tmux-rename": ("tmux", "", "selectedIndex = 2; enterRenameMode('work')"),
+    "tab-tmux-quit": ("tmux", "", "cancelRenameMode(); selectedIndex = 3; enterDeleteMode('dotfiles'); deleteButtonIndex = 1"),
+    "tab-notes": ("notes", "", "selectedIndex = 2"),
+    "tab-notes-markdown": ("notes", "", "selectedIndex = 1"),
+    "tab-notes-options": ("notes", "", "selectedIndex = 1; expandedItemIndex = 1; selectedOptionIndex = 1"),
+    "tab-notes-delete": ("notes", "", "if (renameMode) cancelRenameMode(); selectedIndex = 3; enterDeleteMode(filteredNotes[3].id)"),
+    "tab-notes-search": ("notes", "gro", "expandedItemIndex = 0; selectedOptionIndex = 1"),
+    "tab-notes-rename": ("notes", "", "if (deleteMode) cancelDeleteMode(); selectedIndex = 2; enterRenameMode(filteredNotes[2].id)"),
 }
 
 
@@ -75,7 +100,7 @@ def fixture_files(home: str, wall: str) -> None:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("names", nargs="*", default=list(VARIANTS))
+    ap.add_argument("names", nargs="*", default=list(VARIANTS) + list(TAB_STATES))
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light", "both"])
     ap.add_argument("--languages", default=",".join(LANGUAGES))
@@ -96,7 +121,8 @@ def render(lang: str, mode: str, args, state: dict, wall: str, out: Path) -> Non
     theme = {"lightMode": mode == "light", "language": lang}
     if args.roundness >= 0:
         theme["roundness"] = args.roundness
-    env = LauncherEnv(f"launcher-render-{lang}-{mode}", palette=palette(mode, state), user_config=True,
+    tabs = sorted({TAB_STATES[n][0] for n in args.names if n in TAB_STATES})
+    env = TabsEnv(f"launcher-render-{lang}-{mode}", tabs=tabs, palette=palette(mode, state), user_config=True,
                       overrides={"theme": theme}, wallpaper=state)
     fixture_files(env.home, wall)
     win = env.load(f"""
@@ -126,6 +152,10 @@ Window {{
     QTest.qWait(400)
     suffix = "" if mode == "dark" else "-light"
     for name in args.names:
+        if name in TAB_STATES:
+            render_tab(h, view, win, name, out / f"tabs-{name[4:]}-{lang}{suffix}.png")
+            continue
+        h.eval(view, "currentTab = 0")
         layout, st, extra = VARIANTS.get(name, (LIST, name, ""))
         text, js, wait = STATES[st]
         h.eval(view, f"Config.layout.launcher = Object.assign({{}}, Config.layout.launcher, {json.dumps(layout)})")
@@ -154,6 +184,21 @@ Window {{
         path = out / f"launcher-{name}-{lang}{suffix}.png"
         win.grabWindow().save(str(path))
         print(path)
+
+
+def render_tab(h, view, win, name: str, path: Path) -> None:
+    tab, text, js = TAB_STATES[name]
+    h.eval(view, f"Config.layout.launcher = Object.assign({{}}, Config.layout.launcher, {json.dumps(LIST)})")
+    h.eval(view, f"currentTab = {TABS[tab]}")
+    QTest.qWait(900)
+    item = h.eval(view, f"tabLoader({TABS[tab]}).item")
+    h.eval(item, f"searchText = {json.dumps(text)}")
+    QTest.qWait(300)
+    if js:
+        h.eval(item, js)
+    QTest.qWait(800)
+    win.grabWindow().save(str(path))
+    print(path)
 
 
 if __name__ == "__main__":

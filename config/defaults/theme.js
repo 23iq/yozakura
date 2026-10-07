@@ -9,6 +9,9 @@ var data = {
     "monoFont": "Iosevka Nerd Font Mono",
     "monoFontSize": 14,
     "tintIcons": false,
+    // Palette role of progress fills, rings and slider fills: primary |
+    // secondary | tertiary (a set shows its second accent here).
+    "progressRole": "primary",
     // Icon font weight: regular | bold | fill (modules/theme/IconWeights.js).
     "icons": {
         "weight": "bold"

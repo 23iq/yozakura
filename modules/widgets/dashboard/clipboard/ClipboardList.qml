@@ -1,13 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
 import qs.config
 import "ClipboardView.js" as ClipboardView
 import qs.modules.components.kit
 
-// History list of the clipboard tab: rows, the moving selection highlight,
+// History list of the clipboard tab: rows (the highlight item only tracks
+// the selected row's geometry for scrolling; rows draw their own look),
 // an overlay that closes delete mode / the options menu on outside clicks,
 // and the empty state.
 Item {
@@ -71,7 +71,7 @@ Item {
         highlight: Item {
             width: resultsList.width
             height: {
-                if (list.isExpandedRow(resultsList.currentIndex))
+                if (resultsList.currentIndex >= 0 && resultsList.currentIndex < list.model.count && list.isExpandedRow(resultsList.currentIndex))
                     return ClipboardView.rowHeight(list.model.get(resultsList.currentIndex).itemData, true);
                 return ClipboardView.ROW_HEIGHT;
             }
@@ -100,32 +100,6 @@ Item {
                     Qt.callLater(() => {
                         list.tab.adjustScrollForExpandedItem(list.tab.expandedItemIndex);
                     });
-                }
-            }
-
-            StyledRect {
-                anchors.fill: parent
-                variant: {
-                    if (list.tab.deleteMode) {
-                        return "error";
-                    } else if (list.tab.aliasMode) {
-                        return "secondary";
-                    } else if (list.tab.expandedItemIndex >= 0 && list.tab.selectedIndex === list.tab.expandedItemIndex) {
-                        return "pane";
-                    } else {
-                        return "primary";
-                    }
-                }
-                radius: Styling.radius(4)
-                backgroundOpacity: variant === "primary" ? Look.activeTint : -1
-                visible: list.tab.selectedIndex >= 0
-
-                Behavior on color {
-                    enabled: Config.animDuration > 0
-                    ColorAnimation {
-                        duration: Config.animDuration / 2
-                        easing.type: Motion.morph.easing
-                    }
                 }
             }
         }
@@ -193,32 +167,26 @@ Item {
 
     Column {
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Space.s
         visible: ClipboardService.items.length === 0
 
         Text {
             text: Icons.clipboard
             font.family: Icons.font
-            font.pixelSize: 48
-            color: Colors.surfaceBright
+            font.pixelSize: Type.iconSize("display")
+            color: Type.muted
             anchors.horizontalCenter: parent.horizontalCenter
-            textFormat: Text.RichText
         }
 
-        Text {
+        KitText {
+            role: "body"
             text: I18n.t("clipboard.no_history")
-            font.family: Config.theme.font
-            font.pixelSize: Config.theme.fontSize
-            font.weight: Font.Bold
-            color: Colors.overBackground
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
-        Text {
+        KitText {
+            role: "caption"
             text: I18n.t("clipboard.copy_to_start")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.outline
             anchors.horizontalCenter: parent.horizontalCenter
         }
     }

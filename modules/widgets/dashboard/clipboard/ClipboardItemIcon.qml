@@ -1,9 +1,10 @@
 import QtQuick
 import qs.modules.theme
-import qs.modules.components
+import qs.modules.components.kit
 
-// Row icon: type glyph, or the site favicon for URLs (cached preview favicon,
-// then Google's PNG service, then /favicon.ico), plus the pin badge.
+// Leading slot of a history row: the type glyph, or the site favicon for
+// URLs (cached preview favicon, then Google's PNG service, then
+// /favicon.ico). Delete / alias modes show the trash / edit glyph.
 Item {
     id: icon
 
@@ -11,146 +12,89 @@ Item {
     required property var entry
     property bool isInDeleteMode: false
     property bool isInAliasMode: false
-    property bool isExpanded: false
-    property bool isSelected: false
 
-    StyledRect {
-        id: iconBackground
-        anchors.fill: parent
-        visible: !faviconImage.visible
-        variant: {
-            if (icon.isInDeleteMode) {
-                return "overerror";
-            } else if (icon.isInAliasMode) {
-                return "oversecondary";
-            } else if (icon.isExpanded) {
-                return "primary";
-            } else {
-                return "common";
-            }
-        }
-        radius: Styling.radius(-4)
+    readonly property string iconType: {
+        if (icon.isInDeleteMode)
+            return "trash";
+        if (icon.isInAliasMode)
+            return "edit";
+        return icon.tab.getIconForItem(icon.entry);
+    }
+    readonly property string faviconUrl: {
+        // Rebind when new previews are fetched
+        var _rev = icon.tab.linkPreviewCacheRevision;
+        if (icon.iconType !== "link")
+            return "";
+        var url = icon.tab.getFaviconUrl(icon.entry);
+        return (url && url !== "") ? url : "";
+    }
+    readonly property string faviconFallbackUrl: icon.iconType === "link" ? icon.tab.getFaviconFallbackUrl(icon.entry) : ""
+    property bool faviconLoaded: false
+    property bool triedFallback: false
 
-        property string iconType: {
-            if (icon.isInDeleteMode) {
-                return "trash";
-            } else if (icon.isInAliasMode) {
-                return "edit";
-            }
-            return icon.tab.getIconForItem(icon.entry);
-        }
+    implicitWidth: Metrics.iconSize
+    implicitHeight: Metrics.iconSize
 
-        property string faviconUrl: {
-            // Rebind when new previews are fetched
-            var _rev = icon.tab.linkPreviewCacheRevision;
-            if (iconType !== "link")
-                return "";
-            var url = icon.tab.getFaviconUrl(icon.entry);
-            return (url && url !== "") ? url : "";
-        }
-
-        property string faviconFallbackUrl: {
-            if (iconType !== "link")
-                return "";
-            return icon.tab.getFaviconFallbackUrl(icon.entry);
-        }
-
-        property bool faviconLoaded: false
-        property bool triedFallback: false
-
-        // Update favicon when URL changes (e.g., from cache update)
-        onFaviconUrlChanged: {
-            if (faviconUrl !== "" && faviconUrl !== faviconImage.source) {
-                faviconLoaded = false;
-                triedFallback = false;
-                faviconImage.source = faviconUrl;
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            visible: (iconBackground.iconType !== "link") || (iconBackground.iconType === "link" && !iconBackground.faviconLoaded)
-            text: {
-                if (icon.isInDeleteMode) {
-                    return Icons.trash;
-                } else if (icon.isInAliasMode) {
-                    return Icons.edit;
-                }
-                var iconStr = iconBackground.iconType;
-                if (iconStr === "image")
-                    return Icons.image;
-                if (iconStr === "file")
-                    return Icons.file;
-                if (iconStr === "link")
-                    return Icons.globe; // URL without (working) favicon
-                return Icons.clip;
-            }
-            color: iconBackground.item
-            font.family: Icons.font
-            font.pixelSize: 16
-            textFormat: Text.RichText
+    onFaviconUrlChanged: {
+        if (faviconUrl !== "" && faviconUrl !== faviconImage.source) {
+            faviconLoaded = false;
+            triedFallback = false;
+            faviconImage.source = faviconUrl;
         }
     }
 
-    // Favicon for URLs (outside the StyledRect for independent sizing/background)
+    Text {
+        anchors.centerIn: parent
+        visible: !faviconImage.visible
+        text: ({
+                "trash": Icons.trash,
+                "edit": Icons.edit,
+                "image": Icons.image,
+                "file": Icons.file,
+                "link": Icons.globe // URL without (working) favicon
+            })[icon.iconType] || Icons.clip
+        color: icon.isInDeleteMode ? Colors.error : Type.secondary
+        font.family: Icons.font
+        font.pixelSize: Type.iconSize("body")
+    }
+
     Image {
         id: faviconImage
+        anchors.centerIn: parent
+        width: Type.iconSize("body") + 2
+        height: width
         mipmap: true
-        anchors.fill: parent
         sourceSize.width: 32
         sourceSize.height: 32
-        visible: iconBackground.iconType === "link" && iconBackground.faviconLoaded && status === Image.Ready
+        visible: icon.iconType === "link" && icon.faviconLoaded && status === Image.Ready
         fillMode: Image.PreserveAspectFit
         asynchronous: true
         cache: true
-
         onStatusChanged: {
             if (status === Image.Ready) {
-                iconBackground.faviconLoaded = true;
+                icon.faviconLoaded = true;
             } else if (status === Image.Error) {
                 // Try the fallback URL once
-                if (!iconBackground.triedFallback && iconBackground.faviconFallbackUrl !== "") {
-                    iconBackground.triedFallback = true;
-                    faviconImage.source = iconBackground.faviconFallbackUrl;
+                if (!icon.triedFallback && icon.faviconFallbackUrl !== "") {
+                    icon.triedFallback = true;
+                    faviconImage.source = icon.faviconFallbackUrl;
                 } else {
-                    iconBackground.faviconLoaded = false;
+                    icon.faviconLoaded = false;
                 }
             } else if (status === Image.Null || status === Image.Loading) {
-                iconBackground.faviconLoaded = false;
+                icon.faviconLoaded = false;
             }
         }
     }
 
     Timer {
         interval: 1
-        running: iconBackground.iconType === "link" && iconBackground.faviconUrl !== "" && faviconImage.source === ""
+        running: icon.iconType === "link" && icon.faviconUrl !== "" && faviconImage.source === ""
         onTriggered: {
-            if (iconBackground.faviconUrl !== "") {
-                iconBackground.triedFallback = false;
-                faviconImage.source = iconBackground.faviconUrl;
+            if (icon.faviconUrl !== "") {
+                icon.triedFallback = false;
+                faviconImage.source = icon.faviconUrl;
             }
-        }
-    }
-
-    // Pin badge (outside the StyledRect to avoid clipping)
-    Rectangle {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.topMargin: -2
-        anchors.rightMargin: -2
-        width: 14
-        height: 14
-        radius: 7
-        visible: icon.entry.pinned && !icon.isInDeleteMode && !icon.isInAliasMode
-        color: Styling.srItem("overprimary")
-
-        Text {
-            anchors.centerIn: parent
-            text: Icons.pin
-            font.family: Icons.font
-            font.pixelSize: 8
-            color: Colors.overPrimary
-            textFormat: Text.RichText
         }
     }
 }

@@ -5826,6 +5826,19 @@
                 "keywords": "preview pane file image text calculator side"
               }
             },
+            "icons": {
+              "title": "Result icons",
+              "type": "boolean",
+              "default": true,
+              "description": "Show an icon before each result. Off gives a text-only, command-line list.",
+              "x-settings": {
+                "category": "launcher",
+                "section": "appearance",
+                "label": "prefs.launcher.icons",
+                "control": "toggle",
+                "keywords": "icons text only command line minimal rows"
+              }
+            },
             "compactWhenEmpty": {
               "title": "Compact when empty",
               "type": "boolean",
@@ -8963,6 +8976,29 @@
             "keywords": "icons monochrome tint color"
           }
         },
+        "progressRole": {
+          "title": "Progress color",
+          "type": "string",
+          "default": "primary",
+          "description": "Palette color of progress lines, rings and slider fills.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "palette",
+            "label": "prefs.appearance.progress_role",
+            "control": "selector",
+            "keywords": "progress slider ring fill accent secondary tertiary color role"
+          },
+          "enum": [
+            "primary",
+            "secondary",
+            "tertiary"
+          ],
+          "x-enumLabels": {
+            "primary": "Primary",
+            "secondary": "Secondary",
+            "tertiary": "Tertiary"
+          }
+        },
         "icons": {
           "title": "Icons",
           "type": "object",
@@ -9701,12 +9737,14 @@
               "enum": [
                 "overBackground",
                 "primary",
+                "secondary",
                 "outline",
                 "surfaceBright"
               ],
               "x-enumLabels": {
                 "overBackground": "Text",
                 "primary": "Primary",
+                "secondary": "Secondary",
                 "outline": "Outline",
                 "surfaceBright": "Surface"
               }

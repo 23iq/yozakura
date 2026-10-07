@@ -8,11 +8,12 @@
     "paletteTransitionDuration": 450,
     "shadowOpacity": 0.6,
     "terminalOpacity": 0.94,
+    "progressRole": "secondary",
     "glass": {
         "enabled": true,
         "amount": 0.5,
         "tintRole": "primary",
-        "highlightRole": "primary"
+        "highlightRole": "secondary"
     },
     "srBg": {
         "label": "Background",

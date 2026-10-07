@@ -49,6 +49,11 @@ QtObject {
     readonly property color floatOutline: root.floatBoxed ? root.alpha("overBackground", root.float.outline) : "transparent"
     readonly property color floatHighlight: Qt.rgba(1, 1, 1, root.floatBoxed ? root.float.highlight : 0)
 
+    // App windows (settings): glass draws a translucent frosted background
+    // over the desktop; null keeps the theme's opaque "bg" surface.
+    readonly property bool windowTranslucent: !!root.spec.window
+    readonly property color windowFill: root.windowTranslucent ? root.alpha(root.spec.window.fill, root.spec.window.fillOpacity) : "transparent"
+
     // Controls (IconButton, Chip, ListRow hover). Without a control spec
     // (classic) the theme's "common" / "focus" variants draw them.
     readonly property bool boxedControls: root.control !== null

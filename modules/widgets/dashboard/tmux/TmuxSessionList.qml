@@ -1,15 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import qs.modules.theme
-import qs.modules.components
 import qs.config
+import qs.modules.theme
 import "TmuxModel.js" as TmuxModel
-import qs.modules.components.kit
 
-// Session list of the tmux tab: rows (TmuxSessionDelegate), the moving
-// selection highlight (it grows with the expanded options row) and an
-// overlay that closes the options / cancels a rename or delete when the
+// Session list of the tmux tab: rows (TmuxSessionDelegate, kit ListRows
+// that draw their own selection) and an overlay that closes the options / cancels a rename or delete when the
 // click lands outside the active row.
 ListView {
     id: resultsList
@@ -81,76 +78,20 @@ ListView {
         list: resultsList
     }
 
-    highlight: Item {
-        id: highlightItem
-
-        width: resultsList.width
-        height: TmuxModel.rowHeight(resultsList.currentIndex, resultsList.tab.expandedItemIndex, resultsList.editing)
-        // Rows above the current one may be expanded.
-        y: TmuxModel.rowY(resultsList.currentIndex, resultsList.tab.expandedItemIndex, resultsList.editing, resultsList.count)
-
-        Behavior on y {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration / 2
-                easing.type: Motion.morph.easing
-            }
-        }
-
-        Behavior on height {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Motion.morph.easing
-            }
-        }
-
-        onHeightChanged: {
-            // Keep the expanded row visible as it grows
-            if (resultsList.tab.expandedItemIndex >= 0 && highlightItem.height > TmuxModel.ROW_HEIGHT) {
-                Qt.callLater(() => {
-                    resultsList.adjustScrollForExpandedItem(resultsList.tab.expandedItemIndex);
-                });
-            }
-        }
-
-        StyledRect {
-            anchors.fill: parent
-            variant: {
-                const t = resultsList.tab;
-                if (t.deleteMode) {
-                    return "error";
-                } else if (t.renameMode) {
-                    return "secondary";
-                } else if (t.expandedItemIndex >= 0 && t.selectedIndex === t.expandedItemIndex) {
-                    return "pane";
-                } else {
-                    return "primary";
-                }
-            }
-            radius: Styling.radius(4)
-            backgroundOpacity: variant === "primary" ? Look.activeTint : -1
-            visible: resultsList.tab.selectedIndex >= 0
-
-            Behavior on color {
-                enabled: Config.animDuration > 0
-                ColorAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.morph.easing
-                }
-            }
-
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.enter.easing
-                }
-            }
+    // Keep the expanded row visible once it has grown
+    Connections {
+        target: resultsList.tab
+        function onExpandedItemIndexChanged() {
+            if (resultsList.tab.expandedItemIndex >= 0)
+                revealExpanded.restart();
         }
     }
 
-    highlightFollowsCurrentItem: false
+    Timer {
+        id: revealExpanded
+        interval: Math.max(1, Config.animDuration)
+        onTriggered: resultsList.adjustScrollForExpandedItem(resultsList.tab.expandedItemIndex)
+    }
 
     MouseArea {
         id: outsideClick

@@ -9,7 +9,7 @@ Item {
 
     property real value: 0
     property real thickness: Space.stroke
-    property color color: Type.accent
+    property color color: Type.progress
     readonly property real fraction: Math.max(0, Math.min(1, root.value))
     readonly property real arcRadius: (Math.min(width, height) - root.thickness) / 2
     default property alias content: center.data

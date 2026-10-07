@@ -149,6 +149,7 @@ TOML_WRITER_STUB = """pragma Singleton
 QtObject { property int writes: 0; function callWrite() { writes++ } }"""
 
 MIRROR = [
+    "assets/yozakura",  # brand art (About page)
     "modules/settings",
     "modules/components",
     "modules/aicenter/common",

@@ -8,6 +8,8 @@ Item {
 
     property string text: ""
     property string action: ""
+    // Keyboard focus / a pending confirmation on the action: drawn as hovered.
+    property bool actionHighlighted: false
     readonly property bool actionHovered: actionMouse.containsMouse
 
     signal triggered
@@ -30,7 +32,7 @@ Item {
         role: "caption"
         text: root.action
         visible: root.action !== ""
-        color: root.actionHovered ? Type.text : Type.muted
+        color: root.actionHovered || root.actionHighlighted ? Type.text : Type.muted
         anchors.right: parent.right
         anchors.baseline: label.baseline
 

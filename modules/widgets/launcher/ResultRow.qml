@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.config
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
@@ -17,13 +18,22 @@ ListRow {
     // Narrow list beside the detail pane: the ↵ key without its label.
     property bool narrow: false
     readonly property bool inert: !!row.result.inert
+    // layout.launcher.icons = false: a text-only (command-line) list; the
+    // title then starts at the row's edge.
+    property bool showIcon: Config.layout.launcher.icons !== false
     readonly property int iconSize: row.cards ? Math.round(Metrics.iconSize * 1.375) : Metrics.iconSize
+    // Where the title starts, relative to the row's content edge.
+    readonly property int textInset: row.showIcon ? row.iconSize + Space.m : 0
 
     title: row.result.title || ""
     subtitle: row.result.subtitle || ""
 
-    leading: Component {
+    leading: row.showIcon ? icon : null
+
+    Component {
+        id: icon
         ResultIcon {
+            objectName: "resultIcon"
             item: row.result
             size: row.iconSize
         }

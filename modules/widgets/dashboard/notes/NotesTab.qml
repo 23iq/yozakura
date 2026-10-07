@@ -1,11 +1,10 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.modules.theme
-import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.modules.services
-import qs.config
 import "notes_utils.js" as NotesUtils
+import "NotesActions.js" as NotesActions
 
 // Notes tab (launcher prefix tab): searchable list of rich text / markdown
 // notes on the left, the editor of the selected note on the right.
@@ -29,7 +28,6 @@ Item {
 
     // Search and selection state
     property string searchText: ""
-    property bool showResults: searchText.length > 0
     property int selectedIndex: -1
     property var allNotes: []
     property var filteredNotes: []
@@ -66,82 +64,16 @@ Item {
     property bool loadingNote: false
     property bool editorDirty: false
 
-    // Create menu state
-    property bool showCreateMenu: false
-    property int createMenuSelectedIndex: 0
-
     NotesStore {
         id: store
         notesPath: root.notesPath
         indexPath: root.indexPath
         noteExtension: root.noteExtension
+    }
 
-        onIndexLoaded: notes => {
-            root.allNotes = notes;
-            root.updateFilteredNotes();
-        }
-
-        onNoteCreated: (noteId, title, isMarkdown) => {
-            // Add to allNotes and save index
-            var newNote = {
-                id: noteId,
-                title: title,
-                created: NotesUtils.getCurrentTimestamp(),
-                modified: NotesUtils.getCurrentTimestamp(),
-                isMarkdown: isMarkdown,
-                isCreateButton: false
-            };
-            root.allNotes.unshift(newNote);
-            root.saveNotesOrder();
-            root.updateFilteredNotes();
-
-            // Select the new note
-            root.pendingRenamedNote = noteId;
-            root.updateFilteredNotes();
-
-            // Focus the editor
-            Qt.callLater(() => {
-                root.openNoteInEditor(noteId);
-            });
-        }
-
-        onNoteDeleted: noteId => {
-            // Remove from allNotes
-            root.allNotes = root.allNotes.filter(n => n.id !== noteId);
-            root.saveNotesOrder();
-
-            if (root.currentNoteId === noteId) {
-                root.currentNoteId = "";
-                root.currentNoteContent = "";
-                root.currentNoteTitle = "";
-            }
-
-            root.updateFilteredNotes();
-        }
-
-        onNoteRead: (ok, content) => {
-            if (ok) {
-                root.currentNoteContent = content;
-                root.currentNoteTitle = root.titleOf(root.currentNoteId) ?? root.currentNoteTitle;
-            } else {
-                root.currentNoteContent = "";
-                root.currentNoteTitle = "";
-            }
-            root.editorDirty = false;
-            root.loadingNote = false;
-        }
-
-        onTitleSaved: (noteId, title) => {
-            // Update local allNotes
-            for (var i = 0; i < root.allNotes.length; i++) {
-                if (root.allNotes[i].id === noteId) {
-                    root.allNotes[i].title = title;
-                    root.allNotes[i].modified = NotesUtils.getCurrentTimestamp();
-                    break;
-                }
-            }
-            root.updateFilteredNotes();
-        }
+    NotesStoreSync {
+        store: store
+        tab: root
     }
 
     // Debounce timer for auto-save
@@ -185,32 +117,6 @@ Item {
         return note ? note.title : undefined;
     }
 
-    function adjustScrollForExpandedItem(index) {
-        if (index < 0 || index >= notesModel.count)
-            return;
-
-        const list = listPanel.listView;
-        var itemY = 0;
-        for (var i = 0; i < index; i++) {
-            itemY += 48;
-        }
-
-        // 3 options: Edit, Rename, Delete
-        var listHeight = 36 * 3;
-        var expandedHeight = 48 + 4 + listHeight + 8;
-
-        var maxContentY = Math.max(0, list.contentHeight - list.height);
-        var viewportTop = list.contentY;
-        var viewportBottom = viewportTop + list.height;
-        var itemBottom = itemY + expandedHeight;
-
-        if (itemY < viewportTop) {
-            list.contentY = itemY;
-        } else if (itemBottom > viewportBottom) {
-            list.contentY = Math.min(itemBottom - list.height, maxContentY);
-        }
-    }
-
     onSelectedIndexChanged: {
         if (selectedIndex === -1 && listPanel.listView.count > 0) {
             listPanel.listView.positionViewAtIndex(0, ListView.Beginning);
@@ -243,71 +149,18 @@ Item {
         updateFilteredNotes();
     }
 
-    function clearSearch() {
-        searchText = "";
-        selectedIndex = -1;
-        listPanel.focusSearch();
-        updateFilteredNotes();
-    }
-
     function focusSearchInput() {
         listPanel.focusSearch();
     }
 
     // Focus the editor of the open note (Tab from the search field)
     function focusEditor() {
-        if (currentNoteId) {
-            if (currentNoteIsMarkdown) {
-                markdownEditor.focusEditor();
-            } else {
-                richEditor.focusEditor();
-            }
-        }
-    }
-
-    function cancelDeleteModeFromExternal() {
-        if (deleteMode) {
-            cancelDeleteMode();
-        }
-        if (renameMode) {
-            cancelRenameMode();
-        }
+        if (currentNoteId)
+            editorPane.focusEditor(currentNoteIsMarkdown);
     }
 
     function updateFilteredNotes() {
-        var newFilteredNotes = [];
-
-        var createButtonText = "Create new note";
-        var isCreateSpecific = false;
-        var noteNameToCreate = "";
-
-        if (searchText.length === 0) {
-            newFilteredNotes = allNotes.slice();
-        } else {
-            newFilteredNotes = NotesUtils.filterNotes(allNotes, searchText);
-
-            let exactMatch = allNotes.find(function (note) {
-                return note.title.toLowerCase() === searchText.toLowerCase();
-            });
-
-            if (!exactMatch && searchText.length > 0) {
-                createButtonText = `Create note "${searchText}"`;
-                isCreateSpecific = true;
-                noteNameToCreate = searchText;
-            }
-        }
-
-        if (!deleteMode && !renameMode) {
-            newFilteredNotes.unshift({
-                id: "__create__",
-                title: createButtonText,
-                isCreateButton: true,
-                isCreateSpecificButton: isCreateSpecific,
-                noteNameToCreate: noteNameToCreate,
-                icon: "plus"
-            });
-        }
-
+        var newFilteredNotes = NotesUtils.listEntries(allNotes, searchText, !deleteMode && !renameMode);
         filteredNotes = newFilteredNotes;
         listPanel.resetScroll();
 
@@ -346,64 +199,9 @@ Item {
         }
     }
 
-    // Enter on the search field: confirm/cancel delete or rename, run the
-    // highlighted option of an expanded row, expand the create row or open
-    // the selected note
+    // Enter on the search field (NotesActions.activate)
     function activateSelection() {
-        if (deleteMode) {
-            if (deleteButtonIndex === 1) {
-                confirmDeleteNote();
-            } else {
-                cancelDeleteMode();
-            }
-            return;
-        }
-
-        if (renameMode) {
-            if (renameButtonIndex === 1) {
-                confirmRenameNote();
-            } else {
-                cancelRenameMode();
-            }
-            return;
-        }
-
-        if (expandedItemIndex >= 0) {
-            let note = filteredNotes[expandedItemIndex];
-            if (note) {
-                if (note.isCreateButton) {
-                    // Create menu options: Rich Text, Markdown
-                    if (selectedOptionIndex >= 0 && selectedOptionIndex < 2) {
-                        expandedItemIndex = -1;
-                        createNewNote(note.noteNameToCreate || "", selectedOptionIndex === 1);
-                    }
-                } else {
-                    // Note options: Edit, Rename, Delete
-                    if (selectedOptionIndex === 0) {
-                        openNoteInEditor(note.id);
-                    } else if (selectedOptionIndex === 1) {
-                        enterRenameMode(note.id);
-                    } else if (selectedOptionIndex === 2) {
-                        enterDeleteMode(note.id);
-                    }
-                }
-            }
-            expandedItemIndex = -1;
-            selectedOptionIndex = 0;
-            return;
-        }
-
-        if (selectedIndex >= 0 && selectedIndex < filteredNotes.length) {
-            let note = filteredNotes[selectedIndex];
-            if (note.isCreateButton || note.isCreateSpecificButton) {
-                // Expand to show create options instead of creating directly
-                expandedItemIndex = selectedIndex;
-                selectedOptionIndex = 0;
-                keyboardNavigation = true;
-            } else {
-                openNoteInEditor(note.id);
-            }
-        }
+        NotesActions.activate(root);
     }
 
     function enterDeleteMode(noteId) {
@@ -466,7 +264,7 @@ Item {
     function confirmRenameNote() {
         if (newNoteName.trim() !== "" && noteToRename) {
             pendingRenamedNote = noteToRename;
-            updateNoteTitle(noteToRename, newNoteName.trim());
+            store.setTitle(noteToRename, newNoteName.trim());
         }
         cancelRenameMode();
     }
@@ -499,24 +297,12 @@ Item {
             return;
 
         // Get the text content
-        var content = currentNoteIsMarkdown ? markdownEditor.text : richEditor.text;
+        var content = editorPane.text(currentNoteIsMarkdown);
         store.write(currentNoteId, currentNoteIsMarkdown, content);
         editorDirty = false;
 
         // Update modified timestamp
-        updateNoteModified(currentNoteId);
-    }
-
-    function updateNoteTitle(noteId, newTitle) {
-        store.setTitle(noteId, newTitle);
-    }
-
-    function updateNoteModified(noteId) {
-        store.touch(noteId);
-    }
-
-    function refreshNotes() {
-        store.refresh();
+        store.touch(currentNoteId);
     }
 
     function openNoteInEditor(noteId) {
@@ -530,13 +316,7 @@ Item {
                 break;
             }
         }
-        Qt.callLater(() => {
-            if (isMarkdown) {
-                markdownEditor.focusEditor();
-            } else {
-                richEditor.focusEditor();
-            }
-        });
+        Qt.callLater(() => editorPane.focusEditor(isMarkdown));
     }
 
     // Move the selected note one step up (-1) or down (+1) in the order
@@ -590,7 +370,7 @@ Item {
 
     RowLayout {
         anchors.fill: parent
-        spacing: 8
+        spacing: Space.l
 
         // Left panel: Notes list
         NotesListPanel {
@@ -601,106 +381,29 @@ Item {
             model: notesModel
         }
 
-        // Separator
-        Separator {
-            Layout.preferredWidth: 2
+        Divider {
+            vertical: true
             Layout.fillHeight: true
-            vert: true
         }
 
-        // Right panel: WYSIWYG Editor (Rich Text mode)
-        RichTextEditor {
-            id: richEditor
+        NoteEditorPane {
+            id: editorPane
             Layout.fillWidth: true
             Layout.fillHeight: true
-            visible: root.currentNoteId !== "" && !root.currentNoteIsMarkdown
-            content: root.currentNoteContent
-            onEdited: root.noteEdited(false)
-            onEscapePressed: root.focusSearchInput()
-        }
-
-        // Right panel: Markdown Editor (split view)
-        MarkdownEditor {
-            id: markdownEditor
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.currentNoteId !== "" && root.currentNoteIsMarkdown
-            content: root.currentNoteContent
-            onEdited: root.noteEdited(true)
-            onEscapePressed: root.focusSearchInput()
-        }
-
-        // Placeholder when no note selected
-        Item {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            visible: root.currentNoteId === ""
-
-            Text {
-                anchors.centerIn: parent
-                text: I18n.t("notes.select_or_create")
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize
-                color: Colors.outline
-            }
+            tab: root
         }
     }
 
-    // Loading overlay (outside RowLayout to avoid anchor warning)
-    Rectangle {
-        anchors.fill: parent
-        color: Qt.rgba(Colors.background.r, Colors.background.g, Colors.background.b, 0.8)
-        visible: root.loadingNote
-        radius: Styling.radius(4)
-
-        Text {
-            anchors.centerIn: parent
-            text: Icons.spinnerGap
-            font.family: Icons.font
-            font.pixelSize: 24
-            color: Colors.overSurface
-
-            RotationAnimator on rotation {
-                from: 0
-                to: 360
-                duration: 1000
-                loops: Animation.Infinite
-                running: root.loadingNote
-            }
-        }
-    }
-
-    // Root-level key handler for delete/rename mode navigation
+    // Delete / rename mode keys (NotesActions.modeKey)
     Keys.onPressed: event => {
-        if (root.deleteMode) {
-            if (event.key === Qt.Key_Left) {
-                root.deleteButtonIndex = 0;
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Right) {
-                root.deleteButtonIndex = 1;
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Space) {
-                if (root.deleteButtonIndex === 0) {
-                    root.cancelDeleteMode();
-                } else {
-                    root.confirmDeleteNote();
-                }
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Escape) {
-                root.cancelDeleteMode();
-                event.accepted = true;
-            }
-        } else if (root.renameMode) {
-            if (event.key === Qt.Key_Left) {
-                root.renameButtonIndex = 0;
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Right) {
-                root.renameButtonIndex = 1;
-                event.accepted = true;
-            } else if (event.key === Qt.Key_Escape) {
-                root.cancelRenameMode();
-                event.accepted = true;
-            }
-        }
+        const keys = {
+            left: Qt.Key_Left,
+            right: Qt.Key_Right,
+            escape: Qt.Key_Escape,
+            enter: Qt.Key_Return,
+            space: Qt.Key_Space
+        };
+        if (NotesActions.modeKey(root, event.key, keys))
+            event.accepted = true;
     }
 }

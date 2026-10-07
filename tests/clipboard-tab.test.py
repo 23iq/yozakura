@@ -11,106 +11,27 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib.qmlharness import REPO, Harness  # noqa: E402
+sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
+from tabs_env import TabsEnv  # noqa: E402
 from PySide6.QtCore import QCoreApplication  # noqa: E402
 from PySide6.QtQml import QQmlExpression  # noqa: E402
 from PySide6.QtNetwork import QNetworkProxy  # noqa: E402
 from PySide6.QtQuick import QQuickItem  # noqa: E402
 
-CLIP = REPO / "modules/widgets/dashboard/clipboard"
-sources = "\n".join(p.read_text() for p in CLIP.glob("*.qml"))
-
-
-def names(prefix):
-    return sorted(set(re.findall(rf"\b{prefix}\.(\w+)", sources)))
-
-
-h = Harness("clipboard-tab")
+env = TabsEnv("clipboard-tab", tabs=["clipboard"], clip_items=[])
+h = env.h
 # Favicons point at the network: send every request to a dead local proxy.
 QNetworkProxy.setApplicationProxy(QNetworkProxy(QNetworkProxy.HttpProxy, "127.0.0.1", 9))
-h.module("Quickshell", {"HarnessPlaceholder": "QtObject {}"})
-h.module("Quickshell.Widgets", {"ClippingRectangle": "import QtQuick\nRectangle {}"})
-h.module("qs.modules.globals", {})
-h.singleton("qs.config", "Config", """QtObject {
-    property int animDuration: 0
-    property int roundness: 8
-    property QtObject theme: QtObject { property string font: "Sans"; property int fontSize: 14 }
-}""")
-colors = "".join(f"property color {n}: '#102030'; " for n in names("Colors"))
-icons = "".join(f"property string {n}: 'i-{n}'; " for n in names("Icons") if n != "font")
-h.module("qs.modules.theme", {
-    "Colors": "pragma Singleton\nimport QtQuick\nQtObject { " + colors + "}",
-    "Icons": "pragma Singleton\nimport QtQuick\nQtObject { property string font: 'Icons'; " + icons + "}",
-    "Styling": "pragma Singleton\nimport QtQuick\nQtObject { function radius(x) { return 4 + x; } "
-               "function srItem(x) { return '#405060'; } function fontSize(x) { return 12 + x; } }",
-})
-SEARCH_FIELD = """import QtQuick
-Item {
-    property string text
-    property string placeholderText
-    property string prefixIcon
-    property int radius: 8
-    property int focusCount: 0
-    signal searchTextChanged(string text)
-    signal accepted
-    signal shiftAccepted
-    signal backspaceOnEmpty
-    signal ctrlRPressed
-    signal ctrlPPressed
-    signal ctrlUpPressed
-    signal ctrlDownPressed
-    signal escapePressed
-    signal downPressed
-    signal upPressed
-    property bool rule
-    function focusInput() { focusCount++ }
-}"""
-h.module("qs.modules.components.kit", {
-    "SearchField": SEARCH_FIELD,
-    "Look": "pragma Singleton\nimport QtQuick\nQtObject { property real activeTint: 0.16 }",
-})
-h.module("qs.modules.components", {
-    "StyledRect": "import QtQuick\nRectangle { property string variant; property color item: '#ffffff'; "
-                  "property real backgroundOpacity: -1 }",
-    "Separator": "import QtQuick\nItem { property bool vert }",
-})
+# Keys instead of English strings, and a Visibilities that records the module.
 h.module("qs.modules.services", {
-    "ClipboardService": """pragma Singleton
-import QtQuick
-QtObject {
-    property var items: []
-    property var linkPreviewCache: ({})
-    property int revision: 0
-    property var calls: []
-    property var images: ({})
-    signal listCompleted()
-    signal fullContentRetrieved(string itemId, string content)
-    signal linkPreviewFetched(string url, var metadata, string itemId)
-    function rec(name, a, b) { calls = calls.concat([[name, a === undefined ? null : a, b === undefined ? null : b]]); }
-    function list() { rec("list"); }
-    function getFullContent(id) { rec("getFullContent", id); }
-    function fetchLinkPreview(url, id) { rec("fetchLinkPreview", url, id); }
-    function deleteItem(id) { rec("deleteItem", id); }
-    function clear() { rec("clear"); }
-    function togglePin(id) { rec("togglePin", id); }
-    function setAlias(id, a) { rec("setAlias", id, a); }
-    function moveItemUp(id) { rec("moveItemUp", id); }
-    function moveItemDown(id) { rec("moveItemDown", id); }
-    function copyItem(id, mime) { rec("copyItem", id, mime); }
-    function decodeToDataUrl(id, mime) { rec("decodeToDataUrl", id, mime); }
-    function getImageData(id) { return images[id] || ""; }
-    function requestImagePath(id) { rec("requestImagePath", id); }
-    function getImagePath(id) { return ""; }
-}""",
     "Visibilities": "pragma Singleton\nimport QtQuick\nQtObject { property var active: null; "
                     "function setActiveModule(m) { active = m; } }",
     "I18n": "pragma Singleton\nimport QtQuick\nQtObject { function t(k, a) { return a === undefined ? k : k + ':' + a; } }",
 })
-
-h.copy("modules/widgets/dashboard/clipboard/ClipboardTab.qml")
-win = h.load("""import QtQuick
+env._qmldir(env.root / "qs/modules/widgets/dashboard/clipboard", "qs.modules.widgets.dashboard.clipboard")
+win = env.load("""import QtQuick
 import QtQuick.Window
+import qs.modules.widgets.dashboard.clipboard
 Window {
     width: 900; height: 400; visible: true
     ClipboardTab { objectName: "tab"; anchors.fill: parent; leftPanelWidth: 400; prefixIcon: "P" }
@@ -183,6 +104,7 @@ def delegates():
 
 
 pump()
+ev(f"{svc_expr}.autoComplete = false")
 check("history requested on load", ["list", None, None] in calls())
 now_ms = int(time.time() * 1000)
 items = [
@@ -257,18 +179,18 @@ check("full date and short checksum", any(re.fullmatch(r"calendar\.month\.\w+ \d
 
 # Options menu (expanded row).
 ev("expandedItemIndex = selectedIndex")
-pump()
+pump(1500)
 t = texts()
 check("options menu lists actions", all(x in t for x in ("common.copy", "common.open", "clipboard.pin", "clipboard.alias",
                                                         "common.delete")), [x for x in t if x.startswith(("common", "clipboard."))])
 expanded = [d for d in delegates() if d.property("isExpanded")]
-check("expanded row grows by the options list", len(expanded) == 1 and expanded[0].property("height") == 48 + 4 + 108 + 8,
+check("expanded row grows by the options list", len(expanded) == 1 and expanded[0].property("height") == 48 + 4 + 180 + 8,
       [d.property("height") for d in expanded])
 ev("selectedIndex = 0")
 check("changing selection collapses the menu", ev("expandedItemIndex") == -1)
 
 # Search field keys (SearchInput signals).
-search = next(o for o in walk() if o.metaObject().indexOfProperty("focusCount") >= 0)
+search = next(o for o in walk() if o.metaObject().indexOfSignal("shiftAccepted()") >= 0)
 reset_calls()
 ev("selectedIndex = 1")
 search.shiftAccepted.emit()

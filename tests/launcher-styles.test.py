@@ -156,6 +156,31 @@ settle()
 check(not h.eval(view, "bare") and h.eval(view, "height") == h.eval(view, "Metrics.launcherCompactH"), "first keystroke opens the launcher")
 layout(compactWhenEmpty=False, preview=True)
 
+# icons: false turns the list into a text-only command line (no icon, no gap)
+layout(resultStyle="list", preview=False, icons=False)
+type_text("fire")
+settle()
+
+
+def visual(name, expr="1"):
+    # Visible items named `name` under the view (delegates live in the
+    # visual tree, not the QObject one): `expr` evaluated on each.
+    js = ("(function(root){ var out = [], stack = [root]; while (stack.length) {"
+          " var it = stack.pop(); if (it.objectName === %s && it.visible) out.push((function(){ return %s; }).call(it));"
+          " for (var i = 0; i < it.children.length; i++) stack.push(it.children[i]); } return JSON.stringify(out); })(this)")
+    return json.loads(h.eval(view, js % (json.dumps(name), expr)))
+
+
+rows = visual("resultRow", "[this.showIcon, this.leading === null, this.textInset]")
+check(rows and all(r == [False, True, 0] for r in rows), f"icons=false: no leading slot, title at the row edge: {rows}")
+check(not visual("resultIcon"), "icons=false: no result icons in the list")
+layout(icons=True)
+settle()
+rows = visual("resultRow", "[this.showIcon, this.textInset > this.iconSize]")
+check(rows and all(r == [True, True] for r in rows), f"icons=true: the title follows the icon: {rows}")
+check(len(visual("resultIcon")) > 0, "icons=true: rows show their icons")
+layout(preview=True)
+
 if fails:
     print(f"{len(fails)} failure(s)", file=sys.stderr)
     h.exit(1)

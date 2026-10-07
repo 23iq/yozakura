@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 
 // WYSIWYG editor of rich text (.html) notes: formatting toolbar (font size,
 // bold/italic/underline/strikeout, alignment) and the TextArea with its
@@ -48,16 +49,14 @@ ColumnLayout {
                 onClicked: format.stepFontSize(false)
             }
 
-            Rectangle {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 32
-                radius: Styling.radius(-4)
-                color: "transparent"
+            Item {
+                Layout.preferredWidth: Space.controlM
+                Layout.preferredHeight: Space.controlS
 
                 StyledRect {
                     anchors.fill: parent
-                    variant: fontSizeField.activeFocus ? "primary" : "surface"
-                    radius: Styling.radius(-4)
+                    variant: fontSizeField.activeFocus ? "focus" : "common"
+                    radius: Look.buttonRadius(height)
                 }
 
                 TextInput {
@@ -66,9 +65,9 @@ ColumnLayout {
                     width: parent.width - 8
                     horizontalAlignment: TextInput.AlignHCenter
                     text: format.getCurrentFontSize().toString()
-                    font.family: Config.theme.font
-                    font.pixelSize: 14
-                    color: fontSizeField.activeFocus ? Colors.overPrimary : Colors.overSurface
+                    font.family: Type.family("body")
+                    font.pixelSize: Type.size("body")
+                    color: Type.text
                     selectByMouse: true
                     validator: IntValidator {
                         bottom: 8
@@ -98,7 +97,10 @@ ColumnLayout {
                 onClicked: format.stepFontSize(true)
             }
 
-            ToolbarDivider {}
+            Divider {
+                vertical: true
+                Layout.preferredHeight: Space.l + Space.s
+            }
 
             NoteToolButton {
                 glyph: "B"
@@ -136,7 +138,10 @@ ColumnLayout {
                 onClicked: format.toggleStrikeout()
             }
 
-            ToolbarDivider {}
+            Divider {
+                vertical: true
+                Layout.preferredHeight: Space.l + Space.s
+            }
 
             NoteToolButton {
                 glyph: Icons.alignLeft
@@ -172,10 +177,8 @@ ColumnLayout {
         }
     }
 
-    // Separator below toolbar
-    Separator {
+    Divider {
         Layout.fillWidth: true
-        Layout.preferredHeight: 2
     }
 
     // WYSIWYG Editor

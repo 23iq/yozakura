@@ -1,47 +1,44 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.components
-import qs.config
+import qs.modules.components.kit
+import "../../../components/kit/KitStates.js" as KitStates
 
-// Square button of the notes editor toolbars: a glyph (icon font or styled
-// letter), hover surface, optional "active" state and a tooltip.
-Rectangle {
+// Small button of the notes editor toolbars with the kit IconButton look
+// (KitStates: ghost at rest, hover box, accent tint when `active`): a glyph
+// in the icon font, or a styled letter (B / I / U / S) with `glyphFont`.
+StyledRect {
     id: button
 
     property string glyph: ""
     property string glyphFont: Icons.font
-    property int glyphSize: 14
     property bool glyphBold: false
     property bool glyphItalic: false
     property bool glyphUnderline: false
     property bool glyphStrikeout: false
     property bool active: false
     property string tooltip: ""
+    readonly property string look: KitStates.look(false, button.active, mouseArea.containsMouse)
 
     signal clicked
 
-    width: 32
-    height: 32
-    radius: Styling.radius(-4)
-    color: button.active ? Styling.srItem("overprimary") : "transparent"
-
-    StyledRect {
-        anchors.fill: parent
-        variant: mouseArea.containsMouse && !button.active ? "surface" : "transparent"
-        radius: Styling.radius(-4)
-        visible: !button.active
-    }
+    implicitWidth: Space.controlS
+    implicitHeight: Space.controlS
+    variant: KitStates.variant(button.look, "transparent")
+    backgroundOpacity: KitStates.opacity(button.look, mouseArea.containsMouse)
+    enableBorder: false
+    radius: Look.buttonRadius(height)
 
     Text {
         anchors.centerIn: parent
         text: button.glyph
         font.family: button.glyphFont
-        font.pixelSize: button.glyphSize
+        font.pixelSize: button.glyphFont === Icons.font ? Type.iconSize("body") : Type.size("body")
         font.bold: button.glyphBold
         font.italic: button.glyphItalic
         font.underline: button.glyphUnderline
         font.strikeout: button.glyphStrikeout
-        color: button.active ? Colors.overPrimary : Colors.overSurface
+        color: KitStates.ink(button.look) === "accent" ? Type.accent : Type.text
     }
 
     MouseArea {

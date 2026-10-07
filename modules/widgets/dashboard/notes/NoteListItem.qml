@@ -1,39 +1,36 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
+import qs.modules.components.kit
 import qs.config
 import "notes_utils.js" as NotesUtils
 
-// One row of the notes list (or the "create" row): icon, title / inline
-// rename field, modified time, delete / rename confirm buttons and the
-// expandable options list.
+// One row of the notes list (or the "create" row) as a kit ListRow: the
+// note glyph, title (inline rename editor in rename mode) and modified time;
+// in delete / rename mode cancel + confirm as trailing IconButtons. An
+// expanded row shows its options (NoteItemOptions) under it. The keyboard
+// cursor is the row's `selected` look; a MouseArea on top selects on hover
+// and handles left / right clicks (off in delete / rename mode).
 Item {
     id: noteItem
 
     required property string noteId
     required property var noteData
     required property int index
-    // The NotesTab (state + actions) and the list showing this row
+    // The NotesTab (state + actions) and the NotesListPanel showing this row
     required property var tab
-    required property ListView listView
+    required property var panel
 
-    property var modelData: noteData
+    readonly property var note: noteData
+    readonly property bool isInDeleteMode: tab.deleteMode && note.id === tab.noteToDelete
+    readonly property bool isInRenameMode: tab.renameMode && note.id === tab.noteToRename
+    readonly property bool inMode: isInDeleteMode || isInRenameMode
+    readonly property bool isSelected: tab.selectedIndex === index
+    readonly property bool isExpanded: index === tab.expandedItemIndex && !inMode
 
-    width: noteItem.listView.width
-    height: {
-        let baseHeight = 48;
-        if (noteItem.index === noteItem.tab.expandedItemIndex && !noteItem.isInDeleteMode && !noteItem.isInRenameMode) {
-            // 2 options for create button, 3 for regular notes
-            var optionCount = noteItem.modelData.isCreateButton ? 2 : 3;
-            var listHeight = 36 * optionCount;
-            return baseHeight + 4 + listHeight + 8;
-        }
-        return baseHeight;
-    }
+    width: panel.listView.width
+    height: panel.rowHeight(note, isExpanded)
 
     Behavior on height {
         enabled: Config.animDuration > 0
@@ -43,282 +40,143 @@ Item {
         }
     }
 
-    property bool isInDeleteMode: noteItem.tab.deleteMode && noteItem.modelData.id === noteItem.tab.noteToDelete
-    property bool isInRenameMode: noteItem.tab.renameMode && noteItem.modelData.id === noteItem.tab.noteToRename
-    property bool isSelected: noteItem.tab.selectedIndex === noteItem.index
-    property bool isExpanded: noteItem.index === noteItem.tab.expandedItemIndex
-    property color textColor: {
-        if (noteItem.isInDeleteMode) {
-            return Styling.srItem("error");
-        } else if (noteItem.isExpanded) {
-            return Styling.srItem("pane");
-        } else {
-            return Colors.overSurface;
-        }
-    }
-    property string displayText: {
-        if (noteItem.isInDeleteMode) {
-            return "Delete \"" + noteItem.modelData.title.substring(0, 20) + (noteItem.modelData.title.length > 20 ? '...' : '') + "\"?";
-        }
-        return noteItem.modelData.title || "Untitled";
+    function select() {
+        tab.selectedIndex = index;
+        panel.listView.currentIndex = index;
     }
 
-    function select() {
-        noteItem.tab.selectedIndex = noteItem.index;
-        noteItem.listView.currentIndex = noteItem.index;
+    function toggleOptions(keyboard) {
+        if (tab.expandedItemIndex === index) {
+            tab.expandedItemIndex = -1;
+        } else {
+            tab.expandedItemIndex = index;
+            select();
+        }
+        tab.selectedOptionIndex = 0;
+        tab.keyboardNavigation = keyboard && tab.expandedItemIndex === index;
+    }
+
+    ListRow {
+        id: row
+        width: parent.width
+        height: noteItem.panel.rowH
+        selected: noteItem.isSelected || noteItem.inMode
+        title: noteItem.isInDeleteMode ? NotesUtils.deletePrompt(noteItem.note.title) : (noteItem.note.title || "Untitled")
+        subtitle: noteItem.note.isCreateButton || !noteItem.note.modified ? "" : NotesUtils.formatTimestamp(noteItem.note.modified, I18n.t)
+        titleEditor: noteItem.isInRenameMode ? renameEditor : null
+
+        leading: Component {
+            Item {
+                implicitWidth: Metrics.iconSize
+                implicitHeight: Metrics.iconSize
+
+                Text {
+                    anchors.centerIn: parent
+                    font.family: Icons.font
+                    font.pixelSize: Type.iconSize("body")
+                    color: noteItem.isInDeleteMode ? Colors.error : (noteItem.isSelected || noteItem.inMode ? Type.accent : Type.secondary)
+                    text: {
+                        if (noteItem.isInDeleteMode)
+                            return Icons.trash;
+                        if (noteItem.isInRenameMode)
+                            return Icons.cursorText;
+                        if (noteItem.note.isCreateButton)
+                            return Icons.plus;
+                        return noteItem.note.isMarkdown ? Icons.markdown : Icons.file;
+                    }
+                }
+            }
+        }
+
+        trailing: Component {
+            Row {
+                spacing: Space.xs
+                visible: noteItem.inMode
+
+                Repeater {
+                    model: [Icons.cancel, Icons.accept]
+
+                    IconButton {
+                        required property string modelData
+                        required property int index
+                        size: "s"
+                        icon: modelData
+                        highlighted: (noteItem.isInDeleteMode ? noteItem.tab.deleteButtonIndex : noteItem.tab.renameButtonIndex) === index
+                        onHoveredChanged: {
+                            if (hovered && !highlighted) {
+                                if (noteItem.isInDeleteMode)
+                                    noteItem.tab.deleteButtonIndex = index;
+                                else
+                                    noteItem.tab.renameButtonIndex = index;
+                            }
+                        }
+                        onClicked: {
+                            if (noteItem.isInDeleteMode)
+                                index === 1 ? noteItem.tab.confirmDeleteNote() : noteItem.tab.cancelDeleteMode();
+                            else
+                                index === 1 ? noteItem.tab.confirmRenameNote() : noteItem.tab.cancelRenameMode();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Component {
+        id: renameEditor
+        InlineEdit {
+            text: noteItem.tab.newNoteName
+            onTextChanged: noteItem.tab.newNoteName = text
+            Keys.onPressed: event => {
+                const tab = noteItem.tab;
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                    tab.confirmRenameNote();
+                else if (event.key === Qt.Key_Escape)
+                    tab.cancelRenameMode();
+                else if (event.key === Qt.Key_Left && !event.modifiers)
+                    tab.renameButtonIndex = 0;
+                else if (event.key === Qt.Key_Right && !event.modifiers)
+                    tab.renameButtonIndex = 1;
+                else
+                    return;
+                event.accepted = true;
+            }
+        }
     }
 
     MouseArea {
-        id: mouseArea
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        height: noteItem.isExpanded ? 48 : parent.height
+        anchors.fill: row
         hoverEnabled: true
         enabled: !noteItem.tab.deleteMode && !noteItem.tab.renameMode
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        cursorShape: Qt.PointingHandCursor
 
         onEntered: {
-            if (!noteItem.tab.deleteMode && noteItem.tab.expandedItemIndex === -1) {
+            if (noteItem.tab.expandedItemIndex === -1)
                 noteItem.select();
-            }
         }
 
         onClicked: mouse => {
-            const tab = noteItem.tab;
-            if (mouse.button === Qt.LeftButton && !noteItem.isInDeleteMode) {
-                if (tab.deleteMode && noteItem.modelData.id !== tab.noteToDelete) {
-                    tab.cancelDeleteMode();
-                    return;
-                }
-
-                if (!tab.deleteMode && !noteItem.isExpanded) {
-                    if (noteItem.modelData.isCreateButton || noteItem.modelData.isCreateSpecificButton) {
-                        // Show create menu instead of creating directly
-                        if (tab.expandedItemIndex === noteItem.index) {
-                            tab.expandedItemIndex = -1;
-                            tab.selectedOptionIndex = 0;
-                            tab.keyboardNavigation = false;
-                        } else {
-                            tab.expandedItemIndex = noteItem.index;
-                            noteItem.select();
-                            tab.selectedOptionIndex = 0;
-                            tab.keyboardNavigation = true;
-                        }
-                    } else {
-                        tab.openNoteInEditor(noteItem.modelData.id);
-                    }
-                }
-            } else if (mouse.button === Qt.RightButton) {
-                if (tab.deleteMode) {
-                    tab.cancelDeleteMode();
-                    return;
-                }
-
-                if (noteItem.modelData.isCreateButton)
-                    return;
-
-                if (tab.expandedItemIndex === noteItem.index) {
-                    tab.expandedItemIndex = -1;
-                    tab.selectedOptionIndex = 0;
-                    tab.keyboardNavigation = false;
-                    noteItem.select();
-                } else {
-                    tab.expandedItemIndex = noteItem.index;
-                    noteItem.select();
-                    tab.selectedOptionIndex = 0;
-                    tab.keyboardNavigation = false;
-                }
-            }
-        }
-
-        // Delete buttons
-        NoteConfirmButtons {
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.rightMargin: 8
-            shown: noteItem.isInDeleteMode
-            buttonIndex: noteItem.tab.deleteButtonIndex
-            highlightVariant: "overerror"
-            iconColor: Colors.overError
-            highlightedIconColor: Colors.overErrorContainer
-            onCancelClicked: noteItem.tab.cancelDeleteMode()
-            onConfirmClicked: noteItem.tab.confirmDeleteNote()
-            onButtonHovered: i => noteItem.tab.deleteButtonIndex = i
-        }
-    }
-
-    // Item content
-    RowLayout {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: 8
-        anchors.rightMargin: noteItem.isInRenameMode ? 84 : 8
-        height: 32
-        spacing: 8
-
-        Behavior on anchors.rightMargin {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Motion.morph.easing
-            }
-        }
-
-        StyledRect {
-            id: iconBackground
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
-            Layout.alignment: Qt.AlignVCenter
-            variant: {
-                if (noteItem.isInDeleteMode) {
-                    return "overerror";
-                } else if (noteItem.isInRenameMode) {
-                    return "oversecondary";
-                } else if (noteItem.modelData.isCreateButton) {
-                    return "primary";
-                } else {
-                    return "common";
-                }
-            }
-            radius: Styling.radius(-4)
-
-            Text {
-                anchors.centerIn: parent
-                text: {
-                    if (noteItem.isInDeleteMode) {
-                        return Icons.alert;
-                    } else if (noteItem.isInRenameMode) {
-                        return Icons.edit;
-                    } else if (noteItem.modelData.isCreateButton) {
-                        return Icons.plus;
-                    } else if (noteItem.modelData.isMarkdown) {
-                        return Icons.markdown;
-                    } else {
-                        return Icons.file;
-                    }
-                }
-                color: iconBackground.item
-                font.family: Icons.font
-                font.pixelSize: 16
-                textFormat: Text.RichText
-            }
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignVCenter
-            spacing: 2
-
-            Loader {
-                Layout.fillWidth: true
-                sourceComponent: noteItem.tab.renameMode && noteItem.modelData.id === noteItem.tab.noteToRename ? renameTextInput : normalText
-            }
-
-            Component {
-                id: normalText
-                Text {
-                    text: noteItem.displayText
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize
-                    font.weight: noteItem.isInDeleteMode ? Font.Bold : (noteItem.isSelected ? Font.Bold : Font.Normal)
-                    color: noteItem.textColor
-                    elide: Text.ElideRight
-
-                    Behavior on color {
-                        enabled: Config.animDuration > 0
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Motion.morph.easing
-                        }
-                    }
-                }
-            }
-
-            Component {
-                id: renameTextInput
-                TextField {
-                    id: renameField
-                    text: noteItem.tab.newNoteName
-                    color: Colors.overSecondary
-                    selectionColor: Colors.overSecondary
-                    selectedTextColor: Colors.secondary
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize
-                    font.weight: Font.Bold
-                    background: Item {}
-                    selectByMouse: true
-
-                    onTextChanged: {
-                        noteItem.tab.newNoteName = renameField.text;
-                    }
-
-                    Component.onCompleted: {
-                        Qt.callLater(() => {
-                            renameField.forceActiveFocus();
-                            renameField.selectAll();
-                        });
-                    }
-
-                    Keys.onPressed: event => {
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            noteItem.tab.confirmRenameNote();
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Escape) {
-                            noteItem.tab.cancelRenameMode();
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Left) {
-                            noteItem.tab.renameButtonIndex = 0;
-                            event.accepted = true;
-                        } else if (event.key === Qt.Key_Right) {
-                            noteItem.tab.renameButtonIndex = 1;
-                            event.accepted = true;
-                        }
-                    }
-                }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: noteItem.modelData.modified ? NotesUtils.formatTimestamp(noteItem.modelData.modified, I18n.t) : ""
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize - 2
-                color: Qt.rgba(noteItem.textColor.r, noteItem.textColor.g, noteItem.textColor.b, 0.6)
-                elide: Text.ElideRight
-                maximumLineCount: 1
-                visible: !noteItem.modelData.isCreateButton && text !== "" && !noteItem.isInRenameMode
+            const note = noteItem.note;
+            if (mouse.button === Qt.RightButton) {
+                if (!note.isCreateButton)
+                    noteItem.toggleOptions(false);
+            } else if (!noteItem.isExpanded) {
+                if (note.isCreateButton || note.isCreateSpecificButton)
+                    noteItem.toggleOptions(true);
+                else
+                    noteItem.tab.openNoteInEditor(note.id);
             }
         }
     }
 
-    // Rename action buttons (cancel/confirm)
-    NoteConfirmButtons {
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.rightMargin: 8
-        anchors.topMargin: 8
-        shown: noteItem.isInRenameMode
-        buttonIndex: noteItem.tab.renameButtonIndex
-        highlightVariant: "oversecondary"
-        iconColor: Colors.overSecondary
-        highlightedIconColor: Colors.overSecondaryContainer
-        onCancelClicked: noteItem.tab.cancelRenameMode()
-        onConfirmClicked: noteItem.tab.confirmRenameNote()
-        onButtonHovered: i => noteItem.tab.renameButtonIndex = i
-    }
-
-    // Expandable options list (matching TmuxTab styling)
     NoteItemOptions {
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
-        anchors.bottomMargin: 8
+        anchors.top: row.bottom
+        anchors.topMargin: Space.xs
         tab: noteItem.tab
-        note: noteItem.modelData
-        visible: noteItem.isExpanded && !noteItem.isInDeleteMode && !noteItem.isInRenameMode
-        opacity: (noteItem.isExpanded && !noteItem.isInDeleteMode && !noteItem.isInRenameMode) ? 1 : 0
+        note: noteItem.note
+        visible: noteItem.isExpanded
     }
 }

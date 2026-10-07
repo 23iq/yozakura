@@ -18,7 +18,7 @@ binary as `yozakura` (the repo build is `./yozakura` after `make build`).
 | Settings UI | `modules/settings/` | Schema-driven window (`schema/<category>.js` declares entries) |
 | Backend | `backend/` (Go) | The `yozakura` binary: daemon supervising Quickshell, IPC (JSON-RPC over a unix socket), CLI, `yozakura mcp` server |
 | Compositor daemon | `backend/cmd/yozd`, `backend/pkg/yozd/` (Go) | The `yozd` binary the backend supervises: one JSON API over Hyprland/niri/MangoWC (`yozd window list`, `yozd workspace list`, `yozd monitor list`, `yozd subscribe`), idle monitors and inhibitors, brightness, compositor config generation from `~/.local/share/yozakura/yozd.toml` |
-| Presets | `assets/presets/<Name>/` (built in), `~/.config/yozakura/presets/<Name>/` (user) | A directory of domain files plus `info.json` |
+| Presets | `assets/presets/sets/<Name>/` (built-in sets), `assets/presets/{layouts,styles,palettes}/<Name>/` (the parts sets are composed from), `~/.config/yozakura/presets/<Name>/` (user) | A set is a directory of domain files plus `info.json`; a built-in set names its layout, style and palette in `set.json` |
 | Keybinds | `~/.config/yozakura/binds.json`, `config/KeybindActions.js` | Core binds (`yozakura.*` actions) and custom compositor binds |
 | Wallpapers | `~/.cache/yozakura/wallpapers.json` | Current wallpaper per monitor, matugen scheme, colour preset |
 | Identity | `backend/pkg/brand`, `modules/globals/Brand.qml` + `BrandActions.js`, `scripts/lib/brand.*` | Never hard-code the app id |
@@ -362,8 +362,10 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 14. **No animations / faster animations**: `config set theme.animDuration 0` (or e.g. `250`).
 15. **More transparent surfaces**: `config set theme.srBg.opacity 0.85`, `config set theme.srPopup.opacity 0.9`. The `sr*` keys are the surface variants (`srBg`, `srPopup`, `srBarBg`, `srPane`, `srFocus`, `srPrimary`, ...): `config list theme.srBarBg`.
 16. **Glassiness (glass system)**: `config set theme.glass.amount 0.7` (0 solid .. 1 very glassy; `-1` = the preset's own look); per surface: `config set theme.glass.surfaces.bar.amount 0.3` (surfaces: `windows terminal popups bar notch dock sidebars lockscreen settings`); fine-tune: `config set theme.glass.advanced.blurSize 12`; off: `config set theme.glass.enabled false`. Everywhere in `theme.glass`, `-1` means inherit/auto and is accepted besides the range.
+16a. **Visual language** (how every screen draws groups, dividers and control states): `config set theme.language glass` (`ink` hairlines and ghost controls, the default; `glass` frosted translucent cards; `tiles` solid flat tiles; `classic` the `sr*` variants exactly as configured). Each built-in style sets one. Rules: `modules/theme/VisualLanguage.js`; the UI kit reads them through `Look`.
 16b. **Surface effect (CRT / ink look)**: `config set theme.surfaceEffect crt` (`none`, `crt`, `ink`; shell surfaces only, never app windows), `config set theme.surfaceEffectOptions.intensity 0.4` (auto-lowered to keep text at WCAG AA); crt: `theme.surfaceEffectOptions.flicker false`; ink: `theme.surfaceEffectOptions.grain 0.8`, `theme.surfaceEffectOptions.brushHighlights false`.
 16c. **Double hairline on the screen frame (shoji look)**: give the frame its own surface with a border: `config set theme.srFrame.inheritBg false`, `config set theme.srFrame.border '["secondary@0.5",1]'` (needs `bar.frameThickness` >= 3x the width + 2).
+16d. **Progress / slider fill colour**: `config set theme.progressRole secondary` (`primary` default, `secondary`, `tertiary`; the accent itself stays primary; Neon uses its cyan secondary). Read by the kit as `Type.progress` (ProgressLine, Ring, LineSlider).
 17. **Accent border on the bar**: `config set theme.srBarBg.border '["primary",2]'` (colour spec, width px).
 18. **Gradient bar**: `config set theme.srBarBg.gradient '[["primary",0],["tertiary",1]]'`, `config set theme.srBarBg.gradientType linear`, `config set theme.srBarBg.gradientAngle 90`. Colour specs: palette roles (`primary`, `surface`, `overBackground`, ...), `#rrggbb`, or `role@0.5` for alpha.
 19. **Softer shadows / no screen corners**: `config set theme.shadowOpacity 0.3`, `config set theme.enableCorners false`.
@@ -402,7 +404,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 41. **Terminal used by the shell**: `config set general.terminal foot`.
 42. **UI language**: `config set system.language ru` (`auto` = system locale).
 43. **Weather**: `config set weather.location "Tokyo"`, `config set weather.unit F`.
-44. **Launcher prefixes**: `config set prefix.clipboard cb`.
+44. **Launcher prefixes**: `config set prefix.clipboard cb`. Text-only (command-line) result rows: `config set layout.launcher.icons false` (the CRT set does this; the grid style keeps icons).
 45. **AI bar**: two spaces, switched in the header (Ctrl+1 / Ctrl+2, binds `ai-chat` / `ai-code`): **Assistant** (any engine; CLI agents run in the backend `assistant` mode from `$HOME` with the yozakura MCP and ask before commands/file writes) and **Code** (CLI agents in a project folder: project bar, detailed transcript, changes, gear). Each space keeps its own engine, conversation and history (`GlobalStates.aiSpace`, persisted). Choose the Assistant engine with `config set ai.defaultModel agent:codex` (or an exact API/local model ID) and the Code agent with `config set ai.agents.defaultAgent codex`; look and behaviour live in `ai.appearance.*`, `ai.behavior.*`, `ai.strip.*` (settings → AI). Position with `config set ai.sidebarPosition left`; voice: `config set voice.activation toggle`. The header cycles compact → wide → fullscreen (Ctrl+W) without changing the saved sidebar width. History combines saved chats and agent sessions; switching keeps background tasks, drafts and scroll positions. The model picker (Ctrl+K) lists each CLI agent as a group of its own models (`agents.models`; Claude haiku/sonnet/opus, Codex gpt-5.x, OpenCode provider/model, plus a manual id field); one click picks engine + model. The last pick per space (engine, agent model; effort per model) is persisted in StateService (`aiEngines`, `aiAgentModels`, `aiModelEfforts`, see `modules/services/ai/EngineMemory.qml`) and used by new chats, restarts, Quick Ask (when `ai.quickAsk.model` is empty) and Code tasks (unless `ai.tasks.defaultAgents` is set); `ai.defaultModel` is only the initial engine, or wins when changed after the pick. Agent settings show the installed CLI's model/effort catalog; launch settings can change while idle. Selection results offer explicit Copy/Continue. OpenCode ACP currently rejects the restricted Quick Ask profile rather than silently switching providers.
     **Model, effort, context** (AI bar strip `◆ engine · model ▾  level ▾ … 62k/200k`): the reasoning effort is picked inline and remembered per model (`StateService` `aiModelEfforts`; `config set ai.effort.defaultLevel high` for untouched models, `auto` sends nothing); levels map per family in `modules/services/ai/Effort.js` (CLI agents use their own catalog values). Capabilities and windows come from `assets/ai/models.json` and the backend Ollama probe (`providers.ollama.probe`); Ollama chats send `num_ctx` (`ai.ollama.numCtx`). Unknown windows: `ai.context.overrides`. HTTP chats compact older turns into a summary (Compact button from `ai.context.warnAt`, automatic at `ai.context.autoCompactAt` when `ai.context.autoCompact`; `ai.context.keepTurns`, `ai.context.compactModel`); agents report `usage.contextTokens/contextWindow` on `done` events and compact themselves.
     **Providers** (Connect sheet: picker footer "Connect provider", "not connected" rows, the Assistant "Connect a model" CTA, Settings → AI providers, onboarding): pick a preset (`modules/services/ai/ProviderPresets.js`), enter the key and/or base URL, Test (`providers.test`, free listing; Ollama: `providers.ollama.probe`), Save. Keys live in the KeyStore; Ollama/LM Studio need no key and count as connected while reachable (`ai.ollama.endpoint`, `ai.lmstudio.endpoint`, re-probed every `ai.providers.probeInterval` s while the bar is open). Rules in `ProviderConnect.js`, actions in `ProviderSetup.qml` (`Ai.providers`), UI in `modules/aicenter/providers/`. Requests: `ai.providers.timeout`, `ai.providers.retries`, `ai.providers.customHeaders` (Custom endpoint), `ai.providers.openrouterAttribution`, `ai.ollama.keepAlive`; hide a provider with `ai.providers.hidden`.
@@ -492,6 +494,7 @@ combo.
 | Notch panels | `modules/widgets/defaultview/panels/NotchPanels.js` | | `tests/notch-panels.test.cjs` |
 | Dock | `modules/dock/`, `modules/bar/IntegratedDock.qml` | `dock.*` | |
 | Theme, colours | `modules/theme/Colors.qml`, `Styling.qml`, `config/ColorSpec.js` | `theme.*` | `tests/palette-crossfade.test.py` |
+| UI kit, visual language | `modules/components/kit/`, `modules/theme/VisualLanguage.js` | `theme.language` | `tests/visual-language.test.cjs`, `tools/render/kit_render.py` |
 | App themes (kitty, GTK, ...) | `modules/theme/*Generator.qml` | `theme.terminalOpacity` | `tests/theme-generators.test.py` |
 | Compositor appearance | `modules/services/CompositorAppearance.js`, `CompositorTomlWriter.qml` | `compositor.*` | `tests/compositor-*.test.*` |
 | Motion profiles | `config/motion/` (registry + resolver), `modules/services/CompositorMotion.qml`, `backend/pkg/svc/compositor/motion.go` | `compositor.motion*` | `tests/motion-profiles.test.cjs`, `motion_test.go` |
@@ -603,8 +606,18 @@ as the family has them) into `assets/fonts/ui/<Dir>/` with its OFL/Apache
 licence and add one entry to `modules/theme/BundledFonts.js`;
 `FontRegistry.qml` loads it at startup so `theme.font` can name it.
 
-**Add a built-in preset.** A directory `assets/presets/<Name>/` with the
-domain files it sets (`bar.json`, `theme.json`, ...; never the private domains `system`, `ai`,
+**Add a built-in preset.** Built-in presets are *sets* composed from three
+parts: a layout (`assets/presets/layouts/<Name>/`: `bar`, `dock`, `layout`,
+`notch`, `overview`), a style (`assets/presets/styles/<Name>/`: `theme` incl.
+`theme.language`, `compositor`, `desktop`, `lockscreen`, `workspaces`) and a
+palette (`assets/presets/palettes/<Name>/`: colour keys of `theme`,
+`wallpaper.json`). A set is `assets/presets/sets/<Name>/` with `set.json`
+(`{"layout": ..., "style": ..., "palette": ...}`), `info.json` and only the
+domain files it overrides; each domain is the deep merge layout -> style ->
+palette -> set (objects merge, arrays and scalars replace;
+`backend/pkg/presets/sets.go`, `yozakura preset parts`, `preset apply --part
+style Neon`). Reuse an existing part when you can. Every file holds only the
+domain keys that define the look (`bar.json`, `theme.json`, ...; never the private domains `system`, `ai`,
 `prefix`, `weather`, `notifications`, `apps`, `general`, `specials`, nor machine-local
 keys: secrets, commands, endpoints, personal paths, see config/meta `local`), optionally `wallpaper.json` (`matugenScheme`), and
 `info.json` (`author`, `authorUrl`, `description`, optional `follows`: keys
@@ -613,10 +626,26 @@ light/dark mode when it is applied). A file replaces the whole live domain
 file and the shell fills the keys it lacks with defaults, so keep files to
 the keys that define the look. Layouts go in `bar.panels`. Name only fonts
 that are bundled (`modules/theme/BundledFonts.js`) or installed by the
-installers (`tests/bundled-fonts.test.cjs` checks every built-in preset). Easiest: build the look live, `yozakura preset save <Name>`,
-copy `~/.config/yozakura/presets/<Name>/` into `assets/presets/`.
+installers (`tests/bundled-fonts.test.cjs` checks every built-in preset). Easiest: build the look live, `yozakura preset save <Name>` (user presets
+are flat, self-contained directories) and split its keys into the parts.
 `backend/pkg/catalog` tests validate every built-in preset against the
 catalog.
+
+**UI kit (every screen is built from it).** `modules/components/kit/`
+(`import qs.modules.components.kit`): `Type`/`KitText` (roles display, title,
+body, secondary, caption, label), `Space` (spacing, radii, control sizes),
+`Group`, `SectionLabel`, `Divider`, `ListRow`, `SearchField`, `IconButton`,
+`ActionButton`, `Chip`, `Switch`, `Dropdown`, `LineSlider`, `ProgressLine`,
+`Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`. `Look` turns
+`theme.language` into the group / divider / hover / selected looks, so
+components never branch on the language name. Screens use only the kit: no
+raw font sizes, paddings, hex colours or hand-made rows/buttons; the accent
+marks only active, progress, selected/today and at most one primary action per
+surface; hierarchy comes from Type roles and spacing. Something missing is a
+small generic kit component, not a one-off. Check visuals offscreen only (a
+private Xvfb, never the live display) with `tools/render/<screen>_render.py`
+(`kit_render.py` draws the whole kit per language; most take `--languages
+ink,glass,tiles --mode dark|light`), and view the PNGs.
 
 **Add an activity source.** See `modules/services/activities/AGENTS.md`.
 
