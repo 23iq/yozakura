@@ -110,9 +110,12 @@ Item {
     // Panel on screen: the open one, or the last one while the notch closes
     property string lastPanel: ""
     readonly property int motionDuration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
+    // Kept until the silhouette finished shrinking: a pill or a side notch
+    // morphs with Motion.morph (Notch.geometryAnimationDuration), so the
+    // panel never vanishes from a notch that is still closing around it
     Timer {
         id: closeTimer
-        interval: root.motionDuration
+        interval: root.collapsingStyle || root.vertical ? Math.max(root.motionDuration, Config.animDuration > 0 ? Motion.morph.duration : 0) : root.motionDuration
     }
     Connections {
         target: controller

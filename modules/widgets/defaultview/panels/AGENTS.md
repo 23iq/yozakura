@@ -21,8 +21,9 @@ Notch's own geometry animation; panels crossfade over
 ## Opening
 `notch.expandOn` (Settings > Shell > Notch > "Open Panels On"):
 - `"hover"` (default): resting on a segment for `notch.hoverExpandDelay`
-  opens its panel, resting on another switches, leaving the segments and
-  the panel closes after `notch.hoverCollapseDelay`. Clicks on segments keep
+  opens its panel, resting on another switches; the pointer anywhere on the
+  notch (bell, avatar, artwork, buttons: `DefaultView.pointerHeld`) keeps
+  it, leaving the notch closes it after `notch.hoverCollapseDelay`. Clicks on segments keep
   their action (stop recording, open timer/download).
 - `"click"`: clicking a segment toggles its panel (or switches), a click on
   the header outside the segments closes it. Escape closes it when the notch
