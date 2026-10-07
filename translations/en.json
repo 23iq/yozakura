@@ -3692,5 +3692,9 @@
   "prefs.bar.clock_panel.bento": "Bento grid",
   "bento.label.inbox": "Inbox",
   "specials.windows.one": "%1 window",
-  "specials.windows.other": "%1 windows"
+  "specials.windows.other": "%1 windows",
+  "prefs.appearance.sig_petal_shape": "Falling shape",
+  "prefs.appearance.sig_petal_shape.desc": "Sakura petals or maple leaves, tinted with the palette.",
+  "prefs.appearance.sig_petal_shape.petal": "Petals",
+  "prefs.appearance.sig_petal_shape.leaf": "Maple leaves"
 }

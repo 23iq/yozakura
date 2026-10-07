@@ -5655,6 +5655,12 @@
           "type": "boolean",
           "default": false,
           "description": "The first-run setup wizard was finished or skipped. Set to false (or run `onboarding`) to show it again."
+        },
+        "newLookOffered": {
+          "title": "New look offered",
+          "type": "boolean",
+          "default": false,
+          "description": "The one-time \"Try the new look\" card was answered (tried, kept, reverted or dismissed); it is not shown again."
         }
       },
       "additionalProperties": false
@@ -9284,6 +9290,27 @@
                 "label": "prefs.appearance.sig_petals",
                 "control": "toggle",
                 "keywords": "signature petals sakura falling lockscreen particles"
+              }
+            },
+            "petalShape": {
+              "title": "Falling shape",
+              "type": "string",
+              "default": "petal",
+              "description": "Sakura petals or maple leaves, tinted with the palette.",
+              "x-settings": {
+                "category": "appearance",
+                "section": "signatures",
+                "label": "prefs.appearance.sig_petal_shape",
+                "control": "selector",
+                "keywords": "signature petals leaves maple autumn shape"
+              },
+              "enum": [
+                "petal",
+                "leaf"
+              ],
+              "x-enumLabels": {
+                "petal": "Petals",
+                "leaf": "Maple leaves"
               }
             }
           },

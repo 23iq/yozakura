@@ -7,4 +7,5 @@ JsonAdapter {
     property bool terminalAdvanced: false
     property string terminalCommand: "$TERMINAL -e $COMMAND"
     property bool onboardingDone: false
+    property bool newLookOffered: false
 }

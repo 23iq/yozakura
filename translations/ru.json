@@ -3710,5 +3710,9 @@
   "specials.windows.one": "%1 окно",
   "specials.windows.other": "окон: %1",
   "specials.windows.few": "%1 окна",
-  "specials.windows.many": "%1 окон"
+  "specials.windows.many": "%1 окон",
+  "prefs.appearance.sig_petal_shape": "Что падает",
+  "prefs.appearance.sig_petal_shape.desc": "Лепестки сакуры или кленовые листья в цветах палитры.",
+  "prefs.appearance.sig_petal_shape.petal": "Лепестки",
+  "prefs.appearance.sig_petal_shape.leaf": "Кленовые листья"
 }

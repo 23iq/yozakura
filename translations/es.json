@@ -3692,5 +3692,9 @@
   "prefs.bar.clock_panel.bento": "Cuadrícula bento",
   "bento.label.inbox": "Avisos",
   "specials.windows.one": "%1 ventana",
-  "specials.windows.other": "%1 ventanas"
+  "specials.windows.other": "%1 ventanas",
+  "prefs.appearance.sig_petal_shape": "Forma que cae",
+  "prefs.appearance.sig_petal_shape.desc": "Pétalos de sakura u hojas de arce, teñidos con la paleta.",
+  "prefs.appearance.sig_petal_shape.petal": "Pétalos",
+  "prefs.appearance.sig_petal_shape.leaf": "Hojas de arce"
 }

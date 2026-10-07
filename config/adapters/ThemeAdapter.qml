@@ -35,6 +35,7 @@ JsonAdapter {
     property JsonObject signatures: JsonObject {
         property bool brushHighlight: false
         property bool petals: false
+        property string petalShape: "petal"
     }
     property int paletteTransitionDuration: 600
     property real shadowOpacity: 0.5

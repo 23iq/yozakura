@@ -41,7 +41,8 @@ var data = {
     // Decorative signatures; turned on by the default shift.
     "signatures": {
         "brushHighlight": false,
-        "petals": false
+        "petals": false,
+        "petalShape": "petal"
     },
     "paletteTransitionDuration": 600,
     "shadowOpacity": 0.5,

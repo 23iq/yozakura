@@ -55,6 +55,12 @@
       "type": "boolean",
       "default": false,
       "description": "The first-run setup wizard was finished or skipped. Set to false (or run `onboarding`) to show it again."
+    },
+    "newLookOffered": {
+      "title": "New look offered",
+      "type": "boolean",
+      "default": false,
+      "description": "The one-time \"Try the new look\" card was answered (tried, kept, reverted or dismissed); it is not shown again."
     }
   },
   "additionalProperties": false
