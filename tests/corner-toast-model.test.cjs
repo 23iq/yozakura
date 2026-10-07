@@ -49,3 +49,10 @@ test('art: the image (round) before the app icon (square)', () => {
     assert.equal(M.artOf({ cachedImage: 'data:image/png;base64,AA' }).source, 'data:image/png;base64,AA');
     assert.equal(M.artOf({}).source, '');
 });
+
+test('sheetOpacity: the stack reads, each sheet a little quieter', () => {
+    assert.ok(Math.abs(M.sheetOpacity(1) - 0.85) < 1e-9);
+    assert.ok(Math.abs(M.sheetOpacity(2) - 0.65) < 1e-9);
+    assert.ok(M.sheetOpacity(9) >= 0.3);
+    assert.ok(Math.abs(M.sheetOpacity(0) - 0.85) < 1e-9);
+});

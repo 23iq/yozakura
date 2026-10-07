@@ -28,6 +28,13 @@ function stackDepth(count) {
     return Math.max(0, Math.min(MAX_STACK, (count | 0) - 1));
 }
 
+// Opacity of the sheet `step` (1 = right behind the card) of the stack:
+// clearly there, each one a little quieter (0.85, 0.65).
+function sheetOpacity(step) {
+    var s = Math.max(1, step | 0);
+    return Math.max(0.3, 1.05 - 0.2 * s);
+}
+
 // Urgency arrives as the NotificationUrgency enum (Critical = 2) or its
 // string form ("2", "critical").
 function isCritical(urgency) {
