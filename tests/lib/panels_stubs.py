@@ -78,9 +78,22 @@ QtObject {
 }
 """
 
+# One running download (the bar's downloads list shows it with a progress line)
 ACTIVITY_SERVICE = """pragma Singleton
-QtObject { property string presentation: "notch"; property int count: 0; property var items: [] }
+QtObject {
+    property string presentation: "notch"; property int count: 0; property var items: []
+    property var transfers: [{ id: "dl1", source: "browserDownloads", kind: "download", state: "running",
+        title: "archlinux-2026.10.01-x86_64.iso", processed: 503316480, total: 1181116006, rate: 8388608,
+        units: "bytes", startedAt: 1 }]
+}
 """
+
+# The context menu of the first tray item (renders open it)
+TRAY_MENU = [
+    {"text": "Show window"}, {"text": "Do not disturb", "buttonType": 1, "checkState": 2},
+    {"text": "Start minimized", "buttonType": 1, "checkState": 0}, {"isSeparator": True},
+    {"text": "Status", "hasChildren": True}, {"text": "Quit"},
+]
 
 GLOBAL_STATES = """pragma Singleton
 QtObject {
@@ -298,7 +311,10 @@ QtObject {
 def quickshell_modules(icon_path) -> dict:
     mods = dict(QUICKSHELL_MODULES)
     tray = dict(mods["Quickshell.Services.SystemTray"])
-    items = " ".join(f'SystemTrayItem {{ title: "{t}"; tooltipTitle: "{t}"; icon: "file://{icon_path(t)}" }}' for t in TRAY)
+    menu = json.dumps({"items": TRAY_MENU})
+    items = " ".join(f'SystemTrayItem {{ title: "{t}"; tooltipTitle: "{t}"; icon: "file://{icon_path(t)}"; '
+                     f'hasMenu: {"true" if i == 0 else "false"}; menu: {menu if i == 0 else "null"} }}'
+                     for i, t in enumerate(TRAY))
     tray["SystemTray"] = ("pragma Singleton\nQtObject {\n"
                           f"property list<SystemTrayItem> all: [{items.replace('} S', '}, S')}]\n"
                           "readonly property var items: ({ values: all })\n}")
@@ -326,7 +342,8 @@ QUICKSHELL_MODULES = {
         "PanelWindow": "Item { property color color; property var mask; property var screen; property int exclusiveZone; "
                        "property int exclusionMode; property var anchors2; property bool aboveWindows; "
                        "property var margins }",
-        "QsMenuOpener": "QtObject { property var menu; property var children: ({ values: [] }) }",
+        "QsMenuOpener": "QtObject { property var menu; "
+                        "readonly property var children: ({ values: menu && menu.items ? menu.items : [] }) }",
         "QsMenuAnchor": "QtObject { property var menu; property var anchor; function open() {} }",
         "Variants": "Item { property var model; property Component delegate }",
         "ScriptModel": "QtObject { property var values: [] }",
