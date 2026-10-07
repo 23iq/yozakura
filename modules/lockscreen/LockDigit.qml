@@ -1,5 +1,6 @@
 import QtQuick
 import qs.config
+import qs.modules.theme
 
 // One clock glyph in a fixed-width cell. When the value changes the old glyph
 // rolls up and fades out while the new one rises in from below.
@@ -66,7 +67,7 @@ Item {
             from: root.travel
             to: 0
             duration: roll.duration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: incoming
@@ -74,7 +75,7 @@ Item {
             from: 0
             to: 1
             duration: roll.duration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: outgoing
@@ -82,7 +83,7 @@ Item {
             from: 0
             to: -root.travel
             duration: roll.duration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: outgoing
@@ -90,7 +91,7 @@ Item {
             from: 1
             to: 0
             duration: Math.round(roll.duration * 0.7)
-            easing.type: Easing.OutCubic
+            easing.type: Motion.emphasis.easing
         }
     }
 }

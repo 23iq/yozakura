@@ -68,7 +68,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: root.revealDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -110,7 +110,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: root.revealDuration
-                easing.type: Easing.OutQuint
+                easing.type: Motion.enter.easing
             }
         }
 
@@ -126,7 +126,7 @@ Item {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
                     duration: root.revealDuration
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.morph.easing
                 }
             }
         }
@@ -143,7 +143,7 @@ Item {
             enabled: Config.animDuration > 0
             NumberAnimation {
                 duration: root.revealDuration
-                easing.type: Easing.OutExpo
+                easing.type: Motion.morph.easing
             }
         }
     }

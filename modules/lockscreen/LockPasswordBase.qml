@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.modules.services
 import qs.config
+import qs.modules.theme
 
 // Logic shared by every style's password field. Authentication lives in
 // LockScreen.qml: it reads `field.text` on `field.accepted`, drives
@@ -65,36 +66,36 @@ Item {
             target: root
             property: "shakeOffset"
             to: 14 * root.shakeAmplitude
-            duration: 45
-            easing.type: Easing.OutQuad
+            duration: Motion.emphasis.duration
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: -12 * root.shakeAmplitude
-            duration: 80
-            easing.type: Easing.InOutQuad
+            duration: Motion.emphasis.duration
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: 9 * root.shakeAmplitude
-            duration: 70
-            easing.type: Easing.InOutQuad
+            duration: Motion.emphasis.duration
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: -5 * root.shakeAmplitude
-            duration: 60
-            easing.type: Easing.InOutQuad
+            duration: Motion.emphasis.duration
+            easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: 0
-            duration: 50
-            easing.type: Easing.OutQuad
+            duration: Motion.emphasis.duration
+            easing.type: Motion.emphasis.easing
         }
         ScriptAction {
             script: root.wrongPasswordFinished()
