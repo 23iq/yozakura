@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.components.signatures
 
 // One sidebar page: a calm kit ListRow (icon + title), selected while it is
 // the current page; an IconButton in the compact sidebar. Keyboard focus is
@@ -27,6 +28,11 @@ Item {
 
     Accessible.role: Accessible.PageTab
     Accessible.name: I18n.t(category.title)
+
+    // Signature: a faint brush stroke under the current page (when enabled).
+    BrushHighlight {
+        shown: navItem.selected
+    }
 
     ListRow {
         anchors.fill: parent

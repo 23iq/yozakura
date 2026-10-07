@@ -294,6 +294,18 @@ check(h.eval(row("notifications.position"), "shown") is False, "corner position 
 ev("SettingsStore.set('notifications.presentation', 'corner')")
 settle(50)
 check(h.eval(row("notifications.position"), "shown") is True, "corner position shown for corner toasts")
+# A long option set (7 corners) is an inline kit Dropdown; short ones stay chips
+pos = row("notifications.position")
+check(h.eval(pos, "stacked") is False, "a long selector stays inline")
+picked = h.eval(pos, """(function() {
+    var found = null;
+    (function walk(item) {
+        if (!found && item.chipLimit !== undefined) found = item;
+        for (var i = 0; i < item.children.length; i++) walk(item.children[i]);
+    })(this);
+    return found.dropdown;
+}).call(this)""")
+check(picked is True, "…drawn as a Dropdown")
 ev("SettingsStore.set('notifications.dnd.schedule.enabled', true)")
 settle(50)
 days = row("notifications.dnd.schedule.days")

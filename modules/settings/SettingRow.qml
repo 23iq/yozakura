@@ -31,7 +31,7 @@ Item {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < 600
-    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && (narrow || (entry.options || []).length > 4)) || (narrow && type === "slider")
+    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && narrow) || (narrow && type === "slider")
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
 

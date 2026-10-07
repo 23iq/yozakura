@@ -7,8 +7,9 @@ import "KitStates.js" as KitStates
 import qs.modules.components.kit
 
 // A choice among many options: a field in the language's control box that
-// shows the current option and a caret; a click opens a popup Surface listing
-// the options as ListRows (the current one selected). options:
+// shows the current option and a caret (underlined in a ghost language);
+// a click opens a popup Surface listing the options as ListRows (the
+// current one selected). options:
 // [{value, text, icon (glyph, optional)}]. `selected(value)` on a pick;
 // Enter / Space open it, Up / Down step through the options.
 StyledRect {
@@ -51,6 +52,15 @@ StyledRect {
         shown: root.boxed
         radius: root.radius
         hovered: root.look === "hover"
+    }
+
+    // A ghost language (ink: no box at rest) underlines the field.
+    Rectangle {
+        visible: root.boxed && Look.controlFill(false).a === 0 && Look.controlEdge.a === 0
+        anchors.bottom: parent.bottom
+        width: parent.width
+        height: Space.hairline
+        color: popup.opened ? Type.accent : Type.track
     }
 
     Row {

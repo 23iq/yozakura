@@ -39,6 +39,20 @@ modules/settings/
                             (backend/pkg/presets), trial/edit sessions live in the backend
 ```
 
+## LOOK
+The window is built from the shared kit (`qs.modules.components.kit`, see
+`docs/superpowers/plans/screens-brief.md`): sidebar rows are `ListRow`s in
+labelled blocks (`SectionLabel`, `Categories.sidebarSections()`), search is
+the kit `SearchField`, `PageHeader` is title + secondary with a quiet
+"Reset page" action, a section is a `Group` (its label action reads Reset /
+Show / Hide), a row is body label + caption description with the control
+flush right. Controls: `Switch` (ToggleControl), segmented `Chip`s or a
+`Dropdown` past `chipLimit` options (SelectorControl), `LineSlider`
+(SliderControl), `IconButton` stepper (NumberControl), `FieldBox` behind
+text / path / font fields, `ChoiceCard` / `PillButton` on the kit looks.
+No raw sizes, paddings or colors in new settings code: Type / Space / Look.
+Render: `tools/render/settings_render.py --languages ink,glass,tiles PAGE...`.
+
 Hand-written pages (`page` in Categories.js) are mapped by name in
 `SettingsShell.pages`. The preset studio never writes preset files itself;
 a new mixable aspect is one entry in `backend/pkg/presets/aspects.go` (+

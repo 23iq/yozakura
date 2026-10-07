@@ -20,6 +20,8 @@ Window {
     property int moved: 0
     property int groupAction: 0
     property int iconClicks: 0
+    property var flips: []
+    property var picks: []
     Column {
         KitText { objectName: "display"; role: "display"; text: "21:47" }
         KitText { objectName: "title"; role: "title"; text: "Title" }
@@ -34,6 +36,11 @@ Window {
         IconButton { objectName: "btnS"; size: "s"; icon: Icons.gear }
         IconButton { objectName: "btnM"; icon: Icons.gear }
         Chip { objectName: "chip"; icon: Icons.wifiHigh; text: "Wi-Fi" }
+        Chip { objectName: "primaryChip"; text: "Apply"; primary: true }
+        Switch { objectName: "switch"; onToggled: v => parent.Window.window.flips = parent.Window.window.flips.concat([v]) }
+        Dropdown { objectName: "dropdown"; value: "b"
+                   options: [{ value: "a", text: "Alpha" }, { value: "b", text: "Beta" }, { value: "c", text: "Gamma" }]
+                   onSelected: v => parent.Window.window.picks = parent.Window.window.picks.concat([v]) }
         ListRow { objectName: "row"; width: 300; title: "Mira"; subtitle: "Sent the deck"
                   leading: Component { Avatar { objectName: "avatar"; name: "Mira Tanaka" } }
                   trailing: Component { KeyHint { objectName: "key"; text: "Esc" } } }
@@ -128,6 +135,34 @@ for lang, density in CASES:
     assert chip.property("variant") == "primary", tag
     assert chip.property("look") == ("primary" if lang == "tiles" else "active"), tag
     assert chip.property("ink").name() == h.eval(win, "Type.%s.toString()" % ("onAccent" if lang == "tiles" else "accent")), tag
+
+    # Primary chip: the filled accent text button
+    pc = get("primaryChip")
+    assert pc.property("look") == "primary" and pc.property("variant") == "primary", tag
+    assert pc.property("ink").name() == h.eval(win, "Type.onAccent.toString()"), tag
+
+    # Switch: user flips report the new value; `checked` follows the binding
+    sw = get("switch")
+    h.eval(sw, "flip()")
+    assert win.property("flips").toVariant() == [True] and sw.property("checked") is False, tag
+    sw.setProperty("checked", True)
+    h.eval(sw, "flip()")
+    assert win.property("flips").toVariant() == [True, False], tag
+    if lang == "tiles":  # square languages: the small radius, not a pill
+        assert sw.property("trackRadius") < sw.property("height") / 2, tag
+    else:
+        assert sw.property("trackRadius") == sw.property("height") / 2, tag
+
+    # Dropdown: shows the current option, steps through the options
+    dd = get("dropdown")
+    assert dd.property("currentIndex") == 1 and h.eval(dd, "current.text") == "Beta", tag
+    assert dd.property("height") == space("chip"), tag
+    h.eval(dd, "step(1)")
+    h.eval(dd, "step(-1)")
+    assert win.property("picks").toVariant() == ["c", "a"], tag
+    dd.setProperty("value", "c")
+    h.eval(dd, "step(1)")
+    assert win.property("picks").toVariant() == ["c", "a"], tag  # already the last
 
     # ListRow: ghost at rest, focus on hover, tint when selected; slots load
     row = get("row")
