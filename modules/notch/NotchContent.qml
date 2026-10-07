@@ -108,8 +108,36 @@ Item {
     // Hover state with delay to prevent flickering
     property bool hoverActive: false
 
-    // Track if mouse is over any notch-related area
-    readonly property bool isMouseOverNotch: notchMouseAreaHover.hovered || notchRegionHover.hovered
+    // Track if mouse is over any notch-related area: the edge strip (or the
+    // stem of a dropped notch) and the whole notch silhouette plus a small
+    // tolerance. The silhouette sliding under a still pointer while it
+    // slides back (avoidance.returning) does not count as arriving on it, so
+    // a collapse never re-opens it by itself.
+    readonly property bool isMouseOverNotch: notchMouseAreaHover.hovered || (notchRegionContainer.hovered && !avoidance.returning)
+
+    // Pointer presence held for notch.hoverCollapseDelay: what keeps the
+    // expanded notch (pill, panels) open while crossing child controls
+    NotchHoverHold {
+        id: hoverHold
+        over: root.isMouseOverNotch
+        delay: Config.notch ? Config.notch.hoverCollapseDelay : 200
+    }
+
+    // A grown notch never covers the bar's own modules (NotchAvoid.js)
+    NotchAvoidance {
+        id: avoidance
+        screen: root.screen
+        bar: root.barPanelRef
+        position: root.notchPosition
+        grown: !notchContainer.pillCollapsed && (notchContainer.styleSpec.collapses || root.screenNotchOpen || root.hasActiveNotifications || (root.defaultView ? root.defaultView.panelExpanded : false))
+        targetAlong: Math.max(root.vertical ? notchContainer.targetHeight : notchContainer.targetWidth, notificationPopupContainer.targetWidth)
+        restAlong: notchContainer.restAlong
+        restAcross: (root.vertical ? notchContainer.capsule.w : notchContainer.capsule.h) + root.edgeGap
+        edgeGap: root.edgeGap
+        gap: root.popupGap
+    }
+    // Mask piece of a dropped notch: the bridge from the edge down to it
+    readonly property Item notchStemHitbox: avoidance.moved && root.reveal ? notchHoverRegion : null
 
     readonly property bool microphoneNotice: MicrophoneStatus.noticeVisible && MicrophoneStatus.noticeScreen === screen.name
 
@@ -152,7 +180,7 @@ Item {
     }
 
     // The hitbox for the mask
-    readonly property Item notchHitbox: root.reveal ? notchRegionContainer : notchHoverRegion
+    readonly property Item notchHitbox: root.reveal ? notchHoverArea : notchHoverRegion
 
     // Default view component - user@host text
     Component {
@@ -223,11 +251,13 @@ Item {
         id: notchHoverRegion
 
         // On the notch's edge; a thin strip while hidden, the whole notch
-        // once revealed (NotchShape.hoverStrip)
-        x: root.placement.hoverStrip.x
-        y: root.placement.hoverStrip.y
-        width: root.placement.hoverStrip.w
-        height: root.placement.hoverStrip.h
+        // once revealed (NotchShape.hoverStrip); the resting footprint and
+        // the bridge down to it once the notch moved off the bar
+        readonly property var rect: root.reveal && (avoidance.moved || avoidance.returning) ? avoidance.stem : root.placement.hoverStrip
+        x: rect.x
+        y: rect.y
+        width: rect.w
+        height: rect.h
 
         Behavior on width {
             enabled: Config.animDuration > 0 && root.vertical
@@ -259,15 +289,28 @@ Item {
         width: root.vertical ? notchAnimationContainer.width + (popupShown ? notificationPopupContainer.width + root.popupGap : 0) : Math.max(notchAnimationContainer.width, popupShown ? notificationPopupContainer.width : 0)
         height: root.vertical ? Math.max(notchAnimationContainer.height, popupShown ? notificationPopupContainer.height : 0) : notchAnimationContainer.height + (popupShown ? notificationPopupContainer.height + root.popupGap : 0)
 
-        // On its edge, aligned (notch.align), past a side bar (EdgeLayout)
-        x: root.placement.x
-        y: root.placement.y
+        // On its edge, aligned (notch.align), past a side bar (EdgeLayout),
+        // moved off the bar's modules while grown (NotchAvoidance)
+        x: root.placement.x + avoidance.offsetX
+        y: root.placement.y + avoidance.offsetY
 
-        // HoverHandler to detect when mouse is over the revealed notch
+        // The revealed notch: a HoverHandler (passive) on the container, an
+        // ancestor of every control in it, so child MouseAreas and buttons
+        // never take the hover away from the notch
         HoverHandler {
-            id: notchRegionHover
-            enabled: true
+            id: notchBodyHover
         }
+        // ...plus a small tolerance around the silhouette (also the mask)
+        Item {
+            id: notchHoverArea
+            z: -1
+            anchors.fill: parent
+            anchors.margins: -Math.round(Metrics.spacing / 2)
+            HoverHandler {
+                id: notchToleranceHover
+            }
+        }
+        readonly property bool hovered: notchBodyHover.hovered || notchToleranceHover.hovered
 
         // Animation container for reveal/hide
         Item {
@@ -314,7 +357,7 @@ Item {
                 id: notchContainer
                 screenName: root.screen.name
                 unifiedEffectActive: root.unifiedEffectActive
-                parentHovered: root.isMouseOverNotch
+                parentHovered: hoverHold.held
                 x: root.edgePlace(parent, width, height, root.edgeGap).x
                 y: root.edgePlace(parent, width, height, root.edgeGap).y
 
@@ -354,6 +397,8 @@ Item {
             x: at.x
             y: at.y
             
+            // Target width (animated below); 0 while hidden
+            readonly property real targetWidth: shouldShowNotificationPopup ? Math.round(popupHovered ? 420 + 48 : 320 + 48) : 0
             width: Math.round(popupHovered ? 420 + 48 : 320 + 48)
             height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + 32 : notificationPopup.implicitHeight + 32) : 0
             clip: false
@@ -412,16 +457,16 @@ Item {
             Behavior on width {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
-                    easing.overshoot: 1.2
+                    easing.overshoot: Motion.morph.overshoot
                 }
             }
 
             Behavior on height {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
+                    duration: Motion.morph.duration
                     easing.type: Motion.morph.easing
                 }
             }
