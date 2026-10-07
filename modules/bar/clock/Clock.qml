@@ -118,6 +118,16 @@ Item {
                 font.pixelSize: root.textSize
                 font.family: BarLook.textFont
                 font.weight: BarLook.textWeight
+                font.features: {
+                    "tnum": 1
+                }
+                // Reserve two-digit day width so 9 -> 10 does not resize the island.
+                Layout.minimumWidth: Math.ceil(dateMetrics.advanceWidth)
+                TextMetrics {
+                    id: dateMetrics
+                    font: parent.font
+                    text: "· " + root.dayAbbrev + " 00"
+                }
             }
 
             PomodoroIndicator {

@@ -29,11 +29,28 @@ Item {
     readonly property real contentThickness: layoutItem ? (vertical ? layoutItem.implicitWidth : layoutItem.implicitHeight) : 0
     readonly property bool hasContent: contentLength > 0
 
+    // The first layout (startup, a panel being built) snaps; only changes after
+    // the content has settled morph.
+    property bool settled: false
+    onHasContentChanged: {
+        if (hasContent && !settled)
+            settleTimer.restart();
+    }
+    Component.onCompleted: {
+        if (hasContent)
+            settleTimer.restart();
+    }
+    Timer {
+        id: settleTimer
+        interval: 120
+        onTriggered: island.settled = true
+    }
+
     property real bodyLength: hasContent ? contentLength + padding * 2 : 0
     Behavior on bodyLength {
-        enabled: island.animateSize && Config.animDuration > 0
+        enabled: island.settled && island.animateSize && Motion.morph.duration > 0
         NumberAnimation {
-            duration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
         }
     }
