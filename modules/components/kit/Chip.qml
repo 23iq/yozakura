@@ -6,16 +6,18 @@ import qs.modules.components.kit
 
 // Icon + label toggle. Inactive: the language's control box (Look);
 // `active`: accent tint with accent icon and label (a solid accent fill in
-// tiles). The hit area is at least 36 px tall.
+// tiles); `primary`: the one filled accent action of a surface (a text
+// button). The hit area is at least 36 px tall.
 StyledRect {
     id: root
 
     property string icon: ""
     property string text: ""
     property bool active: false
+    property bool primary: false
     property bool highlighted: false
     readonly property bool hovered: mouse.containsMouse || root.highlighted
-    readonly property string look: KitStates.look(root.active && Look.solidActive, root.active, root.hovered && root.enabled)
+    readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive), root.active, root.hovered && root.enabled)
     readonly property bool boxed: Look.boxedControls && (root.look === "normal" || root.look === "hover")
     readonly property color ink: {
         const k = KitStates.ink(root.look);
@@ -28,7 +30,7 @@ StyledRect {
     implicitWidth: row.implicitWidth + Space.m * 2
     variant: KitStates.variant(root.look, "common")
     backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
-    enableBorder: !root.boxed && !root.active
+    enableBorder: !root.boxed && !root.active && !root.primary
     radius: Look.chipRadius(height)
     opacity: root.enabled ? 1 : 0.38
 
@@ -62,7 +64,7 @@ StyledRect {
             role: "secondary"
             text: root.text
             color: root.ink
-            font.weight: root.active ? Look.activeLabelWeight : Look.labelWeight
+            font.weight: root.active || root.primary ? Look.activeLabelWeight : Look.labelWeight
         }
     }
 
