@@ -1,16 +1,21 @@
 import QtQuick
+import Quickshell.Services.Pipewire
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import "HomeModel.js" as HomeModel
 
-// "Levels" on the composed dashboard: volume (click the speaker to mute)
-// and brightness as LineSliders with their values. Same services as
-// widgets/LevelsColumn.qml (Audio sink, Brightness monitors with the sync
-// option).
-Group {
+// Levels on the composed dashboard: output volume, microphone and
+// brightness as LineSliders without numbers. The speaker and mic icons
+// mute; the microphone track carries its live input level (a Pipewire peak
+// monitor, running only while shown and unmuted). The chevrons open the
+// output / input device lists (`details("output" | "input")`). Same
+// services as widgets/LevelsColumn.qml.
+Column {
     id: root
 
     readonly property var sinkAudio: Audio.sink?.audio ?? null
+    readonly property var sourceAudio: Audio.source?.audio ?? null
     readonly property var monitor: {
         const mons = Brightness.monitors;
         if (mons.length === 0)
@@ -23,10 +28,21 @@ Group {
         return mons[0];
     }
     readonly property bool lightReady: root.monitor !== null && root.monitor.ready
+    readonly property real sliderW: root.width - Space.controlS - Space.xs
 
-    function setVolume(v: real) {
-        if (root.sinkAudio && Math.abs(root.sinkAudio.volume - v) > 0.001)
-            root.sinkAudio.volume = v;
+    // The detail open in the home (its chevron shows active).
+    property string detail: ""
+
+    signal details(string kind)
+
+    function setLevel(audio: var, v: real) {
+        if (audio && Math.abs(audio.volume - v) > 0.001)
+            audio.volume = v;
+    }
+
+    function toggleMuted(audio: var) {
+        if (audio)
+            audio.muted = !audio.muted;
     }
 
     function setBrightness(v: real) {
@@ -41,26 +57,72 @@ Group {
         }
     }
 
-    label: I18n.t("dashboard.home.levels")
+    spacing: Space.xs
 
-    LineSlider {
-        id: volume
-        objectName: "volumeSlider"
-        width: parent.width
-        icon: root.sinkAudio?.muted ? Icons.speakerX : Icons.speakerHigh
-        iconClickable: true
-        showValue: true
-        enabled: root.sinkAudio !== null
-        valueText: enabled ? Math.round(volume.fraction * 100) + "%" : "–"
-        onMoved: v => root.setVolume(v)
-        onIconClicked: {
-            if (root.sinkAudio)
-                root.sinkAudio.muted = !root.sinkAudio.muted;
+    PwNodePeakMonitor {
+        id: micPeak
+        node: Audio.source
+        enabled: root.visible && root.sourceAudio !== null && !root.sourceAudio.muted
+    }
+
+    Row {
+        spacing: Space.xs
+
+        LineSlider {
+            id: volume
+            objectName: "volumeSlider"
+            width: root.sliderW
+            icon: root.sinkAudio?.muted ?? true ? Icons.speakerX : (volume.value < 0.33 ? Icons.speakerLow : Icons.speakerHigh)
+            iconClickable: true
+            enabled: root.sinkAudio !== null
+            onMoved: v => root.setLevel(root.sinkAudio, v)
+            onIconClicked: root.toggleMuted(root.sinkAudio)
+        }
+
+        IconButton {
+            objectName: "outputDevices"
+            size: "s"
+            icon: Icons.caretRight
+            active: root.detail === "output"
+            onClicked: root.details("output")
         }
     }
 
-    // The slider sets its own value while dragged; the service value comes
-    // back through these bindings.
+    Row {
+        spacing: Space.xs
+
+        LineSlider {
+            id: mic
+            objectName: "micSlider"
+            width: root.sliderW
+            icon: root.sourceAudio?.muted ?? true ? Icons.micSlash : Icons.mic
+            iconClickable: true
+            enabled: root.sourceAudio !== null
+            level: micPeak.enabled ? HomeModel.meterLevel(micPeak.peak) : -1
+            onMoved: v => root.setLevel(root.sourceAudio, v)
+            onIconClicked: root.toggleMuted(root.sourceAudio)
+        }
+
+        IconButton {
+            objectName: "inputDevices"
+            size: "s"
+            icon: Icons.caretRight
+            active: root.detail === "input"
+            onClicked: root.details("input")
+        }
+    }
+
+    LineSlider {
+        id: light
+        objectName: "lightSlider"
+        width: root.sliderW
+        icon: Icons.sun
+        enabled: root.lightReady
+        onMoved: v => root.setBrightness(v)
+    }
+
+    // The sliders set their own value while dragged; the service value
+    // comes back through these bindings.
     Binding {
         target: volume
         property: "value"
@@ -68,15 +130,11 @@ Group {
         when: !volume.pressed
     }
 
-    LineSlider {
-        id: light
-        objectName: "lightSlider"
-        width: parent.width
-        icon: Icons.sun
-        showValue: true
-        enabled: root.lightReady
-        valueText: enabled ? Math.round(light.fraction * 100) + "%" : "–"
-        onMoved: v => root.setBrightness(v)
+    Binding {
+        target: mic
+        property: "value"
+        value: root.sourceAudio?.volume ?? 0
+        when: !mic.pressed
     }
 
     Binding {

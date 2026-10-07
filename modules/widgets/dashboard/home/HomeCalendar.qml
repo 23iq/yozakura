@@ -6,7 +6,8 @@ import qs.modules.components.kit
 import qs.modules.widgets.dashboard.widgets
 import "../widgets/CalendarModel.js" as CalendarModel
 
-// Month calendar of the composed dashboard: the month title with ‹ ›
+// Compact month calendar of the composed dashboard (the clock is the
+// hero, so the month title is quiet): the month title with ‹ ›
 // (click the title or scroll to browse, the title returns to today), the
 // weekdays and the days, today selected; with a calendar source (khal) the
 // next events under it. Month logic is the shared CalendarModel.
@@ -21,7 +22,7 @@ Group {
     readonly property var cells: CalendarModel.monthGrid(root.shown, root.firstDay, root.now)
     readonly property int rows: CalendarModel.rowsNeeded(root.shown, root.firstDay)
     readonly property real cellW: width > 0 ? (width - root.padding * 2) / 7 : Space.controlS
-    readonly property real cellH: Math.round(Space.controlS * 0.8)
+    readonly property real cellH: Math.round(Space.controlS * 0.75)
 
     CalendarEvents {
         id: events
@@ -56,7 +57,8 @@ Group {
             anchors.right: nav.left
             anchors.rightMargin: Space.s
             anchors.verticalCenter: parent.verticalCenter
-            role: "title"
+            role: "body"
+            font.weight: Look.labelWeight
             text: root.shown.toLocaleDateString(Qt.locale(), "MMMM yyyy")
             font.capitalization: Font.Capitalize
 

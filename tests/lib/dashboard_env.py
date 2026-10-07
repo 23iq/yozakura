@@ -78,7 +78,7 @@ QtObject {
 QtObject {{
     id: n
     property string presentation: "notch"; property string cornerPosition: "top-right"
-    property bool silent: false; property int cleared: 0; property var sent: []
+    property bool silent: false; property int cleared: 0; property var sent: []; property var discarded: []
     property var list: {json.dumps(notifs)}
     property var groupsByAppName: {{
         const g = {{}};
@@ -91,6 +91,7 @@ QtObject {{
     property var appNameList: Object.keys(groupsByAppName)
     function toggleDnd() {{ silent = !silent }}
     function discardAllNotifications() {{ cleared++; list = [] }}
+    function discardNotifications(ids) {{ discarded = discarded.concat([ids]) }}
     function hideAllPopups() {{}}
     function notifyInternal(o) {{ sent = sent.concat([o]); return null }}
 }}""",
@@ -101,6 +102,12 @@ QtObject {{
 QtObject {
     property QtObject sink: QtObject { property QtObject audio: QtObject { property real volume: 0.62; property bool muted: false } }
     property QtObject source: QtObject { property QtObject audio: QtObject { property real volume: 0.3; property bool muted: false } }
+    property var outputDevices: [sink, { "nickname": "HDMI" }]
+    property var inputDevices: [source]
+    property var defaults: []
+    function friendlyDeviceName(n) { return n === sink ? "Speakers" : (n === source ? "Microphone" : (n && n.nickname) || "Unknown") }
+    function setDefaultSink(n) { defaults = defaults.concat(["sink"]) }
+    function setDefaultSource(n) { defaults = defaults.concat(["source"]) }
 }""",
         "Brightness": """pragma Singleton
 QtObject {
@@ -145,6 +152,12 @@ class DashboardEnv(KitEnv):
             elif src.exists():
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dst)
+        # The device panels the home's details load by URL (real ones need
+        # the full network / Bluetooth services).
+        for panel in ("WifiPanel", "BluetoothPanel"):
+            stub = qs / "modules/widgets/dashboard/controls" / (panel + ".qml")
+            stub.parent.mkdir(parents=True, exist_ok=True)
+            stub.write_text("import QtQuick\nItem { objectName: %r; property int maxContentWidth: 480 }\n" % panel)
         notifs = SAMPLE_NOTIFICATIONS if notifications is None else notifications
         self.h.module("qs.modules.services", services(playing, notifs, art))
         self.h.module("qs.modules.globals", {"GlobalStates": global_states(wallpaper or {})})
@@ -158,6 +171,8 @@ class DashboardEnv(KitEnv):
                               "readonly property int Playlist: 2 }",
             "MprisPlaybackState": "QtObject { readonly property int Stopped: 0; readonly property int Playing: 1; "
                                   "readonly property int Paused: 2 }"})
+        self.h.module("Quickshell.Services.Pipewire", {
+            "PwNodePeakMonitor": "QtObject { property var node; property bool enabled: true; property real peak: 0.25 }"})
         self.h.module("qs.modules.widgets.dashboard.metrics", {"MetricsTab": "Item {}"})
         self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item {}"})
         self._qmldir(qs / "modules/notch", "qs.modules.notch", only=["NotchAnimationBehavior"])

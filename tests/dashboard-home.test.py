@@ -2,11 +2,13 @@
 with the real kit and sample services (tests/lib/dashboard_env.py).
 
 The composed home fills the widgets tab and the dashboard follows its size;
-each toggle chip calls the same service as QuickControls and reflects it;
-the levels write the sink volume (the icon mutes) and the brightness; the
-player shows the track with play as the one primary action; the calendar
-selects today and browses months; the notification list shows rows, a
-count and Clear, then the quiet empty state; the rail switches tabs (the
+each icon toggle calls the same service as QuickControls and reflects it,
+right-click opens its details; the levels write the sink and microphone
+volume (the icons mute, the mic shows its live level) and the brightness,
+the chevrons open the device lists; the player shows the track with play as
+the one primary action; the calendar selects today and browses months; the
+notifications are one line per app with per-app and global clear, then the
+quiet empty state; the rail switches tabs (the
 current one active) and offers the edit toggle only in bento mode.
 """
 import sys
@@ -58,51 +60,82 @@ check(home is not None and h.find(home, "header") is not None, "composed home lo
 check(abs(ev(dash, "implicitWidth") - (ev(home, "implicitWidth") + ev(dash, "railWidth"))) < 1, "width follows the home")
 check(abs(ev(dash, "implicitHeight") - max(430, ev(home, "implicitHeight"))) < 1, "height follows the home")
 
-# Toggles: each chip calls its service and follows its state.
-chips = {n: h.find(home, n) for n in ("wifiChip", "bluetoothChip", "silenceChip", "awakeChip", "gameChip")}
-check(ev(chips["wifiChip"], "text") == "Home 5G" and ev(chips["wifiChip"], "active"), "wifi shows the SSID")
-check(ev(chips["bluetoothChip"], "text") == "Buds Pro", "bluetooth shows the connected device")
-# One row: all five chips on the same line; when the labels don't fit,
-# inactive chips go icon-only together while active ones keep their label
+# Toggles: one row of icon toggles, each calls its service and follows it;
+# the name and state are the tooltip.
+names = ("wifiToggle", "bluetoothToggle", "micToggle", "silenceToggle", "nightToggle", "awakeToggle", "gameToggle")
+toggles = {n: h.find(home, n) for n in names}
 QTest.qWait(50)
-ys = {ev(c, "y") for c in chips.values()}
-check(len(ys) == 1, "the five chips fit one row " + str(ys))
-row = ev(chips["wifiChip"], "parent")
-full = sum(ev(c, "fullWidth") for c in chips.values()) + 4 * ev(row, "spacing")
-if full > ev(row, "width"):
-    check(all(ev(chips[n], "showLabel") for n in ("wifiChip", "bluetoothChip")), "active chips keep labels")
-    check(not any(ev(chips[n], "showLabel") for n in ("silenceChip", "awakeChip", "gameChip")),
-          "inactive chips icon-only together")
-    check(all(abs(ev(chips[n], "width") - ev(chips[n], "compactWidth")) < 1 for n in ("silenceChip", "gameChip")),
-          "icon-only chips shrink to the icon")
-for name, state in (("wifiChip", "NetworkService.wifiEnabled"), ("bluetoothChip", "BluetoothService.enabled"),
-                    ("silenceChip", "Notifications.silent"), ("awakeChip", "CaffeineClient.inhibit"),
-                    ("gameChip", "GameModeClient.toggled")):
-    before = ev(chips[name], state)
-    ev(chips[name], "clicked()")
-    after = ev(chips[name], state)
+check(len({ev(t, "y") for t in toggles.values()}) == 1, "the toggles share one row")
+check(ev(toggles["wifiToggle"], "tooltipText") == "Wi-Fi · On · Home 5G", "wifi tooltip names the network")
+check(ev(toggles["bluetoothToggle"], "tooltipText") == "Bluetooth · On · Buds Pro", "bluetooth tooltip names the device")
+for name, state in (("wifiToggle", "NetworkService.wifiEnabled"), ("bluetoothToggle", "BluetoothService.enabled"),
+                    ("micToggle", "!Audio.source.audio.muted"), ("silenceToggle", "Notifications.silent"),
+                    ("nightToggle", "NightLightClient.active"), ("awakeToggle", "CaffeineClient.inhibit"),
+                    ("gameToggle", "GameModeClient.toggled")):
+    before = ev(toggles[name], state)
+    ev(toggles[name], "clicked()")
+    after = ev(toggles[name], state)
     check(before != after, name + " toggles its service")
-    check(ev(chips[name], "active") == after, name + " follows the service state")
-check(ev(chips["wifiChip"], "text") == "Wi-Fi", "wifi off falls back to its name")
+    check(ev(toggles[name], "active") == after, name + " follows the service state")
+check(ev(toggles["micToggle"], "icon") == ev(home, "Icons.micSlash"), "a muted mic shows the slashed glyph")
+ev(toggles["micToggle"], "clicked()")
 
-# Levels: the sliders read and write the sink volume and the brightness.
+# Details: right-click / hold opens Wi-Fi, Bluetooth or the input devices
+# in place of the calendar and notifications; Done or the same toggle closes.
+detail = h.find(home, "detail")
+ev(toggles["micToggle"], "more()")
+check(ev(home, "detail") == "input" and ev(detail, "visible") and not ev(cal_ := h.find(home, "calendar"), "visible"),
+      "the mic opens the input devices")
+check(ev(detail, "label") == "Input", "the detail is named")
+ev(toggles["micToggle"], "more()")
+check(ev(home, "detail") == "", "the same toggle closes it")
+ev(toggles["wifiToggle"], "more()")
+check(ev(home, "detail") == "wifi", "wifi opens its networks")
+ev(detail, "actionTriggered()")
+check(ev(home, "detail") == "" and ev(cal_, "visible"), "Done closes the details")
+
+# Levels: volume, microphone and brightness; the icons mute; the chevrons
+# open the device lists (a click on a device makes it the default); the mic
+# track carries the live input level.
 vol = h.find(home, "volumeSlider")
+mic = h.find(home, "micSlider")
 light = h.find(home, "lightSlider")
-check(abs(ev(vol, "value") - 0.62) < 1e-6 and ev(vol, "valueText") == "62%", "volume read with its value")
+check(abs(ev(vol, "value") - 0.62) < 1e-6 and not ev(vol, "showValue"), "volume read, no number")
+check(abs(ev(mic, "value") - 0.3) < 1e-6, "mic volume read")
 check(abs(ev(light, "value") - 0.38) < 1e-6, "brightness read")
 ev(vol, "setFraction(0.8)")
+ev(mic, "setFraction(0.5)")
 ev(light, "setFraction(0.7)")
 check(abs(ev(vol, "Audio.sink.audio.volume") - 0.8) < 1e-6, "volume written")
+check(abs(ev(mic, "Audio.source.audio.volume") - 0.5) < 1e-6, "mic volume written")
 check(abs(ev(light, "Brightness.mon.brightness") - 0.7) < 1e-6, "brightness written")
 ev(vol, "Audio.sink.audio.volume = 0.25")
 check(abs(ev(vol, "value") - 0.25) < 1e-6, "the slider follows the service again")
 ev(vol, "iconClicked()")
-check(ev(vol, "Audio.sink.audio.muted") and ev(vol, "icon") == ev(vol, "Icons.speakerX"), "the icon mutes")
+check(ev(vol, "Audio.sink.audio.muted") and ev(vol, "icon") == ev(vol, "Icons.speakerX"), "the speaker mutes")
+check(abs(ev(mic, "level") - 0.8) < 0.01, "the mic shows its live level (peak 0.25 = -12 dB)")
+ev(mic, "iconClicked()")
+check(ev(mic, "Audio.source.audio.muted") and ev(mic, "level") < 0, "the mic mutes, the meter stops")
+ev(mic, "iconClicked()")
+ev(h.find(home, "outputDevices"), "clicked()")
+check(ev(home, "detail") == "output" and ev(h.find(home, "outputDevices"), "active"), "the chevron opens the outputs")
+QTest.qWait(50)
+devices = h.find(home, "devices")
+check(ev(devices, "count") == 2 and ev(devices, "visible"), "the output devices are listed")
+first = item(devices, "deviceRow")
+check(ev(first, "selected") and ev(first, "title") == "Speakers", "the default output is selected")
+ev(first, "clicked()")
+check(ev(devices, "Audio.defaults.length") == 1, "a click sets the default device")
+ev(h.find(home, "inputDevices"), "clicked()")
+check(ev(home, "detail") == "input" and not ev(devices, "output"), "the other chevron switches to the inputs")
+ev(home, "detail = ''")
 
 # Player: the track, the timeline, play as the single primary action.
 check(ev(h.find(home, "title"), "text") == "Midnight City", "track title")
 check(ev(h.find(home, "artist"), "text") == "M83 · Hurry Up, We're Dreaming", "artist · album")
 check(abs(ev(h.find(home, "timeline"), "value") - 104 / 243) < 1e-6, "timeline position")
+times = h.find(home, "times")
+check(ev(times, "opacity") == 0 and not ev(h.find(home, "player"), "showTimes"), "the times hide until hovered")
 play = h.find(home, "playButton")
 check(ev(play, "primary"), "play is primary")
 ev(play, "clicked()")
@@ -121,16 +154,19 @@ check(ev(cal, "monthShift") == -1, "previous month")
 ev(cal, "monthShift = 0")
 check(ev(title, "text") == now_title, "back to today")
 
-# Notifications: a count, one row per app, Clear, then the empty state.
-group = h.find(home, "notifGroup")
+# Notifications: one line per app, no caption; clear one app or all.
+nlist = h.find(home, "notifList")
 empty = h.find(home, "emptyState")
-check(ev(group, "label") == "Notifications · 3" and ev(group, "actionText") == "Clear", "count and Clear")
-check(ev(h.find(home, "notifList"), "count") == 3 and not ev(empty, "visible"), "one row per app")
-ev(group, "actionTriggered()")
-check(ev(group, "Notifications.cleared") == 1, "Clear discards all")
+check(ev(nlist, "count") == 3 and not ev(empty, "visible"), "one row per app")
+row = item(nlist, "notifRow")
+check(ev(row, "title") == "Mira Tanaka · Sent the deck, take a look before the call" and ev(row, "subtitle") == "",
+      "a row is one line")
+ev(item(nlist, "clearGroup"), "clicked()")
+check(ev(nlist, "Notifications.discarded.length") == 1, "the row clears its app")
+ev(h.find(home, "clearAll"), "clicked()")
+check(ev(nlist, "Notifications.cleared") == 1, "clear all discards everything")
 QTest.qWait(50)
-check(ev(empty, "visible") and ev(group, "label") == "Notifications" and ev(group, "actionText") == "",
-      "quiet empty state after Clear")
+check(ev(empty, "visible"), "quiet empty state after clearing")
 
 # Rail: tabs as IconButtons (current active), edit only in bento mode.
 wall_tab = item(dash, "dashTab_wallpapers")

@@ -8,6 +8,8 @@ import qs.modules.components.kit
 // leading `icon` and value text (`showValue`, `valueText`). `vertical: true`
 // stacks value / track / icon top to bottom. `moved(value)` on user changes;
 // `iconClickable` makes the icon a button (`iconClicked()`, e.g. mute).
+// `level` (0..1, -1 = none) draws a live meter over the track (an input's
+// signal level); the icon sits in a fixed cell so stacked sliders align.
 Item {
     id: root
 
@@ -21,6 +23,7 @@ Item {
     property string valueText: Math.round(root.fraction * 100) + "%"
     property bool highlighted: false
     property bool iconClickable: false
+    property real level: -1
     readonly property real fraction: root.to === root.from ? 0 : Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property bool pressed: mouse.pressed
@@ -52,6 +55,8 @@ Item {
             font.family: Icons.font
             font.pixelSize: Type.iconSize("body")
             color: Type.secondary
+            horizontalAlignment: Text.AlignHCenter
+            Layout.preferredWidth: root.vertical ? implicitWidth : Math.round(Type.iconSize("body") * 1.25)
             Layout.row: root.vertical ? 2 : 0
             Layout.column: 0
             Layout.alignment: Qt.AlignCenter
@@ -89,6 +94,20 @@ Item {
                     height: root.vertical ? parent.height * root.fraction : parent.height
                     radius: parent.radius
                     color: Type.progress
+                }
+
+                // Live level, quieter than the value it rides on.
+                Rectangle {
+                    objectName: "levelMeter"
+                    visible: root.level >= 0
+                    readonly property real f: Math.max(0, Math.min(1, root.level))
+                    x: 0
+                    y: root.vertical ? parent.height - height : 0
+                    width: root.vertical ? parent.width : parent.width * f
+                    height: root.vertical ? parent.height * f : parent.height
+                    radius: parent.radius
+                    color: Type.text
+                    opacity: 0.35
                 }
             }
 
