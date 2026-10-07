@@ -47,3 +47,12 @@ test('group ids resolve to their first page', () => {
 test('the presets page is promoted out of "More"', () => {
     assert.equal(Categories.groupOf('presets').id, 'presets');
 });
+
+test('the sidebar blocks hold every element page once, in order, each titled', () => {
+    const secs = Categories.sidebarSections();
+    assert.deepEqual(plain(secs.flatMap(s => s.groups.map(g => g.id))), TREE);
+    for (const s of secs) {
+        assert.ok(en[s.title], s.title);
+        assert.ok(s.groups.length > 0, s.id);
+    }
+});

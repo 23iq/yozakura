@@ -143,9 +143,9 @@ Item {
             id: combo
             objectName: "variantCombo"
             visible: row.variantChoices.length > 1
-            options: row.variantChoices
-            value: row.variant
-            onSelected: v => row.variantPicked(v)
+            variants: row.variantChoices
+            chosen: row.variant
+            onPicked: v => row.variantPicked(v)
         }
     }
 

@@ -1,8 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.config
-import "Ui.js" as Ui
+import qs.modules.components.kit
 
 // Category whose settings do not exist yet.
 Item {
@@ -13,41 +12,36 @@ Item {
     PageHeader {
         id: header
         x: (parent.width - width) / 2
-        y: 36
-        width: Math.min(parent.width - 64, 820)
+        y: Space.xxl
+        width: Math.min(parent.width - Space.xxl * 2, 820)
         category: page.category
     }
 
     Column {
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: 30
-        spacing: 12
-        width: Math.min(parent.width - 64, 420)
+        anchors.verticalCenterOffset: Space.xl
+        spacing: Space.m
+        width: Math.min(parent.width - Space.xxl * 2, 420)
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: Icons[page.category.icon] ?? ""
             font.family: Icons.font
-            font.pixelSize: 54
-            color: Ui.alpha(Colors.primary, 0.6)
+            font.pixelSize: Type.size("display")
+            color: Type.muted
         }
-        Text {
+        KitText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
+            role: "title"
             text: I18n.t("common.coming_soon")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(4)
-            font.weight: Font.Bold
-            color: Colors.overBackground
         }
-        Text {
+        KitText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
+            role: "secondary"
             text: I18n.t("prefs.placeholder.desc")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
         }
     }
 }

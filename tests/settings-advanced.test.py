@@ -28,6 +28,7 @@ import QtQuick.Window
 import qs.config
 import qs.modules.settings
 import qs.modules.settings.store
+import qs.modules.services
 import "../qs/modules/settings/schema/Advanced.js" as Advanced
 Window {
     id: w
@@ -79,19 +80,28 @@ h.eval(page, 'reveal("advanced", "bar.frameEnabled")')
 QTest.qWait(100)
 check(ev(f"{adv}.expanded") is True, "revealing an advanced entry (a search jump) opens the block")
 
-# Section reset
-reset_main = 'findItem("sectionReset:main")'
-check(ev(f"{reset_main}.visible") is False, "no section reset without changes")
+# Section reset: the Group's quiet action reads "Reset" while changed
+main = 'findItem("settingsSection:main")'
+check(ev(f"{main}.resetShown") is False, "no section reset without changes")
+check(ev(f"{main}.actionText") == "", "…and no action on a plain section")
 compact0, bg0 = ev("Config.bar.compact"), ev("Config.bar.hoverToReveal")
 ev(f"SettingsStore.set('bar.compact', {str(not compact0).lower()})")
 ev(f"SettingsStore.set('bar.hoverToReveal', {str(not bg0).lower()})")
 QTest.qWait(50)
-check(ev(f"{reset_main}.visible") is True, "a changed section shows its reset button")
-ev(f"{reset_main}.children[0].clicked(null)")
+check(ev(f"{main}.resetShown") is True, "a changed section offers its reset")
+check(ev(f"{main}.actionText") == ev('I18n.t("prefs.common.reset")'), "…as the Group action")
+ev(f"{main}.actionTriggered()")
 QTest.qWait(50)
 check(ev("Config.bar.compact") == compact0, "section reset restores its entries")
 check(ev("Config.bar.hoverToReveal") != bg0, "…and leaves other sections alone")
-check(ev(f"{reset_main}.visible") is False, "…and hides the button again")
+check(ev(f"{main}.resetShown") is False, "…and hides the action again")
+
+# The Advanced block folds from its label action (Show / Hide)
+ev(f"{adv}.expanded = false")
+check(ev(f"{adv}.actionText") == ev('I18n.t("prefs.common.show")'), "a folded block offers Show")
+ev(f"{adv}.actionTriggered()")
+check(ev(f"{adv}.expanded") is True, "Show unfolds it")
+check(ev(f"{adv}.actionText") == ev('I18n.t("prefs.common.hide")'), "…and then offers Hide")
 ev(f"SettingsStore.set('bar.hoverToReveal', {str(bg0).lower()})")
 
 # Sidebar tree in the real shell

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
@@ -13,10 +14,11 @@ import "SchemaUtil.js" as SchemaUtil
 import "Registry.js" as Registry
 import "Ui.js" as Ui
 
-// One schema entry: label, description, modified dot, reset button and the
-// typed control (inline on the right, or stacked full width for rich
-// editors), plus an optional live preview below. Hidden entries
-// (visibleWhen) collapse with an animation.
+// One schema entry: label (body) and description (caption) on the left,
+// the typed control on the right (or stacked full width for rich editors)
+// and a quiet reset while the value differs from its default, plus an
+// optional live preview below. Hidden entries (visibleWhen) collapse with
+// an animation.
 Item {
     id: row
 
@@ -29,7 +31,7 @@ Item {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < 600
-    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && (narrow || (entry.options || []).length > 4)) || (narrow && type === "slider")
+    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && narrow) || (narrow && type === "slider")
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
 
@@ -54,11 +56,13 @@ Item {
         }
     }
 
+    // Search jump: a short accent wash over the row.
     Rectangle {
         id: flash
         anchors.fill: parent
-        color: Colors.primary
-        opacity: row.highlighted ? 0.12 : 0
+        radius: Look.chipRadius(Space.rowHeight)
+        color: Type.accent
+        opacity: row.highlighted ? Look.activeTint : 0
         Behavior on opacity {
             NumberAnimation {
                 duration: 450
@@ -70,103 +74,73 @@ Item {
     Column {
         id: body
         width: parent.width
-        topPadding: 16
-        bottomPadding: 16
-        spacing: 14
+        topPadding: Space.s
+        bottomPadding: Space.s
+        spacing: Space.m
         enabled: row.active
-        opacity: row.active ? 1 : 0.5
+        opacity: row.active ? 1 : 0.38
 
         RowLayout {
-            x: 20
-            width: parent.width - 40
-            spacing: 16
+            width: parent.width
+            spacing: Space.l
 
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
-                spacing: 3
+                Layout.minimumHeight: Space.rowHeight - body.topPadding - body.bottomPadding
+                spacing: Space.xs / 2
 
-                RowLayout {
-                    spacing: 8
-                    Layout.fillWidth: true
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: I18n.t(row.entry.label)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(0)
-                        font.weight: Font.DemiBold
-                        color: Colors.overBackground
-                        wrapMode: Text.WordWrap
-                    }
+                Item {
+                    Layout.fillHeight: true
                 }
-                Text {
+                KitText {
+                    Layout.fillWidth: true
+                    role: "body"
+                    text: I18n.t(row.entry.label)
+                    wrapMode: Text.WordWrap
+                }
+                KitText {
                     Layout.fillWidth: true
                     visible: !!row.entry.description
+                    role: "caption"
                     text: row.entry.description ? I18n.t(row.entry.description) : ""
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
                     wrapMode: Text.WordWrap
-                    lineHeight: 1.15
+                }
+                Item {
+                    Layout.fillHeight: true
                 }
             }
 
+            // Reset to default: a quiet button before the control, there only
+            // while modified (controls stay flush right).
+            IconButton {
+                objectName: "rowReset"
+                Layout.alignment: Qt.AlignVCenter
+                size: "s"
+                icon: Icons.arrowCounterClockwise
+                visible: row.resettable
+                opacity: row.modified ? 1 : 0
+                enabled: row.modified
+                onClicked: SettingsStore.reset(row.entry)
+                Accessible.name: I18n.t("common.reset_default")
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 150
+                    }
+                }
+            }
             Loader {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(320, row.width * 0.42) : -1
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : -1
                 active: !row.stacked
                 sourceComponent: row.controlComponent()
-            }
-
-            // Reset to default
-            Item {
-                Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: 28
-                Layout.preferredHeight: 28
-                visible: row.resettable
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: width / 2
-                    color: resetArea.containsMouse ? Ui.alpha(Colors.primary, 0.16) : "transparent"
-                    opacity: row.modified ? 1 : 0
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 150
-                        }
-                    }
-                }
-                Text {
-                    anchors.centerIn: parent
-                    text: Icons.arrowCounterClockwise
-                    font.family: Icons.font
-                    font.pixelSize: 15
-                    color: Colors.primary
-                    opacity: row.modified ? (resetArea.containsMouse ? 1 : 0.75) : 0
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: 150
-                        }
-                    }
-                }
-                MouseArea {
-                    id: resetArea
-                    anchors.fill: parent
-                    enabled: row.modified
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: SettingsStore.reset(row.entry)
-                }
-                Accessible.name: I18n.t("common.reset_default")
             }
         }
 
         Loader {
             id: stackedControl
-            x: 20
-            width: parent.width - 40
+            width: parent.width
             active: row.stacked
             visible: active
             sourceComponent: row.controlComponent()
@@ -174,28 +148,11 @@ Item {
 
         Loader {
             id: previewLoader
-            x: 20
-            width: parent.width - 40
+            width: parent.width
             active: !!row.entry.preview
             visible: active
             source: active ? Qt.resolvedUrl(Registry.preview(row.entry.preview)) : ""
             onLoaded: Ui.setIfPresent(item, "entry", row.entry)
-        }
-    }
-
-    // Small dot left of the card edge marks a value changed from default.
-    Rectangle {
-        x: 8
-        y: body.topPadding + 7
-        width: 6
-        height: 6
-        radius: 3
-        color: Colors.primary
-        opacity: row.modified ? 1 : 0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: 150
-            }
         }
     }
 

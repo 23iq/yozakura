@@ -1,10 +1,11 @@
-import "../Ui.js" as Ui
 import QtQuick
-import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 
-// Status card used by editors: a tinted icon, a title and a detail line.
-// `tone`: "ok" (primary), "warn" (tertiary), "error", "muted".
+// Status card used by editors: an icon in the tone's color, a title (body)
+// and a detail line (caption) in the language's control box, actions on the
+// right. `tone`: "ok" (accent: the active state), "warn" (tertiary),
+// "error", "muted".
 Item {
     id: root
 
@@ -13,66 +14,52 @@ Item {
     property string detail: ""
     property string tone: "muted"
     default property alias actions: actionRow.data
-    readonly property color accent: tone === "ok" ? Colors.primary : (tone === "warn" ? Colors.tertiary : (tone === "error" ? Colors.error : Colors.overSurfaceVariant))
+    readonly property color accent: tone === "ok" ? Type.accent : (tone === "warn" ? Colors.tertiary : (tone === "error" ? Colors.error : Type.secondary))
+    readonly property int inset: Look.controlFill(false).a > 0 || Look.controlEdge.a > 0 ? Space.m : 0
 
-    implicitHeight: Math.max(56, textColumn.implicitHeight + 24)
+    implicitHeight: Math.max(Space.rowHeight, textColumn.implicitHeight + Space.m * 2)
 
-    Rectangle {
-        anchors.fill: parent
-        radius: Math.min(Styling.radius(2), 18)
-        color: Ui.alpha(root.accent, 0.08)
-        border.width: 1
-        border.color: Ui.alpha(root.accent, 0.3)
+    ControlBox {
+        radius: Look.chipRadius(Space.chip)
     }
 
-    Rectangle {
+    Text {
         id: badge
 
-        x: 12
+        x: root.inset
         anchors.verticalCenter: parent.verticalCenter
-        width: 34
-        height: 34
-        radius: 12
-        color: Ui.alpha(root.accent, 0.16)
-
-        Text {
-            anchors.centerIn: parent
-            text: Icons[root.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: 17
-            color: root.accent
-        }
+        width: Type.iconSize("title")
+        horizontalAlignment: Text.AlignHCenter
+        text: Icons[root.icon] ?? ""
+        font.family: Icons.font
+        font.pixelSize: Type.iconSize("title")
+        color: root.accent
     }
 
     Column {
         id: textColumn
 
         anchors.left: badge.right
-        anchors.leftMargin: 12
+        anchors.leftMargin: Space.m
         anchors.right: actionRow.left
-        anchors.rightMargin: 10
+        anchors.rightMargin: Space.m
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 2
+        spacing: Space.xs / 2
 
-        Text {
+        KitText {
             width: parent.width
             visible: text !== ""
+            role: "body"
             text: root.title
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            font.weight: Font.DemiBold
-            color: Colors.overBackground
         }
 
-        Text {
+        KitText {
             width: parent.width
             visible: text !== ""
+            role: "caption"
             text: root.detail
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
         }
     }
 
@@ -80,8 +67,8 @@ Item {
         id: actionRow
 
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: root.inset
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 6
+        spacing: Space.xs
     }
 }

@@ -2,11 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
-import qs.modules.theme
-import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import qs.modules.settings.store
-import "Ui.js" as Ui
 
 // Renders a schema-driven category: header + one SettingsSection per
 // schema section. Nothing here is category specific.
@@ -80,14 +78,20 @@ Flickable {
 
     Column {
         id: column
-        width: Math.min(page.width - 64, 820)
+        width: Math.min(page.width - Space.xxl * 2, 820)
         x: (page.width - width) / 2
-        y: 36
-        spacing: 30
+        y: Space.xxl
+        spacing: Look.groupGap
 
         PageHeader {
             width: parent.width
             category: page.category
+        }
+
+        // Header -> first group: a step more than between groups.
+        Item {
+            width: 1
+            height: Space.xl - Look.groupGap
         }
 
         Repeater {
@@ -96,8 +100,10 @@ Flickable {
 
             delegate: SettingsSection {
                 required property var modelData
+                required property int index
                 width: column.width
                 section: modelData
+                divider: index > 0
             }
         }
     }

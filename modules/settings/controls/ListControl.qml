@@ -5,7 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.settings
-import "../Ui.js" as Ui
+import qs.modules.components.kit
 import "../SchemaUtil.js" as SchemaUtil
 
 // Array editor for `type: "list"` entries.
@@ -36,7 +36,7 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 10
+        spacing: Space.s
 
         Repeater {
             id: repeater
@@ -47,7 +47,7 @@ Item {
                 required property int index
                 readonly property var item: root.items[card.index]
                 width: column.width
-                height: cardBody.implicitHeight + (root.objects ? 24 : 0)
+                height: cardBody.implicitHeight + (root.objects ? Space.m * 2 : 0)
                 opacity: 0
                 Component.onCompleted: opacity = 1
                 Behavior on opacity {
@@ -58,55 +58,52 @@ Item {
                     }
                 }
 
-                Rectangle {
-                    anchors.fill: parent
-                    visible: root.objects
-                    radius: Math.min(Styling.radius(2), 18)
-                    color: Ui.alpha(Colors.overBackground, 0.045)
-                    border.width: 1
-                    border.color: Ui.alpha(Colors.outlineVariant, 0.6)
+                // An object item sits in the language's control box (a
+                // hairline above it where controls are ghosts: ink).
+                ControlBox {
+                    shown: root.objects
+                    radius: Look.chipRadius(Space.chip)
+                }
+                Divider {
+                    width: parent.width
+                    visible: root.objects && card.index > 0 && Look.controlFill(false).a === 0 && Look.dividers
                 }
 
                 Column {
                     id: cardBody
-                    x: root.objects ? 14 : 0
-                    y: root.objects ? 12 : 0
-                    width: parent.width - (root.objects ? 28 : 0)
-                    spacing: 10
+                    x: root.objects ? Space.m : 0
+                    y: root.objects ? Space.m : 0
+                    width: parent.width - (root.objects ? Space.m * 2 : 0)
+                    spacing: Space.s
 
                     // Title + reorder/remove (object items)
                     Item {
                         width: parent.width
-                        height: 28
+                        height: Space.controlS
                         visible: root.objects
 
-                        Text {
+                        SectionLabel {
                             anchors.verticalCenter: parent.verticalCenter
                             text: root.entry.itemLabel ? I18n.t(root.entry.itemLabel, card.index + 1) : "#" + (card.index + 1)
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: Font.DemiBold
-                            color: Colors.primary
                         }
                         Row {
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 2
+                            spacing: 0
                             ListIconButton {
-                                icon: "caretUp"
+                                iconName: "caretUp"
                                 enabled: card.index > 0
                                 label: I18n.t("prefs.common.move_up")
                                 onClicked: root.changed(SchemaUtil.listMove(root.items, card.index, card.index - 1))
                             }
                             ListIconButton {
-                                icon: "caretDown"
+                                iconName: "caretDown"
                                 enabled: card.index < root.items.length - 1
                                 label: I18n.t("prefs.common.move_down")
                                 onClicked: root.changed(SchemaUtil.listMove(root.items, card.index, card.index + 1))
                             }
                             ListIconButton {
-                                icon: "trash"
-                                danger: true
+                                iconName: "trash"
                                 label: I18n.t("prefs.common.remove")
                                 onClicked: root.changed(SchemaUtil.listRemove(root.items, card.index))
                             }
@@ -116,7 +113,7 @@ Item {
                     // Fields of an object item
                     Flow {
                         width: parent.width
-                        spacing: 12
+                        spacing: Space.m
                         visible: root.objects
 
                         Repeater {
@@ -126,14 +123,12 @@ Item {
                                 required property var modelData
                                 readonly property var value: card.item ? card.item[fieldBox.modelData.key] : undefined
                                 readonly property bool wide: fieldBox.modelData.type === "text" || fieldBox.modelData.type === "path"
-                                width: fieldBox.wide ? Math.max(200, (cardBody.width + 12) * (fieldBox.modelData.flex ?? 1) - 12) : implicitWidth
-                                spacing: 4
+                                width: fieldBox.wide ? Math.max(200, (cardBody.width + Space.m) * (fieldBox.modelData.flex ?? 1) - Space.m) : implicitWidth
+                                spacing: Space.xs
 
-                                Text {
+                                KitText {
+                                    role: "caption"
                                     text: I18n.t(fieldBox.modelData.label)
-                                    font.family: Config.theme.font
-                                    font.pixelSize: Styling.fontSize(-2)
-                                    color: Colors.overSurfaceVariant
                                 }
                                 Loader {
                                     width: fieldBox.wide ? fieldBox.width : implicitWidth
@@ -209,7 +204,7 @@ Item {
                     // A string item (itemType text/path)
                     Row {
                         width: parent.width
-                        spacing: 6
+                        spacing: Space.xs
                         visible: !root.objects
 
                         Loader {
@@ -239,8 +234,7 @@ Item {
                         ListIconButton {
                             id: stringRemove
                             anchors.verticalCenter: parent.verticalCenter
-                            icon: "trash"
-                            danger: true
+                            iconName: "trash"
                             label: I18n.t("prefs.common.remove")
                             onClicked: root.changed(SchemaUtil.listRemove(root.items, card.index))
                         }
@@ -249,15 +243,12 @@ Item {
             }
         }
 
-        Text {
+        KitText {
             width: parent.width
             visible: (root.items ? root.items.length : 0) === 0 && !!root.entry.emptyLabel
+            role: "caption"
             text: root.entry.emptyLabel ? I18n.t(root.entry.emptyLabel) : ""
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            font.italic: true
-            color: Colors.overSurfaceVariant
         }
 
         PillButton {
@@ -268,40 +259,15 @@ Item {
         }
     }
 
-    component ListIconButton: Item {
-        id: btn
-        property string icon: ""
+    // A quiet kit IconButton (Icons name) for move / remove.
+    component ListIconButton: IconButton {
+        property string iconName: ""
         property string label: ""
-        property bool danger: false
-        signal clicked
-        width: 30
-        height: 30
-        opacity: enabled ? 1 : 0.3
+        size: "s"
+        icon: Icons[iconName] ?? ""
+        highlighted: activeFocus
         activeFocusOnTab: true
-        Keys.onSpacePressed: btn.clicked()
-        Accessible.role: Accessible.Button
-        Accessible.name: btn.label
-
-        Rectangle {
-            anchors.fill: parent
-            radius: width / 2
-            color: btnArea.containsMouse ? Ui.alpha(btn.danger ? Colors.error : Colors.overBackground, 0.14) : "transparent"
-            border.width: btn.activeFocus ? 2 : 0
-            border.color: Colors.primary
-        }
-        Text {
-            anchors.centerIn: parent
-            text: Icons[btn.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: 15
-            color: btn.danger && btnArea.containsMouse ? Colors.error : Colors.overSurfaceVariant
-        }
-        MouseArea {
-            id: btnArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: btn.clicked()
-        }
+        Keys.onSpacePressed: clicked()
+        Accessible.name: label
     }
 }

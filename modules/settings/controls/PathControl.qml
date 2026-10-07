@@ -2,7 +2,7 @@ import "../Ui.js" as Ui
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import qs.config
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.settings
 import qs.modules.theme
@@ -63,11 +63,11 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 6
+        spacing: Space.xs
 
         Row {
             width: parent.width
-            spacing: 8
+            spacing: Space.s
 
             TextControl {
                 id: field
@@ -94,27 +94,24 @@ Item {
                 }
             }
 
-            PillButton {
+            IconButton {
                 id: clear
 
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.clearable && root.path !== ""
-                kind: "ghost"
-                icon: "cancel"
-                text: ""
-                implicitWidth: 34
+                size: "s"
+                icon: Icons.cancel
                 onClicked: root.edited("")
                 Accessible.name: I18n.t("prefs.common.clear")
             }
         }
 
-        Text {
+        KitText {
             width: parent.width
             visible: root.message !== ""
+            role: "caption"
             text: root.message
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.error
         }
     }

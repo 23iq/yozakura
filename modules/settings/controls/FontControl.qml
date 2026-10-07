@@ -5,6 +5,7 @@ import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import "../Ui.js" as Ui
 
 // Font family picker (searchable list, each family drawn in itself) +
@@ -27,49 +28,46 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 12
+        spacing: Space.m
 
         Row {
             width: parent.width
-            spacing: 10
+            spacing: Space.s
 
             Item {
                 id: pickButton
                 width: parent.width - sizeStepper.width - parent.spacing
-                height: 40
+                height: Space.controlS
                 activeFocusOnTab: true
                 Keys.onReturnPressed: picker.open()
                 Keys.onSpacePressed: picker.open()
 
-                Rectangle {
+                FieldBox {
                     anchors.fill: parent
-                    radius: Math.min(Styling.radius(0), height / 2)
-                    color: buttonArea.containsMouse ? Ui.alpha(Colors.overBackground, 0.1) : Ui.alpha(Colors.overBackground, 0.06)
-                    border.width: pickButton.activeFocus || picker.opened ? 2 : 1
-                    border.color: pickButton.activeFocus || picker.opened ? Colors.primary : Ui.alpha(Colors.outline, 0.35)
+                    hovered: buttonArea.containsMouse || pickButton.activeFocus
+                    focused: picker.opened
                 }
-                Text {
+                KitText {
                     anchors.left: parent.left
-                    anchors.leftMargin: 14
+                    anchors.leftMargin: Space.m
                     anchors.right: caret.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Space.s
                     anchors.verticalCenter: parent.verticalCenter
+                    role: "body"
                     text: root.family !== "" ? root.family : root.placeholder
-                    font.family: root.family !== "" ? root.family : Config.theme.font
-                    font.pixelSize: Styling.fontSize(1)
+                    font.family: root.family !== "" ? root.family : Type.bodyFont
                     font.italic: root.family === ""
-                    color: root.family !== "" ? Colors.overBackground : Colors.overSurfaceVariant
-                    elide: Text.ElideRight
+                    color: root.family !== "" ? Type.text : Type.muted
                 }
                 Text {
                     id: caret
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
                     text: Icons.caretDown
                     font.family: Icons.font
-                    font.pixelSize: 14
-                    color: Colors.overSurfaceVariant
+                    font.pixelSize: Type.iconSize("caption")
+                    color: Type.muted
                 }
                 MouseArea {
                     id: buttonArea
@@ -83,7 +81,6 @@ Item {
             NumberControl {
                 id: sizeStepper
                 anchors.verticalCenter: parent.verticalCenter
-                height: 40
                 value: root.size
                 from: 8
                 to: 32
@@ -92,22 +89,22 @@ Item {
             }
         }
 
-        // Live sample
-        Rectangle {
+        // Live sample, in the language's control box.
+        Item {
             width: parent.width
-            height: sample.implicitHeight + 32
-            radius: Styling.radius(0)
-            color: Ui.alpha(Colors.surfaceContainerLowest, 0.7)
-            border.width: 1
-            border.color: Ui.alpha(Colors.outlineVariant, 0.6)
+            height: sample.implicitHeight + Space.l * 2
             clip: true
+
+            ControlBox {
+                radius: Look.chipRadius(Space.chip)
+            }
 
             Column {
                 id: sample
-                x: 18
-                y: 16
-                width: parent.width - 36
-                spacing: 6
+                x: Space.l
+                y: Space.l
+                width: parent.width - Space.l * 2
+                spacing: Space.xs
 
                 Text {
                     visible: !root.monospace
