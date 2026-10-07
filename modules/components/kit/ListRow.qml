@@ -25,7 +25,7 @@ StyledRect {
     // Inline editor in place of the title (rename / alias): a TextInput-like
     // component; the subtitle stays.
     property Component titleEditor: null
-    readonly property bool hovered: mouse.containsMouse || root.highlighted
+    readonly property bool hovered: hover.hovered || root.highlighted
     readonly property string look: KitStates.look(false, root.selected, root.hovered && root.enabled)
     readonly property bool boxed: Look.boxedControls && root.look === "hover"
 
@@ -51,11 +51,15 @@ StyledRect {
         border.width: 0
     }
 
+    // Hover of the whole row, trailing controls included (a MouseArea loses
+    // containsMouse to the controls laid over it)
+    HoverHandler {
+        id: hover
+    }
+
     // Under the row: trailing controls get their own clicks.
     MouseArea {
-        id: mouse
         anchors.fill: parent
-        hoverEnabled: true
         acceptedButtons: Qt.LeftButton
         onClicked: root.clicked()
         onDoubleClicked: root.doubleClicked()

@@ -4,6 +4,7 @@ import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.components
 import "KitStates.js" as KitStates
+import "DropFit.js" as DropFit
 import qs.modules.components.kit
 
 // A choice among many options: a field in the language's control box that
@@ -110,7 +111,17 @@ StyledRect {
 
     Popup {
         id: popup
+        objectName: "dropdownList"
+        // Below the control, or above it near the bottom of the window
         y: root.height + Space.xs
+        margins: Space.s
+        onAboutToShow: {
+            let scene = root;
+            while (scene.parent)
+                scene = scene.parent;
+            const top = root.mapToItem(null, 0, 0).y;
+            y = DropFit.dropY(top, root.height, height, Space.xs, scene.height);
+        }
         width: Math.max(root.width, Space.px(220))
         height: Math.min(list.contentHeight, Space.rowHeight * 7) + Space.xs * 2
         padding: Space.xs
