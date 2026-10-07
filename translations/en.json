@@ -2279,7 +2279,6 @@
   "specials.empty": "No special workspaces yet.",
   "specials.dashboard.empty": "None yet: create them in Settings > Special workspaces.",
   "specials.dashboard.unsupported": "Special workspaces need Hyprland.",
-  "specials.windows": "%1 windows",
   "specials.launcher.open": "Special workspace · open · %1 windows",
   "specials.launcher.closed": "Special workspace · %1 windows",
   "specials.launcher.hint": "Open",
@@ -3682,5 +3681,6 @@
   "prefs.bar.clock_panel.wide": "Wide",
   "prefs.bar.clock_panel.bento": "Bento grid",
   "bento.label.inbox": "Inbox",
-  "specials.windows.one": "%1 window"
+  "specials.windows.one": "%1 window",
+  "specials.windows.other": "%1 windows"
 }

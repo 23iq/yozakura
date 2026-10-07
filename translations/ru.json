@@ -2279,7 +2279,6 @@
   "specials.empty": "Спецпространств пока нет.",
   "specials.dashboard.empty": "Пока нет: создайте их в Настройки > Спецпространства.",
   "specials.dashboard.unsupported": "Спецпространства работают только в Hyprland.",
-  "specials.windows": "окон: %1",
   "specials.launcher.open": "Спецпространство · открыто · окон: %1",
   "specials.launcher.closed": "Спецпространство · окон: %1",
   "specials.launcher.hint": "Открыть",
@@ -3698,5 +3697,8 @@
   "prefs.bar.clock_panel.wide": "Широкое",
   "prefs.bar.clock_panel.bento": "Сетка бенто",
   "bento.label.inbox": "Входящие",
-  "specials.windows.one": "окон: %1"
+  "specials.windows.one": "%1 окно",
+  "specials.windows.other": "окон: %1",
+  "specials.windows.few": "%1 окна",
+  "specials.windows.many": "%1 окон"
 }

@@ -2279,7 +2279,6 @@
   "specials.empty": "Aún no hay espacios especiales.",
   "specials.dashboard.empty": "Ninguno aún: créalos en Ajustes > Espacios especiales.",
   "specials.dashboard.unsupported": "Los espacios especiales necesitan Hyprland.",
-  "specials.windows": "%1 ventanas",
   "specials.launcher.open": "Espacio especial · abierto · %1 ventanas",
   "specials.launcher.closed": "Espacio especial · %1 ventanas",
   "specials.launcher.hint": "Abrir",
@@ -3682,5 +3681,6 @@
   "prefs.bar.clock_panel.wide": "Ancho",
   "prefs.bar.clock_panel.bento": "Cuadrícula bento",
   "bento.label.inbox": "Avisos",
-  "specials.windows.one": "%1 ventana"
+  "specials.windows.one": "%1 ventana",
+  "specials.windows.other": "%1 ventanas"
 }
