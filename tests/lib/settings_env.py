@@ -666,7 +666,7 @@ class SettingsEnv:
                   "modules/desktop/widgets/types", "modules/desktop/clockstyles",
                   "modules/lockscreen", "modules/lockscreen/styles", "modules/settings/presets",
                   "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
-                  "modules/settings/layout",
+                  "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
                   "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))

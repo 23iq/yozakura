@@ -124,8 +124,6 @@ RowLayout {
                     return Colors.overError;
                 } else if (content.isExpanded) {
                     return Colors.overBackground;
-                } else if (content.isSelected) {
-                    return Styling.srItem("primary");
                 } else {
                     return Colors.outline;
                 }

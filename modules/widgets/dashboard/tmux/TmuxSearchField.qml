@@ -1,16 +1,18 @@
 import QtQuick
-import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 
 // Search field of the tmux tab. Owns the keyboard flow while typing:
 // arrows/page/home/end move the selection in `list`, Shift+Enter toggles
 // the options menu (then arrows pick an option), Enter runs the selected
 // row or option, Ctrl+R renames, Escape closes the menu or the dashboard.
-SearchInput {
+SearchField {
     id: field
 
     required property var tab
     required property ListView list
+
+    rule: true
 
     onSearchTextChanged: text => {
         field.tab.searchText = text;

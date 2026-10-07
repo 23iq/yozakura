@@ -33,8 +33,6 @@ Rectangle {
             return Styling.srItem("secondary");
         } else if (row.isExpanded) {
             return Styling.srItem("pane");
-        } else if (row.tab.selectedIndex === row.index) {
-            return Styling.srItem("primary");
         } else {
             return Colors.overSurface;
         }
@@ -240,8 +238,6 @@ Rectangle {
                     return "overerror";
                 } else if (row.isInRenameMode) {
                     return "oversecondary";
-                } else if (row.tab.selectedIndex === row.index) {
-                    return "overprimary";
                 } else if (row.modelData.isCreateButton) {
                     return "primary";
                 } else {

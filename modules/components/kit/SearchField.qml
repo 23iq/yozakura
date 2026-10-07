@@ -8,13 +8,14 @@ import qs.modules.components.kit
 // the query large and light (title size, regular weight) with a calm
 // fading caret, a muted leading glyph (`glyph`: the search glyph, or the
 // active mode's icon) and trailing key hints (`hints: ["cc", "="]`, shown
-// while the field is empty). Same keyboard API as SearchInput. Put a Divider
-// under it.
+// while the field is empty). Same keyboard API as SearchInput; `prefixIcon`
+// (a tab's mode) becomes the glyph. `rule: true` draws the Divider under it.
 SearchInput {
     id: root
 
-    property string glyph: Icons.magnifyingGlass
+    property string glyph: root.prefixIcon !== "" ? root.prefixIcon : Icons.magnifyingGlass
     property var hints: []
+    property bool rule: false
 
     variant: "transparent"
     radius: 0
@@ -54,6 +55,12 @@ SearchInput {
                 }
             }
         }
+    }
+
+    Divider {
+        anchors.bottom: parent.bottom
+        width: parent.width
+        visible: root.rule && Look.dividers
     }
 
     // A thin caret that breathes instead of blinking hard.

@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import "ClipboardView.js" as ClipboardView
 
@@ -17,8 +18,9 @@ Row {
 
     spacing: 8
 
-    SearchInput {
+    SearchField {
         id: searchInput
+        rule: true
         width: parent.width - clearButton.width - parent.spacing
         height: parent.height
         text: bar.tab.searchText

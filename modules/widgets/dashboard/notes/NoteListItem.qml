@@ -52,8 +52,6 @@ Item {
             return Styling.srItem("error");
         } else if (noteItem.isExpanded) {
             return Styling.srItem("pane");
-        } else if (noteItem.isSelected) {
-            return Styling.srItem("primary");
         } else {
             return Colors.overSurface;
         }
@@ -178,8 +176,6 @@ Item {
                     return "overerror";
                 } else if (noteItem.isInRenameMode) {
                     return "oversecondary";
-                } else if (noteItem.tab.selectedIndex === noteItem.index) {
-                    return "overprimary";
                 } else if (noteItem.modelData.isCreateButton) {
                     return "primary";
                 } else {

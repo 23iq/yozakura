@@ -141,7 +141,6 @@ class LauncherEnv(SettingsEnv):
         dst = qs / "modules/widgets/launcher"
         shutil.copytree(REPO / "modules/widgets/launcher", dst, dirs_exist_ok=True)
         self._qmldir(dst, "qs.modules.widgets.launcher")
-        self._qmldir(qs / "modules/components/kit", "qs.modules.components.kit")
         # Motion / Metrics tokens (the layout.launcher looks size and animate with them).
         for rel in ("modules/theme/Metrics.qml", "modules/theme/Motion.qml", "modules/theme/DensityMetrics.js",
                     "config/motion/MotionBudget.js"):

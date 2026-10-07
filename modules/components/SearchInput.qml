@@ -81,7 +81,7 @@ StyledRect {
             Layout.preferredWidth: 32
             Layout.preferredHeight: 32
             radius: Styling.radius(-4)
-            visible: root.prefixText.length > 0 || root.prefixIcon.length > 0
+            visible: root.leading === null && (root.prefixText.length > 0 || root.prefixIcon.length > 0)
 
             Text {
                 id: prefixLabel

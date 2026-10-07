@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.config
 
@@ -45,8 +46,9 @@ Item {
     }
 
     // Search input
-    SearchInput {
+    SearchField {
         id: searchInput
+        rule: true
         width: parent.width
         height: 48
         anchors.top: parent.top
@@ -247,6 +249,7 @@ Item {
                     }
                 }
                 radius: Styling.radius(4)
+                backgroundOpacity: variant === "primary" ? Look.activeTint : -1
                 visible: panel.tab.selectedIndex >= 0
 
                 Behavior on color {

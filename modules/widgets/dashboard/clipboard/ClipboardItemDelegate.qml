@@ -30,8 +30,6 @@ Rectangle {
             return Styling.srItem("error");
         } else if (isExpanded) {
             return Styling.srItem("pane");
-        } else if (isSelected) {
-            return Styling.srItem("primary");
         } else {
             return Colors.overSurface;
         }
