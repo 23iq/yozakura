@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 
 // Editor of markdown (.md) notes: formatting toolbar (heading level, bold,
 // italic, underline, strikethrough, code, link) and a split view of the
@@ -48,26 +49,12 @@ ColumnLayout {
                 onClicked: format.decreaseHeading()
             }
 
-            Rectangle {
-                Layout.preferredWidth: 40
-                Layout.preferredHeight: 32
-                radius: Styling.radius(-4)
-                color: "transparent"
-
-                StyledRect {
-                    anchors.fill: parent
-                    variant: "surface"
-                    radius: Styling.radius(-4)
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: format.currentHeading || "P"
-                    font.family: Config.theme.font
-                    font.pixelSize: 14
-                    font.bold: true
-                    color: Colors.overSurface
-                }
+            KitText {
+                Layout.preferredWidth: Space.controlS
+                horizontalAlignment: Text.AlignHCenter
+                role: "body"
+                font.weight: Font.DemiBold
+                text: format.currentHeading || "P"
             }
 
             NoteToolButton {
@@ -76,7 +63,10 @@ ColumnLayout {
                 onClicked: format.increaseHeading()
             }
 
-            ToolbarDivider {}
+            Divider {
+                vertical: true
+                Layout.preferredHeight: Space.l + Space.s
+            }
 
             NoteToolButton {
                 glyph: "B"
@@ -110,12 +100,14 @@ ColumnLayout {
                 onClicked: format.toggleStrikethrough()
             }
 
-            ToolbarDivider {}
+            Divider {
+                vertical: true
+                Layout.preferredHeight: Space.l + Space.s
+            }
 
             NoteToolButton {
                 glyph: "<>"
                 glyphFont: "monospace"
-                glyphSize: 12
                 tooltip: "Inline code (Ctrl+E)"
                 onClicked: format.toggleCode()
             }
@@ -132,10 +124,8 @@ ColumnLayout {
         }
     }
 
-    // Separator below toolbar
-    Separator {
+    Divider {
         Layout.fillWidth: true
-        Layout.preferredHeight: 2
     }
 
     // Split view: Editor and Preview
@@ -272,11 +262,9 @@ ColumnLayout {
             }
         }
 
-        // Separator
-        Separator {
-            Layout.preferredWidth: 2
+        Divider {
+            vertical: true
             Layout.fillHeight: true
-            vert: true
         }
 
         // Markdown Preview

@@ -1,12 +1,11 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import qs.modules.theme
-import qs.modules.components
-import qs.config
+import qs.modules.components.kit
 
-// Horizontally scrollable chips of the selected session's windows. Click
-// switches window, double click attaches to the session.
+// Horizontally scrollable kit Chips of the selected session's windows (the
+// active one `active`). Click switches window, double click attaches to the
+// session.
 Item {
     id: bar
 
@@ -26,64 +25,34 @@ Item {
 
         Row {
             id: windowsRow
-            spacing: 4
+            spacing: Space.s
             height: bar.height
 
             Repeater {
                 model: bar.tab.sessionWindows
-                delegate: StyledRect {
-                    id: windowRect
-                    required property var modelData
-                    property bool hovered: false
-                    variant: {
-                        if (windowRect.modelData.active) {
-                            return windowRect.hovered ? "primaryfocus" : "primary";
-                        } else {
-                            return windowRect.hovered ? "focus" : "common";
-                        }
-                    }
-                    width: Math.ceil(windowText.width) + 16
-                    height: windowsRow.height
-                    radius: Styling.radius(-4)
 
+                Chip {
+                    id: chip
+                    required property var modelData
+
+                    height: windowsRow.height
+                    text: chip.modelData.index + ": " + chip.modelData.name
+                    active: !!chip.modelData.active
+                    highlighted: clicks.containsMouse
+
+                    // Over the chip: it also needs double clicks.
                     MouseArea {
+                        id: clicks
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-
-                        onEntered: windowRect.hovered = true
-                        onExited: windowRect.hovered = false
-
                         onClicked: {
                             if (bar.isSession(bar.currentSession))
-                                bar.tab.switchToWindow(bar.currentSession.name, windowRect.modelData.index);
+                                bar.tab.switchToWindow(bar.currentSession.name, chip.modelData.index);
                         }
-
                         onDoubleClicked: {
                             if (bar.isSession(bar.currentSession))
                                 bar.tab.attachToSession(bar.currentSession.name);
-                        }
-                    }
-
-                    Row {
-                        anchors.centerIn: parent
-                        spacing: 4
-
-                        Text {
-                            id: windowText
-                            text: windowRect.modelData.index + ": " + windowRect.modelData.name
-                            font.family: Config.theme.font
-                            font.pixelSize: Config.theme.fontSize
-                            font.weight: windowRect.modelData.active ? Font.Bold : Font.Normal
-                            color: windowRect.modelData.active ? Colors.overPrimary : Colors.overSurface
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration / 2
-                                    easing.type: Easing.OutQuart
-                                }
-                            }
                         }
                     }
                 }

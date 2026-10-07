@@ -4,7 +4,8 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
+import "../../../components/kit/KitStates.js" as KitStates
 
 // Scaled layout of the selected session's panes (stretched to fill), with
 // an empty state and a loading overlay. Click focuses a pane, double click
@@ -31,14 +32,26 @@ Item {
             id: paneRect
             required property var modelData
             property bool hovered: false
-            variant: paneRect.hovered ? "focus" : "pane"
+            // Kit look: the active pane is tinted with the accent, hover is the focus box.
+            readonly property string look: KitStates.look(false, !!paneRect.modelData.active, paneRect.hovered)
 
             x: Math.floor(paneRect.modelData.left * preview.scaleX)
             y: Math.floor(paneRect.modelData.top * preview.scaleY)
-            width: Math.floor(paneRect.modelData.width * preview.scaleX)
+            width: Math.floor(paneRect.modelData.width * preview.scaleX) - Space.xs
             height: Math.floor(paneRect.modelData.height * preview.scaleY)
+            variant: KitStates.variant(paneRect.look, "transparent")
+            backgroundOpacity: KitStates.opacity(paneRect.look, paneRect.hovered)
+            radius: Space.controlRadius
 
-            radius: Styling.radius(-2)
+            // At rest the pane is a Group box of the language (ink: a hairline).
+            Rectangle {
+                anchors.fill: parent
+                visible: paneRect.look === "normal"
+                radius: paneRect.radius
+                color: Look.groupBoxed ? Look.groupFill : "transparent"
+                border.width: Space.hairline
+                border.color: Look.groupBoxed ? Look.groupOutline : Type.hairline
+            }
 
             MouseArea {
                 anchors.fill: parent
@@ -59,135 +72,67 @@ Item {
                 }
             }
 
-            // Active border overlay
-            Rectangle {
-                anchors.fill: parent
-                color: "transparent"
-                border.width: paneRect.modelData.active ? 2 : 0
-                border.color: paneRect.modelData.active ? Styling.srItem("overprimary") : "transparent"
-                radius: paneRect.radius
-
-                Behavior on border.width {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration / 2
-                        easing.type: Easing.OutQuart
-                    }
-                }
-
-                Behavior on border.color {
-                    enabled: Config.animDuration > 0
-                    ColorAnimation {
-                        duration: Config.animDuration / 2
-                        easing.type: Easing.OutQuart
-                    }
-                }
-            }
-
             Column {
                 anchors.centerIn: parent
-                spacing: 6
-                width: paneRect.width - 16
+                spacing: Space.xs
+                width: paneRect.width - Space.l
 
-                // Command
-                Text {
+                KitText {
                     width: parent.width
+                    role: "body"
                     text: paneRect.modelData.command
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize
-                    font.weight: Font.Bold
-                    color: Colors.overSurfaceVariant
+                    color: paneRect.modelData.active ? Type.accent : Type.text
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideMiddle
                     visible: paneRect.height > 35
-
-                    Behavior on color {
-                        enabled: Config.animDuration > 0
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutQuart
-                        }
-                    }
                 }
 
-                // Dimensions info
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: paneRect.modelData.width + "×" + paneRect.modelData.height
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.outline
-                    opacity: 0.7
+                KitText {
+                    width: parent.width
+                    role: "caption"
+                    tabular: true
+                    text: paneRect.modelData.width + "\u00d7" + paneRect.modelData.height
+                    horizontalAlignment: Text.AlignHCenter
                     visible: paneRect.height > 70
-
-                    Behavior on color {
-                        enabled: Config.animDuration > 0
-                        ColorAnimation {
-                            duration: Config.animDuration / 2
-                            easing.type: Easing.OutQuart
-                        }
-                    }
                 }
             }
         }
     }
 
     // Empty state for panes
-    Column {
+    KitText {
         anchors.centerIn: parent
-        spacing: 8
+        role: "caption"
         visible: preview.tab.sessionPanes.length === 0 && !preview.tab.loadingSessionInfo
-
-        Text {
-            text: Icons.terminalWindow
-            font.family: Icons.font
-            font.pixelSize: 32
-            color: Colors.outline
-            anchors.horizontalCenter: parent.horizontalCenter
-            textFormat: Text.RichText
-        }
-
-        Text {
-            text: I18n.t("tmux.no_panes")
-            font.family: Config.theme.font
-            font.pixelSize: Config.theme.fontSize
-            color: Colors.outline
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
+        text: I18n.t("tmux.no_panes")
     }
 
     // Loading indicator
-    Rectangle {
-        anchors.fill: parent
-        color: Colors.background
+    Row {
+        anchors.centerIn: parent
+        spacing: Space.s
         visible: preview.tab.loadingSessionInfo
 
-        Row {
-            anchors.centerIn: parent
-            spacing: 12
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Icons.spinnerGap
+            font.family: Icons.font
+            font.pixelSize: Type.iconSize("body")
+            color: Type.muted
 
-            Text {
-                text: Icons.spinnerGap
-                font.family: Icons.font
-                font.pixelSize: 20
-                color: Styling.srItem("overprimary")
-                textFormat: Text.RichText
-
-                RotationAnimator on rotation {
-                    from: 0
-                    to: 360
-                    duration: 1000
-                    loops: Animation.Infinite
-                    running: preview.tab.loadingSessionInfo
-                }
+            RotationAnimator on rotation {
+                from: 0
+                to: 360
+                duration: 1000
+                loops: Animation.Infinite
+                running: preview.tab.loadingSessionInfo
             }
+        }
 
-            Text {
-                text: I18n.t("tmux.loading_panes")
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize
-                color: Colors.outline
-            }
+        KitText {
+            anchors.verticalCenter: parent.verticalCenter
+            role: "caption"
+            text: I18n.t("tmux.loading_panes")
         }
     }
 }

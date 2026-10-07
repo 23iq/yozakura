@@ -1,13 +1,13 @@
 import QtQuick
-import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.services
 import "ClipboardView.js" as ClipboardView
 
-// Search field of the clipboard tab (plus the clear-history button). The
+// Header of the clipboard tab: the kit search field, then the history
+// section label with its Clear action (ClipboardClearButton). The
 // field owns the keyboard: Enter copies (or runs the open option), Shift+Enter
 // toggles the options menu, Ctrl+R alias, Ctrl+P pin, Ctrl+Up/Down reorder.
-Row {
+Column {
     id: bar
 
     required property ClipboardTabBase tab
@@ -16,13 +16,12 @@ Row {
         searchInput.focusInput();
     }
 
-    spacing: 8
+    spacing: Space.m
 
     SearchField {
         id: searchInput
         rule: true
-        width: parent.width - clearButton.width - parent.spacing
-        height: parent.height
+        width: parent.width
         text: bar.tab.searchText
         placeholderText: I18n.t("clipboard.search")
         prefixIcon: bar.tab.prefixIcon
@@ -157,8 +156,8 @@ Row {
     }
 
     ClipboardClearButton {
-        id: clearButton
         tab: bar.tab
-        radius: searchInput.radius
+        x: Space.s
+        width: parent.width - Space.s * 2
     }
 }

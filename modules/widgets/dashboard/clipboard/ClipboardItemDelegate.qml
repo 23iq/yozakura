@@ -1,13 +1,17 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
 import qs.config
 import "ClipboardView.js" as ClipboardView
 
 // One history row. Left click copies, right click toggles the options menu,
 // long press copies, swipe left asks to delete, vertical drag reorders
-// (within the pinned / unpinned group).
-Rectangle {
+// (within the pinned / unpinned group). The row is a kit ListRow (type glyph
+// or favicon, text, relative time; the pin glyph and the Enter hint
+// trailing); the options open below it.
+Item {
     id: row
 
     required property string itemId
@@ -25,15 +29,6 @@ Rectangle {
     property bool isSelected: row.tab.selectedIndex === index
     property bool isExpanded: index === row.tab.expandedItemIndex
     property bool isDraggingForReorder: false
-    property color textColor: {
-        if (isInDeleteMode) {
-            return Styling.srItem("error");
-        } else if (isExpanded) {
-            return Styling.srItem("pane");
-        } else {
-            return Colors.overSurface;
-        }
-    }
     property string displayText: ClipboardView.rowText(modelData, isInDeleteMode)
 
     // Neighbour in the same pin group, or null.
@@ -44,8 +39,6 @@ Rectangle {
 
     width: row.view.width
     height: ClipboardView.rowHeight(modelData, index === row.tab.expandedItemIndex && !isInDeleteMode && !isInAliasMode)
-    color: "transparent"
-    radius: 16
 
     Behavior on y {
         enabled: Config.animDuration > 0
@@ -63,12 +56,83 @@ Rectangle {
         }
     }
 
+    ListRow {
+        id: listRow
+        width: parent.width
+        height: ClipboardView.ROW_HEIGHT
+        title: row.displayText
+        subtitle: ClipboardView.relativeTime(row.modelData.createdAt, new Date(), (key, n) => n === undefined ? I18n.t(key) : I18n.t(key, n))
+        selected: row.isSelected && !row.isInDeleteMode && !row.isInAliasMode
+        highlighted: row.isInDeleteMode || row.isInAliasMode
+        titleEditor: row.isInAliasMode ? aliasEditor : null
+
+        leading: Component {
+            ClipboardItemIcon {
+                tab: row.tab
+                entry: row.modelData
+                isInDeleteMode: row.isInDeleteMode
+                isInAliasMode: row.isInAliasMode
+            }
+        }
+
+        trailing: Component {
+            Row {
+                spacing: Space.s
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: !!row.modelData.pinned
+                    text: Icons.pin
+                    font.family: Icons.font
+                    font.pixelSize: Type.iconSize("caption")
+                    color: Type.muted
+                }
+
+                KeyHint {
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: row.isSelected && !row.isExpanded && !row.isInDeleteMode && !row.isInAliasMode
+                    icon: Icons.arrowElbowDownLeft
+                }
+
+                // Room for the confirm pair drawn over the row
+                Item {
+                    width: deleteActions.width
+                    height: 1
+                    visible: row.isInDeleteMode || row.isInAliasMode
+                }
+            }
+        }
+    }
+
+    Component {
+        id: aliasEditor
+        InlineEdit {
+            text: row.tab.newAlias
+            onTextChanged: row.tab.newAlias = text
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    row.tab.confirmAliasItem();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Escape) {
+                    row.tab.cancelAliasMode();
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Left) {
+                    row.tab.aliasButtonIndex = 0;
+                    event.accepted = true;
+                } else if (event.key === Qt.Key_Right) {
+                    row.tab.aliasButtonIndex = 1;
+                    event.accepted = true;
+                }
+            }
+        }
+    }
+
     MouseArea {
         id: mouseArea
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        height: row.isExpanded ? 48 : parent.height
+        height: row.isExpanded ? ClipboardView.ROW_HEIGHT : parent.height
         hoverEnabled: !row.isDraggingForReorder && !row.viewScrolling
         enabled: !row.tab.deleteMode && !row.tab.aliasMode
         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -165,7 +229,7 @@ Rectangle {
             // Reorder on release after a vertical drag of more than half a row
             if (isVerticalDrag && row.isDraggingForReorder) {
                 let deltaY = mouse.y - startY;
-                if (Math.abs(deltaY) > 48 / 2) {
+                if (Math.abs(deltaY) > ClipboardView.ROW_HEIGHT / 2) {
                     if (deltaY > 0 && row.index < row.tab.allItems.length - 1) {
                         if (row.sameGroupNeighbour(1)) {
                             row.tab.pendingItemIdToSelect = row.modelData.id;
@@ -187,35 +251,6 @@ Rectangle {
             row.tab.anyItemDragging = false;
         }
 
-        // Delete confirmation, slides in from the right
-        ClipboardConfirmActions {
-            width: 68
-            height: 32
-            shown: row.isInDeleteMode
-            highlightVariant: "overerror"
-            buttonIndex: row.tab.deleteButtonIndex
-            idleColor: Colors.overError
-            activeColor: Colors.overErrorContainer
-            onHovered: i => row.tab.deleteButtonIndex = i
-            onCancelled: row.tab.cancelDeleteMode()
-            onConfirmed: row.tab.confirmDeleteItem()
-        }
-
-        // Alias confirmation
-        ClipboardConfirmActions {
-            width: 76
-            height: 36
-            radius: 6
-            shown: row.isInAliasMode
-            highlightVariant: "oversecondary"
-            buttonIndex: row.tab.aliasButtonIndex
-            idleColor: Colors.overSecondary
-            activeColor: Colors.overSecondaryContainer
-            onHovered: i => row.tab.aliasButtonIndex = i
-            onCancelled: row.tab.cancelAliasMode()
-            onConfirmed: row.tab.confirmAliasItem()
-        }
-
         Timer {
             id: longPressTimer
             interval: 800
@@ -230,30 +265,38 @@ Rectangle {
         }
     }
 
+    // Over the row, outside the gesture area (disabled in these modes)
+    Item {
+        anchors.fill: listRow
+
+        // Delete confirmation
+        ClipboardConfirmActions {
+            id: deleteActions
+            shown: row.isInDeleteMode
+            buttonIndex: row.tab.deleteButtonIndex
+            onHovered: i => row.tab.deleteButtonIndex = i
+            onCancelled: row.tab.cancelDeleteMode()
+            onConfirmed: row.tab.confirmDeleteItem()
+        }
+
+        // Alias confirmation
+        ClipboardConfirmActions {
+            id: aliasActions
+            shown: row.isInAliasMode
+            buttonIndex: row.tab.aliasButtonIndex
+            onHovered: i => row.tab.aliasButtonIndex = i
+            onCancelled: row.tab.cancelAliasMode()
+            onConfirmed: row.tab.confirmAliasItem()
+        }
+    }
+
     ClipboardItemOptions {
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.leftMargin: 8
-        anchors.rightMargin: 8
-        anchors.bottomMargin: 8
+        anchors.top: listRow.bottom
+        anchors.topMargin: Space.xs
         tab: row.tab
         entry: row.modelData
         shown: row.isExpanded && !row.isInDeleteMode && !row.isInAliasMode
-    }
-
-    ClipboardItemRow {
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: 8
-        tab: row.tab
-        entry: row.modelData
-        isInDeleteMode: row.isInDeleteMode
-        isInAliasMode: row.isInAliasMode
-        isExpanded: row.isExpanded
-        isSelected: row.isSelected
-        displayText: row.displayText
-        textColor: row.textColor
     }
 }

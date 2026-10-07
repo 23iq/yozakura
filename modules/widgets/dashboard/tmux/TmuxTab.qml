@@ -1,15 +1,15 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import "TmuxModel.js" as TmuxModel
 
 // Tmux session manager tab (dashboard and launcher prefix). Holds the tab
 // state and its actions; the pieces live next to it:
 //   TmuxSearchField   search + keyboard flow
-//   TmuxSessionList   rows (TmuxSessionDelegate, TmuxSessionOptions,
-//                     TmuxConfirmActions), highlight, click-outside
+//   TmuxSessionList   kit ListRows (TmuxSessionDelegate, TmuxSessionGestures,
+//                     TmuxSessionOptions), click-outside
 //   TmuxPreviewPanel  pane layout (TmuxPanesPreview) + windows (TmuxWindowsBar)
 //   TmuxProcesses     tmux invocations; TmuxModel.js parsers/commands
 Item {
@@ -293,9 +293,9 @@ Item {
     RowLayout {
         id: mainLayout
         anchors.fill: parent
-        spacing: 8
+        spacing: Space.l
 
-        // Left column: search + list
+        // Left column: search, section label, sessions
         Item {
             Layout.preferredWidth: root.leftPanelWidth
             Layout.fillHeight: true
@@ -303,7 +303,6 @@ Item {
             TmuxSearchField {
                 id: searchInput
                 width: parent.width
-                height: 48
                 anchors.top: parent.top
                 tab: root
                 list: resultsList
@@ -313,24 +312,29 @@ Item {
                 prefixIcon: root.prefixIcon
             }
 
+            SectionLabel {
+                id: sessionsLabel
+                anchors.top: searchInput.bottom
+                anchors.topMargin: Space.l
+                x: Space.s
+                width: parent.width - Space.s * 2
+                text: I18n.t("tmux.sessions")
+            }
+
             TmuxSessionList {
                 id: resultsList
                 width: parent.width
-                anchors.top: searchInput.bottom
+                anchors.top: sessionsLabel.bottom
                 anchors.bottom: parent.bottom
-                anchors.topMargin: 8
-                visible: true
+                anchors.topMargin: Space.s
                 tab: root
                 model: sessionsModel
             }
         }
 
-        // Separator
-        Rectangle {
-            Layout.preferredWidth: 2
+        Divider {
+            vertical: true
             Layout.fillHeight: true
-            radius: Styling.radius(0)
-            color: Colors.surface
         }
 
         TmuxPreviewPanel {

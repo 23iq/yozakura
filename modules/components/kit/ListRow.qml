@@ -20,6 +20,9 @@ StyledRect {
     property bool tabular: false
     property Component leading: null
     property Component trailing: null
+    // Inline editor in place of the title (rename / alias): a TextInput-like
+    // component; the subtitle stays.
+    property Component titleEditor: null
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property string look: KitStates.look(false, root.selected, root.hovered && root.enabled)
     readonly property bool boxed: Look.boxedControls && root.look === "hover"
@@ -77,10 +80,18 @@ StyledRect {
 
             KitText {
                 width: parent.width
+                visible: root.titleEditor === null
                 role: "body"
                 tabular: root.tabular
                 text: root.title
                 font.weight: Look.labelWeight
+            }
+
+            Loader {
+                width: parent.width
+                active: root.titleEditor !== null
+                visible: active
+                sourceComponent: root.titleEditor
             }
 
             KitText {

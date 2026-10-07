@@ -183,3 +183,53 @@ function moveArrayItem(arr, fromIndex, toIndex) {
     newArr.splice(toIndex, 0, item);
     return newArr;
 }
+
+/**
+ * Rows of the notes list: the notes matching `searchText`, led by the
+ * "create" row unless `withCreate` is false (delete / rename mode). While
+ * searching without an exact title match, the create row offers that name.
+ */
+function listEntries(notes, searchText, withCreate) {
+    var rows = searchText ? filterNotes(notes, searchText) : notes.slice();
+    if (!withCreate)
+        return rows;
+    var query = (searchText || "").toLowerCase();
+    var exact = notes.some(function (note) {
+        return (note.title || "").toLowerCase() === query;
+    });
+    var specific = query.length > 0 && !exact;
+    rows.unshift({
+        id: "__create__",
+        title: specific ? "Create note \"" + searchText + "\"" : "Create new note",
+        isCreateButton: true,
+        isCreateSpecificButton: specific,
+        noteNameToCreate: specific ? searchText : "",
+        icon: "plus"
+    });
+    return rows;
+}
+
+/** Title of a row in delete mode: the note title cut to 20 characters. */
+function deletePrompt(title) {
+    var t = title || "";
+    return "Delete \"" + t.substring(0, 20) + (t.length > 20 ? "..." : "") + "\"?";
+}
+
+/** Options of an expanded row: 2 for the create row, 3 for a note. */
+function optionCount(note) {
+    return note && note.isCreateButton ? 2 : 3;
+}
+
+/** Height of a row: `rowH`, plus a gap, its options (`optionH` each) and a gap when expanded. */
+function rowHeight(note, expanded, rowH, optionH, gap) {
+    return expanded ? rowH + gap + optionCount(note) * optionH + gap : rowH;
+}
+
+/** contentY that shows [y, y + h) in a viewport, or -1 when it already does. */
+function scrollToShow(y, h, contentY, viewH, contentH) {
+    if (y < contentY)
+        return y;
+    if (y + h > contentY + viewH)
+        return Math.min(y + h - viewH, Math.max(0, contentH - viewH));
+    return -1;
+}
