@@ -6,7 +6,9 @@ import qs.modules.components.kit
 
 // Icon + label toggle. Inactive: the language's control box (Look);
 // `active`: accent tint with accent icon and label (a solid accent fill in
-// tiles). The hit area is at least 36 px tall.
+// tiles). The hit area is at least 36 px tall. `showLabel: false` keeps
+// only the icon (crowded rows); fullWidth / compactWidth are the widths
+// with and without the label, for layouts that decide it.
 StyledRect {
     id: root
 
@@ -14,6 +16,9 @@ StyledRect {
     property string text: ""
     property bool active: false
     property bool highlighted: false
+    property bool showLabel: true
+    readonly property real compactWidth: glyph.implicitWidth + Space.m * 2
+    readonly property real fullWidth: glyph.implicitWidth + (root.text !== "" ? Space.s + label.implicitWidth : 0) + Space.m * 2
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property string look: KitStates.look(root.active && Look.solidActive, root.active, root.hovered && root.enabled)
     readonly property bool boxed: Look.boxedControls && (root.look === "normal" || root.look === "hover")
@@ -48,6 +53,7 @@ StyledRect {
         spacing: Space.s
 
         Text {
+            id: glyph
             visible: root.icon !== ""
             anchors.verticalCenter: parent.verticalCenter
             text: root.icon
@@ -57,7 +63,8 @@ StyledRect {
         }
 
         KitText {
-            visible: root.text !== ""
+            id: label
+            visible: root.text !== "" && (root.showLabel || root.icon === "")
             anchors.verticalCenter: parent.verticalCenter
             role: "secondary"
             text: root.text
