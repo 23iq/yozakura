@@ -20,7 +20,8 @@ from panels_env import PanelsEnv, icon_path
 from qmlharness import REPO
 
 MIRROR = ["modules/widgets/defaultview", "modules/notch", "modules/notifications"]
-JS = ["modules/services/activities/TransferModel.js", "modules/services/voice/VoiceModel.js"]
+JS = ["modules/services/activities/TransferModel.js", "modules/services/activities/NotificationProgress.js",
+      "modules/services/voice/VoiceModel.js"]
 
 NOW = "Date.now()"
 
