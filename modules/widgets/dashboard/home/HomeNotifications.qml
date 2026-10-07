@@ -5,118 +5,114 @@ import qs.modules.services
 import qs.modules.components.kit
 import "HomeModel.js" as HomeModel
 
-// Notifications on the composed dashboard, filling the height it is given:
-// one line per app (its icon, the latest "summary · body", how many), no
-// caption. Hovering a row offers to clear that app; hovering the list
-// offers to clear everything (bottom right). A quiet bell when empty.
+// Notifications on the composed dashboard: one line per app (its icon, the
+// latest "summary · body", how many), no caption. Hovering a row offers to
+// clear that app; with several apps a quiet clear-all closes the list.
+// As tall as its rows (`wantedHeight`; the host caps it and the list then
+// scrolls), so the calendar above takes the rest; empty, one quiet line.
 Group {
     id: root
 
     readonly property var groups: Notifications.groupsByAppName
+    readonly property int count: Notifications.appNameList.length
     readonly property real rowH: Space.controlS
-    readonly property real minimumHeight: root.chrome + root.rowH * 2
-    readonly property bool hovered: hover.hovered
+    readonly property real rowGap: Space.xs / 2
+    readonly property real footerH: root.count > 1 ? Space.controlS : 0
+    readonly property real listH: Math.max(1, root.count) * (root.rowH + root.rowGap) - root.rowGap
+    readonly property real wantedHeight: root.chrome + root.listH + (root.footerH > 0 ? root.footerH + Space.m : 0)
+    readonly property real minimumHeight: root.chrome + root.rowH
 
     fill: true
 
-    HoverHandler {
-        id: hover
-    }
-
-    Item {
+    ListView {
+        id: list
+        objectName: "notifList"
         width: parent.width
-        height: Math.max(root.rowH * 2, root.bodyHeight)
+        height: Math.max(root.rowH, root.bodyHeight - (root.footerH > 0 ? root.footerH + Space.m : 0))
+        visible: root.count > 0
+        clip: true
+        spacing: root.rowGap
+        boundsBehavior: Flickable.StopAtBounds
+        model: Notifications.appNameList
 
-        ListView {
-            id: list
-            objectName: "notifList"
-            anchors.fill: parent
-            anchors.bottomMargin: clearAll.visible ? clearAll.height + Space.xs : 0
-            clip: true
-            spacing: Space.xs / 2
-            boundsBehavior: Flickable.StopAtBounds
-            model: Notifications.appNameList
+        delegate: ListRow {
+            id: entry
 
-            delegate: ListRow {
-                id: entry
+            required property string modelData
+            readonly property var row: HomeModel.groupRow(root.groups[entry.modelData] ?? null)
 
-                required property string modelData
-                readonly property var row: HomeModel.groupRow(root.groups[entry.modelData] ?? null)
-
-                objectName: "notifRow"
-                width: ListView.view.width
-                height: root.rowH
-                title: entry.row.text
-
-                HoverHandler {
-                    id: rowHover
+            objectName: "notifRow"
+            width: ListView.view.width
+            height: root.rowH
+            title: entry.row.text
+            leading: Component {
+                Avatar {
+                    width: Space.xl
+                    height: width
+                    name: entry.row.app
+                    source: HomeModel.avatarSource(entry.row)
                 }
-                leading: Component {
-                    Avatar {
-                        width: Space.xl
-                        height: width
-                        name: entry.row.app
-                        source: HomeModel.avatarSource(entry.row)
+            }
+            trailing: Component {
+                Item {
+                    implicitWidth: Space.controlS - Space.s
+                    implicitHeight: implicitWidth
+
+                    KitText {
+                        anchors.centerIn: parent
+                        visible: !entry.hovered && entry.row.count > 1
+                        role: "caption"
+                        tabular: true
+                        text: entry.row.count
                     }
-                }
-                trailing: Component {
-                    Item {
-                        implicitWidth: Space.controlS - Space.s
-                        implicitHeight: implicitWidth
 
-                        KitText {
-                            anchors.centerIn: parent
-                            visible: !rowHover.hovered && entry.row.count > 1
-                            role: "caption"
-                            tabular: true
-                            text: entry.row.count
-                        }
-
-                        IconButton {
-                            objectName: "clearGroup"
-                            anchors.centerIn: parent
-                            width: parent.width
-                            height: width
-                            visible: rowHover.hovered
-                            icon: Icons.cancel
-                            onClicked: Notifications.discardNotifications(entry.row.ids)
-                        }
+                    IconButton {
+                        objectName: "clearGroup"
+                        anchors.fill: parent
+                        visible: entry.hovered
+                        icon: Icons.cancel
+                        onClicked: Notifications.discardNotifications(entry.row.ids)
                     }
                 }
             }
         }
+    }
+
+    Item {
+        width: parent.width
+        height: root.footerH
+        visible: root.footerH > 0
 
         IconButton {
             id: clearAll
             objectName: "clearAll"
             anchors.right: parent.right
-            anchors.bottom: parent.bottom
             size: "s"
             icon: Icons.broom
-            visible: list.count > 0
-            opacity: root.hovered ? 1 : 0
             onClicked: Notifications.discardAllNotifications()
         }
+    }
 
-        Column {
-            objectName: "emptyState"
-            anchors.centerIn: parent
-            spacing: Space.s
-            visible: list.count === 0
+    // Empty: one quiet line where the rows would be.
+    Row {
+        objectName: "emptyState"
+        height: root.rowH
+        x: Space.s
+        spacing: Space.m
+        visible: root.count === 0
 
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: Icons.bellZ
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("title")
-                color: Type.muted
-            }
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            text: Icons.bellZ
+            font.family: Icons.font
+            font.pixelSize: Type.iconSize("body")
+            color: Type.muted
+        }
 
-            KitText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                role: "caption"
-                text: I18n.t("dashboard.home.no_notifications")
-            }
+        KitText {
+            anchors.verticalCenter: parent.verticalCenter
+            role: "caption"
+            text: I18n.t("dashboard.home.no_notifications")
         }
     }
 }

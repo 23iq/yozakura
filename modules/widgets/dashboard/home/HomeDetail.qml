@@ -37,7 +37,6 @@ Group {
         visible: active
         clip: true
         source: root.panels[root.kind] ?? ""
-        onLoaded: item.maxContentWidth = width
     }
 
     HomeDevices {

@@ -1,15 +1,14 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
+// Bluetooth devices (dashboard home details, bento quick controls, the
+// settings Connect page), from the kit: the on/off switch and actions
+// (open the manager, scan), then one BluetoothDeviceItem per device.
+// Opening only refreshes the list; discovery stops on close.
 Item {
     id: root
 
@@ -17,97 +16,64 @@ Item {
     readonly property int contentWidth: Math.min(width, maxContentWidth)
     readonly property real sideMargin: (width - contentWidth) / 2
 
-    Component.onCompleted: {
-        // Only refresh device list, don't start scanning automatically
-        if (BluetoothService.enabled) {
-            // Defer update to avoid blocking UI initialization
-            initialUpdateTimer.start();
-        }
-    }
-
     Timer {
-        id: initialUpdateTimer
         interval: 300
-        repeat: false
+        running: BluetoothService.enabled
         onTriggered: BluetoothService.updateDevices()
     }
 
-    Component.onDestruction: {
-        BluetoothService.stopDiscovery();
+    Component.onDestruction: BluetoothService.stopDiscovery()
+
+    DeviceListHeader {
+        id: header
+        objectName: "bluetoothHeader"
+        x: root.sideMargin
+        width: root.contentWidth
+        checked: BluetoothService.enabled
+        status: BluetoothService.discovering ? I18n.t("bluetooth.scanning") : ""
+        actions: [
+            {
+                icon: Icons.popOpen,
+                tooltip: I18n.t("bluetooth.open_manager"),
+                onClicked: () => Quickshell.execDetached(["blueman-manager"])
+            },
+            {
+                icon: Icons.sync,
+                tooltip: I18n.t("bluetooth.scan"),
+                enabled: BluetoothService.enabled,
+                loading: BluetoothService.discovering || BluetoothService.isUpdating,
+                onClicked: () => BluetoothService.startDiscovery()
+            }
+        ]
+        onToggled: value => {
+            BluetoothService.setEnabled(value);
+            if (value)
+                BluetoothService.startDiscovery();
+        }
     }
 
-    // Device list - fills entire width for scroll/drag
     ListView {
-        id: deviceList
+        id: list
+        objectName: "deviceList"
         anchors.fill: parent
+        anchors.topMargin: header.height + Space.s
         clip: true
-        spacing: 4
-        cacheBuffer: 1000
-        reuseItems: true
-
+        spacing: Space.xs / 2
+        boundsBehavior: Flickable.StopAtBounds
         model: BluetoothService.friendlyDeviceList
 
-        header: Item {
-            width: deviceList.width
-            height: titlebar.height + 8
-
-            PanelTitlebar {
-                id: titlebar
-                width: root.contentWidth
-                anchors.horizontalCenter: parent.horizontalCenter
-                title: I18n.t("settings.bluetooth")
-                showToggle: true
-                toggleChecked: BluetoothService.enabled
-
-                actions: [
-                    {
-                        icon: Icons.popOpen,
-                        tooltip: I18n.t("bluetooth.open_manager"),
-                        onClicked: function () {
-                            Quickshell.execDetached(["blueman-manager"]);
-                        }
-                    },
-                    {
-                        icon: Icons.sync,
-                        tooltip: I18n.t("bluetooth.scan"),
-                        enabled: BluetoothService.enabled,
-                        loading: BluetoothService.discovering || BluetoothService.isUpdating,
-                        onClicked: function () {
-                            BluetoothService.startDiscovery();
-                        }
-                    }
-                ]
-
-                onToggleChanged: checked => {
-                    BluetoothService.setEnabled(checked);
-                    if (checked) {
-                        BluetoothService.startDiscovery();
-                    }
-                }
-            }
-        }
-
-        delegate: Item {
+        delegate: BluetoothDeviceItem {
             required property var modelData
-            width: deviceList.width
-            height: deviceItem.height
-
-            BluetoothDeviceItem {
-                id: deviceItem
-                width: root.contentWidth
-                anchors.horizontalCenter: parent.horizontalCenter
-                device: parent.modelData
-            }
+            x: root.sideMargin
+            width: root.contentWidth
+            device: modelData
         }
 
-        // Empty state
-        Text {
+        KitText {
             anchors.centerIn: parent
-            visible: deviceList.count === 0 && !BluetoothService.discovering
+            visible: list.count === 0 && !BluetoothService.discovering
+            role: "caption"
             text: BluetoothService.enabled ? I18n.t("bluetooth.no_devices") : I18n.t("bluetooth.disabled")
-            font.family: Config.theme.font
-            font.pixelSize: Config.theme.fontSize
-            color: Colors.overSurfaceVariant
         }
     }
 }

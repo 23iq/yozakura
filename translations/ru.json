@@ -221,6 +221,7 @@
   "bluetooth.open_manager": "Открыть Blueman",
   "bluetooth.paired": "Сопряжено",
   "bluetooth.scan": "Поиск устройств",
+  "bluetooth.scanning": "Поиск…",
   "calendar.day.fri": "Пт",
   "calendar.day.mon": "Пн",
   "calendar.day.sat": "Сб",

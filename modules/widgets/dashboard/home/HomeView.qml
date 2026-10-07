@@ -10,7 +10,8 @@ import qs.modules.components.kit
 // Right: a compact month and the notifications, or the details a toggle or
 // level opened (networks, Bluetooth devices, audio devices). The view
 // offers its natural size and fills whatever it is given: free height goes
-// evenly between the left blocks and to the notifications.
+// to the player (its art grows) and to the month (its rows grow), so no
+// block leaves an empty gap.
 Item {
     id: root
 
@@ -31,7 +32,7 @@ Item {
     }
 
     implicitWidth: root.leftW + root.rightW + root.gap * 2 + Space.hairline
-    implicitHeight: Math.max(Metrics.dashH, left.implicitHeight, calendar.implicitHeight + Look.groupGap + notifications.minimumHeight)
+    implicitHeight: Math.max(Metrics.dashH, left.implicitHeight, calendar.minimumHeight + Look.groupGap + notifications.minimumHeight)
 
     RowLayout {
         anchors.fill: parent
@@ -54,18 +55,14 @@ Item {
                 }
             }
 
-            Item {
-                Layout.fillHeight: true
-            }
-
             HomePlayer {
+                id: player
                 objectName: "player"
                 Layout.fillWidth: true
-                divider: true
-            }
-
-            Item {
                 Layout.fillHeight: true
+                Layout.minimumHeight: player.naturalHeight
+                Layout.preferredHeight: player.naturalHeight
+                divider: true
             }
 
             Group {
@@ -102,17 +99,23 @@ Item {
         }
 
         ColumnLayout {
+            id: right
             Layout.preferredWidth: root.rightW
             Layout.horizontalStretchFactor: root.rightW
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: Look.groupGap
 
+            // The month takes what the notifications leave: no empty block
+            // under a short list, and an empty list is one quiet line.
             HomeCalendar {
                 id: calendar
                 objectName: "calendar"
                 visible: root.detail === ""
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: calendar.minimumHeight
+                Layout.preferredHeight: calendar.minimumHeight
             }
 
             HomeNotifications {
@@ -121,8 +124,7 @@ Item {
                 visible: root.detail === ""
                 divider: true
                 Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.preferredHeight: notifications.minimumHeight
+                Layout.preferredHeight: Math.min(notifications.wantedHeight, Math.max(notifications.minimumHeight, right.height - calendar.minimumHeight - right.spacing))
             }
 
             HomeDetail {
