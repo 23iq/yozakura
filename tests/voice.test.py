@@ -241,6 +241,10 @@ check("view height fits the notch", 60 < h.eval(view_root, "view.implicitHeight"
 h.eval(view_root, 'setState({state: "listening", target: "ai", handsFree: false})')
 check("hold hint", h.eval(view_root, "view.hintText()") == EN["voice.hint.release"])
 h.eval(view_root, 'setState({handsFree: true})')
+bars = h.find(view_root, "voiceBars")
+check("bars use the kit accent, one color", h.eval(
+    bars, "(b => b.length > 8 && b.every(c => Qt.colorEqual(c.color, Type.accent)))"
+    "(children.filter(c => c.radius !== undefined))") is True)
 check("hands-free hint", h.eval(view_root, "view.hintText()") == EN["voice.hint.hands_free"])
 print(f"renders in {render_dir}")
 

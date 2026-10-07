@@ -1,11 +1,11 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 import "../../../services/voice/VoiceModel.js" as VoiceModel
 
 // Live microphone spectrum in the cava/visualizer style: rounded bars
-// growing from the centre with a primary -> tertiary palette gradient.
+// growing from the centre in the kit accent (an active state).
 // "live" follows the backend bands; "busy" (transcribing) is a travelling
 // wave; "idle" settles to dots.
 Item {
@@ -18,15 +18,8 @@ Item {
     property real spacing: 3
 
     readonly property real barWidth: Math.max(2, (width - spacing * (barCount - 1)) / barCount)
-    readonly property color startColor: Colors.primary
-    readonly property color endColor: Colors.tertiary
     property var levels: []
     property real phase: 0
-
-    function barColor(index) {
-        const t = barCount > 1 ? index / (barCount - 1) : 0;
-        return Qt.rgba(startColor.r + (endColor.r - startColor.r) * t, startColor.g + (endColor.g - startColor.g) * t, startColor.b + (endColor.b - startColor.b) * t, 1);
-    }
 
     function busyLevel(index) {
         return 0.18 + 0.32 * (0.5 + 0.5 * Math.sin(phase - index * 0.45));
@@ -65,7 +58,7 @@ Item {
             // Never thinner than wide, so silent bars are round dots.
             height: Math.max(bar.width, Math.min(root.height, bar.level * root.height))
             radius: bar.width / 2
-            color: root.barColor(bar.index)
+            color: Type.accent
             opacity: root.mode === "idle" ? 0.35 : (root.speech || root.mode === "busy" ? 0.95 : 0.7)
             antialiasing: true
 
