@@ -696,6 +696,29 @@
                 "island": "Island"
               }
             },
+            "panelStyle": {
+              "title": "Clock popup",
+              "type": "string",
+              "default": "column",
+              "description": "What opens from the clock: a narrow column, a wide two-pane card, or the editable widget grid.",
+              "x-settings": {
+                "category": "bar",
+                "section": "clock",
+                "label": "prefs.bar.clock_panel",
+                "control": "selector",
+                "keywords": "clock popup panel calendar pomodoro world clocks weather column wide bento grid layout"
+              },
+              "enum": [
+                "column",
+                "wide",
+                "bento"
+              ],
+              "x-enumLabels": {
+                "column": "Column",
+                "wide": "Wide",
+                "bento": "Bento grid"
+              }
+            },
             "panel": {
               "title": "Panel",
               "type": "object",

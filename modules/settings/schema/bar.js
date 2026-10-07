@@ -167,6 +167,18 @@ var category = {
                     ]
                 },
                 {
+                    "key": "bar.moduleOptions.clock.panelStyle",
+                    "type": "selector",
+                    "label": "prefs.bar.clock_panel",
+                    "description": "prefs.bar.clock_panel.desc",
+                    "keywords": "clock popup panel calendar pomodoro world clocks weather column wide bento grid layout",
+                    "options": [
+                        { "value": "column", "label": "prefs.bar.clock_panel.column" },
+                        { "value": "wide", "label": "prefs.bar.clock_panel.wide" },
+                        { "value": "bento", "label": "prefs.bar.clock_panel.bento" }
+                    ]
+                },
+                {
                     "key": "bar.moduleOptions.clock.showWeather",
                     "type": "toggle",
                     "label": "prefs.bar.clock_weather",
