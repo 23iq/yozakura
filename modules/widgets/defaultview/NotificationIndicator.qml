@@ -24,35 +24,35 @@ Item {
                 target: shakeContainer
                 property: "rotation"
                 to: -15
-                duration: Motion.emphasis.duration
+                duration: Motion.emphasis.duration / 5
                 easing.type: Motion.emphasis.easing
             }
             NumberAnimation {
                 target: shakeContainer
                 property: "rotation"
                 to: 15
-                duration: Motion.emphasis.duration
+                duration: Motion.emphasis.duration / 5
                 easing.type: Motion.emphasis.easing
             }
             NumberAnimation {
                 target: shakeContainer
                 property: "rotation"
                 to: -10
-                duration: Motion.emphasis.duration
+                duration: Motion.emphasis.duration / 5
                 easing.type: Motion.emphasis.easing
             }
             NumberAnimation {
                 target: shakeContainer
                 property: "rotation"
                 to: 10
-                duration: Motion.emphasis.duration
+                duration: Motion.emphasis.duration / 5
                 easing.type: Motion.emphasis.easing
             }
             NumberAnimation {
                 target: shakeContainer
                 property: "rotation"
                 to: 0
-                duration: Motion.emphasis.duration
+                duration: Motion.emphasis.duration / 5
                 easing.type: Motion.emphasis.easing
             }
         }

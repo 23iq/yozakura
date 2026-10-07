@@ -66,35 +66,35 @@ Item {
             target: root
             property: "shakeOffset"
             to: 14 * root.shakeAmplitude
-            duration: Motion.emphasis.duration
+            duration: Motion.emphasis.duration / 5
             easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: -12 * root.shakeAmplitude
-            duration: Motion.emphasis.duration
+            duration: Motion.emphasis.duration / 5
             easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: 9 * root.shakeAmplitude
-            duration: Motion.emphasis.duration
+            duration: Motion.emphasis.duration / 5
             easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: -5 * root.shakeAmplitude
-            duration: Motion.emphasis.duration
+            duration: Motion.emphasis.duration / 5
             easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "shakeOffset"
             to: 0
-            duration: Motion.emphasis.duration
+            duration: Motion.emphasis.duration / 5
             easing.type: Motion.emphasis.easing
         }
         ScriptAction {
