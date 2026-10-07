@@ -1,5 +1,4 @@
 import QtQuick
-import qs.modules.components
 import qs.modules.theme
 import qs.config
 
@@ -14,8 +13,10 @@ import qs.config
 //   active        on screen: poll and animate only then
 //   preview       drawn in settings: no side effects
 //   k             scale of the widget vs its default size (text grows)
-//   framed        draw its own pane (hosts that already provide a surface,
-//                 like the desktop, turn it off)
+//   framed        the widget draws its own box: a bento widget is one kit
+//                 Group filling the tile (`fill: true, bare: !framed`), so
+//                 its look follows the visual language; hosts that already
+//                 provide a surface, like the desktop, turn it off
 Item {
     id: root
 
@@ -39,13 +40,5 @@ Item {
     // than in panels, since widgets are read from further away, times k.
     function px(offset) {
         return Math.max(8, Math.round(Styling.fontSize(offset) * 1.2 * k));
-    }
-
-    StyledRect {
-        anchors.fill: parent
-        z: -1
-        visible: root.framed
-        variant: "pane"
-        radius: Styling.radius(4)
     }
 }

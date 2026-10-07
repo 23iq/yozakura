@@ -222,6 +222,7 @@ MIRROR = [
     "modules/widgets/dashboard/widgets/CalendarEvents.qml",
     "modules/widgets/dashboard/widgets/CalendarModel.js",
     "modules/widgets/dashboard/widgets/WeatherWidget.qml",
+    "modules/widgets/dashboard/widgets/WidgetFormat.js",
     "modules/widgets/dashboard/widgets/WidgetRegistry.js",
     # Lock screen style gallery: the real lock screen view and its styles.
     "modules/lockscreen",
@@ -659,6 +660,7 @@ class SettingsEnv:
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
+                  "modules/components/kit",
                   "modules/components/surfaceeffects", "modules/components/shape", "modules/bar/workspaces/indicators",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",

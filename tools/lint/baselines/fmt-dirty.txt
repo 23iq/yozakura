@@ -127,10 +127,6 @@ modules/widgets/dashboard/controls/ColorPickerView.qml
 modules/widgets/dashboard/controls/GradientStopsEditor.qml
 modules/widgets/dashboard/controls/ModsPanel.qml
 modules/widgets/dashboard/controls/ShellPanel.qml
-modules/widgets/dashboard/widgets/ControlButton.qml
-modules/widgets/dashboard/widgets/FullPlayer.qml
-modules/widgets/dashboard/widgets/QuickControls.qml
-modules/widgets/dashboard/widgets/WeatherWidget.qml
 modules/widgets/dashboard/widgets/calendar/Calendar.qml
 modules/widgets/defaultview/CompactPlayer.qml
 modules/widgets/defaultview/DefaultView.qml

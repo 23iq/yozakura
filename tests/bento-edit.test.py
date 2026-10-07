@@ -49,11 +49,18 @@ h.singleton("qs.modules.theme", "Styling", """QtObject {
 h.singleton("qs.modules.theme", "Icons", """QtObject {
     property string font: "Sans"; property string plus: "+"; property string cancel: "x"
     property string check: "v"; property string arrowCounterClockwise: "r"; property string arrowsOutSimple: "s"
-    property string sun: "o"
+    property string sun: "o"; property string dotsSix: "d"
 }""")
 h.singleton("qs.modules.services", "I18n", "QtObject { function t(k) { return k } }")
 h.module("qs.modules.components", {
     "StyledRect": "Rectangle { property string variant; property bool enableShadow; property real backgroundOpacity: -1 }"
+})
+# The tile chrome buttons (kit IconButton) and the spacing they use.
+h.module("qs.modules.components.kit", {
+    "IconButton": "Item { property string icon; property string size; property bool active; property bool primary; "
+                  "property bool highlighted; signal clicked; implicitWidth: 36; implicitHeight: 36; "
+                  "MouseArea { anchors.fill: parent; onClicked: parent.clicked() } }",
+    "Space": "pragma Singleton\nQtObject { property int xs: 4 }",
 })
 widget = h.write("""Item {
     property real cellW: 0
