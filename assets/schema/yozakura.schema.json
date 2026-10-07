@@ -5990,6 +5990,19 @@
           },
           "additionalProperties": false
         },
+        "backdrop": {
+          "title": "Dim the screen behind",
+          "type": "boolean",
+          "default": false,
+          "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.backdrop",
+            "control": "toggle",
+            "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
+          }
+        },
         "powermenu": {
           "title": "Powermenu",
           "type": "object",

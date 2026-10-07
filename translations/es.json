@@ -3342,6 +3342,8 @@
   "prefs.layout.dashboard_host.desc": "Notch: crece desde el notch. Spotlight: centrado sobre la pantalla atenuada. Hoja: un panel de altura completa que entra desde el lateral.",
   "prefs.layout.sheet_side": "Lado de la hoja",
   "prefs.layout.sheet_side.desc": "Automático usa el borde derecho, o el izquierdo cuando la barra está a la derecha.",
+  "prefs.layout.backdrop": "Atenuar el fondo",
+  "prefs.layout.backdrop.desc": "Atenúa y desenfoca la pantalla tras el foco y la hoja lateral. Desactivado la deja intacta; un clic fuera sigue cerrando.",
   "prefs.layout.host.notch": "Notch",
   "prefs.layout.host.spotlight": "Spotlight",
   "prefs.layout.host.sheet": "Hoja",

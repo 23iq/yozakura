@@ -35,6 +35,7 @@ JsonAdapter {
     property JsonObject sheet: JsonObject {
         property string side: "auto"
     }
+    property bool backdrop: false
     property JsonObject powermenu: JsonObject {
         property string style: "notch"
     }
