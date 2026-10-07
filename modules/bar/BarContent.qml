@@ -130,9 +130,10 @@ Item {
     property bool drawerHovered: false
     property bool drawerExpanded: false
     // Keep the drawer open while one of its menus/popups is in use
-    readonly property bool drawerHold: {
-        if (notchOpen || (screenVisibilities && screenVisibilities.presets))
-            return true;
+    readonly property bool drawerHold: notchOpen || (screenVisibilities && screenVisibilities.presets) || popupOpen
+    // One of this bar's popups is open: the pointer is over its window, not
+    // the bar, so an auto-hidden bar must stay revealed under it
+    readonly property bool popupOpen: {
         const groups = Visibilities.barPopupGroups;
         for (const key in groups) {
             const list = groups[key] || [];
@@ -194,7 +195,7 @@ Item {
 
         // Show if: hovering, notch hovering (when at top), notch open
         // IMPORTANT: notchHoverActive must be checked to synchronize with notch
-        return isMouseOverBar || hoverActive || notchHoverActive || notchOpen;
+        return isMouseOverBar || hoverActive || notchHoverActive || notchOpen || popupOpen;
     }
 
     // Timer to delay hiding the bar after mouse leaves
