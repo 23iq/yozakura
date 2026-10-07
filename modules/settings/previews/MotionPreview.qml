@@ -52,7 +52,7 @@ PreviewStage {
                 enabled: root.duration > 0
                 NumberAnimation {
                     duration: root.duration
-                    easing.type: Easing.OutCubic
+                    easing.type: Motion.morph.easing
                 }
             }
         }
@@ -79,7 +79,7 @@ PreviewStage {
                 enabled: root.duration > 0
                 NumberAnimation {
                     duration: root.duration
-                    easing.type: Easing.OutBack
+                    easing.type: Motion.morph.easing
                 }
             }
             Behavior on opacity {

@@ -34,7 +34,7 @@ Item {
         enabled: Config.animDuration > 0
         NumberAnimation {
             duration: Config.animDuration
-            easing.type: Easing.OutCubic
+            easing.type: Motion.morph.easing
         }
     }
 
@@ -54,8 +54,8 @@ Item {
         opacity: root.highlighted ? 0.16 : 0
         Behavior on opacity {
             NumberAnimation {
-                duration: 450
-                easing.type: Easing.OutCubic
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
             }
         }
     }
