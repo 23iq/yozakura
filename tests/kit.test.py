@@ -156,6 +156,16 @@ for lang, density in CASES:
     vs = get("vslider")
     assert vs.property("implicitHeight") > vs.property("implicitWidth"), tag
     assert get("progress").property("height") == space("stroke"), tag
+    # Indeterminate: the sweep runs only while visible (and with motion on)
+    prog = get("progress")
+    assert prog.property("sweeping") is False, tag
+    prog.setProperty("indeterminate", True)
+    assert prog.property("sweeping") == (h.eval(win, "Motion.emphasis.duration") > 0), tag
+    prog.setProperty("visible", False)
+    assert prog.property("sweeping") is False, tag
+    prog.setProperty("visible", True)
+    prog.setProperty("indeterminate", False)
+    assert prog.property("sweeping") is False, tag
     assert get("ring").property("fraction") == 0.4, tag
 
     # Surface: the popup box with the standard padding around its content

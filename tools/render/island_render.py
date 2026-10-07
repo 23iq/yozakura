@@ -38,6 +38,10 @@ STATES = {
     "media-row": ("Config.notch.mediaStyle = 'row'", "media"),
     "media-artwork": ("Config.notch.mediaStyle = 'artwork'", "media"),
     "transfers": ("", "transfers"),
+    # Unknown size: the indeterminate ProgressLine sweep
+    "transfers-unknown": ("ActivityService.transfers = ActivityService.transfers.concat([{ id: 's:1', source: 'sync',"
+                          " app: 'Syncthing', appIcon: 'syncthing', title: 'Photos', kind: 'sync', processed: 0,"
+                          " total: 0, rate: 0, state: 'running', units: 'files', actions: [] }])", "transfers"),
     "timers": ("TimersService.stopwatchActive = true; TimersService.stopwatchMs = 83400", "timers"),
     "timerHub": ("TimersService.openHub('timer', '')", ""),
     "alarm": ("TimersService.timers = [{ id: '3', name: 'Tea', state: 'done', ringing: true, leftMs: 0, progress: 1 }]", ""),
