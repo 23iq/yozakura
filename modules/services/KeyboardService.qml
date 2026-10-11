@@ -140,11 +140,13 @@ Singleton {
 
     function _write(patch) {
         const writes = KeyboardModel.planEdit(root.managed, root.current, patch, Config.keyboard);
-        const paused = Config.pauseAutoSave;
-        Config.pauseAutoSave = true;
-        for (const key in writes)
-            Config.keyboard[key] = writes[key];
-        Config.pauseAutoSave = paused;
+        Config.holdAutoSave();
+        try {
+            for (const key in writes)
+                Config.keyboard[key] = writes[key];
+        } finally {
+            Config.releaseAutoSave();
+        }
         Config.saveKeyboard();
     }
 

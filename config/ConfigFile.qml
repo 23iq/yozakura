@@ -6,11 +6,13 @@ import "ConfigValidator.js" as ConfigValidator
 // generated adapter (config/adapters/<Name>Adapter.qml). On the first load the
 // file is validated against the defaults (or created from the preset /
 // defaults when missing); later reloads only fill in missing top-level keys.
-// Adapter edits are written back unless the store pauses auto-save.
+// Adapter edits are written back (coalesced by store.autoSaveDelay) unless the
+// store pauses auto-save; a reload this file triggers never writes back.
 FileView {
     id: file
 
-    // The Config singleton: configDir, presetDir and the shared pauseAutoSave.
+    // The Config singleton: configDir, presetDir, the derived pauseAutoSave,
+    // autoSaveDelay (ms, optional) and configReloaded(name) (optional).
     required property var store
     required property string name
     required property var defaults
@@ -41,6 +43,15 @@ FileView {
         }
     }
 
+    // An external change is being reloaded: adapter updates it causes are
+    // not edits and are not written back.
+    property bool reloading: false
+    // Coalesces bursts of edits (slider ticks) into one write.
+    property Timer saveTimer: Timer {
+        interval: Math.max(1, file.autoSaveDelay())
+        onTriggered: file.autoSave()
+    }
+
     // Values the key aliases moved into this still missing file; laid over the
     // preset copy by the validation that follows it (see handleMissing).
     property var pendingOverlay: undefined
@@ -62,6 +73,9 @@ FileView {
             });
         } else {
             file.fillMissingKeys();
+            // Lets the settings snapshots follow an external reload.
+            if (typeof file.store.configReloaded === "function")
+                file.store.configReloaded(file.name);
         }
     }
     onLoadFailed: error => {
@@ -75,15 +89,34 @@ FileView {
         }
     }
     onFileChanged: {
-        file.store.pauseAutoSave = true;
+        // Our own pending write is newer than what is on disk.
+        if (saveTimer.running)
+            return;
+        file.reloading = true;
         reload();
-        file.store.pauseAutoSave = false;
+        file.reloading = false;
     }
     onPathChanged: reload()
     onAdapterUpdated: {
-        if (file.ready && !file.broken && !file.store.pauseAutoSave) {
+        if (file.ready && !file.broken && !file.reloading && !file.store.pauseAutoSave)
+            file.scheduleWrite();
+    }
+
+    function autoSaveDelay() {
+        const d = Number(file.store.autoSaveDelay);
+        return isFinite(d) && d > 0 ? d : 0;
+    }
+
+    function scheduleWrite() {
+        if (file.autoSaveDelay() > 0)
+            saveTimer.restart();
+        else
             file.writeAdapter();
-        }
+    }
+
+    function autoSave() {
+        if (file.ready && !file.broken && !file.store.pauseAutoSave)
+            file.writeAdapter();
     }
 
     // `migrated`: the parsed file after the key-alias migration (AliasGate).

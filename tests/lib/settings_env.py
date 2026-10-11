@@ -346,7 +346,10 @@ QtObject {{
     property var saved: []
     property bool keybindsInitialLoadComplete: true
     property bool specialsReady: true
-    property bool pauseAutoSave: false
+    property int autoSaveHolds: 0
+    property bool pauseAutoSave: autoSaveHolds > 0
+    function holdAutoSave() {{ autoSaveHolds++ }}
+    function releaseAutoSave() {{ autoSaveHolds = Math.max(0, autoSaveHolds - 1) }}
     property bool initialLoadComplete: true
     property string version: "1.3.9"
     property string configDir: "/tmp/yozakura-config"

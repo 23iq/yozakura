@@ -16,7 +16,7 @@ import "../modules/globals/BrandActions.js" as BrandActions
 Scope {
     id: root
 
-    // The Config singleton: keybindsPath and the shared pauseAutoSave.
+    // The Config singleton: keybindsPath.
     required property var store
     property bool initialLoadComplete: false
     property alias loader: loader
@@ -269,18 +269,19 @@ Scope {
                 createKeybindsTimer.start();
             }
         }
+        property bool reloading: false
         onFileChanged: {
-            root.store.pauseAutoSave = true;
+            reloading = true;
             reload();
+            reloading = false;
             normalizeCustomBinds();
-            root.store.pauseAutoSave = false;
         }
         onPathChanged: {
             reload();
             normalizeCustomBinds();
         }
         onAdapterUpdated: {
-            if (root.initialLoadComplete) {
+            if (root.initialLoadComplete && !loader.reloading) {
                 loader.writeAdapter();
             }
         }
