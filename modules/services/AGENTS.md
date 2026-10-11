@@ -10,7 +10,7 @@ Backend singletons bridging Wayland protocols, CLI tools (nmcli, upower, wpctl, 
 | **Network/WiFi** | `NetworkService.qml` | `nmcli` wrapper. WiFi scanning, connection, status |
 | **Battery/Power** | `Battery.qml` | UPower integration. Percentage, charging state, time remaining |
 | **Bluetooth** | `BluetoothService.qml` | Device listing, connect/disconnect |
-| **Brightness** | `Brightness.qml` | Per-monitor brightness via `brightnessctl` |
+| **Brightness** | `Brightness.qml` + `BrightnessWrite.js` | Per-monitor brightness via `brightnessctl` / `ddcutil`. Writes are single-flight, latest-wins (a DDC write is 150-350 ms and ddcutil serialises calls); never spawn one process per tick |
 | **AI Assistant** | `Ai.qml` + `ai/strategies/` | Multi-provider (OpenAI, Gemini, Mistral). Strategy pattern |
 | **Voice input** | `VoiceService.qml` + `voice/VoiceModel.js` | Client of the backend `voice` service (local whisper.cpp). Sets `panelOpen`/`panelScreen` while a session is shown, which opens the notch registry panel `voice` (`modules/widgets/defaultview/panels/VoicePanel.qml`); routes transcripts to `Ai.handleVoice(text, "sidebar"|"notch")` (fallback: open sidebar + `sendMessage`) or types them via `voice.type`. Dismissing the panel (`dismiss()`) cancels an active session |
 | **Clipboard** | `ClipboardService.qml` | Persistent clipboard via `clipboard.db` + helper scripts |
