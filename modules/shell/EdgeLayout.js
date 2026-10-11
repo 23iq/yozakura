@@ -206,7 +206,8 @@ function notchOpenDir(pos) {
 // by a bar or dock on the perpendicular edges. A start notch keeps its
 // start when it grows, an end notch its end, a centered one its center,
 // so panels always grow toward the middle of the screen. A side notch is
-// offset by the bar, dock and frame on its own edge.
+// offset by the bar and dock on its own edge (and the frame around them);
+// alone on its edge it starts at the monitor edge.
 function notchRect(e, size) {
     var n = e.notch || {};
     var pos = OPPOSITE[n.pos] ? n.pos : "top";
@@ -235,9 +236,13 @@ function notchRect(e, size) {
     start = Math.round(_clamp(start, Math.min(min, total - along), Math.max(0, max - along)));
     var across = Math.min(size.across, vertical ? s.w : s.h);
     if (vertical) {
-        // A side notch sits beside a bar/dock/frame on its own edge (a
-        // horizontal bar keeps a gap for a top/bottom notch instead).
-        var own = Math.min(reserved(pos), s.w - across);
+        // A side notch sits beside a bar/dock on its own edge, inside the
+        // frame that wraps them; with nothing else there it comes out of the
+        // monitor edge itself (the frame is drawn under it), not from behind
+        // the frame. A horizontal bar keeps a gap for a top/bottom notch
+        // instead (NotchContent.edgeGap).
+        var occupied = panelDepth(e, pos) > 0 || !!(e.dock && e.dock.visible && e.dock.pos === pos);
+        var own = Math.min(occupied ? reserved(pos) : 0, s.w - across);
         return { x: pos === "left" ? own : s.w - own - across, y: start, w: across, h: along, vertical: true, dir: notchOpenDir(pos) };
     }
     return { x: start, y: pos === "top" ? 0 : s.h - across, w: along, h: across, vertical: false, dir: notchOpenDir(pos) };
