@@ -20,7 +20,7 @@ var category = {
                     "id": "terminal.look",
                     "type": "custom",
                     "component": "TerminalLookEditor",
-                    "keys": ["terminal.prompt", "terminal.enabled"],
+                    "keys": ["terminal.prompt"],
                     "label": "prefs.term.look.prompt",
                     "description": "prefs.term.look.prompt.desc",
                     "keywords": "prompt starship oh-my-posh fish powerline nerd font preview theme shell look"

@@ -155,7 +155,6 @@ var category = {
                     "unit": "px",
                     "visibleWhen": {
                         "key": "compositor.syncRoundness",
-                    "advanced": true,
                         "equals": false
                     },
                     "label": "prefs.windows.rounding",
