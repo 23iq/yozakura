@@ -61,13 +61,16 @@ Item {
             root.keepLoaded = false
     }
 
+    // A repeated shortcut always closes the open panel. It must not depend on
+    // keyboard focus: with focus-follows-mouse the pointer leaving the panel
+    // moves focus away, and the shortcut would only grab it back.
     Connections {
         target: GlobalStates
         function onAssistantFocusRequested(wasAlreadyOpen) {
             if (root.targetScreen.name !== GlobalStates.assistantScreenName)
                 return;
             Qt.callLater(() => {
-                if (wasAlreadyOpen && root.active && root.hasKeyboard) {
+                if (wasAlreadyOpen && root.active) {
                     GlobalStates.hideAssistant();
                 } else {
                     root.focusWanted();
