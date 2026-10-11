@@ -208,7 +208,7 @@ func TestRestoreExact(t *testing.T) {
 	if rec.reloads != 2 {
 		t.Fatalf("restore must reload, reloads %d", rec.reloads)
 	}
-	if st.Replaced == "" || filepath.Dir(st.Replaced) != backup || st.Previous["keyboard.layouts"] != "us" || len(rec.unimports) != 0 {
+	if st.Replaced == "" || filepath.Dir(st.Replaced) != backup || st.Previous["keyboard.layouts"] != "us" || !st.Unimported || len(rec.unimports) != 1 {
 		t.Fatalf("restore status %+v unimports %v", st, rec.unimports)
 	}
 	if !reflect.DeepEqual(sd.started, []string{"waybar.service"}) {

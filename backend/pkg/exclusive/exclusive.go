@@ -58,6 +58,9 @@ type Status struct {
 	Reason        string         `json:"reason,omitempty"`
 	Replaced      string         `json:"replaced,omitempty"`
 	Previous      map[string]any `json:"previous,omitempty"`
+	// Unimported: Restore wrote Previous back, so the monitors and keyboard
+	// imported by Enable no longer override the restored user config.
+	Unimported bool `json:"unimported,omitempty"`
 }
 
 // Options carries the environment.
@@ -273,7 +276,8 @@ func (r *run) rollback(cause error) (Status, error) {
 // units it recorded (starting the ones that were running) and reloads the
 // compositor. Without from it refuses unless exclusive mode is active. The
 // backup is kept, the replaced tree is saved inside it as replaced-<time>/
-// and the imported settings stay (Status.Previous holds the old values).
+// and the settings Enable imported are reverted to Status.Previous: the
+// restored user config is in charge of monitors and keyboard again.
 func Restore(o Options, from string) (Status, error) {
 	unlock, err := fsutil.Lock(filepath.Join(o.backupRoot(), ".lock"))
 	if err != nil {
@@ -292,11 +296,22 @@ func Restore(o Options, from string) (Status, error) {
 		return GetStatus(o), err
 	}
 	errs := enableUnits(o, m.Units)
+	unimported, previous := false, m.Previous
+	if o.Unimport != nil && (m.ImportedDisplays > 0 || m.ImportedKeyboard) && len(m.Previous) > 0 {
+		if err := o.Unimport(m.Previous); err != nil {
+			errs = append(errs, "could not revert the imported monitor/keyboard settings: "+err.Error())
+		} else {
+			unimported = true
+			// a second restore of this backup must not overwrite later edits
+			m.Previous = nil
+			_ = writeManifest(dir, m)
+		}
+	}
 	if err := o.reload(); err != nil && !errors.Is(err, ErrNoCompositor) {
 		errs = append(errs, "hyprland reload: "+err.Error())
 	}
 	st := GetStatus(o)
-	st.Replaced, st.Previous = replaced, m.Previous
+	st.Replaced, st.Previous, st.Unimported = replaced, previous, unimported
 	if len(errs) > 0 {
 		return st, fmt.Errorf("restored %s, but: %s", dir, strings.Join(errs, "; "))
 	}

@@ -1999,7 +1999,7 @@
   "prefs.exclusive.busy": "Trabajando...",
   "prefs.exclusive.error": "No se pudo completar el cambio",
   "prefs.exclusive.restored.title": "Tu configuración anterior ha vuelto",
-  "prefs.exclusive.restored.detail": "Los archivos que reemplazó el modo exclusivo están en %1. Los ajustes de monitores y teclado importados se conservaron.",
+  "prefs.exclusive.restored.detail": "Los archivos que reemplazó el modo exclusivo están en %1. Los ajustes de monitores y teclado que importó se revirtieron.",
   "prefs.exclusive.active.backup": "Copia de tu configuración anterior",
   "prefs.exclusive.active.tweaks": "Tus ajustes van en %1",
   "prefs.exclusive.active.tweaks.detail": "~/.config/hypr/%1 se carga después de Yozakura, así que puede sobrescribir cualquier cosa.",

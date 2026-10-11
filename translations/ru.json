@@ -1999,7 +1999,7 @@
   "prefs.exclusive.busy": "Выполняется...",
   "prefs.exclusive.error": "Не удалось выполнить изменение",
   "prefs.exclusive.restored.title": "Прежняя настройка возвращена",
-  "prefs.exclusive.restored.detail": "Файлы, которые заменил эксклюзивный режим, сохранены в %1. Импортированные настройки мониторов и клавиатуры сохранены.",
+  "prefs.exclusive.restored.detail": "Файлы, которые заменил эксклюзивный режим, сохранены в %1. Импортированные им настройки мониторов и клавиатуры возвращены.",
   "prefs.exclusive.active.backup": "Копия прежней настройки",
   "prefs.exclusive.active.tweaks": "Ваши правки - в %1",
   "prefs.exclusive.active.tweaks.detail": "~/.config/hypr/%1 загружается после Yozakura и может переопределить что угодно.",

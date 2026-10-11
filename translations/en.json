@@ -1999,7 +1999,7 @@
   "prefs.exclusive.busy": "Working on it...",
   "prefs.exclusive.error": "Could not complete the change",
   "prefs.exclusive.restored.title": "Your previous setup is back",
-  "prefs.exclusive.restored.detail": "The files exclusive mode replaced are saved in %1. Imported monitor and keyboard settings were kept.",
+  "prefs.exclusive.restored.detail": "The files exclusive mode replaced are saved in %1. Monitor and keyboard settings it imported were reverted.",
   "prefs.exclusive.active.backup": "Backup of your old setup",
   "prefs.exclusive.active.tweaks": "Your tweaks go in %1",
   "prefs.exclusive.active.tweaks.detail": "~/.config/hypr/%1 loads after Yozakura, so it can override anything.",
