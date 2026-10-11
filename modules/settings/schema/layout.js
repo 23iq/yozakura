@@ -22,6 +22,19 @@ var HOSTS = [
     }
 ];
 
+// Entries that matter only while some module is hosted in one of `hosts`
+// (launcher, dashboard, cheatsheet; the notch host needs neither).
+function hostedIn(hosts) {
+    return {
+        "any": ["layout.launcher.host", "layout.dashboard.host", "layout.cheatsheet.host"].map(function (key) {
+            return {
+                "key": key,
+                "in": hosts
+            };
+        })
+    };
+}
+
 var category = {
     "id": "layout",
     "icon": "layout",
@@ -87,6 +100,7 @@ var category = {
                             "icon": "arrowRight"
                         }
                     ],
+                    "visibleWhen": hostedIn(["sheet"]),
                     "label": "prefs.layout.sheet_side",
                     "description": "prefs.layout.sheet_side.desc",
                     "keywords": "sheet side left right edge vertical bar"
@@ -94,6 +108,7 @@ var category = {
                 {
                     "key": "layout.backdrop",
                     "type": "toggle",
+                    "visibleWhen": hostedIn(["sheet", "spotlight"]),
                     "label": "prefs.layout.backdrop",
                     "description": "prefs.layout.backdrop.desc",
                     "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"

@@ -464,7 +464,7 @@
       "title": "Widget surface",
       "type": "string",
       "default": "pane",
-      "description": "Which shell surface style widgets use; glass amount: Appearance > Glass.",
+      "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
       "x-settings": {
         "category": "desktop",
         "section": "widgets",

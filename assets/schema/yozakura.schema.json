@@ -5073,7 +5073,7 @@
           "title": "Widget surface",
           "type": "string",
           "default": "pane",
-          "description": "Which shell surface style widgets use; glass amount: Appearance > Glass.",
+          "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
           "x-settings": {
             "category": "desktop",
             "section": "widgets",
@@ -6160,7 +6160,29 @@
                 "section": "hosts",
                 "label": "prefs.layout.sheet_side",
                 "control": "selector",
-                "keywords": "sheet side left right edge vertical bar"
+                "keywords": "sheet side left right edge vertical bar",
+                "visibleWhen": {
+                  "any": [
+                    {
+                      "key": "layout.launcher.host",
+                      "in": [
+                        "sheet"
+                      ]
+                    },
+                    {
+                      "key": "layout.dashboard.host",
+                      "in": [
+                        "sheet"
+                      ]
+                    },
+                    {
+                      "key": "layout.cheatsheet.host",
+                      "in": [
+                        "sheet"
+                      ]
+                    }
+                  ]
+                }
               },
               "enum": [
                 "auto",
@@ -6186,7 +6208,32 @@
             "section": "hosts",
             "label": "prefs.layout.backdrop",
             "control": "toggle",
-            "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
+            "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
+            "visibleWhen": {
+              "any": [
+                {
+                  "key": "layout.launcher.host",
+                  "in": [
+                    "sheet",
+                    "spotlight"
+                  ]
+                },
+                {
+                  "key": "layout.dashboard.host",
+                  "in": [
+                    "sheet",
+                    "spotlight"
+                  ]
+                },
+                {
+                  "key": "layout.cheatsheet.host",
+                  "in": [
+                    "sheet",
+                    "spotlight"
+                  ]
+                }
+              ]
+            }
           }
         },
         "powermenu": {
@@ -6426,7 +6473,11 @@
             "section": "style",
             "label": "prefs.lockscreen.tone",
             "control": "selector",
-            "keywords": "lock screen light dark tone mode theme"
+            "keywords": "lock screen light dark tone mode theme",
+            "visibleWhen": {
+              "key": "lockscreen.style",
+              "notEquals": "neon"
+            }
           },
           "enum": [
             "style",
@@ -7524,7 +7575,11 @@
             "section": "layout",
             "label": "prefs.overview.style",
             "control": "selector",
-            "keywords": "overview style layout grid strip filmstrip carousel"
+            "keywords": "overview style layout grid strip filmstrip carousel",
+            "enabledWhen": {
+              "key": "compositor.layout",
+              "notEquals": "scrolling"
+            }
           },
           "enum": [
             "grid",
@@ -7539,7 +7594,7 @@
           "title": "Workspace rows",
           "type": "number",
           "default": 2,
-          "description": "Rows of workspaces in the overview grid.",
+          "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
           "x-settings": {
             "category": "overview",
             "section": "layout",
@@ -7547,6 +7602,20 @@
             "control": "slider",
             "step": 1,
             "keywords": "overview rows grid vertical workspaces count",
+            "enabledWhen": {
+              "not": {
+                "all": [
+                  {
+                    "key": "overview.style",
+                    "equals": "strip"
+                  },
+                  {
+                    "key": "compositor.layout",
+                    "notEquals": "scrolling"
+                  }
+                ]
+              }
+            },
             "min": 1,
             "max": 10
           },

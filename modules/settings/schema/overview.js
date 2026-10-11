@@ -18,6 +18,10 @@ var category = {
             "entries": [
                 {
                     "key": "overview.style",
+                    "enabledWhen": {
+                        "key": "compositor.layout",
+                        "notEquals": "scrolling"
+                    },
                     "type": "selector",
                     "options": [
                         {
@@ -37,6 +41,20 @@ var category = {
                 },
                 {
                     "key": "overview.rows",
+                    "enabledWhen": {
+                        "not": {
+                            "all": [
+                                {
+                                    "key": "overview.style",
+                                    "equals": "strip"
+                                },
+                                {
+                                    "key": "compositor.layout",
+                                    "notEquals": "scrolling"
+                                }
+                            ]
+                        }
+                    },
                     "type": "slider",
                     "min": 1,
                     "max": 10,
@@ -91,6 +109,7 @@ var category = {
             "entries": [
                 {
                     "key": "desktop.blurWallpaperOnOverview",
+                    "compositor": "niri",
                     "type": "toggle",
                     "label": "prefs.desktop.overview_blur",
                     "description": "prefs.desktop.overview_blur.desc",

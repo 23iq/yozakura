@@ -3590,7 +3590,7 @@
   "prefs.overview.style": "Overview style",
   "prefs.overview.style.desc": "A grid of every workspace, or a filmstrip with the current workspace centered. Scrolling layouts always use their own tape view.",
   "prefs.overview.rows": "Workspace rows",
-  "prefs.overview.rows.desc": "Rows of workspaces in the overview grid.",
+  "prefs.overview.rows.desc": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
   "prefs.overview.columns": "Workspace columns",
   "prefs.overview.columns.desc": "Columns of the grid; in the filmstrip, how many workspaces are visible at once.",
   "prefs.overview.section.size": "Overview previews",

@@ -3590,7 +3590,7 @@
   "prefs.overview.style": "Estilo de la vista general",
   "prefs.overview.style.desc": "Una cuadrícula con todos los escritorios o una tira con el actual en el centro. Los diseños de desplazamiento usan siempre su propia vista de cinta.",
   "prefs.overview.rows": "Filas de escritorios",
-  "prefs.overview.rows.desc": "Filas de escritorios en la cuadrícula de la vista general.",
+  "prefs.overview.rows.desc": "Filas de escritorios en la cuadrícula de la vista general. La tira siempre tiene una fila.",
   "prefs.overview.columns": "Columnas de escritorios",
   "prefs.overview.columns.desc": "Columnas de la cuadrícula; en la tira, cuántos escritorios se ven a la vez.",
   "prefs.overview.section.size": "Miniaturas de la vista general",

@@ -16,7 +16,11 @@
         "section": "layout",
         "label": "prefs.overview.style",
         "control": "selector",
-        "keywords": "overview style layout grid strip filmstrip carousel"
+        "keywords": "overview style layout grid strip filmstrip carousel",
+        "enabledWhen": {
+          "key": "compositor.layout",
+          "notEquals": "scrolling"
+        }
       },
       "enum": [
         "grid",
@@ -31,7 +35,7 @@
       "title": "Workspace rows",
       "type": "number",
       "default": 2,
-      "description": "Rows of workspaces in the overview grid.",
+      "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
       "x-settings": {
         "category": "overview",
         "section": "layout",
@@ -39,6 +43,20 @@
         "control": "slider",
         "step": 1,
         "keywords": "overview rows grid vertical workspaces count",
+        "enabledWhen": {
+          "not": {
+            "all": [
+              {
+                "key": "overview.style",
+                "equals": "strip"
+              },
+              {
+                "key": "compositor.layout",
+                "notEquals": "scrolling"
+              }
+            ]
+          }
+        },
         "min": 1,
         "max": 10
       },
