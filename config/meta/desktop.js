@@ -67,6 +67,7 @@ var keys = {
         "description": "Show the desktop widgets."
     },
     "widgets": {
+        "local": true,
         "items": {
             "type": "object",
             "required": ["type", "x", "y", "w", "h"],
@@ -105,7 +106,7 @@ var keys = {
                 }
             }
         },
-        "description": "Desktop widgets: [{id, type, monitor, x, y, w, h, options}]. type: media | calendar | system | note | weather (registry: modules/desktop/widgets/WidgetRegistry.js). x/y/w/h are fractions of the screen (0..1) so layouts survive resolution changes; monitor is the output name (empty or unknown = first screen); options are per type (see the registry)."
+        "description": "Desktop widgets: [{id, type, monitor, x, y, w, h, options}]. type: media | calendar | system | note | weather (registry: modules/desktop/widgets/WidgetRegistry.js). x/y/w/h are fractions of the screen (0..1) so layouts survive resolution changes; monitor is the output name (empty or unknown = first screen); options are per type (see the registry). Machine-local: your widgets and their content (note text) never travel in presets."
     },
     "widgetGrid": {
         "min": 0,

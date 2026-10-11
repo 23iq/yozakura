@@ -27,7 +27,9 @@ Item {
 
     function choose(id) {
         SettingsStore.set("theme.lightMode", id === "light");
-        SettingsStore.set("theme.oledMode", id === "oled");
+        // Light ignores OLED: the preference is kept for the way back.
+        if (id !== "light")
+            SettingsStore.set("theme.oledMode", id === "oled");
     }
 
     // Palette for a mode; null = the live Colors (already that mode).

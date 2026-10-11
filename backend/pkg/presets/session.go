@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"time"
 
 	"yozakura/backend/pkg/catalog"
@@ -86,7 +87,15 @@ func (m *Manager) begin(kind, name string) (*Session, []catalog.Problem, error) 
 	if m.StateDir == "" {
 		return nil, nil, fmt.Errorf("no state directory for preset sessions")
 	}
-	for _, k := range []string{TrySession, EditSession, PreviewSession} {
+	// A preview is transient (a hover, or left over by a crash): starting a
+	// trial or an edit puts the look from before it back and goes on.
+	if s, _ := m.Session(PreviewSession); s != nil {
+		if err := m.revert(s); err != nil {
+			return nil, nil, fmt.Errorf("ending the preview first: %w", err)
+		}
+		m.dropSession(PreviewSession)
+	}
+	for _, k := range []string{TrySession, EditSession} {
 		if s, _ := m.Session(k); s != nil {
 			return nil, nil, fmt.Errorf("a preset %s of %q is in progress; finish it first", k, s.Preset)
 		}
@@ -147,7 +156,11 @@ func (m *Manager) end(kind string, keep, save bool) (*Session, error) {
 		return nil, fmt.Errorf("no preset %s in progress", kind)
 	}
 	if save && kind == EditSession {
-		if _, err := m.update(s.Preset, nil); err != nil {
+		extra, err := m.editedDomains(s)
+		if err != nil {
+			return s, fmt.Errorf("saving into %q: %w", s.Preset, err)
+		}
+		if _, err := m.update(s.Preset, extra); err != nil {
 			return s, fmt.Errorf("saving into %q: %w", s.Preset, err)
 		}
 	}
@@ -162,13 +175,42 @@ func (m *Manager) end(kind string, keep, save bool) (*Session, error) {
 	return s, os.Remove(m.sessionFile(kind))
 }
 
+// editedDomains lists what an edit session saves: the domains the preset
+// holds plus any other one whose live config differs from the backup (a
+// setting edited on a page the preset has no file for, like the desktop).
+func (m *Manager) editedDomains(s *Session) ([]string, error) {
+	p, err := m.findUser(s.Preset)
+	if err != nil {
+		return nil, err
+	}
+	domains := append([]string{}, p.Domains...)
+	live, err := m.Documents(Current)
+	if err != nil {
+		return nil, err
+	}
+	backup, err := m.Documents(m.backupFile(s.Kind))
+	if err != nil {
+		return nil, fmt.Errorf("reading the backup: %w", err)
+	}
+	for d := range live {
+		if contains(domains, d) {
+			continue
+		}
+		if _, had := backup[d]; !had || len(m.compareDocs(live, backup, []string{d})) > 0 {
+			domains = append(domains, d)
+		}
+	}
+	sort.Strings(domains)
+	return domains, nil
+}
+
 // revert restores the live config backed up when the session began.
 func (m *Manager) revert(s *Session) error {
 	raw, err := m.rawDocuments(m.backupFile(s.Kind))
 	if err != nil {
 		return fmt.Errorf("reading the backup: %w", err)
 	}
-	if _, err := m.applyFiles(raw); err != nil {
+	if _, err := m.applyFiles(raw, false); err != nil {
 		return err
 	}
 	for _, d := range s.Created {

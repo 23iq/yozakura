@@ -54,9 +54,21 @@ test('find command scans every folder and survives missing ones', () => {
     ['a/one.jpg', 'a/sub/two.MP4', 'a/.hidden/three.png', 'b/four.webp', 'b/notes.txt', 'b/five.mkv'].forEach(mk);
     const cmd = F.findCommand([path.join(tmp, 'a'), path.join(tmp, 'missing'), path.join(tmp, 'b')]);
     const out = execFileSync(cmd[0], cmd.slice(1), { encoding: 'utf8' }).trim().split('\n').map(f => path.relative(tmp, f)).sort();
-    // Matching is case sensitive like the original scan (two.MP4 skipped).
-    assert.deepEqual(out, ['a/one.jpg', 'b/five.mkv', 'b/four.webp']);
+    // Extensions match in any case (two.MP4); hidden subfolders are skipped.
+    assert.deepEqual(out, ['a/one.jpg', 'a/sub/two.MP4', 'b/five.mkv', 'b/four.webp']);
     fs.rmSync(tmp, { recursive: true, force: true });
     // No folder at all must not fall back to scanning the working directory.
     assert.deepEqual(plain(F.findCommand([])), ['true']);
+});
+
+test('a hidden start folder is scanned (~/.wallpapers)', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wpfind-'));
+    const hidden = path.join(tmp, '.wallpapers');
+    fs.mkdirSync(path.join(hidden, '.cache'), { recursive: true });
+    fs.writeFileSync(path.join(hidden, 'one.PNG'), '');
+    fs.writeFileSync(path.join(hidden, '.cache', 'skip.png'), '');
+    const cmd = F.findCommand([hidden]);
+    const out = execFileSync(cmd[0], cmd.slice(1), { encoding: 'utf8' }).trim().split('\n').map(f => path.relative(tmp, f));
+    assert.deepEqual(out, ['.wallpapers/one.PNG']);
+    fs.rmSync(tmp, { recursive: true, force: true });
 });

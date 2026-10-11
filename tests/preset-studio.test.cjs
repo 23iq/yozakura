@@ -96,6 +96,18 @@ test('palette per look: scheme + mode, OLED blacks out the background roles', ()
     assert.equal(M.paletteFor({ 'theme.lightMode': true }, { 'scheme-tonal-spot': { light: { primary: '#123456' } } }).primary, '#123456');
 });
 
+test('palette per look: a named color preset wins over the scheme', () => {
+    const schemes = { 'scheme-tonal-spot': { dark: { primary: '#111111' }, light: { primary: '#222222' } } };
+    const presets = { Plum: { dark: { primary: '#aa00aa', background: '#101010' }, light: { primary: '#550055' } } };
+    const look = { 'wallpaper.activeColorPreset': 'Plum', 'theme.lightMode': false };
+    assert.equal(M.presetName(look), 'Plum');
+    assert.equal(M.paletteFor(look, schemes, presets).primary, '#aa00aa');
+    assert.equal(M.paletteFor({ ...look, 'theme.lightMode': true }, schemes, presets).primary, '#550055');
+    assert.equal(M.paletteFor(look, schemes, {}).primary, '#111111', 'not loaded yet: the scheme');
+    assert.equal(M.paletteFor(look, null, presets).primary, '#aa00aa', 'no scheme palettes needed');
+    assert.equal(M.paletteFor({ 'wallpaper.activeColorPreset': '' }, schemes, presets).primary, '#111111');
+});
+
 test('thumbnail key changes with the look, wallpaper, palette and size only', () => {
     const k = M.thumbKey(presets[0].look, '/w/a.jpg', { primary: '#fff' }, '300x170');
     assert.equal(k, M.thumbKey(Object.assign({}, presets[0].look), '/w/a.jpg', { primary: '#fff' }, '300x170'));

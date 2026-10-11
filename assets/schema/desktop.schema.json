@@ -384,7 +384,8 @@
             "type": "object"
           }
         }
-      }
+      },
+      "x-local": true
     },
     "widgetGrid": {
       "title": "Snap grid",

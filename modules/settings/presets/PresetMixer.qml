@@ -20,6 +20,7 @@ Item {
     property var sources: ({})
     readonly property bool wide: width >= 860
     readonly property var look: PresetModel.composeLook(PresetStudio.aspects, PresetStudio.presets, sources, PresetStudio.active)
+    readonly property string colorPreset: PresetModel.presetName(look)
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string wallpaper: manager && manager.currentWallpaper && manager.getDisplaySource ? manager.getDisplaySource(manager.currentWallpaper) : ""
 
@@ -37,9 +38,12 @@ Item {
         sources = s;
     }
 
+    onColorPresetChanged: ColorPresetPalettes.ensure(colorPreset)
+
     Component.onCompleted: {
         reset();
         SchemePreviews.refresh();
+        ColorPresetPalettes.ensure(colorPreset);
     }
     Connections {
         target: PresetStudio
@@ -70,7 +74,7 @@ Item {
                 objectName: "mixerPreview"
                 anchors.fill: parent
                 look: root.look
-                colorMap: PresetModel.paletteFor(root.look, SchemePreviews.palettes)
+                colorMap: PresetModel.paletteFor(root.look, SchemePreviews.palettes, ColorPresetPalettes.palettes)
                 wallpaper: root.wallpaper
             }
         }
