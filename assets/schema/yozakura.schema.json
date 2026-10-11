@@ -3552,7 +3552,6 @@
             "keywords": "rounding radius corners round",
             "visibleWhen": {
               "key": "compositor.syncRoundness",
-              "advanced": true,
               "equals": false
             },
             "min": 0,
@@ -4418,7 +4417,7 @@
           "title": "Speed",
           "type": "number",
           "default": 1,
-          "description": "Multiplies every animation duration of the profile (below 1 is faster).",
+          "description": "Multiplies every animation duration of the profile (below 1 is faster). The shell's own animations follow it only while \"Shell follows the profile\" is on.",
           "x-settings": {
             "category": "appearance",
             "section": "motion",
@@ -4727,14 +4726,36 @@
           "title": "Transition style",
           "type": "string",
           "default": "grow",
-          "description": "How one wallpaper turns into the next.",
+          "description": "How one wallpaper turns into the next. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
             "section": "transition",
             "label": "prefs.wall.transition",
             "control": "selector",
             "preview": "TransitionPreview",
-            "keywords": "transition animation grow wipe dissolve fade random shader effect"
+            "keywords": "transition animation grow wipe dissolve fade random shader effect",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "theme.animDuration",
+                  "notEquals": 0
+                },
+                {
+                  "not": {
+                    "all": [
+                      {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                      },
+                      {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
           },
           "enum": [
             "grow",
@@ -4757,7 +4778,7 @@
           "title": "Transition duration",
           "type": "number",
           "default": 800,
-          "description": "Length of the wallpaper transition.",
+          "description": "Length of the wallpaper transition. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
             "section": "transition",
@@ -4769,6 +4790,28 @@
             "visibleWhen": {
               "key": "desktop.wallpaperTransition",
               "notEquals": "none"
+            },
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "theme.animDuration",
+                  "notEquals": 0
+                },
+                {
+                  "not": {
+                    "all": [
+                      {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                      },
+                      {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                      }
+                    ]
+                  }
+                }
+              ]
             },
             "min": 100,
             "max": 3000
@@ -9118,7 +9161,7 @@
             "unit": "px",
             "keywords": "radius corners rounded square shape",
             "min": 0,
-            "max": 20
+            "max": 24
           },
           "minimum": 0,
           "maximum": 24,
@@ -9327,7 +9370,7 @@
             "unit": "ms",
             "keywords": "animation speed duration fast slow motion reduce",
             "min": 0,
-            "max": 1000,
+            "max": 300,
             "specialValues": [
               {
                 "value": 0,
@@ -9336,7 +9379,7 @@
             ]
           },
           "minimum": 0,
-          "maximum": 2000,
+          "maximum": 300,
           "x-unit": "ms"
         },
         "density": {
@@ -9542,7 +9585,7 @@
               "title": "Brush highlight",
               "type": "boolean",
               "default": true,
-              "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
+              "description": "A faint ink brush stroke under selections and the active tab or workspace, on any surface effect. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
                 "section": "signatures",
@@ -9574,7 +9617,11 @@
                 "section": "signatures",
                 "label": "prefs.appearance.sig_petal_shape",
                 "control": "selector",
-                "keywords": "signature petals leaves maple autumn shape"
+                "keywords": "signature petals leaves maple autumn shape",
+                "visibleWhen": {
+                  "key": "theme.signatures.petals",
+                  "equals": true
+                }
               },
               "enum": [
                 "petal",
@@ -9592,7 +9639,7 @@
           "title": "Color Fade",
           "type": "number",
           "default": 600,
-          "description": "How long colors blend when the palette changes.",
+          "description": "How long colors blend when the palette changes. Skipped while animations are off.",
           "x-settings": {
             "category": "appearance",
             "section": "motion",
@@ -9602,6 +9649,28 @@
             "step": 50,
             "unit": "ms",
             "keywords": "palette colors crossfade fade wallpaper change transition",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "theme.animDuration",
+                  "notEquals": 0
+                },
+                {
+                  "not": {
+                    "all": [
+                      {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                      },
+                      {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
             "min": 0,
             "max": 1500,
             "specialValues": [

@@ -59,9 +59,9 @@ var keys = {
     },
     "animDuration": {
         "min": 0,
-        "max": 2000,
+        "max": 300,
         "unit": "ms",
-        "description": "Base animation duration; 0 disables animations."
+        "description": "Base animation duration; 0 disables animations. Values above 300 are capped (config/motion/MotionBudget.js)."
     },
     "paletteTransitionDuration": {
         "min": 0,

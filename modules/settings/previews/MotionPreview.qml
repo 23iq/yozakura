@@ -10,7 +10,7 @@ PreviewStage {
     id: root
 
     property var entry
-    readonly property int duration: Config.theme.animDuration
+    readonly property int duration: Config.animDuration
     property bool flip: false
 
     stageHeight: 120

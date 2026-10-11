@@ -125,7 +125,6 @@
         "keywords": "rounding radius corners round",
         "visibleWhen": {
           "key": "compositor.syncRoundness",
-          "advanced": true,
           "equals": false
         },
         "min": 0,
@@ -991,7 +990,7 @@
       "title": "Speed",
       "type": "number",
       "default": 1,
-      "description": "Multiplies every animation duration of the profile (below 1 is faster).",
+      "description": "Multiplies every animation duration of the profile (below 1 is faster). The shell's own animations follow it only while \"Shell follows the profile\" is on.",
       "x-settings": {
         "category": "appearance",
         "section": "motion",
