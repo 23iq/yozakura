@@ -2935,6 +2935,7 @@
   "prefs.ai.usage_clear_confirm.desc": "Итоги и графики начнутся с нуля. Лимиты подписок не затрагиваются.",
   "prefs.ai.usage_clear_now": "Удалить",
   "prefs.ai.usage_cleared": "История расхода очищена.",
+  "prefs.ai.prices_open_failed": "Не удалось открыть файл цен",
   "launcher.provider.routines": "Сценарии",
   "launcher.provider.routines.desc": "Запуск сохранённого сценария по имени (@ ищет только сценарии)",
   "routines.launcher.steps": "Шагов: %1",

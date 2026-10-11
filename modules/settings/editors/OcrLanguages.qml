@@ -39,6 +39,10 @@ Item {
         })
         values: root.selected
         onChanged: v => {
+            // at least one language stays: with none the screenshot tool
+            // would silently fall back to English
+            if (v.length === 0)
+                return;
             root.codes.forEach(c => {
                 return SettingsStore.set("system.ocr." + c, v.indexOf(c) !== -1);
             });

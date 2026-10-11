@@ -2935,6 +2935,7 @@
   "prefs.ai.usage_clear_confirm.desc": "Totals and charts start from zero. Subscription limits are not affected.",
   "prefs.ai.usage_clear_now": "Delete",
   "prefs.ai.usage_cleared": "Usage history cleared.",
+  "prefs.ai.prices_open_failed": "Could not open the price file",
   "launcher.provider.routines": "Routines",
   "launcher.provider.routines.desc": "Run a saved routine by name (@ searches only routines)",
   "routines.launcher.steps": "%1 steps",

@@ -52,10 +52,24 @@ func (s *Service) text(params json.RawMessage) (any, error) {
 		langs = "eng+spa"
 	}
 
+	if _, err := exec.LookPath("tesseract"); err != nil {
+		return nil, fmt.Errorf("tesseract is not installed")
+	}
+	if listed, lerr := exec.Command("tesseract", "--list-langs").Output(); lerr == nil {
+		if missing := MissingLangs(langs, string(listed)); len(missing) > 0 {
+			return nil, fmt.Errorf("tesseract language data missing: %s (install the tesseract language packs)", strings.Join(missing, ", "))
+		}
+	}
+
 	cmd := exec.Command("tesseract", "-", "-", "-l", langs)
 	cmd.Stdin = bytes.NewReader(pngBytes)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return nil, fmt.Errorf("tesseract: %s", msg)
+		}
 		return nil, fmt.Errorf("tesseract: %w", err)
 	}
 	text := strings.TrimSpace(string(out))
@@ -63,6 +77,24 @@ func (s *Service) text(params json.RawMessage) (any, error) {
 		copyText(text)
 	}
 	return map[string]any{"text": text}, nil
+}
+
+// MissingLangs returns the languages of langs ("eng+rus") that
+// `tesseract --list-langs` output does not list.
+func MissingLangs(langs, listed string) []string {
+	have := map[string]bool{}
+	for _, l := range strings.Split(listed, "\n") {
+		if l = strings.TrimSpace(l); l != "" && !strings.HasPrefix(l, "List of") {
+			have[l] = true
+		}
+	}
+	var missing []string
+	for _, l := range strings.Split(langs, "+") {
+		if l = strings.TrimSpace(l); l != "" && !have[l] {
+			missing = append(missing, l)
+		}
+	}
+	return missing
 }
 
 func (s *Service) barcode(params json.RawMessage) (any, error) {

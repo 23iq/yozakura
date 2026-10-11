@@ -2935,6 +2935,7 @@
   "prefs.ai.usage_clear_confirm.desc": "Los totales y gráficos empiezan de cero. Los límites de suscripción no cambian.",
   "prefs.ai.usage_clear_now": "Borrar",
   "prefs.ai.usage_cleared": "Historial de uso borrado.",
+  "prefs.ai.prices_open_failed": "No se pudo abrir el archivo de precios",
   "launcher.provider.routines": "Rutinas",
   "launcher.provider.routines.desc": "Ejecuta una rutina guardada por su nombre (@ busca solo rutinas)",
   "routines.launcher.steps": "%1 pasos",

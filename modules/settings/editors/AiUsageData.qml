@@ -32,6 +32,16 @@ Item {
             detail: root.result || (root.confirming ? I18n.t("prefs.ai.usage_clear_confirm.desc") : (UsageService.info.ledgerDir || ""))
         }
 
+        StatusLine {
+            objectName: "pricesError"
+            width: parent.width
+            visible: UsageService.pricesError !== ""
+            icon: "warning"
+            tone: "error"
+            title: I18n.t("prefs.ai.prices_open_failed")
+            detail: UsageService.pricesError
+        }
+
         Row {
             spacing: 8
 
@@ -41,7 +51,10 @@ Item {
                 icon: "fileText"
                 text: I18n.t("ai.usage.edit_prices")
                 enabled: !!UsageService.info.pricesOverride
-                onClicked: UsageService.openPrices()
+                onClicked: {
+                    UsageService.pricesError = "";
+                    UsageService.openPrices();
+                }
             }
             PillButton {
                 objectName: "usageClear"
