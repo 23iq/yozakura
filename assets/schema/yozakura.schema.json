@@ -6045,7 +6045,29 @@
                 "section": "hosts",
                 "label": "prefs.layout.sheet_side",
                 "control": "selector",
-                "keywords": "sheet side left right edge vertical bar"
+                "keywords": "sheet side left right edge vertical bar",
+                "visibleWhen": {
+                  "any": [
+                    {
+                      "key": "layout.launcher.host",
+                      "in": [
+                        "sheet"
+                      ]
+                    },
+                    {
+                      "key": "layout.dashboard.host",
+                      "in": [
+                        "sheet"
+                      ]
+                    },
+                    {
+                      "key": "layout.cheatsheet.host",
+                      "in": [
+                        "sheet"
+                      ]
+                    }
+                  ]
+                }
               },
               "enum": [
                 "auto",
@@ -6071,7 +6093,32 @@
             "section": "hosts",
             "label": "prefs.layout.backdrop",
             "control": "toggle",
-            "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
+            "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
+            "visibleWhen": {
+              "any": [
+                {
+                  "key": "layout.launcher.host",
+                  "in": [
+                    "sheet",
+                    "spotlight"
+                  ]
+                },
+                {
+                  "key": "layout.dashboard.host",
+                  "in": [
+                    "sheet",
+                    "spotlight"
+                  ]
+                },
+                {
+                  "key": "layout.cheatsheet.host",
+                  "in": [
+                    "sheet",
+                    "spotlight"
+                  ]
+                }
+              ]
+            }
           }
         },
         "powermenu": {
@@ -6174,7 +6221,7 @@
               "title": "Edge",
               "type": "string",
               "default": "auto",
-              "description": "Screen edge of the indicator; Auto picks the edge away from the bar.",
+              "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the notch edge).",
               "x-settings": {
                 "category": "osd",
                 "section": "osd",
@@ -7054,7 +7101,7 @@
           "title": "Corner",
           "type": "string",
           "default": "auto",
-          "description": "Where corner toasts stack. Auto sits on the bar's side.",
+          "description": "Where corner toasts stack. Auto sits on the bar's side. Only used while notifications show as corner toasts; with presentation Auto they may open from the notch instead.",
           "x-settings": {
             "category": "notifications",
             "section": "presentation",
@@ -7106,7 +7153,7 @@
           "title": "Show for",
           "type": "number",
           "default": 5000,
-          "description": "How long a toast stays when the app does not choose. Hovering keeps it.",
+          "description": "How long a toast stays when the app does not choose. Hovering keeps it. An app that sets its own duration keeps it.",
           "x-settings": {
             "category": "notifications",
             "section": "behaviour",
@@ -7224,7 +7271,7 @@
           "title": "Rules",
           "type": "array",
           "default": [],
-          "description": "Match an app by name or desktop id (* is a wildcard). Mute keeps it in history only; priority stays until dismissed and passes Do Not Disturb; always show passes Do Not Disturb; sound off never chimes.",
+          "description": "Match an app by name or desktop id (* is a wildcard). Mute keeps it in history only; priority stays until dismissed and passes Do Not Disturb; always show passes Do Not Disturb; sound off never chimes. Mute wins over always show and priority on the same rule.",
           "x-settings": {
             "category": "notifications",
             "section": "rules",
@@ -7409,7 +7456,11 @@
             "section": "layout",
             "label": "prefs.overview.style",
             "control": "selector",
-            "keywords": "overview style layout grid strip filmstrip carousel"
+            "keywords": "overview style layout grid strip filmstrip carousel",
+            "visibleWhen": {
+              "key": "compositor.layout",
+              "notEquals": "scrolling"
+            }
           },
           "enum": [
             "grid",
@@ -7432,6 +7483,20 @@
             "control": "slider",
             "step": 1,
             "keywords": "overview rows grid vertical workspaces count",
+            "visibleWhen": {
+              "not": {
+                "all": [
+                  {
+                    "key": "overview.style",
+                    "equals": "strip"
+                  },
+                  {
+                    "key": "compositor.layout",
+                    "notEquals": "scrolling"
+                  }
+                ]
+              }
+            },
             "min": 1,
             "max": 10
           },
@@ -7611,10 +7676,10 @@
               "equals": true
             },
             "min": 1,
-            "max": 10
+            "max": 3
           },
           "minimum": 1,
-          "maximum": 10
+          "maximum": 3
         }
       },
       "additionalProperties": false
@@ -8547,7 +8612,7 @@
               "title": "Open the alarm in the notch",
               "type": "boolean",
               "default": true,
-              "description": "The notch opens with Stop and +5 min when a timer ends",
+              "description": "The notch opens with Stop and +5 min when a timer ends (always, when the alarm repeats until stopped)",
               "x-settings": {
                 "category": "timers",
                 "section": "alarm",

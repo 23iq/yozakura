@@ -258,7 +258,29 @@
             "section": "hosts",
             "label": "prefs.layout.sheet_side",
             "control": "selector",
-            "keywords": "sheet side left right edge vertical bar"
+            "keywords": "sheet side left right edge vertical bar",
+            "visibleWhen": {
+              "any": [
+                {
+                  "key": "layout.launcher.host",
+                  "in": [
+                    "sheet"
+                  ]
+                },
+                {
+                  "key": "layout.dashboard.host",
+                  "in": [
+                    "sheet"
+                  ]
+                },
+                {
+                  "key": "layout.cheatsheet.host",
+                  "in": [
+                    "sheet"
+                  ]
+                }
+              ]
+            }
           },
           "enum": [
             "auto",
@@ -284,7 +306,32 @@
         "section": "hosts",
         "label": "prefs.layout.backdrop",
         "control": "toggle",
-        "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"
+        "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
+        "visibleWhen": {
+          "any": [
+            {
+              "key": "layout.launcher.host",
+              "in": [
+                "sheet",
+                "spotlight"
+              ]
+            },
+            {
+              "key": "layout.dashboard.host",
+              "in": [
+                "sheet",
+                "spotlight"
+              ]
+            },
+            {
+              "key": "layout.cheatsheet.host",
+              "in": [
+                "sheet",
+                "spotlight"
+              ]
+            }
+          ]
+        }
       }
     },
     "powermenu": {
@@ -387,7 +434,7 @@
           "title": "Edge",
           "type": "string",
           "default": "auto",
-          "description": "Screen edge of the indicator; Auto picks the edge away from the bar.",
+          "description": "Screen edge of the indicator; Auto picks the edge away from the bar (the island style follows the notch edge).",
           "x-settings": {
             "category": "osd",
             "section": "osd",

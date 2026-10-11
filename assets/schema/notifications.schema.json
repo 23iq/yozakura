@@ -54,7 +54,7 @@
       "title": "Corner",
       "type": "string",
       "default": "auto",
-      "description": "Where corner toasts stack. Auto sits on the bar's side.",
+      "description": "Where corner toasts stack. Auto sits on the bar's side. Only used while notifications show as corner toasts; with presentation Auto they may open from the notch instead.",
       "x-settings": {
         "category": "notifications",
         "section": "presentation",
@@ -106,7 +106,7 @@
       "title": "Show for",
       "type": "number",
       "default": 5000,
-      "description": "How long a toast stays when the app does not choose. Hovering keeps it.",
+      "description": "How long a toast stays when the app does not choose. Hovering keeps it. An app that sets its own duration keeps it.",
       "x-settings": {
         "category": "notifications",
         "section": "behaviour",
@@ -224,7 +224,7 @@
       "title": "Rules",
       "type": "array",
       "default": [],
-      "description": "Match an app by name or desktop id (* is a wildcard). Mute keeps it in history only; priority stays until dismissed and passes Do Not Disturb; always show passes Do Not Disturb; sound off never chimes.",
+      "description": "Match an app by name or desktop id (* is a wildcard). Mute keeps it in history only; priority stays until dismissed and passes Do Not Disturb; always show passes Do Not Disturb; sound off never chimes. Mute wins over always show and priority on the same rule.",
       "x-settings": {
         "category": "notifications",
         "section": "rules",

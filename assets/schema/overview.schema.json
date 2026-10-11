@@ -16,7 +16,11 @@
         "section": "layout",
         "label": "prefs.overview.style",
         "control": "selector",
-        "keywords": "overview style layout grid strip filmstrip carousel"
+        "keywords": "overview style layout grid strip filmstrip carousel",
+        "visibleWhen": {
+          "key": "compositor.layout",
+          "notEquals": "scrolling"
+        }
       },
       "enum": [
         "grid",
@@ -39,6 +43,20 @@
         "control": "slider",
         "step": 1,
         "keywords": "overview rows grid vertical workspaces count",
+        "visibleWhen": {
+          "not": {
+            "all": [
+              {
+                "key": "overview.style",
+                "equals": "strip"
+              },
+              {
+                "key": "compositor.layout",
+                "notEquals": "scrolling"
+              }
+            ]
+          }
+        },
         "min": 1,
         "max": 10
       },

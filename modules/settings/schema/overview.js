@@ -31,6 +31,11 @@ var category = {
                             "icon": "columns"
                         }
                     ],
+                    // the scrolling layout keeps its own tape view
+                    "visibleWhen": {
+                        "key": "compositor.layout",
+                        "notEquals": "scrolling"
+                    },
                     "label": "prefs.overview.style",
                     "description": "prefs.overview.style.desc",
                     "keywords": "overview style layout grid strip filmstrip carousel"
@@ -41,6 +46,21 @@ var category = {
                     "min": 1,
                     "max": 10,
                     "step": 1,
+                    // the strip is one row (the tape of the scrolling layout uses rows x columns)
+                    "visibleWhen": {
+                        "not": {
+                            "all": [
+                                {
+                                    "key": "overview.style",
+                                    "equals": "strip"
+                                },
+                                {
+                                    "key": "compositor.layout",
+                                    "notEquals": "scrolling"
+                                }
+                            ]
+                        }
+                    },
                     "label": "prefs.overview.rows",
                     "description": "prefs.overview.rows.desc",
                     "keywords": "overview rows grid vertical workspaces count"
@@ -92,6 +112,7 @@ var category = {
                 {
                     "key": "desktop.blurWallpaperOnOverview",
                     "type": "toggle",
+                    "compositor": "niri",
                     "label": "prefs.desktop.overview_blur",
                     "description": "prefs.desktop.overview_blur.desc",
                     "keywords": "overview blur wallpaper niri workspaces"
