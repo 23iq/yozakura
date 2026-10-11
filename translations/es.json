@@ -2685,7 +2685,7 @@
   "prefs.timers.pulse": "Latir hasta detenerlo",
   "prefs.timers.pulse.desc": "Un temporizador terminado late en el notch hasta que lo detengas",
   "prefs.timers.alarm_panel": "Abrir la alarma en el notch",
-  "prefs.timers.alarm_panel.desc": "El notch se abre con Detener y +5 min al terminar",
+  "prefs.timers.alarm_panel.desc": "El notch se abre con Detener y +5 min al terminar (siempre, si la alarma se repite hasta detenerla)",
   "prefs.timers.sound": "Sonido de alarma",
   "prefs.timers.sound.desc": "Reproducir un tono al terminar un temporizador o recordatorio",
   "prefs.timers.sound_file": "Archivo de sonido",

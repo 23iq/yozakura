@@ -2685,7 +2685,7 @@
   "prefs.timers.pulse": "Pulse until stopped",
   "prefs.timers.pulse.desc": "A finished timer pulses in the notch until you stop it",
   "prefs.timers.alarm_panel": "Open the alarm in the notch",
-  "prefs.timers.alarm_panel.desc": "The notch opens with Stop and +5 min when a timer ends",
+  "prefs.timers.alarm_panel.desc": "The notch opens with Stop and +5 min when a timer ends (always, when the alarm repeats until stopped)",
   "prefs.timers.sound": "Alarm sound",
   "prefs.timers.sound.desc": "Play a tone when a timer or reminder ends",
   "prefs.timers.sound_file": "Sound file",
