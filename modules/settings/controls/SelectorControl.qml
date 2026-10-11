@@ -64,6 +64,7 @@ Item {
                 icon: modelData.icon ? (Icons[modelData.icon] ?? "") : ""
                 text: root.labelOf(modelData)
                 active: index === root.currentIndex
+                enabled: modelData.enabled !== false
                 highlighted: root.activeFocus && active
                 onClicked: {
                     root.forceActiveFocus();

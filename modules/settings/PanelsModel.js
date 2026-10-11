@@ -103,6 +103,26 @@ function setField(panels, index, field, value) {
     return serialize(out);
 }
 
+// The config writes ([{key, value}]) that fold bar.panels back into the
+// single legacy bar from panel `index` (position, style, modules, screens)
+// and empty bar.panels last, so the legacy controls come back and the bar
+// keeps the look of that panel. The center group joins the start group.
+function toSingleBar(panels, index) {
+    var p = panels[index] || panels[0];
+    if (!p)
+        return [{ "key": "bar.panels", "value": [] }];
+    var g = p.groups || {};
+    return [
+        { "key": "bar.position", "value": p.edge },
+        { "key": "bar.layout.style", "value": p.style },
+        { "key": "bar.layout.left", "value": (g.start || []).concat(g.center || []) },
+        { "key": "bar.layout.right", "value": (g.end || []).slice() },
+        { "key": "bar.layout.drawer", "value": (g.drawer || []).slice() },
+        { "key": "bar.screenList", "value": (p.screens || []).slice() },
+        { "key": "bar.panels", "value": [] }
+    ];
+}
+
 // Groups the panel's style renders, in editor order.
 function groupsOf(panel) {
     return PanelStyles.get(panel.style).groups.slice();

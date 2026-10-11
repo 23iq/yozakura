@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.services
+import qs.modules.bar.panels
 import "../../config/motion/MotionSpec.js" as MotionSpec
 
 // The motion profile (compositor.motionProfile + overrides, config/motion)
@@ -13,7 +14,7 @@ Singleton {
     id: root
 
     readonly property var compositor: Config.compositor || ({})
-    readonly property bool verticalBar: !!Config.bar && (Config.bar.position === "left" || Config.bar.position === "right")
+    readonly property bool verticalBar: Panels.primaryEdge === "left" || Panels.primaryEdge === "right"
 
     readonly property var spec: {
         const c = root.compositor || {};
