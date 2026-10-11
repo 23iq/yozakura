@@ -29,6 +29,15 @@ ColumnLayout {
         SettingsStore.set("prefix.launcher.order", Providers.move(root.order, id, delta));
     }
 
+    // Config.prefix as the editor sees it (settings store values).
+    function prefixes() {
+        const out = {};
+        Providers.PROVIDER_PREFIXES.forEach(k => {
+            out[k] = SettingsStore.get("prefix." + k) || "";
+        });
+        return out;
+    }
+
     function setOn(id, on) {
         SettingsStore.set("prefix.launcher.disabled", Providers.setEnabled(root.disabled, id, on));
     }
@@ -42,14 +51,19 @@ ColumnLayout {
         readonly property var meta: Providers.byId(pid)
         readonly property bool on: Providers.isEnabled(pid, root.disabled)
         readonly property string prefixKey: meta && meta.prefix ? "prefix." + meta.prefix : ""
+        // Why the typed prefix was refused (shown under the card), or "".
+        property string prefixError: ""
 
         Layout.fillWidth: true
-        implicitHeight: 58
+        implicitHeight: 58 + (prefixError !== "" ? errorText.implicitHeight + 8 : 0)
         variant: "common"
         radius: Styling.radius(-2)
 
         RowLayout {
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            height: 58
             anchors.leftMargin: 10
             anchors.rightMargin: 12
             spacing: 10
@@ -138,9 +152,14 @@ ColumnLayout {
                 monospace: true
                 enabled: card.on
                 Accessible.name: I18n.t("prefs.launcher.prefix")
+                invalid: card.prefixError !== ""
                 onEdited: t => {
+                    if (!card.prefixKey)
+                        return;
                     const v = t.trim();
-                    if (v !== "" && card.prefixKey)
+                    const err = Providers.prefixError(card.pid, v, root.prefixes(), root.disabled);
+                    card.prefixError = err ? I18n.t("prefs.launcher.prefix_" + err) : "";
+                    if (!err)
                         SettingsStore.set(card.prefixKey, v);
                 }
             }
@@ -150,6 +169,22 @@ ColumnLayout {
                 Accessible.name: I18n.t("launcher.provider." + card.pid)
                 onToggled: v => root.setOn(card.pid, v)
             }
+        }
+
+        Text {
+            id: errorText
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 10
+            anchors.rightMargin: 12
+            anchors.bottomMargin: 6
+            visible: card.prefixError !== ""
+            text: card.prefixError
+            wrapMode: Text.Wrap
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-3)
+            color: Colors.error
         }
     }
 
