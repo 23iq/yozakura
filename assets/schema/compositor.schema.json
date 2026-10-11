@@ -125,7 +125,6 @@
         "keywords": "rounding radius corners round",
         "visibleWhen": {
           "key": "compositor.syncRoundness",
-          "advanced": true,
           "equals": false
         },
         "min": 0,
