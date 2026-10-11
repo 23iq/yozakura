@@ -19,6 +19,11 @@ var category = {
                     "type": "selector",
                     "options": [
                         {
+                            "value": "stage",
+                            "label": "prefs.dashboard.home.stage",
+                            "icon": "player"
+                        },
+                        {
                             "value": "composed",
                             "label": "prefs.dashboard.home.composed",
                             "icon": "squaresFour"
@@ -31,7 +36,29 @@ var category = {
                     ],
                     "label": "prefs.dashboard.home",
                     "description": "prefs.dashboard.home.desc",
-                    "keywords": "dashboard home view composed bento grid widgets layout overview"
+                    "keywords": "dashboard home view stage composed bento grid widgets layout overview"
+                },
+                {
+                    "key": "layout.dashboard.heroTint",
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "layout.dashboard.home",
+                        "equals": "stage"
+                    },
+                    "label": "prefs.dashboard.hero_tint",
+                    "description": "prefs.dashboard.hero_tint.desc",
+                    "keywords": "dashboard player hero tint album art colour color"
+                },
+                {
+                    "key": "layout.dashboard.showMetrics",
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "layout.dashboard.home",
+                        "equals": "stage"
+                    },
+                    "label": "prefs.dashboard.show_metrics",
+                    "description": "prefs.dashboard.show_metrics.desc",
+                    "keywords": "dashboard metrics cpu ram gpu network strip footer"
                 }
             ]
         },

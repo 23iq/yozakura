@@ -36,8 +36,14 @@ var keys = {
         "description": "Where the dashboard opens: grown from the notch, centered over a dimmed screen (spotlight) or as a full-height side sheet. Unknown values fall back to notch."
     },
     "dashboard.home": {
-        "enum": ["composed", "bento"],
-        "description": "Home view of the dashboard widgets tab: composed (clock, player, toggles, levels, calendar and notifications in a fixed two-column layout) or bento (the editable widget grid)."
+        "enum": ["stage", "composed", "bento"],
+        "description": "Home view of the dashboard widgets tab: stage (a hero player tinted by the art, the next events, the week, notifications, toggles and levels, a metrics strip), composed (clock, player, toggles, levels, calendar and notifications in a fixed two-column layout) or bento (the editable widget grid)."
+    },
+    "dashboard.showMetrics": {
+        "description": "Stage home: show the CPU / RAM / GPU / network strip at the bottom (click opens the metrics tab)."
+    },
+    "dashboard.heroTint": {
+        "description": "Stage home: tint the player hero with the colour of the album art (held back so the text stays readable)."
     },
     "dashboard.tabs": {
         "description": "Dashboard tabs in rail order: [{id, visible}], id = widgets | wallpapers | metrics (modules/widgets/dashboard/DashboardTabs.js). Unknown ids are ignored, missing ones are appended; at least one tab stays visible."

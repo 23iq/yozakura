@@ -14,9 +14,14 @@ var data = {
     },
     "dashboard": {
         "host": "notch",
-        // Home view of the widgets tab: composed (fixed two-column layout,
-        // modules/widgets/dashboard/home) or bento (the editable widget grid).
-        "home": "composed",
+        // Home view of the widgets tab: stage (hero player, agenda, week,
+        // notifications; modules/widgets/dashboard/stage), composed (fixed
+        // two-column layout, modules/widgets/dashboard/home) or bento (the
+        // editable widget grid).
+        "home": "stage",
+        // Stage home: the metrics strip at the bottom, the hero tinted by the art.
+        "showMetrics": true,
+        "heroTint": true,
         "tabs": [
             {
                 "id": "widgets",
