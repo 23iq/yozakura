@@ -640,7 +640,7 @@
       "title": "Background opacity",
       "type": "number",
       "default": -1,
-      "description": "Kitty's background opacity before glass. From preset follows the preset's background surface.",
+      "description": "Background opacity of the generated kitty, ghostty, foot and alacritty themes, before glass. From preset follows the preset's background surface. With Glass off it is used as is.",
       "x-settings": {
         "category": "terminal",
         "section": "kitty",
@@ -649,8 +649,24 @@
         "step": 0.01,
         "keywords": "kitty terminal opacity transparency background alpha",
         "enabledWhen": {
-          "key": "apps.theming.kitty",
-          "equals": true
+          "any": [
+            {
+              "key": "apps.theming.kitty",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.ghostty",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.foot",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.alacritty",
+              "equals": true
+            }
+          ]
         },
         "min": 0,
         "max": 1,
