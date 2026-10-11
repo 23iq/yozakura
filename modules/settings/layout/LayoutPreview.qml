@@ -30,6 +30,10 @@ PreviewStage {
             "height": 1080
         })
     readonly property var env: EdgeService.envFor(root.refScreen)
+    // The stage home is 900 wide and about 0.65 as tall (modules/widgets/dashboard/stage)
+    readonly property bool stageHome: root.layoutCfg && root.layoutCfg.dashboard.home === "stage"
+    readonly property int dashW: root.stageHome ? Metrics.launcherWideW : Metrics.dashWideW
+    readonly property int dashHeight: root.stageHome ? Math.round(Metrics.launcherWideW * 0.65) : Metrics.dashH
     readonly property var layoutCfg: Config.layout
     readonly property var items: LayoutSketch.scene(root.env, {
         "launcherHost": root.layoutCfg ? root.layoutCfg.launcher.host : "notch",
@@ -41,8 +45,8 @@ PreviewStage {
             "h": Metrics.launcherCompactH
         },
         "dashboard": {
-            "w": Metrics.dashWideW,
-            "h": Metrics.dashH
+            "w": root.dashW,
+            "h": root.dashHeight
         },
         "osdPosition": root.layoutCfg && root.layoutCfg.osd ? root.layoutCfg.osd.position : "auto",
         "osd": {
