@@ -121,14 +121,10 @@ var category = {
                     "key": "notch.hoverRegionHeight",
                     "advanced": true,
                     "type": "slider",
-                    "min": 0,
+                    "min": 8,
                     "max": 40,
                     "step": 1,
                     "unit": "px",
-                    "visibleWhen": {
-                        "key": "notch.keepHidden",
-                        "equals": true
-                    },
                     "label": "prefs.notch.hover_region",
                     "description": "prefs.notch.hover_region.desc",
                     "keywords": "hover region trigger area reveal"

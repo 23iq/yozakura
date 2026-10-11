@@ -151,26 +151,13 @@
       "title": "Visible at startup",
       "type": "boolean",
       "default": true,
-      "description": "Start with the bar pinned instead of hidden.",
+      "description": "Start with the bar pinned instead of hidden. Panels set to always hide or never hide ignore it.",
       "x-settings": {
         "category": "bar",
         "section": "autohide",
         "label": "prefs.bar.pinned",
         "control": "toggle",
         "keywords": "pin autohide hide show startup visible"
-      }
-    },
-    "hoverToReveal": {
-      "title": "Reveal on hover",
-      "type": "boolean",
-      "default": true,
-      "description": "Show a hidden bar when the pointer touches its edge.",
-      "x-settings": {
-        "category": "bar",
-        "section": "autohide",
-        "label": "prefs.bar.hover_reveal",
-        "control": "toggle",
-        "keywords": "hover reveal mouse edge autohide"
       }
     },
     "hoverRegionHeight": {
@@ -186,14 +173,10 @@
         "step": 1,
         "unit": "px",
         "keywords": "bar hover region trigger strip area reveal autohide",
-        "visibleWhen": {
-          "key": "bar.hoverToReveal",
-          "equals": true
-        },
-        "min": 0,
+        "min": 4,
         "max": 40
       },
-      "minimum": 0,
+      "minimum": 4,
       "maximum": 40,
       "x-unit": "px"
     },
@@ -201,7 +184,7 @@
       "title": "Pin button",
       "type": "boolean",
       "default": true,
-      "description": "A button on the bar to pin or unpin it.",
+      "description": "A button on the bar to pin or unpin it. Panels set to always hide or never hide have no use for it.",
       "x-settings": {
         "category": "bar",
         "section": "autohide",
@@ -240,7 +223,7 @@
       "title": "Bar inside the frame",
       "type": "boolean",
       "default": false,
-      "description": "Draw the bar inside the frame instead of over it.",
+      "description": "Draw the bar inside the frame instead of over it. Applies to the classic, menubar, statusline, ribbon and rail styles.",
       "x-settings": {
         "category": "bar",
         "section": "placement",
@@ -257,7 +240,7 @@
       "title": "Keep bar shadow in frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar shadow when the bar sits inside the screen frame.",
+      "description": "Keep the bar shadow when the bar sits inside the screen frame (styles that can be contained).",
       "x-settings": {
         "category": "bar",
         "section": "advanced",
@@ -282,7 +265,7 @@
       "title": "Keep bar border in frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar border when the bar sits inside the screen frame.",
+      "description": "Keep the bar border when the bar sits inside the screen frame (styles that can be contained).",
       "x-settings": {
         "category": "bar",
         "section": "advanced",
@@ -321,7 +304,7 @@
       "title": "Compact",
       "type": "boolean",
       "default": false,
-      "description": "A slimmer bar and notch.",
+      "description": "A slimmer notch and island tabs. Styles with a fixed size (menubar, statusline, ribbon, rail) keep their own size.",
       "x-settings": {
         "category": "bar",
         "section": "style",

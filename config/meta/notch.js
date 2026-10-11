@@ -17,7 +17,7 @@ var keys = {
         "description": "Where the notch sits along its edge: start, center or end."
     },
     "hoverRegionHeight": {
-        "min": 0,
+        "min": 8,
         "max": 40,
         "unit": "px"
     },

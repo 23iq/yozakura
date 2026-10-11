@@ -12,7 +12,6 @@ JsonAdapter {
     property bool frameEnabled: false
     property int frameThickness: 6
     property bool pinnedOnStartup: true
-    property bool hoverToReveal: true
     property int hoverRegionHeight: 8
     property bool showPinButton: true
     property bool availableOnFullscreen: false

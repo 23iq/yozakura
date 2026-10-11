@@ -81,14 +81,10 @@
         "step": 1,
         "unit": "px",
         "keywords": "hover region trigger area reveal",
-        "visibleWhen": {
-          "key": "notch.keepHidden",
-          "equals": true
-        },
-        "min": 0,
+        "min": 8,
         "max": 40
       },
-      "minimum": 0,
+      "minimum": 8,
       "maximum": 40,
       "x-unit": "px"
     },

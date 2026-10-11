@@ -52,7 +52,7 @@ Window {
             "id": "demo", "icon": "gear", "title": "prefs.cat.bar",
             "sections": [
                 { "id": "main", "title": "prefs.cat.bar", "entries": [w.toggle("bar.compact", false), w.toggle("bar.frameEnabled", true)] },
-                { "id": "other", "title": "prefs.cat.dock", "entries": [w.toggle("bar.hoverToReveal", false)] }
+                { "id": "other", "title": "prefs.cat.dock", "entries": [w.toggle("bar.availableOnFullscreen", false)] }
             ]
         })
     }
@@ -84,16 +84,16 @@ check(ev(f"{adv}.expanded") is True, "revealing an advanced entry (a search jump
 main = 'findItem("settingsSection:main")'
 check(ev(f"{main}.resetShown") is False, "no section reset without changes")
 check(ev(f"{main}.actionText") == "", "…and no action on a plain section")
-compact0, bg0 = ev("Config.bar.compact"), ev("Config.bar.hoverToReveal")
+compact0, bg0 = ev("Config.bar.compact"), ev("Config.bar.availableOnFullscreen")
 ev(f"SettingsStore.set('bar.compact', {str(not compact0).lower()})")
-ev(f"SettingsStore.set('bar.hoverToReveal', {str(not bg0).lower()})")
+ev(f"SettingsStore.set('bar.availableOnFullscreen', {str(not bg0).lower()})")
 QTest.qWait(50)
 check(ev(f"{main}.resetShown") is True, "a changed section offers its reset")
 check(ev(f"{main}.actionText") == ev('I18n.t("prefs.common.reset")'), "…as the Group action")
 ev(f"{main}.actionTriggered()")
 QTest.qWait(50)
 check(ev("Config.bar.compact") == compact0, "section reset restores its entries")
-check(ev("Config.bar.hoverToReveal") != bg0, "…and leaves other sections alone")
+check(ev("Config.bar.availableOnFullscreen") != bg0, "…and leaves other sections alone")
 check(ev(f"{main}.resetShown") is False, "…and hides the action again")
 
 # The Advanced block folds from its label action (Show / Hide)
@@ -102,7 +102,7 @@ check(ev(f"{adv}.actionText") == ev('I18n.t("prefs.common.show")'), "a folded bl
 ev(f"{adv}.actionTriggered()")
 check(ev(f"{adv}.expanded") is True, "Show unfolds it")
 check(ev(f"{adv}.actionText") == ev('I18n.t("prefs.common.hide")'), "…and then offers Hide")
-ev(f"SettingsStore.set('bar.hoverToReveal', {str(bg0).lower()})")
+ev(f"SettingsStore.set('bar.availableOnFullscreen', {str(bg0).lower()})")
 
 # Sidebar tree in the real shell
 shell_win = env.load("""

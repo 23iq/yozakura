@@ -350,7 +350,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 4. **Add / remove one module**: `config set bar.layout.left --add clock`, `config set bar.layout.right --remove systray`. An id listed in two groups (`left`, `right`, `drawer`) is shown only in the first.
 5. **Tuck modules into the hover drawer**: `config set bar.layout.drawer --add systray` (remove it from its group first).
 6. **Slimmer bar**: `config toggle bar.compact`.
-7. **Auto-hide the bar**: `config set bar.pinnedOnStartup false` (reveal by touching the edge: `bar.hoverToReveal true`; strip size `bar.hoverRegionHeight`). Live pin toggle: `yozakura toggle bar`.
+7. **Auto-hide the bar**: `config set bar.pinnedOnStartup false` (reveal by touching the edge; strip size `bar.hoverRegionHeight`). Live pin toggle: `yozakura toggle bar`.
 8. **Bar only on one monitor**: `config set bar.screenList DP-1` (empty list = all: `config set bar.screenList ""`).
 9. **Clock with date / 12-hour**: `config set bar.clockShowDate true`, `config set bar.use12hFormat true`; no weather symbol in the clock (when the weather module is shown): `config set bar.moduleOptions.clock.showWeather false`.
 10. **Screen frame around the desktop**: `config set bar.frameEnabled true`, `config set bar.frameThickness 10`, `config set bar.containBar true`.
