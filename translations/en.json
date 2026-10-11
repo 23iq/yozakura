@@ -1150,6 +1150,7 @@
   "ai.ask_anything": "Ask anything…",
   "ai.ask_selection": "Ask about the selection…",
   "ai.attach": "Attach context",
+  "ai.mention_none": "No matching files",
   "ai.auto_approve_reads": "Auto-approve read-only actions",
   "ai.backend_offline": "The yozakura daemon is not running",
   "ai.binary_path": "Executable",

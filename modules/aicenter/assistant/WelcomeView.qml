@@ -125,10 +125,11 @@ Item {
             }
         }
 
-        Flow {
+        CenteredFlow {
             objectName: "suggestionChips"
             visible: !root.noModels && root.suggestions.length > 0
             Layout.fillWidth: true
+            Layout.preferredHeight: implicitHeight
             spacing: 8
             Repeater {
                 model: root.noModels ? [] : root.suggestions

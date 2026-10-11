@@ -76,6 +76,31 @@ QtObject {
         });
     }
 
+    // MIME types the clipboard offers (wl-paste --list-types).
+    function clipboardTypes(cb) {
+        run(["wl-paste", "--list-types"], (ok, out) => cb(ok ? out.split("\n").map(t => t.trim()).filter(t => t) : []));
+    }
+
+    function clipboardUris(cb) {
+        run(["wl-paste", "-t", "text/uri-list"], (ok, out) => cb(ok ? out : ""));
+    }
+
+    // Files below `dir` whose path contains `query` (fd, else find; hidden and
+    // vendored directories skipped), best matches first. cb([relative paths]).
+    function findFiles(dir, query, cb) {
+        const script = 'cd "$1" 2>/dev/null || exit 1; if command -v fd >/dev/null 2>&1; then fd -t f -d 8 -p -F -i --color never -- "$2"; else find . -maxdepth 8 -type f -ipath "*$2*" -not -path "*/.*" -not -path "*/node_modules/*" | sed "s|^\\./||"; fi | head -300';
+        run(["sh", "-c", script, "sh", dir, query], (ok, out) => {
+            const q = query.toLowerCase();
+            const rank = p => {
+                const name = p.split("/").pop().toLowerCase();
+                return name.startsWith(q) ? 0 : (name.indexOf(q) >= 0 ? 1 : 2);
+            };
+            const list = out.split("\n").filter(l => l);
+            list.sort((a, b) => rank(a) - rank(b) || a.split("/").length - b.split("/").length || a.length - b.length);
+            cb(list.slice(0, 40));
+        });
+    }
+
     // region: true = slurp a region, false = focused output. The PNG is kept
     // in $XDG_RUNTIME_DIR/yozakura-ai so CLI agents can receive it as a file.
     function screenshot(region, cb) {

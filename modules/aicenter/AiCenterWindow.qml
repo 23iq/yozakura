@@ -5,6 +5,7 @@ import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.globals
 import qs.config
+import qs.modules.aicenter.common
 
 // The AI bar's own layer window, one per screen. It is exactly as big as the
 // panel (the whole screen only in fullscreen), so it never captures input
@@ -71,9 +72,25 @@ PanelWindow {
         value: (root.zones.right ?? 0) + (root.onLeft ? 0 : root.frameInset)
     }
 
-    // While the width handle is dragged the window stays at its widest, so the
-    // pointer does not move with the edge it is resizing.
-    implicitWidth: root.fullscreen ? 0 : (host.resizing ? host.maxWidth : host.panelWidth) + host.sidebarMargin
+    // Width the panel wants. The window widens at once but shrinks only after
+    // the panel's own width animation, otherwise it would clip the glide.
+    readonly property int wantedWidth: root.fullscreen ? (root.targetScreen ? root.targetScreen.width : 1920) : (host.resizing ? host.maxWidth : host.panelWidth) + host.sidebarMargin
+    property int shownWidth: wantedWidth
+    onWantedWidthChanged: {
+        if (wantedWidth >= shownWidth || host.resizing) {
+            shrinkTimer.stop();
+            shownWidth = wantedWidth;
+        } else {
+            shrinkTimer.restart();
+        }
+    }
+    implicitWidth: shownWidth
+
+    Timer {
+        id: shrinkTimer
+        interval: Math.max(1, BarLook.animDuration) + 60
+        onTriggered: root.shownWidth = root.wantedWidth
+    }
 
     onHasKeyboardChanged: if (hasKeyboard)
         grabbing = false
