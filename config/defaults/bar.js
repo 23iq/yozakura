@@ -10,7 +10,6 @@ var data = {
     "frameEnabled": false,
     "frameThickness": 6,
     "pinnedOnStartup": true,
-    "hoverToReveal": true,
     "hoverRegionHeight": 8,
     "showPinButton": true,
     "availableOnFullscreen": false,

@@ -105,15 +105,7 @@ ShellRoot {
                 panelZones: unifiedPanel.panelZones
 
                 // Dock status for reservations
-                dockEnabled: {
-                    if (!((Config.dock && Config.dock.enabled !== undefined ? Config.dock.enabled : false)) || (Config.dock && Config.dock.theme !== undefined ? Config.dock.theme : "default") === "integrated")
-                        return false;
-
-                    const list = (Config.dock && Config.dock.screenList !== undefined ? Config.dock.screenList : []);
-                    if (!list || list.length === 0)
-                        return true;
-                    return list.indexOf(screenShellContainer.modelData.name) !== -1;
-                }
+                dockEnabled: unifiedPanel.dockEnabled
                 dockPosition: unifiedPanel.dockPosition
                 dockPinned: unifiedPanel.dockPinned
                 dockHeight: unifiedPanel.dockHeight

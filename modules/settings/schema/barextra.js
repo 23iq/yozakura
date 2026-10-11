@@ -72,15 +72,11 @@ var sections = [
             {
                 "key": "bar.hoverRegionHeight",
                 "type": "slider",
-                "min": 0,
+                "min": 4,
                 "max": 40,
                 "step": 1,
                 "unit": "px",
                 "advanced": true,
-                "visibleWhen": {
-                    "key": "bar.hoverToReveal",
-                    "equals": true
-                },
                 "label": "prefs.bar.hover_region",
                 "description": "prefs.bar.hover_region.desc",
                 "keywords": "bar hover region trigger strip area reveal autohide"

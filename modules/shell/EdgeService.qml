@@ -35,6 +35,16 @@ Singleton {
                         size: p.size,
                         visible: visible
                     }));
+        return configuredPanels(screen).map(p => ({
+                    pos: p.edge,
+                    size: PanelLayout.estimateDepth(p, BarMetrics.moduleSize),
+                    visible: visible
+                }));
+    }
+
+    // Configured panels of a screen (before the PanelHost measured them).
+    function configuredPanels(screen) {
+        const name = screen ? screen.name : "";
         const all = PanelLayout.normalize(Config.bar).panels;
         const screens = Quickshell.screens;
         let index = 0;
@@ -42,11 +52,15 @@ Singleton {
             if (screens[i].name === name)
                 index = i;
         }
-        return PanelLayout.forScreen(all, name, index).map(p => ({
-                    pos: p.edge,
-                    size: PanelLayout.estimateDepth(p, BarMetrics.moduleSize),
-                    visible: visible
-                }));
+        return PanelLayout.forScreen(all, name, index);
+    }
+
+    // The integrated dock is drawn by the primary panel of the screen, and
+    // only when that panel is a classic bar (BarContent.integratedDockEnabled).
+    function integratedDockHosted(screen) {
+        const list = configuredPanels(screen);
+        const i = PanelLayout.primaryIndex(list, Config.notch ? Config.notch.position : "top");
+        return i !== -1 && list[i].style === "classic";
     }
 
     // `screen` is a ShellScreen (or anything with width/height).
@@ -66,9 +80,11 @@ Singleton {
             "frame": frame,
             "panels": panelsFor(screen, vis.bar ?? true),
             "dock": {
-                "pos": dock && dock.position ? dock.position : "bottom",
+                // The dock has no top edge (drawn at the bottom) and an
+                // integrated dock lives inside the bar: no window, no inset.
+                "pos": dock && (dock.position === "left" || dock.position === "right") ? dock.position : "bottom",
                 "size": dock && dock.height ? dock.height : 0,
-                "visible": (vis.dock ?? true) && !!(dock && dock.enabled)
+                "visible": (vis.dock ?? true) && !!(dock && dock.enabled) && !(dock.theme === "integrated" && integratedDockHosted(screen))
             },
             "notch": {
                 "pos": notch && notch.position ? notch.position : "top",

@@ -263,13 +263,6 @@ var category = {
                     "keywords": "pin autohide hide show startup visible"
                 },
                 {
-                    "key": "bar.hoverToReveal",
-                    "type": "toggle",
-                    "label": "prefs.bar.hover_reveal",
-                    "description": "prefs.bar.hover_reveal.desc",
-                    "keywords": "hover reveal mouse edge autohide"
-                },
-                {
                     "key": "bar.showPinButton",
                     "type": "toggle",
                     "label": "prefs.bar.pin_button",

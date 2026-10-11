@@ -60,6 +60,7 @@ h.singleton('qs.config', 'Config', '''QtObject {
         }
     }
 }''')
+h.singleton('qs.modules.bar.panels', 'Panels', 'QtObject { property string primaryEdge: "top" }')
 h.singleton('qs.modules.theme', 'Colors', 'QtObject { signal fileChanged() }')
 h.module('qs.modules.services', {
     'GameModeClient': 'pragma Singleton\nQtObject { property bool toggled: false }',
@@ -125,7 +126,7 @@ h.eval(motion, 'GameModeClient.toggled = false')
 pump(100)
 sent = js(motion, 'BackendService.sent')
 check('GameMode exit restores the profile', len(sent) == 3 and 'speed = 7' in sent[-1], f'({len(sent)})')
-h.eval(motion, 'Config.bar.position = "left"')
+h.eval(motion, 'Panels.primaryEdge = "left"')
 pump(400)
 check('vertical bar re-applies with vertical slides', 'slidevert' in js(motion, 'BackendService.sent')[-1])
 

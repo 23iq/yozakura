@@ -424,36 +424,6 @@ Singleton {
     property string notchTheme: notch.style === "attached" ? "default" : "island"
     property string notchPosition: notch.position
 
-    onNotchPositionChanged: {
-        if (!initialLoadComplete || !dockReady)
-            return;
-
-        // If notch moves bottom
-        if (notchPosition === "bottom") {
-            // Conflict with Dock?
-            if (dock.position === "bottom") {
-                console.log("Notch moved to bottom, adjusting Dock position...");
-                // Offset Dock to avoid notch
-                if (bar.position === "left") {
-                    dock.position = "right";
-                } else {
-                    dock.position = "left";
-                }
-                // Trigger save
-                GlobalStates.markShellChanged();
-            }
-        } else
-        // If notch moves top
-        if (notchPosition === "top") {
-            // Restore Dock if displaced
-            if (dock.position === "left" || dock.position === "right") {
-                console.log("Notch moved to top, restoring Dock to bottom...");
-                dock.position = "bottom";
-                GlobalStates.markShellChanged();
-            }
-        }
-    }
-
     // Compositor configuration
     property CompositorAdapter compositor: compositorLoader.adapter
     property int compositorRounding: compositor.syncRoundness ? roundness : compositor.rounding

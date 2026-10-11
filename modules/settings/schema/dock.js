@@ -61,13 +61,8 @@ var category = {
                 {
                     "key": "dock.position",
                     "type": "selector",
-                    "visibleWhen": STANDALONE,
+                    "visibleWhen": ON,
                     "options": [
-                        {
-                            "value": "top",
-                            "label": "common.top",
-                            "icon": "arrowUp"
-                        },
                         {
                             "value": "bottom",
                             "label": "common.bottom",
@@ -217,7 +212,7 @@ var category = {
                 {
                     "key": "dock.showRunningIndicators",
                     "type": "toggle",
-                    "visibleWhen": STANDALONE,
+                    "visibleWhen": ON,
                     "label": "prefs.dock.running",
                     "description": "prefs.dock.running.desc",
                     "keywords": "dock running indicators dots open apps"

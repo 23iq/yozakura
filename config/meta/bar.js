@@ -44,11 +44,8 @@ var keys = {
     "pinnedOnStartup": {
         "description": "Bar starts pinned (always visible); unpinned it auto-hides."
     },
-    "hoverToReveal": {
-        "description": "Reveal the unpinned bar when the pointer touches its screen edge."
-    },
     "hoverRegionHeight": {
-        "min": 0,
+        "min": 4,
         "max": 40,
         "unit": "px",
         "description": "Size of the invisible edge strip that reveals the hidden bar."

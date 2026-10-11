@@ -82,6 +82,15 @@ Item {
                 }
             }
             Chip {
+                icon: Icons.arrowCounterClockwise
+                text: I18n.t("prefs.bar.panels.single")
+                enabled: root.panels.length > 0 && !PanelsModel.isLegacy(Config.bar)
+                onClicked: {
+                    PanelsModel.toSingleBar(root.panels, root.current).forEach(w => SettingsStore.set(w.key, w.value));
+                    root.selected = 0;
+                }
+            }
+            Chip {
                 icon: Icons.trash
                 text: I18n.t("prefs.bar.panels.remove")
                 enabled: root.panels.length > 1
@@ -105,6 +114,7 @@ Item {
                     options: ["top", "bottom", "left", "right"].map(e => ({
                                 "value": e,
                                 "label": "common." + e,
+                                "enabled": root.panel ? PanelStyles.supportsEdge(root.panel.style, e) : true,
                                 "icon": {
                                     "top": "arrowUp",
                                     "bottom": "arrowDown",
@@ -156,6 +166,20 @@ Item {
                         }
                     ]
                     onSelected: v => root.setField("align", v)
+                }
+            }
+            Labeled {
+                label: I18n.t("prefs.bar.panels.shown")
+                ToggleControl {
+                    checked: root.panel ? root.panel.enabled : true
+                    onToggled: v => root.setField("enabled", v)
+                }
+            }
+            Labeled {
+                label: I18n.t("prefs.bar.panels.flat")
+                ToggleControl {
+                    checked: root.panel ? root.panel.flat : false
+                    onToggled: v => root.setField("flat", v)
                 }
             }
             Labeled {

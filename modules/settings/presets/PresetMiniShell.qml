@@ -41,11 +41,12 @@ Item {
         return spec.alpha === null ? base : Ui.alpha(base, spec.alpha);
     }
 
-    readonly property string edge: v("bar.position", "top")
+    // The first enabled panel of bar.panels wins over the legacy keys
+    readonly property string edge: panels.length > 0 && panels[0].edge ? panels[0].edge : v("bar.position", "top")
     readonly property bool vertical: edge === "left" || edge === "right"
-    readonly property bool islands: v("bar.layout.style", "classic") === "islands"
+    readonly property bool islands: (panels.length > 0 && panels[0].style ? panels[0].style : v("bar.layout.style", "classic")) === "islands"
     readonly property bool frame: v("bar.frameEnabled", false)
-    readonly property bool contained: frame || v("bar.containBar", false)
+    readonly property bool contained: frame && v("bar.containBar", false)
     readonly property bool glass: v("theme.glass.enabled", true) && v("theme.glass.amount", -1) !== 0
     readonly property real radius: Math.max(0, v("theme.roundness", 16)) * u
     readonly property real barThick: (v("bar.compact", false) ? 34 : 42) * u

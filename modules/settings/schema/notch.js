@@ -121,14 +121,10 @@ var category = {
                     "key": "notch.hoverRegionHeight",
                     "advanced": true,
                     "type": "slider",
-                    "min": 0,
+                    "min": 8,
                     "max": 40,
                     "step": 1,
                     "unit": "px",
-                    "visibleWhen": {
-                        "key": "notch.keepHidden",
-                        "equals": true
-                    },
                     "label": "prefs.notch.hover_region",
                     "description": "prefs.notch.hover_region.desc",
                     "keywords": "hover region trigger area reveal"
@@ -284,3 +280,19 @@ var category = {
         }
     ]
 };
+
+// The notch and media sections only matter while the notch is on (turned on
+// and off in the Layout page); activities and timers also work in the bar.
+category.sections.forEach(function (section) {
+    if (section.id !== "notch" && section.id !== "media")
+        return;
+    section.entries.forEach(function (entry) {
+        var on = {
+            "key": "notch.enabled",
+            "equals": true
+        };
+        entry.visibleWhen = entry.visibleWhen ? {
+            "all": [on, entry.visibleWhen]
+        } : on;
+    });
+});

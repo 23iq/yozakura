@@ -226,6 +226,7 @@ MIRROR = [
     "modules/bar/BarModuleRegistry.js",
     "modules/bar/panels/PanelStyles.js",
     "modules/bar/panels/PanelLayout.js",
+    "modules/bar/panels/PanelEdit.js",
     "modules/bar/workspaces/WorkspaceNumerals.js",
     "modules/bar/workspaces/indicators",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",

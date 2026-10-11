@@ -1,6 +1,7 @@
 .pragma library
 .import "../bar/panels/PanelLayout.js" as PanelLayout
 .import "../bar/panels/PanelStyles.js" as PanelStyles
+.import "../bar/panels/PanelEdit.js" as PanelEdit
 
 // The composable layout: three independent parts (bar, notch, dock), each
 // { enabled, edge, style, align }, read from the existing keys only:
@@ -18,6 +19,8 @@ var CONTENT = ["activities", "clock", "tray"];
 var EDGES = PanelLayout.EDGES;
 // The notch runs upright on the side edges (NotchPlacement, NotchShape.js)
 var NOTCH_EDGES = EDGES.slice();
+// The dock window has no top edge (DockContent)
+var DOCK_EDGES = ["bottom", "left", "right"];
 var ALIGNS = ["start", "center", "end"];
 var NOTCH_STYLES = ["attached", "island", "pill"];
 var DOCK_STYLES = ["default", "floating", "integrated"];
@@ -81,7 +84,7 @@ function fromConfig(cfg) {
         },
         "dock": {
             "enabled": dock.enabled !== false,
-            "edge": _pick(dock.position, EDGES, "bottom"),
+            "edge": _pick(dock.position, DOCK_EDGES, "bottom"),
             "style": _pick(dock.theme, DOCK_STYLES, "default"),
             "align": "center"
         }
@@ -181,6 +184,8 @@ function depthOf(part, layout) {
 function edgesOf(part) {
     if (part === "notch")
         return NOTCH_EDGES.slice();
+    if (part === "dock")
+        return DOCK_EDGES.slice();
     return PARTS.indexOf(part) === -1 ? [] : EDGES.slice();
 }
 
@@ -236,22 +241,27 @@ function _panelEdit(panels, field, value) {
         }
         return PanelLayout.serialize(out);
     }
-    var p = out[i];
-    p[field] = value;
-    if (field === "style" && !PanelStyles.supportsEdge(value, p.edge))
-        p.edge = PanelStyles.get(value).edges[0];
-    if (field === "edge" && !PanelStyles.supportsEdge(p.style, value))
-        p.style = "classic";
+    out[i] = PanelEdit.apply(out[i], field, value);
     return PanelLayout.serialize(out);
 }
 
 function _barEdit(bar, field, value) {
     var n = PanelLayout.normalize(bar);
     if (n.legacy && field !== "align") {
-        if (field === "edge")
-            return [{ "key": "bar.position", "value": value }];
-        if (field === "style")
-            return [{ "key": "bar.layout.style", "value": value }];
+        // Same pairing rules as the panels (PanelEdit)
+        var curStyle = n.panels[0].style;
+        if (field === "edge") {
+            var edgeWrites = [{ "key": "bar.position", "value": value }];
+            if (!PanelStyles.supportsEdge(curStyle, value))
+                edgeWrites.push({ "key": "bar.layout.style", "value": "classic" });
+            return edgeWrites;
+        }
+        if (field === "style") {
+            var styleWrites = [{ "key": "bar.layout.style", "value": value }];
+            if (!PanelStyles.supportsEdge(value, n.panels[0].edge))
+                styleWrites.push({ "key": "bar.position", "value": PanelStyles.get(value).edges[0] });
+            return styleWrites;
+        }
         var cur = _obj(_obj(bar).layout).style;
         if (!value)
             return [{ "key": "bar.layout.style", "value": "none" }];
