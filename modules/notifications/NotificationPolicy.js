@@ -158,6 +158,25 @@ function inSchedule(schedule, date) {
     return now < to && hasDay(schedule.days, (day + 6) % 7);
 }
 
+// End (ms timestamp) of the schedule window `date` is in; 0 when none.
+function scheduleEnd(schedule, date) {
+    if (!inSchedule(schedule, date))
+        return 0;
+    var from = parseTime(schedule.from), to = parseTime(schedule.to);
+    var end = new Date(date.getTime());
+    end.setSeconds(0, 0);
+    if (from === to) {
+        end.setHours(24, 0, 0, 0);
+        return end.getTime();
+    }
+    var now = date.getHours() * 60 + date.getMinutes();
+    // Past midnight window: after `from` it ends tomorrow
+    if (from > to && now >= from)
+        end.setDate(end.getDate() + 1);
+    end.setHours(Math.floor(to / 60), to % 60, 0, 0);
+    return end.getTime();
+}
+
 function dndActive(cfg, date) {
     var dnd = (cfg && cfg.dnd) || {};
     return !!dnd.enabled || inSchedule(dnd.schedule, date);

@@ -77,7 +77,7 @@ QtObject {
     property var list: []
     property var dnd: []
     property var sent: []
-    function setDnd(on) { dnd = dnd.concat([on]); }
+    function setFocusSilent(on) { dnd = dnd.concat([on]); }
     function notifyInternal(o) { sent = sent.concat([o]); return null; }
 }""",
     "StateService": """pragma Singleton

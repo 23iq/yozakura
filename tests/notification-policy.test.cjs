@@ -129,3 +129,12 @@ test('soundRequest: suppress-sound, sound-name, sound-file, none', () => {
     assert.deepEqual(r(undefined), {});
     assert.deepEqual(r({}), {});
 });
+
+test('scheduleEnd: end of the window the moment is in', () => {
+    const sched = { enabled: true, from: '22:00', to: '07:00', days: [0, 1, 2, 3, 4, 5, 6] };
+    const at = (d, h, m) => new Date(2026, 0, d, h, m, 0);
+    assert.equal(P.scheduleEnd(sched, at(5, 23, 0)), at(6, 7, 0).getTime());
+    assert.equal(P.scheduleEnd(sched, at(6, 3, 0)), at(6, 7, 0).getTime());
+    assert.equal(P.scheduleEnd(sched, at(6, 12, 0)), 0);
+    assert.equal(P.scheduleEnd({ enabled: true, from: '09:00', to: '17:00', days: [0, 1, 2, 3, 4, 5, 6] }, at(5, 10, 0)), at(5, 17, 0).getTime());
+});
