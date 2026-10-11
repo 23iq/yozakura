@@ -46,6 +46,14 @@ Singleton {
         overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
     }
 
+    // Tactile press / release of big controls and pills that snap into place:
+    // a short spring that overshoots (0 with animations off).
+    readonly property Token spring: Token {
+        duration: Math.round(MotionBudget.token("exit", root.base) / 2)
+        easing: Easing.OutBack
+        overshoot: 2.5
+    }
+
     // Stagger before secondary content (<= 40 ms) and palette crossfade (<= 600 ms).
     readonly property int delay: root.base > 0 ? Math.min(MotionBudget.SHELL.delay, Math.round(root.base * 0.13)) : 0
     readonly property int palette: root.base > 0 ? Math.min(MotionBudget.SHELL.palette, Math.round(root.base * 2)) : 0

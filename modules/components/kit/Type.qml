@@ -46,6 +46,12 @@ QtObject {
     readonly property string progressRole: Config.theme.progressRole || "primary"
     readonly property color progress: root.progressRole === "secondary" ? Colors.secondary : root.progressRole === "tertiary" ? Colors.tertiary : Colors.primary
 
+    // A load / fill level as a color: the progress color, the palette's
+    // warning from 70 %, its error from 90 % (meters, metric capsules).
+    function load(fraction: real): color {
+        return fraction >= 0.9 ? Colors.error : (fraction >= 0.7 ? Colors.warning : root.progress);
+    }
+
     function size(role: string): int {
         const f = root.scale[role];
         return Math.max(8, Math.round(root.base * (f === undefined ? 1 : f)));

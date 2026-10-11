@@ -69,6 +69,20 @@ QtObject {
         return hovered ? root.alpha(root.control.hoverFill, root.control.hover) : root.alpha(root.control.fill, root.control.rest);
     }
 
+    // Big controls (Tile, LevelSlider): a raised surface even where the
+    // small controls are ghosts. The language's control box where it has a
+    // visible one, otherwise a soft ink wash; round languages take the
+    // surface radius, square ones the control radius.
+    function raisedFill(hovered: bool): color {
+        if (root.boxedControls && root.control.rest > 0)
+            return root.controlFill(hovered);
+        return root.alpha("overBackground", hovered ? 0.12 : 0.07);
+    }
+
+    function bigRadius(h: real): real {
+        return Space.clampRadius(root.squareControls ? Space.controlRadius : Space.surfaceRadius, h);
+    }
+
     // Opacity of the accent tint that marks a selected / active item
     // (KitStates "active"): for lists that draw their own selection box.
     readonly property real activeTint: KitStates.opacity("active", false)
