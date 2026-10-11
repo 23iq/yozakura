@@ -10,6 +10,7 @@ import qs.modules.theme
 import qs.config
 import qs.modules.desktop
 import "WallpaperFolders.js" as WallpaperFolders
+import "WallpaperDefaults.js" as WallpaperDefaults
 
 PanelWindow {
     id: wallpaper
@@ -533,7 +534,7 @@ PanelWindow {
         onAdapterUpdated: {
             // Ensure matugenScheme has a default value
             if (!wallpaperConfig.adapter.matugenScheme) {
-                wallpaperConfig.adapter.matugenScheme = "scheme-tonal-spot";
+                wallpaperConfig.adapter.matugenScheme = WallpaperDefaults.MATUGEN_SCHEME;
             }
             // Update the currentMatugenScheme property to trigger UI updates
             currentMatugenScheme = Qt.binding(function () {
@@ -546,7 +547,7 @@ PanelWindow {
             id: wallpaperAdapter
             property string currentWall: ""
             property string wallPath: ""
-            property string matugenScheme: "scheme-tonal-spot"
+            property string matugenScheme: WallpaperDefaults.MATUGEN_SCHEME
             property string activeColorPreset: ""
             property bool tintEnabled: false
             property var perScreenWallpapers: ({})
