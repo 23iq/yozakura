@@ -106,6 +106,10 @@ var keys = {
     "providers": {
         "description": "Chat providers: request timeout and retries, picker visibility, local auto-probe, custom endpoint headers."
     },
+    "providers.customHeaders": {
+        "secret": true,
+        "description": "Extra HTTP headers sent to every provider request ({name, value}); values such as Authorization are credentials (machine-local, never in presets)."
+    },
     "providers.hidden": {
         "items": {
             "type": "string",

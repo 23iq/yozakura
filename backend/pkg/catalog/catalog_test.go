@@ -251,3 +251,18 @@ func mustTrue(t *testing.T, ok bool, msg ...any) {
 		t.FailNow()
 	}
 }
+
+func TestMaskValueHidesNestedStrings(t *testing.T) {
+	in := []any{map[string]any{"name": "Authorization", "value": "Bearer x"}, map[string]any{"name": "", "value": ""}}
+	out := MaskValue(in).([]any)
+	first := out[0].(map[string]any)
+	if first["value"] != MaskedValue || first["name"] != MaskedValue {
+		t.Fatalf("%v", out)
+	}
+	if out[1].(map[string]any)["value"] != "" {
+		t.Fatal("empty stays empty")
+	}
+	if MaskValue("") != "" || MaskValue(3) != 3 {
+		t.Fatal("scalars")
+	}
+}

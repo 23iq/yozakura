@@ -116,9 +116,7 @@ func writeJSON(w io.Writer, v any) error {
 
 func shown(e *catalog.Entry, v any) string {
 	if e.Secret {
-		if s, _ := v.(string); s != "" {
-			return `"********"`
-		}
+		v = catalog.MaskValue(v)
 	}
 	return catalog.Compact(v)
 }

@@ -2550,6 +2550,7 @@
   "ai.connect.need_url": "Introduce la URL base del servidor.",
   "ai.connect.bad_url": "La URL debe empezar por http:// o https://.",
   "prefs.ai.default_engine.last": "El último usado",
+  "prefs.ai.default_engine.unavailable": "no disponible",
   "prefs.ai.providers.open": "Abrir la página de proveedores",
   "prefs.ai.providers.connections": "Conexiones",
   "prefs.ai.providers.connect": "Proveedores",

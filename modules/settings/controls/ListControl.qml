@@ -151,6 +151,7 @@ Item {
                                         TextControl {
                                             text: fieldBox.value ?? ""
                                             monospace: !!fieldBox.modelData.monospace
+                                            secret: !!fieldBox.modelData.secret
                                             placeholder: fieldBox.modelData.placeholder ? I18n.t(fieldBox.modelData.placeholder) : ""
                                             invalid: !SchemaUtil.matchesPattern(fieldBox.modelData, input.text)
                                             onEdited: t => {

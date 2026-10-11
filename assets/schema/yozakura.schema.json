@@ -1715,7 +1715,8 @@
                 "label": "prefs.ai.providers.headers",
                 "control": "list",
                 "keywords": "custom endpoint headers proxy auth authorization openai compatible"
-              }
+              },
+              "x-secret": true
             },
             "openrouterAttribution": {
               "title": "Identify the app to OpenRouter",

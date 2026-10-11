@@ -97,6 +97,7 @@ var category = {
                         {
                             "key": "value",
                             "type": "text",
+                            "secret": true,
                             "monospace": true,
                             "placeholder": "prefs.ai.providers.header_value.placeholder",
                             "label": "prefs.ai.providers.header_value"

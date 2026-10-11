@@ -2550,6 +2550,7 @@
   "ai.connect.need_url": "Введите базовый URL сервера.",
   "ai.connect.bad_url": "URL должен начинаться с http:// или https://.",
   "prefs.ai.default_engine.last": "Последний выбранный",
+  "prefs.ai.default_engine.unavailable": "недоступно",
   "prefs.ai.providers.open": "Открыть страницу провайдеров",
   "prefs.ai.providers.connections": "Подключения",
   "prefs.ai.providers.connect": "Провайдеры",
