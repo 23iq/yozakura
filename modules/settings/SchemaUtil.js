@@ -166,12 +166,46 @@ function withPath(obj, path, value) {
     return copy;
 }
 
+// Deep, key-order independent comparison. Numbers compare with a small
+// tolerance (and NaN equals NaN), list wrappers from JsonAdapter count as
+// arrays, and object keys whose value is undefined are ignored.
 function equal(a, b) {
+    return deepEqual(plain(a), plain(b));
+}
+
+function deepEqual(a, b) {
     if (a === b)
         return true;
     if (typeof a === "number" && typeof b === "number")
-        return Math.abs(a - b) < 1e-9;
-    return JSON.stringify(plain(a)) === JSON.stringify(plain(b));
+        return (isNaN(a) && isNaN(b)) || Math.abs(a - b) < 1e-9;
+    if (a === null || b === null || typeof a !== "object" || typeof b !== "object")
+        return false;
+    var la = Array.isArray(a), lb = Array.isArray(b);
+    if (la !== lb)
+        return false;
+    if (la) {
+        if (a.length !== b.length)
+            return false;
+        for (var i = 0; i < a.length; i++) {
+            if (!deepEqual(a[i], b[i]))
+                return false;
+        }
+        return true;
+    }
+    var ka = definedKeys(a), kb = definedKeys(b);
+    if (ka.length !== kb.length)
+        return false;
+    for (var j = 0; j < ka.length; j++) {
+        if (!Object.prototype.hasOwnProperty.call(b, ka[j]) || !deepEqual(a[ka[j]], b[ka[j]]))
+            return false;
+    }
+    return true;
+}
+
+function definedKeys(o) {
+    return Object.keys(o).filter(function (k) {
+        return o[k] !== undefined;
+    });
 }
 
 function entryId(entry) {
@@ -296,6 +330,9 @@ function buildSearchIndex(categories, tr) {
                     "label": label,
                     "context": secTitle ? catTitle + " › " + secTitle : catTitle,
                     "icon": cat.icon,
+                    "key": entry.key || "",
+                    "compositor": entry.compositor || sec.compositor || "",
+                    "visibleWhen": entry.visibleWhen || null,
                     "haystack": [label, entry.keywords || "", entry.description ? t(entry.description) : "", entry.key || "", secTitle].join(" ").toLowerCase()
                 });
             });
@@ -313,7 +350,38 @@ function buildSearchIndex(categories, tr) {
             });
         });
     });
-    return out;
+    return disambiguate(out);
+}
+
+// Entries sharing label and context ("Position" twice in one section) get
+// their key appended, so a result row says which setting it is.
+function disambiguate(items) {
+    var count = {};
+    items.forEach(function (it) {
+        if (it.entryId) {
+            var k = (it.label + "\u0000" + it.context).toLowerCase();
+            count[k] = (count[k] || 0) + 1;
+        }
+    });
+    items.forEach(function (it) {
+        var k = (it.label + "\u0000" + it.context).toLowerCase();
+        if (it.entryId && count[k] > 1 && it.key)
+            it.context = (it.context ? it.context + " \u203a " : "") + it.key;
+    });
+    return items;
+}
+
+// Is a search item shown right now? `ctx` = {compositor, get}: items tied to
+// another compositor or hidden by their visibleWhen are not offered (a jump
+// would land on a zero-height row).
+function itemVisible(item, ctx) {
+    if (!ctx)
+        return true;
+    if (item.compositor && ctx.compositor !== item.compositor)
+        return false;
+    if (item.visibleWhen && ctx.get && !evalCondition(item.visibleWhen, ctx.get))
+        return false;
+    return true;
 }
 
 // Higher is better, -1 = no match. Substring hits beat fuzzy subsequences;
@@ -360,9 +428,11 @@ function fuzzy(q, target) {
     return qi === q.length && q.length >= 2 ? Math.min(40, s + best * 4) : -1;
 }
 
-function search(index, query, limit) {
+function search(index, query, limit, ctx) {
     var out = [];
     for (var i = 0; i < index.length; i++) {
+        if (!itemVisible(index[i], ctx))
+            continue;
         var s = score(query, index[i]);
         if (s >= 0)
             out.push({
