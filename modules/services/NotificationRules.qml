@@ -126,7 +126,7 @@ QtObject {
     })
 
     function showsOnScreen(name) {
-        return Policy.showsOnScreen(root.cfg ? root.cfg.screens : [], name);
+        return Policy.showsOnScreen(root.cfg ? root.cfg.screens : [], name, Quickshell.screens.map(sc => sc.name));
     }
 
     // Plain snapshot of the policy config (JsonObject -> JS) for decide().

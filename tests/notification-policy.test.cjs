@@ -138,3 +138,12 @@ test('scheduleEnd: end of the window the moment is in', () => {
     assert.equal(P.scheduleEnd(sched, at(6, 12, 0)), 0);
     assert.equal(P.scheduleEnd({ enabled: true, from: '09:00', to: '17:00', days: [0, 1, 2, 3, 4, 5, 6] }, at(5, 10, 0)), at(5, 17, 0).getTime());
 });
+
+test('showsOnScreen: chosen outputs, falling back to all when none of them exists', () => {
+    assert.equal(P.showsOnScreen([], 'DP-1', ['DP-1']), true);
+    assert.equal(P.showsOnScreen(['DP-1'], 'DP-1', ['DP-1', 'DP-2']), true);
+    assert.equal(P.showsOnScreen(['DP-1'], 'DP-2', ['DP-1', 'DP-2']), false);
+    // DP-3 was unplugged: popups must not vanish
+    assert.equal(P.showsOnScreen(['DP-3'], 'DP-2', ['DP-1', 'DP-2']), true);
+    assert.equal(P.showsOnScreen(['DP-1'], 'DP-1'), true);
+});

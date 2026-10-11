@@ -60,14 +60,25 @@ function anchorsOf(position) {
     };
 }
 
-function showsOnScreen(screens, name) {
+// `screens`: the chosen outputs (empty = all). `available` (optional): the
+// outputs that exist now; when none of the chosen ones is among them (an
+// unplugged monitor) popups fall back to every screen instead of none.
+function showsOnScreen(screens, name, available) {
     if (!screens || screens.length === 0)
         return true;
-    for (var i = 0; i < screens.length; i++) {
-        if (screens[i] === name)
+    var list = [];
+    for (var i = 0; i < screens.length; i++)
+        list.push(String(screens[i]));
+    if (available && available.length > 0) {
+        var present = false;
+        for (var j = 0; j < available.length; j++) {
+            if (list.indexOf(String(available[j])) !== -1)
+                present = true;
+        }
+        if (!present)
             return true;
     }
-    return false;
+    return list.indexOf(String(name)) !== -1;
 }
 
 function norm(value) {
