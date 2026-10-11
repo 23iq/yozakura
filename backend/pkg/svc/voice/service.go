@@ -319,14 +319,19 @@ func (svc *Service) end(sess *session, final Snapshot) {
 // Status reports the session plus install/server info for Settings.
 func (svc *Service) Status() map[string]any {
 	cfg := svc.config()
+	have := func(n string) bool { _, err := svc.Typer.LookPath(n); return err == nil }
+	backend := svc.Install.Backend()
+	vad := fileExists(svc.Install.VADModel())
 	return map[string]any{
 		"snapshot":      svc.Snapshot(),
+		"enabled":       cfg.Enabled,
 		"installed":     fileExists(svc.Install.ServerBin()),
-		"backend":       svc.Install.Backend(),
+		"backend":       backend,
 		"models":        svc.Install.Models(),
 		"modelPresent":  fileExists(svc.Install.ModelPath(cfg.Model)),
-		"vadModel":      fileExists(svc.Install.VADModel()),
+		"vadModel":      vad,
 		"serverRunning": svc.server.Running(),
+		"warnings":      healthWarnings(cfg, backend, vad, have),
 	}
 }
 

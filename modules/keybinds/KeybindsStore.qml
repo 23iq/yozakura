@@ -7,6 +7,7 @@ import Quickshell.Io
 import qs.config
 import qs.modules.services
 import "BindModel.js" as BindModel
+import "CompositorSupport.js" as CompositorSupport
 import "RoutineSlots.js" as RoutineSlots
 import "../../config/CoreBinds.js" as CoreBinds
 import "../../config/KeybindActions.js" as KeybindActions
@@ -38,7 +39,14 @@ Singleton {
         const slots = BindModel.slotRows(built).concat(RoutineSlots.rows(built, RoutinesService.routines));
         return BindModel.withApps(built.concat(slots), root.appInfo);
     }
-    property var hyprBinds: []
+    // The compositor's own binds (hyprctl on Hyprland, yozd elsewhere) and
+    // the shell binds its config left out.
+    property alias hyprBinds: compositorBinds.nativeList
+    readonly property var skippedCombos: compositorBinds.skipped
+    readonly property string compositor: YozdService.compositorName
+    // Recording needs the empty submap only Hyprland offers: elsewhere the
+    // recorder cannot keep the compositor from running the pressed combo.
+    readonly property bool canRecord: CompositorSupport.canSuppress(root.compositor) || root.compositor === ""
     readonly property var nativeBinds: BindModel.nativeBinds(hyprBinds, rows)
     readonly property var conflicts: BindModel.findConflicts(rows, nativeBinds)
     readonly property int conflictCount: Object.keys(conflicts).length
@@ -432,23 +440,17 @@ Singleton {
     // --- Compositor binds (conflict detection) ---------------------------
 
     function refreshNative() {
-        if (Quickshell.env("HYPRLAND_INSTANCE_SIGNATURE") && !hyprctl.running)
-            hyprctl.running = true;
+        compositorBinds.refresh();
     }
 
-    property Process hyprctl: Process {
-        command: ["hyprctl", "binds", "-j"]
-        stdout: StdioCollector {
-            waitForEnd: true
-            onStreamFinished: {
-                try {
-                    const list = JSON.parse(text);
-                    root.hyprBinds = Array.isArray(list) ? list : [];
-                } catch (e) {
-                    root.hyprBinds = [];
-                }
-            }
-        }
+    // Why the compositor config left this row's keys out ("" when it did not).
+    function skipNote(uid) {
+        const r = root.row(uid);
+        return r && r.enabled ? CompositorSupport.noteFor(r.keys, root.skippedCombos) : "";
+    }
+
+    property CompositorBinds source: CompositorBinds {
+        id: compositorBinds
     }
 
     // yozd applies a new TOML asynchronously.

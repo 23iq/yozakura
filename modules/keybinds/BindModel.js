@@ -584,7 +584,8 @@ function nativeBinds(hypr, rows) {
     (hypr || []).forEach(function (b) {
         if (!b || b.submap || !b.key)
             return;
-        var combo = KeyNames.comboId(KeyNames.modsFromMask(b.modmask || 0), b.key);
+        var mods = b.modifiers || KeyNames.modsFromMask(b.modmask || 0);
+        var combo = KeyNames.comboId(mods, b.key);
         if (!combo)
             return;
         var slot = combo + (b.release ? "#release" : "#press");
@@ -596,7 +597,7 @@ function nativeBinds(hypr, rows) {
         }
         out.push({
             "combo": combo,
-            "modifiers": KeyNames.modsFromMask(b.modmask || 0),
+            "modifiers": mods,
             "key": b.key,
             "text": described ? b.description : ((b.dispatcher || "") + (b.arg ? " " + b.arg : ""))
         });

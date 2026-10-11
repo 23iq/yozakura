@@ -113,10 +113,10 @@
           "equals": true
         },
         "min": 1,
-        "max": 10
+        "max": 3
       },
       "minimum": 1,
-      "maximum": 10
+      "maximum": 3
     }
   },
   "additionalProperties": false

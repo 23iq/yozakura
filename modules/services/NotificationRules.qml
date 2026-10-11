@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.services
 import qs.modules.bar.panels
 import "../notifications/NotificationPolicy.js" as Policy
 import "../bar/panels/PanelLayout.js" as PanelLayout
@@ -17,13 +18,48 @@ QtObject {
     // DND: turning it off while the schedule is active skips the rest of
     // that window.
     property bool scheduleActive: false
+    // "Skip this window" of the schedule: runtime only, so it is kept in
+    // StateService with the window's end (a restart inside the same
+    // 22:00-07:00 window must not turn DND back on).
     property bool scheduleSkipped: false
-    readonly property bool silent: !!(cfg && cfg.dnd && cfg.dnd.enabled) || (scheduleActive && !scheduleSkipped)
-    onScheduleActiveChanged: if (!scheduleActive)
-        scheduleSkipped = false
+    // Focus mode's quiet period: runtime only, never written to
+    // notifications.dnd.enabled (a crash must not leave DND on forever).
+    property bool focusSilent: false
+    readonly property bool silent: !!(cfg && cfg.dnd && cfg.dnd.enabled) || root.focusSilent || (scheduleActive && !scheduleSkipped)
+    onScheduleActiveChanged: {
+        if (!scheduleActive) {
+            scheduleSkipped = false;
+            root.saveSkip(0);
+        }
+    }
+
+    function saveSkip(until) {
+        if (StateService.initialized)
+            StateService.set("dndSkippedUntil", until);
+    }
+
+    function restoreSkip() {
+        const until = Number(StateService.get("dndSkippedUntil", 0)) || 0;
+        // Valid while the window it skipped is still the one running
+        if (until > Date.now() && root.scheduleActive)
+            root.scheduleSkipped = true;
+        else if (until > 0)
+            root.saveSkip(0);
+    }
+
+    property Connections stateWatch: Connections {
+        target: StateService
+        function onInitializedChanged() {
+            if (StateService.initialized)
+                root.restoreSkip();
+        }
+    }
 
     function refreshSchedule() {
+        const was = root.scheduleActive;
         root.scheduleActive = Policy.inSchedule(root.cfg && root.cfg.dnd ? root.cfg.dnd.schedule : null, new Date());
+        if (!was && root.scheduleActive && StateService.initialized)
+            root.restoreSkip();
     }
 
     property Timer scheduleTimer: Timer {
@@ -55,9 +91,19 @@ QtObject {
         if (!root.cfg || !root.cfg.dnd)
             return;
         root.cfg.dnd.enabled = !!on;
-        if (!on && root.scheduleActive)
-            root.scheduleSkipped = true;
+        if (!on) {
+            root.focusSilent = false;
+            if (root.scheduleActive) {
+                root.scheduleSkipped = true;
+                root.saveSkip(Policy.scheduleEnd(root.cfg.dnd.schedule, new Date()));
+            }
+        }
         Config.saveNotifications();
+    }
+
+    // Focus mode: quiet without touching the persisted DND setting.
+    function setFocusSilent(on) {
+        root.focusSilent = !!on;
     }
 
     function toggleDnd() {
@@ -80,7 +126,7 @@ QtObject {
     })
 
     function showsOnScreen(name) {
-        return Policy.showsOnScreen(root.cfg ? root.cfg.screens : [], name);
+        return Policy.showsOnScreen(root.cfg ? root.cfg.screens : [], name, Quickshell.screens.map(sc => sc.name));
     }
 
     // Plain snapshot of the policy config (JsonObject -> JS) for decide().

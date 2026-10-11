@@ -115,7 +115,7 @@ var performance = {
         },
         "dashboardMaxPersistentTabs": {
             "min": 1,
-            "max": 10,
+            "max": 3,
             "description": "Most dashboard tabs kept loaded."
         }
     }

@@ -22,6 +22,21 @@ var HOSTS = [
     }
 ];
 
+// The hosts the side and the backdrop apply to: shown only while one of the
+// surfaces opens there (SheetHost / SpotlightHost).
+var HOST_KEYS = ["layout.launcher.host", "layout.dashboard.host", "layout.cheatsheet.host"];
+
+function usesHost(values) {
+    return {
+        "any": HOST_KEYS.map(function (k) {
+            return {
+                "key": k,
+                "in": values
+            };
+        })
+    };
+}
+
 var category = {
     "id": "layout",
     "icon": "layout",
@@ -87,6 +102,7 @@ var category = {
                             "icon": "arrowRight"
                         }
                     ],
+                    "visibleWhen": usesHost(["sheet"]),
                     "label": "prefs.layout.sheet_side",
                     "description": "prefs.layout.sheet_side.desc",
                     "keywords": "sheet side left right edge vertical bar"
@@ -94,6 +110,7 @@ var category = {
                 {
                     "key": "layout.backdrop",
                     "type": "toggle",
+                    "visibleWhen": usesHost(["sheet", "spotlight"]),
                     "label": "prefs.layout.backdrop",
                     "description": "prefs.layout.backdrop.desc",
                     "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken"

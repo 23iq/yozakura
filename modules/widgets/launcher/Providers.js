@@ -119,6 +119,7 @@ var PROVIDERS = [
 
 var INLINE_IDS = PROVIDERS.filter(p => p.kind === "inline").map(p => p.id);
 var TAB_IDS = PROVIDERS.filter(p => p.kind === "tab").map(p => p.id);
+var PROVIDER_PREFIXES = PROVIDERS.filter(p => p.prefix).map(p => p.prefix);
 
 function byId(id) {
     for (let i = 0; i < PROVIDERS.length; i++) {
@@ -201,6 +202,27 @@ function setEnabled(disabled, id, on) {
 // work glued to the query ("?why").
 function needsSpace(prefix) {
     return /^[A-Za-z0-9]/.test(prefix || "");
+}
+
+// Why `value` cannot be the prefix of provider `id`: "empty" (an empty prefix
+// switches the mode off silently), "space" (route() splits on the first
+// space) or "duplicate" (another enabled provider or tab uses it: route()
+// would pick one by sort order). "" when fine. `prefixes` is Config.prefix.
+function prefixError(id, value, prefixes, disabled) {
+    const v = String(value === undefined || value === null ? "" : value);
+    if (v.trim() === "")
+        return "empty";
+    if (/\s/.test(v))
+        return "space";
+    prefixes = prefixes || {};
+    for (let i = 0; i < PROVIDERS.length; i++) {
+        const p = PROVIDERS[i];
+        if (p.id === id || !p.prefix || !isEnabled(p.id, disabled))
+            continue;
+        if (String(prefixes[p.prefix] || "") === v)
+            return "duplicate";
+    }
+    return "";
 }
 
 // The query after `prefix`, or null when `text` does not start with it.

@@ -34,6 +34,10 @@ ColumnLayout {
     signal removed
 
     property bool recording: false
+    // Compositors that cannot pause their own binds (niri, MangoWC): the
+    // pressed combo would run its bind, so the key is typed instead.
+    readonly property bool manualOnly: !KeybindsStore.canRecord
+    property string keyError: ""
     property var chipMods: []
     property bool sawKey: false
 
@@ -64,8 +68,12 @@ ColumnLayout {
         chipMods = [];
         sawKey = false;
         keyName.text = "";
+        keyError = "";
         recording = true;
-        pad.forceActiveFocus();
+        if (manualOnly)
+            keyName.forceActiveFocus();
+        else
+            pad.forceActiveFocus();
     }
 
     function cancel() {
@@ -81,6 +89,17 @@ ColumnLayout {
             });
     }
 
+    // The typed key name ("e", "Super+Shift+E", "enter") normalized, or an error.
+    function commitTyped() {
+        const parsed = KeyNames.parseKeyText(keyName.text, root.chipMods);
+        if (parsed.error) {
+            keyError = I18n.t("binds.key_invalid");
+            return;
+        }
+        keyError = "";
+        commit(parsed.mods, parsed.key);
+    }
+
     function toggleMod(mod, on) {
         const rest = chipMods.filter(m => m !== mod);
         chipMods = on ? rest.concat([mod]) : rest;
@@ -89,8 +108,9 @@ ColumnLayout {
     Component.onCompleted: if (autoStart)
         Qt.callLater(start)
 
-    onRecordingChanged: KeybindsStore.holdCompositorBinds(recording)
-    Component.onDestruction: if (recording)
+    onRecordingChanged: if (!manualOnly)
+        KeybindsStore.holdCompositorBinds(recording)
+    Component.onDestruction: if (recording && !manualOnly)
         KeybindsStore.holdCompositorBinds(false)
 
     Connections {
@@ -118,8 +138,8 @@ ColumnLayout {
         }
         PillButton {
             objectName: "keyRecord"
-            icon: "record"
-            text: I18n.t("binds.record")
+            icon: root.manualOnly ? "keyboard" : "record"
+            text: root.manualOnly ? I18n.t("binds.set_key") : I18n.t("binds.record")
             onClicked: root.start()
         }
         PillButton {
@@ -139,7 +159,7 @@ ColumnLayout {
         readonly property string list: root.recording ? root.draftClashText : root.clashText
         visible: list !== ""
         wrapMode: Text.Wrap
-        text: I18n.t("binds.also_used_by", list) + ". " + I18n.t("binds.conflict_kept")
+        text: I18n.t("binds.also_used_by", list) + ". " + I18n.t(KeybindsStore.compositor === "niri" ? "binds.conflict_first_wins" : "binds.conflict_kept")
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(-3)
         color: Colors.error
@@ -150,9 +170,13 @@ ColumnLayout {
         id: pad
         objectName: "keyCapture"
         Layout.fillWidth: true
-        visible: root.recording
+        visible: root.recording && !root.manualOnly
         implicitHeight: Math.round(Styling.fontSize(0) * 4.2)
-        focus: root.recording
+        focus: root.recording && !root.manualOnly
+
+        // The settings window's own shortcuts (Ctrl+S, Ctrl+Tab, ...) must
+        // not fire while a combo is being captured.
+        Keys.onShortcutOverride: event => event.accepted = true
 
         Keys.onPressed: event => {
             event.accepted = true;
@@ -278,7 +302,9 @@ ColumnLayout {
                 font.family: Config.theme.monoFont
                 font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overBackground
-                onAccepted: root.commit(root.chipMods, text.trim())
+                onAccepted: root.commitTyped()
+                onTextChanged: root.keyError = ""
+                Keys.onShortcutOverride: event => event.accepted = true
                 Keys.onEscapePressed: root.cancel()
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
@@ -300,10 +326,21 @@ ColumnLayout {
     }
 
     Text {
+        objectName: "keyError"
+        Layout.fillWidth: true
+        visible: root.recording && root.keyError !== ""
+        wrapMode: Text.Wrap
+        text: root.keyError
+        font.family: Config.theme.font
+        font.pixelSize: Styling.fontSize(-3)
+        color: Colors.error
+    }
+
+    Text {
         Layout.fillWidth: true
         visible: root.recording
         wrapMode: Text.Wrap
-        text: I18n.t("binds.record_super_note")
+        text: root.manualOnly ? I18n.t("binds.record_manual_note") : I18n.t("binds.record_super_note")
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(-3)
         color: Colors.overSurfaceVariant

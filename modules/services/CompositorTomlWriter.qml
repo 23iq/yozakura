@@ -9,6 +9,7 @@ import qs.modules.services
 import "CompositorAppearance.js" as Appearance
 import qs.modules.bar.panels
 import "../../config/CoreBinds.js" as CoreBinds
+import "../globals/BrandActions.js" as BrandActions
 import "../specials/Specials.js" as Specials
 import "DisplayModel.js" as DisplayModel
 import "WriteGate.js" as WriteGate
@@ -236,6 +237,9 @@ Singleton {
             const bind = CoreBinds.lookup(appRoot, entry);
             if (!bind || disabled.indexOf(CoreBinds.path(entry)) !== -1)
                 continue;
+            // Voice input off: its hold binds would only toast "unavailable".
+            if (root.voiceOff() && root.isVoiceAction(CoreBinds.actionId(entry)))
+                continue;
             (entry.section === "system" ? system : yozakura)[entry.name] = {
                 modifiers: bind.modifiers || [],
                 key: bind.key || "",
@@ -254,6 +258,11 @@ Singleton {
             } catch (e) {
                 custom = [];
             }
+        }
+        if (root.voiceOff()) {
+            custom = custom.map(b => Object.assign({}, b, {
+                actions: Array.from(b.actions || []).filter(a => !root.isVoiceAction(a && a.id))
+            }));
         }
         // Special workspace binds live in specials.json (global like
         // binds.json) and are rendered as extra custom binds.
@@ -441,6 +450,19 @@ Singleton {
         function onKeybindsInitialLoadCompleteChanged() {
             root._onReady();
         }
+    }
+
+    function voiceOff() {
+        return Config.voiceReady && Config.voice.enabled === false;
+    }
+
+    function isVoiceAction(id) {
+        return id === BrandActions.action("voice-ai") || id === BrandActions.action("dictation");
+    }
+
+    property Connections voiceConnections: Connections {
+        target: Config.voiceReady ? Config.voice : null
+        function onEnabledChanged() { root.callWrite(); }
     }
 
     function specialsOn() {

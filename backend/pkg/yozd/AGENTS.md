@@ -46,6 +46,8 @@ pkg/yozd/
 - New methods go in `server/binds.go` `dispatchExtra` (reached from the
   `default:` of the switch in `server.go`, which must not grow), e.g.
   `Config.ListBinds` (`yozd config list-binds`; compositors implement the
-  optional `ipc.BindLister`).
+  optional `ipc.BindLister`) and `Config.SkippedBinds`
+  (`yozd config skipped-binds`; generators that drop binds implement
+  `ipc.BindSkipper`; niri drops release, duplicate-combo and unmappable binds).
 - Tests: `go test ./pkg/yozd/... ./cmd/yozd` (mock compositor, no live
   session needed).

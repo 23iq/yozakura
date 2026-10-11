@@ -60,14 +60,25 @@ function anchorsOf(position) {
     };
 }
 
-function showsOnScreen(screens, name) {
+// `screens`: the chosen outputs (empty = all). `available` (optional): the
+// outputs that exist now; when none of the chosen ones is among them (an
+// unplugged monitor) popups fall back to every screen instead of none.
+function showsOnScreen(screens, name, available) {
     if (!screens || screens.length === 0)
         return true;
-    for (var i = 0; i < screens.length; i++) {
-        if (screens[i] === name)
+    var list = [];
+    for (var i = 0; i < screens.length; i++)
+        list.push(String(screens[i]));
+    if (available && available.length > 0) {
+        var present = false;
+        for (var j = 0; j < available.length; j++) {
+            if (list.indexOf(String(available[j])) !== -1)
+                present = true;
+        }
+        if (!present)
             return true;
     }
-    return false;
+    return list.indexOf(String(name)) !== -1;
 }
 
 function norm(value) {
@@ -156,6 +167,25 @@ function inSchedule(schedule, date) {
     if (now >= from)
         return hasDay(schedule.days, day);
     return now < to && hasDay(schedule.days, (day + 6) % 7);
+}
+
+// End (ms timestamp) of the schedule window `date` is in; 0 when none.
+function scheduleEnd(schedule, date) {
+    if (!inSchedule(schedule, date))
+        return 0;
+    var from = parseTime(schedule.from), to = parseTime(schedule.to);
+    var end = new Date(date.getTime());
+    end.setSeconds(0, 0);
+    if (from === to) {
+        end.setHours(24, 0, 0, 0);
+        return end.getTime();
+    }
+    var now = date.getHours() * 60 + date.getMinutes();
+    // Past midnight window: after `from` it ends tomorrow
+    if (from > to && now >= from)
+        end.setDate(end.getDate() + 1);
+    end.setHours(Math.floor(to / 60), to % 60, 0, 0);
+    return end.getTime();
 }
 
 function dndActive(cfg, date) {

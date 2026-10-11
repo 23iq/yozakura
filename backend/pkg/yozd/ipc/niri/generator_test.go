@@ -391,23 +391,68 @@ func TestGenerateAppearanceRoundingWindowRule(t *testing.T) {
 
 func TestGenerateKeybindsSkipsModifierSelfBind(t *testing.T) {
 	g := &Generator{}
-	out := g.GenerateKeybinds(ipc.ConfigKeybinds{
+	cfg := ipc.ConfigKeybinds{
 		Custom: []ipc.Keybind{
+			// exec: handled by the keymon monitor, never written to KDL
 			{Modifiers: []string{"SUPER"}, Key: "Super_L", Dispatcher: "exec", Argument: "yozakura run launcher", Enabled: true},
-			{Modifiers: []string{"ALT"}, Key: "Alt_L", Dispatcher: "exec", Argument: "true", Enabled: true},
+			// not exec: keymon cannot run it, so it is reported
+			{Modifiers: []string{"ALT"}, Key: "Alt_L", Dispatcher: "close", Enabled: true},
 			{Modifiers: []string{"SUPER"}, Key: "T", Dispatcher: "exec", Argument: "foot", Enabled: true},
 		},
-	})
-	if strings.Contains(out, "Mod+Super_L") {
-		t.Fatalf("modifier-self bind must be skipped (niri fires binds on press):\n%s", out)
 	}
-	if strings.Contains(out, "Alt+Alt_L") {
-		t.Fatalf("Alt-self bind must be skipped:\n%s", out)
+	out := g.GenerateKeybinds(cfg)
+	if strings.Contains(out, "Mod+Super_L") || strings.Contains(out, "Alt+Alt_L") {
+		t.Fatalf("modifier-self binds must not be written as niri binds:\n%s", out)
 	}
 	if !strings.Contains(out, "Mod+T") {
 		t.Fatalf("normal binds must survive:\n%s", out)
 	}
-	if !strings.Contains(out, "fires binds on press") {
-		t.Fatalf("expected explanatory skip comment:\n%s", out)
+	sk := g.SkippedKeybinds(cfg)
+	if len(sk) != 1 || sk[0].Key != "Alt_L" || !strings.Contains(sk[0].Reason, "fires binds on press") {
+		t.Fatalf("expected only the non-exec Alt_L bind reported, got %+v", sk)
+	}
+}
+
+func TestGenerateKeybindsSkipsHoldRelease(t *testing.T) {
+	g := &Generator{}
+	cfg := ipc.ConfigKeybinds{
+		Custom: []ipc.Keybind{
+			{Modifiers: []string{"SUPER"}, Key: "V", Dispatcher: "exec", Argument: "yozakura voice press ai", Enabled: true},
+			{Modifiers: []string{"SUPER"}, Key: "V", Dispatcher: "exec", Argument: "yozakura voice release", Flags: "r", Enabled: true},
+		},
+	}
+	out := g.GenerateKeybinds(cfg)
+	if n := strings.Count(out, "Mod+V "); n != 1 {
+		t.Fatalf("combo must be written once (niri rejects duplicates), got %d:\n%s", n, out)
+	}
+	if strings.Contains(out, "voice release") && !strings.Contains(out, "//") {
+		t.Fatalf("release bind must not be a niri bind:\n%s", out)
+	}
+	sk := g.SkippedKeybinds(cfg)
+	if len(sk) != 1 || !strings.Contains(sk[0].Reason, "release") {
+		t.Fatalf("release bind must be reported, got %+v", sk)
+	}
+}
+
+func TestGenerateKeybindsDedupesCombos(t *testing.T) {
+	g := &Generator{}
+	cfg := ipc.ConfigKeybinds{
+		Shell: &ipc.ShellKeybinds{Binds: map[string]ipc.Keybind{
+			"b": {Modifiers: []string{"SUPER"}, Key: "T", Dispatcher: "exec", Argument: "two", Enabled: true},
+			"a": {Modifiers: []string{"super"}, Key: "t", Dispatcher: "exec", Argument: "one", Enabled: true},
+		}},
+		Custom: []ipc.Keybind{
+			{Modifiers: []string{"SUPER"}, Key: "T", Dispatcher: "exec", Argument: "three", Enabled: true},
+		},
+	}
+	out := g.GenerateKeybinds(cfg)
+	if strings.Count(out, "Mod+T {")+strings.Count(out, "Mod+t {") != 1 {
+		t.Fatalf("expected a single Mod+T bind:\n%s", out)
+	}
+	if !strings.Contains(out, `spawn "one"`) {
+		t.Fatalf("first bind in name order must win:\n%s", out)
+	}
+	if sk := g.SkippedKeybinds(cfg); len(sk) != 2 {
+		t.Fatalf("expected two duplicates reported, got %+v", sk)
 	}
 }

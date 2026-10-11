@@ -54,8 +54,13 @@ function move(list, id, delta) {
     return out;
 }
 
+// Hiding the last visible tab is refused (the rail would show it anyway).
 function setVisible(list, id, on) {
-    return resolve(list).map(function (t) {
+    var cur = resolve(list);
+    var shown = cur.filter(function (t) { return t.visible; });
+    if (!on && shown.length === 1 && shown[0].id === id)
+        return cur;
+    return cur.map(function (t) {
         return t.id === id ? { id: t.id, visible: !!on } : t;
     });
 }

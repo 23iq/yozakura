@@ -391,7 +391,7 @@
           "title": "Open the alarm in the notch",
           "type": "boolean",
           "default": true,
-          "description": "The notch opens with Stop and +5 min when a timer ends",
+          "description": "The notch opens with Stop and +5 min when a timer ends (always, when the alarm repeats until stopped)",
           "x-settings": {
             "category": "timers",
             "section": "alarm",

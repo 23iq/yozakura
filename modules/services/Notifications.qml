@@ -162,6 +162,10 @@ Singleton {
     function toggleDnd() {
         rules.toggleDnd();
     }
+    // Focus mode's runtime-only quiet period (never persisted)
+    function setFocusSilent(on) {
+        rules.setFocusSilent(on);
+    }
     function showsOnScreen(name) {
         return rules.showsOnScreen(name);
     }

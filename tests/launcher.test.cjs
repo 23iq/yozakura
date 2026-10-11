@@ -187,3 +187,16 @@ test('routines first by default; an untouched old default order is migrated, a c
     assert.deepEqual(plain(P.ordered(custom)), custom);
     assert.equal(P.ordered(['ai', 'routines', 'apps']).indexOf('routines'), 1);
 });
+
+test('prefix validation: empty, spaces and duplicates are refused', () => {
+    const dis = PREFIX.launcher.disabled || [];
+    const err = (id, v) => P.prefixError(id, v, PREFIX, dis);
+    assert.equal(err('timers', 'tm'), '');
+    assert.equal(err('timers', '  '), 'empty');
+    assert.equal(err('timers', 'a b'), 'space');
+    assert.equal(err('timers', PREFIX.tmux), 'duplicate');
+    // its own current value is not a duplicate
+    assert.equal(err('timers', PREFIX.timers), '');
+    // a disabled provider does not block its prefix
+    assert.equal(P.prefixError('timers', PREFIX.tmux, PREFIX, ['tmux']), '');
+});

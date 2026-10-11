@@ -7,10 +7,10 @@ import Quickshell
 import qs.config
 import "timers/FocusSummary.js" as FocusSummary
 
-// Focus mode (system.focus.*): start = Do Not Disturb on (the previous
-// state is remembered), a "Focus" timer in the timers service and,
+// Focus mode (system.focus.*): start = quiet notifications (a runtime flag, not the
+// persisted DND setting), a "Focus" timer in the timers service and,
 // optionally, no notification badges; end (the timer finished, toggle(),
-// the timer cancelled elsewhere) = DND back as it was and a summary of the
+// the timer cancelled elsewhere) = quiet off and a summary of the
 // notifications that arrived meanwhile. Survives a shell restart through
 // StateService ("focusMode").
 Singleton {
@@ -22,7 +22,6 @@ Singleton {
     property bool active: false
     property string timerId: ""
     property real startedAt: 0
-    property bool previousDnd: false
     property bool changedDnd: false
 
     readonly property var timer: root.timerId !== "" ? (TimersService.timers.find(t => t.id === root.timerId) || null) : null
@@ -42,10 +41,11 @@ Singleton {
         } else {
             root.startedAt = Date.now();
             root.changedDnd = false;
+            // Quiet through a runtime flag: notifications.dnd.enabled stays
+            // as the user left it, so a crash never leaves DND on.
             if (!root.cfg || root.cfg.dnd !== false) {
-                root.previousDnd = !!(Config.notifications && Config.notifications.dnd && Config.notifications.dnd.enabled);
                 root.changedDnd = true;
-                Notifications.setDnd(true);
+                Notifications.setFocusSilent(true);
             }
         }
         root.active = true;
@@ -67,7 +67,7 @@ Singleton {
         root.active = false;
         root.timerId = "";
         if (root.changedDnd)
-            Notifications.setDnd(root.previousDnd);
+            Notifications.setFocusSilent(false);
         root.changedDnd = false;
         if (id !== "" && TimersService.timers.some(t => t.id === id))
             TimersService.call(completed ? "dismiss" : "cancel", {
@@ -145,7 +145,6 @@ Singleton {
             "active": root.active,
             "timerId": root.timerId,
             "startedAt": root.startedAt,
-            "previousDnd": root.previousDnd,
             "changedDnd": root.changedDnd
         });
     }
@@ -156,9 +155,10 @@ Singleton {
             return;
         root.timerId = s.timerId || "";
         root.startedAt = Number(s.startedAt) || Date.now();
-        root.previousDnd = !!s.previousDnd;
         root.changedDnd = !!s.changedDnd;
         root.active = true;
+        if (root.changedDnd)
+            Notifications.setFocusSilent(true);
         // The timer may have finished while the shell was down
         Qt.callLater(() => {
             if (root.active && TimersService.ready && !TimersService.timers.some(t => t.id === root.timerId))
