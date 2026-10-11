@@ -55,6 +55,7 @@ type Service struct {
 	cacheAt time.Time
 	failed  map[string]string   // entry -> reason of its last failed job
 	active  map[string][]string // queued/running job -> its entries
+	planMu  sync.Mutex          // plan + enqueue is one step (no double jobs)
 	planned map[string]Job      // jobs handed to the queue, for retries
 	order   []string
 	subs    []*ipc.Subscriber
@@ -297,6 +298,9 @@ func (s *Service) enqueue(jobs []Job) map[string]any {
 		if e == nil {
 			e = []string{}
 		}
+		// marked before the queue's own "queued" event: a second install
+		// planned right after this one already sees these entries as busy
+		s.active[j.ID] = e
 		refs = append(refs, jobRef{j.ID, j.Kind, e})
 	}
 	s.mu.Unlock()
@@ -316,6 +320,8 @@ func (s *Service) install(params json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.planMu.Lock()
+	defer s.planMu.Unlock()
 	det := s.detected(true) // never plan from a stale cache
 	jobs, err := Plan(c, s.o.Platform(), det, s.notActive(p.IDs), s.o.Self(), PlanOptions{
 		ConfirmMultilib: p.ConfirmMultilib,
@@ -382,6 +388,7 @@ func (s *Service) upgradeAndRetry(params json.RawMessage) (any, error) {
 	}
 	up := UpgradeJob(s.o.Self())
 	retry := old
-	retry.ID, retry.Deps = newJobID(old.Kind), []string{up.ID}
+	retry.ID = newJobID(old.Kind)
+	retry.Deps = append(append([]string(nil), old.Deps...), up.ID)
 	return s.enqueue([]Job{up, retry}), nil
 }

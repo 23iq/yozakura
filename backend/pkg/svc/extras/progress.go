@@ -37,6 +37,9 @@ type Progress struct {
 	Phase   string   `json:"phase"`
 	Reason  string   `json:"reason,omitempty"`
 	Log     string   `json:"log,omitempty"`
+	// PostError: the job succeeded but a post action (app theming hook)
+	// failed; the entry is installed, its integration is not.
+	PostError string `json:"postError,omitempty"`
 }
 
 const maxPhase = 120

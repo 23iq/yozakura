@@ -3216,6 +3216,7 @@
   "extras.ui.reason.disk_full": "Not enough disk space",
   "extras.ui.reason.dependency_failed": "Something it needs failed to install",
   "extras.ui.reason.error": "The installer reported an error",
+  "extras.ui.post_failed": "Installed, but setup failed",
   "extras.ui.reason.needs_aur_helper": "needs an AUR helper (paru or yay)",
   "extras.ui.reason.needs_flatpak": "needs Flatpak",
   "extras.ui.reason.needs_npm": "needs npm (Node.js)",

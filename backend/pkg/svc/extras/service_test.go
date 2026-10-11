@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -235,6 +236,10 @@ func TestServiceLog(t *testing.T) {
 
 func TestServiceOllamaPull(t *testing.T) {
 	e := newSvcEnv(t, archNvidia, map[string]fakeStep{"ollama pull qwen3:8b": {lines: []string{"pulling manifest"}}})
+	if _, err := call(t, e.s.ollamaPull, `{"model":"qwen3:8b"}`); err == nil || !strings.Contains(err.Error(), "not installed") {
+		t.Fatalf("pull without ollama: %v", err)
+	}
+	e.probe.bins = map[string]bool{"ollama": true}
 	m, err := call(t, e.s.ollamaPull, `{"model":"qwen3:8b"}`)
 	if err != nil {
 		t.Fatal(err)
@@ -329,5 +334,49 @@ func TestServiceInstallSkipsActiveAndRedetects(t *testing.T) {
 	}
 	if e.probe.n.Load() == n {
 		t.Error("install did not re-detect")
+	}
+}
+
+func TestServiceConcurrentInstallPlansOneJob(t *testing.T) {
+	key := "pkexec " + self + " sys install firefox"
+	e := newSvcEnv(t, archNvidia, map[string]fakeStep{key: {block: true}})
+	e.run.started = make(chan string, 4)
+	var mu sync.Mutex
+	total := 0
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			m, err := call(t, e.s.install, `{"ids":["firefox"]}`)
+			if err != nil {
+				return
+			}
+			mu.Lock()
+			total += len(m["jobs"].([]any))
+			mu.Unlock()
+		}()
+	}
+	wg.Wait()
+	if total != 1 {
+		t.Fatalf("%d jobs planned for one entry", total)
+	}
+}
+
+func TestServiceRetryKeepsOriginalDeps(t *testing.T) {
+	e := newSvcEnv(t, archNvidia, nil)
+	e.s.mu.Lock()
+	e.s.planned["system-77"] = Job{ID: "system-77", Kind: KindSystem, Entries: []string{"x"}, Deps: []string{"multilib-1"}}
+	e.s.mu.Unlock()
+	m, err := call(t, e.s.upgradeAndRetry, `{"job":"system-77"}`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := jobIDs(t, m)
+	e.s.mu.Lock()
+	retry := e.s.planned[ids[1]]
+	e.s.mu.Unlock()
+	if len(retry.Deps) != 2 || retry.Deps[0] != "multilib-1" || retry.Deps[1] != ids[0] {
+		t.Fatalf("deps = %v", retry.Deps)
 	}
 }

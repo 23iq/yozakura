@@ -3218,6 +3218,7 @@
   "extras.ui.reason.disk_full": "Недостаточно места на диске",
   "extras.ui.reason.dependency_failed": "Не удалось установить нужный ему компонент",
   "extras.ui.reason.error": "Установщик сообщил об ошибке",
+  "extras.ui.post_failed": "Установлено, но настройка не удалась",
   "extras.ui.reason.needs_aur_helper": "нужен помощник AUR (paru или yay)",
   "extras.ui.reason.needs_flatpak": "нужен Flatpak",
   "extras.ui.reason.needs_npm": "нужен npm (Node.js)",
