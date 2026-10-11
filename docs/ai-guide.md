@@ -501,6 +501,7 @@ combo.
 | Music-reactive border | `modules/services/BorderPulse.{qml,js}` | `compositor.borderPulse.*` | `tests/border-pulse.test.cjs` |
 | Desktop, depth clock | `modules/desktop/`, `clockstyles/ClockStyleRegistry.js` | `desktop.*` | `tests/clock-styles.test.cjs`, `tests/depth-clock.test.py` |
 | Desktop widgets | `modules/desktop/widgets/` (`WidgetRegistry.js`, `types/`) | `desktop.widgets*` | `tests/desktop-widgets.test.{cjs,py}` |
+| Dashboard home, header | `modules/widgets/dashboard/` (`Dashboard.qml` frame + `stage/StageHeader`; homes `stage/` (default), `home/` (composed), `widgets/` (bento)) | `layout.dashboard.home` (`stage` / `composed` / `bento`), `layout.dashboard.{tabs,showMetrics,heroTint}` | `tests/dashboard-stage*.test.*`, `tests/dashboard-home.test.py`, `tools/render/dashboard_render.py` |
 | Wallpapers | `modules/widgets/dashboard/wallpapers/` | `desktop.wallpaper*` | `tests/wallpaper-*.test.*` |
 | Launcher | `modules/widgets/launcher/` | `prefix.*` | |
 | Settings window | `modules/settings/` (schema-driven) | | `tests/settings-schema.test.cjs`, `tests/settings-ui.test.py` |

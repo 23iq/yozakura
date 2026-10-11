@@ -57,6 +57,7 @@ Group {
 
         sourceComponent: HomeCalendar {
             bare: true
+            squareCells: true
             maxEvents: 3
         }
     }
