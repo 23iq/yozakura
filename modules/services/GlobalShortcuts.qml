@@ -71,6 +71,8 @@ QtObject {
             case "wallpaper-previous": if (GlobalStates.wallpaperManager) GlobalStates.wallpaperManager.previousWallpaper(); break;
             case "dashboard-widgets": toggleDashboardTab(0); break;
             case "dashboard-wallpapers": toggleDashboardTab(1); break;
+            // "dashboard-kanban" is the old id of the third tab (the kanban board is gone)
+            case "dashboard-kanban":
             case "dashboard-metrics": toggleDashboardTab(2); break;
             case "dashboard-assistant": toggleAssistant(); break;
             case "dashboard-controls": toggleSettings(); break;
