@@ -73,7 +73,9 @@ function thumbnailPath(file, primary, extraFolders, cacheBase, md5) {
 }
 
 // Media scan over every folder. Run through sh so a missing extra folder
-// only drops its own results (find's errors are discarded).
+// only drops its own results (find's errors are discarded). Hidden entries
+// below a folder are skipped, but a folder that is itself hidden
+// (~/.wallpapers) is scanned (-mindepth 1); extensions match any case.
 function findCommand(dirs) {
     if (!dirs || dirs.length === 0)
         return ["true"];
@@ -81,9 +83,9 @@ function findCommand(dirs) {
     for (var i = 0; i < EXTENSIONS.length; i++) {
         if (i > 0)
             names.push("-o");
-        names.push("-name", "*." + EXTENSIONS[i]);
+        names.push("-iname", "*." + EXTENSIONS[i]);
     }
-    return ["sh", "-c", "find -L \"$@\" -name '.*' -prune -o -type f \\( " + names.map(function (a) {
-            return a === "-o" ? a : (a === "-name" ? a : "'" + a + "'");
+    return ["sh", "-c", "find -L \"$@\" -mindepth 1 -name '.*' -prune -o -type f \\( " + names.map(function (a) {
+            return a === "-o" || a === "-iname" ? a : "'" + a + "'";
         }).join(" ") + " \\) -print 2>/dev/null || true", "sh"].concat(dirs);
 }
