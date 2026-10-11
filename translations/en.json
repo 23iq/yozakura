@@ -3545,7 +3545,7 @@
   "prefs.dock.theme": "Dock style",
   "prefs.dock.theme.desc": "Default sits on the edge, floating detaches from it, integrated puts the apps inside the bar.",
   "prefs.dock.position": "Dock edge",
-  "prefs.dock.position.desc": "Screen edge the dock sits on.",
+  "prefs.dock.position.desc": "Screen edge the dock sits on (bottom, left or right). In the bar (integrated) left and right put it at the start or end of the bar, bottom centers it.",
   "prefs.dock.screens": "Dock monitors",
   "prefs.dock.screens.desc": "Monitors that show the dock; none selected shows it on every monitor.",
   "prefs.dock.section.size": "Dock size",

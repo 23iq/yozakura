@@ -13,6 +13,7 @@ import qs.modules.corners
 import qs.modules.globals
 import qs.config
 import qs.modules.bar.panels
+import qs.modules.shell
 import qs.modules.bar.workspaces
 import "../specials/Specials.js" as Specials
 
@@ -27,38 +28,26 @@ Item {
     property bool pinned: Config.dock?.pinnedOnStartup ?? false
 
     // Theme configuration
-    readonly property string theme: Config.dock?.theme ?? "default"
+    // "integrated" without a bar that hosts it falls back to the default look
+    readonly property string theme: (Config.dock?.theme ?? "default") === "integrated" ? "default" : (Config.dock?.theme ?? "default")
     readonly property bool isFloating: theme === "floating"
     readonly property bool isDefault: theme === "default"
 
-    // Position configuration with fallback logic to avoid bar collision
+    // Position: exactly dock.position (the dock has no top edge; "top" is
+    // drawn at the bottom). A bar on the same edge is stacked (barStack), the
+    // configured edge is never remapped.
     readonly property string userPosition: Config.dock?.position ?? "bottom"
-    readonly property string barPosition: Panels.primaryEdge
-    readonly property string notchPosition: Config.notchPosition ?? "top"
+    readonly property string position: userPosition === "left" || userPosition === "right" ? userPosition : "bottom"
 
-    // Effective position
-    readonly property string position: {
-        if (notchPosition === "bottom" && userPosition === "bottom") {
-            return (barPosition === "left") ? "right" : "left";
+    // Depth of the bar panels on the dock's edge: the dock sits outside them.
+    readonly property int barStack: {
+        const list = EdgeService.panelsFor(root.screen, true);
+        let depth = 0;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].pos === root.position)
+                depth = Math.max(depth, list[i].size || 0);
         }
-        if (userPosition !== barPosition) {
-            return userPosition;
-        }
-        switch (userPosition) {
-        case "bottom":
-            if (notchPosition === "bottom" || barPosition === "bottom") {
-                 return (barPosition === "left") ? "right" : "left";
-            }
-            return "left";
-        case "left":
-            return "right";
-        case "right":
-            return "left";
-        case "top":
-            return "bottom";
-        default:
-            return "bottom";
-        }
+        return depth;
     }
 
     readonly property bool isBottom: position === "bottom"
@@ -131,6 +120,7 @@ Item {
     implicitHeight: root.isVertical ? dockContent.implicitHeight + shadowSpace * 2 : dockSize + totalMargin + shadowSpace * 2
 
     readonly property int frameOffset: Config.bar?.frameEnabled ? (Config.bar?.frameThickness ?? 6) : 0
+    readonly property int edgeOffset: frameOffset + barStack
 
     // The hitbox for the mask
     readonly property Item dockHitbox: dockMouseArea
@@ -147,8 +137,8 @@ Item {
         hoverEnabled: true
 
         // Size
-        width: root.isVertical ? (root.reveal ? root.dockSize + root.totalMargin + root.shadowSpace : (Config.dock?.hoverRegionHeight ?? 4) + root.frameOffset) : dockContent.implicitWidth + 20
-        height: root.isVertical ? dockContent.implicitHeight + 20 : (root.reveal ? root.dockSize + root.totalMargin + root.shadowSpace : (Config.dock?.hoverRegionHeight ?? 4) + root.frameOffset)
+        width: root.isVertical ? (root.reveal ? root.dockSize + root.totalMargin + root.shadowSpace : (Config.dock?.hoverRegionHeight ?? 4) + root.edgeOffset) : dockContent.implicitWidth + 20
+        height: root.isVertical ? dockContent.implicitHeight + 20 : (root.reveal ? root.dockSize + root.totalMargin + root.shadowSpace : (Config.dock?.hoverRegionHeight ?? 4) + root.edgeOffset)
 
         // Position using x/y
         x: {
@@ -222,13 +212,13 @@ Item {
             // Position using x/y
             x: {
                 const base = root.isBottom ? (parent.width - width) / 2 : (root.isLeft ? root.edgeSideMargin : parent.width - width - root.edgeSideMargin);
-                if (root.isLeft) return base + root.frameOffset;
-                if (root.isRight) return base - root.frameOffset;
+                if (root.isLeft) return base + root.edgeOffset;
+                if (root.isRight) return base - root.edgeOffset;
                 return base;
             }
             y: {
                 const base = root.isVertical ? (parent.height - height) / 2 : parent.height - height - root.edgeSideMargin;
-                if (root.isBottom) return base - root.frameOffset;
+                if (root.isBottom) return base - root.edgeOffset;
                 return base;
             }
 

@@ -3545,7 +3545,7 @@
   "prefs.dock.theme": "Estilo del dock",
   "prefs.dock.theme.desc": "Predeterminado se pega al borde, flotante se separa de él, integrado pone las apps dentro de la barra.",
   "prefs.dock.position": "Borde del dock",
-  "prefs.dock.position.desc": "Borde de la pantalla donde se sitúa el dock.",
+  "prefs.dock.position.desc": "Borde de la pantalla donde se sitúa el dock (abajo, izquierda o derecha). Integrado en la barra, izquierda y derecha lo colocan al inicio o al final de la barra; abajo lo centra.",
   "prefs.dock.screens": "Monitores del dock",
   "prefs.dock.screens.desc": "Monitores que muestran el dock; sin selección se muestra en todos.",
   "prefs.dock.section.size": "Tamaño del dock",

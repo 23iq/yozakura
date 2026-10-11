@@ -57,7 +57,11 @@ PanelWindow {
 
     readonly property bool dockEnabled: {
         if (!Config.dockReady) return false;
-        if (!(Config.dock.enabled ?? false) || (Config.dock.theme ?? "default") === "integrated")
+        if (!(Config.dock.enabled ?? false))
+            return false;
+        // Integrated is drawn by the bar only when this screen's primary
+        // panel hosts it (classic); otherwise the dock stays standalone.
+        if ((Config.dock.theme ?? "default") === "integrated" && barContent && barContent.integratedDockEnabled)
             return false;
         const list = Config.dock.screenList;
         return (!list || list.length === 0 || list.indexOf(targetScreen.name) !== -1);
