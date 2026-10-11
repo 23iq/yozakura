@@ -179,6 +179,7 @@ QtObject {
     property string configDir: "/cfg"
     property string presetDir: "/preset"
     property bool pauseAutoSave: false
+    property int autoSaveDelay: 0
     property int legacyCalls: 0
     property ConfigFile file: ConfigFile {
         store: store
@@ -204,7 +205,19 @@ h.eval(f, "adapterUpdated()")
 check(h.eval(f, "writes") == 1, "no write while the store pauses auto-save")
 h.eval(scene, "pauseAutoSave = false")
 h.eval(f, "fileChanged()")
-check(h.eval(f, "reloads") >= 1 and h.eval(scene, "pauseAutoSave") is False, "external change reloads with auto-save paused")
+check(h.eval(f, "reloads") >= 1 and h.eval(scene, "pauseAutoSave") is False, "external change reloads without touching the store pause")
+# a staged change keeps auto-save paused across an external reload (S-01)
+h.eval(scene, "pauseAutoSave = true")
+h.eval(f, "fileChanged()")
+check(h.eval(scene, "pauseAutoSave") is True, "an external reload never lifts the store pause")
+h.eval(scene, "pauseAutoSave = false")
+# edits are coalesced when the store sets autoSaveDelay
+h.eval(scene, "autoSaveDelay = 5000")
+h.eval(f, "writes = 0; adapterUpdated(); adapterUpdated()")
+check(h.eval(f, "writes") == 0 and h.eval(f, "saveTimer.running") is True, "edits are debounced by autoSaveDelay")
+h.eval(f, "autoSave()")
+check(h.eval(f, "writes") == 1, "the coalesced edit is written once")
+h.eval(scene, "autoSaveDelay = 0")
 
 BROKEN = """import QtQuick
 QtObject {

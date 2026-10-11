@@ -157,6 +157,8 @@ Item {
                                             onEdited: t => {
                                                 if (SchemaUtil.matchesPattern(fieldBox.modelData, t))
                                                     root.edit(card.index, fieldBox.modelData.key, t);
+                                                else
+                                                    input.text = fieldBox.value ?? "";
                                             }
                                         }
                                     }

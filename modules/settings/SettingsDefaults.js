@@ -20,11 +20,14 @@
 .import "../../config/defaults/specials.js" as SpecialsDefaults
 .import "../../config/defaults/terminal.js" as TerminalDefaults
 .import "../../config/defaults/layout.js" as LayoutDefaults
+.import "../widgets/dashboard/wallpapers/WallpaperDefaults.js" as WallpaperDefaults
 .import "SchemaUtil.js" as SchemaUtil
 
 // Default value of any settings key, read from config/defaults/*.js (the
 // same blueprint Config.qml validates against). Wallpaper keys live in
-// ~/.cache/yozakura/wallpapers.json; their defaults mirror Wallpaper.qml.
+// ~/.cache/yozakura/wallpapers.json; their defaults come from
+// WallpaperDefaults.js (the wallpaper manager's own source). wallPath has none
+// (the manager's fallback folder): the store asks the manager.
 
 var DOMAINS = {
     "theme": ThemeDefaults.data,
@@ -49,9 +52,8 @@ var DOMAINS = {
     "terminal": TerminalDefaults.data,
     "layout": LayoutDefaults.data,
     "wallpaper": {
-        "matugenScheme": "scheme-tonal-spot",
-        "activeColorPreset": "",
-        "wallPath": ""
+        "matugenScheme": WallpaperDefaults.MATUGEN_SCHEME,
+        "activeColorPreset": WallpaperDefaults.ACTIVE_COLOR_PRESET
     }
 };
 

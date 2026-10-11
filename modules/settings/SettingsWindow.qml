@@ -5,6 +5,7 @@ import qs.modules.globals
 import qs.modules.services
 import qs.modules.theme
 import qs.config
+import qs.modules.settings.store
 
 FloatingWindow {
     id: settingsWindow
@@ -78,6 +79,18 @@ FloatingWindow {
 
     SettingsShell {
         anchors.fill: parent
+    }
+
+    // Unsaved staged changes are never dropped silently: a close request
+    // (close button, keybind, window manager) keeps the window and asks.
+    Connections {
+        target: GlobalStates
+        function onSettingsWindowVisibleChanged() {
+            if (!GlobalStates.settingsWindowVisible && SettingsStore.hasChanges) {
+                GlobalStates.settingsCloseConfirm = true;
+                GlobalStates.settingsWindowVisible = true;
+            }
+        }
     }
 
     // Close on visibility change from outside

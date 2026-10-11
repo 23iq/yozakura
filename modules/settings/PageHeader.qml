@@ -41,6 +41,6 @@ RowLayout {
         Layout.topMargin: Space.xs
         visible: header.modifiedCount > 0
         action: I18n.t("prefs.common.reset_page")
-        onTriggered: SettingsStore.resetCategory(header.category)
+        onTriggered: SettingsStore.requestReset(header.category)
     }
 }

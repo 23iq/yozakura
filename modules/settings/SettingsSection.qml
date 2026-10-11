@@ -42,7 +42,7 @@ Group {
     visible: CompositorGate.allows(section.compositor, YozdService.compositorName)
     label: section.title ? I18n.t(section.title) : ""
     actionText: sectionRoot.resetShown ? I18n.t("prefs.common.reset") : (sectionRoot.collapsible ? I18n.t(sectionRoot.expanded ? "prefs.common.hide" : "prefs.common.show") : "")
-    onActionTriggered: sectionRoot.resetShown ? SettingsStore.resetSection(sectionRoot.section) : sectionRoot.toggle()
+    onActionTriggered: sectionRoot.resetShown ? SettingsStore.requestResetSection(sectionRoot.section) : sectionRoot.toggle()
 
     // The whole label row of a foldable section toggles it (the action keeps
     // its own clicks: it is above this area).

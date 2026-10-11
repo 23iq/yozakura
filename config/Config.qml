@@ -51,7 +51,28 @@ Singleton {
     // Dev fallback seed: the default set's own files (the backend seeds from the composed set).
     property string presetDir: Qt.resolvedUrl("../assets/presets/sets/" + Brand.displayName).toString().replace("file://", "")
 
-    property bool pauseAutoSave: false
+    // Auto-save of the config domains is paused while a staged settings
+    // change is waiting for Apply / Discard (GlobalStates *HasChanges), or
+    // while a service holds it (holdAutoSave / releaseAutoSave, ref-counted).
+    // Derived, never assigned: nothing can leave it stuck on or off.
+    property int autoSaveHolds: 0
+    readonly property bool pauseAutoSave: autoSaveHolds > 0 || GlobalStates.themeHasChanges || GlobalStates.shellHasChanges || GlobalStates.compositorHasChanges
+    // Edits are coalesced into one write per domain after this many ms.
+    readonly property int autoSaveDelay: 150
+
+    function holdAutoSave() {
+        root.autoSaveHolds++;
+    }
+
+    function releaseAutoSave() {
+        root.autoSaveHolds = Math.max(0, root.autoSaveHolds - 1);
+    }
+
+    // A domain file was reloaded (external change): the staged settings
+    // snapshot of that domain follows it, so Discard never undoes it.
+    function configReloaded(name) {
+        GlobalStates.refreshSnapshotDomain(name);
+    }
 
     // ConfigFile found <name>.json malformed: tell the user where the copy
     // is (backup "" = the copy failed; replaced = defaults now in use).
@@ -307,14 +328,17 @@ Singleton {
                 root.pinnedAppsReady = true;
             }
         }
+        // The pinned apps are not a staged domain: only the echo of an
+        // external reload is skipped, never an edit made during staged changes.
+        property bool reloading: false
         onFileChanged: {
-            root.pauseAutoSave = true;
+            reloading = true;
             reload();
-            root.pauseAutoSave = false;
+            reloading = false;
         }
         onPathChanged: reload()
         onAdapterUpdated: {
-            if (root.pinnedAppsReady && !root.pauseAutoSave && !DryRun.active) {
+            if (root.pinnedAppsReady && !pinnedAppsLoader.reloading && !DryRun.active) {
                 pinnedAppsLoader.writeAdapter();
             }
         }

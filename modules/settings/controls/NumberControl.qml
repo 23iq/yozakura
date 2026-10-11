@@ -24,8 +24,8 @@ Item {
     activeFocusOnTab: true
 
     function step(dir) {
-        const v = Ui.snap(value + dir * stepSize, from, to, stepSize);
-        if (v !== value)
+        const v = Ui.stepValue(value, dir, from, to, stepSize, specialValues);
+        if (Math.abs(v - value) > 1e-9)
             changed(v);
     }
 
@@ -64,7 +64,7 @@ Item {
                     visible: slot.modelData !== 0
                     size: "s"
                     icon: slot.modelData < 0 ? Icons.minus : Icons.plus
-                    enabled: slot.modelData < 0 ? root.value > root.from : root.value < root.to
+                    enabled: Math.abs(Ui.stepValue(root.value, slot.modelData, root.from, root.to, root.stepSize, root.specialValues) - root.value) > 1e-9
                     onClicked: {
                         root.forceActiveFocus();
                         root.step(slot.modelData);

@@ -37,10 +37,68 @@ function clamp(v, lo, hi) {
     return Math.max(lo, Math.min(hi, v));
 }
 
-// Snap `v` to `step` within [min, max].
+// Decimal places of a step ("0.05" -> 2, 1e-7 -> 7).
+function decimals(x) {
+    var str = String(Math.abs(x));
+    var e = str.match(/e-(\d+)$/);
+    if (e)
+        return Number(e[1]);
+    var dot = str.indexOf(".");
+    return dot === -1 ? 0 : str.length - dot - 1;
+}
+
+// Snap `v` to `step` within [min, max]; the result is rounded to the
+// decimals of step / min so float noise (0.30000000000000004) never reaches
+// the config files.
 function snap(v, min, max, step) {
     var s = step > 0 ? step : 1;
-    return clamp(Math.round((v - min) / s) * s + min, min, max);
+    var r = clamp(Math.round((v - min) / s) * s + min, min, max);
+    var d = Math.max(decimals(s), decimals(min));
+    return d > 0 ? Number(r.toFixed(Math.min(d, 10))) : r;
+}
+
+function isSpecial(value, min, max, specials) {
+    if (value >= min && value <= max)
+        return false;
+    return (specials || []).some(function (sp) {
+        return Math.abs(sp.value - value) < 1e-9;
+    });
+}
+
+// One step of `dir` (+1 / -1) from `value`. Special values outside
+// [min, max] (-1 = auto) are one step beyond the range ends: stepping down
+// from `min` lands on one, stepping back up from it returns to `min`.
+function stepValue(value, dir, min, max, step, specials) {
+    var sp = (specials || []).map(function (x) {
+        return x.value;
+    });
+    if (isSpecial(value, min, max, specials)) {
+        if (value < min)
+            return dir > 0 ? min : value;
+        return dir < 0 ? max : value;
+    }
+    var s = step > 0 ? step : 1;
+    var raw = value + dir * s;
+    if (raw < min - 1e-9) {
+        var below = sp.filter(function (x) {
+            return x < min;
+        });
+        if (below.length && value <= min + 1e-9)
+            return Math.max.apply(null, below);
+    } else if (raw > max + 1e-9) {
+        var above = sp.filter(function (x) {
+            return x > max;
+        });
+        if (above.length && value >= max - 1e-9)
+            return Math.min.apply(null, above);
+    }
+    return snap(raw, min, max, s);
+}
+
+// A finite number from a config value (NaN / non-numeric -> fallback).
+function finite(v, fallback) {
+    var n = Number(v);
+    return isFinite(n) && v !== null && v !== undefined && v !== "" ? n : fallback;
 }
 
 // Duck-typed access to objects of unknown type (Loader items: legacy

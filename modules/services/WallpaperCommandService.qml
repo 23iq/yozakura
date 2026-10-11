@@ -144,7 +144,7 @@ Singleton {
         }
 
         if (payload.oled !== undefined || payload.tint !== undefined) {
-            Config.pauseAutoSave = true;
+            Config.holdAutoSave();
             try {
                 if (payload.oled !== undefined) {
                     Config.theme.oledMode = payload.oled === true;
@@ -153,7 +153,7 @@ Singleton {
                     manager.tintEnabled = payload.tint === true;
                 }
             } finally {
-                Qt.callLater(() => { Config.pauseAutoSave = false; });
+                Qt.callLater(() => Config.releaseAutoSave());
             }
         }
 

@@ -99,7 +99,8 @@ test('each part only carries the keys its kind owns', () => {
         const d = P.domains(P.partDir('palette', n));
         assert.deepEqual(Object.keys(d.wallpaper).sort(), ['activeColorPreset', 'matugenScheme'], n);
         assert.equal(d.wallpaper.activeColorPreset, n, `${n}: its own color preset`);
-        assert.deepEqual(Object.keys(d.theme).sort(), ['lightMode', 'oledMode'], n);
+        // a palette never pins the user's light/dark/OLED mode (sets may)
+        assert.equal(d.theme, undefined, `${n}: no theme domain`);
     }
 });
 

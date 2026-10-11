@@ -291,6 +291,8 @@ Singleton {
 
     // Settings Window state
     property bool settingsWindowVisible: false
+    // Closing the settings window with unsaved changes: ask Apply / Discard / Keep.
+    property bool settingsCloseConfirm: false
     property int settingsTargetWorkspaceId: 0
     property string settingsTargetScreenName: ""
 
@@ -436,7 +438,6 @@ Singleton {
         // Take a snapshot before the first change
         if (!themeHasChanges) {
             themeSnapshot = createThemeSnapshot();
-            Config.pauseAutoSave = true;
         }
         themeHasChanges = true;
     }
@@ -446,7 +447,6 @@ Singleton {
             Config.loader.writeAdapter();
             themeHasChanges = false;
             themeSnapshot = null;
-            Config.pauseAutoSave = false;
         }
     }
 
@@ -455,7 +455,6 @@ Singleton {
             restoreThemeSnapshot(themeSnapshot);
             themeHasChanges = false;
             themeSnapshot = null;
-            Config.pauseAutoSave = false;
         }
     }
 
@@ -468,8 +467,8 @@ Singleton {
     // Shell config sections and their properties
     readonly property var _shellSections: {
         "bar": ["position", "launcherIcon", "launcherIconTint", "launcherIconSize", "enableFirefoxPlayer", "screenList", "frameEnabled", "frameThickness", "pinnedOnStartup", "hoverRegionHeight", "showPinButton", "availableOnFullscreen", "use12hFormat", "containBar", "keepBarShadow", "keepBarBorder", "clockShowDate", "layout", "compact", "panels", "moduleOptions"],
-        "notch": ["enabled", "position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "mediaStyle", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "activitiesIn", "liveActivities"],
-        "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle"],
+        "notch": ["enabled", "position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "mediaStyle", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "activitiesIn", "liveActivities", "hoverExpandDelay", "hoverCollapseDelay", "expandedMediaWidth", "mediaAnimationDuration", "expandedArtworkSize", "microphoneNoticeDuration"],
+        "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle", "showSpecialWorkspace", "specialWorkspaceAnimationDuration", "specialWorkspaceFont"],
         "overview": ["style", "rows", "columns", "scale", "workspaceSpacing"],
         "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "indicator", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce", "ignoredAppRegexes"],
         "lockscreen": ["position", "style", "tone", "blur", "showMedia", "showVisualizer", "showStatus"],
@@ -554,7 +553,6 @@ Singleton {
         // Take a snapshot before the first change
         if (!shellHasChanges) {
             shellSnapshot = createShellSnapshot();
-            Config.pauseAutoSave = true;
         }
         shellHasChanges = true;
     }
@@ -573,7 +571,6 @@ Singleton {
             
             shellHasChanges = false;
             shellSnapshot = null;
-            Config.pauseAutoSave = false;
         }
     }
 
@@ -582,7 +579,6 @@ Singleton {
             restoreShellSnapshot(shellSnapshot);
             shellHasChanges = false;
             shellSnapshot = null;
-            Config.pauseAutoSave = false;
         }
     }
 
@@ -663,11 +659,31 @@ Singleton {
         }
     }
 
+    // A domain file was reloaded from disk (preset apply, `config set`, Mods):
+    // its live values are the file's now, so the snapshot of that domain
+    // follows; Discard must not bring back the values from before it.
+    function refreshSnapshotDomain(name) {
+        if (name === "theme" && themeHasChanges)
+            themeSnapshot = createThemeSnapshot();
+        else if (name === "compositor" && compositorHasChanges)
+            compositorSnapshot = createCompositorSnapshot();
+        else if (shellHasChanges && shellSnapshot && _shellSections[name]) {
+            var props = _shellSections[name];
+            var fresh = {};
+            for (var i = 0; i < props.length; i++) {
+                var val = Config[name][props[i]];
+                fresh[props[i]] = typeof val === 'object' && val !== null ? JSON.parse(JSON.stringify(val)) : val;
+            }
+            var snap = shellSnapshot;
+            snap[name] = fresh;
+            shellSnapshot = snap;
+        }
+    }
+
     function markCompositorChanged() {
         // Take a snapshot before the first change
         if (!compositorHasChanges) {
             compositorSnapshot = createCompositorSnapshot();
-            Config.pauseAutoSave = true;
         }
         compositorHasChanges = true;
     }
@@ -677,7 +693,6 @@ Singleton {
             Config.saveCompositor();
             compositorHasChanges = false;
             compositorSnapshot = null;
-            Config.pauseAutoSave = false;
         }
     }
 
@@ -686,7 +701,6 @@ Singleton {
             restoreCompositorSnapshot(compositorSnapshot);
             compositorHasChanges = false;
             compositorSnapshot = null;
-            Config.pauseAutoSave = false;
         }
     }
 

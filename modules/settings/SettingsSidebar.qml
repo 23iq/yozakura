@@ -5,6 +5,7 @@ import QtQuick.Effects
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
+import qs.modules.settings.store
 import "schema/Categories.js" as Categories
 import "SchemaUtil.js" as SchemaUtil
 
@@ -18,7 +19,10 @@ Item {
     property bool compact: false
     readonly property string query: searchField.text.trim()
     readonly property var index: SchemaUtil.buildSearchIndex(Categories.categories, k => I18n.t(k))
-    readonly property var results: query.length > 0 ? SchemaUtil.search(index, query, 30) : []
+    readonly property var results: query.length > 0 ? SchemaUtil.search(index, query, 30, {
+        "compositor": YozdService.compositorName,
+        "get": SettingsStore.get
+    }) : []
     property int resultIndex: 0
 
     signal categorySelected(string id)
