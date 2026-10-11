@@ -4065,5 +4065,7 @@
   "routines.field.volume_set.percent.hint": "100 is full volume; up to 150 is boosted.",
   "prefs.surfaces.lock.capped": "The %1 style caps this surface's opacity at %2%.",
   "prefs.surfaces.lock.language": "The %1 style overrides this surface's %2; set Visual style to Classic to edit them.",
-  "prefs.surfaces.lock.glass": "Glass is off: this surface is drawn opaque, so its opacity is ignored."
+  "prefs.surfaces.lock.glass": "Glass is off: this surface is drawn opaque, so its opacity is ignored.",
+  "prefs.compositor_only.note.one": "%1 setting is available only on %2",
+  "prefs.compositor_only.note.other": "%1 settings are available only on %2"
 }

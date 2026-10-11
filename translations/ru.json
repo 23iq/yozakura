@@ -4083,5 +4083,9 @@
   "routines.field.volume_set.percent.hint": "100 — полная громкость; до 150 — усиление.",
   "prefs.surfaces.lock.capped": "Стиль %1 ограничивает непрозрачность этой поверхности до %2%.",
   "prefs.surfaces.lock.language": "Стиль %1 переопределяет у этой поверхности: %2. Чтобы править, выберите стиль «Классика».",
-  "prefs.surfaces.lock.glass": "Glass выключен: поверхность рисуется непрозрачной, прозрачность игнорируется."
+  "prefs.surfaces.lock.glass": "Glass выключен: поверхность рисуется непрозрачной, прозрачность игнорируется.",
+  "prefs.compositor_only.note.one": "%1 настройка доступна только в %2",
+  "prefs.compositor_only.note.few": "%1 настройки доступны только в %2",
+  "prefs.compositor_only.note.many": "%1 настроек доступны только в %2",
+  "prefs.compositor_only.note.other": "%1 настройки доступны только в %2"
 }

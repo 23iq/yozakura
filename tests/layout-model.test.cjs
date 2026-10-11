@@ -206,3 +206,81 @@ test('every edit round-trips through fromConfig', () => {
         }
     }
 });
+
+// Bar off -> on gives the user back exactly what they had. The caller keeps
+// the memory (ShellLayout: StateService "barRestore"); here a tiny store.
+const offOn = (c, memory0 = null) => {
+    let memory = memory0;
+    const toggle = (cur, on) => {
+        const keep = M.remember(cur, 'bar', 'enabled', on);
+        if (keep !== undefined) memory = plain(keep);
+        return apply(cur, M.edit(cur, 'bar', 'enabled', on, memory));
+    };
+    return { toggle, memory: () => memory };
+};
+
+test('legacy bar: off then on restores the previous style', () => {
+    const c = cfg({ bar: { layout: { style: 'islands' } } });
+    const s = offOn(c);
+    const off = s.toggle(c, false);
+    assert.equal(off.bar.layout.style, 'none');
+    assert.deepEqual(s.memory(), { style: 'islands' });
+    const on = s.toggle(off, true);
+    assert.equal(on.bar.layout.style, 'islands');
+});
+
+test('legacy bar: repeated off keeps the remembered style; no memory falls back to classic', () => {
+    const c = cfg({ bar: { layout: { style: 'pills' } } });
+    const s = offOn(c);
+    const off = s.toggle(c, false);
+    assert.equal(M.remember(off, 'bar', 'enabled', false), undefined);
+    assert.equal(s.toggle(off, false).bar.layout.style, 'none');
+    assert.equal(s.toggle(off, true).bar.layout.style, 'pills');
+    const none = cfg({ bar: { layout: { style: 'none' } } });
+    assert.deepEqual(plain(M.edit(none, 'bar', 'enabled', true)), [{ key: 'bar.layout.style', value: 'classic' }]);
+    assert.deepEqual(plain(M.edit(none, 'bar', 'enabled', true, { style: 'bogus' })), [{ key: 'bar.layout.style', value: 'classic' }]);
+    assert.deepEqual(plain(M.edit(none, 'bar', 'enabled', true, { style: 'none' })), [{ key: 'bar.layout.style', value: 'classic' }]);
+});
+
+test('panels: off then on restores each panel flag and keeps styles', () => {
+    const c = cfg({ bar: { panels: [
+        { id: 'a', edge: 'top', style: 'islands', enabled: true },
+        { id: 'b', edge: 'bottom', style: 'pills', enabled: false },
+        { id: 'c', edge: 'left', style: 'classic', enabled: true }
+    ] } });
+    const s = offOn(c);
+    const off = s.toggle(c, false);
+    assert.ok(off.bar.panels.every((p) => p.enabled === false));
+    assert.deepEqual(off.bar.panels.map((p) => p.style), ['islands', 'pills', 'classic']);
+    assert.equal(M.fromConfig(off).bar.enabled, false);
+    // repeated off must not overwrite the memory with the all-off snapshot
+    const again = s.toggle(off, false);
+    const on = s.toggle(again, true);
+    assert.deepEqual(on.bar.panels.map((p) => p.enabled), [true, false, true]);
+    assert.deepEqual(on.bar.panels.map((p) => p.style), ['islands', 'pills', 'classic']);
+    // second cycle
+    const on2 = s.toggle(s.toggle(on, false), true);
+    assert.deepEqual(on2.bar.panels.map((p) => p.enabled), [true, false, true]);
+});
+
+test('panels: without memory every visible-style panel comes on; none-styled ones fall back to classic', () => {
+    const c = cfg({ bar: { panels: [
+        { id: 'a', edge: 'top', style: 'islands', enabled: false },
+        { id: 'b', edge: 'bottom', style: 'pills', enabled: false }
+    ] } });
+    const on = apply(c, M.edit(c, 'bar', 'enabled', true));
+    assert.deepEqual(on.bar.panels.map((p) => p.enabled), [true, true]);
+    assert.deepEqual(on.bar.panels.map((p) => p.style), ['islands', 'pills']);
+    const hidden = cfg({ bar: { panels: [{ id: 'a', edge: 'top', style: 'none' }] } });
+    const back = apply(hidden, M.edit(hidden, 'bar', 'enabled', true));
+    assert.equal(back.bar.panels[0].enabled, true);
+    assert.equal(back.bar.panels[0].style, 'classic');
+});
+
+test('remember only fires for the bar being switched off', () => {
+    const c = cfg();
+    assert.equal(M.remember(c, 'notch', 'enabled', false), undefined);
+    assert.equal(M.remember(c, 'bar', 'style', 'islands'), undefined);
+    assert.equal(M.remember(c, 'bar', 'enabled', true), undefined);
+    assert.deepEqual(plain(M.remember(c, 'bar', 'enabled', false)), { style: 'classic' });
+});

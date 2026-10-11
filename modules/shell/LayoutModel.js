@@ -226,18 +226,25 @@ var _KEYS = {
     "dock": { "enabled": "dock.enabled", "edge": "dock.position", "style": "dock.theme" }
 };
 
-function _panelEdit(panels, field, value) {
+// `memory` ({enabled: {panelId: bool}}) is what the bar had before it was
+// switched off (see remember): turning it on gives each panel back its own
+// flag; without it every panel with a visible style comes on.
+function _panelEdit(panels, field, value, memory) {
     var out = JSON.parse(JSON.stringify(panels));
     var i = _primary(out);
     if (field === "enabled") {
+        var was = _obj(_obj(memory).enabled);
         out.forEach(function (p) {
-            p.enabled = value && !PanelStyles.isHidden(p.style);
+            p.enabled = value && !PanelStyles.isHidden(p.style) && (was[p.id] !== false);
         });
         if (value && !out.some(function (p) {
             return p.enabled;
         })) {
+            // Nothing to give back: bring up the first panel, in its own
+            // style when it has a visible one
             out[0].enabled = true;
-            out[0].style = "classic";
+            if (PanelStyles.isHidden(out[0].style))
+                out[0].style = "classic";
         }
         return PanelLayout.serialize(out);
     }
@@ -245,7 +252,7 @@ function _panelEdit(panels, field, value) {
     return PanelLayout.serialize(out);
 }
 
-function _barEdit(bar, field, value) {
+function _barEdit(bar, field, value, memory) {
     var n = PanelLayout.normalize(bar);
     if (n.legacy && field !== "align") {
         // Same pairing rules as the panels (PanelEdit)
@@ -265,20 +272,48 @@ function _barEdit(bar, field, value) {
         var cur = _obj(_obj(bar).layout).style;
         if (!value)
             return [{ "key": "bar.layout.style", "value": "none" }];
-        return PanelStyles.isHidden(cur) ? [{ "key": "bar.layout.style", "value": "classic" }] : [];
+        if (!PanelStyles.isHidden(cur))
+            return [];
+        var back = _obj(memory).style;
+        var restored = PanelStyles.has(back) && !PanelStyles.isHidden(back) ? back : "classic";
+        return [{ "key": "bar.layout.style", "value": restored }];
     }
     // Panels (an align edit turns the legacy bar into bar.panels, the same
     // way the panels editor does on its first edit)
-    return [{ "key": "bar.panels", "value": _panelEdit(n.panels, field, value) }];
+    return [{ "key": "bar.panels", "value": _panelEdit(n.panels, field, value, memory) }];
+}
+
+// What to remember before `part`'s `enabled` is set to false, so that
+// edit(..., memory) can bring the bar back exactly as it was: {style} for
+// the legacy bar, {enabled: {panelId: bool}} for panels. undefined when
+// there is nothing to remember (not the bar, not an off edit, or the bar
+// is already off: a repeated off must not overwrite what was saved).
+function remember(cfg, part, field, value) {
+    if (part !== "bar" || field !== "enabled" || value !== false)
+        return undefined;
+    var bar = _obj(cfg).bar;
+    var n = PanelLayout.normalize(bar);
+    if (!n.panels.some(function (p) {
+        return p.enabled;
+    }))
+        return undefined;
+    if (n.legacy)
+        return { "style": n.panels[0].style };
+    var enabled = {};
+    n.panels.forEach(function (p) {
+        enabled[p.id] = p.enabled;
+    });
+    return { "enabled": enabled };
 }
 
 // The config writes ([{key, value}]) that set `field` (enabled | edge |
-// style | align) of `part`; [] when the value is not allowed.
-function edit(cfg, part, field, value) {
+// style | align) of `part`; [] when the value is not allowed. `memory` is
+// what remember() returned when the bar was switched off.
+function edit(cfg, part, field, value, memory) {
     if (!_valid(part, field, value))
         return [];
     if (part === "bar")
-        return _barEdit(_obj(cfg).bar, field, value);
+        return _barEdit(_obj(cfg).bar, field, value, memory);
     var key = _KEYS[part] ? _KEYS[part][field] : undefined;
     return key ? [{ "key": key, "value": value }] : [];
 }

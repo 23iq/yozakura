@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.services
 import "../shell/LayoutModel.js" as Model
 
 // The live composable layout (modules/shell/LayoutModel.js) of the current
@@ -53,8 +54,15 @@ Singleton {
         return Model.activityPresentation(root.layout, configured, Config.notch ? Config.notch.activitiesIn : "auto");
     }
 
-    // Config writes [{key, value}] setting `field` of `part` (LayoutModel.edit)
+    // Config writes [{key, value}] setting `field` of `part` (LayoutModel.edit).
+    // Switching the bar off remembers its style / per-panel flags in the
+    // machine-local state (never in config or presets); switching it on
+    // restores them.
     function edit(part: string, field: string, value: var): var {
-        return Model.edit(root.config(), part, field, value);
+        const cfg = root.config();
+        const keep = Model.remember(cfg, part, field, value);
+        if (keep !== undefined)
+            StateService.set("barRestore", keep);
+        return Model.edit(cfg, part, field, value, StateService.get("barRestore", null));
     }
 }
