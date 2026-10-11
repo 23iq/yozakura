@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
+import qs.modules.services
 import qs.modules.globals
 import qs.modules.components.kit
 

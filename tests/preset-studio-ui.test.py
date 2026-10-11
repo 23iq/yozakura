@@ -239,7 +239,7 @@ w('cur().sources = ' + json.dumps({"layout": "Kaze", "colors": "Neon Tokyo", "wi
                                    "lockscreen": "Neon Mine"}))
 QTest.qWait(50)
 check(w('cur().look["bar.panels"][0].edge') == "left", "the preview composes the layout source")
-check(w('cur().look["theme.oledMode"]') is True, "…and the colors source")
+check(w('cur().look["wallpaper.activeColorPreset"]') == "Neon", "…and the colors source")
 w('cur().askName("Blend", cur().sources)')
 QTest.qWait(100)
 w('findItem("presetNameField").input.text = "Blend"')
@@ -249,7 +249,7 @@ check(wait_for('PresetStudio.find("Blend") !== null'), "create saves the mix (`p
 mix = calls_with("mix", "Blend")
 check(mix and "--layout" in mix[0] and "Kaze" in mix[0], f"mix sends each aspect source ({mix[:1]})")
 blend = next(p for p in sb.json("list", "--json") if p["name"] == "Blend")
-check(blend["look"]["bar.panels"][0]["edge"] == "left" and blend["look"]["theme.oledMode"] is True, "the saved mix has the previewed look")
+check(blend["look"]["bar.panels"][0]["edge"] == "left" and blend["look"]["wallpaper.activeColorPreset"] == "Neon", "the saved mix has the previewed look")
 
 # Save the current look, import a bundle
 ev('PresetStudio.saveCurrent("Snapshot")')
