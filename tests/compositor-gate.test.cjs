@@ -38,7 +38,8 @@ test('hiddenBy counts entries and sections the gate hides, not visibleWhen', () 
     const r = JSON.parse(JSON.stringify(G.hiddenBy(sections, 'niri')));
     assert.deepEqual(r, { count: 4, compositors: ['hyprland', 'mango'] });
     assert.deepEqual(JSON.parse(JSON.stringify(G.hiddenBy(sections, 'hyprland'))), { count: 1, compositors: ['niri'] });
-    assert.equal(G.hiddenBy(sections, 'mango').count, 3);
+    // mango: z and the whole hyprland-only section (2) and the niri entry
+    assert.equal(G.hiddenBy(sections, 'mango').count, 4);
 });
 
 test('hiddenBy is silent when nothing is gated or the compositor is unknown', () => {
