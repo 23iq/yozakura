@@ -143,6 +143,18 @@ check(ev("Config.keyboard.repeatRate") == 40, "rate slider writes repeatRate")
 QTest.qWait(900)
 check(len(calls("keyboard.apply")) >= 1, "changes are applied through keyboard.apply")
 
+# Errors are visible: a failed apply and a failed read, each with Retry
+check(h.find(win, "keyboardProblem") is not None and h.find(win, "keyboardProblem").property("visible") is False, "no problem banner while all is well")
+ev("KeyboardService.applyError = 'niri: not supported'")
+QTest.qWait(50)
+check(h.find(win, "keyboardProblem").property("visible") is True, "a failed apply shows a banner")
+ev("KeyboardService.applyError = ''; KeyboardService.readError = 'no reply'; KeyboardService.readFailed = true")
+QTest.qWait(50)
+check(h.find(win, "keyboardProblem").property("visible") is True, "a failed read shows a banner")
+before = len(calls("keyboard.current"))
+ev("KeyboardService.retryRead()")
+check(len(calls("keyboard.current")) == before + 1 and ev("KeyboardService.readFailed") is False, "Retry reads again")
+
 if failures:
     sys.exit(1)
 print("ok")
