@@ -101,9 +101,6 @@ var performance = {
         "wavyLine": {
             "description": "Animated wavy progress line in the media player."
         },
-        "rotateCoverArt": {
-            "description": "Spin the album art while playing."
-        },
         "pauseWallpaperOnFullscreen": {
             "description": "Pause video wallpapers while a fullscreen window is shown."
         },

@@ -45,19 +45,6 @@
         "keywords": "wavy line progress media animation"
       }
     },
-    "rotateCoverArt": {
-      "title": "Rotate Cover Art",
-      "type": "boolean",
-      "default": true,
-      "description": "Spin the album art like a vinyl disc while music plays.",
-      "x-settings": {
-        "category": "system",
-        "section": "performance",
-        "label": "performance.rotate_cover",
-        "control": "toggle",
-        "keywords": "cover art album vinyl rotation spin"
-      }
-    },
     "pauseWallpaperOnFullscreen": {
       "title": "Pause Wallpaper on Fullscreen",
       "type": "boolean",

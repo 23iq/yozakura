@@ -6,7 +6,6 @@ JsonAdapter {
     property bool blurTransition: true
     property bool windowPreview: true
     property bool wavyLine: true
-    property bool rotateCoverArt: true
     property bool pauseWallpaperOnFullscreen: true
     property bool pauseWallpaperWhenCovered: true
     property bool dashboardPersistTabs: false
