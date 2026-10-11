@@ -16,6 +16,8 @@ func (s *Server) dispatchExtra(req Request) (interface{}, error) {
 		return listBinds(s.compositor)
 	case "Config.Errors":
 		return configErrors(s.compositor)
+	case "Config.SkippedBinds":
+		return s.skippedBinds(), nil
 	}
 	if res, handled, err := s.dispatchOutputs(req); handled {
 		return res, err
@@ -52,4 +54,20 @@ func configErrors(c ipc.Compositor) ([]string, error) {
 		errs = []string{}
 	}
 	return errs, err
+}
+
+// skippedBinds lists the binds of the applied config that the generated
+// compositor config leaves out (never nil; [] when the compositor writes
+// everything or no config was applied yet).
+func (s *Server) skippedBinds() []ipc.SkippedBind {
+	out := []ipc.SkippedBind{}
+	payload, ok := s.cfgState.Current()
+	if !ok {
+		return out
+	}
+	gen := NewConfigHandler(s.compositor).generator
+	if sk, ok := gen.(ipc.BindSkipper); ok {
+		out = append(out, sk.SkippedKeybinds(payload.Keybinds)...)
+	}
+	return out
 }
