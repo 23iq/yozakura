@@ -148,15 +148,29 @@ function nameProblem(presets, name, except) {
     return "";
 }
 
-// Palette a look renders with: the matugen scheme palette of the current
-// wallpaper in the look's mode ({scheme: {dark, light}} from `<app>
-// schemes`), OLED blacking out the background roles. null when unknown.
-function paletteFor(look, schemes) {
-    if (!look || !schemes)
+// Static color preset a look names ("" = colors generated from the wallpaper).
+function presetName(look) {
+    return look && look["wallpaper.activeColorPreset"] ? String(look["wallpaper.activeColorPreset"]) : "";
+}
+
+// Palette a look renders with: the static color preset it names
+// (`presets` = {name: {dark, light}} from assets/colors), else the matugen
+// scheme palette of the current wallpaper in the look's mode ({scheme:
+// {dark, light}} from `<app> schemes`). OLED blacks out the background
+// roles. null when unknown (the live colors are used).
+function paletteFor(look, schemes, presets) {
+    if (!look)
         return null;
-    var s = schemes[look["wallpaper.matugenScheme"] || "scheme-tonal-spot"];
     var light = !!look["theme.lightMode"];
-    var p = s ? s[light ? "light" : "dark"] : null;
+    var mode = light ? "light" : "dark";
+    var named = presetName(look);
+    var p = null;
+    if (named && presets && presets[named])
+        p = presets[named][mode] || null;
+    if (!p && schemes) {
+        var s = schemes[look["wallpaper.matugenScheme"] || "scheme-tonal-spot"];
+        p = s ? s[mode] : null;
+    }
     if (!p)
         return null;
     if (!light && look["theme.oledMode"]) {

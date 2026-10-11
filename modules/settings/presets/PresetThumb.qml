@@ -23,9 +23,11 @@ Item {
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string wallpaperFile: manager ? (manager.currentWallpaper || "") : ""
     readonly property string wallpaper: manager && wallpaperFile && manager.getDisplaySource ? manager.getDisplaySource(wallpaperFile) : wallpaperFile
-    readonly property var colors: PresetModel.paletteFor(look, SchemePreviews.palettes)
-    // Wait for the scheme palettes unless they cannot come.
-    readonly property bool inputsReady: look !== null && PresetStudio.thumbIndexReady && (colors !== null || SchemePreviews.failed || SchemePreviews.source === "" || (!SchemePreviews.loading && SchemePreviews.loadedSource === SchemePreviews.source))
+    readonly property string colorPreset: PresetModel.presetName(look)
+    readonly property var colors: PresetModel.paletteFor(look, SchemePreviews.palettes, ColorPresetPalettes.palettes)
+    // Wait for the scheme palettes unless they cannot come, and for the
+    // palette of the color preset the look names.
+    readonly property bool inputsReady: look !== null && PresetStudio.thumbIndexReady && !ColorPresetPalettes.pending(colorPreset) && (colors !== null || SchemePreviews.failed || SchemePreviews.source === "" || (!SchemePreviews.loading && SchemePreviews.loadedSource === SchemePreviews.source))
     readonly property string key: inputsReady ? PresetModel.thumbKey(look, wallpaper, colors, Math.round(width) + "x" + Math.round(height)) : ""
     readonly property string file: key ? PresetStudio.thumbFile(key) : ""
 
@@ -38,8 +40,10 @@ Item {
 
     Component.onCompleted: {
         SchemePreviews.refresh();
+        ColorPresetPalettes.ensure(colorPreset);
         keyUpdated();
     }
+    onColorPresetChanged: ColorPresetPalettes.ensure(colorPreset)
     Component.onDestruction: releaseSlot()
     onKeyChanged: keyUpdated()
 
