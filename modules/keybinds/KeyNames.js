@@ -271,3 +271,72 @@ function mouseKey(button) {
         return "mouse:274";
     return "";
 }
+
+// --- Manual entry ---------------------------------------------------------------
+
+var NAMED_KEYS = null;
+
+// Lower-case name -> the cased name the recorder would have produced.
+function namedKeys() {
+    if (NAMED_KEYS)
+        return NAMED_KEYS;
+    NAMED_KEYS = {};
+    [QT_KEYS, SYMBOLS].forEach(function (table) {
+        Object.keys(table).forEach(function (k) {
+            NAMED_KEYS[table[k].toLowerCase()] = table[k];
+        });
+    });
+    ["Super_L", "Alt_L", "Control_L", "Shift_L"].forEach(function (n) {
+        NAMED_KEYS[n.toLowerCase()] = n;
+    });
+    return NAMED_KEYS;
+}
+
+// A typed key name in the canonical form the recorder writes ("e" -> "E",
+// "enter" -> "Return"), or "" when it is not a key name.
+function typedKey(text) {
+    var t = String(text === undefined || text === null ? "" : text).trim();
+    if (t === "")
+        return "";
+    if (/^[A-Za-z0-9]$/.test(t))
+        return t.toUpperCase();
+    if (SYMBOLS[t] && /^[^A-Za-z0-9]$/.test(t) && "!@#$%^&*()<>?:\"{}|_+~".indexOf(t) === -1)
+        return SYMBOLS[t];
+    var fn = /^f([1-9]|[12][0-9]|3[0-5])$/i.exec(t);
+    if (fn)
+        return "F" + fn[1];
+    if (/^mouse:\d+$/.test(t) || t === "mouse_up" || t === "mouse_down")
+        return t;
+    var lower = t.toLowerCase();
+    var canon = KEY_ALIASES[lower] || lower;
+    if (canon === "super_l")
+        return "Super_L";
+    var named = namedKeys()[canon];
+    if (named)
+        return named;
+    if (/^xf86[A-Za-z0-9_]+$/i.test(t))
+        return "XF86" + t.slice(4);
+    // Any other keysym name (KP_Enter, Print, ...): a plain identifier.
+    return /^[A-Za-z][A-Za-z0-9_]+$/.test(t) ? t : "";
+}
+
+// "Super+Shift+e" / "enter" -> {mods, key}, or {error: "empty" | "key" | "mod"}.
+function parseKeyText(text, baseMods) {
+    var raw = String(text === undefined || text === null ? "" : text).trim();
+    if (raw === "")
+        return { "error": "empty" };
+    var parts = raw.split("+").map(function (p) {
+        return p.trim();
+    });
+    var key = typedKey(parts.pop());
+    if (key === "")
+        return { "error": "key" };
+    var mods = (baseMods || []).slice();
+    for (var i = 0; i < parts.length; i++) {
+        var m = MOD_ALIASES[parts[i].toUpperCase()];
+        if (!m)
+            return { "error": "mod" };
+        mods.push(m);
+    }
+    return { "mods": normalizeMods(mods), "key": key };
+}

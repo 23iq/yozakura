@@ -22,6 +22,8 @@ Item {
     readonly property var conflicts: KeybindsStore.conflictsOf(bind.uid)
     readonly property bool conflicted: conflicts.length > 0
     readonly property bool modified: KeybindsStore.isModified(bind)
+    // Why the compositor config left this bind out (niri), or "".
+    readonly property string skipNote: KeybindsStore.skipNote(bind.uid)
     readonly property var app: BindModel.appOf(bind)
     // Just added, or moved here by a new action: flashes for a moment.
     readonly property bool highlighted: KeybindsStore.highlightUid !== "" && KeybindsStore.highlightUid === bind.uid
@@ -144,6 +146,31 @@ Item {
                         font.family: Config.theme.font
                         font.pixelSize: Styling.fontSize(-3)
                         color: Colors.error
+                    }
+                }
+
+                // The compositor cannot express this bind: it is not applied.
+                Item {
+                    objectName: "skipBadge"
+                    visible: root.skipNote !== ""
+                    Layout.preferredWidth: skipLabel.implicitWidth
+                    Layout.preferredHeight: skipLabel.implicitHeight
+                    Text {
+                        id: skipLabel
+                        text: I18n.t("binds.skipped_badge")
+                        font.family: Config.theme.font
+                        font.pixelSize: Styling.fontSize(-3)
+                        font.weight: Font.DemiBold
+                        color: Colors.overSurfaceVariant
+                    }
+                    MouseArea {
+                        id: skipArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                    }
+                    StyledToolTip {
+                        show: skipArea.containsMouse
+                        tooltipText: root.skipNote
                     }
                 }
 
