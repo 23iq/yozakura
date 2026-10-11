@@ -29,6 +29,7 @@ import qs.modules.shell.hosts
 import qs.config
 import qs.modules.shell.osd
 import qs.modules.theme
+import qs.modules.aicenter
 import qs.modules.aicenter.selection
 // Loaded by URL below; the import lets Quickshell scan the settings types.
 import qs.modules.settings
@@ -95,6 +96,13 @@ ShellRoot {
                 sourceComponent: ScreenCorners {
                     screen: screenShellContainer.modelData
                 }
+            }
+
+            // The AI bar: its own window, sized to the panel
+            AiCenterWindow {
+                targetScreen: screenShellContainer.modelData
+                zones: unifiedPanel.panelZones
+                dockBottom: unifiedPanel.dockEnabled && unifiedPanel.dockPosition === "bottom" && unifiedPanel.dockPinned ? unifiedPanel.dockHeight : 0
             }
 
             // Exclusive zone reservations

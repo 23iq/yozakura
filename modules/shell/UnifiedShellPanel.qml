@@ -12,7 +12,6 @@ import qs.modules.services
 import qs.modules.globals
 import qs.modules.components
 import qs.config
-import qs.modules.aicenter
 import qs.modules.notifications
 import qs.modules.shell.rehome
 
@@ -37,9 +36,6 @@ PanelWindow {
         if (notchContent.screenNotchOpen || notchContent.panelModal) {
             return WlrKeyboardFocus.Exclusive;
         }
-        if (assistantSidebar.active && assistantSidebar.wantsFocus) {
-            return WlrKeyboardFocus.Exclusive;
-        }
         return WlrKeyboardFocus.None;
     }
     WlrLayershell.namespace: Brand.namespace("")
@@ -48,7 +44,7 @@ PanelWindow {
 
     // Whether we need to capture full-screen input for click-outside detection.
     // True when notch modules are open OR any FocusGrab is active (e.g., BarPopups).
-    readonly property bool needsFullScreenInput: notchContent.screenNotchOpen || notchContent.panelModal || FocusGrabManager.hasActiveGrab || (assistantSidebar.active && assistantSidebar.wantsFocus)
+    readonly property bool needsFullScreenInput: notchContent.screenNotchOpen || notchContent.panelModal || FocusGrabManager.hasActiveGrab
 
     // Bar panels of this screen (bar.panels, or the legacy bar); the
     // primary one is what the notch, frame and activities pair with
@@ -139,7 +135,7 @@ PanelWindow {
     mask: Region {
         // Full-screen capture when any module/popup is open
         item: unifiedPanel.needsFullScreenInput ? fullScreenMask : null
-        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.assistantRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
+        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
     }
 
     readonly property Region notchRegion: Region {
@@ -153,9 +149,6 @@ PanelWindow {
     readonly property Region dockRegion: Region {
         // Only include the dock hitbox if the dock is actually enabled and visible on this screen.
         item: dockContent.visible ? dockContent.dockHitbox : null
-    }
-    readonly property Region assistantRegion: Region {
-        item: (assistantSidebar.active || assistantSidebar.hitbox.visible) ? assistantSidebar.hitbox : null
     }
     readonly property Region activityLeftRegion: Region {
         item: activityHost.leftHitbox
@@ -198,9 +191,6 @@ PanelWindow {
             FocusGrabManager.clearTopGrab();
             if (notchContent.panelModal)
                 notchContent.dismissPanel();
-            if (assistantSidebar.active && assistantSidebar.wantsFocus) {
-                assistantSidebar.wantsFocus = false;
-            }
         }
     }
 
@@ -221,7 +211,6 @@ PanelWindow {
             notch: notchContent
             dock: dockContent
             activities: activityHost
-            sidebar: assistantSidebar
             barEnabled: unifiedPanel.barEnabled
             dockEnabled: unifiedPanel.dockEnabled
         }
@@ -286,55 +275,6 @@ PanelWindow {
             notch: notchContent
             screenName: unifiedPanel.targetScreen.name
             z: 5
-        }
-
-        AiCenterHost {
-            id: assistantSidebar
-            targetScreen: unifiedPanel.targetScreen
-            z: 1
-            
-            // Respect top/bottom bar reservations so the sidebar doesn't overlap them
-            anchors.topMargin: {
-                let frameOn = (Config.bar?.frameEnabled ?? false);
-                let frameWrapped = frameOn && GlobalStates.assistantPinned;
-                let margin = (frameOn && !frameWrapped) ? (Config.bar?.frameThickness ?? 6) : 0;
-                margin += unifiedPanel.panelZones.top;
-                return margin;
-            }
-            
-            anchors.bottomMargin: {
-                let frameOn = (Config.bar?.frameEnabled ?? false);
-                let frameWrapped = frameOn && GlobalStates.assistantPinned;
-                let margin = (frameOn && !frameWrapped) ? (Config.bar?.frameThickness ?? 6) : 0;
-                if (unifiedPanel.panelZones.bottom > 0) {
-                    margin += unifiedPanel.panelZones.bottom;
-                } else if (unifiedPanel.dockEnabled && dockContent.dockPosition === "bottom" && dockContent.pinned) {
-                    margin += dockContent.dockHeight;
-                }
-                return margin;
-            }
-
-            anchors.leftMargin: {
-                let sidebarPos = GlobalStates.assistantPosition;
-                let frameOn = (Config.bar?.frameEnabled ?? false);
-                let frameWrapped = frameOn && GlobalStates.assistantPinned;
-                let margin = 0;
-                if (sidebarPos === "left" && frameOn && !frameWrapped)
-                    margin += (Config.bar?.frameThickness ?? 6);
-                margin += unifiedPanel.panelZones.left;
-                return margin;
-            }
-
-            anchors.rightMargin: {
-                let sidebarPos = GlobalStates.assistantPosition;
-                let frameOn = (Config.bar?.frameEnabled ?? false);
-                let frameWrapped = frameOn && GlobalStates.assistantPinned;
-                let margin = 0;
-                if (sidebarPos === "right" && frameOn && !frameWrapped)
-                    margin += (Config.bar?.frameThickness ?? 6);
-                margin += unifiedPanel.panelZones.right;
-                return margin;
-            }
         }
     }
 }

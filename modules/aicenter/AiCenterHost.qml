@@ -6,10 +6,11 @@ import qs.modules.globals
 import qs.config
 import qs.modules.aicenter.common
 
-// Per-screen mount point of the AI bar. The content is created
+// Content of the AI bar's own window (AiCenterWindow). The content is created
 // lazily on first open and unloaded after `ai.unloadAfterMinutes` closed,
-// so an unused AI center costs one empty Item per screen. Exposes the
-// properties UnifiedShellPanel needs: active, hitbox, wantsFocus.
+// so an unused AI center costs one empty Item per screen. It only reports
+// that the composer wants the keyboard (`focusWanted`); the window decides
+// how focus is requested.
 Item {
     id: root
 
@@ -19,14 +20,22 @@ Item {
 
     readonly property bool active: Config.ai.enabled !== false && GlobalStates.assistantVisible && targetScreen && targetScreen.name === GlobalStates.assistantScreenName
     property alias hitbox: container
-    property bool wantsFocus: false
     property bool keepLoaded: false
+    // Set by the window: it owns the keyboard right now
+    property bool hasKeyboard: false
+    // Width the panel may use; the window is only as wide as the panel, so it
+    // supplies the screen's width
+    property real availableWidth: width
+    readonly property bool resizing: resizeHandle.pressed
+    readonly property int maxWidth: 900
+
+    signal focusWanted
 
     readonly property bool onLeft: GlobalStates.assistantPosition === "left"
     readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
     readonly property bool frameWrapped: frameEnabled && GlobalStates.assistantPinned && !GlobalStates.assistantFullscreen
     readonly property int sidebarMargin: frameWrapped || GlobalStates.assistantFullscreen ? 0 : 4
-    readonly property int panelWidth: GlobalStates.assistantFullscreen ? width : Math.min(GlobalStates.assistantEffectiveWidth, Math.max(320, width - 24))
+    readonly property int panelWidth: GlobalStates.assistantFullscreen ? width : Math.min(GlobalStates.assistantEffectiveWidth, Math.max(320, availableWidth - 24))
 
     function focusComposer() {
         const panel = loader.item as AiCenterPanel;
@@ -38,10 +47,9 @@ Item {
         if (active) {
             unloadTimer.stop();
             keepLoaded = true;
-            wantsFocus = true;
+            focusWanted();
             Qt.callLater(focusComposer);
         } else {
-            wantsFocus = false;
             unloadTimer.restart();
         }
     }
@@ -59,10 +67,10 @@ Item {
             if (root.targetScreen.name !== GlobalStates.assistantScreenName)
                 return;
             Qt.callLater(() => {
-                if (wasAlreadyOpen && root.active && root.wantsFocus) {
+                if (wasAlreadyOpen && root.active && root.hasKeyboard) {
                     GlobalStates.hideAssistant();
                 } else {
-                    root.wantsFocus = true;
+                    root.focusWanted();
                     root.focusComposer();
                 }
             });
@@ -75,7 +83,8 @@ Item {
         propagateComposedEvents: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onPressed: mouse => {
-            root.wantsFocus = true;
+            if (!root.hasKeyboard)
+                root.focusWanted();
             mouse.accepted = false;
         }
     }
@@ -85,7 +94,7 @@ Item {
         width: 8
         height: container.height
         y: container.y
-        x: root.onLeft ? container.x + container.width : container.x - width
+        x: root.onLeft ? container.x + container.width - width : container.x
         visible: container.visible && root.active && !GlobalStates.assistantWide && !GlobalStates.assistantFullscreen
         cursorShape: Qt.SplitHCursor
         preventStealing: true
@@ -100,7 +109,7 @@ Item {
                 return;
             const x = mapToItem(root, mouseX, 0).x;
             const delta = root.onLeft ? x - pressX : pressX - x;
-            GlobalStates.assistantWidth = Math.max(320, Math.min(900, pressWidth + delta));
+            GlobalStates.assistantWidth = Math.max(320, Math.min(root.maxWidth, pressWidth + delta));
         }
         onReleased: Config.ai.sidebarWidth = GlobalStates.assistantWidth
     }
