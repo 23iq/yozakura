@@ -62,20 +62,6 @@ test('invalid style and wrong types fall back per field', () => {
     assert.deepEqual(normalize('islands').right, barDefaults.layout.right);
 });
 
-test('vertical keeps the legacy three-group arrangement only for the default layout', () => {
-    const legacy = plain(layoutLib.resolveGroups(normalize(undefined), 'vertical', barDefaults.layout));
-    assert.deepEqual(legacy.start, ['launcher', 'systray', 'tools', 'presets']);
-    assert.deepEqual(legacy.center, ['layoutSelector', 'workspaces', 'pin']);
-    assert.deepEqual(legacy.end, ['keyboardLayout', 'controls', 'battery', 'clock', 'power']);
-
-    const custom = plain(layoutLib.resolveGroups(normalize({ left: ['workspaces'], right: ['clock'], drawer: ['power'] }), 'vertical', barDefaults.layout));
-    assert.deepEqual(custom, { start: ['workspaces'], center: [], end: ['clock'], drawer: ['power'] });
-
-    const horizontal = plain(layoutLib.resolveGroups(normalize(undefined), 'horizontal', barDefaults.layout));
-    assert.deepEqual(horizontal.start, barDefaults.layout.left);
-    assert.deepEqual(horizontal.center, []);
-});
-
 test('pin visibility and pill radii follow the visible items', () => {
     assert.deepEqual(plain(layoutLib.visibleIds(['launcher', 'pin'], { showPinButton: false })), ['launcher']);
     assert.deepEqual(plain(layoutLib.visibleIds(['launcher', 'pin'], {})), ['launcher', 'pin']);
@@ -93,17 +79,6 @@ test('config validator keeps layout arrays and rejects unknown styles', () => {
     assert.deepEqual(merged.layout.drawer, []);
     const bad = plain(validator.validate({ layout: { style: 'wat' } }, barDefaults));
     assert.equal(bad.layout.style, 'classic');
-});
-
-test('a saved layout equal to the old default gets the keyboard indicator, vertical keeps the legacy arrangement', () => {
-    const old = { style: 'classic', left: ['launcher', 'workspaces', 'layoutSelector', 'pin'], right: ['presets', 'tools', 'systray', 'controls', 'battery', 'clock', 'power'], drawer: [] };
-    const v = plain(layoutLib.resolveGroups(normalize(old), 'vertical', barDefaults.layout));
-    assert.deepEqual(v.center, ['layoutSelector', 'workspaces', 'pin']);
-    assert.deepEqual(v.end, ['keyboardLayout', 'controls', 'battery', 'clock', 'power']);
-    const h = plain(layoutLib.resolveGroups(normalize(old), 'horizontal', barDefaults.layout));
-    assert.deepEqual(h.end, barDefaults.layout.right);
-    const custom = plain(layoutLib.resolveGroups(normalize({ ...old, right: ['clock'] }), 'horizontal', barDefaults.layout));
-    assert.deepEqual(custom.end, ['clock']);
 });
 
 test('activity chips go first in the end group unless placed already', () => {

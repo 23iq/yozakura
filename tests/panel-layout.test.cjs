@@ -37,10 +37,13 @@ test('legacy keys map: position, style, drawer and screenList', () => {
     assert.deepEqual(p.screens, ['HDMI-A-1']);
 });
 
-test('default vertical classic keeps the historical three groups', () => {
-    const p = Layout.fromLegacy({ position: 'right', layout: barDefaults.layout });
-    const g = plain(Layout.resolveGroups(p));
-    assert.deepEqual(g.center, ['layoutSelector', 'workspaces', 'pin']);
+test('the edge never changes the groups: default layout on a vertical classic bar is the horizontal one', () => {
+    const v = plain(Layout.resolveGroups(Layout.fromLegacy({ position: 'right', layout: barDefaults.layout })));
+    const h = plain(Layout.resolveGroups(Layout.fromLegacy({ position: 'top', layout: barDefaults.layout })));
+    assert.deepEqual(v, h);
+    assert.deepEqual(v.start, barDefaults.layout.left);
+    assert.deepEqual(v.center, []);
+    assert.deepEqual(v.end, barDefaults.layout.right);
     const custom = Layout.fromLegacy({ position: 'right', layout: { style: 'classic', left: ['clock'], right: [] } });
     assert.deepEqual(plain(Layout.resolveGroups(custom)).start, ['clock']);
 });
@@ -150,13 +153,11 @@ test('separators interleave modules', () => {
     assert.deepEqual(plain(BarLayout.withSeparators([])), []);
 });
 
-test('a panel holding the old default right group gets the keyboard indicator', () => {
+test('a saved old-default right group is read as is (no read-time upgrade)', () => {
     const old = { position: 'right', layout: { style: 'classic', left: ['launcher', 'workspaces', 'layoutSelector', 'pin'], right: ['presets', 'tools', 'systray', 'controls', 'battery', 'clock', 'power'], drawer: [] } };
     const g = plain(Layout.resolveGroups(Layout.fromLegacy(old)));
-    assert.deepEqual(g.center, ['layoutSelector', 'workspaces', 'pin']);
-    assert.ok(g.end.includes('keyboardLayout'));
-    const h = plain(Layout.resolveGroups(Layout.fromLegacy({ ...old, position: 'top' })));
-    assert.ok(h.end.includes('keyboardLayout'));
+    assert.ok(!g.end.includes('keyboardLayout'));
+    assert.deepEqual(g.end, old.layout.right);
 });
 
 test('estimateDepth: explicit thickness, then size, then the style size; plus the explicit margin', () => {

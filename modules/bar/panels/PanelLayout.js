@@ -38,14 +38,6 @@ var DEFAULT_LAYOUT = {
     "drawer": []
 };
 
-// The untouched default layout on a vertical classic bar keeps its historical
-// three-group arrangement (see BarLayout.js).
-var LEGACY_VERTICAL = {
-    "start": ["launcher", "systray", "tools", "presets"],
-    "center": ["layoutSelector", "workspaces", "pin"],
-    "end": ["keyboardLayout", "controls", "battery", "clock", "power"]
-};
-
 // JsonAdapter hands JSON arrays over as list wrappers (QVariantList), for
 // which Array.isArray() is false. Accept any array-like.
 function toArray(value) {
@@ -62,16 +54,6 @@ function toArray(value) {
 
 function isObject(value) {
     return value !== null && typeof value === "object" && toArray(value) === null;
-}
-
-function sameList(a, b) {
-    if (!a || !b || a.length !== b.length)
-        return false;
-    for (var i = 0; i < a.length; i++) {
-        if (a[i] !== b[i])
-            return false;
-    }
-    return true;
 }
 
 function emptyGroups() {
@@ -285,43 +267,10 @@ function orientationOf(edge) {
     return edge === "left" || edge === "right" ? "vertical" : "horizontal";
 }
 
-// Default right group before the keyboard layout indicator existed: a panel
-// still holding it is the untouched default and gets the indicator.
-var OLD_DEFAULT_RIGHT = ["presets", "tools", "systray", "controls", "battery", "clock", "power"];
-
-function upgradeOldDefault(panel) {
-    var g = panel.groups;
-    if (sameList(g.start, DEFAULT_LAYOUT.left) && sameList(g.end, OLD_DEFAULT_RIGHT) && g.drawer.length === 0 && g.center.length === 0) {
-        var groups = {};
-        for (var k in g)
-            groups[k] = g[k];
-        groups.end = DEFAULT_LAYOUT.right.slice();
-        var out = {};
-        for (var p in panel)
-            out[p] = panel[p];
-        out.groups = groups;
-        return out;
-    }
-    return panel;
-}
-
-function isDefaultArrangement(panel) {
-    var g = panel.groups;
-    return sameList(g.start, DEFAULT_LAYOUT.left) && sameList(g.end, DEFAULT_LAYOUT.right) && g.drawer.length === 0 && g.center.length === 0;
-}
-
-// Groups in render order. The untouched default layout on a vertical
-// classic panel keeps its historical three-group arrangement.
+// Groups in render order: exactly what the panel declares. The edge never
+// changes which modules sit in which group.
 function resolveGroups(panel) {
-    panel = upgradeOldDefault(panel);
-    var g = panel.groups;
-    if (orientationOf(panel.edge) === "vertical" && panel.style === "classic" && isDefaultArrangement(panel)) {
-        var out = emptyGroups();
-        out.start = LEGACY_VERTICAL.start.slice();
-        out.center = LEGACY_VERTICAL.center.slice();
-        out.end = LEGACY_VERTICAL.end.slice();
-        return out;
-    }
+    var g = panel.groups || {};
     var copy = emptyGroups();
     for (var i = 0; i < GROUPS.length; i++)
         copy[GROUPS[i]] = (g[GROUPS[i]] || []).slice();

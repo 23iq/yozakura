@@ -21,15 +21,6 @@ var DEFAULT_LAYOUT = {
     "drawer": []
 };
 
-// The vertical bar historically used its own three-group arrangement. It is
-// kept for the untouched default layout so vertical presets look unchanged;
-// any customised layout maps left -> top group and right -> bottom group.
-var LEGACY_VERTICAL = {
-    "start": ["launcher", "systray", "tools", "presets"],
-    "center": ["layoutSelector", "workspaces", "pin"],
-    "end": ["keyboardLayout", "controls", "battery", "clock", "power"]
-};
-
 function isKnown(id) {
     return MODULE_IDS.indexOf(id) !== -1;
 }
@@ -50,16 +41,6 @@ function toArray(value) {
 
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
-}
-
-function sameList(a, b) {
-    if (!a || !b || a.length !== b.length)
-        return false;
-    for (var i = 0; i < a.length; i++) {
-        if (a[i] !== b[i])
-            return false;
-    }
-    return true;
 }
 
 // Returns {style, left, right, drawer, warnings}. Never throws: unknown ids,
@@ -116,50 +97,6 @@ function normalize(raw, defaults) {
         "right": right,
         "drawer": drawer,
         "warnings": warnings
-    };
-}
-
-// The right group of the default layout before the keyboard layout indicator
-// joined it. A saved layout equal to the old default is the untouched default:
-// it gets the indicator (which hides itself with one layout) and keeps the
-// legacy vertical arrangement.
-var OLD_DEFAULT_RIGHT = ["presets", "tools", "systray", "controls", "battery", "clock", "power"];
-
-function upgradeOldDefault(layout, defaults) {
-    var base = defaults || DEFAULT_LAYOUT;
-    if (sameList(layout.left, base.left) && sameList(layout.right, OLD_DEFAULT_RIGHT) && sameList(layout.drawer, base.drawer || []))
-        return {
-            "style": layout.style,
-            "left": layout.left,
-            "right": base.right.slice(),
-            "drawer": layout.drawer,
-            "warnings": layout.warnings
-        };
-    return layout;
-}
-
-function isDefaultArrangement(layout, defaults) {
-    var base = defaults || DEFAULT_LAYOUT;
-    return sameList(layout.left, base.left) && sameList(layout.right, base.right) && sameList(layout.drawer, base.drawer || []);
-}
-
-// Groups in render order: start (left/top), center (vertical legacy only),
-// end (right/bottom) and drawer (revealed next to the end group).
-function resolveGroups(layout, orientation, defaults) {
-    layout = upgradeOldDefault(layout, defaults);
-    if (orientation === "vertical" && layout.style === "classic" && isDefaultArrangement(layout, defaults)) {
-        return {
-            "start": LEGACY_VERTICAL.start.slice(),
-            "center": LEGACY_VERTICAL.center.slice(),
-            "end": LEGACY_VERTICAL.end.slice(),
-            "drawer": []
-        };
-    }
-    return {
-        "start": layout.left.slice(),
-        "center": [],
-        "end": layout.right.slice(),
-        "drawer": layout.drawer.slice()
     };
 }
 
