@@ -13,10 +13,11 @@ import "strings"
 // a whole (general holds the terminal command the shell executes; specials,
 // the special workspaces, are global like binds.json: switching presets
 // never touches them; displays, the saved monitor layout, is specific to
-// the machine and keyboard to the person).
+// the machine and keyboard to the person; voice holds the person's speech
+// model, language and push-to-talk choices).
 var LocalDomains = map[string]bool{
 	"system": true, "ai": true, "prefix": true, "weather": true, "notifications": true, "apps": true,
-	"general": true, "specials": true, "displays": true, "keyboard": true,
+	"general": true, "specials": true, "displays": true, "keyboard": true, "voice": true,
 }
 
 // localSelf reports whether the entry itself is machine-local.

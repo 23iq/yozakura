@@ -119,6 +119,20 @@ func (m *Manager) Mix(name string, sources map[string]string, description string
 			objects[d] = o
 		}
 	}
+	// A whole domain taken for one aspect carries the keys of the aspects
+	// that live in it too (theme.animDuration is "windows"): without a
+	// source of their own those stay the user's.
+	for _, a := range Aspects {
+		if ref, ok := sources[a.ID]; ok && ref != "" {
+			continue
+		}
+		for _, key := range a.Keys {
+			kp := strings.SplitN(key, ".", 2)
+			if o := objects[kp[0]]; o != nil {
+				o.Delete(kp[1])
+			}
+		}
+	}
 	for _, a := range Aspects {
 		ref, ok := sources[a.ID]
 		if !ok || ref == "" || len(a.Keys) == 0 {

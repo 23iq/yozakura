@@ -163,11 +163,43 @@ func (m *Manager) partOverLive(live map[string][]byte, dir string) (map[string]a
 	return docs, nil
 }
 
+// paletteModeKeys are the theme keys a palette never pins: the light or
+// dark (and OLED) preference is the user's, a palette follows it (its
+// colors come in a dark and a light variant).
+var paletteModeKeys = []string{"lightMode", "oledMode"}
+
+// dropPaletteModes removes the mode keys from a palette's theme file.
+func dropPaletteModes(files map[string][]byte) {
+	data, ok := files["theme"]
+	if !ok {
+		return
+	}
+	doc, err := decodeObject(data)
+	if err != nil || doc == nil {
+		return
+	}
+	changed := false
+	for _, k := range paletteModeKeys {
+		if doc.Delete(k) {
+			changed = true
+		}
+	}
+	if !changed {
+		return
+	}
+	if out, err := marshalDoc(doc); err == nil {
+		files["theme"] = out
+	}
+}
+
 // partFiles reads a part's domain files without machine-local keys.
 func (m *Manager) partFiles(dir string) (map[string][]byte, error) {
 	raw, err := readDir(dir, domainsIn(dir))
 	if err != nil {
 		return nil, err
+	}
+	if filepath.Base(filepath.Dir(dir)) == PartPalette+"s" {
+		dropPaletteModes(raw)
 	}
 	for d, data := range raw {
 		if raw[d], err = m.stripLocal(d, data); err != nil {
@@ -227,7 +259,7 @@ func (m *Manager) applyPart(kind, name string) (Part, []catalog.Problem, error) 
 			}
 		}
 	}
-	problems, err := m.applyFiles(files)
+	problems, err := m.applyFiles(files, true)
 	if err != nil {
 		return p, problems, err
 	}

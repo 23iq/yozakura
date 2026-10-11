@@ -24,7 +24,7 @@ func TestSeedConfigNewAndExistingInstall(t *testing.T) {
 	writeFiles(t, official, map[string]string{
 		"layouts/Yozakura/bar.json":      `{"position": "top"}`,
 		"styles/Sakura/theme.json":       `{"roundness": 12}`,
-		"palettes/Plum/theme.json":       `{"lightMode": false}`,
+		"palettes/Plum/theme.json":       `{"fontSize": 14}`,
 		"palettes/Plum/wallpaper.json":   `{"matugenScheme": "scheme-content", "activeColorPreset": "Plum"}`,
 		"sets/Yozakura/set.json":         `{"layout": "Yozakura", "style": "Sakura", "palette": "Plum"}`,
 		"sets/Yozakura/notch.json":       `{"style": "island"}`,
@@ -36,7 +36,7 @@ func TestSeedConfigNewAndExistingInstall(t *testing.T) {
 	assert.NoError(t, seedConfig(p, official))
 	theme, err := os.ReadFile(p.Config("theme"))
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"roundness": 12, "lightMode": false}`, string(theme), "composed from the parts")
+	assert.JSONEq(t, `{"roundness": 12, "fontSize": 14}`, string(theme), "composed from the parts")
 	_, err = os.Stat(p.Config("notch"))
 	assert.NoError(t, err)
 	marker, _ := os.ReadFile(filepath.Join(p.ConfigDir, "presets", "active_preset"))

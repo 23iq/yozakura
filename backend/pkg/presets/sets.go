@@ -131,6 +131,9 @@ func Compose(officialDir, setDir string) (map[string][]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if kind == PartPalette {
+			dropPaletteModes(files)
+		}
 		if err := mergeFiles(out, files); err != nil {
 			return nil, fmt.Errorf("%s: %w", dir, err)
 		}

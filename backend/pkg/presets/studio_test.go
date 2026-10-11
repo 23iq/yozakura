@@ -144,7 +144,7 @@ func TestMixAndInspect(t *testing.T) {
 	look := m.WithLooks([]Preset{mixed})[0].Look
 	assert.Contains(t, TagsOf(look), "bar-left", "layout from Kaze")
 	assert.Equal(t, true, look["bar.frameEnabled"], "layout from Kaze")
-	assert.Equal(t, true, look["theme.oledMode"], "colors from Neon Tokyo")
+	assert.Equal(t, "Neon", look["wallpaper.activeColorPreset"], "colors from Neon Tokyo")
 	assert.Equal(t, true, look["desktop.depthClock"], "desktop from Sumi-e")
 
 	crt, _ := m.Documents("CRT")

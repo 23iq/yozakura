@@ -393,7 +393,7 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 	if raw, err = m.keepFollowed(raw, p.Follows); err != nil {
 		return p, nil, err
 	}
-	problems, err := m.applyFiles(raw)
+	problems, err := m.applyFiles(raw, true)
 	if err != nil {
 		return p, problems, err
 	}
@@ -442,8 +442,12 @@ func (m *Manager) keepFollowed(raw map[string][]byte, follows []string) (map[str
 }
 
 // applyFiles writes domain files over the live config, keeping the live
-// machine-local values (endpoints, secrets, ...).
-func (m *Manager) applyFiles(raw map[string][]byte) ([]catalog.Problem, error) {
+// machine-local values (endpoints, secrets, ...). With overLive a partial
+// document (one that omits settings of its domain, like a mix or a
+// composed official set) is merged onto the live file, so what the preset
+// does not name stays the user's; a whole document replaces the file. A
+// revert passes false: the backup is the exact file to restore.
+func (m *Manager) applyFiles(raw map[string][]byte, overLive bool) ([]catalog.Problem, error) {
 	var problems []catalog.Problem
 	for _, d := range sortedKeys(raw) {
 		data := raw[d]
@@ -461,6 +465,13 @@ func (m *Manager) applyFiles(raw map[string][]byte) ([]catalog.Problem, error) {
 		if !m.Cat.HasDomain(d) {
 			continue
 		}
+		if overLive && m.partial(d, doc) {
+			if live, err := os.ReadFile(m.Store.File(d)); err == nil {
+				if merged, err := MergeJSON(live, data); err == nil {
+					data = merged
+				}
+			}
+		}
 		data, err := m.keepLocal(d, data)
 		if err != nil {
 			return problems, fmt.Errorf("%s.json: %w", d, err)
@@ -470,6 +481,28 @@ func (m *Manager) applyFiles(raw map[string][]byte) ([]catalog.Problem, error) {
 		}
 	}
 	return problems, nil
+}
+
+// partial reports whether a domain document leaves settings of its domain
+// out (machine-local keys do not count: they are never stored). A document
+// from a live save holds every key, so it is whole.
+func (m *Manager) partial(domain string, doc any) bool {
+	obj, ok := doc.(map[string]any)
+	if !ok {
+		return false
+	}
+	local := map[string]bool{}
+	for _, p := range m.localPaths(domain) {
+		if len(p) == 1 {
+			local[p[0]] = true
+		}
+	}
+	for _, k := range m.Cat.TopKeys(domain) {
+		if _, ok := obj[k]; !ok && !local[k] {
+			return true
+		}
+	}
+	return false
 }
 
 // liveFiles reads the live files of the given domains (missing ones skipped).

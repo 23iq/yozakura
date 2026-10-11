@@ -64,7 +64,7 @@ func TestComposeOrderAndDeepMerge(t *testing.T) {
 	theme := decodeMap(t, files["theme"])
 	assert.Equal(t, map[string]any{"enabled": true, "amount": 0.7}, theme["glass"], "objects merge recursively")
 	assert.Equal(t, 12.0, theme["roundness"])
-	assert.Equal(t, false, theme["lightMode"], "the palette adds its keys")
+	assert.NotContains(t, theme, "lightMode", "a palette never pins the mode")
 	assert.Equal(t, `{"style": "island"}`, string(files["notch"]), "single-source files stay byte for byte")
 
 	legacy, err := Compose(m.OfficialDir, filepath.Join(m.OfficialDir, "sets", "Old"))

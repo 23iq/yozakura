@@ -22,9 +22,6 @@ func TestPreviewChainsAndReverts(t *testing.T) {
 	assert.Equal(t, "Yozakura", s.PrevActive)
 	assert.Equal(t, "Yozakura Night", s.Preset)
 
-	_, _, err = m.Begin(TrySession, "Neon Tokyo")
-	assert.ErrorContains(t, err, "in progress")
-
 	reverted, err := m.Revert()
 	assert.NoError(t, err)
 	assert.True(t, reverted)
@@ -64,4 +61,26 @@ func TestPreviewRefusedDuringTrial(t *testing.T) {
 	assert.ErrorContains(t, err, "in progress")
 	_, err = m.Preview("No Such Preset")
 	assert.Error(t, err)
+}
+
+// A trial started during a preview (or after a crash left one) first puts
+// the look from before the preview back.
+func TestTrialEndsPreviewFirst(t *testing.T) {
+	m := newManager(t)
+	_, _, err := m.Apply("Yozakura")
+	assert.NoError(t, err)
+	before, _ := m.Documents(Current)
+	_, err = m.Preview("Neon Tokyo")
+	assert.NoError(t, err)
+
+	s, _, err := m.Begin(TrySession, "Yozakura Night")
+	assert.NoError(t, err)
+	assert.Equal(t, "Yozakura", s.PrevActive)
+	reverted, err := m.Revert()
+	assert.NoError(t, err)
+	assert.False(t, reverted, "the preview is gone")
+	_, err = m.End(TrySession, false, false)
+	assert.NoError(t, err)
+	after, _ := m.Documents(Current)
+	assert.Empty(t, m.compareDocs(before, after, nil))
 }
