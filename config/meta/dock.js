@@ -14,8 +14,8 @@ var keys = {
         "description": "Dock style; integrated puts the apps inside the bar."
     },
     "position": {
-        "enum": Enums.EDGES,
-        "description": "Screen edge of the dock."
+        "enum": Enums.DOCK_EDGES,
+        "description": "Screen edge of the dock (integrated: left/right = start/end of the bar)."
     },
     "height": {
         "min": 24,

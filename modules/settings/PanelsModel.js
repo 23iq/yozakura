@@ -1,6 +1,7 @@
 .pragma library
 .import "../bar/panels/PanelLayout.js" as PanelLayout
 .import "../bar/panels/PanelStyles.js" as PanelStyles
+.import "../bar/panels/PanelEdit.js" as PanelEdit
 .import "../bar/BarModuleRegistry.js" as Modules
 
 // Pure edit operations of the panels editor (editors/PanelsEditor.qml).
@@ -92,21 +93,13 @@ function removePanel(panels, index) {
     }));
 }
 
-// Set one field of one panel; edge/style changes keep the pair valid.
+// Set one field of one panel; edge/style changes go through PanelEdit, the
+// same rules the composable layout uses.
 function setField(panels, index, field, value) {
     var out = clone(panels);
-    var p = out[index];
-    if (!p)
+    if (!out[index])
         return serialize(out);
-    p[field] = value;
-    if (field === "style" && !PanelStyles.supportsEdge(value, p.edge))
-        p.edge = PanelStyles.get(value).edges[0];
-    if (field === "style")
-        p.flat = PanelStyles.get(value).flat;
-    if (field === "edge" && !PanelStyles.supportsEdge(p.style, value)) {
-        var fallback = ["classic", "islands"].indexOf(p.style) === -1 ? "classic" : p.style;
-        p.style = PanelStyles.supportsEdge(fallback, value) ? fallback : "classic";
-    }
+    out[index] = PanelEdit.apply(out[index], field, value);
     return serialize(out);
 }
 

@@ -20,6 +20,8 @@
 // system / bar module stays one file + one entry.
 
 var EDGES = ["top", "bottom", "left", "right"];
+// The dock window has no top edge (a stored "top" is drawn at the bottom)
+var DOCK_EDGES = ["bottom", "left", "right"];
 var VERTICAL_EDGES = ["top", "bottom"];
 var GRADIENT_TYPES = ["linear", "radial", "halftone"];
 var WALLPAPER_TRANSITIONS = ["grow", "wipe", "dissolve", "fade", "random", "none"];

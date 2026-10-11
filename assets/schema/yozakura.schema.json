@@ -5114,7 +5114,7 @@
           "title": "Dock edge",
           "type": "string",
           "default": "bottom",
-          "description": "Screen edge the dock sits on.",
+          "description": "Screen edge the dock sits on (bottom, left or right). In the bar (integrated) left and right put it at the start or end of the bar, bottom centers it.",
           "x-settings": {
             "category": "dock",
             "section": "dock",
@@ -5122,26 +5122,16 @@
             "control": "selector",
             "keywords": "dock position edge top bottom left right vertical",
             "visibleWhen": {
-              "all": [
-                {
-                  "key": "dock.enabled",
-                  "equals": true
-                },
-                {
-                  "key": "dock.theme",
-                  "notEquals": "integrated"
-                }
-              ]
+              "key": "dock.enabled",
+              "equals": true
             }
           },
           "enum": [
-            "top",
             "bottom",
             "left",
             "right"
           ],
           "x-enumLabels": {
-            "top": "Top",
             "bottom": "Bottom",
             "left": "Left",
             "right": "Right"
@@ -5402,16 +5392,8 @@
             "control": "toggle",
             "keywords": "dock running indicators dots open apps",
             "visibleWhen": {
-              "all": [
-                {
-                  "key": "dock.enabled",
-                  "equals": true
-                },
-                {
-                  "key": "dock.theme",
-                  "notEquals": "integrated"
-                }
-              ]
+              "key": "dock.enabled",
+              "equals": true
             }
           }
         },
