@@ -212,7 +212,9 @@ MIRROR = [
     "modules/bar/panels/PanelLayout.js",
     "modules/bar/workspaces/WorkspaceNumerals.js",
     "modules/bar/workspaces/indicators",
+    "modules/bar/look",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",
+    "modules/widgets/dashboard/wallpapers/WallpaperDefaults.js",
     "modules/widgets/launcher/Providers.js",
     "modules/specials/Specials.js",
     "modules/widgets/dashboard/wallpapers/wallpaper_transition.frag.qsb",
@@ -347,7 +349,8 @@ QtObject {{
     property bool keybindsInitialLoadComplete: true
     property bool specialsReady: true
     property int autoSaveHolds: 0
-    property bool pauseAutoSave: autoSaveHolds > 0
+    property bool stagedPause: false
+    property bool pauseAutoSave: autoSaveHolds > 0 || stagedPause
     function holdAutoSave() {{ autoSaveHolds++ }}
     function releaseAutoSave() {{ autoSaveHolds = Math.max(0, autoSaveHolds - 1) }}
     property bool initialLoadComplete: true
@@ -409,16 +412,23 @@ def global_states_qml(wallpaper: dict) -> str:
     sections = m.group(1) if m else "({})"
     return f"""pragma Singleton
 import QtQuick
+import qs.config
 QtObject {{
     id: gs
     property bool themeHasChanges: false
     property bool shellHasChanges: false
     property bool compositorHasChanges: false
+    // Config.pauseAutoSave follows the staged changes (as the real Config does).
+    function _sync() {{ Config.stagedPause = themeHasChanges || shellHasChanges || compositorHasChanges }}
+    onThemeHasChangesChanged: _sync()
+    onShellHasChangesChanged: _sync()
+    onCompositorHasChangesChanged: _sync()
     property int applied: 0
     property int discarded: 0
     property string compositorLayout: "dwindle"
     property string settingsCategory: "appearance"
     property bool settingsWindowVisible: true
+    property bool settingsCloseConfirm: false
     readonly property var _shellSections: {sections}
     function markThemeChanged() {{ themeHasChanges = true }}
     function markShellChanged() {{ shellHasChanges = true }}
@@ -670,7 +680,7 @@ class SettingsEnv:
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
                   "modules/components/surfaceeffects", "modules/components/shape", "modules/components/kit",
-                  "modules/bar/workspaces/indicators",
+                  "modules/bar/workspaces/indicators", "modules/bar/look",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",

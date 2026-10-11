@@ -267,7 +267,13 @@ settle(50)
 check(h.eval(row("system.disks"), "modified") is True, "disks list modified")
 ev("SettingsStore.set('prefix.emoji', 'em')")
 check(ev("Config.prefix.emoji") == "em" and "prefix" in json.loads(ev("JSON.stringify(Config.saved)")),
-      "unstaged domain saved immediately")
+      "unstaged domain saved while staged changes pause auto-save")
+ev("SettingsStore.apply()")
+settle(50)
+ev("Config.saved = []")
+ev("SettingsStore.set('prefix.emoji', 'em2')")
+check(ev("Config.prefix.emoji") == "em2" and ev("Config.saved.length") == 0,
+      "unstaged domain edit is left to the domain's own auto-save (one writer)")
 
 # Notifications: screens multi-select, multiselect days, list rules, pattern
 ev('select("notifications")')
@@ -287,7 +293,7 @@ chips = h.eval(scr, """(function() {
 }).call(this)""")
 check(chips == 2, f"screens control lists the connected monitors ({chips})")
 check(json.loads(ev("JSON.stringify(Config.notifications.screens)")) == ["HDMI-A-1"], "screen selected")
-check("notifications" in json.loads(ev("JSON.stringify(Config.saved)")), "notifications domain saved immediately")
+check("notifications" not in json.loads(ev("JSON.stringify(Config.saved)")), "notifications domain is left to its own auto-save (one writer)")
 ev("SettingsStore.set('notifications.presentation', 'notch')")
 settle(50)
 check(h.eval(row("notifications.position"), "shown") is False, "corner position hidden for notch toasts")
@@ -409,6 +415,23 @@ h.eval(editor, "write(Registry.setField(list, 'osd', 'side', 'leading'))")
 settle(50)
 stored = {e["id"]: e for e in json.loads(ev("JSON.stringify(Config.notch.activities)"))}
 check(stored["battery"]["enabled"] is False and stored["osd"]["side"] == "leading", "enable and side stored")
+
+# Closing with staged changes asks first: Keep editing keeps them, Apply applies.
+ev("GlobalStates.markShellChanged(); GlobalStates.settingsCloseConfirm = true")
+settle(80)
+keep = ev('w.findItem("confirm:keep")')
+check(keep is not None and h.eval(keep, "visible") is True, "close confirm offers Keep editing")
+h.eval(keep, "clicked()")
+settle(50)
+check(ev("GlobalStates.settingsCloseConfirm") is False and ev("GlobalStates.shellHasChanges") is True,
+      "Keep editing leaves the staged changes")
+ev("GlobalStates.settingsCloseConfirm = true")
+settle(80)
+h.eval(ev('w.findItem("confirm:apply")'), "clicked()")
+settle(50)
+check(ev("GlobalStates.shellHasChanges") is False and ev("GlobalStates.settingsWindowVisible") is False,
+      "Apply from the close confirm applies and closes")
+ev("GlobalStates.settingsWindowVisible = true")
 
 late = [e for e in errors if "/widgets/" not in e]
 check(not late, "QML errors during interaction:\n  " + "\n  ".join(late))

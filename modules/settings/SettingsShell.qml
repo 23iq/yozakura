@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.globals
+import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.presets
