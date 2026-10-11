@@ -71,3 +71,11 @@ var category = {
         }
     ]
 };
+
+// Special workspaces are a Hyprland feature.
+category.sections.forEach(function (section) {
+    section.compositor = "hyprland";
+    section.entries.forEach(function (entry) {
+        entry.compositor = "hyprland";
+    });
+});

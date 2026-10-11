@@ -6396,7 +6396,11 @@
             "section": "notch",
             "label": "prefs.notch.position",
             "control": "selector",
-            "keywords": "notch position top bottom left right side vertical edge"
+            "keywords": "notch position top bottom left right side vertical edge",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "top",
@@ -6421,7 +6425,11 @@
             "section": "notch",
             "label": "prefs.notch.align",
             "control": "selector",
-            "keywords": "notch align alignment left right corner start center end"
+            "keywords": "notch align alignment left right corner start center end",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "start",
@@ -6447,6 +6455,10 @@
             "step": 1,
             "unit": "px",
             "keywords": "hover region trigger area reveal",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            },
             "min": 8,
             "max": 40
           },
@@ -6464,7 +6476,11 @@
             "section": "notch",
             "label": "shell.notch.keep_hidden",
             "control": "toggle",
-            "keywords": "hide notch autohide"
+            "keywords": "hide notch autohide",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           }
         },
         "noMediaDisplay": {
@@ -6477,7 +6493,11 @@
             "section": "media",
             "label": "shell.no_media_display",
             "control": "selector",
-            "keywords": "idle text user host compositor custom nothing playing"
+            "keywords": "idle text user host compositor custom nothing playing",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "userHost",
@@ -6502,8 +6522,16 @@
             "control": "text",
             "keywords": "custom text label idle",
             "visibleWhen": {
-              "key": "notch.noMediaDisplay",
-              "equals": "custom"
+              "all": [
+                {
+                  "key": "notch.enabled",
+                  "equals": true
+                },
+                {
+                  "key": "notch.noMediaDisplay",
+                  "equals": "custom"
+                }
+              ]
             }
           }
         },
@@ -6517,7 +6545,11 @@
             "section": "advanced",
             "label": "shell.notch.disable_hover_expansion",
             "control": "toggle",
-            "keywords": "hover expand grow media preview"
+            "keywords": "hover expand grow media preview",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           }
         },
         "hoverExpandDelay": {
@@ -6548,7 +6580,11 @@
             "section": "notch",
             "label": "shell.notch.expand_on",
             "control": "selector",
-            "keywords": "notch panel expand open hover click activities media downloads"
+            "keywords": "notch panel expand open hover click activities media downloads",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "hover",
@@ -6605,7 +6641,11 @@
             "section": "media",
             "label": "shell.notch.visualizer",
             "control": "toggle",
-            "keywords": "audio visualizer cava bars music"
+            "keywords": "audio visualizer cava bars music",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           }
         },
         "mediaStyle": {
@@ -6618,7 +6658,11 @@
             "section": "media",
             "label": "prefs.notch.media_style",
             "control": "selector",
-            "keywords": "media player panel style row artwork album cover spotify"
+            "keywords": "media player panel style row artwork album cover spotify",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "row",
@@ -6639,7 +6683,11 @@
             "section": "notch",
             "label": "prefs.notch.theme",
             "control": "selector",
-            "keywords": "notch style island attached floating pill dot minimal"
+            "keywords": "notch style island attached floating pill dot minimal",
+            "visibleWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "attached",

@@ -280,3 +280,19 @@ var category = {
         }
     ]
 };
+
+// The notch and media sections only matter while the notch is on (turned on
+// and off in the Layout page); activities and timers also work in the bar.
+category.sections.forEach(function (section) {
+    if (section.id !== "notch" && section.id !== "media")
+        return;
+    section.entries.forEach(function (entry) {
+        var on = {
+            "key": "notch.enabled",
+            "equals": true
+        };
+        entry.visibleWhen = entry.visibleWhen ? {
+            "all": [on, entry.visibleWhen]
+        } : on;
+    });
+});
