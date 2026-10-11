@@ -166,6 +166,8 @@ type DisplaySession struct {
 	Session  string `json:"session"`
 	RevertIn int    `json:"revertIn"`
 	Live     bool   `json:"live"`
+	// Unchanged: every requested output already matched (or mirrors another).
+	Unchanged bool `json:"unchanged"`
 }
 
 // StartDisplayApply applies the configs live; the daemon reverts them after
@@ -178,6 +180,9 @@ func StartDisplayApply(c Caller, cfgs []yipc.OutputConfig) (DisplaySession, erro
 	raw, err := c.Call("displays.apply", map[string]any{"outputs": cfgs})
 	if err != nil {
 		return s, err
+	}
+	if err := json.Unmarshal(raw, &s); err == nil && s.Unchanged {
+		return s, fmt.Errorf("displays.apply: nothing to change (the outputs already match, or mirror another output)")
 	}
 	if err := json.Unmarshal(raw, &s); err != nil || s.Session == "" {
 		return s, fmt.Errorf("displays.apply: unexpected answer")

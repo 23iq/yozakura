@@ -105,3 +105,15 @@ func TestApplyOutputDisableIgnoresModeFields(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestCheckKeywordReply(t *testing.T) {
+	if err := checkKeywordReply("keyword monitor DP-1,disable", "ok"); err != nil {
+		t.Fatal(err)
+	}
+	if err := checkKeywordReply("keyword monitor DP-1,bad", "invalid monitor syntax"); err == nil {
+		t.Fatal("error text must fail")
+	}
+	if err := checkKeywordReply("eval hl.monitor({})", "something"); err != nil {
+		t.Fatal("eval replies are not judged")
+	}
+}

@@ -55,6 +55,7 @@ type Service struct {
 
 	// persist saves a kept candidate (displays.monitors); outs are the
 	// outputs at apply time (stable ids). nil: nothing is saved.
+	applyMu sync.Mutex // one apply (snapshot + start) at a time
 	persist func(cand []yipc.OutputConfig, outs []yipc.Output) error
 	sessMu  sync.Mutex
 	keepMu  sync.Mutex
@@ -162,11 +163,19 @@ func (s *Service) apply(params json.RawMessage) (any, error) {
 			return nil, fmt.Errorf("displays.apply: %w", err)
 		}
 	}
+	s.applyMu.Lock()
+	defer s.applyMu.Unlock()
 	current, err := s.yozd.Outputs()
 	if err != nil {
 		return nil, fmt.Errorf("displays.apply: snapshot: %w", err)
 	}
-	sess, err := s.mgr.Start(s.now(), snapshotFor(current, p.Outputs), p.Outputs)
+	// only what changed, never mirrored outputs: user rules for the rest
+	// (mirror, bitdepth, cm, desc:) stay untouched and are not persisted
+	cand, skipped := planApply(current, p.Outputs)
+	if len(cand) == 0 {
+		return map[string]any{"session": "", "unchanged": true, "applied": []string{}, "skipped": skipped}, nil
+	}
+	sess, err := s.mgr.Start(s.now(), snapshotFor(current, cand), cand)
 	if sess != nil {
 		s.sessMu.Lock()
 		// one session at a time: older entries are gone with it
@@ -178,7 +187,59 @@ func (s *Service) apply(params json.RawMessage) (any, error) {
 		return nil, fmt.Errorf("displays.apply: %w", err)
 	}
 	s.ensureTimer()
-	return map[string]any{"session": sess.ID, "revertIn": int(RevertAfter.Seconds()), "live": sess.Live}, nil
+	applied := make([]string, len(cand))
+	for i, c := range cand {
+		applied[i] = c.Name
+	}
+	return map[string]any{
+		"session": sess.ID, "revertIn": int(RevertAfter.Seconds()), "live": sess.Live,
+		"applied": applied, "skipped": skipped,
+	}, nil
+}
+
+// Skipped is a requested output the apply left alone.
+type Skipped struct {
+	Name   string `json:"name"`
+	Reason string `json:"reason"` // "unchanged" | "mirror"
+}
+
+// planApply drops from cand the outputs that already match the live state
+// and those that mirror another output. Outputs not connected are kept.
+func planApply(current []yipc.Output, cand []yipc.OutputConfig) ([]yipc.OutputConfig, []Skipped) {
+	byName := map[string]yipc.Output{}
+	for _, o := range current {
+		byName[o.Name] = o
+	}
+	var out []yipc.OutputConfig
+	skipped := []Skipped{}
+	for _, c := range cand {
+		o, ok := byName[c.Name]
+		switch {
+		case !ok:
+			out = append(out, c)
+		case o.MirrorOf != "":
+			skipped = append(skipped, Skipped{c.Name, "mirror"})
+		case sameConfig(c, o):
+			skipped = append(skipped, Skipped{c.Name, "unchanged"})
+		default:
+			out = append(out, c)
+		}
+	}
+	return out, skipped
+}
+
+func sameConfig(c yipc.OutputConfig, o yipc.Output) bool {
+	if c.Enabled != o.Enabled {
+		return false
+	}
+	if !c.Enabled {
+		return true
+	}
+	near := func(a, b, tol float64) bool { return a-b < tol && b-a < tol }
+	return !c.AutoPosition && c.Width == o.Width && c.Height == o.Height && c.Width > 0 &&
+		near(c.Refresh, o.Refresh, 0.01) && c.X == o.X && c.Y == o.Y &&
+		c.Scale > 0 && near(c.Scale, o.Scale, 0.001) && c.Transform == o.Transform &&
+		(c.VRR > 0) == o.VRR
 }
 
 // snapshotFor is the current state of the outputs the candidate touches
@@ -191,7 +252,14 @@ func snapshotFor(current []yipc.Output, cand []yipc.OutputConfig) []yipc.OutputC
 	var snap []yipc.OutputConfig
 	for _, c := range cand {
 		if o, ok := byName[c.Name]; ok {
-			snap = append(snap, configFromOutput(o))
+			sc := configFromOutput(o)
+			// the compositor reports vrr as a bool: when it agrees with
+			// the candidate, keep the candidate's mode (1 vs 2) so a
+			// revert does not collapse fullscreen-only into always-on
+			if o.VRR && c.VRR > 0 {
+				sc.VRR = c.VRR
+			}
+			snap = append(snap, sc)
 		}
 	}
 	return snap
@@ -234,6 +302,11 @@ func (s *Service) keep(params json.RawMessage) (any, error) {
 		return map[string]any{"ok": true, "saved": false}, nil
 	}
 	if err := s.persist(kept.Candidate, s.sessOut[kept.ID]); err != nil {
+		// the session is kept already: tell every listener, not only the caller
+		s.publish("displays.session", map[string]any{
+			"session": kept.ID, "state": kept.State, "remaining": 0, "live": kept.Live,
+			"error": "kept, but saving the layout failed: " + err.Error(),
+		})
 		return nil, fmt.Errorf("displays.keep: kept, but saving the layout failed: %w", err)
 	}
 	s.saved = map[string]bool{kept.ID: true}
@@ -297,6 +370,7 @@ func (s *Service) publishSession(sess *Session) {
 		"state":     sess.State,
 		"remaining": s.mgr.Remaining(s.now()),
 		"live":      sess.Live,
+		"error":     sess.Error,
 	})
 }
 
