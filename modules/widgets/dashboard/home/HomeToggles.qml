@@ -17,10 +17,8 @@ Item {
     readonly property var micAudio: Audio.source?.audio ?? null
     readonly property bool micOn: root.micAudio !== null && !root.micAudio.muted
     readonly property int count: row.children.length
-    // Stage home: the toggles share the width as wide buttons (a larger hit area).
-    property bool stretch: false
-    readonly property real gap: root.stretch ? Space.s : Math.max(0, (root.width - Space.controlM * root.count) / Math.max(1, root.count - 1))
-    readonly property real cellW: root.stretch ? Math.max(Space.controlM, (root.width - root.gap * (root.count - 1)) / Math.max(1, root.count)) : Space.controlM
+    readonly property real gap: Math.max(0, (root.width - Space.controlM * root.count) / Math.max(1, root.count - 1))
+    readonly property real cellW: Space.controlM
 
     signal details(string kind)
 

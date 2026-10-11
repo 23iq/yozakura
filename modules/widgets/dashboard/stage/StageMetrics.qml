@@ -5,10 +5,11 @@ import qs.modules.services
 import qs.modules.components.kit
 import "StageModel.js" as StageModel
 
-// The metrics strip at the bottom of the stage home: CPU, RAM and GPU load
-// as small rings with their value, the network down / up rates, a caret at
-// the end. One thin line; clicking it opens the metrics tab (`open()`).
-// Keeps SystemResources polling while it is shown.
+// The metrics strip at the bottom of the stage home: CPU, RAM and GPU
+// load and the network rates as StageMetric capsules of equal width (the
+// value large, a sparkline of the history in the load's color), a caret
+// at the end. Clicking it opens the metrics tab (`open()`). Keeps
+// SystemResources polling while it is shown.
 Item {
     id: root
 
@@ -17,25 +18,29 @@ Item {
         const out = [
             {
                 "label": "CPU",
-                "value": SystemResources.cpuUsage
+                "value": SystemResources.cpuUsage,
+                "history": SystemResources.cpuHistory ?? []
             },
             {
                 "label": "RAM",
-                "value": SystemResources.ramUsage
+                "value": SystemResources.ramUsage,
+                "history": SystemResources.ramHistory ?? []
             }
         ];
         if (SystemResources.gpuDetected)
             out.push({
                 "label": "GPU",
-                "value": SystemResources.gpuUsage
+                "value": SystemResources.gpuUsage,
+                "history": (SystemResources.gpuHistories ?? [])[0] ?? []
             });
         return out;
     }
+    readonly property real cellW: (row.width - row.spacing * root.loads.length) / (root.loads.length + 1)
 
     signal open
 
-    implicitHeight: Space.controlS
-    implicitWidth: row.implicitWidth
+    implicitHeight: Space.controlL - Space.s
+    implicitWidth: Space.controlL * 8
 
     onVisibleChanged: SystemResources.setConsumer(root.consumerKey, root.visible)
     Component.onCompleted: SystemResources.setConsumer(root.consumerKey, root.visible)
@@ -52,82 +57,44 @@ Item {
 
     Row {
         id: row
-        anchors.verticalCenter: parent.verticalCenter
-        spacing: Space.xl
+        anchors.left: parent.left
+        anchors.right: caret.left
+        anchors.rightMargin: Space.s
+        height: parent.height
+        spacing: Space.s
 
         Repeater {
             model: root.loads
 
-            Row {
-                id: load
+            StageMetric {
                 required property var modelData
-                spacing: Space.s
-
-                Ring {
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: Space.l
-                    height: width
-                    thickness: Space.stroke - 1
-                    value: (Number(load.modelData.value) || 0) / 100
-                }
-
-                KitText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    role: "caption"
-                    text: load.modelData.label
-                }
-
-                KitText {
-                    anchors.verticalCenter: parent.verticalCenter
-                    role: "secondary"
-                    tabular: true
-                    text: Math.round(Number(load.modelData.value) || 0) + "%"
-                }
+                width: root.cellW
+                height: row.height
+                hovered: area.containsMouse
+                label: modelData.label
+                value: (Number(modelData.value) || 0) / 100
+                history: modelData.history
             }
         }
 
-        Row {
+        StageMetric {
             objectName: "netRates"
-            spacing: Space.s
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Icons.arrowDown
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("caption")
-                color: Type.muted
-            }
-
-            KitText {
-                anchors.verticalCenter: parent.verticalCenter
-                role: "secondary"
-                tabular: true
-                text: StageModel.rate(SystemResources.netRxRate)
-            }
-
-            Text {
-                anchors.verticalCenter: parent.verticalCenter
-                text: Icons.arrowUp
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("caption")
-                color: Type.muted
-            }
-
-            KitText {
-                anchors.verticalCenter: parent.verticalCenter
-                role: "secondary"
-                tabular: true
-                text: StageModel.rate(SystemResources.netTxRate)
-            }
+            width: root.cellW
+            height: row.height
+            hovered: area.containsMouse
+            label: "NET"
+            valueText: "↓ " + StageModel.rate(SystemResources.netRxRate)
+            subText: "↑ " + StageModel.rate(SystemResources.netTxRate)
         }
     }
 
     Text {
+        id: caret
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         text: Icons.caretRight
         font.family: Icons.font
-        font.pixelSize: Type.iconSize("caption")
+        font.pixelSize: Type.iconSize("body")
         color: area.containsMouse ? Type.text : Type.muted
     }
 }

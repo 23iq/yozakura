@@ -27,6 +27,12 @@ Item {
     readonly property bool playing: hero.playing
     // What the right column shows instead of NEXT / week / notifications.
     property string detail: ""
+    // The left column at full size (independent of `compact`, so the
+    // natural height never depends on the mode it picks).
+    readonly property real leftFull: hero.naturalHeight + Look.groupGap + controls.chrome + Space.m + toggles.fullHeight + levels.fullHeight
+    readonly property real metricsH: root.showMetrics ? metrics.implicitHeight + Space.m : 0
+    // Shorter than the full left column (a low screen): compact controls.
+    readonly property bool compact: root.height > 0 && root.height - root.metricsH < root.leftFull - 1
 
     signal openTab(string id)
 
@@ -42,7 +48,7 @@ Item {
     }
 
     implicitWidth: Metrics.launcherWideW
-    implicitHeight: Math.max(Metrics.dashH + Space.xxl, left.implicitHeight, right.implicitHeight) + (root.showMetrics ? metrics.implicitHeight + Space.m : 0)
+    implicitHeight: Math.max(Metrics.dashH + Space.xxl, root.leftFull, right.implicitHeight) + root.metricsH
 
     CalendarEvents {
         id: events
@@ -102,7 +108,7 @@ Item {
                     objectName: "hero"
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.minimumHeight: hero.naturalHeight
+                    Layout.minimumHeight: root.compact ? hero.naturalHeight * 0.6 : hero.naturalHeight
                 }
 
                 Group {
@@ -111,15 +117,18 @@ Item {
                     Layout.fillWidth: true
                     divider: true
 
-                    HomeToggles {
+                    StageToggles {
+                        id: toggles
                         objectName: "toggles"
+                        compact: root.compact
                         width: parent.width
-                        stretch: true
                         onDetails: kind => root.openDetail(kind)
                     }
 
-                    HomeLevels {
+                    StageLevels {
+                        id: levels
                         objectName: "levels"
+                        compact: root.compact
                         width: parent.width
                         detail: root.detail
                         onDetails: kind => root.openDetail(kind)
@@ -158,6 +167,7 @@ Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: next.minimumHeight
+                    Layout.preferredHeight: next.naturalHeight
                 }
 
                 StageWeek {
@@ -169,14 +179,17 @@ Item {
                     onOpenMonth: root.openDetail("month")
                 }
 
-                HomeNotifications {
+                StageNotifications {
                     id: notifications
                     objectName: "notifications"
                     visible: root.detail === ""
-                    labelled: true
                     divider: true
                     Layout.fillWidth: true
+                    // Up to three cards; on a low screen down to one (it scrolls).
+                    Layout.fillHeight: true
                     Layout.preferredHeight: Math.min(notifications.wantedHeight, notifications.chrome + 3 * (notifications.rowH + notifications.rowGap))
+                    Layout.maximumHeight: Layout.preferredHeight
+                    Layout.minimumHeight: Math.min(notifications.wantedHeight, notifications.minimumHeight)
                 }
 
                 HomeDetail {

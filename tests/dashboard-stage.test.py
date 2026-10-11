@@ -155,7 +155,7 @@ check(h2.eval(item(h2, hero2, "heroIdle"), "visible") and not h2.eval(item(h2, h
 check(h2.eval(item(h2, hero2, "greeting"), "text").startswith("Good"), "idle hero greets")
 check(h2.eval(item(h2, hero2, "heroClock"), "text") != "", "idle hero shows the clock")
 check(not h2.eval(item(h2, dash2, "clock"), "visible"), "the header leaves the time to the idle hero")
-check(not h2.eval(hero2, "tinted"), "no tint without art")
+check(h2.eval(hero2, "tinted") and h2.eval(hero2, "toneRgb") is None, "idle: the accent floods the hero, no art tone")
 nxt2 = h2.find(stage2, "next")
 check(h2.eval(item(h2, nxt2, "nextEmpty"), "visible") and count(h2, nxt2, "nextRow") == 0, "nothing coming: one calm line")
 check(h2.eval(item(h2, stage2, "emptyState"), "visible"), "no notifications: the quiet line")

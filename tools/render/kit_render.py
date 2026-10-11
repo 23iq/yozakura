@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Render the shared UI kit sheet offscreen (private Xvfb, never the live desktop).
 
-    tools/render/kit_render.py [--out DIR] [--mode dark|light] [LANGUAGE ...]
+    tools/render/kit_render.py [--out DIR] [--mode dark|light] [--sheet NAME] [LANGUAGE ...]
 
 Draws tools/render/KitGallery.qml (every modules/components/kit component in
 its states) once per visual language (ink, glass, tiles by default) with your
 real config, palette and wallpaper (see settings_render.py). Writes
-<out>/<prefix>-<language>.png (prefix: kit).
+<out>/<prefix>-<language>.png (prefix: kit). `--sheet KitGalleryBold` draws the
+big controls (Tile, LevelSlider, Segmented, Sparkline) instead (prefix: kit-bold).
 """
 from __future__ import annotations
 
@@ -26,8 +27,10 @@ def main() -> int:
     ap.add_argument("languages", nargs="*", default=LANGUAGES)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
-    ap.add_argument("--prefix", default="kit", help="file name prefix (<prefix>-<language>.png)")
+    ap.add_argument("--prefix", default="", help="file name prefix (<prefix>-<language>.png)")
+    ap.add_argument("--sheet", default="KitGallery", choices=["KitGallery", "KitGalleryBold"])
     args = ap.parse_args()
+    prefix = args.prefix or ("kit" if args.sheet == "KitGallery" else "kit-bold")
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
@@ -37,12 +40,12 @@ def main() -> int:
         theme = {"language": lang, "lightMode": args.mode == "light"}
         env = KitEnv(f"kit-render-{lang}", gallery=True, palette=palette(args.mode, state), user_config=True,
                      overrides={"theme": theme}, wallpaper=state)
-        win = env.load("import qs.kitgallery\nKitGallery {}")
+        win = env.load(f"import qs.kitgallery\n{args.sheet} {{}}")
         win.setProperty("wallpaper", url)
         win.setProperty("art", url)
         win.setProperty("language", lang)
         QTest.qWait(900)
-        path = out / f"{args.prefix}-{lang}.png"
+        path = out / f"{prefix}-{lang}.png"
         win.grabWindow().save(str(path))
         print(path)
     return 0

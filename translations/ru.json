@@ -3722,6 +3722,8 @@
   "dashboard.home.more": "ещё %1",
   "dashboard.home.on": "Вкл",
   "dashboard.home.off": "Выкл",
+  "dashboard.home.short.mic": "Микрофон",
+  "dashboard.home.short.night": "Ночь",
   "dashboard.home.microphone": "Микрофон",
   "dashboard.home.night_light": "Ночной свет",
   "dashboard.home.no_devices": "Нет устройств",

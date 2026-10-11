@@ -9,6 +9,7 @@ Item {
     property url source: ""
     property real radius: 0
     property real strength: 0.32
+    property real saturation: 0.2
 
     visible: image.status === Image.Ready
 
@@ -39,7 +40,7 @@ Item {
         blurEnabled: true
         blurMax: 64
         blur: 1
-        saturation: 0.2
+        saturation: root.saturation
         autoPaddingEnabled: false
         maskEnabled: true
         maskSource: mask

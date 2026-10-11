@@ -49,6 +49,7 @@ Item {
             anchors.verticalCenter: parent.verticalCenter
             visible: root.showClock
             role: "display"
+            font.pixelSize: Math.round(Type.size("display") * 1.2)
             text: Qt.formatTime(root.now, root.use12h ? "h:mm" : "HH:mm")
         }
 

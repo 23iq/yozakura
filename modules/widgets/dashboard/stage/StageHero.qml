@@ -9,12 +9,14 @@ import "StageModel.js" as StageModel
 // The hero block of the stage home, the left column's main surface: the
 // player (StageHeroPlayer) or, with nothing playing, the greeting and the
 // large clock (StageHeroIdle), cross-faded. While a cover shows (and
-// layout.dashboard.heroTint), the block is tinted by ONE tone taken from
-// the art (StageTone): a wash that fades towards the bottom plus the art,
-// blurred and faint, held back by StageModel.tintAlpha so the text keeps
-// its contrast; the tone cross-fades with the track. Where groups have no
-// box (ink), the hero still draws its own faint rounded panel: it is the
-// one surface that stands out.
+// layout.dashboard.heroTint), ONE tone taken from the art (StageTone)
+// floods the block: StageModel.floodTone makes it deep (dark theme) or pale
+// (light theme) and saturated, StageModel.tintAlpha holds it back so the
+// text keeps its contrast; over it the art, blurred, and a scrim at the
+// bottom. The tone cross-fades with the track. Where groups have no box
+// (ink), the hero still draws its own faint rounded panel: it is the one
+// surface that stands out. With nothing playing the accent floods it the
+// same way.
 Group {
     id: root
 
@@ -23,7 +25,14 @@ Group {
     readonly property url artUrl: root.playing ? (MprisController.activePlayer?.trackArtUrl ?? "") : ""
     // The art's tone ({r, g, b} or null).
     readonly property var toneRgb: tone.tone
-    readonly property bool tinted: root.tintOn && root.playing && root.toneRgb !== null
+    // Idle (nothing playing) the accent floods the hero instead.
+    readonly property var accentRgb: ({
+            "r": Type.accent.r,
+            "g": Type.accent.g,
+            "b": Type.accent.b
+        })
+    readonly property var sourceRgb: root.playing ? root.toneRgb : root.accentRgb
+    readonly property bool tinted: root.tintOn && root.sourceRgb !== null
     readonly property var baseRgb: ({
             "r": Colors.background.r,
             "g": Colors.background.g,
@@ -34,13 +43,17 @@ Group {
             "g": Type.text.g,
             "b": Type.text.b
         })
-    readonly property real alpha: root.tinted ? StageModel.tintAlpha(root.toneRgb, root.baseRgb, root.inkRgb, 0.5, 4.5) : 0
+    // The art's tone as a deep (dark theme) or pale (light theme) flood.
+    readonly property var floodRgb: StageModel.floodTone(root.sourceRgb, StageModel.luminance(root.baseRgb) < 0.4 ? 0.26 : 0.84, 0.42)
+    readonly property real alpha: root.tinted ? StageModel.tintAlpha(root.floodRgb, root.baseRgb, root.inkRgb, 0.95, 4.5) : 0
     readonly property real naturalHeight: root.padding * 2 + (root.playing ? player.naturalHeight : idle.naturalHeight)
 
     readonly property bool ownBox: !Look.groupBoxed
     readonly property real boxRadius: Look.groupRadius || Space.controlRadius
 
     fill: true
+    // Natural, not the filled height (a filled Group would echo its height).
+    implicitHeight: root.naturalHeight
     padding: Math.max(Look.groupPadding, Space.l)
 
     Item {
@@ -84,8 +97,9 @@ Group {
             HomeArtGlow {
                 anchors.fill: parent
                 radius: root.boxRadius
-                source: root.tinted ? root.artUrl : ""
-                strength: root.alpha * 0.6
+                source: root.tinted && root.playing ? root.artUrl : ""
+                strength: root.alpha * 0.55
+                saturation: 0.7
             }
 
             Rectangle {
@@ -98,15 +112,30 @@ Group {
                     }
                     GradientStop {
                         position: 1
-                        color: Qt.rgba(tint.color.r, tint.color.g, tint.color.b, root.alpha * 0.35)
+                        color: Qt.rgba(tint.color.r, tint.color.g, tint.color.b, root.alpha * 0.8)
                     }
                 }
             }
 
+            // Legibility scrim under the timeline and the transport.
+            Rectangle {
+                anchors.fill: parent
+                radius: root.boxRadius
+                gradient: Gradient {
+                    GradientStop {
+                        position: 0.45
+                        color: "transparent"
+                    }
+                    GradientStop {
+                        position: 1
+                        color: Qt.alpha(Colors.background, 0.32)
+                    }
+                }
+            }
             // The tone, animated on track change.
             QtObject {
                 id: tint
-                property color color: tone.tone ? tone.color : Type.placeholder
+                property color color: root.floodRgb ? Qt.rgba(root.floodRgb.r, root.floodRgb.g, root.floodRgb.b, 1) : Type.placeholder
 
                 Behavior on color {
                     enabled: Config.animDuration > 0

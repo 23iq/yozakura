@@ -113,7 +113,9 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 Screens are built only from `modules/components/kit/` (`import qs.modules.components.kit`):
 `Type`/`KitText` roles, `Space` tokens, `Group`, `SectionLabel`, `Divider`, `ListRow`,
 `SearchField`, `IconButton`, `ActionButton`, `Chip`, `Switch`, `LineSlider`, `ProgressLine`,
-`Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`. No raw font sizes, paddings, hex colours or
+`Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`; big controls `Tile`, `LevelSlider`, `Segmented`,
+`Sparkline` (raised via `Look.raisedFill`, radius `Look.bigRadius`, load colours `Type.load`;
+sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`). No raw font sizes, paddings, hex colours or
 hand-made rows/buttons; a missing piece becomes a small generic kit component. The accent
 marks only active, progress, selected/today and one primary action per surface.
 `theme.language` (`ink` hairlines | `glass` frosted cards | `tiles` solid tiles | `classic`)
