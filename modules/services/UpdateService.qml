@@ -6,6 +6,7 @@ import Quickshell.Io
 import qs.config
 import qs.modules.services
 import qs.modules.globals
+import "UpdateVersions.js" as Versions
 
 Singleton {
     id: root
@@ -89,10 +90,14 @@ Singleton {
                     try {
                         const tags = JSON.parse(xhr.responseText);
                         if (tags && Array.isArray(tags) && tags.length > 0) {
-                            const latestTag = tags[0].name.replace(/^v/, "");
-                            if (isNewer(latestTag, root.currentVersion)) {
+                            // GitHub lists tags by name, not by version
+                            const latestTag = Versions.latest(tags, root.currentVersion);
+                            if (latestTag !== "" && isNewer(latestTag, root.currentVersion)) {
+                                // "Check now" with the service off only
+                                // updates the settings status, no popup
                                 if (latestTag !== root.lastDetectedVersion || !isNotificationInHistory()) {
-                                    sendUpdateNotification(latestTag);
+                                    if (Config.system.updateServiceEnabled)
+                                        sendUpdateNotification(latestTag);
                                     root.lastDetectedVersion = latestTag;
                                 }
                             }
@@ -115,15 +120,7 @@ Singleton {
     }
 
     function isNewer(latest, current) {
-        const l = latest.split('.').map(Number);
-        const c = current.split('.').map(Number);
-        for (let i = 0; i < Math.max(l.length, c.length); i++) {
-            const lv = l[i] || 0;
-            const cv = c[i] || 0;
-            if (lv > cv) return true;
-            if (lv < cv) return false;
-        }
-        return false;
+        return Versions.isNewer(latest, current);
     }
 
     function isNotificationInHistory() {
