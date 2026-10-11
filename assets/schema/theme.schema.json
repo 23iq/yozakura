@@ -49,7 +49,7 @@
         "unit": "px",
         "keywords": "radius corners rounded square shape",
         "min": 0,
-        "max": 20
+        "max": 24
       },
       "minimum": 0,
       "maximum": 24,
@@ -258,7 +258,7 @@
         "unit": "ms",
         "keywords": "animation speed duration fast slow motion reduce",
         "min": 0,
-        "max": 1000,
+        "max": 300,
         "specialValues": [
           {
             "value": 0,
@@ -267,7 +267,7 @@
         ]
       },
       "minimum": 0,
-      "maximum": 2000,
+      "maximum": 300,
       "x-unit": "ms"
     },
     "density": {
@@ -473,7 +473,7 @@
           "title": "Brush highlight",
           "type": "boolean",
           "default": true,
-          "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
+          "description": "A faint ink brush stroke under selections and the active tab or workspace, on any surface effect. Off in game mode and power saver.",
           "x-settings": {
             "category": "appearance",
             "section": "signatures",
@@ -505,7 +505,11 @@
             "section": "signatures",
             "label": "prefs.appearance.sig_petal_shape",
             "control": "selector",
-            "keywords": "signature petals leaves maple autumn shape"
+            "keywords": "signature petals leaves maple autumn shape",
+            "visibleWhen": {
+              "key": "theme.signatures.petals",
+              "equals": true
+            }
           },
           "enum": [
             "petal",
@@ -523,7 +527,7 @@
       "title": "Color Fade",
       "type": "number",
       "default": 600,
-      "description": "How long colors blend when the palette changes.",
+      "description": "How long colors blend when the palette changes. Skipped while animations are off.",
       "x-settings": {
         "category": "appearance",
         "section": "motion",
@@ -533,6 +537,28 @@
         "step": 50,
         "unit": "ms",
         "keywords": "palette colors crossfade fade wallpaper change transition",
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "theme.animDuration",
+              "notEquals": 0
+            },
+            {
+              "not": {
+                "all": [
+                  {
+                    "key": "compositor.motionProfile",
+                    "equals": "off"
+                  },
+                  {
+                    "key": "compositor.motionShell",
+                    "notEquals": false
+                  }
+                ]
+              }
+            }
+          ]
+        },
         "min": 0,
         "max": 1500,
         "specialValues": [
@@ -640,7 +666,7 @@
       "title": "Background opacity",
       "type": "number",
       "default": -1,
-      "description": "Kitty's background opacity before glass. From preset follows the preset's background surface.",
+      "description": "Background opacity of the generated kitty, ghostty, foot and alacritty themes, before glass. From preset follows the preset's background surface. With Glass off it is used as is.",
       "x-settings": {
         "category": "terminal",
         "section": "kitty",
@@ -649,8 +675,24 @@
         "step": 0.01,
         "keywords": "kitty terminal opacity transparency background alpha",
         "enabledWhen": {
-          "key": "apps.theming.kitty",
-          "equals": true
+          "any": [
+            {
+              "key": "apps.theming.kitty",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.ghostty",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.foot",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.alacritty",
+              "equals": true
+            }
+          ]
         },
         "min": 0,
         "max": 1,
@@ -1574,6 +1616,14 @@
                   "title": "Amount",
                   "type": "number",
                   "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
                   "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
                   "x-specialValues": [
                     {

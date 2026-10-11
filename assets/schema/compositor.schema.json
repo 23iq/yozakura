@@ -125,7 +125,6 @@
         "keywords": "rounding radius corners round",
         "visibleWhen": {
           "key": "compositor.syncRoundness",
-          "advanced": true,
           "equals": false
         },
         "min": 0,
@@ -526,7 +525,11 @@
         "section": "blur",
         "label": "prefs.windows.blur",
         "control": "toggle",
-        "keywords": "blur frosted glass transparency behind windows"
+        "keywords": "blur frosted glass transparency behind windows",
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        }
       }
     },
     "blurSize": {
@@ -543,6 +546,10 @@
         "keywords": "blur size radius amount",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         },
         "min": 0,
@@ -567,6 +574,10 @@
           "key": "compositor.blurEnabled",
           "equals": true
         },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        },
         "min": 1,
         "max": 10
       },
@@ -587,6 +598,10 @@
         "visibleWhen": {
           "key": "compositor.blurEnabled",
           "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
         }
       }
     },
@@ -603,6 +618,10 @@
         "keywords": "blur ignore alpha threshold transparent pixels",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         }
       }
@@ -631,6 +650,10 @@
             }
           ]
         },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        },
         "min": 0,
         "max": 1
       },
@@ -651,6 +674,10 @@
         "visibleWhen": {
           "key": "compositor.blurEnabled",
           "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
         }
       }
     },
@@ -667,6 +694,10 @@
         "keywords": "blur xray see through wallpaper floating",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         }
       }
@@ -685,6 +716,10 @@
         "keywords": "blur noise grain",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         },
         "min": 0,
@@ -709,6 +744,10 @@
           "key": "compositor.blurEnabled",
           "equals": true
         },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        },
         "min": 0,
         "max": 2
       },
@@ -729,6 +768,10 @@
         "keywords": "blur brightness light",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         },
         "min": 0,
@@ -753,6 +796,10 @@
           "key": "compositor.blurEnabled",
           "equals": true
         },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        },
         "min": 0,
         "max": 1
       },
@@ -775,6 +822,10 @@
           "key": "compositor.blurEnabled",
           "equals": true
         },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        },
         "min": 0,
         "max": 1
       },
@@ -795,6 +846,10 @@
         "visibleWhen": {
           "key": "compositor.blurEnabled",
           "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
         }
       }
     },
@@ -811,6 +866,10 @@
         "keywords": "blur popups menus context",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         }
       }
@@ -839,6 +898,10 @@
             }
           ]
         },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
+        },
         "min": 0,
         "max": 1
       },
@@ -858,6 +921,10 @@
         "keywords": "blur input method ime popup",
         "visibleWhen": {
           "key": "compositor.blurEnabled",
+          "equals": true
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
           "equals": true
         }
       }
@@ -885,6 +952,10 @@
               "equals": true
             }
           ]
+        },
+        "enabledWhen": {
+          "key": "theme.glass.enabled",
+          "equals": true
         },
         "min": 0,
         "max": 1
@@ -919,7 +990,7 @@
       "title": "Speed",
       "type": "number",
       "default": 1,
-      "description": "Multiplies every animation duration of the profile (below 1 is faster).",
+      "description": "Multiplies every animation duration of the profile (below 1 is faster). The shell's own animations follow it only while \"Shell follows the profile\" is on.",
       "x-settings": {
         "category": "appearance",
         "section": "motion",

@@ -59,7 +59,11 @@
         "section": "style",
         "label": "prefs.lockscreen.tone",
         "control": "selector",
-        "keywords": "lock screen light dark tone mode theme"
+        "keywords": "lock screen light dark tone mode theme",
+        "visibleWhen": {
+          "key": "lockscreen.style",
+          "notEquals": "neon"
+        }
       },
       "enum": [
         "style",

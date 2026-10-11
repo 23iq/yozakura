@@ -15,11 +15,16 @@ ColumnLayout {
 
     property var def: ({})
     property var value
+    // Overridden by the visual language / ignored with Glass off: shown
+    // dimmed and not editable (RoleLocks.js).
+    property bool locked: false
     signal edited(var value)
 
     readonly property bool inline: def.kind === "toggle" || def.kind === "slider" || def.kind === "selector"
 
     objectName: "surfaceField:" + (def.field || "")
+    enabled: !locked
+    opacity: locked ? 0.38 : 1
     spacing: 6
 
     RowLayout {

@@ -150,7 +150,9 @@ test('glass off: solid surfaces, no blur, no effects', () => {
         assert.equal(Model.variantOpacity(ctx, v, d, '', 0), d > 0 ? 1 : d, v);
         assert.equal(Model.effect(ctx, 'borderHighlight', v, d, 'popups'), 0);
     }
-    assert.equal(Model.terminalOpacity(ctx, sakura.theme, 0), 1);
+    // an explicit terminal opacity is kept with Glass off; the srBg fallback is solid
+    assert.equal(Model.terminalOpacity(ctx, sakura.theme, 0), sakura.theme.terminalOpacity);
+    assert.equal(Model.terminalOpacity(ctx, Object.assign(plain(sakura.theme), { terminalOpacity: -1 }), 0), 1);
     assert.equal(Model.compositor(ctx, sakura.compositor).blur.enabled, false);
     assert.equal(Model.shellBlur(ctx), false);
 });

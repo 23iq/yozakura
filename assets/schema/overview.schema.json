@@ -20,6 +20,10 @@
         "visibleWhen": {
           "key": "compositor.layout",
           "notEquals": "scrolling"
+        },
+        "enabledWhen": {
+          "key": "compositor.layout",
+          "notEquals": "scrolling"
         }
       },
       "enum": [
@@ -35,7 +39,7 @@
       "title": "Workspace rows",
       "type": "number",
       "default": 2,
-      "description": "Rows of workspaces in the overview grid.",
+      "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
       "x-settings": {
         "category": "overview",
         "section": "layout",
@@ -44,6 +48,20 @@
         "step": 1,
         "keywords": "overview rows grid vertical workspaces count",
         "visibleWhen": {
+          "not": {
+            "all": [
+              {
+                "key": "overview.style",
+                "equals": "strip"
+              },
+              {
+                "key": "compositor.layout",
+                "notEquals": "scrolling"
+              }
+            ]
+          }
+        },
+        "enabledWhen": {
           "not": {
             "all": [
               {

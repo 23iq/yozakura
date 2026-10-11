@@ -7,6 +7,32 @@
 // appearance.js.
 // Entry format: see modules/settings/AGENTS.md.
 
+// True while the shell animates: not 0 ms, not the "off" profile driving the
+// shell (Config.animDuration is 0 then; palette fades and wallpaper
+// transitions are skipped).
+var ANIMATED = {
+    "all": [
+        {
+            "key": "theme.animDuration",
+            "notEquals": 0
+        },
+        {
+            "not": {
+                "all": [
+                    {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                    },
+                    {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                    }
+                ]
+            }
+        }
+    ]
+};
+
 var sections = [
     {
         "id": "motion",
@@ -136,7 +162,7 @@ var sections = [
                 "advanced": true,
                 "type": "slider",
                 "min": 0,
-                "max": 1000,
+                "max": 300,
                 "step": 25,
                 "unit": "ms",
                 "specialValues": [
@@ -164,6 +190,7 @@ var sections = [
                     }
                 ],
                 "preview": "PaletteFadePreview",
+                "enabledWhen": ANIMATED,
                 "label": "settings.theme.palette_transition",
                 "description": "prefs.appearance.palette_transition.desc",
                 "keywords": "palette colors crossfade fade wallpaper change transition"

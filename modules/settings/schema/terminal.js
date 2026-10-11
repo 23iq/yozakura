@@ -34,6 +34,10 @@ var category = {
                 },
                 {
                     "key": "terminal.engine",
+                    "enabledWhen": {
+                        "key": "terminal.enabled",
+                        "equals": true
+                    },
                     "type": "selector",
                     "options": [
                         {
@@ -53,6 +57,10 @@ var category = {
                 },
                 {
                     "key": "terminal.greeting",
+                    "enabledWhen": {
+                        "key": "terminal.enabled",
+                        "equals": true
+                    },
                     "type": "selector",
                     "options": [
                         {
@@ -70,6 +78,18 @@ var category = {
                 },
                 {
                     "key": "terminal.padding",
+                    "enabledWhen": {
+                        "all": [
+                            {
+                                "key": "terminal.enabled",
+                                "equals": true
+                            },
+                            {
+                                "key": "apps.theming.kitty",
+                                "equals": true
+                            }
+                        ]
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 64,
@@ -81,6 +101,18 @@ var category = {
                 },
                 {
                     "key": "terminal.cursorShape",
+                    "enabledWhen": {
+                        "all": [
+                            {
+                                "key": "terminal.enabled",
+                                "equals": true
+                            },
+                            {
+                                "key": "apps.theming.kitty",
+                                "equals": true
+                            }
+                        ]
+                    },
                     "type": "custom",
                     "component": "CursorShapeChips",
                     "label": "prefs.term.look.cursor",
@@ -89,6 +121,18 @@ var category = {
                 },
                 {
                     "key": "terminal.cursorBlink",
+                    "enabledWhen": {
+                        "all": [
+                            {
+                                "key": "terminal.enabled",
+                                "equals": true
+                            },
+                            {
+                                "key": "apps.theming.kitty",
+                                "equals": true
+                            }
+                        ]
+                    },
                     "type": "toggle",
                     "label": "prefs.term.look.blink",
                     "description": "prefs.term.look.blink.desc",
@@ -164,8 +208,12 @@ var category = {
                         }
                     ],
                     "enabledWhen": {
-                        "key": "apps.theming.kitty",
-                        "equals": true
+                        "any": ["kitty", "ghostty", "foot", "alacritty"].map(function (id) {
+                            return {
+                                "key": "apps.theming." + id,
+                                "equals": true
+                            };
+                        })
                     },
                     "label": "prefs.term.opacity",
                     "description": "prefs.term.opacity.desc",

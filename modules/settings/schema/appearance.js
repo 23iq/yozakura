@@ -83,7 +83,7 @@ var category = {
                     "key": "theme.roundness",
                     "type": "slider",
                     "min": 0,
-                    "max": 20,
+                    "max": 24,
                     "step": 1,
                     "unit": "px",
                     "preview": "RoundnessPreview",
@@ -155,7 +155,6 @@ var category = {
                     "unit": "px",
                     "visibleWhen": {
                         "key": "compositor.syncRoundness",
-                    "advanced": true,
                         "equals": false
                     },
                     "label": "prefs.windows.rounding",
@@ -185,6 +184,10 @@ var category = {
                 {
                     "key": "theme.signatures.petalShape",
                     "type": "selector",
+                    "visibleWhen": {
+                        "key": "theme.signatures.petals",
+                        "equals": true
+                    },
                     "label": "prefs.appearance.sig_petal_shape",
                     "description": "prefs.appearance.sig_petal_shape.desc",
                     "options": [

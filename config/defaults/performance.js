@@ -4,7 +4,6 @@ var data = {
     "blurTransition": true,
     "windowPreview": true,
     "wavyLine": true,
-    "rotateCoverArt": true,
     "pauseWallpaperOnFullscreen": true,
     "pauseWallpaperWhenCovered": true,
     "dashboardPersistTabs": false,

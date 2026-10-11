@@ -48,6 +48,10 @@ var category = {
                             "icon": "moon"
                         }
                     ],
+                    "visibleWhen": {
+                        "key": "lockscreen.style",
+                        "notEquals": "neon"
+                    },
                     "label": "prefs.lockscreen.tone",
                     "description": "prefs.lockscreen.tone.desc",
                     "keywords": "lock screen light dark tone mode theme"

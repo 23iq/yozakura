@@ -3535,7 +3535,6 @@
             "keywords": "rounding radius corners round",
             "visibleWhen": {
               "key": "compositor.syncRoundness",
-              "advanced": true,
               "equals": false
             },
             "min": 0,
@@ -3936,7 +3935,11 @@
             "section": "blur",
             "label": "prefs.windows.blur",
             "control": "toggle",
-            "keywords": "blur frosted glass transparency behind windows"
+            "keywords": "blur frosted glass transparency behind windows",
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            }
           }
         },
         "blurSize": {
@@ -3953,6 +3956,10 @@
             "keywords": "blur size radius amount",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             },
             "min": 0,
@@ -3977,6 +3984,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 1,
             "max": 10
           },
@@ -3997,6 +4008,10 @@
             "visibleWhen": {
               "key": "compositor.blurEnabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             }
           }
         },
@@ -4013,6 +4028,10 @@
             "keywords": "blur ignore alpha threshold transparent pixels",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4041,6 +4060,10 @@
                 }
               ]
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4061,6 +4084,10 @@
             "visibleWhen": {
               "key": "compositor.blurEnabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             }
           }
         },
@@ -4077,6 +4104,10 @@
             "keywords": "blur xray see through wallpaper floating",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4095,6 +4126,10 @@
             "keywords": "blur noise grain",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             },
             "min": 0,
@@ -4119,6 +4154,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 2
           },
@@ -4139,6 +4178,10 @@
             "keywords": "blur brightness light",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             },
             "min": 0,
@@ -4163,6 +4206,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4185,6 +4232,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4205,6 +4256,10 @@
             "visibleWhen": {
               "key": "compositor.blurEnabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             }
           }
         },
@@ -4221,6 +4276,10 @@
             "keywords": "blur popups menus context",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4249,6 +4308,10 @@
                 }
               ]
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4268,6 +4331,10 @@
             "keywords": "blur input method ime popup",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4295,6 +4362,10 @@
                   "equals": true
                 }
               ]
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             },
             "min": 0,
             "max": 1
@@ -4329,7 +4400,7 @@
           "title": "Speed",
           "type": "number",
           "default": 1,
-          "description": "Multiplies every animation duration of the profile (below 1 is faster).",
+          "description": "Multiplies every animation duration of the profile (below 1 is faster). The shell's own animations follow it only while \"Shell follows the profile\" is on.",
           "x-settings": {
             "category": "appearance",
             "section": "motion",
@@ -4638,14 +4709,36 @@
           "title": "Transition style",
           "type": "string",
           "default": "grow",
-          "description": "How one wallpaper turns into the next.",
+          "description": "How one wallpaper turns into the next. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
             "section": "transition",
             "label": "prefs.wall.transition",
             "control": "selector",
             "preview": "TransitionPreview",
-            "keywords": "transition animation grow wipe dissolve fade random shader effect"
+            "keywords": "transition animation grow wipe dissolve fade random shader effect",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "theme.animDuration",
+                  "notEquals": 0
+                },
+                {
+                  "not": {
+                    "all": [
+                      {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                      },
+                      {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
           },
           "enum": [
             "grow",
@@ -4668,7 +4761,7 @@
           "title": "Transition duration",
           "type": "number",
           "default": 800,
-          "description": "Length of the wallpaper transition.",
+          "description": "Length of the wallpaper transition. Skipped while animations are off.",
           "x-settings": {
             "category": "wallpapers",
             "section": "transition",
@@ -4680,6 +4773,28 @@
             "visibleWhen": {
               "key": "desktop.wallpaperTransition",
               "notEquals": "none"
+            },
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "theme.animDuration",
+                  "notEquals": 0
+                },
+                {
+                  "not": {
+                    "all": [
+                      {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                      },
+                      {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                      }
+                    ]
+                  }
+                }
+              ]
             },
             "min": 100,
             "max": 3000
@@ -4942,7 +5057,7 @@
           "title": "Widget surface",
           "type": "string",
           "default": "pane",
-          "description": "Which shell surface style widgets use; glass amount: Appearance > Glass.",
+          "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
           "x-settings": {
             "category": "desktop",
             "section": "widgets",
@@ -6324,7 +6439,11 @@
             "section": "style",
             "label": "prefs.lockscreen.tone",
             "control": "selector",
-            "keywords": "lock screen light dark tone mode theme"
+            "keywords": "lock screen light dark tone mode theme",
+            "visibleWhen": {
+              "key": "lockscreen.style",
+              "notEquals": "neon"
+            }
           },
           "enum": [
             "style",
@@ -7470,6 +7589,10 @@
             "visibleWhen": {
               "key": "compositor.layout",
               "notEquals": "scrolling"
+            },
+            "enabledWhen": {
+              "key": "compositor.layout",
+              "notEquals": "scrolling"
             }
           },
           "enum": [
@@ -7485,7 +7608,7 @@
           "title": "Workspace rows",
           "type": "number",
           "default": 2,
-          "description": "Rows of workspaces in the overview grid.",
+          "description": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
           "x-settings": {
             "category": "overview",
             "section": "layout",
@@ -7494,6 +7617,20 @@
             "step": 1,
             "keywords": "overview rows grid vertical workspaces count",
             "visibleWhen": {
+              "not": {
+                "all": [
+                  {
+                    "key": "overview.style",
+                    "equals": "strip"
+                  },
+                  {
+                    "key": "compositor.layout",
+                    "notEquals": "scrolling"
+                  }
+                ]
+              }
+            },
+            "enabledWhen": {
               "not": {
                 "all": [
                   {
@@ -7616,19 +7753,6 @@
             "label": "performance.wavy_line",
             "control": "toggle",
             "keywords": "wavy line progress media animation"
-          }
-        },
-        "rotateCoverArt": {
-          "title": "Rotate Cover Art",
-          "type": "boolean",
-          "default": true,
-          "description": "Spin the album art like a vinyl disc while music plays.",
-          "x-settings": {
-            "category": "system",
-            "section": "performance",
-            "label": "performance.rotate_cover",
-            "control": "toggle",
-            "keywords": "cover art album vinyl rotation spin"
           }
         },
         "pauseWallpaperOnFullscreen": {
@@ -8919,13 +9043,17 @@
           "title": "Prompt engine",
           "type": "string",
           "default": "starship",
-          "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing.",
+          "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing. Applies while \"Use this prompt in fish\" is on.",
           "x-settings": {
             "category": "terminal",
             "section": "look",
             "label": "prefs.term.look.engine",
             "control": "selector",
-            "keywords": "prompt engine starship oh-my-posh omp"
+            "keywords": "prompt engine starship oh-my-posh omp",
+            "enabledWhen": {
+              "key": "terminal.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "starship",
@@ -8955,13 +9083,17 @@
           "title": "Greeting",
           "type": "string",
           "default": "none",
-          "description": "What fish shows when a terminal opens.",
+          "description": "What fish shows when a terminal opens. Applies while \"Use this prompt in fish\" is on.",
           "x-settings": {
             "category": "terminal",
             "section": "look",
             "label": "prefs.term.look.greeting",
             "control": "selector",
-            "keywords": "greeting fastfetch welcome fish_greeting"
+            "keywords": "greeting fastfetch welcome fish_greeting",
+            "enabledWhen": {
+              "key": "terminal.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "none",
@@ -8976,7 +9108,7 @@
           "title": "Window padding",
           "type": "number",
           "default": 12,
-          "description": "Space between the kitty window edge and the text.",
+          "description": "Space between the kitty window edge and the text. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
           "x-settings": {
             "category": "terminal",
             "section": "look",
@@ -8985,6 +9117,18 @@
             "step": 1,
             "unit": "px",
             "keywords": "kitty padding margin window spacing",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "terminal.enabled",
+                  "equals": true
+                },
+                {
+                  "key": "apps.theming.kitty",
+                  "equals": true
+                }
+              ]
+            },
             "min": 0,
             "max": 64
           },
@@ -8996,14 +9140,26 @@
           "title": "Cursor shape",
           "type": "string",
           "default": "beam",
-          "description": "The kitty cursor.",
+          "description": "The kitty cursor. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
           "x-settings": {
             "category": "terminal",
             "section": "look",
             "label": "prefs.term.look.cursor",
             "control": "custom",
             "component": "CursorShapeChips",
-            "keywords": "kitty cursor shape block beam underline caret"
+            "keywords": "kitty cursor shape block beam underline caret",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "terminal.enabled",
+                  "equals": true
+                },
+                {
+                  "key": "apps.theming.kitty",
+                  "equals": true
+                }
+              ]
+            }
           },
           "enum": [
             "block",
@@ -9015,13 +9171,25 @@
           "title": "Blinking cursor",
           "type": "boolean",
           "default": true,
-          "description": "Blink the kitty cursor while you're not typing.",
+          "description": "Blink the kitty cursor while you're not typing. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
           "x-settings": {
             "category": "terminal",
             "section": "look",
             "label": "prefs.term.look.blink",
             "control": "toggle",
-            "keywords": "kitty cursor blink blinking"
+            "keywords": "kitty cursor blink blinking",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "terminal.enabled",
+                  "equals": true
+                },
+                {
+                  "key": "apps.theming.kitty",
+                  "equals": true
+                }
+              ]
+            }
           }
         }
       },
@@ -9077,7 +9245,7 @@
             "unit": "px",
             "keywords": "radius corners rounded square shape",
             "min": 0,
-            "max": 20
+            "max": 24
           },
           "minimum": 0,
           "maximum": 24,
@@ -9286,7 +9454,7 @@
             "unit": "ms",
             "keywords": "animation speed duration fast slow motion reduce",
             "min": 0,
-            "max": 1000,
+            "max": 300,
             "specialValues": [
               {
                 "value": 0,
@@ -9295,7 +9463,7 @@
             ]
           },
           "minimum": 0,
-          "maximum": 2000,
+          "maximum": 300,
           "x-unit": "ms"
         },
         "density": {
@@ -9501,7 +9669,7 @@
               "title": "Brush highlight",
               "type": "boolean",
               "default": true,
-              "description": "Paint selections and the active tab or workspace with a faint ink brush stroke. Off in game mode and power saver.",
+              "description": "A faint ink brush stroke under selections and the active tab or workspace, on any surface effect. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
                 "section": "signatures",
@@ -9533,7 +9701,11 @@
                 "section": "signatures",
                 "label": "prefs.appearance.sig_petal_shape",
                 "control": "selector",
-                "keywords": "signature petals leaves maple autumn shape"
+                "keywords": "signature petals leaves maple autumn shape",
+                "visibleWhen": {
+                  "key": "theme.signatures.petals",
+                  "equals": true
+                }
               },
               "enum": [
                 "petal",
@@ -9551,7 +9723,7 @@
           "title": "Color Fade",
           "type": "number",
           "default": 600,
-          "description": "How long colors blend when the palette changes.",
+          "description": "How long colors blend when the palette changes. Skipped while animations are off.",
           "x-settings": {
             "category": "appearance",
             "section": "motion",
@@ -9561,6 +9733,28 @@
             "step": 50,
             "unit": "ms",
             "keywords": "palette colors crossfade fade wallpaper change transition",
+            "enabledWhen": {
+              "all": [
+                {
+                  "key": "theme.animDuration",
+                  "notEquals": 0
+                },
+                {
+                  "not": {
+                    "all": [
+                      {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                      },
+                      {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
             "min": 0,
             "max": 1500,
             "specialValues": [
@@ -9668,7 +9862,7 @@
           "title": "Background opacity",
           "type": "number",
           "default": -1,
-          "description": "Kitty's background opacity before glass. From preset follows the preset's background surface.",
+          "description": "Background opacity of the generated kitty, ghostty, foot and alacritty themes, before glass. From preset follows the preset's background surface. With Glass off it is used as is.",
           "x-settings": {
             "category": "terminal",
             "section": "kitty",
@@ -9677,8 +9871,24 @@
             "step": 0.01,
             "keywords": "kitty terminal opacity transparency background alpha",
             "enabledWhen": {
-              "key": "apps.theming.kitty",
-              "equals": true
+              "any": [
+                {
+                  "key": "apps.theming.kitty",
+                  "equals": true
+                },
+                {
+                  "key": "apps.theming.ghostty",
+                  "equals": true
+                },
+                {
+                  "key": "apps.theming.foot",
+                  "equals": true
+                },
+                {
+                  "key": "apps.theming.alacritty",
+                  "equals": true
+                }
+              ]
             },
             "min": 0,
             "max": 1,
@@ -10602,6 +10812,14 @@
                       "title": "Amount",
                       "type": "number",
                       "default": -1,
+                      "x-settings": {
+                        "category": "appearance",
+                        "section": "glassSurfaces",
+                        "label": "prefs.glass.surfaces",
+                        "entry": "theme.glass.surfaces",
+                        "entryTitle": "Surfaces",
+                        "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                      },
                       "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
                       "x-specialValues": [
                         {

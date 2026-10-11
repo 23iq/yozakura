@@ -182,9 +182,13 @@ function effect(ctx, name, variant, design, surface) {
     return param(ctx, name, surfaceAmount(ctx, surface), 0);
 }
 
-// Kitty background opacity: theme.terminalOpacity when set, else srBg.
+// Terminal background opacity: theme.terminalOpacity when set, else srBg.
+// An explicit value is the user's (or the style's) choice, so it also holds
+// with Glass off, where glass surfaces are otherwise drawn opaque.
 function terminalOpacity(ctx, theme, floor) {
     const t = theme ? theme.terminalOpacity : undefined;
+    if (!ctx.enabled && isSet(t))
+        return Math.min(t, 1);
     const design = isSet(t) ? Math.min(t, 1) : themeOpacity(theme, "srBg");
     return scaleOpacity(ctx, design === undefined ? 1 : design, surfaceAmount(ctx, "terminal"), floor);
 }

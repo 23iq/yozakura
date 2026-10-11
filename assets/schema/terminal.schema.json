@@ -24,13 +24,17 @@
       "title": "Prompt engine",
       "type": "string",
       "default": "starship",
-      "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing.",
+      "description": "The program that draws the prompt. Both look the same; it gets installed if it's missing. Applies while \"Use this prompt in fish\" is on.",
       "x-settings": {
         "category": "terminal",
         "section": "look",
         "label": "prefs.term.look.engine",
         "control": "selector",
-        "keywords": "prompt engine starship oh-my-posh omp"
+        "keywords": "prompt engine starship oh-my-posh omp",
+        "enabledWhen": {
+          "key": "terminal.enabled",
+          "equals": true
+        }
       },
       "enum": [
         "starship",
@@ -60,13 +64,17 @@
       "title": "Greeting",
       "type": "string",
       "default": "none",
-      "description": "What fish shows when a terminal opens.",
+      "description": "What fish shows when a terminal opens. Applies while \"Use this prompt in fish\" is on.",
       "x-settings": {
         "category": "terminal",
         "section": "look",
         "label": "prefs.term.look.greeting",
         "control": "selector",
-        "keywords": "greeting fastfetch welcome fish_greeting"
+        "keywords": "greeting fastfetch welcome fish_greeting",
+        "enabledWhen": {
+          "key": "terminal.enabled",
+          "equals": true
+        }
       },
       "enum": [
         "none",
@@ -81,7 +89,7 @@
       "title": "Window padding",
       "type": "number",
       "default": 12,
-      "description": "Space between the kitty window edge and the text.",
+      "description": "Space between the kitty window edge and the text. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
       "x-settings": {
         "category": "terminal",
         "section": "look",
@@ -90,6 +98,18 @@
         "step": 1,
         "unit": "px",
         "keywords": "kitty padding margin window spacing",
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "terminal.enabled",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.kitty",
+              "equals": true
+            }
+          ]
+        },
         "min": 0,
         "max": 64
       },
@@ -101,14 +121,26 @@
       "title": "Cursor shape",
       "type": "string",
       "default": "beam",
-      "description": "The kitty cursor.",
+      "description": "The kitty cursor. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
       "x-settings": {
         "category": "terminal",
         "section": "look",
         "label": "prefs.term.look.cursor",
         "control": "custom",
         "component": "CursorShapeChips",
-        "keywords": "kitty cursor shape block beam underline caret"
+        "keywords": "kitty cursor shape block beam underline caret",
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "terminal.enabled",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.kitty",
+              "equals": true
+            }
+          ]
+        }
       },
       "enum": [
         "block",
@@ -120,13 +152,25 @@
       "title": "Blinking cursor",
       "type": "boolean",
       "default": true,
-      "description": "Blink the kitty cursor while you're not typing.",
+      "description": "Blink the kitty cursor while you're not typing. Written to kitty while \"Use this prompt in fish\" and kitty theming are on.",
       "x-settings": {
         "category": "terminal",
         "section": "look",
         "label": "prefs.term.look.blink",
         "control": "toggle",
-        "keywords": "kitty cursor blink blinking"
+        "keywords": "kitty cursor blink blinking",
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "terminal.enabled",
+              "equals": true
+            },
+            {
+              "key": "apps.theming.kitty",
+              "equals": true
+            }
+          ]
+        }
       }
     }
   },

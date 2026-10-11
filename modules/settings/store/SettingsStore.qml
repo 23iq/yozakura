@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.services
 import "../SchemaUtil.js" as SchemaUtil
 import "../SettingsDefaults.js" as SettingsDefaults
+import "../CompositorGate.js" as CompositorGate
 
 // Read/write access to settings keys for the schema renderer.
 //
@@ -179,7 +180,7 @@ Singleton {
 
     function visible(entry) {
         // entries tied to one compositor (exclusive mode: Hyprland)
-        if (entry.compositor && YozdService.compositorName !== entry.compositor)
+        if (!CompositorGate.allows(entry.compositor, YozdService.compositorName))
             return false;
         return SchemaUtil.evalCondition(entry.visibleWhen, root.get);
     }

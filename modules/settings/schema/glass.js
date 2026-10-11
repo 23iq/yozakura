@@ -184,7 +184,8 @@ var sections = [
                     "theme.glass.surfaces.dock.amount",
                     "theme.glass.surfaces.sidebars.amount",
                     "theme.glass.surfaces.lockscreen.amount",
-                    "theme.glass.surfaces.settings.amount"
+                    "theme.glass.surfaces.settings.amount",
+                    "theme.glass.surfaces.widgets.amount"
                 ],
                 "visibleWhen": {
                     "key": "theme.glass.enabled",

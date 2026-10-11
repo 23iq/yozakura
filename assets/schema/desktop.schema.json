@@ -117,14 +117,36 @@
       "title": "Transition style",
       "type": "string",
       "default": "grow",
-      "description": "How one wallpaper turns into the next.",
+      "description": "How one wallpaper turns into the next. Skipped while animations are off.",
       "x-settings": {
         "category": "wallpapers",
         "section": "transition",
         "label": "prefs.wall.transition",
         "control": "selector",
         "preview": "TransitionPreview",
-        "keywords": "transition animation grow wipe dissolve fade random shader effect"
+        "keywords": "transition animation grow wipe dissolve fade random shader effect",
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "theme.animDuration",
+              "notEquals": 0
+            },
+            {
+              "not": {
+                "all": [
+                  {
+                    "key": "compositor.motionProfile",
+                    "equals": "off"
+                  },
+                  {
+                    "key": "compositor.motionShell",
+                    "notEquals": false
+                  }
+                ]
+              }
+            }
+          ]
+        }
       },
       "enum": [
         "grow",
@@ -147,7 +169,7 @@
       "title": "Transition duration",
       "type": "number",
       "default": 800,
-      "description": "Length of the wallpaper transition.",
+      "description": "Length of the wallpaper transition. Skipped while animations are off.",
       "x-settings": {
         "category": "wallpapers",
         "section": "transition",
@@ -159,6 +181,28 @@
         "visibleWhen": {
           "key": "desktop.wallpaperTransition",
           "notEquals": "none"
+        },
+        "enabledWhen": {
+          "all": [
+            {
+              "key": "theme.animDuration",
+              "notEquals": 0
+            },
+            {
+              "not": {
+                "all": [
+                  {
+                    "key": "compositor.motionProfile",
+                    "equals": "off"
+                  },
+                  {
+                    "key": "compositor.motionShell",
+                    "notEquals": false
+                  }
+                ]
+              }
+            }
+          ]
         },
         "min": 100,
         "max": 3000
@@ -421,7 +465,7 @@
       "title": "Widget surface",
       "type": "string",
       "default": "pane",
-      "description": "Which shell surface style widgets use; glass amount: Appearance > Glass.",
+      "description": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
       "x-settings": {
         "category": "desktop",
         "section": "widgets",

@@ -3,6 +3,32 @@
 // Wallpapers: library, folders, transitions. Entry format: see
 // modules/settings/AGENTS.md.
 
+// True while the shell animates: not 0 ms, not the "off" profile driving the
+// shell (Config.animDuration is 0 then; palette fades and wallpaper
+// transitions are skipped).
+var ANIMATED = {
+    "all": [
+        {
+            "key": "theme.animDuration",
+            "notEquals": 0
+        },
+        {
+            "not": {
+                "all": [
+                    {
+                        "key": "compositor.motionProfile",
+                        "equals": "off"
+                    },
+                    {
+                        "key": "compositor.motionShell",
+                        "notEquals": false
+                    }
+                ]
+            }
+        }
+    ]
+};
+
 var category = {
     "id": "wallpapers",
     "icon": "image",
@@ -45,6 +71,7 @@ var category = {
             "entries": [
                 {
                     "key": "desktop.wallpaperTransition",
+                    "enabledWhen": ANIMATED,
                     "type": "selector",
                     "options": [
                         {
@@ -79,6 +106,7 @@ var category = {
                 },
                 {
                     "key": "desktop.wallpaperTransitionDuration",
+                    "enabledWhen": ANIMATED,
                     "type": "slider",
                     "min": 100,
                     "max": 3000,
