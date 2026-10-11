@@ -97,6 +97,13 @@ FileView {
         file.reloading = false;
     }
     onPathChanged: reload()
+    // A pending coalesced write must not be lost when the shell quits.
+    Component.onDestruction: {
+        if (saveTimer.running) {
+            saveTimer.stop();
+            file.autoSave();
+        }
+    }
     onAdapterUpdated: {
         if (file.ready && !file.broken && !file.reloading && !file.store.pauseAutoSave)
             file.scheduleWrite();

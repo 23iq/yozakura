@@ -144,6 +144,9 @@ Singleton {
         }
 
         if (payload.oled !== undefined || payload.tint !== undefined) {
+            // Persist oledMode right away, unless the user has staged theme
+            // edits that an early write would apply behind their back.
+            const persistOled = payload.oled !== undefined && !GlobalStates.themeHasChanges;
             Config.holdAutoSave();
             try {
                 if (payload.oled !== undefined) {
@@ -153,7 +156,11 @@ Singleton {
                     manager.tintEnabled = payload.tint === true;
                 }
             } finally {
-                Qt.callLater(() => Config.releaseAutoSave());
+                Qt.callLater(() => {
+                    Config.releaseAutoSave();
+                    if (persistOled && Config.loader)
+                        Config.loader.writeAdapter();
+                });
             }
         }
 
