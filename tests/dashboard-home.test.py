@@ -9,8 +9,9 @@ the chevrons open the device lists; the player shows the track with play as
 the one primary action; the calendar selects today and browses months; the
 notifications are one line per app with per-app and global clear, then the
 quiet empty state; the month and the player grow to fill the area; the
-Wi-Fi / Bluetooth details list networks and devices from the kit; the rail switches tabs (the
-current one active) and offers the edit toggle only in bento mode.
+Wi-Fi / Bluetooth details list networks and devices from the kit; the header's
+tab chips switch tabs (the current one active) and it offers the edit toggle
+only in bento mode.
 """
 import sys
 from pathlib import Path
@@ -57,9 +58,11 @@ def item(root, name: str):
 
 QTest.qWait(100)
 home = ev(dash, "widgetsItem")
-check(home is not None and h.find(home, "header") is not None, "composed home loaded")
-check(abs(ev(dash, "implicitWidth") - (ev(home, "implicitWidth") + ev(dash, "railWidth"))) < 1, "width follows the home")
-check(abs(ev(dash, "implicitHeight") - max(430, ev(home, "implicitHeight"))) < 1, "height follows the home")
+check(home is not None and h.find(home, "player") is not None, "composed home loaded")
+check(abs(ev(dash, "implicitWidth") - ev(home, "implicitWidth")) < 1, "width follows the home")
+header_h = ev(h.find(dash, "header"), "height") + ev(dash, "headerGap")
+check(abs(ev(dash, "implicitHeight") - (header_h + max(430, ev(home, "implicitHeight")))) < 1, "height follows the home")
+check(ev(item(dash, "clock"), "visible"), "the header shows the time on the composed home")
 
 # Toggles: one row of icon toggles, each calls its service and follows it;
 # the name and state are the tooltip.
@@ -210,19 +213,20 @@ dev = item(home, "deviceRow")
 check(ev(dev, "title") == "Buds Pro" and ev(dev, "subtitle") == "Connected · 72%", "bluetooth rows show state and battery")
 ev(home, "detail = ''")
 
-# Rail: tabs as IconButtons (current active), edit only in bento mode.
+# Header: tabs as labelled chips (current active), edit only in bento mode.
 wall_tab = item(dash, "dashTab_wallpapers")
 check(ev(item(dash, "dashTab_widgets"), "active") and not ev(wall_tab, "active"), "widgets tab active")
 check(not ev(h.find(dash, "bentoEditToggle"), "visible"), "no edit toggle on the composed home")
 ev(wall_tab, "clicked()")
-check(ev(dash, "GlobalStates.dashboardCurrentTab") == 1 and ev(wall_tab, "active"), "rail navigates")
+check(ev(dash, "GlobalStates.dashboardCurrentTab") == 1 and ev(wall_tab, "active"), "header chips navigate")
+check(ev(wall_tab, "text") == "Wallpapers", "tab chips are labelled")
 ev(h.find(dash, "settingsButton"), "clicked()")
 check(ev(dash, "GlobalShortcuts.settings") == 1, "settings button")
 ev(dash, "GlobalStates.dashboardCurrentTab = 0")
 ev(dash, "Config.layout.dashboard = Object.assign({}, Config.layout.dashboard, { home: 'bento' })")
 QTest.qWait(100)
 edit = h.find(dash, "bentoEditToggle")
-check(ev(dash, "!homeComposed") and ev(edit, "visible"), "bento mode offers the edit toggle")
+check(ev(dash, "homeBento") and ev(edit, "visible"), "bento mode offers the edit toggle")
 ev(edit, "clicked()")
 check(ev(dash, "bentoEditing") and ev(edit, "active"), "edit toggle switches bento editing")
 
