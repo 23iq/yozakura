@@ -1050,6 +1050,8 @@
   "prefs.wall.previous": "Назад",
   "prefs.wall.next": "Далее",
   "prefs.wall.all": "Все",
+  "prefs.wall.per_screen": "Экраны с собственными обоями",
+  "prefs.wall.apply_all": "Применить ко всем экранам",
   "prefs.wall.empty": "В папках не найдено обоев.",
   "prefs.wall.folders": "Папки с обоями",
   "prefs.wall.folders.desc": "Изображения и видео собираются из всех папок, включая вложенные.",

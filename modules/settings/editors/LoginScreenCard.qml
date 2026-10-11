@@ -18,7 +18,10 @@ Item {
     property var entry
     property bool installed: false
     property string syncedAt: ""
-    readonly property string installCommand: "sudo " + Quickshell.shellDir + "/scripts/install-sddm-theme.sh"
+    // The command is copied for the user to paste in a terminal (it needs
+    // root, so the shell never runs it): the path is shell-quoted.
+    readonly property string installScript: Quickshell.shellDir + "/scripts/install-sddm-theme.sh"
+    readonly property string installCommand: "sudo '" + installScript.replace(/'/g, "'\\''") + "'"
 
     implicitHeight: column.implicitHeight + 28
 

@@ -27,6 +27,13 @@ Item {
 
     implicitHeight: column.implicitHeight
 
+    // A removed folder (or a single remaining one, which hides the chips)
+    // must not leave an empty grid behind.
+    onFoldersChanged: {
+        if (folderFilter !== "" && (folders.length < 2 || folders.indexOf(folderFilter) < 0))
+            folderFilter = "";
+    }
+
     function typeOf(path) {
         return manager && manager.getFileType ? manager.getFileType(path) : "image";
     }
@@ -167,6 +174,10 @@ Item {
                     }
                 }
             }
+        }
+
+        WallpaperScreens {
+            width: parent.width
         }
 
         // Folder filter

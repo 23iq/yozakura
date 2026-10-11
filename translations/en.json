@@ -1050,6 +1050,8 @@
   "prefs.wall.previous": "Previous",
   "prefs.wall.next": "Next",
   "prefs.wall.all": "All",
+  "prefs.wall.per_screen": "Screens with their own wallpaper",
+  "prefs.wall.apply_all": "Apply to all screens",
   "prefs.wall.empty": "No wallpapers found in your folders.",
   "prefs.wall.folders": "Wallpaper folders",
   "prefs.wall.folders.desc": "Images and videos are collected from all of them, including subfolders.",

@@ -1050,6 +1050,8 @@
   "prefs.wall.previous": "Anterior",
   "prefs.wall.next": "Siguiente",
   "prefs.wall.all": "Todos",
+  "prefs.wall.per_screen": "Pantallas con fondo propio",
+  "prefs.wall.apply_all": "Aplicar a todas las pantallas",
   "prefs.wall.empty": "No se encontraron fondos en tus carpetas.",
   "prefs.wall.folders": "Carpetas de fondos",
   "prefs.wall.folders.desc": "Se reúnen imágenes y vídeos de todas, subcarpetas incluidas.",

@@ -365,6 +365,15 @@ PanelWindow {
         }
     }
 
+    // Every screen shows the shared wallpaper again.
+    function clearAllPerScreenWallpapers() {
+        if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager !== wallpaper) {
+            GlobalStates.wallpaperManager.clearAllPerScreenWallpapers();
+            return;
+        }
+        wallpaperConfig.adapter.perScreenWallpapers = {};
+    }
+
     function nextWallpaper() {
         if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager !== wallpaper) {
             GlobalStates.wallpaperManager.nextWallpaper();
