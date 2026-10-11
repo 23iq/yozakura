@@ -9,6 +9,9 @@ Singleton {
     property var keyCache: ({})
     property bool initialized: false
 
+    // Last write failure ("" when the last write succeeded).
+    property string lastError: ""
+
     signal keysChanged
 
     Component.onCompleted: {
@@ -55,28 +58,47 @@ Singleton {
         return keyCache[provider] !== undefined && keyCache[provider].api_key !== "";
     }
 
-    function setKey(provider, apiKey, endpoint, customCurl) {
+    function _errorText(result, error) {
+        if (error)
+            return typeof error === "string" ? error : (error.message || String(error));
+        if (!result)
+            return "no reply";
+        return result.error ? String(result.error) : "";
+    }
+
+    // done(errorText) is called with "" on success.
+    function setKey(provider, apiKey, endpoint, customCurl, done) {
         BackendService.call("keystore.set", {
             provider: provider,
             api_key: apiKey,
             endpoint: endpoint || "",
             custom_curl: customCurl || ""
         }, (result, error) => {
-            if (error || !result || result.error) {
-                console.warn("KeyStore: Failed to set key:", error || result?.error);
-                return;
+            const msg = root._errorText(result, error);
+            root.lastError = msg;
+            if (msg) {
+                console.warn("KeyStore: Failed to set key:", msg);
+            } else {
+                root.refreshKeys();
             }
-            root.refreshKeys();
+            if (done)
+                done(msg);
         });
     }
 
-    function deleteKey(provider) {
-        BackendService.call("keystore.delete", {provider: provider}, (result, error) => {
-            if (error || !result || result.error) {
-                console.warn("KeyStore: Failed to delete key:", error || result?.error);
-                return;
+    function deleteKey(provider, done) {
+        BackendService.call("keystore.delete", {
+            provider: provider
+        }, (result, error) => {
+            const msg = root._errorText(result, error);
+            root.lastError = msg;
+            if (msg) {
+                console.warn("KeyStore: Failed to delete key:", msg);
+            } else {
+                root.refreshKeys();
             }
-            root.refreshKeys();
+            if (done)
+                done(msg);
         });
     }
 }
