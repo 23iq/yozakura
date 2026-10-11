@@ -151,6 +151,24 @@ check(ev(f'w.findItem("saveRoutine", {card}).enabled') is False, "save disabled 
 ev(f'w.findItem("routineStep:1", {card}).patched({{"tool": "volume_set", "args": {{"percent": 30}}}})')
 QTest.qWait(50)
 
+# A tool step reads as a sentence and has a form built from the schema;
+# the picker swaps the tool and starts it with its own defaults.
+step1 = f'w.findItem("routineStep:1", {card})'
+check(ev(f'w.findItem("stepSummary", {step1}).text') == "Set volume to 30%", "tool step summary sentence")
+check(ev(f'w.findItem("toolForm", {step1}) !== null'), "argument form rendered")
+ev(f'w.findItem("changeTool", {step1}).clicked()')
+QTest.qWait(100)
+check(ev(f'w.findItem("tool:dnd_set", {step1}).visible') is True, "picker lists the catalog")
+ev(f'w.findItem("tool:dnd_set", {step1}).clicked()')
+QTest.qWait(100)
+check(ev(f"JSON.stringify({card}.routine.steps[1])") == '{"kind":"tool","tool":"dnd_set","args":{"enabled":true}}', "picked tool starts with its defaults")
+check(ev(f'w.findItem("stepSummary", {step1}).text') == "Turn on Do Not Disturb", "summary follows the tool")
+ev(f'w.findItem("routineStep:1", {card}).patched({{"tool": "volume_set", "args": {{"percent": 999}}}})')
+QTest.qWait(50)
+check(ev(f"{card}.problems.length") == 1 and ev(f'w.findItem("saveRoutine", {card}).enabled') is False, "schema range blocks save")
+ev(f'w.findItem("routineStep:1", {card}).patched({{"args": {{"percent": 30}}}})')
+QTest.qWait(50)
+
 # Test run: the draft is run quietly and its report is shown.
 ev('RoutinesService.nextReport = {"ok": false, "steps": [{"index": 0, "label": "Play/Pause", "status": "ok"}, '
    '{"index": 1, "label": "Tool volume_set", "status": "failed", "error": "no sink"}, '
@@ -161,6 +179,11 @@ tests = [c for c in calls() if c[0] == "test"]
 check(len(tests) == 1 and len(tests[0][1]["steps"]) == 3, "test run sends the draft")
 check(ev(f'w.findItem("routineReport", {card}).visible') is True, "report shown")
 check(ev(f'w.findItem("routineReport", {card}).summary.done') == 1, "report summary")
+
+shots = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+if shots:
+    shots.mkdir(parents=True, exist_ok=True)
+    win.grabWindow().save(str(shots / "routines-steps.png"))
 
 ev(f'w.findItem("saveRoutine", {card}).clicked()')
 QTest.qWait(150)

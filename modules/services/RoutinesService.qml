@@ -17,6 +17,11 @@ Singleton {
     property string running: ""
     property var lastReport: null
     property string lastError: ""
+    // Tools a tool step may call, with their argument JSON schemas
+    // (`routines.tools`, loaded once by ensureTools).
+    property var tools: []
+    property var toolCategories: []
+    property bool toolsLoaded: false
 
     signal reported(var report)
     signal failed(string message)
@@ -34,6 +39,18 @@ Singleton {
             }
             if (callback)
                 callback(error ? null : result, error ? root.lastError : "");
+        });
+    }
+
+    function ensureTools() {
+        if (root.toolsLoaded)
+            return;
+        root.call("tools", {}, result => {
+            if (result && Array.isArray(result.tools)) {
+                root.tools = result.tools;
+                root.toolCategories = result.categories || [];
+                root.toolsLoaded = true;
+            }
         });
     }
 

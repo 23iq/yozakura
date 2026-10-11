@@ -150,6 +150,18 @@ var catalog = []ActionSpec{
 
 	{ID: "apps.launch", Label: "Open App", Category: "Apps", Dispatcher: "exec", Args: []ActionArg{{Key: "app", Label: "App", Placeholder: "firefox", DefaultValue: ""}}, ArgumentFn: func(args map[string]any) string { return LaunchCommand(stringArg(args, "app")) }},
 
+	{ID: "apps.terminal-run", Label: "Run in Terminal", Category: "Apps", Dispatcher: "exec", Args: []ActionArg{
+		{Key: "command", Label: "Command", Placeholder: "cd ~/project && claude", DefaultValue: ""},
+		{Key: "cwd", Label: "Directory", Placeholder: "~/project", DefaultValue: ""},
+		{Key: "keepOpen", Label: "Keep open", Placeholder: "true / false", DefaultValue: "true"},
+	}, ArgumentFn: func(args map[string]any) string {
+		keep := ""
+		if v, ok := args["keepOpen"]; ok && v != nil {
+			keep = fmt.Sprint(v) // a string from the editor, a bool from a routine
+		}
+		return TerminalRunCommand(stringArg(args, "command"), stringArg(args, "cwd"), keep)
+	}},
+
 	{ID: "legacy.dispatcher", Label: "Legacy Dispatcher", Category: "Advanced", Dispatcher: "", Args: []ActionArg{
 		{Key: "dispatcher", Label: "Dispatcher", Placeholder: "dispatcher", DefaultValue: ""},
 		{Key: "argument", Label: "Argument", Placeholder: "argument", DefaultValue: ""},
@@ -433,6 +445,32 @@ func LaunchCommand(app string) string {
 		return ""
 	}
 	return brand.Command("launch", shellWord(id))
+}
+
+// TerminalRunCommand is the exec line of "apps.terminal-run": `<app>
+// terminal run [--cwd DIR] [--keep-open=false] -- COMMAND`, every value
+// single-quoted when it is not a plain word (the line goes through sh).
+// Empty for no command.
+func TerminalRunCommand(command, cwd, keepOpen string) string {
+	command = strings.TrimSpace(command)
+	if command == "" {
+		return ""
+	}
+	parts := []string{"terminal", "run"}
+	if cwd = strings.TrimSpace(cwd); cwd != "" {
+		parts = append(parts, "--cwd", quoteAlways(cwd))
+	}
+	switch strings.ToLower(strings.TrimSpace(keepOpen)) {
+	case "false", "0", "no", "off":
+		parts = append(parts, "--keep-open=false")
+	}
+	return brand.Command(append(parts, "--", quoteAlways(command))...)
+}
+
+// quoteAlways single-quotes s for sh (a leading "~" stays literal: the
+// terminal command expands it itself).
+func quoteAlways(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 func stringArg(args map[string]any, key string) string {

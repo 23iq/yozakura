@@ -35,7 +35,7 @@ func TestRoutineTools(t *testing.T) {
 	m := structured(t, callTool(t, d, "routines_list", `{}`))
 	r := m["routines"].([]any)[0].(map[string]any)
 	assert.Equal(t, "morning", r["id"])
-	assert.Equal(t, "Tool dnd_set", r["steps"].([]any)[0].(map[string]any)["label"])
+	assert.Equal(t, "Turn off Do Not Disturb", r["steps"].([]any)[0].(map[string]any)["label"])
 
 	// New routine: undo deletes it, and the result says how to bind it.
 	ipc.result["routines.save"] = `{"routine":{"id":"focus","name":"Focus","steps":[{"kind":"tool","tool":"focus_start"}]},"previous":null}`

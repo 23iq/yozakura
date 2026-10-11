@@ -8,11 +8,13 @@ import qs.config
 import qs.modules.aicenter.common
 import qs.modules.settings.controls
 import qs.modules.settings.editors.keybinds
+import "../../../../config/KeybindActions.js" as KeybindActions
 import "../../../routines/RoutineModel.js" as RoutineModel
 
 // One step of a routine in the editor: a bind action (the keybind
-// editor's action picker and argument fields), a built-in tool (name +
-// JSON arguments, common tools as chips) or a delay. Emits patches.
+// editor's action picker and argument fields), a built-in tool
+// (RoutineToolStep: tool picker + argument form) or a delay. The header
+// reads the step as a sentence. Emits patches.
 StyledRect {
     id: root
 
@@ -26,7 +28,10 @@ StyledRect {
     signal moved(int delta)
 
     readonly property string kind: step.kind || "action"
-    readonly property var argsParse: RoutineModel.parseArgs(argsField.input.text)
+    // The step as one sentence ("Turn on Do Not Disturb", "Switch Workspace · 3").
+    readonly property string summary: RoutineModel.stepSummary(step, RoutinesService.tools, key => I18n.has(key) ? I18n.t(key) : "", id => I18n.t(KeybindActions.labelKey(id)))
+    // Only the sentence shows; click it to fold or unfold the step.
+    property bool folded: false
 
     objectName: "routineStep:" + stepIndex
     variant: "internalbg"
@@ -59,11 +64,19 @@ StyledRect {
                 }
             }
             Text {
-                text: I18n.t("routines.kind." + root.kind)
+                objectName: "stepSummary"
+                Layout.fillWidth: true
+                text: root.summary !== "" ? root.summary : I18n.t("routines.kind." + root.kind)
+                elide: Text.ElideRight
                 font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
+                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.DemiBold
-                color: Colors.overSurfaceVariant
+                color: Colors.overSurface
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.folded = !root.folded
+                }
             }
             Text {
                 Layout.fillWidth: true
@@ -73,9 +86,6 @@ StyledRect {
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-3)
                 color: Colors.error
-            }
-            Item {
-                Layout.fillWidth: root.problem === ""
             }
             IconButton {
                 glyph: Icons.arrowUp
@@ -104,7 +114,7 @@ StyledRect {
         }
 
         ActionEditor {
-            visible: root.kind === "action"
+            visible: root.kind === "action" && !root.folded
             Layout.fillWidth: true
             action: ({
                     "id": root.step.action || "",
@@ -117,59 +127,15 @@ StyledRect {
                 })
         }
 
-        ColumnLayout {
-            visible: root.kind === "tool"
+        RoutineToolStep {
+            visible: root.kind === "tool" && !root.folded
             Layout.fillWidth: true
-            spacing: 6
-
-            TextControl {
-                objectName: "toolName"
-                Layout.fillWidth: true
-                monospace: true
-                text: root.step.tool || ""
-                placeholder: "dnd_set"
-                onEdited: t => root.patched({
-                        "tool": t.trim()
-                    })
-            }
-            Flow {
-                Layout.fillWidth: true
-                spacing: 6
-                Repeater {
-                    model: RoutineModel.SUGGESTED_TOOLS
-                    delegate: ChipToggle {
-                        required property string modelData
-                        text: modelData
-                        checked: root.step.tool === modelData
-                        onToggled: v => {
-                            if (v)
-                                root.patched({
-                                    "tool": modelData
-                                });
-                        }
-                    }
-                }
-            }
-            TextControl {
-                id: argsField
-                objectName: "toolArgs"
-                Layout.fillWidth: true
-                monospace: true
-                text: RoutineModel.argsText(root.step.args)
-                placeholder: I18n.t("routines.args_placeholder")
-                invalid: !root.argsParse.ok
-                onEdited: t => {
-                    const p = RoutineModel.parseArgs(t);
-                    if (p.ok)
-                        root.patched({
-                            "args": p.value
-                        });
-                }
-            }
+            step: root.step
+            onPatched: p => root.patched(p)
         }
 
         RowLayout {
-            visible: root.kind === "delay"
+            visible: root.kind === "delay" && !root.folded
             Layout.fillWidth: true
             spacing: 10
             NumberControl {

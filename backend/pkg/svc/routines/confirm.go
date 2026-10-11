@@ -23,7 +23,7 @@ var ConfirmTools = map[string]bool{
 // sensitive as a confirm tool: an arbitrary command line, a raw compositor
 // dispatcher, closing the focused window and quitting the shell.
 var confirmActions = map[string]bool{
-	"command.run": true, "legacy.dispatcher": true, "window.close": true, brand.Action("quit"): true,
+	"command.run": true, "apps.terminal-run": true, "legacy.dispatcher": true, "window.close": true, brand.Action("quit"): true,
 }
 
 // ConfirmSteps lists what in r needs the user's confirmation before an AI

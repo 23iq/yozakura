@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"yozakura/backend/pkg/routinetools"
+	"yozakura/backend/pkg/svc/compositor"
 )
 
 // Step result statuses.
@@ -59,13 +62,33 @@ func StepLabel(s Step) string {
 		if s.Action == RoutineAction {
 			return "Run routine " + argString(s.Args, "routine")
 		}
-		return ActionLabel(s.Action)
+		label := ActionLabel(s.Action)
+		if d := actionDetail(s.Action, s.Args); d != "" {
+			label += " · " + truncate(d, 60)
+		}
+		return label
 	case KindTool:
-		return "Tool " + s.Tool
+		return routinetools.Label(s.Tool, s.Args)
 	case KindDelay:
 		return "Wait " + (time.Duration(s.Ms) * time.Millisecond).String()
 	}
 	return s.Kind
+}
+
+// actionDetail is the argument that tells two steps of one action apart
+// (the workspace, the command, the app...): the first argument of the
+// catalog entry that has a value.
+func actionDetail(id string, args map[string]any) string {
+	spec, ok := compositor.GetActionById(id)
+	if !ok {
+		return ""
+	}
+	for _, a := range spec.Args {
+		if v := argString(args, a.Key); v != "" {
+			return v
+		}
+	}
+	return ""
 }
 
 func argString(args map[string]any, key string) string {

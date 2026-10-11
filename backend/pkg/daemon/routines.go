@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/mcp/yozakura"
 	"yozakura/backend/pkg/paths"
 	mcpsvc "yozakura/backend/pkg/svc/mcp"
 	notifysvc "yozakura/backend/pkg/svc/notify"
@@ -32,6 +33,7 @@ func newRoutines(srv *ipc.Server, p *paths.Paths, mcp *mcpsvc.Service, notify *n
 				return res.Text(), res.IsError, nil
 			},
 		},
+		Tools: func() any { return yozakura.RoutineTools() },
 		Notify: func(sp notifysvc.SendParams) {
 			sp.AppIcon, sp.ReplaceKey = "dialog-warning", "routine-failed"
 			_, _ = notify.Send(sp)

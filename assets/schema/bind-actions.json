@@ -1429,6 +1429,52 @@
       ]
     },
     {
+      "id": "apps.terminal-run",
+      "labels": {
+        "en": "Run in terminal",
+        "es": "Ejecutar en una terminal",
+        "ru": "Выполнить в терминале"
+      },
+      "category": "Apps",
+      "group": "apps",
+      "dispatcher": "exec",
+      "args": [
+        {
+          "key": "command",
+          "labels": {
+            "en": "Command",
+            "es": "Comando",
+            "ru": "Команда"
+          },
+          "placeholder": "cd ~/project && claude",
+          "kind": "text",
+          "default": ""
+        },
+        {
+          "key": "cwd",
+          "labels": {
+            "en": "Directory",
+            "es": "Carpeta",
+            "ru": "Папка"
+          },
+          "placeholder": "~/project",
+          "kind": "path",
+          "default": ""
+        },
+        {
+          "key": "keepOpen",
+          "labels": {
+            "en": "Keep open after it ends",
+            "es": "Mantener abierta al terminar",
+            "ru": "Оставить открытым после завершения"
+          },
+          "placeholder": "true / false",
+          "kind": "bool",
+          "default": "true"
+        }
+      ]
+    },
+    {
       "id": "legacy.dispatcher",
       "labels": {
         "en": "Compositor dispatcher",

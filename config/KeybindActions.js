@@ -40,6 +40,25 @@ function launchCommand(app) {
     return id ? BrandActions.command("launch", shellWord(id)) : "";
 }
 
+function quoteAlways(value) {
+    return "'" + String(value).replace(/'/g, "'\\''") + "'";
+}
+
+// `<app> terminal run [--cwd DIR] [--keep-open=false] -- COMMAND`, every
+// value single-quoted (mirrors compositor.TerminalRunCommand); "" without
+// a command.
+function terminalRunCommand(command, cwd, keepOpen) {
+    const cmd = String(command || "").trim();
+    if (!cmd) return "";
+    const parts = ["terminal", "run"];
+    const dir = String(cwd || "").trim();
+    if (dir) parts.push("--cwd", quoteAlways(dir));
+    if (["false", "0", "no", "off"].indexOf(String(keepOpen === undefined ? "" : keepOpen).trim().toLowerCase()) !== -1)
+        parts.push("--keep-open=false");
+    parts.push("--", quoteAlways(cmd));
+    return BrandActions.command.apply(null, parts);
+}
+
 // `<app> run '<prefix><value>'` (UtilityCommands), "" without a value.
 function runParam(prefix, value) {
     const v = String(value || "").trim();
@@ -202,6 +221,16 @@ var ACTION_CATALOG = [
     // settings editor picks it from a list. Rendered as `<app> launch <id>`.
     { id: "apps.launch", label: "Open App", category: "Apps", group: "apps", dispatcher: "exec", args: [{ key: "app", label: "App", placeholder: "firefox", defaultValue: "", kind: "app" }], argumentBuilder: function (args) {
         return launchCommand(args.app);
+    } },
+
+    // A command line in the user's terminal (general.terminal). Rendered as
+    // `<app> terminal run [--cwd DIR] [--keep-open=false] -- 'COMMAND'`.
+    { id: "apps.terminal-run", label: "Run in Terminal", category: "Apps", group: "apps", dispatcher: "exec", args: [
+        { key: "command", label: "Command", placeholder: "cd ~/project && claude", defaultValue: "" },
+        { key: "cwd", label: "Directory", placeholder: "~/project", defaultValue: "", kind: "path" },
+        { key: "keepOpen", label: "Keep open", placeholder: "true / false", defaultValue: "true", kind: "bool" }
+    ], argumentBuilder: function (args) {
+        return terminalRunCommand(args.command, args.cwd, args.keepOpen);
     } },
 
     { id: "legacy.dispatcher", label: "Legacy Dispatcher", category: "Advanced", group: "other", dispatcher: "", args: [

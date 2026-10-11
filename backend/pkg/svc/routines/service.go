@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/routinetools"
 	"yozakura/backend/pkg/svc/notify"
 )
 
@@ -21,6 +22,7 @@ type Service struct {
 	path   string
 	exec   Executor
 	notify func(notify.SendParams)
+	tools  func() any
 
 	mu     sync.Mutex // serialises writers
 	grants grants     // user confirmations of AI runs (confirm.go)
@@ -34,11 +36,14 @@ type Options struct {
 	Exec Executor
 	// Notify reports a failed run that nobody watches (nil: silent).
 	Notify func(notify.SendParams)
+	// Tools returns the catalog of tools a step may call (the MCP
+	// definitions joined with their routine metadata); nil: none.
+	Tools func() any
 }
 
 // NewService builds the service; the executor's Lookup is filled in.
 func NewService(o Options) *Service {
-	s := &Service{path: o.Path, exec: o.Exec, notify: o.Notify, subs: map[*ipc.Subscriber]struct{}{}}
+	s := &Service{path: o.Path, exec: o.Exec, notify: o.Notify, tools: o.Tools, subs: map[*ipc.Subscriber]struct{}{}}
 	if s.exec.Lookup == nil {
 		s.exec.Lookup = s.lookup
 	}
@@ -58,7 +63,18 @@ func (s *Service) methods() map[string]ipc.HandlerFunc {
 		"delete": s.remove,
 		"run":    s.run,
 		"grant":  s.grant,
+		"tools":  s.toolCatalog,
 	}
+}
+
+// toolCatalog is routines.tools: the tools a tool step may call, each with
+// its argument JSON schema, grouped by category (routinetools).
+func (s *Service) toolCatalog(_ json.RawMessage) (any, error) {
+	var list any = []any{}
+	if s.tools != nil {
+		list = s.tools()
+	}
+	return map[string]any{"tools": list, "categories": routinetools.Categories}, nil
 }
 
 // ConfirmFor lists what the saved routine ref runs that needs the user's

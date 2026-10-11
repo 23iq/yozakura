@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import "../../../../config/KeybindActions.js" as KeybindActions
 import "../../../routines/RoutineModel.js" as RoutineModel
 
 // Result of a test run: a summary line and one line per step
@@ -13,7 +14,15 @@ StyledRect {
     id: root
 
     property var report: null
+    // The steps that ran: their sentences replace the backend's English labels.
+    property var steps: []
     readonly property var summary: RoutineModel.reportSummary(report)
+
+    function labelOf(res: var): string {
+        const step = root.steps[res.index];
+        const s = step ? RoutineModel.stepSummary(step, RoutinesService.tools, key => I18n.has(key) ? I18n.t(key) : "", id => I18n.t(KeybindActions.labelKey(id)), res.label) : "";
+        return s !== "" ? s : res.label;
+    }
 
     objectName: "routineReport"
     visible: report !== null
@@ -52,7 +61,7 @@ StyledRect {
                 }
                 Text {
                     Layout.fillWidth: true
-                    text: (line.modelData.index + 1) + ". " + line.modelData.label + (line.modelData.error ? " — " + line.modelData.error : "")
+                    text: (line.modelData.index + 1) + ". " + root.labelOf(line.modelData) + (line.modelData.error ? " — " + line.modelData.error : "")
                     wrapMode: Text.WordWrap
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-2)

@@ -86,7 +86,9 @@ ColumnLayout {
             required property var modelData
             readonly property bool isApp: modelData.kind === "app"
             readonly property bool isRoutine: modelData.kind === "routine"
-            readonly property bool plain: !isApp && !isRoutine
+            readonly property bool isPath: modelData.kind === "path"
+            readonly property bool isBool: modelData.kind === "bool"
+            readonly property bool plain: !isApp && !isRoutine && !isPath && !isBool
             Layout.fillWidth: true
             spacing: 12
 
@@ -110,6 +112,23 @@ ColumnLayout {
                 Layout.fillWidth: true
                 routineId: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
                 onPicked: id => root.setArg(fieldRow.modelData.key, id)
+            }
+            PathControl {
+                visible: fieldRow.isPath
+                Layout.fillWidth: true
+                pathKind: "dir"
+                path: String((root.action.args || {})[fieldRow.modelData.key] ?? "")
+                placeholder: fieldRow.modelData.placeholder
+                onEdited: p => root.setArg(fieldRow.modelData.key, p)
+            }
+            ToggleControl {
+                visible: fieldRow.isBool
+                checked: String((root.action.args || {})[fieldRow.modelData.key] ?? fieldRow.modelData.defaultValue) !== "false"
+                onToggled: v => root.setArg(fieldRow.modelData.key, v ? "true" : "false")
+            }
+            Item {
+                visible: fieldRow.isBool
+                Layout.fillWidth: true
             }
             TextControl {
                 visible: fieldRow.plain
