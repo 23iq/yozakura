@@ -8,6 +8,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.services
 import QtQuick
+import "BrightnessWrite.js" as Write
 
 /**
  * For managing brightness of monitors. Supports both brightnessctl and ddcutil.
@@ -150,10 +151,6 @@ Singleton {
             }
         }
         onExited: root.ddcMonitorsChanged()
-    }
-
-    Process {
-        id: setProc
     }
 
     component BrightnessMonitor: QtObject {
@@ -308,41 +305,27 @@ Singleton {
             }
         }
 
-        // Rate-limited write: writing ddcutil for every keypress during a
-        // sustained hold would saturate the DDC bus (every ddcutil setvcp
-        // takes ~100ms+). Instead we write on the leading edge of activity
-        // (snappy single-press feedback) and then fire periodic trailing
-        // writes every 200ms while activity continues, so the actual
-        // monitor brightness tracks the QML state smoothly during a held
-        // bind instead of waiting until release and jumping in one big
-        // DDC transaction (which is what produced the "drops to min, then
-        // snaps up" perception during sustained keypress).
-        property var setTimer: Timer {
-            id: setTimer
-            interval: 200
-            repeat: true
-            onTriggered: {
-                if (setProc.running) return;
-                syncBrightness();
+        // Single-flight, latest-wins write (BrightnessWrite.js): one DDC
+        // write takes 150-350 ms and ddcutil serialises concurrent calls, so
+        // a process per tick used to build a backlog the monitor replayed
+        // late and out of order. Now at most one write runs; requests that
+        // arrive meanwhile collapse into the newest value, written the moment
+        // the bus is free.
+        readonly property var writer: Write.create()
+
+        readonly property Process writeProc: Process {
+            onExited: exitCode => {
+                const next = Write.done(monitor.writer, exitCode === 0);
+                if (next !== null)
+                    monitor.startWrite(next);
             }
         }
-        // Stops the periodic trailing writes 200ms after the last activity
-        // so we don't keep writing to the hardware every 200ms forever
-        // after a single press.
-        property var stopTimer: Timer {
-            interval: 200
-            repeat: false
-            onTriggered: monitor.setTimer.stop()
-        }
 
-        function syncBrightness() {
-            if (isDdc && !busNum)
-                return;
+        function startWrite(raw: int): void {
             monitor.lastUserWriteAt = Date.now();
             monitor.lastUserWriteValue = monitor.brightness;
-            const rounded = Math.round(monitor.brightness * monitor.rawMaxBrightness);
-            setProc.command = isDdc ? ["ddcutil", "-b", busNum, "setvcp", "10", rounded] : ["brightnessctl", "--class", "backlight", "s", rounded, "--quiet"];
-            setProc.startDetached();
+            writeProc.command = Write.command(isDdc, busNum, raw, monitor.writer.fast);
+            writeProc.running = true;
         }
 
         function setBrightness(value: real): void {
@@ -350,16 +333,11 @@ Singleton {
             monitor.brightness = value;
             monitor.lastUserWriteAt = Date.now();
             monitor.lastUserWriteValue = value;
-            if (!monitor.setTimer.running) {
-                // Leading edge: first call after a pause writes immediately
-                // for snappy single-press feedback, then arms the periodic
-                // trailing timer.
-                if (!setProc.running) syncBrightness();
-                monitor.setTimer.start();
-            }
-            // Re-arm the watchdog that stops the trailing timer 200ms after
-            // the last activity — keeps it alive while presses keep coming.
-            monitor.stopTimer.restart();
+            if (isDdc && !busNum)
+                return;
+            const next = Write.submit(monitor.writer, Math.round(value * monitor.rawMaxBrightness));
+            if (next !== null)
+                monitor.startWrite(next);
         }
 
         Component.onCompleted: {
