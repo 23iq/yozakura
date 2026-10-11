@@ -36,7 +36,7 @@ test('groupRow: one line "summary · body", a count and the ids', () => {
     const g = { appName: 'chat', notifications: [
         { id: 1, appName: 'chat', summary: 'Bob', body: 'old', appIcon: 'chat', image: '' },
         { id: 2, appName: 'chat', summary: 'Ann', body: 'see <i>you</i>', appIcon: 'chat', image: '' }] };
-    assert.deepEqual(plain(m.groupRow(g)), { text: 'Ann · see you', count: 2, app: 'chat', icon: 'chat', image: '', ids: [1, 2] });
+    assert.deepEqual(plain(m.groupRow(g)), { text: 'Ann · see you', summary: 'Ann', body: 'see you', count: 2, app: 'chat', icon: 'chat', image: '', ids: [1, 2] });
 });
 
 test('groupRow: whichever of summary / body is set, else the app', () => {
@@ -46,13 +46,21 @@ test('groupRow: whichever of summary / body is set, else the app', () => {
     assert.equal(one({ appName: 'x', summary: '', body: '' }), 'x');
 });
 
+test('groupRow: summary over body; body alone moves up', () => {
+    const row = n => m.groupRow({ appName: 'app', notifications: [n] });
+    assert.equal(row({ summary: '<b>Hi</b>', body: 'there' }).summary, 'Hi');
+    assert.equal(row({ summary: '', body: 'only body' }).summary, 'only body');
+    assert.equal(row({ summary: '', body: 'only body' }).body, '');
+    assert.equal(row({ summary: '', body: '' }).summary, 'app');
+});
+
 test('groupRow: cached icon and image win; empty group is safe', () => {
     const n = { summary: 's', body: '', appIcon: 'a', cachedAppIcon: '/c/a.png', image: 'x', cachedImage: '/c/x.png' };
     const row = m.groupRow({ appName: 'app', notifications: [n] });
     assert.equal(row.icon, '/c/a.png');
     assert.equal(row.image, '/c/x.png');
     assert.equal(m.groupRow(null).text, '');
-    assert.deepEqual(plain(m.groupRow({ appName: 'x', notifications: [] })), { text: 'x', count: 0, app: 'x', icon: '', image: '', ids: [] });
+    assert.deepEqual(plain(m.groupRow({ appName: 'x', notifications: [] })), { text: 'x', summary: 'x', body: '', count: 0, app: 'x', icon: '', image: '', ids: [] });
 });
 
 test('avatarSource: the app icon first, then the image; paths as file URLs', () => {

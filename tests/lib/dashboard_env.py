@@ -13,6 +13,7 @@ Used by tests/dashboard-home.test.py and tools/render/dashboard_render.py.
 from __future__ import annotations
 
 import json
+import math
 import shutil
 
 from kit_env import KitEnv
@@ -151,11 +152,21 @@ QtObject {
         "Visibilities": "pragma Singleton\nQtObject { function setActiveModule(m) {} }",
         "SystemResources": "pragma Singleton\nQtObject { property real cpuUsage: 23; property real ramUsage: 48; "
                            "property bool gpuDetected: true; property real gpuUsage: 12; property real netRxRate: 1468006; "
-                           "property real netTxRate: 41984; function setConsumer(k, a) {} }",
+                           "property real netTxRate: 41984; "
+                           f"property var cpuHistory: {json.dumps(SAMPLE_HISTORY['cpu'])}; "
+                           f"property var ramHistory: {json.dumps(SAMPLE_HISTORY['ram'])}; "
+                           f"property var gpuHistories: [{json.dumps(SAMPLE_HISTORY['gpu'])}]; "
+                           "function setConsumer(k, a) {} }",
         "TimersService": "pragma Singleton\nQtObject { property real now: Date.now(); property var reminders: []; "
                          f"property var timers: {json.dumps(timers or [])} }}",
     }
 
+
+
+# Recent load samples (0..1) for the metric sparklines: a calm wave around
+# each sample's current value.
+SAMPLE_HISTORY = {k: [round(max(0.0, min(1.0, v + a * math.sin(i / 3.0 + p))), 3) for i in range(30)]
+                  for k, v, a, p in (("cpu", 0.25, 0.12, 0.0), ("ram", 0.47, 0.03, 1.0), ("gpu", 0.14, 0.1, 2.0))}
 
 def global_states(wallpaper: dict) -> str:
     extra = """property bool settingsWindowVisible: false

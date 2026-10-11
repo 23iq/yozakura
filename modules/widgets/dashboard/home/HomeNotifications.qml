@@ -17,17 +17,12 @@ Group {
     readonly property int count: Notifications.appNameList.length
     readonly property real rowH: Space.controlS
     readonly property real rowGap: Space.xs / 2
-    // Stage home: "Notifications" as the label, clear-all as its action.
-    property bool labelled: false
-    readonly property real footerH: root.count > 1 && !root.labelled ? Space.controlS : 0
+    readonly property real footerH: root.count > 1 ? Space.controlS : 0
     readonly property real listH: Math.max(1, root.count) * (root.rowH + root.rowGap) - root.rowGap
     readonly property real wantedHeight: root.chrome + root.listH + (root.footerH > 0 ? root.footerH + Space.m : 0)
     readonly property real minimumHeight: root.chrome + root.rowH
 
     fill: true
-    label: root.labelled ? I18n.t("dashboard.stage.notifications") : ""
-    actionText: root.labelled && root.count > 1 ? I18n.t("dashboard.stage.clear_all") : ""
-    onActionTriggered: Notifications.discardAllNotifications()
 
     ListView {
         id: list

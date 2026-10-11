@@ -199,6 +199,37 @@ function tintAlpha(tone, base, ink, maxAlpha, minContrast) {
     return Math.max(0, Math.round(a * 100) / 100);
 }
 
+// The art's tone made into a flood colour for the hero card: its hue with
+// the saturation lifted (at least `minSat`) and the lightness moved to
+// `light` (a deep tone over a dark theme, a pale one over a light theme),
+// so the card can take it at full strength and the ink stays readable.
+// {r, g, b} -> {r, g, b}; null in, null out.
+function floodTone(tone, light, minSat) {
+    if (!tone)
+        return null;
+    var r = tone.r, g = tone.g, b = tone.b;
+    var max = Math.max(r, g, b), min = Math.min(r, g, b);
+    var h = 0, s = 0, l = (max + min) / 2;
+    var d = max - min;
+    if (d > 1e-6) {
+        s = d / (1 - Math.abs(2 * l - 1));
+        if (max === r)
+            h = ((g - b) / d) % 6;
+        else if (max === g)
+            h = (b - r) / d + 2;
+        else
+            h = (r - g) / d + 4;
+        h = (h * 60 + 360) % 360;
+    }
+    s = d > 1e-6 ? Math.min(0.9, Math.max(Number(minSat) || 0, s * 1.2)) : 0;
+    l = Math.max(0, Math.min(1, Number(light)));
+    var c = (1 - Math.abs(2 * l - 1)) * s;
+    var x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    var m = l - c / 2;
+    var rgb = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return { r: rgb[0] + m, g: rgb[1] + m, b: rgb[2] + m };
+}
+
 // Network rate (bytes/s) -> "820 B/s", "12 KB/s", "1.4 MB/s".
 function rate(bytes) {
     var v = Math.max(0, Number(bytes) || 0);

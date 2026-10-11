@@ -105,6 +105,21 @@ test('tintAlpha keeps the ink readable', () => {
     assert.ok(m.contrast(m.mix(light, { r: 0, g: 0, b: 0 }, b), { r: 0.1, g: 0.1, b: 0.1 }) >= 4.5);
 });
 
+test('floodTone keeps the hue, lifts the saturation, sets the lightness', () => {
+    assert.equal(m.floodTone(null, 0.2, 0.4), null);
+    const pink = m.floodTone({ r: 0.9, g: 0.7, b: 0.75 }, 0.22, 0.45);
+    assert.ok(pink.r > pink.b && pink.b > pink.g, JSON.stringify(pink));
+    const l = (Math.max(pink.r, pink.g, pink.b) + Math.min(pink.r, pink.g, pink.b)) / 2;
+    assert.ok(Math.abs(l - 0.22) < 0.01, String(l));
+    const s = (Math.max(pink.r, pink.g, pink.b) - Math.min(pink.r, pink.g, pink.b)) / (1 - Math.abs(2 * l - 1));
+    assert.ok(s >= 0.45 - 1e-6, String(s));
+    const grey = m.floodTone({ r: 0.5, g: 0.5, b: 0.5 }, 0.85, 0.5);
+    assert.ok(Math.abs(grey.r - 0.85) < 1e-6 && Math.abs(grey.g - grey.b) < 1e-6, 'grey stays grey');
+    const dark = { r: 0.08, g: 0.07, b: 0.08 };
+    const ink = { r: 0.93, g: 0.9, b: 0.92 };
+    assert.ok(m.contrast(m.mix(dark, pink, m.tintAlpha(pink, dark, ink, 0.95, 4.5)), ink) >= 4.5);
+});
+
 test('rate formats bytes per second', () => {
     assert.equal(m.rate(820), '820 B/s');
     assert.equal(m.rate(12 * 1024), '12 KB/s');

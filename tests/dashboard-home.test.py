@@ -213,7 +213,7 @@ dev = item(home, "deviceRow")
 check(ev(dev, "title") == "Buds Pro" and ev(dev, "subtitle") == "Connected · 72%", "bluetooth rows show state and battery")
 ev(home, "detail = ''")
 
-# Header: tabs as labelled chips (current active), edit only in bento mode.
+# Header: tabs as a labelled segmented group (current active), edit only in bento mode.
 wall_tab = item(dash, "dashTab_wallpapers")
 check(ev(item(dash, "dashTab_widgets"), "active") and not ev(wall_tab, "active"), "widgets tab active")
 check(not ev(h.find(dash, "bentoEditToggle"), "visible"), "no edit toggle on the composed home")

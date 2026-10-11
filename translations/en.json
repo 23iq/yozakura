@@ -3706,6 +3706,8 @@
   "dashboard.home.more": "%1 more",
   "dashboard.home.on": "On",
   "dashboard.home.off": "Off",
+  "dashboard.home.short.mic": "Mic",
+  "dashboard.home.short.night": "Night",
   "dashboard.home.microphone": "Microphone",
   "dashboard.home.night_light": "Night light",
   "dashboard.home.no_devices": "No devices",

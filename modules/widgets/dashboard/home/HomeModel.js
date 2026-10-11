@@ -42,12 +42,16 @@ function groupRow(group) {
     var latest = list.length > 0 ? list[list.length - 1] : null;
     var app = group ? group.appName || "" : "";
     if (!latest)
-        return { text: app, count: 0, app: app, icon: "", image: "", ids: [] };
+        return { text: app, summary: app, body: "", count: 0, app: app, icon: "", image: "", ids: [] };
     var parts = [plainLine(latest.summary), plainLine(latest.body)].filter(function (s) {
         return s !== "";
     });
+    var summary = plainLine(latest.summary);
+    var body = plainLine(latest.body);
     return {
         text: parts.length > 0 ? parts.join(" · ") : (latest.appName || app),
+        summary: summary !== "" ? summary : (body !== "" ? body : (latest.appName || app)),
+        body: summary !== "" ? body : "",
         count: list.length,
         app: latest.appName || app,
         icon: latest.cachedAppIcon || latest.appIcon || "",
