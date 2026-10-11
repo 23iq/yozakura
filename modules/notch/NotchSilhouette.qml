@@ -82,6 +82,11 @@ Item {
         bottomRightRadius: root.br
         layer.enabled: root.attached
         layer.smooth: true
+        // StyledRect brings its own layer.effect (Shadow / CornerMask, picked
+        // from the corner style): swapping it while this layer is already
+        // live at shell start leaves the fill rendered as a thin strip. The
+        // mask below shapes this surface; it needs the plain texture.
+        layer.effect: null
     }
     MultiEffect {
         anchors.fill: parent
