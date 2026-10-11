@@ -1403,7 +1403,7 @@
   "prefs.windows.shadow_sharp.desc": "Sombras de borde duro en lugar de suaves.",
   "prefs.windows.section.blur": "Desenfoque",
   "prefs.windows.glass_link": "Cantidad de cristal",
-  "prefs.windows.glass_link.desc": "La intensidad del desenfoque y la opacidad también siguen Apariencia › Cristal; estos valores son su referencia.",
+  "prefs.windows.glass_link.desc": "El desenfoque de ventanas solo funciona con Glass activado; su intensidad y la opacidad de las ventanas escalan con la cantidad de Glass (los valores de abajo son la referencia en la cantidad propia del preset).",
   "prefs.windows.glass_link.open": "Abrir Cristal",
   "prefs.windows.blur": "Desenfoque tras ventanas",
   "prefs.windows.blur.desc": "Desenfoque esmerilado tras ventanas translúcidas y superficies del shell.",
@@ -3604,6 +3604,7 @@
   "prefs.surfaces.section": "Superficies",
   "prefs.surfaces.roles": "Estilos de superficie",
   "prefs.surfaces.roles.desc": "Los estilos con los que se dibuja cada contenedor del shell: elige uno y cambia su relleno, opacidad, borde y color del contenido.",
+  "prefs.surfaces.lock.language": "El estilo %1 sustituye %2 de esta superficie; usa el estilo Clásico para editarlos.",
   "prefs.surfaces.group.surfaces": "Superficies",
   "prefs.surfaces.group.accents": "Acentos",
   "prefs.surfaces.role.bg": "Fondo",
@@ -3752,5 +3753,7 @@
   "prefs.notch.activities_in.notch": "Notch",
   "prefs.notch.activities_in.bar": "Barra",
   "prefs.notch.activities_in.desc": "Automático muestra las actividades en vivo como pequeños chips en la barra cuando el notch comparte su borde, para que el notch nunca crezca sobre tus módulos",
-  "prefs.bar.module.activities": "Actividades en vivo"
+  "prefs.bar.module.activities": "Actividades en vivo",
+  "prefs.surfaces.lock.capped": "El estilo %1 limita la opacidad de esta superficie al %2 %.",
+  "prefs.surfaces.lock.glass": "Glass está desactivado: esta superficie se dibuja opaca y su opacidad se ignora."
 }

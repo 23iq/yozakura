@@ -1403,7 +1403,7 @@
   "prefs.windows.shadow_sharp.desc": "Hard-edged shadows instead of soft ones.",
   "prefs.windows.section.blur": "Blur",
   "prefs.windows.glass_link": "Glass amount",
-  "prefs.windows.glass_link.desc": "Blur strength and window opacity also follow Appearance › Glass; the values below are its reference.",
+  "prefs.windows.glass_link.desc": "Window blur only runs while Glass is on; its strength and window opacity scale with the Glass amount (the values below are the reference at the preset's own amount).",
   "prefs.windows.glass_link.open": "Open Glass",
   "prefs.windows.blur": "Blur behind windows",
   "prefs.windows.blur.desc": "Frosted blur behind translucent windows and shell surfaces.",
@@ -3604,6 +3604,7 @@
   "prefs.surfaces.section": "Surfaces",
   "prefs.surfaces.roles": "Surface styles",
   "prefs.surfaces.roles.desc": "The styles every shell container is drawn with: pick one, then change its fill, opacity, border and content color.",
+  "prefs.surfaces.lock.language": "The %1 style overrides this surface's %2; set Visual style to Classic to edit them.",
   "prefs.surfaces.group.surfaces": "Surfaces",
   "prefs.surfaces.group.accents": "Accents",
   "prefs.surfaces.role.bg": "Background",
@@ -3752,5 +3753,7 @@
   "prefs.notch.activities_in.notch": "Notch",
   "prefs.notch.activities_in.bar": "Bar",
   "prefs.notch.activities_in.desc": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
-  "prefs.bar.module.activities": "Live Activities"
+  "prefs.bar.module.activities": "Live Activities",
+  "prefs.surfaces.lock.capped": "The %1 style caps this surface's opacity at %2%.",
+  "prefs.surfaces.lock.glass": "Glass is off: this surface is drawn opaque, so its opacity is ignored."
 }

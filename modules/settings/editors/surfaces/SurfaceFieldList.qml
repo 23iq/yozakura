@@ -14,6 +14,8 @@ ColumnLayout {
 
     property string prop: "srBg"
     property string group: "main"
+    // RoleLocks.locks() of this role: {field: {kind, ...}}
+    property var locks: ({})
 
     readonly property var role: Config.theme ? Config.theme[prop] : null
     readonly property var model: Roles.fields(role, group)
@@ -33,6 +35,7 @@ ColumnLayout {
             required property var modelData
             Layout.fillWidth: true
             def: modelData
+            locked: !!root.locks[modelData.field] && root.locks[modelData.field].kind !== "capped"
             value: Roles.read(root.role, modelData.field)
             onEdited: v => root.commit(modelData.field, v)
         }

@@ -1403,7 +1403,7 @@
   "prefs.windows.shadow_sharp.desc": "Тени с жёсткими краями вместо мягких.",
   "prefs.windows.section.blur": "Размытие",
   "prefs.windows.glass_link": "Степень стекла",
-  "prefs.windows.glass_link.desc": "Сила размытия и прозрачность окон также следуют разделу Внешний вид › Стекло; значения ниже — его основа.",
+  "prefs.windows.glass_link.desc": "Размытие окон работает только при включённом Glass; его сила и прозрачность окон масштабируются величиной Glass (значения ниже - опорные при собственной величине пресета).",
   "prefs.windows.glass_link.open": "Открыть «Стекло»",
   "prefs.windows.blur": "Размытие под окнами",
   "prefs.windows.blur.desc": "Матовое размытие под полупрозрачными окнами и панелями оболочки.",
@@ -3620,6 +3620,7 @@
   "prefs.surfaces.section": "Поверхности",
   "prefs.surfaces.roles": "Стили поверхностей",
   "prefs.surfaces.roles.desc": "Стили, которыми рисуется каждый контейнер оболочки: выберите стиль и измените его заливку, непрозрачность, рамку и цвет содержимого.",
+  "prefs.surfaces.lock.language": "Стиль %1 переопределяет у этой поверхности: %2. Чтобы править, выберите стиль «Классика».",
   "prefs.surfaces.group.surfaces": "Поверхности",
   "prefs.surfaces.group.accents": "Акценты",
   "prefs.surfaces.role.bg": "Фон",
@@ -3770,5 +3771,7 @@
   "prefs.notch.activities_in.notch": "В вырезе",
   "prefs.notch.activities_in.bar": "В панели",
   "prefs.notch.activities_in.desc": "Авто показывает живые активности маленькими чипами в панели, когда вырез на том же краю, чтобы вырез не разрастался поверх модулей",
-  "prefs.bar.module.activities": "Живые активности"
+  "prefs.bar.module.activities": "Живые активности",
+  "prefs.surfaces.lock.capped": "Стиль %1 ограничивает непрозрачность этой поверхности до %2%.",
+  "prefs.surfaces.lock.glass": "Glass выключен: поверхность рисуется непрозрачной, прозрачность игнорируется."
 }
