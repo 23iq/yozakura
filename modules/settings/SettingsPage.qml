@@ -5,7 +5,9 @@ import QtQuick.Controls
 import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.services
 import qs.modules.theme
+import "CompositorGate.js" as CompositorGate
 
 // Renders a schema-driven category: header + one SettingsSection per
 // schema section. Nothing here is category specific.
@@ -13,6 +15,8 @@ Flickable {
     id: page
 
     required property var category
+    // Entries of this page the compositor gate hides on the running compositor
+    readonly property var gated: CompositorGate.hiddenBy(page.category.sections, YozdService.compositorName)
 
     contentWidth: width
     contentHeight: column.implicitHeight + 120
@@ -106,6 +110,16 @@ Flickable {
                 section: modelData
                 divider: index > 0
             }
+        }
+
+        KitText {
+            objectName: "compositorOnlyNote"
+            width: parent.width
+            visible: page.gated.count > 0
+            role: "caption"
+            color: Type.muted
+            wrapMode: Text.WordWrap
+            text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
         }
     }
 }

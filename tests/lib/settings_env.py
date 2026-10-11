@@ -621,6 +621,13 @@ QtObject {
     function enable(done) {}
     function restore(done) {}
 }"""
+STATE_STUB = """pragma Singleton
+import QtQuick
+QtObject {
+    property var state: ({})
+    function get(key, d) { return state[key] !== undefined ? state[key] : d }
+    function set(key, value) { const s = Object.assign({}, state); s[key] = value; state = s }
+}"""
 YOZD_STUB = 'pragma Singleton\nimport QtQuick\nQtObject { property string compositorName: "hyprland" }'
 
 
@@ -662,7 +669,7 @@ class SettingsEnv:
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
-                                              "YozdService": YOZD_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
+                                              "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})

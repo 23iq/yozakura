@@ -4045,5 +4045,7 @@
   "routines.field.volume_set.percent.hint": "100 es el volumen completo; hasta 150 se amplifica.",
   "prefs.surfaces.lock.capped": "El estilo %1 limita la opacidad de esta superficie al %2 %.",
   "prefs.surfaces.lock.language": "El estilo %1 sustituye %2 de esta superficie; usa el estilo Clásico para editarlos.",
-  "prefs.surfaces.lock.glass": "Glass está desactivado: esta superficie se dibuja opaca y su opacidad se ignora."
+  "prefs.surfaces.lock.glass": "Glass está desactivado: esta superficie se dibuja opaca y su opacidad se ignora.",
+  "prefs.compositor_only.note.one": "%1 ajuste solo está disponible en %2",
+  "prefs.compositor_only.note.other": "%1 ajustes solo están disponibles en %2"
 }

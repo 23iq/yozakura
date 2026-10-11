@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.services
 import "../shell/LayoutModel.js" as Model
 
 // The live composable layout (modules/shell/LayoutModel.js) of the current

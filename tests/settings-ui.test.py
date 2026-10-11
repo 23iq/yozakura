@@ -119,6 +119,21 @@ ev("SettingsStore.set('bar.frameEnabled', true)")
 settle(50)
 check(h.eval(row("bar.frameThickness"), "shown") is True, "frame thickness shown with frame")
 
+# Compositor gate note: silent on Hyprland, counts gated entries on niri
+ev('select("windows")')
+settle(250)
+note = ev('w.findItem("compositorOnlyNote")')
+check(note is not None and h.eval(note, "visible") is False, "no compositor note on Hyprland")
+h.eval(note, "YozdService.compositorName = 'niri'")
+settle(250)
+note = ev('w.findItem("compositorOnlyNote")')
+check(note is not None and h.eval(note, "visible") is True, "compositor note shows on niri")
+check("Hyprland" in h.eval(note, "text"), "compositor note names the supporting compositors")
+h.eval(note, "YozdService.compositorName = 'hyprland'")
+settle(100)
+ev('select("bar")')
+settle(250)
+
 # Nested key keeps the rest of the object
 ev("SettingsStore.set('bar.layout.style', 'islands')")
 check(ev("Config.bar.layout.style") == "islands", "nested write")
