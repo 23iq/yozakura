@@ -226,17 +226,19 @@ QtObject {
     function getCustomCurl(p) { return keyCache[p] ? keyCache[p].custom_curl : ''; }
     function getEndpoint(p) { return keyCache[p] ? keyCache[p].endpoint : ''; }
     function hasKey(p) { return !!keyCache[p] && keyCache[p].api_key !== ''; }
-    function setKey(p, key, endpoint, curl) {
+    function setKey(p, key, endpoint, curl, done) {
         const c = Object.assign({}, keyCache);
         c[p] = {api_key: key || '', endpoint: endpoint || '', custom_curl: curl || ''};
         keyCache = c;
         keysChanged();
+        if (done) done('');
     }
-    function deleteKey(p) {
+    function deleteKey(p, done) {
         const c = Object.assign({}, keyCache);
         delete c[p];
         keyCache = c;
         keysChanged();
+        if (done) done('');
     }
 }
 """)

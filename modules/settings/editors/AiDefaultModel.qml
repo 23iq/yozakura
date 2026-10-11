@@ -29,7 +29,9 @@ ColumnLayout {
         if (value && !list.some(c => c.id === root.value))
             list.push({
                 id: root.value,
-                name: root.value
+                // a model of a hidden or disconnected provider: still the
+                // setting, but the assistant cannot use it
+                name: root.value + "  ·  " + I18n.t("prefs.ai.default_engine.unavailable")
             });
         return list;
     }

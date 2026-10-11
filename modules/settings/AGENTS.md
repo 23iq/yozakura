@@ -99,7 +99,7 @@ Collection types (controls/ListControl, PathControl, ScreensControl,
 ChipsControl; pure helpers in SchemaUtil: listInsert/Remove/Move/Set,
 newListItem, toggleValue):
 - `list`: an array. Objects: `fields: [{key, type: text|number|selector|path|toggle,
-  label, placeholder, min/max/step/unit, options, monospace, pattern, flex
+  label, placeholder, min/max/step/unit, options, monospace, secret (masked text), pattern, flex
   (share of the row, e.g. 0.5)}]`, `newItem`, `itemLabel` ("Rule %1"),
   `addLabel`, `emptyLabel`; strings: `itemType: "text" | "path"` (+ `pathKind`).
   Items can be added, removed and reordered (system.idle.listeners,

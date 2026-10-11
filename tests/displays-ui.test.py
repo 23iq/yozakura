@@ -139,6 +139,21 @@ ev("DisplaysService.moveConflicts()")
 msg = ev("message", h.find(win, "conflictBanner"))
 check("monitors.conf:3" in msg and "unsupported: bitdepth" in msg, f"the banner lists skipped rules and why, got {msg!r}")
 
+# Errors reach the page: a failed restore published with the session
+ev("DisplaysService._onSession({session: 's9', state: 'reverted', remaining: 0, live: true, error: 'revert DP-1: boom'})")
+QTest.qWait(50)
+check(h.find(win, "applyError").property("visible") is True, "a failed restore shows the error banner")
+check("boom" in ev("message", h.find(win, "applyError")), "the banner carries the backend text")
+ev("DisplaysService.dismissNotice()")
+check(h.find(win, "applyError").property("visible") is False, "dismissing hides the banner")
+
+# Overlapping monitors block Apply with a message
+ev("page.resync()")
+ev("page.draft = page.draft.map(c => Object.assign({}, c, {x: 0, y: 0}))")
+QTest.qWait(50)
+check(h.find(win, "overlapNote").property("visible") is True, "overlap is reported")
+check(h.find(win, "applyButton").property("enabled") is False, "Apply is blocked while monitors overlap")
+
 # Identify
 ev("DisplaysService.identify()")
 check(len(calls("displays.identify")) == 1, "Identify calls displays.identify")

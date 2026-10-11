@@ -282,9 +282,10 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 	post, after := q.post, q.after
 	q.mu.Unlock()
 	ok := state == JobDone
+	var postErrs []string
 	if ok && post != nil {
 		for _, id := range j.Entries {
-			runPost(id, post(id))
+			postErrs = append(postErrs, runPost(id, post(id))...)
 		}
 	}
 	if after != nil {
@@ -296,6 +297,7 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 		q.record(j, state)
 	}
 	j.prog.State, j.prog.Reason = state, reason
+	j.prog.PostError = strings.Join(postErrs, "; ")
 	if ok {
 		j.prog.Percent = 100
 	}
@@ -329,13 +331,20 @@ func (q *Queue) finish(j *qjob, state, reason string) {
 	if ok && j.Kind == KindLogin {
 		q.notify("Login shell changed", "Log out and in again to use it.")
 	} else if ok {
-		q.notify(names+" installed", "")
+		body := ""
+		if len(postErrs) > 0 {
+			body = "Integration failed: " + strings.Join(postErrs, "; ")
+		}
+		q.notify(names+" installed", body)
 	} else {
 		q.notify("Installing "+names+" failed", reasonText(reason)+" Open Extras to retry.")
 	}
 }
 
-func runPost(id string, actions []string) {
+// runPost runs the post actions of one entry and returns the failures
+// (also logged); a failing hook never fails the finished install.
+func runPost(id string, actions []string) []string {
+	var errs []string
 	for _, a := range actions {
 		prefix, arg, found := strings.Cut(a, ":")
 		fn := postHook(prefix)
@@ -344,8 +353,10 @@ func runPost(id string, actions []string) {
 		}
 		if err := fn(arg); err != nil {
 			fmt.Fprintf(os.Stderr, "extras: %s: post %s: %v\n", id, a, err)
+			errs = append(errs, fmt.Sprintf("%s: %v", id, err))
 		}
 	}
+	return errs
 }
 
 func reasonText(r string) string {

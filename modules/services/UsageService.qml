@@ -1,6 +1,7 @@
 pragma Singleton
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import qs.config
 import "ai/UsageFormat.js" as UsageFormat
 
@@ -183,7 +184,20 @@ Singleton {
         if (!path)
             return;
         // Create the file with an empty override table on first use.
-        Quickshell.execDetached(["sh", "-c", 'f="$1"; [ -e "$f" ] || { mkdir -p "$(dirname "$f")" && printf "%s\\n" "{\\"providers\\": {}}" > "$f"; }; xdg-open "$f"', "sh", path]);
+        openPricesProc.command = ["sh", "-c", 'f="$1"; [ -e "$f" ] || { mkdir -p "$(dirname "$f")" && printf "%s\\n" "{\\"providers\\": {}}" > "$f"; } || exit 2; command -v xdg-open >/dev/null || exit 3; xdg-open "$f"', "sh", path];
+        openPricesProc.running = true;
+    }
+
+    // Last openPrices() failure ("" = none): shown by the usage editor
+    property string pricesError: ""
+
+    property Process openPricesProc: Process {
+        stderr: StdioCollector {
+            id: openPricesErr
+        }
+        onExited: code => {
+            root.pricesError = code === 0 ? "" : (code === 3 ? "xdg-open is not installed" : (openPricesErr.text.trim() || "could not open the prices file"));
+        }
     }
 
     property Timer _tick: Timer {

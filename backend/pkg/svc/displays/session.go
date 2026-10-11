@@ -36,6 +36,9 @@ type Session struct {
 	Deadline            time.Time
 	State               string
 	Live                bool
+	// Error is set when re-applying the snapshot failed (the outputs may
+	// not be back in their old state); published with the session.
+	Error string
 }
 
 // Manager holds at most one session. It is clock-free: callers pass now,
@@ -57,11 +60,12 @@ func NewManager(a Applier) *Manager { return &Manager{applier: a} }
 func (m *Manager) Start(now time.Time, snap, cand []ipc.OutputConfig) (*Session, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	var carried error
 	if m.cur != nil && m.cur.State == StatePending {
 		// snap was read while the old candidate was live: restore the
 		// old session's snapshot for outputs it already covered.
 		snap = carrySnapshot(m.cur.Snapshot, snap, cand)
-		_ = m.revertLocked()
+		carried = m.revertLocked()
 	}
 	m.seq++
 	s := &Session{
@@ -70,6 +74,9 @@ func (m *Manager) Start(now time.Time, snap, cand []ipc.OutputConfig) (*Session,
 		Deadline: now.Add(RevertAfter),
 		State:    StatePending,
 		Live:     true,
+	}
+	if carried != nil {
+		s.Error = carried.Error()
 	}
 	m.cur = s
 	for i, c := range cand {
@@ -81,7 +88,9 @@ func (m *Manager) Start(now time.Time, snap, cand []ipc.OutputConfig) (*Session,
 			s.Live = false
 			break
 		}
-		_ = m.revertLocked()
+		if rerr := m.revertLocked(); rerr != nil {
+			return m.copyLocked(), fmt.Errorf("apply %s: %w (restoring the previous layout failed: %v)", c.Name, err, rerr)
+		}
 		return m.copyLocked(), fmt.Errorf("apply %s: %w", c.Name, err)
 	}
 	return m.copyLocked(), nil
@@ -169,6 +178,9 @@ func (m *Manager) revertLocked() error {
 		if err := m.applier.Apply(c); err != nil && first == nil {
 			first = fmt.Errorf("revert %s: %w", c.Name, err)
 		}
+	}
+	if first != nil {
+		s.Error = first.Error()
 	}
 	return first
 }

@@ -2,6 +2,7 @@ package extras
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -311,5 +312,21 @@ func TestQueuePacmanPipedPercent(t *testing.T) {
 	}
 	if !saw50 {
 		t.Errorf("percents = %v", pcts)
+	}
+}
+
+func TestQueuePostFailureIsReported(t *testing.T) {
+	f := &fakeRunner{}
+	q, r := newTestQueue(t, f)
+	registerTestPost(t, "failhook", func(arg string) error { return errors.New("no such app") })
+	q.SetPostActions(func(id string) []string { return []string{"failhook:x"} })
+	q.Enqueue([]Job{job("a", KindNpm, "npm", "a")})
+	q.Wait()
+	fin := r.final()["a"]
+	if fin.State != JobDone || !strings.Contains(fin.PostError, "no such app") {
+		t.Fatalf("final = %+v", fin)
+	}
+	if len(r.notifs) != 1 {
+		t.Fatalf("notifs = %v", r.notifs)
 	}
 }

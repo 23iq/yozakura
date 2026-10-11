@@ -27,6 +27,8 @@ StyledRect {
 
     readonly property bool selectable: root.cardState === "selectable"
     readonly property string failReason: (root.progress && root.progress.state === "failed" ? root.progress.reason : (root.status ? root.status.reason : "")) || "error"
+    // installed, but a post action (app theming hook) failed
+    readonly property string postError: root.progress && root.progress.state === "done" && root.progress.postError ? root.progress.postError : ""
     readonly property bool hovered: hover.hovered
 
     variant: "pane"
@@ -135,13 +137,13 @@ StyledRect {
         anchors.topMargin: 10
         objectName: "description"
         // a failed card says why instead
-        text: root.cardState === "failed" ? I18n.t("extras.ui.reason." + root.failReason) : I18n.t("extras." + root.entry.id + ".desc")
+        text: root.cardState === "failed" ? I18n.t("extras.ui.reason." + root.failReason) : (root.postError !== "" ? I18n.t("extras.ui.post_failed") + ": " + root.postError : I18n.t("extras." + root.entry.id + ".desc"))
         wrapMode: Text.WordWrap
         maximumLineCount: 2
         elide: Text.ElideRight
         font.family: Config.theme.font
         font.pixelSize: Styling.fontSize(-1)
-        color: root.cardState === "failed" ? Colors.error : Colors.overSurfaceVariant
+        color: root.cardState === "failed" || root.postError !== "" ? Colors.error : Colors.overSurfaceVariant
     }
 
     CardFooter {

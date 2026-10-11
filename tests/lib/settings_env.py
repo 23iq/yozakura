@@ -62,7 +62,7 @@ QtObject {
         function status(id) { return { state: id === "ollama" ? "connected" : "none", connected: id === "ollama", local: id === "ollama" || id === "lmstudio" }; }
         function current(id) { return { key: "", url: "", curl: "" }; }
         function test(id, key, url, cb) { cb({ ok: true, verified: true, count: 2, error: "", models: [] }); }
-        function save(id, key, url, curl) { saved = saved.concat([id]); return true; }
+        function save(id, key, url, curl, done) { saved = saved.concat([id]); if (done) done(""); return true; }
         function disconnect(id) {}
         function setHidden(id, hide) { hidden = hide ? hidden.concat([id]) : hidden.filter(h => h !== id); }
     }

@@ -39,7 +39,57 @@ Singleton {
     // there the shell saves it into the dry run's config copy.
     property var _candidate: []
 
+    // True between an apply request and its answer (blocks a second apply)
+    property bool applying: false
+
+    // Last problem to show the user: kind is "apply", "keep", "revert",
+    // "restore" (the backend could not put the old layout back) or "info".
+    property var notice: ({
+            "kind": "",
+            "message": ""
+        })
+
     signal applyFailed(string message)
+
+    function _text(error, fallback) {
+        if (error === undefined || error === null)
+            return fallback;
+        if (typeof error === "string")
+            return error;
+        return error.message ? String(error.message) : fallback;
+    }
+
+    function setNotice(kind, message) {
+        root.notice = {
+            "kind": kind,
+            "message": message
+        };
+        // keep/revert are answered on the full-screen prompt, which closes
+        // at once: say what went wrong where the user will still see it
+        const titles = {
+            "keep": "prefs.displays.keep_failed",
+            "revert": "prefs.displays.revert_failed",
+            "restore": "prefs.displays.restore_failed"
+        };
+        if (message !== "" && titles[kind] !== undefined) {
+            try {
+                Notifications.notifyInternal({
+                    "summary": I18n.t(titles[kind]),
+                    "body": message,
+                    "appName": Brand.displayName,
+                    "urgency": "critical",
+                    "replaceKey": Brand.appId + "-displays"
+                });
+            } catch (e) {
+                console.warn("DisplaysService: notify failed", e);
+            }
+        }
+    }
+
+    function dismissNotice() {
+        if (root.notice.kind !== "" || root.notice.message !== "")
+            root.setNotice("", "");
+    }
 
     function refresh() {
         BackendService.call("displays.list", {}, (result, error) => {
@@ -58,16 +108,30 @@ Singleton {
     }
 
     function currentConfigs() {
-        return root.outputs.map(DisplayModel.outputToConfig);
+        const saved = root.savedConfigs();
+        return root.outputs.map(o => DisplayModel.outputToConfig(o, saved.find(c => c.name === o.name)));
     }
 
-    // Applies configs (the saved form) live; the backend reverts after 15 s unless keep() is called
+    // Applies configs (the saved form) live; the backend reverts after 15 s unless keep() is called.
+    // Only the outputs that differ from the live state are applied.
     function apply(configs) {
+        if (root.applying)
+            return;
+        root.applying = true;
+        root.dismissNotice();
         BackendService.call("displays.apply", {
             "outputs": configs.map(DisplayModel.toWire)
         }, (result, error) => {
+            root.applying = false;
             if (error || !result) {
-                root.applyFailed(error && error.message ? error.message : "apply failed");
+                const message = root._text(error, "apply failed");
+                root.setNotice("apply", message);
+                root.applyFailed(message);
+                root.refresh();
+                return;
+            }
+            if (result.unchanged === true || !result.session) {
+                root.setNotice("info", "");
                 root.refresh();
                 return;
             }
@@ -77,7 +141,8 @@ Singleton {
                 "remaining": result.revertIn,
                 "live": result.live !== false
             };
-            root._candidate = configs;
+            const applied = Array.isArray(result.applied) ? result.applied : null;
+            root._candidate = applied ? configs.filter(c => applied.indexOf(c.name) >= 0) : configs;
             root.refresh();
         });
     }
@@ -91,6 +156,8 @@ Singleton {
         }, (result, error) => {
             if (error) {
                 console.warn("DisplaysService: keep failed", JSON.stringify(error));
+                root.setNotice("keep", root._text(error, "keep failed"));
+                root.refresh();
                 return;
             }
             const candidate = root._candidate;
@@ -108,8 +175,11 @@ Singleton {
         BackendService.call("displays.revert", {
             "session": root.session.id
         }, (result, error) => {
-            if (error)
+            if (error) {
                 console.warn("DisplaysService: revert failed", JSON.stringify(error));
+                root.setNotice("revert", root._text(error, "revert failed"));
+                root.refresh();
+            }
         });
     }
 
@@ -165,6 +235,8 @@ Singleton {
         if (!data)
             return;
         const prev = root.session.state;
+        if (data.error && data.error !== root.notice.message)
+            root.setNotice(data.state === "kept" ? "keep" : "restore", String(data.error));
         root.session = {
             "id": data.session,
             "state": data.state,

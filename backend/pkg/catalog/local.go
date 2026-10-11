@@ -66,3 +66,30 @@ func (c *Catalog) LocalEntries(domain string) []*Entry {
 	}
 	return out
 }
+
+// MaskedValue is what reports show instead of a credential.
+const MaskedValue = "********"
+
+// MaskValue hides every non-empty string inside a credential value (a
+// string, or a list/object of them such as custom request headers).
+func MaskValue(v any) any {
+	switch t := v.(type) {
+	case string:
+		if t != "" {
+			return MaskedValue
+		}
+	case []any:
+		out := make([]any, len(t))
+		for i, x := range t {
+			out[i] = MaskValue(x)
+		}
+		return out
+	case map[string]any:
+		out := make(map[string]any, len(t))
+		for k, x := range t {
+			out[k] = MaskValue(x)
+		}
+		return out
+	}
+	return v
+}

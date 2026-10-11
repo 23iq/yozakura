@@ -150,3 +150,18 @@ test('keyboard shortName', () => {
     assert.equal(Kb.shortName('ru'), 'RU');
     assert.equal(Kb.shortName(undefined), '');
 });
+
+test('outputToConfig keeps the saved fullscreen-only vrr mode while vrr is on', () => {
+    const o = out('DP-1', 'A', { vrr: true });
+    assert.equal(M.outputToConfig(o, cfg('DP-1', 'A', { vrr: 2 })).vrr, 2);
+    assert.equal(M.outputToConfig(o).vrr, 1);
+    assert.equal(M.outputToConfig(out('DP-1', 'A', { vrr: false }), cfg('DP-1', 'A', { vrr: 2 })).vrr, 0);
+});
+
+test('firstOverlap reports overlapping enabled outputs only', () => {
+    const a = cfg('A', '1', { x: 0 });
+    const b = cfg('B', '2', { x: 1920 });
+    assert.deepEqual(plain(M.firstOverlap([a, b])), []);
+    assert.deepEqual(plain(M.firstOverlap([a, cfg('B', '2', { x: 1000 })])), ['A', 'B']);
+    assert.deepEqual(plain(M.firstOverlap([a, cfg('B', '2', { x: 1000, enabled: false })])), []);
+});

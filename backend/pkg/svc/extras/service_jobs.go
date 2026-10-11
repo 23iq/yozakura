@@ -26,6 +26,9 @@ func (s *Service) ollamaPull(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil || !reModel.MatchString(p.Model) || strings.HasPrefix(p.Model, "-") {
 		return nil, errors.New("invalid model name")
 	}
+	if s.o.Probe != nil && !s.o.Probe.LookPath("ollama") {
+		return nil, errors.New("ollama is not installed (install it first)")
+	}
 	return s.enqueue([]Job{{ID: newJobID(KindOllama), Kind: KindOllama, Entries: []string{},
 		Names: []string{p.Model}, Argv: []string{"ollama", "pull", p.Model}}}), nil
 }

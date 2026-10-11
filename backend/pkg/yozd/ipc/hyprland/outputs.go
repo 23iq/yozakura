@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 
 	"yozakura/backend/pkg/yozd/ipc"
 )
@@ -28,23 +29,24 @@ func parseHyprMode(s string) (ipc.Mode, bool) {
 }
 
 type hyprMonitorJSON struct {
-	Name           string   `json:"name"`
-	Description    string   `json:"description"`
-	Make           string   `json:"make"`
-	Model          string   `json:"model"`
-	Serial         string   `json:"serial"`
-	Width          int      `json:"width"`
-	Height         int      `json:"height"`
-	PhysicalWidth  int      `json:"physicalWidth"`
-	PhysicalHeight int      `json:"physicalHeight"`
-	RefreshRate    float64  `json:"refreshRate"`
-	X              int      `json:"x"`
-	Y              int      `json:"y"`
-	Scale          float64  `json:"scale"`
-	Transform      int      `json:"transform"`
-	VRR            bool     `json:"vrr"`
-	Disabled       bool     `json:"disabled"`
-	AvailableModes []string `json:"availableModes"`
+	Name           string          `json:"name"`
+	Description    string          `json:"description"`
+	Make           string          `json:"make"`
+	Model          string          `json:"model"`
+	Serial         string          `json:"serial"`
+	Width          int             `json:"width"`
+	Height         int             `json:"height"`
+	PhysicalWidth  int             `json:"physicalWidth"`
+	PhysicalHeight int             `json:"physicalHeight"`
+	RefreshRate    float64         `json:"refreshRate"`
+	X              int             `json:"x"`
+	Y              int             `json:"y"`
+	Scale          float64         `json:"scale"`
+	Transform      int             `json:"transform"`
+	VRR            bool            `json:"vrr"`
+	MirrorOf       json.RawMessage `json:"mirrorOf"`
+	Disabled       bool            `json:"disabled"`
+	AvailableModes []string        `json:"availableModes"`
 }
 
 func parseHyprOutputs(data []byte) ([]ipc.Output, error) {
@@ -70,6 +72,7 @@ func parseHyprOutputs(data []byte) ([]ipc.Output, error) {
 			Scale:            m.Scale,
 			Transform:        m.Transform,
 			VRR:              m.VRR,
+			MirrorOf:         mirrorName(m.MirrorOf),
 			Modes:            dedupeModes(m.AvailableModes),
 			PhysicalWidthMM:  m.PhysicalWidth,
 			PhysicalHeightMM: m.PhysicalHeight,
@@ -77,6 +80,17 @@ func parseHyprOutputs(data []byte) ([]ipc.Output, error) {
 		outs = append(outs, o)
 	}
 	return outs, nil
+}
+
+// mirrorName reads hyprctl's mirrorOf, which is "none", null, -1 or the
+// mirrored monitor (a name or an id depending on the version).
+func mirrorName(raw json.RawMessage) string {
+	t := strings.Trim(strings.TrimSpace(string(raw)), `"`)
+	switch t {
+	case "", "null", "none", "None", "-1", "false":
+		return ""
+	}
+	return t
 }
 
 func dedupeModes(in []string) []ipc.Mode {
@@ -156,6 +170,24 @@ func (h *Hyprland) ApplyOutput(cfg ipc.OutputConfig) error {
 	if err := cfg.Validate(); err != nil {
 		return err
 	}
-	_, err := h.dispatch(buildHyprMonitorCmd(cfg, h.supportsLuaDispatchers()))
-	return err
+	cmd := buildHyprMonitorCmd(cfg, h.supportsLuaDispatchers())
+	resp, err := h.dispatch(cmd)
+	if err != nil {
+		return err
+	}
+	return checkKeywordReply(cmd, resp)
+}
+
+// checkKeywordReply: Hyprland answers `keyword` with "ok" and with the
+// config error text otherwise (e.g. an invalid monitor line), which the
+// generic dispatch cannot tell from a success. The `eval` (Lua) reply is
+// not documented, so it is only checked by dispatch's error prefixes.
+func checkKeywordReply(cmd, resp string) error {
+	if !strings.HasPrefix(cmd, "keyword ") {
+		return nil
+	}
+	if r := strings.TrimSpace(resp); r != "" && r != "ok" {
+		return fmt.Errorf("hyprland rejected monitor config: %s", r)
+	}
+	return nil
 }

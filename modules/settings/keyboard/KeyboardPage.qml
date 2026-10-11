@@ -85,10 +85,14 @@ Flickable {
             category: page.category
         }
 
+        KeyboardStatus {
+            width: parent.width
+        }
+
         UnmanagedNote {
             objectName: "unmanagedNote"
             width: parent.width
-            visible: Config.keyboardReady && !KeyboardService.managed
+            visible: Config.keyboardReady && !KeyboardService.managed && !KeyboardService.readFailed
         }
 
         LayoutList {

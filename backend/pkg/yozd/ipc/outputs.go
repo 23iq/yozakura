@@ -15,24 +15,27 @@ type Mode struct {
 
 // Output is one monitor as the compositor reports it.
 type Output struct {
-	ID               string  `json:"id"`
-	Name             string  `json:"name"`
-	Make             string  `json:"make"`
-	Model            string  `json:"model"`
-	Serial           string  `json:"serial"`
-	Description      string  `json:"description"`
-	Enabled          bool    `json:"enabled"`
-	Width            int     `json:"width"`
-	Height           int     `json:"height"`
-	Refresh          float64 `json:"refresh"`
-	X                int     `json:"x"`
-	Y                int     `json:"y"`
-	Scale            float64 `json:"scale"`
-	Transform        int     `json:"transform"` // 0..7 (wl_output transform)
-	VRR              bool    `json:"vrr"`
-	Modes            []Mode  `json:"modes"`
-	PhysicalWidthMM  int     `json:"physical_width_mm"`
-	PhysicalHeightMM int     `json:"physical_height_mm"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Make        string  `json:"make"`
+	Model       string  `json:"model"`
+	Serial      string  `json:"serial"`
+	Description string  `json:"description"`
+	Enabled     bool    `json:"enabled"`
+	Width       int     `json:"width"`
+	Height      int     `json:"height"`
+	Refresh     float64 `json:"refresh"`
+	X           int     `json:"x"`
+	Y           int     `json:"y"`
+	Scale       float64 `json:"scale"`
+	Transform   int     `json:"transform"` // 0..7 (wl_output transform)
+	VRR         bool    `json:"vrr"`
+	// MirrorOf is the output this one mirrors ("" when none). Such outputs
+	// carry options OutputConfig cannot express, so they are never applied.
+	MirrorOf         string `json:"mirror_of,omitempty"`
+	Modes            []Mode `json:"modes"`
+	PhysicalWidthMM  int    `json:"physical_width_mm"`
+	PhysicalHeightMM int    `json:"physical_height_mm"`
 }
 
 // OutputConfig is the desired state of one output.

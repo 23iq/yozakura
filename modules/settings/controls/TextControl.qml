@@ -9,6 +9,8 @@ Item {
     property string text: ""
     property string placeholder: ""
     property bool monospace: false
+    // A credential: shown as dots unless the field has the focus
+    property bool secret: false
     property bool invalid: false
     property alias input: field
     signal edited(string text)
@@ -41,6 +43,7 @@ Item {
         text: root.text
         clip: true
         selectByMouse: true
+        echoMode: root.secret && !field.activeFocus ? TextInput.Password : TextInput.Normal
         font.family: root.monospace ? Config.theme.monoFont : Type.bodyFont
         font.pixelSize: Type.size("secondary")
         color: Type.text

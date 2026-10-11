@@ -147,8 +147,8 @@ func (d Deps) configSearch(_ context.Context, args json.RawMessage) (*mcp.CallTo
 }
 
 func masked(e *catalog.Entry, v any) any {
-	if s, ok := v.(string); ok && e.Secret && s != "" {
-		return "********"
+	if e.Secret {
+		return catalog.MaskValue(v)
 	}
 	return v
 }

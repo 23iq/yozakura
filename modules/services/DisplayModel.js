@@ -23,8 +23,13 @@ function _vrrInt(v) {
     return (typeof v === "number" && v >= 0 && v <= 2) ? Math.round(v) : 0;
 }
 
-// The saved form of a live output.
-function outputToConfig(output) {
+// The saved form of a live output. `saved` (that output's saved entry, optional)
+// keeps the vrr mode: the compositor reports only on/off, so "fullscreen
+// only" (2) would collapse to 1 on every apply and revert.
+function outputToConfig(output, saved) {
+    var vrr = _vrrInt(output.vrr);
+    if (saved && vrr > 0 && _vrrInt(saved.vrr) > 0)
+        vrr = _vrrInt(saved.vrr);
     return {
         "id": output.id || "",
         "name": output.name || "",
@@ -37,7 +42,7 @@ function outputToConfig(output) {
         "autoPosition": false,
         "scale": _num(output.scale, 1),
         "transform": _num(output.transform, 0),
-        "vrr": _vrrInt(output.vrr)
+        "vrr": vrr
     };
 }
 
@@ -335,6 +340,23 @@ function arrange(outputs, movedName, x, y) {
         o.y -= minY;
     });
     return result;
+}
+
+// The first pair [a, b] of enabled outputs whose logical rectangles overlap
+// (empty when the layout is clean). arrange() resolves overlaps while
+// dragging, but a size or rotation change in a crowded layout can still end
+// in one; the compositor would then place the monitors unpredictably.
+function firstOverlap(configs) {
+    var on = (configs || []).filter(function (c) {
+        return c.enabled !== false;
+    });
+    for (var i = 0; i < on.length; i++) {
+        for (var j = i + 1; j < on.length; j++) {
+            if (_overlaps(_rect(on[i]), _rect(on[j])))
+                return [on[i].name, on[j].name];
+        }
+    }
+    return [];
 }
 
 // Merges imported configs into the saved list: an entry replaces the saved

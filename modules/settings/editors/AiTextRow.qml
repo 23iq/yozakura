@@ -20,6 +20,17 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 4
 
+    readonly property string currentText: root.multiline ? area.text : field.text
+
+    function commit(text) {
+        if (text !== root.value)
+            root.edited(text);
+    }
+
+    // Saved when the page goes away too, so a window closed with the focus
+    // still in the field keeps the value.
+    Component.onDestruction: root.commit(root.currentText)
+
     Text {
         visible: root.label.length > 0
         text: root.label
@@ -48,8 +59,7 @@ ColumnLayout {
             font.family: root.mono ? Config.theme.monoFont : Config.theme.font
             font.pixelSize: Styling.fontSize(-1)
             background: null
-            onEditingFinished: if (text !== root.value)
-                root.edited(text)
+            onEditingFinished: root.commit(text)
         }
         ScrollView {
             visible: root.multiline
@@ -65,8 +75,8 @@ ColumnLayout {
                 font.family: root.mono ? Config.theme.monoFont : Config.theme.font
                 font.pixelSize: Styling.fontSize(-1)
                 background: null
-                onActiveFocusChanged: if (!activeFocus && text !== root.value)
-                    root.edited(text)
+                onActiveFocusChanged: if (!activeFocus)
+                    root.commit(text)
             }
         }
     }

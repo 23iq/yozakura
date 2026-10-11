@@ -10,7 +10,8 @@ import "../Ui.js" as Ui
 
 // Trust prompt. Installing and enabling both bring somebody else's code
 // into the shell, so both say whose code it is before it happens.
-// `kind` "install" | "enable" ("" = closed); `confirmed()` runs it.
+// `kind` "install" | "enable" | "bypass" ("" = closed); `confirmed()` runs it.
+// "bypass" is the version-check switch: it is a trust decision too.
 Item {
     id: dialog
 
@@ -21,6 +22,7 @@ Item {
     signal cancelled
 
     readonly property bool enabling: dialog.kind === "enable"
+    readonly property bool bypass: dialog.kind === "bypass"
 
     visible: dialog.kind !== ""
     z: 50
@@ -68,7 +70,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                text: dialog.enabling ? I18n.t("mods.confirm_enable_title") : I18n.t("mods.confirm_install_title")
+                text: dialog.bypass ? I18n.t("mods.confirm_bypass_title") : (dialog.enabling ? I18n.t("mods.confirm_enable_title") : I18n.t("mods.confirm_install_title"))
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(2)
                 font.weight: Font.DemiBold
@@ -78,7 +80,7 @@ Item {
 
             Text {
                 Layout.fillWidth: true
-                text: dialog.enabling ? I18n.t("mods.confirm_enable_body") : I18n.t("mods.confirm_install_body")
+                text: dialog.bypass ? I18n.t("mods.confirm_bypass_body") : (dialog.enabling ? I18n.t("mods.confirm_enable_body") : I18n.t("mods.confirm_install_body"))
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
@@ -149,7 +151,7 @@ Item {
 
                 PillButton {
                     kind: "filled"
-                    text: dialog.enabling ? I18n.t("mods.enable") : I18n.t("mods.install")
+                    text: dialog.bypass ? I18n.t("mods.bypass_confirm") : (dialog.enabling ? I18n.t("mods.enable") : I18n.t("mods.install"))
                     onClicked: dialog.confirmed()
                 }
             }

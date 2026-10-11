@@ -32,6 +32,13 @@ Singleton {
     property var _queue: []
     property bool _reading: false
     property int _retries: 0
+    // The compositor's settings could not be read after the retries; the
+    // page offers a Retry (retryRead()). Edits stay queued meanwhile.
+    property bool readFailed: false
+    property string readError: ""
+    // Error of the last keyboard.apply ("" when it worked): the config is
+    // saved, but the live compositor did not take it
+    property string applyError: ""
     // What the UI shows: the domain once managed, the compositor's values before
     readonly property var effective: KeyboardModel.effective(root.managed, Config.keyboardReady ? Config.keyboard : null, root.current)
 
@@ -83,6 +90,18 @@ Singleton {
         root._read();
     }
 
+    // Retry after readFailed (the page's button)
+    function retryRead() {
+        root.readFailed = false;
+        root.refreshCurrent();
+    }
+
+    function _errorText(error) {
+        if (error === undefined || error === null)
+            return "";
+        return typeof error === "string" ? error : (error.message ? String(error.message) : JSON.stringify(error));
+    }
+
     function _read() {
         if (root._reading)
             return;
@@ -91,11 +110,17 @@ Singleton {
             root._reading = false;
             if (error || !result) {
                 console.warn("KeyboardService: current failed", JSON.stringify(error));
-                if (root._retries++ < 10)
+                if (root._retries++ < 10) {
                     retryTimer.restart();
+                } else {
+                    root.readError = root._errorText(error) || "no reply";
+                    root.readFailed = true;
+                }
                 return;
             }
             root._retries = 0;
+            root.readFailed = false;
+            root.readError = "";
             root.current = result;
             root._flush();
         });
@@ -179,8 +204,12 @@ Singleton {
         if (!root.managed)
             return;
         BackendService.call("keyboard.apply", root.input(), (result, error) => {
-            if (error)
+            if (error) {
                 console.warn("KeyboardService: apply failed", JSON.stringify(error));
+                root.applyError = root._errorText(error) || "apply failed";
+            } else {
+                root.applyError = "";
+            }
         });
     }
 

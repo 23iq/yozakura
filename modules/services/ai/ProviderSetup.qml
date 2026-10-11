@@ -74,18 +74,33 @@ QtObject {
     }
 
     // Stores a provider's connection and shows it in the picker again.
-    function save(id, key, url, curl) {
+    // done(errorText) is called with "" once everything is stored, or with
+    // the keystore error (nothing else is changed then).
+    function save(id, key, url, curl, done) {
         if (Connect.validate(id, key, url))
             return false;
         const plan = Connect.savePlan(id, key, url, curl);
+        const finish = () => {
+            if (plan.config)
+                SettingsStore.set(plan.config.key, plan.config.value);
+            if (hidden.indexOf(id) >= 0)
+                SettingsStore.set("ai.providers.hidden", hidden.filter(h => h !== id));
+            if (plan.config && catalog)
+                Qt.callLater(() => root.catalog.probeLocal(true));
+            if (done)
+                done("");
+        };
         if (plan.keystore)
-            KeyStore.setKey(plan.keystore.provider, plan.keystore.key, plan.keystore.endpoint, plan.keystore.curl);
-        if (plan.config)
-            SettingsStore.set(plan.config.key, plan.config.value);
-        if (hidden.indexOf(id) >= 0)
-            SettingsStore.set("ai.providers.hidden", hidden.filter(h => h !== id));
-        if (plan.config && catalog)
-            Qt.callLater(() => root.catalog.probeLocal(true));
+            KeyStore.setKey(plan.keystore.provider, plan.keystore.key, plan.keystore.endpoint, plan.keystore.curl, err => {
+                if (err) {
+                    if (done)
+                        done(err);
+                    return;
+                }
+                finish();
+            });
+        else
+            finish();
         return true;
     }
 

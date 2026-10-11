@@ -73,18 +73,28 @@ Flickable {
     }
 
     function save() {
-        const invalid = Connect.validate(provider, keyField.text, urlField.text);
-        if (invalid || !Ai.providers || !Ai.providers.save(provider, keyField.text, urlField.text, curlField.text)) {
+        const fail = text => {
             result = {
                 ok: false,
                 verified: false,
                 count: 0,
-                error: I18n.t(invalid || "ai.connect.save_failed"),
+                error: text,
                 models: []
             };
+        };
+        const invalid = Connect.validate(provider, keyField.text, urlField.text);
+        if (invalid) {
+            fail(I18n.t(invalid));
             return;
         }
-        saved();
+        const started = Ai.providers && Ai.providers.save(provider, keyField.text, urlField.text, curlField.text, err => {
+            if (err)
+                fail(I18n.t("ai.connect.save_failed") + " " + err);
+            else
+                root.saved();
+        });
+        if (!started)
+            fail(I18n.t("ai.connect.save_failed"));
     }
 
     function edited() {
