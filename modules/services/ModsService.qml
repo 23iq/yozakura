@@ -48,9 +48,15 @@ Singleton {
         root.loaded = true;
     }
 
+    // Requests made while one is running (a confirmed dialog, a second click)
+    // wait here and run in order instead of being dropped.
+    property var _waiting: []
+
     function request(method, params, successMessage, requiresRestart, onSuccess) {
-        if (root.busy)
+        if (root.busy) {
+            root._waiting = root._waiting.concat([[method, params, successMessage, requiresRestart, onSuccess]]);
             return;
+        }
         root.busy = true;
         root.errorMessage = "";
         root.statusMessage = "";
@@ -59,14 +65,20 @@ Singleton {
             root.busy = false;
             if (error) {
                 root.errorMessage = String(error);
-                return;
+            } else {
+                root.applyStatus(result);
+                root.statusMessageKey = successMessage ?? "";
+                if (requiresRestart && (result?.restartRequired === undefined))
+                    root.restartRequired = true;
+                if (onSuccess)
+                    onSuccess(result);
             }
-            root.applyStatus(result);
-            root.statusMessageKey = successMessage ?? "";
-            if (requiresRestart && (result?.restartRequired === undefined))
-                root.restartRequired = true;
-            if (onSuccess)
-                onSuccess(result);
+            // a failed request does not cancel what the user asked for after it
+            if (root._waiting.length > 0) {
+                const next = root._waiting[0];
+                root._waiting = root._waiting.slice(1);
+                root.request(next[0], next[1], next[2], next[3], next[4]);
+            }
         });
     }
 

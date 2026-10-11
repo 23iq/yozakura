@@ -55,6 +55,8 @@ Item {
             ModsService.install(source);
         else if (kind === "enable" && mod)
             ModsService.setEnabled(mod.id, true);
+        else if (kind === "bypass")
+            ModsService.setBypassVersionCheck(true);
     }
 
     function toggle(mod) {
@@ -166,7 +168,9 @@ Item {
                     title: I18n.t("mods.bypass_title")
                     description: I18n.t("mods.bypass_description")
                     checked: ModsService.bypassVersionCheck
-                    onToggled: value => ModsService.setBypassVersionCheck(value)
+                    // turning the check off lets a mod built for another base
+                    // version in: ask first, turning it back on is free
+                    onToggled: value => value ? page.askConfirm("bypass", null, "") : ModsService.setBypassVersionCheck(false)
                 }
             }
 
