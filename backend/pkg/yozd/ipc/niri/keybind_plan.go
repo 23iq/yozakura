@@ -50,7 +50,7 @@ func keybindPlan(config ipc.ConfigKeybinds) (planned []plannedBind, skipped []ip
 			return
 		}
 		if strings.Contains(strings.ToLower(kb.Flags), "r") {
-			skip("niri has no key-release binds, so a hold action cannot stop on release; use a toggle mode (voice.mode = toggle)")
+			skip("niri has no key-release binds, so a hold action cannot stop on release; use the toggle activation mode (voice.activation = toggle)")
 			return
 		}
 		arg := ipc.ResolveBindArgument(kb)
