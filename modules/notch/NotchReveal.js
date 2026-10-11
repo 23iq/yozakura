@@ -10,11 +10,11 @@
 //   interacting           open, hovered, notifications, mic notice...
 // }
 
-// Notch and bar on different edges: hide with keepHidden or while windows
-// are open; on the same edge: follow the bar's pin.
+// Notch and bar on different edges: hide while windows are open (keepHidden
+// is handled in reveal()); on the same edge: follow the bar's pin.
 function shouldAutoHide(s) {
     if (!s.sameEdge)
-        return !!s.keepHidden || !!s.hasWindows || !!s.fullscreen;
+        return !!s.hasWindows || !!s.fullscreen;
     return !s.barPinned || !!s.fullscreen;
 }
 
@@ -24,8 +24,9 @@ function reveal(s) {
         return false;
     if (s.enabled === false)
         return !!s.open;
-    // keepHidden is ignored on the bar's edge, to stay in sync with it
-    if (s.keepHidden && !s.sameEdge)
+    // keepHidden hides the notch on every edge, the bar's own included (the
+    // bar keeps its place in its pin): only interaction shows it
+    if (s.keepHidden)
         return !!s.interacting;
     return !shouldAutoHide(s) || !!s.interacting;
 }

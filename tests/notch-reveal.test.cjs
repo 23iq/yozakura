@@ -19,7 +19,9 @@ test('on another edge it hides with windows or keepHidden, and shows on interact
     assert.equal(R.reveal(s({ sameEdge: false, hasWindows: true })), false);
     assert.equal(R.reveal(s({ sameEdge: false, keepHidden: true })), false);
     assert.equal(R.reveal(s({ sameEdge: false, keepHidden: true, interacting: true })), true);
-    assert.equal(R.reveal(s({ keepHidden: true })), true, 'keepHidden is ignored on the bar edge');
+    assert.equal(R.reveal(s({ keepHidden: true })), false, 'keepHidden hides the notch on the bar edge too');
+    assert.equal(R.reveal(s({ keepHidden: true, interacting: true })), true, 'and the pointer shows it');
+    assert.equal(R.reveal(s({ keepHidden: true, barPinned: false })), false);
 });
 
 test('fullscreen hard-hides unless the bar is available on fullscreen', () => {
