@@ -94,14 +94,17 @@ Singleton {
         if (!mon || !mon.activeWorkspace)
             return false;
         const wsId = mon.activeWorkspace.id;
+        // An open special workspace covers the active one: its windows
+        // decide, not those underneath it.
+        const special = root.specialWorkspaceNames[mon.name] || "";
         // yozd reports maximized Hyprland windows as fullscreen too. Read
         // the native mode so maximizing keeps the shell visible.
         if (YozdService.compositorName === "hyprland") {
             const toplevels = Hyprland.toplevels.values;
             for (let i = 0; i < toplevels.length; i++) {
                 const win = toplevels[i].lastIpcObject;
-                if (win && win.monitor === mon.id && win.workspace
-                        && win.workspace.id === wsId && (win.fullscreen & 2) !== 0)
+                if (win && win.monitor === mon.id && (win.fullscreen & 2) !== 0
+                        && SpecialWorkspaces.isShown(win.workspace, wsId, special))
                     return true;
             }
             return false;

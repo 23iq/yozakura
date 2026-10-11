@@ -13,3 +13,18 @@ function namesFromMonitors(monitors) {
     }
     return names;
 }
+
+// Whether a window's workspace is the one a monitor shows: its open
+// special (named as namesFromMonitors() reports it) covers the active
+// workspace, else the active workspace itself.
+function isShown(workspace, activeId, specialName) {
+    if (!workspace)
+        return false;
+    if (specialName) {
+        if (!(workspace.id < 0))
+            return false;
+        const name = String(workspace.name || "").replace(/^special:/, "");
+        return (name || "special") === specialName;
+    }
+    return workspace.id === activeId;
+}

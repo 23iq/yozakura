@@ -27,3 +27,14 @@ test('the unnamed scratchpad gets a readable fallback', () => {
 test('regular workspaces are never treated as special', () => {
     assert.deepEqual(names([{name: 'DP-1', specialWorkspace: {id: 2, name: 'Dev'}}]), {});
 });
+test('the shown workspace is the open special, else the active one', () => {
+    const shown = (ws, id, special) => parser.isShown(ws, id, special);
+    assert.equal(shown({id: 1, name: '1'}, 1, ''), true);
+    assert.equal(shown({id: 2, name: '2'}, 1, ''), false);
+    assert.equal(shown({id: -96, name: 'special:Dev'}, 1, ''), false);
+    assert.equal(shown({id: -96, name: 'special:Dev'}, 1, 'Dev'), true);
+    assert.equal(shown({id: 1, name: '1'}, 1, 'Dev'), false, 'the special covers the active workspace');
+    assert.equal(shown({id: -97, name: 'special:Telegram'}, 1, 'Dev'), false);
+    assert.equal(shown({id: -99, name: 'special:'}, 1, 'special'), true);
+    assert.equal(shown(null, 1, ''), false);
+});
