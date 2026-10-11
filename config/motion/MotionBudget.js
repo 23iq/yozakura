@@ -10,7 +10,10 @@ var SHELL = {
     morph: 360,
     emphasis: 450,
     palette: 600,
-    delay: 40
+    delay: 40,
+    // Small state changes (fills, hover, focus) and slides inside a surface.
+    micro: 120,
+    glide: 220
 };
 var BASE_MAX = 300;
 var PRESET_ANIM = {
@@ -31,7 +34,9 @@ var FACTOR = {
     enter: 0.87,
     exit: 0.6,
     morph: 1.2,
-    emphasis: 1.5
+    emphasis: 1.5,
+    micro: 0.45,
+    glide: 0.75
 };
 
 // theme.animDuration x profile scale, capped. Never negative.
@@ -40,7 +45,7 @@ function shellBase(animDuration, profileScale) {
     return Math.max(0, Math.min(v, BASE_MAX));
 }
 
-// kind: enter | exit | morph | emphasis -> effective ms.
+// kind: enter | exit | morph | emphasis | micro | glide -> effective ms.
 function token(kind, base) {
     if (!(base > 0) || FACTOR[kind] === undefined)
         return 0;

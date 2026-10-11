@@ -15,8 +15,10 @@ import "StageModel.js" as StageModel
 // text keeps its contrast; over it the art, blurred, and a scrim at the
 // bottom. The tone cross-fades with the track. Where groups have no box
 // (ink), the hero still draws its own faint rounded panel: it is the one
-// surface that stands out. With nothing playing the accent floods it the
-// same way.
+// surface that stands out. With nothing playing a quiet wash of the
+// accent (well under the player's flood) keeps it calm, so play and the on
+// tiles stay the focal points. Player and idle share one natural height
+// and cross-fade with a short rise: starting / stopping never reflows.
 Group {
     id: root
 
@@ -45,8 +47,21 @@ Group {
         })
     // The art's tone as a deep (dark theme) or pale (light theme) flood.
     readonly property var floodRgb: StageModel.floodTone(root.sourceRgb, StageModel.luminance(root.baseRgb) < 0.4 ? 0.26 : 0.84, 0.42)
-    readonly property real alpha: root.tinted ? StageModel.tintAlpha(root.floodRgb, root.baseRgb, root.inkRgb, 0.95, 4.5) : 0
-    readonly property real naturalHeight: root.padding * 2 + (root.playing ? player.naturalHeight : idle.naturalHeight)
+    readonly property real alpha: root.tinted ? (root.playing ? StageModel.tintAlpha(root.floodRgb, root.baseRgb, root.inkRgb, 0.95, 4.5) : Look.tonalStrength / 2) : 0
+    readonly property real naturalHeight: root.padding * 2 + player.naturalHeight
+    // The first focus on open (play), none while idle.
+    readonly property Item focusTarget: root.playing ? player.focusTarget : null
+
+    // 1 = player, 0 = idle (animated): the leaving one clears out early, the
+    // arriving one comes in late, so they barely overlap.
+    property real playT: root.playing ? 1 : 0
+
+    Behavior on playT {
+        enabled: Motion.glide.duration > 0
+        NumberAnimation {
+            duration: Motion.glide.duration
+        }
+    }
 
     readonly property bool ownBox: !Look.groupBoxed
     readonly property real boxRadius: Look.groupRadius || Space.controlRadius
@@ -87,10 +102,10 @@ Group {
             visible: opacity > 0
 
             Behavior on opacity {
-                enabled: Config.animDuration > 0
+                enabled: Motion.glide.duration > 0
                 NumberAnimation {
-                    duration: Motion.enter.duration
-                    easing.type: Motion.enter.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
 
@@ -138,9 +153,9 @@ Group {
                 property color color: root.floodRgb ? Qt.rgba(root.floodRgb.r, root.floodRgb.g, root.floodRgb.b, 1) : Type.placeholder
 
                 Behavior on color {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.glide.duration > 0
                     ColorAnimation {
-                        duration: Motion.enter.duration * 2
+                        duration: Motion.glide.duration
                     }
                 }
             }
@@ -150,14 +165,10 @@ Group {
             id: player
             objectName: "heroPlayer"
             anchors.fill: parent
-            opacity: root.playing ? 1 : 0
+            opacity: Math.max(0, (root.playT - 0.35) / 0.65)
             visible: opacity > 0
-
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Motion.enter.duration
-                }
+            transform: Translate {
+                y: (1 - player.opacity) * Space.m
             }
         }
 
@@ -165,14 +176,10 @@ Group {
             id: idle
             objectName: "heroIdle"
             anchors.fill: parent
-            opacity: root.playing ? 0 : 1
+            opacity: 1 - Math.min(1, root.playT * 1.6)
             visible: opacity > 0
-
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Motion.enter.duration
-                }
+            transform: Translate {
+                y: (1 - idle.opacity) * Space.m
             }
         }
     }

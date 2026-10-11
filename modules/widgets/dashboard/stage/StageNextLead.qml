@@ -18,7 +18,7 @@ Item {
     Rectangle {
         objectName: "nextLeadCard"
         anchors.fill: parent
-        radius: Look.bigRadius(Space.controlL)
+        radius: Look.bigRadius(height)
         color: Look.alpha("primary", Look.activeTint)
     }
 
@@ -27,7 +27,7 @@ Item {
         x: Space.m
         anchors.verticalCenter: parent.verticalCenter
         width: Space.xs
-        height: parent.height - Space.m * 2
+        height: parent.height - Space.s * 2
         radius: width / 2
         color: Type.accent
     }
@@ -39,6 +39,7 @@ Item {
         anchors.leftMargin: Space.m
         anchors.verticalCenter: parent.verticalCenter
         role: "display"
+        font.pixelSize: Math.round(Type.size("title") * 1.6)
         tabular: true
         text: root.time
     }
@@ -74,7 +75,7 @@ Item {
         KitText {
             objectName: "nextTitle"
             width: parent.width
-            role: "title"
+            font.weight: Font.DemiBold
             elide: Text.ElideRight
             text: root.title
         }
@@ -82,7 +83,7 @@ Item {
         KitText {
             objectName: "nextWhen"
             width: parent.width
-            role: "secondary"
+            role: "caption"
             elide: Text.ElideRight
             text: root.when
         }

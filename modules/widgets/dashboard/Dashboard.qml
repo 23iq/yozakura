@@ -254,21 +254,21 @@ NotchAnimationBehavior {
                 // Tab 0: Unified Launcher
                 TabLoader {
                     id: widgetsTabLoader
-                    property int index: 0
+                    index: 0
                     sourceComponent: root.homeBento ? unifiedLauncherComponent : (root.home === "composed" ? homeComponent : stageComponent)
                     z: visible ? 1 : 0
                 }
 
                 // Tab 1: Wallpapers
                 TabLoader {
-                    property int index: 1
+                    index: 1
                     sourceComponent: wallpapersComponent
                     z: visible ? 1 : 0
                 }
 
                 // Tab 2: Metrics
                 TabLoader {
-                    property int index: 2
+                    index: 2
                     sourceComponent: metricsComponent
                     z: visible ? 1 : 0
                 }
@@ -301,34 +301,39 @@ NotchAnimationBehavior {
 
     // Generic Tab Loader Component
     component TabLoader: Loader {
+        id: slot
+        // Stable tab index (DashboardTabs.js).
+        property int index: 0
         anchors.fill: parent
         // Load based on LRU strategy or if currently active.
         // When the dashboard closes (isVisible false) tabs are
         // unloaded so their image caches / GL pools are released;
         // currentTab alone must NOT keep heavy tabs resident.
-        active: root.shouldTabBeLoaded(index)
-
-        // Visibility handles the "switching"
-        visible: root.state.currentTab === index
-
-        // Transitions
-        opacity: visible ? 1 : 0
+        active: root.shouldTabBeLoaded(slot.index)
+        readonly property bool current: root.state.currentTab === slot.index
+        // Where this tab waits: before (-1) or after (1) the current one in
+        // header order. Switching slides the new tab in from its side while
+        // the old one slides the other way and fades (clicks, Ctrl+Tab,
+        // wheel and swipes alike).
+        readonly property int side: root.tabOrder.indexOf(slot.index) < root.tabOrder.indexOf(root.state.currentTab) ? -1 : 1
+        visible: current || opacity > 0
+        enabled: current
+        opacity: current ? 1 : 0
         transform: Translate {
-            y: visible ? 0 : (root.state.currentTab > index ? -20 : 20)
-            Behavior on y {
-                enabled: Config.animDuration > 0
+            x: slot.current ? 0 : slot.side * Space.xxl
+            Behavior on x {
+                enabled: Motion.glide.duration > 0
                 NumberAnimation {
-                    duration: Config.animDuration
-                    easing.type: Motion.morph.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
         }
 
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.glide.duration > 0
             NumberAnimation {
-                duration: Config.animDuration
-                easing.type: Motion.enter.easing
+                duration: slot.current ? Motion.glide.duration : Motion.micro.duration
             }
         }
 

@@ -115,7 +115,12 @@ Screens are built only from `modules/components/kit/` (`import qs.modules.compon
 `SearchField`, `IconButton`, `ActionButton`, `Chip`, `Switch`, `LineSlider`, `ProgressLine`,
 `Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`; big controls `Tile`, `LevelSlider`, `Segmented`,
 `Sparkline` (raised via `Look.raisedFill`, radius `Look.bigRadius`, load colours `Type.load`;
-sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`). No raw font sizes, paddings, hex colours or
+sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; level fills are tonal,
+`Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
+Animated lists: `KeyedListModel` (keys -> insert/remove/move, `KeyedSync.js`) under a ListView's
+add/remove/displaced transitions. Motion: `Motion.micro` (fills, hover, focus, <= 120 ms),
+`Motion.glide` (slides, lists, panels, <= 220 ms), `Motion.spring` (press), `Motion.delay`
+(stagger step). No raw font sizes, paddings, hex colours or
 hand-made rows/buttons; a missing piece becomes a small generic kit component. The accent
 marks only active, progress, selected/today and one primary action per surface.
 `theme.language` (`ink` hairlines | `glass` frosted cards | `tiles` solid tiles | `classic`)

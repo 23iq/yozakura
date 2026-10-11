@@ -3,10 +3,12 @@ import qs.modules.theme
 import qs.modules.components.kit
 
 // A chunky level slider (volume, brightness): a pill track on the raised
-// surface (Look.raisedFill) with a solid fill that always holds the `icon`
-// at its start, and the value as text at the end. No thumb: press or drag
-// anywhere on the track to set, the wheel and the arrow keys step by
-// `step`. `iconClickable` makes the icon's cap a button (`iconClicked()`,
+// surface (Look.raisedFill) with a tonal fill (Look.tonal; `strong`: solid
+// accent) that always holds the `icon` at its start, and the value as text
+// at the end. No thumb: press or drag anywhere on the track to set (the
+// fill follows 1:1), the wheel and Left / Right step by `step` (Up / Down
+// are left to the host's focus moves); external changes ease in and the
+// number rolls with them. `iconClickable` makes the icon's cap a button (`iconClicked()`,
 // mute); `dimmed` draws the fill quiet (muted). `level` (0..1, -1 = none)
 // draws a live meter: a ghost of the fill reaching the signal level. `moved(value)` on user
 // changes; `pressed` while dragged (hosts hold their binding then).
@@ -28,6 +30,7 @@ Item {
     property real level: -1
     property bool hasMore: false
     property bool moreActive: false
+    property bool strong: false
     readonly property real fraction: root.to === root.from ? 0 : Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
     // The drawn fraction: follows the value with a short ease (instant while dragged).
     property real shown: root.fraction
@@ -37,8 +40,8 @@ Item {
     readonly property real moreW: root.hasMore ? root.cap : 0
     readonly property real span: Math.max(1, root.width - root.cap - root.moreW)
     readonly property real fillW: root.cap + root.shown * root.span
-    readonly property color fillColor: root.dimmed ? Type.muted : Type.progress
-    readonly property color onFill: root.dimmed ? Colors.background : Type.accentInk
+    property color fillColor: root.dimmed ? Qt.alpha(Type.muted, root.strong ? 1 : 0.45) : (root.strong ? Type.progress : Look.tonal(Type.progress))
+    readonly property color onFill: root.strong ? (root.dimmed ? Colors.background : Type.accentInk) : (root.dimmed ? Type.secondary : Type.text)
 
     signal moved(real value)
     signal iconClicked
@@ -67,8 +70,20 @@ Item {
 
     Keys.onLeftPressed: root.stepBy(-1)
     Keys.onRightPressed: root.stepBy(1)
-    Keys.onDownPressed: root.stepBy(-1)
-    Keys.onUpPressed: root.stepBy(1)
+
+    Behavior on fillColor {
+        enabled: Motion.micro.duration > 0
+        ColorAnimation {
+            duration: Motion.micro.duration
+        }
+    }
+
+    Behavior on opacity {
+        enabled: Motion.micro.duration > 0
+        NumberAnimation {
+            duration: Motion.micro.duration
+        }
+    }
 
     Behavior on scale {
         enabled: Motion.spring.duration > 0
@@ -82,8 +97,8 @@ Item {
     Behavior on shown {
         enabled: Motion.spring.duration > 0 && !root.pressed
         NumberAnimation {
-            duration: Motion.exit.duration / 2
-            easing.type: Motion.morph.easing
+            duration: Motion.glide.duration
+            easing.type: Motion.glide.easing
         }
     }
 
@@ -93,8 +108,8 @@ Item {
         anchors.fill: parent
         radius: Look.bigRadius(height)
         color: Look.raisedFill(root.hovered)
-        border.width: root.activeFocus ? Space.hairline * 2 : (Look.controlEdge.a > 0 ? Space.hairline : 0)
-        border.color: root.activeFocus ? Type.accent : Look.controlEdge
+        border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
+        border.color: Look.controlEdge
         clip: true
 
         // Live input level: a ghost of the fill reaching the signal level.
@@ -104,8 +119,8 @@ Item {
             width: root.cap + Math.max(0, Math.min(1, root.level)) * root.span
             height: parent.height
             radius: parent.radius
-            color: root.fillColor
-            opacity: 0.2
+            color: Type.progress
+            opacity: 0.16
         }
 
         Rectangle {
@@ -138,7 +153,12 @@ Item {
         font.weight: Font.DemiBold
         text: root.valueText
         // On the fill once it reaches the end.
-        color: root.fillW > root.width - root.moreW - Space.m - width / 2 ? root.onFill : Type.text
+        color: root.strong && root.fillW > root.width - root.moreW - Space.m - width / 2 ? root.onFill : Type.text
+    }
+
+    FocusRing {
+        radius: track.radius + Space.stroke
+        shown: root.activeFocus
     }
 
     MouseArea {
@@ -157,7 +177,6 @@ Item {
             mouse.onCap = root.iconClickable && m.x < root.cap;
             if (!mouse.onCap)
                 mouse.track(m);
-            root.forceActiveFocus();
         }
         onPositionChanged: m => {
             if (mouse.pressed && !mouse.onCap)

@@ -10,7 +10,10 @@ import qs.modules.components.kit
 // otherwise the icon leads and, with `hasMore`, a caret zone at the end
 // opens the feature's detail (`more()`, also right-click / press-and-hold).
 // Presses spring back, hover lifts the tile a little; `tooltipText` shows
-// on hover. Height: controlM + l.
+// on hover. A vertical tile with `hasMore` marks its detail with a small
+// caret in the top corner (also a click zone). The on fill cross-fades, the
+// icon pops in on change; keyboard: Enter / Space toggle, Menu or
+// Shift+Enter open the detail, the focus ring fades in. Height: controlM + l.
 Item {
     id: root
 
@@ -26,9 +29,11 @@ Item {
     property string tooltipText: ""
     readonly property bool hovered: area.containsMouse || moreArea.containsMouse || root.highlighted
     readonly property bool pressed: area.pressed || moreArea.pressed
-    readonly property color ink: root.active ? Type.accentInk : Type.text
-    readonly property color quietInk: root.active ? Qt.alpha(Type.accentInk, 0.78) : Type.secondary
+    property color ink: root.active ? Type.accentInk : Type.text
+    property color quietInk: root.active ? Qt.alpha(Type.accentInk, 0.78) : Type.secondary
     readonly property real moreW: root.hasMore && !root.vertical ? Space.controlS : 0
+    readonly property real radius: Look.bigRadius(root.height)
+    property real glyphScale: 1
 
     signal clicked
     signal more
@@ -37,10 +42,47 @@ Item {
     implicitHeight: Space.controlM + Space.l
     opacity: root.enabled ? 1 : 0.38
     scale: root.pressed ? 0.95 : 1
+    activeFocusOnTab: root.enabled
+
+    Keys.onPressed: event => {
+        const more = event.key === Qt.Key_Menu || ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & Qt.ShiftModifier));
+        if (more && root.hasMore) {
+            root.more();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            root.clicked();
+            event.accepted = true;
+        }
+    }
+
+    // The icon pops in when it changes (state flips).
+    onIconChanged: if (Motion.spring.duration > 0)
+        pop.restart()
+
+    Behavior on opacity {
+        enabled: Motion.micro.duration > 0
+        NumberAnimation {
+            duration: Motion.micro.duration
+        }
+    }
 
     Accessible.role: Accessible.CheckBox
     Accessible.name: root.text
     Accessible.checked: root.active
+
+    Behavior on ink {
+        enabled: Motion.micro.duration > 0
+        ColorAnimation {
+            duration: Motion.micro.duration
+        }
+    }
+
+    Behavior on quietInk {
+        enabled: Motion.micro.duration > 0
+        ColorAnimation {
+            duration: Motion.micro.duration
+        }
+    }
 
     Behavior on scale {
         enabled: Motion.spring.duration > 0
@@ -59,31 +101,42 @@ Item {
             Behavior on y {
                 enabled: Motion.spring.duration > 0
                 NumberAnimation {
-                    duration: Motion.exit.duration / 2
+                    duration: Motion.micro.duration
+                    easing.type: Motion.micro.easing
                 }
             }
         }
 
-        // Raised surface while off.
+        // Raised surface (under the accent, which fades over it).
         Rectangle {
             objectName: "tileRest"
             anchors.fill: parent
-            radius: Look.bigRadius(root.height)
-            visible: !root.active
+            radius: root.radius
+            visible: tileOn.opacity < 1
             color: Look.raisedFill(root.hovered)
             border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
             border.color: Look.controlEdge
         }
 
-        // Solid accent while on.
+        // Solid accent while on, cross-faded.
         StyledRect {
+            id: tileOn
             objectName: "tileOn"
             anchors.fill: parent
             variant: "primary"
             enableBorder: false
-            radius: Look.bigRadius(root.height)
-            visible: root.active
+            radius: root.radius
+            opacity: root.active ? 1 : 0
+            visible: opacity > 0
             backgroundOpacity: root.hovered ? 0.9 : 1
+
+            Behavior on opacity {
+                enabled: Motion.micro.duration > 0
+                NumberAnimation {
+                    duration: Motion.micro.duration
+                    easing.type: Motion.micro.easing
+                }
+            }
         }
 
         // Row: icon, label + state, caret zone.
@@ -101,6 +154,7 @@ Item {
                 font.family: Icons.font
                 font.pixelSize: Type.iconSize("title")
                 color: root.ink
+                scale: root.glyphScale
             }
 
             Column {
@@ -138,10 +192,12 @@ Item {
                 font.family: Icons.font
                 font.pixelSize: Type.iconSize("title")
                 color: root.ink
+                scale: root.glyphScale
             }
 
             KitText {
-                width: parent.width
+                width: root.width - Space.hairline * 2
+                anchors.horizontalCenter: parent.horizontalCenter
                 visible: root.showLabel
                 horizontalAlignment: Text.AlignHCenter
                 role: "caption"
@@ -202,6 +258,56 @@ Item {
                 onClicked: root.more()
             }
         }
+    }
+
+    SequentialAnimation {
+        id: pop
+        NumberAnimation {
+            target: root
+            property: "glyphScale"
+            to: 0.7
+            duration: Motion.micro.duration / 2
+        }
+        NumberAnimation {
+            target: root
+            property: "glyphScale"
+            to: 1
+            duration: Motion.spring.duration
+            easing.type: Motion.spring.easing
+            easing.overshoot: Motion.spring.overshoot
+        }
+    }
+
+    // Vertical tiles: the detail caret in the top corner.
+    Item {
+        objectName: "tileCorner"
+        visible: root.hasMore && root.vertical
+        anchors.top: parent.top
+        anchors.right: parent.right
+        width: Space.l + Space.xs
+        height: width
+
+        Text {
+            anchors.centerIn: parent
+            text: Icons.caretRight
+            font.family: Icons.font
+            font.pixelSize: Type.iconSize("caption") - Space.hairline * 2
+            color: cornerArea.containsMouse ? root.ink : root.quietInk
+        }
+
+        MouseArea {
+            id: cornerArea
+            anchors.fill: parent
+            hoverEnabled: true
+            enabled: root.enabled
+            cursorShape: Qt.PointingHandCursor
+            onClicked: root.more()
+        }
+    }
+
+    FocusRing {
+        radius: root.radius + Space.stroke
+        shown: root.activeFocus
     }
 
     StyledToolTip {

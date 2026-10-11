@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from lib.kit_env import KitEnv  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
 
 SCENE = """import QtQuick
 import QtQuick.Window
@@ -62,6 +63,7 @@ for lang in ("ink", "glass", "tiles", "classic"):
     assert ev(h.find(tile, "tileMore"), "visible"), tag
     assert not ev(h.find(sq, "tileMore"), "visible"), "vertical tiles keep only right-click / hold"
     ev(tile, "active = true")
+    QTest.qWait(400)  # the accent cross-fades in
     assert ev(h.find(tile, "tileOn"), "visible") and not ev(h.find(tile, "tileRest"), "visible"), tag
     assert ev(tile, "ink.toString()") == ev(win, "Type.accentInk.toString()"), tag
     ev(tile, "clicked(); more()")
@@ -71,7 +73,7 @@ for lang in ("ink", "glass", "tiles", "classic"):
     # zone narrows the span, mute through the cap.
     level, lmore = get("level"), get("levelMore")
     cap = level.property("height")
-    assert cap == ev(win, "Space.controlM + Space.xs"), tag
+    assert cap == ev(win, "Space.controlM + Space.xs"), tag  # the gallery's own height
     assert abs(level.property("fillW") - (cap + 0.5 * (300 - cap))) < 1, tag
     ev(level, "setFraction(1.4)")
     assert level.property("value") == 1 and win.property("moved") == 1, tag
@@ -82,8 +84,10 @@ for lang in ("ink", "glass", "tiles", "classic"):
     assert lmore.property("fillW") == lmore.property("height"), "an empty fill still holds the icon"
     assert lmore.property("span") == 300 - 2 * lmore.property("height"), tag
     assert ev(h.find(lmore, "levelMore"), "visible") and not ev(h.find(level, "levelMore"), "visible"), tag
+    assert ev(level, "fillColor.toString()") == ev(win, "Look.tonal(Type.progress).toString()"), "tonal fill"
     ev(level, "dimmed = true")
-    assert ev(level, "fillColor.toString()") == ev(win, "Type.muted.toString()"), tag
+    QTest.qWait(400)  # the fill colour eases
+    assert ev(level, "fillColor.toString()") == ev(win, "Qt.alpha(Type.muted, 0.45).toString()"), tag
     assert not ev(h.find(level, "levelMeter"), "visible"), tag
     ev(level, "level = 0.5")
     assert ev(h.find(level, "levelMeter"), "visible"), tag
