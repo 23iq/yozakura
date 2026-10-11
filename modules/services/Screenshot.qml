@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.globals
 import qs.config
+import "OcrLangs.js" as OcrLangs
 
 QtObject {
     id: root
@@ -266,21 +267,7 @@ QtObject {
     }
 
     function ocrLangs() {
-        var cfg = Config.system.ocr;
-        var langs = [];
-        if (cfg) {
-            if (cfg.eng !== false) langs.push("eng");
-            if (cfg.spa !== false) langs.push("spa");
-            if (cfg.lat === true) langs.push("lat");
-            if (cfg.jpn === true) langs.push("jpn");
-            if (cfg.chi_sim === true) langs.push("chi_sim");
-            if (cfg.chi_tra === true) langs.push("chi_tra");
-            if (cfg.kor === true) langs.push("kor");
-        } else {
-            langs = ["eng", "spa"];
-        }
-        if (langs.length === 0) langs.push("eng");
-        return langs.join("+");
+        return OcrLangs.langs(Config.system.ocr);
     }
 
     function processMonitorScreen(monitorName) {
