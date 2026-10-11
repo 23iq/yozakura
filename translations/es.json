@@ -1768,7 +1768,7 @@
   "prefs.desktop.widgets": "Tus widgets",
   "prefs.desktop.widgets.desc": "Añade widgets y luego arrástralos y cámbiales el tamaño en el escritorio (clic derecho en el escritorio o el atajo Editar widgets).",
   "prefs.desktop.widget_variant": "Superficie de los widgets",
-  "prefs.desktop.widget_variant.desc": "Qué estilo de superficie usan los widgets; el cristal: Apariencia > Cristal.",
+  "prefs.desktop.widget_variant.desc": "Qué estilo de superficie usan los widgets; el cristal: Apariencia > Cristal. Con el estilo Tinta solo Emergente y Fondo dibujan una tarjeta visible (Panel, Tarjeta e Interior se dibujan sin ella).",
   "prefs.desktop.widget_variant.pane": "Panel",
   "prefs.desktop.widget_variant.common": "Tarjeta",
   "prefs.desktop.widget_variant.popup": "Emergente",

@@ -1768,7 +1768,7 @@
   "prefs.desktop.widgets": "Ваши виджеты",
   "prefs.desktop.widgets.desc": "Добавьте виджеты, затем перемещайте и меняйте их размер на рабочем столе (правый клик по столу или сочетание «Редактировать виджеты»).",
   "prefs.desktop.widget_variant": "Поверхность виджетов",
-  "prefs.desktop.widget_variant.desc": "Стиль поверхности виджетов; степень стекла: Внешний вид > Стекло.",
+  "prefs.desktop.widget_variant.desc": "Стиль поверхности виджетов; степень стекла: Внешний вид > Стекло. В стиле «Тушь» видимую карточку рисуют только «Всплывающее» и «Фон» (Панель, Карточка и Вложенное рисуются без неё).",
   "prefs.desktop.widget_variant.pane": "Панель",
   "prefs.desktop.widget_variant.common": "Карточка",
   "prefs.desktop.widget_variant.popup": "Всплывающее",

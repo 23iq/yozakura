@@ -1768,7 +1768,7 @@
   "prefs.desktop.widgets": "Your widgets",
   "prefs.desktop.widgets.desc": "Add widgets, then drag and resize them on the desktop (right click on the desktop or the Edit Desktop Widgets shortcut).",
   "prefs.desktop.widget_variant": "Widget surface",
-  "prefs.desktop.widget_variant.desc": "Which shell surface style widgets use; glass amount: Appearance > Glass.",
+  "prefs.desktop.widget_variant.desc": "Which shell surface style widgets use; glass amount: Appearance > Glass. With the Ink style only Popup and Background draw a visible card (Panel, Card and Inner are drawn without one).",
   "prefs.desktop.widget_variant.pane": "Pane",
   "prefs.desktop.widget_variant.common": "Card",
   "prefs.desktop.widget_variant.popup": "Popup",
