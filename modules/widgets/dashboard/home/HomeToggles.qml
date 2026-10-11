@@ -17,7 +17,10 @@ Item {
     readonly property var micAudio: Audio.source?.audio ?? null
     readonly property bool micOn: root.micAudio !== null && !root.micAudio.muted
     readonly property int count: row.children.length
-    readonly property real gap: Math.max(0, (root.width - Space.controlM * root.count) / Math.max(1, root.count - 1))
+    // Stage home: the toggles share the width as wide buttons (a larger hit area).
+    property bool stretch: false
+    readonly property real gap: root.stretch ? Space.s : Math.max(0, (root.width - Space.controlM * root.count) / Math.max(1, root.count - 1))
+    readonly property real cellW: root.stretch ? Math.max(Space.controlM, (root.width - root.gap * (root.count - 1)) / Math.max(1, root.count)) : Space.controlM
 
     signal details(string kind)
 
@@ -35,6 +38,7 @@ Item {
         spacing: root.gap
 
         ControlToggle {
+            width: root.cellW
             objectName: "wifiToggle"
             icon: NetworkService.wifiEnabled ? Icons.wifiHigh : Icons.wifiOff
             active: NetworkService.wifiEnabled
@@ -44,6 +48,7 @@ Item {
         }
 
         ControlToggle {
+            width: root.cellW
             objectName: "bluetoothToggle"
             icon: !BluetoothService.enabled ? Icons.bluetoothOff : (BluetoothService.connected ? Icons.bluetoothConnected : Icons.bluetooth)
             active: BluetoothService.enabled
@@ -53,6 +58,7 @@ Item {
         }
 
         ControlToggle {
+            width: root.cellW
             objectName: "micToggle"
             icon: root.micOn ? Icons.mic : Icons.micSlash
             active: root.micOn
@@ -66,6 +72,7 @@ Item {
         }
 
         ControlToggle {
+            width: root.cellW
             objectName: "silenceToggle"
             icon: Notifications.silent ? Icons.bellZ : Icons.bell
             active: Notifications.silent
@@ -74,6 +81,7 @@ Item {
         }
 
         ControlToggle {
+            width: root.cellW
             objectName: "nightToggle"
             icon: Icons.nightLight
             active: NightLightClient.active
@@ -82,6 +90,7 @@ Item {
         }
 
         ControlToggle {
+            width: root.cellW
             objectName: "awakeToggle"
             icon: Icons.caffeine
             active: CaffeineClient.inhibit
@@ -90,6 +99,7 @@ Item {
         }
 
         ControlToggle {
+            width: root.cellW
             objectName: "gameToggle"
             icon: Icons.gameMode
             active: GameModeClient.toggled

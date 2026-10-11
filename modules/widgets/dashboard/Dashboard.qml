@@ -15,6 +15,7 @@ import qs.modules.widgets.dashboard.controls
 import qs.modules.widgets.dashboard.wallpapers
 import qs.modules.widgets.dashboard.metrics
 import qs.modules.widgets.dashboard.home
+import qs.modules.widgets.dashboard.stage
 import qs.config
 import "DashboardTabs.js" as DashboardTabs
 
@@ -28,24 +29,24 @@ NotchAnimationBehavior {
         property int currentTab: GlobalStates.dashboardCurrentTab
     }
 
-    // Stable tab indices (DashboardTabs.js) in rail order; hidden tabs are left out.
+    // Stable tab indices (DashboardTabs.js) in header order; hidden tabs are left out.
     readonly property var tabOrder: DashboardTabs.visibleIndices(Config.layout.dashboard.tabs)
     readonly property int tabCount: DashboardTabs.tabs.length
-    // Bento edit mode of the widgets tab (toggled from the rail).
+    // Bento edit mode of the widgets tab (toggled from the header).
     property bool bentoEditing: false
-    readonly property int tabSpacing: Space.s
-    // Space on each side of the rail divider.
-    readonly property int railGap: Space.m
-
-    readonly property int tabWidth: Space.controlM
-    readonly property int railWidth: tabWidth + railGap * 2 + Space.hairline
-    // layout.dashboard.home: the widgets tab shows the composed home view or the bento grid.
-    readonly property bool homeComposed: (Config.layout.dashboard.home ?? "composed") !== "bento"
-    // One stable size for every tab: the widgets tab's (composed home or bento
-    // grid, always loaded while open) is the largest, so switching tabs never
-    // resizes the dashboard; the other tabs fill it.
+    // Between the header row and the tab content.
+    readonly property int headerGap: Look.groupGap
+    // layout.dashboard.home: the widgets tab shows the stage, the composed
+    // home or the bento grid (unknown values: the stage).
+    readonly property string home: DashboardTabs.homeOf(Config.layout.dashboard.home)
+    readonly property bool homeBento: home === "bento"
+    // Nothing plays on the stage home: its hero shows the time large.
+    property bool stageIdle: false
+    // One stable size for every tab: the widgets tab's (stage, composed home
+    // or bento grid, always loaded while open) is the largest, so switching
+    // tabs never resizes the dashboard; the other tabs fill it.
     readonly property Item widgetsItem: widgetsTabLoader.item as Item
-    readonly property real widgetsWidth: homeComposed && widgetsItem ? widgetsItem.implicitWidth : 780
+    readonly property real widgetsWidth: !homeBento && widgetsItem ? widgetsItem.implicitWidth : 780
     readonly property real widgetsHeight: widgetsItem ? widgetsItem.implicitHeight : 430
     // Room the screen leaves for the dashboard (air on every side).
     readonly property var screenObj: {
@@ -54,19 +55,23 @@ NotchAnimationBehavior {
                 return s;
         return null;
     }
-    readonly property real nonAnimWidth: DashboardTabs.fitScreen(widgetsWidth + railWidth, screenObj ? screenObj.width : 0, Space.xl)
+    readonly property real nonAnimWidth: DashboardTabs.fitScreen(widgetsWidth, screenObj ? screenObj.width : 0, Space.xl)
 
-    onHomeComposedChanged: bentoEditing = false
+    onHomeBentoChanged: bentoEditing = false
 
     implicitWidth: nonAnimWidth
-    implicitHeight: DashboardTabs.fitScreen(Math.max(430, widgetsHeight), screenObj ? screenObj.height : 0, Space.xl * 2)
+    implicitHeight: DashboardTabs.fitScreen(header.implicitHeight + headerGap + Math.max(430, widgetsHeight), screenObj ? screenObj.height : 0, Space.xl * 2)
 
     // Track which tabs have been loaded (for lazy loading)
-    property var loadedTabs: ({0: true}) // Tab 0 (widgets) loaded by default
+    property var loadedTabs: ({
+            0: true
+        }) // Tab 0 (widgets) loaded by default
 
     // LRU Tab Management
     property var lruAccessOrder: [0]  // Tracks access order: [0] means tab 0 is most recent
-    property var lruTabsLoaded: ({0: true})  // Reflects which tabs are actually loaded
+    property var lruTabsLoaded: ({
+            0: true
+        })  // Reflects which tabs are actually loaded
 
     // Update LRU on tab access
     function updateLRUAccess(tabIndex) {
@@ -83,10 +88,10 @@ NotchAnimationBehavior {
     // Determine which tabs should be loaded based on LRU and config
     function updateLoadedTabs() {
         let newLoadedTabs = {};
-        
+
         // Always load tab 0 (widgets bento) to avoid "jumpy" opening
         newLoadedTabs[0] = true;
-        
+
         // Always load current tab
         newLoadedTabs[root.state.currentTab] = true;
 
@@ -114,7 +119,8 @@ NotchAnimationBehavior {
             return tabIndex === 0;
         }
 
-        if (tabIndex === 0) return true; // Always load the widgets tab (Tab 0)
+        if (tabIndex === 0)
+            return true; // Always load the widgets tab (Tab 0)
 
         if (Config.performance.dashboardPersistTabs) {
             return lruTabsLoaded[tabIndex] === true;
@@ -180,41 +186,31 @@ NotchAnimationBehavior {
         }
     }
 
-    Row {
+    Column {
         id: mainLayout
         anchors.fill: parent
-        spacing: root.railGap
+        spacing: root.headerGap
 
-        DashboardTabRail {
-            id: tabsContainer
-            width: root.tabWidth
-            height: parent.height
-            tabSpacing: root.tabSpacing
+        StageHeader {
+            id: header
+            objectName: "header"
+            width: parent.width
             order: root.tabOrder
             currentTab: root.state.currentTab
-            canEdit: root.state.currentTab === 0 && !root.homeComposed
+            canEdit: root.state.currentTab === 0 && root.homeBento
             editing: root.bentoEditing
+            // The idle stage hero shows the time large itself.
+            showClock: !(root.state.currentTab === 0 && root.home === "stage" && root.stageIdle)
             onNavigate: index => stack.navigateToTab(index)
             onEditToggled: root.bentoEditing = !root.bentoEditing
-        }
-
-        // A slot, so the content keeps its place where dividers are hidden (tiles).
-        Item {
-            width: Space.hairline
-            height: parent.height
-
-            Divider {
-                vertical: true
-                anchors.fill: parent
-            }
         }
 
         // Content area
         Item {
             id: viewWrapper
 
-            width: parent.width - root.railWidth
-            height: parent.height
+            width: parent.width
+            height: parent.height - header.height - root.headerGap
 
             clip: true
 
@@ -244,7 +240,7 @@ NotchAnimationBehavior {
 
                         root.state.currentTab = index;
                         GlobalStates.dashboardCurrentTab = index;
-                        
+
                         // Update LRU when tab is accessed
                         root.updateLRUAccess(index);
 
@@ -255,53 +251,11 @@ NotchAnimationBehavior {
                     }
                 }
 
-                // Generic Tab Loader Component
-                component TabLoader : Loader {
-                    anchors.fill: parent
-                    // Load based on LRU strategy or if currently active.
-                    // When the dashboard closes (isVisible false) tabs are
-                    // unloaded so their image caches / GL pools are released;
-                    // currentTab alone must NOT keep heavy tabs resident.
-                    active: root.shouldTabBeLoaded(index)
-                    
-                    // Visibility handles the "switching"
-                    visible: root.state.currentTab === index
-                    
-                    // Transitions
-                    opacity: visible ? 1 : 0
-                    transform: Translate {
-                        y: visible ? 0 : (root.state.currentTab > index ? -20 : 20)
-                        Behavior on y {
-                             enabled: Config.animDuration > 0
-                             NumberAnimation { duration: Config.animDuration; easing.type: Motion.morph.easing } 
-                        }
-                    }
-
-                    Behavior on opacity {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation { duration: Config.animDuration; easing.type: Motion.enter.easing }
-                    }
-
-                    // Forward focus
-                    onLoaded: {
-                        if (visible && item && item.focusSearchInput) {
-                            focusUnifiedLauncherTimer.restart();
-                        }
-                    }
-                    
-                    // Ensure focus when becoming visible
-                    onVisibleChanged: {
-                        if (visible && item && item.focusSearchInput) {
-                            focusUnifiedLauncherTimer.restart();
-                        }
-                    }
-                }
-
                 // Tab 0: Unified Launcher
                 TabLoader {
                     id: widgetsTabLoader
                     property int index: 0
-                    sourceComponent: root.homeComposed ? homeComponent : unifiedLauncherComponent
+                    sourceComponent: root.homeBento ? unifiedLauncherComponent : (root.home === "composed" ? homeComponent : stageComponent)
                     z: visible ? 1 : 0
                 }
 
@@ -318,59 +272,77 @@ NotchAnimationBehavior {
                     sourceComponent: metricsComponent
                     z: visible ? 1 : 0
                 }
-                
+
                 // Helper to access current item for focus
                 property var currentItem: {
-                    switch(root.state.currentTab) {
-                        case 0: return children[0].item;
-                        case 1: return children[1].item;
-                        case 2: return children[2].item;
-                        default: return null;
+                    switch (root.state.currentTab) {
+                    case 0:
+                        return children[0].item;
+                    case 1:
+                        return children[1].item;
+                    case 2:
+                        return children[2].item;
+                    default:
+                        return null;
                     }
                 }
 
-                // Gesture handling para swipe vertical
-                MouseArea {
+                // Swipe up: next tab, down: previous (header order).
+                DashboardSwipe {
                     anchors.fill: parent
-                    property real startY: 0
-                    property real startX: 0
-                    property bool swiping: false
-                    property real swipeThreshold: 50
-                    
-                    // Allow clicking through to tabs
-                    propagateComposedEvents: true
-                    preventStealing: false
-
-                    onPressed: mouse => {
-                        startY = mouse.y;
-                        startX = mouse.x;
-                        swiping = false;
-                        mouse.accepted = false; // Let children handle clicks
-                    }
-
-                    onPositionChanged: mouse => {
-                        let deltaY = mouse.y - startY;
-                        let deltaX = Math.abs(mouse.x - startX);
-
-                        // Solo considerar swipe vertical si el movimiento horizontal es mínimo
-                        if (Math.abs(deltaY) > 20 && deltaX < 30) {
-                            swiping = true;
-                        }
-                    }
-
-                    onReleased: mouse => {
-                        if (swiping) {
-                            let deltaY = mouse.y - startY;
-
-                            if (Math.abs(deltaY) > swipeThreshold && !root.bentoEditing) {
-                                // Swipe up: next tab, down: previous (rail order)
-                                stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, deltaY < 0 ? 1 : -1, false));
-                            }
-                        }
-                        swiping = false;
-                        mouse.accepted = false;
+                    onSwiped: delta => {
+                        if (!root.bentoEditing)
+                            stack.navigateToTab(DashboardTabs.step(root.tabOrder, root.state.currentTab, delta, false));
                     }
                 }
+            }
+        }
+    }
+
+    // Generic Tab Loader Component
+    component TabLoader: Loader {
+        anchors.fill: parent
+        // Load based on LRU strategy or if currently active.
+        // When the dashboard closes (isVisible false) tabs are
+        // unloaded so their image caches / GL pools are released;
+        // currentTab alone must NOT keep heavy tabs resident.
+        active: root.shouldTabBeLoaded(index)
+
+        // Visibility handles the "switching"
+        visible: root.state.currentTab === index
+
+        // Transitions
+        opacity: visible ? 1 : 0
+        transform: Translate {
+            y: visible ? 0 : (root.state.currentTab > index ? -20 : 20)
+            Behavior on y {
+                enabled: Config.animDuration > 0
+                NumberAnimation {
+                    duration: Config.animDuration
+                    easing.type: Motion.morph.easing
+                }
+            }
+        }
+
+        Behavior on opacity {
+            enabled: Config.animDuration > 0
+            NumberAnimation {
+                duration: Config.animDuration
+                easing.type: Motion.enter.easing
+            }
+        }
+
+        // Forward focus
+        onLoaded: {
+            if (visible && item && item.focusSearchInput) {
+                focusUnifiedLauncherTimer.restart();
+            }
+        }
+
+        // Ensure focus when becoming visible
+        onVisibleChanged: {
+            if (visible && item && item.focusSearchInput) {
+                focusUnifiedLauncherTimer.restart();
             }
         }
     }
@@ -440,6 +412,20 @@ NotchAnimationBehavior {
     Component {
         id: homeComponent
         HomeView {}
+    }
+
+    Component {
+        id: stageComponent
+        StageView {
+            id: stage
+            onOpenTab: id => stack.navigateToTab(DashboardTabs.indexOf(id))
+
+            Binding {
+                target: root
+                property: "stageIdle"
+                value: !stage.playing
+            }
+        }
     }
 
     Component {
