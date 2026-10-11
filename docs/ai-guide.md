@@ -231,6 +231,21 @@ yozakura routine save routine.json        # or "-" for stdin: {"name","icon","st
 yozakura routine delete morning
 ```
 
+Tool steps: the editor never shows tool ids. `routines.tools` (IPC) serves the
+catalog of routine-usable tools, each with its MCP input schema, joined in
+`backend/pkg/mcp/yozakura/routine_catalog.go` from the `define(...)` schemas
+(single source) and `backend/pkg/routinetools` (category + English summary
+template). A new effectful MCP tool must be listed in `routinetools.Tools` (or
+`Excluded`; a test enforces it) and get `routines.tool.<id>`, `.desc` and
+`.summary` strings in `translations/{en,es,ru}.json` (a Go test checks them);
+enum values use `routines.enum.<value>`, field labels `routines.field.<key>`
+(`routines.field.<tool>.<key>` overrides, `.hint`). The form comes from the
+schema (`modules/routines/RoutineTools.js`, `editors/routines/ToolPicker`,
+`ToolArgsForm`, `ArgField`); `StepLabel` / `RoutineModel.stepSummary` render a
+step as a sentence ("Turn on Do Not Disturb") with the template language
+documented in `routinetools.Render`. To run a command line in the terminal as a
+step use the action `apps.terminal-run` (above).
+
 AI coding tasks (daemon `tasks` service, state in
 `~/.local/share/yozakura/tasks/`; each run works in its own git worktree under
 `~/.local/share/yozakura/worktrees/<project>/<id>` on branch `yoz/<id>`; when the

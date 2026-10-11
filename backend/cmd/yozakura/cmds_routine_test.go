@@ -48,7 +48,7 @@ func TestRoutineCLI(t *testing.T) {
 
 	out.Reset()
 	assert.Equal(t, 0, runRoutineWith(call, []string{"show", "Morning"}, nil, &out, &errOut))
-	assert.Contains(t, out.String(), `1. Tool dnd_set {"enabled":true}`)
+	assert.Contains(t, out.String(), `1. Turn on Do Not Disturb {"enabled":true}`)
 	assert.Equal(t, map[string]any{"id": "Morning"}, calls[len(calls)-1].Params)
 
 	out.Reset()
