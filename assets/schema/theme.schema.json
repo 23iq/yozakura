@@ -1574,6 +1574,14 @@
                   "title": "Amount",
                   "type": "number",
                   "default": -1,
+                  "x-settings": {
+                    "category": "appearance",
+                    "section": "glassSurfaces",
+                    "label": "prefs.glass.surfaces",
+                    "entry": "theme.glass.surfaces",
+                    "entryTitle": "Surfaces",
+                    "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                  },
                   "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
                   "x-specialValues": [
                     {

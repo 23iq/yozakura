@@ -3953,7 +3953,11 @@
             "section": "blur",
             "label": "prefs.windows.blur",
             "control": "toggle",
-            "keywords": "blur frosted glass transparency behind windows"
+            "keywords": "blur frosted glass transparency behind windows",
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            }
           }
         },
         "blurSize": {
@@ -3970,6 +3974,10 @@
             "keywords": "blur size radius amount",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             },
             "min": 0,
@@ -3994,6 +4002,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 1,
             "max": 10
           },
@@ -4014,6 +4026,10 @@
             "visibleWhen": {
               "key": "compositor.blurEnabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             }
           }
         },
@@ -4030,6 +4046,10 @@
             "keywords": "blur ignore alpha threshold transparent pixels",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4058,6 +4078,10 @@
                 }
               ]
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4078,6 +4102,10 @@
             "visibleWhen": {
               "key": "compositor.blurEnabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             }
           }
         },
@@ -4094,6 +4122,10 @@
             "keywords": "blur xray see through wallpaper floating",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4112,6 +4144,10 @@
             "keywords": "blur noise grain",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             },
             "min": 0,
@@ -4136,6 +4172,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 2
           },
@@ -4156,6 +4196,10 @@
             "keywords": "blur brightness light",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             },
             "min": 0,
@@ -4180,6 +4224,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4202,6 +4250,10 @@
               "key": "compositor.blurEnabled",
               "equals": true
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4222,6 +4274,10 @@
             "visibleWhen": {
               "key": "compositor.blurEnabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             }
           }
         },
@@ -4238,6 +4294,10 @@
             "keywords": "blur popups menus context",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4266,6 +4326,10 @@
                 }
               ]
             },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
+            },
             "min": 0,
             "max": 1
           },
@@ -4285,6 +4349,10 @@
             "keywords": "blur input method ime popup",
             "visibleWhen": {
               "key": "compositor.blurEnabled",
+              "equals": true
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
               "equals": true
             }
           }
@@ -4312,6 +4380,10 @@
                   "equals": true
                 }
               ]
+            },
+            "enabledWhen": {
+              "key": "theme.glass.enabled",
+              "equals": true
             },
             "min": 0,
             "max": 1
@@ -10527,6 +10599,14 @@
                       "title": "Amount",
                       "type": "number",
                       "default": -1,
+                      "x-settings": {
+                        "category": "appearance",
+                        "section": "glassSurfaces",
+                        "label": "prefs.glass.surfaces",
+                        "entry": "theme.glass.surfaces",
+                        "entryTitle": "Surfaces",
+                        "keywords": "glass per surface override windows terminal kitty popups bar panels notch dock sidebar ai center lockscreen settings"
+                      },
                       "description": "Glass amount of this surface 0..1; -1 = inherit the master amount.",
                       "x-specialValues": [
                         {

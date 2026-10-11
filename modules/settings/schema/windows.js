@@ -18,6 +18,7 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.layout",
+                    "compositor": ["hyprland", "mango"],
                     "type": "selector",
                     "options": [
                         {
@@ -54,6 +55,7 @@ var category = {
                 },
                 {
                     "key": "compositor.gapsOut",
+                    "compositor": ["hyprland", "mango"],
                     "type": "slider",
                     "min": 0,
                     "max": 100,
@@ -203,6 +205,7 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.shadowEnabled",
+                    "compositor": ["hyprland", "mango"],
                     "type": "toggle",
                     "label": "prefs.windows.shadows",
                     "description": "prefs.windows.shadows.desc",
@@ -210,6 +213,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowRange",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 100,
@@ -236,6 +240,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowColor",
+                    "compositor": "hyprland",
                     "type": "color-role",
                     "visibleWhen": {
                         "all": [
@@ -266,6 +271,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowOpacity",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -296,6 +302,7 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.shadowColorInactive",
+                    "compositor": "hyprland",
                     "type": "color-role",
                     "visibleWhen": {
                         "key": "compositor.shadowEnabled",
@@ -307,6 +314,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowRenderPower",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 1,
                     "max": 4,
@@ -321,6 +329,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowScale",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -335,6 +344,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowOffset",
+                    "compositor": "hyprland",
                     "type": "text",
                     "placeholder": "prefs.windows.shadow_offset.placeholder",
                     "monospace": true,
@@ -348,6 +358,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowSharp",
+                    "compositor": "hyprland",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.shadowEnabled",
@@ -376,6 +387,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurEnabled",
+                    "compositor": ["hyprland", "mango"],
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "label": "prefs.windows.blur",
                     "description": "prefs.windows.blur.desc",
@@ -383,6 +399,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurSize",
+                    "compositor": ["hyprland", "mango"],
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 20,
@@ -397,6 +418,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurPasses",
+                    "compositor": ["hyprland", "mango"],
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 1,
                     "max": 10,
@@ -411,6 +437,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurVibrancy",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -425,6 +456,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurXray",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -436,6 +472,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurPopups",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -455,6 +496,11 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.blurNoise",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 0.2,
@@ -469,6 +515,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurContrast",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -483,6 +534,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurBrightness",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -497,6 +553,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurVibrancyDarkness",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -511,6 +572,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurSpecial",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -522,6 +588,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurIgnoreOpacity",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -533,6 +604,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurNewOptimizations",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -544,6 +620,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurExplicitIgnoreAlpha",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -555,6 +636,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurIgnoreAlphaValue",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -577,6 +663,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurPopupsIgnorealpha",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -599,6 +690,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurInputMethods",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -610,6 +706,11 @@ var category = {
                 },
                 {
                     "key": "compositor.blurInputMethodsIgnorealpha",
+                    "compositor": "hyprland",
+                    "enabledWhen": {
+                        "key": "theme.glass.enabled",
+                        "equals": true
+                    },
                     "type": "slider",
                     "min": 0,
                     "max": 1,

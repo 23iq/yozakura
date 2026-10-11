@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "Ui.js" as Ui
+import "CompositorGate.js" as CompositorGate
 
 // One schema section: a kit Group (its label is the section title) of
 // SettingRows. `collapsible: true` sections (the Advanced block) fold behind
@@ -38,7 +39,7 @@ Group {
     }
 
     objectName: "settingsSection:" + sectionId
-    visible: !section.compositor || YozdService.compositorName === section.compositor
+    visible: CompositorGate.allows(section.compositor, YozdService.compositorName)
     label: section.title ? I18n.t(section.title) : ""
     actionText: sectionRoot.resetShown ? I18n.t("prefs.common.reset") : (sectionRoot.collapsible ? I18n.t(sectionRoot.expanded ? "prefs.common.hide" : "prefs.common.show") : "")
     onActionTriggered: sectionRoot.resetShown ? SettingsStore.resetSection(sectionRoot.section) : sectionRoot.toggle()
