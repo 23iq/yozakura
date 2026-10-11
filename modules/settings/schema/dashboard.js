@@ -65,7 +65,7 @@ var category = {
                     "type": "number",
                     "advanced": true,
                     "min": 1,
-                    "max": 10,
+                    "max": 3,
                     "visibleWhen": {
                         "key": "performance.dashboardPersistTabs",
                         "equals": true

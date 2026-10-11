@@ -11,3 +11,12 @@ test('fitScreen clamps to the screen room and ignores an unknown screen', () => 
     assert.equal(T.fitScreen(850, 0, 24), 850);
     assert.equal(T.fitScreen(850, 10, 24), 1);
 });
+
+test('the last visible tab cannot be hidden', () => {
+    const one = T.setVisible(T.resolve([]), 'wallpapers', false);
+    const two = T.setVisible(one, 'metrics', false);
+    assert.deepEqual(JSON.parse(JSON.stringify(T.visibleIndices(two))), [0]);
+    const refused = T.setVisible(two, 'widgets', false);
+    assert.equal(refused.filter(t => t.visible).length, 1);
+    assert.equal(T.setVisible(refused, 'metrics', true).filter(t => t.visible).length, 2);
+});

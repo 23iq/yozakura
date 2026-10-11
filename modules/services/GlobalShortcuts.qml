@@ -9,6 +9,8 @@ import qs.modules.desktop.widgets
 import qs.modules.specials
 
 import Quickshell.Io
+import "../widgets/launcher/Providers.js" as Providers
+import "../widgets/dashboard/DashboardTabs.js" as DashboardTabs
 
 QtObject {
     id: root
@@ -69,7 +71,7 @@ QtObject {
             case "wallpaper-previous": if (GlobalStates.wallpaperManager) GlobalStates.wallpaperManager.previousWallpaper(); break;
             case "dashboard-widgets": toggleDashboardTab(0); break;
             case "dashboard-wallpapers": toggleDashboardTab(1); break;
-            case "dashboard-kanban": toggleDashboardTab(2); break;
+            case "dashboard-metrics": toggleDashboardTab(2); break;
             case "dashboard-assistant": toggleAssistant(); break;
             case "dashboard-controls": toggleSettings(); break;
 
@@ -224,7 +226,26 @@ QtObject {
         }
     }
 
+    // A prefix tab whose provider is switched off (prefix.launcher.disabled)
+    // is not reachable: the bind opens the plain launcher instead of a
+    // search box filled with a prefix nothing handles.
+    function launcherTabEnabled(tabIndex) {
+        const p = Providers.tabProvider(tabIndex);
+        return !p || Providers.isEnabled(p.id, Config.prefix.launcher.disabled);
+    }
+
+    // The dashboard tab to open: the requested one while it is visible in
+    // layout.dashboard.tabs, else the first visible tab.
+    function visibleDashboardTab(tabIndex) {
+        const visible = DashboardTabs.visibleIndices(Config.layout.dashboard.tabs);
+        return visible.indexOf(tabIndex) !== -1 ? tabIndex : visible[0];
+    }
+
     function toggleLauncherWithPrefix(tabIndex, prefix) {
+        if (!launcherTabEnabled(tabIndex)) {
+            toggleLauncher();
+            return;
+        }
         const isActive = Visibilities.currentActiveModule === "launcher";
         const currentTab = GlobalStates.widgetsTabCurrentIndex;
         const currentText = GlobalStates.launcherSearchText;
@@ -243,7 +264,8 @@ QtObject {
         }
     }
 
-    function toggleDashboardTab(tabIndex) {
+    function toggleDashboardTab(requested) {
+        const tabIndex = visibleDashboardTab(requested);
         const isActive = Visibilities.currentActiveModule === "dashboard";
         
         // Special handling for widgets tab (launcher)
