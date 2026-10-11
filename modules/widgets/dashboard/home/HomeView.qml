@@ -5,8 +5,9 @@ import qs.modules.components.kit
 
 // Composed dashboard home (layout.dashboard.home = "composed"): one calm
 // surface in two columns, no captions; the hierarchy comes from the layout.
-// Left: the clock (hero) with the weather, now playing around its art, a
-// row of icon toggles and the levels (volume, microphone, brightness).
+// Left: now playing around its art (the clock and the weather are in the
+// dashboard header), a row of icon toggles and the levels (volume,
+// microphone, brightness).
 // Right: a compact month and the notifications, or the details a toggle or
 // level opened (networks, Bluetooth devices, audio devices). The view
 // offers its natural size and fills whatever it is given: free height goes
@@ -45,15 +46,6 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: Look.groupGap
-
-            Group {
-                Layout.fillWidth: true
-
-                HomeHeader {
-                    objectName: "header"
-                    width: parent.width
-                }
-            }
 
             HomePlayer {
                 id: player

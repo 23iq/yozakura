@@ -1,11 +1,12 @@
 """Offscreen environment for the dashboard (modules/widgets/dashboard).
 
 KitEnv (real kit, StyledRect, Styling, Metrics, generated Config / Colors)
-plus the dashboard frame (Dashboard, DashboardTabRail, DashboardTabs.js),
-the composed home (home/) and the bento widgets (widgets/), with sample
+plus the dashboard frame (Dashboard, the header in stage/, DashboardTabs.js),
+the stage home (stage/), the composed home (home/) and the bento widgets
+(widgets/), with sample
 stand-ins for the services they call: a playing track (or none), Wi-Fi,
-Bluetooth, levels and `notifications` (a list of {appName, summary, body,
-image}). Calls are recorded on the stubs (`calls`, `cleared`, ...).
+Bluetooth, levels, `notifications` (a list of {appName, summary, body,
+image}) and `timers` (TimersService rows: {name, leftMs, pomodoro}). Calls are recorded on the stubs (`calls`, `cleared`, ...).
 
 Used by tests/dashboard-home.test.py and tools/render/dashboard_render.py.
 """
@@ -20,9 +21,10 @@ from settings_env import global_states_qml
 
 MIRROR = [
     "modules/widgets/dashboard/Dashboard.qml",
-    "modules/widgets/dashboard/DashboardTabRail.qml",
     "modules/widgets/dashboard/DashboardTabs.js",
+    "modules/widgets/dashboard/DashboardSwipe.qml",
     "modules/widgets/dashboard/home",
+    "modules/widgets/dashboard/stage",
     "modules/widgets/dashboard/widgets",
     "modules/widgets/dashboard/controls",
     "modules/notch/NotchAnimationBehavior.qml",
@@ -48,7 +50,7 @@ def player_qml(playing: bool, art: str) -> str:
     }}"""
 
 
-def services(playing: bool, notifications: list[dict], art: str) -> dict[str, str]:
+def services(playing: bool, notifications: list[dict], art: str, timers: list[dict] | None = None) -> dict[str, str]:
     notifs = [{**n, "image": art if n.get("image") == "ART" else n.get("image", ""), "appIcon": ""} for n in notifications]
     return {
         "MprisController": f"""pragma Singleton
@@ -148,7 +150,10 @@ QtObject {
         "GlobalShortcuts": "pragma Singleton\nQtObject { property int settings: 0; function toggleSettings() { settings++ } }",
         "Visibilities": "pragma Singleton\nQtObject { function setActiveModule(m) {} }",
         "SystemResources": "pragma Singleton\nQtObject { property real cpuUsage: 23; property real ramUsage: 48; "
-                           "property bool gpuDetected: true; property real gpuUsage: 12; function setConsumer(k, a) {} }",
+                           "property bool gpuDetected: true; property real gpuUsage: 12; property real netRxRate: 1468006; "
+                           "property real netTxRate: 41984; function setConsumer(k, a) {} }",
+        "TimersService": "pragma Singleton\nQtObject { property real now: Date.now(); property var reminders: []; "
+                         f"property var timers: {json.dumps(timers or [])} }}",
     }
 
 
@@ -167,7 +172,7 @@ def global_states(wallpaper: dict) -> str:
 
 class DashboardEnv(KitEnv):
     def __init__(self, name: str = "dashboard", *, playing: bool = True, notifications: list[dict] | None = None,
-                 art: str = "", wallpaper: dict | None = None, **kw):
+                 art: str = "", wallpaper: dict | None = None, timers: list[dict] | None = None, **kw):
         super().__init__(name, wallpaper=wallpaper, **kw)
         qs = self.root / "qs"
         for rel in MIRROR:
@@ -178,7 +183,7 @@ class DashboardEnv(KitEnv):
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dst)
         notifs = SAMPLE_NOTIFICATIONS if notifications is None else notifications
-        self.h.module("qs.modules.services", services(playing, notifs, art))
+        self.h.module("qs.modules.services", services(playing, notifs, art, timers))
         self.h.module("qs.modules.globals", {"GlobalStates": global_states(wallpaper or {})})
         self.h.module("qs.modules.notifications", {"NotificationAppIcon": "Item { property var appIcon; property string appName; property var image; "
                                                    "property var summary; property var urgency; property real size: 28; "
@@ -195,6 +200,7 @@ class DashboardEnv(KitEnv):
         self._qmldir(qs / "modules/notch", "qs.modules.notch", only=["NotchAnimationBehavior"])
         self._qmldir(qs / "modules/widgets/dashboard", "qs.modules.widgets.dashboard")
         self._qmldir(qs / "modules/widgets/dashboard/home", "qs.modules.widgets.dashboard.home")
+        self._qmldir(qs / "modules/widgets/dashboard/stage", "qs.modules.widgets.dashboard.stage")
         self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets")
         # Bento tiles load their widgets by URL, compiled on the QML loader
         # thread, whose warnings wait for the GIL (a deadlock). The player's

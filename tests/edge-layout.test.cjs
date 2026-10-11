@@ -85,6 +85,26 @@ test('notch rect touches its edge, stays on screen and leaves bars and docks alo
         assert.ok(along[0] >= res(lo) && along[1] <= total - res(hi), tag);
     }
 });
+test('a side notch comes out of the monitor edge, not from behind the frame', () => {
+    const framed = (bar, dock, notch, frame) => Object.assign(envN(bar, dock, notch, 'center'), { frame });
+    const noDock = e => Object.assign(e, { dock: { pos: 'bottom', size: 64, visible: false } });
+    for (const frame of [6, 8, 20]) {
+        // nothing else on its edge: flush with the monitor edge (the frame is
+        // drawn under it)
+        const l = L.notchRect(noDock(framed('top', 'bottom', 'left', frame)), { along: 200, across: 36 });
+        assert.equal(l.x, 0, `left, frame ${frame}`);
+        const r = L.notchRect(noDock(framed('top', 'bottom', 'right', frame)), { along: 200, across: 36 });
+        assert.equal(r.x + r.w, 1920, `right, frame ${frame}`);
+        // still clear of the frame and the bar along the edge
+        assert.ok(l.y >= frame + 40 && l.y + l.h <= 1080 - frame, `ends, frame ${frame}`);
+        // a bar on its own edge: beside the bar, which sits inside the frame
+        const b = L.notchRect(noDock(framed('left', 'bottom', 'left', frame)), { along: 200, across: 36 });
+        assert.equal(b.x, frame + 40, `beside the left bar, frame ${frame}`);
+        // a dock on its own edge likewise
+        const d = L.notchRect(framed('top', 'left', 'left', frame), { along: 200, across: 36 });
+        assert.equal(d.x, frame + 64, `beside the left dock, frame ${frame}`);
+    }
+});
 test('notch alignment orders start < center < end', () => {
     for (const notch of EDGES) {
         const at = a => L.notchRect(envN('top', 'bottom', notch, a), { along: 200, across: 36 });

@@ -20,3 +20,11 @@ test('the last visible tab cannot be hidden', () => {
     assert.equal(refused.filter(t => t.visible).length, 1);
     assert.equal(T.setVisible(refused, 'metrics', true).filter(t => t.visible).length, 2);
 });
+
+test('homeOf keeps a known home view, defaults to the stage', () => {
+    assert.equal(T.homeOf('composed'), 'composed');
+    assert.equal(T.homeOf('bento'), 'bento');
+    assert.equal(T.homeOf('stage'), 'stage');
+    assert.equal(T.homeOf(undefined), 'stage');
+    assert.equal(T.homeOf('grid'), 'stage');
+});

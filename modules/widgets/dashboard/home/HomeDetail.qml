@@ -4,12 +4,12 @@ import qs.modules.components.kit
 
 // The details of a quick toggle or level on the composed dashboard, in
 // place of the calendar and notifications: Wi-Fi networks and Bluetooth
-// devices (the shared device panels of ../controls) or the audio outputs /
-// inputs (HomeDevices). The label names it, "Done" closes it (`done()`).
+// devices (the shared device panels of ../controls), the audio outputs /
+// inputs (HomeDevices) or the month (HomeCalendar, from the stage week). The label names it, "Done" closes it (`done()`).
 Group {
     id: root
 
-    // "wifi" | "bluetooth" | "output" | "input"
+    // "wifi" | "bluetooth" | "output" | "input" | "month"
     property string kind: ""
     readonly property var panels: ({
             "wifi": "../controls/WifiPanel.qml",
@@ -24,7 +24,8 @@ Group {
             "wifi": I18n.t("dashboard.home.detail.wifi"),
             "bluetooth": I18n.t("dashboard.home.detail.bluetooth"),
             "output": I18n.t("dashboard.home.detail.output"),
-            "input": I18n.t("dashboard.home.detail.input")
+            "input": I18n.t("dashboard.home.detail.input"),
+            "month": I18n.t("dashboard.home.detail.month")
         })[root.kind] ?? ""
     actionText: I18n.t("bento.done")
     onActionTriggered: root.done()
@@ -33,7 +34,7 @@ Group {
         objectName: "detailPanel"
         width: parent.width
         height: root.bodyHeight
-        active: root.kind !== "" && !root.audio
+        active: root.kind !== "" && !root.audio && root.kind !== "month"
         visible: active
         clip: true
         source: root.panels[root.kind] ?? ""
@@ -45,5 +46,19 @@ Group {
         height: root.bodyHeight
         visible: root.audio
         output: root.kind === "output"
+    }
+
+    Loader {
+        objectName: "month"
+        width: parent.width
+        height: root.bodyHeight
+        active: root.kind === "month"
+        visible: active
+
+        sourceComponent: HomeCalendar {
+            bare: true
+            squareCells: true
+            maxEvents: 3
+        }
     }
 }

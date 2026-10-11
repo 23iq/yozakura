@@ -2,7 +2,7 @@
 
 // Dashboard tabs. The index of a tab here is its stable index
 // (GlobalStates.dashboardCurrentTab, global shortcuts); `layout.dashboard.tabs`
-// only sets the rail order and visibility.
+// only sets the header order and visibility.
 var tabs = [
     { id: "widgets", icon: "widgets", labelKey: "dashboard.tab.widgets" },
     { id: "wallpapers", icon: "wallpapers", labelKey: "dashboard.tab.wallpapers" },
@@ -37,7 +37,7 @@ function resolve(list) {
     return out;
 }
 
-// Stable indices of the visible tabs in rail order (never empty).
+// Stable indices of the visible tabs in header order (never empty).
 function visibleIndices(list) {
     var out = resolve(list).filter(function (t) { return t.visible; }).map(function (t) { return indexOf(t.id); });
     return out.length > 0 ? out : [0];
@@ -65,7 +65,7 @@ function setVisible(list, id, on) {
     });
 }
 
-// Next stable index from `current` in rail `order`; wraps unless wrap is false.
+// Next stable index from `current` in header `order`; wraps unless wrap is false.
 function step(order, current, delta, wrap) {
     var pos = order.indexOf(current);
     if (pos < 0)
@@ -82,4 +82,12 @@ function fitScreen(size, room, margin) {
     if (!(room > 0))
         return size;
     return Math.max(1, Math.min(size, room - margin * 2));
+}
+
+// Home views of the widgets tab (layout.dashboard.home); anything else is
+// the default, the stage.
+var homes = ["stage", "composed", "bento"];
+
+function homeOf(value) {
+    return homes.indexOf(value) >= 0 ? value : homes[0];
 }

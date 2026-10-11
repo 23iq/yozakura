@@ -28,7 +28,10 @@ Group {
     readonly property real eventsH: (events.available ? events.events.length : 0) * (Space.rowHeight + Space.m)
     readonly property real fixedH: Space.controlS + Space.m + root.eventsH
     readonly property real minimumHeight: root.chrome + root.fixedH + (root.rows + 1) * root.compactCellH
-    readonly property real cellH: Math.max(root.compactCellH, Math.floor((root.bodyHeight - root.fixedH) / (root.rows + 1)))
+    // `squareCells` caps them a little under square, so a tall host (the
+    // stage's month detail) keeps day cells instead of tall bands.
+    property bool squareCells: false
+    readonly property real cellH: Math.max(root.compactCellH, Math.min(root.squareCells ? Math.round(root.cellW * 0.9) : Infinity, Math.floor((root.bodyHeight - root.fixedH) / (root.rows + 1))))
 
     fill: true
 

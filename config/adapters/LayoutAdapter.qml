@@ -12,7 +12,9 @@ JsonAdapter {
     }
     property JsonObject dashboard: JsonObject {
         property string host: "notch"
-        property string home: "composed"
+        property string home: "stage"
+        property bool showMetrics: true
+        property bool heroTint: true
         property list<var> tabs: [
             {
                 "id": "widgets",

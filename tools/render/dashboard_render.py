@@ -2,21 +2,26 @@
 """Render the dashboard offscreen (private Xvfb, never the live desktop).
 
     tools/render/dashboard_render.py [--out DIR] [--mode dark|light]
-                                     [--variants composed,composed-empty,bento]
+                                     [--variants stage,stage-idle,composed,...]
                                      [LANGUAGE ...]
 
-Draws the real dashboard frame (tab rail + widgets tab) on the popup
-surface over your wallpaper, with your config and palette (see
-settings_render.py) and sample data from tests/lib/dashboard_env.py: a
-playing track, three notifications (none in composed-empty). Variants:
-the composed home, without notifications, on a taller area (composed-tall),
-with the output devices / Wi-Fi / Bluetooth details open, the bento grid.
+Draws the real dashboard frame (header + widgets tab) on the popup surface
+over your wallpaper, with your config and palette (see settings_render.py)
+and sample data from tests/lib/dashboard_env.py: a playing track (its art is
+your wallpaper), three notifications, sample events and a Pomodoro. Variants:
+the stage home (playing; idle = nothing playing; empty = idle without
+events, timers or notifications; low = a short screen; narrow = a narrow
+one; month = the week's month detail; flat = tint and metrics off), the
+composed home (without notifications, taller, with the output devices /
+Wi-Fi / Bluetooth details open) and the bento grid.
 Writes <out>/dashboard-<variant>-<language>.png.
 """
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -26,16 +31,35 @@ from dashboard_env import DashboardEnv  # noqa: E402
 from kit_env import LANGUAGES  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-# variant -> (layout.dashboard.home, notifications: None = the samples, home detail, height: 0 = natural)
+# variant -> options: home, notifications (None = the samples), playing, events,
+# timers, detail, height / width (0 = natural), layout overrides.
+STAGE = {"home": "stage", "events": True, "timers": True}
 VARIANTS = {
-    "composed": ("composed", None, "", 0),
-    "composed-empty": ("composed", [], "", 0),
-    "composed-tall": ("composed", None, "", 640),
-    "composed-devices": ("composed", None, "output", 0),
-    "composed-wifi": ("composed", None, "wifi", 0),
-    "composed-bluetooth": ("composed", None, "bluetooth", 0),
-    "bento": ("bento", None, "", 0),
+    "stage": STAGE,
+    "stage-idle": {**STAGE, "playing": False},
+    "stage-empty": {**STAGE, "playing": False, "events": False, "timers": False, "notifications": []},
+    "stage-low": {**STAGE, "height": 540},
+    "stage-narrow": {**STAGE, "width": 760},
+    "stage-month": {**STAGE, "detail": "month"},
+    "stage-flat": {**STAGE, "layout": {"heroTint": False, "showMetrics": False}},
+    "composed": {"home": "composed"},
+    "composed-empty": {"home": "composed", "notifications": []},
+    "composed-tall": {"home": "composed", "height": 640},
+    "composed-devices": {"home": "composed", "detail": "output"},
+    "composed-wifi": {"home": "composed", "detail": "wifi"},
+    "composed-bluetooth": {"home": "composed", "detail": "bluetooth"},
+    "bento": {"home": "bento"},
 }
+SAMPLE_TIMERS = [{"name": "", "leftMs": 17 * 60000 + 24000, "pomodoro": True}]
+
+
+def sample_events() -> str:
+    """khal-like rows from now on: in 40 min, later today, tomorrow."""
+    now = datetime.now()
+    rows = [(now + timedelta(minutes=40), "Sync with Mira"), (now + timedelta(hours=2, minutes=30), "Deck review"),
+            ((now + timedelta(days=1)).replace(hour=10, minute=0), "Dentist")]
+    return json.dumps([{"date": t.strftime("%Y-%m-%d"), "time": t.strftime("%H:%M"), "title": title} for t, title in rows])
+
 
 SCENE = """
 import QtQuick
@@ -55,21 +79,27 @@ Window {
 }"""
 
 
-def render(name: str, path: Path, state: dict, colors: dict, overrides: dict,
-           notifications: list[dict] | None = None, user_config: bool = True, detail: str = "",
-           height: int = 0) -> Path:
+def render(name: str, path: Path, state: dict, colors: dict, overrides: dict, opts: dict) -> Path:
     """One dashboard scene: `overrides` ({domain: {...}}) over the defaults
-    (and your config with user_config) and `colors` as the palette."""
+    and your config, `colors` as the palette, `opts` a VARIANTS entry."""
     wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
     url = ("file://" + wall) if wall else ""
-    env = DashboardEnv(name, notifications=notifications, art=url, palette=colors, user_config=user_config,
-                       overrides=overrides, wallpaper=state)
+    env = DashboardEnv(name, notifications=opts.get("notifications"), art=url, palette=colors, user_config=True,
+                       overrides=overrides, wallpaper=state, playing=opts.get("playing", True),
+                       timers=SAMPLE_TIMERS if opts.get("timers") else [])
     win = env.load(SCENE)
     win.setProperty("wallpaper", url)
-    if detail:
-        env.h.eval(env.h.find(win, "dashboard"), f"widgetsItem.detail = {detail!r}")
-    if height:
-        env.h.eval(env.h.find(win, "dashboard"), f"implicitHeight = {height}")
+    dash = env.h.find(win, "dashboard")
+    if opts.get("events"):
+        cal = env.h.find(win, "calendarEvents")
+        env.h.eval(cal, "available = true")
+        env.h.eval(cal, f"this.events = {sample_events()}")
+    if opts.get("detail"):
+        env.h.eval(dash, f"widgetsItem.detail = {opts['detail']!r}")
+    if opts.get("height"):
+        env.h.eval(dash, f"implicitHeight = {opts['height']}")
+    if opts.get("width"):
+        env.h.eval(dash, f"implicitWidth = {opts['width']}")
     QTest.qWait(1200)
     win.grabWindow().save(str(path))
     print(path, flush=True)
@@ -88,12 +118,13 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
     for variant in args.variants.split(","):
-        home, notifs, detail, height = VARIANTS[variant]
+        opts = VARIANTS[variant]
+        suffix = "-light" if args.mode == "light" else ""
         for lang in args.languages:
             overrides = {"theme": {"language": lang, "lightMode": args.mode == "light"},
-                         "layout": {"dashboard": {"home": home}}}
-            render(f"dashboard-render-{variant}-{lang}", out / f"dashboard-{variant}-{lang}.png", state,
-                   palette(args.mode, state), overrides, notifs, detail=detail, height=height)
+                         "layout": {"dashboard": {"home": opts["home"], **opts.get("layout", {})}}}
+            render(f"dashboard-render-{variant}-{lang}", out / f"dashboard-{variant}-{lang}{suffix}.png", state,
+                   palette(args.mode, state), overrides, opts)
     return 0
 
 

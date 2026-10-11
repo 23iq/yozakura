@@ -6000,22 +6000,58 @@
             "home": {
               "title": "Home view",
               "type": "string",
-              "default": "composed",
-              "description": "What the widgets tab shows: a composed overview (clock, player, toggles, calendar, notifications) or the editable widget grid.",
+              "default": "stage",
+              "description": "What the widgets tab shows: the stage (a large player, what is next, the week, notifications), a composed overview (clock, player, toggles, calendar, notifications) or the editable widget grid.",
               "x-settings": {
                 "category": "dashboard",
                 "section": "home",
                 "label": "prefs.dashboard.home",
                 "control": "selector",
-                "keywords": "dashboard home view composed bento grid widgets layout overview"
+                "keywords": "dashboard home view stage composed bento grid widgets layout overview"
               },
               "enum": [
+                "stage",
                 "composed",
                 "bento"
               ],
               "x-enumLabels": {
+                "stage": "Stage",
                 "composed": "Composed",
                 "bento": "Widget grid"
+              }
+            },
+            "showMetrics": {
+              "title": "Metrics strip",
+              "type": "boolean",
+              "default": true,
+              "description": "A thin line with CPU, RAM, GPU and network at the bottom; click it to open the metrics tab.",
+              "x-settings": {
+                "category": "dashboard",
+                "section": "home",
+                "label": "prefs.dashboard.show_metrics",
+                "control": "toggle",
+                "keywords": "dashboard metrics cpu ram gpu network strip footer",
+                "visibleWhen": {
+                  "key": "layout.dashboard.home",
+                  "equals": "stage"
+                }
+              }
+            },
+            "heroTint": {
+              "title": "Tint the player with the art",
+              "type": "boolean",
+              "default": true,
+              "description": "The player block takes the colour of the album art, held back so the text stays readable.",
+              "x-settings": {
+                "category": "dashboard",
+                "section": "home",
+                "label": "prefs.dashboard.hero_tint",
+                "control": "toggle",
+                "keywords": "dashboard player hero tint album art colour color",
+                "visibleWhen": {
+                  "key": "layout.dashboard.home",
+                  "equals": "stage"
+                }
               }
             },
             "tabs": {

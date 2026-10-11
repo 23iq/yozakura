@@ -27,7 +27,6 @@ Item {
     property var notch: null
     property var dock: null
     property var activities: null
-    property var sidebar: null
 
     property bool barEnabled: true
     property bool dockEnabled: true
@@ -132,15 +131,5 @@ Item {
     ShadowCaster {
         source: root.notch
         sourceRect: root.itemRegion(root.notch ? root.notch.visualRegion : null)
-    }
-    // A sidebar pinned inside the frame is part of the frame's silhouette
-    ShadowCaster {
-        source: root.sidebar
-        active: !(root.frameEnabled && GlobalStates.assistantPinned)
-        sourceRect: {
-            const s = root.sidebar;
-            const box = s ? s.hitbox : null;
-            return box && box.visible ? root.region(s.x + box.x, s.y + box.y, box.width, box.height) : Qt.rect(0, 0, 0, 0);
-        }
     }
 }
