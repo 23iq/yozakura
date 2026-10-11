@@ -3752,5 +3752,8 @@
   "prefs.notch.activities_in.notch": "Notch",
   "prefs.notch.activities_in.bar": "Barra",
   "prefs.notch.activities_in.desc": "Automático muestra las actividades en vivo como pequeños chips en la barra cuando el notch comparte su borde, para que el notch nunca crezca sobre tus módulos",
-  "prefs.bar.module.activities": "Actividades en vivo"
+  "prefs.bar.module.activities": "Actividades en vivo",
+  "binds.action.apps.terminal-run": "Ejecutar en una terminal",
+  "binds.field.cwd": "Carpeta",
+  "binds.field.keepOpen": "Mantener abierta al terminar"
 }

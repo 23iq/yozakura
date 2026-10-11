@@ -359,6 +359,17 @@ test('apps.launch renders `<app> launch <desktop id>`, quoted only when needed',
     eq(Actions.actionFromLegacy('exec', `${app} launch firefox`, ''), { id: 'apps.launch', args: { app: 'firefox' } });
 });
 
+test('apps.terminal-run renders `<app> terminal run ... -- COMMAND`, always single-quoted', () => {
+    const exec = args => Actions.resolveAction({ id: 'apps.terminal-run', args }).argument;
+    assert.strictEqual(exec({ command: 'htop' }), `${app} terminal run -- 'htop'`);
+    assert.strictEqual(exec({ command: "echo 'a'; $(id)", cwd: '~/my app', keepOpen: 'false' }),
+        `${app} terminal run --cwd '~/my app' --keep-open=false -- 'echo '\\''a'\\''; $(id)'`);
+    assert.strictEqual(exec({ command: 'x', keepOpen: 'true' }), `${app} terminal run -- 'x'`);
+    assert.strictEqual(exec({ command: '  ' }), '');
+    eq(Actions.defaultArgs('apps.terminal-run'), { command: '', cwd: '', keepOpen: 'true' });
+    eq(Actions.getActionFields('apps.terminal-run').map(f => f.kind), ['text', 'path', 'bool']);
+});
+
 test('the Go renderer quotes desktop ids like the JS one', () => {
     const go = fs.readFileSync(path.join(repo, 'backend/pkg/svc/compositor/actions.go'), 'utf8');
     const js = fs.readFileSync(path.join(repo, 'config/KeybindActions.js'), 'utf8');

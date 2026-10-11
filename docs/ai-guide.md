@@ -306,7 +306,7 @@ connects to it automatically (`ai.mcp.yozakura`).
 | `binds_search`, `binds_list`, `binds_check`, `binds_suggest` | yes | bind advisor: `{"query":"раскладка"}` -> results with a ready `action` ({id, args}); every bind with its source; is a combo free; free combos for an action |
 | `binds_set`, `binds_remove`, `binds_undo` | no | `{"combo":"SUPER+F","action":"window.fullscreen"}` (confirm with the user first); writes `binds.json` only, returns `undo: {tool, args}` |
 | `routines_list` | yes | saved routines with their steps |
-| `routine_save`, `routine_run`, `routine_delete` | no | `{"name":"Night","steps":[{"kind":"tool","tool":"nightlight_set","args":{"enabled":true}},{"kind":"delay","ms":1000}]}` ("save this as a routine"); run returns a per-step report; delete always asks, and so do save/run of a routine with confirm-required steps (`app_close`, `binds_*`, `command.run`, `window.close`, quit), even in YOLO: the backend runs such a routine for an AI only after the user allowed that call (`routines.grant`) |
+| `routine_save`, `routine_run`, `routine_delete` | no | `{"name":"Night","steps":[{"kind":"tool","tool":"nightlight_set","args":{"enabled":true}},{"kind":"delay","ms":1000}]}` ("save this as a routine"); run returns a per-step report; delete always asks, and so do save/run of a routine with confirm-required steps (`app_close`, `binds_*`, `command.run`, `apps.terminal-run`, `window.close`, quit), even in YOLO: the backend runs such a routine for an AI only after the user allowed that call (`routines.grant`) |
 | `notes_search`, `notes_read` | yes | the Notes tab (`<data dir>-notes/index.json` + `notes/<id>.md|.html`) |
 | `notes_create`, `notes_append` | no | `{"id":"Inbox","text":"buy milk","bullet":true}` (`create: true` makes a missing note); undo deletes the new note / restores the previous content (`notes_restore`) |
 | `notes_delete`, `notes_restore` | no | delete a note (always asks; undo is `notes_restore` with its title and content); restore writes a note's whole content back, recreating it when deleted |
@@ -473,6 +473,16 @@ without `.desktop`): it renders to `yozakura launch <id>`, which starts the app
 exactly like the launcher (`gio launch <file>`), instead of a `command.run`
 with a shell command. Two binds may share a combo (Hyprland runs both); the
 settings page marks them as conflicts but never blocks or overwrites one.
+
+To run a command line in the user's terminal (`general.terminal`, honouring
+`terminalAdvanced`/`terminalCommand`) use `{"id": "apps.terminal-run", "args":
+{"command": "cd ~/.local/src/yozakura && claude", "cwd": "~/.local/src/yozakura",
+"keepOpen": "true"}}` in a bind or as an action step of a routine. `command`
+is required, `cwd` optional (`~` expanded), `keepOpen` defaults to true (the
+shell stays open after the command ends). It renders to `yozakura terminal run
+[--cwd DIR] [--keep-open=false] -- 'COMMAND'`: the command is passed as one
+positional argument of a fixed `sh -c` script, never pasted into a shell
+string (`backend/pkg/termrun`, flags per terminal in its `execArgs` table).
 
 Defaults (only for a new `binds.json`; an existing file keeps its combos):
 Super+Q closes the window, Super+T opens the terminal (`general.terminal`,

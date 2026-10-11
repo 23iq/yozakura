@@ -3752,5 +3752,8 @@
   "prefs.notch.activities_in.notch": "Notch",
   "prefs.notch.activities_in.bar": "Bar",
   "prefs.notch.activities_in.desc": "Auto shows live activities as small chips in the bar when the notch shares its edge with it, so the notch never grows over your modules",
-  "prefs.bar.module.activities": "Live Activities"
+  "prefs.bar.module.activities": "Live Activities",
+  "binds.action.apps.terminal-run": "Run in terminal",
+  "binds.field.cwd": "Directory",
+  "binds.field.keepOpen": "Keep open after it ends"
 }

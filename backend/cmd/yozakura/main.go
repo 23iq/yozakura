@@ -99,6 +99,8 @@ func main() {
 			os.Exit(runDisplay(args[1:], defaultDisplayEnv(os.Stdin, os.Stdout), os.Stdout, os.Stderr))
 		case "keyboard":
 			os.Exit(runKeyboard(args[1:], defaultKeyboardEnv(), os.Stdout, os.Stderr))
+		case "terminal":
+			os.Exit(runTerminal(args[1:], defaultTerminalEnv(), os.Stderr))
 		case "term":
 			os.Exit(runTerm(args[1:], ipcTerm{newClient()}, os.Stdout, os.Stderr))
 		case "extras":
@@ -722,6 +724,7 @@ Commands:
     cmd [list | <command> [arg]]     Run a launcher command ("dnd", "glass 0.6",
                                      "preset <name>"; {bin} cmd list)
     launch <desktop-id>              Start an installed app like the launcher does
+    terminal run [--cwd D] -- CMD    Open the terminal running a command line
     onboarding                       Open the welcome / setup wizard again
     onboarding --dry-run [--keep]    Click through the wizard without changing anything
     reload                           Restart {name}

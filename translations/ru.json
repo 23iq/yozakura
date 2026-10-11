@@ -3770,5 +3770,8 @@
   "prefs.notch.activities_in.notch": "В вырезе",
   "prefs.notch.activities_in.bar": "В панели",
   "prefs.notch.activities_in.desc": "Авто показывает живые активности маленькими чипами в панели, когда вырез на том же краю, чтобы вырез не разрастался поверх модулей",
-  "prefs.bar.module.activities": "Живые активности"
+  "prefs.bar.module.activities": "Живые активности",
+  "binds.action.apps.terminal-run": "Выполнить в терминале",
+  "binds.field.cwd": "Папка",
+  "binds.field.keepOpen": "Оставить открытым после завершения"
 }

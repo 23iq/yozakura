@@ -20,7 +20,7 @@ var CONFIRM = { binds_set: true, binds_remove: true, app_close: true, routine_de
 // Routine steps as sensitive as a confirm tool (routines/confirm.go): an
 // arbitrary command line, a raw dispatcher, closing the focused window and
 // quitting the shell (<app>.quit).
-var CONFIRM_ACTIONS = { "command.run": true, "legacy.dispatcher": true, "window.close": true };
+var CONFIRM_ACTIONS = { "command.run": true, "apps.terminal-run": true, "legacy.dispatcher": true, "window.close": true };
 var ROUTINE_ACTION = "utilities.routine";
 var ROUTINE_TOOLS = { routine_run: true, routine_save: true, routine_delete: true, routines_list: true };
 
