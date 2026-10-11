@@ -235,9 +235,20 @@ StyledRect {
             onPickRequested: root.openFolderPicker()
         }
         RowLayout {
+            id: body
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 10
+            // The conversation column sits in the middle of the whole bar, not
+            // of the space left of the docked history: it reserves the same
+            // width on its right, as long as that leaves a readable column.
+            // The row fills the bar inside its 10 px margins; sizing from the
+            // bar (not from the row) keeps the layout free of binding loops.
+            readonly property real avail: root.width - 20
+            readonly property bool centered: !changesPane.visible
+            readonly property real reserve: sessionList.visible ? sessionList.Layout.preferredWidth + spacing : 0
+            readonly property real columnLimit: GlobalStates.assistantFullscreen && !root.taskMode ? 960 : avail
+            readonly property real columnWidth: Math.max(Math.min(columnLimit, avail - 2 * reserve), Math.min(columnLimit, avail - reserve, 680))
             SessionDrawer {
                 id: sessionList
                 docked: true
@@ -262,9 +273,10 @@ StyledRect {
                 onCloseRequested: root.focusComposer()
             }
             ColumnLayout {
-                Layout.fillWidth: true
+                Layout.fillWidth: !body.centered
                 Layout.fillHeight: true
-                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: body.centered ? body.columnWidth : -1
+                Layout.leftMargin: body.centered ? Math.max(0, (body.avail - body.columnWidth) / 2 - body.reserve) : 0
                 Layout.maximumWidth: GlobalStates.assistantFullscreen && !root.taskMode ? 960 : Number.POSITIVE_INFINITY
                 Layout.minimumWidth: Math.min(320, root.width - 20)
                 spacing: 6
@@ -341,6 +353,7 @@ StyledRect {
                     id: composer
                     objectName: "workspaceComposer"
                     Layout.fillWidth: true
+                    mentionRoot: root.project
                     busy: Ai.busy
                     placeholder: Ai.activeAgent ? I18n.t("ai.agent_followup") : (root.taskMode ? I18n.t("ai.tasks.placeholder") : (root.code ? I18n.t("ai.code_placeholder") : I18n.t("ai.ask_anything")))
                     submitHandler: (text, attachments) => root.taskMode ? taskOptions.submit(text, attachments) : root.send(text, attachments)
@@ -353,6 +366,7 @@ StyledRect {
                 }
             }
             ChangesPane {
+                id: changesPane
                 Layout.preferredWidth: Math.min(420, root.width * 0.3)
                 Layout.fillHeight: true
                 visible: root.changesDocked && root.changesOpen

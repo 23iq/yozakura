@@ -1167,6 +1167,7 @@
   "ai.ask_anything": "Pregunta lo que quieras…",
   "ai.ask_selection": "Pregunta sobre la selección…",
   "ai.attach": "Adjuntar contexto",
+  "ai.mention_none": "No hay archivos coincidentes",
   "ai.auto_approve_reads": "Aprobar automáticamente las acciones de solo lectura",
   "ai.backend_offline": "El demonio de yozakura no está en ejecución",
   "ai.binary_path": "Ejecutable",

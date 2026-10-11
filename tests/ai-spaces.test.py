@@ -115,7 +115,7 @@ pump()
 assert ev(top, "space()") == "assistant"
 assert visible("welcomeView"), "empty assistant chat shows the welcome view"
 chips = find("suggestionChips")
-labels = ev(chips, "JSON.stringify(children.filter(c => c.label !== undefined).map(c => c.label))")
+labels = ev(chips, "JSON.stringify(items.filter(c => c.label !== undefined).map(c => c.label))")
 labels = json.loads(labels)
 assert any("error" in t.lower() for t in labels), labels
 assert any("Clair de lune" in t for t in labels), labels

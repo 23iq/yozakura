@@ -1167,6 +1167,7 @@
   "ai.ask_anything": "Спросите что угодно…",
   "ai.ask_selection": "Спросить о выделенном…",
   "ai.attach": "Прикрепить контекст",
+  "ai.mention_none": "Нет подходящих файлов",
   "ai.auto_approve_reads": "Автоматически разрешать только чтение",
   "ai.backend_offline": "Демон yozakura не запущен",
   "ai.binary_path": "Исполняемый файл",
