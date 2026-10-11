@@ -1,21 +1,25 @@
 package keystore
 
 import (
-	"yozakura/backend/pkg/brand"
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 )
 
-// Service stores encrypted API keys in an sqlite DB (XOR with the machine-id
-// salt, byte-compatible with the legacy scripts/keystore.py flow).
+// Service stores API keys in an sqlite DB (0600). Values are only obfuscated
+// (XOR with the machine-id salt, byte-compatible with the legacy
+// scripts/keystore.py flow), not encrypted: the file permissions are the
+// protection. SQL is fed through stdin so secrets never appear in argv.
 type Service struct {
 	paths *paths.Paths
 	db    string
@@ -80,33 +84,100 @@ func decrypt(hexStr string, key []byte) string {
 	return string(xorCrypt(enc, key))
 }
 
+const schema = `CREATE TABLE IF NOT EXISTS api_keys (
+	provider TEXT PRIMARY KEY,
+	api_key TEXT NOT NULL,
+	endpoint TEXT DEFAULT '',
+	custom_curl TEXT DEFAULT ''
+);`
+
+// ensureDB creates the directory, the file and the table; every path that
+// touches the database goes through it (query), so a clean install works.
+// Callers hold s.lock.
 func (s *Service) ensureDB() error {
 	if err := os.MkdirAll(filepath.Dir(s.db), 0o755); err != nil {
 		return err
 	}
+	if _, err := os.Stat(s.db); err != nil {
+		f, cerr := os.OpenFile(s.db, os.O_CREATE|os.O_WRONLY, 0o600)
+		if cerr != nil {
+			return cerr
+		}
+		f.Close()
+	}
 	if err := os.Chmod(s.db, 0o600); err != nil {
 		return err
 	}
-	_, err := exec.Command("sqlite3", s.db,
-		`CREATE TABLE IF NOT EXISTS api_keys (
-			 provider TEXT PRIMARY KEY,
-			 api_key TEXT NOT NULL,
-			 endpoint TEXT DEFAULT '',
-			 custom_curl TEXT DEFAULT ''
-		 )`).Output()
+	return s.exec(schema)
+}
+
+// exec feeds the SQL through stdin so secrets never reach argv
+// (/proc/<pid>/cmdline).
+func (s *Service) exec(sql string) error {
+	_, err := s.run(sql)
 	return err
 }
 
-func (s *Service) query(args ...string) (string, error) {
-	s.lock <- struct{}{}
-	defer func() { <-s.lock }()
-	cmd := exec.Command("sqlite3", s.db, args[0])
-	cmd.Args = append(cmd.Args, args[1:]...)
+func (s *Service) run(sql string, flags ...string) (string, error) {
+	bin, err := exec.LookPath("sqlite3")
+	if err != nil {
+		return "", errors.New("sqlite3 is not installed")
+	}
+	cmd := exec.Command(bin, append(flags, s.db)...)
+	cmd.Stdin = strings.NewReader(sql)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	out, err := cmd.Output()
 	if err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return "", errors.New(msg)
+		}
 		return "", err
 	}
 	return string(out), nil
+}
+
+// query runs SQL against the ensured database and returns the output.
+func (s *Service) query(sql string, flags ...string) (string, error) {
+	s.lock <- struct{}{}
+	defer func() { <-s.lock }()
+	if err := s.ensureDB(); err != nil {
+		return "", err
+	}
+	return s.run(sql, flags...)
+}
+
+// selectRows returns decoded rows; text columns are hex()-encoded in SQL so
+// separators and newlines inside values cannot break parsing.
+func (s *Service) selectRows(where string) ([]entry, error) {
+	out, err := s.query(`SELECT hex(provider), api_key, hex(endpoint), hex(custom_curl) FROM api_keys `+where+`;`,
+		"-separator", "\x1f")
+	if err != nil {
+		return nil, err
+	}
+	key := machineKey()
+	var res []entry
+	for _, row := range strings.Split(out, "\n") {
+		f := strings.Split(strings.TrimSpace(row), "\x1f")
+		if len(f) < 4 {
+			continue
+		}
+		res = append(res, entry{
+			Provider:   unhex(f[0]),
+			APIKey:     decrypt(f[1], key),
+			Endpoint:   unhex(f[2]),
+			CustomCurl: unhex(f[3]),
+		})
+	}
+	return res, nil
+}
+
+func unhex(s string) string {
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		return ""
+	}
+	return string(b)
 }
 
 func (s *Service) get(params json.RawMessage) (any, error) {
@@ -117,11 +188,16 @@ func (s *Service) get(params json.RawMessage) (any, error) {
 	if p.Provider == "" {
 		return map[string]any{"error": "get requires provider"}, nil
 	}
-	out, err := s.query(`SELECT * FROM api_keys WHERE provider = ` + qsql(p.Provider))
-	if err != nil || strings.TrimSpace(out) == "" {
+	rows, err := s.selectRows(`WHERE provider = ` + qsql(p.Provider))
+	if err != nil {
+		return map[string]any{"error": err.Error()}, nil
+	}
+	if len(rows) == 0 {
 		return map[string]any{"error": fmt.Sprintf("Provider '%s' not found", p.Provider)}, nil
 	}
-	return entryFromRow(out), nil
+	e := rows[0]
+	return map[string]any{"provider": e.Provider, "api_key": e.APIKey,
+		"endpoint": e.Endpoint, "custom_curl": e.CustomCurl}, nil
 }
 
 func (s *Service) set(params json.RawMessage) (any, error) {
@@ -139,8 +215,8 @@ func (s *Service) set(params json.RawMessage) (any, error) {
 	}
 	key := machineKey()
 	enc := encrypt(p.APIKey, key)
-	_, err := s.query(`INSERT OR REPLACE INTO api_keys VALUES (` +
-		qsql(p.Provider) + `,` + qsql(enc) + `,` + qsql(p.Endpoint) + `,` + qsql(p.CustomCurl) + `)`)
+	_, err := s.query(`INSERT OR REPLACE INTO api_keys (provider, api_key, endpoint, custom_curl) VALUES (` +
+		qsql(p.Provider) + `,` + qsql(enc) + `,` + qsql(p.Endpoint) + `,` + qsql(p.CustomCurl) + `);`)
 	if err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
@@ -155,7 +231,7 @@ func (s *Service) delete(params json.RawMessage) (any, error) {
 	if p.Provider == "" {
 		return map[string]any{"error": "delete requires provider"}, nil
 	}
-	_, err := s.query(`DELETE FROM api_keys WHERE provider = ` + qsql(p.Provider))
+	_, err := s.query(`DELETE FROM api_keys WHERE provider = ` + qsql(p.Provider) + `;`)
 	if err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
@@ -163,42 +239,14 @@ func (s *Service) delete(params json.RawMessage) (any, error) {
 }
 
 func (s *Service) list(params json.RawMessage) (any, error) {
-	// sqlite3 CLI has no CSV loop; use a JSON mode? -json not available in all
-	// versions. Fallback: SELECT with separator and parse rows manually.
-	if err := s.ensureDB(); err != nil {
-		return []any{}, nil
-	}
-	s.lock <- struct{}{}
-	defer func() { <-s.lock }()
-	out, err := exec.Command("sqlite3", "-separator", "\x1f", s.db,
-		`SELECT provider, api_key, endpoint, custom_curl FROM api_keys`).Output()
+	rows, err := s.selectRows("")
 	if err != nil {
-		return []any{}, nil
+		return nil, err
 	}
-	rows := strings.Split(strings.TrimSpace(string(out)), "\n")
-	key := machineKey()
-	result := []entry{}
-	for _, row := range rows {
-		if row == "" {
-			continue
-		}
-		fields := strings.Split(row, "\x1f")
-		if len(fields) < 1 {
-			continue
-		}
-		e := entry{Provider: fields[0]}
-		if len(fields) > 1 {
-			e.APIKey = decrypt(fields[1], key)
-		}
-		if len(fields) > 2 {
-			e.Endpoint = fields[2]
-		}
-		if len(fields) > 3 {
-			e.CustomCurl = fields[3]
-		}
-		result = append(result, e)
+	if rows == nil {
+		rows = []entry{}
 	}
-	return result, nil
+	return rows, nil
 }
 
 // Credential is one stored provider credential (in-process use only:
@@ -209,8 +257,7 @@ type Credential struct {
 
 // Credentials lists the stored credentials (empty when none or on error).
 func (s *Service) Credentials() []Credential {
-	res, _ := s.list(nil)
-	list, _ := res.([]entry)
+	list, _ := s.selectRows("")
 	out := make([]Credential, 0, len(list))
 	for _, e := range list {
 		out = append(out, Credential{Provider: e.Provider, APIKey: e.APIKey, Endpoint: e.Endpoint})
@@ -226,28 +273,10 @@ func (s *Service) has(params json.RawMessage) (any, error) {
 	if p.Provider == "" {
 		return false, nil
 	}
-	out, err := s.query(`SELECT 1 FROM api_keys WHERE provider = ` + qsql(p.Provider))
-	if err != nil || strings.TrimSpace(out) == "" {
-		return false, nil
-	}
-	return true, nil
+	out, err := s.query(`SELECT 1 FROM api_keys WHERE provider = ` + qsql(p.Provider) + `;`)
+	return err == nil && strings.TrimSpace(out) != "", nil
 }
 
 func qsql(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", "''") + "'"
-}
-
-func entryFromRow(row string) map[string]any {
-	fields := strings.Split(row, "|")
-	e := map[string]any{"provider": fields[0]}
-	if len(fields) > 1 {
-		e["api_key"] = decrypt(fields[1], machineKey())
-	}
-	if len(fields) > 2 {
-		e["endpoint"] = fields[2]
-	}
-	if len(fields) > 3 {
-		e["custom_curl"] = fields[3]
-	}
-	return e
 }
