@@ -19,20 +19,20 @@ Item {
     property real shown: Math.max(0, root.value)
     readonly property color tone: Type.load(root.value)
 
-    implicitHeight: Space.controlL - Space.s
+    implicitHeight: Space.controlM + Space.xs
     implicitWidth: Space.controlL * 2
 
     Behavior on shown {
-        enabled: Motion.morph.duration > 0
+        enabled: Motion.glide.duration > 0
         NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
+            duration: Motion.glide.duration
+            easing.type: Motion.glide.easing
         }
     }
 
     Rectangle {
         anchors.fill: parent
-        radius: Look.bigRadius(height)
+        radius: Look.chipRadius(height)
         color: Look.raisedFill(root.hovered)
         border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
         border.color: Look.controlEdge
@@ -43,27 +43,29 @@ Item {
         anchors.right: parent.right
         anchors.rightMargin: Space.m
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: Space.s
-        width: parent.width * 0.42
-        height: parent.height * 0.5
+        anchors.bottomMargin: Space.xs
+        width: parent.width * 0.4
+        height: parent.height * 0.6
         visible: root.value >= 0
         values: root.history
         color: root.tone
     }
 
-    Column {
+    Row {
         x: Space.m
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 0
+        spacing: Space.s
 
         KitText {
+            anchors.baseline: value.baseline
             role: "label"
             text: root.label
         }
 
         KitText {
+            id: value
             objectName: "metricValue"
-            role: "title"
+            role: "body"
             tabular: true
             font.weight: Font.Bold
             color: root.value >= 0 ? (root.value >= 0.7 ? root.tone : Type.text) : Type.text
@@ -74,10 +76,9 @@ Item {
     KitText {
         anchors.right: parent.right
         anchors.rightMargin: Space.m
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: Space.s
+        anchors.verticalCenter: parent.verticalCenter
         visible: root.subText !== ""
-        role: "secondary"
+        role: "caption"
         tabular: true
         text: root.subText
     }

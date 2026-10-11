@@ -12,7 +12,11 @@ test('tokens respect the budget at any base', () => {
         assert.ok(B.token('exit', base) <= 180);
         assert.ok(B.token('morph', base) <= 360);
         assert.ok(B.token('emphasis', base) <= 450);
+        assert.ok(B.token('micro', base) <= 120);
+        assert.ok(B.token('glide', base) <= 220);
     }
+    assert.equal(B.token('glide', 0), 0);
+    assert.ok(B.token('micro', 300) < B.token('glide', 300));
     assert.equal(B.token('enter', 0), 0);
     assert.equal(B.token('morph', 300), 360);
 });

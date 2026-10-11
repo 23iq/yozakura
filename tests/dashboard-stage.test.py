@@ -9,6 +9,11 @@ the Pomodoro, then the events, or one calm line when nothing is coming; the
 week marks today and opens the month detail; the notifications have a label
 and clear-all; the toggles open their details in the right column; the
 metrics strip opens the metrics tab and hides with layout.dashboard.showMetrics.
+Size: the natural footprint stays within about 900 x 600. Keyboard: the first
+focus is play (no ring until the keys move), arrows move spatially, Enter
+toggles a tile, Esc closes a detail before the dashboard. Motion state: the
+open reveal settles, a detail slides over the right column and back, a
+dismissed notification leaves the keyed list (no rebuild).
 """
 import sys
 import tempfile
@@ -19,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from lib.dashboard_env import DashboardEnv  # noqa: E402
 from PySide6.QtGui import QColor, QImage  # noqa: E402
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 SCENE = """
@@ -27,6 +33,7 @@ import QtQuick.Window
 import qs.config
 import qs.modules.globals
 import qs.modules.services
+import qs.modules.components.kit
 import qs.modules.widgets.dashboard
 Window {
     width: 1100; height: 800; visible: true
@@ -106,18 +113,22 @@ nxt = h.find(stage, "next")
 check(ev(nxt, "rows[0].kind") == "pomodoro", "the Pomodoro leads NEXT")
 check(ev(nxt, "rows[1].title") == "Sync with Mira", "then the soonest event")
 check(ev(nxt, "subText(rows[1])") in ("in 40 min", "in 39 min"), "relative time of the event")
-check(count(h, nxt, "nextRow") >= 3, "NEXT lists several rows")
+check(count(h, nxt, "nextRow") >= 2, "NEXT lists the lead and a row")
 check(ev(item(h, nxt, "nextTime"), "text") == "10:00", "the Pomodoro shows its countdown")
 
 week = h.find(stage, "week")
 check(count(h, week, "weekToday") == 1, "the week marks today")
 check(count(h, week, "eventDot") >= 1, "days with events are dotted")
 ev(week, "openMonth()")
-QTest.qWait(50)
+QTest.qWait(400)
 check(ev(stage, "detail") == "month" and ev(item(h, stage, "month"), "visible"), "the week opens the month")
 check(not ev(nxt, "visible"), "the month takes the right column")
+left = h.find(stage, "controls")
+left_x = ev(left, "mapToItem(null, 0, 0).x")
 ev(h.find(stage, "detail"), "done()")
+QTest.qWait(400)
 check(ev(stage, "detail") == "" and ev(nxt, "visible"), "done closes the month")
+check(abs(ev(left, "mapToItem(null, 0, 0).x") - left_x) < 0.5, "the detail never moves the left column")
 
 notes = h.find(stage, "notifications")
 check(ev(notes, "label") == "Notifications" and ev(notes, "actionText") == "Clear all", "notifications labelled with clear-all")
@@ -136,7 +147,7 @@ check(ev(dash, "GlobalStates.dashboardCurrentTab") == 2, "the strip opens the me
 check(ev(item(h, dash, "dashTab_metrics"), "active"), "metrics chip active")
 check(ev(item(h, dash, "clock"), "visible"), "the header shows the time on other tabs")
 ev(dash, "GlobalStates.dashboardCurrentTab = 0")
-QTest.qWait(50)
+QTest.qWait(400)
 
 ev(dash, "Config.layout.dashboard = Object.assign({}, Config.layout.dashboard, { showMetrics: false, heroTint: false })")
 QTest.qWait(800)
@@ -147,6 +158,53 @@ ev(dash, "Config.layout.dashboard = Object.assign({}, Config.layout.dashboard, {
 QTest.qWait(100)
 check(ev(h.find(dash, "bentoEditToggle"), "visible"), "bento mode offers the edit toggle in the header")
 
+# --- Size, keyboard and motion state (fresh scene) ---------------------------
+env3, h3, dash3 = scene("dashboard-stage-keys", art=art_file(), timers=[{"name": "", "leftMs": 600000, "pomodoro": True}])
+ev3 = h3.eval
+QTest.qWait(500)
+stage3 = ev3(dash3, "widgetsItem")
+check(ev3(stage3, "reveal") == 1, "the open reveal settles")
+check(ev3(dash3, "implicitWidth") <= 900 and ev3(dash3, "implicitHeight") <= 600,
+      "natural size within 900 x 600 (%d x %d)" % (ev3(dash3, "implicitWidth"), ev3(dash3, "implicitHeight")))
+check(not ev3(stage3, "compact"), "natural size: not compact")
+win3 = ev3(dash3, "Window.window")
+win3.requestActivate()
+QTest.qWait(100)
+ev3(stage3, "focusSearchInput()")
+play = h3.find(stage3, "playButton")
+check(ev3(play, "activeFocus"), "the first focus is play")
+check(not ev3(dash3, "FocusState.keyboard"), "no focus ring before the keys move")
+QTest.keyClick(win3, Qt.Key_Right)
+check(ev3(h3.find(stage3, "nextButton"), "activeFocus"), "Right moves to next")
+check(ev3(dash3, "FocusState.keyboard"), "the ring shows once the keys move")
+QTest.keyClick(win3, Qt.Key_Down)
+focused = ev3(dash3, "Window.window.activeFocusItem.objectName")
+check(focused.endswith("Toggle"), "Down from the transport reaches the tiles (%s)" % focused)
+ev3(h3.find(stage3, "wifiToggle"), "forceActiveFocus()")
+wifi_on = ev3(dash3, "NetworkService.wifiEnabled")
+QTest.keyClick(win3, Qt.Key_Return)
+QTest.qWait(50)
+check(ev3(dash3, "NetworkService.wifiEnabled") != wifi_on, "Enter toggles the focused tile")
+QTest.keyClick(win3, Qt.Key_Down)
+check(ev3(dash3, "Window.window.activeFocusItem.objectName") == "volumeSlider", "Down from the tiles reaches volume")
+vol = h3.find(stage3, "volumeSlider")
+before = ev3(vol, "value")
+QTest.keyClick(win3, Qt.Key_Right)
+check(ev3(vol, "value") > before, "Right on a slider raises it")
+ev3(stage3, "openDetail('wifi')")
+QTest.qWait(400)
+check(ev3(h3.find(stage3, "right"), "t") == 1, "the detail slid in")
+QTest.keyClick(win3, Qt.Key_Escape)
+check(ev3(stage3, "detail") == "", "Esc closes the detail first")
+check(ev3(dash3, "Notifications.cleared") == 0, "...and not the dashboard")
+notif_list = h3.find(stage3, "notifList")
+n0 = ev3(notif_list, "count")
+first = ev3(notif_list, "itemAtIndex(1)")
+ev3(dash3, "Notifications.list = Notifications.list.filter(x => x.appName !== Notifications.appNameList[0])")
+QTest.qWait(500)
+check(ev3(notif_list, "count") == n0 - 1, "a dismissed app leaves the list")
+check(ev3(notif_list, "itemAtIndex(0)") == first, "the neighbours are kept, not rebuilt")
+
 # --- Idle, nothing coming, no notifications --------------------------------
 env2, h2, dash2 = scene("dashboard-stage-idle", playing=False, notifications=[], timers=[])
 stage2 = h2.eval(dash2, "widgetsItem")
@@ -154,8 +212,11 @@ hero2 = h2.find(stage2, "hero")
 check(h2.eval(item(h2, hero2, "heroIdle"), "visible") and not h2.eval(item(h2, hero2, "heroPlayer"), "visible"), "idle hero")
 check(h2.eval(item(h2, hero2, "greeting"), "text").startswith("Good"), "idle hero greets")
 check(h2.eval(item(h2, hero2, "heroClock"), "text") != "", "idle hero shows the clock")
+QTest.qWait(400)
 check(not h2.eval(item(h2, dash2, "clock"), "visible"), "the header leaves the time to the idle hero")
-check(h2.eval(hero2, "tinted") and h2.eval(hero2, "toneRgb") is None, "idle: the accent floods the hero, no art tone")
+check(h2.eval(hero2, "tinted") and h2.eval(hero2, "toneRgb") is None, "idle: a quiet accent wash, no art tone")
+check(h2.eval(hero2, "alpha") < 0.25, "idle: the wash stays muted")
+check(h2.eval(stage2, "focusSearchInput(), Window.window.activeFocusItem.objectName") == "wifiToggle", "idle: the first focus is the first tile")
 nxt2 = h2.find(stage2, "next")
 check(h2.eval(item(h2, nxt2, "nextEmpty"), "visible") and count(h2, nxt2, "nextRow") == 0, "nothing coming: one calm line")
 check(h2.eval(item(h2, stage2, "emptyState"), "visible"), "no notifications: the quiet line")

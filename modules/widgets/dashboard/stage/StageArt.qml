@@ -1,10 +1,10 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
-import qs.config
 
 // The hero's album art with a cross-fade on track change: two kit Arts,
-// the new cover loads into the hidden one and fades in over the old.
+// the new cover loads into the hidden one and fades in over the old,
+// settling from slightly smaller (scale follows the fade).
 Item {
     id: root
 
@@ -27,12 +27,13 @@ Item {
 
     component Layer: Art {
         anchors.fill: parent
+        scale: 0.92 + 0.08 * opacity
 
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.glide.duration > 0
             NumberAnimation {
-                duration: Motion.enter.duration
-                easing.type: Motion.enter.easing
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
             }
         }
     }

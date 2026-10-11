@@ -9,7 +9,9 @@ import "StageModel.js" as StageModel
 // load and the network rates as StageMetric capsules of equal width (the
 // value large, a sparkline of the history in the load's color), a caret
 // at the end. Clicking it opens the metrics tab (`open()`). Keeps
-// SystemResources polling while it is shown.
+// SystemResources polling while it is shown. The capsules stay alive
+// across updates (the Repeater counts, it does not rebuild), so values
+// roll and sparklines slide. Keyboard: focusable, Enter opens metrics.
 Item {
     id: root
 
@@ -39,7 +41,14 @@ Item {
 
     signal open
 
-    implicitHeight: Space.controlL - Space.s
+    implicitHeight: Space.controlM + Space.xs
+    activeFocusOnTab: true
+    Keys.onPressed: event => {
+        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
+            root.open();
+            event.accepted = true;
+        }
+    }
     implicitWidth: Space.controlL * 8
 
     onVisibleChanged: SystemResources.setConsumer(root.consumerKey, root.visible)
@@ -64,16 +73,17 @@ Item {
         spacing: Space.s
 
         Repeater {
-            model: root.loads
+            model: root.loads.length
 
             StageMetric {
-                required property var modelData
+                required property int index
+                readonly property var load: root.loads[index] ?? ({})
                 width: root.cellW
                 height: row.height
-                hovered: area.containsMouse
-                label: modelData.label
-                value: (Number(modelData.value) || 0) / 100
-                history: modelData.history
+                hovered: area.containsMouse || root.activeFocus
+                label: load.label ?? ""
+                value: (Number(load.value) || 0) / 100
+                history: load.history ?? []
             }
         }
 
@@ -81,7 +91,7 @@ Item {
             objectName: "netRates"
             width: root.cellW
             height: row.height
-            hovered: area.containsMouse
+            hovered: area.containsMouse || root.activeFocus
             label: "NET"
             valueText: "↓ " + StageModel.rate(SystemResources.netRxRate)
             subText: "↑ " + StageModel.rate(SystemResources.netTxRate)
@@ -96,5 +106,10 @@ Item {
         font.family: Icons.font
         font.pixelSize: Type.iconSize("body")
         color: area.containsMouse ? Type.text : Type.muted
+    }
+
+    FocusRing {
+        radius: Look.chipRadius(root.height) + Space.stroke
+        shown: root.activeFocus
     }
 }

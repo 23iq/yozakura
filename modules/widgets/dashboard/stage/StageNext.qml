@@ -16,20 +16,30 @@ Group {
 
     // CalendarEvents rows ({date, time, title}); [] without a source.
     property var events: []
-    readonly property real leadH: leadProbe.implicitHeight + Space.m * 2
+    readonly property real leadH: Space.controlL - Space.xs
     readonly property real rowH: Space.controlM
-    readonly property int capacity: Math.max(1, Math.min(4, 1 + Math.floor((root.bodyHeight - root.leadH + 0.5) / (root.rowH + Space.xs))))
+    readonly property real rowGap: Space.xs
+    readonly property int capacity: Math.max(1, Math.min(4, 1 + Math.floor((root.bodyHeight - root.leadH + 0.5) / (root.rowH + root.rowGap))))
     readonly property var rows: StageModel.nextRows({
         "events": root.events,
         "timers": TimersService.timers,
         "reminders": TimersService.reminders,
         "now": TimersService.now
     }, root.capacity)
-    // The rows share the free height (up to a quarter taller than rowH).
-    readonly property real spreadH: Math.max(root.rowH, Math.min(root.rowH * 1.25, (root.bodyHeight - root.leadH) / Math.max(1, root.rows.length - 1) - Space.xs))
+    // Rows by a stable key (the list animates additions and removals).
+    readonly property var byKey: {
+        const out = {};
+        for (const r of root.rows)
+            out[root.keyOf(r)] = r;
+        return out;
+    }
     readonly property real minimumHeight: root.chrome + root.leadH
-    // Room for the lead and two rows (the host's preferred height).
-    readonly property real naturalHeight: root.minimumHeight + 2 * (root.rowH + Space.xs)
+    // Room for the lead and one row (the host's preferred height).
+    readonly property real naturalHeight: root.minimumHeight + root.rowH + root.rowGap
+
+    function keyOf(row: var): string {
+        return row.kind + "|" + row.title + "|" + (row.kind === "event" ? row.at : "");
+    }
 
     function timeText(row: var): string {
         if (row.kind !== "event")
@@ -66,81 +76,94 @@ Group {
     implicitHeight: root.naturalHeight
     label: I18n.t("dashboard.stage.next")
 
-    KitText {
-        id: leadProbe
-        visible: false
-        role: "display"
-        text: "00:00"
-    }
-
     Item {
         width: parent.width
         height: root.bodyHeight
 
-        Column {
-            width: parent.width
-            spacing: Space.xs
+        ListView {
+            id: list
+            objectName: "nextList"
+            anchors.fill: parent
+            interactive: false
+            spacing: root.rowGap
             visible: root.rows.length > 0
+            model: KeyedListModel {
+                keys: root.rows.map(r => root.keyOf(r))
+            }
 
-            Repeater {
-                model: root.rows
+            delegate: Loader {
+                id: slot
+                required property string key
+                required property int index
+                readonly property var row: root.byKey[slot.key] ?? null
+                width: ListView.view.width
+                height: slot.index === 0 ? root.leadH : root.rowH
+                active: slot.row !== null
+                sourceComponent: slot.index === 0 ? leadCard : smallRow
 
-                Loader {
-                    id: slot
-                    required property var modelData
-                    required property int index
-
-                    width: parent.width
-                    sourceComponent: slot.index === 0 ? leadCard : smallRow
-
-                    Component {
-                        id: leadCard
-                        StageNextLead {
-                            objectName: "nextRow"
-                            width: slot.width
-                            height: root.leadH
-                            time: root.timeText(slot.modelData)
-                            title: root.titleText(slot.modelData)
-                            when: root.subText(slot.modelData)
-                            kind: root.kindName(slot.modelData) !== root.titleText(slot.modelData) ? root.kindName(slot.modelData) : ""
-                            icon: root.glyph(slot.modelData)
-                        }
+                Component {
+                    id: leadCard
+                    StageNextLead {
+                        objectName: "nextRow"
+                        time: root.timeText(slot.row)
+                        title: root.titleText(slot.row)
+                        when: root.subText(slot.row)
+                        kind: root.kindName(slot.row) !== root.titleText(slot.row) ? root.kindName(slot.row) : ""
+                        icon: root.glyph(slot.row)
                     }
+                }
 
-                    Component {
-                        id: smallRow
-                        StageNextRow {
-                            objectName: "nextRow"
-                            width: slot.width
-                            height: root.spreadH
-                            time: root.timeText(slot.modelData)
-                            title: root.titleText(slot.modelData)
-                            when: slot.modelData.kind === "event" ? root.subText(slot.modelData) : root.kindName(slot.modelData)
-                            icon: root.glyph(slot.modelData)
-                        }
+                Component {
+                    id: smallRow
+                    StageNextRow {
+                        objectName: "nextRow"
+                        time: root.timeText(slot.row)
+                        title: root.titleText(slot.row)
+                        when: slot.row.kind === "event" ? root.subText(slot.row) : root.kindName(slot.row)
+                        icon: root.glyph(slot.row)
                     }
+                }
+            }
+
+            add: Transition {
+                enabled: Motion.glide.duration > 0
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0
+                    to: 1
+                    duration: Motion.glide.duration
+                }
+                NumberAnimation {
+                    property: "x"
+                    from: Space.l
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
+            remove: Transition {
+                enabled: Motion.glide.duration > 0
+                NumberAnimation {
+                    property: "opacity"
+                    to: 0
+                    duration: Motion.micro.duration
+                }
+            }
+            displaced: Transition {
+                enabled: Motion.glide.duration > 0
+                NumberAnimation {
+                    properties: "x,y"
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
         }
 
-        Column {
+        StageEmpty {
             objectName: "nextEmpty"
             anchors.centerIn: parent
-            spacing: Space.m
             visible: root.rows.length === 0
-
-            Art {
-                anchors.horizontalCenter: parent.horizontalCenter
-                width: Space.controlL
-                height: width
-                icon: Icons.calendar
-            }
-
-            KitText {
-                anchors.horizontalCenter: parent.horizontalCenter
-                role: "secondary"
-                text: I18n.t("dashboard.stage.nothing_next")
-            }
+            icon: Icons.calendar
+            text: I18n.t("dashboard.stage.nothing_next")
         }
     }
 }

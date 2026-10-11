@@ -79,6 +79,13 @@ QtObject {
         return root.alpha("overBackground", hovered ? 0.12 : 0.07);
     }
 
+    // A tonal fill (accent container): the accent held back so it reads as
+    // a level, not as an action; the ink on it stays the text colour.
+    readonly property real tonalStrength: 0.36
+    function tonal(c: color): color {
+        return Qt.alpha(c, root.tonalStrength);
+    }
+
     function bigRadius(h: real): real {
         return Space.clampRadius(root.squareControls ? Space.controlRadius : Space.surfaceRadius, h);
     }

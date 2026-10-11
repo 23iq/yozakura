@@ -46,6 +46,19 @@ Singleton {
         overshoot: root.enterEasing === Easing.OutBack ? root._overshoot : 1.0
     }
 
+    // State changes inside a surface (colour fills, hover, focus rings,
+    // icon swaps): short, decelerating, never overshooting (<= 120 ms).
+    readonly property Token micro: Token {
+        duration: MotionBudget.token("micro", root.base)
+        easing: Easing.OutCubic
+    }
+    // Things that travel inside a surface (tab content, list rows, detail
+    // panels, sliding indicators): decelerating, <= 220 ms.
+    readonly property Token glide: Token {
+        duration: MotionBudget.token("glide", root.base)
+        easing: root.enterEasing === Easing.OutBack ? Easing.OutCubic : root.enterEasing
+    }
+
     // Tactile press / release of big controls and pills that snap into place:
     // a short spring that overshoots (0 with animations off).
     readonly property Token spring: Token {

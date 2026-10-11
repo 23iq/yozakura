@@ -41,16 +41,28 @@ Item {
         id: when
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
-        spacing: Space.l
+        spacing: Space.l * clock.opacity
 
+        // Hands the time to the idle hero and back: folds away, no pop.
         KitText {
             id: clock
             objectName: "clock"
             anchors.verticalCenter: parent.verticalCenter
-            visible: root.showClock
+            opacity: root.showClock ? 1 : 0
+            visible: opacity > 0
+            width: implicitWidth * clock.opacity
+            clip: true
             role: "display"
             font.pixelSize: Math.round(Type.size("display") * 1.2)
             text: Qt.formatTime(root.now, root.use12h ? "h:mm" : "HH:mm")
+
+            Behavior on opacity {
+                enabled: Motion.glide.duration > 0
+                NumberAnimation {
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
+                }
+            }
         }
 
         Column {

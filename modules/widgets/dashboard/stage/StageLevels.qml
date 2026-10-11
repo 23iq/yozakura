@@ -10,6 +10,7 @@ import "../home/HomeModel.js" as HomeModel
 // fill then goes quiet); the microphone shows its live input level (a
 // Pipewire peak monitor, only while shown and unmuted). The caret zones of
 // volume and mic open the device lists (`details("output" | "input")`).
+// Fills are tonal (the accent is kept for play and the on tiles).
 // `compact` (low screens) slims the tracks. Same services as
 // home/HomeLevels.qml (the composed home).
 Column {
@@ -34,9 +35,9 @@ Column {
     property string detail: ""
     // Low screens: slimmer tracks, closer together.
     property bool compact: false
-    readonly property real trackH: root.compact ? Space.controlS : Space.controlM + Space.xs
+    readonly property real trackH: root.compact ? Space.controlS - Space.xs : Space.controlS
     // The full height, whatever the mode (the host sizes itself by it).
-    readonly property real fullHeight: (Space.controlM + Space.xs) * 3 + Space.s * 2
+    readonly property real fullHeight: Space.controlS * 3 + Space.s * 2
 
     signal details(string kind)
 

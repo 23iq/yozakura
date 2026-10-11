@@ -11,7 +11,8 @@ and sample data from tests/lib/dashboard_env.py: a playing track (its art is
 your wallpaper), three notifications, sample events and a Pomodoro. Variants:
 the stage home (playing; idle = nothing playing; empty = idle without
 events, timers or notifications; low = a short screen; narrow = a narrow
-one; month = the week's month detail; flat = tint and metrics off), the
+one; month = the week's month detail; flat = tint and metrics off; focus =
+the keyboard focus ring on a tile), the
 composed home (without notifications, taller, with the output devices /
 Wi-Fi / Bluetooth details open) and the bento grid.
 Writes <out>/dashboard-<variant>-<language>.png.
@@ -42,6 +43,7 @@ VARIANTS = {
     "stage-narrow": {**STAGE, "width": 760},
     "stage-month": {**STAGE, "detail": "month"},
     "stage-flat": {**STAGE, "layout": {"heroTint": False, "showMetrics": False}},
+    "stage-focus": {**STAGE, "focus": "nightToggle"},
     "composed": {"home": "composed"},
     "composed-empty": {"home": "composed", "notifications": []},
     "composed-tall": {"home": "composed", "height": 640},
@@ -96,6 +98,11 @@ def render(name: str, path: Path, state: dict, colors: dict, overrides: dict, op
         env.h.eval(cal, f"this.events = {sample_events()}")
     if opts.get("detail"):
         env.h.eval(dash, f"widgetsItem.detail = {opts['detail']!r}")
+    if opts.get("focus"):
+        win.requestActivate()
+        QTest.qWait(100)
+        env.h.eval(env.h.find(win, opts["focus"]), "forceActiveFocus()")
+        env.h.eval(dash, "FocusState.keyboard = true")
     if opts.get("height"):
         env.h.eval(dash, f"implicitHeight = {opts['height']}")
     if opts.get("width"):

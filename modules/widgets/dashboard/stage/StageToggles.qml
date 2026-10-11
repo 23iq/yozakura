@@ -4,14 +4,14 @@ import qs.modules.services
 import qs.modules.components.kit
 import "../home/HomeModel.js" as HomeModel
 
-// Quick toggles of the stage home as kit Tiles in two rows: Wi-Fi and
-// Bluetooth as wide tiles (name + state, a caret zone that opens the
-// detail: `details("wifi" | "bluetooth")`), then the microphone, silence,
-// night light, stay awake and game mode as square tiles (icon over the
-// name; right-click or hold the microphone for `details("input")`). Solid
-// accent while on. `compact` (low screens): one row of seven icon-only
+// Quick toggles of the stage home: one row of seven square kit Tiles (icon
+// over the name): Wi-Fi, Bluetooth, microphone, silence, night light, stay
+// awake and game mode. Solid accent while on; the state (network, device)
+// is in the tooltip. Wi-Fi, Bluetooth and the microphone have a detail
+// (corner caret, right-click, hold, Menu / Shift+Enter): `details("wifi" |
+// "bluetooth" | "input")`. `compact` (low screens): shorter, icon-only
 // tiles, the names as tooltips. Same service calls as home/HomeToggles.
-Flow {
+Row {
     id: root
 
     readonly property string btDevice: HomeModel.connectedDevice(BluetoothService.friendlyDeviceList)
@@ -20,11 +20,14 @@ Flow {
     readonly property string onText: I18n.t("dashboard.home.on")
     readonly property string offText: I18n.t("dashboard.home.off")
     property bool compact: false
-    readonly property real tileH: root.compact ? Space.controlM : Space.controlM + Space.l
-    readonly property real squareW: Math.floor(root.compact ? (root.width - root.spacing * 6) / 7 : (root.width - root.spacing * 4) / 5)
-    readonly property real wideW: root.compact ? root.squareW : Math.floor((root.width - root.spacing) / 2)
-    // The two-row height, whatever the mode (the host sizes itself by it).
-    readonly property real fullHeight: (Space.controlM + Space.l) * 2 + Space.s
+    // The detail open in the home.
+    property string detail: ""
+    readonly property real tileW: Space.controlL - Space.xs
+    readonly property real tileH: root.compact ? Space.controlM : root.tileW
+    // The row at its natural size (the left column takes this width).
+    readonly property real rowWidth: root.tileW * 7 + Space.s * 6
+    readonly property real fullHeight: root.tileW
+    readonly property Item firstTile: wifi
 
     signal details(string kind)
 
@@ -36,15 +39,17 @@ Flow {
         return name + " · " + root.stateText(on, extra);
     }
 
-    spacing: Space.s
+    spacing: Math.max(Space.xs, Math.floor((root.width - root.tileW * 7) / 6))
 
     Component.onCompleted: BluetoothService.initialize()
 
     Tile {
+        id: wifi
         objectName: "wifiToggle"
-        width: root.wideW
+        highlighted: root.detail === "wifi"
+        width: root.tileW
         height: root.tileH
-        vertical: root.compact
+        vertical: true
         showLabel: !root.compact
         icon: NetworkService.wifiEnabled ? Icons.wifiHigh : Icons.wifiOff
         text: I18n.t("dashboard.home.wifi")
@@ -58,9 +63,10 @@ Flow {
 
     Tile {
         objectName: "bluetoothToggle"
-        width: root.wideW
+        highlighted: root.detail === "bluetooth"
+        width: root.tileW
         height: root.tileH
-        vertical: root.compact
+        vertical: true
         showLabel: !root.compact
         icon: !BluetoothService.enabled ? Icons.bluetoothOff : (BluetoothService.connected ? Icons.bluetoothConnected : Icons.bluetooth)
         text: I18n.t("dashboard.home.bluetooth")
@@ -74,7 +80,8 @@ Flow {
 
     Tile {
         objectName: "micToggle"
-        width: root.squareW
+        highlighted: root.detail === "input"
+        width: root.tileW
         height: root.tileH
         vertical: true
         showLabel: !root.compact
@@ -82,6 +89,7 @@ Flow {
         text: I18n.t("dashboard.home.short.mic")
         active: root.micOn
         enabled: root.micAudio !== null
+        hasMore: true
         tooltipText: root.tip(root.micOn, I18n.t("dashboard.home.microphone"), "")
         onClicked: {
             if (root.micAudio)
@@ -92,7 +100,7 @@ Flow {
 
     Tile {
         objectName: "silenceToggle"
-        width: root.squareW
+        width: root.tileW
         height: root.tileH
         vertical: true
         showLabel: !root.compact
@@ -105,7 +113,7 @@ Flow {
 
     Tile {
         objectName: "nightToggle"
-        width: root.squareW
+        width: root.tileW
         height: root.tileH
         vertical: true
         showLabel: !root.compact
@@ -118,7 +126,7 @@ Flow {
 
     Tile {
         objectName: "awakeToggle"
-        width: root.squareW
+        width: root.tileW
         height: root.tileH
         vertical: true
         showLabel: !root.compact
@@ -131,7 +139,7 @@ Flow {
 
     Tile {
         objectName: "gameToggle"
-        width: root.squareW
+        width: root.tileW
         height: root.tileH
         vertical: true
         showLabel: !root.compact
