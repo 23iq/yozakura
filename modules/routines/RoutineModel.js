@@ -1,4 +1,5 @@
 .pragma library
+.import "RoutineTools.js" as Tools
 
 // Pure helpers for routines (backend svc/routines): launcher search, the
 // settings editor's edits and labels. A routine:
@@ -13,12 +14,6 @@ var MAX_DELAY_MS = 600000;
 
 // Tools a routine may not call (they edit or run routines).
 var BLOCKED_TOOLS = { routine_run: true, routine_save: true, routine_delete: true, routines_list: true };
-
-// Common tools offered first in the step picker; any other built-in tool
-// can be typed.
-var SUGGESTED_TOOLS = ["dnd_set", "volume_set", "media_control", "timer_start", "focus_start", "app_launch",
-    "wallpaper_set", "preset_apply", "nightlight_set", "caffeine_set", "brightness_set", "wifi_toggle",
-    "audio_output_set", "bluetooth_connect", "workspace_switch", "notification_send", "notes_append", "shell_command"];
 
 // Icon choices (Icons.* names).
 var ICONS = ["lightning", "sun", "moon", "brain", "headphones", "musicNotes", "gamepad", "code", "monitor",
@@ -65,10 +60,12 @@ function newRoutine(name) {
     return { id: "", name: String(name || ""), icon: "lightning", keywords: "", continueOnError: false, steps: [] };
 }
 
-function newStep(kind) {
+// A new step; for a tool step `tool` (a catalog entry) gives the tool and
+// its starting arguments, else the tool is left to pick.
+function newStep(kind, tool) {
     switch (kind) {
     case "tool":
-        return { kind: "tool", tool: "dnd_set", args: { enabled: true } };
+        return tool ? Tools.newStep(tool) : { kind: "tool", tool: "", args: {} };
     case "delay":
         return { kind: "delay", ms: 1000 };
     }
@@ -116,8 +113,11 @@ function delayText(ms) {
     return (Math.round(v / 6000) / 10) + " min";
 }
 
-// Problems that stop a save, as translation keys: [{index, key}].
-function problems(r) {
+// Problems that stop a save, as translation keys: [{index, key}]. With the
+// tool catalog, tool arguments are checked against their schema too
+// ({index, key: "routines.problem.args", field, code, min, max}).
+function problems(r, catalog) {
+    var tools = catalog ? Tools.byName(catalog) : {};
     var out = [];
     if (!r || !String(r.name || "").trim())
         out.push({ index: -1, key: "routines.problem.name" });
@@ -136,6 +136,11 @@ function problems(r) {
             out.push({ index: i, key: "routines.problem.blocked" });
         else if (s.kind === "delay" && !(s.ms > 0 && s.ms <= MAX_DELAY_MS))
             out.push({ index: i, key: "routines.problem.delay" });
+        else if (s.kind === "tool" && tools[s.tool]) {
+            var bad = Tools.validate(tools[s.tool], s.args);
+            if (bad.length)
+                out.push({ index: i, key: "routines.problem.args", field: bad[0].key, code: bad[0].code, min: bad[0].min, max: bad[0].max });
+        }
     }
     return out;
 }
@@ -199,4 +204,28 @@ function reportSummary(rep) {
             failed = { index: s.index, label: s.label || "", error: s.error || "" };
     });
     return { ok: !!(rep && rep.ok), done: done, total: steps.length, failed: failed };
+}
+
+// A step as one sentence ("Turn on Do Not Disturb", "Switch Workspace · 3",
+// "Wait 2 s"). catalog: routines.tools; tr(key): translation or "";
+// actionLabel(id): the action's label; fallback: the backend's label.
+function stepSummary(step, catalog, tr, actionLabel, fallback) {
+    var s = step || {};
+    switch (s.kind) {
+    case "tool":
+        return s.tool ? Tools.summary(s, catalog, tr, fallback) : "";
+    case "delay":
+        return (tr("routines.kind.delay") || "Wait") + " " + delayText(s.ms);
+    case "action":
+        if (!s.action)
+            return "";
+        var label = actionLabel ? actionLabel(s.action) : (fallback || s.action);
+        var args = s.args || {};
+        for (var k in args) {
+            if (String(args[k]).trim() !== "")
+                return label + " \u00b7 " + args[k];
+        }
+        return label;
+    }
+    return fallback || "";
 }

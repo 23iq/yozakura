@@ -98,6 +98,22 @@ QtObject {
     property var routines: []
     property var calls: []
     property var nextReport: ({ "ok": true, "steps": [] })
+    property var tools: [
+        { "name": "dnd_set", "title": "Do Not Disturb", "description": "Turn Do Not Disturb on or off.", "category": "focus",
+          "summary": "{enabled|true=Turn on|false=Turn off|unset=Toggle} Do Not Disturb",
+          "schema": { "type": "object", "properties": { "enabled": { "type": "boolean" } }, "additionalProperties": false } },
+        { "name": "volume_set", "title": "Set volume", "description": "Set the volume.", "category": "media",
+          "summary": "Set volume to {percent}%",
+          "schema": { "type": "object", "properties": { "percent": { "type": "number", "minimum": 0, "maximum": 150 },
+                      "mute": { "type": ["boolean", "string"] } }, "additionalProperties": false } },
+        { "name": "media_control", "title": "Control media", "description": "Play, pause or skip.", "category": "media",
+          "summary": "{action|play=Play media|pause=Pause media|*=Control media}",
+          "schema": { "type": "object", "properties": { "action": { "type": "string", "enum": ["play", "pause", "next"] } },
+                      "required": ["action"], "additionalProperties": false } }
+    ]
+    property var toolCategories: ["media", "display", "focus", "apps", "network", "shell", "notes"]
+    property bool toolsLoaded: true
+    function ensureTools() {}
     function find(ref) { return routines.find(r => r.id === ref) || null }
     function refresh() { calls = calls.concat([["refresh"]]) }
     function call(method, params, cb) {
@@ -396,6 +412,7 @@ def i18n_qml() -> str:
             f"    property var availableLanguages: ({(REPO / 'translations/languages.json').read_text()})\n"
             "    function detectSystemLanguage() { return 'en' }\n"
             "    function tn(key, n) { const k = key + (n === 1 ? '.one' : '.other'); return t(strings[k] !== undefined ? k : key, n); }\n"
+            "    function has(key) { return strings[key] !== undefined; }\n"
             "    function t(key) { let s = strings[key] ?? key;"
             " for (let i = 1; i < arguments.length; i++) s = s.replace('%' + i, arguments[i]); return s; }\n}\n")
 

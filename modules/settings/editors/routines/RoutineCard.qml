@@ -40,7 +40,7 @@ StyledRect {
     signal removeRequested
     signal toggleRequested
 
-    readonly property var problems: RoutineModel.problems(routine)
+    readonly property var problems: RoutineModel.problems(routine, RoutinesService.tools)
     readonly property var stepProblems: {
         const out = {};
         problems.forEach(p => {
@@ -210,6 +210,7 @@ StyledRect {
             RoutineReport {
                 Layout.fillWidth: true
                 report: root.report
+                steps: root.routine.steps || []
             }
             Text {
                 Layout.fillWidth: true
