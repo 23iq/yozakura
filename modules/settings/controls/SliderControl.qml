@@ -34,10 +34,16 @@ Item {
             moved(snapped);
     }
 
-    Keys.onLeftPressed: emitValue(value - stepSize)
-    Keys.onRightPressed: emitValue(value + stepSize)
-    Keys.onDownPressed: emitValue(value - stepSize)
-    Keys.onUpPressed: emitValue(value + stepSize)
+    function stepBy(dir) {
+        const v = Ui.stepValue(value, dir, from, to, stepSize, specialValues);
+        if (Math.abs(v - value) > 1e-9)
+            moved(v);
+    }
+
+    Keys.onLeftPressed: stepBy(-1)
+    Keys.onRightPressed: stepBy(1)
+    Keys.onDownPressed: stepBy(-1)
+    Keys.onUpPressed: stepBy(1)
     Keys.onPressed: event => {
         const big = stepSize * 10;
         const target = ({

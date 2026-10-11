@@ -197,7 +197,7 @@ Item {
     Component {
         id: sliderComponent
         SliderControl {
-            value: Number(row.value ?? 0)
+            value: Ui.finite(row.value, row.entry.min ?? 0)
             from: row.entry.min
             to: row.entry.max
             stepSize: row.entry.step ?? 1
@@ -210,7 +210,7 @@ Item {
     Component {
         id: numberComponent
         NumberControl {
-            value: Number(row.value ?? 0)
+            value: Ui.finite(row.value, row.entry.min ?? 0)
             from: row.entry.min
             to: row.entry.max
             stepSize: row.entry.step ?? 1
@@ -239,6 +239,8 @@ Item {
             onEdited: t => {
                 if (SchemaUtil.matchesPattern(row.entry, t))
                     SettingsStore.set(row.entry.key, t);
+                else
+                    input.text = row.value ?? "";
             }
         }
     }
