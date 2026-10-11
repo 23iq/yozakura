@@ -80,3 +80,17 @@ test('schema condition `empty` for list keys', () => {
     assert.equal(SchemaUtil.evalCondition({ key: 'x.y', empty: true }, get), false);
     assert.equal(SchemaUtil.evalCondition({ key: 'missing', empty: true }, get), true);
 });
+
+test('toSingleBar folds a panel back into the legacy keys and empties bar.panels last', () => {
+    const panels = plain(Model.panelsOf({ panels: [{ id: 'a', edge: 'left', style: 'islands', groups: { start: ['launcher'], center: ['clock'], end: ['power'], drawer: ['tools'] }, screens: ['DP-1'] }] }));
+    const w = plain(Model.toSingleBar(panels, 0));
+    const get = k => w.find(x => x.key === k).value;
+    assert.equal(get('bar.position'), 'left');
+    assert.equal(get('bar.layout.style'), 'islands');
+    assert.deepEqual(get('bar.layout.left'), ['launcher', 'clock']);
+    assert.deepEqual(get('bar.layout.right'), ['power']);
+    assert.deepEqual(get('bar.layout.drawer'), ['tools']);
+    assert.deepEqual(get('bar.screenList'), ['DP-1']);
+    assert.equal(w[w.length - 1].key, 'bar.panels');
+    assert.deepEqual(w[w.length - 1].value, []);
+});
