@@ -218,6 +218,67 @@ Item {
         }
     }
 
+    // Closing the window with unsaved staged changes asks first
+    // (SettingsWindow keeps the window and raises settingsCloseConfirm).
+    ConfirmSheet {
+        id: closeConfirm
+        anchors.fill: parent
+        open: GlobalStates.settingsCloseConfirm && SettingsStore.hasChanges
+        title: I18n.t("prefs.close.title")
+        body: I18n.t("prefs.close.body")
+        actions: [
+            {
+                "id": "keep",
+                "text": I18n.t("prefs.close.keep"),
+                "kind": "ghost"
+            },
+            {
+                "id": "discard",
+                "text": I18n.t("prefs.changes.discard"),
+                "kind": "tonal"
+            },
+            {
+                "id": "apply",
+                "text": I18n.t("prefs.changes.apply"),
+                "kind": "filled"
+            }
+        ]
+        onDismissed: GlobalStates.settingsCloseConfirm = false
+        onChosen: id => {
+            GlobalStates.settingsCloseConfirm = false;
+            if (id === "keep")
+                return;
+            if (id === "apply")
+                SettingsStore.apply();
+            else
+                SettingsStore.discard();
+            GlobalStates.settingsWindowVisible = false;
+        }
+    }
+
+    // Reset page / section over settings that save at once (no Apply /
+    // Discard covers them): ask before applying the defaults.
+    ConfirmSheet {
+        anchors.fill: parent
+        open: SettingsStore.pendingReset !== null
+        title: I18n.t("prefs.reset.title")
+        body: I18n.t("prefs.reset.body", SettingsStore.pendingResetCount)
+        actions: [
+            {
+                "id": "cancel",
+                "text": I18n.t("common.cancel"),
+                "kind": "ghost"
+            },
+            {
+                "id": "reset",
+                "text": I18n.t("prefs.common.reset"),
+                "kind": "filled"
+            }
+        ]
+        onDismissed: SettingsStore.cancelReset()
+        onChosen: id => id === "reset" ? SettingsStore.confirmReset() : SettingsStore.cancelReset()
+    }
+
     // Reveal after the page laid out.
     Timer {
         id: revealTimer

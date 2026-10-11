@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.services
 import "../SchemaUtil.js" as SchemaUtil
 import "../SettingsDefaults.js" as SettingsDefaults
+import "../ResetModel.js" as ResetModel
 
 // Read/write access to settings keys for the schema renderer.
 //
@@ -61,7 +62,16 @@ Singleton {
         return SchemaUtil.getPath(domain, k.path);
     }
 
+    // Context of the reset / count rules (ResetModel.js).
+    readonly property var resetContext: ({
+            "compositor": YozdService.compositorName,
+            "get": root.get
+        })
+
     function defaultValue(key) {
+        // The wallpaper folder default is the manager's bundled fallback.
+        if (key === "wallpaper.wallPath")
+            return root.wallpaperManager ? root.wallpaperManager.fallbackDir : undefined;
         return SettingsDefaults.get(key);
     }
 
@@ -99,7 +109,6 @@ Singleton {
             console.warn("SettingsStore: unknown config domain for", key);
             return;
         }
-        stage(k.domain);
         // Descend through nested JsonObject children (e.g. ai.quickAsk.enabled):
         // their properties are assigned in place; a `property var` object on
         // the way is replaced by an updated copy (e.g. bar.layout.style).
@@ -112,11 +121,16 @@ Singleton {
             target = child;
             i++;
         }
+        // Snapshot before the first change of a staged domain.
+        stage(k.domain);
         if (i === k.path.length - 1)
             target[k.path[i]] = SchemaUtil.plain(value);
         else
             target[k.path[i]] = SchemaUtil.withPath(target[k.path[i]], k.path.slice(i + 1), value);
-        if (!isStaged(k.domain)) {
+        // One writer: the domain's own auto-save persists the edit (debounced
+        // by ConfigFile). Only while auto-save is paused for staged changes
+        // is the write explicit, so a non-staged setting is never held back.
+        if (!isStaged(k.domain) && Config.pauseAutoSave) {
             const saver = Config["save" + k.domain.charAt(0).toUpperCase() + k.domain.slice(1)];
             if (typeof saver === "function")
                 saver();
@@ -147,9 +161,15 @@ Singleton {
         }
     }
 
+    // Entries of a page a reset / the modified count may touch: visible ones
+    // of the running compositor only (ResetModel.js).
+    function activeItems(category) {
+        return ResetModel.activeItems(category, root.resetContext);
+    }
+
     function modifiedCount(category) {
         let n = 0;
-        const all = SchemaUtil.flatten([category]);
+        const all = activeItems(category);
         for (let i = 0; i < all.length; i++) {
             if (isModified(all[i].entry))
                 n++;
@@ -158,9 +178,15 @@ Singleton {
     }
 
     function resetCategory(category) {
-        const all = SchemaUtil.flatten([category]);
+        const all = activeItems(category);
         for (let i = 0; i < all.length; i++)
             reset(all[i].entry);
+    }
+
+    // Keys a reset of `category` would change that no Apply / Discard
+    // covers (domains without a snapshot list save immediately).
+    function irreversibleKeys(category) {
+        return ResetModel.unstagedKeys(activeItems(category), isModified, isStaged);
     }
 
     // One schema section of a page (its header's reset button).
@@ -170,11 +196,39 @@ Singleton {
         }) : 0;
     }
 
-    function resetSection(section) {
+    // A page or section the user asked to reset that touches values with no
+    // Apply / Discard: the window asks first (SettingsShell). Anything else
+    // resets at once.
+    property var pendingReset: null
+    property int pendingResetCount: 0
+
+    function requestReset(scope) {
+        const n = scope ? irreversibleKeys(scope).length : 0;
+        if (n === 0) {
+            if (scope)
+                resetCategory(scope);
+            return;
+        }
+        pendingResetCount = n;
+        pendingReset = scope;
+    }
+
+    function requestResetSection(section) {
         if (section)
-            resetCategory({
+            requestReset({
                 "sections": [section]
             });
+    }
+
+    function confirmReset() {
+        const scope = pendingReset;
+        pendingReset = null;
+        if (scope)
+            resetCategory(scope);
+    }
+
+    function cancelReset() {
+        pendingReset = null;
     }
 
     function visible(entry) {
