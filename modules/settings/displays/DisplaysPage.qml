@@ -18,7 +18,10 @@ Flickable {
     // The layout being edited: one config per connected output
     property var draft: []
     property string selectedName: ""
-    property string error: ""
+
+    // First pair of overlapping enabled monitors ([] when clean): Apply is blocked
+    readonly property var overlap: DisplayModel.firstOverlap(draft)
+    readonly property var notice: DisplaysService.notice
 
     readonly property var live: DisplaysService.currentConfigs()
     readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(live)
@@ -80,7 +83,8 @@ Flickable {
     }
 
     function applyDraft() {
-        error = "";
+        if (overlap.length > 0)
+            return;
         DisplaysService.apply(draft);
     }
 
@@ -96,9 +100,6 @@ Flickable {
             const names = DisplaysService.outputs.map(o => o.name).join();
             if (!page.dirty || names !== page.draft.map(c => c.name).join())
                 page.resync();
-        }
-        function onApplyFailed(message) {
-            page.error = message;
         }
     }
 
@@ -117,11 +118,34 @@ Flickable {
         DisplayNotice {
             objectName: "applyError"
             width: parent.width
-            visible: page.error !== ""
+            visible: page.notice.message !== "" && page.notice.kind !== "info"
             tone: "error"
             icon: "warning"
-            title: I18n.t("prefs.displays.apply_failed")
-            message: page.error
+            title: I18n.t("prefs.displays." + ({
+                    "keep": "keep_failed",
+                    "revert": "revert_failed",
+                    "restore": "restore_failed"
+                })[page.notice.kind] ?? "apply_failed")
+            message: page.notice.message
+        }
+
+        DisplayNotice {
+            objectName: "unchangedNote"
+            width: parent.width
+            visible: page.notice.kind === "info"
+            tone: "info"
+            icon: "info"
+            title: I18n.t("prefs.displays.unchanged")
+        }
+
+        DisplayNotice {
+            objectName: "overlapNote"
+            width: parent.width
+            visible: page.overlap.length > 0
+            tone: "warning"
+            icon: "warning"
+            title: I18n.t("prefs.displays.overlap")
+            message: page.overlap.join(" / ")
         }
 
         DisplayPendingNote {
@@ -156,7 +180,7 @@ Flickable {
             config: page.selectedConfig
             output: page.selectedConfig ? DisplayFormat.outputFor(DisplaysService.outputs, page.selectedName) : null
             dirty: page.dirty
-            busy: DisplaysService.pending
+            busy: DisplaysService.pending || DisplaysService.applying || page.overlap.length > 0
             onPatch: values => page.edit(page.selectedName, values)
             onResolutionPicked: (w, h) => page.pickResolution(page.selectedName, w, h)
             onIdentify: DisplaysService.identify()
