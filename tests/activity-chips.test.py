@@ -89,9 +89,26 @@ move(centre(mic))
 assert h.eval(popup, "isOpen") and h.eval(popup, "panelId") == "privacy"
 move(QPoint(5, 700), 600)
 
+# The hovered activity ends under the pointer: its chip is gone, so is the
+# hover it held; the popup closes, keeps an anchor and a later activity
+# never opens it by itself
+move(centre(find(win.contentItem(), "activityChip:downloads")))
+assert h.eval(popup, "isOpen")
+h.eval(svc, "ActivityService.activities = []")
+h.eval(svc, "ActivityService.transfers = []")
+QTest.qWait(900)
+assert not h.eval(popup, "isOpen") and not h.eval(popup, "visible"), "ended activity closes its popup"
+assert h.eval(module, "hoverChip") == "" and not h.eval(module, "held"), "no hover left on a removed chip"
+assert not h.eval(popup, "anchorItem === null"), "the popup never loses its anchor"
+move(QPoint(5, 700), 300)
+h.eval(svc, f"ActivityService.transfers = {TRANSFERS}")
+h.eval(svc, f"ActivityService.activities = {ACTIVITIES}.filter(a => a.id === 'downloads')")
+QTest.qWait(900)
+assert not h.eval(popup, "isOpen"), "a new activity does not open the popup without the pointer"
+
 h.eval(svc, "ActivityService.activities = []")
 QTest.qWait(800)
 assert h.eval(module, "collapsed"), "no activities: the module folds away"
 
-print("activity chips: bar presence, hover popup, chip->popup hold, pin, privacy panel, fold")
+print("activity chips: bar presence, hover popup, chip->popup hold, pin, privacy panel, ended under pointer, fold")
 h.exit(0)

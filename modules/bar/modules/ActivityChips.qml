@@ -58,7 +58,7 @@ BarModuleBase {
 
     function show(key, activity, item, pin) {
         const panel = Chips.panelFor(activity, root.registry, root.available);
-        if (panel === "")
+        if (panel === "" || !item)
             return false;
         root.openChip = key;
         root.pinned = pin;
@@ -75,6 +75,20 @@ BarModuleBase {
         root.pinned = false;
         popup.close();
     }
+    // A chip removed under the pointer never reports the pointer leaving:
+    // drop the hover it held and close the popup that was anchored to it
+    function prune() {
+        const shown = root.model.shown;
+        const has = id => shown.some(a => a && a.id === id);
+        if (root.hoverChip !== "" && !has(root.hoverChip)) {
+            root.hoverChip = "";
+            root.hoverActivity = null;
+            root.hoverItem = null;
+        }
+        if (root.openChip !== "" && !has(root.openChip))
+            root.hide();
+    }
+    onModelChanged: root.prune()
     function chipClicked(key, activity, item, button) {
         if (button === Qt.LeftButton && Chips.panelFor(activity, root.registry, root.available) !== "") {
             const s = Chips.clicked({
@@ -170,6 +184,9 @@ BarModuleBase {
         bar: root.bar
         screenName: root.screenName
         pinned: root.pinned
+        // Its chip is gone: a popup without an anchor could not be placed
+        onAnchorItemChanged: if (!popup.anchorItem)
+            popup.anchorItem = root
         onClosedExternally: {
             root.openChip = "";
             root.pinned = false;
