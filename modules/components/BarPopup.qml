@@ -151,7 +151,14 @@ PopupWindow {
         item: background
     }
 
-    mask: root.clickThroughMargins ? contentInputMask : null
+    // Closing keeps the surface mapped for the exit motion, but it must
+    // release input immediately. A null mask accepts the whole window;
+    // an empty Region makes even a still-mapped surface click-through.
+    Region {
+        id: closedInputMask
+    }
+
+    mask: !root.isOpen ? closedInputMask : root.clickThroughMargins ? contentInputMask : null
 
     // Focus grab for click-outside-to-close behavior
     property bool focusActive: false

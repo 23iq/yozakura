@@ -65,6 +65,12 @@ assert h.eval(popup, "isOpen"), "resting on the chip opens its popup"
 assert h.eval(popup, "panelId") == "transfers"
 assert not h.eval(popup, "claimFocus"), "hover-opened: no focus grab"
 
+# Progress refreshes keep activity ids but replace the Repeater's chip
+# delegates. The old delegate must not leave its hover behind.
+h.eval(svc, f"ActivityService.activities = {ACTIVITIES}.filter(a => a.id === 'downloads' || a.id === 'privacy:mic').map(a => Object.assign({{}}, a, {{progress: 0.6}}))")
+QTest.qWait(100)
+chip = find(win.contentItem(), "activityChip:downloads")
+
 # Into the popup: stays open past the collapse delay
 inside = popup.mapToItem(None, popup.width() / 2, popup.height() / 2)
 move(QPoint(round(inside.x()), round(inside.y())), 500)
@@ -72,6 +78,22 @@ assert h.eval(popup, "isOpen"), "chip -> popup keeps it open"
 
 move(QPoint(5, 700), 600)
 assert not h.eval(popup, "isOpen"), "leaving chip and popup closes it"
+assert not h.eval(popup, "visible"), "the closed popup is unmapped"
+
+# The surface may remain mapped for its exit animation, or until the
+# fallback timer runs if rendering stops. It must stop taking input as
+# soon as the pointer's collapse delay closes it.
+move(centre(chip))
+assert h.eval(popup, "isOpen")
+move(QPoint(5, 700), h.eval(module, "Config.notch.hoverCollapseDelay") + 20)
+assert not h.eval(popup, "isOpen"), "leaving releases the popup before its exit finishes"
+assert h.eval(popup, "visible"), "the exit surface is still mapped when input is released"
+assert h.eval(popup, "mask !== null && mask.item === null && mask.regions.length === 0"), \
+    "closing activity popup has an empty input region, even while mapped"
+QTest.qWait(600)
+move(centre(chip))
+assert h.eval(popup, "isOpen") and h.eval(popup, "mask === null"), "reopening restores popup input"
+move(QPoint(5, 700), 600)
 
 # Click pins, leaving keeps it, a second click unpins
 QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, centre(chip))
@@ -110,5 +132,5 @@ h.eval(svc, "ActivityService.activities = []")
 QTest.qWait(800)
 assert h.eval(module, "collapsed"), "no activities: the module folds away"
 
-print("activity chips: bar presence, hover popup, chip->popup hold, pin, privacy panel, ended under pointer, fold")
+print("activity chips: bar presence, hover popup, progress refresh, chip->popup hold, input release, pin, privacy panel, ended under pointer, fold")
 h.exit(0)
