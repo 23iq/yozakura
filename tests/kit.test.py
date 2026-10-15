@@ -173,7 +173,8 @@ for lang, density in CASES:
     assert row.property("height") == h.eval(win, "Metrics.rowHeight"), tag
     assert row.property("variant") == "transparent", tag
     row.setProperty("highlighted", True)
-    assert row.property("variant") == "focus", tag
+    assert row.property("look") == "hover", tag
+    assert row.property("boxed") or row.property("variant") == "focus", tag
     row.setProperty("selected", True)
     assert row.property("variant") == "primary", tag
     assert h.eval(get("avatar"), "placeholderText") == "MT", tag

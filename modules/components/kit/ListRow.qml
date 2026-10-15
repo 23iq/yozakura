@@ -34,7 +34,10 @@ StyledRect {
 
     implicitHeight: Space.rowHeight
     implicitWidth: row.implicitWidth + Space.s * 2
-    variant: KitStates.variant(root.look, "transparent")
+    // Boxed languages paint hover through ControlBox below. Switching this
+    // invisible surface to focus would rebuild its corner mask and load
+    // highlight effects on every pointer entry (and tear them down on exit).
+    variant: KitStates.variant(root.boxed ? "normal" : root.look, "transparent")
     backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
     enableBorder: false
     radius: Look.chipRadius(height)

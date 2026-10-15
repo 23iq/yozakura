@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.globals
+import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
 
@@ -30,7 +31,22 @@ PanelWindow {
     readonly property bool fullscreen: GlobalStates.assistantFullscreen
     readonly property int frameInset: (Config.bar?.frameEnabled ?? false) && !GlobalStates.assistantPinned ? (Config.bar?.frameThickness ?? 6) : 0
 
+    // The persistent shell window was mapped before the AI window. Equal
+    // Overlay layers leave a newly opened dashboard underneath fullscreen
+    // AI, so yield both stacking and keyboard ownership to shell overlays.
+    readonly property bool shellOverlayOpen: {
+        if (!targetScreen)
+            return false;
+        const vis = Visibilities.getForScreen(targetScreen.name);
+        return Visibilities.moduleNames.some(name => vis[name]);
+    }
+
+    onShellOverlayOpenChanged: if (shellOverlayOpen)
+        grabbing = false
+
     function requestFocus() {
+        if (shellOverlayOpen)
+            return;
         grabbing = true;
         grabTimer.restart();
     }
@@ -39,9 +55,9 @@ PanelWindow {
     color: "transparent"
     visible: host.active || host.hitbox.visible
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.layer: shellOverlayOpen ? WlrLayer.Top : WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("aicenter")
-    WlrLayershell.keyboardFocus: !host.active ? WlrKeyboardFocus.None : (grabbing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
+    WlrLayershell.keyboardFocus: !host.active || shellOverlayOpen ? WlrKeyboardFocus.None : (grabbing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
 
     anchors {
         top: true

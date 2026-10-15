@@ -1,9 +1,11 @@
 package axmon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"time"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
 )
@@ -48,8 +50,16 @@ func (m Monitor) EffectiveScale() float64 {
 
 // List returns the current monitor layout via the compositor daemon.
 func List() ([]Monitor, error) {
-	out, err := exec.Command(paths.DaemonBinary(), "monitor", "list").Output()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, paths.DaemonBinary(), "monitor", "list")
+	// Bound inherited pipes as well if the daemon spawned a child.
+	cmd.WaitDelay = 250 * time.Millisecond
+	out, err := cmd.Output()
 	if err != nil {
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
 		return nil, fmt.Errorf("%s monitor list: %w", brand.Daemon, err)
 	}
 	var monitors []Monitor

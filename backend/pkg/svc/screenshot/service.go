@@ -1,8 +1,10 @@
 package screenshot
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -149,7 +151,9 @@ func (s *Service) capture(params json.RawMessage) (any, error) {
 	}
 
 	if p.Clipboard {
-		copyFileToClipboard(outPath)
+		if err := copyFileToClipboard(outPath); err != nil {
+			log.Printf("screenshot: saved %q but clipboard copy failed: %v", outPath, err)
+		}
 	}
 
 	return map[string]any{"path": outPath, "width": w, "height": h}, nil
@@ -206,15 +210,24 @@ func (s *Service) saveCapture(result *screenshot.CaptureResult, filename string)
 	return outPath, result.Buffer.Width, result.Buffer.Height, nil
 }
 
-func copyFileToClipboard(path string) {
+func copyFileToClipboard(path string) error {
 	f, err := os.Open(path)
 	if err != nil {
-		return
+		return err
 	}
 	defer f.Close()
-	cmd := exec.Command("wl-copy", "--type", "image/png")
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "wl-copy", "--type", "image/png")
+	cmd.WaitDelay = 250 * time.Millisecond
 	cmd.Stdin = f
-	_ = cmd.Run()
+	if err := cmd.Run(); err != nil {
+		if ctx.Err() != nil {
+			err = ctx.Err()
+		}
+		return fmt.Errorf("wl-copy: %w", err)
+	}
+	return nil
 }
 
 func screenshotsDir(p *paths.Paths) string {

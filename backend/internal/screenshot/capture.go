@@ -7,6 +7,7 @@ import (
 	"fmt"
 	stdlog "log"
 	"sync"
+	"time"
 
 	"yozakura/backend/internal/proto/wlr_screencopy"
 	"yozakura/backend/internal/proto/wp_color_management"
@@ -50,13 +51,25 @@ func NewEngine(cursor CursorMode) *Engine {
 	}
 }
 
-func (e *Engine) Connect() error {
+// Bound registry discovery and each frame wait independently. A compositor
+// may stop producing frame events while an output is asleep or reconfigured.
+const captureTimeout = 5 * time.Second
+
+func (e *Engine) Connect() (err error) {
 	display, err := client.Connect("")
 	if err != nil {
 		return err
 	}
 	e.display = display
 	e.ctx = display.Context()
+	defer func() {
+		if err != nil {
+			e.Close()
+		}
+	}()
+	if err := e.ctx.SetReadDeadline(time.Now().Add(captureTimeout)); err != nil {
+		return fmt.Errorf("registry deadline: %w", err)
+	}
 
 	if err := e.setupRegistry(); err != nil {
 		return fmt.Errorf("registry setup: %w", err)
@@ -184,12 +197,16 @@ func (e *Engine) setupOutputHandlers(name uint32, output *client.Output) {
 func (e *Engine) cleanup() {
 	if e.colorMgr != nil {
 		e.colorMgr.Destroy()
+		e.colorMgr = nil
 	}
 	if e.screencopy != nil {
 		e.screencopy.Destroy()
+		e.screencopy = nil
 	}
 	if e.display != nil {
 		e.ctx.Close()
+		e.display = nil
+		e.ctx = nil
 	}
 }
 
@@ -244,6 +261,9 @@ func ListOutputs() ([]Output, error) {
 // CaptureOutputFrame captures the raw scanout framebuffer of a named output.
 // No transform is applied; use Upright before interpreting pixels.
 func (e *Engine) CaptureOutputFrame(outputName string) (*CaptureResult, error) {
+	if err := e.ctx.SetReadDeadline(time.Now().Add(captureTimeout)); err != nil {
+		return nil, fmt.Errorf("frame deadline for %q: %w", outputName, err)
+	}
 	var output *WaylandOutput
 	e.outputsMu.Lock()
 	for _, o := range e.outputs {
@@ -265,7 +285,7 @@ func (e *Engine) CaptureOutputFrame(outputName string) (*CaptureResult, error) {
 
 	result, err := e.processFrame(frame)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("frame for %q: %w", outputName, err)
 	}
 
 	result.Region = Region{
@@ -352,7 +372,7 @@ func CropBuffer(src *CaptureResult, x, y, w, h int32) (*CaptureResult, error) {
 	}, nil
 }
 
-func (e *Engine) processFrame(frame *wlr_screencopy.ZwlrScreencopyFrameV1) (*CaptureResult, error) {
+func (e *Engine) processFrame(frame *wlr_screencopy.ZwlrScreencopyFrameV1) (_ *CaptureResult, err error) {
 	var buf *ShmBuffer
 	var pool *client.ShmPool
 	var wlBuf *client.Buffer
@@ -360,6 +380,18 @@ func (e *Engine) processFrame(frame *wlr_screencopy.ZwlrScreencopyFrameV1) (*Cap
 	var yInverted bool
 	ready := false
 	failed := false
+	defer func() {
+		frame.Destroy()
+		if wlBuf != nil {
+			wlBuf.Destroy()
+		}
+		if pool != nil {
+			pool.Destroy()
+		}
+		if err != nil && buf != nil {
+			buf.Close()
+		}
+	}()
 
 	frame.SetBufferHandler(func(ev wlr_screencopy.ZwlrScreencopyFrameV1BufferEvent) {
 		format = PixelFormat(ev.Format)
@@ -407,6 +439,7 @@ func (e *Engine) processFrame(frame *wlr_screencopy.ZwlrScreencopyFrameV1) (*Cap
 
 		if err := frame.Copy(wlBuf); err != nil {
 			stdlog.Printf("screenshot: failed to copy frame: %v", err)
+			failed = true
 		}
 	})
 
@@ -420,30 +453,17 @@ func (e *Engine) processFrame(frame *wlr_screencopy.ZwlrScreencopyFrameV1) (*Cap
 
 	for !ready && !failed {
 		if err := e.ctx.Dispatch(); err != nil {
-			frame.Destroy()
 			return nil, fmt.Errorf("dispatch: %w", err)
 		}
 	}
 
-	frame.Destroy()
-	if wlBuf != nil {
-		wlBuf.Destroy()
-	}
-	if pool != nil {
-		pool.Destroy()
-	}
-
 	if failed {
-		if buf != nil {
-			buf.Close()
-		}
 		return nil, fmt.Errorf("frame capture failed")
 	}
 
 	if format.Is24Bit() {
 		converted, newFormat, err := buf.ConvertTo32Bit(format)
 		if err != nil {
-			buf.Close()
 			return nil, fmt.Errorf("convert 24-bit to 32-bit: %w", err)
 		}
 		if converted != buf {

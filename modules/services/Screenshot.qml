@@ -35,6 +35,17 @@ QtObject {
     property bool _initialized: false
     property bool _freezing: false
     property int _pendingFrames: 0
+    property int _freezeGeneration: 0
+    // Closing the selection keeps its save callback valid; opening a new
+    // selection prevents older save failures from dismissing that new tool.
+    property int _captureGeneration: 0
+    property Timer _freezeTimeout: Timer {
+        interval: 10000
+        onTriggered: {
+            root.releaseFrozenFrames();
+            root.errorOccurred("Screenshot freeze timed out waiting for the backend");
+        }
+    }
 
     function initialize() {
         if (_initialized) return;
@@ -144,8 +155,16 @@ QtObject {
     function freezeScreen() {
         if (_freezing) return;
         _freezing = true;
+        root._captureGeneration++;
+        var generation = ++root._freezeGeneration;
+        root._freezeTimeout.restart();
 
         var qsScreens = Quickshell.screens;
+        if (qsScreens.length === 0) {
+            root.releaseFrozenFrames();
+            root.errorOccurred("Screenshot: no screens available");
+            return;
+        }
         var mappedMonitors = [];
         for (var i = 0; i < qsScreens.length; i++) {
             var s = qsScreens[i];
@@ -163,33 +182,43 @@ QtObject {
 
         root._pendingFrames = qsScreens.length;
         for (var j = 0; j < qsScreens.length; j++) {
-            root._requestFrame(qsScreens[j].name);
+            root._requestFrame(qsScreens[j].name, generation);
         }
 
         root.fetchWindows();
     }
 
-    function _requestFrame(outputName) {
+    function _requestFrame(outputName, generation) {
         BackendService.call("screenshot.frame", { output: outputName }, (result, error) => {
-            root._onFrameResult(outputName, result, error);
+            root._onFrameResult(outputName, result, error, generation);
         });
     }
 
-    function _onFrameResult(outputName, result, error) {
+    function _onFrameResult(outputName, result, error, generation) {
+        if (generation !== root._freezeGeneration || !root._freezing)
+            return;
         if (error || !result || !result.path) {
-            console.warn("Screenshot: frame failed for " + outputName + ": " + (error || "no path"));
-        } else {
-            root.monitorScreenshotReady(outputName, result.path);
+            var message = "Screenshot: frame failed for " + outputName + ": " + (error || "no path");
+            console.warn(message);
+            root.releaseFrozenFrames();
+            root.errorOccurred(message);
+            return;
         }
         root._pendingFrames--;
         if (root._pendingFrames <= 0) {
             root._freezing = false;
+            root._freezeTimeout.stop();
         }
+        root.monitorScreenshotReady(outputName, result.path);
     }
 
     // Drops the backend freeze session (retained frozen buffers). Called
     // when the tool closes so the daemon stops holding the memory.
     function releaseFrozenFrames() {
+        root._freezeGeneration++;
+        root._freezing = false;
+        root._pendingFrames = 0;
+        root._freezeTimeout.stop();
         BackendService.call("screenshot.release", {}, (result, error) => {
             if (error)
                 console.warn("Screenshot: failed to release frozen frames: " + error);
@@ -217,6 +246,7 @@ QtObject {
             return;
         }
         var isLens = root.captureMode === "lens";
+        var generation = root._captureGeneration;
         var params = {
             mode: "region",
             x: Math.round(x),
@@ -229,7 +259,7 @@ QtObject {
             params.outPath = root.lensPath;
         }
         BackendService.call("screenshot.capture", params, (result, error) => {
-            root._onCaptureResult(result, error);
+            root._onCaptureResult(result, error, generation, isLens);
         });
     }
 
@@ -272,6 +302,7 @@ QtObject {
 
     function processMonitorScreen(monitorName) {
         var isLens = root.captureMode === "lens";
+        var generation = root._captureGeneration;
         var params = {
             mode: "output",
             output: monitorName,
@@ -281,19 +312,23 @@ QtObject {
             params.outPath = root.lensPath;
         }
         BackendService.call("screenshot.capture", params, (result, error) => {
-            root._onCaptureResult(result, error);
+            root._onCaptureResult(result, error, generation, isLens);
         });
     }
 
-    function _onCaptureResult(result, error) {
+    function _onCaptureResult(result, error, generation, isLens) {
         if (error || !result || !result.path) {
-            root.errorOccurred("Failed to capture screenshot");
+            var message = "Failed to capture screenshot: " + (error || "no path");
+            console.warn(message);
+            if (generation === root._captureGeneration)
+                root.errorOccurred(message);
             return;
         }
         root.finalPath = result.path;
-        if (root.captureMode === "lens") {
+        if (isLens) {
             root.runLensScript();
-            root.captureMode = "normal";
+            if (generation === root._captureGeneration)
+                root.captureMode = "normal";
         } else {
             root.imageSaved(root.finalPath);
         }
