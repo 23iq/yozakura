@@ -33,6 +33,14 @@ test('markdown: unclosed fence while streaming is an open code block', () => {
     assert.equal(segs[1].content, 'ls -la');
 });
 
+test('markdown: a table is a text segment of its own', () => {
+    const segs = plain(Markdown.segments('Intro\n| a | b |\n|---|:-:|\n| 1 | 2 |\nAfter | not a row?\n\nNext'));
+    assert.deepEqual(segs.map(s => s.content), ['Intro', '| a | b |\n|---|:-:|\n| 1 | 2 |\nAfter | not a row?', 'Next']);
+    assert.ok(segs.every(s => s.type === 'text'));
+    const prose = plain(Markdown.segments('a | b\nno rule here'));
+    assert.equal(prose.length, 1, 'a pipe without a rule line is prose');
+});
+
 test('markdown: <think> blocks from local models become thinking segments', () => {
     const segs = plain(Markdown.segments('<think>plan it</think>Answer'));
     assert.deepEqual(segs.map(s => s.type), ['thinking', 'text']);

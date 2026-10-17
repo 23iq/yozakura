@@ -218,6 +218,9 @@ Singleton {
             property bool presets: false
             property bool aiquick: false
             property bool keybinds: false
+            // The notch is grown past its resting shape (hover, a view,
+            // a notification): windows on its layer yield to it
+            property bool notchRaised: false
         }
     }
 

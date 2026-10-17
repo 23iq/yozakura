@@ -376,6 +376,9 @@ func TestServiceRetryKeepsOriginalDeps(t *testing.T) {
 	e.s.mu.Lock()
 	retry := e.s.planned[ids[1]]
 	e.s.mu.Unlock()
+	// The queued jobs write their logs into the TempDir; let them finish
+	// before its cleanup runs.
+	e.s.q.Wait()
 	if len(retry.Deps) != 2 || retry.Deps[0] != "multilib-1" || retry.Deps[1] != ids[0] {
 		t.Fatalf("deps = %v", retry.Deps)
 	}

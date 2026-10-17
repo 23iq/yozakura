@@ -8,10 +8,35 @@
 
 var FENCE = /^ {0,3}(`{3,}|~{3,})\s*([^`\s]*)[^`]*$/;
 
-function _pushText(out, lines) {
+var TABLE_RULE = /^\s*\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)*\|?\s*$/;
+
+function _pushRun(out, lines) {
     var text = lines.join("\n");
     if (text.trim().length > 0)
         out.push({ type: "text", content: text.replace(/^\n+|\n+$/g, "") });
+}
+
+// A GFM table (header row, |---| rule, rows up to the first line without
+// a pipe) is a text segment of its own: in one QTextDocument a selection
+// starting next to a table grows over all of its cells.
+function _pushText(out, lines) {
+    var run = [];
+    var i = 0;
+    while (i < lines.length) {
+        if (lines[i].indexOf("|") >= 0 && i + 1 < lines.length && lines[i + 1].indexOf("-") >= 0 && TABLE_RULE.test(lines[i + 1])) {
+            var end = i + 2;
+            while (end < lines.length && lines[end].indexOf("|") >= 0)
+                end++;
+            _pushRun(out, run);
+            _pushRun(out, lines.slice(i, end));
+            run = [];
+            i = end;
+        } else {
+            run.push(lines[i]);
+            i++;
+        }
+    }
+    _pushRun(out, run);
 }
 
 function _splitThinking(text) {

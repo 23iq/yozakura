@@ -185,6 +185,15 @@ Item {
         }
     }
 
+    // Grown past its resting shape; fullscreen AI drops below it
+    // (Visibilities notchRaised, AiCenterWindow)
+    readonly property bool raised: reveal && (screenNotchOpen || hasActiveNotifications || hoverActive || (defaultView ? defaultView.panelExpanded : false))
+    Binding {
+        target: root.screenVisibilities
+        property: "notchRaised"
+        value: root.raised
+    }
+
     // The hitbox for the mask
     readonly property Item notchHitbox: root.reveal ? notchHoverArea : notchHoverRegion
 

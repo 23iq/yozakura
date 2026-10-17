@@ -41,6 +41,10 @@ PanelWindow {
         return Visibilities.moduleNames.some(name => vis[name]);
     }
 
+    // A grown notch (hover, player, notifications) draws below the bar,
+    // inside fullscreen AI: AI drops a layer for it, keeping the keyboard.
+    readonly property bool notchRaised: targetScreen ? Visibilities.getForScreen(targetScreen.name).notchRaised : false
+
     onShellOverlayOpenChanged: if (shellOverlayOpen)
         grabbing = false
 
@@ -55,7 +59,7 @@ PanelWindow {
     color: "transparent"
     visible: host.active || host.hitbox.visible
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.layer: shellOverlayOpen ? WlrLayer.Top : WlrLayer.Overlay
+    WlrLayershell.layer: shellOverlayOpen || notchRaised ? WlrLayer.Top : WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("aicenter")
     WlrLayershell.keyboardFocus: !host.active || shellOverlayOpen ? WlrKeyboardFocus.None : (grabbing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
 

@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit as Kit
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
@@ -21,6 +22,16 @@ StyledRect {
     signal stopped
     signal renamed(string title)
     property bool renaming: false
+
+    // Enter or focus loss keeps a non-empty, changed title; Escape cancels.
+    function finishRename(title) {
+        if (!renaming)
+            return;
+        renaming = false;
+        const t = (title || "").trim();
+        if (t && t !== (entry.title || ""))
+            renamed(t);
+    }
 
     implicitHeight: 52
     radius: Styling.radius(-4)
@@ -43,6 +54,7 @@ StyledRect {
         id: hov
     }
     TapHandler {
+        enabled: !root.renaming
         onTapped: root.opened()
     }
 
@@ -64,8 +76,15 @@ StyledRect {
             RowLayout {
                 Layout.fillWidth: true
                 spacing: 6
+                Loader {
+                    Layout.fillWidth: true
+                    active: root.renaming
+                    visible: active
+                    sourceComponent: renameEditor
+                }
                 Text {
                     Layout.fillWidth: true
+                    visible: !root.renaming
                     text: root.entry.title || I18n.t("ai.untitled")
                     elide: Text.ElideRight
                     font.family: Config.theme.font
@@ -85,6 +104,7 @@ StyledRect {
                     status: root.entry.status || "idle"
                 }
                 Text {
+                    visible: !root.renaming
                     text: root.ago(root.entry.updated)
                     font.family: Config.theme.font
                     font.pixelSize: Styling.fontSize(-4)
@@ -103,26 +123,23 @@ StyledRect {
         IconButton {
             glyph: Icons.stop
             size: 24
-            visible: hov.hovered && ["running", "starting", "waiting"].indexOf(root.entry.status) >= 0
+            visible: hov.hovered && !root.renaming && ["running", "starting", "waiting"].indexOf(root.entry.status) >= 0
             tooltip: I18n.t("ai.stop")
             onClicked: root.stopped()
         }
         IconButton {
             glyph: Icons.notePencil
             size: 24
-            visible: hov.hovered
+            visible: hov.hovered && !root.renaming
             tooltip: I18n.t("ai.rename")
-            onClicked: {
-                root.renaming = true;
-                renameInput.forceActiveFocus();
-            }
+            onClicked: root.renaming = true
         }
         IconButton {
             glyph: Icons.pin
             size: 24
             iconSize: 12
             active: !!root.entry.pinned
-            visible: hov.hovered || root.entry.pinned
+            visible: !root.renaming && (hov.hovered || root.entry.pinned)
             tooltip: root.entry.pinned ? I18n.t("ai.unpin") : I18n.t("ai.pin")
             onClicked: root.pinToggled()
         }
@@ -131,26 +148,19 @@ StyledRect {
             size: 24
             iconSize: 12
             danger: true
-            visible: hov.hovered
+            visible: hov.hovered && !root.renaming
             tooltip: I18n.t("ai.delete")
             onClicked: root.removed()
         }
     }
-    TextField {
-        id: renameInput
-        anchors.fill: parent
-        visible: root.renaming
-        text: root.entry.title || ""
-        color: Colors.overSurface
-        background: StyledRect {
-            variant: "common"
-            radius: Styling.radius(-4)
+    Component {
+        id: renameEditor
+        Kit.InlineEdit {
+            text: root.entry.title || ""
+            onAccepted: root.finishRename(text)
+            onActiveFocusChanged: if (!activeFocus)
+                root.finishRename(text)
+            Keys.onEscapePressed: root.renaming = false
         }
-        onAccepted: {
-            if (text.trim())
-                root.renamed(text.trim());
-            root.renaming = false;
-        }
-        Keys.onEscapePressed: root.renaming = false
     }
 }
