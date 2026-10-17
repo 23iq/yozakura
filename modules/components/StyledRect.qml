@@ -149,12 +149,18 @@ ClippingRectangle {
         radiusValues: [root.topLeftRadius, root.topRightRadius, root.bottomRightRadius, root.bottomLeftRadius]
     }
 
-    // Linear gradient - procedural (no texture)
+    // Gradient fill: one loader for the procedural shaders (a StyledRect is
+    // created hundreds of times; inactive loaders are not free).
     Loader {
         anchors.fill: parent
-        active: root.gradientType === "linear" && root.needsGradientShader
+        active: root.gradientType === "halftone" || ((root.gradientType === "linear" || root.gradientType === "radial") && root.needsGradientShader)
+        sourceComponent: root.gradientType === "halftone" ? halftoneGradient : (root.gradientType === "radial" ? radialGradient : linearGradient)
+    }
 
-        sourceComponent: ShaderEffect {
+    // Linear gradient - procedural (no texture)
+    Component {
+        id: linearGradient
+        ShaderEffect {
             opacity: root.rectOpacity
 
             property real angle: root.gradientAngle
@@ -180,11 +186,9 @@ ClippingRectangle {
     }
 
     // Radial gradient - procedural (no texture)
-    Loader {
-        anchors.fill: parent
-        active: root.gradientType === "radial" && root.needsGradientShader
-
-        sourceComponent: ShaderEffect {
+    Component {
+        id: radialGradient
+        ShaderEffect {
             opacity: root.rectOpacity
 
             property real centerX: root.gradientCenterX
@@ -211,11 +215,9 @@ ClippingRectangle {
     }
 
     // Halftone gradient - no texture needed, purely procedural
-    Loader {
-        anchors.fill: parent
-        active: root.gradientType === "halftone"
-
-        sourceComponent: ShaderEffect {
+    Component {
+        id: halftoneGradient
+        ShaderEffect {
             opacity: root.rectOpacity
 
             property real angle: root.gradientAngle

@@ -18,6 +18,26 @@ Flickable {
     // Entries of this page the compositor gate hides on the running compositor
     readonly property var gated: CompositorGate.hiddenBy(page.category.sections, YozdService.compositorName)
 
+    // Sections fill in a few per frame (as many as fit a frame budget): a
+    // long page shows its top at once and never freezes the window.
+    readonly property int sectionCount: (page.category.sections || []).length
+    property int builtSections: 1
+    readonly property bool complete: builtSections >= sectionCount
+
+    function buildAll() {
+        builtSections = sectionCount;
+    }
+
+    FrameAnimation {
+        running: !page.complete
+        onTriggered: {
+            const start = Date.now();
+            do {
+                page.builtSections++;
+            } while (!page.complete && Date.now() - start < 6)
+        }
+    }
+
     contentWidth: width
     contentHeight: column.implicitHeight + 120
     clip: true
@@ -37,6 +57,7 @@ Flickable {
 
     // Scroll to an entry (or a section) and flash it.
     function reveal(sectionId, entryId) {
+        buildAll();
         let target = null;
         for (let i = 0; i < sections.count; i++) {
             const s = sections.itemAt(i) as SettingsSection;
@@ -109,6 +130,7 @@ Flickable {
                 width: column.width
                 section: modelData
                 divider: index > 0
+                pending: index >= page.builtSections
             }
         }
 

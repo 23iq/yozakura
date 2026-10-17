@@ -56,17 +56,29 @@ Item {
         }
     }
 
+    // Built on first use (page switches create hundreds of rows): the
+    // control once the row is shown, the reset button while modified, the
+    // flash once the row was a search target.
+    property bool built: shown
+    onShownChanged: if (shown)
+        built = true
+    property bool flashed: highlighted
+    onHighlightedChanged: if (highlighted)
+        flashed = true
+
     // Search jump: a short accent wash over the row.
-    Rectangle {
-        id: flash
+    Loader {
         anchors.fill: parent
-        radius: Look.chipRadius(Space.rowHeight)
-        color: Type.accent
-        opacity: row.highlighted ? Look.activeTint : 0
-        Behavior on opacity {
-            NumberAnimation {
-                duration: Motion.enter.duration
-                easing.type: Motion.enter.easing
+        active: row.flashed
+        sourceComponent: Rectangle {
+            radius: Look.chipRadius(Space.rowHeight)
+            color: Type.accent
+            opacity: row.highlighted ? Look.activeTint : 0
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Motion.enter.duration
+                    easing.type: Motion.enter.easing
+                }
             }
         }
     }
@@ -113,18 +125,22 @@ Item {
 
             // Reset to default: a quiet button before the control, there only
             // while modified (controls stay flush right).
-            IconButton {
-                objectName: "rowReset"
+            // The slot keeps its width so the label does not reflow.
+            Loader {
                 Layout.alignment: Qt.AlignVCenter
-                size: "s"
-                icon: Icons.arrowCounterClockwise
+                Layout.preferredWidth: Space.controlS
+                Layout.preferredHeight: Space.controlS
                 visible: row.resettable
-                opacity: row.modified ? 1 : 0
-                enabled: row.modified
-                onClicked: SettingsStore.reset(row.entry)
-                Accessible.name: I18n.t("common.reset_default")
-                Behavior on opacity {
-                    NumberAnimation {
+                active: row.resettable && row.modified
+                sourceComponent: IconButton {
+                    objectName: "rowReset"
+                    size: "s"
+                    icon: Icons.arrowCounterClockwise
+                    onClicked: SettingsStore.reset(row.entry)
+                    Accessible.name: I18n.t("common.reset_default")
+                    NumberAnimation on opacity {
+                        from: 0
+                        to: 1
                         duration: Motion.enter.duration
                     }
                 }
@@ -133,7 +149,7 @@ Item {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
                 Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : -1
-                active: !row.stacked
+                active: row.built && !row.stacked
                 sourceComponent: row.controlComponent()
             }
         }
@@ -141,7 +157,7 @@ Item {
         Loader {
             id: stackedControl
             width: parent.width
-            active: row.stacked
+            active: row.built && row.stacked
             visible: active
             sourceComponent: row.controlComponent()
         }
@@ -149,7 +165,7 @@ Item {
         Loader {
             id: previewLoader
             width: parent.width
-            active: !!row.entry.preview
+            active: row.built && !!row.entry.preview
             visible: active
             source: active ? Qt.resolvedUrl(Registry.preview(row.entry.preview)) : ""
             onLoaded: Ui.setIfPresent(item, "entry", row.entry)

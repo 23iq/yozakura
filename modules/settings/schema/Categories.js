@@ -38,7 +38,7 @@
 //     SettingsPage.qml, searchable entry by entry; entries flagged
 //     `advanced: true` gather in a collapsed "Advanced" block (Advanced.js);
 //   * a page: has `page` - a hand-written page mapped by name in
-//     SettingsShell.pages (Connect pages host the live device controls).
+//     SettingsPageHost.pages (Connect pages host the live device controls).
 // Every category is listed in exactly one group. `resolve(id)` accepts a
 // category id, a moved id (MOVED) or a group id, so old deep links and the
 // new tree both work.
@@ -118,7 +118,7 @@ var groups = [
     }
 ];
 
-// A hand-written page (SettingsShell.pages[name]).
+// A hand-written page (SettingsPageHost.pages[name]).
 function page(id, icon, name, keywords) {
     return {
         "id": id,

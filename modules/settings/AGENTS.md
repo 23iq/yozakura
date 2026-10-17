@@ -11,6 +11,7 @@ the same declarations.
 modules/settings/
 ├── SettingsWindow.qml      FloatingWindow wrapper (placement on the focused workspace)
 ├── SettingsShell.qml       sidebar + current page + ChangesBar, keyboard shortcuts
+├── SettingsPageHost.qml    the page Loader: fresh per category, page table (SettingsPage fills sections per frame)
 ├── SettingsSidebar.qml     brand, search (schema index), grouped categories (NavItem)
 ├── SettingsPage.qml        renders one schema category (PageHeader + SettingsSection...)
 ├── SettingsSection.qml     titled card of SettingRow
@@ -54,7 +55,7 @@ No raw sizes, paddings or colors in new settings code: Type / Space / Look.
 Render: `tools/render/settings_render.py --languages ink,glass,tiles PAGE...`.
 
 Hand-written pages (`page` in Categories.js) are mapped by name in
-`SettingsShell.pages`. The preset studio never writes preset files itself;
+`SettingsPageHost.pages`. The preset studio never writes preset files itself;
 a new mixable aspect is one entry in `backend/pkg/presets/aspects.go` (+
 `tests/fixtures/preset-aspects.json`, icon in `PresetModel.ASPECT_ICONS`,
 `prefs.presets.aspect.<id>[.desc]` strings). Render it with

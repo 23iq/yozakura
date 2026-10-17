@@ -74,6 +74,12 @@ def settle(ms: int = 150) -> None:
     QTest.qWait(ms)
 
 
+def select(cat: str) -> None:
+    """Open a page and wait for its asynchronous build."""
+    ev(f'select("{cat}")')
+    check(env.wait_page(win), f"{cat}: page built")
+
+
 def row(entry_id: str):
     found = ev(f'w.findItem("settingRow:{entry_id}")')
     check(found is not None, f"row {entry_id} exists")
@@ -90,7 +96,7 @@ def check(cond: bool, what: str) -> None:
 order = ["appearance", "wallpapers", "bar", "notch", "dock", "overview", "desktop", "dashboard", "osd", "menus",
          "lockscreen", "notifications", "windows", "input", "terminal", "system", "voice", "updates", "about"]
 for cat in order:
-    ev(f'select("{cat}")')
+    select(cat)
     settle(250)
     check(ev("currentCategory") == cat, f"select {cat}")
     page = h.find(win, "settingsPage").property("item")
@@ -99,7 +105,7 @@ own_errors = [e for e in errors if "/widgets/" not in e]
 check(not own_errors, "QML errors while loading pages:\n  " + "\n  ".join(own_errors))
 
 # Toggle: writes Config, stages the shell domain, shows modified, resets.
-ev('select("bar")')
+select("bar")
 settle(300)
 r = row("bar.compact")
 check(h.eval(r, "modified") is False, "compact starts at default")
@@ -120,7 +126,7 @@ settle(50)
 check(h.eval(row("bar.frameThickness"), "shown") is True, "frame thickness shown with frame")
 
 # Compositor gate note: silent on Hyprland, counts gated entries on niri
-ev('select("windows")')
+select("windows")
 settle(250)
 note = ev('w.findItem("compositorOnlyNote")')
 check(note is not None and h.eval(note, "visible") is False, "no compositor note on Hyprland")
@@ -131,7 +137,7 @@ check(note is not None and h.eval(note, "visible") is True, "compositor note sho
 check("Hyprland" in h.eval(note, "text"), "compositor note names the supporting compositors")
 h.eval(note, "YozdService.compositorName = 'hyprland'")
 settle(100)
-ev('select("bar")')
+select("bar")
 settle(250)
 
 # Nested key keeps the rest of the object
@@ -190,7 +196,7 @@ check(drawer and drawer[-1] == moving, f"{moving} dropped at the end of the draw
 check(moving not in json.loads(ev("JSON.stringify(Config.bar.layout.left)")), "dragged module left its group")
 
 # Theme keys stage the theme snapshot
-ev('select("appearance")')
+select("appearance")
 settle(300)
 ev("SettingsStore.set('theme.roundness', 4)")
 check(ev("GlobalStates.themeHasChanges") is True, "theme edit stages the theme snapshot")
@@ -206,7 +212,7 @@ check(ev("GlobalStates.themeHasChanges") is False and ev("GlobalStates.shellHasC
 check(ev("GlobalStates.applied") >= 2, "apply called for each domain")
 
 # Wallpaper folders: extras staged, primary immediate
-ev('select("wallpapers")')
+select("wallpapers")
 settle(300)
 folders = row("desktop.wallpaperFolders")
 h.eval(folders, """(function() {
@@ -226,7 +232,7 @@ check(json.loads(ev("JSON.stringify(Config.desktop.wallpaperFolders)")) == ["/wa
 
 # Lock screen gallery: a live preview (the real LockView) per registry style;
 # picking a card writes lockscreen.style and stages the shell snapshot.
-ev('select("lockscreen")')
+select("lockscreen")
 settle(800)
 lock_styles = ["glass", "paper", "terminal", "aurora", "neon", "poster"]
 for sid in lock_styles:
@@ -259,7 +265,7 @@ settle(100)
 check(ev("currentCategory") == "sound", "settingsCategory opens the page")
 
 # System: list editor (idle listeners), string list of paths (disks)
-ev('select("system")')
+select("system")
 settle(300)
 n0 = ev("Config.system.idle.listeners.length")
 lst = row("system.idle.listeners")
@@ -291,7 +297,7 @@ check(ev("Config.prefix.emoji") == "em2" and ev("Config.saved.length") == 0,
       "unstaged domain edit is left to the domain's own auto-save (one writer)")
 
 # Notifications: screens multi-select, multiselect days, list rules, pattern
-ev('select("notifications")')
+select("notifications")
 settle(300)
 scr = row("notifications.screens")
 chips = h.eval(scr, """(function() {
@@ -349,7 +355,7 @@ h.eval(test_btn, "clicked()")
 check(h.eval(row("notifications.status"), "Notifications.sent.length") == 1, "test notification sent")
 
 # Terminal & Apps: per-app theming toggles + glass link
-ev('select("terminal")')
+select("terminal")
 settle(300)
 tog = ev('w.findItem("appTheme:discord")')
 check(tog is not None, "app theming row for discord")
@@ -361,7 +367,7 @@ settle(400)
 check(ev("currentCategory") == "appearance", "glass link opens Appearance")
 
 # Windows page: color-role control, nested pulse key, preview
-ev('select("windows")')
+select("windows")
 settle(400)
 FIND = """(function(name) {
     function find(item) {
@@ -392,7 +398,7 @@ check(readout is not None and "7" in readout.property("text"), "preview readout 
 check(ev('w.findItem("motionCard:springs")') is None, "motion lives on Look, not Windows")
 
 # Look > Motion: the one motion section (profile + speed)
-ev('select("appearance")')
+select("appearance")
 settle(400)
 card = ev('w.findItem("motionCard:springs")')
 check(card is not None, "motion profile cards rendered")
@@ -403,7 +409,7 @@ settle(50)
 check(h.eval(row("compositor.motionDurationScale"), "shown") is False, "speed hidden for the off profile")
 # Leave the page before the engine is torn down: PySide destroys the Config/
 # Colors singletons first and the live preview bindings would read them dead.
-ev('select("about")')
+select("about")
 settle(300)
 legal = ev('w.findItem("aboutLegalNotice")')
 check(legal is not None, "about page shows the legal row")
@@ -415,7 +421,7 @@ check(notice is not None and h.eval(notice, "visible") and h.eval(legal, "notice
 
 # Island activities editor: every registry entry, reorder / side / enable
 # write notch.activities as [{id, side, enabled}]
-ev('select("notch")')
+select("notch")
 settle(250)
 editor = ev('w.findItem("islandActivitiesEditor")')
 check(editor is not None, "island activities editor rendered")

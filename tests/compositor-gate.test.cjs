@@ -24,6 +24,14 @@ test('list matches any member and shows while the name is unknown', () => {
     assert.equal(G.allows(['hyprland', 'mango'], ''), true);
 });
 
+test('a list given as a sequence (QStringList from a Repeater model) is a list', () => {
+    const seq = { 0: 'hyprland', 1: 'mango', length: 2 };
+    assert.equal(Array.isArray(seq), false);
+    assert.equal(G.allows(seq, 'hyprland'), true);
+    assert.equal(G.allows(seq, 'niri'), false);
+    assert.equal(G.allows({ length: 0 }, 'niri'), true);
+});
+
 test('hiddenBy counts entries and sections the gate hides, not visibleWhen', () => {
     const sections = [
         { id: 'a', entries: [
