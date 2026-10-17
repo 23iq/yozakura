@@ -5,18 +5,24 @@
 // A single name keeps the strict behaviour (hidden until the compositor is
 // known); a list also shows while the name is still being probed, so a page
 // does not flash empty.
+// A list may arrive as a sequence instead of a JS array: schema entries
+// that went through a Repeater model are QVariant copies, their string
+// lists QStringList sequences (Array.isArray is false for those).
 function allows(spec, name) {
-    if (!spec || (Array.isArray(spec) && spec.length === 0))
+    if (!spec)
         return true;
-    if (Array.isArray(spec))
-        return !name || spec.indexOf(name) !== -1;
-    return name === spec;
+    if (typeof spec === "string")
+        return name === spec;
+    var list = _specList(spec);
+    return list.length === 0 || !name || list.indexOf(name) !== -1;
 }
 
 var _LABELS = { "hyprland": "Hyprland", "niri": "niri", "mango": "MangoWC" };
 
 function _specList(spec) {
-    return Array.isArray(spec) ? spec : (spec ? [spec] : []);
+    if (!spec)
+        return [];
+    return typeof spec === "string" ? [spec] : Array.prototype.slice.call(spec);
 }
 
 // What the compositor gate hides of `sections` (a page's schema sections)

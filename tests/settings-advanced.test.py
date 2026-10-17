@@ -75,10 +75,11 @@ QTest.qWait(200)
 adv = 'findItem("settingsSection:advanced")'
 check(ev(f"{adv} !== null"), "the page has an Advanced block")
 check(ev(f"{adv}.expanded") is False, "the Advanced block starts collapsed")
-check(ev('findItem("settingRow:bar.frameEnabled") !== null'), "the advanced entry renders inside it")
+check(ev('findItem("settingRow:bar.frameEnabled") === null'), "a folded block builds its rows lazily")
 h.eval(page, 'reveal("advanced", "bar.frameEnabled")')
 QTest.qWait(100)
 check(ev(f"{adv}.expanded") is True, "revealing an advanced entry (a search jump) opens the block")
+check(ev('findItem("settingRow:bar.frameEnabled") !== null'), "the advanced entry renders inside it")
 
 # Section reset: the Group's quiet action reads "Reset" while changed
 main = 'findItem("settingsSection:main")'

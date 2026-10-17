@@ -9,34 +9,31 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.presets
-import qs.modules.settings.displays
-import qs.modules.settings.layout
-import qs.modules.settings.keyboard
-import qs.modules.settings.system
-import qs.modules.settings.extras
-import qs.modules.settings.connect
-import qs.modules.settings.mods
 import "schema/Categories.js" as Categories
 import "Ui.js" as Ui
 
-// Settings window content: sidebar (groups, search) + the current page.
-// Pages come from the category kind (see schema/Categories.js): schema
-// categories render through SettingsPage, the rest are hand-written pages.
+// Settings window content: sidebar (groups, search) + the current page
+// (SettingsPageHost: a fresh, asynchronously built page per category).
 Item {
     id: shell
 
-    property string currentCategory: GlobalStates.settingsCategory || "appearance"
-    readonly property var category: Categories.resolve(currentCategory) || Categories.byId("appearance")
+    property string currentCategory: ""
     readonly property bool compact: width < 860
     property var pendingReveal: null
 
     // Accepts a category id or a sidebar group id (Categories.resolve).
+    // The page is rebuilt here, after the category is known: a handler on
+    // currentCategory would run before the bindings that follow it and
+    // build the old page once more.
     function select(id) {
         const c = Categories.resolve(id);
         if (!c)
             return;
+        const changed = c.id !== currentCategory || !page.category;
         currentCategory = c.id;
         GlobalStates.settingsCategory = c.id;
+        if (changed)
+            page.load(c);
     }
 
     function navigate(categoryId, sectionId, entryId) {
@@ -45,7 +42,7 @@ Item {
             "entry": entryId || ""
         };
         const c = Categories.resolve(categoryId);
-        if (c && c.id === currentCategory)
+        if (c && c.id === currentCategory && page.status === Loader.Ready)
             revealTimer.restart();
         else
             select(categoryId);
@@ -71,12 +68,7 @@ Item {
     Component.onCompleted: {
         // A preset trial or edit outlives the window: bring back its pill/banner.
         PresetStudio.refreshSessions();
-    }
-
-    // Fresh page per category: resets scroll and replays the enter motion.
-    onCurrentCategoryChanged: {
-        page.active = false;
-        page.active = true;
+        select(Categories.resolve(GlobalStates.settingsCategory) ? GlobalStates.settingsCategory : "appearance");
     }
 
     Connections {
@@ -167,34 +159,15 @@ Item {
             z: 2
         }
 
-        Loader {
+        SettingsPageHost {
             id: page
             objectName: "settingsPage"
             y: editBanner.height
             width: parent.width
             height: parent.height - editBanner.height
-            sourceComponent: shell.category.sections ? schemaPage : (shell.pages[shell.category.page] ?? placeholderPage)
-            property real slide: 0
-
-            opacity: 1 - slide
-            transform: Translate {
-                y: page.slide * 18
-            }
-
             onLoaded: {
-                enter.restart();
                 if (shell.pendingReveal)
                     revealTimer.restart();
-            }
-
-            NumberAnimation {
-                id: enter
-                target: page
-                property: "slide"
-                from: 1
-                to: 0
-                duration: Math.max(1, Config.animDuration)
-                easing.type: Motion.morph.easing
             }
         }
 
@@ -289,97 +262,6 @@ Item {
             shell.pendingReveal = null;
             if (r)
                 Ui.invoke(page.item, "reveal", [r.section, r.entry]);
-        }
-    }
-
-    Component {
-        id: schemaPage
-        SettingsPage {
-            category: shell.category
-        }
-    }
-    Component {
-        id: modsPage
-        ModsEditor {
-            category: shell.category
-        }
-    }
-    // Connect pages: the live device controls of the dashboard.
-    Component {
-        id: networkPage
-        ConnectPage {
-            category: shell.category
-            panel: "WifiPanel.qml"
-        }
-    }
-    Component {
-        id: bluetoothPage
-        ConnectPage {
-            category: shell.category
-            panel: "BluetoothPanel.qml"
-        }
-    }
-    Component {
-        id: soundPage
-        ConnectPage {
-            category: shell.category
-            panel: "AudioMixerPanel.qml"
-        }
-    }
-    Component {
-        id: effectsPage
-        ConnectPage {
-            category: shell.category
-            panel: "EasyEffectsPanel.qml"
-        }
-    }
-    Component {
-        id: aboutPage
-        AboutPage {
-            category: shell.category
-        }
-    }
-    Component {
-        id: presetStudioPage
-        PresetStudioPage {
-            category: shell.category
-        }
-    }
-    Component {
-        id: displaysPage
-        DisplaysPage {
-            category: shell.category
-        }
-    }
-    Component {
-        id: keyboardPage
-        KeyboardPage {
-            category: shell.category
-        }
-    }
-    Component {
-        id: extrasPage
-        ExtrasPage {
-            category: shell.category
-        }
-    }
-    // Hand-written pages by Categories.js `page` name.
-    readonly property var pages: ({
-            "AboutPage": aboutPage,
-            "Bluetooth": bluetoothPage,
-            "Displays": displaysPage,
-            "Effects": effectsPage,
-            "Extras": extrasPage,
-            "Keyboard": keyboardPage,
-            "Mods": modsPage,
-            "Network": networkPage,
-            "PresetStudio": presetStudioPage,
-            "Sound": soundPage
-        })
-    Component {
-        id: placeholderPage
-        PlaceholderPage {
-            category: shell.category
         }
     }
 }

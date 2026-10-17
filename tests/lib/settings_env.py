@@ -745,3 +745,16 @@ class SettingsEnv:
 
     def load(self, qml: str):
         return self.h.load(qml, auto_stub=False)
+
+    def wait_page(self, win, ms: int = 8000) -> bool:
+        """Wait until the settings page has built all its sections (schema
+        pages add them a few per frame, see SettingsPage)."""
+        from PySide6.QtCore import QObject
+        from PySide6.QtTest import QTest
+
+        for _ in range(ms // 25):
+            page = win.findChild(QObject, "settingsPage")
+            if page is not None and self.h.eval(page, "!!item && item.complete !== false"):
+                return True
+            QTest.qWait(25)
+        return False
