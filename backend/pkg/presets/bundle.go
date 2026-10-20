@@ -156,7 +156,7 @@ func (m *Manager) Import(file, name string, force bool) (Preset, []catalog.Probl
 	if author == "" {
 		author = "Unknown"
 	}
-	p, err := m.write(name, files, info{Author: author, AuthorURL: b.AuthorURL, Description: b.Description}, force)
+	p, err := m.write(name, files, info{Author: author, AuthorURL: b.AuthorURL, Description: b.Description, Partial: true}, force)
 	return p, problems, err
 }
 

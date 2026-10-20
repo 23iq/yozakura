@@ -170,3 +170,73 @@ func TestEditSessionSavesEditsOutsidePresetDomains(t *testing.T) {
 	desktop, _ := docs["desktop"].(map[string]any)
 	assert.Equal(t, true, desktop["depthClock"], "the desktop edit was stored")
 }
+
+// writeUserPreset writes a user preset by hand, as an older version left it.
+func writeUserPreset(t *testing.T, m *Manager, name, infoJSON string, files map[string]string) {
+	t.Helper()
+	dir := filepath.Join(m.UserDir, name)
+	if !assert.NoError(t, os.MkdirAll(dir, 0o755)) {
+		t.FailNow()
+	}
+	files["info"] = infoJSON
+	for d, body := range files {
+		if !assert.NoError(t, os.WriteFile(filepath.Join(dir, d+".json"), []byte(body), 0o644)) {
+			t.FailNow()
+		}
+	}
+}
+
+// A user snapshot saved before a setting existed resets that setting to
+// its default instead of keeping the previously applied preset's value.
+func TestApplyOldSnapshotResetsNewerKeys(t *testing.T) {
+	m := newManager(t)
+	defs := m.Cat.DomainDefault("theme")
+	seedLive(t, m, "theme", `{"font":"Newer Sans","roundness":3,"language":"glass"}`)
+	writeUserPreset(t, m, "Old", `{"author":"User","authorUrl":""}`,
+		map[string]string{"theme": `{"font":"Old Sans"}`})
+	_, _, err := m.Apply("Old")
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	doc := liveDoc(t, m, "theme")
+	assert.Equal(t, "Old Sans", doc["font"])
+	assert.EqualValues(t, defs["roundness"], doc["roundness"])
+	assert.EqualValues(t, defs["language"], doc["language"])
+}
+
+// Mixes (flagged, or legacy ones recognised by their description) and
+// copies of official sets keep applying over the live config.
+func TestApplyPartialUserPresetKeepsLive(t *testing.T) {
+	for _, inf := range []string{
+		`{"author":"User","authorUrl":"","partial":true}`,
+		`{"author":"User","authorUrl":"","description":"Mixed from colors: Kaze"}`,
+	} {
+		m := newManager(t)
+		seedLive(t, m, "theme", `{"font":"Mine Sans","roundness":9}`)
+		writeUserPreset(t, m, "Mix", inf, map[string]string{"theme": `{"font":"Mix Sans"}`})
+		_, _, err := m.Apply("Mix")
+		if !assert.NoError(t, err) {
+			t.FailNow()
+		}
+		doc := liveDoc(t, m, "theme")
+		assert.Equal(t, "Mix Sans", doc["font"], inf)
+		assert.EqualValues(t, 9, doc["roundness"], inf)
+	}
+}
+
+func TestDuplicateOfficialStaysPartial(t *testing.T) {
+	m := newManager(t)
+	p, err := m.Duplicate("Yozakura Night", "Night copy")
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	inf, _ := readInfo(p.Path)
+	assert.True(t, inf.Partial)
+	_, err = m.Mix("Tints", map[string]string{"colors": "Yozakura Night"}, "", false)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	tints, _ := m.Find("Tints")
+	inf, _ = readInfo(tints.Path)
+	assert.True(t, inf.Partial)
+}

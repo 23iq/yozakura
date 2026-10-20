@@ -174,7 +174,7 @@ func (m *Manager) Mix(name string, sources map[string]string, description string
 	if description == "" && len(parts) > 0 {
 		description = "Mixed from " + strings.Join(parts, ", ")
 	}
-	return m.write(name, files, info{Author: "User", Description: description}, force)
+	return m.write(name, files, info{Author: "User", Description: description, Partial: true}, force)
 }
 
 func aspectIDs() []string {

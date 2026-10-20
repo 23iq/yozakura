@@ -196,6 +196,11 @@ type info struct {
 	AuthorURL   string   `json:"authorUrl"`
 	Description string   `json:"description,omitempty"`
 	Follows     []string `json:"follows,omitempty"`
+	// Partial marks a preset whose files name only some settings on
+	// purpose (a mix, a copy of a composed official set, an import):
+	// applying it keeps what it does not name. Otherwise a user preset is
+	// a whole snapshot (see wholeSnapshot).
+	Partial bool `json:"partial,omitempty"`
 }
 
 func readInfo(dir string) (info, bool) {
@@ -390,6 +395,11 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 	if err != nil {
 		return p, nil, err
 	}
+	if m.wholeSnapshot(p) {
+		if raw, err = m.overDefaults(raw); err != nil {
+			return p, nil, err
+		}
+	}
 	if raw, err = m.keepFollowed(raw, p.Follows); err != nil {
 		return p, nil, err
 	}
@@ -405,6 +415,57 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 	}
 	p.Active = true
 	return p, problems, nil
+}
+
+// legacyPartial are the description prefixes Mix and Duplicate wrote
+// before info.json had "partial": such presets stay partial.
+var legacyPartial = []string{"Mixed from ", "Based on "}
+
+// wholeSnapshot reports whether a preset is a user snapshot of the live
+// config (Save): its files held every setting when it was saved, so a key
+// missing from them is one added since, at its default then.
+func (m *Manager) wholeSnapshot(p Preset) bool {
+	if p.Official {
+		return false
+	}
+	inf, _ := readInfo(p.Path)
+	if inf.Partial {
+		return false
+	}
+	for _, prefix := range legacyPartial {
+		if strings.HasPrefix(inf.Description, prefix) {
+			return false
+		}
+	}
+	return true
+}
+
+// overDefaults merges every catalog domain file over its domain defaults,
+// so applying it resets the settings it predates instead of keeping the
+// live ones (those of the previously applied preset).
+func (m *Manager) overDefaults(raw map[string][]byte) (map[string][]byte, error) {
+	for d, data := range raw {
+		if !m.Cat.HasDomain(d) {
+			continue
+		}
+		defs := m.Cat.DomainDefault(d)
+		base := catalog.NewObject()
+		for _, k := range m.Cat.TopKeys(d) {
+			if v, ok := defs[k]; ok {
+				base.Set(k, v)
+			}
+		}
+		b, err := json.Marshal(base)
+		if err != nil {
+			return raw, err
+		}
+		merged, err := MergeJSON(b, data)
+		if err != nil {
+			return raw, fmt.Errorf("%s.json: %w", d, err)
+		}
+		raw[d] = merged
+	}
+	return raw, nil
 }
 
 // keepFollowed copies the live value of every followed key (info.json

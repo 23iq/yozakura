@@ -178,6 +178,7 @@ func (m *Manager) Duplicate(src, name string) (Preset, error) {
 	}
 	inf, _ := readInfo(p.Path)
 	inf.Author, inf.AuthorURL = "User", ""
+	inf.Partial = inf.Partial || !m.wholeSnapshot(p)
 	if inf.Description == "" || p.Official {
 		inf.Description = strings.TrimSpace("Based on " + p.Name + ". " + inf.Description)
 	}
