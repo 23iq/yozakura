@@ -103,8 +103,9 @@ QtObject {
             });
     }
 
+    // Offset from the transcript origin; -1 (never scrolled) = the end.
     function scroll(key) {
-        return _scrolls[key] || 0;
+        return key in _scrolls ? _scrolls[key] : -1;
     }
 
     function setScroll(key, y) {

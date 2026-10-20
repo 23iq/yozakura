@@ -30,10 +30,12 @@ Item {
         undoStates: Ai.undoStates
     }
 
-    // Scroll position per session (Ai.drafts), restored when switching back.
+    // Scroll position per session (Ai.drafts), restored when switching back:
+    // the offset from the list origin (the origin moves when a recreated
+    // ListView estimates row heights), -1 = following the end.
     property string scrollKey: ""
     property bool restoringScroll: false
-    property real scrollPosition: 0
+    property real scrollPosition: -1
     function saveScroll() {
         if (scrollKey && Ai.drafts && !restoringScroll)
             Ai.drafts.setScroll(scrollKey, scrollPosition);
@@ -43,9 +45,14 @@ Item {
         scrollKey = root.persistKey || Ai.sessionKey;
         restoringScroll = true;
         Qt.callLater(() => {
-            scrollPosition = Ai.drafts ? Ai.drafts.scroll(scrollKey) : 0;
-            list.contentY = scrollPosition;
-            list.stick = list.atYEnd;
+            scrollPosition = Ai.drafts ? Ai.drafts.scroll(scrollKey) : -1;
+            if (scrollPosition < 0) {
+                list.stick = true;
+                list.positionViewAtEnd();
+            } else {
+                list.contentY = list.originY + scrollPosition;
+                list.stick = list.atYEnd;
+            }
             restoringScroll = false;
         });
     }
@@ -83,7 +90,7 @@ Item {
 
         onMovementEnded: {
             stick = atYEnd;
-            root.scrollPosition = contentY;
+            root.scrollPosition = stick ? -1 : contentY - originY;
             root.saveScroll();
         }
         function follow() {

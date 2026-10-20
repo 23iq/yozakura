@@ -37,7 +37,7 @@ QtObject {
         property var positions: ({})
         function draft(key) { return saved[key] || {text: "", attachments: []}; }
         function setDraft(key, text, attachments) { saved[key] = {text: text, attachments: attachments}; }
-        function scroll(key) { return positions[key] || 0; }
+        function scroll(key) { return key in positions ? positions[key] : -1; }
         function setScroll(key, y) { positions[key] = y; }
     }
     property var lastConfiguration: ({})

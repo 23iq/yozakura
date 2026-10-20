@@ -101,6 +101,19 @@ evaluate(workspace, 'chooseChat()')
 pump()
 chat_list = workspace.findChild(QObject, 'workspaceChatList')
 assert abs(chat_list.property('contentY') - 200) < 1, 'session switching must restore manual scroll'
+# A chat left at its end comes back following new messages (not at a stale offset).
+evaluate(chat_list, 'stick = true; positionViewAtEnd()')
+evaluate(workspace, 'fillChat()')
+pump()
+evaluate(workspace, 'chooseAgent()')
+pump()
+evaluate(workspace, 'chooseChat()')
+pump()
+chat_list = [x for x in workspace.findChildren(QObject, 'workspaceChatList') if x.property('count') > 0][-1]
+assert evaluate(chat_list, 'stick && atYEnd'), 'a chat left at its end must reopen at its end'
+evaluate(workspace, 'fillChat()')
+pump()
+assert evaluate(chat_list, 'stick'), 'a reopened chat must keep following new messages'
 evaluate(workspace, 'chooseAgent()')
 evaluate(workspace, 'setOverlay("settings")')
 pump()

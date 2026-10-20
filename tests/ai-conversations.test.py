@@ -50,7 +50,7 @@ assert h.eval(pool, "active.title") == "Running", "disk reload must not overwrit
 h.eval(pool, f"setDraft('chat:{first}', 'removed draft', []); setScroll('chat:{first}', 99)")
 h.eval(pool, f"setDraft('chat:{second}', 'kept draft', []); remove('{first}')")
 assert h.eval(pool, f"draft('chat:{first}').text") == "", "remove must clear the actual UI draft key"
-assert h.eval(pool, f"scroll('chat:{first}')") == 0
+assert h.eval(pool, f"scroll('chat:{first}')") == -1
 assert h.eval(pool, f"draft('{first}').text") == "", "clear legacy draft keys too"
 assert h.eval(pool, f"draft('chat:{second}').text") == "kept draft"
 assert h.eval(pool, "active === null") is True, "facade decides the visible replacement without switching an agent"
