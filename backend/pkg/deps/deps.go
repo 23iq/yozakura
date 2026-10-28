@@ -36,6 +36,8 @@ type Dep struct {
 	Checks  []string // alternatives; empty = package query only
 	Arch    []string
 	Fedora  []string
+	Suse    []string
+	Debian  []string
 	Purpose string
 }
 
@@ -54,16 +56,24 @@ func (d Dep) CompositorScoped() bool {
 	return false
 }
 
-// Packages returns the packages for a distro family ("arch" or "fedora").
+// Packages returns the packages for a distro family ("arch", "fedora",
+// "suse" or "debian"). An entry src:<name> is built by the installer.
 func (d Dep) Packages(distro string) []string {
 	switch distro {
 	case "arch":
 		return d.Arch
 	case "fedora":
 		return d.Fedora
+	case "suse":
+		return d.Suse
+	case "debian":
+		return d.Debian
 	}
 	return nil
 }
+
+// columns is the number of tab-separated fields of a row.
+const columns = 8
 
 // All parses the embedded table.
 func All() []Dep {
@@ -82,10 +92,11 @@ func Parse(text string) ([]Dep, error) {
 			continue
 		}
 		f := strings.Split(line, "\t")
-		if len(f) != 6 {
-			return nil, fmt.Errorf("packages.tsv:%d: want 6 columns, got %d", i+1, len(f))
+		if len(f) != columns {
+			return nil, fmt.Errorf("packages.tsv:%d: want %d columns, got %d", i+1, columns, len(f))
 		}
-		out = append(out, Dep{ID: f[0], Need: f[1], Checks: list(f[2], "|"), Arch: list(f[3], " "), Fedora: list(f[4], " "), Purpose: f[5]})
+		out = append(out, Dep{ID: f[0], Need: f[1], Checks: list(f[2], "|"), Arch: list(f[3], " "), Fedora: list(f[4], " "),
+			Suse: list(f[5], " "), Debian: list(f[6], " "), Purpose: f[7]})
 	}
 	return out, nil
 }
@@ -123,6 +134,9 @@ func (c *Checker) Present(d Dep) bool {
 			return true // nothing to verify here
 		}
 		for _, p := range pkgs {
+			if strings.HasPrefix(p, "src:") || strings.HasPrefix(p, "flatpak:") {
+				continue // not a distro package: only a check can tell
+			}
 			if !c.HasPkg(c.Distro, p) {
 				return false
 			}
@@ -143,6 +157,12 @@ func (c *Checker) Present(d Dep) bool {
 			if m, _ := c.Glob(alt); len(m) > 0 {
 				return true
 			}
+		case strings.HasPrefix(alt, "flatpak:"):
+			for _, dir := range flatpakDirs() {
+				if m, _ := c.Glob(filepath.Join(dir, strings.TrimPrefix(alt, "flatpak:"))); len(m) > 0 {
+					return true
+				}
+			}
 		default:
 			if _, err := c.LookPath(alt); err == nil {
 				return true
@@ -150,6 +170,15 @@ func (c *Checker) Present(d Dep) bool {
 		}
 	}
 	return false
+}
+
+// flatpakDirs are the system and the user Flatpak app directories.
+func flatpakDirs() []string {
+	dirs := []string{"/var/lib/flatpak/app"}
+	if home, err := os.UserHomeDir(); err == nil {
+		dirs = append(dirs, filepath.Join(home, ".local/share/flatpak/app"))
+	}
+	return dirs
 }
 
 func systemFonts() string {
@@ -162,13 +191,17 @@ func hasPackage(distro, pkg string) bool {
 	switch distro {
 	case "arch":
 		return exec.Command("pacman", "-Q", pkg).Run() == nil
-	case "fedora":
+	case "fedora", "suse":
 		return exec.Command("rpm", "-q", "--whatprovides", pkg).Run() == nil
+	case "debian":
+		out, err := exec.Command("dpkg-query", "-W", "-f=${Status}", pkg).Output()
+		return err == nil && strings.HasSuffix(string(out), " installed")
 	}
 	return true
 }
 
-// Distro returns "nixos", "arch", "fedora" or "other" from /etc/os-release.
+// Distro returns "nixos", "arch", "fedora", "suse", "debian" or "other"
+// from /etc/os-release.
 func Distro() string {
 	data, _ := os.ReadFile("/etc/os-release")
 	return distroFromOSRelease(string(data))
@@ -189,6 +222,10 @@ func distroFromOSRelease(text string) string {
 			return "arch"
 		case "fedora":
 			return "fedora"
+		case "suse", "opensuse", "opensuse-tumbleweed", "opensuse-leap", "sles":
+			return "suse"
+		case "debian", "ubuntu":
+			return "debian"
 		}
 	}
 	return "other"
@@ -196,10 +233,14 @@ func distroFromOSRelease(text string) string {
 
 // InstallHint returns the command that installs pkgs on distro.
 func InstallHint(distro string, pkgs []string) string {
-	var repo, aur []string
+	var repo, aur, src, flat []string
 	for _, p := range pkgs {
-		if name, ok := strings.CutPrefix(p, "aur:"); ok {
+		if name, ok := strings.CutPrefix(p, "flatpak:"); ok {
+			flat = append(flat, name)
+		} else if name, ok := strings.CutPrefix(p, "aur:"); ok {
 			aur = append(aur, name)
+		} else if name, ok := strings.CutPrefix(p, "src:"); ok {
+			src = append(src, name)
 		} else {
 			repo = append(repo, p)
 		}
@@ -223,6 +264,22 @@ func InstallHint(distro string, pkgs []string) string {
 				}
 			}
 		}
+	case "suse":
+		if len(repo) > 0 {
+			cmds = append(cmds, "sudo zypper install "+strings.Join(repo, " "))
+		}
+	case "debian":
+		if len(repo) > 0 {
+			cmds = append(cmds, "sudo apt install "+strings.Join(repo, " "))
+		}
+	default:
+		return ""
+	}
+	if len(flat) > 0 {
+		cmds = append(cmds, "flatpak install --user flathub "+strings.Join(flat, " "))
+	}
+	if len(src) > 0 {
+		cmds = append(cmds, "re-run install.sh: it builds "+strings.Join(src, ", ")+" from source")
 	}
 	return strings.Join(cmds, "\n")
 }
