@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """install.sh end to end in a sandbox: the compositor choice, the attended
-pacman upgrade, non-fatal optional steps and the reboot offer.
+pacman upgrade, non-fatal optional steps, the reboot offer, the four package
+families (pacman, dnf, zypper, apt) and --force.
 
 Every external command the installer runs (pacman, sudo, systemctl, git, make,
 go, curl, dnf, rpm, the built binary, the setup scripts) is a stub on a private
@@ -37,6 +38,7 @@ STUBS = {
     "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n',
     "git": 'case "$*" in *--abbrev-ref*) echo main ;; *--short*) echo abc1234 ;; esac\n',
     "make": (
+        'printf "make-env\\tGOTOOLCHAIN=%s\\n" "${GOTOOLCHAIN:-}" >>"$STUB_LOG"\n'
         'if [[ "$1" == -C && "$3" == build ]]; then\n'
         '  for b in yozakura yozd; do cp "$FAKE_BIN" "$2/$b"; chmod 755 "$2/$b"; done\n'
         "fi\n"
@@ -47,12 +49,45 @@ STUBS = {
     "paru": "exit 0\n",
 }
 ARCH_STUBS = {
-    # -T lists every package as missing; -Qq finds none installed.
-    "pacman": 'case "$1" in -T) shift; printf "%s\\n" "$@" ;; -Qq) exit 1 ;; esac\n',
+    # -T lists every package as missing; -Q/-Qq find only STUB_INSTALLED;
+    # -Slq (the sync database) is STUB_REPO, or nothing (= cannot tell).
+    "pacman": (
+        'case "$1" in -T) shift; printf "%s\\n" "$@" ;;\n'
+        '-Q | -Qq) shift; r=1; for p in "$@"; do [[ " ${STUB_INSTALLED:-} " == *" $p "* ]] && echo "$p" && r=0; done; exit $r ;;\n'
+        '-Slq) [[ -n "${STUB_REPO:-}" ]] && printf "%s\\n" $STUB_REPO ;;\nesac\n'
+    ),
 }
 FEDORA_STUBS = {
-    "rpm": 'shift; for p in "$@"; do echo "package $p is not installed"; done\n',
+    "rpm": 'for p in "$@"; do [[ "$p" == -* ]] || echo "package $p is not installed"; done\n',
     "dnf": '[[ "$1" == --version ]] && echo "dnf5 version 5.2"\nexit 0\n',
+}
+# apt: nothing installed; every package available but STUB_MISSING.
+DEBIAN_STUBS = {
+    # Known packages: `ii ` when in STUB_INSTALLED, else `un `.
+    "dpkg-query": (
+        'shift 2; for p in "$@"; do st="un "; [[ " ${STUB_INSTALLED:-} " == *" $p "* ]] && st="ii "\n'
+        '  printf "%s %s\\n" "$p" "$st"; done; exit 1\n'
+    ),
+    "apt-cache": (
+        '[[ "$1" == policy ]] || exit 0; shift\n'
+        'for p in "$@"; do c=1.0; [[ " ${STUB_MISSING:-} " == *" $p "* ]] && c="(none)"\n'
+        '  printf "%s:\\n  Installed: (none)\\n  Candidate: %s\\n" "$p" "$c"; done\n'
+    ),
+    "apt-get": "exit 0\n",
+    "flatpak": "exit 0\n",
+}
+# zypper: `search` lists every name but STUB_MISSING as a package.
+SUSE_STUBS = {
+    "rpm": FEDORA_STUBS["rpm"],
+    "zypper": (
+        'for a in "$@"; do [[ "$a" == search ]] && s=1; done\n'
+        '[[ -n "${s:-}" ]] || exit 0\n'
+        '[[ " $* " == *" --provides "* ]] && exit 104\n'
+        'echo "S | Name | Summary | Type"; echo "--+------+---------+-----"\n'
+        'for p in "$@"; do [[ "$p" == -* || "$p" == search || "$p" == package ]] && continue\n'
+        '  [[ " ${STUB_MISSING:-} " == *" $p "* ]] || echo "  | $p | x | package"; done\n'
+    ),
+    "flatpak": "exit 0\n",
 }
 # The built binary: knows install/doctor/version; --exclusive only with
 # FAKE_EXCLUSIVE (Part E builds). Like the real one: `install --help` is an
@@ -78,6 +113,8 @@ SCRIPTS = {
     "voice_setup.sh": 'case "$1" in --vulkan) ;; esac\necho "fatal: unable to access github.com" >&2\nexit 1\n',
     "depth_setup.sh": "exit 0\n",
     "install-sddm-theme.sh": "exit 0\n",
+    "deps/quickshell.sh": "exit 0\n",
+    "deps/matugen.sh": "exit 0\n",
 }
 # --dry-run: every command that could change something writes a marker and
 # fails; only the reads the plan needs (pacman -T/-Qq, systemctl
@@ -91,7 +128,7 @@ DRY_STUBS = {
 }
 DRY_STUBS.update(
     {
-        "pacman": 'case "$1" in -T) shift; printf "%s\\n" "$@"; exit 0 ;; -Qq) exit 1 ;; esac\n' + LOUD,
+        "pacman": 'case "$1" in -T) shift; printf "%s\\n" "$@"; exit 0 ;; -Qq | -Q | -Slq) exit 1 ;; esac\n' + LOUD,
         "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n' + LOUD,
         "dnf": '[[ "$1" == --version ]] && { echo "dnf5 version 5.2"; exit 0; }\n' + LOUD,
         "go": '[[ "$1" == version ]] && { [[ $# -eq 1 ]] && echo "go version go1.24.0 linux/amd64"; exit 0; }\n' + LOUD,
@@ -109,22 +146,25 @@ ASKS_SDDM = not os.path.islink("/etc/systemd/system/display-manager.service") an
 OS_RELEASE = {
     "arch": 'ID=arch\nPRETTY_NAME="Arch Linux"\n',
     "fedora": 'ID=fedora\nPRETTY_NAME="Fedora Linux 42"\n',
+    "suse": 'ID="opensuse-tumbleweed"\nID_LIKE="opensuse suse"\nPRETTY_NAME="openSUSE Tumbleweed"\n',
+    "debian": 'ID=debian\nPRETTY_NAME="Debian GNU/Linux 13 (trixie)"\n',
 }
+FAMILY_STUBS = {"arch": ARCH_STUBS, "fedora": FEDORA_STUBS, "suse": SUSE_STUBS, "debian": DEBIAN_STUBS}
 
 
 class Sandbox:
-    def __init__(self, distro="arch", strict=False):
+    def __init__(self, distro="arch", strict=False, tools=TOOLS):
         self.root = Path(tempfile.mkdtemp(prefix="install-sh-"))
         self.bin = self.root / "bin"
         self.home = self.root / "home"
         self.src = self.home / ".local/src/yozakura"
         self.log = self.root / "argv.log"
         self.bin.mkdir()
-        for tool in TOOLS:
+        for tool in tools:
             real = shutil.which(tool)
             assert real, f"missing host tool {tool}"
             (self.bin / tool).symlink_to(real)
-        stubs = dict(STUBS, **(ARCH_STUBS if distro == "arch" else FEDORA_STUBS))
+        stubs = dict(STUBS, **FAMILY_STUBS[distro])
         if strict:
             stubs.update({k: v for k, v in DRY_STUBS.items() if k not in ("pacman", "dnf") or k in stubs})
         for name, body in stubs.items():
@@ -543,8 +583,106 @@ def test_dry_run_interactive_walkthrough():
         sb.cleanup()
 
 
+def sudo_calls(sb, *prefix):
+    return [c for c in sb.calls("sudo") if c[: len(prefix)] == list(prefix)]
+
+
+def test_debian_without_awk_builds_what_apt_lacks():
+    sb = Sandbox("debian", tools=[t for t in TOOLS if t != "awk"])
+    try:
+        sb.extra_env["STUB_MISSING"] = "gpu-screen-recorder hyprland"
+        sb.extra_env["STUB_INSTALLED"] = "curl"
+        rc, err, _ = sb.run("-y", "--compositor", "hyprland", "--no-sddm")
+        check(rc == 0, f"debian install exit {rc}", err)
+        apt = [c[3:] for c in sudo_calls(sb, "env", "DEBIAN_FRONTEND=noninteractive", "apt-get")]
+        check(any("update" in c for c in apt), f"no apt-get update: {apt}")
+        installs = [c for c in apt if "install" in c]
+        check(len(installs) == 1, f"want one apt install: {apt}")
+        pkgs = installs[0] if installs else []
+        check("kitty" in pkgs and "qml6-module-qtquick-effects" in pkgs, f"apt install lacks packages: {pkgs}")
+        check("curl" not in pkgs, f"installed package planned again: {pkgs}")
+        check("gpu-screen-recorder" not in pkgs and "hyprland" not in pkgs, f"unavailable packages installed: {pkgs}")
+        check(not any(p.startswith(("src:", "flatpak:", "aur:")) for p in pkgs), f"tokens passed to apt: {pkgs}")
+        check(re.search(r"Unavailable\s+not packaged.{0,200}gpu-screen-recorder", err, re.S),
+              "plan does not name the unavailable package", err)
+        check("Hyprland itself is not packaged here" in err, "no note about the missing compositor", err)
+        check(sb.calls("quickshell.sh") == [["debian"]], f"quickshell not built: {sb.calls('quickshell.sh')}")
+        check(sb.calls("matugen.sh") == [[]], f"matugen not fetched: {sb.calls('matugen.sh')}")
+        flat = [c for c in sb.calls("flatpak") if "install" in c]
+        check(flat and flat[0][-1] == "be.alexandervanhee.gradia", f"gradia not from Flathub: {sb.calls('flatpak')}")
+        check(["make-env", "GOTOOLCHAIN=auto"] in [ln.split("\t") for ln in sb.log.read_text().splitlines()],
+              "make did not run with GOTOOLCHAIN=auto", sb.log.read_text())
+        check(not any(c[:1] == ["--fix-broken"] for c in apt), "--fix-broken without --force")
+    finally:
+        sb.cleanup()
+
+
+def test_arch_force_replaces_conflicts():
+    sb = Sandbox("arch")
+    try:
+        sb.extra_env["STUB_INSTALLED"] = "tlp pulseaudio archlinux-keyring"
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        ups = pacman_upgrades(sb)
+        check(rc == 0 and ups, f"plain install exit {rc}", err)
+        check(ups and "power-profiles-daemon" not in ups[0] and "pipewire-pulse" not in ups[0],
+              f"clashing packages planned without --force: {ups}")
+        check(ups and "--ask=4" not in ups[0], "--ask=4 without --force")
+        rc, err, _ = sb.run("-y", "--force", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"--force install exit {rc}", err)
+        ups = pacman_upgrades(sb)
+        check(len(ups) == 1 and "--ask=4" in ups[0], f"--force upgrade lacks --ask=4: {ups}")
+        check(ups and "power-profiles-daemon" in ups[0] and "pipewire-pulse" in ups[0], f"--force skipped rivals: {ups}")
+        check("Replaces     tlp by power-profiles-daemon" in err and "pulseaudio by pipewire-pulse" in err,
+              "plan does not list the replacements", err)
+        keys = sudo_calls(sb, "pacman", "-Sy")
+        check(keys == [["pacman", "-Sy", "--needed", "--noconfirm", "archlinux-keyring"]], f"keyring not refreshed: {keys}")
+    finally:
+        sb.cleanup()
+
+
+def test_arch_package_missing_from_repos():
+    tsv = (REPO / "backend/pkg/deps/packages.tsv").read_text()
+    names = {p for line in tsv.splitlines() if line and not line.startswith("#")
+             for p in line.split("\t")[3].split() if ":" not in p}
+    sb = Sandbox("arch")
+    try:
+        sb.extra_env["STUB_REPO"] = " ".join(sorted(names - {"quickshell"}) + ["pipewire-jack", "base-devel"])
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"exit {rc}", err)
+        ups = pacman_upgrades(sb)
+        check(ups and "quickshell" not in ups[0], f"pacman asked for a package it lacks: {ups}")
+        aur = [c for c in sb.calls("paru") if "-S" in c]
+        check(aur and "quickshell" in aur[0], f"quickshell not taken from the AUR: {sb.calls('paru')}")
+        rc, err, _ = sb.run("-y", "--no-aur", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and sb.calls("quickshell.sh") == [["arch"]], f"--no-aur did not build quickshell: {sb.calls('quickshell.sh')}", err)
+    finally:
+        sb.cleanup()
+
+
+def test_suse_force_upgrades_and_resolves():
+    sb = Sandbox("suse")
+    try:
+        sb.extra_env["STUB_MISSING"] = "cava"
+        rc, err, _ = sb.run("-y", "--force", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"suse install exit {rc}", err)
+        zyp = [c[3:] for c in sudo_calls(sb, "env", "ZYPP_LOCK_TIMEOUT=300", "zypper")]
+        check(["--non-interactive", "refresh"] in zyp, f"no zypper refresh: {zyp}")
+        check(any(c[1:2] == ["dup"] for c in zyp), f"--force on Tumbleweed did not dup: {zyp}")
+        inst = [c for c in zyp if c[1:2] == ["install"]]
+        check(inst and "--force-resolution" in inst[0] and "niri" in inst[0], f"install lacks --force-resolution: {inst}")
+        check(inst and "cava" not in inst[0], f"unavailable cava installed: {inst}")
+        check(sb.calls("quickshell.sh") == [["suse", "--force"]], f"quickshell not rebuilt: {sb.calls('quickshell.sh')}")
+        check("zypper dup" in err, "plan does not show the upgrade", err)
+    finally:
+        sb.cleanup()
+
+
 def main():
     for test in (
+        test_debian_without_awk_builds_what_apt_lacks,
+        test_arch_force_replaces_conflicts,
+        test_arch_package_missing_from_repos,
+        test_suse_force_upgrades_and_resolves,
         test_dry_run_walks_everything_headless,
         test_dry_run_interactive_walkthrough,
         test_dry_run_fedora_and_update,

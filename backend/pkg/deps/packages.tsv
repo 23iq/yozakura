@@ -9,71 +9,85 @@
 #           path glob, or font:<family substring>; "-" = package query only
 #   arch    Arch packages (space-separated; aur:<name> from the AUR, "-" none)
 #   fedora  Fedora packages (lionheartp/Hyprland COPR for the Hyprland stack)
+#   suse    openSUSE packages (zypper; Tumbleweed names)
+#   debian  Debian/Ubuntu packages (apt; Ubuntu 26.04 names, Debian lacks some)
 #   purpose what breaks without it
-# Rows without packages ("-") are built from this repository by the installer.
-#id	need	check	arch	fedora	purpose
-git	build	git	git	git	fetching and updating the sources
-go	build	go	go	golang	building the backend
-make	build	make	make	make	building the backend
-curl	build	curl	curl	curl	downloads (installer, fonts, models)
-unzip	build	unzip	unzip	unzip	unpacking the icon font
-hyprland	hyprland	Hyprland|hyprland	hyprland	hyprland	the compositor (and its display-manager session entry)
-yozd	required	yozd	-	-	the compositor daemon (binds, rules, config), built from this repository
-quickshell	required	qs|quickshell	quickshell	quickshell	the QML runtime the whole UI runs in
-qt6-base	required	/usr/lib*/qt6/plugins/platforms/libqwayland*.so|/usr/lib*/qt6/plugins/platforms/libqxcb.so	qt6-base qt6-wayland	qt6-qtbase qt6-qtwayland	Qt 6 on Wayland
-qt6-declarative	required	/usr/lib*/qt6/qml/QtQuick/Effects	qt6-declarative	qt6-qtdeclarative	QtQuick, Controls, Effects, Shapes
-qt6-svg	required	/usr/lib*/qt6/plugins/imageformats/libqsvg.so	qt6-svg	qt6-qtsvg	SVG icons
-qt6-imageformats	standard	/usr/lib*/qt6/plugins/imageformats/libqwebp.so	qt6-imageformats libwebp libavif	qt6-qtimageformats libwebp libavif	WebP/AVIF wallpapers and thumbnails
-qt6-multimedia	required	/usr/lib*/qt6/qml/QtMultimedia	qt6-multimedia qt6-multimedia-gstreamer	qt6-qtmultimedia	video wallpapers and media previews
-qt6-shadertools	standard	-	qt6-shadertools qt6-tools syntax-highlighting	qt6-qtshadertools qt6-qttools kf6-syntax-highlighting	shader effects, code highlighting
-gstreamer	standard	/usr/lib*/gstreamer-1.0/libgstlibav.so	gst-plugins-good gst-plugins-bad gst-libav	gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugin-libav	video playback backend
-matugen	required	matugen	matugen	matugen	palette generation from the wallpaper
-portal-hyprland	hyprland	/usr/lib*/xdg-desktop-portal-hyprland|/usr/libexec/xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	screen sharing, screenshots for apps
-portal-gtk	standard	/usr/lib*/xdg-desktop-portal-gtk|/usr/libexec/xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	file pickers and settings for apps
-polkit-agent	standard	/usr/lib*/hyprpolkitagent*|/usr/libexec/hyprpolkitagent|/usr/lib*/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib*/polkit-kde-authentication-agent-1	hyprpolkitagent	hyprpolkitagent	password prompts for system actions
-pipewire	standard	pipewire	pipewire pipewire-pulse	pipewire pipewire-pulseaudio	audio
-wireplumber	standard	wireplumber|wpctl	wireplumber	wireplumber	audio session manager, volume control
-pw-record	standard	pw-record	pipewire	pipewire-utils	audio visualizer input, voice recording
-playerctl	standard	playerctl	playerctl	playerctl	media controls
-cava	standard	cava	cava	cava	audio visualizer
-ffmpeg	standard	ffmpeg	ffmpeg x264	ffmpeg-free	video wallpapers, thumbnails, recordings
-networkmanager	standard	nmcli	networkmanager network-manager-applet	NetworkManager network-manager-applet	network panel
-bluez	standard	bluetoothctl	bluez bluez-utils blueman	bluez blueman	bluetooth panel
-brightnessctl	standard	brightnessctl	brightnessctl	brightnessctl	screen brightness
-ddcutil	standard	ddcutil	ddcutil	ddcutil	external monitor brightness
-upower	standard	upower	upower	upower	battery status
-power-profiles	standard	powerprofilesctl	power-profiles-daemon	power-profiles-daemon	power profile switch
-libnotify	standard	notify-send	libnotify	libnotify	notifications from scripts
-wl-clipboard	standard	wl-copy	wl-clipboard	wl-clipboard	clipboard history
-wtype	standard	wtype	wtype	wtype	typing emoji and dictated text
-grim	standard	grim	grim	grim	screenshots
-slurp	standard	slurp	slurp	slurp	region selection
-wlsunset	standard	wlsunset	wlsunset	wlsunset	night light
-jq	standard	jq	jq	jq	scripts
-python	standard	python3	python	python3	helper scripts
-gio	standard	gio	glib2	glib2	trash, file operations, gsettings
-fontconfig	standard	fc-list	fontconfig	fontconfig	font lookup
-sqlite	standard	sqlite3	sqlite	sqlite	key store
-hostname	standard	hostname	inetutils	hostname	system info
-xdg-utils	standard	xdg-open	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	opening files and links
-tesseract	standard	tesseract	tesseract tesseract-data-eng tesseract-data-spa tesseract-data-jpn tesseract-data-chi_sim tesseract-data-chi_tra tesseract-data-kor tesseract-data-lat	tesseract tesseract-langpack-eng tesseract-langpack-spa tesseract-langpack-jpn tesseract-langpack-chi_sim tesseract-langpack-chi_tra tesseract-langpack-kor tesseract-langpack-lat	OCR (text from screen)
-kitty	standard	kitty	kitty	kitty	default terminal
-tmux	standard	tmux	tmux	tmux	tmux panel
-zenity	standard	zenity|kdialog	zenity	zenity	file and color dialogs
-easyeffects	standard	easyeffects	easyeffects pavucontrol	easyeffects pavucontrol	audio effects, mixer
-gpu-screen-recorder	standard	gpu-screen-recorder	gpu-screen-recorder	gpu-screen-recorder	screen recording
-fd	standard	fd|fdfind	fd	fd-find	file search in the launcher
-plocate	standard	plocate|locate	plocate	plocate	fast file search index
-imagemagick	standard	magick	imagemagick	ImageMagick	app theme images
-inotify-tools	standard	inotifywait	inotify-tools	inotify-tools	camera-in-use indicator
-gtk-theme	standard	/usr/share/themes/adw-gtk3*	adw-gtk-theme	adw-gtk3-theme	GTK apps follow the palette
-icons	standard	/usr/share/icons/breeze|/usr/share/icons/hicolor	breeze-icons hicolor-icon-theme	breeze-icon-theme hicolor-icon-theme	app and tray icons
-fonts	standard	font:Noto Sans CJK	ttf-roboto ttf-roboto-mono ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-nerd-fonts-symbols	google-roboto-fonts google-roboto-mono-fonts dejavu-sans-fonts liberation-sans-fonts google-noto-sans-fonts google-noto-sans-cjk-fonts google-noto-emoji-fonts	text, CJK and emoji glyphs
-phosphor-icons	required	font:Phosphor	aur:ttf-phosphor-icons	-	UI icons (installed per user when no package is available)
-niri	niri	niri	niri	niri	the compositor (and its display-manager session entry)
-xwayland-satellite	niri	xwayland-satellite	xwayland-satellite	xwayland-satellite	X11 apps under niri
-portal-gnome	niri	/usr/lib*/xdg-desktop-portal-gnome|/usr/libexec/xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	screen sharing, screenshots for apps under niri
-mango	mango	mango|mangowm	mangowm	-	the compositor (Arch only; no Fedora package)
-cmake	voice	cmake	cmake ninja gcc	cmake ninja-build gcc-c++	building whisper.cpp for voice input
-uv	depth	uv	uv	uv	the depth clock's Python environment
-sddm	sddm	sddm	sddm	sddm	login screen with the matching theme
+# Package cells: "-" none (the yozd row is built from this repository, the
+# Phosphor font is installed per user), aur:<name> from the AUR,
+# src:<name> built or fetched by scripts/deps/<name>.sh where the distro has
+# no package, flatpak:<app id> from Flathub (per user). In check,
+# flatpak:<app id> is an installed Flatpak app. A package a distro release does not carry is left out of the
+# plan and named there; its row degrades like a missing standard one.
+#id	need	check	arch	fedora	suse	debian	purpose
+git	build	git	git	git	git	git	fetching and updating the sources
+go	build	go	go	golang	go	golang-go	building the backend
+make	build	make	make	make	make	make	building the backend
+curl	build	curl	curl	curl	curl	curl	downloads (installer, fonts, models)
+unzip	build	unzip	unzip	unzip	unzip	unzip	unpacking the icon font
+hyprland	hyprland	Hyprland|hyprland	hyprland	hyprland	hyprland	hyprland	the compositor (and its display-manager session entry)
+yozd	required	yozd	-	-	-	-	the compositor daemon (binds, rules, config), built from this repository
+quickshell	required	qs|quickshell	quickshell	quickshell	src:quickshell	src:quickshell	the QML runtime the whole UI runs in
+qt6-base	required	/usr/lib*/qt6/plugins/platforms/libqwayland*.so|/usr/lib/*-linux-gnu/qt6/plugins/platforms/libqwayland*.so|/usr/lib*/qt6/plugins/platforms/libqxcb.so|/usr/lib/*-linux-gnu/qt6/plugins/platforms/libqxcb.so	qt6-base qt6-wayland	qt6-qtbase qt6-qtwayland	qt6-wayland	qt6-qpa-plugins qt6-wayland	Qt 6 on Wayland
+qt6-declarative	required	/usr/lib*/qt6/qml/QtQuick/Effects|/usr/lib/*-linux-gnu/qt6/qml/QtQuick/Effects	qt6-declarative	qt6-qtdeclarative	qt6-declarative-imports	qml6-module-qtquick qml6-module-qtquick-controls qml6-module-qtquick-templates qml6-module-qtquick-layouts qml6-module-qtquick-effects qml6-module-qtquick-shapes qml6-module-qtquick-window qml6-module-qtquick-particles qml6-module-qtquick-dialogs qml6-module-qtqml qml6-module-qtqml-models qml6-module-qtqml-workerscript qml6-module-qt-labs-qmlmodels qml6-module-qt-labs-folderlistmodel	QtQuick, Controls, Effects, Shapes
+qt6-svg	required	/usr/lib*/qt6/plugins/imageformats/libqsvg.so|/usr/lib/*-linux-gnu/qt6/plugins/imageformats/libqsvg.so	qt6-svg	qt6-qtsvg	libQt6Svg6	qt6-svg-plugins	SVG icons
+qt6-imageformats	standard	/usr/lib*/qt6/plugins/imageformats/libqwebp.so|/usr/lib/*-linux-gnu/qt6/plugins/imageformats/libqwebp.so	qt6-imageformats libwebp libavif	qt6-qtimageformats libwebp libavif	qt6-imageformats	qt6-image-formats-plugins	WebP/AVIF wallpapers and thumbnails
+qt6-multimedia	required	/usr/lib*/qt6/qml/QtMultimedia|/usr/lib/*-linux-gnu/qt6/qml/QtMultimedia	qt6-multimedia qt6-multimedia-gstreamer	qt6-qtmultimedia	qt6-multimedia qt6-multimedia-imports	qml6-module-qtmultimedia libqt6multimedia6	video wallpapers and media previews
+qt6-shadertools	standard	-	qt6-shadertools qt6-tools syntax-highlighting	qt6-qtshadertools qt6-qttools kf6-syntax-highlighting	qt6-shadertools qt6-tools kf6-syntax-highlighting	libqt6shadertools6 qt6-tools-dev-tools qml6-module-org-kde-syntaxhighlighting	shader effects, code highlighting
+gstreamer	standard	/usr/lib*/gstreamer-1.0/libgstlibav.so|/usr/lib/*-linux-gnu/gstreamer-1.0/libgstlibav.so	gst-plugins-good gst-plugins-bad gst-libav gst-plugin-pipewire	gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-plugin-libav pipewire-gstreamer	gstreamer-plugins-base gstreamer-plugins-good gstreamer-plugins-bad gstreamer-plugins-libav gstreamer-plugin-pipewire	gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav gstreamer1.0-pipewire	video playback backend, camera through PipeWire
+matugen	required	matugen	matugen	matugen	src:matugen	src:matugen	palette generation from the wallpaper
+portal-hyprland	hyprland	/usr/lib*/xdg-desktop-portal-hyprland|/usr/lib/*-linux-gnu/xdg-desktop-portal-hyprland|/usr/libexec/xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	xdg-desktop-portal-hyprland	screen sharing, screenshots for apps
+portal-gtk	standard	/usr/lib*/xdg-desktop-portal-gtk|/usr/lib/*-linux-gnu/xdg-desktop-portal-gtk|/usr/libexec/xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	xdg-desktop-portal-gtk	file pickers and settings for apps
+polkit-agent	standard	/usr/lib*/hyprpolkitagent*|/usr/lib/*-linux-gnu/hyprpolkitagent*|/usr/libexec/hyprpolkitagent|/usr/lib*/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib/*-linux-gnu/polkit-gnome/polkit-gnome-authentication-agent-1|/usr/lib*/polkit-kde-authentication-agent-1|/usr/lib/*-linux-gnu/polkit-kde-authentication-agent-1	hyprpolkitagent	hyprpolkitagent	hyprpolkitagent	hyprpolkitagent	password prompts for system actions
+pipewire	standard	pipewire	pipewire pipewire-pulse	pipewire pipewire-pulseaudio	pipewire pipewire-pulseaudio	pipewire pipewire-pulse	audio
+wireplumber	standard	wireplumber|wpctl	wireplumber	wireplumber	wireplumber	wireplumber	audio session manager, volume control
+pactl	standard	pactl	libpulse	pulseaudio-utils	pulseaudio-utils	pulseaudio-utils	media idle inhibit, audio sink switching, sound fallbacks
+canberra	standard	canberra-gtk-play	libcanberra sound-theme-freedesktop	libcanberra-gtk3 sound-theme-freedesktop	canberra-gtk-play sound-theme-freedesktop	gnome-session-canberra sound-theme-freedesktop	notification event sounds
+pw-record	standard	pw-record	pipewire-audio	pipewire-utils	pipewire-tools	pipewire-bin	audio visualizer input, voice recording
+playerctl	standard	playerctl	playerctl	playerctl	playerctl	playerctl	media controls
+cava	standard	cava	cava	cava	cava	cava	audio visualizer
+ffmpeg	standard	ffmpeg	ffmpeg x264	ffmpeg-free	ffmpeg	ffmpeg	video wallpapers, thumbnails, recordings
+networkmanager	standard	nmcli	networkmanager network-manager-applet	NetworkManager network-manager-applet	NetworkManager NetworkManager-applet	network-manager network-manager-gnome	network panel
+bluez	standard	bluetoothctl	bluez bluez-utils blueman	bluez blueman	bluez blueman	bluez blueman	bluetooth panel
+brightnessctl	standard	brightnessctl	brightnessctl	brightnessctl	brightnessctl	brightnessctl	screen brightness
+ddcutil	standard	ddcutil	ddcutil	ddcutil	ddcutil	ddcutil	external monitor brightness
+upower	standard	upower	upower	upower	upower	upower	battery status
+power-profiles	standard	powerprofilesctl	power-profiles-daemon	power-profiles-daemon	power-profiles-daemon	power-profiles-daemon	power profile switch
+libnotify	standard	notify-send	libnotify	libnotify	libnotify-tools	libnotify-bin	notifications from scripts
+wl-clipboard	standard	wl-copy	wl-clipboard	wl-clipboard	wl-clipboard	wl-clipboard	clipboard history
+wtype	standard	wtype	wtype	wtype	wtype	wtype	typing emoji and dictated text
+grim	standard	grim	grim	grim	grim	grim	screenshots
+gradia	standard	gradia|flatpak:be.alexandervanhee.gradia	gradia	flatpak:be.alexandervanhee.gradia	flatpak:be.alexandervanhee.gradia	flatpak:be.alexandervanhee.gradia	screenshot editor (annotate, crop, the Edit button)
+slurp	standard	slurp	slurp	slurp	slurp	slurp	region selection
+wlsunset	standard	wlsunset	wlsunset	wlsunset	wlsunset	wlsunset	night light
+jq	standard	jq	jq	jq	jq	jq	scripts
+python	standard	python3	python	python3	python3	python3	helper scripts
+gio	standard	gio	glib2	glib2	glib2-tools	libglib2.0-bin	trash, file operations, gsettings
+fontconfig	standard	fc-list	fontconfig	fontconfig	fontconfig	fontconfig	font lookup
+sqlite	standard	sqlite3	sqlite	sqlite	sqlite3	sqlite3	key store
+hostname	standard	hostname	inetutils	hostname	hostname	hostname	system info
+xdg-utils	standard	xdg-open	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	opening files and links
+tesseract	standard	tesseract	tesseract tesseract-data-eng tesseract-data-spa tesseract-data-jpn tesseract-data-chi_sim tesseract-data-chi_tra tesseract-data-kor tesseract-data-lat	tesseract tesseract-langpack-eng tesseract-langpack-spa tesseract-langpack-jpn tesseract-langpack-chi_sim tesseract-langpack-chi_tra tesseract-langpack-kor tesseract-langpack-lat	tesseract-ocr tesseract-ocr-traineddata-eng tesseract-ocr-traineddata-spa tesseract-ocr-traineddata-jpn tesseract-ocr-traineddata-chi_sim tesseract-ocr-traineddata-chi_tra tesseract-ocr-traineddata-kor tesseract-ocr-traineddata-lat	tesseract-ocr tesseract-ocr-eng tesseract-ocr-spa tesseract-ocr-jpn tesseract-ocr-chi-sim tesseract-ocr-chi-tra tesseract-ocr-kor tesseract-ocr-lat	OCR (text from screen)
+kitty	standard	kitty	kitty	kitty	kitty	kitty	default terminal
+tmux	standard	tmux	tmux	tmux	tmux	tmux	tmux panel
+khal	standard	khal	khal	khal	-	khal	calendar events on the dashboard
+zip	standard	zip|bsdtar	zip	zip	zip	zip	Telegram theme package
+zenity	standard	zenity|kdialog	zenity	zenity	zenity	zenity	file and color dialogs
+easyeffects	standard	easyeffects	easyeffects pavucontrol	easyeffects pavucontrol	easyeffects pavucontrol	easyeffects pavucontrol	audio effects, mixer
+gpu-screen-recorder	standard	gpu-screen-recorder	gpu-screen-recorder	gpu-screen-recorder	gpu-screen-recorder	gpu-screen-recorder	screen recording
+fd	standard	fd|fdfind	fd	fd-find	fd	fd-find	file search in the launcher
+plocate	standard	plocate|locate	plocate	plocate	plocate	plocate	fast file search index
+imagemagick	standard	magick	imagemagick	ImageMagick	ImageMagick	imagemagick	app theme images
+inotify-tools	standard	inotifywait	inotify-tools	inotify-tools	inotify-tools	inotify-tools	camera-in-use indicator
+gtk-theme	standard	/usr/share/themes/adw-gtk3*	adw-gtk-theme	adw-gtk3-theme	-	-	GTK apps follow the palette
+qt6ct	standard	qt6ct	qt6ct	qt6ct	qt6ct	qt6ct	Qt apps follow the palette
+icons	standard	/usr/share/icons/breeze|/usr/share/icons/hicolor	breeze-icons hicolor-icon-theme	breeze-icon-theme hicolor-icon-theme	kf6-breeze-icons hicolor-icon-theme	breeze-icon-theme hicolor-icon-theme	app and tray icons
+fonts	standard	font:Noto Sans CJK	ttf-roboto ttf-roboto-mono ttf-dejavu ttf-liberation noto-fonts noto-fonts-cjk noto-fonts-emoji ttf-nerd-fonts-symbols	google-roboto-fonts google-roboto-mono-fonts dejavu-sans-fonts liberation-sans-fonts google-noto-sans-fonts google-noto-sans-cjk-fonts google-noto-emoji-fonts	google-roboto-fonts google-roboto-mono-fonts dejavu-fonts liberation-fonts google-noto-sans-fonts google-noto-sans-cjk-fonts google-noto-coloremoji-fonts nerdfonts-symbolsonly-fonts	fonts-roboto fonts-dejavu fonts-liberation fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji	text, CJK and emoji glyphs
+mono-font	standard	font:Iosevka Nerd	ttf-iosevka-nerd	-	-	-	the default monospace font (falls back to any monospace)
+phosphor-icons	required	font:Phosphor	aur:ttf-phosphor-icons	-	-	-	UI icons (installed per user when no package is available)
+niri	niri	niri	niri	niri	niri	niri	the compositor (and its display-manager session entry)
+xwayland-satellite	niri	xwayland-satellite	xwayland-satellite	xwayland-satellite	xwayland-satellite	xwayland-satellite	X11 apps under niri
+portal-gnome	niri	/usr/lib*/xdg-desktop-portal-gnome|/usr/lib/*-linux-gnu/xdg-desktop-portal-gnome|/usr/libexec/xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	xdg-desktop-portal-gnome	screen sharing, screenshots for apps under niri
+mango	mango	mango|mangowm	mangowm	-	-	-	the compositor (Arch only; no Fedora package)
+cmake	voice	cmake	cmake ninja gcc	cmake ninja-build gcc-c++	cmake ninja gcc-c++	cmake ninja-build g++	building whisper.cpp for voice input
+uv	depth	uv	uv	uv	-	-	the depth clock's Python environment
+sddm	sddm	sddm	sddm	sddm	sddm	sddm	login screen with the matching theme

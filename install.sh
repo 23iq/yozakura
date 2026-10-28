@@ -43,11 +43,15 @@ OS_RELEASE="${YOZAKURA_OS_RELEASE:-/etc/os-release}"
 COMPOSITORS=(hyprland niri mango)
 
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
-INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0
+INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
+# UNAVAILABLE: planned packages this distribution release does not carry;
+# SRC_BUILDS: scripts/deps/<name>.sh to run; REPLACES: installed packages
+# --force swaps out ("old>new").
+UNAVAILABLE=() SRC_BUILDS=() REPLACES=() FLATPAKS=()
 
 # === Output ===
 # Everything is written to stderr, so stderr decides: colour depth (truecolor,
@@ -610,7 +614,9 @@ $DISPLAY_NAME installer
 Usage: install.sh [options]
        curl -fsSL https://raw.githubusercontent.com/23iq/$APP_ID/main/install.sh | bash -s -- [options]
 
-Installs the core: the shell, your compositor and a login screen. Asks which
+Installs the core: the shell, your compositor and a login screen on Arch
+(and derivatives), Fedora, openSUSE and Debian/Ubuntu; what a distribution
+does not package (Quickshell, matugen) is built from source. Asks which
 compositor (Hyprland, niri or Mango), shows the plan (packages, services,
 files) and asks once; at the end it offers a reboot into the setup wizard.
 Without a terminal it proceeds with the defaults (Hyprland, no reboot).
@@ -634,6 +640,11 @@ Install:
                     showing what would run; nothing is changed, no sudo
   --no-deps         skip packages and services (sources + binaries only)
   --no-aur          Arch: no AUR helper; the icon font is installed per user
+  --force           fix what blocks the packages: upgrade the whole system
+                    first, replace conflicting packages (pulseaudio, jack2,
+                    tlp ... by what the plan installs; the plan lists them),
+                    clear a stale package-manager lock and rebuild the
+                    source-built dependencies (Quickshell after a Qt upgrade)
   --reboot          reboot at the end without asking (needs a terminal)
   --no-reboot       do not offer the reboot at the end
   --update          update an existing install: pull, rebuild, reinstall the
@@ -664,6 +675,7 @@ parse_args() {
     --no-sddm) WITH_SDDM=0 ;;
     --no-deps) INSTALL_DEPS=0 ;;
     --no-aur) USE_AUR=0 ;;
+    --force | --replace-conflicts) FORCE=1 ;;
     --no-compositor-config | --no-hyprland) COMP_CONFIG=0 ;;
     --exclusive) EXCLUSIVE=1 ;;
     --reboot) REBOOT=1 ;;
@@ -774,12 +786,27 @@ detect_system() {
     id="$(. "$OS_RELEASE" && echo "${ID:-}")" like="$(. "$OS_RELEASE" && echo "${ID_LIKE:-}")" name="$(. "$OS_RELEASE" && echo "${PRETTY_NAME:-}")"
   fi
   DISTRO_NAME="${name:-unknown}"
+  # The family: os-release first (a stray pacman on Ubuntu does not make it
+  # Arch), then whichever package manager is there.
+  local ids=" $id $like "
   if [[ -f /etc/NIXOS || "$id" == nixos ]]; then
     DISTRO=nixos
-  elif has_cmd pacman || [[ " $id $like " == *" arch "* ]]; then
+  elif [[ "$ids" == *" arch "* || "$ids" == *" archlinux "* ]]; then
     DISTRO=arch
-  elif has_cmd dnf || [[ " $id $like " == *" fedora "* ]]; then
+  elif [[ "$ids" == *" fedora "* ]]; then
     DISTRO=fedora
+  elif [[ "$ids" =~ \ (suse|opensuse|opensuse-tumbleweed|opensuse-leap|sles)\  ]]; then
+    DISTRO=suse
+  elif [[ "$ids" == *" debian "* || "$ids" == *" ubuntu "* ]]; then
+    DISTRO=debian
+  elif has_cmd pacman; then
+    DISTRO=arch
+  elif has_cmd dnf; then
+    DISTRO=fedora
+  elif has_cmd zypper; then
+    DISTRO=suse
+  elif has_cmd apt-get; then
+    DISTRO=debian
   else
     DISTRO=other
   fi
@@ -837,8 +864,27 @@ comp_bin() {
   esac
 }
 
-# comp_supported NAME: whether this distribution packages it (Mango: Arch only).
-comp_supported() { [[ "$1" != mango || "$DISTRO" != fedora ]]; }
+# comp_pkg NAME: its package (to tell whether this distribution has it).
+comp_pkg() {
+  case "$1" in
+  mango) echo mangowm ;;
+  *) echo "$1" ;;
+  esac
+}
+
+# upgrade_cmd: the full-upgrade command --force runs first.
+upgrade_cmd() {
+  case "$DISTRO" in
+  arch) echo "pacman -Syu" ;;
+  fedora) echo "dnf upgrade --refresh" ;;
+  suse) grep -qs tumbleweed "$OS_RELEASE" && echo "zypper dup" || echo "zypper update" ;;
+  debian) echo "apt full-upgrade" ;;
+  esac
+}
+
+# comp_supported NAME: whether this distribution packages it (Mango: Arch
+# only; elsewhere only when it is installed already).
+comp_supported() { [[ "$1" != mango || "$DISTRO" == arch || "$DISTRO" == other ]] || has_cmd mango; }
 
 # comp_config NAME: the user config file '$APP_ID install NAME' adds its block to.
 comp_config() {
@@ -929,54 +975,204 @@ load_deps() {
   die "Could not fetch the package list from $RAW_BASE/$DEPS_PATH." "Check your connection, or set YOZAKURA_RAW_BASE."
 }
 
-# deps_for COLUMN: package names of every row whose need is wanted.
-deps_for() {
-  local col="$1" wanted="|build|required|standard|${COMPOSITOR:-hyprland}|"
-  [[ "$WITH_VOICE" == 1 ]] && wanted+="voice|"
-  [[ "$WITH_DEPTH" == 1 ]] && wanted+="depth|"
-  [[ "$WITH_SDDM" == 1 ]] && wanted+="sddm|"
-  awk -F'\t' -v col="$col" -v wanted="$wanted" '
-    /^#/ || NF < 6 { next }
-    index(wanted, "|" $2 "|") && $col != "-" { n = split($col, p, " "); for (i = 1; i <= n; i++) print p[i] }
-  ' <<<"$DEPS_TSV"
-}
-
-# Packages that clash with common alternatives are skipped when the
-# alternative is there, so pacman never stops at a "remove X?" question.
-arch_skip() {
-  case "$1" in
-  quickshell) has_cmd qs ;;
-  hyprland) has_cmd Hyprland ;;
-  niri) has_cmd niri ;;
-  mangowm) has_cmd mango ;;
-  matugen) has_cmd matugen ;;
-  power-profiles-daemon) pacman -Qq tlp tuned tuned-ppd auto-cpufreq >/dev/null 2>&1 ;;
-  pipewire-pulse) pacman -Qq pulseaudio >/dev/null 2>&1 ;;
-  *) return 1 ;;
+# deps_column: the packages.tsv column of this distribution family.
+deps_column() {
+  case "$DISTRO" in
+  arch) echo 4 ;;
+  fedora) echo 5 ;;
+  suse) echo 6 ;;
+  debian) echo 7 ;;
+  *) echo 0 ;;
   esac
 }
 
-plan_packages_arch() {
-  local p all=() repo=() aur=()
-  mapfile -t all < <(deps_for 4)
-  for p in "${all[@]}"; do
-    if [[ "$p" == aur:* ]]; then
-      [[ "$USE_AUR" == 1 ]] && aur+=("${p#aur:}")
-    elif ! arch_skip "$p"; then
-      repo+=("$p")
+# deps_for COLUMN: package names of every row whose need is wanted. Plain
+# bash: a minimal system may not have awk yet.
+deps_for() {
+  local col="$1" wanted="|build|required|standard|${COMPOSITOR:-hyprland}|" line f p
+  [[ "$WITH_VOICE" == 1 ]] && wanted+="voice|"
+  [[ "$WITH_DEPTH" == 1 ]] && wanted+="depth|"
+  [[ "$WITH_SDDM" == 1 ]] && wanted+="sddm|"
+  while IFS= read -r line; do
+    [[ -z "$line" || "$line" == "#"* ]] && continue
+    IFS=$'\t' read -ra f <<<"$line"
+    ((${#f[@]} >= 6 && col >= 1 && col <= ${#f[@]})) || continue
+    [[ "$wanted" == *"|${f[1]}|"* && "${f[col - 1]}" != "-" ]] || continue
+    for p in ${f[col - 1]}; do printf '%s\n' "$p"; done
+  done <<<"$DEPS_TSV"
+}
+
+# The source builders (scripts/deps/<name>.sh) by package name: a package a
+# distribution release does not carry is built instead.
+SRC_FOR_PKG=" quickshell matugen "
+
+# plan_src NAME: build NAME from source, unless it is there (and no --force).
+plan_src() {
+  local bin="$1"
+  [[ "$1" == quickshell ]] && bin=qs
+  [[ " ${SRC_BUILDS[*]} " == *" $1 "* ]] && return 0
+  has_cmd "$bin" && [[ "$FORCE" == 0 ]] && return 0
+  SRC_BUILDS+=("$1")
+}
+
+# plan_flatpak ID: a Flathub app (per user), and flatpak itself if missing.
+plan_flatpak() {
+  [[ " ${FLATPAKS[*]} " == *" $1 "* ]] && return 0
+  [[ -d "/var/lib/flatpak/app/$1" || -d "$HOME/.local/share/flatpak/app/$1" ]] && return 0
+  FLATPAKS+=("$1")
+}
+
+# Packages that clash with common alternatives. Without --force the planned
+# one is skipped when its rival is installed, so the package manager never
+# stops at a "remove X?" question; with --force it is installed and the
+# rival replaced (REPLACES, shown in the plan).
+clash_rivals() {
+  case "$DISTRO:$1" in
+  arch:power-profiles-daemon) pacman -Qq tlp tuned tuned-ppd auto-cpufreq 2>/dev/null ;;
+  arch:pipewire-pulse) pacman -Qq pulseaudio 2>/dev/null ;;
+  arch:pipewire-jack) pacman -Qq jack2 2>/dev/null ;;
+  fedora:power-profiles-daemon | suse:power-profiles-daemon) rpm -q --qf '%{NAME}\n' tlp tuned-ppd 2>/dev/null | grep -v ' ' ;;
+  debian:power-profiles-daemon) dpkg_installed tlp tuned ;;
+  debian:pipewire-pulse) dpkg_installed pulseaudio ;;
+  esac
+  return 0
+}
+
+# keep_pkg NAME: whether NAME goes into the plan (status 1 = skipped).
+keep_pkg() {
+  local rivals r
+  # A working alternative build (quickshell-git, hyprland-git ...) stays.
+  case "$1" in
+  quickshell) has_cmd qs && return 1 ;;
+  hyprland) has_cmd Hyprland && return 1 ;;
+  niri) has_cmd niri && return 1 ;;
+  mangowm) has_cmd mango && return 1 ;;
+  matugen) has_cmd matugen && return 1 ;;
+  esac
+  rivals="$(clash_rivals "$1")"
+  [[ -z "$rivals" ]] && return 0
+  [[ "$FORCE" == 1 ]] || return 1
+  for r in $rivals; do REPLACES+=("$r>$1"); done
+  return 0
+}
+
+# dpkg_installed NAME...: the installed ones among NAMEs.
+dpkg_installed() {
+  local name status
+  while read -r name status; do
+    [[ "$status" == ii* ]] && printf '%s\n' "$name"
+  done < <(dpkg-query -W -f='${Package} ${db:Status-Abbrev}\n' "$@" 2>/dev/null || true)
+  return 0
+}
+
+# not_installed NAME...: the NAMEs this system does not have yet.
+not_installed() {
+  (($# > 0)) || return 0
+  case "$DISTRO" in
+  arch) pacman -T "$@" 2>/dev/null || true ;;
+  fedora | suse)
+    # whatprovides: names like python3 are capabilities on openSUSE.
+    local line re='^(package (.+) is not installed|no package provides (.+))$'
+    while IFS= read -r line; do
+      [[ "$line" =~ $re ]] && printf '%s\n' "${BASH_REMATCH[2]}${BASH_REMATCH[3]}"
+    done < <(rpm -q --whatprovides "$@" 2>/dev/null || true)
+    ;;
+  debian)
+    local have p
+    have=" $(dpkg_installed "$@" | tr '\n' ' ') "
+    for p in "$@"; do [[ "$have" == *" $p "* ]] || printf '%s\n' "$p"; done
+    ;;
+  esac
+}
+
+# available NAME...: the NAMEs the configured repositories carry. Prints
+# every NAME when that cannot be told (no package index yet): the install
+# step asks again after refreshing it.
+available() {
+  (($# > 0)) || return 0
+  local known="" p line name
+  case "$DISTRO" in
+  arch) known=" $(pacman -Slq 2>/dev/null | tr '\n' ' ') " ;;
+  suse)
+    while IFS='|' read -r _ name _; do
+      name="${name// /}"
+      [[ -n "$name" && "$name" != Name ]] && known+=" $name"
+    done < <(zypper --no-refresh -q search -x -t package "$@" 2>/dev/null || true)
+    [[ -n "$known" ]] && known+=" "
+    # Capabilities (python3) are no package names.
+    for p in "$@"; do
+      [[ -n "$known" && "$known" != *" $p "* ]] &&
+        zypper --no-refresh -q search -x --provides "$p" >/dev/null 2>&1 && known+="$p "
+    done
+    ;;
+  debian)
+    while IFS= read -r line; do
+      if [[ "$line" =~ ^([^[:space:]]+):$ ]]; then
+        name="${BASH_REMATCH[1]}"
+      elif [[ "$line" =~ ^[[:space:]]+Candidate:\ (.+)$ && "${BASH_REMATCH[1]}" != "(none)" ]]; then
+        known+=" $name"
+      fi
+    done < <(apt-cache policy "$@" 2>/dev/null || true)
+    [[ -n "$known" ]] && known+=" "
+    ;;
+  esac
+  if [[ "${known// /}" == "" ]]; then
+    printf '%s\n' "$@"
+    return 0
+  fi
+  for p in "$@"; do [[ "$known" == *" $p "* ]] && printf '%s\n' "$p"; done
+  return 0
+}
+
+# split_available NAME...: PKGS = the available NAMEs; the others go to the
+# AUR (Arch, with a helper), a source build, or UNAVAILABLE.
+split_available() {
+  local p have
+  PKGS=()
+  (($# > 0)) || return 0
+  have=" $(available "$@" | tr '\n' ' ') "
+  for p in "$@"; do
+    if [[ "$have" == *" $p "* ]]; then
+      PKGS+=("$p")
+    elif [[ "$DISTRO" == arch && "$USE_AUR" == 1 ]]; then
+      AUR_PKGS+=("$p")
+    elif [[ "$SRC_FOR_PKG" == *" $p "* ]]; then
+      plan_src "$p"
+    else
+      UNAVAILABLE+=("$p")
     fi
   done
-  # Without a JACK provider pacman would pick jack2; PipeWire's fits.
-  [[ -n "$(pacman -T jack 2>/dev/null)" ]] && repo+=(pipewire-jack)
-  mapfile -t PKGS < <(pacman -T "${repo[@]}" 2>/dev/null | sort -u || true)
-  if [[ ${#aur[@]} -gt 0 ]]; then
-    mapfile -t AUR_PKGS < <(pacman -T "${aur[@]}" 2>/dev/null || true)
-    # The Phosphor font can also come from a user-level copy.
-    if [[ " ${AUR_PKGS[*]} " == *" ttf-phosphor-icons "* ]] && has_phosphor; then
-      AUR_PKGS=("${AUR_PKGS[@]/ttf-phosphor-icons/}")
-      mapfile -t AUR_PKGS < <(printf '%s\n' "${AUR_PKGS[@]}" | grep . || true)
+}
+
+plan_packages() {
+  local p all=() repo=() aur=()
+  mapfile -t all < <(deps_for "$(deps_column)")
+  for p in "${all[@]}"; do
+    case "$p" in
+    aur:*) [[ "$USE_AUR" == 1 ]] && aur+=("${p#aur:}") ;;
+    src:*) plan_src "${p#src:}" ;;
+    flatpak:*) plan_flatpak "${p#flatpak:}" ;;
+    *) keep_pkg "$p" && repo+=("$p") ;;
+    esac
+  done
+  if [[ "$DISTRO" == arch ]]; then
+    # Without a JACK provider pacman would pick jack2; PipeWire's fits.
+    if [[ -n "$(pacman -T jack 2>/dev/null)" ]] || { [[ "$FORCE" == 1 ]] && keep_pkg pipewire-jack; }; then
+      repo+=(pipewire-jack)
     fi
   fi
+  [[ ${#FLATPAKS[@]} -gt 0 ]] && ! has_cmd flatpak && repo+=(flatpak)
+  mapfile -t repo < <(not_installed "${repo[@]}" | sort -u)
+  # Fedora: the COPR is enabled at install time, so its packages cannot be
+  # looked up yet; dnf skips the unavailable ones (see verify_core).
+  if [[ "$DISTRO" == fedora ]]; then PKGS=("${repo[@]}"); else split_available "${repo[@]}"; fi
+  [[ ${#aur[@]} -gt 0 ]] && mapfile -t aur < <(pacman -T "${aur[@]}" 2>/dev/null || true)
+  AUR_PKGS+=("${aur[@]}")
+  # The Phosphor font can also come from a user-level copy.
+  if [[ " ${AUR_PKGS[*]} " == *" ttf-phosphor-icons "* ]] && has_phosphor; then
+    AUR_PKGS=("${AUR_PKGS[@]/ttf-phosphor-icons/}")
+  fi
+  mapfile -t AUR_PKGS < <(printf '%s\n' "${AUR_PKGS[@]}" | grep . | sort -u || true)
   if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
     if has_cmd paru; then
       AUR_HELPER=paru
@@ -990,16 +1186,6 @@ plan_packages_arch() {
       } | grep . | sort -u)
     fi
   fi
-}
-
-plan_packages_fedora() {
-  local all=()
-  mapfile -t all < <(deps_for 5)
-  if has_cmd tlp || has_cmd tuned-adm; then
-    mapfile -t all < <(printf '%s\n' "${all[@]}" | grep -vx power-profiles-daemon)
-  fi
-  # rpm prints "package X is not installed" for each missing one.
-  mapfile -t PKGS < <(rpm -q "${all[@]}" 2>/dev/null | awk '/is not installed/ {print $2}' | sort -u || true)
 }
 
 plan_services() {
@@ -1019,11 +1205,10 @@ plan_services() {
 on_path() { case ":$PATH:" in *":$BIN_DIR:"* | *":${BIN_DIR%/}:"*) return 0 ;; esac; return 1; }
 
 make_plan() {
-  PKGS=() AUR_PKGS=() AUR_HELPER=""
+  PKGS=() AUR_PKGS=() AUR_HELPER="" UNAVAILABLE=() SRC_BUILDS=() REPLACES=() FLATPAKS=()
   if [[ "$INSTALL_DEPS" == 1 ]]; then
     case "$DISTRO" in
-    arch) plan_packages_arch ;;
-    fedora) plan_packages_fedora ;;
+    arch | fedora | suse | debian) plan_packages ;;
     esac
     plan_services
     ADD_INPUT_GROUP=0
@@ -1067,10 +1252,13 @@ show_plan() {
   [[ -n "$old" ]] && ui_box_kv "Cleanup" "remove the old $OLD_DAEMON ($old) once $DAEMON_ID is installed"
   if [[ "$INSTALL_DEPS" == 1 ]]; then
     case "$DISTRO" in
-    arch | fedora)
-      local via="pacman -Syu"
+    arch | fedora | suse | debian)
+      local via="pacman -Syu" r
       [[ "$DISTRO" == arch && "$ASSUME_YES" == 0 && -n "$TTY" ]] && via+=", which asks to confirm"
       [[ "$DISTRO" == fedora ]] && via="dnf, COPR $FEDORA_COPR"
+      [[ "$DISTRO" == suse ]] && via="zypper"
+      [[ "$DISTRO" == debian ]] && via="apt"
+      [[ "$FORCE" == 1 ]] && ui_box_kv "Upgrade" "the whole system first ($(upgrade_cmd)), conflicts resolved (--force)" "$C_YELLOW"
       if [[ ${#PKGS[@]} -eq 0 ]]; then
         ui_box_kv "Packages" "all installed"
       else
@@ -1078,7 +1266,14 @@ show_plan() {
         indented_list "${PKGS[*]}"
       fi
       [[ ${#AUR_PKGS[@]} -gt 0 ]] && ui_box_kv "AUR" "${AUR_PKGS[*]} via $AUR_HELPER"
-      [[ "$DISTRO" == fedora ]] && ui_box_kv "Fonts" "Phosphor icons into ~/.local/share/fonts"
+      [[ ${#FLATPAKS[@]} -gt 0 ]] && ui_box_kv "Flathub" "${FLATPAKS[*]} (per user)"
+      [[ ${#SRC_BUILDS[@]} -gt 0 ]] && ui_box_kv "From source" "${SRC_BUILDS[*]} (not packaged here; built after the sources are fetched)"
+      for r in "${REPLACES[@]}"; do ui_box_kv "Replaces" "${r%%>*} by ${r#*>} (--force)" "$C_YELLOW"; done
+      [[ ${#UNAVAILABLE[@]} -gt 0 ]] &&
+        ui_box_kv "Unavailable" "not packaged for $DISTRO_NAME, left out: ${UNAVAILABLE[*]} ('$APP_ID doctor' names what each one does)" "$C_YELLOW"
+      [[ " ${UNAVAILABLE[*]} " == *" $(comp_pkg "$COMPOSITOR") "* ]] && ! has_cmd "$(comp_bin "$COMPOSITOR")" &&
+        ui_box_kv "Note" "$(comp_name "$COMPOSITOR") itself is not packaged here: install it yourself first, or pick another compositor" "$C_RED"
+      [[ "$DISTRO" != arch ]] && ! has_phosphor && ui_box_kv "Fonts" "Phosphor icons into ~/.local/share/fonts"
       [[ "$DISTRO" == fedora && "$COMPOSITOR" == niri ]] &&
         ui_box_kv "Note" "if dnf cannot find niri or xwayland-satellite: sudo dnf copr enable yalter/niri, then re-run" "$C_YELLOW"
       ;;
@@ -1127,17 +1322,62 @@ confirm_plan() {
 }
 
 # === Steps ===
+CONFLICT_HINT="or re-run with --force to replace conflicting packages and upgrade the system first."
+
+# wait_pacman_lock: another pacman (an update notifier, a second terminal)
+# holds the database; wait for it. A lock nobody holds is left by a crashed
+# pacman: --force removes it.
+wait_pacman_lock() {
+  local lock=/var/lib/pacman/db.lck i
+  [[ -e "$lock" ]] || return 0
+  if has_cmd pgrep && pgrep -x pacman >/dev/null 2>&1; then
+    info "Another pacman is running; waiting for it (up to 5 minutes)."
+    for ((i = 0; i < 60; i++)); do
+      [[ -e "$lock" ]] || return 0
+      sleep 5
+    done
+    die "pacman is still busy ($lock)." "Let it finish, then re-run the installer."
+  fi
+  [[ -e "$lock" ]] || return 0
+  if [[ "$FORCE" == 1 ]]; then
+    would sudo rm -f "$lock"
+    done_or_would "Removed the stale pacman lock" "remove the stale pacman lock $lock"
+  else
+    die "pacman's database is locked ($lock) but no pacman is running." "Remove the stale lock: sudo rm $lock, or re-run with --force."
+  fi
+}
+
+# Old installs fail the upgrade on new signing keys: the keyring goes first
+# (the one partial upgrade Arch recommends).
+refresh_keyring() {
+  local k keys=()
+  for k in archlinux-keyring manjaro-keyring cachyos-keyring endeavouros-keyring; do
+    pacman -Q "$k" >/dev/null 2>&1 && keys+=("$k")
+  done
+  [[ ${#keys[@]} -gt 0 ]] || return 0
+  RUN_SOFT=1 run "Refreshing the signing keys (${keys[*]})" "" retry sudo pacman -Sy --needed --noconfirm "${keys[@]}" || true
+}
+
 install_packages() {
+  local hint
   case "$DISTRO" in
   arch)
+    wait_pacman_lock
+    [[ ${#PKGS[@]} -gt 0 || "$FORCE" == 1 ]] && refresh_keyring
+    hint="Fix the pacman error above, $CONFLICT_HINT"
+    local force=()
+    # --ask=4 answers "yes" to pacman's "X conflicts with Y. Remove Y?".
+    [[ "$FORCE" == 1 ]] && force=(--ask=4)
     # A full upgrade is confirmed by the person unless they said --yes;
     # without a terminal nobody could answer, so that run is a --yes one.
     if [[ ${#PKGS[@]} -gt 0 && "$ASSUME_YES" == 0 && -n "$TTY" ]]; then
-      run_attended "Installing ${#PKGS[@]} packages (pacman)" "Fix the pacman error above, then re-run the installer." \
-        sudo pacman -Syu --needed "${PKGS[@]}"
+      run_attended "Installing ${#PKGS[@]} packages (pacman)" "$hint" \
+        sudo pacman -Syu --needed "${force[@]}" "${PKGS[@]}"
     elif [[ ${#PKGS[@]} -gt 0 ]]; then
-      run "Installing ${#PKGS[@]} packages (pacman)" "Fix the pacman error above, then re-run the installer." \
-        retry sudo pacman -Syu --needed --noconfirm "${PKGS[@]}"
+      run "Installing ${#PKGS[@]} packages (pacman)" "$hint" \
+        retry sudo pacman -Syu --needed --noconfirm "${force[@]}" "${PKGS[@]}"
+    elif [[ "$FORCE" == 1 ]]; then
+      run "Upgrading the system (pacman)" "$hint" retry sudo pacman -Syu --noconfirm "${force[@]}"
     fi
     if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
       if [[ "$AUR_HELPER" == yay* ]] && ! has_cmd yay; then
@@ -1150,15 +1390,102 @@ install_packages() {
     fi
     ;;
   fedora)
+    hint="Fix the dnf error above, $CONFLICT_HINT"
+    # dnf copr is a plugin a minimal install may not have.
+    [[ "$DRY_RUN" == 1 ]] || dnf copr --help >/dev/null 2>&1 ||
+      run "Installing the dnf COPR plugin" "" retry sudo dnf install -y 'dnf-command(copr)'
     run "Enabling COPR $FEDORA_COPR" "" retry sudo dnf copr enable -y "$FEDORA_COPR"
+    [[ "$FORCE" == 1 ]] && run "Upgrading the system (dnf)" "$hint" retry sudo dnf upgrade --refresh -y --allowerasing
     if [[ ${#PKGS[@]} -gt 0 ]]; then
-      local skip=--skip-unavailable
+      local skip=--skip-unavailable force=()
       [[ "$(dnf --version 2>/dev/null)" == dnf5* ]] || skip=--setopt=strict=0
-      run "Installing ${#PKGS[@]} packages (dnf)" "Fix the dnf error above, then re-run the installer." \
-        retry sudo dnf install -y "$skip" --setopt=install_weak_deps=False "${PKGS[@]}"
+      [[ "$FORCE" == 1 ]] && force=(--allowerasing)
+      run "Installing ${#PKGS[@]} packages (dnf)" "$hint" \
+        retry sudo dnf install -y "$skip" "${force[@]}" --setopt=install_weak_deps=False "${PKGS[@]}"
+    fi
+    ;;
+  suse)
+    hint="Fix the zypper error above, $CONFLICT_HINT"
+    local zyp=(sudo env ZYPP_LOCK_TIMEOUT=300 zypper --non-interactive)
+    run "Refreshing the repositories (zypper)" "Check your connection." retry "${zyp[@]}" refresh
+    if [[ "$FORCE" == 1 ]]; then
+      # Tumbleweed upgrades with dup; Leap with update.
+      local up=update
+      grep -qs tumbleweed "$OS_RELEASE" && up=dup
+      run "Upgrading the system (zypper $up)" "$hint" retry "${zyp[@]}" "$up" --auto-agree-with-licenses
+    fi
+    recheck_available
+    if [[ ${#PKGS[@]} -gt 0 ]]; then
+      local force=()
+      [[ "$FORCE" == 1 ]] && force=(--force-resolution)
+      run "Installing ${#PKGS[@]} packages (zypper)" "$hint" \
+        retry "${zyp[@]}" install --auto-agree-with-licenses "${force[@]}" "${PKGS[@]}"
+    fi
+    ;;
+  debian)
+    hint="Fix the apt error above, $CONFLICT_HINT"
+    local apt=(sudo env DEBIAN_FRONTEND=noninteractive apt-get -o DPkg::Lock::Timeout=300 -y)
+    run "Refreshing the package lists (apt)" "Check your connection." retry "${apt[@]}" update
+    if [[ "$FORCE" == 1 ]]; then
+      run "Repairing broken packages (apt)" "$hint" "${apt[@]}" --fix-broken install
+      run "Upgrading the system (apt)" "$hint" retry "${apt[@]}" full-upgrade
+    fi
+    recheck_available
+    if [[ ${#PKGS[@]} -gt 0 ]]; then
+      run "Installing ${#PKGS[@]} packages (apt)" "$hint" retry "${apt[@]}" install "${PKGS[@]}"
     fi
     ;;
   esac
+  verify_core
+}
+
+# recheck_available: the plan may have run without a package index (a fresh
+# system); now that it is refreshed, drop what this release does not carry.
+recheck_available() {
+  [[ "$DRY_RUN" == 1 || ${#PKGS[@]} -eq 0 ]] && return 0
+  local before=("${PKGS[@]}") n=${#UNAVAILABLE[@]}
+  split_available "${before[@]}"
+  ((${#UNAVAILABLE[@]} > n)) && warn "Not packaged for $DISTRO_NAME, skipped: ${UNAVAILABLE[*]:n}"
+  return 0
+}
+
+# verify_core: what the shell cannot start without, after the packages. A
+# missing Quickshell or matugen (dnf skipped it, the AUR was off) is built.
+verify_core() {
+  [[ "$DRY_RUN" == 1 ]] && return 0
+  has_cmd qs || plan_src quickshell
+  has_cmd matugen || plan_src matugen
+}
+
+# build_sources: the scripts/deps/<name>.sh builders, from the checkout.
+build_sources() {
+  local name script args
+  for name in "${SRC_BUILDS[@]}"; do
+    script="$SRC_DIR/scripts/deps/$name.sh" args=()
+    [[ "$name" == quickshell ]] && args=("$DISTRO")
+    [[ "$FORCE" == 1 ]] && args+=(--force)
+    if [[ "$DRY_RUN" == 0 && ! -f "$script" ]]; then
+      warn "This checkout has no $name builder; install $name yourself."
+      FAILED+=("$name")
+      continue
+    fi
+    run_optional "$name" "Building $name from source" "Retry later: bash $script ${args[*]}" bash "$script" "${args[@]}"
+  done
+}
+
+# install_flatpaks: Flathub apps for what a distribution does not package
+# (per user: no sudo, no system remote).
+install_flatpaks() {
+  [[ ${#FLATPAKS[@]} -gt 0 ]] || return 0
+  if [[ "$DRY_RUN" == 0 ]] && ! has_cmd flatpak; then
+    warn "flatpak is not installed; skipped: ${FLATPAKS[*]}"
+    FAILED+=("flatpak apps")
+    return 0
+  fi
+  run_optional "flathub" "Adding Flathub (per user)" "" \
+    flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+  run_optional "flatpak apps" "Installing from Flathub: ${FLATPAKS[*]}" "Retry later: flatpak install --user flathub ${FLATPAKS[*]}" \
+    retry flatpak install --user -y --noninteractive flathub "${FLATPAKS[@]}"
 }
 
 bootstrap_yay() {
@@ -1257,15 +1584,30 @@ sync_repo() {
   fi
 }
 
+# go_switches: whether this go can fetch the toolchain go.mod asks for
+# (Go 1.21+); Debian and Ubuntu ship older ones than the backend needs.
+go_switches() {
+  local v
+  v="$(go version 2>/dev/null)" v="${v#*go version go}" v="${v%% *}"
+  if [[ "$v" =~ ^1\.([0-9]+) ]]; then ((BASH_REMATCH[1] >= 21)); else [[ "$v" =~ ^[2-9]\. ]]; fi
+}
+
 build_backend() {
-  if ! has_cmd go || ! has_cmd make; then
+  if ! has_cmd go || ! has_cmd make || ! go_switches; then
     # Prebuilt binaries are the fallback: they match the sources only when
     # the checkout is at the release they were built from.
-    warn "Go/make are missing; trying the prebuilt release binaries instead."
+    warn "Go 1.21+ or make is missing; trying the prebuilt release binaries instead."
     run "Downloading release binaries" "Install go and make (or drop --no-deps) to build from source." download_release
     return
   fi
-  run "Building $APP_ID and $DAEMON_ID ($(go version | awk '{print $3}'))" "Report the build error above as an issue." make -C "$SRC_DIR" build
+  local ver
+  ver="$(go version)" ver="${ver#go version }" ver="${ver%% *}"
+  # Distributions pin GOTOOLCHAIN=local in their go.env; auto lets an older
+  # go download the version go.mod names (an explicit setting wins).
+  if ! GOTOOLCHAIN="${GOTOOLCHAIN:-auto}" RUN_SOFT=1 run "Building $APP_ID and $DAEMON_ID ($ver)" "" make -C "$SRC_DIR" build; then
+    run "Downloading release binaries instead" "Report the build error above as an issue." download_release
+    return
+  fi
   if [[ "$DRY_RUN" == 0 && -d "$SRC_DIR/backend/cmd/$DAEMON_ID" && ! -x "$SRC_DIR/$DAEMON_ID" ]]; then
     run "Building $DAEMON_ID" "" bash -c "cd '$SRC_DIR/backend' && go build -o '../$DAEMON_ID' './cmd/$DAEMON_ID'"
   fi
@@ -1747,9 +2089,11 @@ main() {
 
   if [[ "$INSTALL_DEPS" == 1 ]]; then
     step "Packages"
-    [[ ${#PKGS[@]} -gt 0 || ${#AUR_PKGS[@]} -gt 0 || "$DISTRO" == fedora ]] && need_sudo
+    [[ ${#PKGS[@]} -gt 0 || ${#AUR_PKGS[@]} -gt 0 || ${#SRC_BUILDS[@]} -gt 0 || "$FORCE" == 1 ||
+      " fedora suse debian " == *" $DISTRO "* ]] && need_sudo
     install_packages
     install_phosphor
+    install_flatpaks
     if [[ ${#SERVICES[@]} -gt 0 || "$ADD_INPUT_GROUP" == 1 ]]; then
       step "System"
       need_sudo
@@ -1762,6 +2106,11 @@ main() {
   [[ "$LINK_BINS" == 1 ]] && need_sudo
   helper_sudo
   sync_repo
+  if [[ ${#SRC_BUILDS[@]} -gt 0 ]]; then
+    step "Building what $DISTRO_NAME does not package"
+    build_sources
+    step "$DISPLAY_NAME"
+  fi
   build_backend
   install_binaries
   install_sys_helper

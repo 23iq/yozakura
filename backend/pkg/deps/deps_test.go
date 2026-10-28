@@ -25,6 +25,14 @@ func TestTableParses(t *testing.T) {
 		if len(d.Arch) == 0 && d.ID != "phosphor-icons" && d.ID != "yozd" {
 			t.Errorf("%s: no Arch package", d.ID)
 		}
+		// Every distro has a way to get what the shell cannot start without.
+		if d.Need == NeedRequired && d.ID != "phosphor-icons" && d.ID != "yozd" {
+			for _, distro := range []string{"arch", "fedora", "suse", "debian"} {
+				if len(d.Packages(distro)) == 0 {
+					t.Errorf("%s: required but nothing installs it on %s", d.ID, distro)
+				}
+			}
+		}
 	}
 	for _, id := range []string{"hyprland", "yozd", "quickshell", "matugen", "portal-hyprland", "polkit-agent", "pipewire", "networkmanager", "bluez"} {
 		if !seen[id] {
@@ -68,7 +76,7 @@ func fakeChecker(cmds, files []string, fonts string) *Checker {
 }
 
 func TestPresentAlternatives(t *testing.T) {
-	c := fakeChecker([]string{"kdialog"}, []string{"/usr/share/x"}, "Phosphor-Bold\n")
+	c := fakeChecker([]string{"kdialog"}, []string{"/usr/share/x", "/var/lib/flatpak/app/org.example.App"}, "Phosphor-Bold\n")
 	cases := []struct {
 		dep  Dep
 		want bool
@@ -78,6 +86,8 @@ func TestPresentAlternatives(t *testing.T) {
 		{Dep{Checks: []string{"/usr/share/x"}}, true},
 		{Dep{Checks: []string{"font:Phosphor"}}, true},
 		{Dep{Checks: []string{"font:Noto"}}, false},
+		{Dep{Checks: []string{"flatpak:org.example.App"}}, true},
+		{Dep{Checks: []string{"flatpak:org.example.Gone"}}, false},
 		{Dep{Arch: []string{"present"}}, true},
 		{Dep{Arch: []string{"present", "absent"}}, false},
 	}
@@ -90,12 +100,15 @@ func TestPresentAlternatives(t *testing.T) {
 
 func TestDistroFromOSRelease(t *testing.T) {
 	for text, want := range map[string]string{
-		"ID=arch\n":                       "arch",
-		"ID=endeavouros\nID_LIKE=arch\n":  "arch",
-		"ID=fedora\n":                     "fedora",
-		"ID=nobara\nID_LIKE=\"fedora\"\n": "fedora",
-		"ID=nixos\n":                      "nixos",
-		"ID=ubuntu\nID_LIKE=debian\n":     "other",
+		"ID=arch\n":                                           "arch",
+		"ID=endeavouros\nID_LIKE=arch\n":                      "arch",
+		"ID=fedora\n":                                         "fedora",
+		"ID=nobara\nID_LIKE=\"fedora\"\n":                     "fedora",
+		"ID=nixos\n":                                          "nixos",
+		"ID=ubuntu\nID_LIKE=debian\n":                         "debian",
+		"ID=linuxmint\nID_LIKE=\"ubuntu debian\"\n":           "debian",
+		"ID=opensuse-tumbleweed\nID_LIKE=\"opensuse suse\"\n": "suse",
+		"ID=void\n":                                           "other",
 	} {
 		if got := distroFromOSRelease(text); got != want {
 			t.Errorf("%q: got %s want %s", text, got, want)
@@ -107,6 +120,13 @@ func TestInstallHint(t *testing.T) {
 	h := InstallHint("arch", []string{"cava", "aur:ttf-phosphor-icons"})
 	if !strings.Contains(h, "pacman -S --needed cava") || !strings.Contains(h, "paru -S ttf-phosphor-icons") {
 		t.Fatalf("unexpected hint %q", h)
+	}
+	h = InstallHint("debian", []string{"cava", "src:quickshell"})
+	if !strings.Contains(h, "apt install cava") || !strings.Contains(h, "builds quickshell from source") {
+		t.Fatalf("unexpected debian hint %q", h)
+	}
+	if !strings.Contains(InstallHint("suse", []string{"cava"}), "zypper install cava") {
+		t.Fatal("no zypper hint")
 	}
 	if InstallHint("other", []string{"x"}) != "" {
 		t.Fatal("no hint expected for unknown distros")
@@ -167,7 +187,7 @@ func TestCompositorRowsAreNotOptional(t *testing.T) {
 }
 
 func TestParseCompositorNeed(t *testing.T) {
-	ds, err := Parse("niri\tniri\tniri\tniri\tniri\tx\n")
+	ds, err := Parse("niri\tniri\tniri\tniri\tniri\tniri\tniri\tx\n")
 	if err != nil || len(ds) != 1 || !ds[0].CompositorScoped() {
 		t.Fatalf("got %v %v", ds, err)
 	}
