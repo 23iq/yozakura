@@ -75,7 +75,7 @@ var ACTION_CATALOG = [
     { id: BrandActions.action("launcher"), label: "Open Launcher", category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("run", "launcher"), flags: "r" },
     { id: BrandActions.action("dashboard"), label: "Open Dashboard", category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("run", "dashboard") },
     { id: BrandActions.action("assistant"), label: "Open Assistant", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "assistant") },
-    { id: BrandActions.action("ai-quickask"), label: "AI Quick Ask (notch)", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-quickask") },
+    { id: BrandActions.action("ai-quickask"), label: "AI Quick Ask", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-quickask") },
     { id: BrandActions.action("ai-selection"), label: "AI Selection Actions", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-selection") },
     { id: BrandActions.action("ai-region"), label: "AI Ask About Screen Region", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-region") },
     { id: BrandActions.action("ai-agent"), label: "AI Agent (Code space)", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-agent") },

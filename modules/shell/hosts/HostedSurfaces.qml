@@ -6,9 +6,11 @@ import qs.modules.shell.hosts
 import qs.modules.widgets.dashboard
 import qs.modules.widgets.launcher
 import qs.modules.keybinds
+import qs.modules.aicenter.quickask
+import qs.modules.components.kit
 
-// Per-screen owner of the spotlight and sheet hosts (launcher, dashboard,
-// keybind cheatsheet). Watches this screen's Visibilities flags through
+// Per-screen owner of the spotlight, sheet and card hosts (launcher,
+// dashboard, keybind cheatsheet, AI quick ask). Watches this screen's Visibilities flags through
 // HostRouter and opens/closes the host that shows the module; hosts and views are created on first use and kept, like the
 // notch's persistent views. A host's requestClose clears the flags.
 Scope {
@@ -18,20 +20,24 @@ Scope {
     readonly property var vis: root.screen ? Visibilities.getForScreen(root.screen.name) : null
     readonly property string spotlightModule: HostRouter.moduleIn(root.vis, "spotlight")
     readonly property string sheetModule: HostRouter.moduleIn(root.vis, "sheet")
+    readonly property string cardModule: HostRouter.moduleIn(root.vis, "card")
 
     // For tests and callers: the host instances once created.
     readonly property var spotlight: spotlightLoader.item
     readonly property var sheet: sheetLoader.item
+    readonly property var card: cardLoader.item
 
     onSpotlightModuleChanged: root.route(spotlightLoader, root.spotlightModule)
     onSheetModuleChanged: root.route(sheetLoader, root.sheetModule)
+    onCardModuleChanged: root.route(cardLoader, root.cardModule)
     Component.onCompleted: {
         root.route(spotlightLoader, root.spotlightModule);
         root.route(sheetLoader, root.sheetModule);
+        root.route(cardLoader, root.cardModule);
     }
 
     function viewFor(module: string): var {
-        const loader = module === "dashboard" ? dashboardLoader : module === "cheatsheet" ? cheatsheetLoader : launcherLoader;
+        const loader = module === "dashboard" ? dashboardLoader : module === "cheatsheet" ? cheatsheetLoader : module === "aiquick" ? quickAskLoader : launcherLoader;
         loader.active = true;
         return loader.item;
     }
@@ -84,6 +90,17 @@ Scope {
         }
     }
 
+    // AI quick ask off the notch (layout.aiquick.host: card | spotlight)
+    Loader {
+        id: quickAskLoader
+        active: false
+        sourceComponent: Component {
+            QuickAskCard {
+                visible: false
+            }
+        }
+    }
+
     Loader {
         id: spotlightLoader
         active: false
@@ -101,6 +118,18 @@ Scope {
         sourceComponent: Component {
             SheetHost {
                 screen: root.screen
+                onRequestClose: root.dismiss()
+            }
+        }
+    }
+
+    Loader {
+        id: cardLoader
+        active: false
+        sourceComponent: Component {
+            CardHost {
+                screen: root.screen
+                padding: Space.m
                 onRequestClose: root.dismiss()
             }
         }

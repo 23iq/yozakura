@@ -84,15 +84,15 @@ var keys = {
         "description": "AI quick ask placement."
     },
     "aiquick.host": {
-        "enum": ["auto", "notch", "card"],
-        "description": "Where the AI quick ask opens: auto (the notch while it is enabled, else a floating card), in the notch, or a floating card (not built yet: shown as spotlight)."
+        "enum": ["auto", "notch", "card", "spotlight"],
+        "description": "Where the AI quick ask opens: auto (the notch while it is enabled, else a floating card), in the notch, a small floating card beside the bar, or centered (spotlight). Unknown values behave like auto; notch while the notch is disabled shows as auto would."
     },
     "panels": {
         "description": "Placement of the notch's own panels (voice, timer hub, alarm)."
     },
     "panels.host": {
         "enum": ["auto", "notch", "card"],
-        "description": "Where the voice, timer hub and alarm panels open: auto (the notch while it is enabled, else a floating card), in the notch, or a floating card (not built yet: shown as spotlight)."
+        "description": "Where the voice, timer hub and alarm panels open: auto (the notch while it is enabled, else a floating card), in the notch, or a small floating card beside the bar. Unknown values behave like auto; notch while the notch is disabled shows as auto would."
     },
     "cheatsheet": {
         "description": "Keybind cheatsheet placement."
@@ -110,7 +110,7 @@ var keys = {
     },
     "osd.style": {
         "enum": ["pill", "edge", "island", "bar-inline", "gauge"],
-        "description": "OSD look: pill, a slim bar on the screen edge, inside the notch island, inline in the bar, or a gauge (a needle dial instrument)."
+        "description": "OSD look: pill, a slim bar on the screen edge, inside the notch island (an island-shaped pill on its own while the notch is off), inline in the bar, or a gauge (a needle dial instrument)."
     },
     "osd.timeout": {
         "min": 800,

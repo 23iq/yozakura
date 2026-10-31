@@ -46,7 +46,7 @@ var catalog = []ActionSpec{
 	{ID: brand.Action("launcher"), Label: "Open Launcher", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "launcher"), Flags: "r"},
 	{ID: brand.Action("dashboard"), Label: "Open Dashboard", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "dashboard")},
 	{ID: brand.Action("assistant"), Label: "Open Assistant", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "assistant")},
-	{ID: brand.Action("ai-quickask"), Label: "AI Quick Ask (notch)", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "ai-quickask")},
+	{ID: brand.Action("ai-quickask"), Label: "AI Quick Ask", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "ai-quickask")},
 	{ID: brand.Action("ai-selection"), Label: "AI Selection Actions", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "ai-selection")},
 	{ID: brand.Action("ai-region"), Label: "AI Ask About Screen Region", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "ai-region")},
 	{ID: brand.Action("ai-agent"), Label: "AI Agent (Code space)", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "ai-agent")},

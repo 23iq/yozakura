@@ -28,7 +28,6 @@ Item {
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
     readonly property bool isScreenFocused: YozdService.focusedMonitor && YozdService.focusedMonitor.name === screen.name
 
-    // Monitor reference and refrence to toplevels on monitor
     readonly property var compositorMonitor: YozdService.monitorFor(screen)
     readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !YozdService.clients.values) ? [] : YozdService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
 
@@ -194,12 +193,13 @@ Item {
     // The hitbox for the mask
     readonly property Item notchHitbox: root.reveal ? notchHoverArea : notchHoverRegion
 
-    // Default view component - user@host text
+    // Resting view; auto panels off the notch: PanelSurfaces (layout.panels.host)
     Component {
         id: defaultViewComponent
         DefaultView {
             screenName: root.screen.name
             revealed: root.reveal
+            ownsAutoPanels: (HostRouter.panelsHost ?? "notch") === "notch"
         }
     }
 

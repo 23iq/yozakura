@@ -180,6 +180,16 @@ ShellRoot {
         }
     }
 
+    // Voice / timers hub / alarm off the notch (layout.panels.host: card)
+    Variants {
+        model: Quickshell.screens
+
+        PanelSurfaces {
+            required property ShellScreen modelData
+            screen: modelData
+        }
+    }
+
     // Power/tools menus off the notch (layout.powermenu/tools.style)
     Variants {
         model: Quickshell.screens

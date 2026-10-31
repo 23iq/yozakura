@@ -62,6 +62,9 @@ Item {
     function availability(ctx) {
         return NotchPanels.availability(ctx);
     }
+    function autoContext(state) {
+        return NotchPanels.autoContext(state);
+    }
 
     function toggle(id) {
         if (controller.suspended || controller.autoTarget !== "")

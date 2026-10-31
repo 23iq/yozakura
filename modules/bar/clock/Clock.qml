@@ -158,7 +158,8 @@ Item {
         }
 
         // system.timers.clockClick: the left button opens the clock panel
-        // or the notch timers hub, the right button the other one
+        // or the timers hub (the notch or a card, layout.panels.host), the
+        // right button the other one
         MouseArea {
             anchors.fill: parent
             hoverEnabled: false

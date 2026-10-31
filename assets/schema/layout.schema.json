@@ -489,15 +489,29 @@
       "description": "AI quick ask placement.",
       "properties": {
         "host": {
-          "title": "Host",
+          "title": "AI quick ask opens in",
           "type": "string",
           "default": "auto",
-          "description": "Where the AI quick ask opens: auto (the notch while it is enabled, else a floating card), in the notch, or a floating card (not built yet: shown as spotlight).",
+          "description": "Notch: inside the island. Card: a small floating card beside the bar. Spotlight: centered over the screen.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.aiquick_host",
+            "control": "selector",
+            "keywords": "ai quick ask host card floating spotlight notch island"
+          },
           "enum": [
             "auto",
             "notch",
-            "card"
-          ]
+            "card",
+            "spotlight"
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "notch": "Notch",
+            "card": "Card",
+            "spotlight": "Spotlight"
+          }
         }
       },
       "additionalProperties": false
@@ -508,15 +522,27 @@
       "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
       "properties": {
         "host": {
-          "title": "Host",
+          "title": "Voice, timers and alarm open in",
           "type": "string",
           "default": "auto",
-          "description": "Where the voice, timer hub and alarm panels open: auto (the notch while it is enabled, else a floating card), in the notch, or a floating card (not built yet: shown as spotlight).",
+          "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
+          "x-settings": {
+            "category": "layout",
+            "section": "hosts",
+            "label": "prefs.layout.panels_host",
+            "control": "selector",
+            "keywords": "voice dictation timer hub alarm panels host card floating notch island"
+          },
           "enum": [
             "auto",
             "notch",
             "card"
-          ]
+          ],
+          "x-enumLabels": {
+            "auto": "Auto",
+            "notch": "Notch",
+            "card": "Card"
+          }
         }
       },
       "additionalProperties": false

@@ -29,6 +29,13 @@ var HOSTS = [
     }
 ];
 
+// The small floating card beside the bar (CardHost)
+var CARD = {
+    "value": "card",
+    "label": "prefs.layout.host.card",
+    "icon": "appWindow"
+};
+
 // The hosts the side and the backdrop apply to: shown only while one of the
 // surfaces opens there (SheetHost / SpotlightHost).
 var HOST_KEYS = ["layout.launcher.host", "layout.dashboard.host", "layout.cheatsheet.host"];
@@ -109,6 +116,24 @@ var category = {
                     "label": "prefs.layout.dashboard_host",
                     "description": "prefs.layout.dashboard_host.desc",
                     "keywords": "dashboard host spotlight sheet notch side panel"
+                },
+                {
+                    "key": "layout.aiquick.host",
+                    "type": "selector",
+                    "options": HOSTS.slice(0, 2).concat([CARD, HOSTS[2]]),
+                    "surface": "aiquick",
+                    "label": "prefs.layout.aiquick_host",
+                    "description": "prefs.layout.aiquick_host.desc",
+                    "keywords": "ai quick ask host card floating spotlight notch island"
+                },
+                {
+                    "key": "layout.panels.host",
+                    "type": "selector",
+                    "options": HOSTS.slice(0, 2).concat([CARD]),
+                    "surface": "panels",
+                    "label": "prefs.layout.panels_host",
+                    "description": "prefs.layout.panels_host.desc",
+                    "keywords": "voice dictation timer hub alarm panels host card floating notch island"
                 },
                 {
                     "key": "layout.sheet.side",

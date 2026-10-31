@@ -605,7 +605,7 @@
           "title": "Quick ask in the notch",
           "type": "boolean",
           "default": true,
-          "description": "Bind “AI Quick Ask” to ask from the notch without opening the sidebar.",
+          "description": "Bind “AI Quick Ask” to ask without opening the sidebar; it opens where Layout places it (the notch, a card or the spotlight).",
           "x-settings": {
             "category": "ai",
             "section": "quickask",
