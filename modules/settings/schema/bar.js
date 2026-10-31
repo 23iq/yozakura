@@ -145,12 +145,13 @@ var category = {
                     "type": "selector",
                     "label": "prefs.bar.clock_face",
                     "description": "prefs.bar.clock_face.desc",
-                    "keywords": "clock face style digital stacked dot matrix led kanji japanese",
+                    "keywords": "clock face style digital stacked dot matrix led lcd seven segment kanji japanese",
                     "options": [
                         { "value": "digital", "label": "prefs.bar.clock_face.digital" },
                         { "value": "stacked", "label": "prefs.bar.clock_face.stacked" },
                         { "value": "dotMatrix", "label": "prefs.bar.clock_face.dotMatrix" },
-                        { "value": "kanji", "label": "prefs.bar.clock_face.kanji" }
+                        { "value": "kanji", "label": "prefs.bar.clock_face.kanji" },
+                        { "value": "segment", "label": "prefs.bar.clock_face.segment" }
                     ]
                 },
                 {

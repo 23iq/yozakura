@@ -68,6 +68,7 @@ var PREVIEWS = {
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
     "WindowsPreview": "previews/WindowsPreview.qml",
+    "OsdPreview": "previews/OsdPreview.qml",
     "LayoutPreview": "layout/LayoutPreview.qml"
 };
 

@@ -3,12 +3,13 @@
 // OSD style registry and the small pure helpers the styles share. Each style
 // is its own component under styles/; OSD.qml loads one through a Loader.
 
-var STYLES = ["pill", "edge", "island", "bar-inline"];
+var STYLES = ["pill", "edge", "island", "bar-inline", "gauge"];
 var FILES = {
     "pill": "styles/OsdPill.qml",
     "edge": "styles/OsdEdge.qml",
     "island": "styles/OsdIsland.qml",
-    "bar-inline": "styles/OsdBarInline.qml"
+    "bar-inline": "styles/OsdBarInline.qml",
+    "gauge": "styles/OsdGauge.qml"
 };
 
 function normalize(style) {
@@ -49,6 +50,9 @@ function sizeFor(style, vertical, osdW) {
         return vertical ? { "w": 56, "h": Math.round(w * 1.1) } : { "w": w, "h": 56 };
     case "island":
         return { "w": Math.round(w * 0.82), "h": 44 };
+    case "gauge":
+        // An upright instrument on every edge.
+        return { "w": Math.round(w * 0.76), "h": Math.round(w * 0.76 * 0.98) };
     default:
         return vertical ? { "w": 52, "h": Math.round(w * 0.9) } : { "w": w, "h": 52 };
     }

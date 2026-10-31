@@ -3257,19 +3257,21 @@
                     "section": "clock",
                     "label": "prefs.bar.clock_face",
                     "control": "selector",
-                    "keywords": "clock face style digital stacked dot matrix led kanji japanese"
+                    "keywords": "clock face style digital stacked dot matrix led lcd seven segment kanji japanese"
                   },
                   "enum": [
                     "digital",
                     "stacked",
                     "dotMatrix",
-                    "kanji"
+                    "kanji",
+                    "segment"
                   ],
                   "x-enumLabels": {
                     "digital": "Digital",
                     "stacked": "Stacked",
                     "dotMatrix": "Dot matrix",
-                    "kanji": "Kanji (十時 二十五分)"
+                    "kanji": "Kanji (十時 二十五分)",
+                    "segment": "Segment LCD"
                   }
                 },
                 "pomodoroStyle": {
@@ -4951,7 +4953,8 @@
           },
           "enum": [
             "yozakura",
-            "poster"
+            "poster",
+            "segment"
           ]
         },
         "depthClockPosition": {
@@ -6580,19 +6583,22 @@
                 "section": "osd",
                 "label": "prefs.osd.style",
                 "control": "selector",
-                "keywords": "osd volume brightness on screen display pill island bar edge indicator"
+                "preview": "OsdPreview",
+                "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
               },
               "enum": [
                 "pill",
                 "edge",
                 "island",
-                "bar-inline"
+                "bar-inline",
+                "gauge"
               ],
               "x-enumLabels": {
                 "pill": "Pill",
                 "edge": "Edge bar",
                 "island": "Island",
-                "bar-inline": "In the bar"
+                "bar-inline": "In the bar",
+                "gauge": "Gauge"
               }
             },
             "timeout": {
@@ -9757,25 +9763,27 @@
           "title": "Visual style",
           "type": "string",
           "default": "ink",
-          "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, or the classic surface variants",
+          "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, the classic surface variants, or a hardware device with knobs and segment readouts",
           "x-settings": {
             "category": "appearance",
             "section": "mode",
             "label": "prefs.appearance.language",
             "control": "selector",
-            "keywords": "visual language style ink glass tiles solid classic look kit"
+            "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit"
           },
           "enum": [
             "ink",
             "glass",
             "tiles",
-            "classic"
+            "classic",
+            "device"
           ],
           "x-enumLabels": {
             "ink": "Ink",
             "glass": "Glass",
             "tiles": "Tiles",
-            "classic": "Classic"
+            "classic": "Classic",
+            "device": "Device"
           }
         },
         "shape": {

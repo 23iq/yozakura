@@ -53,6 +53,7 @@ Window {{
         ClockFace {{ objectName: "vFace"; face: "digital"; vertical: true; now: new Date(2026, 9, 6, 10, 25) }}
         ClockFace {{ objectName: "kFace"; face: "kanji"; now: new Date(2026, 9, 6, 10, 25) }}
         ClockFace {{ objectName: "dFace"; face: "dotMatrix"; now: new Date(2026, 9, 6, 10, 25) }}
+        ClockFace {{ objectName: "sFace"; face: "segment"; now: new Date(2026, 9, 6, 10, 25) }}
         Item {{ width: 120; height: 36; PomodoroIndicator {{ objectName: "ring"; style: "ring"; pomodoro: {json.dumps(POMODORO)} }} }}
         Item {{ width: 120; height: 36; PomodoroIndicator {{ objectName: "underline"; anchors.fill: parent; slot: "overlay"; style: "underline"; pomodoro: {json.dumps(POMODORO)} }} }}
         Item {{ width: 120; height: 36; PomodoroIndicator {{ objectName: "countdown"; style: "countdown"; pomodoro: {json.dumps(POMODORO)} }} }}
@@ -94,7 +95,8 @@ check(h.eval(item("vFace"), "faceId") == "stacked", "vertical bar uses stacked")
 check(h.eval(win, "findItem('faceStacked', findItem('vFace')) !== null"), "stacked face loaded")
 check(h.eval(item("faceKanji"), "text") == "十時 二十五分", "kanji 10:25")
 check(h.eval(item("faceDotMatrix"), "implicitWidth") > 0, "dot matrix has a size")
-for name in ("hFace", "vFace", "kFace", "dFace"):
+check(h.eval(item("faceSegment"), "implicitWidth") > 0, "segment digits have a size")
+for name in ("hFace", "vFace", "kFace", "dFace", "sFace"):
     check(h.eval(item(name), "implicitWidth") > 0, name + " sized")
 
 # Pomodoro styles: each shows the phase progress; island and idle show nothing.

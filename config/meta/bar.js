@@ -154,8 +154,8 @@ var keys = {
         "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
     },
     "moduleOptions.clock.face": {
-        "enum": ["digital", "stacked", "dotMatrix", "kanji"],
-        "description": "Clock face: digital text, hours over minutes, 3x5 dot matrix or Japanese numerals (十時 二十五分). A vertical bar shows digital as stacked."
+        "enum": ["digital", "stacked", "dotMatrix", "kanji", "segment"],
+        "description": "Clock face: digital text, hours over minutes, 3x5 dot matrix, Japanese numerals (十時 二十五分) or seven-segment LCD digits. A vertical bar shows digital as stacked."
     },
     "moduleOptions.clock.pomodoroStyle": {
         "enum": ["ring", "underline", "countdown", "island"],

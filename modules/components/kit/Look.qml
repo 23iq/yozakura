@@ -16,6 +16,7 @@ QtObject {
     readonly property var spec: VisualLanguage.kit(Config.theme.language)
     readonly property var group: root.spec.group
     readonly property var control: root.spec.control
+    readonly property var instrument: VisualLanguage.instrument(Config.theme.language)
 
     function alpha(role: string, a: real): color {
         if (role === "" || a <= 0)
@@ -31,6 +32,8 @@ QtObject {
     readonly property color groupFill: root.alpha(root.group.fill, root.group.fillOpacity)
     readonly property color groupOutline: root.alpha("overBackground", root.group.outline)
     readonly property color groupHighlight: Qt.rgba(1, 1, 1, root.group.highlight)
+    // Dark bottom edge of a bevelled box (device), transparent elsewhere.
+    readonly property color groupShade: root.alpha("shadow", root.group.shade || 0)
     readonly property int groupRadius: ({
             "card": Space.controlRadius + 4,
             "small": Space.smallRadius
@@ -95,6 +98,20 @@ QtObject {
     function bigRadius(h: real): real {
         return Space.clampRadius(root.squareControls ? Space.controlRadius : Space.surfaceRadius, h);
     }
+
+    // Instruments (VisualLanguage.instrument): how level controls, live
+    // numbers and active tiles draw, and the inset screen behind readouts.
+    //   levelControl  "slider" | "knob"     (LevelSlider)
+    //   readout       "text" | "segment"    (live numbers)
+    //   ledIndicator  an active Tile lights an LED instead of a solid fill
+    readonly property string levelControl: root.instrument.levelControl
+    readonly property string readout: root.instrument.readout
+    readonly property bool ledIndicator: root.instrument.indicator === "led"
+    readonly property color wellFill: root.alpha(root.instrument.well.fill, root.instrument.well.opacity)
+    // Inner shadow along the top edge of a well.
+    readonly property color wellEdge: root.alpha("shadow", root.instrument.well.edge)
+    readonly property bool monoLabels: root.instrument.label.mono
+    readonly property real labelTracking: root.instrument.label.tracking
 
     // Opacity of the accent tint that marks a selected / active item
     // (KitStates "active"): for lists that draw their own selection box.

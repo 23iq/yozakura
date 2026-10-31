@@ -85,9 +85,37 @@ test('kit float: glass is a translucent box with a hairline, tiles a solid tile,
     assert.equal(V.kit('classic').float, null);
 });
 
+test('device: matte solid boxes with a 1px edge, bevelled groups, square controls', () => {
+    const out = plain(V.apply('device', 'pane', pane));
+    assert.equal(out.opacity, 1);
+    assert.equal(out.border[1], 1);
+    const kit = plain(V.kit('device'));
+    assert.equal(kit.group.fillOpacity, 1);
+    assert.ok(kit.group.highlight > 0 && kit.group.shade > 0, 'a bevel: light top, dark bottom');
+    assert.equal(kit.group.radius, 'small');
+    assert.equal(kit.control.shape, 'square');
+    assert.equal(kit.control.solidActive, false, 'the accent is kept for live values');
+});
+
+test('instrument tokens: device turns knobs, segments and LEDs on, others keep the defaults', () => {
+    const dev = plain(V.instrument('device'));
+    assert.equal(dev.levelControl, 'knob');
+    assert.equal(dev.readout, 'segment');
+    assert.equal(dev.indicator, 'led');
+    assert.equal(dev.label.mono, true);
+    assert.ok(dev.well.opacity > 0 && dev.well.edge > 0);
+    for (const lang of ['ink', 'glass', 'tiles', 'classic', 'chrome']) {
+        const i = plain(V.instrument(lang));
+        assert.equal(i.levelControl, 'slider', lang);
+        assert.equal(i.readout, 'text', lang);
+        assert.equal(i.indicator, 'fill', lang);
+        assert.equal(i.label.mono, false, lang);
+    }
+});
+
 test('kit window: only glass draws a translucent window background', () => {
     const glass = V.kit('glass').window;
     assert.ok(glass.fillOpacity > 0 && glass.fillOpacity < 1);
-    for (const lang of ['ink', 'tiles', 'classic'])
+    for (const lang of ['ink', 'tiles', 'classic', 'device'])
         assert.equal(V.kit(lang).window, null);
 });

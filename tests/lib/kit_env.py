@@ -13,7 +13,7 @@ import shutil
 from qmlharness import REPO  # first: enters the headless platform
 from settings_env import SettingsEnv
 
-LANGUAGES = ["ink", "glass", "tiles"]
+LANGUAGES = ["ink", "glass", "tiles", "device"]
 
 
 class KitEnv(SettingsEnv):

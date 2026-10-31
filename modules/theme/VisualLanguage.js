@@ -9,9 +9,11 @@
 //   glass    translucent inner cards with a hairline edge
 //   tiles    solid, flat inner tiles with tight corners
 //   classic  the variants exactly as configured
+//   device   a hardware instrument: matte solid boxes with a crisp 1px
+//            edge instead of blur, tight corners
 // Unit tested in tests/visual-language.test.cjs.
 
-var LANGUAGES = ["ink", "glass", "tiles", "classic"];
+var LANGUAGES = ["ink", "glass", "tiles", "classic", "device"];
 var DEFAULT = "ink";
 
 // Roles drawn inside a surface (never the surface itself: bg, popup, barbg,
@@ -85,11 +87,11 @@ function apply(lang, variant, cfg) {
         }
         return cfg;
     }
-    // tiles: flat, solid inner tiles
+    // tiles: flat, solid inner tiles; device: the same, with a 1px edge
     if (CONTAINERS[variant] || GHOSTS[variant]) {
         out = copy(cfg);
         out.opacity = 1;
-        out.border = withBorder(cfg, 0);
+        out.border = withBorder(cfg, l === "device" ? 1 : 0);
         return out;
     }
     return cfg;
@@ -114,6 +116,14 @@ function apply(lang, variant, cfg) {
 //   light     theme.lighting (Lighting.qml): `edge` = strength of the lit
 //             top edge of shell surfaces (0: the language draws no edges),
 //             `lantern` = peak alpha of the cursor lantern glow
+//   group.shade  dark alpha of the bottom edge (a bevel with `highlight`)
+//   instrument   how big controls draw (missing: the soft defaults):
+//             levelControl "slider" | "knob" (LevelSlider), readout "text"
+//             | "segment" (live numbers: 7-segment digits), indicator
+//             "fill" | "led" (an active Tile: a solid accent fill or a lit
+//             LED on the matte tile), well {fill, opacity, edge}: the inset
+//             screen behind a readout, label {mono, tracking}: section
+//             labels in the mono font, letter spacing as a share of the size
 var KIT = {
     "ink": {
         group: { fill: "", fillOpacity: 0, outline: 0, highlight: 0, radius: "none", padding: "", gap: "l", inset: "l", divider: true },
@@ -139,6 +149,22 @@ var KIT = {
         window: null,
         light: { edge: 0.12, lantern: 0.09 }
     },
+    "device": {
+        group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0.09, highlight: 0.05, shade: 0.24, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
+        dividers: true,
+        control: { fill: "surfaceContainerHigh", rest: 1, hoverFill: "surfaceContainerHighest", hover: 1, edge: 0.1, shape: "square", weight: 500, activeWeight: 600, solidActive: false },
+        float: { fill: "surfaceContainer", fillOpacity: 1, outline: 0.12, highlight: 0.06 },
+        window: null,
+        // matte hardware: a thin machined top edge, a dim lantern
+        light: { edge: 0.18, lantern: 0.07 },
+        instrument: {
+            levelControl: "knob",
+            readout: "segment",
+            indicator: "led",
+            well: { fill: "surfaceContainerLowest", opacity: 1, edge: 0.32 },
+            label: { mono: true, tracking: 0.2 }
+        }
+    },
     "classic": {
         group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "l", divider: false },
         dividers: true,
@@ -149,6 +175,23 @@ var KIT = {
     }
 };
 
+// Defaults of `instrument` for the languages that do not set it.
+var INSTRUMENT = {
+    levelControl: "slider",
+    readout: "text",
+    indicator: "fill",
+    well: { fill: "overBackground", opacity: 0.06, edge: 0 },
+    label: { mono: false, tracking: 0.14 }
+};
+
 function kit(lang) {
     return KIT[normalize(lang)];
+}
+
+function instrument(lang) {
+    var own = KIT[normalize(lang)].instrument || {};
+    var out = {};
+    for (var k in INSTRUMENT)
+        out[k] = own[k] !== undefined ? own[k] : INSTRUMENT[k];
+    return out;
 }

@@ -313,7 +313,8 @@
       },
       "enum": [
         "yozakura",
-        "poster"
+        "poster",
+        "segment"
       ]
     },
     "depthClockPosition": {
