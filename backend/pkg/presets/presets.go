@@ -11,6 +11,7 @@ package presets
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -726,7 +727,9 @@ func swapDir(staging, dir string, exists bool) error {
 			return err
 		}
 		if err := os.Rename(staging, dir); err != nil {
-			_ = os.Rename(old, dir)
+			if rerr := os.Rename(old, dir); rerr != nil {
+				log.Printf("[presets] put back %s: %v", dir, rerr)
+			}
 			return err
 		}
 		return os.RemoveAll(old)

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -690,8 +691,10 @@ func (m *Manager) updateLocalSource(state State, index int, installed InstalledM
 		return Status{}, fmt.Errorf("prepare package update: %w", err)
 	}
 	restore := func() {
-		_ = os.RemoveAll(packageRoot)
-		_ = os.Rename(backup, packageRoot)
+		_ = os.RemoveAll(packageRoot) // best effort: the rename below overwrites the slot
+		if err := os.Rename(backup, packageRoot); err != nil {
+			log.Printf("[mods] restore previous package %s: %v", packageRoot, err)
+		}
 	}
 	if err := os.Rename(updatedRoot, packageRoot); err != nil {
 		restore()

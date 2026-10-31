@@ -3,6 +3,7 @@ package exclusive
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -181,7 +182,9 @@ func restoreTree(o Options, dir string, m manifest, now time.Time, keepCurrent b
 	if !m.HyprMissing {
 		if err := os.Rename(stage, hypr); err != nil {
 			if exists {
-				_ = os.Rename(old, hypr)
+				if rerr := os.Rename(old, hypr); rerr != nil {
+					log.Printf("[exclusive] put back %s: %v", hypr, rerr)
+				}
 			}
 			_ = removeTree(stage)
 			return "", fmt.Errorf("restore: %w", err)
