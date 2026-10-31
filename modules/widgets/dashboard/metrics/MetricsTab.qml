@@ -191,6 +191,7 @@ Rectangle {
                             anchors.fill: parent
                             anchors.margins: 2
                             source: `file://${Quickshell.env("HOME")}/.face.icon?${GlobalStates.avatarCacheBuster}`
+                            sourceSize: Qt.size(width * 2, height * 2)
                             fillMode: Image.PreserveAspectCrop
                             smooth: true
                             asynchronous: true

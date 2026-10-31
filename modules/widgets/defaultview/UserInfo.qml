@@ -63,6 +63,8 @@ Item {
                     Image {
                         anchors.fill: parent
                         source: `file://${Quickshell.env("HOME")}/.face.icon`
+                        sourceSize: Qt.size(48, 48)
+                        asynchronous: true
                         fillMode: Image.PreserveAspectCrop
                     }
                 }

@@ -82,6 +82,7 @@ Item {
         id: cached
         anchors.fill: parent
         source: root.file && root.phase === "cache" ? "file://" + root.file : ""
+        sourceSize: Qt.size(width * 2, height * 2)
         cache: true // file names are content hashes: never stale
         asynchronous: true
         fillMode: Image.PreserveAspectCrop

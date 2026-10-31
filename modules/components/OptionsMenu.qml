@@ -304,6 +304,7 @@ Menu {
                                 source: iconLoader.iconSource
                                 width: 16
                                 height: 16
+                                sourceSize: Qt.size(32, 32)
                                 fillMode: Image.PreserveAspectFit
                                 smooth: true
                                 anchors.centerIn: parent

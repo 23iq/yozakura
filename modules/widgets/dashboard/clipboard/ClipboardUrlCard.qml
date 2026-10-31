@@ -57,6 +57,7 @@ Rectangle {
                 anchors.centerIn: parent
                 width: 24
                 height: 24
+                sourceSize: Qt.size(48, 48)
                 visible: card.item !== null && status === Image.Ready
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
