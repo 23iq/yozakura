@@ -2951,6 +2951,7 @@
                   "media",
                   "notifications",
                   "mic",
+                  "sentence",
                   "keyboardLayout",
                   "controls",
                   "battery",
@@ -3004,6 +3005,7 @@
                   "media",
                   "notifications",
                   "mic",
+                  "sentence",
                   "keyboardLayout",
                   "controls",
                   "battery",
@@ -3057,6 +3059,7 @@
                   "media",
                   "notifications",
                   "mic",
+                  "sentence",
                   "keyboardLayout",
                   "controls",
                   "battery",
@@ -3442,6 +3445,180 @@
                   "description": "Workspace previews: miniatures shown.",
                   "minimum": 1,
                   "maximum": 10
+                }
+              },
+              "additionalProperties": false
+            },
+            "sentence": {
+              "title": "Sentence",
+              "type": "object",
+              "properties": {
+                "fragments": {
+                  "title": "Fragments",
+                  "type": "array",
+                  "default": [
+                    "clock",
+                    "window",
+                    "workspace",
+                    "battery",
+                    "media",
+                    "notifications"
+                  ],
+                  "items": {
+                    "enum": [
+                      "clock",
+                      "window",
+                      "workspace",
+                      "battery",
+                      "network",
+                      "volume",
+                      "media",
+                      "notifications",
+                      "weather"
+                    ]
+                  },
+                  "description": "What the line says, in this order. Empty ones (no battery, nothing playing) stay out; a window followed by its workspace reads as one.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "sentence",
+                    "label": "prefs.bar.sentence_fragments",
+                    "control": "custom",
+                    "component": "OrderedListEditor",
+                    "keywords": "sentence fragments order clock window workspace battery network volume media notifications weather"
+                  },
+                  "uniqueItems": true
+                },
+                "priority": {
+                  "title": "Keep first",
+                  "type": "array",
+                  "default": [
+                    "clock",
+                    "media",
+                    "window",
+                    "battery",
+                    "notifications",
+                    "workspace",
+                    "volume",
+                    "weather",
+                    "network"
+                  ],
+                  "items": {
+                    "enum": [
+                      "clock",
+                      "window",
+                      "workspace",
+                      "battery",
+                      "network",
+                      "volume",
+                      "media",
+                      "notifications",
+                      "weather"
+                    ]
+                  },
+                  "description": "On a narrow bar the fragments at the bottom of this list drop out first. Nothing is cut mid-word.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "sentence",
+                    "label": "prefs.bar.sentence_priority",
+                    "control": "custom",
+                    "component": "OrderedListEditor",
+                    "keywords": "sentence priority narrow overflow drop keep"
+                  },
+                  "uniqueItems": true
+                },
+                "separator": {
+                  "title": "Separator",
+                  "type": "string",
+                  "default": "dash",
+                  "description": "What stands between fragments.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "sentence",
+                    "label": "prefs.bar.sentence_separator",
+                    "control": "selector",
+                    "preview": "SentencePreview",
+                    "keywords": "sentence line separator dash dot comma kotoba words"
+                  },
+                  "enum": [
+                    "dash",
+                    "dot",
+                    "comma",
+                    "none"
+                  ],
+                  "x-enumLabels": {
+                    "dash": "Dash",
+                    "dot": "Dot",
+                    "comma": "Comma",
+                    "none": "None"
+                  }
+                },
+                "verbosity": {
+                  "title": "Wording",
+                  "type": "string",
+                  "default": "full",
+                  "description": "Short shows just the values; full reads as phrases.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "sentence",
+                    "label": "prefs.bar.sentence_verbosity",
+                    "control": "selector",
+                    "keywords": "sentence wording short full phrases words"
+                  },
+                  "enum": [
+                    "short",
+                    "full"
+                  ],
+                  "x-enumLabels": {
+                    "short": "Short",
+                    "full": "Full"
+                  }
+                },
+                "typeface": {
+                  "title": "Typeface",
+                  "type": "string",
+                  "default": "editorial",
+                  "description": "The bar text font, or the editorial serif from Icons & type.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "sentence",
+                    "label": "prefs.bar.sentence_typeface",
+                    "control": "selector",
+                    "keywords": "sentence font typeface serif editorial"
+                  },
+                  "enum": [
+                    "body",
+                    "editorial"
+                  ],
+                  "x-enumLabels": {
+                    "body": "Bar text",
+                    "editorial": "Editorial"
+                  }
+                },
+                "maxWidth": {
+                  "title": "Longest line",
+                  "type": "number",
+                  "default": 0,
+                  "description": "0 uses up to half the bar.",
+                  "x-settings": {
+                    "category": "bar",
+                    "section": "sentence",
+                    "label": "prefs.bar.sentence_max_width",
+                    "control": "slider",
+                    "step": 20,
+                    "unit": "px",
+                    "keywords": "sentence width length longest line",
+                    "min": 0,
+                    "max": 2000,
+                    "specialValues": [
+                      {
+                        "value": 0,
+                        "label": "Half the bar"
+                      }
+                    ]
+                  },
+                  "minimum": 0,
+                  "maximum": 4000,
+                  "x-unit": "px"
                 }
               },
               "additionalProperties": false
@@ -9608,6 +9785,19 @@
                 "upper": "UPPER",
                 "lower": "lower",
                 "title": "Title"
+              }
+            },
+            "editorial": {
+              "title": "Editorial font",
+              "type": "string",
+              "default": "",
+              "description": "Serif display face for text that reads as prose, such as the sentence bar. Empty uses the system serif.",
+              "x-settings": {
+                "category": "icons-type",
+                "section": "headings",
+                "label": "prefs.icons_type.editorial_font",
+                "control": "text",
+                "keywords": "editorial serif font typeface family sentence bar"
               }
             }
           },

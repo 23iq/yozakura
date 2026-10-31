@@ -193,6 +193,38 @@ var keys = {
         "max": 12,
         "description": "Downloads stack: recent files fanned out."
     },
+    "moduleOptions.sentence.fragments": {
+        "items": {
+            "enum": ["clock", "window", "workspace", "battery", "network", "volume", "media", "notifications", "weather"]
+        },
+        "uniqueItems": true,
+        "description": "Sentence module: fragments of the line, in order. Empty ones (no battery, nothing playing, no notifications) are left out; a window followed by its workspace reads as one fragment."
+    },
+    "moduleOptions.sentence.priority": {
+        "items": {
+            "enum": ["clock", "window", "workspace", "battery", "network", "volume", "media", "notifications", "weather"]
+        },
+        "uniqueItems": true,
+        "description": "Sentence module: fragments ranked highest first; on a narrow bar the last ones drop out first (never cut mid-word)."
+    },
+    "moduleOptions.sentence.separator": {
+        "enum": ["dash", "dot", "comma", "none"],
+        "description": "Sentence module: what stands between fragments: an em dash, a middle dot, a comma or a plain gap."
+    },
+    "moduleOptions.sentence.verbosity": {
+        "enum": ["short", "full"],
+        "description": "Sentence module: short (just the values, 18:20 · 82%) or full phrases (Saturday, 18:20 · battery 82%)."
+    },
+    "moduleOptions.sentence.typeface": {
+        "enum": ["body", "editorial"],
+        "description": "Sentence module: the bar text font, or the editorial serif (theme.type.editorial)."
+    },
+    "moduleOptions.sentence.maxWidth": {
+        "min": 0,
+        "max": 4000,
+        "unit": "px",
+        "description": "Sentence module: longest the line may get; 0 = half the bar."
+    },
     "moduleOptions.workspacePreviews.count": {
         "min": 1,
         "max": 10,

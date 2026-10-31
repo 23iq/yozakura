@@ -229,6 +229,9 @@ MIRROR = [
     "modules/services/KeyboardModel.js",
     "modules/bar/BarLayout.js",
     "modules/bar/BarModuleRegistry.js",
+    "modules/bar/sentence",  # sentence schema lists + its settings preview
+    "modules/services/Plural.js",
+    "modules/bar/modules/AppNames.js",
     "modules/bar/panels/PanelStyles.js",
     "modules/bar/panels/PanelLayout.js",
     "modules/bar/panels/PanelEdit.js",
@@ -712,7 +715,7 @@ class SettingsEnv:
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
                   "modules/components/surfaceeffects", "modules/components/shape", "modules/components/kit",
-                  "modules/bar/workspaces/indicators", "modules/bar/look",
+                  "modules/bar/workspaces/indicators", "modules/bar/look", "modules/bar/sentence",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
