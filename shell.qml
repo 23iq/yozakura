@@ -69,7 +69,7 @@ ShellRoot {
 
         Loader {
             id: desktopLoader
-            active: (Config.desktop.enabled || DesktopWidgets.wanted) && SuspendManager.wakeReady
+            active: (Config.desktop.enabled || DesktopWidgets.wanted || (Config.desktop.depthLayering && Config.desktop.depthClock)) && SuspendManager.wakeReady
             required property ShellScreen modelData
             sourceComponent: Desktop {
                 screen: desktopLoader.modelData
