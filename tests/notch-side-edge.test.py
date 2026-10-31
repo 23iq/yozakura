@@ -72,6 +72,8 @@ QtObject {
         return screens[n];
     }
     function setActiveModule(m) {}
+    function registerNotch(n, c) {}
+    function unregisterNotch(n) {}
 }""",
     "Notifications": "pragma Singleton\nQtObject { property var popupList: []; property var notchPopupList: []; function showsOnScreen(s) { return true } }",
     "MicrophoneStatus": "pragma Singleton\nQtObject { property bool noticeVisible: false; property string noticeScreen: \"\"; property bool muted: false; property bool available: true }",

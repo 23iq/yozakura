@@ -493,6 +493,15 @@ Item {
 
     // Export some internal items for Visibilities
     property alias notchContainerRef: notchContainer
+
+    // Loaded only while notch.enabled (UnifiedShellPanel): its geometry is
+    // published while it exists (Visibilities.notchRect & co.)
+    Component.onCompleted: Visibilities.registerNotch(root.screen.name, notchContainer)
+    Component.onDestruction: {
+        Visibilities.unregisterNotch(root.screen.name);
+        if (root.screenVisibilities)
+            root.screenVisibilities.notchRaised = false;
+    }
     // Notch + notification popup: where this item draws (shadow capture)
     readonly property Item visualRegion: notchRegionContainer
 }

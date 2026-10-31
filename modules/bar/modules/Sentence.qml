@@ -27,8 +27,8 @@ BarModuleBase {
     readonly property bool editorial: root.options.typeface !== "body"
     readonly property real barLength: root.bar ? (root.vertical ? root.bar.height : root.bar.width) : 0
     // The island on this bar's edge: the line stops short of it
-    readonly property var notchItem: Visibilities.notches ? Visibilities.notches[root.screenName] : null
-    readonly property real notchSpan: root.notchItem && ShellLayout.notchEnabled && Config.notchPosition === root.edge ? (root.vertical ? root.notchItem.height : root.notchItem.width) : 0
+    readonly property rect notchBox: Visibilities.notchRect(root.screenName)
+    readonly property real notchSpan: Config.notchPosition === root.edge ? (root.vertical ? root.notchBox.height : root.notchBox.width) : 0
     property real room: Infinity
     // Half the bar, or moduleOptions.sentence.maxWidth, short of the notch
     readonly property real budget: Sentence.budget(root.barLength, root.options.maxWidth || 0, root.room)

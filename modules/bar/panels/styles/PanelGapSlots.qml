@@ -23,9 +23,10 @@ Item {
     readonly property bool vertical: barRoot ? barRoot.orientation === "vertical" : false
     readonly property real length: vertical ? height : width
     // A disabled notch (notch.enabled) leaves no middle gap
-    readonly property Item notchItem: barRoot && !vertical && ShellLayout.notchEnabled && barRoot.notchPosition === barRoot.barPosition ? Visibilities.getNotchForScreen(barRoot.screen.name) : null
+    readonly property bool notchHere: !!barRoot && !vertical && barRoot.notchPosition === barRoot.barPosition && Visibilities.hasNotch(barRoot.screen.name)
+    readonly property real notchWidth: notchHere ? Visibilities.notchRect(barRoot.screen.name).width : 0
     readonly property real notchFillet: Config.roundness > 0 ? Config.roundness + 4 : 0
-    readonly property real middleHalf: Math.max(centerLength / 2, notchItem ? notchItem.width / 2 + notchFillet : 0)
+    readonly property real middleHalf: Math.max(centerLength / 2, notchHere ? notchWidth / 2 + notchFillet : 0)
     readonly property real spacing: 12
 
     // [from, to] spans along the panel

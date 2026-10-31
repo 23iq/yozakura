@@ -181,7 +181,9 @@ QtObject {
     function unregisterBar(n) {}
     function registerBarPanel(n, b) {}
     function unregisterBarPanel(n) {}
-    function getNotchForScreen(n) { return notches[n] || null }
+    function hasNotch(n) { return !!notches[n] }
+    function notchRect(n) { const x = notches[n]; return x ? Qt.rect(x.x, x.y, x.width, x.height) : Qt.rect(0, 0, 0, 0) }
+    function notchEdgeClaim(n) { const x = notches[n]; return x && x.edgeClaim !== undefined ? x.edgeClaim : 0 }
     function getBarPanelForScreen(n) { return barPanels[n] || null }
     function setContextMenu(m) { contextMenu = m }
 }""",
@@ -434,8 +436,9 @@ def scene_qml(width: int, height: int, wallpaper: str, windows: bool, notch_text
     # Shadows like the live shell: one caster per surface (old trees: one layer)
     shadows = ("layer.enabled: true\n        layer.effect: Shadow {}" if legacy else
                "PanelShadows { anchors.fill: parent; z: 0; frame: frameItem; bars: host.bars }\n"
-               "        ShadowCaster { z: 0; source: notch; sourceRect: Qt.rect(notch.x - 24, notch.y, notch.width + 48, "
-               "notch.height + 24) }")
+               "        ShadowCaster { z: 0; source: notchLoader.item; sourceRect: notchLoader.item ? "
+               "Qt.rect(notchLoader.item.x - 24, notchLoader.item.y, notchLoader.item.width + 48, "
+               "notchLoader.item.height + 24) : Qt.rect(0, 0, 0, 0) }")
     text = notch_text or "Pull Me Under"
     wall = f'Image {{ anchors.fill: parent; source: "file://{wallpaper}"; fillMode: Image.PreserveAspectCrop; ' \
            f'sourceSize.width: {width} }}' if wallpaper else "Rectangle { anchors.fill: parent; color: Colors.background }"
@@ -519,7 +522,6 @@ Window {{
     Component.onCompleted: {{
         Visibilities.barPanels = {{ "DP-1": barProxy }};
         Visibilities.notchPanels = {{ "DP-1": barProxy }};
-        Visibilities.notches = {{ "DP-1": notch }};
         GlobalStates.wallpaperManager.currentWallpaper = {json.dumps(wallpaper)};
     }}
 
@@ -530,14 +532,22 @@ Window {{
 
         ScreenFrameContent {{ id: frameItem; anchors.fill: parent; targetScreen: scr; z: 1 }}
         {host}
-        Notch {{
-            id: notch
+        // Like UnifiedShellPanel: the notch exists only while notch.enabled
+        Loader {{
+            id: notchLoader
+            z: 4
+            active: Config.notch.enabled !== false
+            onItemChanged: {{
+                const m = Object.assign({{}}, Visibilities.notches);
+                m["DP-1"] = item;
+                Visibilities.notches = m;
+            }}
+            sourceComponent: Notch {{
             objectName: "notch"
             visible: !Config.notch.keepHidden
-            z: 4
             width: implicitWidth; height: implicitHeight
-            x: (parent.width - width) / 2
-            y: Config.notchPosition === "bottom" ? parent.height - height - win.frame : win.frame
+            x: (visual.width - width) / 2
+            y: Config.notchPosition === "bottom" ? visual.height - height - win.frame : win.frame
             visibilities: Visibilities.getForScreen("DP-1")
             defaultViewComponent: Component {{
                 Item {{
@@ -551,6 +561,7 @@ Window {{
                     }}
                 }}
             }}
+        }}
         }}
     }}
 }}

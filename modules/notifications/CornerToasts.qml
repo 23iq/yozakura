@@ -16,9 +16,8 @@ import "NotificationPolicy.js" as Policy
 Item {
     id: root
 
-    // The UnifiedShellPanel (panel zones, dock, frame) and its notch content
+    // The UnifiedShellPanel (panel zones, dock, frame, notch reveal)
     property var panel: null
-    property var notch: null
     property string screenName: ""
 
     readonly property bool active: Notifications.presentation === "corner" && Notifications.showsOnScreen(screenName)
@@ -49,10 +48,10 @@ Item {
     }
     function notchInset(edge) {
         // Centered toasts clear the notch on its edge
-        if (root.side !== "center" || !notch || (Config.notchPosition ?? "top") !== edge || !notch.reveal)
+        if (root.side !== "center" || !panel || !panel.notchReveal || (Config.notchPosition ?? "top") !== edge)
             return 0;
-        const n = notch.notchContainerRef;
-        return n ? n.height + Space.xs : 0;
+        const h = Visibilities.notchRect(root.screenName).height;
+        return h > 0 ? h + Space.xs : 0;
     }
     readonly property real insetTop: frameInset + Math.max(barInset("top"), notchInset("top")) + gap
     readonly property real insetBottom: frameInset + Math.max(barInset("bottom"), dockInset("bottom"), notchInset("bottom")) + gap

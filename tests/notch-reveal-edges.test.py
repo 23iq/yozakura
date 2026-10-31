@@ -33,6 +33,8 @@ QtObject {
     property var barPanels: ({})
     property var bars: ({})
     function getForScreen(n) { return ({ launcher: false, dashboard: false, powermenu: false, tools: false, aiquick: false, presets: false }) }
+    function registerNotch(n, c) {}
+    function unregisterNotch(n) {}
 }""",
     "ShellLayout": "pragma Singleton\nQtObject { property bool notchEnabled: true; property var notchSegments: [] }",
     "YozdService": "pragma Singleton\nQtObject { property var focusedMonitor: null; property var clients: ({ values: [({ workspace: { id: 1 } })] }); function monitorFor(s) { return ({ activeWorkspace: { id: 1 } }) } }",

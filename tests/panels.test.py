@@ -106,14 +106,30 @@ for enabled in (True, False):
     env, win, host = scene(GAP_BAR, notch={"enabled": enabled, "position": "top"})
     style_item = ev(env, host, "primary.styleItem")  # keep a reference while in use
     gaps = env.h.find(style_item, "gapSlots")
-    assert (ev(env, gaps, "notchItem !== null")) is enabled, enabled
+    assert (ev(env, gaps, "notchHere")) is enabled, enabled
+    assert ev(env, host, 'Visibilities.hasNotch("DP-1")') is enabled, "the island exists only while notch.enabled"
     assert (ev(env, gaps, "middleHalf") > 0) is enabled, ev(env, gaps, "middleHalf")
     win.close()
     env, win, host = scene({"frameEnabled": False, "panels": [{"id": "d", "edge": "top", "style": "dock",
                             "groups": {"start": ["launcher"], "center": [], "end": ["battery"]}}]},
                            notch={"enabled": enabled, "position": "top"})
-    assert ev(env, host, "primary.styleItem.notchItem !== null") is enabled, enabled
+    assert ev(env, host, "primary.styleItem.notchHere") is enabled, enabled
     win.close()
+
+# notch.enabled toggled at runtime, both ways: the island goes away and comes
+# back, every reader (gap slots, dock parting, frame, shadows) follows, and
+# nothing reads a missing notch (no TypeError, checked below)
+env, win, host = scene(GAP_BAR, notch={"enabled": True, "position": "top"})
+style_item = ev(env, host, "primary.styleItem")
+gaps = env.h.find(style_item, "gapSlots")
+for enabled in (False, True, False, True):
+    ev(env, host, f"Config.notch.enabled = {str(enabled).lower()}")
+    QTest.qWait(100)
+    assert ev(env, host, 'Visibilities.hasNotch("DP-1")') is enabled, enabled
+    assert ev(env, host, 'Visibilities.notchRect("DP-1").width > 0') is enabled, enabled
+    assert ev(env, gaps, "notchHere") is enabled, enabled
+    assert (ev(env, gaps, "middleHalf") > 0) is enabled, ev(env, gaps, "middleHalf")
+win.close()
 
 errors = [e for env in ENVS for e in env.h.type_errors]
 assert not errors, errors

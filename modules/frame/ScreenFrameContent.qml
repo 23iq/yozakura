@@ -25,7 +25,9 @@ Item {
     // Effective Reveal States
     readonly property bool barReveal: barPanel ? barPanel.reveal : true
     readonly property bool dockReveal: dockPanel ? dockPanel.reveal : true
-    readonly property bool notchReveal: barPanel ? barPanel.notchReveal : true
+    // The notch exists only while notch.enabled
+    readonly property bool notchOn: Visibilities.hasNotch(targetScreen.name)
+    readonly property bool notchReveal: notchOn && (barPanel ? barPanel.notchReveal : true)
 
     // Hover States for Restoration Logic
     readonly property bool barHovered: barPanel ? (barPanel.barHoverActive || barPanel.notchHoverActive || barPanel.notchOpen) : false
@@ -122,7 +124,7 @@ Item {
             let progress = 0.0;
 
             if (barPos === side && barHovered) { restore = true; progress = Math.max(progress, _barAnimProgress); }
-            if (notchPos === side && barHovered) { restore = true; progress = Math.max(progress, _notchAnimProgress); }
+            if (notchOn && notchPos === side && barHovered) { restore = true; progress = Math.max(progress, _notchAnimProgress); }
             if (dockPanel && dockPanel.position === side && dockHovered) { restore = true; progress = Math.max(progress, _dockAnimProgress); }
             
             t = restore ? (baseThickness * progress) : 0;

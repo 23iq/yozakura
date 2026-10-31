@@ -253,13 +253,7 @@ Singleton {
         return active ? active.presets : false;
     }
 
-    function getActiveNotchOpen() {
-        let active = Visibilities.getForActive();
-        return active ? (active.launcher || active.dashboard || active.overview) : false;
-    }
-
     // Legacy properties for backward compatibility - use active screen
-    readonly property bool notchOpen: getActiveNotchOpen()
     readonly property bool overviewOpen: getActiveOverview()
     readonly property bool presetsOpen: getActivePresets()
     readonly property bool launcherOpen: getActiveLauncher()
