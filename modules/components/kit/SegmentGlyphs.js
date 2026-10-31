@@ -63,30 +63,38 @@ function isSeparator(ch) {
     return SEPARATORS[ch] === true;
 }
 
-// Geometry of segment `i` (SEGMENTS order) in a w x h cell with bar
-// thickness t: {x, y, w, h}. Horizontal bars sit between the vertical ones
-// and every joint keeps a small gap, so no two bars overlap and each reads
-// as its own segment.
-function segment(i, w, h, t) {
-    var g = Math.max(1, t * 0.22);
+// A bar along its centreline from (x0, y0) to (x1, y1) (horizontal or
+// vertical), t thick, with pointed ends: a hexagon as [[x, y], ...].
+function bar(x0, y0, x1, y1, t) {
+    var r = t / 2;
+    if (y0 === y1)
+        return [[x0, y0], [x0 + r, y0 - r], [x1 - r, y0 - r], [x1, y0], [x1 - r, y0 + r], [x0 + r, y0 + r]];
+    return [[x0, y0], [x0 + r, y0 + r], [x0 + r, y1 - r], [x0, y1], [x0 - r, y1 - r], [x0 - r, y0 + r]];
+}
+
+// Outline of segment `i` (SEGMENTS order) in a w x h cell with bar
+// thickness t: a pointed hexagon, [[x, y], ...]. Bars run between the
+// centrelines of their neighbours and stop a small gap short of each joint,
+// so they meet at mitred tips like a real LCD and never touch.
+function polygon(i, w, h, t) {
+    var g = Math.max(0.6, t * 0.2);
+    var r = t / 2;
     var half = h / 2;
-    var hx = t + g;
-    var hw = Math.max(0, w - 2 * t - 2 * g);
-    var vh = Math.max(0, half - t / 2 - g / 2);
+    var left = r, right = w - r, top = r, bottom = h - r;
     switch (SEGMENTS[i]) {
     case "a":
-        return { x: hx, y: 0, w: hw, h: t };
+        return bar(left + g, top, right - g, top, t);
     case "b":
-        return { x: w - t, y: t / 2, w: t, h: vh };
+        return bar(right, top + g, right, half - g, t);
     case "c":
-        return { x: w - t, y: half + g / 2, w: t, h: vh };
+        return bar(right, half + g, right, bottom - g, t);
     case "d":
-        return { x: hx, y: h - t, w: hw, h: t };
+        return bar(left + g, bottom, right - g, bottom, t);
     case "e":
-        return { x: 0, y: half + g / 2, w: t, h: vh };
+        return bar(left, half + g, left, bottom - g, t);
     case "f":
-        return { x: 0, y: t / 2, w: t, h: vh };
+        return bar(left, top + g, left, half - g, t);
     default:
-        return { x: hx, y: half - t / 2, w: hw, h: t };
+        return bar(left + g, half, right - g, half, t);
     }
 }

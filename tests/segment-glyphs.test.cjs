@@ -25,17 +25,19 @@ test('colon and dot are separators', () => {
     assert.ok(!G.isSeparator('0') && !G.isSeparator(' '));
 });
 
-test('segments stay inside the cell and never overlap', () => {
-    const w = 22, h = 40, t = 5;
-    const boxes = [0, 1, 2, 3, 4, 5, 6].map(i => G.segment(i, w, h, t));
-    for (const b of boxes) {
-        assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= w + 1e-9 && b.y + b.h <= h + 1e-9, JSON.stringify(b));
-        assert.ok(b.w > 0 && b.h > 0);
-    }
-    for (let i = 0; i < 7; i++)
-        for (let j = i + 1; j < 7; j++) {
-            const a = boxes[i], b = boxes[j];
-            const overlap = a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-            assert.ok(!overlap, `${G.SEGMENTS[i]} / ${G.SEGMENTS[j]}`);
+test('segments are pointed hexagons inside the cell that never touch', () => {
+    for (const [w, h, t] of [[23, 40, 5.2], [10, 18, 2.3]]) {
+        const polys = [0, 1, 2, 3, 4, 5, 6].map(i => plain(G.polygon(i, w, h, t)));
+        for (const p of polys) {
+            assert.equal(p.length, 6);
+            for (const [x, y] of p)
+                assert.ok(x >= -1e-9 && y >= -1e-9 && x <= w + 1e-9 && y <= h + 1e-9, JSON.stringify(p));
         }
+        // Every vertex of one segment stays a gap away from every vertex of another.
+        for (let i = 0; i < 7; i++)
+            for (let j = i + 1; j < 7; j++)
+                for (const [ax, ay] of polys[i])
+                    for (const [bx, by] of polys[j])
+                        assert.ok(Math.hypot(ax - bx, ay - by) > 0.5, `${G.SEGMENTS[i]} / ${G.SEGMENTS[j]} at ${w}x${h}`);
+    }
 });
