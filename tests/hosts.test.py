@@ -49,6 +49,11 @@ for f in ("Motion", "Metrics", "BarMetrics"):
     p.write_text("import qs.config\n" + p.read_text())
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }", "Shadow": "Item {}"})
 h.module("qs.modules.services", {"FocusGrab": "QtObject { property var windows; property bool active; signal cleared }"})
+h.singleton("qs.modules.services", "ShellLayout", """QtObject {
+    property bool notchEnabled: true
+    property bool barEnabled: true
+    property var layout: ({bar: {edges: ["top"]}})
+}""")
 h.singleton("qs.modules.services", "Visibilities", """QtObject {
     id: vroot
     property Component flags: Component { QtObject { property bool launcher; property bool dashboard; property bool powermenu; property bool tools; property bool aiquick; property bool keybinds } }
@@ -81,6 +86,11 @@ h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
 for f in ("HostFrame", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS, replace={"layer.enabled: true": "layer.enabled: false"})
 h.module("qs.modules.shell.hosts", {})
+h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})
+h.module("qs.modules.widgets.tools", {"ToolsMenuView": "Item {}"})
+h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
+h.copy("modules/notch/NotchMenuViews.qml", "qs/modules/notch")
+h.module("qs.modules.notch", {})
 
 root = h.load("""import QtQuick
 import QtQuick.Window
@@ -88,6 +98,7 @@ import Quickshell
 import qs.modules.shell.hosts
 import qs.config
 import qs.modules.services
+import qs.modules.notch
 Window {
     width: 1920; height: 1080; visible: true
     property ShellScreen a: ShellScreen { name: "A"; width: 1920; height: 1080 }
@@ -108,6 +119,7 @@ Window {
         function pushView(v) { pushes++; stackView.depth++; stackView.currentItem = v; }
     }
     NotchHostedSurfaces { objectName: "nhA"; screen: a; vis: Visibilities.getForScreen("A"); container: container }
+    NotchMenuViews { vis: Visibilities.getForScreen("A"); container: container }
     Item {
         id: otherContainer
         property bool isShowingDefault: true
@@ -252,5 +264,29 @@ h.eval(root, 'container.stackView.depth = 1; container.stackView.currentItem = n
 h.eval(root, 'Visibilities.setActiveModule("")')
 pump(10)
 assert not ev(nhA, "host.isOpen") and ev(c, "stackView.depth") == 1
+# The notch off: an explicit "notch" host opens off it at runtime (spotlight),
+# menus go to the overlay and never push onto the notch stack; config untouched.
+h.eval(root, 'Config.layout.launcher.host = "notch"')
+h.eval(root, "ShellLayout.notchEnabled = false")
+h.eval(root, 'Visibilities.setActiveModule("launcher")')
+pump(10)
+assert not ev(nhA, "host.isOpen") and ev(ev(hsA, "spotlight"), "isOpen"), "notch-off launcher not in spotlight"
+assert ev(root, "Config.layout.launcher.host") == "notch", "config rewritten"
+assert ev(root, 'HostRouter.hostFor("powermenu")') == "overlay"
+h.eval(root, 'Visibilities.setActiveModule("")')
+pump(10)
+pushes = ev(c, "pushes")
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = true')
+pump(20)
+assert ev(c, "pushes") == pushes and ev(c, "stackView.depth") == 1, "power menu pushed onto a disabled notch"
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = false')
+# The notch on: the auto power menu is the notch's own view again
+h.eval(root, "ShellLayout.notchEnabled = true")
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = true')
+pump(20)
+assert ev(c, "pushes") == pushes + 1, "auto power menu not pushed onto the notch"
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = false')
+pump(20)
+assert ev(c, "stackView.depth") == 1, "power menu not popped"
 print("hosts: ok")
 h.exit(0)

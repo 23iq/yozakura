@@ -7,12 +7,9 @@ import Quickshell.Io
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.widgets.defaultview
-import qs.modules.widgets.powermenu
-import qs.modules.widgets.tools
 import qs.modules.services
 import qs.modules.components
 import qs.modules.bar.workspaces
-import qs.modules.aicenter.quickask
 import qs.config
 import qs.modules.shell
 import "./NotchNotificationView.qml"
@@ -223,38 +220,10 @@ Item {
         container: notchContainer
     }
 
-    // Persistent power menu view
-    Loader {
-        id: persistentPowerMenuViewLoader
-        active: false
-        sourceComponent: Component {
-            PowerMenuView {
-                visible: false
-            }
-        }
-    }
-
-    // Persistent tools menu view
-    Loader {
-        id: persistentToolsMenuViewLoader
-        active: false
-        sourceComponent: Component {
-            ToolsMenuView {
-                visible: false
-            }
-        }
-    }
-
-    // AI quick ask: a notch module (focusable input inside the island);
-    // it switches views like the launcher, unlike the registry's panels.
-    Loader {
-        id: persistentQuickAskLoader
-        active: false
-        sourceComponent: Component {
-            QuickAskCard {
-                visible: false
-            }
-        }
+    // Power menu, tools and AI quick ask views on the notch stack
+    NotchMenuViews {
+        vis: root.screenVisibilities
+        container: notchContainer
     }
 
     // Notification view component
@@ -517,80 +486,6 @@ Item {
                         duration: Config.animDuration
                         easing.type: Motion.enter.easing
                     }
-                }
-            }
-        }
-    }
-
-    // Listen for dashboard and powermenu state changes
-    Connections {
-        target: screenVisibilities
-
-        function onPowermenuChanged() {
-            // other layout.powermenu.style values open in the menu overlay
-            if (HostRouter.hostFor("powermenu") !== "notch")
-                return;
-            if (screenVisibilities.powermenu) {
-                persistentPowerMenuViewLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentPowerMenuViewLoader.item) {
-                        notchContainer.pushView(persistentPowerMenuViewLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem) {
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
-            }
-        }
-
-        function onAiquickChanged() {
-            if (root.screenVisibilities.aiquick) {
-                persistentQuickAskLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentQuickAskLoader.item) {
-                        notchContainer.pushView(persistentQuickAskLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem)
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                        });
-                    }
-                });
-            } else if (notchContainer.stackView.depth > 1) {
-                notchContainer.stackView.pop();
-                notchContainer.isShowingDefault = true;
-                notchContainer.isShowingNotifications = false;
-            }
-        }
-
-        function onToolsChanged() {
-            // other layout.tools.style values open in the menu overlay
-            if (HostRouter.hostFor("tools") !== "notch")
-                return;
-            if (screenVisibilities.tools) {
-                persistentToolsMenuViewLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentToolsMenuViewLoader.item) {
-                        notchContainer.pushView(persistentToolsMenuViewLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem) {
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
                 }
             }
         }

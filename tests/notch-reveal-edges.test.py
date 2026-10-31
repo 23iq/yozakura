@@ -64,7 +64,8 @@ h.module("Quickshell.Widgets", {"ClippingRectangle": "Rectangle {}"})
 h.module("qs.modules.widgets.tools", {"ToolsMenuView": "Item {}"})
 h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})
 h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
-nd = h.module("qs.modules.notch", {"NotchNotificationView": "Item { property bool notchHovered }"})
+nd = h.module("qs.modules.notch", {"NotchNotificationView": "Item { property bool notchHovered }",
+                                   "NotchMenuViews": "Item { property var vis; property var container }"})
 notch_dir = REPO / "modules/notch"
 for n in ["Notch", "NotchSilhouette", "NotchOutline", "NotchViewTransition", "NotchContent", "NotchPlacement", "NotchHoverHold", "NotchAvoidance"]:
     text = (notch_dir / f"{n}.qml").read_text()
