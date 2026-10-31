@@ -216,6 +216,23 @@ A change is done only when all of these hold:
 | `make audit` | Knip-like report (`tools/audit/`, `ARGS=--json`): config schema, translations, dead files, snapshot coverage, monoliths, generated catalog freshness, shell/QML injection. Allowlists with reasons in `tools/audit/config.json`. |
 | `make schema` | Regenerate the settings catalog `assets/schema/*.schema.json` (JSON Schema 2020-12). |
 | `make baseline` | Re-record lint/format baselines (rarely; justify it). |
+| `make layers-baseline` | Re-record `tools/lint/baselines/layers.json` after *fixing* layer violations (never to hide new ones). |
+| `make ipc-methods` | Regenerate `assets/schema/ipc-methods.json` (part of `make schema`). |
+
+Architecture guards (in `make audit`): `layers` orders the modules foundation
+(`theme`, `globals`, `components`, `config`) < `services` < feature modules < `shell`
+from the `import qs.modules.X` / `qs.config` lines; a lower layer importing a higher one
+(upward) or a new mutual import pair fails, the existing ones are a ratchet in
+`tools/lint/baselines/layers.json` (32 upward imports / 28 mutual pairs at creation; fix
+some, then `make layers-baseline`). `ipc-methods` checks every `BackendService.call/notify`
+method name and `addSubscription` service in QML against the daemon's registry
+`assets/schema/ipc-methods.json` (generated from the registered services by
+`backend/pkg/daemon/ipc_registry_test.go`; `make schema` refreshes it, the Go test fails when
+stale). Dynamic names are warnings unless the file is in `ipcMethods.dynamicAllow`; helper
+wrappers go in `ipcMethods.wrappers`. The daemon answers `ipc.hello` (`ipc.ProtocolVersion`)
+and `ipc.methods`; bump the version on a breaking wire change and update
+`BackendService.expectedProtocol` (the shell warns and sets `protocolMismatch` otherwise).
+`.claude/` (agent worktrees, full repo copies) is excluded from every audit/lint file list.
 
 Diff-based checks use `BASE` (default `origin/main`): `make check BASE=upstream/main`.
 Optional pre-commit hook (parse + format on staged files + audit errors, ~1s):
