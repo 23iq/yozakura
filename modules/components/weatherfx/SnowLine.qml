@@ -6,7 +6,7 @@ import qs.modules.components.kit
 // Snow on a surface (theme.weatherFx.frost while it snows): now and then a
 // flake drifts down and settles along the top edge; once the edge is full
 // the oldest one melts to make room. Starts with a few flakes resting; one
-// timer, stopped while hidden or with motion off.
+// timer (the flakes step on WeatherFx.frame), stopped while hidden or with motion off.
 Item {
     id: root
 
@@ -29,6 +29,7 @@ Item {
             restX: Math.max(root.radius * 0.6, Math.min(root.width - d - root.radius * 0.6, (index + 0.5 + jitter * 0.7) / root.slots * root.width))
             restY: Space.hairline + Math.abs(jitter) * Space.xs * 0.5
             strength: root.strength
+            animate: root.animate
             // Resting from the start: every other flake (fewer while it can
             // still fill up with motion)
             settled: index % (root.animate ? 3 : 2) === 0

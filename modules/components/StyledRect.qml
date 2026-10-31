@@ -271,9 +271,22 @@ ClippingRectangle {
 
     // Weather on surfaces (theme.weatherFx): one overlay per surface root,
     // under the content; nothing exists while the mode is off.
+    // While the surface renders through a layer (shadow / corner mask) every
+    // child change re-renders and re-blurs the whole layer, so the overlay
+    // lives as a sibling just above the surface instead: the shadow depends
+    // on the shape only. Without a layer it stays inside, under the content.
     Loader {
+        id: weatherHost
         objectName: "weatherFx"
-        anchors.fill: parent
+        readonly property bool hoisted: root.layer.enabled && root.parent !== null
+        parent: weatherHost.hoisted ? root.parent : root
+        x: weatherHost.hoisted ? root.x : 0
+        y: weatherHost.hoisted ? root.y : 0
+        z: weatherHost.hoisted ? root.z + 0.001 : 0
+        width: root.width
+        height: root.height
+        visible: root.visible
+        opacity: root.opacity
         active: (WeatherFx.active || WeatherFx.scopes > 0) && root.glassSurface !== "" && WeatherFx.hosts(root.glassSurface)
         sourceComponent: WeatherOverlay {
             surface: root

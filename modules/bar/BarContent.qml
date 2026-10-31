@@ -64,6 +64,10 @@ Item {
     // applies to the screen that actually has the fullscreen window
     readonly property bool activeWindowFullscreen: CompositorData.monitorHasFullscreen(compositorMonitor)
 
+    // The weather overlays of this screen rest under a fullscreen window
+    onActiveWindowFullscreenChanged: if (screen)
+        WeatherFx.setCovered(screen.name, activeWindowFullscreen)
+
     // Whether auto-hide should be active (not pinned, or fullscreen forces it)
     readonly property bool shouldAutoHide: !pinned || activeWindowFullscreen
 

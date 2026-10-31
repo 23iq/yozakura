@@ -82,6 +82,17 @@ QtObject {
         running: root.tickUsers > 0 && root.motionOn
     }
 
+    // Screens (by name) a fullscreen window covers: their overlays rest.
+    // Fed per screen by the bar (BarContent), which already tracks it.
+    property var coveredScreens: ({})
+    function setCovered(name: string, covered: bool): void {
+        if ((root.coveredScreens[name] === true) === covered)
+            return;
+        const next = Object.assign({}, root.coveredScreens);
+        next[name] = covered;
+        root.coveredScreens = next;
+    }
+
     // Ambient durations follow the shell speed (1 at the default 300 ms)
     readonly property real tempo: Math.max(0.5, Math.min(2, Motion.base / 300))
     function ms(base: real): int {

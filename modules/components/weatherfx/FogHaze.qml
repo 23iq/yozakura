@@ -4,13 +4,14 @@ import QtQuick.Shapes
 import qs.modules.theme
 
 // Fog on a surface (theme.weatherFx.fog): a soft haze rising from the bottom
-// edge and a few wide, very faint banks of mist. Static: nothing animates
-// once it has faded in.
+// edge and a few wide, very faint banks of mist. Static once it has faded in
+// (the fade steps on WeatherFx.frame).
 Item {
     id: root
 
     property real level: 0.6
     property real strength: 1
+    property bool animate: false
     property int salt: 0
     property real radius: 0
 
@@ -27,11 +28,25 @@ Item {
         return out;
     }
 
+    // Fades in over 1.6 s on the shared weather clock
+    property real _t0: 0
+    property bool _fading: false
     opacity: 0
-    Component.onCompleted: opacity = 1
-    Behavior on opacity {
-        NumberAnimation {
-            duration: WeatherFx.motionOn ? WeatherFx.ms(1600) : 0
+    Component.onCompleted: {
+        if (root.animate && WeatherFx.motionOn) {
+            root._t0 = Date.now();
+            root._fading = true;
+        } else {
+            root.opacity = 1;
+        }
+    }
+    FrameUse {
+        ticking: root._fading && root.animate
+        onTick: now => {
+            const p = Math.min(1, (now - root._t0) / Math.max(1, WeatherFx.ms(1600)));
+            root.opacity = p;
+            if (p >= 1)
+                root._fading = false;
         }
     }
 

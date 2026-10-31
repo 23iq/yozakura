@@ -130,28 +130,30 @@ Canvas {
     onLevelChanged: requestPaint()
     onStrengthChanged: requestPaint()
 
-    // Creeping in from the corner
+    // Creeping in from the corner (scale 0.45 -> 1 over 2.6 s OutCubic, fade
+    // over 1.8 s), stepped on the shared weather clock
     scale: 1
+    property real _t0: 0
+    property bool _creeping: false
     Component.onCompleted: {
-        if (root.animate)
-            creep.start();
-    }
-    ParallelAnimation {
-        id: creep
-        NumberAnimation {
-            target: root
-            property: "scale"
-            from: 0.45
-            to: 1
-            duration: WeatherFx.ms(2600)
-            easing.type: Easing.OutCubic
+        if (root.animate) {
+            root.scale = 0.45;
+            root.opacity = 0;
+            root._t0 = Date.now();
+            root._creeping = true;
         }
-        NumberAnimation {
-            target: root
-            property: "opacity"
-            from: 0
-            to: 1
-            duration: WeatherFx.ms(1800)
+    }
+    FrameUse {
+        ticking: root._creeping && root.animate
+        onTick: now => {
+            const t = now - root._t0;
+            const p = Math.min(1, t / Math.max(1, WeatherFx.ms(2600)));
+            root.scale = 0.45 + 0.55 * (1 - Math.pow(1 - p, 3));
+            root.opacity = Math.min(1, t / Math.max(1, WeatherFx.ms(1800)));
+            if (p >= 1) {
+                root.opacity = 1;
+                root._creeping = false;
+            }
         }
     }
 }
