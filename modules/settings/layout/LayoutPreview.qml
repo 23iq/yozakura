@@ -8,6 +8,7 @@ import qs.modules.shell
 import qs.modules.settings.controls
 import "../Ui.js" as Ui
 import "LayoutSketch.js" as LayoutSketch
+import "../../shell/hosts/HostResolve.js" as HostResolve
 
 // Edge preview of the Layout page: a thumbnail of the screen with the bar,
 // dock and notch, and where the launcher, dashboard and OSD open for the
@@ -35,9 +36,13 @@ PreviewStage {
     readonly property int dashW: root.stageHome ? Metrics.launcherWideW : Metrics.dashWideW
     readonly property int dashHeight: root.stageHome ? Math.round(Metrics.launcherWideW * 0.65) : Metrics.dashH
     readonly property var layoutCfg: Config.layout
+    readonly property var hostCtx: ({
+            "notchEnabled": ShellLayout.notchEnabled
+        })
     readonly property var items: LayoutSketch.scene(root.env, {
-        "launcherHost": root.layoutCfg ? root.layoutCfg.launcher.host : "notch",
-        "dashboardHost": root.layoutCfg ? root.layoutCfg.dashboard.host : "notch",
+        // Resolved: "auto" and a notch that is off show where they open
+        "launcherHost": HostResolve.resolve(root.layoutCfg, "launcher", root.hostCtx),
+        "dashboardHost": HostResolve.resolve(root.layoutCfg, "dashboard", root.hostCtx),
         "sheetSide": root.layoutCfg ? root.layoutCfg.sheet.side : "auto",
         "sheetW": Metrics.sheetW,
         "launcher": {

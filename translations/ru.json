@@ -3399,6 +3399,7 @@
   "prefs.layout.host.notch": "Вырез",
   "prefs.layout.host.spotlight": "Spotlight",
   "prefs.layout.host.sheet": "Шторка",
+  "prefs.layout.island_off": "Остров выключен — показано как %1",
   "prefs.layout.preview.launcher": "Лаунчер",
   "prefs.layout.preview.dashboard": "Панель",
   "prefs.layout.preview.osd": "OSD",

@@ -3383,6 +3383,7 @@
   "prefs.layout.host.notch": "Notch",
   "prefs.layout.host.spotlight": "Spotlight",
   "prefs.layout.host.sheet": "Hoja",
+  "prefs.layout.island_off": "La isla está desactivada: se muestra como %1",
   "prefs.layout.preview.launcher": "Lanzador",
   "prefs.layout.preview.dashboard": "Panel",
   "prefs.layout.preview.osd": "OSD",
