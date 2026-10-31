@@ -378,6 +378,9 @@
               "systemStats",
               "weather",
               "worldClocks",
+              "media",
+              "notifications",
+              "mic",
               "keyboardLayout",
               "controls",
               "battery",
@@ -428,6 +431,9 @@
               "systemStats",
               "weather",
               "worldClocks",
+              "media",
+              "notifications",
+              "mic",
               "keyboardLayout",
               "controls",
               "battery",
@@ -478,6 +484,9 @@
               "systemStats",
               "weather",
               "worldClocks",
+              "media",
+              "notifications",
+              "mic",
               "keyboardLayout",
               "controls",
               "battery",
@@ -611,6 +620,39 @@
               "type": "boolean",
               "default": true,
               "description": "Weather module: show the condition text."
+            }
+          },
+          "additionalProperties": false
+        },
+        "media": {
+          "title": "Media",
+          "type": "object",
+          "properties": {
+            "showTitle": {
+              "title": "Track title",
+              "type": "boolean",
+              "default": true,
+              "description": "Show the title next to the album art (horizontal bars).",
+              "x-settings": {
+                "category": "bar",
+                "section": "media",
+                "label": "prefs.bar.media_title",
+                "control": "toggle",
+                "keywords": "media music player title song track module"
+              }
+            },
+            "visualizer": {
+              "title": "Visualizer",
+              "type": "boolean",
+              "default": true,
+              "description": "Small audio bars while something plays.",
+              "x-settings": {
+                "category": "bar",
+                "section": "media",
+                "label": "prefs.bar.media_visualizer",
+                "control": "toggle",
+                "keywords": "media music visualizer cava bars audio module"
+              }
             }
           },
           "additionalProperties": false

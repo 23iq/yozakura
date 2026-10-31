@@ -144,6 +144,12 @@ var keys = {
     "moduleOptions.weather.showDescription": {
         "description": "Weather module: show the condition text."
     },
+    "moduleOptions.media.showTitle": {
+        "description": "Media module: show the track title next to the album art (horizontal bars; a vertical bar shows the art only)."
+    },
+    "moduleOptions.media.visualizer": {
+        "description": "Media module: small audio bars while a player is playing (cava, only while shown)."
+    },
     "moduleOptions.clock.showWeather": {
         "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
     },

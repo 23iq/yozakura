@@ -46,6 +46,10 @@ var data = {
         "weather": {
             "showDescription": true
         },
+        "media": {
+            "showTitle": true,
+            "visualizer": true
+        },
         "clock": {
             "showWeather": true,
             "face": "digital",

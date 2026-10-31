@@ -188,6 +188,26 @@ var category = {
             ]
         },
         {
+            "id": "media",
+            "title": "prefs.bar.section.media",
+            "entries": [
+                {
+                    "key": "bar.moduleOptions.media.showTitle",
+                    "type": "toggle",
+                    "label": "prefs.bar.media_title",
+                    "description": "prefs.bar.media_title.desc",
+                    "keywords": "media music player title song track module"
+                },
+                {
+                    "key": "bar.moduleOptions.media.visualizer",
+                    "type": "toggle",
+                    "label": "prefs.bar.media_visualizer",
+                    "description": "prefs.bar.media_visualizer.desc",
+                    "keywords": "media music visualizer cava bars audio module"
+                }
+            ]
+        },
+        {
             "id": "workspaces",
             "title": "prefs.bar.section.workspaces",
             "entries": [

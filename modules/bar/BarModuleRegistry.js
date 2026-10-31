@@ -109,6 +109,27 @@ var MODULES = [
         "file": "modules/WorldClocks.qml"
     },
     {
+        // The idle island's media, bell and muted mic. Each shows only
+        // while the island does not (ShellLayout.homeOf), so nothing is
+        // drawn twice with the notch on
+        "id": "media",
+        "icon": "musicNotes",
+        "label": "prefs.bar.module.media",
+        "file": "modules/MediaChip.qml"
+    },
+    {
+        "id": "notifications",
+        "icon": "bell",
+        "label": "prefs.bar.module.notifications",
+        "file": "modules/NotificationsChip.qml"
+    },
+    {
+        "id": "mic",
+        "icon": "micSlash",
+        "label": "prefs.bar.module.mic",
+        "file": "modules/MicChip.qml"
+    },
+    {
         "id": "keyboardLayout",
         "icon": "keyboard",
         "label": "prefs.bar.module.keyboardLayout",
