@@ -59,7 +59,7 @@ Item {
 
     ParallelAnimation {
         id: roll
-        readonly property int duration: Math.max(1, Math.round(Config.animDuration * 1.6))
+        readonly property int duration: Math.max(1, Motion.emphasis.duration)
 
         NumberAnimation {
             target: incoming

@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.lockscreen
 import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 
 // Base interface of every lock screen style (see LockStyleRegistry.js).
 //
@@ -37,8 +38,8 @@ Item {
     // "column": like "center", aligned to the left margin
     property string arrangement: "stack"
     property string clockSide: "left"
-    property real clusterWidth: 420
-    property real clusterSpacing: 18
+    property real clusterWidth: Space.controlXL * 4 + Space.xl
+    property real clusterSpacing: Space.l
 
     // ── Wallpaper treatment (LockView) ─────────────────────────────────
     property real wallpaperBlur: 0.7
