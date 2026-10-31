@@ -174,28 +174,12 @@ Item {
         }
     }
 
-    BarPopup {
+    ClockPopup {
         id: clockPopup
         anchorItem: buttonBg
         bar: root.bar
-        variant: "transparent"
-        popupPadding: 0
-
-        contentWidth: panel.implicitWidth
-        contentHeight: panel.implicitHeight
-
-        onIsOpenChanged: {
-            if (isOpen && !WeatherService.dataAvailable)
-                WeatherService.updateWeather();
-        }
-
-        ClockPanel {
-            id: panel
-            width: implicitWidth
-            height: implicitHeight
-            now: root.now
-            use12h: root.use12h
-        }
+        now: root.now
+        use12h: root.use12h
     }
 
     PomodoroSync {
