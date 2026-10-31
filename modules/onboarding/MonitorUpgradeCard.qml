@@ -9,6 +9,7 @@ import "../settings/Ui.js" as Ui
 import "../services/DisplayModel.js" as DisplayModel
 import "../settings/displays/DisplayFormat.js" as DisplayFormat
 import "OnboardingModel.js" as Model
+import "../../config/JsonUtil.js" as JsonUtil
 
 // One monitor in the Displays step: what it runs now, a one-click upgrade
 // to its best refresh rate, the recommended scale, and "More" with the full
@@ -82,7 +83,7 @@ StyledRect {
         z: 10
     }
 
-    onOutputChanged: if (root.draft && root.output && JSON.stringify(root.draft) === JSON.stringify(root.live))
+    onOutputChanged: if (root.draft && root.output && JsonUtil.deepEqual(root.draft, root.live))
         root.draft = null
 
     Column {
@@ -233,7 +234,7 @@ StyledRect {
                 width: parent ? parent.width : 0
                 config: root.config
                 output: root.output
-                dirty: root.draft !== null && JSON.stringify(root.draft) !== JSON.stringify(root.live)
+                dirty: root.draft !== null && !JsonUtil.deepEqual(root.draft, root.live)
                 busy: root.busy
                 onPatch: values => root.patch(values)
                 onResolutionPicked: (w, h) => root.pickResolution(w, h)

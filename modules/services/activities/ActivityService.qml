@@ -7,6 +7,7 @@ import qs.modules.theme
 import qs.config
 import "ActivityModel.js" as Model
 import "TransferModel.js" as Transfers
+import "../../../config/JsonUtil.js" as JsonUtil
 
 // Aggregates every registered provider (ActivityProviders.qml) into:
 //   activities  sorted, de-duplicated live activities (ActivityModel.js
@@ -68,7 +69,7 @@ Singleton {
             activities = aggregated;
     }
     onTransfersAllChanged: {
-        if (JSON.stringify(transfersAll) !== JSON.stringify(transfers))
+        if (!JsonUtil.deepEqual(transfersAll, transfers))
             transfers = transfersAll;
     }
     Component.onCompleted: {

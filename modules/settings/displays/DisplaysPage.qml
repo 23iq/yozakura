@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.settings
 import "../../services/DisplayModel.js" as DisplayModel
 import "DisplayFormat.js" as DisplayFormat
+import "../../../config/JsonUtil.js" as JsonUtil
 
 // Settings > Displays: arrange the monitors on a canvas, tune the selected
 // one, apply live. The layout runs for 15 s on every screen with a "keep
@@ -24,7 +25,7 @@ Flickable {
     readonly property var notice: DisplaysService.notice
 
     readonly property var live: DisplaysService.currentConfigs()
-    readonly property bool dirty: JSON.stringify(draft) !== JSON.stringify(live)
+    readonly property bool dirty: !JsonUtil.deepEqual(draft, live)
     readonly property var selectedConfig: draft.find(c => c.name === selectedName) ?? null
     readonly property int selectedIndex: draft.findIndex(c => c.name === selectedName)
 

@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import "BentoGrid.js" as BentoGrid
 import "WidgetRegistry.js" as WidgetRegistry
+import "../../../../config/JsonUtil.js" as JsonUtil
 // Reaches time/ for Quickshell's scanner (widgets are loaded by URL).
 import "time"
 
@@ -128,7 +129,7 @@ Item {
             preview = null;
             activeId = "";
             selectedId = "";
-            if (JSON.stringify(out) !== JSON.stringify(BentoGrid.serialize(normalized)))
+            if (!JsonUtil.deepEqual(out, BentoGrid.serialize(normalized)))
                 commit(out);
         }
     }
