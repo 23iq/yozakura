@@ -7,8 +7,8 @@ const P = loadLibrary(path.join(__dirname, '../modules/notifications/strips/Stri
 test('no sway with motion off; capped otherwise', () => {
     assert.equal(P.swayDuration(0), 0);
     assert.equal(P.swayDuration(-5), 0);
-    assert.equal(P.swayDuration(300), 1200);
-    assert.equal(P.swayDuration(5000), 2400);
+    assert.equal(P.swayDuration(300), 1050);
+    assert.equal(P.swayDuration(5000), 1200);
 });
 
 test('the sway starts and ends at rest and decays', () => {
@@ -29,7 +29,7 @@ test('the sway starts and ends at rest and decays', () => {
 });
 
 test('neighbours get a light nudge, far strips none', () => {
-    assert.equal(P.amplitude(0), 7);
+    assert.equal(P.amplitude(0), 5);
     assert.ok(P.amplitude(1) < 2.5 && P.amplitude(1) > 0);
     assert.ok(P.amplitude(2) < P.amplitude(1));
     assert.equal(P.amplitude(3), 0);
@@ -57,6 +57,7 @@ test('a dragged strip follows the pointer around its pivot, within a limit', () 
 
 test('timeouts lift away gently, flicks leave at once', () => {
     assert.equal(P.exitDuration('flick', 200), 200);
-    assert.equal(P.exitDuration('lift', 200), 400);
+    assert.equal(P.exitDuration('lift', 100), 150);
+    assert.equal(P.exitDuration('lift', 200), 240);
     assert.equal(P.exitDuration('lift', 0), 0);
 });

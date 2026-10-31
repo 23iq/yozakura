@@ -55,6 +55,12 @@ test('unfold and morph grow along the opening axis', () => {
     assert.ok(m.scaleY < m.scaleX, 'morph is flatter along the axis than across it');
 });
 
+test('unfold starts from half its length, not a smear from zero', () => {
+    const f = K.frame('unfold', 'down', 0, 16);
+    close(f.scaleY, 0.5, 'unfold starts at half height');
+    close(f.opacity, 0, 'and hidden');
+});
+
 test('opacity is clamped when an OutBack easing overshoots', () => {
     for (const kind of K.KINDS) {
         const f = K.frame(kind, 'down', 1.15, 16);

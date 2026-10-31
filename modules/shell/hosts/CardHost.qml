@@ -9,7 +9,8 @@ import qs.modules.components.kit
 // sits under a bar, dock or notch, on any edge. Shows the notch's auto
 // panels off the notch (PanelSurfaces) and the AI quick ask
 // (layout.aiquick.host "card", HostedSurfaces). The kit's floating Surface,
-// gliding in from its edge (Motion.glide). Modal (the default): Escape and a
+// gliding in from its edge (Motion.enter, a short travel plus a fade) and
+// leaving faster (Motion.exit). Modal (the default): Escape and a
 // click outside ask to close (SurfaceHost). Not modal: no focus, and input
 // only reaches the card; the rest of the screen stays usable.
 SurfaceHost {
@@ -17,8 +18,8 @@ SurfaceHost {
 
     hostName: "card"
     slot: slotItem
-    enterMotion: Motion.glide
-    exitMotion: Motion.glide
+    enterMotion: Motion.enter
+    exitMotion: Motion.exit
 
     // Padding around the view (the notch panels bring their own: 0)
     property int padding: 0

@@ -3,7 +3,7 @@
     "font": "Inter",
     "fontSize": 13,
     "monoFont": "JetBrains Mono",
-    "animDuration": 180,
+    "animDuration": 200,
     "paletteTransitionDuration": 400,
     "shadowOpacity": 0.35,
     "terminalOpacity": 1.0,

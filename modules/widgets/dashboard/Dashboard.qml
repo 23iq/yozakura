@@ -399,20 +399,18 @@ NotchAnimationBehavior {
     onImplicitHeightChanged: animatedHeight = implicitHeight
 
     Behavior on animatedWidth {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
-            easing.overshoot: 1.1
         }
     }
 
     Behavior on animatedHeight {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
-            easing.overshoot: 1.1
         }
     }
 

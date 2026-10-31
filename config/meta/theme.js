@@ -61,7 +61,7 @@ var keys = {
         "min": 0,
         "max": 300,
         "unit": "ms",
-        "description": "Base animation duration; 0 disables animations. Values above 300 are capped (config/motion/MotionBudget.js)."
+        "description": "Base animation duration; 0 disables animations. Above 160 ms it counts half (300 plays as 230) and the result is capped at 240 (config/motion/MotionBudget.js)."
     },
     "paletteTransitionDuration": {
         "min": 0,

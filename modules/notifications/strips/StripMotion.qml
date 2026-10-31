@@ -7,7 +7,7 @@ import "StripPhysics.js" as Physics
 // Motion of one strip (Strip.qml): it drops in along its thread and sways
 // (a damped pendulum, StripPhysics.swayAngle), neighbours get a nudge, and
 // it leaves back up the thread: at once when flicked (`kind` "flick"),
-// gently when its time is up ("lift"). All durations come from Motion
+// a little slower when its time is up ("lift"), accelerating away both times. All durations come from Motion
 // tokens; with motion off nothing moves and nothing sways.
 Item {
     id: root
@@ -55,7 +55,7 @@ Item {
     function leave(): void {
         swayAnim.stop();
         leaveAnim.duration = Physics.exitDuration(root.kind, Motion.exit.duration);
-        leaveAnim.easing.type = root.kind === "lift" ? Easing.InOutSine : Motion.exit.easing;
+        leaveAnim.easing.type = Motion.exit.easing;
         leaveSeq.restart();
     }
 

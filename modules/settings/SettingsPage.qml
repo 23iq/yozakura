@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
-import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.services
@@ -54,7 +53,7 @@ Flickable {
         id: scroller
         target: page
         property: "contentY"
-        duration: Math.max(1, Config.animDuration * 1.5)
+        duration: Math.max(1, Motion.morph.duration)
         easing.type: Motion.morph.easing
     }
 

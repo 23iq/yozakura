@@ -18,7 +18,7 @@ import qs.modules.theme
 // Escape from the view bubbles up to it). `modal` false (a card that only
 // shows, like a ringing alarm) takes no keyboard focus and no focus grab;
 // the subclass then masks input to its frame. `enterMotion` / `exitMotion`
-// are the open / close tokens (a card glides: Motion.glide).
+// are the open / close tokens (close is always the shorter one).
 PanelWindow {
     id: root
 

@@ -76,10 +76,12 @@ var _builders = {
             "dy": 0
         };
     },
+    // Unfolds from half its length: a full 0 -> 1 stretch squashes the text
+    // for most of a short animation and reads as a smear.
     "unfold": function (dir, t) {
-        var s = _axis(dir, t, 1);
+        var s = _axis(dir, 0.5 + 0.5 * t, 1);
         return {
-            "opacity": _clamp01(t * 4),
+            "opacity": _clamp01(t * 2.5),
             "scaleX": Math.max(0.01, s[0]),
             "scaleY": Math.max(0.01, s[1]),
             "dx": 0,
