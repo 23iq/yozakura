@@ -8,7 +8,8 @@ when the composed theme.lightMode is true).
 
 Writes <out>/<set>-dashboard.png (the dashboard frame) and <out>/<set>-bar.png
 (the strip of the set's first bar panel on its edge; the top strip, where the
-notch lives, for a set without a visible bar).
+notch lives, for a set without a visible bar) and <out>/<set>-screen.png
+(the whole screen with sample windows; no island while notch.enabled is off).
 """
 from __future__ import annotations
 
@@ -59,6 +60,9 @@ def render_set(name: str, out: Path, size: tuple[int, int], state: dict) -> None
     layout = {**overrides, "name": f"{name}-bar", "crop": {"edge": bar_edge(composed.get("bar", {})),
                                                            "size": STRIP}}
     panels_render.render(layout, mode, size, out, state, REPO, windows=False, colors=colors, user_config=False)
+    # The whole screen: every panel, the notch only while notch.enabled
+    screen = {**overrides, "name": f"{name}-screen"}
+    panels_render.render(screen, mode, size, out, state, REPO, windows=True, colors=colors, user_config=False)
 
 
 def main() -> int:

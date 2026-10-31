@@ -81,12 +81,15 @@ Window {
 }"""
 
 
-def render(name: str, path: Path, state: dict, colors: dict, overrides: dict, opts: dict) -> Path:
+def render(name: str, path: Path, state: dict, colors: dict, overrides: dict, opts: dict | None = None,
+           user_config: bool = True) -> Path:
     """One dashboard scene: `overrides` ({domain: {...}}) over the defaults
-    and your config, `colors` as the palette, `opts` a VARIANTS entry."""
+    and your config (user_config=False: the defaults only), `colors` as
+    the palette, `opts` a VARIANTS entry."""
+    opts = opts or {}
     wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
     url = ("file://" + wall) if wall else ""
-    env = DashboardEnv(name, notifications=opts.get("notifications"), art=url, palette=colors, user_config=True,
+    env = DashboardEnv(name, notifications=opts.get("notifications"), art=url, palette=colors, user_config=user_config,
                        overrides=overrides, wallpaper=state, playing=opts.get("playing", True),
                        timers=SAMPLE_TIMERS if opts.get("timers") else [])
     win = env.load(SCENE)
