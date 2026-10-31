@@ -28,6 +28,7 @@ h.singleton("qs.modules.services", "Brightness", """QtObject {
     signal brightnessChanged(real value, var screen)
     function getMonitorForScreen(s) { return null }
 }""")
+h.singleton("qs.modules.services", "ShellLayout", "QtObject { property bool notchEnabled: true }")
 h.copy("modules/shell/osd/OsdStyles.js")
 h.copy("modules/shell/osd/MicrophoneVolume.js")
 h.copy("modules/services/OsdService.qml", strip_singleton=True, siblings=False, replace={

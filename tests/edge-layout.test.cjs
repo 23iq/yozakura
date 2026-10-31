@@ -195,7 +195,9 @@ test('cards sit beside the bar, inside the work area, on every edge', () => {
     }
     // A left bar with the dock on the top: the free bottom-left corner
     assert.equal(L.cardCorner(env('left', 'top', 'top')), 'bottom-left');
-    // Slides in from its vertical edge; too big shrinks to the work area
+    // Glides out of the bar's edge; too big shrinks to the work area
+    assert.equal(L.cardRect(env('left', 'bottom', 'top'), { w: 400, h: 200 }, 'auto', 10).from, 'left');
+    assert.equal(L.cardRect(env('left', 'bottom', 'top'), { w: 400, h: 200 }, 'bottom-right', 10).from, 'bottom');
     const big = L.cardRect(env('top', 'bottom', 'top'), { w: 5000, h: 5000 }, 'auto', 10);
     assert.equal(big.from, 'top');
     assert.equal(big.w, 1920 - 20);

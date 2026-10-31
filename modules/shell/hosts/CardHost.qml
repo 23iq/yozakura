@@ -29,8 +29,10 @@ SurfaceHost {
         "w": Math.max(root.preferredWidth, root.view ? root.view.implicitWidth : 0) + root.padding * 2,
         "h": (root.view ? root.view.implicitHeight : 0) + root.padding * 2
     }, Space.m)
-    // Toward the edge it glides in from
-    readonly property real _slide: (root.area.from === "bottom" ? 1 : -1) * Space.l * (1 - root.progress)
+    // Offset toward the edge it glides in from
+    readonly property real _slide: Space.l * (1 - root.progress)
+    readonly property bool _sideways: root.area.from === "left" || root.area.from === "right"
+    readonly property int _sign: root.area.from === "bottom" || root.area.from === "right" ? 1 : -1
 
     mask: Region {
         item: root.modal ? backdrop : card
@@ -51,8 +53,8 @@ SurfaceHost {
         objectName: "cardFrame"
         floating: true
         padding: 0
-        x: root.area.x
-        y: root.area.y + root._slide
+        x: root.area.x + (root._sideways ? root._sign * root._slide : 0)
+        y: root.area.y + (root._sideways ? 0 : root._sign * root._slide)
         width: root.area.w
         height: root.area.h
         opacity: Math.min(1, root.progress)

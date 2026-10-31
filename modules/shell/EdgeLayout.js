@@ -199,14 +199,18 @@ function freeCorner(e, pref) {
 // chips that open it live, at the end of that edge with the fewest other
 // occupied edges (top-right for a top bar, top-left for a left bar); with
 // no bar the free corner.
-function cardCorner(e) {
-    var bar = "";
+function _cardBar(e) {
     var panels = e.panels !== undefined ? e.panels : [e.bar];
-    for (var i = 0; i < panels.length && !bar; i++) {
+    for (var i = 0; i < panels.length; i++) {
         var p = panels[i];
         if (p && p.visible && (p.size || 0) > 0 && OPPOSITE[p.pos])
-            bar = p.pos;
+            return p.pos;
     }
+    return "";
+}
+
+function cardCorner(e) {
+    var bar = _cardBar(e);
     if (!bar)
         return freeCorner(e, "auto");
     var corners = ["top-right", "top-left", "bottom-right", "bottom-left"];
@@ -228,7 +232,8 @@ function cardCorner(e) {
 
 // Rect of a floating card of `size` {w, h} in its corner (cardCorner, or
 // `pref` when it names one), `margin` px inside the work area so it never
-// sits under a bar, dock or notch. `.from` is the edge it slides in from.
+// sits under a bar, dock or notch. `.from` is the edge it glides in from:
+// the bar's edge when the card is beside it, else its vertical edge.
 function cardRect(e, size, pref, margin) {
     var corner = pref && pref !== "auto" ? pref : cardCorner(e);
     var parts = corner.split("-");
@@ -236,13 +241,14 @@ function cardRect(e, size, pref, margin) {
     var m = margin || 0;
     var rw = Math.min(size.w, Math.max(0, w.w - m * 2));
     var rh = Math.min(size.h, Math.max(0, w.h - m * 2));
+    var bar = _cardBar(e);
     return {
         x: Math.round(parts[1] === "left" ? w.x + m : w.x + w.w - m - rw),
         y: Math.round(parts[0] === "top" ? w.y + m : w.y + w.h - m - rh),
         w: rw,
         h: rh,
         corner: corner,
-        from: parts[0]
+        from: parts.indexOf(bar) !== -1 ? bar : parts[0]
     };
 }
 
