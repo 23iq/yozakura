@@ -100,6 +100,18 @@ var category = {
                     "label": "prefs.sys.dashboard_max_tabs",
                     "description": "prefs.sys.dashboard_max_tabs.desc",
                     "keywords": "dashboard tabs memory limit"
+                },
+                {
+                    "key": "performance.unloadIdleViews",
+                    "type": "toggle",
+                    "advanced": true,
+                    "visibleWhen": {
+                        "key": "performance.dashboardPersistTabs",
+                        "equals": true
+                    },
+                    "label": "prefs.sys.unload_idle_views",
+                    "description": "prefs.sys.unload_idle_views.desc",
+                    "keywords": "dashboard tabs memory unload idle release"
                 }
             ]
         }

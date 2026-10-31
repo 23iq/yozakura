@@ -2033,6 +2033,8 @@
   "prefs.sys.dashboard_persist.desc": "Mantiene cargadas las pestañas del panel: cambio más rápido, más memoria.",
   "prefs.sys.dashboard_max_tabs": "Pestañas cargadas",
   "prefs.sys.dashboard_max_tabs.desc": "Máximo de pestañas del panel en memoria a la vez.",
+  "prefs.sys.unload_idle_views": "Liberar pestañas inactivas",
+  "prefs.sys.unload_idle_views.desc": "Descarga las pestañas conservadas un minuto después de cerrar el panel.",
   "prefs.sys.lock_cmd.desc": "Se ejecuta al bloquear la sesión (loginctl lock-session, escuchas de inactividad).",
   "prefs.sys.idle_listeners.desc": "Comandos tras un tiempo sin actividad, en orden: atenuar, bloquear, apagar pantalla, suspender. Al volver se ejecuta \"al reanudar\".",
   "prefs.sys.idle_listeners.empty": "Sin escuchas: la pantalla nunca se atenúa, bloquea ni suspende sola.",
