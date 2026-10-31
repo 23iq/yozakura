@@ -191,7 +191,11 @@ Window {{
     env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
     env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
     for cat in args.categories:
-        env.h.eval(shell, f'select("{cat}")')
+        cat = cat.lower()
+        env.h.eval(shell, 'currentCategory = ""')
+        env.h.eval(shell, f"select({json.dumps(cat)})")
+        if not env.h.eval(shell, "currentCategory"):
+            raise SystemExit(f"unknown settings category: {cat!r}")
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)

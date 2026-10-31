@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 
 // One rain drop resting on a surface (RainBeads). Drawn per language
 // (WeatherFx.drop): "bead" a refracting glass bead (dark contact side, bright
@@ -30,6 +31,9 @@ Item {
         root._then = then;
         root._resume = Date.now() + ms;
     }
+
+    // Big beads sit over text more often: the larger, the more see-through
+    opacity: Math.max(0.4, 1 - Math.max(0, root.d - Space.s) / Space.s * 0.65)
 
     width: root.d
     height: Math.round(root.d * 1.12)

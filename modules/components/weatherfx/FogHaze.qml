@@ -56,11 +56,11 @@ Item {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: Qt.alpha(WeatherFx.mist, 0.03 * root.k)
+                color: Qt.alpha(WeatherFx.mist, 0.03 * root.k * WeatherFx.mistGain)
             }
             GradientStop {
                 position: 1
-                color: Qt.alpha(WeatherFx.mist, 0.16 * root.k)
+                color: Qt.alpha(WeatherFx.mist, 0.16 * root.k * WeatherFx.mistGain)
             }
         }
     }
@@ -95,11 +95,11 @@ Item {
                     focalY: bank.rx
                     GradientStop {
                         position: 0
-                        color: Qt.alpha(WeatherFx.mist, 0.12 * root.k)
+                        color: Qt.alpha(WeatherFx.mist, 0.12 * root.k * WeatherFx.mistGain)
                     }
                     GradientStop {
                         position: 0.6
-                        color: Qt.alpha(WeatherFx.mist, 0.05 * root.k)
+                        color: Qt.alpha(WeatherFx.mist, 0.05 * root.k * WeatherFx.mistGain)
                     }
                     GradientStop {
                         position: 1

@@ -15,7 +15,7 @@ Item {
     property bool compact: false
 
     readonly property real reach: {
-        const base = root.compact ? Math.min(Math.min(root.width, root.height) * 1.6, Math.max(root.width, root.height) * 0.2) : Math.max(24, Math.min(150, Math.min(root.width, root.height) * 0.45));
+        const base = root.compact ? Math.min(Math.min(root.width, root.height) * 0.8, Math.max(root.width, root.height) * 0.2) : Math.max(24, Math.min(150, Math.min(root.width, root.height) * 0.45));
         return Math.round(base * (0.7 + 0.3 * root.level));
     }
 

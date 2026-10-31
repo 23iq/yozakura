@@ -227,7 +227,7 @@ def main() -> int:
     ap.add_argument("--tint", action="store_true")
     ap.add_argument("--palette", default="default", choices=sorted(PALETTES))
     args = ap.parse_args()
-    out = Path(args.out)
+    out = Path(args.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     w, h = (int(v) for v in args.size.split("x"))
     work = out / "panorama-src"
