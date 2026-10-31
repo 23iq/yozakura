@@ -124,7 +124,7 @@ test('surface effects: surface visibility and scanline row mapping', () => {
 test('indicator styles: registry', () => {
     assert.equal(I.DEFAULT_ID, 'pill');
     assert.equal(wsDefaults.indicatorStyle, 'pill');
-    assert.deepEqual([...I.ids()], ['pill', 'underline', 'dot', 'brush', 'bracket']);
+    assert.deepEqual([...I.ids()], ['pill', 'underline', 'dot', 'brush', 'bracket', 'branch']);
     assert.equal(I.get('zigzag').id, 'pill');
     for (const id of I.ids()) {
         const s = I.get(id);

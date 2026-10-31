@@ -16,7 +16,18 @@ var keys = {
     },
     "indicatorStyle": {
         "enum": Enums.indicatorStyles(),
-        "description": "Shape of the active workspace indicator: pill, underline, dot, brush (sumi-e stroke) or bracket ([1], retro) (registry: modules/bar/workspaces/indicators/IndicatorStyles.js)."
+        "description": "Shape of the active workspace indicator: pill, underline, dot, brush (sumi-e stroke), bracket ([1], retro) or branch (a blossom branch: a bud per empty workspace, a petal per window) (registry: modules/bar/workspaces/indicators/IndicatorStyles.js)."
+    },
+    "branchBlossom": {
+        "enum": Enums.branchBlossoms(),
+        "description": "Blossom shape of the branch indicator (indicatorStyle branch): sakura (notched petals), plum (round petals), round (dots) or leaf."
+    },
+    "branchColor": {
+        "enum": Enums.COLOR_ROLES,
+        "description": "Palette role of the branch indicator's blossoms and buds; the active workspace always takes the accent."
+    },
+    "branchPetalFall": {
+        "description": "Branch indicator: a petal falls when a window closes (only with animations on)."
     },
     "showSpecialWorkspace": {
         "description": "Show the special (scratchpad) workspace indicator."

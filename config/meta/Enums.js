@@ -2,6 +2,7 @@
 .import "../../modules/bar/BarLayout.js" as BarLayout
 .import "../../modules/bar/workspaces/WorkspaceNumerals.js" as WorkspaceNumerals
 .import "../../modules/bar/workspaces/indicators/IndicatorStyles.js" as IndicatorStyles
+.import "../../modules/bar/workspaces/branch/BranchGeometry.js" as BranchGeometry
 .import "../../modules/components/surfaceeffects/SurfaceEffects.js" as SurfaceEffects
 .import "../../modules/desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
 .import "../../modules/lockscreen/styles/LockStyleRegistry.js" as LockStyles
@@ -54,6 +55,7 @@ var LOCK_TONES = LockStyles.TONES;
 var CLOCK_INKS = ClockStyles.INKS;
 var WIDGET_TYPES = WidgetRegistry.ids();
 var WIDGET_VARIANTS = WidgetRegistry.VARIANTS;
+var COLOR_ROLES = BranchGeometry.ROLES;
 
 function clockStyles() {
     return ClockStyles.ids();
@@ -69,6 +71,10 @@ function numeralStyles() {
 
 function indicatorStyles() {
     return IndicatorStyles.ids();
+}
+
+function branchBlossoms() {
+    return BranchGeometry.SHAPES;
 }
 
 function surfaceEffects() {

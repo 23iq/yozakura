@@ -139,15 +139,85 @@
         "label": "prefs.bar.ws_indicator",
         "control": "custom",
         "component": "IndicatorStyleChips",
-        "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink"
+        "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
       },
       "enum": [
         "pill",
         "underline",
         "dot",
         "brush",
-        "bracket"
+        "bracket",
+        "branch"
       ]
+    },
+    "branchBlossom": {
+      "title": "Blossom",
+      "type": "string",
+      "default": "sakura",
+      "description": "Shape of the blossoms on the branch: a petal per window, fully open on the active workspace.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_branch_blossom",
+        "control": "custom",
+        "component": "BranchBlossomChips",
+        "keywords": "branch blossom flower petal sakura plum round leaf shape workspaces",
+        "visibleWhen": {
+          "key": "workspaces.indicatorStyle",
+          "equals": "branch"
+        }
+      },
+      "enum": [
+        "sakura",
+        "plum",
+        "round",
+        "leaf"
+      ]
+    },
+    "branchColor": {
+      "title": "Blossom colour",
+      "type": "string",
+      "default": "primary",
+      "description": "Palette role of the blossoms and buds. The active workspace always takes the accent.",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_branch_color",
+        "control": "custom",
+        "component": "ColorRoleSwatches",
+        "keywords": "branch blossom colour color palette role accent workspaces",
+        "visibleWhen": {
+          "key": "workspaces.indicatorStyle",
+          "equals": "branch"
+        }
+      },
+      "enum": [
+        "primary",
+        "secondary",
+        "tertiary"
+      ],
+      "x-enumLabels": {
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "tertiary": "Tertiary"
+      }
+    },
+    "branchPetalFall": {
+      "title": "Falling petals",
+      "type": "boolean",
+      "default": true,
+      "description": "A petal falls when a window closes (only with animations on).",
+      "x-settings": {
+        "category": "bar",
+        "section": "workspaces",
+        "label": "prefs.bar.ws_branch_fall",
+        "control": "toggle",
+        "keywords": "branch petal fall animation window close workspaces",
+        "visibleWhen": {
+          "key": "workspaces.indicatorStyle",
+          "equals": "branch"
+        }
+      }
     }
   },
   "additionalProperties": false

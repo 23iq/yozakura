@@ -14,4 +14,7 @@ JsonAdapter {
     property string numeralStyle: "arabic"
     property string numeralFont: ""
     property string indicatorStyle: "pill"
+    property string branchBlossom: "sakura"
+    property string branchColor: "primary"
+    property bool branchPetalFall: true
 }

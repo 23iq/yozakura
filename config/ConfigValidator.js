@@ -181,6 +181,14 @@ function validate(current, defaults, keyName) {
         return defaults;
     }
 
+    if (keyName === "branchBlossom" && Enums.branchBlossoms().indexOf(current) === -1) {
+        return defaults;
+    }
+
+    if (keyName === "branchColor" && Enums.COLOR_ROLES.indexOf(current) === -1) {
+        return defaults;
+    }
+
     // notch.liveActivities.maxVisible: at least one island, never a wall of them
     if (keyName === "maxVisible" && typeof defaults === "number") {
         if (!isFinite(current)) {

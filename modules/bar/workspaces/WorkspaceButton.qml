@@ -33,6 +33,9 @@ Button {
     readonly property string indicatorStyle: Config.workspaces.indicatorStyle
     readonly property bool solidIndicator: IndicatorStyles.filled(root.indicatorStyle) && (root.indicatorStyle !== "pill" || Look.solidActive || BarLook.classic)
     readonly property color activeColor: root.solidIndicator ? Styling.srItem("primary") : Type.accent
+    // Strip styles (the branch) draw the slot themselves: the button only
+    // takes clicks and focus.
+    readonly property bool stripIndicator: IndicatorStyles.strip(root.indicatorStyle) !== ""
 
     onPressed: YozdService.dispatch(`workspace ${root.workspaceId}`)
 
@@ -61,6 +64,7 @@ Button {
             return Quickshell.iconPath(AppSearch.getCachedIcon(focusedWindow ? focusedWindow.class : undefined), "image-missing");
         }
         readonly property bool iconFullSize: WorkspaceSlot.iconFullSize(Config.workspaces)
+        visible: !root.stripIndicator
 
         WorkspaceNumberLabel {
             z: 3
