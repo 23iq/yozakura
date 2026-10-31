@@ -5,6 +5,10 @@
 // server-side (cheap) so the CLI can pretty-print without talking to
 // Quickshell first.
 //
+// `preset.status` is the active preset against the live config (changed
+// keys); subscribers also get it pushed as a `preset.status` event when it
+// changes (status.go).
+//
 // `preset.load` is the CLI's "apply this preset now" hook. It broadcasts
 // a `preset.load` ServiceEvent to QML subscribers, where
 // PresetCommandService.qml calls into PresetsService.loadPreset().
@@ -17,6 +21,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"yozakura/backend/pkg/presets"
 	"yozakura/backend/pkg/ipc"
@@ -27,22 +32,73 @@ type Service struct {
 	paths *paths.Paths
 	mu    sync.Mutex
 	subs  []*ipc.Subscriber
+
+	track     *tracker
+	watchOnce sync.Once
+	mgrOnce   sync.Once
+	mgr       *presets.Manager
+	mgrErr    error
 }
 
-func NewService(p *paths.Paths) *Service { return &Service{paths: p} }
+func NewService(p *paths.Paths) *Service {
+	s := &Service{paths: p}
+	s.track = &tracker{manager: s.manager, send: s.broadcastStatus, saveWait: 2 * time.Second}
+	return s
+}
+
+// manager is the presets manager (built once: the catalog load is not free).
+func (s *Service) manager() (*presets.Manager, error) {
+	s.mgrOnce.Do(func() {
+		if s.paths == nil {
+			s.mgrErr = os.ErrNotExist
+			return
+		}
+		s.mgr, s.mgrErr = newPresetManager(s.paths)
+	})
+	return s.mgr, s.mgrErr
+}
+
+func (s *Service) broadcastStatus(data any) {
+	s.mu.Lock()
+	subs := append([]*ipc.Subscriber(nil), s.subs...)
+	s.mu.Unlock()
+	for _, sub := range subs {
+		sub.Send("preset.status", data)
+	}
+}
+
+// status answers `preset.status` (and starts the change watcher).
+func (s *Service) status(_ json.RawMessage) (any, error) {
+	s.startWatch()
+	return s.track.refresh(), nil
+}
+
+func (s *Service) startWatch() {
+	if s.paths == nil {
+		return
+	}
+	s.watchOnce.Do(func() {
+		s.track.watch([]string{
+			filepath.Join(s.paths.ConfigDir, "config"),
+			filepath.Join(s.paths.ConfigDir, "presets"),
+		}, 400*time.Millisecond)
+	})
+}
 
 func (s *Service) Register(srv *ipc.Server) {
 	srv.Register(&ipc.Service{
 		Name: "preset",
 		Methods: map[string]ipc.HandlerFunc{
-			"list": s.list,
-			"load": s.load,
+			"list":   s.list,
+			"load":   s.load,
+			"status": s.status,
 		},
 		Subscribe: s.subscribe,
 	})
 }
 
 func (s *Service) subscribe(sub *ipc.Subscriber) {
+	s.startWatch()
 	s.mu.Lock()
 	s.subs = append(s.subs, sub)
 	s.mu.Unlock()

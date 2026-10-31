@@ -111,6 +111,7 @@ func newDeps(t *testing.T) (Deps, *fakeRunner, *fakeIPC) {
 		NotificationsFile: "testdata/notifications.json",
 		WallpapersFile:    filepath.Join(dir, "wallpapers.json"),
 		StateDir:          filepath.Join(dir, "state"),
+		DataDir:           filepath.Join(dir, "data"),
 		Now:               func() time.Time { return time.Date(2026, 10, 5, 12, 30, 45, 0, time.UTC) },
 	}, r, ipc
 }
@@ -153,6 +154,7 @@ func TestEveryToolIsWellFormed(t *testing.T) {
 		"presets_list", "preset_apply", "preset_save", "preset_diff",
 		"preset_show", "preset_mix", "preset_duplicate", "preset_rename", "preset_delete",
 		"preset_export", "preset_import", "preset_parts", "preset_apply_part",
+		"preset_status", "preset_save_current", "preset_undo_save",
 		"wallpaper_set", "wallpapers_list", "windows_list", "workspaces_list", "window_focus",
 		"window_move_to_workspace", "workspace_switch", "notification_send", "notifications_list",
 		"clipboard_read", "clipboard_write", "clipboard_history", "screenshot", "media_control",

@@ -13,12 +13,14 @@ import (
 // <name>`. A preview is undone by `preset revert`; a plain apply during
 // one keeps it.
 func presetApplyArgs(m *presets.Manager, args []string, out, errOut io.Writer) error {
-	preview, part := false, ""
+	preview, part, asJSON := false, "", false
 	var names []string
 	for i := 0; i < len(args); i++ {
 		switch a := args[i]; {
 		case a == "--preview":
 			preview = true
+		case a == "--json":
+			asJSON = true
 		case a == "--part" && i+1 < len(args):
 			part = args[i+1]
 			i++
@@ -35,6 +37,9 @@ func presetApplyArgs(m *presets.Manager, args []string, out, errOut io.Writer) e
 		return presetApplyPartCmd(m, part, name, preview, out, errOut)
 	}
 	if !preview {
+		if asJSON {
+			return presetApplyJSON(m, name, out)
+		}
 		return presetApplyCmd(m, name, out, errOut)
 	}
 	if strings.TrimSpace(name) == "" {
