@@ -261,7 +261,8 @@
    "name": "preset",
    "methods": [
     "list",
-    "load"
+    "load",
+    "status"
    ],
    "subscribe": true
   },
