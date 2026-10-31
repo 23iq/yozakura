@@ -15,6 +15,8 @@
 //   warmth      -1..1: golden hour > 0, night < 0 (cool), 0 at noon
 //   day         0..1: 0 at night, 1 in daylight
 //   night       sun below civil twilight
+// withStrength() scales every departure from the neutral light by
+// theme.lighting.strength (subtle | normal | dramatic).
 
 function clamp(v, lo, hi) {
     return Math.max(lo, Math.min(hi, v));
@@ -32,6 +34,12 @@ function mix(a, b, t) {
 var RAD = Math.PI / 180;
 var MODES = ["off", "fixed", "sun"];
 var NIGHT_ALTITUDE = -6;
+var STRENGTHS = { "subtle": 0.55, "normal": 1, "dramatic": 1.6 };
+
+// theme.lighting.strength -> multiplier of the effect (unknown: normal)
+function strengthScale(name) {
+    return Object.prototype.hasOwnProperty.call(STRENGTHS, name) ? STRENGTHS[name] : 1;
+}
 
 function normalizeMode(mode) {
     return MODES.indexOf(mode) >= 0 ? mode : "off";
@@ -66,20 +74,37 @@ function sun(azimuth, altitude, lat) {
     var dx = mix(0, hx / n, day);
     var dy = mix(1, vy / n, day);
     var m = Math.sqrt(dx * dx + dy * dy) || 1;
-    var height = Math.sin(alt);
-    var dayLength = clamp(1 / Math.tan(alt), 0.4, 2.4);
-    var golden = 1 - smoothstep(2, 24, altitude);
+    // 0 with the sun on the horizon, 1 high in the sky
+    var high = smoothstep(4, 50, altitude);
+    var golden = 1 - smoothstep(2, 20, altitude);
     return {
         dx: dx / m,
         dy: dy / m,
-        length: mix(0.35, dayLength, day),
-        blur: mix(1, 0.62 + 0.38 * (1 - height), day),
-        strength: mix(0.45, 1 - 0.18 * golden, day),
+        // Long and soft at dawn and dusk, short and crisp at noon
+        length: mix(0.3, mix(3.4, 0.5, high), day),
+        blur: mix(1.15, mix(1.15, 0.55, high), day),
+        strength: mix(0.22, 1, day),
         side: side * day + 0,
-        warmth: day * golden - (1 - day) * 0.7,
+        warmth: day * golden - (1 - day) * 0.8,
         day: day,
         night: altitude < NIGHT_ALTITUDE
     };
+}
+
+// The light scaled by k (strengthScale): lengths and softness as powers so
+// noon stays shorter than golden hour at every strength; opacity loss and
+// warmth linearly. Direction, side and day are kept.
+function withStrength(light, k) {
+    if (!light)
+        return light;
+    var out = {};
+    for (var key in light)
+        out[key] = light[key];
+    out.length = clamp(Math.pow(light.length, k), 0.2, 4.5);
+    out.blur = Math.pow(light.blur, k);
+    out.strength = clamp(1 + (light.strength - 1) * k, 0.06, 1.2);
+    out.warmth = clamp(light.warmth * k, -1, 1);
+    return out;
 }
 
 // The shadow to draw: base = the theme's own values {x, y, blur, opacity}.

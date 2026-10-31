@@ -64,3 +64,30 @@ test('lantern: always, at night only, or off', () => {
     assert.equal(L.lanternOn('night', true), true);
     assert.equal(L.lanternOn('off', true), false);
 });
+
+test('time of day reads at a glance: golden hour shadows far longer than noon', () => {
+    const golden = L.shadow(L.sun(95, 6, 48), base, 6);
+    const noon = L.shadow(L.sun(180, 35, 48), base, 6);
+    const night = L.shadow(L.sun(0, -30, 48), base, 6);
+    assert.ok(golden.x >= 18, `golden x ${golden.x}`);
+    assert.ok(Math.hypot(golden.x, golden.y) > 2.5 * Math.hypot(noon.x, noon.y));
+    assert.ok(golden.blur > noon.blur, 'golden hour is softer');
+    assert.ok(night.opacity <= 0.25 * 0.5, 'night shadows almost gone');
+});
+
+test('strength scales departures from the neutral light', () => {
+    assert.equal(L.strengthScale('normal'), 1);
+    assert.ok(L.strengthScale('subtle') < 1 && L.strengthScale('dramatic') > 1);
+    assert.equal(L.strengthScale('loud'), 1);
+    const m = L.sun(95, 8, 48);
+    const subtle = L.withStrength(m, L.strengthScale('subtle'));
+    const dramatic = L.withStrength(m, L.strengthScale('dramatic'));
+    assert.ok(subtle.length < m.length && m.length < dramatic.length);
+    assert.ok(subtle.warmth < m.warmth && m.warmth < dramatic.warmth);
+    assert.equal(dramatic.dx, m.dx, 'direction kept');
+    const noon = L.sun(180, 62, 51);
+    assert.ok(L.withStrength(noon, 1.6).length < L.withStrength(m, 1.6).length);
+    const night = L.withStrength(L.sun(0, -30, 48), 1.6);
+    assert.ok(night.strength > 0 && night.strength < 0.2);
+    assert.equal(L.withStrength(null, 1), null);
+});
