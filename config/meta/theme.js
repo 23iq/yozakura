@@ -308,6 +308,23 @@ var keys = {
     "signatures": {
         "description": "Decorative signatures drawn on top of the shell's surfaces."
     },
+    "lighting": {
+        "description": "One light source for the shell's shadows, lit edges and the cursor lantern."
+    },
+    "lighting.mode": {
+        "enum": ["off", "fixed", "sun"],
+        "description": "off: the theme shadow as configured; fixed: light from lighting.angle; sun: shadows follow the real sun at the weather location (long and soft at dawn and dusk, short at noon, faint at night)."
+    },
+    "lighting.angle": {
+        "min": -180,
+        "max": 180,
+        "unit": "deg",
+        "description": "fixed mode: where the light comes from, degrees clockwise from the top of the screen."
+    },
+    "lighting.lantern": {
+        "enum": ["off", "night", "always"],
+        "description": "A soft light that follows the pointer over shell surfaces: off, only after sunset, or always."
+    },
     "signatures.brushHighlight": {
         "description": "Paint selection and focus highlights as a brush stroke."
     },

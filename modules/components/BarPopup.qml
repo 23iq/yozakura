@@ -196,6 +196,9 @@ PopupWindow {
                 root.visible = false;
         }
 
+        // Pointer of the cursor lantern for the popup's surface
+        LanternScope {}
+
         StyledRect {
             id: background
             anchors.fill: parent
