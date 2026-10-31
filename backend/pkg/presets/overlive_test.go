@@ -186,24 +186,6 @@ func writeUserPreset(t *testing.T, m *Manager, name, infoJSON string, files map[
 	}
 }
 
-// A user snapshot saved before a setting existed resets that setting to
-// its default instead of keeping the previously applied preset's value.
-func TestApplyOldSnapshotResetsNewerKeys(t *testing.T) {
-	m := newManager(t)
-	defs := m.Cat.DomainDefault("theme")
-	seedLive(t, m, "theme", `{"font":"Newer Sans","roundness":3,"language":"glass"}`)
-	writeUserPreset(t, m, "Old", `{"author":"User","authorUrl":""}`,
-		map[string]string{"theme": `{"font":"Old Sans"}`})
-	_, _, err := m.Apply("Old")
-	if !assert.NoError(t, err) {
-		t.FailNow()
-	}
-	doc := liveDoc(t, m, "theme")
-	assert.Equal(t, "Old Sans", doc["font"])
-	assert.EqualValues(t, defs["roundness"], doc["roundness"])
-	assert.EqualValues(t, defs["language"], doc["language"])
-}
-
 // Mixes (flagged, or legacy ones recognised by their description) and
 // copies of official sets keep applying over the live config.
 func TestApplyPartialUserPresetKeepsLive(t *testing.T) {

@@ -34,7 +34,7 @@ Loader {
     }
 
     active: false
-    sourceComponent: !category ? null : (category.sections ? schemaPage : (host.pages[category.page] ?? placeholderPage))
+    sourceComponent: !category ? null : (host.pages[category.page] ?? (category.sections ? schemaPage : placeholderPage))
 
     opacity: 1 - slide
     transform: Translate {

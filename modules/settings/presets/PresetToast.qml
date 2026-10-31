@@ -13,6 +13,18 @@ Item {
     readonly property var notice: PresetStudio.toast
     readonly property bool shown: notice !== null
 
+    // "Details" of a notice (kept settings after an apply): the changes sheet.
+    signal detailsRequested
+
+    // Undo of a delete (a trash id) or of a save ("save:<version id>").
+    function undo() {
+        const id = toast.notice.undo;
+        if (id.indexOf("save:") === 0)
+            PresetStatusService.undoSave(id.slice(5), (ok, message) => PresetStudio.notify(message, ""));
+        else
+            PresetStudio.undoDelete(id);
+    }
+
     objectName: "presetToast"
     implicitWidth: Math.min(row.implicitWidth + 32, parent ? parent.width - 32 : 560)
     implicitHeight: 48
@@ -66,7 +78,26 @@ Item {
                 anchors.fill: parent
                 anchors.margins: -8
                 cursorShape: Qt.PointingHandCursor
-                onClicked: PresetStudio.undoDelete(toast.notice.undo)
+                onClicked: toast.undo()
+            }
+        }
+        Text {
+            anchors.verticalCenter: parent.verticalCenter
+            objectName: "toastDetails"
+            visible: toast.notice !== null && !!toast.notice.details
+            text: I18n.t("presets.status.details")
+            font.family: Config.theme.font
+            font.pixelSize: Styling.fontSize(-1)
+            font.weight: Font.Bold
+            color: Colors.inversePrimary
+            MouseArea {
+                anchors.fill: parent
+                anchors.margins: -8
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    PresetStudio.toast = null;
+                    toast.detailsRequested();
+                }
             }
         }
     }

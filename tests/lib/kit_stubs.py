@@ -50,7 +50,7 @@ TYPES = {
     "IconButton": "Item { property string icon; property string size: 'm'; property bool active: false; "
                   "property bool primary: false; property bool highlighted: false; signal clicked; "
                   "implicitWidth: size === 's' ? 36 : 40; implicitHeight: implicitWidth }",
-    "Chip": "Item { property string icon; property string text; property bool active: false; property bool showLabel: true; readonly property real fullWidth: width; readonly property real compactWidth: width; "
+    "Chip": "Item { property string icon; property string text; property bool active: false; property bool primary: false; property bool showLabel: true; readonly property real fullWidth: width; readonly property real compactWidth: width; "
             "property bool highlighted: false; signal clicked; implicitWidth: 60; implicitHeight: 32 }",
     "ListRow": "Item { id: r; property string title; property string subtitle; property bool selected; "
                "property bool highlighted; property bool tabular; property Component leading: null; "

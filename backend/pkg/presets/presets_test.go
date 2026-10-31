@@ -28,6 +28,7 @@ func newManager(t *testing.T) *Manager {
 		OfficialDir:   filepath.Join(repoRoot, "assets", "presets"),
 		WallpaperFile: filepath.Join(dir, "cache", "wallpapers.json"),
 		StateDir:      filepath.Join(dir, "state"),
+		DataDir:       filepath.Join(dir, "data"),
 	}
 }
 

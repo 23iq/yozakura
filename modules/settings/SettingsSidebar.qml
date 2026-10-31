@@ -6,6 +6,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
+import qs.modules.settings.presets
 import "schema/Categories.js" as Categories
 import "SchemaUtil.js" as SchemaUtil
 
@@ -27,6 +28,7 @@ Item {
 
     signal categorySelected(string id)
     signal resultActivated(var result)
+    signal presetAction(string id)
 
     onQueryChanged: resultIndex = 0
 
@@ -112,7 +114,7 @@ Item {
     SidebarTree {
         anchors.top: searchField.bottom
         anchors.topMargin: Space.l
-        anchors.bottom: parent.bottom
+        anchors.bottom: presetFooter.top
         width: parent.width
         visible: sidebar.query.length === 0
         currentCategory: sidebar.currentCategory
@@ -126,7 +128,7 @@ Item {
         objectName: "settingsSearchResults"
         anchors.top: searchField.bottom
         anchors.topMargin: Space.l
-        anchors.bottom: parent.bottom
+        anchors.bottom: presetFooter.top
         x: Space.m
         width: parent.width - Space.m * 2
         visible: sidebar.query.length > 0
@@ -164,5 +166,14 @@ Item {
             role: "secondary"
             text: I18n.t("prefs.search.empty")
         }
+    }
+
+    // The active preset and its unsaved drift (Save to current preset).
+    PresetStatusFooter {
+        id: presetFooter
+        anchors.bottom: parent.bottom
+        width: parent.width
+        compact: sidebar.compact
+        onActionRequested: id => sidebar.presetAction(id)
     }
 }

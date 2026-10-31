@@ -75,7 +75,7 @@ var Excluded = map[string]string{
 	"binds_remove": "keybind management", "binds_undo": "keybind management", "routine_run": "routines do not nest here",
 	"routine_save": "edits routines", "routine_delete": "edits routines", "notes_delete": "destructive",
 	"notes_restore": "note management", "extras_install": "installs software", "displays_apply": "needs keep/revert",
-	"displays_confirm": "needs keep/revert",
+	"displays_confirm": "needs keep/revert", "preset_save_current": "preset management", "preset_undo_save": "preset management",
 }
 
 // Lookup returns the metadata of a routine-usable tool.

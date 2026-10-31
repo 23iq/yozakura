@@ -86,10 +86,11 @@ Singleton {
         return (err || "").trim().replace(/^Error: /, "").split("\n")[0];
     }
 
-    function notify(text, undo) {
+    function notify(text, undo, details) {
         toast = {
             "text": text,
             "undo": undo || "",
+            "details": !!details,
             "serial": Date.now()
         };
     }
@@ -185,11 +186,13 @@ Singleton {
 
         pending = name;
         afterFlush(() => {
-            run(["apply", name], (ok, out, err) => {
+            run(["apply", name, "--json"], (ok, out, err) => {
                 pending = "";
                 if (!ok)
                     fail(err);
-
+                const kept = ok ? ((parse(out) || {}).keptUserValues || []).length : 0;
+                if (kept > 0)
+                    notify(I18n.tn("presets.status.kept", kept), "", true);
                 refresh();
             });
         });

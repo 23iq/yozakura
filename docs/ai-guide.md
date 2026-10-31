@@ -92,6 +92,11 @@ yozakura preset list [--json]             # official first, * = active (also: `y
 yozakura preset apply "Neon Tokyo"        # copies the preset's files over the live config (also: `yozakura preset "Neon Tokyo"`)
 yozakura preset save Backup [--force]     # live config -> user preset (private domains + machine-local keys never included)
 yozakura preset save "Only colors" --domains theme
+yozakura preset status [--json]          # active preset, built-in or yours, settings changed since it was applied
+yozakura preset save --current [--json]  # write the live config into the active user preset (prints an undo id)
+yozakura preset save --current --as "Mine"  # built-in active: save as a new preset, which becomes active
+yozakura preset save --undo <id>         # put the preset back as it was before that save
+yozakura preset apply "Kōyō" --exact     # revert to the preset completely (plain apply keeps settings you changed)
 yozakura preset diff Backup current       # key-by-key differences ("current" = live config, files allowed)
 yozakura preset export current look.json  # single-file bundle {"format":"yozakura-preset","version":1,...}
 yozakura preset import look.json --name Shared [--force]
@@ -108,6 +113,16 @@ yozakura preset set-info Ink --description "..."
 yozakura preset try CRT                 # trial: backs up the live look; `try --keep` / `try --revert`
 yozakura preset edit Ink                  # applies it so settings edit it; `edit --save [--keep]` / `edit --cancel`
 ```
+
+Applying never overwrites the user's own settings: `~/.local/share/yozakura/presets/applied.json`
+records what the last preset wrote. A key the new preset does not name is reset to its default
+only while it still holds that recorded value; anything the user changed is kept (reported as
+`keptUserValues` by `apply --json` / the MCP `preset_apply`). Without a record nothing is reset.
+System domains (keyboard, displays, general, ...) are never written. The settings sidebar footer
+shows the active preset and its changes (`PresetStatusService`, pushed by the backend
+`preset.status` event); `general.autoSavePreset` (off by default) saves changes into an active
+user preset automatically, never into a built-in. Code: `backend/pkg/presets/{provenance,status}.go`,
+`backend/pkg/svc/preset/status.go`, `modules/settings/presets/PresetStatus*`.
 
 Special workspaces (Hyprland scratchpads; global like the keybinds, never in
 presets; stored in `specials.json`):
@@ -442,7 +457,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 60. **Try for a moment**: `preset try CRT`, then `preset try --keep` or `--revert` (the settings studio counts down 10 s and reverts by itself).
 61. **Combine presets**: `preset mix Blend --layout Kaze --colors "Neon Tokyo" --windows CRT --desktop Sumi-e --lockscreen defaults`.
 62. **Customise a built-in**: `preset duplicate "Neon Tokyo" Mine`, `preset edit Mine`, change settings, `preset edit --save`.
-63. **Where does a preset differ?** `preset show Mine --against "Neon Tokyo"`.
+63. **Where does a preset differ?** `preset show Mine --against "Neon Tokyo"`. Changes since the active preset: `preset status`; keep them in it: `preset save --current`.
 64. **Undo everything in one domain**: `config reset compositor --yes`.
 
 ### Special workspaces

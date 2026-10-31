@@ -111,11 +111,16 @@ Singleton {
         if (!presetName)
             return;
         currentPreset = presetName;
-        run(["apply", presetName], (ok, out, err) => {
+        run(["apply", presetName, "--json"], (ok, out, err) => {
             if (ok)
                 root.activePreset = presetName;
             root.currentPreset = "";
-            root.notify(ok, "Preset Loaded", `Preset "${presetName}" loaded successfully.`, err);
+            let kept = 0;
+            try {
+                kept = ok ? ((JSON.parse(out) || {}).keptUserValues || []).length : 0;
+            } catch (e) {}
+            const body = `Preset "${presetName}" loaded successfully.` + (kept > 0 ? " " + I18n.tn("presets.status.kept", kept) + "." : "");
+            root.notify(ok, "Preset Loaded", body, err);
         });
     }
 

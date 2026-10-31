@@ -60,6 +60,9 @@ func (m *Manager) preview(resolve func() (previewTarget, error)) (*Session, erro
 		if _, err := m.Export(Current, m.backupFile(PreviewSession)); err != nil {
 			return nil, fmt.Errorf("backing up the live config: %w", err)
 		}
+		if err := m.backupApplied(PreviewSession); err != nil {
+			return nil, err
+		}
 	}
 	s.Preset, s.Part = t.name, t.part
 	for _, d := range t.domains {
@@ -111,5 +114,6 @@ func (m *Manager) Revert() (bool, error) {
 
 func (m *Manager) dropSession(kind string) {
 	_ = os.Remove(m.backupFile(kind))
+	_ = os.Remove(m.appliedBackup(kind))
 	_ = os.Remove(m.sessionFile(kind))
 }

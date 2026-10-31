@@ -159,6 +159,16 @@ Item {
                 width: parent.width
                 sourceComponent: page.view === "mixer" ? mixer : (page.view === "editor" ? editor : gallery)
             }
+
+            // The page's own settings (schema/presets.js): auto-save.
+            Repeater {
+                model: page.view === "gallery" ? (page.category.sections || []) : []
+                SettingsSection {
+                    required property var modelData
+                    width: column.width
+                    section: modelData
+                }
+            }
         }
     }
 

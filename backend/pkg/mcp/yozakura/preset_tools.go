@@ -23,7 +23,7 @@ func (d Deps) presets() (*presets.Manager, error) {
 		official = filepath.Join(d.ShellSource, "assets", "presets")
 	}
 	return &presets.Manager{Cat: cat, Store: store, UserDir: d.PresetsDir, OfficialDir: official,
-		WallpaperFile: d.WallpapersFile, StateDir: d.StateDir}, nil
+		WallpaperFile: d.WallpapersFile, StateDir: d.StateDir, DataDir: d.DataDir}, nil
 }
 
 func presetTools(d Deps) []mcp.ToolDef {
@@ -32,7 +32,7 @@ func presetTools(d Deps) []mcp.ToolDef {
 			`List the shell's theme/layout presets: name, official or user-made, author, the config domains each one sets, and which one is active. Use a name with preset_apply or preset_diff.`,
 			noArgs, toolOpts{readOnly: true}, d.presetsList),
 		define("preset_apply", "Apply preset",
-			`Apply a preset by name (case-insensitive): its config domain files replace the live ones (bar, theme, notch, dock, compositor, ...) and the shell hot-reloads them. Call presets_list first; consider preset_save "Backup" before, so the user can go back. Values the catalog rejects are reported as warnings.`,
+			`Apply a preset by name (case-insensitive): its config domain files replace the live ones (bar, theme, notch, dock, compositor, ...) and the shell hot-reloads them. Settings the user changed since the last preset apply are kept (keptUserValues). Call presets_list first; consider preset_save "Backup" before, so the user can go back. Values the catalog rejects are reported as warnings.`,
 			`{"type":"object","properties":{"name":{"type":"string","description":"Preset name as returned by presets_list."}},"required":["name"],"additionalProperties":false}`,
 			toolOpts{destructive: true, idempotent: true}, d.presetApply),
 		define("preset_save", "Save preset",
@@ -178,11 +178,12 @@ func (d Deps) presetApply(_ context.Context, args json.RawMessage) (*mcp.CallToo
 	if err != nil {
 		return nil, err
 	}
-	p, problems, err := m.Apply(a.Name)
+	p, sum, problems, err := m.ApplyReport(a.Name)
 	if err != nil {
 		return nil, err
 	}
-	return mcp.JSONResult(map[string]any{"applied": p.Name, "domains": p.Domains, "warnings": problems}), nil
+	return mcp.JSONResult(map[string]any{"applied": p.Name, "domains": p.Domains, "warnings": problems,
+		"reset": sum.Reset, "keptUserValues": sum.Kept}), nil
 }
 
 func (d Deps) presetSave(_ context.Context, args json.RawMessage) (*mcp.CallToolResult, error) {

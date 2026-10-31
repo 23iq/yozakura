@@ -10,6 +10,7 @@ import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.presets
 import "schema/Categories.js" as Categories
+import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
 
 // Settings window content: sidebar (groups, search) + the current page
@@ -57,6 +58,20 @@ Item {
             revealTimer.restart();
         else
             select(categoryId);
+    }
+
+    // The active preset's actions (sidebar footer, changes sheet, toast).
+    // Staged edits are written first, so the preset gets what the user sees.
+    function presetAction(id) {
+        const toast = (ok, message, undo) => PresetStudio.notify(message, undo ? "save:" + undo : "");
+        if (id === "save")
+            PresetStudio.afterFlush(() => PresetStatusService.save(toast));
+        else if (id === "saveAs")
+            saveAsDialog.ask(I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast)));
+        else if (id === "changes")
+            changesSheet.open = true;
+        else if (id === "revert")
+            PresetStatusService.revert(toast);
     }
 
     function step(delta) {
@@ -157,6 +172,7 @@ Item {
             shell.searchOpen = false;
             shell.navigate(r.categoryId, r.sectionId, r.entryId);
         }
+        onPresetAction: id => shell.presetAction(id)
 
         Behavior on width {
             enabled: Config.animDuration > 0
@@ -231,7 +247,22 @@ Item {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 22
             z: 3
+            onDetailsRequested: shell.presetAction("changes")
         }
+    }
+
+    PresetChangesSheet {
+        id: changesSheet
+        objectName: "presetChangesSheet"
+        anchors.fill: parent
+        index: sidebar.index
+        onClosed: open = false
+        onActionRequested: id => shell.presetAction(id)
+        onNavigate: (c, s, e) => shell.navigate(c, s, e)
+    }
+
+    PresetNameDialog {
+        id: saveAsDialog
     }
 
     // Closing the window with unsaved staged changes asks first

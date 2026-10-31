@@ -5,5 +5,6 @@ var data = {
     "terminalAdvanced": false,
     "terminalCommand": "$TERMINAL -e $COMMAND",
     "onboardingDone": false,
-    "newLookOffered": false
+    "newLookOffered": false,
+    "autoSavePreset": false
 }
