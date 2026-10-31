@@ -4,6 +4,7 @@ import QtQuick.Controls
 import qs.modules.services
 import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 
 // Glass style password field: a glass pill with a lock glyph, the masked
 // text, a caps-lock mark and a round submit button; hints below.
@@ -17,13 +18,13 @@ LockPasswordBase {
     property color fill: Colors.shadow
     property string fontFamily: Config.theme.font
 
-    readonly property real pillHeight: 54
-    readonly property real pillRadius: Config.roundness > 0 ? (pillHeight / 2) * Math.min(1, Config.roundness / 16) : 0
+    readonly property real pillHeight: Space.controlM + Space.m
+    readonly property real pillRadius: Space.round(pillHeight)
     readonly property color hintColor: errorShown ? errorColor : textColor
 
     field: passwordInput
-    implicitWidth: 420
-    implicitHeight: pillHeight + 10 + hintLabel.implicitHeight
+    implicitWidth: Space.controlXL * 4 + Space.xl
+    implicitHeight: pillHeight + Space.s + hintLabel.height
 
     LockGlass {
         id: pill
@@ -33,7 +34,7 @@ LockPasswordBase {
         fill: root.fill
         ink: root.textColor
         strength: 0.62
-        ringWidth: (root.showError || passwordInput.activeFocus) ? 1.5 : 1
+        ringWidth: (root.showError || passwordInput.activeFocus) ? Space.hairline * 1.5 : Space.hairline
         ringColor: {
             if (root.showError)
                 return root.errorColor;
@@ -47,10 +48,10 @@ LockPasswordBase {
         }
 
         Behavior on ringColor {
-            enabled: Config.animDuration > 0
+            enabled: Motion.micro.duration > 0
             ColorAnimation {
-                duration: Motion.morph.duration
-                easing.type: Motion.morph.easing
+                duration: Motion.micro.duration
+                easing.type: Motion.micro.easing
             }
         }
 
@@ -58,18 +59,18 @@ LockPasswordBase {
         Text {
             id: leadIcon
             anchors.left: parent.left
-            anchors.leftMargin: 20
+            anchors.leftMargin: Space.l
             anchors.verticalCenter: parent.verticalCenter
             text: Icons.lock
             font.family: Icons.font
-            font.pixelSize: 17
+            font.pixelSize: Type.iconSize("body")
             color: root.showError ? root.errorColor : root.textColor
             opacity: root.showError ? 1 : 0.7
 
             Behavior on color {
-                enabled: Config.animDuration > 0
+                enabled: Motion.micro.duration > 0
                 ColorAnimation {
-                    duration: Motion.enter.duration
+                    duration: Motion.micro.duration
                 }
             }
         }
@@ -77,9 +78,9 @@ LockPasswordBase {
         TextField {
             id: passwordInput
             anchors.left: leadIcon.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Space.m
             anchors.right: capsIcon.visible ? capsIcon.left : submitButton.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Space.s
             anchors.verticalCenter: parent.verticalCenter
             height: parent.height
             background: null
@@ -92,8 +93,8 @@ LockPasswordBase {
             selectionColor: root.accent
             selectedTextColor: root.overAccent
             font.family: root.fontFamily
-            font.pixelSize: root.hasText ? Styling.fontSize(6) : Styling.fontSize(1)
-            font.letterSpacing: root.hasText ? 3 : 0.2
+            font.pixelSize: root.hasText ? Type.size("title") : Type.size("body")
+            font.letterSpacing: root.hasText ? Space.stroke : 0
             placeholderText: I18n.t("lockscreen.password")
             placeholderTextColor: Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, 0.5)
             Keys.onReleased: event => root.observeKey(event)
@@ -103,19 +104,19 @@ LockPasswordBase {
         Text {
             id: capsIcon
             anchors.right: submitButton.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Space.s
             anchors.verticalCenter: parent.verticalCenter
             visible: opacity > 0
             opacity: root.capsLock ? 1 : 0
             text: Icons.capsLock
             font.family: Icons.font
-            font.pixelSize: 17
+            font.pixelSize: Type.iconSize("body")
             color: root.accent
 
             Behavior on opacity {
-                enabled: Config.animDuration > 0
+                enabled: Motion.micro.duration > 0
                 NumberAnimation {
-                    duration: Motion.enter.duration
+                    duration: Motion.micro.duration
                 }
             }
         }
@@ -124,9 +125,9 @@ LockPasswordBase {
         Item {
             id: submitButton
             anchors.right: parent.right
-            anchors.rightMargin: 9
+            anchors.rightMargin: Space.s
             anchors.verticalCenter: parent.verticalCenter
-            width: root.pillHeight - 18
+            width: root.pillHeight - Space.l
             height: width
 
             Rectangle {
@@ -136,39 +137,27 @@ LockPasswordBase {
                 scale: submitMouse.pressed ? 0.9 : 1
 
                 Behavior on color {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.micro.duration > 0
                     ColorAnimation {
-                        duration: Motion.morph.duration
-                        easing.type: Motion.morph.easing
+                        duration: Motion.micro.duration
+                        easing.type: Motion.micro.easing
                     }
                 }
                 Behavior on scale {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.spring.duration > 0
                     NumberAnimation {
-                        duration: Motion.exit.duration
-                        easing.type: Motion.morph.easing
+                        duration: Motion.spring.duration
+                        easing.type: Motion.spring.easing
+                        easing.overshoot: Motion.spring.overshoot
                     }
                 }
             }
 
-            Text {
+            LockSpinner {
                 id: submitGlyph
                 anchors.centerIn: parent
-                text: root.authenticating ? Icons.circleNotch : Icons.arrowRight
-                font.family: Icons.font
-                font.pixelSize: 16
+                busy: root.authenticating
                 color: root.hasText || root.authenticating ? root.overAccent : root.textColor
-
-                RotationAnimator on rotation {
-                    running: root.authenticating
-                    from: 0
-                    to: 360
-                    duration: 800
-                    loops: Animation.Infinite
-                }
-
-                onTextChanged: if (!root.authenticating)
-                    rotation = 0
             }
 
             MouseArea {
@@ -182,25 +171,23 @@ LockPasswordBase {
         }
     }
 
-    Text {
+    KitText {
         id: hintLabel
         anchors.top: pill.bottom
-        anchors.topMargin: 10
+        anchors.topMargin: Space.s
         anchors.horizontalCenter: parent.horizontalCenter
+        role: "secondary"
+        font.weight: Font.Medium
         text: root.hint
         color: root.hintColor
-        font.family: root.fontFamily
-        font.pixelSize: Styling.fontSize(-1)
-        font.weight: Font.DemiBold
-        font.letterSpacing: 0.3
         opacity: root.hint !== "" ? 0.95 : 0
         // Reserve the line so the pill never jumps when a hint appears.
-        height: Math.max(implicitHeight, Styling.fontSize(-1) + 6)
+        height: Math.max(implicitHeight, Type.size("secondary") + Space.xs)
 
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.micro.duration > 0
             NumberAnimation {
-                duration: Motion.enter.duration
+                duration: Motion.micro.duration
             }
         }
 

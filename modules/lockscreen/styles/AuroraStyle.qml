@@ -6,6 +6,7 @@ import QtQuick.Shapes
 import qs.modules.lockscreen
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.widgets.defaultview
 import qs.config
 import "../../desktop/clockstyles/ClockText.js" as ClockText
@@ -25,8 +26,7 @@ LockStyle {
     accent: light ? Colors.overPrimaryFixedVariant : Colors.primaryFixedDim
 
     arrangement: "center"
-    clusterWidth: 360
-    clusterSpacing: 20
+    clusterWidth: Space.controlXL * 4 - Space.xl
     wallpaperBlur: 1
     wallpaperSaturation: 0.15
     wallpaperZoom: 1.1
@@ -118,7 +118,7 @@ LockStyle {
                 text: skin.view.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
                 color: skin.alpha(skin.ink, 0.85)
                 font.family: skin.font
-                font.pixelSize: Math.max(16, Math.round(clockColumn.digitSize * 0.12))
+                font.pixelSize: Math.max(Type.size("title"), Math.round(clockColumn.digitSize * 0.12))
                 font.weight: Font.DemiBold
                 font.variableAxes: ({
                         "wght": 600,
@@ -162,27 +162,27 @@ LockStyle {
             Column {
                 id: column
                 width: parent.width
-                spacing: 12
+                spacing: Space.m
 
                 LockAvatar {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: 64
-                    height: 64
-                    ink: skin.ink
+                    width: Space.controlL
+                    height: Space.controlL
+                    name: skin.view.username
                 }
-                Text {
+                KitText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: skin.view.username
                     color: skin.ink
                     font.family: skin.font
-                    font.pixelSize: Styling.fontSize(3)
+                    role: "title"
                     font.weight: Font.DemiBold
                 }
                 Frost {
                     id: capsule
                     anchors.horizontalCenter: parent.horizontalCenter
-                    width: Math.min(parent.width, 300)
-                    height: 44
+                    width: Math.min(parent.width, Space.controlXL * 3)
+                    height: Space.controlM
                     radius: height / 2 * skin.capsuleRadius
                     border.color: pw.errorShown ? skin.error : (input.activeFocus ? skin.alpha(skin.accent, 0.7) : skin.rim)
                     transform: Translate {
@@ -192,8 +192,8 @@ LockStyle {
                     TextField {
                         id: input
                         anchors.fill: parent
-                        anchors.leftMargin: 44
-                        anchors.rightMargin: 44
+                        anchors.leftMargin: Space.xxl
+                        anchors.rightMargin: Space.xxl
                         background: null
                         padding: 0
                         horizontalAlignment: TextInput.AlignHCenter
@@ -205,7 +205,7 @@ LockStyle {
                         selectionColor: skin.accent
                         selectedTextColor: skin.overAccent
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(0)
+                        font.pixelSize: Type.size("body")
                         font.letterSpacing: pw.hasText ? 4 : 0.2
                         Keys.onReleased: event => pw.observeKey(event)
                     }
@@ -219,54 +219,44 @@ LockStyle {
                     }
                     Text {
                         anchors.left: parent.left
-                        anchors.leftMargin: 16
+                        anchors.leftMargin: Space.l
                         anchors.verticalCenter: parent.verticalCenter
                         visible: pw.capsLock
                         text: Icons.capsLock
                         font.family: Icons.font
-                        font.pixelSize: 15
+                        font.pixelSize: Type.iconSize("body")
                         color: skin.accent
                     }
                     Rectangle {
                         anchors.right: parent.right
-                        anchors.rightMargin: 6
+                        anchors.rightMargin: Space.s
                         anchors.verticalCenter: parent.verticalCenter
-                        width: 32
-                        height: 32
-                        radius: 16 * skin.capsuleRadius
+                        width: Space.chip
+                        height: Space.chip
+                        radius: Space.round(height) * skin.capsuleRadius
                         color: skin.accent
                         opacity: pw.hasText || pw.authenticating ? 1 : 0
                         scale: pw.hasText || pw.authenticating ? 1 : 0.6
 
                         Behavior on opacity {
-                            enabled: Config.animDuration > 0
+                            enabled: Motion.micro.duration > 0
                             NumberAnimation {
-                                duration: Motion.enter.duration
+                                duration: Motion.micro.duration
                             }
                         }
                         Behavior on scale {
-                            enabled: Config.animDuration > 0
+                            enabled: Motion.micro.duration > 0
                             NumberAnimation {
-                                duration: Motion.morph.duration
-                                easing.type: Motion.morph.easing
+                                duration: Motion.spring.duration
+                                easing.type: Motion.spring.easing
+                                easing.overshoot: Motion.spring.overshoot
                             }
                         }
 
-                        Text {
+                        LockSpinner {
                             anchors.centerIn: parent
-                            text: pw.authenticating ? Icons.circleNotch : Icons.arrowRight
-                            font.family: Icons.font
-                            font.pixelSize: 15
+                            busy: pw.authenticating
                             color: skin.overAccent
-                            RotationAnimator on rotation {
-                                running: pw.authenticating
-                                from: 0
-                                to: 360
-                                duration: 900
-                                loops: Animation.Infinite
-                            }
-                            onTextChanged: if (!pw.authenticating)
-                                rotation = 0
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -276,19 +266,19 @@ LockStyle {
                         }
                     }
                 }
-                Text {
+                KitText {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: pw.hint
-                    height: Math.max(implicitHeight, Styling.fontSize(-1) + 6)
+                    height: Math.max(implicitHeight, Type.size("secondary") + Space.xs)
                     color: pw.errorShown ? skin.error : skin.alpha(skin.ink, 0.8)
                     font.family: skin.font
-                    font.pixelSize: Styling.fontSize(-1)
+                    role: "secondary"
                     font.weight: Font.Medium
                     opacity: pw.hint !== "" ? 1 : 0
                     Behavior on opacity {
-                        enabled: Config.animDuration > 0
+                        enabled: Motion.micro.duration > 0
                         NumberAnimation {
-                            duration: Motion.enter.duration
+                            duration: Motion.micro.duration
                         }
                     }
                 }
@@ -299,76 +289,57 @@ LockStyle {
     mediaCard: Component {
         LockMediaBase {
             id: media
-            implicitHeight: 76
+            implicitHeight: Space.controlL + Space.m
 
             Frost {
                 anchors.fill: parent
-                radius: Math.min(22, Styling.radius(6)) * skin.capsuleRadius
+                radius: Space.clampRadius(Space.surfaceRadius + Space.s, height) * skin.capsuleRadius
             }
 
             Row {
                 anchors.fill: parent
-                anchors.margins: 10
-                spacing: 12
+                anchors.margins: Space.s
+                spacing: Space.m
 
-                Rectangle {
-                    width: 56
-                    height: 56
-                    radius: 12 * skin.capsuleRadius
-                    color: skin.alpha(skin.ink, 0.08)
-                    clip: true
-
-                    Image {
-                        anchors.fill: parent
-                        source: media.artUrl
-                        sourceSize: Qt.size(112, 112)
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        visible: status === Image.Ready
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        visible: media.artUrl === ""
-                        text: Icons.musicNotes
-                        font.family: Icons.font
-                        font.pixelSize: 22
-                        color: skin.alpha(skin.ink, 0.6)
-                    }
+                Art {
+                    width: parent.height
+                    height: parent.height
+                    radius: Space.controlRadius * skin.capsuleRadius
+                    source: media.artUrl
+                    icon: Icons.musicNotes
                 }
 
                 Column {
-                    width: parent.width - 68 - controls.width - 12
+                    width: parent.width - parent.height - controls.width - parent.spacing * 2
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Space.xs
 
-                    Text {
+                    KitText {
                         width: parent.width
                         text: media.title
-                        textFormat: Text.PlainText
                         elide: Text.ElideRight
                         color: skin.ink
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(0)
+                        role: "body"
                         font.weight: Font.DemiBold
                     }
-                    Text {
+                    KitText {
                         width: parent.width
                         text: media.artist
                         visible: text !== ""
-                        textFormat: Text.PlainText
                         elide: Text.ElideRight
                         color: skin.alpha(skin.ink, 0.65)
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(-2)
+                        role: "caption"
                     }
                     Item {
                         width: parent.width
-                        height: 18
+                        height: Space.l
                         NotchVisualizer {
                             anchors.fill: parent
-                            anchors.topMargin: 4
+                            anchors.topMargin: Space.xs
                             barCount: 22
-                            spacing: 3
+                            spacing: Space.xs
                             centered: true
                             idleOpacity: 0.3
                             visible: media.visualizerEnabled && CavaService.available
@@ -384,7 +355,7 @@ LockStyle {
                 Row {
                     id: controls
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Space.xs
                     LockMediaButton {
                         icon: Icons.previous
                         glyphColor: skin.ink
@@ -411,7 +382,7 @@ LockStyle {
     // Connectivity and power in one frosted pill, top right.
     status: Component {
         Item {
-            implicitHeight: 34
+            implicitHeight: Space.chip
 
             LockStatusInfo {
                 id: info
@@ -420,19 +391,19 @@ LockStyle {
             Frost {
                 anchors.right: parent.right
                 height: parent.height
-                width: row.implicitWidth + 28
+                width: row.implicitWidth + Space.xl
                 radius: height / 2 * skin.capsuleRadius
 
                 Row {
                     id: row
                     anchors.centerIn: parent
-                    spacing: 8
+                    spacing: Space.s
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: info.networkIcon
                         font.family: Icons.font
-                        font.pixelSize: 15
+                        font.pixelSize: Type.iconSize("body")
                         color: skin.ink
                     }
                     Text {
@@ -440,15 +411,15 @@ LockStyle {
                         visible: info.batteryAvailable
                         text: info.batteryIcon
                         font.family: Icons.font
-                        font.pixelSize: 15
+                        font.pixelSize: Type.iconSize("body")
                         color: info.batteryLow ? skin.error : skin.ink
                     }
-                    Text {
+                    KitText {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: info.batteryAvailable
                         text: info.batteryPercent + "%"
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(-1)
+                        role: "secondary"
                         font.weight: Font.DemiBold
                         color: skin.ink
                     }

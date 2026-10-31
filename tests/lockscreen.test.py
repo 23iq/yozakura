@@ -131,5 +131,15 @@ lv = h.find(root, "lv")
 assert h.eval(lv, "styleEntry.id") == "glass" and h.eval(lv, "passwordField !== null")
 print("unknown style falls back to glass")
 
+# The submit spinner turns once per kit progress cycle while busy, and
+# stays still with motion off.
+sp = env.load('import QtQuick\nimport qs.config\nimport qs.modules.lockscreen\nLockSpinner { busy: true; function motionOff() { Config.theme.animDuration = 0 } }')
+assert h.eval(sp, "cycle > 0 && text !== idleIcon"), "busy spinner shows the notch"
+h.eval(sp, "busy = false")
+assert h.eval(sp, "text === idleIcon && rotation === 0"), "idle spinner rests on the arrow"
+h.eval(sp, "motionOff()")
+assert h.eval(sp, "cycle === 0"), "no spin with motion off"
+print("spinner follows the kit motion")
+
 assert not env.errors, "QML errors in the lock screen:\n  " + "\n  ".join(env.errors)
 h.exit(0)

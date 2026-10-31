@@ -3,13 +3,14 @@ import QtQuick
 import QtQuick.Effects
 import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 
 // Glass style clock: heavy digits with a rolling transition, an accent
 // colon and the date below.
 Item {
     id: root
 
-    property real pixelSize: 200
+    property real pixelSize: Type.size("display") * 4
     property date now: new Date()
     property color digitColor: Colors.secondaryFixed
     property color dateColor: digitColor
@@ -134,7 +135,7 @@ Item {
                 font.family: Config.theme.font
                 font.pixelSize: Math.round(root.pixelSize * 0.16)
                 font.weight: Font.Bold
-                font.letterSpacing: 1
+                font.letterSpacing: Type.letterSpacing("label")
                 color: root.digitColor
                 opacity: 0.8
                 leftPadding: Math.round(root.pixelSize * 0.06)
@@ -148,9 +149,8 @@ Item {
             y: digits.height - root.digitTrim
             text: root.now.toLocaleDateString(Qt.locale(), "dddd, d MMMM")
             font.family: Config.theme.font
-            font.pixelSize: Math.max(16, Math.round(root.pixelSize * 0.13))
+            font.pixelSize: Math.max(Type.size("title"), Math.round(root.pixelSize * 0.13))
             font.weight: Font.DemiBold
-            font.letterSpacing: 0.5
             color: root.dateColor
             opacity: 0.88
         }
