@@ -119,7 +119,8 @@ QtObject {
     readonly property string presentation: Policy.resolvePresentation(cfg ? cfg.presentation : "auto", {
         "barStyle": primaryPanel ? primaryPanel.style : "",
         "barPosition": primaryPanel ? primaryPanel.edge : Panels.notchEdge,
-        "notchPosition": Panels.notchEdge
+        "notchPosition": Panels.notchEdge,
+        "notchEnabled": ShellLayout.notchEnabled
     })
     readonly property string cornerPosition: Policy.resolvePosition(cfg ? cfg.position : "auto", {
         "barPosition": Panels.primaryEdge

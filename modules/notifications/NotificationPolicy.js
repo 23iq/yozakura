@@ -28,12 +28,16 @@ function oneOf(value, list, fallback) {
     return list.indexOf(value) !== -1 ? value : fallback;
 }
 
-// ctx: {barStyle, barPosition, notchPosition}
+// ctx: {barStyle, barPosition, notchPosition, notchEnabled}. A disabled
+// notch (notchEnabled === false) never takes popups, even an explicit
+// "notch": they fall back to corner toasts (the config is left as is).
 function resolvePresentation(presentation, ctx) {
+    var c = ctx || {};
+    if (c.notchEnabled === false)
+        return "corner";
     var p = oneOf(presentation, PRESENTATIONS, "auto");
     if (p !== "auto")
         return p;
-    var c = ctx || {};
     var byStyle = STYLE_PRESENTATION[c.barStyle];
     if (byStyle)
         return byStyle;

@@ -41,6 +41,15 @@ test('presentation: explicit wins, auto follows the bar style', () => {
     assert.equal(P.resolvePresentation('bogus', {}), 'notch', 'unknown value behaves like auto');
 });
 
+test('a disabled notch never takes popups: corner toasts instead', () => {
+    const off = { barStyle: 'islands', barPosition: 'top', notchPosition: 'top', notchEnabled: false };
+    assert.equal(P.resolvePresentation('auto', off), 'corner');
+    assert.equal(P.resolvePresentation('notch', off), 'corner', 'explicit notch falls back at runtime');
+    assert.equal(P.resolvePresentation('corner', off), 'corner');
+    assert.equal(P.resolvePresentation('auto', Object.assign({}, off, { notchEnabled: true })), 'notch');
+    assert.equal(P.resolvePresentation('notch', { notchEnabled: true }), 'notch');
+});
+
 test('corner position and anchors', () => {
     assert.equal(P.resolvePosition('auto', { barPosition: 'bottom' }), 'bottom-right');
     assert.equal(P.resolvePosition('auto', { barPosition: 'top' }), 'top-right');
