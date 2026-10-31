@@ -382,12 +382,23 @@ func (m *Manager) Apply(name string) (Preset, []catalog.Problem, error) {
 
 // ApplyReport is Apply that also says what it set, reset and kept.
 func (m *Manager) ApplyReport(name string) (Preset, ApplySummary, []catalog.Problem, error) {
+	return m.applyLocked(name, false)
+}
+
+// ApplyExact applies a preset discarding the changes made since (the
+// user's explicit "Revert to preset"): a whole snapshot resets every key it
+// does not name, whoever set it.
+func (m *Manager) ApplyExact(name string) (Preset, ApplySummary, []catalog.Problem, error) {
+	return m.applyLocked(name, true)
+}
+
+func (m *Manager) applyLocked(name string, exact bool) (Preset, ApplySummary, []catalog.Problem, error) {
 	unlock, err := m.lock()
 	if err != nil {
 		return Preset{}, ApplySummary{}, nil, err
 	}
 	defer unlock()
-	p, sum, problems, err := m.applyReport(name)
+	p, sum, problems, err := m.applyReport(name, exact)
 	if err == nil {
 		// A real apply keeps it: a running preview's backup is dropped.
 		m.dropSession(PreviewSession)
@@ -396,7 +407,7 @@ func (m *Manager) ApplyReport(name string) (Preset, ApplySummary, []catalog.Prob
 }
 
 func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
-	p, _, problems, err := m.applyReport(name)
+	p, _, problems, err := m.applyReport(name, false)
 	return p, problems, err
 }
 
@@ -405,7 +416,7 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 // only where an earlier preset left it untouched (overProvenance); a
 // partial preset merges over the live config. The record of what was
 // written (applied.json) is updated either way.
-func (m *Manager) applyReport(name string) (Preset, ApplySummary, []catalog.Problem, error) {
+func (m *Manager) applyReport(name string, exact bool) (Preset, ApplySummary, []catalog.Problem, error) {
 	var sum ApplySummary
 	p, err := m.Find(name)
 	if err != nil {
@@ -417,7 +428,7 @@ func (m *Manager) applyReport(name string) (Preset, ApplySummary, []catalog.Prob
 	}
 	defined := m.definedKeys(raw, p.Follows)
 	if m.wholeSnapshot(p) {
-		if raw, sum, err = m.overProvenance(raw, defined, p.Follows); err != nil {
+		if raw, sum, err = m.overProvenance(raw, defined, p.Follows, exact); err != nil {
 			return p, sum, nil, err
 		}
 	} else {

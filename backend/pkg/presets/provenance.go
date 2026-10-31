@@ -157,8 +157,9 @@ func (m *Manager) definedKeys(raw map[string][]byte, follows []string) map[strin
 // overProvenance turns the files of a whole snapshot into whole documents:
 // a key the snapshot names is set (over its default, deep), a key it does
 // not name is reset to its default only when its live value is still the
-// one the last apply wrote, and otherwise keeps the user's value.
-func (m *Manager) overProvenance(raw map[string][]byte, defined map[string]map[string]bool, follows []string) (map[string][]byte, ApplySummary, error) {
+// one the last apply wrote (always with exact), and otherwise keeps the
+// user's value.
+func (m *Manager) overProvenance(raw map[string][]byte, defined map[string]map[string]bool, follows []string, exact bool) (map[string][]byte, ApplySummary, error) {
 	prev := m.readApplied()
 	followed := map[string]bool{}
 	for _, f := range follows {
@@ -193,7 +194,7 @@ func (m *Manager) overProvenance(raw map[string][]byte, defined map[string]map[s
 			switch {
 			case local[k] || followed[d+"."+k]:
 				// keepLocal / keepFollowed put the live value back
-			case prev.wrote(d, k, cur):
+			case exact || prev.wrote(d, k, cur):
 				if hasDef {
 					base.Set(k, def)
 				}

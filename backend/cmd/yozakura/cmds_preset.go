@@ -28,9 +28,10 @@ Commands:
                                          (values the thumbnails are drawn from) and the
                                          set's layout, style and palette
     parts [--json]                       Layouts, styles and palettes; * marks the current ones
-    apply <name> [--json]                Copy the preset over the live config (hot-applies);
+    apply <name> [--json] [--exact]      Copy the preset over the live config (hot-applies);
                                          settings you changed since the last apply are kept
-                                         (--json: {preset, set, reset, keptUserValues})
+                                         (--json: {preset, set, reset, keptUserValues};
+                                         --exact: discard them, "Revert to preset")
     apply --part <layout|style|palette> <name>
                                          Merge only that part's keys into the live config
     apply [--part <kind>] --preview <name>

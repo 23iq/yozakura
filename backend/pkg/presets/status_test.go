@@ -118,3 +118,20 @@ func TestSaveCurrentRefusedDuringSession(t *testing.T) {
 	_, _, err = m.SaveCurrent()
 	assert.ErrorContains(t, err, "in progress")
 }
+
+func TestApplyExactDiscardsChanges(t *testing.T) {
+	m := newManager(t)
+	seedNewerAndOld(t, m)
+	mustApply(t, m, "Old")
+	setLive(t, m, "theme", "roundness", 7) // not named by Old
+	setLive(t, m, "theme", "font", "Mine Sans")
+	st, _ := m.Status()
+	assert.ElementsMatch(t, []string{"theme.roundness", "theme.font"}, changedKeys(st))
+	mustApply(t, m, "Old")
+	st, _ = m.Status()
+	assert.Equal(t, []string{"theme.roundness"}, changedKeys(st), "a plain apply keeps the user's value")
+	_, _, _, err := m.ApplyExact("Old")
+	assert.NoError(t, err)
+	st, _ = m.Status()
+	assert.Equal(t, 0, st.Changed, "%v", changedKeys(st))
+}

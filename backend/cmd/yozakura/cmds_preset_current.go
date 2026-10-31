@@ -12,13 +12,23 @@ import (
 // `preset save --current [--as NAME]`, `preset save --undo ID` and
 // `preset apply --json` (what the apply set, reset and kept).
 
-func presetApplyJSON(m *presets.Manager, name string, out io.Writer) error {
+// presetApplyReportCmd is `apply [--exact] [--json] <name>`: --exact also
+// resets the settings changed since (Revert to preset).
+func presetApplyReportCmd(m *presets.Manager, name string, exact, asJSON bool, out io.Writer) error {
 	if strings.TrimSpace(name) == "" {
-		return fmt.Errorf("usage: preset apply <name> --json")
+		return fmt.Errorf("usage: preset apply [--exact] [--json] <name>")
 	}
-	p, sum, problems, err := m.ApplyReport(name)
+	apply := m.ApplyReport
+	if exact {
+		apply = m.ApplyExact
+	}
+	p, sum, problems, err := apply(name)
 	if err != nil {
 		return err
+	}
+	if !asJSON {
+		fmt.Fprintf(out, "Preset applied: %s (%d set, %d reset, %d kept)\n", p.Name, len(sum.Set), len(sum.Reset), len(sum.Kept))
+		return nil
 	}
 	return writeJSON(out, map[string]any{
 		"preset": p.Name, "domains": p.Domains, "set": nonNil(sum.Set), "reset": nonNil(sum.Reset),
