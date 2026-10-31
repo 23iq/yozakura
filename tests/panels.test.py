@@ -98,6 +98,23 @@ assert ev(env, host, "Config.bar.pinnedOnStartup") is False
 assert ev(env, host, "bars[0].pinned") is False and ev(env, host, "bars[1].pinned") is False
 assert ev(env, host, "zones.top") == 0
 win.close()
+# A disabled notch leaves no middle gap: the gap slots span to the center
+# group, the dock never parts around it (both pair with the notch otherwise)
+GAP_BAR = {"frameEnabled": False, "panels": [{"id": "p", "edge": "top", "style": "classic",
+           "groups": {"start": ["launcher"], "center": [], "end": ["battery"], "gapStart": ["weather"]}}]}
+for enabled in (True, False):
+    env, win, host = scene(GAP_BAR, notch={"enabled": enabled, "position": "top"})
+    style_item = ev(env, host, "primary.styleItem")  # keep a reference while in use
+    gaps = env.h.find(style_item, "gapSlots")
+    assert (ev(env, gaps, "notchItem !== null")) is enabled, enabled
+    assert (ev(env, gaps, "middleHalf") > 0) is enabled, ev(env, gaps, "middleHalf")
+    win.close()
+    env, win, host = scene({"frameEnabled": False, "panels": [{"id": "d", "edge": "top", "style": "dock",
+                            "groups": {"start": ["launcher"], "center": [], "end": ["battery"]}}]},
+                           notch={"enabled": enabled, "position": "top"})
+    assert ev(env, host, "primary.styleItem.notchItem !== null") is enabled, enabled
+    win.close()
+
 errors = [e for env in ENVS for e in env.h.type_errors]
 assert not errors, errors
 print("panels: ok", flush=True)

@@ -34,7 +34,7 @@ PanelStyleBase {
     property bool ownShadow: true
 
     // ── Parting around the notch ──
-    readonly property var notchItem: b && !vertical && b.notchPosition === b.barPosition ? Visibilities.getNotchForScreen(b.screen.name) : null
+    readonly property var notchItem: b && !vertical && ShellLayout.notchEnabled && b.notchPosition === b.barPosition ? Visibilities.getNotchForScreen(b.screen.name) : null
     readonly property bool centered: !!b && b.aligned && b.spec.align !== "start" && b.spec.align !== "end" && (!Config.notch || !Config.notch.align || Config.notch.align === "center")
     readonly property real claim: notchItem && notchItem.edgeClaim !== undefined ? notchItem.edgeClaim : 0
     readonly property real leftLength: vertical ? leftRow.implicitHeight : leftRow.implicitWidth
