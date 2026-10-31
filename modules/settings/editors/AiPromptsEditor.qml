@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import "PromptsEdit.js" as PromptsEdit
 
 // Selection actions (popup near the cursor) and the prompt library.
 ColumnLayout {
@@ -15,15 +16,10 @@ ColumnLayout {
 
     spacing: 10
 
-    function edit(listName, index, fields) {
+    // ref: {id, index} of the item (null = append)
+    function edit(listName, ref, fields) {
         const src = listName === "actions" ? Config.ai.selection.actions : Config.ai.prompts;
-        const list = JSON.parse(JSON.stringify(src || []));
-        if (index < 0)
-            list.push(fields);
-        else if (fields === null)
-            list.splice(index, 1);
-        else
-            list[index] = Object.assign(list[index], fields);
+        const list = PromptsEdit.apply(src, ref, fields);
         if (listName === "actions")
             Config.ai.selection.actions = list;
         else
@@ -65,6 +61,10 @@ ColumnLayout {
                     required property var modelData
                     required property int index
                     property bool open: false
+                    readonly property var ref: ({
+                            id: item.modelData.id || "",
+                            index: item.index
+                        })
                     Layout.fillWidth: true
                     variant: "common"
                     radius: Styling.radius(-4)
@@ -102,14 +102,14 @@ ColumnLayout {
                                 glyph: Icons.trash
                                 danger: true
                                 size: 24
-                                onClicked: root.edit(group.modelData.list, item.index, null)
+                                onClicked: root.edit(group.modelData.list, item.ref, null)
                             }
                         }
                         AiTextRow {
                             visible: item.open
                             label: I18n.t("ai.name")
                             value: item.modelData.label || item.modelData.name || ""
-                            onEdited: t => root.edit(group.modelData.list, item.index, group.modelData.list === "actions" ? {
+                            onEdited: t => root.edit(group.modelData.list, item.ref, group.modelData.list === "actions" ? {
                                     label: t
                                 } : {
                                     name: t
@@ -120,7 +120,7 @@ ColumnLayout {
                             label: I18n.t("ai.prompt") + " — {selection} {clipboard} {language} {date}"
                             value: item.modelData.prompt
                             multiline: true
-                            onEdited: t => root.edit(group.modelData.list, item.index, {
+                            onEdited: t => root.edit(group.modelData.list, item.ref, {
                                     prompt: t
                                 })
                         }
@@ -132,7 +132,7 @@ ColumnLayout {
                                         label: "ai.output_" + (o || "default"),
                                         value: o
                                     }))
-                            onSelected: v => root.edit(group.modelData.list, item.index, {
+                            onSelected: v => root.edit(group.modelData.list, item.ref, {
                                     output: v
                                 })
                         }
@@ -143,7 +143,7 @@ ColumnLayout {
             Chip {
                 glyph: Icons.plus
                 label: group.modelData.list === "actions" ? I18n.t("ai.add_action") : I18n.t("ai.add_prompt")
-                onClicked: root.edit(group.modelData.list, -1, group.modelData.list === "actions" ? {
+                onClicked: root.edit(group.modelData.list, null, group.modelData.list === "actions" ? {
                     id: "custom-" + Date.now(),
                     label: I18n.t("ai.new_action"),
                     icon: "sparkle",
