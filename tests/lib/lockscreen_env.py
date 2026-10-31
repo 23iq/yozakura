@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import shutil
 
-from qmlharness import REPO, Harness
+from qmlharness import REPO
 from settings_env import SettingsEnv
 from PySide6.QtCore import qInstallMessageHandler
 
