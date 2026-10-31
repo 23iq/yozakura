@@ -13,15 +13,23 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
-from PIL import Image  # noqa: E402
+from PySide6.QtGui import QColor, QImage  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 h = Harness('panorama')
 img_dir = h.root / 'walls'
 img_dir.mkdir()
-Image.new('RGB', (3000, 500), (40, 60, 90)).save(img_dir / 'wide.png')
-Image.new('L', (3000, 500), 200).save(img_dir / 'wide.depth.png')
-Image.new('RGB', (3000, 500), (90, 60, 40)).save(img_dir / 'flat.png')
+
+
+def solid(path, color, fmt=QImage.Format.Format_RGB32):
+    img = QImage(3000, 500, fmt)
+    img.fill(color)
+    assert img.save(str(path)), path
+
+
+solid(img_dir / 'wide.png', QColor(40, 60, 90))
+solid(img_dir / 'wide.depth.png', QColor(200, 200, 200), QImage.Format.Format_Grayscale8)
+solid(img_dir / 'flat.png', QColor(90, 60, 40))
 WIDE, DEPTH, FLAT = (str(img_dir / n) for n in ('wide.png', 'wide.depth.png', 'flat.png'))
 
 h.singleton('qs.modules.theme', 'Motion', '''QtObject {
