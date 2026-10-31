@@ -29,6 +29,7 @@ MIRROR = [
     "modules/widgets/dashboard/widgets",
     "modules/widgets/dashboard/controls",
     "modules/notch/NotchAnimationBehavior.qml",
+    "modules/shell/hosts/HostFrame.qml",  # the side sheet frame (dashboard_render --variants sheet)
     "modules/bar/modules/WorldClock.js",
     "modules/services/timers/TimerFormat.js",
 ]
@@ -197,7 +198,7 @@ class DashboardEnv(KitEnv):
         self.h.module("qs.modules.services", services(playing, notifs, art, timers))
         self.h.module("qs.modules.globals", {"GlobalStates": global_states(wallpaper or {})})
         self.h.module("qs.modules.notifications", {"NotificationAppIcon": "Item { property var appIcon; property string appName; property var image; "
-                                                   "property var summary; property var urgency; property real size: 28; "
+                                                   "property var summary; property var urgency; property real size: 28; property real radius; "
                                                    "implicitWidth: size; implicitHeight: size }"})
         self.h.module("Quickshell.Services.Mpris", {
             "MprisLoopState": "QtObject { readonly property int None: 0; readonly property int Track: 1; "
@@ -209,6 +210,7 @@ class DashboardEnv(KitEnv):
         self.h.module("qs.modules.widgets.dashboard.metrics", {"MetricsTab": "Item {}"})
         self.h.module("qs.modules.widgets.dashboard.wallpapers", {"WallpapersTab": "Item {}"})
         self._qmldir(qs / "modules/notch", "qs.modules.notch", only=["NotchAnimationBehavior"])
+        self._qmldir(qs / "modules/shell/hosts", "qs.modules.shell.hosts", only=["HostFrame"])
         self._qmldir(qs / "modules/widgets/dashboard", "qs.modules.widgets.dashboard")
         self._qmldir(qs / "modules/widgets/dashboard/home", "qs.modules.widgets.dashboard.home")
         self._qmldir(qs / "modules/widgets/dashboard/stage", "qs.modules.widgets.dashboard.stage")

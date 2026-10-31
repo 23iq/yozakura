@@ -7,7 +7,8 @@ when the composed theme.lightMode is true).
     tools/render/sets_render.py [--only NAME] [--out DIR] [--size 1920x1080]
                                 [--mode set|dark|light|both]
 
-Writes <out>/<set>-dashboard.png (the dashboard frame) and <out>/<set>-bar.png
+Writes <out>/<set>-dashboard.png (the dashboard frame, in the side sheet
+when notch.enabled is off) and <out>/<set>-bar.png
 (the strip of the set's first bar panel on its edge; the top strip, where the
 notch lives, for a set without a visible bar) and <out>/<set>-screen.png
 (the whole screen with sample windows; no island while notch.enabled is off).
@@ -62,7 +63,10 @@ def render_set(name: str, out: Path, size: tuple[int, int], state: dict, force_m
     overrides = {dom: obj for dom, obj in composed.items() if dom in known}
     slug = name.replace(" ", "-")
     tag = f"{name}-{force_mode}" if force_mode else name
+    # Off the notch the dashboard opens in the side sheet (dashboard.host auto)
+    sheet = composed.get("notch", {}).get("enabled") is False
     dashboard_render.render(f"sets-{slug}-dash", out / f"{tag}-dashboard.png", state, colors, overrides,
+                            {"host": "sheet", "events": True, "timers": True} if sheet else None,
                             user_config=False)
     mode = "light" if composed.get("theme", {}).get("lightMode") else "dark"
     # a sentence bar needs its popups and fixture services (sentence_env)

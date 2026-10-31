@@ -63,6 +63,24 @@ test('the sheet fills the work area height on its side and never covers the bar'
         else assert.equal(r.x, w.x, tag);
     }
 });
+test('a sheet with its view height hugs the bar end of its side, inset by the margin', () => {
+    for (const bar of EDGES) for (const dock of EDGES) {
+        const e = env(bar, dock, 'top');
+        const w = L.workArea(e);
+        const r = L.sheetRect(e, 'auto', 800, 600, 12);
+        const tag = `${bar}/${dock}`;
+        assert.equal(r.h, 600, tag);
+        assert.equal(r.w, 800, tag);
+        assert.ok(!overlaps(r, barRect(e)), tag);
+        assert.ok(r.x >= w.x + 12 && r.x + r.w <= w.x + w.w - 12, tag);
+        assert.ok(r.y >= w.y + 12 && r.y + r.h <= w.y + w.h - 12, tag);
+        if (bar === 'bottom') assert.equal(r.y + r.h, w.y + w.h - 12, tag);
+        else assert.equal(r.y, w.y + 12, tag);
+    }
+    // Taller than the work area: capped
+    const e = env('top', 'bottom', 'top');
+    assert.equal(L.sheetRect(e, 'auto', 800, 5000, 12).h, L.workArea(e).h - 24);
+});
 test('a right bar puts the auto sheet on the left; explicit sides win', () => {
     assert.equal(L.sheetRect(env('right', 'bottom', 'top'), 'auto', 400).side, 'left');
     assert.equal(L.sheetRect(env('top', 'bottom', 'top'), 'left', 400).side, 'left');
