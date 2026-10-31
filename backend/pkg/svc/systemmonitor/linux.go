@@ -3,12 +3,17 @@
 package systemmonitor
 
 import (
+	"context"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+
+
+
+
+	"yozakura/backend/pkg/proc"
 )
 
 type syscallStatfs = syscall.Statfs_t
@@ -23,9 +28,9 @@ func statfs(mount string, st *syscallStatfs) error {
 }
 
 func nvidiaQuery(pciID string) (usage float64, temp int) {
-	out, err := exec.Command("nvidia-smi", "-i", pciID,
+	out, err := proc.Run(context.Background(), "nvidia-smi", "-i", pciID,
 		"--query-gpu=utilization.gpu,temperature.gpu",
-		"--format=csv,noheader,nounits").Output()
+		"--format=csv,noheader,nounits")
 	if err != nil {
 		return 0, -1
 	}

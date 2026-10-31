@@ -2,17 +2,18 @@ package hyprland
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
@@ -608,7 +609,7 @@ func (h *Hyprland) fetchLayouts() ([]ipc.Layout, ipc.LayoutSource, error) {
 
 func hyprctlSubprocessLayouts() ([]string, error) {
 	for _, arg := range []string{"-j", "layouts"} {
-		out, err := exec.Command("hyprctl", arg).Output()
+		out, err := proc.Run(context.Background(), "hyprctl", arg)
 		if err != nil {
 			continue
 		}

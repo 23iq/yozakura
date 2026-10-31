@@ -1,13 +1,14 @@
 package paths
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/proc"
 )
 
 type modGenerationMetadata struct {
@@ -107,8 +108,7 @@ func ValidateModGeneration(generation, base string) error {
 		return fmt.Errorf("generation uses Yozakura %s; base is %s", metadata.BaseVersion, baseVersion)
 	}
 	if metadata.BaseRevision != "" {
-		cmd := exec.Command("git", "-C", base, "rev-parse", "HEAD")
-		output, err := cmd.Output()
+		output, err := proc.Run(context.Background(), "git", "-C", base, "rev-parse", "HEAD")
 		if err != nil {
 			return fmt.Errorf("read base revision: %w", err)
 		}

@@ -2,9 +2,11 @@ package clipboard
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -14,6 +16,7 @@ import (
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 // Service owns the clipboard history (two encrypted SQLite stores: pinned
@@ -159,7 +162,7 @@ func (s *Service) clear(_ json.RawMessage) (any, error) {
 	if err := st.clearUnpinned(); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
-	exec.Command("wl-copy", "--clear").Run()
+	proc.Do(context.Background(), "wl-copy", "--clear")
 	return map[string]any{"ok": true}, nil
 }
 
@@ -265,12 +268,21 @@ func (s *Service) copy(params json.RawMessage) (any, error) {
 	if p.Mime != "" {
 		mime = p.Mime
 	}
-	cmd := exec.Command("wl-copy", "--type", mime)
-	cmd.Stdin = bytes.NewReader(content)
-	if err := cmd.Run(); err != nil {
+	if err := runWlCopy(mime, bytes.NewReader(content)); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
 	return map[string]any{"ok": true}, nil
+}
+
+// runWlCopy feeds content to wl-copy. wl-copy forks a child that keeps
+// serving the selection, so stdout/stderr must stay nil (/dev/null): a pipe
+// would be held open by that child and make Run block.
+func runWlCopy(mime string, content io.Reader) error {
+	ctx, cancel := context.WithTimeout(context.Background(), proc.DefaultTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "wl-copy", "--type", mime)
+	cmd.Stdin = content
+	return cmd.Run()
 }
 
 // emojiType copies an emoji and types it via wtype.
@@ -283,13 +295,11 @@ func (s *Service) emojiType(params json.RawMessage) (any, error) {
 	if emoji == "" {
 		return map[string]any{"error": "empty emoji"}, nil
 	}
-	cmd := exec.Command("wl-copy", "--type", "text/plain;charset=utf-8")
-	cmd.Stdin = strings.NewReader(emoji)
-	if err := cmd.Run(); err != nil {
+	if err := runWlCopy("text/plain;charset=utf-8", strings.NewReader(emoji)); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
 	go func() {
-		exec.Command("bash", "-c", "sleep 0.25; wtype -M ctrl -P v -p v -m ctrl").Run()
+		proc.Do(context.Background(), "bash", "-c", "sleep 0.25; wtype -M ctrl -P v -p v -m ctrl")
 	}()
 	return map[string]any{"ok": true}, nil
 }
@@ -375,7 +385,7 @@ func (s *Service) imagePath(params json.RawMessage) (any, error) {
 }
 
 func (s *Service) clearClipboard(_ json.RawMessage) (any, error) {
-	exec.Command("wl-copy", "--clear").Run()
+	proc.Do(context.Background(), "wl-copy", "--clear")
 	return map[string]any{"ok": true}, nil
 }
 

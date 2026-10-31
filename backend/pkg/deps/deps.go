@@ -4,12 +4,15 @@
 package deps
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"yozakura/backend/pkg/proc"
 )
 
 //go:embed packages.tsv
@@ -182,7 +185,7 @@ func flatpakDirs() []string {
 }
 
 func systemFonts() string {
-	out, _ := exec.Command("fc-list", ":", "family").Output()
+	out, _ := proc.Run(context.Background(), "fc-list", ":", "family")
 	return strings.ToLower(string(out))
 }
 
@@ -190,11 +193,11 @@ func hasPackage(distro, pkg string) bool {
 	pkg = strings.TrimPrefix(pkg, "aur:")
 	switch distro {
 	case "arch":
-		return exec.Command("pacman", "-Q", pkg).Run() == nil
+		return proc.Do(context.Background(), "pacman", "-Q", pkg) == nil
 	case "fedora", "suse":
-		return exec.Command("rpm", "-q", "--whatprovides", pkg).Run() == nil
+		return proc.Do(context.Background(), "rpm", "-q", "--whatprovides", pkg) == nil
 	case "debian":
-		out, err := exec.Command("dpkg-query", "-W", "-f=${Status}", pkg).Output()
+		out, err := proc.Run(context.Background(), "dpkg-query", "-W", "-f=${Status}", pkg)
 		return err == nil && strings.HasSuffix(string(out), " installed")
 	}
 	return true

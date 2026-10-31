@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,7 +11,9 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/proc"
 )
 
 var mediaVideoExts = map[string]bool{
@@ -80,8 +83,8 @@ func runLockWall(args []string) int {
 	}
 
 	output := filepath.Join(lockscreenDir, filepath.Base(wallpaper)+".jpg")
-	out, err := exec.Command("ffmpeg", "-y", "-i", wallpaper,
-		"-vframes", "1", "-q:v", "2", "-f", "image2", output).CombinedOutput()
+	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: 2 * time.Minute, Combined: true}, "ffmpeg", "-y", "-i", wallpaper,
+		"-vframes", "1", "-q:v", "2", "-f", "image2", output)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to extract frame: %s\n%s\n", err, out)
 		return 1
@@ -118,8 +121,8 @@ func generateThumb(filePath, thumbPath string, size int) error {
 	ext := strings.ToLower(filepath.Ext(filePath))
 	if mediaVideoExts[ext] {
 		scale := fmt.Sprintf("scale=%d:%d:force_original_aspect_ratio=increase,crop=%d:%d", size, size, size, size)
-		_, err := exec.Command("ffmpeg", "-y", "-i", filePath,
-			"-ss", "00:00:01", "-vframes", "1", "-vf", scale, "-q:v", "2", "-f", "image2", thumbPath).Output()
+		_, err := proc.RunWith(context.Background(), proc.Options{Timeout: 2 * time.Minute}, "ffmpeg", "-y", "-i", filePath,
+			"-ss", "00:00:01", "-vframes", "1", "-vf", scale, "-q:v", "2", "-f", "image2", thumbPath)
 		return err
 	}
 	return generateThumbImage(filePath, thumbPath, size)

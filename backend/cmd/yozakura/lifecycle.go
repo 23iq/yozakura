@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"yozakura/backend/pkg/apphooks"
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/termlook"
 )
 
@@ -36,7 +38,7 @@ func runUpdate() {
 		fmt.Fprintf(os.Stderr, "Error: %s has no install.sh; update it with git pull && make build.\n", src)
 		os.Exit(1)
 	}
-	cmd := exec.Command("bash", args...)
+	cmd := exec.CommandContext(context.Background(), "bash", args...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: update failed: %v\n", err)
@@ -146,11 +148,12 @@ func runGoodbye(args []string) {
 
 	exe := currentExecutable()
 	if fileExists("/etc/NIXOS") || strings.HasPrefix(exe, "/nix/store/") {
-		out, _ := exec.Command("nix", "profile", "list").Output()
+		out, _ := proc.Run(context.Background(), "nix", "profile", "list")
 		if strings.Contains(strings.ToLower(string(out)), brand.AppID) {
 			fmt.Println("Removing from nix profile...")
-			exec.Command("nix", "profile", "remove", brand.DisplayName).Run()
-			exec.Command("nix", "profile", "remove", brand.AppID).Run()
+			// Removal can be slow (store locks): no implicit timeout.
+			proc.RunWith(context.Background(), proc.Options{Timeout: -1}, "nix", "profile", "remove", brand.DisplayName)
+			proc.RunWith(context.Background(), proc.Options{Timeout: -1}, "nix", "profile", "remove", brand.AppID)
 		} else {
 			fmt.Println("Remove " + brand.DisplayName + " from your NixOS/home-manager configuration and rebuild.")
 		}

@@ -5,14 +5,15 @@
 package yozdcli
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os/exec"
 	"strings"
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
@@ -24,7 +25,7 @@ type Client struct {
 // New returns a client for the installed daemon binary.
 func New() *Client {
 	return &Client{Run: func(args ...string) ([]byte, error) {
-		return exec.Command(paths.DaemonBinary(), args...).Output()
+		return proc.Run(context.Background(), paths.DaemonBinary(), args...)
 	}}
 }
 

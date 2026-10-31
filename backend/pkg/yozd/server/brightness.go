@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/proc"
 )
 
 // Device describes a brightness-controllable output. Internal panels
@@ -105,7 +107,7 @@ func parseVCPGet(out string) (current, max float64, ok bool) {
 }
 
 func readBacklightCurrent() (*float64, error) {
-	out, err := exec.Command("sh", "-c", "brightnessctl g; brightnessctl m").Output()
+	out, err := proc.Run(context.Background(), "sh", "-c", "brightnessctl g; brightnessctl m")
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +125,7 @@ func readBacklightCurrent() (*float64, error) {
 }
 
 func readDDCCurrent(bus string) (*float64, error) {
-	out, err := exec.Command("ddcutil", "-b", bus, "getvcp", "10").Output()
+	out, err := proc.Run(context.Background(), "ddcutil", "-b", bus, "getvcp", "10")
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +140,7 @@ func lookupInternal() []Device {
 	if _, err := exec.LookPath("brightnessctl"); err != nil {
 		return nil
 	}
-	out, err := exec.Command("sh", "-c", "ls /sys/class/backlight/ 2>/dev/null").Output()
+	out, err := proc.Run(context.Background(), "sh", "-c", "ls /sys/class/backlight/ 2>/dev/null")
 	if err != nil {
 		return nil
 	}
@@ -149,7 +151,7 @@ func lookupDDC() []Device {
 	if _, err := exec.LookPath("ddcutil"); err != nil {
 		return nil
 	}
-	out, err := exec.Command("ddcutil", "detect", "--brief").Output()
+	out, err := proc.Run(context.Background(), "ddcutil", "detect", "--brief")
 	if err != nil {
 		return nil
 	}
@@ -164,7 +166,7 @@ func applyBacklight(value float64) error {
 	if pct > 100 {
 		pct = 100
 	}
-	return exec.Command("brightnessctl", "--class", "backlight", "s", fmt.Sprintf("%d%%", pct), "--quiet").Run()
+	return proc.Do(context.Background(), "brightnessctl", "--class", "backlight", "s", fmt.Sprintf("%d%%", pct), "--quiet")
 }
 
 func applyDDC(bus string, value float64) error {
@@ -175,7 +177,7 @@ func applyDDC(bus string, value float64) error {
 	if pct > 100 {
 		pct = 100
 	}
-	return exec.Command("ddcutil", "-b", bus, "setvcp", "10", strconv.Itoa(pct)).Run()
+	return proc.Do(context.Background(), "ddcutil", "-b", bus, "setvcp", "10", strconv.Itoa(pct))
 }
 
 func resolveTargets(name string) ([]Device, error) {

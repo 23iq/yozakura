@@ -1,7 +1,7 @@
 package keystore
 
 import (
-	"bytes"
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -14,6 +14,7 @@ import (
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 // Service stores API keys in an sqlite DB (0600). Values are only obfuscated
@@ -123,14 +124,14 @@ func (s *Service) run(sql string, flags ...string) (string, error) {
 	if err != nil {
 		return "", errors.New("sqlite3 is not installed")
 	}
-	cmd := exec.Command(bin, append(flags, s.db)...)
-	cmd.Stdin = strings.NewReader(sql)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	out, err := cmd.Output()
+	out, err := proc.RunWith(context.Background(), proc.Options{Stdin: strings.NewReader(sql)}, bin, append(flags, s.db)...)
 	if err != nil {
-		if msg := strings.TrimSpace(stderr.String()); msg != "" {
-			return "", errors.New(msg)
+		var pe *proc.Error
+		if errors.As(err, &pe) {
+			if msg := strings.TrimSpace(pe.Stderr); msg != "" {
+				return "", errors.New(msg)
+			}
+			return "", pe.Err
 		}
 		return "", err
 	}

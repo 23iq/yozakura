@@ -1,6 +1,7 @@
 package sleep
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -123,5 +124,5 @@ func runDetached(cmd string) {
 	if cmd == "" {
 		return
 	}
-	exec.Command("sh", "-c", cmd).Start()
+	exec.CommandContext(context.Background(), "sh", "-c", cmd).Start()
 }

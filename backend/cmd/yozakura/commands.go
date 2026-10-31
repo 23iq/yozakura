@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 	"syscall"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/proc"
 )
 
 func isSocketUp() bool {
@@ -78,18 +80,18 @@ func runRefresh() {
 }
 
 func runShellScript(script string, args ...string) (string, error) {
-	out, err := exec.Command("bash", append([]string{script}, args...)...).Output()
+	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: -1}, "bash", append([]string{script}, args...)...)
 	return strings.TrimSpace(string(out)), err
 }
 
 func doSuspend() {
 	if _, err := exec.LookPath("systemctl"); err == nil {
-		exec.Command("systemctl", "suspend").Run()
+		proc.Do(context.Background(), "systemctl", "suspend")
 	} else if _, err := exec.LookPath("loginctl"); err == nil {
-		exec.Command("loginctl", "suspend").Run()
+		proc.Do(context.Background(), "loginctl", "suspend")
 	} else {
-		exec.Command("dbus-send", "--system", "--print-reply",
+		proc.Do(context.Background(), "dbus-send", "--system", "--print-reply",
 			"--dest=org.freedesktop.login1", "/org/freedesktop/login1",
-			"org.freedesktop.login1.Manager.Suspend", "boolean:true").Run()
+			"org.freedesktop.login1.Manager.Suspend", "boolean:true")
 	}
 }

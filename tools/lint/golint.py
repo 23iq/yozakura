@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import baseline  # noqa: E402
+import execguard  # noqa: E402
 from common import BASELINES, REPO, fail, find_tool, ok, skip  # noqa: E402
 
 BACKEND = REPO / "backend"
@@ -84,6 +85,8 @@ def main() -> int:
         skip("lint-go: go not found")
         return 0
     rc = 0 if args.update_baseline else vet(go)
+    if not args.update_baseline:
+        rc |= execguard.main()
     tool = find_tool("staticcheck", "STATICCHECK")
     if not tool:
         skip("staticcheck not found (go install honnef.co/go/tools/cmd/staticcheck@latest)")

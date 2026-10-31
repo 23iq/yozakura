@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"yozakura/backend/pkg/paths"
 
 	"yozakura/backend/pkg/svc/notify"
+	"yozakura/backend/pkg/proc"
 )
 
 func runScreen(args []string) {
@@ -31,7 +33,7 @@ func runScreen(args []string) {
 		notifyShell("Screen "+sub, brand.Daemon+" is required to control the screen", "critical")
 		os.Exit(1)
 	}
-	monitors, err := exec.Command(paths.DaemonBinary(), "monitor", "list").Output()
+	monitors, err := proc.Run(context.Background(), paths.DaemonBinary(), "monitor", "list")
 	if err != nil {
 		notifyShell("Screen "+sub, "Failed to list monitors via "+brand.Daemon, "critical")
 		os.Exit(1)
@@ -45,7 +47,7 @@ func runScreen(args []string) {
 	}
 	for _, m := range list {
 		id := fmt.Sprintf("%v", m.ID)
-		if err := exec.Command(paths.DaemonBinary(), "monitor", "set-dpms", id, state).Run(); err != nil {
+		if err := proc.Do(context.Background(), paths.DaemonBinary(), "monitor", "set-dpms", id, state); err != nil {
 			notifyShell("Screen "+sub, "Failed to set DPMS on monitor "+id, "critical")
 			os.Exit(1)
 		}

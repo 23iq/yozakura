@@ -25,6 +25,7 @@ import (
 	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 const stateVersion = 1
@@ -1326,9 +1327,7 @@ func (m *Manager) cleanupGenerations(state State) {
 // goes first. Any conflict that also rewrites existing lines is left alone and
 // stops the build.
 func resolveAddedBlocks(generation string) (bool, error) {
-	cmd := exec.Command("git", "diff", "--name-only", "--diff-filter=U")
-	cmd.Dir = generation
-	output, err := cmd.Output()
+	output, err := proc.RunWith(context.Background(), proc.Options{Dir: generation}, "git", "diff", "--name-only", "--diff-filter=U")
 	if err != nil {
 		return false, fmt.Errorf("list conflicts: %w", err)
 	}
@@ -1443,8 +1442,7 @@ func commitComposition(generation, message string) error {
 }
 
 func gitObjectsDir(base string) string {
-	cmd := exec.Command("git", "-C", base, "rev-parse", "--git-path", "objects")
-	output, err := cmd.Output()
+	output, err := proc.Run(context.Background(), "git", "-C", base, "rev-parse", "--git-path", "objects")
 	if err != nil {
 		return ""
 	}
@@ -1597,7 +1595,7 @@ func topologicalOrder(installed []InstalledMod, manifests map[string]Manifest) (
 
 func exportBase(base, destination string) error {
 	if gitRevision(base) != "" {
-		cmd := exec.Command("git", "-C", base, "archive", "--format=tar", "HEAD")
+		cmd := exec.CommandContext(context.Background(), "git", "-C", base, "archive", "--format=tar", "HEAD")
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			return err
@@ -1896,7 +1894,7 @@ func runCommandTimeout(timeout time.Duration, directory, name string, args ...st
 		cancel = stop
 		cmd = exec.CommandContext(ctx, name, args...)
 	} else {
-		cmd = exec.Command(name, args...)
+		cmd = exec.CommandContext(context.Background(), name, args...) // timeout <= 0: caller wants no limit
 	}
 	if cancel != nil {
 		defer cancel()
@@ -2007,8 +2005,7 @@ func gitRevision(directory string) string {
 	if directory == "" {
 		return ""
 	}
-	cmd := exec.Command("git", "-C", directory, "rev-parse", "HEAD")
-	output, err := cmd.Output()
+	output, err := proc.Run(context.Background(), "git", "-C", directory, "rev-parse", "HEAD")
 	if err != nil {
 		return ""
 	}

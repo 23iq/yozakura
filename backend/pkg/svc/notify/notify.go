@@ -1,13 +1,14 @@
 package notify
 
 import (
+	"context"
 	"encoding/json"
-	"os/exec"
 	"sync"
 	"sync/atomic"
 	"yozakura/backend/pkg/brand"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/proc"
 )
 
 // Service exposes a notification-request IPC channel. CLIs that previously
@@ -177,5 +178,10 @@ func SendFallback(summary, body, urgency string) error {
 	if urgency != "" {
 		args = append(args, "-u", urgency)
 	}
-	return exec.Command("notify-send", args...).Start()
+	cmd, err := proc.Start(context.Background(), "notify-send", args...)
+	if err != nil {
+		return err
+	}
+	go func() { _ = cmd.Wait() }() // reap; the notification is fire-and-forget
+	return nil
 }
