@@ -2,12 +2,12 @@
 left-only panel leaves the top edge free whatever the legacy bar.position, the
 notch (attached, dot or off) never reserves, the top panel still does."""
 import json
-import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from panels_env import PanelsEnv  # noqa: E402
+import qmlharness  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 ENVS = []
@@ -50,4 +50,4 @@ assert z["top"] > 0 and z["bottom"] == 0, z
 
 print("reservation-edges: ok", flush=True)
 # PySide tears several QML engines down in an order that can crash
-os._exit(0)
+qmlharness.hard_exit(0)
