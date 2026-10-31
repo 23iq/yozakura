@@ -62,11 +62,12 @@ void main() {
         alpha = smoothstep(ubuf.nearDepth, ubuf.nearDepth + ubuf.edge, rawDepth(uv));
     } else if (ubuf.mode > 0.5 && abs(ubuf.shift) > 0.0) {
         vec2 s = vec2(ubuf.shift, 0.0);
-        float levels[3] = float[3](1.0, ubuf.midLead, 0.0);
         bool found = false;
         vec2 pick = uv;
+        // No array constructor: GLSL 100 (the GL backend on some drivers)
+        // rejects it and the whole wallpaper fails to draw.
         for (int i = 0; i < 3; i++) {
-            float lv = levels[i];
+            float lv = i == 0 ? 1.0 : (i == 1 ? ubuf.midLead : 0.0);
             float d = lv > 0.99 ? rawDepth(uv - s * lv) : grownDepth(uv - s * lv);
             if (abs(level(d) - lv) < 0.25) {
                 pick = uv - s * lv;
