@@ -28,7 +28,6 @@ backend/pkg/svc/nightlight/service.go
 backend/pkg/svc/nightlight/service_test.go
 backend/pkg/svc/powerprofile/service.go
 backend/pkg/svc/powerprofile/service_test.go
-backend/pkg/svc/preset/service.go
 backend/pkg/svc/preset/service_test.go
 backend/pkg/svc/recorder/service.go
 backend/pkg/svc/sleep/service.go
