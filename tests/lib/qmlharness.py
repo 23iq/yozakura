@@ -122,6 +122,22 @@ def dryrun_qml(env: dict[str, str] | None = None) -> str:
     return text
 
 
+_ROOTS: list[Path] = []
+
+
+def hard_exit(code: int = 0) -> None:
+    """os._exit(code) after removing every harness temp tree.
+
+    Tests that leave through os._exit (to skip a crashy PySide teardown) skip
+    atexit, which used to leak one copy of the sources per Harness into /tmp.
+    """
+    for root in _ROOTS:
+        shutil.rmtree(root, True)
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(code)
+
+
 class Harness:
     def __init__(self, name: str = "qml", *, keep: bool | None = None):
         self.app = QGuiApplication.instance() or QGuiApplication([])
@@ -141,6 +157,7 @@ class Harness:
         self._keep = keep
         if not keep:
             atexit.register(shutil.rmtree, self.root, True)
+            _ROOTS.append(self.root)
         # Inert stand-ins for the decorative signatures (modules/components/
         # signatures); envs that exercise the real ones mirror the files over them.
         self.module("qs.modules.components.signatures", {

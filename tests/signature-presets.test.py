@@ -4,7 +4,6 @@ loads with its theme, notch and workspaces config without QML errors, the
 Shōji frame draws its double hairline (others none), workspace tags follow
 the numeral style (Neon Tokyo: roman) and a clock with
 moduleOptions.clock.showWeather false leaves the weather to its module."""
-import os
 import sys
 from pathlib import Path
 
@@ -12,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import bundled_fonts  # noqa: E402
 import presetsets  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
+import qmlharness  # noqa: E402
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
@@ -67,4 +67,4 @@ assert not problems, "\n".join(problems[:20])
 print(f"{len(panel_presets)} presets ok", flush=True)
 # PySide tears several QML engines down in an order that can crash; every
 # check passed, leave without running the destructors.
-os._exit(0)
+qmlharness.hard_exit(0)

@@ -3,7 +3,6 @@ modules/bar/workspaces/branch), offscreen in the real bar: the strip replaces
 the active box, the occupied ranges and the slot contents in horizontal and
 vertical bars, keeps a node per slot inside the widget, follows the window
 counts and drops a petal when a window closes, but only with motion on."""
-import os
 import sys
 from pathlib import Path
 
@@ -13,6 +12,7 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from panels_env import PanelsEnv  # noqa: E402
+import qmlharness  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 failures: list[str] = []
@@ -104,6 +104,6 @@ for edge in ["top", "left"]:
 
 if failures:
     print(f"workspace-branch: {len(failures)} failure(s)", flush=True)
-    os._exit(1)
+    qmlharness.hard_exit(1)
 print("workspace-branch: ok", flush=True)
-os._exit(0)
+qmlharness.hard_exit(0)
