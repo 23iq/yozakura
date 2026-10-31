@@ -32,7 +32,10 @@ const apply = (c, writes) => {
 
 test('fromConfig reads the existing keys of every part', () => {
     const l = plain(M.fromConfig(cfg({ notch: { position: 'bottom', align: 'end', style: 'pill' }, dock: { position: 'left', theme: 'floating' } })));
-    assert.deepEqual(l.bar, { enabled: true, edge: 'top', edges: ['top'], style: 'classic', align: 'fill' });
+    const { modules, ...bar } = l.bar;
+    assert.deepEqual(bar, { enabled: true, edge: 'top', edges: ['top'], style: 'classic', align: 'fill' });
+    // The legacy bar's default layout (PanelLayout.DEFAULT_LAYOUT)
+    assert.ok(modules.includes('clock') && modules.includes('workspaces'), modules.join(','));
     assert.deepEqual(l.notch, { enabled: true, edge: 'bottom', style: 'pill', align: 'end' });
     assert.deepEqual(l.dock, { enabled: true, edge: 'left', style: 'floating', align: 'center' });
 });
@@ -41,7 +44,7 @@ test('the bar is off for style none, a missing config, or only disabled panels',
     assert.equal(M.fromConfig(cfg({ bar: { layout: { style: 'none' } } })).bar.enabled, false);
     assert.equal(M.fromConfig(cfg({ bar: { panels: [{ id: 'a', edge: 'left', style: 'classic', enabled: false }] } })).bar.enabled, false);
     const p = M.fromConfig(cfg({ bar: { panels: [{ id: 'a', edge: 'left', style: 'classic', enabled: false }, { id: 'b', edge: 'right', style: 'islands', align: 'center' }] } })).bar;
-    assert.deepEqual(plain(p), { enabled: true, edge: 'right', edges: ['right'], style: 'islands', align: 'center' });
+    assert.deepEqual(plain(p), { enabled: true, edge: 'right', edges: ['right'], style: 'islands', align: 'center', modules: [] });
     const empty = plain(M.fromConfig({}));
     assert.equal(empty.notch.enabled, true);
     assert.equal(empty.bar.enabled, true);
@@ -74,8 +77,51 @@ test('re-homing rules', () => {
 test('notch segments and corner content follow the homes', () => {
     assert.deepEqual(plain(M.notchSegments(layoutOf(false, true, true))), ['clock', 'tray']);
     assert.deepEqual(plain(M.notchSegments(layoutOf(true, true, true))), []);
-    assert.deepEqual(plain(M.cornerContent(layoutOf(false, false, true))), ['activities', 'clock', 'tray']);
-    assert.deepEqual(plain(M.cornerContent(layoutOf(true, false, false))), []);
+    const island = ['media', 'notifications', 'mic'];
+    assert.deepEqual(plain(M.cornerContent(layoutOf(false, false, true))), ['activities', 'clock', 'tray', ...island]);
+    // A bar without the media / notifications / mic modules: corner pills
+    assert.deepEqual(plain(M.cornerContent(layoutOf(true, false, false))), island);
+    assert.deepEqual(plain(M.cornerContent(layoutOf(true, true, false))), []);
+});
+
+// A panels bar holding `ids` (start group) on `edge`, optionally disabled
+const withModules = (ids, notch, edge = 'top', enabled = true) => M.fromConfig(cfg({
+    bar: { panels: [{ id: 'main', edge, style: 'classic', enabled, groups: { start: ['workspaces'], end: ids } }] },
+    notch: { enabled: notch }
+}));
+
+test('media, notifications and mic: the island first, then their bar module, else corner pills', () => {
+    for (const id of ['media', 'notifications', 'mic']) {
+        // The idle island shows them: the bar module stays hidden (no duplicate)
+        assert.equal(M.homeOf(id, withModules([id], true)), 'notch', id);
+        assert.equal(M.homeOf(id, withModules([], true)), 'notch', id);
+        // Island off: the bar module, on any edge (vertical bars too)
+        for (const edge of EDGES)
+            assert.equal(M.homeOf(id, withModules([id], false, edge)), 'bar', `${id} ${edge}`);
+        // Island off and no module (or the panel holding it is off): corner
+        assert.equal(M.homeOf(id, withModules([], false)), 'corner', id);
+        assert.equal(M.homeOf(id, withModules([id], false, 'top', false)), 'corner', id);
+        assert.ok(M.cornerContent(withModules([], false)).includes(id), id);
+        assert.ok(!M.cornerContent(withModules([id], false)).includes(id), id);
+        // Never a notch segment: the island draws them itself
+        assert.ok(!M.notchSegments(withModules([], true)).includes(id), id);
+    }
+    // One module does not re-home the others
+    const l = withModules(['media'], false);
+    assert.deepEqual(plain(M.cornerContent(l)), ['notifications', 'mic']);
+    assert.ok(plain(l.bar.modules).includes('media'));
+});
+
+test('bar modules collect every group of the enabled panels only', () => {
+    const l = M.fromConfig(cfg({
+        bar: {
+            panels: [
+                { id: 'a', edge: 'top', style: 'classic', groups: { start: ['media'], drawer: ['mic'] } },
+                { id: 'b', edge: 'bottom', style: 'classic', enabled: false, groups: { end: ['notifications'] } }
+            ]
+        }
+    }));
+    assert.deepEqual(plain(l.bar.modules).sort(), ['media', 'mic']);
 });
 
 test('activity presentation: configured off stays off, otherwise it follows the home', () => {
@@ -87,7 +133,7 @@ test('activity presentation: configured off stays off, otherwise it follows the 
     const side = M.fromConfig(cfg({ bar: { position: 'left' }, notch: { enabled: false } }));
     assert.equal(M.homeOf('activities', side), 'bar');
     assert.equal(M.activityPresentation(side, 'notch'), 'corner');
-    assert.deepEqual(plain(M.cornerContent(side)), ['activities']);
+    assert.deepEqual(plain(M.cornerContent(side)), ['activities', 'media', 'notifications', 'mic']);
 });
 
 test('activities in: auto makes bar chips while a bar shares the notch edge', () => {
