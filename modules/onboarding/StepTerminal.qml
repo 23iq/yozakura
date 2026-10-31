@@ -2,13 +2,10 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
 import qs.modules.terminal
-import qs.modules.settings
-import qs.modules.settings.keyboard
+import qs.modules.components.kit
 import qs.config
-import "../settings/Ui.js" as Ui
 import "../terminal/TermModel.js" as TermModel
 import "OnboardingModel.js" as Model
 
@@ -22,10 +19,7 @@ Item {
 
     readonly property string terminal: wizard ? String(wizard.get("general.terminal") || "") : ""
     readonly property var detected: wizard ? wizard.detected.terminals : []
-    readonly property var terminals: Model.terminalChoices(detected, terminal).map(t => ({
-                "value": t,
-                "label": t
-            }))
+    readonly property var terminals: Model.terminalChoices(detected, terminal)
     readonly property var term: Config.terminal
     readonly property var preview: TerminalLookService.previews[TermModel.previewKey(TerminalLookService.engine, TerminalLookService.prompt)]
     readonly property string fish: TermModel.fishState(TerminalLookService.status)
@@ -36,7 +30,7 @@ Item {
     readonly property var presetInfo: TerminalLookService.presets.find(p => p.id === TerminalLookService.prompt) ?? null
     readonly property bool needsNerdFont: !!presetInfo && presetInfo.nerdFont && !TerminalLookService.nerdFontAvailable
     readonly property bool nerdInstallable: ExtrasService.cardState("nerd-font") !== "unavailable"
-    readonly property int gap: Math.round(Styling.fontSize(0) * 1.4)
+    readonly property int gap: Space.xl
 
     function pickTerminal(name) {
         const t = String(name || "").trim();
@@ -79,7 +73,8 @@ Item {
 
         Column {
             id: column
-            width: flick.width - 10
+            x: Space.stroke
+            width: flick.width - Space.m
             spacing: root.gap
 
             // ---- terminal app + preview on desktop ------------------------
@@ -87,98 +82,98 @@ Item {
                 width: parent.width
                 height: Math.max(apps.implicitHeight, peekBox.implicitHeight)
 
-                Column {
+                Group {
                     id: apps
-                    width: parent.width - peekBox.width - root.gap
-                    spacing: 8
-
-                    SectionLabel {
-                        width: parent.width
-                        icon: "terminalWindow"
-                        text: I18n.t("onboarding.system.terminal")
-                    }
+                    width: Math.round((parent.width - root.gap) * 0.54)
+                    label: I18n.t("onboarding.system.terminal")
 
                     Flow {
+                        id: chips
+                        objectName: "terminalChips"
                         width: parent.width
-                        spacing: 8
+                        spacing: Space.s
 
-                        KeyChips {
-                            objectName: "terminalChips"
-                            options: root.terminals
-                            value: root.terminal
-                            onSelected: t => root.pickTerminal(t)
+                        signal selected(string value)
+                        onSelected: value => root.pickTerminal(value)
+
+                        Repeater {
+                            model: root.terminals
+                            delegate: FocusChip {
+                                required property string modelData
+                                objectName: "terminalChip:" + modelData
+                                text: modelData
+                                active: modelData === root.terminal
+                                onClicked: chips.selected(modelData)
+                            }
                         }
 
-                        StyledRect {
-                            id: other
-                            variant: "common"
-                            enableShadow: false
-                            width: Math.round(Styling.fontSize(0) * 10)
-                            height: 34
-                            radius: height / 2
+                        // "Other…": any terminal command, Enter applies it.
+                        Item {
+                            width: Space.px(160)
+                            height: Space.chip
 
                             Rectangle {
                                 anchors.fill: parent
-                                radius: parent.radius
-                                color: "transparent"
-                                border.width: otherInput.activeFocus ? 2 : 1
-                                border.color: otherInput.activeFocus ? Colors.primary : Ui.alpha(Colors.outline, 0.35)
-                                z: 10
+                                radius: Look.chipRadius(height)
+                                color: Look.raisedFill(otherHover.hovered)
+                                border.width: Look.controlEdge.a > 0 ? Space.hairline : 0
+                                border.color: Look.controlEdge
                             }
 
-                            TextInput {
+                            HoverHandler {
+                                id: otherHover
+                                cursorShape: Qt.IBeamCursor
+                            }
+
+                            InlineEdit {
                                 id: otherInput
                                 objectName: "terminalOther"
                                 anchors.fill: parent
-                                anchors.leftMargin: 14
-                                anchors.rightMargin: 14
-                                verticalAlignment: TextInput.AlignVCenter
-                                clip: true
-                                selectByMouse: true
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-1)
-                                color: Colors.overBackground
-                                selectionColor: Colors.primary
-                                selectedTextColor: Colors.overPrimary
+                                anchors.leftMargin: Space.m
+                                anchors.rightMargin: Space.m
+                                role: "secondary"
+                                autoFocus: false
+                                activeFocusOnTab: true
                                 onAccepted: {
                                     root.pickTerminal(text);
                                     text = "";
                                 }
 
-                                Text {
+                                KitText {
                                     anchors.verticalCenter: parent.verticalCenter
                                     visible: otherInput.text === "" && !otherInput.activeFocus
+                                    role: "secondary"
+                                    color: Type.muted
                                     text: I18n.t("onboarding.terminal.other")
-                                    font: otherInput.font
-                                    color: Colors.overSurfaceVariant
                                 }
+                            }
+
+                            FocusRing {
+                                shown: otherInput.activeFocus
+                                radius: Look.chipRadius(height) + Space.stroke
                             }
                         }
                     }
 
-                    Text {
+                    KitText {
                         visible: !!root.wizard && root.wizard.detecting
+                        role: "caption"
                         text: I18n.t("onboarding.detecting")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        color: Colors.outline
                     }
                 }
 
                 Column {
                     id: peekBox
                     anchors.right: parent.right
-                    spacing: 6
+                    spacing: Space.xs
                     PeekButton {
                         objectName: "terminalPeek"
                         anchors.right: parent.right
                     }
-                    Text {
+                    KitText {
                         anchors.right: parent.right
+                        role: "caption"
                         text: I18n.t("onboarding.terminal.peek_hint", root.terminal || "kitty")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        color: Colors.overSurfaceVariant
                     }
                 }
             }
@@ -190,16 +185,16 @@ Item {
                 // fills the step; the gallery scrolls inside it
                 height: Math.max(previewCol.implicitHeight, flick.height - y)
 
-                Column {
+                Group {
                     id: previewCol
                     width: Math.round((parent.width - root.gap) * 0.54)
-                    spacing: 10
+                    label: I18n.t("onboarding.terminal.prompt")
 
-                    SectionLabel {
+                    KitText {
                         width: parent.width
-                        icon: "sparkle"
-                        text: I18n.t("onboarding.terminal.prompt")
-                        hint: I18n.t("onboarding.terminal.prompt.desc")
+                        role: "secondary"
+                        wrapMode: Text.WordWrap
+                        text: I18n.t("onboarding.terminal.prompt.desc")
                     }
 
                     TerminalPreview {
@@ -208,7 +203,7 @@ Item {
                         preview: root.preview
                         fontFamily: TerminalLookService.fontFamily
                         pixelSize: TerminalLookService.fontPixelSize
-                        padding: root.term ? Number(root.term.padding) : 12
+                        padding: root.term ? Number(root.term.padding) : Space.m
                         cursorShape: root.term ? root.term.cursorShape : "beam"
                         cursorBlink: root.term ? root.term.cursorBlink : true
                         greeting: false
@@ -241,17 +236,15 @@ Item {
                         title: I18n.t("prefs.term.look.nerd.title")
                         message: I18n.t("prefs.term.look.nerd.desc") + (root.nerdInstallable ? "" : " " + I18n.t("prefs.term.look.nerd.manual"))
 
-                        PillButton {
-                            kind: "tonal"
+                        FocusChip {
                             text: I18n.t("prefs.term.look.nerd.use_plain")
                             onClicked: TerminalLookService.enablePrompt("plain")
                         }
-                        PillButton {
+                        FocusChip {
                             visible: root.nerdInstallable
                             readonly property bool busy: ExtrasService.cardState("nerd-font") === "installing"
                             enabled: !busy
-                            kind: "filled"
-                            icon: busy ? "" : "downloadSimple"
+                            icon: busy ? "" : Icons.downloadSimple
                             text: busy ? I18n.t("prefs.term.look.installing") : I18n.t("prefs.term.look.nerd.install")
                             onClicked: ExtrasService.install(["nerd-font"])
                         }
@@ -276,7 +269,7 @@ Item {
                     PromptGallery {
                         id: gallery
                         objectName: "onboardingPromptGallery"
-                        width: galleryFlick.width - 12
+                        width: galleryFlick.width - Space.m
                     }
                 }
             }
