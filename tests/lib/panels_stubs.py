@@ -76,6 +76,7 @@ QtObject {
     property var monitors: []
     property var workspaceOccupationMap: ({ "1": true, "2": true, "3": true, "4": true })
     property var workspaceWindowsMap: (""" + _windows_map() + """)
+    property var workspaceUrgentMap: ({})
     function monitorHasFullscreen(m) { return false; }
     function refreshSpecialWorkspaces() {}
 }
