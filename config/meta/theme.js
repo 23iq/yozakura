@@ -332,6 +332,28 @@ var keys = {
         "enum": ["off", "night", "always"],
         "description": "A soft light that follows the pointer over shell surfaces: off, only after sunset, or always."
     },
+    "weatherFx": {
+        "description": "The current weather drawn onto the shell's surfaces: droplets, frost, heat shimmer, haze and seasonal petals."
+    },
+    "weatherFx.mode": {
+        "enum": ["off", "subtle", "vivid"],
+        "description": "off: no weather on surfaces; subtle: a few droplets, a faint haze; vivid: denser and more visible. Never drawn over text."
+    },
+    "weatherFx.rain": {
+        "description": "Rain and drizzle: a few droplets rest on surfaces and now and then one runs down."
+    },
+    "weatherFx.frost": {
+        "description": "Below 0 °C frost creeps in from the corners of surfaces; snowflakes settle on their top edge while it snows."
+    },
+    "weatherFx.heat": {
+        "description": "Above 30 °C a faint heat shimmer passes over the bar now and then."
+    },
+    "weatherFx.fog": {
+        "description": "Fog and mist: a soft haze over surfaces."
+    },
+    "weatherFx.seasonal": {
+        "description": "In spring a petal, in autumn a leaf, occasionally lands on the bar and slides off (season from the weather location's hemisphere)."
+    },
     "signatures.brushHighlight": {
         "description": "Paint selection and focus highlights as a brush stroke."
     },

@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components.surfaceeffects
 import qs.modules.components.shape
+import "weatherfx"
 
 ClippingRectangle {
     id: root
@@ -265,6 +266,17 @@ ClippingRectangle {
         sourceComponent: LitSurface {
             radii: root.cornerRadii
             glassHighlight: root.glassHighlight
+        }
+    }
+
+    // Weather on surfaces (theme.weatherFx): one overlay per surface root,
+    // under the content; nothing exists while the mode is off.
+    Loader {
+        objectName: "weatherFx"
+        anchors.fill: parent
+        active: (WeatherFx.active || WeatherFx.scopes > 0) && root.glassSurface !== "" && WeatherFx.hosts(root.glassSurface)
+        sourceComponent: WeatherOverlay {
+            surface: root
         }
     }
 

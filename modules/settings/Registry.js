@@ -64,6 +64,7 @@ var PREVIEWS = {
     "MotionPreview": "previews/MotionPreview.qml",
     "PaletteFadePreview": "previews/PaletteFadePreview.qml",
     "LightingPreview": "previews/LightingPreview.qml",
+    "WeatherFxPreview": "previews/WeatherFxPreview.qml",
     "ClockPreview": "previews/ClockPreview.qml",
     "SentencePreview": "previews/SentencePreview.qml",
     "TransitionPreview": "previews/TransitionPreview.qml",
