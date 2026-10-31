@@ -76,7 +76,6 @@ Item {
         from: 0
         to: 1
         duration: root.swayMs
-        easing.type: Easing.Linear
     }
 
     SequentialAnimation {
