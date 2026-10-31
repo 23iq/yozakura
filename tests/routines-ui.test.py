@@ -4,13 +4,8 @@ slots and the "Run routine" bind picker, on tests/lib/settings_env.py with
 a RoutinesService stub that records its calls.
 """
 import json
-import os
 import sys
 from pathlib import Path
-
-# The desktop's Controls style (e.g. KDE Breeze) warns about the TextArea
-# of AiTextRow; the shell itself never loads it.
-os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import headless  # noqa: E402
