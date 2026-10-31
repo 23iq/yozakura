@@ -129,6 +129,11 @@ Singleton {
         return EdgeLayout.notchRect(envFor(screen), size);
     }
 
+    // Floating card of `size` {w, h} beside the bar (CardHost)
+    function cardRect(screen, size, margin) {
+        return EdgeLayout.cardRect(envFor(screen), size, "auto", margin);
+    }
+
     function freeCorner(screen, pref) {
         return EdgeLayout.freeCorner(envFor(screen), pref || "auto");
     }

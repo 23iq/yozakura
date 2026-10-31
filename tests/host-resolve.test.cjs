@@ -17,7 +17,7 @@ const all = (v) => ({
     cheatsheet: { host: v }, aiquick: { host: v }, panels: { host: v },
 });
 const AUTO_OFF = { launcher: 'spotlight', dashboard: 'sheet', powermenu: 'fullscreen', tools: 'radial',
-    cheatsheet: 'fullscreen', aiquick: 'spotlight', panels: 'spotlight' };
+    cheatsheet: 'fullscreen', aiquick: 'card', panels: 'card' };
 
 test('auto is the notch while it is on (unchanged behaviour)', () => {
     for (const s of ['launcher', 'dashboard', 'powermenu', 'tools', 'aiquick', 'panels'])
@@ -27,7 +27,7 @@ test('auto is the notch while it is on (unchanged behaviour)', () => {
     assert.equal(H.resolve(all('auto'), 'launcher'), 'notch');
 });
 
-test('auto off the notch: spotlight / sheet / fullscreen / radial / card (spotlight stand-in)', () => {
+test('auto off the notch: spotlight / sheet / fullscreen / radial / card', () => {
     for (const [s, host] of Object.entries(AUTO_OFF))
         assert.equal(H.resolve(all('auto'), s, OFF), host, s);
 });
@@ -51,9 +51,16 @@ test('explicit available hosts are kept; unknown values behave like auto', () =>
     assert.equal(H.chosen(all('bogus'), 'launcher'), 'auto');
 });
 
-test('card is not built yet: it resolves to its spotlight stand-in', () => {
-    assert.equal(S.host('card').built, false);
-    assert.equal(H.resolve(all('card'), 'aiquick', ON), 'spotlight');
+test('card is built: it is kept on and off the notch; quick ask can use spotlight', () => {
+    assert.equal(S.host('card').built, undefined);
+    for (const ctx of [ON, OFF]) {
+        assert.equal(H.resolve(all('card'), 'aiquick', ctx), 'card');
+        assert.equal(H.resolve(all('card'), 'panels', ctx), 'card');
+        assert.equal(H.resolve(all('spotlight'), 'aiquick', ctx), 'spotlight');
+    }
+    // Panels have no spotlight: unknown there, so auto
+    assert.equal(H.resolve(all('spotlight'), 'panels', ON), 'notch');
+    assert.equal(H.shownInstead(all('notch'), 'panels', OFF), 'card');
 });
 
 test('shownInstead: only with the notch off and when the host differs', () => {
@@ -90,4 +97,17 @@ test('the router follows the resolver: notch off never opens the notch for menus
     assert.equal(R.menuStyle(all('notch'), 'tools', OFF), 'radial');
     assert.equal(R.hostFor(all('notch'), 'dashboard', OFF), 'sheet');
     assert.equal(R.moduleIn(Object.assign({}, vis, { powermenu: false }), all('auto'), 'overlay', OFF), 'tools');
+});
+
+test('the router sends quick ask and the auto panels off a disabled notch', () => {
+    const vis = { launcher: false, dashboard: false, powermenu: false, tools: false, aiquick: true, keybinds: false };
+    assert.equal(R.hostFor(all('auto'), 'aiquick', ON), 'notch');
+    assert.equal(R.hostFor(all('auto'), 'aiquick', OFF), 'card');
+    assert.equal(R.notchOpen(vis, all('auto'), OFF), false);
+    assert.equal(R.moduleIn(vis, all('auto'), 'card', OFF), 'aiquick');
+    assert.equal(R.moduleIn(vis, all('spotlight'), 'spotlight', ON), 'aiquick');
+    assert.equal(R.hostFor(all('auto'), 'panels', OFF), 'card');
+    assert.equal(R.hostFor(all('card'), 'panels', ON), 'card');
+    // Panels are no Visibilities module: never "open" in a host
+    assert.equal(R.moduleIn({ panels: true }, all('card'), 'card', ON), '');
 });

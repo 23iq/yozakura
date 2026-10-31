@@ -15,7 +15,10 @@ import qs.modules.theme
 // A full-screen overlay layer on one screen. Subclasses place their frame
 // from `progress` (0 closed .. 1 open, Motion.enter / Motion.exit; jumps
 // straight to the end when animations are off) and set `slot` (HostFrame.slot:
-// Escape from the view bubbles up to it).
+// Escape from the view bubbles up to it). `modal` false (a card that only
+// shows, like a ringing alarm) takes no keyboard focus and no focus grab;
+// the subclass then masks input to its frame. `enterMotion` / `exitMotion`
+// are the open / close tokens (a card glides: Motion.glide).
 PanelWindow {
     id: root
 
@@ -24,6 +27,9 @@ PanelWindow {
     property Item view: null
     property bool isOpen: false
     property real progress: 0
+    property bool modal: true
+    property var enterMotion: Motion.enter
+    property var exitMotion: Motion.exit
 
     signal closed
     signal requestClose
@@ -42,7 +48,7 @@ PanelWindow {
             root.view.visible = true;
         }
         root.isOpen = true;
-        root._animate(1, Motion.enter);
+        root._animate(1, root.enterMotion);
         Qt.callLater(root.focusView);
     }
 
@@ -50,7 +56,7 @@ PanelWindow {
         if (!root.isOpen)
             return;
         root.isOpen = false;
-        root._animate(0, Motion.exit);
+        root._animate(0, root.exitMotion);
     }
 
     function focusView() {
@@ -95,11 +101,11 @@ PanelWindow {
     visible: root.isOpen || root.progress > 0
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace(root.hostName)
-    WlrLayershell.keyboardFocus: root.isOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: root.isOpen && root.modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     FocusGrab {
         windows: [root]
-        active: root.isOpen
+        active: root.isOpen && root.modal
         onCleared: Qt.callLater(() => {
             if (root.isOpen)
                 root.requestClose();

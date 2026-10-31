@@ -195,6 +195,57 @@ function freeCorner(e, pref) {
     return best;
 }
 
+// Corner of a floating card (CardHost): beside the bar, where the clock and
+// chips that open it live, at the end of that edge with the fewest other
+// occupied edges (top-right for a top bar, top-left for a left bar); with
+// no bar the free corner.
+function cardCorner(e) {
+    var bar = "";
+    var panels = e.panels !== undefined ? e.panels : [e.bar];
+    for (var i = 0; i < panels.length && !bar; i++) {
+        var p = panels[i];
+        if (p && p.visible && (p.size || 0) > 0 && OPPOSITE[p.pos])
+            bar = p.pos;
+    }
+    if (!bar)
+        return freeCorner(e, "auto");
+    var corners = ["top-right", "top-left", "bottom-right", "bottom-left"];
+    var best = "";
+    var bestScore = Infinity;
+    for (var c = 0; c < corners.length; c++) {
+        var parts = corners[c].split("-");
+        if (parts.indexOf(bar) === -1)
+            continue;
+        var other = parts[0] === bar ? parts[1] : parts[0];
+        var score = _occupied(e, other, false) ? 2 : _occupied(e, other, true) ? 1 : 0;
+        if (score < bestScore) {
+            bestScore = score;
+            best = corners[c];
+        }
+    }
+    return best;
+}
+
+// Rect of a floating card of `size` {w, h} in its corner (cardCorner, or
+// `pref` when it names one), `margin` px inside the work area so it never
+// sits under a bar, dock or notch. `.from` is the edge it slides in from.
+function cardRect(e, size, pref, margin) {
+    var corner = pref && pref !== "auto" ? pref : cardCorner(e);
+    var parts = corner.split("-");
+    var w = workArea(e);
+    var m = margin || 0;
+    var rw = Math.min(size.w, Math.max(0, w.w - m * 2));
+    var rh = Math.min(size.h, Math.max(0, w.h - m * 2));
+    return {
+        x: Math.round(parts[1] === "left" ? w.x + m : w.x + w.w - m - rw),
+        y: Math.round(parts[0] === "top" ? w.y + m : w.y + w.h - m - rh),
+        w: rw,
+        h: rh,
+        corner: corner,
+        from: parts[0]
+    };
+}
+
 // Direction the notch's panels open in: toward the screen center.
 function notchOpenDir(pos) {
     return { top: "down", bottom: "up", left: "right", right: "left" }[pos] || "down";
