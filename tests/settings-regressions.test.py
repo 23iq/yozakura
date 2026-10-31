@@ -88,5 +88,11 @@ check(h.eval(shell, "searchOpen") is False and h.eval(shell, "railed") is True, 
 h.eval(shell, "openSearch()")
 QTest.qWait(150)
 check(h.eval(shell, "searchOpen") is True, "Ctrl+F path opens the search when compact")
+
+# Service-backed pages build offscreen with the harness stubs (no QML errors).
+for cat in ("keyboard", "displays", "mods", "terminal", "extras", "system", "about"):
+    h.eval(shell, f'select("{cat}")')
+    check(env.wait_page(win), f"{cat}: page built")
+    QTest.qWait(200)
 check(not errors, "QML errors:\n  " + "\n  ".join(errors))
 print("settings-regressions: ok")
