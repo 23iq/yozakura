@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.bar.look
+import "../../widgets/dashboard/widgets/WidgetFormat.js" as WidgetFormat
 
 // Bar clock: the weather symbol (or day name), a clock face
 // (bar.moduleOptions.clock.face, ClockFaces.js; a vertical bar shows digital
@@ -82,10 +83,13 @@ Item {
                 id: lead
                 visible: root.vertical || root.weatherAvailable || !root.showDate
                 Layout.alignment: Qt.AlignCenter
-                text: root.weatherAvailable ? WeatherService.weatherSymbol : root.dayAbbrev
+                // The weather as an icon-font glyph in the module ink: a colour
+                // emoji turns pale on a light pill
+                readonly property string glyph: root.weatherAvailable ? (Icons[WidgetFormat.weatherGlyph(WeatherService.effectiveWeatherCode, WeatherService.effectiveIsDay)] || "") : ""
+                text: root.weatherAvailable ? (lead.glyph || WeatherService.weatherSymbol) : root.dayAbbrev
                 color: root.fg
                 font.pixelSize: root.weatherAvailable ? BarLook.iconSize(root.moduleSize) : root.textSize
-                font.family: BarLook.textFont
+                font.family: lead.glyph ? Icons.font : BarLook.textFont
                 font.weight: BarLook.textWeight
             }
 
