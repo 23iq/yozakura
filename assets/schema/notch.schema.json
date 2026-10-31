@@ -21,14 +21,14 @@
       "description": "Show the notch at rest. Off, its live activities move to the bar (or to corner pills without a bar) and it only appears while it shows a view."
     },
     "position": {
-      "title": "Position",
+      "title": "Island edge",
       "type": "string",
       "default": "top",
       "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
-        "label": "prefs.notch.position",
+        "label": "prefs.label.island_edge",
         "control": "selector",
         "keywords": "notch position top bottom left right side vertical edge",
         "visibleWhen": {
@@ -50,14 +50,14 @@
       }
     },
     "align": {
-      "title": "Alignment",
+      "title": "Island alignment",
       "type": "string",
       "default": "center",
       "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
-        "label": "prefs.notch.align",
+        "label": "prefs.label.island_align",
         "control": "selector",
         "keywords": "notch align alignment left right corner start center end",
         "visibleWhen": {
@@ -83,7 +83,7 @@
       "description": "Height of the edge area that reveals a hidden notch.",
       "x-settings": {
         "category": "notch",
-        "section": "advanced",
+        "section": "notch",
         "label": "prefs.notch.hover_region",
         "control": "slider",
         "step": 1,
@@ -93,6 +93,7 @@
           "key": "notch.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 8,
         "max": 40
       },
@@ -101,14 +102,14 @@
       "x-unit": "px"
     },
     "keepHidden": {
-      "title": "Keep Hidden",
+      "title": "Hide until hovered",
       "type": "boolean",
       "default": false,
       "description": "Hide the notch until the pointer reaches it.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
-        "label": "shell.notch.keep_hidden",
+        "label": "prefs.notch.hide_until_hovered",
         "control": "toggle",
         "keywords": "hide notch autohide",
         "visibleWhen": {
@@ -170,20 +171,21 @@
       }
     },
     "disableHoverExpansion": {
-      "title": "Disable Hover Expansion",
+      "title": "Media panel",
       "type": "boolean",
       "default": true,
-      "description": "Don't grow the notch into a media preview on hover.",
+      "description": "The island grows into a panel for the playing track: art, controls and the visualizer (on hover or click, see Open Panels On).",
       "x-settings": {
         "category": "notch",
-        "section": "advanced",
-        "label": "shell.notch.disable_hover_expansion",
+        "section": "media",
+        "label": "prefs.notch.media_panel",
         "control": "toggle",
-        "keywords": "hover expand grow media preview",
+        "keywords": "media panel card player hover expand grow preview disable",
         "visibleWhen": {
           "key": "notch.enabled",
           "equals": true
-        }
+        },
+        "invert": true
       }
     },
     "hoverExpandDelay": {
@@ -266,36 +268,44 @@
       "x-unit": "ms"
     },
     "visualizer": {
-      "title": "Audio Visualizer",
+      "title": "Visualizer in the media panel",
       "type": "boolean",
       "default": true,
       "description": "Audio bars next to the playing media.",
       "x-settings": {
         "category": "notch",
         "section": "media",
-        "label": "shell.notch.visualizer",
+        "label": "prefs.notch.media_visualizer",
         "control": "toggle",
         "keywords": "audio visualizer cava bars music",
         "visibleWhen": {
           "key": "notch.enabled",
           "equals": true
+        },
+        "enabledWhen": {
+          "key": "notch.disableHoverExpansion",
+          "equals": false
         }
       }
     },
     "mediaStyle": {
-      "title": "Media Panel Style",
+      "title": "Media panel style",
       "type": "string",
       "default": "row",
       "description": "Row: art, title and controls in one compact row. Artwork: large album art on a card tinted by the cover.",
       "x-settings": {
         "category": "notch",
         "section": "media",
-        "label": "prefs.notch.media_style",
+        "label": "prefs.notch.media_panel_style",
         "control": "selector",
         "keywords": "media player panel style row artwork album cover spotify",
         "visibleWhen": {
           "key": "notch.enabled",
           "equals": true
+        },
+        "enabledWhen": {
+          "key": "notch.disableHoverExpansion",
+          "equals": false
         }
       },
       "enum": [
@@ -308,14 +318,14 @@
       }
     },
     "style": {
-      "title": "Style",
+      "title": "Island shape",
       "type": "string",
       "default": "attached",
       "description": "Attached to the screen edge, a floating island, or a pill that shrinks to a dot when idle.",
       "x-settings": {
         "category": "notch",
         "section": "notch",
-        "label": "prefs.notch.theme",
+        "label": "prefs.label.island_shape",
         "control": "selector",
         "keywords": "notch style island attached floating pill dot minimal",
         "visibleWhen": {

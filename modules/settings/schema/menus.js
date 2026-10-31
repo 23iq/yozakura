@@ -97,6 +97,7 @@ var category = {
             },
             {
                 "key": "theme.popup.gap",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 32,

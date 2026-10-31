@@ -110,9 +110,20 @@ Item {
         }
     }
 
+    // Simple / All view of every page (general.settingsShowAll).
+    ViewToggle {
+        id: viewToggle
+        anchors.top: searchField.bottom
+        anchors.topMargin: sidebar.compact ? 0 : Space.s
+        x: Space.m
+        width: parent.width - Space.m * 2
+        height: sidebar.compact ? 0 : implicitHeight
+        visible: !sidebar.compact
+    }
+
     // Element pages
     SidebarTree {
-        anchors.top: searchField.bottom
+        anchors.top: viewToggle.bottom
         anchors.topMargin: Space.l
         anchors.bottom: presetFooter.top
         width: parent.width
@@ -126,7 +137,7 @@ Item {
     ListView {
         id: resultsView
         objectName: "settingsSearchResults"
-        anchors.top: searchField.bottom
+        anchors.top: viewToggle.bottom
         anchors.topMargin: Space.l
         anchors.bottom: presetFooter.top
         x: Space.m

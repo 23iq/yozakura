@@ -33,12 +33,13 @@ var category = {
                 {
                     "key": "specials.enabled",
                     "type": "toggle",
-                    "label": "prefs.specials.enabled",
+                    "label": "prefs.label.use_specials",
                     "description": "prefs.specials.enabled.desc",
                     "keywords": "on off disable binds rules launch"
                 },
                 {
                     "key": "specials.launchTimeout",
+                    "advanced": true,
                     "type": "slider",
                     "label": "prefs.specials.launch_timeout",
                     "description": "prefs.specials.launch_timeout.desc",
@@ -54,6 +55,7 @@ var category = {
                 },
                 {
                     "key": "specials.preloadDelay",
+                    "advanced": true,
                     "type": "slider",
                     "label": "prefs.specials.preload_delay",
                     "description": "prefs.specials.preload_delay.desc",

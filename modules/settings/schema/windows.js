@@ -81,6 +81,7 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.syncBorderWidth",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.windows.sync_border_width",
                     "description": "prefs.windows.sync_border_width.desc",
@@ -88,6 +89,7 @@ var category = {
                 },
                 {
                     "key": "compositor.borderSize",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 20,
@@ -103,6 +105,7 @@ var category = {
                 },
                 {
                     "key": "compositor.syncBorderColor",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.windows.sync_border_color",
                     "description": "prefs.windows.sync_border_color.desc",
@@ -110,6 +113,7 @@ var category = {
                 },
                 {
                     "key": "compositor.activeBorderColor",
+                    "advanced": true,
                     "type": "color-role",
                     "gradient": true,
                     "visibleWhen": {
@@ -122,6 +126,7 @@ var category = {
                 },
                 {
                     "key": "compositor.borderAngle",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -142,6 +147,7 @@ var category = {
                 },
                 {
                     "key": "compositor.inactiveBorderAngle",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -162,6 +168,7 @@ var category = {
                 },
                 {
                     "key": "compositor.borderPulse.intensity",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -191,6 +198,7 @@ var category = {
                 },
                 {
                     "key": "compositor.dimStrength",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -220,6 +228,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowRange",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -236,6 +245,7 @@ var category = {
                 },
                 {
                     "key": "compositor.syncShadowColor",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "toggle",
                     "visibleWhen": {
@@ -248,6 +258,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowColor",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "color-role",
                     "visibleWhen": {
@@ -268,6 +279,7 @@ var category = {
                 },
                 {
                     "key": "compositor.syncShadowOpacity",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "toggle",
                     "visibleWhen": {
@@ -280,6 +292,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowOpacity",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -311,6 +324,7 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.shadowColorInactive",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "color-role",
                     "visibleWhen": {
@@ -323,6 +337,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowRenderPower",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 1,
@@ -338,6 +353,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowScale",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
@@ -353,6 +369,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowOffset",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "text",
                     "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$",
@@ -368,6 +385,7 @@ var category = {
                 },
                 {
                     "key": "compositor.shadowSharp",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "type": "toggle",
                     "visibleWhen": {
@@ -402,7 +420,6 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "label": "prefs.windows.blur",
                     "description": "prefs.windows.blur.desc",
@@ -415,7 +432,6 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 20,
@@ -430,12 +446,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurPasses",
+                    "advanced": true,
                     "compositor": ["hyprland", "mango"],
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 1,
                     "max": 10,
@@ -450,12 +466,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurVibrancy",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -470,12 +486,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurXray",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -492,7 +508,6 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -512,12 +527,12 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.blurNoise",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 0.2,
@@ -532,12 +547,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurContrast",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -552,12 +567,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurBrightness",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -572,12 +587,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurVibrancyDarkness",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -592,12 +607,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurSpecial",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -609,12 +624,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurIgnoreOpacity",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -626,12 +641,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurNewOptimizations",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -643,12 +658,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurExplicitIgnoreAlpha",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -660,12 +675,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurIgnoreAlphaValue",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -688,12 +703,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurPopupsIgnorealpha",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -716,12 +731,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurInputMethods",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -733,12 +748,12 @@ var category = {
                 },
                 {
                     "key": "compositor.blurInputMethodsIgnorealpha",
+                    "advanced": true,
                     "compositor": "hyprland",
                     "enabledWhen": {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
-                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,

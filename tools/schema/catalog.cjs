@@ -110,7 +110,7 @@ function applySettings(node, s, tr, isLeaf) {
     if (tr(e.label)) node.title = tr(e.label);
     if (tr(e.description)) node.description = tr(e.description);
     x.control = e.type;
-    for (const f of ['component', 'preview', 'step', 'unit', 'keywords', 'visibleWhen', 'enabledWhen'])
+    for (const f of ['component', 'preview', 'step', 'unit', 'keywords', 'visibleWhen', 'enabledWhen', 'advanced', 'invert'])
         if (e[f] !== undefined) x[f] = plain(e[f]);
     if (e.min !== undefined) x.min = e.min;
     if (e.max !== undefined) x.max = e.max;

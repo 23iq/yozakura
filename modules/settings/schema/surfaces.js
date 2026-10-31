@@ -31,6 +31,7 @@ var sections = [
         "entries": [
             {
                 "key": "theme.shadowColor",
+                "advanced": true,
                 "type": "color-role",
                 "label": "prefs.surfaces.shadow_color",
                 "description": "prefs.surfaces.shadow_color.desc",
@@ -38,6 +39,7 @@ var sections = [
             },
             {
                 "key": "theme.shadowOpacity",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 1,

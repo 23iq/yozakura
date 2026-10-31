@@ -57,6 +57,7 @@ var sections = [
         "entries": [
             {
                 "key": "ai.context.warnAt",
+                "advanced": true,
                 "type": "slider",
                 "label": "prefs.ai.context_warn",
                 "description": "prefs.ai.context_warn.desc",
@@ -68,6 +69,7 @@ var sections = [
             },
             {
                 "key": "ai.context.criticalAt",
+                "advanced": true,
                 "type": "slider",
                 "label": "prefs.ai.context_critical",
                 "description": "prefs.ai.context_critical.desc",
@@ -86,6 +88,7 @@ var sections = [
             },
             {
                 "key": "ai.context.autoCompactAt",
+                "advanced": true,
                 "type": "slider",
                 "label": "prefs.ai.auto_compact_at",
                 "description": "prefs.ai.auto_compact_at.desc",
@@ -98,6 +101,7 @@ var sections = [
             },
             {
                 "key": "ai.context.keepTurns",
+                "advanced": true,
                 "type": "number",
                 "label": "prefs.ai.keep_turns",
                 "description": "prefs.ai.keep_turns.desc",
@@ -115,6 +119,7 @@ var sections = [
             },
             {
                 "key": "ai.context.overrides",
+                "advanced": true,
                 "type": "list",
                 "fields": [
                     {

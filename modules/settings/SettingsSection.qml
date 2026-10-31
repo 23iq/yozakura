@@ -23,6 +23,8 @@ Group {
     readonly property int modifiedCount: SettingsStore.sectionModifiedCount(section)
     readonly property bool resetShown: sectionRoot.modifiedCount > 0 && sectionRoot.expanded
     readonly property bool allowed: CompositorGate.allows(section.compositor, YozdService.compositorName)
+    // Simple view: a section of advanced entries only hides (Advanced.js).
+    readonly property bool inView: SettingsStore.sectionInView(section)
     // Rows are created the first time the section is open and allowed on
     // the running compositor (a folded Advanced block costs nothing); once
     // built (toggle, search jump) folding only hides them.
@@ -53,7 +55,7 @@ Group {
     }
 
     objectName: "settingsSection:" + sectionId
-    visible: sectionRoot.allowed && !sectionRoot.pending
+    visible: sectionRoot.allowed && sectionRoot.inView && !sectionRoot.pending
     label: section.title ? I18n.t(section.title) : ""
     actionText: sectionRoot.resetShown ? I18n.t("prefs.common.reset") : (sectionRoot.collapsible ? I18n.t(sectionRoot.expanded ? "prefs.common.hide" : "prefs.common.show") : "")
     onActionTriggered: sectionRoot.resetShown ? SettingsStore.requestResetSection(sectionRoot.section) : sectionRoot.toggle()
@@ -85,8 +87,10 @@ Group {
 
             delegate: SettingRow {
                 required property var modelData
+                required property int index
                 width: rowsColumn.width
                 entry: modelData
+                previousEntry: index > 0 ? sectionRoot.section.entries[index - 1] : null
             }
         }
     }

@@ -27,6 +27,7 @@ var sections = [
         "entries": [
             {
                 "key": "bar.moduleOptions.sentence.separator",
+                "advanced": true,
                 "type": "selector",
                 "preview": "SentencePreview",
                 "label": "prefs.bar.sentence_separator",
@@ -44,6 +45,7 @@ var sections = [
             },
             {
                 "key": "bar.moduleOptions.sentence.typeface",
+                "advanced": true,
                 "type": "selector",
                 "label": "prefs.bar.sentence_typeface",
                 "description": "prefs.bar.sentence_typeface.desc",
@@ -52,6 +54,7 @@ var sections = [
             },
             {
                 "key": "bar.moduleOptions.sentence.fragments",
+                "advanced": true,
                 "type": "custom",
                 "component": "OrderedListEditor",
                 "subset": true,
@@ -62,6 +65,7 @@ var sections = [
             },
             {
                 "key": "bar.moduleOptions.sentence.priority",
+                "advanced": true,
                 "type": "custom",
                 "component": "OrderedListEditor",
                 "choices": CHOICES,
@@ -71,6 +75,7 @@ var sections = [
             },
             {
                 "key": "bar.moduleOptions.sentence.maxWidth",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 2000,

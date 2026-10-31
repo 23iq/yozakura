@@ -25,6 +25,10 @@ var general = {
         },
         "autoSavePreset": {
             "description": "Save setting changes into the active preset automatically (debounced) when it is one of your own presets; built-in presets are never changed. Off: use \"Save to current preset\" (settings sidebar, preset switcher, `preset save --current`)."
+        },
+        "settingsShowAll": {
+            "title": "Show all settings",
+            "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
         }
     }
 };

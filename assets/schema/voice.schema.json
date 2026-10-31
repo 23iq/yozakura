@@ -45,14 +45,14 @@
       }
     },
     "language": {
-      "title": "Language",
+      "title": "Speech language",
       "type": "string",
       "default": "auto",
       "description": "Language you speak. Auto detects it every time.",
       "x-settings": {
         "category": "voice",
         "section": "recognition",
-        "label": "voice.settings.language",
+        "label": "prefs.label.speech_language",
         "control": "selector",
         "keywords": "speech recognition language auto detect english russian japanese",
         "enabledWhen": {
@@ -224,6 +224,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 300,
         "max": 5000
       },
@@ -245,7 +246,8 @@
         "enabledWhen": {
           "key": "voice.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       },
       "enum": [
         0.2,
@@ -404,6 +406,7 @@
           "key": "voice.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 5000,
         "specialValues": [

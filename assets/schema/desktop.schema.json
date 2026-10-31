@@ -60,6 +60,7 @@
           "key": "desktop.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 64
       },
@@ -204,6 +205,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 100,
         "max": 3000
       },
@@ -265,7 +267,8 @@
         "visibleWhen": {
           "key": "desktop.wallpaperMode",
           "equals": "panorama"
-        }
+        },
+        "advanced": true
       }
     },
     "depthLayering": {
@@ -295,14 +298,14 @@
       }
     },
     "depthClockStyle": {
-      "title": "Style",
+      "title": "Clock style",
       "type": "string",
       "default": "yozakura",
       "description": "Each style shown on your current wallpaper.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
-        "label": "prefs.desktop.depth_clock_style",
+        "label": "prefs.label.clock_style",
         "control": "custom",
         "component": "ClockStyleGallery",
         "keywords": "clock style yozakura poster kanji mincho look gallery",
@@ -318,14 +321,14 @@
       ]
     },
     "depthClockPosition": {
-      "title": "Position",
+      "title": "Clock position",
       "type": "string",
       "default": "auto",
       "description": "Auto picks the side where the subject leaves the time readable.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
-        "label": "prefs.desktop.depth_clock_position",
+        "label": "prefs.label.clock_position",
         "control": "selector",
         "keywords": "clock side left right auto placement",
         "visibleWhen": {
@@ -363,14 +366,14 @@
       }
     },
     "depthClockInk": {
-      "title": "Colour",
+      "title": "Clock colour",
       "type": "string",
       "default": "auto",
       "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
-        "label": "prefs.desktop.depth_clock_ink",
+        "label": "prefs.label.clock_colour",
         "control": "custom",
         "component": "ColorRoleSwatches",
         "keywords": "clock colour color ink palette role accent",
@@ -501,6 +504,7 @@
           "key": "desktop.widgetsEnabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 96,
         "specialValues": [

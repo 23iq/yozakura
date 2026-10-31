@@ -615,14 +615,14 @@
           }
         },
         "style": {
-          "title": "Style",
+          "title": "On-screen display style",
           "type": "string",
           "default": "pill",
           "description": "How the volume and brightness indicator looks and where it lives.",
           "x-settings": {
             "category": "osd",
             "section": "osd",
-            "label": "prefs.osd.style",
+            "label": "prefs.label.osd_style",
             "control": "selector",
             "preview": "OsdPreview",
             "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
@@ -655,6 +655,7 @@
             "step": 100,
             "unit": "ms",
             "keywords": "osd duration timeout how long hide",
+            "advanced": true,
             "min": 800,
             "max": 8000
           },

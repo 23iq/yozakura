@@ -25,7 +25,6 @@
 .import "dashboard.js" as Dashboard
 .import "osd.js" as Osd
 .import "menus.js" as Menus
-.import "Advanced.js" as Advanced
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
 .import "presets.js" as Presets
@@ -37,7 +36,7 @@
 // has several, lists them under itself. A category is one of:
 //   * schema-driven: has `sections` (see appearance.js) - rendered by
 //     SettingsPage.qml, searchable entry by entry; entries flagged
-//     `advanced: true` gather in a collapsed "Advanced" block (Advanced.js);
+//     `advanced: true` show only in the All view (Advanced.js);
 //   * a page: has `page` - a hand-written page mapped by name in
 //     SettingsPageHost.pages (Connect pages host the live device controls).
 // Every category is listed in exactly one group. `resolve(id)` accepts a
@@ -222,8 +221,6 @@ var categories = [
         "page": "AboutPage"
     }
 ];
-
-categories = categories.map(Advanced.apply);
 
 function byId(id) {
     for (var i = 0; i < categories.length; i++) {

@@ -457,10 +457,12 @@ function validateCategory(cat, defaults, tr, registry) {
                 bad(where + ": preview '" + e.preview + "' is not in Registry.js");
             if (e.type !== "custom" && !e.key)
                 bad(where + ": typed entry needs a key");
-            [e.label, e.description].forEach(function (k) {
+            [e.label, e.description, e.reason].forEach(function (k) {
                 if (k && tr(k) === null)
                     bad(where + ": missing translation '" + k + "'");
             });
+            if (e.invert && e.type !== "toggle")
+                bad(where + ": only a toggle can be inverted");
             if (!e.label && e.type !== "custom")
                 bad(where + ": needs a label");
             entryKeys(e).concat(conditionKeys(e.visibleWhen), conditionKeys(e.enabledWhen)).forEach(function (k) {

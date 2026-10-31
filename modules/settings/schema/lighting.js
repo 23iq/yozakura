@@ -34,6 +34,7 @@ var sections = [
             },
             {
                 "key": "theme.lighting.angle",
+                "advanced": true,
                 "type": "slider",
                 "min": -180,
                 "max": 180,
@@ -49,6 +50,7 @@ var sections = [
             },
             {
                 "key": "theme.lighting.strength",
+                "advanced": true,
                 "type": "selector",
                 "preview": "LightingPreview",
                 "visibleWhen": {
@@ -75,6 +77,7 @@ var sections = [
             },
             {
                 "key": "theme.lighting.lantern",
+                "advanced": true,
                 "type": "selector",
                 "label": "prefs.lighting.lantern",
                 "description": "prefs.lighting.lantern.desc",

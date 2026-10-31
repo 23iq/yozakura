@@ -165,7 +165,8 @@
         "visibleWhen": {
           "key": "workspaces.indicatorStyle",
           "equals": "branch"
-        }
+        },
+        "advanced": true
       },
       "enum": [
         "sakura",
@@ -189,7 +190,8 @@
         "visibleWhen": {
           "key": "workspaces.indicatorStyle",
           "equals": "branch"
-        }
+        },
+        "advanced": true
       },
       "enum": [
         "primary",
@@ -203,20 +205,21 @@
       }
     },
     "branchPetalFall": {
-      "title": "Falling petals",
+      "title": "Petals fall from the branch",
       "type": "boolean",
       "default": true,
       "description": "A petal falls when a window closes (only with animations on).",
       "x-settings": {
         "category": "bar",
         "section": "workspaces",
-        "label": "prefs.bar.ws_branch_fall",
+        "label": "prefs.label.branch_petals",
         "control": "toggle",
         "keywords": "branch petal fall animation window close workspaces",
         "visibleWhen": {
           "key": "workspaces.indicatorStyle",
           "equals": "branch"
-        }
+        },
+        "advanced": true
       }
     }
   },

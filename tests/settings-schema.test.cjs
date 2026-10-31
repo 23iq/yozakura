@@ -233,17 +233,20 @@ test('compositor-specific rows are tagged, dock effects follow dock.enabled', ()
         assert.match(JSON.stringify(byKey['dock.' + k].visibleWhen), /dock\.enabled/, k);
 });
 
-test('rows disabled by the Glass switch say why, in every language', () => {
+test('rows disabled by the Glass switch say why and offer to turn it on', () => {
+    const Reason = lib('modules/settings/DisabledReason.js');
+    const index = Reason.entryIndex(Categories.categories);
+    const get = k => (k === 'theme.glass.enabled' ? false : undefined);
     let n = 0;
     for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
         if (!entry.key || !entry.key.startsWith('compositor.blur') || !entry.enabledWhen) continue;
         if (entry.enabledWhen.key !== 'theme.glass.enabled') continue;
         n++;
-        assert.equal(entry.disabledReason, 'prefs.windows.needs_glass', entry.key);
+        const note = Reason.explain(entry, get, k => index[k] || null, k => en[k] || k);
+        assert.equal(note.text, 'Needs \u201cGlass effect\u201d on', entry.key);
+        assert.deepEqual(plain({ key: note.fix.key, value: note.fix.value }), { key: 'theme.glass.enabled', value: true });
     }
     assert.ok(n >= 10, `${n} blur rows`);
-    for (const lang of ['en', 'es', 'ru'])
-        assert.ok(require(`../translations/${lang}.json`)['prefs.windows.needs_glass'], lang);
 });
 
 test('shadow offset falls back to "0 0" when malformed', () => {

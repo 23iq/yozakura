@@ -26,6 +26,7 @@ var sections = [
             },
             {
                 "key": "bar.launcherIconSize",
+                "advanced": true,
                 "type": "slider",
                 "min": 8,
                 "max": 64,
@@ -94,8 +95,8 @@ var sections = [
                             "equals": true
                         }]
                 },
-                "label": "prefs.bar.keep_shadow",
-                "description": "prefs.bar.keep_shadow.desc",
+                "label": "prefs.label.bar_shadow_in_frame",
+                "description": "prefs.label.bar_shadow_in_frame.desc",
                 "keywords": "frame contain bar shadow keep"
             },
             {
@@ -111,8 +112,8 @@ var sections = [
                             "equals": true
                         }]
                 },
-                "label": "prefs.bar.keep_border",
-                "description": "prefs.bar.keep_border.desc",
+                "label": "prefs.label.bar_border_in_frame",
+                "description": "prefs.label.bar_border_in_frame.desc",
                 "keywords": "frame contain bar border outline keep"
             }
         ]

@@ -7,14 +7,14 @@
   "x-file": "config/specials.json",
   "properties": {
     "enabled": {
-      "title": "Special workspaces",
+      "title": "Use special workspaces",
       "type": "boolean",
       "default": true,
       "description": "Their keys, window rules, app launching and preload. Off keeps the list but does nothing.",
       "x-settings": {
         "category": "specials",
         "section": "behaviour",
-        "label": "prefs.specials.enabled",
+        "label": "prefs.label.use_specials",
         "control": "toggle",
         "keywords": "on off disable binds rules launch"
       }
@@ -36,6 +36,7 @@
           "key": "specials.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 2000,
         "max": 60000
       },
@@ -60,6 +61,7 @@
           "key": "specials.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 30000
       },
