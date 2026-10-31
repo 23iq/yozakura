@@ -49,7 +49,9 @@ func WriteFile(path string, data []byte, perm os.FileMode) error {
 		return err
 	}
 	if st, err := os.Stat(real); err == nil {
-		perm = st.Mode().Perm()
+		// Kept, but always owner-writable: a copy of a read-only source
+		// (the Nix store) must not stay read-only forever.
+		perm = st.Mode().Perm() | 0o200
 	}
 	tmp, err := os.CreateTemp(dir, "."+filepath.Base(real)+".tmp-*")
 	if err != nil {

@@ -53,6 +53,17 @@ func TestWriteFileNew(t *testing.T) {
 	assert.Equal(t, os.FileMode(0o640), st.Mode().Perm())
 }
 
+// A config seeded from the read-only Nix store becomes writable on the
+// first save instead of keeping 0444 forever.
+func TestWriteFileMakesReadOnlyWritable(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "theme.json")
+	assert.NoError(t, os.WriteFile(p, []byte("0"), 0o444))
+	assert.NoError(t, WriteFile(p, []byte("1"), 0o600))
+	st, err := os.Stat(p)
+	assert.NoError(t, err)
+	assert.Equal(t, os.FileMode(0o644), st.Mode().Perm())
+}
+
 func TestLockExcludes(t *testing.T) {
 	p := filepath.Join(t.TempDir(), "x.lock")
 	unlock, err := Lock(p)

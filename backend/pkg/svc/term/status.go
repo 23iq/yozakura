@@ -15,6 +15,7 @@ type Status struct {
 	Enabled           bool            `json:"enabled"`
 	Engine            string          `json:"engine"`
 	FishInstalled     bool            `json:"fishInstalled"`
+	FishPath          string          `json:"fishPath"`
 	FishIsLoginShell  bool            `json:"fishIsLoginShell"`
 	EngineInstalled   map[string]bool `json:"engineInstalled"`
 	ForeignPromptInit bool            `json:"foreignPromptInit"`
@@ -32,7 +33,11 @@ func (s *Service) currentStatus() Status {
 	cfg := s.config()
 	env := s.o.Env
 	st := Status{Enabled: cfg.Enabled, Engine: cfg.Engine, EngineInstalled: map[string]bool{}, HookPath: termlook.HookFile(env)}
-	_, st.FishInstalled = env.LookPath("fish")
+	st.FishPath, st.FishInstalled = env.LookPath("fish")
+	if st.FishInstalled {
+		shells, _ := readEtcShells()
+		st.FishPath = listedShell(st.FishPath, string(shells))
+	}
 	_, st.EngineInstalled[termlook.EngineStarship] = env.LookPath("starship")
 	_, st.EngineInstalled[termlook.EngineOMP] = env.LookPath("oh-my-posh")
 	_, err := os.Stat(st.HookPath)
@@ -42,6 +47,31 @@ func (s *Service) currentStatus() Status {
 	st.ForeignPromptInit = st.ForeignFile != ""
 	st.HookSkipped = cfg.Enabled && st.ForeignPromptInit
 	return st
+}
+
+// readEtcShells reads /etc/shells; tests swap it.
+var readEtcShells = func() ([]byte, error) { return os.ReadFile("/etc/shells") }
+
+// listedShell returns found when /etc/shells lists it, else the first
+// listed fish that exists (chsh only accepts listed shells: a fish found
+// first on PATH in ~/.local/bin is not), else found.
+func listedShell(found, shells string) string {
+	var listed []string
+	for _, line := range strings.Split(shells, "\n") {
+		line = strings.TrimSpace(line)
+		if line == found {
+			return found
+		}
+		if strings.HasPrefix(line, "/") && filepath.Base(line) == "fish" {
+			listed = append(listed, line)
+		}
+	}
+	for _, p := range listed {
+		if st, err := os.Stat(p); err == nil && !st.IsDir() {
+			return p
+		}
+	}
+	return found
 }
 
 // foreignFile is the fish file that starts a prompt engine itself ("").

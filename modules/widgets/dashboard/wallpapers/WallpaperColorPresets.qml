@@ -31,9 +31,11 @@ Scope {
         var dest = Brand.cacheDir + "/colors.json";
 
         // Official first, then user; preset names are directory names, so
-        // the paths go in as positional args.
+        // the paths go in as positional args. The copy stays writable (the
+        // official presets may be read-only in the Nix store): matugen and
+        // the next preset overwrite it.
         console.log("Applying color preset:", name);
-        applyProcess.command = ["sh", "-c", 'if [ -f "$1" ]; then cp -- "$1" "$3"; else cp -- "$2" "$3"; fi', "color-preset", officialFile, userFile, dest];
+        applyProcess.command = ["sh", "-c", 'if [ -f "$1" ]; then s="$1"; else s="$2"; fi; cp -f -- "$s" "$3" && chmod u+w -- "$3"', "color-preset", officialFile, userFile, dest];
         applyProcess.running = true;
     }
 

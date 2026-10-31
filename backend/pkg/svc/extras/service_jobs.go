@@ -54,6 +54,11 @@ func (s *Service) setLoginShell(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &p); err != nil || p.Shell == "" {
 		return nil, errors.New("shell is required")
 	}
+	if s.o.Platform().Distro == "nixos" {
+		// NixOS rewrites the passwd shell from users.users on every switch,
+		// so a chsh would not last: the change belongs in the config.
+		return nil, errors.New("on NixOS set the login shell in your configuration: programs.fish.enable = true; users.users.<you>.shell = pkgs.fish; then rebuild")
+	}
 	shells, err := s.o.ReadFile("/etc/shells")
 	if err != nil || !validShell(shells, p.Shell) {
 		return nil, fmt.Errorf("shell %q is not listed in /etc/shells", p.Shell)

@@ -52,6 +52,15 @@ func TestUnwrapShell(t *testing.T) {
 	if got := unwrapShell("ls"); got != "ls" {
 		t.Errorf("unwrap = %q", got)
 	}
+	// NixOS: the system profile and store shells unwrap like /usr/bin ones.
+	for _, sh := range []string{"/run/current-system/sw/bin/bash", "/nix/store/0123456789abcdfghijklmnpqrsvwxyz-bash-5.3p15/bin/bash"} {
+		if got := unwrapShell(sh + " -lc 'ls -la'"); got != "ls -la" {
+			t.Errorf("unwrap %s = %q", sh, got)
+		}
+	}
+	if got := unwrapShell("/home/u/bin/bash -lc 'ls'"); got != "/home/u/bin/bash -lc 'ls'" {
+		t.Errorf("a shell from an arbitrary dir must stay wrapped, got %q", got)
+	}
 }
 
 func TestPolicyDecide(t *testing.T) {

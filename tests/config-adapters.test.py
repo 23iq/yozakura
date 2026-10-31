@@ -294,7 +294,9 @@ mf = h.eval(ms, "file")
 h.eval(mf, "loadFailed('FileNotFound')")
 cp = h.eval(ms, "log.last ? log.last.command : null")
 cp = list(cp.toVariant()) if hasattr(cp, "toVariant") else cp
-check(cp == ["cp", "-n", "--", "/preset/miss.json", "/cfg/miss.json"], f"missing file: preset copied with cp argv: {cp}")
+check(cp is not None and list(cp)[:2] == ["sh", "-c"] and "cp -n" in cp[2] and "chmod u+w" in cp[2]
+      and list(cp)[3:] == ["seed-config", "/preset/miss.json", "/cfg/miss.json"],
+      f"missing file: preset copied (writable) with paths as argv: {cp}")
 before = h.eval(mf, "reloads")
 h.eval(ms, "log.last.exited(0, 0)")
 check(h.eval(mf, "reloads") == before + 1, "missing file: reloads after the preset copy")

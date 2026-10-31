@@ -203,8 +203,8 @@ func printDoctor(out io.Writer, distro string, items []doctorItem, verbose bool)
 	} else if len(pkgs) > 0 {
 		fmt.Fprintln(out, "\nInstall these with your package manager: "+strings.Join(pkgs, " "))
 	}
-	if distro == "nixos" && len(pkgs) > 0 {
-		fmt.Fprintln(out, "On NixOS the flake package carries every dependency: use it instead of separate packages.")
+	if distro == "nixos" {
+		fmt.Fprintln(out, "On NixOS the flake's NixOS module (programs."+brand.AppID+") carries every dependency and service; add what is missing there and rebuild (docs/nixos.md).")
 	}
 	for _, f := range uniq(fixes) {
 		fmt.Fprintln(out, "  "+f)

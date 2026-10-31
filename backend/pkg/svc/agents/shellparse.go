@@ -2,6 +2,7 @@ package agents
 
 import (
 	"path/filepath"
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -37,8 +38,8 @@ func shellWrapped(segs []cmdSegment) (string, bool) {
 		return "", false
 	}
 	a := segs[0].argv
-	switch a[0] {
-	case "bash", "sh", "zsh", "/bin/bash", "/bin/sh", "/bin/zsh", "/usr/bin/bash", "/usr/bin/sh", "/usr/bin/zsh":
+	switch programName(a[0]) {
+	case "bash", "sh", "zsh":
 	default:
 		return "", false
 	}
@@ -180,8 +181,19 @@ func programName(arg0 string) string {
 	}
 	dir, base := filepath.Split(arg0)
 	switch dir {
-	case "/bin/", "/usr/bin/":
+	case "/bin/", "/usr/bin/", "/run/current-system/sw/bin/":
+		return base
+	}
+	if nixStoreBin.MatchString(dir) {
 		return base
 	}
 	return ""
 }
+
+// ProgramName is programName for other policy code (tasks): the bare name
+// of a command run from PATH, a system bin dir or the Nix store; "" else.
+func ProgramName(arg0 string) string { return programName(arg0) }
+
+// nixStoreBin matches the bin dir of a Nix store package
+// (/nix/store/<hash>-bash-5.3/bin/): immutable and root-owned like /usr/bin.
+var nixStoreBin = regexp.MustCompile(`^/nix/store/[0-9a-z]{32}-[^/]+/bin/$`)

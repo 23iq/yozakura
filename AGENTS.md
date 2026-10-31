@@ -108,6 +108,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Terminal prompt** | `backend/pkg/termlook`, `backend/pkg/svc/term`, `assets/terminal/prompts/` | `yozakura term ...`; fish + Starship / oh-my-posh |
 | **Exclusive mode** | `backend/pkg/exclusive`, `backend/pkg/svc/exclusive` | `yozakura install hyprland --exclusive` / `--restore` |
 | **Installer** | `install.sh`, `backend/cmd/yozakura/cmds_onboarding_dryrun.go` | Core-only, compositor choice, `--dry-run`; wizard `onboarding --dry-run` |
+| **Nix / NixOS** | `flake.nix`, `nix/packages/default.nix` (launcher wrapper, `YOZAKURA_*` paths), `nix/modules/default.nix`, `docs/nixos.md` | No FHS paths: persist `paths.Launcher()`, never `os.Executable()`; NixOS-only setup goes in module options |
 
 ## UI KIT
 Screens are built only from `modules/components/kit/` (`import qs.modules.components.kit`):

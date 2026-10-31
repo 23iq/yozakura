@@ -1,5 +1,5 @@
 {
-  description = "Yozakura - night-sakura desktop shell for Hyprland";
+  description = "Yozakura - night-sakura desktop shell for Hyprland, niri and MangoWC";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -9,7 +9,14 @@
     let
       yozakuraLib = import ./nix/lib.nix { inherit nixpkgs; };
       version = nixpkgs.lib.removeSuffix "\n" (builtins.readFile ./version);
+      lib = nixpkgs.lib;
+
+      pkgsFor = system: import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
     in {
+      # programs.yozakura.* (docs/nixos.md)
       nixosModules.default = { pkgs, lib, ... }: {
         imports = [ ./nix/modules ];
         programs.yozakura.enable = lib.mkDefault true;
@@ -18,15 +25,10 @@
 
       packages = yozakuraLib.forAllSystems (system:
         let
-          pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-          };
-
-          lib = nixpkgs.lib;
-
-          Yozakura = import ./nix/packages {
-            inherit pkgs lib self system version;
+          pkgs = pkgsFor system;
+          # .override { withVoice = true; voiceAcceleration = "vulkan"; withDepth = true; }
+          Yozakura = lib.makeOverridable (import ./nix/packages) {
+            inherit pkgs lib self version;
           };
         in {
           default = Yozakura;
@@ -34,18 +36,37 @@
           backend = import ./nix/packages/backend.nix {
             inherit pkgs lib version;
           };
+          sddm-theme = import ./nix/packages/sddm-theme.nix {
+            inherit pkgs lib version;
+          };
         }
       );
 
+      # Development: `nix develop`, then `make build && ./yozakura`
       devShells = yozakuraLib.forAllSystems (system:
         let
-          pkgs = import nixpkgs { inherit system; };
+          pkgs = pkgsFor system;
           Yozakura = self.packages.${system}.default;
         in {
           default = pkgs.mkShell {
-            packages = [ Yozakura ];
+            packages = [ Yozakura ] ++ (with pkgs; [
+              go_1_26
+              gnumake
+              nodejs
+              python3
+              shellcheck
+              ruff
+              go-tools
+              qt6.qtdeclarative
+            ]);
+            # A terminal opened from the installed shell inherits its
+            # packaging variables: the checkout must run its own sources,
+            # yozd and binary instead
             shellHook = ''
-              export QML2_IMPORT_PATH="${Yozakura}/lib/qt-6/qml:$QML2_IMPORT_PATH"
+              unset YOZAKURA_SHELL YOZAKURA_LAUNCHER YOZAKURA_DAEMON_BIN YOZAKURA_BIN
+              export YOZAKURA_QS="${Yozakura.qsWrapper}"
+              export YOZAKURA_NIX_ENV="${Yozakura.envYozakura}"
+              export QML2_IMPORT_PATH="${Yozakura.envYozakura}/lib/qt-6/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
               export QML_IMPORT_PATH="$QML2_IMPORT_PATH"
               echo "Yozakura dev environment loaded."
             '';

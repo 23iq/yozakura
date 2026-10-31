@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 	"syscall"
 	"yozakura/backend/pkg/brand"
@@ -76,7 +79,46 @@ func rebuildModsAfterUpdate() {
 
 func runRefresh() {
 	fmt.Println("Refreshing " + brand.DisplayName + " profile...")
-	execCommand("nix", "profile", "upgrade", brand.AppID, "--refresh", "--impure")
+	name := brand.AppID
+	if out, err := exec.Command("nix", "profile", "list", "--json").Output(); err == nil {
+		if found := profileElement(out); found != "" {
+			name = found
+		}
+	}
+	execCommand("nix", "profile", "upgrade", name, "--refresh", "--impure")
+}
+
+// profileElement finds the nix profile entry holding the app in `nix
+// profile list --json` output: its name comes from the flake URL, so it is
+// matched by the store path (/nix/store/<hash>-<app id>-<version>).
+func profileElement(listJSON []byte) string {
+	var list struct {
+		Elements map[string]struct {
+			StorePaths []string `json:"storePaths"`
+		} `json:"elements"`
+	}
+	if json.Unmarshal(listJSON, &list) != nil {
+		return ""
+	}
+	if _, ok := list.Elements[brand.AppID]; ok {
+		return brand.AppID
+	}
+	names := make([]string, 0, len(list.Elements))
+	for name := range list.Elements {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		for _, p := range list.Elements[name].StorePaths {
+			base := strings.ToLower(filepath.Base(p))
+			// <app id>-<version>: not -backend, -env or -sddm-theme
+			_, rest, _ := strings.Cut(base, "-")
+			if v, ok := strings.CutPrefix(rest, brand.AppID+"-"); ok && v != "" && v[0] >= '0' && v[0] <= '9' {
+				return name
+			}
+		}
+	}
+	return ""
 }
 
 func runShellScript(script string, args ...string) (string, error) {

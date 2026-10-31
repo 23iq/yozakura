@@ -48,7 +48,9 @@ Singleton {
     property string _paletteSig: ""
     property string _enginesSig: ""
 
-    readonly property string fishPath: "/usr/bin/fish"
+    // fish as found on PATH (NixOS: /run/current-system/sw/bin/fish), the
+    // path chsh validates against /etc/shells.
+    readonly property string fishPath: root.status?.fishPath || "/usr/bin/fish"
 
     function load() {
         if (!root._loaded) {

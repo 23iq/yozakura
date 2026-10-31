@@ -119,3 +119,32 @@ func TestDetectAllBins(t *testing.T) {
 		t.Errorf("amd with vulkan pkgs = %+v", s)
 	}
 }
+
+// On NixOS the package wrapper exports the whisper.cpp and depth Python
+// store paths: the build-tool and uv requirements count as installed, so
+// voice and depth plan just their shell scripts (models only).
+func TestDetectNixProvidedRequirements(t *testing.T) {
+	c := loadReal(t)
+	nixos := Platform{Distro: "nixos"}
+	st := Detect(c, nixos, fakeProbe{})
+	for _, id := range []string{"voice-build-deps", "uv"} {
+		if s := st[id]; s.State != StateUnavailable {
+			t.Errorf("%s without Nix env = %+v", id, s)
+		}
+	}
+	t.Setenv("YOZAKURA_WHISPER_BIN_DIR", "/nix/store/x-whisper-cpp/bin")
+	t.Setenv("YOZAKURA_DEPTH_PYTHON", "/nix/store/x-python/bin/python3")
+	st = Detect(c, nixos, fakeProbe{})
+	for _, id := range []string{"voice-build-deps", "uv"} {
+		if s := st[id]; s.State != StateInstalled || s.Source != "env" {
+			t.Errorf("%s with Nix env = %+v", id, s)
+		}
+	}
+	jobs, err := Plan(c, nixos, st, []string{"voice", "depth"}, "/bin/self", PlanOptions{})
+	if err != nil {
+		t.Fatalf("plan on NixOS: %v", err)
+	}
+	if len(jobs) != 2 || jobs[0].Kind != KindShell || jobs[1].Kind != KindShell {
+		t.Errorf("jobs = %+v", jobs)
+	}
+}

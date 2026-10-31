@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
@@ -47,10 +48,17 @@ type Catalog struct {
 // RulesPaths are the candidate rules lists, best first.
 func RulesPaths() []string {
 	var out []string
-	if root := os.Getenv("XKB_CONFIG_ROOT"); root != "" {
-		out = append(out, root+"/rules/evdev.lst", root+"/rules/base.lst")
+	// XKB_CONFIG_ROOT as libxkbcommon reads it, then the root a packaging
+	// wrapper exports (Nix: the xkeyboard-config store path), then the FHS
+	// and NixOS system locations.
+	roots := []string{os.Getenv("XKB_CONFIG_ROOT"), brand.Env("XKB_ROOT"),
+		"/usr/share/X11/xkb", "/run/current-system/sw/share/X11/xkb", "/etc/X11/xkb"}
+	for _, root := range roots {
+		if root != "" {
+			out = append(out, root+"/rules/evdev.lst", root+"/rules/base.lst")
+		}
 	}
-	return append(out, "/usr/share/X11/xkb/rules/evdev.lst", "/usr/share/X11/xkb/rules/base.lst")
+	return out
 }
 
 // LoadCatalog parses the first readable file of paths.

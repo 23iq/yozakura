@@ -103,7 +103,7 @@ func installHyprland() {
 
 	upgradeLegacyBlock(luaPath)
 	upgradeLegacyBlock(confPath)
-	repairHyprlandEntry(home, currentExecutable())
+	repairHyprlandEntry(home, paths.Launcher(currentExecutable()))
 	if fileExists(luaPath) || !fileExists(confPath) {
 		appendBlock(luaPath, blockMarker("--"), hyprLuaBlock())
 	} else {
@@ -182,7 +182,7 @@ func installSimpleTarget(t simpleTarget) {
 	block := fmt.Sprintf("%s\n%s\n\n%s OVERRIDES\n%s\n",
 		blockMarker(t.header), fmt.Sprintf(t.line, dataRel()), t.header, overridesNote(t.header, includeKeyword(t.name)))
 	appendBlock(path, blockMarker(t.header), block)
-	writeStartupBootstrap(t, currentExecutable())
+	writeStartupBootstrap(t, paths.Launcher(currentExecutable()))
 }
 
 func removeSimpleTarget(t simpleTarget) {

@@ -208,7 +208,8 @@ FileView {
         var targetPath = store.configDir + "/" + name + ".json";
         console.log(name + ".json not found, checking preset: " + presetPath);
         var copy = copyProcess.createObject(file, {
-            command: ["cp", "-n", "--", presetPath, targetPath],
+            // Writable even when the preset is read-only (the Nix store)
+            command: ["sh", "-c", 'cp -n -- "$1" "$2" && chmod u+w -- "$2"', "seed-config", presetPath, targetPath],
             whenDone: exitCode => {
                 // Copied: the reload validates it. Otherwise use the defaults.
                 if (exitCode === 0) {

@@ -535,10 +535,29 @@ PanelWindow {
         watchChanges: true
 
         onLoaded: {
-            if (!wallpaperConfig.adapter.wallPath) {
+            const a = wallpaperConfig.adapter;
+            const bundled = wallpaper.fallbackDir;
+            if (!a.wallPath) {
                 console.log("Loaded config but wallPath is empty, using fallback");
-                wallpaperConfig.adapter.wallPath = fallbackDir;
+                a.wallPath = bundled;
             }
+            // Saved paths into an older copy of the bundled wallpapers (a
+            // previous Nix store path or mods generation) follow the shell.
+            const wall = WallpaperFolders.rebaseBundled(a.wallPath, bundled);
+            if (wall !== a.wallPath)
+                a.wallPath = wall;
+            const cur = WallpaperFolders.rebaseBundled(a.currentWall, bundled);
+            if (cur !== a.currentWall)
+                a.currentWall = cur;
+            const screens = a.perScreenWallpapers || {};
+            let moved = false;
+            const rebased = {};
+            for (const name in screens) {
+                rebased[name] = WallpaperFolders.rebaseBundled(screens[name], bundled);
+                moved = moved || rebased[name] !== screens[name];
+            }
+            if (moved)
+                a.perScreenWallpapers = rebased;
         }
 
         onFileChanged: reload()

@@ -49,6 +49,24 @@ function effective(primary, extras) {
     return out;
 }
 
+// BUNDLED is the tail of the example wallpapers folder shipped with the
+// shell. Its absolute location moves when the shell does (each Nix update is
+// a new store path, mods run from a generation dir), so a saved path into
+// an older copy is moved onto the current one; other paths stay as they are.
+var BUNDLED = "/assets/wallpapers_example";
+
+function rebaseBundled(path, bundledDir) {
+    var p = String(path || "");
+    var dir = normalize(bundledDir);
+    var at = p.indexOf(BUNDLED);
+    if (!dir || at < 0)
+        return p;
+    var tail = p.substring(at + BUNDLED.length);
+    if (tail !== "" && tail.charAt(0) !== "/")
+        return p;
+    return dir + tail;
+}
+
 // Extra folders only (normalized, primary and duplicates removed).
 function extras(primary, list) {
     return effective(primary, list).slice(normalize(primary) ? 1 : 0);

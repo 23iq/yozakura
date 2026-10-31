@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"yozakura/backend/pkg/svc/extras"
 )
@@ -120,12 +121,13 @@ func (h Helper) Chsh(user, shell string) error {
 	return h.Run("usermod", "-s", shell, "--", user)
 }
 
-// systemDirs is where ExecRunner looks programs up; PATH is ignored.
-var systemDirs = []string{"/usr/bin", "/usr/sbin", "/bin", "/sbin"}
+// systemDirs is where ExecRunner looks programs up; PATH is ignored. The
+// last two are NixOS's root-owned system profile and setuid wrappers.
+var systemDirs = []string{"/usr/bin", "/usr/sbin", "/bin", "/sbin", "/run/wrappers/bin", "/run/current-system/sw/bin"}
 
 // childEnv is the whole environment of root children: C locale so output
 // parsing sees English messages, fixed PATH.
-var childEnv = []string{"PATH=/usr/bin:/usr/sbin:/bin:/sbin", "LC_ALL=C", "LANG=C"}
+var childEnv = []string{"PATH=" + strings.Join(systemDirs, ":"), "LC_ALL=C", "LANG=C"}
 
 // ExecRunner returns a Runner that executes programs from the system dirs
 // with a fixed environment and no stdin, writing their merged stdout and

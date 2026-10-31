@@ -43,6 +43,10 @@ type DetectSpec struct {
 	// Fonts: installed when a font family contains one of these
 	// (case-insensitive, fontconfig families).
 	Fonts []string `json:"fonts,omitempty"`
+	// Env: installed when one of these brand env vars (name without the
+	// app prefix, see brand.Env) is set: a packaging wrapper provides the
+	// tool (Nix exports the store paths of whisper.cpp, the depth Python).
+	Env []string `json:"env,omitempty"`
 }
 
 // Install lists the ways an entry can be installed.

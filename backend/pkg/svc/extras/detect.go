@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"yozakura/backend/pkg/brand"
 )
 
 // State is the install state of one catalog entry.
@@ -122,6 +124,11 @@ func firstSource(e Entry, probe Probe, pkgs, flat map[string]bool, fonts []strin
 	for _, g := range e.Detect.Paths {
 		if probe.Glob(g) {
 			return "path"
+		}
+	}
+	for _, n := range e.Detect.Env {
+		if brand.Env(n) != "" {
+			return "env"
 		}
 	}
 	for _, want := range e.Detect.Fonts {

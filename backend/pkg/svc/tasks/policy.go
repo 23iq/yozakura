@@ -308,10 +308,16 @@ func resolve(cwd, p string) string {
 	return filepath.Clean(filepath.Join(cwd, p))
 }
 
-// unwrapShell turns `bash -lc "script"` into script.
+// unwrapShell turns `bash -lc "script"` into script. A shell from a system
+// dir or the Nix store counts as its bare name.
 func unwrapShell(cmd string) string {
 	c := strings.TrimSpace(cmd)
-	for _, sh := range []string{"/usr/bin/bash", "/bin/bash", "bash", "/usr/bin/sh", "/bin/sh", "sh", "/usr/bin/zsh", "zsh"} {
+	if first, rest, ok := strings.Cut(c, " "); ok && strings.Contains(first, "/") {
+		if name := agents.ProgramName(first); name != "" {
+			c = name + " " + rest
+		}
+	}
+	for _, sh := range []string{"bash", "sh", "zsh"} {
 		for _, flag := range []string{" -lc ", " -c "} {
 			if rest, ok := strings.CutPrefix(c, sh+flag); ok {
 				rest = strings.TrimSpace(rest)
