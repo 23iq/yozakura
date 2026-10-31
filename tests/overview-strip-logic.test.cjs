@@ -9,7 +9,7 @@ const Strip = load('../modules/widgets/overview/StripMath.js');
 const Search = load('../modules/widgets/overview/OverviewSearch.js');
 
 test('registry resolves style, scrolling layout wins, unknown falls back to grid', () => {
-    assert.deepEqual([...Styles.ids()], ['grid', 'strip']);
+    assert.deepEqual([...Styles.ids()], ['grid', 'strip', 'scroll']);
     assert.equal(Styles.resolve('strip', 'dwindle'), 'strip');
     assert.equal(Styles.resolve('grid', 'dwindle'), 'grid');
     assert.equal(Styles.resolve('bogus', 'dwindle'), 'grid');

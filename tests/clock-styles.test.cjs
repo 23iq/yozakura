@@ -74,7 +74,7 @@ test('hours, minutes and meridiem in 24h and 12h', () => {
 test('registry: default style exists and unknown ids fall back to it', () => {
     assert.ok(registry.has(registry.DEFAULT_ID));
     assert.equal(desktopDefaults.depthClockStyle, registry.DEFAULT_ID);
-    assert.deepEqual(plain(registry.ids()), ['yozakura', 'poster']);
+    assert.deepEqual(plain(registry.ids()), ['yozakura', 'poster', 'segment']);
     assert.equal(registry.get('nope').id, registry.DEFAULT_ID);
     for (const s of registry.styles) {
         assert.ok(fs.existsSync(path.join(__dirname, '../modules/desktop/clockstyles', s.file)), s.file);

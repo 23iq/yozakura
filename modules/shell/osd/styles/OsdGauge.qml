@@ -49,7 +49,7 @@ Surface {
         enabled: Motion.glide.duration > 0
         NumberAnimation {
             duration: Motion.glide.duration * 1.5
-            easing.type: Easing.OutBack
+            easing.type: Motion.spring.easing
             easing.overshoot: 1.2
         }
     }
