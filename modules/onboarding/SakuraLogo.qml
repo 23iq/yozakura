@@ -17,7 +17,7 @@ Item {
     readonly property color lift: Config.lightMode ? Colors.background : Colors.overBackground
     property color accent: Qt.rgba(color.r + (lift.r - color.r) * 0.5, color.g + (lift.g - color.g) * 0.5, color.b + (lift.b - color.b) * 0.5, 1)
     // 0 = closed bud, 1 = open blossom (animated by play()).
-    property real bloom: Config.animDuration > 0 ? 0 : 1
+    property real bloom: Motion.emphasis.duration > 0 ? 0 : 1
     property real halo: 0
 
     implicitWidth: size
@@ -27,7 +27,7 @@ Item {
     readonly property string petal: "M 12.00 9.30 C 9.10 8.40 6.80 5.60 7.70 2.60 C 8.20 0.90 9.90 0.10 11.00 0.40 L 12.00 1.90 L 13.00 0.40 C 14.10 0.10 15.80 0.90 16.30 2.60 C 17.20 5.60 14.90 8.40 12.00 9.30 Z"
 
     function play() {
-        if (Config.animDuration <= 0) {
+        if (Motion.emphasis.duration <= 0) {
             bloom = 1;
             halo = 0;
             return;
@@ -51,7 +51,7 @@ Item {
             target: root
             property: "bloom"
             to: 1
-            duration: Math.max(900, Config.animDuration * 4)
+            duration: Motion.emphasis.duration * 2
             easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
@@ -59,14 +59,14 @@ Item {
             property: "halo"
             from: 0
             to: 1
-            duration: Math.max(500, Config.animDuration * 2)
+            duration: Motion.emphasis.duration
             easing.type: Motion.emphasis.easing
         }
         NumberAnimation {
             target: root
             property: "halo"
             to: 0
-            duration: Math.max(900, Config.animDuration * 3)
+            duration: Motion.emphasis.duration * 2
             easing.type: Motion.emphasis.easing
         }
     }

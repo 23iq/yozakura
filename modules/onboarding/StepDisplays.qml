@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.settings.displays
 import qs.config
+import qs.modules.components.kit
 import "../services/DisplayModel.js" as DisplayModel
 import "../services/KeyboardModel.js" as KeyboardModel
 
@@ -125,48 +126,60 @@ Item {
 
         Column {
             id: column
-            width: flick.width - 12
-            spacing: Math.round(Styling.fontSize(0) * 0.9)
+            width: flick.width - Space.m
+            spacing: Look.groupGap
 
-            SectionLabel {
+            Group {
                 width: parent.width
-                icon: "monitor"
-                text: I18n.t("onboarding.displays.monitors")
-                hint: root.outputs.length > 0 ? I18n.t("onboarding.displays.monitors.desc") : I18n.t("onboarding.displays.none")
-            }
+                label: I18n.t("onboarding.displays.monitors")
 
-            DisplayNotice {
-                objectName: "displayError"
-                width: parent.width
-                visible: root.error !== ""
-                tone: "error"
-                icon: "warning"
-                title: I18n.t("prefs.displays.apply_failed")
-                message: root.error
-            }
-
-            DisplayPendingNote {
-                objectName: "deferredNote"
-                width: parent.width
-                visible: DisplaysService.pending && !DisplaysService.session.live
-            }
-
-            Repeater {
-                model: root.outputs
-
-                delegate: MonitorUpgradeCard {
-                    required property var modelData
-                    objectName: "monitorCard:" + modelData.name
-                    width: column.width
-                    output: modelData
-                    busy: DisplaysService.pending
-                    onApply: config => root.applyMonitor(config)
+                KitText {
+                    width: parent.width
+                    role: "secondary"
+                    wrapMode: Text.WordWrap
+                    text: root.outputs.length > 0 ? I18n.t("onboarding.displays.monitors.desc") : I18n.t("onboarding.displays.none")
                 }
-            }
 
-            Item {
-                width: 1
-                height: Math.round(Styling.fontSize(0) * 0.4)
+                DisplayNotice {
+                    objectName: "displayError"
+                    width: parent.width
+                    visible: root.error !== ""
+                    tone: "error"
+                    icon: "warning"
+                    title: I18n.t("prefs.displays.apply_failed")
+                    message: root.error
+                }
+
+                DisplayPendingNote {
+                    objectName: "deferredNote"
+                    width: parent.width
+                    visible: DisplaysService.pending && !DisplaysService.session.live
+                }
+
+                Repeater {
+                    model: root.outputs
+
+                    delegate: Column {
+                        id: block
+                        required property var modelData
+                        required property int index
+                        width: parent.width
+                        spacing: Space.m
+
+                        Divider {
+                            width: parent.width
+                            visible: block.index > 0
+                        }
+
+                        MonitorUpgradeCard {
+                            objectName: "monitorCard:" + block.modelData.name
+                            width: parent.width
+                            output: block.modelData
+                            busy: DisplaysService.pending
+                            onApply: config => root.applyMonitor(config)
+                        }
+                    }
+                }
             }
 
             KeyboardSetupCard {
