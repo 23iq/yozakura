@@ -18,6 +18,7 @@ JsonAdapter {
     property JsonObject type: JsonObject {
         property string heading: ""
         property string headingCase: "none"
+        property string editorial: ""
     }
     property bool enableCorners: true
     property int animDuration: 300
