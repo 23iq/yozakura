@@ -598,6 +598,34 @@
             "night": "At night",
             "always": "Always"
           }
+        },
+        "strength": {
+          "title": "Strength",
+          "type": "string",
+          "default": "normal",
+          "description": "How strongly the light shows: shadow length, the lit edge, the warm glow at dawn and dusk, the dimmer night and the lantern.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "lighting",
+            "label": "prefs.lighting.strength",
+            "control": "selector",
+            "preview": "LightingPreview",
+            "keywords": "lighting strength intensity subtle dramatic shadow length glow",
+            "visibleWhen": {
+              "key": "theme.lighting.mode",
+              "notEquals": "off"
+            }
+          },
+          "enum": [
+            "subtle",
+            "normal",
+            "dramatic"
+          ],
+          "x-enumLabels": {
+            "subtle": "Subtle",
+            "normal": "Normal",
+            "dramatic": "Dramatic"
+          }
         }
       },
       "additionalProperties": false
