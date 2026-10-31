@@ -81,7 +81,7 @@ Group {
             enabled: Motion.glide.duration > 0
             SequentialAnimation {
                 PauseAnimation {
-                    duration: Math.max(0, Math.min(4, ViewTransition.index)) * Motion.delay
+                    duration: Motion.stagger(ViewTransition.index)
                 }
                 ParallelAnimation {
                     NumberAnimation {

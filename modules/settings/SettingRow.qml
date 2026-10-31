@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components.kit
 import qs.modules.services
-import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.editors
 import qs.modules.settings.previews
@@ -56,23 +55,21 @@ Item {
     }
 
     objectName: "settingRow:" + entryId
-    implicitHeight: shown ? body.implicitHeight + (note ? disabledNote.implicitHeight + Space.s : 0) : 0
+    // Showing / hiding (Simple <-> All, visibleWhen) folds the row open or
+    // shut; its own content changes (wrapping on a resize) apply at once, so
+    // a window resize never animates hundreds of row heights.
+    property real unfolded: shown ? 1 : 0
+    implicitHeight: (body.implicitHeight + (note ? disabledNote.implicitHeight + Space.s : 0)) * unfolded
     height: implicitHeight
-    opacity: shown ? 1 : 0
+    opacity: unfolded
     visible: opacity > 0
-    clip: true
+    clip: unfolded < 1
 
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
+    Behavior on unfolded {
+        enabled: Motion.glide.duration > 0
         NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
-        }
-    }
-    Behavior on opacity {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Motion.enter.duration
+            duration: row.shown ? Motion.glide.duration : Motion.exit.duration
+            easing.type: row.shown ? Motion.glide.easing : Motion.exit.easing
         }
     }
 

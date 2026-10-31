@@ -6,11 +6,13 @@
 // from a Motion token passed in (0 = motion off = no sway at all).
 // Unit tested in tests/strips-physics.test.cjs; used by Strip.qml.
 
-var SWAY_SPAN = 4;        // sway lasts this many Motion.emphasis durations
-var SWAY_MAX_MS = 2400;   // ...but never longer than this
-var CYCLES = 2.5;         // swings in one sway
-var DAMPING = 3.2;        // exponential decay over the sway
-var ARRIVAL_DEG = 7;      // swing of a strip that just arrived
+var SWAY_SPAN = 3.5;      // sway lasts this many Motion.emphasis durations
+var SWAY_MAX_MS = 1200;   // ...but never longer than this
+var CYCLES = 2;           // swings in one sway
+var DAMPING = 3.6;        // exponential decay over the sway
+var ARRIVAL_DEG = 5;      // swing of a strip that just arrived
+var LIFT_SPAN = 1.5;      // a timed-out strip lifts away this many exits
+var LIFT_MAX_MS = 240;    // ...but never longer than this
 var MAX_TILT_DEG = 24;    // tilt limit while dragged
 
 function swayDuration(emphasisMs) {
@@ -77,8 +79,8 @@ function dragTilt(edge, across, radius) {
 }
 
 // How long leaving takes: a flick flies off at once, a timeout lifts the
-// strip away gently.
+// strip away a little slower (still short: it is an exit).
 function exitDuration(kind, exitMs) {
     var base = Math.max(0, Number(exitMs) || 0);
-    return kind === "lift" ? Math.round(base * 2) : base;
+    return kind === "lift" ? Math.min(LIFT_MAX_MS, Math.round(base * LIFT_SPAN)) : base;
 }

@@ -231,7 +231,7 @@ assert ev(card, "isOpen"), "explicit card with the notch on"
 h.eval(root, 'TimersService.hubOpen = false; Config.layout.panels.host = "auto"; ShellLayout.notchEnabled = false')
 pump(20)
 
-# Glides: opens and closes with Motion.glide, nothing stuck half-way
+# Opens with Motion.enter, closes with Motion.exit, nothing stuck half-way
 h.eval(root, "Config.animDuration = 200; TimersService.hubOpen = true")
 pump(5)
 assert ev(card, "progress") < 1

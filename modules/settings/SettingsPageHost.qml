@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.config
 import qs.modules.settings.presets
 import qs.modules.settings.displays
 import qs.modules.settings.keyboard
@@ -50,8 +49,8 @@ Loader {
         property: "slide"
         from: 1
         to: 0
-        duration: Math.max(1, Config.animDuration)
-        easing.type: Motion.morph.easing
+        duration: Math.max(1, Motion.glide.duration)
+        easing.type: Motion.glide.easing
     }
 
     Component {
