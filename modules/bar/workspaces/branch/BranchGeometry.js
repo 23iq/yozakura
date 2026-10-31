@@ -200,6 +200,42 @@ function bloomRadius(slot) {
     return slot * 0.4;
 }
 
+// Urgency must read with any palette (error is close to pink on the default
+// one), so it never depends on hue alone: a halo ring around the blossom and
+// a stamen, each in the alert role when that contrasts with what it sits on
+// (WCAG ratio >= MIN_CONTRAST), else in whichever of `ink`/`alt` does.
+var MIN_CONTRAST = 3;
+
+function _lin(v) {
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+// Relative luminance of a colour ({r, g, b} in 0..1, as a QML color).
+function luminance(c) {
+    return 0.2126 * _lin(c.r) + 0.7152 * _lin(c.g) + 0.0722 * _lin(c.b);
+}
+
+function contrast(a, b) {
+    var la = luminance(a), lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+// `color` when readable on `ground`, else the better of `ink` and `alt`.
+function readable(color, ground, ink, alt) {
+    if (contrast(color, ground) >= MIN_CONTRAST)
+        return color;
+    return contrast(ink, ground) >= contrast(alt, ground) ? ink : alt;
+}
+
+// Halo radius and stroke width of an urgent blossom (inside the slot).
+function haloRadius(slot) {
+    return slot * 0.455;
+}
+
+function haloWidth(slot) {
+    return Math.max(1, slot * 0.07);
+}
+
 // Where a falling petal ends (relative to where it starts): down the
 // screen with a little sideways drift and a turn.
 function fall(i, slot) {
