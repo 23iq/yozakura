@@ -72,3 +72,10 @@ test('a hidden start folder is scanned (~/.wallpapers)', () => {
     assert.deepEqual(out, ['.wallpapers/one.PNG']);
     fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('depth maps are split out of the wallpaper list', () => {
+    const r = F.splitScan(['/w/b.jpg', '/w/a.depth.png', '', '/w/a.png', '/w/c.DEPTH.PNG']);
+    assert.deepEqual([...r.wallpapers], ['/w/a.png', '/w/b.jpg']);
+    assert.deepEqual([...r.depthMaps], ['/w/a.depth.png', '/w/c.DEPTH.PNG']);
+    assert.equal(F.isDepthMap('/w/x.depth.jpg'), false);
+});

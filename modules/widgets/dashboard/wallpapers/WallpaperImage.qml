@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.theme
 import qs.config
 import qs.modules.desktop
+import qs.modules.desktop.panorama
 
 // What a Wallpaper window shows: two ping-ponged content slots blended by the
 // transition shader, the overview blur pass and the desktop depth clock.
@@ -55,6 +56,9 @@ Item {
     readonly property VideoWallpaper matteVideo: frontVideo !== null && frontVideo.matteMode ? frontVideo : null
     // The subject can be drawn over the clock right now.
     readonly property bool matteShowing: matteVideo !== null && matteVideo.contentReady && !transitioning && frontSlot.sourceFile === source
+    // Still images as one wide scroll panned per workspace (PanoramaView).
+    readonly property bool panorama: (Config.desktop.wallpaperMode ?? "fill") === "panorama"
+
     // Owner key for DepthMaskService.setMatteWanted (one per screen).
     property string screenName: ""
     readonly property string matteOwner: "wallpaper:" + (screenName || "default")
@@ -167,7 +171,7 @@ Item {
         var fileType = wallImageRoot.host.getFileType(file);
         if (fileType === 'video' || fileType === 'gif')
             return videoWallpaperComponent;
-        return staticImageComponent;
+        return panorama ? panoramaComponent : staticImageComponent;
     }
 
     function handleSourceChange() {
@@ -475,6 +479,25 @@ Item {
             sourceWidth: wallImageRoot.host.width
             sourceHeight: wallImageRoot.host.height
         }
+    }
+
+    Component {
+        id: panoramaComponent
+        PanoramaView {
+            sourceFile: (parent as WallpaperSlot)?.sourceFile ?? ""
+            tint: wallImageRoot.host.tintEnabled
+            sourceWidth: wallImageRoot.host.width
+            sourceHeight: wallImageRoot.host.height
+            slotIndex: panoramaSlot.index
+            slotCount: panoramaSlot.count
+            parallax: Config.desktop.panoramaParallax ?? true
+            depthMaps: GlobalStates.wallpaperManager?.depthMaps ?? []
+        }
+    }
+
+    PanoramaSlot {
+        id: panoramaSlot
+        screen: wallImageRoot.host.screen
     }
 
     Component {

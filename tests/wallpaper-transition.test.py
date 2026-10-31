@@ -47,6 +47,9 @@ import QtQuick
 QtObject { property bool lockscreenVisible: false; property var wallpaperTransitionOrigin: null; property int videoSyncTick: 0 }'''})
 palette = ["background", "overBackground", "shadow", "surface", "surfaceBright", "surfaceDim", "surfaceContainer", "surfaceContainerHigh", "surfaceContainerHighest", "surfaceContainerLow", "surfaceContainerLowest", "primary", "secondary", "tertiary", "red", "lightRed", "green", "lightGreen", "blue", "lightBlue", "yellow", "lightYellow", "cyan", "lightCyan", "magenta", "lightMagenta"]
 module('qs.modules.desktop', {'DepthClock': 'import QtQuick\nItem { property string wallpaperPath; property bool isVideo; property bool matteActive; property bool tint; property bool suppressed; property Item frontHost; property bool canDepth: false; property bool depthActive: false }'})
+# Panorama mode is off here (wallpaperMode unset): stubs only satisfy the import.
+module('qs.modules.desktop.panorama', {'PanoramaView': 'import QtQuick\nItem { property string sourceFile; property bool tint; property real sourceWidth; property real sourceHeight; property int slotIndex; property int slotCount; property bool parallax; property var depthMaps; property bool contentReady: true }',
+                                        'PanoramaSlot': 'import QtQuick\nQtObject { property var screen; property int index: 0; property int count: 1 }'})
 module('qs.modules.services', {'DepthMaskService': '''pragma Singleton
 import QtQuick
 QtObject { property bool available: false; property int revision: 0; function result(p, w, h) { return null; } function request(p, w, h) {} function setMatteWanted(o, p) {} }'''})

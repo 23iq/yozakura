@@ -34,6 +34,8 @@ PanelWindow {
     readonly property var scanDirs: WallpaperFolders.effective(wallpaperDir, extraDirs)
     property string fallbackDir: decodeURIComponent(Qt.resolvedUrl("../../../../assets/wallpapers_example").toString().replace("file://", ""))
     property var wallpaperPaths: []
+    // <name>.depth.png files found by the scan (PanoramaDepth), not wallpapers.
+    property var depthMaps: []
     property var subfolderFilters: []
     property var allSubdirs: []
     property int currentIndex: 0

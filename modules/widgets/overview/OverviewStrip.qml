@@ -11,13 +11,16 @@ import "StripMath.js" as StripMath
 import "OverviewSearch.js" as OverviewSearch
 
 // Overview style "strip": a horizontal filmstrip of workspaces with the
-// selected one centered. Reuses OverviewWindow for the previews, which expects
+// selected one centered. Style "scroll" (`scroll`): the same strip without
+// gaps, each frame showing its slot of the panorama wallpaper, so the
+// workspaces read as frames of one continuous scroll. Reuses OverviewWindow for the previews, which expects
 // the layout contract of the grid (this root is a one-row grid of `count`
 // columns; windowSpace sits two levels under it).
 Item {
     id: overviewRoot
 
     property var currentScreen: null
+    property bool scroll: false
     readonly property var monitor: currentScreen ? YozdService.monitorFor(currentScreen) : YozdService.focusedMonitor
     readonly property var monitors: CompositorData.monitors
     readonly property int monitorId: monitor?.id ?? -1
@@ -31,7 +34,7 @@ Item {
     // Contract with OverviewWindow (grid vocabulary).
     readonly property var motion: Motion
     readonly property real previewScale: Config.overview.scale
-    readonly property real workspaceSpacing: Config.overview.workspaceSpacing
+    readonly property real workspaceSpacing: scroll ? 0 : Config.overview.workspaceSpacing
     readonly property real workspacePadding: 8
     readonly property int rows: 1
     readonly property int columns: count
@@ -42,6 +45,15 @@ Item {
 
     readonly property int activeId: monitor?.activeWorkspace?.id ?? 1
     readonly property int count: StripMath.count(Config.workspaces.shown, activeId, windowList)
+    // Scroll style: the panorama slots of this screen (same as the wallpaper).
+    readonly property var wallManager: GlobalStates.wallpaperManager
+    readonly property string scrollSource: {
+        if (!scroll || !wallManager)
+            return "";
+        const file = (wallManager.perScreenWallpapers || {})[monitor?.name ?? ""] || wallManager.currentWallpaper || "";
+        return file && wallManager.getFileType(file) === "image" ? file : "";
+    }
+    readonly property int slotCount: Math.max(1, Config.workspaces.shown || 0, activeId)
     readonly property int visibleCells: StripMath.visibleCount(Config.overview.columns, count)
     property int selected: activeId
 
@@ -211,6 +223,10 @@ Item {
             delegate: OverviewStripCell {
                 required property int index
                 workspaceId: index + 1
+                panoramaSource: overviewRoot.scrollSource
+                slotCount: overviewRoot.slotCount
+                screenW: overviewRoot.workspaceImplicitWidth / Math.max(0.01, overviewRoot.previewScale)
+                screenH: overviewRoot.workspaceImplicitHeight / Math.max(0.01, overviewRoot.previewScale)
                 x: StripMath.cellX(overviewRoot.cellW, overviewRoot.workspaceSpacing, workspaceId)
                 width: overviewRoot.cellW
                 height: overviewRoot.cellH

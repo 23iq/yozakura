@@ -123,6 +123,41 @@ var category = {
             ]
         },
         {
+            "id": "panorama",
+            "title": "prefs.wall.section.panorama",
+            "entries": [
+                {
+                    "key": "desktop.wallpaperMode",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "fill",
+                            "label": "prefs.wall.mode.fill"
+                        },
+                        {
+                            "value": "panorama",
+                            "label": "prefs.wall.mode.panorama"
+                        }
+                    ],
+                    "preview": "PanoramaPreview",
+                    "label": "prefs.wall.mode",
+                    "description": "prefs.wall.mode.desc",
+                    "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
+                },
+                {
+                    "key": "desktop.panoramaParallax",
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "desktop.wallpaperMode",
+                        "equals": "panorama"
+                    },
+                    "label": "prefs.wall.parallax",
+                    "description": "prefs.wall.parallax.desc",
+                    "keywords": "parallax depth layers map near far 3d"
+                }
+            ]
+        },
+        {
             "id": "more",
             "title": "prefs.wall.section.more",
             "entries": [

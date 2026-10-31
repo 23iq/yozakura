@@ -13,7 +13,9 @@ var SHELL = {
     delay: 40,
     // Small state changes (fills, hover, focus) and slides inside a surface.
     micro: 120,
-    glide: 220
+    glide: 220,
+    // Slow camera moves across a whole surface (panorama wallpaper pan).
+    pan: 900
 };
 var BASE_MAX = 300;
 var PRESET_ANIM = {
@@ -36,7 +38,8 @@ var FACTOR = {
     morph: 1.2,
     emphasis: 1.5,
     micro: 0.45,
-    glide: 0.75
+    glide: 0.75,
+    pan: 3
 };
 
 // theme.animDuration x profile scale, capped. Never negative.
@@ -45,7 +48,7 @@ function shellBase(animDuration, profileScale) {
     return Math.max(0, Math.min(v, BASE_MAX));
 }
 
-// kind: enter | exit | morph | emphasis | micro | glide -> effective ms.
+// kind: enter | exit | morph | emphasis | micro | glide | pan -> effective ms.
 function token(kind, base) {
     if (!(base > 0) || FACTOR[kind] === undefined)
         return 0;

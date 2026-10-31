@@ -59,6 +59,13 @@ Singleton {
         easing: root.enterEasing === Easing.OutBack ? Easing.OutCubic : root.enterEasing
     }
 
+    // A camera move across a whole surface (the panorama wallpaper panning
+    // between workspaces): slow, smooth in and out, <= 900 ms.
+    readonly property Token pan: Token {
+        duration: MotionBudget.token("pan", root.base)
+        easing: Easing.InOutCubic
+    }
+
     // Tactile press / release of big controls and pills that snap into place:
     // a short spring that overshoots (0 with animations off).
     readonly property Token spring: Token {

@@ -52,7 +52,7 @@ Item {
         anchors.centerIn: parent
         active: true
         
-        sourceComponent: root.style === "scrolling" ? scrollingOverviewComponent : root.style === "strip" ? stripOverviewComponent : standardOverviewComponent
+        sourceComponent: root.style === "scrolling" ? scrollingOverviewComponent : (root.style === "strip" || root.style === "scroll") ? stripOverviewComponent : standardOverviewComponent
     }
 
     // Standard grid overview
@@ -79,6 +79,7 @@ Item {
         id: stripOverviewComponent
         OverviewStrip {
             currentScreen: root.currentScreen
+            scroll: root.style === "scroll"
 
             Component.onCompleted: forceActiveFocus()
         }

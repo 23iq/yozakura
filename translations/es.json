@@ -3653,7 +3653,7 @@
   "prefs.dock.launch_bounce.desc": "Hace rebotar el icono mientras la app se inicia.",
   "prefs.overview.section.layout": "Disposición de la vista general",
   "prefs.overview.style": "Estilo de la vista general",
-  "prefs.overview.style.desc": "Una cuadrícula con todos los escritorios o una tira con el actual en el centro. Los diseños de desplazamiento usan siempre su propia vista de cinta.",
+  "prefs.overview.style.desc": "Una cuadrícula con todos los escritorios, una tira con el actual en el centro o un pergamino: la tira como fotogramas del fondo panorámico. Los diseños de desplazamiento usan siempre su propia vista de cinta.",
   "prefs.overview.rows": "Filas de escritorios",
   "prefs.overview.rows.desc": "Filas de escritorios en la cuadrícula de la vista general. La tira siempre tiene una fila.",
   "prefs.overview.columns": "Columnas de escritorios",
@@ -4123,5 +4123,15 @@
   "prefs.surfaces.lock.language": "El estilo %1 sustituye %2 de esta superficie; usa el estilo Clásico para editarlos.",
   "prefs.surfaces.lock.glass": "Glass está desactivado: esta superficie se dibuja opaca y su opacidad se ignora.",
   "prefs.compositor_only.note.one": "%1 ajuste solo está disponible en %2",
-  "prefs.compositor_only.note.other": "%1 ajustes solo están disponibles en %2"
+  "prefs.compositor_only.note.other": "%1 ajustes solo están disponibles en %2",
+  "settings.shell.overview_style_scroll": "Pergamino",
+  "prefs.desktop.depth_layering": "Capas de profundidad",
+  "prefs.desktop.depth_layering.desc": "Los widgets y los iconos quedan detrás del sujeto en primer plano del fondo. Requiere un <nombre>.depth.png junto a la imagen o el modelo de profundidad. La barra y los menús emergentes siempre quedan delante.",
+  "prefs.wall.section.panorama": "Panorama",
+  "prefs.wall.mode": "Modo del fondo",
+  "prefs.wall.mode.desc": "Rellenar recorta la imagen a la pantalla. Panorama la escala a la altura de la pantalla: cada espacio de trabajo es un fotograma de una imagen ancha y la vista se desliza entre ellos.",
+  "prefs.wall.mode.fill": "Rellenar",
+  "prefs.wall.mode.panorama": "Panorama",
+  "prefs.wall.parallax": "Paralaje",
+  "prefs.wall.parallax.desc": "Las partes cercanas de la imagen se adelantan mientras el panorama se desplaza. Usa un <nombre>.depth.png junto a la imagen (blanco = cerca) o el recorte del sujeto del reloj de profundidad."
 }

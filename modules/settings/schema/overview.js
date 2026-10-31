@@ -33,6 +33,11 @@ var category = {
                             "value": "strip",
                             "label": "settings.shell.overview_style_strip",
                             "icon": "columns"
+                        },
+                        {
+                            "value": "scroll",
+                            "label": "settings.shell.overview_style_scroll",
+                            "icon": "panorama"
                         }
                     ],
                     // the scrolling layout keeps its own tape view
@@ -50,8 +55,16 @@ var category = {
                         "not": {
                             "all": [
                                 {
-                                    "key": "overview.style",
-                                    "equals": "strip"
+                                    "any": [
+                                        {
+                                            "key": "overview.style",
+                                            "equals": "strip"
+                                        },
+                                        {
+                                            "key": "overview.style",
+                                            "equals": "scroll"
+                                        }
+                                    ]
                                 },
                                 {
                                     "key": "compositor.layout",
@@ -69,8 +82,16 @@ var category = {
                         "not": {
                             "all": [
                                 {
-                                    "key": "overview.style",
-                                    "equals": "strip"
+                                    "any": [
+                                        {
+                                            "key": "overview.style",
+                                            "equals": "strip"
+                                        },
+                                        {
+                                            "key": "overview.style",
+                                            "equals": "scroll"
+                                        }
+                                    ]
                                 },
                                 {
                                     "key": "compositor.layout",

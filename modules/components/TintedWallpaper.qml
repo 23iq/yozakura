@@ -175,10 +175,17 @@ Item {
             id: rawImage
             anchors.fill: parent
             visible: !root.isVideo
-            source: root.isVideo ? "" : root.source
+            // Not before the item has a size: decoding needs it (below).
+            source: root.isVideo || root.width <= 0 || root.height <= 0 ? "" : root.source
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
             smooth: true
+            // Decode at the shown size, not the file's: overview cells and
+            // previews would otherwise hold a full-resolution copy each.
+            // Rounded up to 128 px steps so animated resizes (overview
+            // zoom) do not re-decode every frame.
+            sourceSize.width: Math.ceil(root.width / 128) * 128
+            sourceSize.height: Math.ceil(root.height / 128) * 128
 
             // Tint layer
             layer.enabled: root.tintEnabled

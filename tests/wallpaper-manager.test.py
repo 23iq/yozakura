@@ -71,6 +71,7 @@ Item {
         property var extraDirs: []
         property string fallbackDir: "/fallback"
         property var wallpaperPaths: []
+        property var depthMaps: []
         property var subfolderFilters: []
         property var allSubdirs: []
         property int currentIndex: -1

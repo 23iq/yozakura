@@ -64,6 +64,7 @@ var PREVIEWS = {
     "LightingPreview": "previews/LightingPreview.qml",
     "ClockPreview": "previews/ClockPreview.qml",
     "TransitionPreview": "previews/TransitionPreview.qml",
+    "PanoramaPreview": "previews/PanoramaPreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
     "WindowsPreview": "previews/WindowsPreview.qml",
