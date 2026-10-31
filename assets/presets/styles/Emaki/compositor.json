@@ -1,0 +1,16 @@
+{
+    "activeBorderColor": [
+        "primary"
+    ],
+    "inactiveBorderColor": [
+        "outlineVariant@0.7"
+    ],
+    "borderSize": 2,
+    "rounding": 10,
+    "gapsIn": 6,
+    "gapsOut": 12,
+    "shadowOpacity": 0.3,
+    "blurEnabled": false,
+    "motionProfile": "smooth",
+    "motionWorkspaceStyle": "slidefade"
+}

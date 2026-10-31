@@ -80,17 +80,31 @@ def _defaults_options() -> dict:
     return load_defaults()["bar"]["moduleOptions"]
 
 
+def sentence_panels_env(name: str, lang: str = "en", **kw) -> IslandEnv:
+    """A PanelsEnv-compatible environment (same keyword arguments) with what
+    a bar holding the sentence module reads: its popups, the fixture player,
+    notifications and the real strings of `lang`. Draw it with
+    PanelsEnv.scene(env, ...)."""
+    env = IslandEnv(name, **kw)
+    env.h.module("qs.modules.services", {**SERVICES, "I18n": i18n_qml(lang)})
+    env.h.module("qs.modules.globals", {"GlobalStates": GLOBAL_STATES.replace(
+        "QtObject {", "QtObject {\n    property string settingsCategory: \"\"\n    property bool settingsWindowVisible: false", 1)})
+    return env
+
+
+def uses_sentence(bar: dict) -> bool:
+    """True when one of bar.panels holds the sentence module."""
+    return any("sentence" in mods for p in bar.get("panels") or [] for mods in (p.get("groups") or {}).values())
+
+
 def sentence_scene(name: str, *, edge: str = "top", width: int = 1600, height: int = 900, lang: str = "en",
                    language: str = "ink", palette: dict | None = None, style: str = "classic",
                    options: dict | None = None, notch: bool = False, art: str = "", type_cfg: dict | None = None):
     theme = {"language": language}
     if type_cfg:
         theme["type"] = type_cfg
-    env = IslandEnv(name, art=art, bar=bar(edge, style, options), theme=theme,
-                    notch={"enabled": notch, "keepHidden": not notch, "position": "top"}, palette=palette)
-    env.h.module("qs.modules.services", {**SERVICES, "I18n": i18n_qml(lang)})
-    env.h.module("qs.modules.globals", {"GlobalStates": GLOBAL_STATES.replace(
-        "QtObject {", "QtObject {\n    property string settingsCategory: \"\"\n    property bool settingsWindowVisible: false", 1)})
+    env = sentence_panels_env(name, lang, art=art, bar=bar(edge, style, options), theme=theme,
+                              notch={"enabled": notch, "keepHidden": not notch, "position": "top"}, palette=palette)
     win = PanelsEnv.scene(env, width, height, windows=False)
     svc = env.h.load("import QtQuick\nimport qs.config\nimport qs.modules.services\nimport qs.modules.globals\nQtObject {}")
     env.h.eval(svc, f"MprisController.player.trackArtist = {json.dumps(TRACK[0])}; "

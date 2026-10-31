@@ -1,0 +1,31 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": true,
+    "panels": [
+        {
+            "id": "scroll",
+            "edge": "bottom",
+            "style": "islands",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaces"
+                ],
+                "center": [
+                    "taskbar"
+                ],
+                "end": [
+                    "systray",
+                    "controls",
+                    "battery",
+                    "clock"
+                ],
+                "drawer": [
+                    "tools",
+                    "power"
+                ]
+            }
+        }
+    ]
+}

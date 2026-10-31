@@ -5,6 +5,7 @@ the set's static palette (assets/colors/<Palette>/{dark,light}.json, light
 when the composed theme.lightMode is true).
 
     tools/render/sets_render.py [--only NAME] [--out DIR] [--size 1920x1080]
+                                [--mode set|dark|light|both]
 
 Writes <out>/<set>-dashboard.png (the dashboard frame) and <out>/<set>-bar.png
 (the strip of the set's first bar panel on its edge; the top strip, where the
@@ -23,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import panels_render  # noqa: E402  (enters the private Xvfb first)
 import dashboard_render  # noqa: E402
 import presetsets  # noqa: E402
+from sentence_env import sentence_panels_env, uses_sentence  # noqa: E402
 from settings_env import load_defaults  # noqa: E402
 from settings_render import REPO, wallpaper_state  # noqa: E402
 
@@ -48,21 +50,31 @@ def bar_edge(bar: dict) -> str:
     return "top" if first.get("style") == "none" else first.get("edge", "top")
 
 
-def render_set(name: str, out: Path, size: tuple[int, int], state: dict) -> None:
+
+def render_set(name: str, out: Path, size: tuple[int, int], state: dict, force_mode: str = "") -> None:
+    """force_mode "dark" / "light" renders the set in that mode whatever its
+    theme.lightMode (the files get a -dark / -light suffix)."""
     composed = presetsets.compose(name)
+    if force_mode:
+        composed.setdefault("theme", {})["lightMode"] = force_mode == "light"
     colors = set_palette(composed)
     known = load_defaults()
     overrides = {dom: obj for dom, obj in composed.items() if dom in known}
     slug = name.replace(" ", "-")
-    dashboard_render.render(f"sets-{slug}-dash", out / f"{name}-dashboard.png", state, colors, overrides,
+    tag = f"{name}-{force_mode}" if force_mode else name
+    dashboard_render.render(f"sets-{slug}-dash", out / f"{tag}-dashboard.png", state, colors, overrides,
                             user_config=False)
     mode = "light" if composed.get("theme", {}).get("lightMode") else "dark"
-    layout = {**overrides, "name": f"{name}-bar", "crop": {"edge": bar_edge(composed.get("bar", {})),
-                                                           "size": STRIP}}
-    panels_render.render(layout, mode, size, out, state, REPO, windows=False, colors=colors, user_config=False)
+    # a sentence bar needs its popups and fixture services (sentence_env)
+    make_env = sentence_panels_env if uses_sentence(composed.get("bar", {})) else None
+    layout = {**overrides, "name": f"{tag}-bar", "crop": {"edge": bar_edge(composed.get("bar", {})),
+                                                          "size": STRIP}}
+    panels_render.render(layout, mode, size, out, state, REPO, windows=False, colors=colors, user_config=False,
+                         make_env=make_env)
     # The whole screen: every panel, the notch only while notch.enabled
     screen = {**overrides, "name": f"{name}-screen"}
-    panels_render.render(screen, mode, size, out, state, REPO, windows=True, colors=colors, user_config=False)
+    panels_render.render(screen, mode, size, out, state, REPO, windows=True, colors=colors, user_config=False,
+                         make_env=make_env)
 
 
 def main() -> int:
@@ -70,14 +82,18 @@ def main() -> int:
     ap.add_argument("--only", default="", help="only this set")
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "sets"))
     ap.add_argument("--size", default="1920x1080")
+    ap.add_argument("--mode", default="set", choices=["set", "dark", "light", "both"],
+                    help="the set's own mode (default) or dark / light / both whatever it pins")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     size = tuple(int(x) for x in args.size.split("x"))
     state = wallpaper_state()
     names = [args.only] if args.only else presetsets.list_sets()
+    modes = {"set": [""], "both": ["dark", "light"]}.get(args.mode, [args.mode])
     for name in names:
-        render_set(name, out, size, state)
+        for mode in modes:
+            render_set(name, out, size, state, mode)
     return 0
 
 

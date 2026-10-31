@@ -1,0 +1,13 @@
+{
+    "launcher": {
+        "host": "auto",
+        "resultStyle": "cards"
+    },
+    "dashboard": {
+        "host": "auto",
+        "home": "stage"
+    },
+    "osd": {
+        "style": "pill"
+    }
+}

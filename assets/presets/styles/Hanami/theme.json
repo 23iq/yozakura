@@ -1,0 +1,105 @@
+{
+    "roundness": 20,
+    "font": "Nunito",
+    "fontSize": 14,
+    "monoFont": "JetBrains Mono",
+    "animDuration": 280,
+    "paletteTransitionDuration": 900,
+    "shadowOpacity": 0.22,
+    "terminalOpacity": 0.9,
+    "surfaceEffect": "none",
+    "glass": {
+        "enabled": true,
+        "amount": 0.7,
+        "highlightRole": "overBackground",
+        "tintRole": "primary"
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.1",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.78
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.12",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 0.86
+    },
+    "language": "glass",
+    "density": "roomy",
+    "shape": {
+        "corners": "round",
+        "popupCorners": "round",
+        "cutSize": 10
+    },
+    "popup": {
+        "entry": "morph-from-bar",
+        "tail": false,
+        "gap": 10
+    },
+    "icons": {
+        "weight": "bold"
+    },
+    "type": {
+        "heading": "Nunito",
+        "headingCase": "none"
+    },
+    "lighting": {
+        "mode": "sun",
+        "angle": -35,
+        "lantern": "off",
+        "strength": "subtle"
+    },
+    "weatherFx": {
+        "mode": "subtle",
+        "rain": true,
+        "frost": true,
+        "heat": false,
+        "fog": true,
+        "seasonal": true
+    },
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false,
+        "petalShape": "petal"
+    }
+}

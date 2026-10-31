@@ -1,0 +1,7 @@
+{
+    "depthClock": true,
+    "depthClockStyle": "segment",
+    "depthClockInk": "primary",
+    "wallpaperTransition": "wipe",
+    "wallpaperTransitionDuration": 400
+}

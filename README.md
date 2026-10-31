@@ -40,7 +40,11 @@ so AI agents can drive the desktop too.
   character: *Yozakura Night* (islands), *Neon Tokyo* (dense pro bar), *Sumi-e*
   (notch only), *Kōyō* (bottom taskbar), *Glacier* (menubar + dock), *Kaze*
   (vertical rail), *Shōji* (corner tabs), *Metro* (two bars), *CRT*
-  (statusline) and *Yozakura Default*. Their fonts ship with the shell
+  (statusline) and *Yozakura Default*; and four without the island:
+  *Kotoba* (the bar as one sentence, paper-strip notifications), *Hanami*
+  (light, a sakura branch for workspaces, sun shadows and weather), *Emaki*
+  (a panorama wallpaper that scrolls with the workspaces) and *Device*
+  (a hardware instrument with a segment clock and a gauge OSD). Their fonts ship with the shell
   (`assets/fonts/ui`, OFL).
 - Each built-in preset is a set of three parts (a layout, a style and a
   palette, in `assets/presets/`) that can be swapped one at a time.

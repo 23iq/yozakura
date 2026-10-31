@@ -1,0 +1,20 @@
+{
+    "activeBorderColor": [
+        "primary@0.6"
+    ],
+    "inactiveBorderColor": [
+        "overBackground@0.08"
+    ],
+    "borderSize": 1,
+    "rounding": 20,
+    "gapsIn": 8,
+    "gapsOut": 16,
+    "shadowOpacity": 0.18,
+    "shadowRange": 28,
+    "blurEnabled": true,
+    "blurSize": 10,
+    "blurPasses": 3,
+    "blurVibrancy": 0.2,
+    "motionProfile": "sakura",
+    "blurPopups": true
+}
