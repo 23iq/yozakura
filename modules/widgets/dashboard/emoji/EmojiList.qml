@@ -54,6 +54,9 @@ ListView {
     model: list.tab.model
     currentIndex: list.tab.selectedIndex
     highlightFollowsCurrentItem: false
+    // Delegates are pure functions of their model roles and the tab's
+    // selection, so pooled ones carry no stale state
+    reuseItems: true
     boundsBehavior: Flickable.StopAtBounds
 
     Behavior on contentY {
