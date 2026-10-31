@@ -13,14 +13,23 @@ Item {
     property real d: 5
     property real strength: 1
     property var respawn: null      // function () -> { x, y } for the next landing
-    // Shared slide clock of the surface (RainBeads); `moving` asks for it
-    property Timer clock: null
-    signal moving(bool on)
+    // Motion is stepped by the shared weather clock (WeatherFx.frame) and
+    // only while `animate`; `ticking` tells whether this drop needs it
+    property bool animate: false
+    readonly property bool ticking: root.animate && (slide.running || landAnim.running || root._resume > 0)
     readonly property string look: WeatherFx.drop
     readonly property real s: Math.min(1.5, root.strength)
 
     property bool _run: false
     property real _from: 0
+    // Waiting (between slides, while the trail dries) is a deadline checked
+    // on the shared clock, so no timer wakes a frame of its own
+    property real _resume: 0
+    property string _then: ""
+    function wait(ms: real, then: string): void {
+        root._then = then;
+        root._resume = Date.now() + ms;
+    }
 
     width: root.d
     height: Math.round(root.d * 1.12)
@@ -34,8 +43,7 @@ Item {
             return;
         root._run = true;
         root._from = root.y;
-        trail.opacity = 1;
-        root.step();
+        root.wait(1, "start");
     }
 
     // One slide: a short burst down, then a pause (drops stick and slip)
@@ -56,7 +64,7 @@ Item {
 
     // Off the bottom: the trail dries, then a new drop lands elsewhere
     function finish(): void {
-        trailFade.start();
+        root.wait(WeatherFx.ms(650), "dry");
     }
 
     function relaunch(): void {
@@ -66,12 +74,11 @@ Item {
             return;
         root.x = p.x;
         root.y = p.y;
-        land.start();
+        landAnim.start();
     }
 
-    // The slide steps on the surface's shared 20 Hz clock (RainBeads): a
-    // slow drop reads the same and the surface re-renders three times less
-    // often than at 60 Hz, once per tick however many drops run.
+    // The slide steps on the shared 10 Hz weather clock: a slow drop reads
+    // the same and every drop of every surface lands in the same frame.
     QtObject {
         id: slide
         property real from: 0
@@ -79,7 +86,6 @@ Item {
         property real duration: 1
         property real started: 0
         property bool running: false
-        onRunningChanged: root.moving(running)
         function start(): void {
             running = true;
         }
@@ -87,40 +93,62 @@ Item {
             running = false;
         }
     }
+    onTickingChanged: WeatherFx.tickUsers += root.ticking ? 1 : -1
+    Component.onDestruction: {
+        if (root.ticking)
+            WeatherFx.tickUsers -= 1;
+    }
     Connections {
-        target: root.clock
-        enabled: slide.running
+        target: WeatherFx.frame
+        enabled: root.ticking
         function onTriggered(): void {
-            const p = Math.min(1, (Date.now() - slide.started) / slide.duration);
-            root.y = slide.from + (slide.to - slide.from) * (0.5 - 0.5 * Math.cos(Math.PI * p));
-            if (p >= 1) {
-                slide.stop();
-                pause.start();
+            const now = Date.now();
+            if (slide.running) {
+                const p = Math.min(1, (now - slide.started) / slide.duration);
+                root.y = slide.from + (slide.to - slide.from) * (0.5 - 0.5 * Math.cos(Math.PI * p));
+                if (p >= 1) {
+                    slide.stop();
+                    root.wait(WeatherFx.ms(180 + Math.random() * 520), "step");
+                }
+            }
+            if (landAnim.running)
+                landAnim.step(now);
+            if (root._resume > 0 && now >= root._resume) {
+                root._resume = 0;
+                if (root._then === "start") {
+                    trail.opacity = 1;
+                    root.step();
+                } else if (root._then === "step") {
+                    root.step();
+                } else {
+                    trail.opacity = Math.max(0, trail.opacity - 0.25);
+                    if (trail.opacity <= 0)
+                        root.relaunch();
+                    else
+                        root.wait(WeatherFx.ms(650), "dry");
+                }
             }
         }
     }
-    Timer {
-        id: pause
-        interval: WeatherFx.ms(180 + Math.random() * 520)
-        onTriggered: root.step()
-    }
-    // A new drop lands: grows in from nothing
-    ParallelAnimation {
-        id: land
-        NumberAnimation {
-            target: body
-            property: "scale"
-            from: 0.2
-            to: 1
-            duration: WeatherFx.ms(420)
-            easing.type: Easing.OutBack
+    // A new drop lands: grows in from nothing (OutBack), on the same clock
+    QtObject {
+        id: landAnim
+        property bool running: false
+        property real started: 0
+        function start(): void {
+            started = Date.now();
+            body.scale = 0.2;
+            body.opacity = 0;
+            running = true;
         }
-        NumberAnimation {
-            target: body
-            property: "opacity"
-            from: 0
-            to: 1
-            duration: WeatherFx.ms(300)
+        function step(now: real): void {
+            const t = Math.min(1, (now - started) / WeatherFx.ms(420));
+            const c = 1.70158;
+            const u = t - 1;
+            body.scale = 0.2 + 0.8 * (1 + (c + 1) * u * u * u + c * u * u);
+            body.opacity = Math.min(1, (now - started) / WeatherFx.ms(300));
+            if (t >= 1)
+                running = false;
         }
     }
 
@@ -143,21 +171,6 @@ Item {
             GradientStop {
                 position: 1
                 color: Qt.alpha(WeatherFx.glint, root.a(root.look === "glint" ? 0.34 : 0.3))
-            }
-        }
-    }
-
-    // The trail dries in a few discrete steps (a handful of frames, not a
-    // 60 fps fade)
-    Timer {
-        id: trailFade
-        interval: WeatherFx.ms(650)
-        repeat: true
-        onTriggered: {
-            trail.opacity = Math.max(0, trail.opacity - 0.25);
-            if (trail.opacity <= 0) {
-                stop();
-                root.relaunch();
             }
         }
     }

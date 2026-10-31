@@ -72,6 +72,16 @@ QtObject {
 
     // Ambient motion: none with motion off or the profile disabled
     readonly property bool motionOn: Motion.base > 0 && !(Config.motionProfile && Config.motionProfile.disabled)
+    // One clock for every moving effect of every surface: ~10 Hz, running
+    // only while some effect moves (`tickUsers`), so the shell renders one
+    // frame per tick however many drops slide and nothing while still.
+    property int tickUsers: 0
+    readonly property Timer frame: Timer {
+        interval: 100
+        repeat: true
+        running: root.tickUsers > 0 && root.motionOn
+    }
+
     // Ambient durations follow the shell speed (1 at the default 300 ms)
     readonly property real tempo: Math.max(0.5, Math.min(2, Motion.base / 300))
     function ms(base: real): int {
