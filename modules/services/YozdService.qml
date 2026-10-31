@@ -41,6 +41,8 @@ Singleton {
     property QtObject workspaces: QtObject {
         property var values: []
     }
+    // Ids of workspaces whose tag is urgent (MangoWC reports urgency per tag)
+    property var urgentWorkspaceIds: []
 
     signal rawEvent(var event)
 
@@ -145,6 +147,7 @@ Singleton {
                     size: [win.metadata ? (win.metadata.width || 0) : 0, win.metadata ? (win.metadata.height || 0) : 0],
                     xwayland: (win.metadata ? win.metadata.xwayland : false) || false,
                     is_focused: win.is_focused || false,
+                    urgent: !!(win.metadata && win.metadata.is_urgent),
                     focusHistoryID: newFocus
                 };
             });
@@ -161,12 +164,14 @@ Singleton {
                 name: ws.name,
                 monitor: ws.monitor_id,
                 active: ws.is_active,
+                urgent: !!(ws.metadata && ws.metadata.urgent),
                 windows: 0
             }));
             const key = JSON.stringify(mappedWorkspaces);
             if (key !== root._workspacesKey) {
                 root._workspacesKey = key;
                 root.workspaces.values = mappedWorkspaces;
+                root.urgentWorkspaceIds = mappedWorkspaces.filter(ws => ws.urgent).map(ws => ws.id);
                 const focused = mappedWorkspaces.find(ws => ws.active) || null;
                 if (focused !== root.focusedWorkspace) {
                     root.focusedWorkspace = focused;

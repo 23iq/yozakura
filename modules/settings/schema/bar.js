@@ -236,7 +236,47 @@ var category = {
                     "component": "IndicatorStyleChips",
                     "label": "prefs.bar.ws_indicator",
                     "description": "prefs.bar.ws_indicator.desc",
-                    "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink"
+                    "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
+                },
+                {
+                    "key": "workspaces.branchBlossom",
+                    "type": "custom",
+                    "component": "BranchBlossomChips",
+                    "visibleWhen": {
+                        "key": "workspaces.indicatorStyle",
+                        "equals": "branch"
+                    },
+                    "label": "prefs.bar.ws_branch_blossom",
+                    "description": "prefs.bar.ws_branch_blossom.desc",
+                    "keywords": "branch blossom flower petal sakura plum round leaf shape workspaces"
+                },
+                {
+                    "key": "workspaces.branchColor",
+                    "type": "custom",
+                    "component": "ColorRoleSwatches",
+                    "options": [
+                        { "value": "primary", "label": "prefs.glass.role.primary" },
+                        { "value": "secondary", "label": "prefs.glass.role.secondary" },
+                        { "value": "tertiary", "label": "prefs.glass.role.tertiary" }
+                    ],
+                    "visibleWhen": {
+                        "key": "workspaces.indicatorStyle",
+                        "equals": "branch"
+                    },
+                    "label": "prefs.bar.ws_branch_color",
+                    "description": "prefs.bar.ws_branch_color.desc",
+                    "keywords": "branch blossom colour color palette role accent workspaces"
+                },
+                {
+                    "key": "workspaces.branchPetalFall",
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "workspaces.indicatorStyle",
+                        "equals": "branch"
+                    },
+                    "label": "prefs.bar.ws_branch_fall",
+                    "description": "prefs.bar.ws_branch_fall.desc",
+                    "keywords": "branch petal fall animation window close workspaces"
                 },
                 {
                     "key": "workspaces.showNumbers",

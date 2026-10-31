@@ -14,6 +14,7 @@ var EDITORS = {
     "BarPositionPicker": "editors/BarPositionPicker.qml",
     "NumeralCards": "editors/NumeralCards.qml",
     "IndicatorStyleChips": "editors/IndicatorStyleChips.qml",
+    "BranchBlossomChips": "editors/BranchBlossomChips.qml",
     "SurfaceEffectCards": "editors/SurfaceEffectCards.qml",
     "WallpaperGrid": "editors/WallpaperGrid.qml",
     "FolderList": "editors/FolderList.qml",

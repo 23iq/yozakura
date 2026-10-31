@@ -13,6 +13,7 @@ import qs.modules.globals
 import qs.config
 import qs.modules.bar.look
 import "../../specials/Specials.js" as Specials
+import "indicators/IndicatorStyles.js" as IndicatorStyles
 
 Item {
     id: workspacesWidget
@@ -256,8 +257,12 @@ Item {
         }
     }
 
+    // Strip styles (the branch) draw every slot instead of the active box.
+    readonly property string stripStyle: IndicatorStyles.strip(Config.workspaces.indicatorStyle)
+
     OccupiedRanges {
         parent: regularWorkspaces
+        visible: workspacesWidget.stripStyle === ""
         z: 1
         anchors.fill: parent
         anchors.margins: widgetPadding
@@ -280,6 +285,22 @@ Item {
         occupied: !!CompositorData.workspaceOccupationMap[workspacesWidget.activeWorkspaceId]
         baseRadius: workspacesWidget.radius
         workspaceId: workspacesWidget.activeWorkspaceId
+    }
+
+    Loader {
+        id: stripLoader
+        objectName: "workspaceStrip"
+        parent: regularWorkspaces
+        z: 2
+        active: workspacesWidget.stripStyle !== ""
+        anchors.fill: parent
+        anchors.margins: workspacesWidget.widgetPadding
+        source: active ? Qt.resolvedUrl("indicators/" + workspacesWidget.stripStyle) : ""
+        onLoaded: {
+            item.vertical = Qt.binding(() => workspacesWidget.orientation === "vertical");
+            item.slot = Qt.binding(() => workspacesWidget.workspaceButtonWidth);
+            item.slots = Qt.binding(() => IndicatorStyles.stripSlots(workspacesWidget.effectiveWorkspaceCount, i => workspacesWidget.getWorkspaceId(i), CompositorData.workspaceWindowsMap, CompositorData.workspaceUrgentMap, workspacesWidget.isMonitorWorkspace(workspacesWidget.activeWorkspaceId) ? workspacesWidget.activeWorkspaceId : -1));
+        }
     }
 
     // Slot bindings shared by both orientations.
