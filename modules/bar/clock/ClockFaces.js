@@ -8,7 +8,8 @@ var faces = [
     { id: "digital", url: "faces/Digital.qml", labelKey: "prefs.bar.clock_face.digital" },
     { id: "stacked", url: "faces/Stacked.qml", labelKey: "prefs.bar.clock_face.stacked" },
     { id: "dotMatrix", url: "faces/DotMatrix.qml", labelKey: "prefs.bar.clock_face.dotMatrix" },
-    { id: "kanji", url: "faces/Kanji.qml", labelKey: "prefs.bar.clock_face.kanji" }
+    { id: "kanji", url: "faces/Kanji.qml", labelKey: "prefs.bar.clock_face.kanji" },
+    { id: "segment", url: "faces/Segment.qml", labelKey: "prefs.bar.clock_face.segment" }
 ];
 
 function ids() {

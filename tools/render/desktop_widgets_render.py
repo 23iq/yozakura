@@ -3,7 +3,8 @@
 
     tools/render/desktop_widgets_render.py [--out DIR] [--mode dark|light|both]
                                            [--size 2560x1440] [--wallpaper PATH]
-                                           [--no-depth] [--settings]
+                                           [--no-depth] [--settings] [--clock STYLE]
+                                           [--seed HEX]
 
 Draws the wallpaper (a video shows the frame its depth mask was made from),
 the real depth clock (with the subject cutout when the depth venv is set up:
@@ -96,6 +97,8 @@ def main() -> int:
     ap.add_argument("--wallpaper", default="")
     ap.add_argument("--no-depth", action="store_true")
     ap.add_argument("--settings", action="store_true", help="also render the Desktop & Clock settings page")
+    ap.add_argument("--clock", default="", help="show the depth clock in this style (e.g. segment)")
+    ap.add_argument("--seed", default="", help="palette from this seed colour (matugen), e.g. '#4c8f5a'")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
@@ -109,9 +112,11 @@ def main() -> int:
         backdrop = str(frame) if frame and frame.exists() else state.get("thumbs", {}).get(wall, "")
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
     for mode in modes:
-        env = SettingsEnv(f"desktop-render-{mode}", palette=palette(mode, state), user_config=True,
-                          overrides={"theme": {"lightMode": mode == "light"},
-                                     "desktop": {"widgets": LAYOUT, "widgetsEnabled": True}},
+        desktop = {"widgets": LAYOUT, "widgetsEnabled": True}
+        if args.clock:
+            desktop.update({"depthClock": True, "depthClockStyle": args.clock})
+        env = SettingsEnv(f"desktop-render-{mode}", palette=palette(mode, state, args.seed), user_config=True,
+                          overrides={"theme": {"lightMode": mode == "light"}, "desktop": desktop},
                           wallpaper=state)
         env.h.module("qs.modules.services", demo_services(depth, "file://" + backdrop if backdrop else ""))
         env.h.module("Quickshell", {**QUICKSHELL, "Quickshell": QUICKSHELL["Quickshell"].replace(

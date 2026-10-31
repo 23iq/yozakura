@@ -121,6 +121,35 @@ function posterLayout(ctx) {
     return m;
 }
 
+// Seven-segment LCD: HH:MM in one wide line high on the side (behind the
+// subject, unlit segments faintly visible), a tracked mono date strip
+// under it (in front). Cell proportions match the kit's SegmentDigits.
+function segmentLayout(ctx) {
+    var a = ctx.area;
+    var u = Math.min(ctx.screenW, ctx.screenH) / 1440;
+    // HH:MM = 4 cells (0.58) + 4 gaps (0.18) + the colon (0.13) of the digit height.
+    var ratio = 4 * 0.58 + 4 * 0.18 + 0.13;
+    var digit = Math.min(270 * u, a.w * 0.42 / ratio, a.h * 0.3);
+    var timeW = digit * ratio;
+    var edge = 120 * u;
+    var x0 = ctx.side === "left" ? a.x + edge : a.x + a.w - edge - timeW;
+    var top = a.y + a.h * 0.14;
+    var m = {
+        u: u,
+        digit: digit,
+        x: x0,
+        top: top,
+        width: timeW,
+        dateSize: Math.max(12, 26 * u),
+        dateTracking: 0.32,
+        dateTop: top + digit + 34 * u
+    };
+    m.behind = box(x0, top, timeW, digit);
+    m.legible = [m.behind];
+    m.bounds = box(x0, top, timeW, m.dateTop - top + 2 * m.dateSize);
+    return m;
+}
+
 var styles = [
     {
         id: "yozakura",
@@ -139,6 +168,15 @@ var styles = [
         needsDepth: true,
         sides: ["left", "right"],
         layout: posterLayout
+    },
+    {
+        id: "segment",
+        labelKey: "shell.desktop.depth_clock_style_segment",
+        icon: "clock",
+        file: "SegmentClock.qml",
+        needsDepth: true,
+        sides: ["left", "right"],
+        layout: segmentLayout
     }
 ];
 

@@ -3212,19 +3212,21 @@
                     "section": "clock",
                     "label": "prefs.bar.clock_face",
                     "control": "selector",
-                    "keywords": "clock face style digital stacked dot matrix led kanji japanese"
+                    "keywords": "clock face style digital stacked dot matrix led lcd seven segment kanji japanese"
                   },
                   "enum": [
                     "digital",
                     "stacked",
                     "dotMatrix",
-                    "kanji"
+                    "kanji",
+                    "segment"
                   ],
                   "x-enumLabels": {
                     "digital": "Digital",
                     "stacked": "Stacked",
                     "dotMatrix": "Dot matrix",
-                    "kanji": "Kanji (十時 二十五分)"
+                    "kanji": "Kanji (十時 二十五分)",
+                    "segment": "Segment LCD"
                   }
                 },
                 "pomodoroStyle": {
@@ -4854,7 +4856,8 @@
           },
           "enum": [
             "yozakura",
-            "poster"
+            "poster",
+            "segment"
           ]
         },
         "depthClockPosition": {
