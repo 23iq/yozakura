@@ -145,9 +145,28 @@ Singleton {
         }
     }
 
+    // ---- protocol handshake ----
+    // Wire protocol revision this shell was written for; the daemon reports
+    // its own through ipc.hello (backend/pkg/ipc/registry.go ProtocolVersion).
+    // A daemon too old to know ipc.hello counts as protocol 0. Behaviour is
+    // unchanged on a mismatch: it is logged and exposed so a stale daemon
+    // (shell updated, `yozakura` not restarted) is easy to spot.
+    readonly property int expectedProtocol: 1
+    property int daemonProtocol: -1    // -1: not asked yet
+    readonly property bool protocolMismatch: daemonProtocol >= 0 && daemonProtocol !== expectedProtocol
+
+    function _checkProtocol() {
+        root.call("ipc.hello", {}, (result, error) => {
+            root.daemonProtocol = (!error && result && typeof result.protocol === "number") ? result.protocol : 0;
+            if (root.protocolMismatch)
+                console.warn("BackendService: protocol mismatch, shell speaks v" + root.expectedProtocol + " but the daemon speaks v" + root.daemonProtocol + "; restart the " + Brand.appId + " daemon so both come from the same install");
+        });
+    }
+
     property bool socketAvailable: false
     onSocketAvailableChanged: {
         if (!socketAvailable) probeTimer.running = true;
+        else root._checkProtocol();
     }
 
     // Connect on the spot instead of waiting for probeTimer's first tick;
