@@ -1,0 +1,14 @@
+{
+    "launcher": {
+        "host": "auto",
+        "resultStyle": "list",
+        "icons": false
+    },
+    "dashboard": {
+        "host": "auto",
+        "home": "composed"
+    },
+    "osd": {
+        "style": "bar-inline"
+    }
+}

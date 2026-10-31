@@ -1,0 +1,117 @@
+{
+    "roundness": 4,
+    "font": "Inter",
+    "fontSize": 13,
+    "monoFont": "JetBrains Mono",
+    "animDuration": 180,
+    "paletteTransitionDuration": 400,
+    "shadowOpacity": 0.35,
+    "terminalOpacity": 1.0,
+    "surfaceEffect": "none",
+    "glass": {
+        "enabled": false
+    },
+    "srBg": {
+        "label": "Background",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.14",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srPopup": {
+        "label": "Popup",
+        "gradient": [
+            [
+                "background",
+                0.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 0,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.18",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "srBarBg": {
+        "label": "Bar BG",
+        "gradient": [
+            [
+                "surfaceContainerLow",
+                0.0
+            ],
+            [
+                "surfaceDim",
+                1.0
+            ]
+        ],
+        "gradientType": "linear",
+        "gradientAngle": 90,
+        "gradientCenterX": 0.5,
+        "gradientCenterY": 0.5,
+        "halftoneDotMin": 0,
+        "halftoneDotMax": 2,
+        "halftoneStart": 0,
+        "halftoneEnd": 1,
+        "halftoneDotColor": "surface",
+        "halftoneBackgroundColor": "background",
+        "border": [
+            "overBackground@0.08",
+            1
+        ],
+        "itemColor": "overBackground",
+        "opacity": 1
+    },
+    "language": "device",
+    "density": "compact",
+    "shape": {
+        "corners": "cut",
+        "popupCorners": "cut",
+        "cutSize": 6
+    },
+    "popup": {
+        "entry": "fade-scale",
+        "tail": false,
+        "gap": 6
+    },
+    "icons": {
+        "weight": "regular"
+    },
+    "type": {
+        "heading": "JetBrains Mono",
+        "headingCase": "upper"
+    },
+    "signatures": {
+        "brushHighlight": false,
+        "petals": false,
+        "petalShape": "petal"
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "showAppIcons": false,
+    "showNumbers": false,
+    "numeralStyle": "arabic",
+    "indicatorStyle": "branch",
+    "branchBlossom": "sakura",
+    "branchColor": "primary",
+    "branchPetalFall": true
+}

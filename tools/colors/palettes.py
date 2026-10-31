@@ -105,6 +105,38 @@ PALETTES = {
                        "inversePrimary": "#b3121f"},
               "light": {"ground": "#f5f3ef", "primary": "#b3121f", "overPrimary": "#ffffff",
                         "primaryContainer": "#ffdadb", "overPrimaryContainer": "#410006"}},
+    # Kotoba: indigo-dyed night, unbleached cream type, a muted vermilion stamp
+    "Indigo": {"seed": "#3b4f8f", "scheme": "scheme-neutral",
+               "dark": {"ground": "#0f121c", "primary": "#b4c0e8", "secondary": "#c9c2b0", "tertiary": "#e09a7a",
+                        "overBackground": "#e8e2d4", "overSurface": "#e8e2d4", "overSurfaceVariant": "#aaa79c",
+                        "outline": "#5d6170", "outlineVariant": "#2a2f40", "surfaceTint": "#b4c0e8"},
+               "light": {"ground": "#f3f1ea", "primary": "#2c3c78", "tertiary": "#a8482a",
+                         "overBackground": "#1d2133", "overSurface": "#1d2133", "outlineVariant": "#d3cfc2"}},
+    # Hanami: a spring afternoon, blush paper, sakura pink, young-leaf green, sky
+    "Blossom": {"seed": "#d9668f", "scheme": "scheme-tonal-spot",
+                "dark": {"ground": "#1b1517", "primary": "#ffb0c8", "secondary": "#b5d39a", "tertiary": "#a9cdee"},
+                "light": {"ground": "#fbf3f2", "surfaceContainerLowest": "#fffafa", "primary": "#b23a64",
+                          "overPrimary": "#ffffff", "primaryContainer": "#ffd9e3", "overPrimaryContainer": "#3f0019",
+                          "secondary": "#4c7a3d", "overSecondary": "#ffffff", "tertiary": "#386b9a",
+                          "overBackground": "#2c1f24", "overSurface": "#2c1f24", "outlineVariant": "#e6cfd5"}},
+    # Emaki: gold leaf and vermilion on black lacquer
+    "Kinpaku": {"seed": "#c9a24a", "scheme": "scheme-content",
+                "dark": {"ground": "#120e0b", "primary": "#e3c27a", "overPrimary": "#2a1d00", "secondary": "#c8b79a",
+                         "tertiary": "#e0715a", "overTertiary": "#3b0900", "overBackground": "#efe6d2",
+                         "overSurface": "#efe6d2", "outline": "#7c6a4c", "outlineVariant": "#3a2f22",
+                         "surfaceTint": "#e3c27a"},
+                "light": {"ground": "#f6efe0", "primary": "#8a6416", "tertiary": "#a33a24",
+                          "overBackground": "#2a2216", "overSurface": "#2a2216"}},
+    # Device: a graphite instrument with an amber signal and a cyan LED
+    "Signal": {"seed": "#ff7a1a", "scheme": "scheme-fidelity",
+               "dark": {"ground": "#151617", "primary": "#ff8a2a", "overPrimary": "#2b1100",
+                        "primaryContainer": "#6e3200", "overPrimaryContainer": "#ffdcc6", "secondary": "#4fd1d9",
+                        "overSecondary": "#002f33", "tertiary": "#e8e4dc", "overTertiary": "#1f1d19",
+                        "overBackground": "#ecebe7", "overSurface": "#ecebe7", "overSurfaceVariant": "#a3a29e",
+                        "outline": "#5b5c5e", "outlineVariant": "#2e3032", "surfaceTint": "#ff8a2a"},
+               "light": {"ground": "#e9e8e4", "primary": "#d4560a", "overPrimary": "#ffffff",
+                         "secondary": "#00838c", "overSecondary": "#ffffff", "overBackground": "#1d1e20",
+                         "overSurface": "#1d1e20"}},
 }
 
 

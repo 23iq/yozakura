@@ -1,0 +1,13 @@
+{
+    "launcher": {
+        "host": "auto",
+        "resultStyle": "grid"
+    },
+    "dashboard": {
+        "host": "auto",
+        "home": "bento"
+    },
+    "osd": {
+        "style": "gauge"
+    }
+}

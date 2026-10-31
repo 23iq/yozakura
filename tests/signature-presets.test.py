@@ -3,7 +3,10 @@ and palette, tests/lib/presetsets.py), offscreen: each one's bar.panels
 loads with its theme, notch and workspaces config without QML errors, the
 Shōji frame draws its double hairline (others none), workspace tags follow
 the numeral style (Neon Tokyo: roman) and a clock with
-moduleOptions.clock.showWeather false leaves the weather to its module."""
+moduleOptions.clock.showWeather false leaves the weather to its module.
+The island-less sets draw no notch, and the flagship sets show their
+feature: Kotoba the sentence line, Hanami the sakura branch, Device the
+segment clock face."""
 import sys
 from pathlib import Path
 
@@ -11,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import bundled_fonts  # noqa: E402
 import presetsets  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
+from sentence_env import sentence_panels_env, uses_sentence  # noqa: E402
 import qmlharness  # noqa: E402
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
@@ -38,15 +42,29 @@ def visual(item, name: str):
     return out
 
 
+def of_type(item, name: str):
+    """Visual items whose QML type is `name` (className is <name>_QMLTYPE_<n>)."""
+    out = [item] if item.metaObject().className().split("_QMLTYPE_")[0] == name else []
+    for child in item.childItems():
+        out += of_type(child, name)
+    return out
+
+
+def shown(items) -> bool:
+    return any(i.isVisible() and i.width() > 0 for i in items)
+
+
 panel_presets = sorted(name for name in SETS if read(name, "bar").get("panels"))
-assert {"Neon Tokyo", "Glacier", "Kaze", "Shōji", "Metro", "CRT", "Yozakura", "Sumi-e"} <= set(panel_presets), panel_presets
+assert {"Neon Tokyo", "Glacier", "Kaze", "Shōji", "Metro", "CRT", "Yozakura", "Sumi-e",
+        "Kotoba", "Hanami", "Emaki", "Device"} <= set(panel_presets), panel_presets
 ENVS = []
 for name in panel_presets:
     theme = read(name, "theme")
-    env = PanelsEnv("signature-" + name, bar=read(name, "bar"), theme=theme, notch=read(name, "notch"),
-                    dock=read(name, "dock") or None, extra={"workspaces": read(name, "workspaces")})
+    make_env = sentence_panels_env if uses_sentence(read(name, "bar")) else PanelsEnv
+    env = make_env("signature-" + name, bar=read(name, "bar"), theme=theme, notch=read(name, "notch"),
+                   dock=read(name, "dock") or None, extra={"workspaces": read(name, "workspaces")})
     ENVS.append(env)
-    win = env.scene(1600, 900, windows=False)
+    win = PanelsEnv.scene(env, 1600, 900, windows=False)
     QTest.qWait(250)
     host = env.h.find(win, "host")
     count = env.h.eval(host, "bars.length")
@@ -57,6 +75,17 @@ for name in panel_presets:
     drawn = any(item.isVisible() for item in lines)
     framed = read(name, "bar").get("frameEnabled", False) and theme.get("srFrame", {}).get("inheritBg") is False
     assert drawn == framed, (name, "frame hairlines", drawn)
+
+    if read(name, "notch").get("enabled") is False:
+        assert not shown(visual(win.contentItem(), "notch")), (name, "no island")
+
+    if name == "Kotoba":
+        line = visual(win.contentItem(), "sentenceLine")
+        assert shown(line), (name, "sentence line")
+    if name == "Hanami":
+        assert shown(of_type(win.contentItem(), "BranchStrip")), (name, "sakura branch")
+    if name == "Device":
+        assert shown(visual(win.contentItem(), "faceSegment")), (name, "segment clock")
 
     if name == "Neon Tokyo":
         tags = [t.property("text") for t in visual(win.contentItem(), "workspaceTagLabel")]

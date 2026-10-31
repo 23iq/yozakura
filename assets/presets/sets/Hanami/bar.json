@@ -1,0 +1,30 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": true,
+    "panels": [
+        {
+            "id": "branch",
+            "edge": "top",
+            "style": "floating",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaces"
+                ],
+                "center": [
+                    "clock"
+                ],
+                "end": [
+                    "systray",
+                    "controls",
+                    "battery"
+                ],
+                "drawer": [
+                    "tools",
+                    "power"
+                ]
+            }
+        }
+    ]
+}

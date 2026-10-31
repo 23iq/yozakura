@@ -1,0 +1,7 @@
+{
+    "wallpaperMode": "panorama",
+    "panoramaParallax": true,
+    "depthLayering": true,
+    "wallpaperTransition": "fade",
+    "wallpaperTransitionDuration": 800
+}

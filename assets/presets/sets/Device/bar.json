@@ -1,0 +1,43 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": false,
+    "moduleOptions": {
+        "clock": {
+            "face": "segment",
+            "panelStyle": "bento"
+        },
+        "systemStats": {
+            "items": [
+                "cpu",
+                "ram",
+                "gpuTemp"
+            ]
+        }
+    },
+    "panels": [
+        {
+            "id": "panel",
+            "edge": "top",
+            "style": "classic",
+            "groups": {
+                "start": [
+                    "launcher",
+                    "workspaces",
+                    "windowTitle"
+                ],
+                "end": [
+                    "systemStats",
+                    "systray",
+                    "controls",
+                    "battery",
+                    "clock"
+                ],
+                "drawer": [
+                    "tools",
+                    "power"
+                ]
+            }
+        }
+    ]
+}

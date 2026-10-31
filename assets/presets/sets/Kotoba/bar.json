@@ -1,0 +1,37 @@
+{
+    "frameEnabled": false,
+    "containBar": false,
+    "clockShowDate": false,
+    "moduleOptions": {
+        "sentence": {
+            "fragments": [
+                "clock",
+                "window",
+                "workspace",
+                "media",
+                "battery",
+                "notifications"
+            ],
+            "separator": "dash",
+            "verbosity": "full",
+            "typeface": "editorial",
+            "maxWidth": 0
+        }
+    },
+    "panels": [
+        {
+            "id": "line",
+            "edge": "top",
+            "style": "ribbon",
+            "groups": {
+                "start": [],
+                "center": [
+                    "sentence"
+                ],
+                "end": [
+                    "controls"
+                ]
+            }
+        }
+    ]
+}
