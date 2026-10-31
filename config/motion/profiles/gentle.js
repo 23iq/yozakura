@@ -1,7 +1,9 @@
 .pragma library
 
 // Soft, ink-like motion (Sumi-e): gentle eases without overshoot, windows fade and
-// barely grow, workspaces cross-fade. Nothing overshoots.
+// barely grow, workspaces cross-fade. Nothing overshoots. Calm, not slow:
+// fades decelerate (gentleInk) and nothing takes longer than 300 ms; only the
+// workspace cross-fade eases in and out.
 // Format: config/motion/MotionProfiles.js.
 
 var profile = {
@@ -22,26 +24,26 @@ var profile = {
     "leaves": {
         "windows": {
             "curve": "gentleInk",
-            "speed": 3.5,
+            "speed": 3,
             "style": "popin 92%"
         },
         "windowsOut": {
             "curve": "gentleBreath",
-            "speed": 3,
+            "speed": 2.2,
             "style": "popin 95%"
         },
         "windowsMove": {
             "curve": "gentleInk",
-            "speed": 3.5
+            "speed": 3
         },
         "layers": {
             "curve": "gentleInk",
-            "speed": 3,
+            "speed": 2.5,
             "style": "fade"
         },
         "fade": {
-            "curve": "gentleBreath",
-            "speed": 3.5
+            "curve": "gentleInk",
+            "speed": 2.5
         },
         "border": {
             "curve": "gentleBreath",
@@ -49,12 +51,12 @@ var profile = {
         },
         "workspaces": {
             "curve": "gentleBreath",
-            "speed": 4,
+            "speed": 3,
             "style": "fade"
         },
         "specialWorkspace": {
             "curve": "gentleInk",
-            "speed": 3.5,
+            "speed": 3,
             "style": "fade"
         }
     },
