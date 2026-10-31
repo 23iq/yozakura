@@ -91,6 +91,9 @@ Item {
     readonly property bool depthActive: canDepth && (!isVideo || matteActive)
     Rectangle { x: parent.width * 0.3; y: parent.height * 0.3; width: parent.width * 0.4; height: parent.height * 0.4; color: clock.ink }
 }'''})
+# Panorama mode is off here (wallpaperMode unset): stubs only satisfy the import.
+module('qs.modules.desktop.panorama', {'PanoramaView': 'import QtQuick\nItem { property string sourceFile; property bool tint; property real sourceWidth; property real sourceHeight; property int slotIndex; property int slotCount; property bool parallax; property var depthMaps; property bool contentReady: true }',
+                                        'PanoramaSlot': 'import QtQuick\nQtObject { property var screen; property int index: 0; property int count: 1 }'})
 module('qs.modules.services', {'DepthMaskService': f'''pragma Singleton
 import QtQuick
 QtObject {{

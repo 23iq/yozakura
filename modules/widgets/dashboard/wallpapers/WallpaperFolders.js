@@ -7,6 +7,29 @@
 
 var EXTENSIONS = ["jpg", "jpeg", "png", "webp", "tif", "tiff", "gif", "mp4", "webm", "mov", "avi", "mkv"];
 
+// Depth maps for the panorama parallax / depth layering live next to their
+// image as <name>.depth.png: they are not wallpapers themselves.
+var DEPTH_SUFFIX = /\.depth\.png$/i;
+
+function isDepthMap(path) {
+    return DEPTH_SUFFIX.test(String(path || ""));
+}
+
+// Scan output -> { wallpapers, depthMaps }, both sorted, empties dropped.
+function splitScan(files) {
+    var walls = [];
+    var maps = [];
+    (files || []).forEach(function (f) {
+        if (!f)
+            return;
+        (isDepthMap(f) ? maps : walls).push(f);
+    });
+    return {
+        wallpapers: walls.sort(),
+        depthMaps: maps.sort()
+    };
+}
+
 function normalize(path) {
     var p = String(path || "").trim();
     while (p.length > 1 && p.charAt(p.length - 1) === "/")

@@ -10,7 +10,7 @@
       "title": "Overview style",
       "type": "string",
       "default": "grid",
-      "description": "A grid of every workspace, or a filmstrip with the current workspace centered. Scrolling layouts always use their own tape view.",
+      "description": "A grid of every workspace, a filmstrip with the current workspace centered, or a scroll: the filmstrip as frames of the panorama wallpaper. Scrolling layouts always use their own tape view.",
       "x-settings": {
         "category": "overview",
         "section": "layout",
@@ -28,11 +28,13 @@
       },
       "enum": [
         "grid",
-        "strip"
+        "strip",
+        "scroll"
       ],
       "x-enumLabels": {
         "grid": "Grid",
-        "strip": "Filmstrip"
+        "strip": "Filmstrip",
+        "scroll": "Scroll"
       }
     },
     "rows": {
@@ -51,8 +53,16 @@
           "not": {
             "all": [
               {
-                "key": "overview.style",
-                "equals": "strip"
+                "any": [
+                  {
+                    "key": "overview.style",
+                    "equals": "strip"
+                  },
+                  {
+                    "key": "overview.style",
+                    "equals": "scroll"
+                  }
+                ]
               },
               {
                 "key": "compositor.layout",
@@ -65,8 +75,16 @@
           "not": {
             "all": [
               {
-                "key": "overview.style",
-                "equals": "strip"
+                "any": [
+                  {
+                    "key": "overview.style",
+                    "equals": "strip"
+                  },
+                  {
+                    "key": "overview.style",
+                    "equals": "scroll"
+                  }
+                ]
               },
               {
                 "key": "compositor.layout",

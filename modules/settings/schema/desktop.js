@@ -165,6 +165,13 @@ var category = {
                     "keywords": "widgets desktop show hide"
                 },
                 {
+                    "key": "desktop.depthLayering",
+                    "type": "toggle",
+                    "label": "prefs.desktop.depth_layering",
+                    "description": "prefs.desktop.depth_layering.desc",
+                    "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
+                },
+                {
                     "key": "desktop.widgets",
                     "type": "custom",
                     "component": "DesktopWidgetsEditor",

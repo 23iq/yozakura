@@ -4822,6 +4822,58 @@
           },
           "x-local": true
         },
+        "wallpaperMode": {
+          "title": "Wallpaper mode",
+          "type": "string",
+          "default": "fill",
+          "description": "Fill crops a still image to the screen. Panorama scales it to the screen height: each workspace is a frame of one wide image and the view glides between them.",
+          "x-settings": {
+            "category": "wallpapers",
+            "section": "panorama",
+            "label": "prefs.wall.mode",
+            "control": "selector",
+            "preview": "PanoramaPreview",
+            "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
+          },
+          "enum": [
+            "fill",
+            "panorama"
+          ],
+          "x-enumLabels": {
+            "fill": "Fill",
+            "panorama": "Panorama"
+          }
+        },
+        "panoramaParallax": {
+          "title": "Parallax",
+          "type": "boolean",
+          "default": true,
+          "description": "Near parts of the image run ahead while the panorama pans. Uses a <name>.depth.png next to the image (white = near) or the depth clock's subject cut-out.",
+          "x-settings": {
+            "category": "wallpapers",
+            "section": "panorama",
+            "label": "prefs.wall.parallax",
+            "control": "toggle",
+            "keywords": "parallax depth layers map near far 3d",
+            "visibleWhen": {
+              "key": "desktop.wallpaperMode",
+              "equals": "panorama"
+            }
+          }
+        },
+        "depthLayering": {
+          "title": "Depth layering",
+          "type": "boolean",
+          "default": false,
+          "description": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
+          "x-settings": {
+            "category": "desktop",
+            "section": "widgets",
+            "label": "prefs.desktop.depth_layering",
+            "control": "toggle",
+            "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
+          }
+        },
         "depthClock": {
           "title": "Depth clock",
           "type": "boolean",
@@ -7616,7 +7668,7 @@
           "title": "Overview style",
           "type": "string",
           "default": "grid",
-          "description": "A grid of every workspace, or a filmstrip with the current workspace centered. Scrolling layouts always use their own tape view.",
+          "description": "A grid of every workspace, a filmstrip with the current workspace centered, or a scroll: the filmstrip as frames of the panorama wallpaper. Scrolling layouts always use their own tape view.",
           "x-settings": {
             "category": "overview",
             "section": "layout",
@@ -7634,11 +7686,13 @@
           },
           "enum": [
             "grid",
-            "strip"
+            "strip",
+            "scroll"
           ],
           "x-enumLabels": {
             "grid": "Grid",
-            "strip": "Filmstrip"
+            "strip": "Filmstrip",
+            "scroll": "Scroll"
           }
         },
         "rows": {
@@ -7657,8 +7711,16 @@
               "not": {
                 "all": [
                   {
-                    "key": "overview.style",
-                    "equals": "strip"
+                    "any": [
+                      {
+                        "key": "overview.style",
+                        "equals": "strip"
+                      },
+                      {
+                        "key": "overview.style",
+                        "equals": "scroll"
+                      }
+                    ]
                   },
                   {
                     "key": "compositor.layout",
@@ -7671,8 +7733,16 @@
               "not": {
                 "all": [
                   {
-                    "key": "overview.style",
-                    "equals": "strip"
+                    "any": [
+                      {
+                        "key": "overview.style",
+                        "equals": "strip"
+                      },
+                      {
+                        "key": "overview.style",
+                        "equals": "scroll"
+                      }
+                    ]
                   },
                   {
                     "key": "compositor.layout",

@@ -3623,7 +3623,7 @@
   "prefs.dock.launch_bounce.desc": "Bounce an app icon while the app is starting.",
   "prefs.overview.section.layout": "Overview layout",
   "prefs.overview.style": "Overview style",
-  "prefs.overview.style.desc": "A grid of every workspace, or a filmstrip with the current workspace centered. Scrolling layouts always use their own tape view.",
+  "prefs.overview.style.desc": "A grid of every workspace, a filmstrip with the current workspace centered, or a scroll: the filmstrip as frames of the panorama wallpaper. Scrolling layouts always use their own tape view.",
   "prefs.overview.rows": "Workspace rows",
   "prefs.overview.rows.desc": "Rows of workspaces in the overview grid. The filmstrip always has one row.",
   "prefs.overview.columns": "Workspace columns",
@@ -4093,5 +4093,15 @@
   "prefs.surfaces.lock.language": "The %1 style overrides this surface's %2; set Visual style to Classic to edit them.",
   "prefs.surfaces.lock.glass": "Glass is off: this surface is drawn opaque, so its opacity is ignored.",
   "prefs.compositor_only.note.one": "%1 setting is available only on %2",
-  "prefs.compositor_only.note.other": "%1 settings are available only on %2"
+  "prefs.compositor_only.note.other": "%1 settings are available only on %2",
+  "settings.shell.overview_style_scroll": "Scroll",
+  "prefs.desktop.depth_layering": "Depth layering",
+  "prefs.desktop.depth_layering.desc": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
+  "prefs.wall.section.panorama": "Panorama",
+  "prefs.wall.mode": "Wallpaper mode",
+  "prefs.wall.mode.desc": "Fill crops a still image to the screen. Panorama scales it to the screen height: each workspace is a frame of one wide image and the view glides between them.",
+  "prefs.wall.mode.fill": "Fill",
+  "prefs.wall.mode.panorama": "Panorama",
+  "prefs.wall.parallax": "Parallax",
+  "prefs.wall.parallax.desc": "Near parts of the image run ahead while the panorama pans. Uses a <name>.depth.png next to the image (white = near) or the depth clock's subject cut-out."
 }

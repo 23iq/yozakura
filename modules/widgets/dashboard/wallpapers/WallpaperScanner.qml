@@ -181,9 +181,10 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const m = scanner.manager;
-                var files = text.trim().split("\n").filter(function (f) {
-                    return f.length > 0;
-                });
+                var scan = WallpaperFolders.splitScan(text.trim().split("\n"));
+                var files = scan.wallpapers;
+                if (JSON.stringify(scan.depthMaps) !== JSON.stringify(m.depthMaps))
+                    m.depthMaps = scan.depthMaps;
                 if (files.length === 0) {
                     console.log("No wallpapers found in main directory, using fallback");
                     m.usingFallback = true;
@@ -191,7 +192,7 @@ Scope {
                 } else {
                     m.usingFallback = false;
                     // Only update if the list has actually changed
-                    var newFiles = files.sort();
+                    var newFiles = files;
                     var listChanged = JSON.stringify(newFiles) !== JSON.stringify(m.wallpaperPaths);
                     if (listChanged) {
                         console.log("Wallpaper directory updated. Found", newFiles.length, "images");
@@ -232,14 +233,12 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const m = scanner.manager;
-                var files = text.trim().split("\n").filter(function (f) {
-                    return f.length > 0;
-                });
+                var files = WallpaperFolders.splitScan(text.trim().split("\n")).wallpapers;
                 console.log("Using fallback wallpapers. Found", files.length, "images");
 
                 // Only use fallback if we don't already have main wallpapers loaded
                 if (m.usingFallback) {
-                    m.wallpaperPaths = files.sort();
+                    m.wallpaperPaths = files;
 
                     // Initialize fallback wallpaper selection
                     if (m.wallpaperPaths.length > 0)
