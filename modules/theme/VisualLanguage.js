@@ -111,8 +111,10 @@ function apply(lang, variant, cfg) {
 //             controls become a solid accent fill with the on-accent glyph
 //   window    the background of an app window (settings): null keeps the
 //             theme's "bg" surface; glass is a translucent frosted fill
-//   light     theme.lighting (Lighting.qml): `edge` = strength of the lit
-//             top edge of shell surfaces (0: the language draws no edges),
+//   light     theme.lighting (Lighting.qml, LitSurface): `edge` = alpha of
+//             the 1 px lit edge of shell surfaces (ink: a faint hairline),
+//             `wash` = alpha of the sun wash over the background (0: none),
+//             `dim` = how much darker surfaces get at night,
 //             `lantern` = peak alpha of the cursor lantern glow
 var KIT = {
     "ink": {
@@ -121,7 +123,7 @@ var KIT = {
         control: { fill: "overBackground", rest: 0, hoverFill: "overBackground", hover: 0.08, edge: 0, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
         float: null,
         window: null,
-        light: { edge: 0, lantern: 0.09 }
+        light: { edge: 0.3, wash: 0, dim: 0.12, lantern: 0.26 }
     },
     "glass": {
         group: { fill: "surface", fillOpacity: 0.4, outline: 0.10, highlight: 0.2, radius: "card", padding: "m", gap: "m", inset: "m", divider: false },
@@ -129,7 +131,7 @@ var KIT = {
         control: { fill: "overBackground", rest: 0.07, hoverFill: "overBackground", hover: 0.14, edge: 0.12, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
         float: { fill: "surface", fillOpacity: 0.62, outline: 0.18, highlight: 0.28 },
         window: { fill: "surface", fillOpacity: 0.72 },
-        light: { edge: 0.34, lantern: 0.12 }
+        light: { edge: 0.8, wash: 0.36, dim: 0.18, lantern: 0.34 }
     },
     "tiles": {
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
@@ -137,7 +139,7 @@ var KIT = {
         control: { fill: "surfaceContainerHigh", rest: 1, hoverFill: "surfaceContainerHighest", hover: 1, edge: 0, shape: "square", weight: 500, activeWeight: 600, solidActive: true },
         float: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0 },
         window: null,
-        light: { edge: 0.12, lantern: 0.09 }
+        light: { edge: 0.5, wash: 0.3, dim: 0.18, lantern: 0.3 }
     },
     "classic": {
         group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "l", divider: false },
@@ -145,7 +147,7 @@ var KIT = {
         control: null,
         float: null,
         window: null,
-        light: { edge: 0.14, lantern: 0.1 }
+        light: { edge: 0.55, wash: 0.3, dim: 0.16, lantern: 0.3 }
     }
 };
 

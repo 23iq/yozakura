@@ -48,7 +48,8 @@ h = env.h
 win = env.load(SCENE)
 surface = h.find(win, "surface")
 lantern = h.find(surface, "lantern")
-assert lantern is not None
+lit = h.find(surface, "lit")
+assert lantern is not None and lit is not None
 
 # Off (default): the theme shadow exactly, no clock, no lantern
 assert h.eval(win, "Lighting.mode") == "off"
@@ -58,6 +59,7 @@ assert h.eval(win, "Lighting.shadowColor === Qt.color(Config.resolveColor(Config
 assert h.eval(win, "Lighting.edgeStrength") == 0 and h.eval(win, "Lighting.edgeCenter") == 0.5
 assert h.eval(win, "Lighting.clock.running") is False
 assert lantern.property("active") is False
+assert lit.property("active") is False
 
 # Fixed: light from the top-left, shadow down-right, lit edge on the left
 h.eval(win, "setLighting('fixed', 'off', 0)")
@@ -70,6 +72,24 @@ h.eval(win, f"setLighting('sun', 'off', {MORNING})")
 assert h.eval(win, "Lighting.shadowXOffset") >= 8, h.eval(win, "Lighting.shadowXOffset")
 assert h.eval(win, "Lighting.warmth") > 0.5
 assert h.eval(win, "Lighting.night") is False
+# Lit surface: warm wash from the left, lit left edge
+assert lit.property("active") is True
+assert h.eval(win, "Lighting.washStrength") > 0.1 and h.eval(win, "Lighting.edgeSide") < -0.5
+side = h.find(surface, "litSide")
+assert side is not None and side.property("visible") is True
+normal_x = h.eval(win, "Lighting.shadowXOffset")
+h.eval(win, "Config.theme.lighting = Object.assign({}, Config.theme.lighting, { strength: 'dramatic' })")
+assert h.eval(win, "Lighting.shadowXOffset") > normal_x
+h.eval(win, "Config.theme.lighting = Object.assign({}, Config.theme.lighting, { strength: 'subtle' })")
+assert h.eval(win, "Lighting.shadowXOffset") < normal_x
+h.eval(win, "Config.theme.lighting = Object.assign({}, Config.theme.lighting, { strength: 'normal' })")
+
+# Night: shadow almost gone, cool, surfaces dimmed
+NIGHT = 1793480400000  # 2026-10-31T21:00:00Z
+h.eval(win, f"setLighting('sun', 'off', {NIGHT})")
+assert h.eval(win, "Lighting.night") is True
+assert h.eval(win, "Lighting.shadowOpacity") < 0.15
+assert h.eval(win, "Lighting.warmth") < 0 and h.eval(win, "Lighting.dimStrength") > 0
 
 # Lantern: always on, follows the pointer even over a hover-taking child
 h.eval(win, "setLighting('sun', 'always', 0)")
@@ -87,6 +107,7 @@ assert glow.property("opacity") > 0.9
 
 h.eval(win, "setLighting('off', 'off', 0)")
 assert lantern.property("active") is False
+assert lit.property("active") is False
 
 print("lighting: ok")
 h.exit(0)

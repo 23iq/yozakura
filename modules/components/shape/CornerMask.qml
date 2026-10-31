@@ -25,7 +25,10 @@ Item {
     readonly property real blurMax: 32
 
     // The theme drop shadow (Shadow.qml values), analytic: a MultiEffect
-    // downstream of the mask would resample the layer texture.
+    // downstream of the mask would resample the layer texture. It is drawn
+    // outside the item (not clipped by the mask, so lit shadows keep their
+    // full length), but as a rounded rect: at a cut or tab corner it follows
+    // the radius, not the cut.
     Loader {
         anchors.fill: parent
         active: root.shadow
