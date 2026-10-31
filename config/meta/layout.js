@@ -95,8 +95,8 @@ var keys = {
         "description": "Screen edge of the OSD; auto is opposite the bar."
     },
     "osd.style": {
-        "enum": ["pill", "edge", "island", "bar-inline"],
-        "description": "OSD look: pill, a slim bar on the screen edge, inside the notch island, or inline in the bar."
+        "enum": ["pill", "edge", "island", "bar-inline", "gauge"],
+        "description": "OSD look: pill, a slim bar on the screen edge, inside the notch island, inline in the bar, or a gauge (a needle dial instrument)."
     },
     "osd.timeout": {
         "min": 800,

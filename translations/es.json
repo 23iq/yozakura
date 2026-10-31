@@ -483,6 +483,7 @@
   "prefs.osd.style.edge": "Barra en el borde",
   "prefs.osd.style.island": "Isla",
   "prefs.osd.style.bar_inline": "En la barra",
+  "prefs.osd.style.gauge": "Indicador de aguja",
   "prefs.osd.position": "Borde",
   "prefs.osd.position.desc": "Borde de pantalla del indicador; Auto elige el borde opuesto a la barra (el estilo isla sigue el borde del notch).",
   "prefs.osd.position.auto": "Auto",

@@ -10,7 +10,7 @@ const env = (bar) => ({ screen: { w: 1920, h: 1080 }, frame: 0,
     notch: { pos: 'top', height: 36, visible: true } });
 
 test('registry lists the four styles, each with a file', () => {
-    assert.deepEqual([...S.STYLES], ['pill', 'edge', 'island', 'bar-inline']);
+    assert.deepEqual([...S.STYLES], ['pill', 'edge', 'island', 'bar-inline', 'gauge']);
     for (const s of S.STYLES) assert.match(S.fileFor(s), /^styles\/Osd[A-Za-z]+\.qml$/);
 });
 test('unknown style falls back to pill', () => {
@@ -28,7 +28,7 @@ test('island hides the window only when the notch handles it', () => {
     assert.equal(S.resolve('pill', {}).window, true);
 });
 test('every style on every bar edge stays on screen and off the bar', () => {
-    for (const style of ['pill', 'edge', 'island']) for (const bar of EDGES) for (const pref of ['auto', ...EDGES]) {
+    for (const style of ['pill', 'edge', 'island', 'gauge']) for (const bar of EDGES) for (const pref of ['auto', ...EDGES]) {
         const e = env(bar);
         const edge = S.edgePref(style, pref, 'top');
         const probe = E.osdPlacement(e, edge, { w: 10, h: 10 });
@@ -45,6 +45,15 @@ test('edge and pill styles stand upright on side edges and lie flat on top/botto
         const v = S.sizeFor(style, true, 220), h = S.sizeFor(style, false, 220);
         assert.ok(v.h > v.w && h.w > h.h, style);
     }
+});
+const plainObj = v => JSON.parse(JSON.stringify(v));
+test('gauge is an upright instrument on every edge', () => {
+    assert.equal(S.fileFor('gauge'), 'styles/OsdGauge.qml');
+    for (const vertical of [true, false]) {
+        const s = S.sizeFor('gauge', vertical, 220);
+        assert.ok(s.w > 100 && Math.abs(s.w - s.h) < s.w * 0.1, JSON.stringify(s));
+    }
+    assert.deepEqual(plainObj(S.resolve('gauge', {})), { style: 'gauge', window: true });
 });
 test('island follows the notch edge when auto', () => {
     assert.equal(S.edgePref('island', 'auto', 'bottom'), 'bottom');

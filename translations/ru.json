@@ -483,6 +483,7 @@
   "prefs.osd.style.edge": "Полоса у края",
   "prefs.osd.style.island": "Остров",
   "prefs.osd.style.bar_inline": "В панели",
+  "prefs.osd.style.gauge": "Стрелочный прибор",
   "prefs.osd.position": "Край",
   "prefs.osd.position.desc": "Край экрана для индикатора; Авто выбирает край напротив панели (стиль «остров» следует краю нотча).",
   "prefs.osd.position.auto": "Авто",

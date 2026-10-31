@@ -6376,19 +6376,22 @@
                 "section": "osd",
                 "label": "prefs.osd.style",
                 "control": "selector",
-                "keywords": "osd volume brightness on screen display pill island bar edge indicator"
+                "preview": "OsdPreview",
+                "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
               },
               "enum": [
                 "pill",
                 "edge",
                 "island",
-                "bar-inline"
+                "bar-inline",
+                "gauge"
               ],
               "x-enumLabels": {
                 "pill": "Pill",
                 "edge": "Edge bar",
                 "island": "Island",
-                "bar-inline": "In the bar"
+                "bar-inline": "In the bar",
+                "gauge": "Gauge"
               }
             },
             "timeout": {

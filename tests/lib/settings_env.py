@@ -209,6 +209,8 @@ MIRROR = [
     "modules/theme/BarMetrics.qml",
     "modules/shell/EdgeService.qml",
     "modules/shell/EdgeLayout.js",
+    # OSD page: the style preview loads the real OSD styles
+    "modules/shell/osd",
     "modules/shell/LayoutModel.js",
     "modules/services/ShellLayout.qml",
     "modules/notifications/NotificationPolicy.js",
@@ -679,11 +681,13 @@ class SettingsEnv:
         self.h.module("qs.modules.bar.panels", {
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
         from lockscreen_env import SERVICES as LOCK_SERVICES  # (lockscreen_env imports this module)
+        from osd_env import AUDIO_STUB, OSD_SERVICE_STUB  # (same)
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB,
+                                              "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -714,7 +718,8 @@ class SettingsEnv:
                   "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
                   "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
-                  "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces"]:
+                  "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces",
+                  "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

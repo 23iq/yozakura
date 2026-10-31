@@ -4,7 +4,7 @@
     tools/render/osd_render.py [--out DIR] [--mode dark|light]
                                [--languages ink,glass,tiles] [STYLE ...]
 
-Draws each style of modules/shell/osd/styles (pill, edge, island,
+Draws each style of modules/shell/osd/styles (pill, edge, island, gauge,
 bar-inline) in the states volume / brightness / muted / device switch, once
 per visual language, over your wallpaper with your real config and palette
 (see settings_render.py). The edge and pill styles show their vertical (left/right
@@ -25,7 +25,7 @@ from kit_env import LANGUAGES  # noqa: E402
 from osd_env import OsdEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-STYLES = ["pill", "edge", "island", "bar-inline"]
+STYLES = ["pill", "edge", "island", "bar-inline", "gauge"]
 # name -> (kind, value, muted, device)
 STATES = [
     ("volume", 0.62, False, ""),
@@ -39,6 +39,7 @@ CELL = {
     "pill": "OsdPill { vertical: %s; width: implicitWidth; height: implicitHeight; %s }",
     "edge": "OsdEdge { vertical: %s; width: implicitWidth; height: implicitHeight; %s }",
     "island": "OsdIsland { width: implicitWidth; height: implicitHeight; %s }",
+    "gauge": "OsdGauge { width: implicitWidth; height: implicitHeight; %s }",
     # The bar's controls button, grown by the inline OSD (ControlsButton).
     "bar-inline": """StyledRect {
         variant: "bg"
