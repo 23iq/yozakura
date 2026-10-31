@@ -27,6 +27,7 @@ h.singleton("qs.config", "Config", """QtObject {
         property QtObject dashboard: QtObject { property string host: "sheet" }
         property QtObject sheet: QtObject { property string side: "auto" }
         property QtObject cheatsheet: QtObject { property string host: "sheet" }
+        property QtObject aiquick: QtObject { property string host: "auto" }
     }
     property QtObject bar: QtObject { property string position: "top"; property bool frameEnabled: false }
     property QtObject dock: QtObject { property string position: "bottom"; property int height: 64; property bool enabled: true }
@@ -296,5 +297,18 @@ assert ev(c, "pushes") == pushes + 1, "auto power menu not pushed onto the notch
 h.eval(root, 'Visibilities.getForScreen("A").powermenu = false')
 pump(20)
 assert ev(c, "stackView.depth") == 1, "power menu not popped"
+# A quick ask open on the notch, rerouted to the card while open: popped,
+# and closing it later pops nothing it does not own
+h.eval(root, 'Visibilities.getForScreen("A").aiquick = true')
+pump(20)
+assert ev(c, "stackView.depth") == 2, "quick ask not pushed onto the notch"
+h.eval(root, 'Config.layout.aiquick.host = "card"')
+pump(20)
+assert ev(root, 'HostRouter.hostFor("aiquick")') == "card"
+assert ev(c, "stackView.depth") == 1, "rerouted quick ask left on the notch stack"
+h.eval(root, 'Visibilities.getForScreen("A").aiquick = false')
+pump(20)
+assert ev(c, "stackView.depth") == 1
+h.eval(root, 'Config.layout.aiquick.host = "auto"')
 print("hosts: ok")
 h.exit(0)

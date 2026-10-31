@@ -9,9 +9,9 @@ import qs.modules.aicenter.quickask
 // The notch's menu views: power menu, tools and AI quick ask. Each view is
 // created on first use and kept; while its Visibilities flag is set and
 // HostRouter routes it to the notch it is pushed onto the notch stack, and
-// popped when the flag clears. Routed elsewhere (another
-// layout.powermenu/tools.style, or the notch disabled) the notch never
-// takes it: the menu overlay shows it (modules/widgets/menus).
+// popped when the flag clears or it is routed away while open. Routed
+// elsewhere (another layout.powermenu/tools.style or layout.aiquick.host)
+// the notch never takes it: the menu overlay or the card shows it.
 Item {
     id: root
 
@@ -20,17 +20,23 @@ Item {
     // The Notch: pushView(), stackView, isShowingDefault, isShowingNotifications
     required property var container
 
+    // The module whose view this pushed onto the notch stack ("" = none)
+    property string shown: ""
+
     function loaderOf(module: string): Loader {
         return module === "powermenu" ? powerMenu : module === "tools" ? toolsMenu : quickAsk;
     }
 
     function sync(module: string) {
-        if (!root.vis || !root.container || HostRouter.hostFor(module) !== "notch")
+        if (!root.vis || !root.container)
             return;
-        if (root.vis[module])
+        if (root.vis[module] && HostRouter.hostFor(module) === "notch") {
+            root.shown = module;
             root.push(root.loaderOf(module));
-        else
+        } else if (root.shown === module) {
+            root.shown = "";
             root.pop();
+        }
     }
 
     function push(loader: Loader) {
@@ -53,6 +59,21 @@ Item {
         root.container.stackView.pop();
         root.container.isShowingDefault = true;
         root.container.isShowingNotifications = false;
+    }
+
+    // Routed away while open (the host changed under it)
+    Connections {
+        target: HostRouter
+
+        function onPowermenuStyleChanged() {
+            root.sync("powermenu");
+        }
+        function onToolsStyleChanged() {
+            root.sync("tools");
+        }
+        function onAiquickHostChanged() {
+            root.sync("aiquick");
+        }
     }
 
     Connections {
