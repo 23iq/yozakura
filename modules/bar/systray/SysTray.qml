@@ -26,7 +26,7 @@ Item {
     readonly property int iconSize: Math.round(BarLook.iconSize(root.moduleSize) * 1.1)
 
     // Orientación derivada de la barra
-    property bool vertical: bar.orientation === "vertical"
+    property bool vertical: bar ? bar.orientation === "vertical" : false
 
     readonly property var allItems: SystemTray.items?.values ?? []
     readonly property var hiddenIds: StateService.systrayHidden
@@ -49,7 +49,7 @@ Item {
     // The caret points to where the overflow popup opens, per bar side;
     // the chevron rotates while the popup is open
     readonly property string chevronIcon: {
-        switch (bar.barPosition) {
+        switch (bar ? bar.barPosition : "top") {
         case "bottom":
             return Icons.caretUp;
         case "left":

@@ -24,7 +24,7 @@ Item {
     readonly property real length: vertical ? height : width
     // A disabled notch (notch.enabled) leaves no middle gap
     readonly property bool notchHere: !!barRoot && !vertical && barRoot.notchPosition === barRoot.barPosition && Visibilities.hasNotch(barRoot.screen.name)
-    readonly property real notchWidth: notchHere ? Visibilities.notchRect(barRoot.screen.name).width : 0
+    readonly property real notchWidth: notchHere && barRoot && barRoot.screen ? Visibilities.notchRect(barRoot.screen.name).width : 0
     readonly property real notchFillet: Config.roundness > 0 ? Config.roundness + 4 : 0
     readonly property real middleHalf: Math.max(centerLength / 2, notchHere ? notchWidth / 2 + notchFillet : 0)
     readonly property real spacing: 12

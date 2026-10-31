@@ -19,8 +19,8 @@ Item {
     id: workspacesWidget
     required property var bar
     required property string orientation
-    readonly property var monitor: YozdService.monitorFor(bar.screen)
-    readonly property string specialWorkspaceName: Config.workspaces.showSpecialWorkspace ? (CompositorData.specialWorkspaceNames[bar.screen.name] || "") : ""
+    readonly property var monitor: (bar && bar.screen ? YozdService.monitorFor(bar.screen) : null)
+    readonly property string specialWorkspaceName: Config.workspaces.showSpecialWorkspace ? (CompositorData.specialWorkspaceNames[bar && bar.screen ? bar.screen.name : ""] || "") : ""
     readonly property bool specialWorkspaceActive: specialWorkspaceName.length > 0
     // A configured special (modules/specials) shows its own name and icon.
     readonly property var specialItem: specialWorkspaceActive && Config.specials.enabled ? Specials.byHyprName(Config.specials.workspaces, specialWorkspaceName) : null

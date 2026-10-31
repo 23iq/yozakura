@@ -16,7 +16,7 @@ Item {
     property real innerRadius: 0
     property bool enableShadow: true
 
-    readonly property bool vertical: barRoot.orientation === "vertical"
+    readonly property bool vertical: barRoot ? barRoot.orientation === "vertical" : false
     readonly property bool hasModules: ids.length > 0
     // Same timing as the notch's media hover expansion
     readonly property int animationDuration: Math.min(Config.animDuration, Math.max(0, Config.notch.mediaAnimationDuration))

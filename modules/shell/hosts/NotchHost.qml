@@ -10,7 +10,7 @@ QtObject {
     property Item view: null
     property bool isOpen: false
 
-    signal closed
+    signal hostClosed
     signal requestClose
 
     function open(v, scr) {
@@ -39,7 +39,7 @@ QtObject {
         }
         if (root.isOpen) {
             root.isOpen = false;
-            root.closed();
+            root.hostClosed();
         }
     }
 }

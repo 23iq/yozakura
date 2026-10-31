@@ -27,7 +27,7 @@ Singleton {
     }
 
     function usesBundled(text) {
-        return !Config.workspaces.numeralFont && !!bundledEntry && bundledFont.status === FontLoader.Ready && Numerals.covers(bundledEntry.coverage, text);
+        return !Config.workspaces.numeralFont && !!bundledEntry && !!bundledFont.item && bundledFont.item.status === FontLoader.Ready && Numerals.covers(bundledEntry.coverage, text);
     }
 
     function family(text) {
@@ -37,7 +37,7 @@ Singleton {
         if (!fontSpec)
             return Config.theme.font;
         if (usesBundled(text))
-            return bundledFont.name;
+            return bundledFont.item.name;
         if (probe && probe.systemFamily)
             return probe.systemFamily;
         return Config.theme.font;
@@ -67,9 +67,16 @@ Singleton {
     onNumeralSystemChanged: runProbe()
     Component.onCompleted: runProbe()
 
-    FontLoader {
+    // Only while a bundled file was found: a FontLoader with an empty source
+    // still tries to load it ("Cannot load font").
+    Instantiator {
         id: bundledFont
-        source: root.bundledEntry ? "file://" + root.probe.bundledFile : ""
+        readonly property FontLoader item: object as FontLoader
+        model: root.bundledEntry ? [root.probe.bundledFile] : []
+        delegate: FontLoader {
+            required property string modelData
+            source: "file://" + modelData
+        }
     }
 
     Process {
