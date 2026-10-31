@@ -1422,6 +1422,7 @@
   "prefs.windows.section.blur": "Размытие",
   "prefs.windows.glass_link": "Степень стекла",
   "prefs.windows.glass_link.desc": "Размытие окон работает только при включённом Glass; его сила и прозрачность окон масштабируются величиной Glass (значения ниже - опорные при собственной величине пресета).",
+  "prefs.windows.needs_glass": "Нужен включённый эффект Glass",
   "prefs.windows.glass_link.open": "Открыть «Стекло»",
   "prefs.windows.blur": "Размытие под окнами",
   "prefs.windows.blur.desc": "Матовое размытие под полупрозрачными окнами и панелями оболочки.",

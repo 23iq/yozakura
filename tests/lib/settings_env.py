@@ -370,6 +370,7 @@ QtObject {{
     property var saved: []
     property bool keybindsInitialLoadComplete: true
     property bool specialsReady: true
+    property bool keyboardReady: true
     property int autoSaveHolds: 0
     property bool stagedPause: false
     property bool pauseAutoSave: autoSaveHolds > 0 || stagedPause
@@ -494,7 +495,7 @@ QtObject {{
 
 QUICKSHELL = {
     "Singleton": "QtObject { default property list<QtObject> data }",
-    "Quickshell": "pragma Singleton\nQtObject { property var screens: []; function env(n) { return n === 'HOME' ? '/home/user' : '' } "
+    "Quickshell": "pragma Singleton\nQtObject { property var screens: []; property string shellDir: '/nonexistent/yozakura'; function env(n) { return n === 'HOME' ? '/home/user' : '' } "
                   "property var detached: []; function execDetached(a) { detached.push(a) } "
                   "function iconPath(n, f) { return '' } }",
     # Installed apps (special workspaces app picker): looked up by id.
@@ -552,8 +553,21 @@ QtObject {
     property var active: ({ "name": "", "index": 0, "code": "", "short": "" })
     readonly property string shortLabel: active.short
     readonly property bool indicatorVisible: false
+    property bool managed: true
+    property var current: null
+    property bool known: true
+    property bool unreadable: false
+    property bool readFailed: false
+    property string readError: ""
+    property string applyError: ""
+    property var effective: ({ "layouts": [], "switchBind": "none", "options": [], "repeatRate": 25, "repeatDelay": 600 })
     function loadCatalog() {}
     function next() {}
+    function refreshCurrent() {}
+    function retryRead() {}
+    function edit(patch) {}
+    function takeOver() {}
+    function apply() {}
 }"""
 # Displays page (modules/settings/displays): idle stand-in; tests/lib/displays_env.py swaps in the real one.
 DISPLAYS_STUB = """pragma Singleton
@@ -563,6 +577,9 @@ QtObject {
     property bool pending: false
     property var identified: []
     property var conflicts: []
+    property var moveSkipped: []
+    property bool applying: false
+    property var notice: ({ "kind": "", "message": "" })
     signal applyFailed(string message)
     function refresh() {}
     function currentConfigs() { return [] }
@@ -619,11 +636,64 @@ QtObject {
     function refreshStatus() {}
     function previewOf(id, engine) { return undefined }
     function ensure(id, engine) {}
+    function ensureEngine(engine) {}
     function invalidate() {}
     function choose(id) {}
     function installEngine(engine) {}
     function makeFishDefault() {}
     function apply() {}
+}"""
+# Mods page (modules/settings/mods): idle stand-in; tests/mods-ui.test.py swaps in a recording one.
+MODS_STUB = """pragma Singleton
+QtObject {
+    property var mods: []
+    property string baseVersion: ""
+    property string baseRevision: ""
+    property string activeGeneration: ""
+    property string previousGeneration: ""
+    property bool generationCurrent: true
+    property string generationError: ""
+    property bool busy: false
+    property bool loaded: true
+    property bool restartRequired: false
+    property bool bypassVersionCheck: false
+    property bool modsEnabled: true
+    property string errorMessage: ""
+    property string statusMessage: ""
+    property string statusMessageKey: ""
+    property var settingsFields: []
+    property var settingsValues: ({})
+    property bool settingsBusy: false
+    signal settingChanged(string modId, string key, var value)
+    signal installed(string source)
+    function refresh() {}
+    function install(source) {}
+    function installDependencies(id) {}
+    function setEnabled(id, enabled) {}
+    function update(id, enabled) {}
+    function remove(id, enabled) {}
+    function move(id, direction) {}
+    function moveTo(id, position) {}
+    function rebuild() {}
+    function setBypassVersionCheck(enabled) {}
+    function setModsEnabled(enabled) {}
+    function rollback() {}
+    function loadSettings(id) {}
+    function setSetting(id, key, value) {}
+    function restart() {}
+}"""
+# Usage ledger of the AI usage editor (modules/settings/editors/AiUsageData).
+USAGE_STUB = """pragma Singleton
+QtObject {
+    property var info: ({ "ledgerDir": "" })
+    property string pricesError: ""
+    function start() {}
+    function refreshInfo() {}
+}"""
+# About page "Welcome tour" button.
+ONBOARDING_STUB = """pragma Singleton
+QtObject {
+    function open() {}
 }"""
 # Exclusive mode card (modules/settings/system): idle stand-in; tests/lib/exclusive_env.py swaps in the real one.
 EXCLUSIVE_STUB = """pragma Singleton
@@ -690,7 +760,8 @@ class SettingsEnv:
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
-                                              "TerminalLookService": TERMINAL_LOOK_STUB,
+                                              "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
+                                              "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),

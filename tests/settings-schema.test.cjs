@@ -202,3 +202,54 @@ test('migrated system categories replace their legacy panels', () => {
         assert.notEqual(c.legacy && c.legacy.source, 'dashboard/controls/SystemPanel.qml', c.id);
     assert.equal(fs.existsSync(path.join(repo, 'modules/widgets/dashboard/controls/SystemPanel.qml')), false);
 });
+
+test('text entries validate with the same pattern the catalog (CLI/MCP) enforces', () => {
+    const { metaFor } = require('../tools/schema/catalog.cjs');
+    const Meta = lib('config/meta/Meta.js');
+    const mismatches = [];
+    for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
+        if (entry.type !== 'text' || !entry.key) continue;
+        const [domain, ...rest] = entry.key.split('.');
+        const meta = Meta.domains[domain];
+        const m = meta && metaFor(meta.keys || {}, rest.join('.'));
+        const catalog = m && m.pattern;
+        if ((catalog || entry.pattern) && catalog !== entry.pattern)
+            mismatches.push(`${entry.key}: ui ${entry.pattern} vs catalog ${catalog}`);
+    }
+    assert.deepEqual(mismatches, []);
+});
+
+test('compositor-specific rows are tagged, dock effects follow dock.enabled', () => {
+    const byKey = {};
+    for (const { entry } of SchemaUtil.flatten(Categories.categories))
+        if (entry.key) byKey[entry.key] = entry;
+    const hyprOnly = ['smartGaps', 'borderAngle', 'inactiveBorderAngle', 'borderPulse.enabled',
+        'borderPulse.intensity', 'dimInactive', 'dimStrength', 'syncShadowColor', 'syncShadowOpacity'];
+    for (const k of hyprOnly)
+        assert.equal(byKey['compositor.' + k].compositor, 'hyprland', k);
+    for (const k of ['activeOpacity', 'inactiveOpacity'])
+        assert.deepEqual(plain(byKey['theme.glass.surfaces.windows.' + k].compositor), ['hyprland', 'mango'], k);
+    for (const k of ['magnification', 'magnificationScale', 'launchBounce'])
+        assert.match(JSON.stringify(byKey['dock.' + k].visibleWhen), /dock\.enabled/, k);
+});
+
+test('rows disabled by the Glass switch say why, in every language', () => {
+    let n = 0;
+    for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
+        if (!entry.key || !entry.key.startsWith('compositor.blur') || !entry.enabledWhen) continue;
+        if (entry.enabledWhen.key !== 'theme.glass.enabled') continue;
+        n++;
+        assert.equal(entry.disabledReason, 'prefs.windows.needs_glass', entry.key);
+    }
+    assert.ok(n >= 10, `${n} blur rows`);
+    for (const lang of ['en', 'es', 'ru'])
+        assert.ok(require(`../translations/${lang}.json`)['prefs.windows.needs_glass'], lang);
+});
+
+test('shadow offset falls back to "0 0" when malformed', () => {
+    const app = lib('modules/services/CompositorAppearance.js');
+    assert.equal(app.shadowOffset('2 -3'), '2 -3');
+    assert.equal(app.shadowOffset(' 1.5 2 '), '1.5 2');
+    for (const bad of ['', undefined, '2,3', 'a b', '1'])
+        assert.equal(app.shadowOffset(bad), '0 0');
+});

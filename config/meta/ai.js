@@ -120,6 +120,15 @@ var keys = {
     "lmstudio": {
         "description": "LM Studio (local OpenAI-compatible server)."
     },
+    "lmstudio.endpoint": {
+        "pattern": "^$|^https?://\\S+$"
+    },
+    "ollama.endpoint": {
+        "pattern": "^$|^https?://\\S+$"
+    },
+    "ollama.keepAlive": {
+        "pattern": "^$|^-?\\d+(\\.\\d+)?(ms|s|m|h)?$"
+    },
     "tasks": {
         "description": "Code space tasks: agents run prompts in git worktrees, a check verifies the result, the user reviews and accepts (backend svc/tasks)."
     },

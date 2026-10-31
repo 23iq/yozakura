@@ -13,6 +13,8 @@ FloatingWindow {
     // Window properties
     implicitWidth: 1180
     implicitHeight: 780
+    // Below this the page has no room for its cards and rows.
+    minimumSize: Qt.size(640, 480)
     title: "Yozakura Settings"
     visible: GlobalStates.settingsWindowVisible
 

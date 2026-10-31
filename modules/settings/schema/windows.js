@@ -67,6 +67,7 @@ var category = {
                 },
                 {
                     "key": "compositor.smartGaps",
+                    "compositor": "hyprland",
                     "type": "toggle",
                     "label": "prefs.windows.smart_gaps",
                     "description": "prefs.windows.smart_gaps.desc",
@@ -121,6 +122,7 @@ var category = {
                 },
                 {
                     "key": "compositor.borderAngle",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 360,
@@ -140,6 +142,7 @@ var category = {
                 },
                 {
                     "key": "compositor.inactiveBorderAngle",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 360,
@@ -151,6 +154,7 @@ var category = {
                 },
                 {
                     "key": "compositor.borderPulse.enabled",
+                    "compositor": "hyprland",
                     "type": "toggle",
                     "label": "prefs.windows.border_pulse",
                     "description": "prefs.windows.border_pulse.desc",
@@ -158,6 +162,7 @@ var category = {
                 },
                 {
                     "key": "compositor.borderPulse.intensity",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -178,6 +183,7 @@ var category = {
             "entries": [
                 {
                     "key": "compositor.dimInactive",
+                    "compositor": "hyprland",
                     "type": "toggle",
                     "label": "prefs.windows.dim_inactive",
                     "description": "prefs.windows.dim_inactive.desc",
@@ -185,6 +191,7 @@ var category = {
                 },
                 {
                     "key": "compositor.dimStrength",
+                    "compositor": "hyprland",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -229,6 +236,7 @@ var category = {
                 },
                 {
                     "key": "compositor.syncShadowColor",
+                    "compositor": "hyprland",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.shadowEnabled",
@@ -260,6 +268,7 @@ var category = {
                 },
                 {
                     "key": "compositor.syncShadowOpacity",
+                    "compositor": "hyprland",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.shadowEnabled",
@@ -346,6 +355,7 @@ var category = {
                     "key": "compositor.shadowOffset",
                     "compositor": "hyprland",
                     "type": "text",
+                    "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$",
                     "placeholder": "prefs.windows.shadow_offset.placeholder",
                     "monospace": true,
                     "visibleWhen": {
@@ -392,6 +402,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "label": "prefs.windows.blur",
                     "description": "prefs.windows.blur.desc",
@@ -404,6 +415,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 20,
@@ -423,6 +435,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 1,
                     "max": 10,
@@ -442,6 +455,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -461,6 +475,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -477,6 +492,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -501,6 +517,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 0.2,
@@ -520,6 +537,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -539,6 +557,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -558,6 +577,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -577,6 +597,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -593,6 +614,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -609,6 +631,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -625,6 +648,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -641,6 +665,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -668,6 +693,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -695,6 +721,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -711,6 +738,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,

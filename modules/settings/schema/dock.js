@@ -286,6 +286,7 @@ var category = {
                 {
                     "key": "dock.magnification",
                     "type": "toggle",
+                    "visibleWhen": ON,
                     "label": "prefs.dock.magnification",
                     "description": "prefs.dock.magnification.desc",
                     "keywords": "dock magnification zoom magnify icons hover macos"
@@ -298,8 +299,10 @@ var category = {
                     "step": 0.1,
                     "unit": "×",
                     "visibleWhen": {
-                        "key": "dock.magnification",
-                        "equals": true
+                        "all": [ON, {
+                                "key": "dock.magnification",
+                                "equals": true
+                            }]
                     },
                     "label": "prefs.dock.magnification_scale",
                     "description": "prefs.dock.magnification_scale.desc",
@@ -308,6 +311,7 @@ var category = {
                 {
                     "key": "dock.launchBounce",
                     "type": "toggle",
+                    "visibleWhen": ON,
                     "label": "prefs.dock.launch_bounce",
                     "description": "prefs.dock.launch_bounce.desc",
                     "keywords": "dock launch bounce animation opening app"

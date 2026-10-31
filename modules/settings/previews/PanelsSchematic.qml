@@ -31,8 +31,13 @@ Item {
             "left": 0,
             "right": 0
         };
-        for (let i = 0; i < panels.length; i++)
-            d[panels[i].edge] = Math.max(d[panels[i].edge], sketches[i].depth);
+        // sketches can lag panels for one evaluation: walk the shorter one
+        const n = Math.min(panels.length, sketches.length);
+        for (let i = 0; i < n; i++) {
+            const e = panels[i].edge;
+            if (e in d)
+                d[e] = Math.max(d[e], sketches[i].depth);
+        }
         return d;
     }
 
@@ -75,13 +80,14 @@ Item {
 
     // Panels
     Repeater {
-        model: root.panels.length
+        model: root.sketches
         delegate: Item {
             id: panel
             required property int index
-            readonly property var sk: root.sketches[index]
+            required property var modelData
+            readonly property var sk: modelData
             readonly property bool isSelected: index === root.selected
-            readonly property bool hidden: root.panels[index].autohide === "always"
+            readonly property bool hidden: (root.panels[index] ? root.panels[index].autohide : "") === "always"
             x: root.frame
             y: root.frame
             width: root.width - 2 * root.frame

@@ -1563,7 +1563,8 @@
                 "label": "prefs.ai.ollama_endpoint",
                 "control": "text",
                 "keywords": "ollama endpoint url host port server remote local"
-              }
+              },
+              "pattern": "^$|^https?://\\S+$"
             },
             "keepAlive": {
               "title": "Keep Ollama models loaded",
@@ -1576,7 +1577,8 @@
                 "label": "prefs.ai.ollama_keep_alive",
                 "control": "text",
                 "keywords": "ollama keep alive unload memory vram minutes"
-              }
+              },
+              "pattern": "^$|^-?\\d+(\\.\\d+)?(ms|s|m|h)?$"
             }
           },
           "additionalProperties": false
@@ -1597,7 +1599,8 @@
                 "label": "prefs.ai.lmstudio_endpoint",
                 "control": "text",
                 "keywords": "lm studio lmstudio endpoint url server port local"
-              }
+              },
+              "pattern": "^$|^https?://\\S+$"
             }
           },
           "additionalProperties": false
@@ -5765,7 +5768,11 @@
             "section": "effects",
             "label": "prefs.dock.magnification",
             "control": "toggle",
-            "keywords": "dock magnification zoom magnify icons hover macos"
+            "keywords": "dock magnification zoom magnify icons hover macos",
+            "visibleWhen": {
+              "key": "dock.enabled",
+              "equals": true
+            }
           }
         },
         "magnificationScale": {
@@ -5782,8 +5789,16 @@
             "unit": "×",
             "keywords": "dock magnification scale zoom amount size",
             "visibleWhen": {
-              "key": "dock.magnification",
-              "equals": true
+              "all": [
+                {
+                  "key": "dock.enabled",
+                  "equals": true
+                },
+                {
+                  "key": "dock.magnification",
+                  "equals": true
+                }
+              ]
             },
             "min": 1,
             "max": 2.5
@@ -5801,7 +5816,11 @@
             "section": "effects",
             "label": "prefs.dock.launch_bounce",
             "control": "toggle",
-            "keywords": "dock launch bounce animation opening app"
+            "keywords": "dock launch bounce animation opening app",
+            "visibleWhen": {
+              "key": "dock.enabled",
+              "equals": true
+            }
           }
         }
       },

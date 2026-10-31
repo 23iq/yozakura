@@ -48,6 +48,28 @@ test('catalog builds without errors and describes every key', () => {
     assert.strictEqual(bar.layout.properties.style['x-settings'].component, 'BarStyleCards');
 });
 
+test('a default outside the declared range is a declared sentinel (e.g. glass.amount -1)', () => {
+    const { files } = build(repo);
+    const combined = Object.values(files).find(f => f.$defs);
+    const bad = [];
+    const walk = (node, key) => {
+        if (node.type === 'object') {
+            for (const [k, v] of Object.entries(node.properties)) walk(v, `${key}.${k}`);
+            return;
+        }
+        if (typeof node.default !== 'number') return;
+        const outside = (node.minimum !== undefined && node.default < node.minimum) ||
+            (node.maximum !== undefined && node.default > node.maximum);
+        if (outside) bad.push(key);
+    };
+    for (const [d, def] of Object.entries(combined.$defs))
+        for (const [k, v] of Object.entries(def.properties)) walk(v, `${d}.${k}`);
+    assert.deepStrictEqual(bad, []);
+    const amount = combined.$defs.theme.properties.glass.properties.amount;
+    assert.deepStrictEqual(amount.anyOf[1].enum, [-1]);
+    assert.strictEqual(amount.default, -1);
+});
+
 test('generated files in assets/schema are up to date (make schema)', () => {
     execFileSync('node', [path.join(repo, 'tools/schema/gen_schema.cjs'), '--check'], { stdio: 'pipe' });
 });

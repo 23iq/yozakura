@@ -1422,6 +1422,7 @@
   "prefs.windows.section.blur": "Desenfoque",
   "prefs.windows.glass_link": "Cantidad de cristal",
   "prefs.windows.glass_link.desc": "El desenfoque de ventanas solo funciona con Glass activado; su intensidad y la opacidad de las ventanas escalan con la cantidad de Glass (los valores de abajo son la referencia en la cantidad propia del preset).",
+  "prefs.windows.needs_glass": "Requiere el efecto Glass activado",
   "prefs.windows.glass_link.open": "Abrir Cristal",
   "prefs.windows.blur": "Desenfoque tras ventanas",
   "prefs.windows.blur.desc": "Desenfoque esmerilado tras ventanas translúcidas y superficies del shell.",

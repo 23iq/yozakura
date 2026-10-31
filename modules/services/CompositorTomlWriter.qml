@@ -150,7 +150,7 @@ Singleton {
                     color: shadow.color,
                     colorInactive: shadow.color_inactive,
                     opacity: c.shadowOpacity !== undefined ? c.shadowOpacity : 0.5,
-                    offset: c.shadowOffset || "0 0",
+                    offset: Appearance.shadowOffset(c.shadowOffset),
                     scale: c.shadowScale !== undefined ? c.shadowScale : 1.0,
                 },
                 blur: {

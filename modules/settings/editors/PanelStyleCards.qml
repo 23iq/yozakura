@@ -12,7 +12,7 @@ Item {
     id: root
 
     property var panel: null
-    readonly property int columns: width < 520 ? 2 : 4
+    readonly property int columns: Math.max(2, Math.min(4, Math.floor(width / 180)))
     signal picked(string style)
 
     implicitHeight: grid.implicitHeight

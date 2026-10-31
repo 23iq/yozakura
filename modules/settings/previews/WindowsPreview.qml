@@ -20,7 +20,7 @@ PreviewStage {
     id: root
 
     property var entry
-    stageHeight: 250
+    stageHeight: 250 + tagStrip
 
     readonly property var c: Config.compositor
     readonly property var theme: Config.theme
@@ -57,6 +57,7 @@ PreviewStage {
     Item {
         id: scene
         anchors.fill: parent
+        anchors.topMargin: root.tagStrip
         clip: true
 
         ScreenBackdrop {

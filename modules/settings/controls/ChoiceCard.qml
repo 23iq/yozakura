@@ -77,11 +77,23 @@ StyledRect {
                 font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
             }
+            // Up to two lines (a card's description is a sentence, not a
+            // word); the height is reserved so cards in a row stay equal.
+            KitText {
+                id: twoLines
+                visible: false
+                role: "caption"
+                text: "M\nM"
+            }
             KitText {
                 width: parent.width
+                height: card.subtitle !== "" ? twoLines.implicitHeight : 0
                 visible: card.subtitle !== ""
                 role: "caption"
                 text: card.subtitle
+                wrapMode: Text.WordWrap
+                maximumLineCount: 2
+                elide: Text.ElideRight
             }
         }
         Text {
