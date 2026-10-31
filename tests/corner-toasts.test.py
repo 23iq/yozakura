@@ -25,6 +25,8 @@ h.module("qs.modules.shell", {"EdgeService": """pragma Singleton
 QtObject {
     property var asked: null
     function freeCorner(screen, pref) { asked = screen; return screen && screen.width > 0 ? "bottom-left" : "top-right" }
+    property var claims: ({})
+    function claimCorner(n, c) { const m = Object.assign({}, claims); m[n] = c; claims = m }
 }"""})
 h.module("qs.modules.theme", {
     "Styling": "pragma Singleton\nQtObject { function fontSize(n) { return 14 } }",

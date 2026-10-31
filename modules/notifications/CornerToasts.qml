@@ -25,6 +25,10 @@ Item {
     // leave free (EdgeLayout.freeCorner); otherwise the configured corner
     readonly property bool autoCorner: !Config.notifications || Config.notifications.position === "auto"
     readonly property string cornerPosition: autoCorner && panel && panel.targetScreen ? EdgeService.freeCorner(panel.targetScreen, "auto") : Notifications.cornerPosition
+    // Claimed while shown: the floating card keeps off it (EdgeService.cardRect)
+    readonly property string claimedCorner: active ? cornerPosition : ""
+    onClaimedCornerChanged: EdgeService.claimCorner(root.screenName, root.claimedCorner)
+    Component.onDestruction: EdgeService.claimCorner(root.screenName, "")
     readonly property var anchorsInfo: Policy.anchorsOf(cornerPosition)
     readonly property bool atBottom: anchorsInfo.vertical === "bottom"
     readonly property string side: anchorsInfo.horizontal
@@ -96,7 +100,10 @@ Item {
         }
     }
     onActiveChanged: sync()
-    Component.onCompleted: sync()
+    Component.onCompleted: {
+        sync();
+        EdgeService.claimCorner(root.screenName, root.claimedCorner);
+    }
 
     // Horizontal entry offset: from the nearest side (center: from the edge)
     readonly property real enterX: side === "left" ? -(toastWidth * 0.6) : (side === "right" ? toastWidth * 0.6 : 0)

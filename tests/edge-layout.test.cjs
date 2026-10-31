@@ -206,3 +206,21 @@ test('cards sit beside the bar, inside the work area, on every edge', () => {
     none.bar.visible = false;
     assert.equal(L.cardCorner(none), L.freeCorner(none, 'auto'));
 });
+test('cards never take the corner the toasts claim', () => {
+    for (const bar of EDGES) for (const dock of EDGES) {
+        const e = env(bar, dock, 'top');
+        e.notch.visible = false;
+        const free = L.cardCorner(e);
+        const moved = L.cardCorner(e, free);
+        assert.notEqual(moved, free, `${bar}/${dock}`);
+        assert.ok(moved.split('-').includes(bar), `${bar}/${dock}: ${moved}`);
+        assert.equal(L.cardRect(e, { w: 300, h: 200 }, 'auto', 10, free).corner, moved);
+        // An explicit corner is kept
+        assert.equal(L.cardRect(e, { w: 300, h: 200 }, free, 10, free).corner, free);
+    }
+    const none = env('top', 'bottom', 'top');
+    none.bar.visible = false;
+    const taken = L.freeCorner(none, 'auto');
+    assert.notEqual(L.cardCorner(none, taken), taken);
+    assert.notEqual(L.freeCorner(none, 'auto', taken), taken);
+});

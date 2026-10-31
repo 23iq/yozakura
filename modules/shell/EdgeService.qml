@@ -129,9 +129,23 @@ Singleton {
         return EdgeLayout.notchRect(envFor(screen), size);
     }
 
-    // Floating card of `size` {w, h} beside the bar (CardHost)
+    // Floating card of `size` {w, h} beside the bar (CardHost), clear of
+    // the corner claimed on its screen
     function cardRect(screen, size, margin) {
-        return EdgeLayout.cardRect(envFor(screen), size, "auto", margin);
+        const claimed = screen && screen.name ? (root.cornerClaims[screen.name] || "") : "";
+        return EdgeLayout.cardRect(envFor(screen), size, "auto", margin, claimed);
+    }
+
+    // Corner taken per screen name (the corner toasts: CornerToasts), so
+    // the card never lands on them; "" = none
+    property var cornerClaims: ({})
+
+    function claimCorner(name, corner) {
+        if (!name || (root.cornerClaims[name] || "") === (corner || ""))
+            return;
+        const m = Object.assign({}, root.cornerClaims);
+        m[name] = corner || "";
+        root.cornerClaims = m;
     }
 
     function freeCorner(screen, pref) {

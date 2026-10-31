@@ -171,14 +171,17 @@ function osdPlacement(e, pref, size) {
     return { edge: edge, x: Math.round(x), y: Math.round(y), vertical: !!VERTICAL[edge] };
 }
 
-// Corner for toasts/widgets: the one touching the fewest occupied edges.
-function freeCorner(e, pref) {
+// Corner for toasts/widgets: the one touching the fewest occupied edges,
+// never `avoid` (a corner something else already claimed).
+function freeCorner(e, pref, avoid) {
     if (pref && pref !== "auto")
         return pref;
     var corners = ["top-right", "top-left", "bottom-right", "bottom-left"];
     var best = corners[0];
     var bestScore = Infinity;
     for (var i = 0; i < corners.length; i++) {
+        if (corners[i] === avoid)
+            continue;
         var parts = corners[i].split("-");
         var score = 0;
         for (var j = 0; j < parts.length; j++) {
@@ -209,16 +212,17 @@ function _cardBar(e) {
     return "";
 }
 
-function cardCorner(e) {
+// `avoid` is a corner already claimed (corner toasts: EdgeService.toastCorner).
+function cardCorner(e, avoid) {
     var bar = _cardBar(e);
     if (!bar)
-        return freeCorner(e, "auto");
+        return freeCorner(e, "auto", avoid);
     var corners = ["top-right", "top-left", "bottom-right", "bottom-left"];
     var best = "";
     var bestScore = Infinity;
     for (var c = 0; c < corners.length; c++) {
         var parts = corners[c].split("-");
-        if (parts.indexOf(bar) === -1)
+        if (parts.indexOf(bar) === -1 || corners[c] === avoid)
             continue;
         var other = parts[0] === bar ? parts[1] : parts[0];
         var score = _occupied(e, other, false) ? 2 : _occupied(e, other, true) ? 1 : 0;
@@ -233,9 +237,10 @@ function cardCorner(e) {
 // Rect of a floating card of `size` {w, h} in its corner (cardCorner, or
 // `pref` when it names one), `margin` px inside the work area so it never
 // sits under a bar, dock or notch. `.from` is the edge it glides in from:
-// the bar's edge when the card is beside it, else its vertical edge.
-function cardRect(e, size, pref, margin) {
-    var corner = pref && pref !== "auto" ? pref : cardCorner(e);
+// the bar's edge when the card is beside it, else its vertical edge. An
+// "auto" card never takes `avoid` (the corner toasts' corner).
+function cardRect(e, size, pref, margin, avoid) {
+    var corner = pref && pref !== "auto" ? pref : cardCorner(e, avoid);
     var parts = corner.split("-");
     var w = workArea(e);
     var m = margin || 0;
