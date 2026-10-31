@@ -9518,25 +9518,27 @@
           "title": "Visual style",
           "type": "string",
           "default": "ink",
-          "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, or the classic surface variants",
+          "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, the classic surface variants, or a hardware device with knobs and segment readouts",
           "x-settings": {
             "category": "appearance",
             "section": "mode",
             "label": "prefs.appearance.language",
             "control": "selector",
-            "keywords": "visual language style ink glass tiles solid classic look kit"
+            "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit"
           },
           "enum": [
             "ink",
             "glass",
             "tiles",
-            "classic"
+            "classic",
+            "device"
           ],
           "x-enumLabels": {
             "ink": "Ink",
             "glass": "Glass",
             "tiles": "Tiles",
-            "classic": "Classic"
+            "classic": "Classic",
+            "device": "Device"
           }
         },
         "shape": {

@@ -31,12 +31,13 @@ var category = {
                     "type": "selector",
                     "label": "prefs.appearance.language",
                     "description": "prefs.appearance.language.desc",
-                    "keywords": "visual language style ink glass tiles solid classic look kit",
+                    "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit",
                     "options": [
                         { "value": "ink", "label": "prefs.appearance.language.ink" },
                         { "value": "glass", "label": "prefs.appearance.language.glass" },
                         { "value": "tiles", "label": "prefs.appearance.language.tiles" },
-                        { "value": "classic", "label": "prefs.appearance.language.classic" }
+                        { "value": "classic", "label": "prefs.appearance.language.classic" },
+                        { "value": "device", "label": "prefs.appearance.language.device" }
                     ]
                 }
             ]

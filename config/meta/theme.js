@@ -252,8 +252,8 @@ var keys = {
         "description": "Size density of bar, notch, dock and panels: compact, cozy (the historical sizes) or roomy."
     },
     "language": {
-        "enum": ["ink", "glass", "tiles", "classic"],
-        "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles) or classic (the surface variants exactly as configured)."
+        "enum": ["ink", "glass", "tiles", "classic", "device"],
+        "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles), classic (the surface variants exactly as configured) or device (a hardware instrument: matte bevelled boxes, knobs, segment readouts, LED tiles)."
     },
     "shape": {
         "description": "Corner shape of the shell's surfaces."

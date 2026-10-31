@@ -27,6 +27,7 @@ def main() -> int:
     ap.add_argument("languages", nargs="*", default=LANGUAGES)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
+    ap.add_argument("--seed", default="", help="palette from this seed colour (matugen), e.g. '#4c8f5a'")
     ap.add_argument("--prefix", default="", help="file name prefix (<prefix>-<language>.png)")
     ap.add_argument("--sheet", default="KitGallery", choices=["KitGallery", "KitGalleryBold"])
     args = ap.parse_args()
@@ -38,7 +39,7 @@ def main() -> int:
     url = ("file://" + wall) if wall else ""
     for lang in args.languages:
         theme = {"language": lang, "lightMode": args.mode == "light"}
-        env = KitEnv(f"kit-render-{lang}", gallery=True, palette=palette(args.mode, state), user_config=True,
+        env = KitEnv(f"kit-render-{lang}", gallery=True, palette=palette(args.mode, state, args.seed), user_config=True,
                      overrides={"theme": theme}, wallpaper=state)
         win = env.load(f"import qs.kitgallery\n{args.sheet} {{}}")
         win.setProperty("wallpaper", url)

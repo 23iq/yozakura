@@ -101,6 +101,7 @@ def main() -> int:
     ap.add_argument("styles", nargs="*", default=STYLES)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
+    ap.add_argument("--seed", default="", help="palette from this seed colour (matugen), e.g. '#4c8f5a'")
     ap.add_argument("--languages", default=",".join(LANGUAGES))
     args = ap.parse_args()
     out = Path(args.out)
@@ -110,7 +111,7 @@ def main() -> int:
     url = ("file://" + wall) if wall else ""
     for lang in args.languages.split(","):
         theme = {"language": lang, "lightMode": args.mode == "light"}
-        env = OsdEnv(f"osd-render-{lang}", palette=palette(args.mode, state), user_config=True,
+        env = OsdEnv(f"osd-render-{lang}", palette=palette(args.mode, state, args.seed), user_config=True,
                      overrides={"theme": theme}, wallpaper=state)
         for style in args.styles:
             win = env.load(sheet(style, url))

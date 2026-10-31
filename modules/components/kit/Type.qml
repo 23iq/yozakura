@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 import "../../theme/TypeRoles.js" as TypeRoles
 
 // Type roles and ink colors of the shared kit (modules/components/kit).
@@ -12,6 +13,7 @@ import "../../theme/TypeRoles.js" as TypeRoles
 //   secondary  0.93x, overSurfaceVariant
 //   caption    0.86x, outline (muted)
 //   label      0.78x, semibold, UPPERCASE, tracked, muted: the section label
+//              (the mono font where the language says so: Look.monoLabels)
 // The accent (primary) is reserved for active state, progress, today /
 // selected and the single primary action of a surface; never decoration.
 // Progress fills use `progress` (the accent unless theme.progressRole).
@@ -66,6 +68,8 @@ QtObject {
     }
 
     function family(role: string): string {
+        if (role === "label" && Look.monoLabels)
+            return Config.theme.monoFont;
         return role === "display" || role === "title" ? root.headingFont : root.bodyFont;
     }
 
@@ -78,7 +82,7 @@ QtObject {
     }
 
     function letterSpacing(role: string): real {
-        return role === "label" ? Math.round(root.size("label") * 0.14 * 10) / 10 : 0;
+        return role === "label" ? Math.round(root.size("label") * Look.labelTracking * 10) / 10 : 0;
     }
 
     // label UPPERCASE / title as typed, unless theme.type.headingCase sets a case

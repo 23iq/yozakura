@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.components.kit
@@ -13,7 +14,9 @@ import qs.modules.components.kit
 // draws a live meter: a ghost of the fill reaching the signal level. `moved(value)` on user
 // changes; `pressed` while dragged (hosts hold their binding then).
 // `hasMore` ends the track with a caret zone (`more()`: the device list),
-// accent while `moreActive`; the fill never runs under it.
+// accent while `moreActive`; the fill never runs under it. Where the
+// language draws levels as knobs (Look.levelControl "knob") the face is a
+// LevelStrip (knob + LED ladder + readout); the input stays the same.
 Item {
     id: root
 
@@ -42,6 +45,7 @@ Item {
     readonly property real fillW: root.cap + root.shown * root.span
     property color fillColor: root.dimmed ? Qt.alpha(Type.muted, root.strong ? 1 : 0.45) : (root.strong ? Type.progress : Look.tonal(Type.progress))
     readonly property color onFill: root.strong ? (root.dimmed ? Colors.background : Type.accentInk) : (root.dimmed ? Type.secondary : Type.text)
+    readonly property bool knob: Look.levelControl === "knob"
 
     signal moved(real value)
     signal iconClicked
@@ -115,7 +119,7 @@ Item {
         // Live input level: a ghost of the fill reaching the signal level.
         Rectangle {
             objectName: "levelMeter"
-            visible: root.level > 0.02
+            visible: root.level > 0.02 && !root.knob
             width: root.cap + Math.max(0, Math.min(1, root.level)) * root.span
             height: parent.height
             radius: parent.radius
@@ -125,6 +129,7 @@ Item {
 
         Rectangle {
             objectName: "levelFill"
+            visible: !root.knob
             width: root.fillW
             height: parent.height
             radius: parent.radius
@@ -132,8 +137,17 @@ Item {
         }
     }
 
+    Loader {
+        anchors.fill: parent
+        active: root.knob
+        sourceComponent: LevelStrip {
+            slider: root
+        }
+    }
+
     Text {
         objectName: "levelIcon"
+        visible: !root.knob
         x: (root.cap - width) / 2
         anchors.verticalCenter: parent.verticalCenter
         text: root.icon
@@ -144,7 +158,7 @@ Item {
 
     KitText {
         objectName: "levelValue"
-        visible: root.showValue
+        visible: root.showValue && !root.knob
         anchors.right: parent.right
         anchors.rightMargin: root.moreW + Space.m
         anchors.verticalCenter: parent.verticalCenter
