@@ -19,6 +19,16 @@ Item {
 
     property string currentCategory: ""
     readonly property bool compact: width < 860
+    // Compact: the icon rail has no search field. Ctrl+F or the rail's search
+    // button slides the full sidebar over the page until a pick or Escape.
+    property bool searchOpen: false
+    readonly property bool railed: compact && !searchOpen
+    readonly property real railWidth: 76
+    function openSearch() {
+        if (compact)
+            searchOpen = true;
+        Qt.callLater(sidebar.focusSearch);
+    }
     property var pendingReveal: null
 
     // Accepts a category id or a sidebar group id (Categories.resolve).
@@ -31,6 +41,7 @@ Item {
             return;
         const changed = c.id !== currentCategory || !page.category;
         currentCategory = c.id;
+        searchOpen = false;
         GlobalStates.settingsCategory = c.id;
         if (changed)
             page.load(c);
@@ -80,7 +91,12 @@ Item {
 
     Shortcut {
         sequences: [StandardKey.Find]
-        onActivated: sidebar.focusSearch()
+        onActivated: shell.openSearch()
+    }
+    Shortcut {
+        sequences: [StandardKey.Cancel]
+        enabled: shell.searchOpen
+        onActivated: shell.searchOpen = false
     }
     Shortcut {
         sequences: [StandardKey.Save]
@@ -117,6 +133,7 @@ Item {
     // against the page.
     Rectangle {
         id: sidebarBg
+        z: shell.searchOpen ? 5 : 0
         width: sidebar.width
         height: parent.height
         color: Look.groupFill
@@ -130,12 +147,16 @@ Item {
 
     SettingsSidebar {
         id: sidebar
-        width: shell.compact ? 76 : 264
+        z: shell.searchOpen ? 6 : 0
+        width: shell.railed ? shell.railWidth : 264
         height: parent.height
-        compact: shell.compact
+        compact: shell.railed
         currentCategory: shell.currentCategory
         onCategorySelected: id => shell.select(id)
-        onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
+        onResultActivated: r => {
+            shell.searchOpen = false;
+            shell.navigate(r.categoryId, r.sectionId, r.entryId);
+        }
 
         Behavior on width {
             enabled: Config.animDuration > 0
@@ -146,12 +167,33 @@ Item {
         }
     }
 
+    // The rail's search button (the field itself needs the wide sidebar).
+    IconButton {
+        objectName: "railSearch"
+        visible: shell.railed
+        size: "s"
+        icon: Icons.magnifyingGlass
+        x: (shell.railWidth - width) / 2
+        y: sidebar.height - height - Space.l
+        onClicked: shell.openSearch()
+    }
+
     Item {
         id: content
-        anchors.left: sidebar.right
+        anchors.left: parent.left
+        anchors.leftMargin: shell.compact ? shell.railWidth : sidebar.width
         anchors.right: parent.right
         height: parent.height
         clip: true
+
+        // Click outside the opened search sidebar closes it.
+        MouseArea {
+            anchors.fill: parent
+            z: 4
+            enabled: shell.searchOpen
+            visible: shell.searchOpen
+            onClicked: shell.searchOpen = false
+        }
 
         PresetEditBanner {
             id: editBanner
