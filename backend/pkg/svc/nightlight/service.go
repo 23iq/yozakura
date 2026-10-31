@@ -12,16 +12,18 @@ package nightlight
 
 import (
 	"encoding/json"
+	"log"
 	"os"
 	"os/exec"
 	"sync"
+	"yozakura/backend/pkg/statesfile"
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 )
 
 type Service struct {
-	paths *paths.Paths
+	paths  *paths.Paths
 	mu     sync.Mutex
 	active bool
 	temp   uint32 // Kelvin
@@ -83,16 +85,12 @@ const stateKey = "nightlight"
 
 // loadPersisted reads the saved {active, temp} from states.json.
 func (s *Service) loadPersisted() (bool, uint32, bool) {
-	data, err := os.ReadFile(s.paths.StatesFile())
+	v, found, err := statesfile.Get[map[string]any](s.paths.StatesFile(), stateKey)
 	if err != nil {
+		log.Printf("[nightlight] read state: %v", err)
 		return false, 0, false
 	}
-	doc := map[string]any{}
-	if err := json.Unmarshal(data, &doc); err != nil {
-		return false, 0, false
-	}
-	v, ok := doc[stateKey].(map[string]any)
-	if !ok {
+	if !found || v == nil {
 		return false, 0, false
 	}
 	active, _ := v["active"].(bool)
@@ -106,20 +104,10 @@ func (s *Service) loadPersisted() (bool, uint32, bool) {
 // persist writes the current {active, temp} into states.json. Holds no lock;
 // callers must serialize via s.mu.
 func (s *Service) persist() {
-	doc := map[string]any{}
-	if data, err := os.ReadFile(s.paths.StatesFile()); err == nil {
-		_ = json.Unmarshal(data, &doc)
+	val := map[string]any{"active": s.active, "temp": s.temp}
+	if err := statesfile.Set(s.paths.StatesFile(), stateKey, val); err != nil {
+		log.Printf("[nightlight] persist state: %v", err)
 	}
-	doc[stateKey] = map[string]any{"active": s.active, "temp": s.temp}
-	out, err := json.MarshalIndent(doc, "", "  ")
-	if err != nil {
-		return
-	}
-	tmp := s.paths.StatesFile() + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return
-	}
-	_ = os.Rename(tmp, s.paths.StatesFile())
 }
 
 func defaultStart(temp uint32) error {

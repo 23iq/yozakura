@@ -55,9 +55,9 @@ func paramsInt(params RawParams, key string, def int) int {
 	return def
 }
 
-// subID generates a unique subscriber key per goroutine invocation.
+// subID keys a subscriber by its own pointer (stable, unique while it is alive).
 func subID(sub *ipc.Subscriber) string {
-	return fmt.Sprintf("%p", &sub)
+	return fmt.Sprintf("%p", sub)
 }
 
 func errorsNew(msg string) error { return errors.New(msg) }

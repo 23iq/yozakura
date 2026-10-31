@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/svc/notify"
@@ -293,8 +295,7 @@ func (s *Service) saveAlertStates() {
 	if os.MkdirAll(filepath.Dir(path), 0o700) != nil {
 		return
 	}
-	tmp := path + ".tmp"
-	if os.WriteFile(tmp, data, 0o600) == nil {
-		_ = os.Rename(tmp, path)
+	if err := fsutil.WriteFile(path, data, 0o600); err != nil {
+		log.Printf("[usage] save alert states: %v", err)
 	}
 }

@@ -2,8 +2,9 @@ package gamemode
 
 import (
 	"encoding/json"
-	"os"
+	"log"
 	"sync"
+	"yozakura/backend/pkg/statesfile"
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
@@ -77,36 +78,20 @@ func (s *Service) broadcast() {
 
 // load reads the current persisted state from states.json.
 func (s *Service) load() bool {
-	data, err := os.ReadFile(s.paths.StatesFile())
+	v, _, err := statesfile.Get[bool](s.paths.StatesFile(), stateKey)
 	if err != nil {
-		return false
+		log.Printf("[gamemode] read state: %v", err)
 	}
-	doc := map[string]any{}
-	if err := json.Unmarshal(data, &doc); err != nil {
-		return false
-	}
-	v, ok := doc[stateKey].(bool)
-	return ok && v
+	return v
 }
 
 // save persists the current toggled state under the gameMode key.
 func (s *Service) save(v bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	doc := map[string]any{}
-	if data, err := os.ReadFile(s.paths.StatesFile()); err == nil {
-		_ = json.Unmarshal(data, &doc)
+	if err := statesfile.Set(s.paths.StatesFile(), stateKey, v); err != nil {
+		log.Printf("[gamemode] persist state: %v", err)
 	}
-	doc[stateKey] = v
-	out, err := json.MarshalIndent(doc, "", "  ")
-	if err != nil {
-		return
-	}
-	tmp := s.paths.StatesFile() + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return
-	}
-	_ = os.Rename(tmp, s.paths.StatesFile())
 }
 
 // IsEnabled reports the current GameMode state. Used by the compositor

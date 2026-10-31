@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -21,6 +22,7 @@ import (
 	"sync"
 	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/paths"
 )
@@ -689,8 +691,10 @@ func (m *Manager) updateLocalSource(state State, index int, installed InstalledM
 		return Status{}, fmt.Errorf("prepare package update: %w", err)
 	}
 	restore := func() {
-		_ = os.RemoveAll(packageRoot)
-		_ = os.Rename(backup, packageRoot)
+		_ = os.RemoveAll(packageRoot) // best effort: the rename below overwrites the slot
+		if err := os.Rename(backup, packageRoot); err != nil {
+			log.Printf("[mods] restore previous package %s: %v", packageRoot, err)
+		}
 	}
 	if err := os.Rename(updatedRoot, packageRoot); err != nil {
 		restore()
@@ -1871,31 +1875,7 @@ func fileSHA256(path string) (string, error) {
 }
 
 func writeAtomic(path string, data []byte, mode os.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if err := tmp.Chmod(mode); err != nil {
-		tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmpPath, path)
+	return fsutil.WriteFile(path, data, mode)
 }
 
 // Local git work is fast, but it holds the manager mutex, so a stalled process

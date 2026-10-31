@@ -1,11 +1,11 @@
 package tasks
 
 import (
-	"encoding/json"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"yozakura/backend/pkg/fsutil"
 )
 
 // On-disk layout (dir = ~/.local/share/<app>/tasks):
@@ -70,25 +70,11 @@ func (s store) saveSettings(st Settings) {
 	}
 }
 
-func readJSON(path string, v any) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, v)
-}
+func readJSON(path string, v any) error { return fsutil.ReadJSON(path, v) }
 
 func writeJSON(path string, v any) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
 		return err
 	}
-	data, err := json.MarshalIndent(v, "", "  ")
-	if err != nil {
-		return err
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return fsutil.WriteJSON(path, v, 0o600)
 }

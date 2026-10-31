@@ -369,7 +369,9 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 		return fmt.Errorf("ipc listen: %w", err)
 	}
 	pidPath := pidFile()
-	_ = os.WriteFile(pidPath, []byte(fmt.Sprintf("%d\n", os.Getpid())), 0o644)
+	if err := os.WriteFile(pidPath, []byte(fmt.Sprintf("%d\n", os.Getpid())), 0o644); err != nil {
+		log.Printf("[daemon] write pid file: %v", err)
+	}
 	defer os.Remove(pidPath)
 	defer d.srv.Close()
 
@@ -507,7 +509,9 @@ func (d *Daemon) spawnQS(qsBin, shellQML string) error {
 	// `qs ipc` calls back into the running shell (e.g. `yozakura brightness`
 	// notifying the QML IpcHandler so the OSD fires on keybind).
 	if pidPath := d.paths.QsPidFile(); pidPath != "" {
-		_ = os.WriteFile(pidPath, []byte(fmt.Sprintf("%d\n", cmd.Process.Pid)), 0o644)
+		if err := os.WriteFile(pidPath, []byte(fmt.Sprintf("%d\n", cmd.Process.Pid)), 0o644); err != nil {
+			log.Printf("[daemon] write qs pid file: %v", err)
+		}
 	}
 	return nil
 }
