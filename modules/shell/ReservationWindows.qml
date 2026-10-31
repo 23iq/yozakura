@@ -55,7 +55,7 @@ Item {
     PanelWindow {
         id: topWindow
         screen: root.screen
-        visible: true
+        visible: exclusiveZone > 0
         implicitHeight: Math.max(1, exclusiveZone)
         color: "transparent"
         anchors {
@@ -84,7 +84,7 @@ Item {
     PanelWindow {
         id: bottomWindow
         screen: root.screen
-        visible: true
+        visible: exclusiveZone > 0
         implicitHeight: Math.max(1, exclusiveZone)
         color: "transparent"
         anchors {
@@ -113,7 +113,7 @@ Item {
     PanelWindow {
         id: leftWindow
         screen: root.screen
-        visible: true
+        visible: exclusiveZone > 0
         implicitWidth: Math.max(1, exclusiveZone)
         color: "transparent"
         anchors {
@@ -146,7 +146,7 @@ Item {
     PanelWindow {
         id: rightWindow
         screen: root.screen
-        visible: true
+        visible: exclusiveZone > 0
         implicitWidth: Math.max(1, exclusiveZone)
         color: "transparent"
         anchors {
