@@ -5,7 +5,7 @@ import qs.modules.components.kit
 
 // Rain on a surface (theme.weatherFx.rain): a few drops resting where they
 // landed (more in heavy rain than in drizzle, WeatherFxModel.beadCount) and,
-// every few seconds, one of them running down. One timer per surface; it
+// every few seconds, one of them running down. One timer per surface (drop motion steps on WeatherFx.frame); it
 // stops while the surface is hidden or motion is off (the drops then just
 // rest).
 Item {
@@ -89,19 +89,8 @@ Item {
             d: spot.d
             strength: root.strength
             respawn: root.landing
-            clock: slideClock
-            onMoving: on => root.movers += on ? 1 : -1
+            animate: root.animate
         }
-    }
-
-    // One 20 Hz clock for every sliding drop of this surface, running only
-    // while one slides
-    property int movers: 0
-    Timer {
-        id: slideClock
-        interval: 50
-        repeat: true
-        running: root.movers > 0
     }
 
     Timer {
