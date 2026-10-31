@@ -498,6 +498,7 @@ Item {
     PanoramaSlot {
         id: panoramaSlot
         screen: wallImageRoot.host.screen
+        enabled: wallImageRoot.panorama
     }
 
     Component {

@@ -132,6 +132,8 @@ check(ev("view.placed.overflow") == 0 and lst.property("count") == 2, "the waiti
 # Other presentations: idle
 ev("Notifications.presentation = 'corner'")
 check(ev("view.active") is False and ev("view.placed.keys.length") == 0, "idle for corner toasts")
+QTest.qWait(50)
+check(lst.property("count") == 0, "no strip items remain when off")
 
 print("strips:", "OK" if not failures else f"{len(failures)} failure(s)")
 sys.exit(1 if failures else 0)

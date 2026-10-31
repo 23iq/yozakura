@@ -311,20 +311,28 @@ Item {
 
     // The state LED (Look.ledIndicator): top left on a square tile, top
     // right (before the detail zone) on a wide one.
-    Rectangle {
+    Loader {
+        id: led
         objectName: "tileLed"
-        visible: Look.ledIndicator
-        x: root.vertical ? Space.s : root.width - root.moreW - Space.s - width
+        active: Look.ledIndicator
+        x: root.vertical ? Space.s : root.width - root.moreW - Space.s - led.width
         y: Space.s
         width: Space.s + Space.xs
         height: Math.max(2, Space.xs - 1)
-        radius: height / 2
-        color: root.active ? Type.accent : Type.track
+        Binding {
+            target: led.item
+            property: "color"
+            value: root.active ? Type.accent : Type.track
+            when: led.item !== null
+        }
+        sourceComponent: Rectangle {
+            radius: height / 2
 
-        Behavior on color {
-            enabled: Motion.micro.duration > 0
-            ColorAnimation {
-                duration: Motion.micro.duration
+            Behavior on color {
+                enabled: Motion.micro.duration > 0
+                ColorAnimation {
+                    duration: Motion.micro.duration
+                }
             }
         }
     }

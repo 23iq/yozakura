@@ -84,7 +84,8 @@ for lang in ("ink", "device"):
     # Tile: an LED on a matte tile, or the solid accent fill.
     tile = get("tile")
     QTest.qWait(300)
-    assert ev(h.find(tile, "tileLed"), "visible") is device, lang
+    assert ev(h.find(tile, "tileLed"), "active") is device, lang
+    assert ev(h.find(tile, "tileLed"), "item !== null") is device, lang
     assert ev(h.find(tile, "tileOn"), "visible") is not device, lang
     if device:
         assert ev(tile, "glyphInk.toString()") == ev(win, "Type.accent.toString()"), "the icon carries the state"

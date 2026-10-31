@@ -93,7 +93,7 @@ Item {
 }'''})
 # Panorama mode is off here (wallpaperMode unset): stubs only satisfy the import.
 module('qs.modules.desktop.panorama', {'PanoramaView': 'import QtQuick\nItem { property string sourceFile; property bool tint; property real sourceWidth; property real sourceHeight; property int slotIndex; property int slotCount; property bool parallax; property var depthMaps; property bool contentReady: true }',
-                                        'PanoramaSlot': 'import QtQuick\nQtObject { property var screen; property int index: 0; property int count: 1 }'})
+                                        'PanoramaSlot': 'import QtQuick\nQtObject { property var screen; property bool enabled: true; property int index: 0; property int count: 1 }'})
 module('qs.modules.services', {'DepthMaskService': f'''pragma Singleton
 import QtQuick
 QtObject {{

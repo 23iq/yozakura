@@ -153,12 +153,14 @@ Surface {
         x: root.hub.x - width / 2
         y: root.hub.y + root.dialR * 0.3
 
-        SegmentDigits {
-            visible: root.segment && root.readout.value !== ""
+        Loader {
+            active: root.segment && root.readout.value !== ""
             anchors.centerIn: parent
-            text: ("   " + OsdStyles.percent(root.value)).slice(-3)
-            digitHeight: Type.size("title")
-            color: Type.text
+            sourceComponent: SegmentDigits {
+                text: ("   " + OsdStyles.percent(root.value)).slice(-3)
+                digitHeight: Type.size("title")
+                color: Type.text
+            }
         }
 
         KitText {
