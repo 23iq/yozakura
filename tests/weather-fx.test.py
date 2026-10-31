@@ -106,6 +106,40 @@ assert h.eval(rain, "item.spots.length") >= 2
 timer = h.find(panel, "rainTimer")
 assert timer.property("running") is True
 
+# A fullscreen window on this screen (reported by the bar) pauses everything:
+# the surface timer and the shared frame clock stop, and resume afterwards
+screen_name = h.eval(win, "Qt.application.screens[0].name")
+assert h.eval(fx["panel"], "item.animate") is True
+h.eval(win, "WeatherFx.setCovered(%r, true)" % screen_name)
+QTest.qWait(30)
+assert h.eval(fx["panel"], "item.animate") is False
+assert timer.property("running") is False
+h.eval(win, "WeatherFx.setCovered(%r, false)" % screen_name)
+QTest.qWait(30)
+assert h.eval(fx["panel"], "item.animate") is True
+assert timer.property("running") is True
+
+# Hidden window: the overlay rests too
+win.setProperty("visible", False)
+QTest.qWait(30)
+assert h.eval(fx["panel"], "item.animate") is False
+assert h.eval(win, "WeatherFx.frame.running") is False
+win.setProperty("visible", True)
+QTest.qWait(30)
+assert h.eval(fx["panel"], "item.animate") is True
+
+# Snow, frost and fog load (they step on the shared clock, see FrameUse)
+h.eval(win, "weather(73, -4)")
+QTest.qWait(30)
+for n in ("weatherSnow", "weatherFrost"):
+    assert effect("panel", n).property("active") is True
+h.eval(win, "weather(45, 8)")
+QTest.qWait(30)
+assert effect("panel", "weatherFog").property("active") is True
+h.eval(win, "weather(65, 8)")
+QTest.qWait(30)
+timer = h.find(panel, "rainTimer")
+
 # Motion off: drops rest, no timer runs
 h.eval(win, "Config.animDuration = 0")
 QTest.qWait(30)

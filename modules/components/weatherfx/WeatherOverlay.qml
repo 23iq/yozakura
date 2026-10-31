@@ -28,7 +28,12 @@ Item {
     readonly property bool horizontal: root.width >= root.height
     readonly property real strength: root.fx.strength * WeatherFx.alpha
     readonly property bool shown: root.visible && root.width > 0 && root.height > 0 && root.Window.window !== null && root.Window.window.visible
-    readonly property bool animate: WeatherFx.motionOn && root.shown
+    // A fullscreen window on this screen covers the shell: the weather rests
+    // (the bar reports it through WeatherFx.setCovered)
+    readonly property var win: root.Window.window
+    readonly property var screen: root.win ? root.win.screen : null
+    readonly property bool covered: root.screen ? WeatherFx.coveredScreens[root.screen.name] === true : false
+    readonly property bool animate: WeatherFx.motionOn && root.shown && !root.covered
     // Salt of this surface's random layout (stable per host)
     readonly property int salt: root.host.length * 131 + Math.round(root.width) % 97
 
@@ -51,6 +56,7 @@ Item {
         active: root.fx.fog > 0
         sourceComponent: FogHaze {
             level: root.fx.fog
+            animate: root.animate
             strength: root.strength
             salt: root.salt
             radius: root.radius
