@@ -254,14 +254,27 @@ ClippingRectangle {
         onLoaded: item.surface = root
     }
 
-    // Glass top-edge highlight: a thin light line fading out at the ends
+    // Cursor lantern (theme.lighting.lantern) on surface roots: a soft glow
+    // under the content where the pointer is; nothing exists while off.
     Loader {
-        active: root.glassHighlight > 0.001
+        objectName: "lantern"
+        anchors.fill: parent
+        active: Lighting.lanternOn && root.glassSurface !== ""
+        sourceComponent: LanternGlow {}
+    }
+
+    // Top-edge highlight of surface roots: the glass highlight, and the lit
+    // edge of theme.lighting (peaks on the side the light comes from)
+    readonly property real edgeHighlight: Math.max(root.glassHighlight, root.glassSurface === "" ? 0 : Lighting.edgeStrength)
+    Loader {
+        active: root.edgeHighlight > 0.001
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.max(0, parent.width - root.radius * 2)
         height: 1
         sourceComponent: Rectangle {
+            id: edgeLine
+            readonly property color edgeColor: Lighting.active ? Lighting.edgeColor : Glass.highlightColor
             gradient: Gradient {
                 orientation: Gradient.Horizontal
                 GradientStop {
@@ -269,8 +282,8 @@ ClippingRectangle {
                     color: "transparent"
                 }
                 GradientStop {
-                    position: 0.5
-                    color: Qt.rgba(Glass.highlightColor.r, Glass.highlightColor.g, Glass.highlightColor.b, root.glassHighlight)
+                    position: Lighting.edgeCenter
+                    color: Qt.rgba(edgeLine.edgeColor.r, edgeLine.edgeColor.g, edgeLine.edgeColor.b, root.edgeHighlight)
                 }
                 GradientStop {
                     position: 1

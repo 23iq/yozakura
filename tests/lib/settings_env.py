@@ -198,6 +198,9 @@ MIRROR = [
     "modules/theme/Motion.qml",
     "config/motion/MotionBudget.js",
     "modules/theme/Glass.qml",
+    "modules/theme/Lighting.qml",
+    "modules/theme/LightModel.js",
+    "modules/theme/SunPosition.js",
     "modules/theme/GlassModel.js",
     "modules/theme/GlassCurve.js",
     "modules/theme/GlassContrast.js",
@@ -673,7 +676,7 @@ class SettingsEnv:
         (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds)))
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
-        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion", "BarMetrics"])
+        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Lighting", "Metrics", "Motion", "BarMetrics"])
         self._qmldir(qs / "modules/shell", "qs.modules.shell", only=["EdgeService"])
         # DepthClock (clock style gallery) reads the bar edge
         self.h.module("qs.modules.bar.panels", {

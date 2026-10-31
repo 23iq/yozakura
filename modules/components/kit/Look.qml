@@ -49,6 +49,12 @@ QtObject {
     readonly property color floatOutline: root.floatBoxed ? root.alpha("overBackground", root.float.outline) : "transparent"
     readonly property color floatHighlight: Qt.rgba(1, 1, 1, root.floatBoxed ? root.float.highlight : 0)
 
+    // Lighting (theme.lighting, Lighting.qml): strength of the lit top edge
+    // of shell surfaces (0 where the language draws no edges) and the peak
+    // alpha of the cursor lantern.
+    readonly property real edgeLight: root.spec.light.edge
+    readonly property real lanternGlow: root.spec.light.lantern
+
     // App windows (settings): glass draws a translucent frosted background
     // over the desktop; null keeps the theme's opaque "bg" surface.
     readonly property bool windowTranslucent: !!root.spec.window

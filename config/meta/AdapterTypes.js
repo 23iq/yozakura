@@ -18,6 +18,7 @@ var types = {
         "animDuration": "int",
         "shape.cutSize": "int",
         "popup.gap": "int",
+        "lighting.angle": "int",
         "fontSize": "int",
         "monoFontSize": "int",
         "paletteTransitionDuration": "int",

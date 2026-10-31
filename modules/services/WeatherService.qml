@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.globals
+import qs.modules.theme
 
 Singleton {
     id: root
@@ -455,6 +456,12 @@ Singleton {
                     });
                 }
                 root.forecast = forecastData;
+
+                // The place the sun lighting follows (theme.lighting)
+                if (isFinite(data.latitude) && isFinite(data.longitude)) {
+                    Lighting.latitude = data.latitude;
+                    Lighting.longitude = data.longitude;
+                }
 
                 root.weatherSymbol = getWeatherCodeEmoji(root.weatherCode);
                 root.weatherDescription = getWeatherDescription(root.weatherCode);

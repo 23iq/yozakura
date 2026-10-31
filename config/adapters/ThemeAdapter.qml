@@ -38,6 +38,11 @@ JsonAdapter {
         property bool petals: true
         property string petalShape: "petal"
     }
+    property JsonObject lighting: JsonObject {
+        property string mode: "off"
+        property int angle: -35
+        property string lantern: "off"
+    }
     property int paletteTransitionDuration: 600
     property real shadowOpacity: 0.5
     property string shadowColor: "shadow"

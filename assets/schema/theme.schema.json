@@ -523,6 +523,85 @@
       },
       "additionalProperties": false
     },
+    "lighting": {
+      "title": "Lighting",
+      "type": "object",
+      "description": "One light source for the shell's shadows, lit edges and the cursor lantern.",
+      "properties": {
+        "mode": {
+          "title": "Light source",
+          "type": "string",
+          "default": "off",
+          "description": "Where the shadows of the shell's surfaces fall. Sun follows the real sun at your weather location: long, soft shadows at dawn and dusk, short at noon, faint at night.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "lighting",
+            "label": "prefs.lighting.mode",
+            "control": "selector",
+            "preview": "LightingPreview",
+            "keywords": "lighting light sun shadow direction time of day dawn dusk noon"
+          },
+          "enum": [
+            "off",
+            "fixed",
+            "sun"
+          ],
+          "x-enumLabels": {
+            "off": "Off",
+            "fixed": "Fixed",
+            "sun": "Sun"
+          }
+        },
+        "angle": {
+          "title": "Light direction",
+          "type": "number",
+          "default": -35,
+          "description": "Where the light comes from, clockwise from the top of the screen.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "lighting",
+            "label": "prefs.lighting.angle",
+            "control": "slider",
+            "step": 5,
+            "unit": "deg",
+            "keywords": "light angle direction shadow side",
+            "visibleWhen": {
+              "key": "theme.lighting.mode",
+              "equals": "fixed"
+            },
+            "min": -180,
+            "max": 180
+          },
+          "minimum": -180,
+          "maximum": 180,
+          "x-unit": "deg"
+        },
+        "lantern": {
+          "title": "Cursor lantern",
+          "type": "string",
+          "default": "off",
+          "description": "A soft light follows the pointer over the bar, notch, dock and popups.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "lighting",
+            "label": "prefs.lighting.lantern",
+            "control": "selector",
+            "keywords": "lantern cursor pointer glow light night hover"
+          },
+          "enum": [
+            "off",
+            "night",
+            "always"
+          ],
+          "x-enumLabels": {
+            "off": "Off",
+            "night": "At night",
+            "always": "Always"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "paletteTransitionDuration": {
       "title": "Color Fade",
       "type": "number",

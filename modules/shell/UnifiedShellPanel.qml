@@ -206,6 +206,9 @@ PanelWindow {
         id: visualContent
         anchors.fill: parent
 
+        // Pointer of the cursor lantern for every surface of this panel
+        LanternScope {}
+
         // Shadows below every surface, each re-rendered on its own
         PanelShadows {
             anchors.fill: parent

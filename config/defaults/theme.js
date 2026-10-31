@@ -47,6 +47,16 @@ var data = {
         "petals": true,
         "petalShape": "petal"
     },
+    // One light source for the shell's shadows (modules/theme/Lighting.qml):
+    // mode off (the shadow* values as is) | fixed (light from `angle`,
+    // degrees clockwise from the top) | sun (the real sun at the weather
+    // location). lantern: off | night | always (a soft glow follows the
+    // pointer over shell surfaces).
+    "lighting": {
+        "mode": "off",
+        "angle": -35,
+        "lantern": "off"
+    },
     "paletteTransitionDuration": 600,
     "shadowOpacity": 0.5,
     "shadowColor": "shadow",
