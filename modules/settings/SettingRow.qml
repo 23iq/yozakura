@@ -115,7 +115,8 @@ Item {
                     Layout.fillWidth: true
                     visible: !!row.entry.description
                     role: "caption"
-                    text: row.entry.description ? I18n.t(row.entry.description) : ""
+                    // A dimmed row says why, when the entry names a reason.
+                    text: !row.active && row.entry.disabledReason ? I18n.t(row.entry.disabledReason) : (row.entry.description ? I18n.t(row.entry.description) : "")
                     wrapMode: Text.WordWrap
                 }
                 Item {

@@ -402,6 +402,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "label": "prefs.windows.blur",
                     "description": "prefs.windows.blur.desc",
@@ -414,6 +415,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 20,
@@ -433,6 +435,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 1,
                     "max": 10,
@@ -452,6 +455,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -471,6 +475,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -487,6 +492,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -511,6 +517,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 0.2,
@@ -530,6 +537,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -549,6 +557,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 2,
@@ -568,6 +577,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -587,6 +597,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -603,6 +614,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -619,6 +631,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -635,6 +648,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -651,6 +665,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -678,6 +693,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -705,6 +721,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "compositor.blurEnabled",
@@ -721,6 +738,7 @@ var category = {
                         "key": "theme.glass.enabled",
                         "equals": true
                     },
+                    "disabledReason": "prefs.windows.needs_glass",
                     "type": "slider",
                     "min": 0,
                     "max": 1,

@@ -1422,6 +1422,7 @@
   "prefs.windows.section.blur": "Blur",
   "prefs.windows.glass_link": "Glass amount",
   "prefs.windows.glass_link.desc": "Window blur only runs while Glass is on; its strength and window opacity scale with the Glass amount (the values below are the reference at the preset's own amount).",
+  "prefs.windows.needs_glass": "Needs the Glass effect on",
   "prefs.windows.glass_link.open": "Open Glass",
   "prefs.windows.blur": "Blur behind windows",
   "prefs.windows.blur.desc": "Frosted blur behind translucent windows and shell surfaces.",

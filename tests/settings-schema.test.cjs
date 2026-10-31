@@ -233,6 +233,19 @@ test('compositor-specific rows are tagged, dock effects follow dock.enabled', ()
         assert.match(JSON.stringify(byKey['dock.' + k].visibleWhen), /dock\.enabled/, k);
 });
 
+test('rows disabled by the Glass switch say why, in every language', () => {
+    let n = 0;
+    for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
+        if (!entry.key || !entry.key.startsWith('compositor.blur') || !entry.enabledWhen) continue;
+        if (entry.enabledWhen.key !== 'theme.glass.enabled') continue;
+        n++;
+        assert.equal(entry.disabledReason, 'prefs.windows.needs_glass', entry.key);
+    }
+    assert.ok(n >= 10, `${n} blur rows`);
+    for (const lang of ['en', 'es', 'ru'])
+        assert.ok(require(`../translations/${lang}.json`)['prefs.windows.needs_glass'], lang);
+});
+
 test('shadow offset falls back to "0 0" when malformed', () => {
     const app = lib('modules/services/CompositorAppearance.js');
     assert.equal(app.shadowOffset('2 -3'), '2 -3');
