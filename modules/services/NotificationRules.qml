@@ -150,7 +150,7 @@ QtObject {
     // {popup, sound, priority, timeout} for a new notification
     // ({appName, desktopEntry, urgency, expireTimeout}).
     function decide(info) {
-        return Policy.decide(root.policyConfig(), info, root.silent);
+        return Policy.decide(root.policyConfig(), info, root.silent, root.presentation);
     }
 
     readonly property string defaultSound: Quickshell.shellDir + "/assets/sound/notification-chime.wav"

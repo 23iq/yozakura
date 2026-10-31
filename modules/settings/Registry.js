@@ -72,6 +72,7 @@ var PREVIEWS = {
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
     "WindowsPreview": "previews/WindowsPreview.qml",
     "OsdPreview": "previews/OsdPreview.qml",
+    "StripsPreview": "previews/StripsPreview.qml",
     "LayoutPreview": "layout/LayoutPreview.qml"
 };
 

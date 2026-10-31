@@ -156,3 +156,27 @@ test('showsOnScreen: chosen outputs, falling back to all when none of them exist
     assert.equal(P.showsOnScreen(['DP-3'], 'DP-2', ['DP-1', 'DP-2']), true);
     assert.equal(P.showsOnScreen(['DP-1'], 'DP-1'), true);
 });
+
+test('strips are chosen explicitly and need no notch', () => {
+    assert.equal(P.resolvePresentation('strips', { barStyle: 'islands' }), 'strips');
+    assert.equal(P.resolvePresentation('strips', { notchEnabled: false }), 'strips');
+    assert.notEqual(P.resolvePresentation('auto', { barStyle: 'menubar' }), 'strips', 'auto never picks strips');
+    assert.ok(P.PRESENTATIONS.indexOf('strips') !== -1);
+});
+
+test('strips weigh urgency: critical stays, low leaves sooner', () => {
+    const cfg = { timeout: 5000 };
+    assert.equal(P.decide(cfg, { urgency: 2, expireTimeout: -1 }, false, 'strips').timeout, 0);
+    assert.equal(P.decide(cfg, { urgency: 'low', expireTimeout: -1 }, false, 'strips').timeout, 3000);
+    assert.equal(P.decide(cfg, { urgency: 1, expireTimeout: -1 }, false, 'strips').timeout, 5000);
+    assert.equal(P.decide(cfg, { urgency: 0, expireTimeout: -1 }, false, 'corner').timeout, 5000, 'other presentations unchanged');
+    assert.equal(P.stripsTimeout(0, 0), 0, 'never-expiring stays');
+    assert.equal(P.stripsTimeout(1200, 'low'), 1000);
+});
+
+test('strips keep enough popups to hang them and fill the knot', () => {
+    assert.equal(P.popupLimit({ maxVisible: 3 }, 'corner'), 3);
+    assert.equal(P.popupLimit({ maxVisible: 3, strips: { maxVisible: 5 } }, 'strips'), 14);
+    assert.equal(P.popupLimit({ maxVisible: 20, strips: { maxVisible: 5 } }, 'strips'), 20);
+    assert.equal(P.popupLimit(null, 'notch'), 3);
+});

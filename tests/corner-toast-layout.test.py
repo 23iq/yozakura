@@ -65,7 +65,7 @@ for lang in LANGUAGES:
     shutil.copy(REPO / "modules/services/activities/NotificationProgress.js", act)
     h.module("qs.modules.services", {"Notifications": NOTIFICATIONS})
     h.module("Quickshell", {"Quickshell": QUICKSHELL})
-    env._qmldir(dst, "qs.modules.notifications", only=["CornerToast", "ToastCard"])
+    env._qmldir(dst, "qs.modules.notifications", only=["CornerToast", "ToastCard", "ToastGroup"])
     win = env.load(SCENE)
 
     for which in ("single", "stackDown", "stackUp"):

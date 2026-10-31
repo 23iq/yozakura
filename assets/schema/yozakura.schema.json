@@ -7615,7 +7615,7 @@
     "notifications": {
       "$id": "urn:yozakura:config:notifications",
       "title": "notifications",
-      "description": "Notification popups: presentation (notch-born toasts or corner toasts, auto = by the preset's bar style), corner, screens, timeout, stacking, grouping, history size, sound, per-app rules and Do Not Disturb (manual + schedule).",
+      "description": "Notification popups: presentation (notch-born toasts, corner toasts or strips hanging from an edge; auto = by the preset's bar style), corner, screens, timeout, stacking, grouping, history size, sound, per-app rules and Do Not Disturb (manual + schedule).",
       "type": "object",
       "x-file": "config/notifications.json",
       "properties": {
@@ -7644,23 +7644,26 @@
           "title": "Style",
           "type": "string",
           "default": "auto",
-          "description": "Notch: toasts are born from the notch and grow with its shape. Corner: classic toasts. Auto follows the bar style of the preset (islands → notch, taskbars → corner).",
+          "description": "Notch: toasts are born from the notch and grow with its shape. Corner: classic toasts. Auto follows the bar style of the preset (islands → notch, taskbars → corner). Strips: narrow strips hanging on a thread from a screen edge; pull one down to read it, flick it up to dismiss.",
           "x-settings": {
             "category": "notifications",
             "section": "presentation",
             "label": "prefs.notif.presentation",
             "control": "selector",
-            "keywords": "notch toast corner popup island style presentation where"
+            "preview": "StripsPreview",
+            "keywords": "notch toast corner popup island style presentation where strips tanzaku hanging tags"
           },
           "enum": [
             "auto",
             "notch",
-            "corner"
+            "corner",
+            "strips"
           ],
           "x-enumLabels": {
             "auto": "Auto",
             "notch": "Notch",
-            "corner": "Corner"
+            "corner": "Corner",
+            "strips": "Strips"
           }
         },
         "position": {
@@ -7676,7 +7679,10 @@
             "keywords": "corner position top bottom left right center",
             "visibleWhen": {
               "key": "notifications.presentation",
-              "notEquals": "notch"
+              "in": [
+                "auto",
+                "corner"
+              ]
             }
           },
           "enum": [
@@ -7770,6 +7776,126 @@
             "control": "toggle",
             "keywords": "group grouping stack app same application"
           }
+        },
+        "strips": {
+          "title": "Strips",
+          "type": "object",
+          "properties": {
+            "material": {
+              "title": "Material",
+              "type": "string",
+              "default": "plain",
+              "description": "Plain, or a subtle paper or washi texture tinted from your palette.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "presentation",
+                "label": "prefs.notif.strips.material",
+                "control": "selector",
+                "keywords": "strips material paper washi texture plain",
+                "visibleWhen": {
+                  "key": "notifications.presentation",
+                  "equals": "strips"
+                }
+              },
+              "enum": [
+                "plain",
+                "paper",
+                "washi"
+              ],
+              "x-enumLabels": {
+                "plain": "Plain",
+                "paper": "Paper",
+                "washi": "Washi"
+              }
+            },
+            "thread": {
+              "title": "Thread",
+              "type": "boolean",
+              "default": true,
+              "description": "Draw the thread each strip hangs on.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "presentation",
+                "label": "prefs.notif.strips.thread",
+                "control": "toggle",
+                "keywords": "strips thread string line hang",
+                "visibleWhen": {
+                  "key": "notifications.presentation",
+                  "equals": "strips"
+                }
+              }
+            },
+            "sway": {
+              "title": "Sway on arrival",
+              "type": "boolean",
+              "default": true,
+              "description": "A new strip swings briefly and comes to rest. Never with motion off.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "presentation",
+                "label": "prefs.notif.strips.sway",
+                "control": "toggle",
+                "keywords": "strips sway swing pendulum animation motion",
+                "visibleWhen": {
+                  "key": "notifications.presentation",
+                  "equals": "strips"
+                }
+              }
+            },
+            "maxVisible": {
+              "title": "Strips at once",
+              "type": "number",
+              "default": 5,
+              "description": "The rest wait behind a +N knot at the end of the row.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "presentation",
+                "label": "prefs.notif.strips.max",
+                "control": "number",
+                "keywords": "strips maximum count knot overflow",
+                "visibleWhen": {
+                  "key": "notifications.presentation",
+                  "equals": "strips"
+                },
+                "min": 1,
+                "max": 10
+              },
+              "minimum": 1,
+              "maximum": 10
+            },
+            "edge": {
+              "title": "Hang from",
+              "type": "string",
+              "default": "auto",
+              "description": "Screen edge the strips hang from. Auto: the top edge, right under a top bar. On a side edge they lie sideways like tags.",
+              "x-settings": {
+                "category": "notifications",
+                "section": "presentation",
+                "label": "prefs.notif.strips.edge",
+                "control": "selector",
+                "keywords": "strips edge top bottom left right hang tags",
+                "visibleWhen": {
+                  "key": "notifications.presentation",
+                  "equals": "strips"
+                }
+              },
+              "enum": [
+                "auto",
+                "top",
+                "bottom",
+                "left",
+                "right"
+              ],
+              "x-enumLabels": {
+                "auto": "Auto",
+                "top": "Top",
+                "bottom": "Bottom",
+                "left": "Left",
+                "right": "Right"
+              }
+            }
+          },
+          "additionalProperties": false
         },
         "historySize": {
           "title": "History size",

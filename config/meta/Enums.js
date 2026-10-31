@@ -10,6 +10,7 @@
 .import "../../modules/services/voice/VoiceModel.js" as VoiceModel
 .import "../../modules/widgets/launcher/Providers.js" as LauncherProviders
 .import "../../modules/notifications/NotificationPolicy.js" as NotificationPolicy
+.import "../../modules/notifications/strips/StripLayout.js" as StripLayout
 .import "../../modules/theme/AppThemes.js" as AppThemes
 .import "../../modules/specials/Specials.js" as Specials
 
@@ -51,6 +52,8 @@ var CLOCK_POSITIONS = ClockStyles.POSITIONS;
 var NOTIFICATION_PRESENTATIONS = NotificationPolicy.PRESENTATIONS;
 var NOTIFICATION_POSITIONS = NotificationPolicy.POSITIONS;
 var NOTIFICATION_RULE_ACTIONS = NotificationPolicy.RULE_ACTIONS;
+var NOTIFICATION_STRIP_MATERIALS = StripLayout.MATERIALS;
+var NOTIFICATION_STRIP_EDGES = StripLayout.EDGES;
 var THEMED_APPS = AppThemes.ids();
 var LOCK_TONES = LockStyles.TONES;
 var CLOCK_INKS = ClockStyles.INKS;

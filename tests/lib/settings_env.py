@@ -169,6 +169,8 @@ QtObject { property int writes: 0; function callWrite() { writes++ } }"""
 
 MIRROR = [
     "assets/yozakura",  # brand art (About page)
+    "modules/notifications",  # strips preview (Settings > Notifications)
+    "modules/services/activities/NotificationProgress.js",
     "modules/settings",
     "modules/components",
     "modules/aicenter/common",
@@ -815,6 +817,8 @@ class SettingsEnv:
         self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
         self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
+        self._qmldir(qs / "modules/notifications", "qs.modules.notifications", only=["ToastCard", "ToastGroup"])
+        self._qmldir(qs / "modules/notifications/strips", "qs.modules.notifications.strips")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
                   "modules/components/surfaceeffects", "modules/components/shape", "modules/components/kit",

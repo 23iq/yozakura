@@ -10,6 +10,13 @@ JsonAdapter {
     property int timeout: 5000
     property int maxVisible: 3
     property bool groupByApp: true
+    property JsonObject strips: JsonObject {
+        property string material: "plain"
+        property bool thread: true
+        property bool sway: true
+        property int maxVisible: 5
+        property string edge: "auto"
+    }
     property int historySize: 100
     property JsonObject sound: JsonObject {
         property bool enabled: false
