@@ -127,5 +127,13 @@ yozd.setProperty('compositorName', 'niri')
 ev(root, 'YozdService.workspaces.values = [{ id: 7, monitor: "DP-1" }, { id: 4, monitor: "HDMI" }, { id: 2, monitor: "DP-1" }]')
 yozd.setProperty('activeId', 2)
 assert ev(slot, 'index') == 1 and ev(slot, 'count') == 2, (ev(slot, 'index'), ev(slot, 'count'))
+# Off: a slot that is not wanted tracks nothing; depth layering off leaves the
+# foreground without an image, a depth map or a visible layer.
+slot.setProperty('enabled', False)
+assert ev(slot, 'index') == 0 and ev(slot, 'count') == 1
+slot.setProperty('enabled', True)
+desk.setProperty('depthLayering', False)
+assert wait_for(lambda: not ev(fg, 'visible'))
+assert ev(fg, 'wanted') is False
 print('panorama: ok')
 h.exit(0)

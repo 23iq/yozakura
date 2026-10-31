@@ -80,5 +80,12 @@ for edge, angle in (("left", -90), ("right", 90)):
 # Notch on: the island shows the track, the line leaves it out
 env, win, svc = sentence_scene("sentence-test-notch", notch=True)
 assert not any("Aruarian" in t for t in texts(env.h, win)), "notch on: the track stays in the island"
+env, win, svc = sentence_scene("sentence-test-off")
+assert find(win.contentItem(), "sentenceLine") is not None
+# Off: taking the module out of the bar leaves no line, no popups, nothing
+env.h.eval(svc, "(function(){ var p = JSON.parse(JSON.stringify(Config.bar.panels)); "
+                "p[0].groups.start = ['launcher']; Config.bar.panels = p; })()")
+QTest.qWait(400)
+assert find(win.contentItem(), "sentenceLine") is None, "module removed: the sentence line is gone"
 print("sentence bar: order, empty hides, actions, narrow drops, vertical turns, notch keeps the track")
 env.h.exit(0)

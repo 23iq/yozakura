@@ -64,6 +64,7 @@ Item {
     PanoramaSlot {
         id: slot
         screen: root.screen
+        enabled: root.wanted
     }
 
     PanoramaPan {
