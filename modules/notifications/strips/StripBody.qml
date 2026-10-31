@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
+import qs.config
 import qs.modules.theme
 import qs.modules.components.kit
 import qs.modules.notifications
@@ -139,7 +140,7 @@ Item {
             KitText {
                 width: lane.length
                 role: "caption"
-                color: root.critical ? root.ink : Type.muted
+                color: root.critical ? root.ink : (Config.theme.lightMode ? Type.muted : Colors.overSurfaceVariant)
                 elide: Text.ElideRight
                 maximumLineCount: 1
                 visible: text !== ""
