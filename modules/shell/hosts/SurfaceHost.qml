@@ -7,7 +7,8 @@ import qs.modules.theme
 
 // SurfaceHost contract (NotchHost implements the same API on the notch):
 //   open(view, screen)  shows `view` (reparented into `slot`) on `screen`
-//   close()             animates out, then emits closed()
+//   close()             animates out, then emits hostClosed()
+//                       (not `closed`: PanelWindow already has one)
 //   isOpen              true between open() and close()
 //   requestClose()      Escape, click outside or a lost focus grab; the owner
 //                       (HostedSurfaces) clears the Visibilities flag, which
@@ -31,7 +32,7 @@ PanelWindow {
     property var enterMotion: Motion.enter
     property var exitMotion: Motion.exit
 
-    signal closed
+    signal hostClosed
     signal requestClose
 
     function open(v, scr) {
@@ -80,7 +81,7 @@ PanelWindow {
 
     function _settled() {
         if (!root.isOpen && root.progress === 0)
-            root.closed();
+            root.hostClosed();
     }
 
     NumberAnimation {

@@ -18,7 +18,7 @@ Item {
     id: root
 
     required property var bar
-    property bool vertical: bar.orientation === "vertical"
+    property bool vertical: bar ? bar.orientation === "vertical" : false
     property bool isHovered: false
     property bool layerEnabled: true
 

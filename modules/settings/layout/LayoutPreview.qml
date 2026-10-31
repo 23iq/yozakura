@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.shell
 import qs.modules.settings.controls
@@ -45,6 +46,7 @@ PreviewStage {
         "dashboardHost": HostResolve.resolve(root.layoutCfg, "dashboard", root.hostCtx),
         "sheetSide": root.layoutCfg ? root.layoutCfg.sheet.side : "auto",
         "sheetW": Metrics.sheetW,
+        "sheetMargin": Space.m,
         "launcher": {
             "w": Metrics.launcherCompactW,
             "h": Metrics.launcherCompactH

@@ -22,8 +22,8 @@ Item {
     default property alias content: contentHolder.data
     property Item layoutItem: null
 
-    readonly property bool vertical: barRoot.orientation === "vertical"
-    readonly property string edge: barRoot.barPosition
+    readonly property bool vertical: barRoot ? barRoot.orientation === "vertical" : false
+    readonly property string edge: barRoot ? barRoot.barPosition : "top"
 
     readonly property real contentLength: layoutItem ? (vertical ? layoutItem.implicitHeight : layoutItem.implicitWidth) : 0
     readonly property real contentThickness: layoutItem ? (vertical ? layoutItem.implicitWidth : layoutItem.implicitHeight) : 0

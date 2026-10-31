@@ -415,7 +415,8 @@ func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
 // applyReport writes a preset over the live config. A whole snapshot
 // (wholeSnapshot) sets every key it names and resets what it does not name
 // only where an earlier preset left it untouched (overProvenance); a
-// partial preset merges over the live config. The record of what was
+// partial preset merges over the live config, a complete official set also
+// resets what the earlier preset left behind (resetLeftovers). The record of what was
 // written (applied.json) is updated either way.
 func (m *Manager) applyReport(name string, exact bool) (Preset, ApplySummary, []catalog.Problem, error) {
 	var sum ApplySummary
@@ -433,6 +434,11 @@ func (m *Manager) applyReport(name string, exact bool) (Preset, ApplySummary, []
 			return p, sum, nil, err
 		}
 	} else {
+		if completeSet(p) {
+			if raw, sum, err = m.resetLeftovers(raw, p.Follows); err != nil {
+				return p, sum, nil, err
+			}
+		}
 		sum.Set = setKeys(defined)
 	}
 	if raw, err = m.keepFollowed(raw, p.Follows); err != nil {

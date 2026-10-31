@@ -33,9 +33,9 @@ Loader {
     // "__sep__" slots draw this separator ("line", "dot", "slash")
     property string separatorStyle: "line"
 
-    readonly property bool vertical: barRoot.orientation === "vertical"
-    readonly property int moduleSize: barRoot.moduleSize !== undefined ? barRoot.moduleSize : BarMetrics.moduleSize
-    readonly property bool flat: forceFlat || (barRoot.flat !== undefined ? barRoot.flat : false)
+    readonly property bool vertical: barRoot ? barRoot.orientation === "vertical" : false
+    readonly property int moduleSize: barRoot && barRoot.moduleSize !== undefined ? barRoot.moduleSize : BarMetrics.moduleSize
+    readonly property bool flat: forceFlat || (barRoot && barRoot.flat !== undefined ? barRoot.flat : false)
     readonly property bool shadow: enableShadow && !flat
 
     // File-based modules (BarModuleRegistry.js `file`) share one interface
@@ -156,9 +156,9 @@ Loader {
         Workspaces {
             baseSize: slot.moduleSize
             flat: slot.flat
-            orientation: slot.barRoot.orientation
+            orientation: slot.vertical ? "vertical" : "horizontal"
             bar: QtObject {
-                property var screen: slot.barRoot.screen
+                property var screen: slot.barRoot ? slot.barRoot.screen : null
             }
             startRadius: slot.startRadius
             endRadius: slot.endRadius

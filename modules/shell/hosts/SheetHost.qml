@@ -1,12 +1,16 @@
 import QtQuick
 import qs.config
+import qs.modules.components.kit
 import qs.modules.shell
 import qs.modules.theme
 
-// Full work-area height on the side from EdgeLayout.sheetSide
-// (layout.sheet.side; "auto" avoids a vertical bar). Slides in from that side,
-// clipped to the work area so it never passes over the bar or the dock.
-// Width: Metrics.sheetW, or the view's implicitWidth when larger.
+// On the side from EdgeLayout.sheetSide (layout.sheet.side; "auto" avoids a
+// vertical bar), Space.m inside the work area. Slides in from that side,
+// clipped to its rect so it never passes over the bar or the dock.
+// Width: Metrics.sheetW, or the view's implicitWidth when larger. Height:
+// the view's implicitHeight (the dashboard is laid out for its own height;
+// stretched over the screen it spreads its tiles apart), the work area for a
+// view without one.
 SurfaceHost {
     id: root
 
@@ -14,7 +18,8 @@ SurfaceHost {
     slot: frame.slot
 
     readonly property int wantWidth: Math.max(Metrics.sheetW, (root.view ? root.view.implicitWidth : 0) + frame.padding * 2)
-    readonly property var area: EdgeService.sheetRect(root.screen, Config.layout && Config.layout.sheet ? Config.layout.sheet.side : "auto", root.wantWidth)
+    readonly property int wantHeight: root.view && root.view.implicitHeight > 0 ? root.view.implicitHeight + frame.padding * 2 : 0
+    readonly property var area: EdgeService.sheetRect(root.screen, Config.layout && Config.layout.sheet ? Config.layout.sheet.side : "auto", root.wantWidth, root.wantHeight, Space.m)
     readonly property string side: root.area.side
 
     HostBackdrop {

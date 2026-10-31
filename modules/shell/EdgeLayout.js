@@ -98,16 +98,24 @@ function sheetSide(e, pref) {
     return "right";
 }
 
-// Full-height side sheet inside the work area, on sheetSide(e, pref).
-function sheetRect(e, pref, width) {
+// Side sheet inside the work area, on sheetSide(e, pref), `margin` (0:
+// flush) away from its edges. Full height, or `height` (the view's own,
+// capped) hugging the end of the side where the bars are deeper (the top
+// unless the bottom bar is deeper), so a view laid out for its own height
+// is never stretched over the whole screen height.
+function sheetRect(e, pref, width, height, margin) {
     var w = workArea(e);
     var side = sheetSide(e, pref);
-    var rw = Math.min(width, w.w);
+    var m = margin || 0;
+    var rw = Math.min(width, Math.max(0, w.w - m * 2));
+    var full = Math.max(0, w.h - m * 2);
+    var rh = height > 0 ? Math.min(height, full) : full;
+    var bottom = panelDepth(e, "bottom") > panelDepth(e, "top");
     return {
-        x: side === "right" ? w.x + w.w - rw : w.x,
-        y: w.y,
+        x: side === "right" ? w.x + w.w - m - rw : w.x + m,
+        y: bottom ? w.y + w.h - m - rh : w.y + m,
         w: rw,
-        h: w.h,
+        h: rh,
         side: side
     };
 }

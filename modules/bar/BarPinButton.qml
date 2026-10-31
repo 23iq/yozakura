@@ -29,7 +29,7 @@ Button {
         endRadius: pinButton.endRadius
         flat: pinButton.flat
         shadow: pinButton.enableShadow
-        active: pinButton.barRoot.pinned
+        active: (pinButton.barRoot ? pinButton.barRoot.pinned : false)
         hovered: pinButton.hovered || pinButton.pressed
     }
 
@@ -41,7 +41,7 @@ Button {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
 
-        rotation: pinButton.barRoot.pinned ? 0 : 45
+        rotation: (pinButton.barRoot ? pinButton.barRoot.pinned : false) ? 0 : 45
         Behavior on rotation {
             enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
             NumberAnimation {
@@ -61,6 +61,6 @@ Button {
 
     StyledToolTip {
         show: pinButton.hovered
-        tooltipText: pinButton.barRoot.pinned ? I18n.t("bar.tooltip.unpin_bar") : I18n.t("bar.tooltip.pin_bar")
+        tooltipText: (pinButton.barRoot ? pinButton.barRoot.pinned : false) ? I18n.t("bar.tooltip.unpin_bar") : I18n.t("bar.tooltip.pin_bar")
     }
 }

@@ -7,7 +7,7 @@
 // the hosts use); the bar/dock/notch strips are only drawn here.
 //   e:   EdgeLayout environment (EdgeService.envFor)
 //   cfg: {launcherHost, dashboardHost, sheetSide, launcher: {w,h},
-//         dashboard: {w,h}, sheetW, osdPosition, osd: {w,h}}
+//         dashboard: {w,h}, sheetW, sheetMargin, osdPosition, osd: {w,h}}
 
 function _strip(e, pos, size, offset, length) {
     var s = e.screen;
@@ -29,7 +29,7 @@ function _hostRect(e, host, size, cfg) {
     if (host === "spotlight")
         return EdgeLayout.spotlightRect(e, size);
     if (host === "sheet")
-        return EdgeLayout.sheetRect(e, cfg.sheetSide, Math.max(cfg.sheetW || 0, size.w));
+        return EdgeLayout.sheetRect(e, cfg.sheetSide, Math.max(cfg.sheetW || 0, size.w), size.h, cfg.sheetMargin || 0);
     // notch: grows away from its edge, below/above the bar on that edge
     var s = e.screen;
     var off = (e.frame || 0) + (_sameEdge(e.bar, { pos: e.notch.pos, visible: true }) ? e.bar.size : 0);

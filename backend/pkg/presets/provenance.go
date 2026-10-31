@@ -329,3 +329,68 @@ func (m *Manager) restoreApplied(kind string) error {
 	}
 	return writeAtomic(m.AppliedFile(), data)
 }
+
+// completeSet reports whether a preset is a whole official look (a set with
+// a layout, a style and a palette): applying it replaces the earlier look,
+// so what the earlier preset wrote and this one does not name goes.
+func completeSet(p Preset) bool {
+	return p.Official && SetRef{Layout: p.Layout, Style: p.Style, Palette: p.Palette}.Complete()
+}
+
+// resetLeftovers adds to the files of a complete set the keys the last
+// apply wrote that the set does not name, back at their default, when the
+// live value is still the one written (Emaki's panorama wallpaper must not
+// stick under Kotoba). A key the user changed since is kept (Kept); keys of
+// unknown origin are never touched.
+func (m *Manager) resetLeftovers(raw map[string][]byte, follows []string) (map[string][]byte, ApplySummary, error) {
+	var sum ApplySummary
+	prev := m.readApplied()
+	if prev == nil {
+		return raw, sum, nil
+	}
+	followed := map[string]bool{}
+	for _, f := range follows {
+		followed[f] = true
+	}
+	for _, d := range sortedKeys(prev.Values) {
+		if Excluded[d] || d == WallpaperDomain || !m.Cat.HasDomain(d) {
+			continue
+		}
+		var doc map[string]any
+		if data, ok := raw[d]; ok && json.Unmarshal(data, &doc) != nil {
+			continue
+		}
+		live, defs, local := m.liveTop(d), m.Cat.DomainDefault(d), m.localTop(d)
+		reset := catalog.NewObject()
+		for _, k := range sortedKeys(prev.Values[d]) {
+			def, hasDef := defs[k]
+			if _, named := doc[k]; named || !hasDef || local[k] || followed[d+"."+k] {
+				continue
+			}
+			cur := effective(live, defs, k)
+			if canon(cur) == canon(def) {
+				continue
+			}
+			if !prev.wrote(d, k, cur) {
+				sum.Kept = append(sum.Kept, d+"."+k)
+				continue
+			}
+			reset.Set(k, def)
+			sum.Reset = append(sum.Reset, d+"."+k)
+		}
+		if len(reset.Keys()) == 0 {
+			continue
+		}
+		b, err := json.Marshal(reset)
+		if err != nil {
+			return raw, sum, err
+		}
+		if over, ok := raw[d]; ok {
+			if b, err = MergeJSON(b, over); err != nil {
+				return raw, sum, err
+			}
+		}
+		raw[d] = b
+	}
+	return raw, sum, nil
+}

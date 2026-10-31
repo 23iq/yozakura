@@ -21,6 +21,9 @@ Item {
     readonly property string text: Numerals.format(numeralSystem.id, workspaceId)
     readonly property string fontFamily: NumeralFonts.family(text)
     readonly property real basePixelSize: Config.theme.fontSize * (optical ? fit.em : 1)
+    // Read by both metrics and the label: taking it from label.font would loop
+    // (the label's font changes with the fitted size).
+    readonly property int fontWeight: optical ? NumeralFonts.weight(text) : Font.Normal
 
     // Ink box at the base size, then the fitted size and compression.
     readonly property var fitting: {
@@ -42,7 +45,7 @@ Item {
         id: baseMetrics
         text: root.text
         font.family: root.fontFamily
-        font.weight: label.font.weight
+        font.weight: root.fontWeight
         font.pixelSize: Math.max(1, Math.round(root.basePixelSize))
     }
 
@@ -64,7 +67,7 @@ Item {
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         font.family: root.fontFamily
-        font.weight: root.optical ? NumeralFonts.weight(root.text) : Font.Normal
+        font.weight: root.fontWeight
         font.pixelSize: root.optical ? Math.max(1, Math.round(root.basePixelSize * root.fitting.scale)) : root.legacyFontSize(text)
         text: root.text
         color: root.color

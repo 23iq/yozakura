@@ -116,7 +116,7 @@ Scope {
             CardHost {
                 screen: root.screen
                 onRequestClose: root.dismiss()
-                onClosed: {
+                onHostClosed: {
                     if (root.panelId === "")
                         root.shownId = "";
                 }
