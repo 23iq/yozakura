@@ -11,6 +11,7 @@ import qs.modules.bar as Bar
 // notch when it shares the edge), each centered in its span. Empty by default.
 Item {
     id: gaps
+    objectName: "gapSlots"
 
     required property var barRoot
     // Space taken from each end of the panel by the start/end groups
@@ -21,7 +22,8 @@ Item {
 
     readonly property bool vertical: barRoot ? barRoot.orientation === "vertical" : false
     readonly property real length: vertical ? height : width
-    readonly property Item notchItem: barRoot && !vertical && barRoot.notchPosition === barRoot.barPosition ? Visibilities.getNotchForScreen(barRoot.screen.name) : null
+    // A disabled notch (notch.enabled) leaves no middle gap
+    readonly property Item notchItem: barRoot && !vertical && ShellLayout.notchEnabled && barRoot.notchPosition === barRoot.barPosition ? Visibilities.getNotchForScreen(barRoot.screen.name) : null
     readonly property real notchFillet: Config.roundness > 0 ? Config.roundness + 4 : 0
     readonly property real middleHalf: Math.max(centerLength / 2, notchItem ? notchItem.width / 2 + notchFillet : 0)
     readonly property real spacing: 12

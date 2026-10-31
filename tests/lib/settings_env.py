@@ -213,6 +213,8 @@ MIRROR = [
     "modules/shell/EdgeService.qml",
     "modules/shell/EdgeLayout.js",
     "modules/shell/LayoutModel.js",
+    "modules/shell/hosts/HostResolve.js",
+    "modules/shell/hosts/SurfaceRegistry.js",
     "modules/services/ShellLayout.qml",
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",

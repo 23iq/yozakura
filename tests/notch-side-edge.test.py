@@ -82,6 +82,7 @@ names = ["Notch", "NotchSilhouette", "NotchOutline", "NotchViewTransition", "Not
 files = {n: (notch_dir / f"{n}.qml").read_text() for n in names}
 files["NotchContent"] = files["NotchContent"].replace('import "./NotchNotificationView.qml"\n', "")
 files["NotchNotificationView"] = "Item { property bool notchHovered }"
+files["NotchMenuViews"] = "Item { property var vis; property var container }"
 nd = h.module("qs.modules.notch", files)
 for js in ["NotchShape.js", "NotchReveal.js", "NotchAvoid.js"]:
     (nd / js).write_text((notch_dir / js).read_text())

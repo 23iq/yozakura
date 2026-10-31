@@ -5913,7 +5913,7 @@
     "layout": {
       "$id": "urn:yozakura:config:layout",
       "title": "layout",
-      "description": "Where the launcher and dashboard live (notch, centered spotlight or side sheet), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.",
+      "description": "Where the launcher and dashboard live (auto, notch, centered spotlight or side sheet), launcher result style, dashboard tabs and widget grid, side sheet placement and the OSD.",
       "type": "object",
       "x-file": "config/layout.json",
       "properties": {
@@ -5925,7 +5925,7 @@
             "host": {
               "title": "Launcher opens in",
               "type": "string",
-              "default": "notch",
+              "default": "auto",
               "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
               "x-settings": {
                 "category": "layout",
@@ -5936,11 +5936,13 @@
                 "keywords": "launcher host spotlight sheet notch centered search"
               },
               "enum": [
+                "auto",
                 "notch",
                 "spotlight",
                 "sheet"
               ],
               "x-enumLabels": {
+                "auto": "Auto",
                 "notch": "Notch",
                 "spotlight": "Spotlight",
                 "sheet": "Sheet"
@@ -6019,7 +6021,7 @@
             "host": {
               "title": "Dashboard opens in",
               "type": "string",
-              "default": "notch",
+              "default": "auto",
               "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
               "x-settings": {
                 "category": "layout",
@@ -6029,11 +6031,13 @@
                 "keywords": "dashboard host spotlight sheet notch side panel"
               },
               "enum": [
+                "auto",
                 "notch",
                 "spotlight",
                 "sheet"
               ],
               "x-enumLabels": {
+                "auto": "Auto",
                 "notch": "Notch",
                 "spotlight": "Spotlight",
                 "sheet": "Sheet"
@@ -6225,6 +6229,21 @@
                       "in": [
                         "sheet"
                       ]
+                    },
+                    {
+                      "all": [
+                        {
+                          "key": "layout.dashboard.host",
+                          "in": [
+                            "auto",
+                            "notch"
+                          ]
+                        },
+                        {
+                          "key": "notch.enabled",
+                          "equals": false
+                        }
+                      ]
                     }
                   ]
                 }
@@ -6276,6 +6295,36 @@
                     "sheet",
                     "spotlight"
                   ]
+                },
+                {
+                  "all": [
+                    {
+                      "key": "layout.launcher.host",
+                      "in": [
+                        "auto",
+                        "notch"
+                      ]
+                    },
+                    {
+                      "key": "notch.enabled",
+                      "equals": false
+                    }
+                  ]
+                },
+                {
+                  "all": [
+                    {
+                      "key": "layout.dashboard.host",
+                      "in": [
+                        "auto",
+                        "notch"
+                      ]
+                    },
+                    {
+                      "key": "notch.enabled",
+                      "equals": false
+                    }
+                  ]
                 }
               ]
             }
@@ -6289,7 +6338,7 @@
             "style": {
               "title": "Power menu",
               "type": "string",
-              "default": "notch",
+              "default": "auto",
               "description": "In the notch, large buttons over a dimmed screen, or a ring at the pointer. Shutdown, reboot and log out are held to confirm.",
               "x-settings": {
                 "category": "menus",
@@ -6299,11 +6348,13 @@
                 "keywords": "power menu shutdown reboot logout style radial fullscreen notch hold confirm"
               },
               "enum": [
+                "auto",
                 "notch",
                 "fullscreen",
                 "radial"
               ],
               "x-enumLabels": {
+                "auto": "Auto",
                 "notch": "Notch",
                 "fullscreen": "Full screen",
                 "radial": "Radial"
@@ -6320,7 +6371,7 @@
             "style": {
               "title": "Tools menu",
               "type": "string",
-              "default": "notch",
+              "default": "auto",
               "description": "Screenshot, recording and picker tools in the notch or on a ring at the pointer.",
               "x-settings": {
                 "category": "menus",
@@ -6330,13 +6381,53 @@
                 "keywords": "tools menu screenshot record color picker ocr style radial notch cursor"
               },
               "enum": [
+                "auto",
                 "notch",
                 "radial"
               ],
               "x-enumLabels": {
+                "auto": "Auto",
                 "notch": "Notch",
                 "radial": "Radial"
               }
+            }
+          },
+          "additionalProperties": false
+        },
+        "aiquick": {
+          "title": "Aiquick",
+          "type": "object",
+          "description": "AI quick ask placement.",
+          "properties": {
+            "host": {
+              "title": "Host",
+              "type": "string",
+              "default": "auto",
+              "description": "Where the AI quick ask opens: auto (the notch while it is enabled, else a floating card), in the notch, or a floating card (not built yet: shown as spotlight).",
+              "enum": [
+                "auto",
+                "notch",
+                "card"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "panels": {
+          "title": "Panels",
+          "type": "object",
+          "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
+          "properties": {
+            "host": {
+              "title": "Host",
+              "type": "string",
+              "default": "auto",
+              "description": "Where the voice, timer hub and alarm panels open: auto (the notch while it is enabled, else a floating card), in the notch, or a floating card (not built yet: shown as spotlight).",
+              "enum": [
+                "auto",
+                "notch",
+                "card"
+              ]
             }
           },
           "additionalProperties": false

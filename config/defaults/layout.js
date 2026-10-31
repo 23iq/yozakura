@@ -2,10 +2,11 @@
 
 // Where the launcher and dashboard live, the dashboard tab/grid layout, the
 // side sheet and the OSD. "auto" values follow the bar/notch placement
-// (modules/shell/EdgeLayout.js).
+// (modules/shell/EdgeLayout.js); an "auto" host is the notch while it is on,
+// else the surface's fallback (modules/shell/hosts/SurfaceRegistry.js).
 var data = {
     "launcher": {
-        "host": "notch",
+        "host": "auto",
         "resultStyle": "list",
         "preview": false,
         // Leading icons on list/card result rows (false: a command-line list).
@@ -13,7 +14,7 @@ var data = {
         "compactWhenEmpty": false
     },
     "dashboard": {
-        "host": "notch",
+        "host": "auto",
         // Home view of the widgets tab: stage (hero player, agenda, week,
         // notifications; modules/widgets/dashboard/stage), composed (fixed
         // two-column layout, modules/widgets/dashboard/home) or bento (the
@@ -54,13 +55,22 @@ var data = {
     // Dim (and let the compositor blur) the screen behind the spotlight and
     // sheet hosts. Off: no scrim, a click outside still closes.
     "backdrop": false,
-    // notch: in the notch; fullscreen: big buttons over a dimmed screen;
-    // radial: a ring at the cursor (modules/widgets/powermenu/styles).
+    // auto: the notch while it is on, else fullscreen (power menu) / radial
+    // (tools); notch: in the notch; fullscreen: big buttons over a dimmed
+    // screen; radial: a ring at the cursor (modules/widgets/powermenu/styles).
     "powermenu": {
-        "style": "notch"
+        "style": "auto"
     },
     "tools": {
-        "style": "notch"
+        "style": "auto"
+    },
+    // AI quick ask and the notch's own panels (voice, timer hub, alarm):
+    // auto = the notch while it is on, else a floating card.
+    "aiquick": {
+        "host": "auto"
+    },
+    "panels": {
+        "host": "auto"
     },
     // fullscreen keeps the frosted full-screen sheet; spotlight / sheet use
     // the launcher's hosts (modules/shell/hosts).

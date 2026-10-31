@@ -94,7 +94,8 @@ it is saved), `options`
 key a composite entry reads/resets), `sizeKey` (font), `resettable: false`,
 `compositor` (entry or section shown only on that compositor, e.g. `"hyprland"`),
 `id` (when there is no single `key`), `target` (PageLink), `sizeUnit`
-(font).
+(font), `surface` (a host/style picker's `modules/shell/hosts/SurfaceRegistry.js`
+id: the row notes "Island is off - shown as X" while the notch is off).
 
 Collection types (controls/ListControl, PathControl, ScreensControl,
 ChipsControl; pure helpers in SchemaUtil: listInsert/Remove/Move/Set,

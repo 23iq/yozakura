@@ -13,6 +13,7 @@ import qs.modules.settings.store
 import "SchemaUtil.js" as SchemaUtil
 import "Registry.js" as Registry
 import "Ui.js" as Ui
+import "../shell/hosts/HostResolve.js" as HostResolve
 
 // One schema entry: label (body) and description (caption) on the left,
 // the typed control on the right (or stacked full width for rich editors)
@@ -34,6 +35,17 @@ Item {
     readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && narrow) || (narrow && type === "slider")
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
+    // A host/style picker (entry.surface) while the notch is off: the
+    // option it shows as instead of the chosen one ("" otherwise)
+    readonly property string shownAs: {
+        if (!entry.surface)
+            return "";
+        const host = HostResolve.shownInstead(HostResolve.layoutWith(entry.surface, row.value), entry.surface, {
+            "notchEnabled": SettingsStore.get("notch.enabled") !== false
+        });
+        const opt = host ? (entry.options || []).find(o => o.value === host) : null;
+        return opt ? I18n.t(opt.label) : host;
+    }
 
     objectName: "settingRow:" + entryId
     implicitHeight: shown ? body.implicitHeight : 0
@@ -116,6 +128,14 @@ Item {
                     visible: !!row.entry.description
                     role: "caption"
                     text: row.entry.description ? I18n.t(row.entry.description) : ""
+                    wrapMode: Text.WordWrap
+                }
+                KitText {
+                    objectName: "rowShownAs"
+                    Layout.fillWidth: true
+                    visible: row.shownAs !== ""
+                    role: "caption"
+                    text: row.shownAs !== "" ? I18n.t("prefs.layout.island_off").arg(row.shownAs) : ""
                     wrapMode: Text.WordWrap
                 }
                 Item {

@@ -125,6 +125,23 @@ ev("SettingsStore.set('bar.frameEnabled', true)")
 settle(50)
 check(h.eval(row("bar.frameThickness"), "shown") is True, "frame thickness shown with frame")
 
+# Host/style pickers note where they show while the notch is off
+select("menus")
+settle(250)
+pm = row("layout.powermenu.style")
+check(h.eval(pm, "shownAs") == "", "no note while the notch is on")
+ev("SettingsStore.set('notch.enabled', false)")
+settle(50)
+shown_as = h.eval(pm, "shownAs")
+check(shown_as != "" and shown_as != "fullscreen", f"auto power menu notes its fallback label ({shown_as!r})")
+ev("SettingsStore.set('layout.powermenu.style', 'radial')")
+settle(50)
+check(h.eval(pm, "shownAs") == "", "an explicit off-notch style has no note")
+ev("SettingsStore.reset({key: 'layout.powermenu.style'})")
+ev("SettingsStore.reset({key: 'notch.enabled'})")
+settle(50)
+check(h.eval(pm, "shownAs") == "", "note gone with the notch back on")
+
 # Compositor gate note: silent on Hyprland, counts gated entries on niri
 select("windows")
 settle(250)

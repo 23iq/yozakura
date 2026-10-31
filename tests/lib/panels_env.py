@@ -75,6 +75,8 @@ MIRROR_FILES = [
     "modules/notch/NotchShape.js",
     "modules/shell/hosts/HostRouter.qml",
     "modules/shell/hosts/HostRouter.js",
+    "modules/shell/hosts/HostResolve.js",
+    "modules/shell/hosts/SurfaceRegistry.js",
     "modules/notch/styles/NotchStyles.js",
     "modules/widgets/dashboard/LauncherButton.qml",
     "modules/widgets/powermenu/PowerButton.qml",

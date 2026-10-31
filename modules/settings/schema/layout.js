@@ -3,8 +3,15 @@
 // Layout: where the launcher and dashboard open (notch, spotlight or side
 // sheet) and which side the sheet uses, with a live edge preview of the
 // screen. Hosts: modules/shell/hosts. Entry format: see modules/settings/AGENTS.md.
+// `surface` (SurfaceRegistry.js id) notes where an entry shows while the
+// notch is off ("Island is off - shown as X", SettingRow).
 
 var HOSTS = [
+    {
+        "value": "auto",
+        "label": "common.auto",
+        "icon": "magicWand"
+    },
     {
         "value": "notch",
         "label": "prefs.layout.host.notch",
@@ -25,15 +32,33 @@ var HOSTS = [
 // The hosts the side and the backdrop apply to: shown only while one of the
 // surfaces opens there (SheetHost / SpotlightHost).
 var HOST_KEYS = ["layout.launcher.host", "layout.dashboard.host", "layout.cheatsheet.host"];
+// Where "auto" / "notch" open while the notch is off (SurfaceRegistry.js)
+var OFF_NOTCH = {
+    "layout.launcher.host": "spotlight",
+    "layout.dashboard.host": "sheet"
+};
 
 function usesHost(values) {
+    var any = HOST_KEYS.map(function (k) {
+        return {
+            "key": k,
+            "in": values
+        };
+    });
+    Object.keys(OFF_NOTCH).forEach(function (k) {
+        if (values.indexOf(OFF_NOTCH[k]) !== -1)
+            any.push({
+                "all": [{
+                        "key": k,
+                        "in": ["auto", "notch"]
+                    }, {
+                        "key": "notch.enabled",
+                        "equals": false
+                    }]
+            });
+    });
     return {
-        "any": HOST_KEYS.map(function (k) {
-            return {
-                "key": k,
-                "in": values
-            };
-        })
+        "any": any
     };
 }
 
@@ -70,6 +95,7 @@ var category = {
                     "key": "layout.launcher.host",
                     "type": "selector",
                     "options": HOSTS,
+                    "surface": "launcher",
                     "preview": "LayoutPreview",
                     "label": "prefs.layout.launcher_host",
                     "description": "prefs.layout.launcher_host.desc",
@@ -79,6 +105,7 @@ var category = {
                     "key": "layout.dashboard.host",
                     "type": "selector",
                     "options": HOSTS,
+                    "surface": "dashboard",
                     "label": "prefs.layout.dashboard_host",
                     "description": "prefs.layout.dashboard_host.desc",
                     "keywords": "dashboard host spotlight sheet notch side panel"
@@ -124,7 +151,7 @@ var category = {
                             "label": "prefs.layout.host.fullscreen",
                             "icon": "arrowsOut"
                         }
-                    ].concat(HOSTS.slice(1)),
+                    ].concat(HOSTS.slice(2)),
                     "label": "prefs.layout.cheatsheet_host",
                     "description": "prefs.layout.cheatsheet_host.desc",
                     "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
