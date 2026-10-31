@@ -24,10 +24,35 @@ test('layout tolerates missing sizes', () => {
     assert.deepEqual({ ...P.layout(0, 0, 1920, 1080) }, { width: 1920, height: 1080, y: 0, travel: 0 });
 });
 
-test('slots are a screen apart and centred when they fit', () => {
+test('workspaces span exactly the image: first at 0, last at travel', () => {
     const travel = 6480 - 1920;
-    assert.equal(P.slotX(0, 3, travel, 1920), (travel - 3840) / 2);
-    assert.equal(P.slotX(1, 3, travel, 1920) - P.slotX(0, 3, travel, 1920), 1920);
+    for (const n of [2, 3, 5, 9]) {
+        assert.equal(P.slotX(0, n, travel, 1920), 0);
+        assert.ok(Math.abs(P.slotX(n - 1, n, travel, 1920) - travel) < 1e-9);
+        assert.ok(Math.abs(P.frameStep(n, travel) * (n - 1) - travel) < 1e-9);
+    }
+});
+
+test('frames never leave the image or run backwards (no wrap)', () => {
+    const travel = 3000;
+    for (const n of [2, 4, 7, 12, 40]) {
+        let prev = -1;
+        for (let i = 0; i < n + 3; i++) {
+            const x = P.slotX(i, n, travel, 1920);
+            assert.ok(x >= 0 && x <= travel && x >= prev);
+            prev = x;
+        }
+    }
+    assert.equal(P.frameStep(1, 3000), 3000);
+    assert.equal(P.frameStep(4, 0), 0);
+});
+
+test('parallax layers start and end on the slot x values', () => {
+    const a = P.slotX(3, 8, 4560, 1920), b = P.slotX(4, 8, 4560, 1920);
+    for (const layer of [0, 1, 2]) {
+        assert.equal(P.layerX(a, b, 0, layer), a);
+        assert.ok(Math.abs(P.layerX(a, b, 1, layer) - b) < 1e-9);
+    }
 });
 
 test('slots spread over the travel when there are too many', () => {

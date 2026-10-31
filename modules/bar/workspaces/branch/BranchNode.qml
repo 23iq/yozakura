@@ -22,6 +22,10 @@ Item {
     // Urgent workspaces: the stamen (and a bud) take this role, so they read
     // with motion off too.
     required property color alert
+    // Bar background and its ink: urgency falls back to these when the alert
+    // role does not contrast (Geo.readable).
+    required property color ground
+    required property color ink
     required property bool petalFall
 
     readonly property var state_: Geo.node(root.slotData)
@@ -30,6 +34,8 @@ Item {
     readonly property real half: root.slot / 2
     readonly property real len: Geo.bloomRadius(root.slot)
     readonly property color petalColor: root.open ? root.accent : root.tint
+    readonly property color haloColor: Geo.readable(root.alert, root.ground, root.ink, root.accentInk)
+    readonly property color alertCentre: Geo.readable(root.alert, root.petalColor, root.ink, root.ground)
 
     width: root.slot
     height: root.slot
@@ -106,12 +112,25 @@ Item {
                     path: Geo.petalsPath(root.shape, root.index, 0, root.state_.petals, root.half, root.half, root.len)
                 }
             }
+            // Urgent: a halo around the blossom, readable on any palette.
+            ShapePath {
+                strokeWidth: root.state_.urgent ? Geo.haloWidth(root.slot) : -1
+                strokeColor: root.haloColor
+                fillColor: "transparent"
+                PathAngleArc {
+                    centerX: root.half
+                    centerY: root.half
+                    radiusX: Geo.haloRadius(root.slot)
+                    radiusY: Geo.haloRadius(root.slot)
+                    sweepAngle: 360
+                }
+            }
             // Stamen: a small centre in the on-accent ink, the branch colour
             // on a plain blossom.
             ShapePath {
                 strokeWidth: -1
                 fillRule: ShapePath.WindingFill
-                fillColor: root.state_.urgent ? root.alert : (root.open ? root.accentInk : root.stem)
+                fillColor: root.state_.urgent ? root.alertCentre : (root.open ? root.accentInk : root.stem)
                 PathAngleArc {
                     centerX: root.half
                     centerY: root.half

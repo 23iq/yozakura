@@ -1,11 +1,11 @@
 """Bar panels engine, offscreen: legacy parity, multi-panel reservations,
 autohide, screen filters, every style loading on every edge, shared pin."""
-import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from panels_env import PanelsEnv  # noqa: E402
+import qmlharness  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 STYLES = {
@@ -136,4 +136,4 @@ assert not errors, errors
 print("panels: ok", flush=True)
 # PySide tears several QML engines down in an order that can crash; every
 # check passed, leave without running the destructors.
-os._exit(0)
+qmlharness.hard_exit(0)

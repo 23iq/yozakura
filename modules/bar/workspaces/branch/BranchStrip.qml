@@ -51,6 +51,8 @@ Item {
             accentInk: Type.accentInk
             stem: root.stem
             alert: Colors.error
+            ground: Colors.background
+            ink: Colors.overBackground
             petalFall: root.petalFall
         }
     }

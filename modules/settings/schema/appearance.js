@@ -3,6 +3,7 @@
 .import "motion.js" as Motion
 .import "surfaces.js" as Surfaces
 .import "lighting.js" as Lighting
+.import "weatherfx.js" as WeatherFx
 
 // Appearance: theme mode, palette, typography, shape, glass and motion.
 // Entry format: see modules/settings/AGENTS.md.
@@ -275,6 +276,9 @@ var category = {
 
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);
+
+// Weather on surfaces (schema/weatherfx.js) closes "effects".
+category.sections.find(s => s.id === "effects").entries.push(...WeatherFx.entries);
 
 // Lighting (schema/lighting.js) right after "effects".
 category.sections.splice(category.sections.findIndex(s => s.id === "effects") + 1, 0, ...Lighting.sections);
