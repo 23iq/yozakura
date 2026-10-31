@@ -1,6 +1,6 @@
 """Signatures (theme.signatures.*): the brush highlight underlay and the lock
 screen petals (or maple leaves) follow their flag, are created only while enabled and shown,
-and switch off in game mode and the power-saver profile; petals are capped
+and switch off in game mode, the power-saver profile and (petals) with motion off; capped
 at 40 particles and use palette colors."""
 import sys
 from pathlib import Path
@@ -82,6 +82,12 @@ assert alive(brush) and alive(petals)
 # Petals need motion; the brush does not.
 set_("Config.theme.animDuration = 0")
 assert not alive(petals) and alive(brush)
+
+# A motion profile that is off stops them too, whatever the durations.
+set_("Config.theme.animDuration = 20; Config.motionProfile = { disabled: true }")
+assert not alive(petals) and alive(brush), "petals stop with the motion profile off"
+set_("Config.motionProfile = { disabled: false }")
+assert alive(petals)
 
 # Flags off.
 set_("Config.theme.animDuration = 20; sig(false, false)")

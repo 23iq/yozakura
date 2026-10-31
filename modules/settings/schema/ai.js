@@ -40,6 +40,7 @@ var category = {
                 },
                 {
                     "key": "ai.maxToolRounds",
+                    "advanced": true,
                     "type": "number",
                     "label": "ai.max_tool_rounds",
                     "description": "prefs.ai.max_tool_rounds.desc",
@@ -49,6 +50,7 @@ var category = {
                 },
                 {
                     "key": "ai.unloadAfterMinutes",
+                    "advanced": true,
                     "type": "number",
                     "label": "ai.unload_after",
                     "description": "prefs.ai.unload_after.desc",
@@ -113,6 +115,7 @@ var category = {
                 },
                 {
                     "key": "ai.sidebarWidth",
+                    "advanced": true,
                     "type": "slider",
                     "label": "prefs.ai.compact_width",
                     "description": "prefs.ai.compact_width.desc",
@@ -124,6 +127,7 @@ var category = {
                 },
                 {
                     "key": "ai.wideWidth",
+                    "advanced": true,
                     "type": "slider",
                     "label": "ai.wide_width",
                     "description": "prefs.ai.wide_width.desc",
@@ -210,8 +214,9 @@ var category = {
                 },
                 {
                     "key": "ai.appearance.opacity",
+                    "advanced": true,
                     "type": "slider",
-                    "label": "prefs.ai.opacity",
+                    "label": "prefs.label.sidebar_opacity",
                     "description": "prefs.ai.opacity.desc",
                     "keywords": "opacity transparency background surface",
                     "min": 0.4,
@@ -436,6 +441,7 @@ var category = {
                 },
                 {
                     "key": "ai.quickAsk.width",
+                    "advanced": true,
                     "type": "number",
                     "label": "prefs.ai.quick_width",
                     "description": "prefs.ai.quick_width.desc",

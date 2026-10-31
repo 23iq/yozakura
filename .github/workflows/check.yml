@@ -101,3 +101,25 @@ jobs:
             echo "::error::make check skipped a gate; a CI tool is missing"
             exit 1
           fi
+
+  # The flake (package, SDDM theme, NixOS module): builds what NixOS users
+  # install and evaluates a system with every module option on.
+  nix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+
+      - name: Build the package and the SDDM theme
+        run: nix build --print-build-logs .#default .#sddm-theme
+
+      - name: Evaluate NixOS systems with the module (with and without TLP)
+        run: |
+          for tlp in false true; do
+            nix eval --raw --impure --expr "(import ./nix/tests/eval.nix { flake = builtins.getFlake (toString ./.); tlp = $tlp; }).config.system.build.toplevel.drvPath"
+            echo
+          done

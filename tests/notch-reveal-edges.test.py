@@ -33,6 +33,8 @@ QtObject {
     property var barPanels: ({})
     property var bars: ({})
     function getForScreen(n) { return ({ launcher: false, dashboard: false, powermenu: false, tools: false, aiquick: false, presets: false }) }
+    function registerNotch(n, c) {}
+    function unregisterNotch(n) {}
 }""",
     "ShellLayout": "pragma Singleton\nQtObject { property bool notchEnabled: true; property var notchSegments: [] }",
     "YozdService": "pragma Singleton\nQtObject { property var focusedMonitor: null; property var clients: ({ values: [({ workspace: { id: 1 } })] }); function monitorFor(s) { return ({ activeWorkspace: { id: 1 } }) } }",
@@ -64,7 +66,8 @@ h.module("Quickshell.Widgets", {"ClippingRectangle": "Rectangle {}"})
 h.module("qs.modules.widgets.tools", {"ToolsMenuView": "Item {}"})
 h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})
 h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
-nd = h.module("qs.modules.notch", {"NotchNotificationView": "Item { property bool notchHovered }"})
+nd = h.module("qs.modules.notch", {"NotchNotificationView": "Item { property bool notchHovered }",
+                                   "NotchMenuViews": "Item { property var vis; property var container }"})
 notch_dir = REPO / "modules/notch"
 for n in ["Notch", "NotchSilhouette", "NotchOutline", "NotchViewTransition", "NotchContent", "NotchPlacement", "NotchHoverHold", "NotchAvoidance"]:
     text = (notch_dir / f"{n}.qml").read_text()

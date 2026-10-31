@@ -2,12 +2,12 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
-import qs.config
 import qs.modules.components.kit
 import qs.modules.settings.store
 import qs.modules.services
 import qs.modules.theme
 import "CompositorGate.js" as CompositorGate
+import "schema/Advanced.js" as Advanced
 
 // Renders a schema-driven category: header + one SettingsSection per
 // schema section. Nothing here is category specific.
@@ -17,6 +17,8 @@ Flickable {
     required property var category
     // Entries of this page the compositor gate hides on the running compositor
     readonly property var gated: CompositorGate.hiddenBy(page.category.sections, YozdService.compositorName)
+    // Rows the Simple view hides here (the footer offers All).
+    readonly property int simpleHidden: Advanced.hiddenCount(page.category, SettingsStore.showAll, SettingsStore.revealed, (e, sec) => CompositorGate.allows(e.compositor || sec.compositor, YozdService.compositorName) && SettingsStore.visible(e) && !SettingsStore.isModified(e))
 
     // Sections fill in a few per frame (as many as fit a frame budget): a
     // long page shows its top at once and never freezes the window.
@@ -51,12 +53,15 @@ Flickable {
         id: scroller
         target: page
         property: "contentY"
-        duration: Math.max(1, Config.animDuration * 1.5)
+        duration: Math.max(1, Motion.morph.duration)
         easing.type: Motion.morph.easing
     }
 
     // Scroll to an entry (or a section) and flash it.
     function reveal(sectionId, entryId) {
+        // An advanced entry shows in Simple once searched for.
+        if (entryId)
+            SettingsStore.revealEntry(entryId);
         buildAll();
         let target = null;
         for (let i = 0; i < sections.count; i++) {
@@ -132,6 +137,11 @@ Flickable {
                 divider: index > 0
                 pending: index >= page.builtSections
             }
+        }
+
+        SimpleFooter {
+            width: parent.width
+            hidden: page.simpleHidden
         }
 
         KitText {

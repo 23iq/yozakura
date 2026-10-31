@@ -6,13 +6,17 @@ session, never a real lock).
                                       [--modes dark,light] [--tone theme]
                                       [--wallpaper PATH] [--size 1920x1080]
                                       [--no-media] [--position bottom|top]
+                                      [--languages ink,glass,tiles] [--seed '#4f8a5b']
 
 Builds tests/lib/lockscreen_env.py (real modules/lockscreen files, stubbed
 services) with your palette: dark = ~/.cache/<app>/colors.json, light =
 matugen from the wallpaper. Wallpaper: --wallpaper, else the current one
 (videos: the frame the lock screen caches), else an example wallpaper. A fake
 player fills the media card unless --no-media.
-Writes <out>/<style>-<mode>.png (with --tone other than "theme": <style>-<mode>-<tone>.png).
+--languages renders once per theme.language (the kit's look), --seed takes
+the palette from that colour (matugen) instead (e.g. a green one).
+Writes <out>/<style>-<mode>[-<tone>][-<language>][-<seed>].png (tone only
+when not "theme", language only with --languages, seed only with --seed).
 """
 from __future__ import annotations
 
@@ -60,13 +64,14 @@ def wallpaper(arg: str) -> str:
     return str(sorted((REPO / "assets" / "wallpapers_example").glob("*.png"))[0])
 
 
-def palette(mode: str, wall: str) -> dict:
-    if mode == "dark":
+def palette(mode: str, wall: str, seed: str = "") -> dict:
+    cmd = ["matugen", "color", "hex", seed] if seed else ["matugen", "image", wall]
+    if mode == "dark" and not seed:
         try:
             return {**DEFAULT_PALETTE, **json.loads((CACHE / "colors.json").read_text())}
         except (OSError, ValueError):
             pass
-    r = subprocess.run(["matugen", "image", wall, "--dry-run", "-q", "-j", "hex", "-m", mode,
+    r = subprocess.run(cmd + ["--dry-run", "-q", "-j", "hex", "-m", mode,
                         "--source-color-index", "0"], capture_output=True, text=True)
     if r.returncode != 0:
         return DEFAULT_PALETTE
@@ -91,16 +96,20 @@ def main() -> int:
     ap.add_argument("--size", default="1920x1080")
     ap.add_argument("--position", default="bottom")
     ap.add_argument("--no-media", action="store_true")
+    ap.add_argument("--languages", default="", help="theme.language values, one render each (ink,glass,tiles)")
+    ap.add_argument("--seed", default="", help="palette seed colour (matugen), e.g. '#4f8a5b'")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     wall = wallpaper(args.wallpaper)
     wanted = [s for s in args.styles.split(",") if s] or styles()
-    for mode in args.modes.split(","):
+    langs = args.languages.split(",") if args.languages else [""]
+    for mode, lang in [(m, lg) for m in args.modes.split(",") for lg in langs]:
         bundled_fonts.register()
-        env = LockscreenEnv(f"lock-render-{mode}", palette=palette(mode, wall), overrides={
-            "theme": {"lightMode": mode == "light"},
+        theme = {"lightMode": mode == "light", **({"language": lang} if lang else {})}
+        env = LockscreenEnv(f"lock-render-{mode}", palette=palette(mode, wall, args.seed), overrides={
+            "theme": theme,
             "lockscreen": {"tone": args.tone, "position": args.position}})
         win = env.load(f"""
 import QtQuick
@@ -126,7 +135,8 @@ Window {{
             win.requestActivate()
             env.h.eval(lv, "focusPassword()")
             QTest.qWait(600)
-            suffix = "" if args.tone == "theme" else f"-{args.tone}"
+            suffix = ("" if args.tone == "theme" else f"-{args.tone}") + (f"-{lang}" if lang else "")
+            suffix += "-" + args.seed.lstrip("#") if args.seed else ""
             path = out / f"{style}-{mode}{suffix}.png"
             win.grabWindow().save(str(path))
             print(path)

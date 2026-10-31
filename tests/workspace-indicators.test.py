@@ -3,7 +3,6 @@ modules/bar/workspaces/indicators), offscreen in the real bar: every style
 loads in horizontal and vertical bars, stays inside its box, the pill keeps
 the classic geometry and the label color follows the style (on the fill or
 accent on the bar)."""
-import os
 import sys
 from pathlib import Path
 
@@ -13,6 +12,7 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from panels_env import PanelsEnv  # noqa: E402
+import qmlharness  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 STYLES = ["pill", "underline", "dot", "brush", "bracket"]
@@ -87,7 +87,7 @@ for edge in ["top", "left"]:
 
 if failures:
     print(f"workspace-indicators: {len(failures)} failure(s)", flush=True)
-    os._exit(1)
+    qmlharness.hard_exit(1)
 print("workspace-indicators: ok", flush=True)
 # PySide tears several QML engines down in an order that can crash.
-os._exit(0)
+qmlharness.hard_exit(0)

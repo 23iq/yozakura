@@ -69,7 +69,7 @@ ShellRoot {
 
         Loader {
             id: desktopLoader
-            active: (Config.desktop.enabled || DesktopWidgets.wanted) && SuspendManager.wakeReady
+            active: (Config.desktop.enabled || DesktopWidgets.wanted || (Config.desktop.depthLayering && Config.desktop.depthClock)) && SuspendManager.wakeReady
             required property ShellScreen modelData
             sourceComponent: Desktop {
                 screen: desktopLoader.modelData
@@ -180,6 +180,16 @@ ShellRoot {
         }
     }
 
+    // Voice / timers hub / alarm off the notch (layout.panels.host: card)
+    Variants {
+        model: Quickshell.screens
+
+        PanelSurfaces {
+            required property ShellScreen modelData
+            screen: modelData
+        }
+    }
+
     // Power/tools menus off the notch (layout.powermenu/tools.style)
     Variants {
         model: Quickshell.screens
@@ -231,14 +241,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Loader {
-            id: screenshotOverlayLoader
-            active: SuspendManager.wakeReady
-            required property ShellScreen modelData
-            sourceComponent: ScreenshotOverlay {
-                targetScreen: screenshotOverlayLoader.modelData
-            }
-        }
+        ScreenshotOverlayHost {}
     }
 
     // Screen recording tool

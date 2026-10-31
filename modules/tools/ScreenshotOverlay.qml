@@ -61,25 +61,7 @@ PanelWindow {
         propagateComposedEvents: true
     }
 
-    // Listen for the saved signal from Screenshot service
-    Connections {
-        target: Screenshot
-        function onImageSaved(path) {
-            var s = root.targetScreen;
-            var mx = Screenshot.selectionX;
-            var my = Screenshot.selectionY;
-            var logicalW = s.width;
-
-            if (mx >= s.x && mx < (s.x + s.width) && my >= s.y && my < (s.y + s.height)) {
-                root.imagePath = path;
-            } else if (Screenshot.captureMode === "screen") {
-                var cursor = Quickshell.cursor;
-                if (cursor && cursor.screen && cursor.screen.name === s.name) {
-                    root.imagePath = path;
-                }
-            }
-        }
-    }
+    // Shown by ScreenshotOverlayHost, which sets imagePath on the saved signal
 
     Row {
         id: mainRow

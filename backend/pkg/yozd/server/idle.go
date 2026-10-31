@@ -14,6 +14,7 @@ import (
 	"yozakura/backend/pkg/brand"
 
 	"golang.org/x/sys/unix"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/yozd/ipc/wayland/client"
 	"yozakura/backend/pkg/yozd/ipc/wayland/ext_idle_notify_v1"
 	"yozakura/backend/pkg/yozd/ipc/wayland/idle_inhibit_v1"
@@ -1064,8 +1065,7 @@ func (im *IdleManager) MediaInhibitorCheck() (map[string]interface{}, error) {
 }
 
 func checkMediaApps() (int, []string) {
-	cmd := exec.Command("pactl", "list", "sink-inputs")
-	out, err := cmd.Output()
+	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: 5 * time.Second}, "pactl", "list", "sink-inputs")
 	if err != nil {
 		return 0, nil
 	}
@@ -1229,8 +1229,7 @@ func (im *IdleManager) AppInhibitorCheck(patterns []string) (map[string]bool, er
 }
 
 func checkHyprlandApps(patterns []string) (int, []string) {
-	cmd := exec.Command("hyprctl", "clients", "-j")
-	out, err := cmd.Output()
+	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: 5 * time.Second}, "hyprctl", "clients", "-j")
 	if err != nil {
 		return 0, nil
 	}
@@ -1265,8 +1264,7 @@ func checkHyprlandApps(patterns []string) (int, []string) {
 
 // checkNiriApps checks app patterns against Niri windows using niri msg
 func checkNiriApps(patterns []string) (int, []string) {
-	cmd := exec.Command("niri", "msg", "windows")
-	out, err := cmd.Output()
+	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: 5 * time.Second}, "niri", "msg", "windows")
 	if err != nil {
 		return 0, nil
 	}

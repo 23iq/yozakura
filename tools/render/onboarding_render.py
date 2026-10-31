@@ -3,13 +3,18 @@
 
     tools/render/onboarding_render.py [--out DIR] [--mode dark|light|both]
                                       [--size 1920x1080,1280x720] [--lang en]
+                                      [--language ink,glass,tiles] [--palette '#3f8f4f']
+                                      [--steps welcome,look]
 
 Uses your real config (read-only), palette, wallpaper and binds.json (see
 settings_render.py), the real environment probe (installed terminals,
 the real extras catalog (a sample install state: Firefox, Claude Code and
 Ollama installed) and the real prompt previews (terminal_render.py); the
 monitors are a sample pair (one 60 Hz panel that can do 165 Hz). Nothing is
-applied or installed. Writes <out>/<WxH>/<NN>-<step>-<mode>.png plus a few
+applied or installed. `--language` renders each visual language (default:
+your config's), `--palette` swaps your palette for one generated from a seed
+colour (matugen), `--steps` keeps only those step ids (peek always).
+Writes <out>/<WxH>/<NN>-<step>-<mode>[-<language>].png plus a few
 in-progress states (wallpaper tab, preset picked, monitor details, apps
 installing, a model pull, tour half done, summary with installs running and
 the exclusive toggle on, summary when done).
@@ -24,7 +29,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tests" / "lib"))
-from settings_render import REPO, palette, wallpaper_state  # noqa: E402  (also enters the private Xvfb)
+from settings_render import DEFAULT_PALETTE, REPO, camel, palette, wallpaper_state  # noqa: E402  (also enters the private Xvfb)
 
 from PySide6.QtTest import QTest  # noqa: E402
 from onboarding_env import OnboardingEnv  # noqa: E402
@@ -77,13 +82,26 @@ def probe() -> str:
     return subprocess.run(["bash", "-c", script], capture_output=True, text=True).stdout
 
 
+def seed_palette(seed: str, mode: str) -> dict:
+    """A full palette from one seed colour (a non-default palette check)."""
+    r = subprocess.run(["matugen", "color", "hex", seed, "--dry-run", "-q", "-j", "hex", "-m", mode],
+                       capture_output=True, text=True, check=True)
+    out = dict(DEFAULT_PALETTE)
+    out.update({camel(k): v[mode]["color"] for k, v in json.loads(r.stdout)["colors"].items() if mode in v})
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "onboarding"))
     ap.add_argument("--mode", default="both", choices=["dark", "light", "both"])
     ap.add_argument("--size", default="1920x1080,1280x720")
     ap.add_argument("--lang", default="en")
+    ap.add_argument("--language", default="", help="comma list of visual languages (ink,glass,tiles)")
+    ap.add_argument("--palette", default="", help="seed colour of a generated palette, e.g. '#3f8f4f'")
+    ap.add_argument("--steps", default="", help="comma list of step ids to render")
     args = ap.parse_args()
+    only = set(filter(None, args.steps.split(",")))
     sizes = [tuple(int(x) for x in sz.split("x")) for sz in args.size.split(",")]
     state = wallpaper_state()
     wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
@@ -93,11 +111,14 @@ def main() -> int:
     except (OSError, ValueError):
         binds = default_binds()
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
-    for mode in modes:
-        pal = palette(mode, state)
+    languages = [x for x in args.language.split(",") if x] or [""]
+    for mode, language in [(m, lg) for lg in languages for m in modes]:
+        pal = seed_palette(args.palette, mode) if args.palette else palette(mode, state)
         presets, previews = prompt_previews(pal)
-        env = OnboardingEnv(f"onboarding-{mode}", lang=args.lang, palette=pal, user_config=True,
-                            overrides={"theme": {"lightMode": mode == "light"}}, wallpaper=state, binds=binds,
+        theme = {"lightMode": mode == "light", **({"language": language} if language else {})}
+        suffix = f"{mode}-{language}" if language else mode
+        env = OnboardingEnv(f"onboarding-{suffix}", lang=args.lang, palette=pal, user_config=True,
+                            overrides={"theme": theme}, wallpaper=state, binds=binds,
                             outputs=OUTPUTS, replies=extras_replies())
         win = env.load(f"""
 import QtQuick
@@ -126,9 +147,9 @@ Window {{
             win.setWidth(w)
             win.setHeight(h_)
 
-            def shot(name: str, wait: int = 900, win=win, mode=mode, out=out) -> None:
+            def shot(name: str, wait: int = 900, win=win, suffix=suffix, out=out) -> None:
                 QTest.qWait(wait)
-                path = out / f"{name}-{mode}.png"
+                path = out / f"{name}-{suffix}.png"
                 win.grabWindow().save(str(path))
                 print(path)
 
@@ -140,6 +161,8 @@ Window {{
             for i in range(count):
                 h.eval(win, f"wizard.go({i})")
                 sid = h.eval(win, "wizard.step.id")
+                if only and sid not in only:
+                    continue
                 if sid == "apps":  # the catalog and its status first: the preselection shows
                     for _ in range(50):
                         if h.eval(win, "!!ExtrasService.catalog && Object.keys(ExtrasService.status).length > 0"):

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.config
 import qs.modules.settings.presets
 import qs.modules.settings.displays
 import qs.modules.settings.keyboard
@@ -12,6 +11,7 @@ import qs.modules.settings.mods
 // Not used here: lets Quickshell's scanner reach these page directories.
 import qs.modules.settings.layout
 import qs.modules.settings.system
+import qs.modules.settings.changes
 
 // The page of the settings window. `load()` always starts a fresh instance
 // (scroll reset, enter motion). Schema categories render through
@@ -34,7 +34,7 @@ Loader {
     }
 
     active: false
-    sourceComponent: !category ? null : (category.sections ? schemaPage : (host.pages[category.page] ?? placeholderPage))
+    sourceComponent: !category ? null : (host.pages[category.page] ?? (category.sections ? schemaPage : placeholderPage))
 
     opacity: 1 - slide
     transform: Translate {
@@ -49,8 +49,8 @@ Loader {
         property: "slide"
         from: 1
         to: 0
-        duration: Math.max(1, Config.animDuration)
-        easing.type: Motion.morph.easing
+        duration: Math.max(1, Motion.glide.duration)
+        easing.type: Motion.glide.easing
     }
 
     Component {
@@ -125,9 +125,16 @@ Loader {
         }
     }
     // Hand-written pages by Categories.js `page` name.
+    Component {
+        id: changesPage
+        ChangesPage {
+            category: host.category
+        }
+    }
     readonly property var pages: ({
             "AboutPage": aboutPage,
             "Bluetooth": bluetoothPage,
+            "Changes": changesPage,
             "Displays": displaysPage,
             "Effects": effectsPage,
             "Extras": extrasPage,

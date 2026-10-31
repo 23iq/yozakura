@@ -276,6 +276,14 @@ func TestServiceSetLoginShell(t *testing.T) {
 	if len(e.run.calls) != 1 {
 		t.Errorf("extra calls: %v", e.run.calls)
 	}
+
+	nix := newSvcEnv(t, Platform{Distro: "nixos"}, nil)
+	if _, err := call(t, nix.s.setLoginShell, `{"shell":"/run/current-system/sw/bin/fish"}`); err == nil || !strings.Contains(err.Error(), "users.users") {
+		t.Errorf("NixOS must point at the configuration, got %v", err)
+	}
+	if len(nix.run.calls) != 0 {
+		t.Errorf("NixOS ran %v", nix.run.calls)
+	}
 }
 
 func TestServiceCatalog(t *testing.T) {

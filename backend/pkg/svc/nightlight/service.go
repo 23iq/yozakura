@@ -11,17 +11,21 @@
 package nightlight
 
 import (
+	"context"
 	"encoding/json"
+	"log"
 	"os"
 	"os/exec"
 	"sync"
+	"yozakura/backend/pkg/statesfile"
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 type Service struct {
-	paths *paths.Paths
+	paths  *paths.Paths
 	mu     sync.Mutex
 	active bool
 	temp   uint32 // Kelvin
@@ -37,7 +41,7 @@ type Service struct {
 // runFn is the package-level indirection used by enable/disable so tests
 // can swap in fakes without going through real processes.
 var runFn = func(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Start()
@@ -67,7 +71,7 @@ func (s *Service) defaultStart(temp uint32) error {
 		return err
 	}
 	// We don't capture the cmd here because runFn may not have used
-	// exec.Command. The defaultStop uses exec.Command("pkill", "wlsunset")
+	// exec.CommandContext. The defaultStop uses proc.Do("pkill", "wlsunset")
 	// instead.
 	return nil
 }
@@ -76,23 +80,19 @@ func (s *Service) defaultStop() {
 	// Best-effort kill — wlsunset doesn't have a stop signal we can send
 	// portably, so we pkill any running instances. Process exit cleans
 	// itself up.
-	exec.Command("pkill", "-f", "wlsunset").Run()
+	proc.Do(context.Background(), "pkill", "-f", "wlsunset")
 }
 
 const stateKey = "nightlight"
 
 // loadPersisted reads the saved {active, temp} from states.json.
 func (s *Service) loadPersisted() (bool, uint32, bool) {
-	data, err := os.ReadFile(s.paths.StatesFile())
+	v, found, err := statesfile.Get[map[string]any](s.paths.StatesFile(), stateKey)
 	if err != nil {
+		log.Printf("[nightlight] read state: %v", err)
 		return false, 0, false
 	}
-	doc := map[string]any{}
-	if err := json.Unmarshal(data, &doc); err != nil {
-		return false, 0, false
-	}
-	v, ok := doc[stateKey].(map[string]any)
-	if !ok {
+	if !found || v == nil {
 		return false, 0, false
 	}
 	active, _ := v["active"].(bool)
@@ -106,20 +106,10 @@ func (s *Service) loadPersisted() (bool, uint32, bool) {
 // persist writes the current {active, temp} into states.json. Holds no lock;
 // callers must serialize via s.mu.
 func (s *Service) persist() {
-	doc := map[string]any{}
-	if data, err := os.ReadFile(s.paths.StatesFile()); err == nil {
-		_ = json.Unmarshal(data, &doc)
+	val := map[string]any{"active": s.active, "temp": s.temp}
+	if err := statesfile.Set(s.paths.StatesFile(), stateKey, val); err != nil {
+		log.Printf("[nightlight] persist state: %v", err)
 	}
-	doc[stateKey] = map[string]any{"active": s.active, "temp": s.temp}
-	out, err := json.MarshalIndent(doc, "", "  ")
-	if err != nil {
-		return
-	}
-	tmp := s.paths.StatesFile() + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return
-	}
-	_ = os.Rename(tmp, s.paths.StatesFile())
 }
 
 func defaultStart(temp uint32) error {

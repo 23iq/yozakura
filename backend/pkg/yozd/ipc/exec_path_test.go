@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"yozakura/backend/pkg/paths"
 )
 
 func TestResolveExecCommand(t *testing.T) {
@@ -43,5 +45,21 @@ func TestResolveExecCommand(t *testing.T) {
 	execBinDir = func() string { return "" }
 	if got := ResolveExecCommand("yozakura run launcher"); got != "yozakura run launcher" {
 		t.Errorf("unknown dir must leave the command alone, got %q", got)
+	}
+}
+
+func TestResolveExecCommandUsesLauncherDir(t *testing.T) {
+	profile := t.TempDir()
+	app := filepath.Join(profile, "yozakura")
+	daemon := filepath.Join(profile, "yozd")
+	os.WriteFile(app, []byte("#!/bin/sh\n"), 0o755)
+	os.WriteFile(daemon, []byte("#!/bin/sh\n"), 0o755)
+	t.Setenv(paths.LauncherEnv, app)
+
+	if got, want := ResolveExecCommand("yozakura run launcher"), app+" run launcher"; got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+	if got, want := ResolveExecCommand("yozd window close"), daemon+" window close"; got != want {
+		t.Errorf("got %q, want %q", got, want)
 	}
 }

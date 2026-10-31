@@ -70,7 +70,7 @@ QtObject {
         changed=""
         for f in user.css theme.js; do
             [ -f "$assets/$f" ] || continue
-            cmp -s "$assets/$f" "$dir/$f" || { cp -f "$assets/$f" "$dir/$f"; changed=1; }
+            cmp -s "$assets/$f" "$dir/$f" || { cp -f "$assets/$f" "$dir/$f" && chmod u+w "$dir/$f"; changed=1; }
         done
         if ! [ -f "$dir/color.ini" ] || [ "$(cat "$dir/color.ini")" != "$(printf '%s' "$ini")" ]; then
             printf '%s' "$ini" > "$dir/color.ini.tmp" && mv -f "$dir/color.ini.tmp" "$dir/color.ini"

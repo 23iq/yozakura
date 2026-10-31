@@ -1,4 +1,5 @@
 {
     "style": "pill",
-    "visualizer": false
+    "visualizer": false,
+    "enabled": false
 }

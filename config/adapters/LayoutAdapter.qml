@@ -4,14 +4,14 @@ import Quickshell.Io
 
 JsonAdapter {
     property JsonObject launcher: JsonObject {
-        property string host: "notch"
+        property string host: "auto"
         property string resultStyle: "list"
         property bool preview: false
         property bool icons: true
         property bool compactWhenEmpty: false
     }
     property JsonObject dashboard: JsonObject {
-        property string host: "notch"
+        property string host: "auto"
         property string home: "stage"
         property bool showMetrics: true
         property bool heroTint: true
@@ -75,10 +75,16 @@ JsonAdapter {
     }
     property bool backdrop: false
     property JsonObject powermenu: JsonObject {
-        property string style: "notch"
+        property string style: "auto"
     }
     property JsonObject tools: JsonObject {
-        property string style: "notch"
+        property string style: "auto"
+    }
+    property JsonObject aiquick: JsonObject {
+        property string host: "auto"
+    }
+    property JsonObject panels: JsonObject {
+        property string host: "auto"
     }
     property JsonObject cheatsheet: JsonObject {
         property string host: "fullscreen"

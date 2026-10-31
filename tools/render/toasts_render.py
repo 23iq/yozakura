@@ -134,7 +134,7 @@ def env_for(lang: str, mode: str, state: dict) -> KitEnv:
     shutil.copy(REPO / "modules/services/activities/NotificationProgress.js", act)
     env.h.module("qs.modules.services", {"Notifications": SERVICES_STUB})
     env.h.module("Quickshell", {"Quickshell": QUICKSHELL_STUB})
-    env._qmldir(dst, "qs.modules.notifications", only=["CornerToast", "ToastCard"])
+    env._qmldir(dst, "qs.modules.notifications", only=["CornerToast", "ToastCard", "ToastGroup"])
     return env
 
 

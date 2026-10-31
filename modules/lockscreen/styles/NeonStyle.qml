@@ -6,6 +6,7 @@ import QtQuick.Shapes
 import qs.modules.lockscreen
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.widgets.defaultview
 import qs.config
 import "../../desktop/clockstyles/ClockText.js" as ClockText
@@ -30,8 +31,7 @@ LockStyle {
     error: Qt.hsla(Colors.error.hslHue < 0 ? 0 : Colors.error.hslHue, 1, 0.62, 1)
 
     arrangement: "stack"
-    clusterWidth: 400
-    clusterSpacing: 26
+    clusterWidth: Space.controlXL * 4 + Space.l
     wallpaperOpacity: 0
     wallpaperBlur: 0
 
@@ -51,7 +51,7 @@ LockStyle {
     component Caps: Text {
         color: skin.inkSoft
         font.family: skin.font
-        font.pixelSize: Styling.fontSize(-2)
+        font.pixelSize: Type.size("caption")
         font.letterSpacing: 2.5
         font.weight: Font.Medium
     }
@@ -123,7 +123,7 @@ LockStyle {
                 text: skin.view.now.toLocaleDateString(Qt.locale(), "dddd  d MMMM").toUpperCase()
                 color: skin.inkSoft
                 font.family: skin.font
-                font.pixelSize: Math.max(14, Math.round(clockColumn.digitSize * 0.085))
+                font.pixelSize: Math.max(Type.size("body"), Math.round(clockColumn.digitSize * 0.085))
                 font.weight: Font.Medium
                 font.letterSpacing: Math.round(clockColumn.digitSize * 0.03)
             }
@@ -134,13 +134,13 @@ LockStyle {
         LockPasswordBase {
             id: pw
             field: input
-            implicitHeight: 48 + 14 + hintText.height
+            implicitHeight: line.height + Space.m + hintText.height
             readonly property color tube: errorShown ? skin.error : skin.neon
 
             Item {
                 id: line
                 width: parent.width
-                height: 48
+                height: Space.controlM + Space.s
                 transform: Translate {
                     x: pw.shakeOffset
                 }
@@ -151,17 +151,17 @@ LockStyle {
                     anchors.verticalCenter: input.verticalCenter
                     text: pw.capsLock ? Icons.capsLock : Icons.lock
                     font.family: Icons.font
-                    font.pixelSize: 16
+                    font.pixelSize: Type.iconSize("body")
                     color: pw.capsLock ? skin.neon : skin.inkSoft
                 }
                 TextField {
                     id: input
                     anchors.left: lead.right
-                    anchors.leftMargin: 14
+                    anchors.leftMargin: Space.m
                     anchors.right: submit.left
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Space.m
                     anchors.bottom: tubeLine.top
-                    anchors.bottomMargin: 10
+                    anchors.bottomMargin: Space.s
                     background: null
                     padding: 0
                     echoMode: TextInput.Password
@@ -171,33 +171,23 @@ LockStyle {
                     selectionColor: skin.neon
                     selectedTextColor: skin.black
                     font.family: skin.font
-                    font.pixelSize: pw.hasText ? Styling.fontSize(5) : Styling.fontSize(1)
+                    font.pixelSize: pw.hasText ? Type.size("title") : Type.size("body")
                     font.letterSpacing: pw.hasText ? 5 : 3
                     font.capitalization: pw.hasText ? Font.MixedCase : Font.AllUppercase
                     placeholderText: I18n.t("lockscreen.password")
                     placeholderTextColor: skin.inkSoft
                     Keys.onReleased: event => pw.observeKey(event)
                 }
-                Text {
+                LockSpinner {
                     id: submit
                     anchors.right: parent.right
                     anchors.verticalCenter: input.verticalCenter
-                    text: pw.authenticating ? Icons.circleNotch : Icons.keyReturn
-                    font.family: Icons.font
-                    font.pixelSize: 18
+                    busy: pw.authenticating
+                    idleIcon: Icons.keyReturn
                     color: pw.hasText ? skin.neon : skin.inkSoft
-                    RotationAnimator on rotation {
-                        running: pw.authenticating
-                        from: 0
-                        to: 360
-                        duration: 900
-                        loops: Animation.Infinite
-                    }
-                    onTextChanged: if (!pw.authenticating)
-                        rotation = 0
                     MouseArea {
                         anchors.fill: parent
-                        anchors.margins: -8
+                        anchors.margins: -Space.s
                         enabled: pw.hasText && !pw.authenticating
                         cursorShape: Qt.PointingHandCursor
                         onClicked: input.accepted()
@@ -217,29 +207,29 @@ LockStyle {
                         tint: pw.tube
                     }
                     Behavior on opacity {
-                        enabled: Config.animDuration > 0
+                        enabled: Motion.micro.duration > 0
                         NumberAnimation {
-                            duration: Motion.enter.duration
+                            duration: Motion.micro.duration
                         }
                     }
                 }
             }
-            Text {
+            KitText {
                 id: hintText
                 anchors.top: line.bottom
-                anchors.topMargin: 14
+                anchors.topMargin: Space.m
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: pw.hint.toUpperCase()
-                height: Math.max(implicitHeight, Styling.fontSize(-2) + 6)
+                height: Math.max(implicitHeight, Type.size("caption") + Space.xs)
                 color: pw.errorShown ? skin.error : skin.neon
                 font.family: skin.font
-                font.pixelSize: Styling.fontSize(-2)
+                role: "caption"
                 font.letterSpacing: 2.5
                 opacity: pw.hint !== "" ? 1 : 0
                 Behavior on opacity {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.micro.duration > 0
                     NumberAnimation {
-                        duration: Motion.enter.duration
+                        duration: Motion.micro.duration
                     }
                 }
             }
@@ -249,74 +239,56 @@ LockStyle {
     mediaCard: Component {
         LockMediaBase {
             id: media
-            implicitHeight: 74
+            implicitHeight: Space.controlL + Space.m
 
             Rectangle {
                 anchors.fill: parent
                 color: "transparent"
-                radius: Math.min(18, Styling.radius(4)) * skin.tubeRadius
+                radius: Space.clampRadius(Space.surfaceRadius, height) * skin.tubeRadius
                 border.color: skin.alpha(skin.neon, 0.32)
                 border.width: 1
             }
 
             Row {
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 14
+                anchors.margins: Space.m
+                spacing: Space.m
 
-                Rectangle {
-                    width: 50
-                    height: 50
-                    radius: 8 * skin.tubeRadius
-                    color: skin.alpha(skin.ink, 0.06)
-                    clip: true
-                    Image {
-                        anchors.fill: parent
-                        source: media.artUrl
-                        sourceSize: Qt.size(100, 100)
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        visible: status === Image.Ready
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        visible: media.artUrl === ""
-                        text: Icons.musicNotes
-                        font.family: Icons.font
-                        font.pixelSize: 20
-                        color: skin.neon
-                    }
+                Art {
+                    width: parent.height
+                    height: parent.height
+                    radius: Space.smallRadius * skin.tubeRadius
+                    source: media.artUrl
+                    icon: Icons.musicNotes
                 }
                 Column {
-                    width: parent.width - 64 - controls.width - 14
+                    width: parent.width - parent.height - controls.width - parent.spacing * 2
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 3
-                    Text {
+                    spacing: Space.xs
+                    KitText {
                         width: parent.width
                         text: media.title
-                        textFormat: Text.PlainText
                         elide: Text.ElideRight
                         color: skin.ink
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(0)
+                        role: "body"
                         font.weight: Font.Medium
                     }
-                    Text {
+                    KitText {
                         width: parent.width
                         text: media.artist.toUpperCase()
                         visible: text !== ""
-                        textFormat: Text.PlainText
                         elide: Text.ElideRight
                         color: skin.inkSoft
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(-3)
+                        role: "caption"
                         font.letterSpacing: 1.5
                     }
                     NotchVisualizer {
                         width: parent.width
-                        height: 14
+                        height: Space.m
                         barCount: 26
-                        spacing: 3
+                        spacing: Space.xs
                         centered: true
                         idleOpacity: 0.25
                         visible: media.visualizerEnabled && CavaService.available
@@ -330,7 +302,7 @@ LockStyle {
                 Row {
                     id: controls
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Space.xs
                     LockMediaButton {
                         icon: Icons.previous
                         glyphColor: skin.ink
@@ -353,7 +325,7 @@ LockStyle {
 
     status: Component {
         Item {
-            implicitHeight: 24
+            implicitHeight: Space.xl
 
             LockStatusInfo {
                 id: info
@@ -366,7 +338,7 @@ LockStyle {
             Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 18
+                spacing: Space.l
                 Caps {
                     text: info.networkLabel.toUpperCase()
                     visible: text !== ""

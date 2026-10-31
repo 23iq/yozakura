@@ -47,7 +47,7 @@ _NESTED = re.compile(r"^(\s*)property\s+JsonObject\s+(\w+):\s*JsonObject\s*\{")
 
 def _source_files() -> list[str]:
     out = git("ls-files", "--cached", "--others", "--exclude-standard")
-    return [f for f in out.splitlines() if f and not f.startswith(SKIP_PREFIXES) and (REPO / f).is_file()]
+    return [f for f in out.splitlines() if f and not f.startswith((".claude/", *SKIP_PREFIXES)) and (REPO / f).is_file()]
 
 
 def shadow_adapters(src: str) -> str:

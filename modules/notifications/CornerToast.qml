@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
-import qs.modules.services
 import qs.modules.components.kit
 import "ToastModel.js" as ToastModel
 
@@ -17,34 +16,25 @@ Item {
 
     property var group: null
     property bool stackUp: false
-    // Last non-empty group: keeps the content while the remove transition runs
-    property var held: null
-    onGroupChanged: if (group)
-        held = group
-    readonly property var notifications: root.held ? ToastModel.visible(root.held.notifications) : []
-    readonly property var latest: ToastModel.latest(root.notifications)
-    readonly property int extra: Math.max(0, root.notifications.length - 1)
+    // Content and actions of the group (shared with the strips)
+    readonly property ToastGroup toast: ToastGroup {
+        group: root.group
+    }
+    readonly property var notifications: root.toast.notifications
+    readonly property var latest: root.toast.latest
+    readonly property int extra: root.toast.extra
     readonly property int depth: ToastModel.stackDepth(root.notifications.length)
     readonly property int peek: Space.m
 
     implicitHeight: card.height + root.depth * root.peek
 
     function dismiss(): void {
-        if (root.notifications.length > 0)
-            Notifications.discardNotifications(root.notifications.map(n => n.id));
+        root.toast.dismiss();
     }
 
-    // The app group this toast paused; resumed on leave, or when the toast
-    // goes away under the pointer (no leave event then)
-    property string pausedApp: ""
     function hold(on: bool): void {
-        if (root.pausedApp !== "")
-            Notifications.resumeGroupTimers(root.pausedApp);
-        root.pausedApp = on && root.held ? root.held.appName : "";
-        if (root.pausedApp !== "")
-            Notifications.pauseGroupTimers(root.pausedApp);
+        root.toast.hold(on);
     }
-    Component.onDestruction: hold(false)
 
     HoverHandler {
         id: hover
@@ -100,8 +90,8 @@ Item {
             onClicked: mouse => {
                 if (mouse.button === Qt.MiddleButton)
                     root.dismiss();
-                else if (root.latest)
-                    Notifications.activateNotification(root.latest.id);
+                else
+                    root.toast.activate();
             }
         }
 
@@ -113,12 +103,7 @@ Item {
             extra: root.extra
             hovered: hover.hovered
             onDismissRequested: root.dismiss()
-            onActionInvoked: identifier => {
-                if (!root.latest)
-                    return;
-                Notifications.attemptInvokeAction(root.latest.id, identifier, false);
-                root.dismiss();
-            }
+            onActionInvoked: identifier => root.toast.invoke(identifier)
         }
     }
 }

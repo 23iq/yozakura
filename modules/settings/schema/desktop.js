@@ -94,7 +94,7 @@ var category = {
                         "key": "desktop.depthClock",
                         "equals": true
                     },
-                    "label": "prefs.desktop.depth_clock_style",
+                    "label": "prefs.label.clock_style",
                     "description": "prefs.desktop.depth_clock_style.desc",
                     "keywords": "clock style yozakura poster kanji mincho look gallery"
                 },
@@ -122,7 +122,7 @@ var category = {
                         "key": "desktop.depthClock",
                         "equals": true
                     },
-                    "label": "prefs.desktop.depth_clock_position",
+                    "label": "prefs.label.clock_position",
                     "description": "prefs.desktop.depth_clock_position.desc",
                     "keywords": "clock side left right auto placement"
                 },
@@ -135,7 +135,7 @@ var category = {
                         "key": "desktop.depthClock",
                         "equals": true
                     },
-                    "label": "prefs.desktop.depth_clock_ink",
+                    "label": "prefs.label.clock_colour",
                     "description": "prefs.desktop.depth_clock_ink.desc",
                     "keywords": "clock colour color ink palette role accent"
                 },
@@ -165,6 +165,13 @@ var category = {
                     "keywords": "widgets desktop show hide"
                 },
                 {
+                    "key": "desktop.depthLayering",
+                    "type": "toggle",
+                    "label": "prefs.desktop.depth_layering",
+                    "description": "prefs.desktop.depth_layering.desc",
+                    "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
+                },
+                {
                     "key": "desktop.widgets",
                     "type": "custom",
                     "component": "DesktopWidgetsEditor",
@@ -190,6 +197,7 @@ var category = {
                 },
                 {
                     "key": "desktop.widgetGrid",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 96,
@@ -239,6 +247,7 @@ var category = {
                 },
                 {
                     "key": "desktop.spacingVertical",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 64,

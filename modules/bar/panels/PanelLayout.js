@@ -253,6 +253,15 @@ function primaryIndex(panels, notchEdge) {
     return panels.length > 0 ? 0 : -1;
 }
 
+// Edge the primary panel is looked for on (primaryIndex): the notch's
+// while it exists, else the bar's own (bar.position); "" = the first panel.
+function pairEdge(bar, notch) {
+    var n = notch || {};
+    if (n.enabled !== false)
+        return EDGES.indexOf(n.position) !== -1 ? n.position : "top";
+    return EDGES.indexOf(bar && bar.position) !== -1 ? bar.position : "";
+}
+
 // Edge of the primary panel over every configured panel (screen-agnostic),
 // used where only "the bar's edge" matters (desktop margins, overview...).
 function primaryEdge(bar, notchEdge) {

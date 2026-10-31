@@ -5,7 +5,7 @@
 // Used by modules/services/Notifications.qml (what pops up, for how long,
 // with or without sound), the notch and CornerToasts.qml (where).
 
-var PRESENTATIONS = ["auto", "notch", "corner"];
+var PRESENTATIONS = ["auto", "notch", "corner", "strips"];
 var POSITIONS = ["auto", "top-left", "top", "top-right", "bottom-left", "bottom", "bottom-right"];
 var RULE_ACTIONS = ["mute", "priority", "alwaysShow", "soundOff"];
 
@@ -28,12 +28,20 @@ function oneOf(value, list, fallback) {
     return list.indexOf(value) !== -1 ? value : fallback;
 }
 
-// ctx: {barStyle, barPosition, notchPosition}
+// ctx: {barStyle, barPosition, notchPosition, notchEnabled}. A disabled
+// notch (notchEnabled === false) never takes popups, even an explicit
+// "notch": they fall back to corner toasts (the config is left as is).
+// "strips" (tanzaku hanging from an edge, modules/notifications/strips/)
+// is only ever chosen explicitly and needs no notch.
 function resolvePresentation(presentation, ctx) {
+    var c = ctx || {};
     var p = oneOf(presentation, PRESENTATIONS, "auto");
+    if (p === "strips")
+        return p;
+    if (c.notchEnabled === false)
+        return "corner";
     if (p !== "auto")
         return p;
-    var c = ctx || {};
     var byStyle = STYLE_PRESENTATION[c.barStyle];
     if (byStyle)
         return byStyle;
@@ -198,11 +206,28 @@ function isCritical(urgency) {
     return u === "2" || u === "critical";
 }
 
+function isLow(urgency) {
+    var u = String(urgency === undefined || urgency === null ? "" : urgency).toLowerCase();
+    return u === "0" || u === "low";
+}
+
+// Strips (presentation "strips") weigh urgency: a critical strip stays
+// until dismissed, a low-urgency one leaves sooner.
+var STRIPS_LOW_FACTOR = 0.6;
+function stripsTimeout(timeout, urgency) {
+    if (isCritical(urgency))
+        return 0;
+    if (isLow(urgency) && timeout > 0)
+        return Math.max(1000, Math.round(timeout * STRIPS_LOW_FACTOR));
+    return timeout;
+}
+
 // What happens to a new notification.
 //   notif: {appName, desktopEntry, urgency, expireTimeout}
 //   dnd:   Do Not Disturb in effect (manual or scheduled, see Notifications.silent)
+//   presentation: the resolved one ("strips" weighs urgency, stripsTimeout)
 // -> {popup, sound, priority, timeout (ms, 0 = until dismissed)}
-function decide(cfg, notif, dnd) {
+function decide(cfg, notif, dnd, presentation) {
     var c = cfg || {};
     var flags = matchRules(c.rules, notif);
     var critical = isCritical(notif && notif.urgency);
@@ -218,6 +243,8 @@ function decide(cfg, notif, dnd) {
         timeout = Math.max(0, Number(c.timeout) || 0);
     else
         timeout = expire;
+    if (presentation === "strips")
+        timeout = stripsTimeout(timeout, notif && notif.urgency);
     return {
         "popup": popup,
         "sound": sound,
@@ -277,6 +304,18 @@ function overflowPopups(popups, max) {
     return list.slice(0, list.length - limit).map(function (n) {
         return n.id;
     });
+}
+
+// How many popups may stay at once: notifications.maxVisible, or for
+// strips enough to hang notifications.strips.maxVisible and fill the "+N"
+// knot behind them (up to STRIPS_KNOT_MAX more).
+var STRIPS_KNOT_MAX = 9;
+function popupLimit(cfg, presentation) {
+    var base = Math.max(1, Number(cfg && cfg.maxVisible) || 3);
+    if (presentation !== "strips")
+        return base;
+    var strips = cfg && cfg.strips ? Number(cfg.strips.maxVisible) || 0 : 0;
+    return Math.max(base, strips + STRIPS_KNOT_MAX);
 }
 
 // Ids of history entries to drop so at most `size` remain (oldest first,

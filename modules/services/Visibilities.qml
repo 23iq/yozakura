@@ -133,8 +133,21 @@ Singleton {
         notches = _updateMap(notches, screenName, null);
     }
 
-    function getNotchForScreen(screenName) {
-        return notches[screenName] || null;
+    // Null-safe notch geometry. The notch exists only while notch.enabled
+    // (UnifiedShellPanel loads it): absent, it is an empty rect, claims no
+    // edge and is not there. Read these instead of the notch item.
+    function hasNotch(screenName): bool {
+        return !!notches[screenName];
+    }
+
+    function notchRect(screenName): rect {
+        const n = notches[screenName];
+        return n ? Qt.rect(n.x, n.y, n.width, n.height) : Qt.rect(0, 0, 0, 0);
+    }
+
+    function notchEdgeClaim(screenName): real {
+        const n = notches[screenName];
+        return n && n.edgeClaim !== undefined ? n.edgeClaim : 0;
     }
 
     function registerNotchPanel(screenName, notchPanel) {

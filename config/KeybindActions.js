@@ -1,10 +1,7 @@
 .pragma library
+.import "JsonUtil.js" as JsonUtil
 .import "../modules/globals/BrandActions.js" as BrandActions
 .import "../modules/keybinds/KeyNames.js" as KeyNames
-
-function clone(obj) {
-    return JSON.parse(JSON.stringify(obj || {}));
-}
 
 function formatOffset(value) {
     if (value === undefined || value === null || value === "") {
@@ -78,7 +75,7 @@ var ACTION_CATALOG = [
     { id: BrandActions.action("launcher"), label: "Open Launcher", category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("run", "launcher"), flags: "r" },
     { id: BrandActions.action("dashboard"), label: "Open Dashboard", category: BrandActions.displayName, group: "shell", dispatcher: "exec", argument: BrandActions.command("run", "dashboard") },
     { id: BrandActions.action("assistant"), label: "Open Assistant", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "assistant") },
-    { id: BrandActions.action("ai-quickask"), label: "AI Quick Ask (notch)", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-quickask") },
+    { id: BrandActions.action("ai-quickask"), label: "AI Quick Ask", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-quickask") },
     { id: BrandActions.action("ai-selection"), label: "AI Selection Actions", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-selection") },
     { id: BrandActions.action("ai-region"), label: "AI Ask About Screen Region", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-region") },
     { id: BrandActions.action("ai-agent"), label: "AI Agent (Code space)", category: BrandActions.displayName, group: "ai", dispatcher: "exec", argument: BrandActions.command("run", "ai-agent") },
@@ -354,7 +351,7 @@ function describeAction(action) {
 function ensureAction(action) {
     if (!action) return null;
     if (action.id) {
-        const fixed = clone(action);
+        const fixed = JsonUtil.clone(action);
         fixed.id = BrandActions.normalizeAction(fixed.id);
         if (!fixed.args) {
             fixed.args = defaultArgs(fixed.id);

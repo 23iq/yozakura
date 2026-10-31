@@ -46,6 +46,10 @@ var data = {
         "weather": {
             "showDescription": true
         },
+        "media": {
+            "showTitle": true,
+            "visualizer": true
+        },
         "clock": {
             "showWeather": true,
             "face": "digital",
@@ -86,6 +90,19 @@ var data = {
         },
         "workspacePreviews": {
             "count": 4
+        },
+        // The bar read as one line (modules/bar/sentence/Sentence.js):
+        // fragments in order, the ranking that keeps them on a narrow bar,
+        // separator dash | dot | comma | none, verbosity short | full,
+        // typeface body | editorial (theme.type.editorial), maxWidth px
+        // (0 = half the bar).
+        "sentence": {
+            "fragments": ["clock", "window", "workspace", "battery", "media", "notifications"],
+            "priority": ["clock", "media", "window", "battery", "notifications", "workspace", "volume", "weather", "network"],
+            "separator": "dash",
+            "verbosity": "full",
+            "typeface": "editorial",
+            "maxWidth": 0
         }
     }
 }

@@ -16,12 +16,11 @@ Item {
     id: host
 
     required property string screenName
-    // BarContent and NotchContent of the same UnifiedShellPanel
+    // BarContent and NotchContent of the same UnifiedShellPanel; the
+    // notch is null while notch.enabled is off
     required property BarContent bar
-    required property NotchContent notch
+    property NotchContent notch: null
     property bool barEnabled: true
-
-    readonly property Item notchItem: host.notch ? host.notch.notchContainerRef : null
     readonly property var place: Layout.placement({
         barEnabled: barEnabled,
         barStyle: bar && bar.styleMeta.activity === "tab" ? "islands" : "classic",
@@ -31,7 +30,7 @@ Item {
         notchTheme: Config.notchTheme || "default"
     })
 
-    readonly property bool frameOn: Config.bar && Config.bar.frameEnabled && !(notch && notch.activeWindowFullscreen)
+    readonly property bool frameOn: Config.bar && Config.bar.frameEnabled && !(notch ? notch.activeWindowFullscreen : (bar && bar.activeWindowFullscreen))
     readonly property real frameOffset: frameOn ? (Config.bar.frameThickness !== undefined ? Config.bar.frameThickness : 6) : 0
     readonly property real roundFillet: Config.roundness > 0 ? Config.roundness + 4 : 0
 
@@ -65,7 +64,7 @@ Item {
     }
 
     // ── Free span along the edge ──
-    readonly property real notchWidth: notchItem && ShellLayout.notchEnabled ? notchItem.width : 0
+    readonly property real notchWidth: Visibilities.notchRect(host.screenName).width
     readonly property real notchStart: (width - notchWidth) / 2
     readonly property real notchEnd: (width + notchWidth) / 2
     readonly property real margin: Math.max(8, roundFillet)
@@ -88,7 +87,7 @@ Item {
     readonly property real spacing: Math.max(4, Math.round(thickness / 6))
 
     // Retract with the notch, and while it is opened (launcher, dashboard...)
-    readonly property bool revealed: notch !== null && !notch.screenNotchOpen && (ShellLayout.notchEnabled ? notch.reveal : (!bar || bar.reveal))
+    readonly property bool revealed: notch ? (!notch.screenNotchOpen && notch.reveal) : (!bar || bar.reveal)
 
     // ── Lifetime: only alive while something is (or was just) showing ──
     property bool lingering: false

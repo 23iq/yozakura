@@ -201,3 +201,38 @@ func TestInstallHintFedoraNiriCopr(t *testing.T) {
 		t.Errorf("unexpected niri hint: %q", h)
 	}
 }
+
+func TestNixAlternatives(t *testing.T) {
+	roots := []string{"/nix/store/x-env", "/run/current-system/sw"}
+	got := nixAlternatives("/usr/lib*/qt6/plugins/imageformats/libqwebp.so", roots)
+	want := []string{
+		"/nix/store/x-env/lib/qt-6/plugins/imageformats/libqwebp.so",
+		"/nix/store/x-env/libexec/qt-6/plugins/imageformats/libqwebp.so",
+		"/run/current-system/sw/lib/qt-6/plugins/imageformats/libqwebp.so",
+		"/run/current-system/sw/libexec/qt-6/plugins/imageformats/libqwebp.so",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("qt6 plugin:\n%s", strings.Join(got, "\n"))
+	}
+	if got := nixAlternatives("/usr/share/themes/adw-gtk3*", roots[1:]); len(got) != 1 || got[0] != "/run/current-system/sw/share/themes/adw-gtk3*" {
+		t.Errorf("share: %q", got)
+	}
+	if got := nixAlternatives("/usr/lib/*-linux-gnu/xdg-desktop-portal-gtk", roots[1:]); len(got) != 2 || got[1] != "/run/current-system/sw/libexec/xdg-desktop-portal-gtk" {
+		t.Errorf("debian multiarch: %q", got)
+	}
+	if got := nixAlternatives("/opt/x", roots); got != nil {
+		t.Errorf("unknown prefix: %q", got)
+	}
+}
+
+func TestPresentFindsNixProfile(t *testing.T) {
+	c := fakeChecker(nil, []string{"/run/current-system/sw/libexec/xdg-desktop-portal-gtk"}, "")
+	d := Dep{ID: "portal-gtk", Checks: []string{"/usr/lib*/xdg-desktop-portal-gtk", "/usr/libexec/xdg-desktop-portal-gtk"}}
+	if c.Present(d) {
+		t.Fatal("no Nix roots: the FHS check alone must fail")
+	}
+	c.NixRoots = []string{"/run/current-system/sw"}
+	if !c.Present(d) {
+		t.Fatal("NixOS profile must satisfy the portal check")
+	}
+}

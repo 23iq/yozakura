@@ -23,14 +23,15 @@ def check(ok, msg):
 
 h = Harness("key-alias-gate")
 h.module("Quickshell.Io", {
-    # The preset copy ("cp -n") succeeds for /preset-ok/ and fails otherwise.
+    # The preset copy (sh -c 'cp -n ...' seed-config <preset> <target>)
+    # succeeds for /preset-ok/ and fails otherwise.
     "Process": """QtObject {
     property var command: []
     property bool running: false
     signal exited(int exitCode, int exitStatus)
     onRunningChanged: {
-        if (running && command.indexOf("-n") !== -1)
-            exited(String(command[3]).indexOf("/preset-ok/") === 0 ? 0 : 1, 0);
+        if (running && command.indexOf("seed-config") !== -1)
+            exited(String(command[command.length - 2]).indexOf("/preset-ok/") === 0 ? 0 : 1, 0);
     }
 }""",
     "FileViewError": "QtObject { enum Value { Success, Unknown, FileNotFound, PermissionDenied, NotAFile } }",
@@ -50,6 +51,8 @@ h.module("Quickshell.Io", {
     function writeAdapter() {}
 }""",
 })
+h.copy("config/JsonUtil.js")
+h.copy("config/JsonUtil.js", dest="config")
 h.copy("config/ConfigFile.qml")
 h.copy("config/AliasGate.qml")
 

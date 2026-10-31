@@ -23,12 +23,17 @@ onboarding/
 ├── SummaryCard / ExclusiveChoice   parts of StepFinish
 ├── PresetCard / PresetPreview   static mini desktop from a preset's bar.json/theme.json
 ├── DryRunBadge / DryRunWallpapers   dry run only (see DRY RUN)
-└── ChoiceRow / NavButton / SectionLabel / StepScaffold / ProgressDots / SakuraLogo / TourTask
+├── FocusChip / ChoiceRow  kit wrappers: a keyboard-reachable Chip, a ListRow that checks / toggles
+└── StepScaffold / ProgressDots / SakuraLogo / TourTask
 ```
 State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
 `peek`, `open/close/toggle/complete`, auto-show).
 
 ## RULES
+- Built only from the UI kit (`qs.modules.components.kit`): text buttons are
+  `FocusChip`, rows `ChoiceRow` / `ListRow`, sections `Group`; no raw font sizes,
+  durations, hex or Ui.js washes (`tests/onboarding.test.cjs` checks it).
+  Renders: `onboarding_render.py --language ink,glass,tiles --palette '#3f8f4f'`.
 - Adding a step = `Step<Name>.qml` + one entry in `OnboardingSteps.js` +
   `onboarding.*` translations (en/es/ru). `tests/onboarding.test.cjs` checks
   files and keys.

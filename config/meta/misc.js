@@ -22,6 +22,13 @@ var general = {
         },
         "newLookOffered": {
             "description": "The one-time \"Try the new look\" card was answered (tried, kept, reverted or dismissed); it is not shown again."
+        },
+        "autoSavePreset": {
+            "description": "Save setting changes into the active preset automatically (debounced) when it is one of your own presets; built-in presets are never changed. Off: use \"Save to current preset\" (settings sidebar, preset switcher, `preset save --current`)."
+        },
+        "settingsShowAll": {
+            "title": "Show all settings",
+            "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
         }
     }
 };
@@ -114,6 +121,9 @@ var performance = {
             "min": 1,
             "max": 3,
             "description": "Most dashboard tabs kept loaded."
+        },
+        "unloadIdleViews": {
+            "description": "Release kept-loaded dashboard tabs a minute after the dashboard closes."
         }
     }
 };

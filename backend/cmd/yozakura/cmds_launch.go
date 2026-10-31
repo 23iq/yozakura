@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -53,7 +54,7 @@ func runLaunch(args []string, env launchEnv, stderr io.Writer) int {
 
 // startDetached runs argv in its own session from $HOME and does not wait.
 func startDetached(argv []string) error {
-	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd := exec.CommandContext(context.Background(), argv[0], argv[1:]...)
 	if home, err := os.UserHomeDir(); err == nil {
 		cmd.Dir = home
 	}

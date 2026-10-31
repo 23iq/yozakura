@@ -52,7 +52,8 @@ test('digital parts: 24h padded, 12h with suffix', () => {
 // ---------------------------------------------------------------- registry
 
 test('face registry: known faces resolve, unknown falls back to digital', () => {
-    assert.deepEqual(plain(faces.ids()), ['digital', 'stacked', 'dotMatrix', 'kanji']);
+    assert.deepEqual(plain(faces.ids()), ['digital', 'stacked', 'dotMatrix', 'kanji', 'segment']);
+    assert.equal(faces.resolve('segment', true).id, 'segment');
     assert.equal(faces.resolve('kanji', false).id, 'kanji');
     assert.equal(faces.resolve('dotMatrix', false).url, 'faces/DotMatrix.qml');
     assert.equal(faces.resolve('bogus', false).id, 'digital');

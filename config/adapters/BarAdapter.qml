@@ -45,6 +45,10 @@ JsonAdapter {
             "weather": {
                 "showDescription": true
             },
+            "media": {
+                "showTitle": true,
+                "visualizer": true
+            },
             "clock": {
                 "showWeather": true,
                 "face": "digital",
@@ -108,6 +112,14 @@ JsonAdapter {
             },
             "workspacePreviews": {
                 "count": 4
+            },
+            "sentence": {
+                "fragments": ["clock", "window", "workspace", "battery", "media", "notifications"],
+                "priority": ["clock", "media", "window", "battery", "notifications", "workspace", "volume", "weather", "network"],
+                "separator": "dash",
+                "verbosity": "full",
+                "typeface": "editorial",
+                "maxWidth": 0
             }
         })
 }

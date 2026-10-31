@@ -178,6 +178,8 @@ var sections = [
             },
             {
                 "key": "theme.paletteTransitionDuration",
+                "reason": "prefs.disabled.motion_off",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 1500,

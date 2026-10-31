@@ -1,8 +1,8 @@
 package keymon
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
 	"path/filepath"
 	"sync"
 	"syscall"
@@ -10,6 +10,7 @@ import (
 
 	"golang.org/x/sys/unix"
 
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/yozd/ipc"
 )
 
@@ -285,5 +286,7 @@ func (m *Monitor) dispatch(group string) {
 }
 
 func runShell(cmd string) error {
-	return exec.Command("sh", "-c", ipc.ResolveExecCommand(cmd)).Run()
+	// User keybind commands may run for as long as they like: no timeout.
+	_, err := proc.RunWith(context.Background(), proc.Options{Timeout: -1}, "sh", "-c", ipc.ResolveExecCommand(cmd))
+	return err
 }

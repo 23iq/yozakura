@@ -12,6 +12,11 @@
 //   filled     true when the label sits on the indicator's fill (it then
 //              takes the fill's item color), false when the label stays on
 //              the bar background (it then takes the accent color)
+//   strip      only for styles that draw the whole strip instead of the
+//              active box (the branch): the bar then hides the box, the
+//              occupied ranges and the slot contents and draws this QML file
+//              (relative to this directory) over every slot; `component` is
+//              the settings preview (a 3-slot strip, `indicator.slotSize`)
 //
 // To add a style: one component file here + one entry below; validation,
 // the catalog and the settings chips pick it up.
@@ -23,7 +28,8 @@ var STYLES = [
     { "id": "underline", "label": "Underline", "component": "UnderlineIndicator.qml", "filled": false },
     { "id": "dot", "label": "Dot", "component": "DotIndicator.qml", "filled": false },
     { "id": "brush", "label": "Brush", "component": "BrushIndicator.qml", "filled": true },
-    { "id": "bracket", "label": "Bracket", "component": "BracketIndicator.qml", "filled": false }
+    { "id": "bracket", "label": "Bracket", "component": "BracketIndicator.qml", "filled": false },
+    { "id": "branch", "label": "Branch", "component": "BranchIndicator.qml", "filled": false, "strip": "../branch/BranchStrip.qml" }
 ];
 
 function ids() {
@@ -46,6 +52,28 @@ function get(id) {
 
 function filled(id) {
     return get(id).filled;
+}
+
+// The whole-strip component of a strip style ("" for box styles).
+function strip(id) {
+    return get(id).strip || "";
+}
+
+// What a strip style draws per slot (its `slots`): workspace id, its window count, urgency and
+// whether it is the monitor's active workspace.
+function stripSlots(count, idOf, windowsMap, urgentMap, activeId) {
+    var out = [];
+    for (var i = 0; i < count; i++) {
+        var id = idOf(i);
+        var wins = (windowsMap && windowsMap[id]) || [];
+        out.push({
+            "id": id,
+            "windows": wins.length,
+            "urgent": !!(urgentMap && urgentMap[id]),
+            "active": id === activeId
+        });
+    }
+    return out;
 }
 
 // Box of the indicator inside the workspaces widget: the slots between the

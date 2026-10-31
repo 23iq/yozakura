@@ -28,7 +28,10 @@ Commands:
                                          (values the thumbnails are drawn from) and the
                                          set's layout, style and palette
     parts [--json]                       Layouts, styles and palettes; * marks the current ones
-    apply <name>                         Copy the preset over the live config (hot-applies)
+    apply <name> [--json] [--exact]      Copy the preset over the live config (hot-applies);
+                                         settings you changed since the last apply are kept
+                                         (--json: {preset, set, reset, keptUserValues};
+                                         --exact: discard them, "Revert to preset")
     apply --part <layout|style|palette> <name>
                                          Merge only that part's keys into the live config
     apply [--part <kind>] --preview <name>
@@ -36,6 +39,10 @@ Commands:
     revert                               bring back the look from before the first preview
     save <name> [--domains a,b] [--force]
                                          Save the live config (+ matugen scheme) as a user preset
+    save --current [--json]              Save the live config into the active user preset
+    save --current --as <name> [--json]  Save it as a new user preset and make that active
+    save --undo <id>                     Put back the version a save --current replaced
+    status [--json]                      Active preset and the settings changed since
     update <name> [--domains a,b]        Overwrite a user preset with the live config
     diff <a> <b> [--json]                Keys that differ (names, "current", "defaults", bundles)
     show <name> [--against B] [--json]   What a preset changes, aspect by aspect (vs defaults
@@ -81,6 +88,7 @@ func presetManager() (*presets.Manager, error) {
 		OfficialDir:   official,
 		WallpaperFile: filepath.Join(p.CacheDir, "wallpapers.json"),
 		StateDir:      p.StateDir,
+		DataDir:       p.DataDir,
 	}, nil
 }
 
@@ -142,6 +150,8 @@ func runPreset(args []string, out, errOut io.Writer) int {
 		err = presetSessionCmd(m, presets.EditSession, rest, out, errOut)
 	case "active":
 		fmt.Fprintln(out, m.Active())
+	case "status":
+		err = presetStatusCmd(m, rest, out)
 	case "__names":
 		for _, p := range m.List() {
 			fmt.Fprintln(out, p.Name)
@@ -206,17 +216,23 @@ func presetApplyCmd(m *presets.Manager, name string, out, errOut io.Writer) erro
 	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("usage: %s preset apply <name>", brand.AppID)
 	}
-	p, problems, err := m.Apply(name)
+	p, sum, problems, err := m.ApplyReport(name)
 	if err != nil {
 		return err
 	}
 	reportProblems(errOut, problems)
 	fmt.Fprintf(out, "Preset applied: %s (%s)\n", p.Name, strings.Join(p.Domains, ", "))
+	if len(sum.Kept) > 0 {
+		fmt.Fprintf(out, "Kept %d of your settings: %s\n", len(sum.Kept), strings.Join(sum.Kept, ", "))
+	}
 	return nil
 }
 
 func presetSaveCmd(m *presets.Manager, args []string, out io.Writer) error {
-	a := parseCLI(args, []string{"force"}, []string{"domains"})
+	a := parseCLI(args, []string{"force", "current", "json"}, []string{"domains", "as", "undo"})
+	if a.has("current") || a.has("undo") {
+		return presetSaveCurrentCmd(m, a, out)
+	}
 	if len(a.pos) == 0 {
 		return fmt.Errorf("usage: %s preset save <name> [--domains bar,theme] [--force]", brand.AppID)
 	}

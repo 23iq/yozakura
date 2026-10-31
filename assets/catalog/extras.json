@@ -216,6 +216,9 @@
           "cmake",
           "ninja",
           "g++"
+        ],
+        "env": [
+          "WHISPER_BIN_DIR"
         ]
       },
       "install": {
@@ -285,7 +288,7 @@
       "size": "2 GB",
       "detect": {
         "paths": [
-          "~/.local/share/yozakura/voice"
+          "~/.local/share/yozakura/whisper/BUILD_INFO"
         ]
       },
       "install": {
@@ -304,6 +307,9 @@
       "detect": {
         "bins": [
           "uv"
+        ],
+        "env": [
+          "DEPTH_PYTHON"
         ]
       },
       "install": {
@@ -327,7 +333,7 @@
       "size": "3 GB",
       "detect": {
         "paths": [
-          "~/.local/share/yozakura/depth"
+          "~/.local/share/yozakura/depth-models/*.onnx"
         ]
       },
       "install": {

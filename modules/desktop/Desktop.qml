@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.modules.desktop
 import qs.modules.desktop.widgets
+import qs.modules.desktop.panorama
 import qs.modules.bar.workspaces
 import qs.modules.services
 import qs.modules.theme
@@ -39,7 +40,10 @@ PanelWindow {
     WlrLayershell.keyboardFocus: editing || DesktopWidgets.widgets.length > 0 ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
     exclusionMode: ExclusionMode.Ignore
 
-    visible: iconsEnabled || DesktopWidgets.wanted
+    // Depth layering alone (with the depth clock) also needs this surface:
+    // it draws the subject over the clock.
+    readonly property bool layeringOnly: (Config.desktop.depthLayering ?? false) && (Config.desktop.depthClock ?? false)
+    visible: iconsEnabled || DesktopWidgets.wanted || layeringOnly
 
     onIconsEnabledChanged: {
         if (iconsEnabled)
@@ -276,6 +280,13 @@ PanelWindow {
                 w: iconContainer.width,
                 h: iconContainer.height
             })
+    }
+
+    // Depth layering: the wallpaper's subject above the widgets and icons.
+    WallpaperForeground {
+        anchors.fill: parent
+        screen: desktop.screen
+        suspended: desktop.editing
     }
 
     Rectangle {

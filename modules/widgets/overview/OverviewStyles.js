@@ -7,7 +7,8 @@
 
 var styles = [
     { id: "grid", labelKey: "settings.shell.overview_style_grid" },
-    { id: "strip", labelKey: "settings.shell.overview_style_strip" }
+    { id: "strip", labelKey: "settings.shell.overview_style_strip" },
+    { id: "scroll", labelKey: "settings.shell.overview_style_scroll" }
 ];
 
 function ids() {

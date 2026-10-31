@@ -61,7 +61,7 @@ var keys = {
         "min": 0,
         "max": 300,
         "unit": "ms",
-        "description": "Base animation duration; 0 disables animations. Values above 300 are capped (config/motion/MotionBudget.js)."
+        "description": "Base animation duration; 0 disables animations. Above 160 ms it counts half (300 plays as 230) and the result is capped at 240 (config/motion/MotionBudget.js)."
     },
     "paletteTransitionDuration": {
         "min": 0,
@@ -252,8 +252,8 @@ var keys = {
         "description": "Size density of bar, notch, dock and panels: compact, cozy (the historical sizes) or roomy."
     },
     "language": {
-        "enum": ["ink", "glass", "tiles", "classic"],
-        "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles) or classic (the surface variants exactly as configured)."
+        "enum": ["ink", "glass", "tiles", "classic", "device"],
+        "description": "Visual language: ink (one surface, no inner boxes, ghost buttons, soft accent tints), glass (translucent inner cards), tiles (solid flat tiles), classic (the surface variants exactly as configured) or device (a hardware instrument: matte bevelled boxes, knobs, segment readouts, LED tiles)."
     },
     "shape": {
         "description": "Corner shape of the shell's surfaces."
@@ -285,6 +285,9 @@ var keys = {
     "type.heading": {
         "description": "Font family of page, section and panel titles; empty uses theme.font."
     },
+    "type.editorial": {
+        "description": "Font family of the editorial type role (serif display text such as the sentence bar); empty uses the system serif face."
+    },
     "type.headingCase": {
         "enum": ["none", "upper", "lower", "title"],
         "description": "Letter case applied to titles: none, upper, lower or title."
@@ -307,6 +310,49 @@ var keys = {
     },
     "signatures": {
         "description": "Decorative signatures drawn on top of the shell's surfaces."
+    },
+    "lighting": {
+        "description": "One light source for the shell's shadows, lit edges and the cursor lantern."
+    },
+    "lighting.mode": {
+        "enum": ["off", "fixed", "sun"],
+        "description": "off: the theme shadow as configured; fixed: light from lighting.angle; sun: shadows follow the real sun at the weather location (long and soft at dawn and dusk, short at noon, faint at night)."
+    },
+    "lighting.angle": {
+        "min": -180,
+        "max": 180,
+        "unit": "deg",
+        "description": "fixed mode: where the light comes from, degrees clockwise from the top of the screen."
+    },
+    "lighting.strength": {
+        "enum": ["subtle", "normal", "dramatic"],
+        "description": "How strongly the light shows: shadow length and softness, the lit edge, the warm sun wash, the night dim and the lantern."
+    },
+    "lighting.lantern": {
+        "enum": ["off", "night", "always"],
+        "description": "A soft light that follows the pointer over shell surfaces: off, only after sunset, or always."
+    },
+    "weatherFx": {
+        "description": "The current weather drawn onto the shell's surfaces: droplets, frost, heat shimmer, haze and seasonal petals."
+    },
+    "weatherFx.mode": {
+        "enum": ["off", "subtle", "vivid"],
+        "description": "off: no weather on surfaces; subtle: a few droplets, a faint haze; vivid: denser and more visible. Never drawn over text."
+    },
+    "weatherFx.rain": {
+        "description": "Rain and drizzle: a few droplets rest on surfaces and now and then one runs down."
+    },
+    "weatherFx.frost": {
+        "description": "Below 0 °C frost creeps in from the corners of surfaces; snowflakes settle on their top edge while it snows."
+    },
+    "weatherFx.heat": {
+        "description": "Above 30 °C a faint heat shimmer passes over the bar now and then."
+    },
+    "weatherFx.fog": {
+        "description": "Fog and mist: a soft haze over surfaces."
+    },
+    "weatherFx.seasonal": {
+        "description": "In spring a petal, in autumn a leaf, occasionally lands on the bar and slides off (season from the weather location's hemisphere)."
     },
     "signatures.brushHighlight": {
         "description": "Paint selection and focus highlights as a brush stroke."

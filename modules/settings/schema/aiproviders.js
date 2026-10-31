@@ -55,6 +55,7 @@ var category = {
             "entries": [
                 {
                     "key": "ai.providers.timeout",
+                    "advanced": true,
                     "type": "number",
                     "label": "prefs.ai.providers.timeout",
                     "description": "prefs.ai.providers.timeout.desc",
@@ -67,6 +68,7 @@ var category = {
                 },
                 {
                     "key": "ai.providers.retries",
+                    "advanced": true,
                     "type": "number",
                     "label": "prefs.ai.providers.retries",
                     "description": "prefs.ai.providers.retries.desc",
@@ -76,6 +78,7 @@ var category = {
                 },
                 {
                     "key": "ai.providers.openrouterAttribution",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "prefs.ai.providers.openrouter_attribution",
                     "description": "prefs.ai.providers.openrouter_attribution.desc",
@@ -83,6 +86,7 @@ var category = {
                 },
                 {
                     "key": "ai.providers.customHeaders",
+                    "advanced": true,
                     "type": "list",
                     "fields": [
                         {
@@ -122,6 +126,7 @@ var category = {
             "entries": [
                 {
                     "key": "ai.ollama.endpoint",
+                    "advanced": true,
                     "type": "text",
                     "label": "prefs.ai.ollama_endpoint",
                     "description": "prefs.ai.ollama_endpoint.desc",
@@ -131,6 +136,7 @@ var category = {
                 },
                 {
                     "key": "ai.ollama.keepAlive",
+                    "advanced": true,
                     "type": "text",
                     "label": "prefs.ai.ollama_keep_alive",
                     "description": "prefs.ai.ollama_keep_alive.desc",
@@ -140,6 +146,7 @@ var category = {
                 },
                 {
                     "key": "ai.ollama.numCtx",
+                    "advanced": true,
                     "type": "number",
                     "label": "prefs.ai.ollama_num_ctx",
                     "description": "prefs.ai.ollama_num_ctx.desc",
@@ -151,6 +158,7 @@ var category = {
                 },
                 {
                     "key": "ai.lmstudio.endpoint",
+                    "advanced": true,
                     "type": "text",
                     "label": "prefs.ai.lmstudio_endpoint",
                     "description": "prefs.ai.lmstudio_endpoint.desc",
@@ -160,6 +168,7 @@ var category = {
                 },
                 {
                     "key": "ai.providers.probeInterval",
+                    "advanced": true,
                     "type": "number",
                     "label": "prefs.ai.providers.probe_interval",
                     "description": "prefs.ai.providers.probe_interval.desc",

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.config
+import qs.modules.theme
 
 // Theme drop shadow of one part of a larger item, drawn on its own (shadow
 // only, no copy of the source), so it can sit beneath every other surface.
@@ -26,13 +27,13 @@ Item {
     property bool active: true
 
     readonly property bool hasArea: root.sourceRect.width >= 1 && root.sourceRect.height >= 1
-    readonly property color shadowColor: Config.resolveColor(Config.theme.shadowColor)
+    readonly property color shadowColor: Lighting.shadowColor
     // MultiEffect's auto padding (blurMax 32): the blur spills this far
     readonly property int spill: 32
 
-    visible: root.active && root.hasArea && root.source !== null && Config.theme.shadowOpacity > 0
-    x: root.sourceRect.x + Config.theme.shadowXOffset - root.spill
-    y: root.sourceRect.y + Config.theme.shadowYOffset - root.spill
+    visible: root.active && root.hasArea && root.source !== null && Lighting.shadowOpacity > 0
+    x: root.sourceRect.x + Lighting.shadowXOffset - root.spill
+    y: root.sourceRect.y + Lighting.shadowYOffset - root.spill
     width: root.sourceRect.width + root.spill * 2
     height: root.sourceRect.height + root.spill * 2
 
@@ -64,11 +65,11 @@ Item {
         source: capture
         visible: root.visible
         blurEnabled: true
-        blur: Config.theme.shadowBlur
+        blur: Lighting.shadowBlur
         contrast: -1
         brightness: 0.5
         colorization: 1
         colorizationColor: Qt.rgba(root.shadowColor.r, root.shadowColor.g, root.shadowColor.b, 1)
-        opacity: Config.theme.shadowOpacity * root.shadowColor.a
+        opacity: Lighting.shadowOpacity * root.shadowColor.a
     }
 }

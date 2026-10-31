@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -189,7 +190,7 @@ func binLinksIn(dir string, ours map[string]bool) []string {
 var pkexecRm = realPkexecRm
 
 func realPkexecRm(files ...string) error {
-	cmd := exec.Command("pkexec", append([]string{"rm", "-f", "--"}, files...)...)
+	cmd := exec.CommandContext(context.Background(), "pkexec", append([]string{"rm", "-f", "--"}, files...)...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	return cmd.Run()
 }
@@ -211,7 +212,7 @@ var sysHelperPath = func() string { return "/usr/local/lib/" + brand.AppID + "/"
 // pkexecRmHelper removes the helper and then its folder when that is empty,
 // in one authorisation (paths as argv, the script is constant).
 var pkexecRmHelper = func(helper, dir string) error {
-	cmd := exec.Command("pkexec", "sh", "-c", `rm -f -- "$1" && { rmdir -- "$2" 2>/dev/null || true; }`, "sh", helper, dir)
+	cmd := exec.CommandContext(context.Background(), "pkexec", "sh", "-c", `rm -f -- "$1" && { rmdir -- "$2" 2>/dev/null || true; }`, "sh", helper, dir)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	return cmd.Run()
 }

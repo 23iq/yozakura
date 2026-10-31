@@ -1,10 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Widgets
 import qs.modules.services
 import qs.modules.theme
 import qs.modules.widgets.defaultview
-import qs.config
+import qs.modules.components.kit
 
 // Glass style now-playing card: artwork, title/artist, transport controls,
 // a thin progress line and the shared cava spectrum.
@@ -17,11 +16,11 @@ LockMediaBase {
     property color fill: Colors.shadow
     // Accent -> this colour across the spectrum.
     property color spectrumEnd: Colors.tertiaryFixedDim
-    readonly property int pad: 14
-    readonly property int artSize: 84
-    readonly property real radius: Config.roundness > 0 ? Math.min(Styling.radius(10), 28) : 0
+    readonly property int pad: Space.m
+    readonly property int artSize: Space.controlXL - Space.m
+    readonly property real radius: Space.clampRadius(Space.surfaceRadius + Space.s, root.implicitHeight)
 
-    implicitWidth: 440
+    implicitWidth: Space.controlXL * 4 + Space.xl
     implicitHeight: artSize + pad * 2
 
     LockGlass {
@@ -34,45 +33,16 @@ LockMediaBase {
     RowLayout {
         anchors.fill: parent
         anchors.margins: root.pad
-        spacing: 16
+        spacing: Space.l
 
         // Artwork
-        ClippingRectangle {
+        Art {
             Layout.preferredWidth: root.artSize
             Layout.preferredHeight: root.artSize
             Layout.alignment: Qt.AlignVCenter
-            radius: Config.roundness > 0 ? Math.max(6, root.radius - root.pad) : 0
-            color: Qt.rgba(root.textColor.r, root.textColor.g, root.textColor.b, 0.08)
-
-            Image {
-                id: art
-                anchors.fill: parent
-                source: root.artUrl
-                sourceSize: Qt.size(root.artSize * 2, root.artSize * 2)
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                smooth: true
-                mipmap: true
-                opacity: status === Image.Ready ? 1 : 0
-
-                Behavior on opacity {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Motion.enter.duration
-                        easing.type: Motion.enter.easing
-                    }
-                }
-            }
-
-            Text {
-                anchors.centerIn: parent
-                visible: art.status !== Image.Ready
-                text: Icons.player
-                font.family: Icons.font
-                font.pixelSize: 30
-                color: root.textColor
-                opacity: 0.6
-            }
+            source: root.artUrl
+            icon: Icons.player
+            radius: Space.clampRadius(Math.max(0, root.radius - root.pad), root.artSize)
         }
 
         ColumnLayout {
@@ -80,28 +50,21 @@ LockMediaBase {
             Layout.fillHeight: true
             spacing: 0
 
-            Text {
+            KitText {
                 Layout.fillWidth: true
+                role: "body"
+                font.weight: Font.Medium
                 text: root.title
-                textFormat: Text.PlainText
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(2)
-                font.weight: Font.Bold
                 color: root.textColor
-                elide: Text.ElideRight
                 maximumLineCount: 1
             }
 
-            Text {
+            KitText {
                 Layout.fillWidth: true
+                role: "caption"
                 text: root.artist
-                textFormat: Text.PlainText
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                font.weight: Font.Medium
                 color: root.textColor
                 opacity: 0.62
-                elide: Text.ElideRight
                 maximumLineCount: 1
                 visible: text !== ""
             }
@@ -112,7 +75,7 @@ LockMediaBase {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.xs
 
                 LockMediaButton {
                     icon: Icons.previous
@@ -139,20 +102,20 @@ LockMediaBase {
                 }
 
                 Item {
-                    Layout.preferredWidth: 6
+                    Layout.preferredWidth: Space.xs
                 }
 
                 // Accent spectrum from the shared cava service.
                 NotchVisualizer {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 26
+                    Layout.preferredHeight: Space.xl
                     Layout.alignment: Qt.AlignVCenter
                     visible: root.visualizerEnabled && CavaService.available
                     configEnabled: root.visualizerEnabled
                     startColor: root.accent
                     endColor: root.spectrumEnd
                     barCount: 18
-                    spacing: 3
+                    spacing: Space.stroke
                     centered: false
                     idleOpacity: 0.25
                     playing: root.playing
@@ -161,13 +124,13 @@ LockMediaBase {
             }
 
             Item {
-                Layout.preferredHeight: 8
+                Layout.preferredHeight: Space.s
             }
 
             // Thin progress line
             Item {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 3
+                Layout.preferredHeight: Space.stroke
                 visible: root.length > 0
 
                 Rectangle {
@@ -182,7 +145,7 @@ LockMediaBase {
                     color: root.accent
 
                     Behavior on width {
-                        enabled: Config.animDuration > 0
+                        enabled: Motion.morph.duration > 0
                         NumberAnimation {
                             duration: Motion.morph.duration
                             easing.type: Motion.morph.easing

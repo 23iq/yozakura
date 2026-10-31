@@ -5,17 +5,29 @@
 // Applied before the user's explicit motionDurationScale.
 
 var SHELL = {
-    enter: 260,
-    exit: 180,
-    morph: 360,
-    emphasis: 450,
+    // Surfaces and popups opening / closing (exits are faster than enters).
+    enter: 220,
+    exit: 160,
+    // Size / shape changes of an open surface.
+    morph: 280,
+    emphasis: 360,
     palette: 600,
     delay: 40,
     // Small state changes (fills, hover, focus) and slides inside a surface.
     micro: 120,
-    glide: 220
+    glide: 220,
+    // Slow camera moves across a whole surface (panorama wallpaper pan).
+    pan: 700
 };
-var BASE_MAX = 300;
+// theme.animDuration x profile scale is compressed above KNEE (each ms above
+// it counts KNEE_SLOPE ms) and capped at BASE_MAX, so a "calm" 260-300 ms
+// preset still feels crisp while the slider stays monotonic. Config.animDuration
+// is that base, and ~400 animations use it raw.
+var KNEE = 160;
+var KNEE_SLOPE = 0.5;
+var BASE_MAX = 240;
+// Most stagger a list or a reveal adds on top of its own animation.
+var STAGGER_MAX = 120;
 var PRESET_ANIM = {
     min: 160,
     max: 300
@@ -31,37 +43,69 @@ var COMPOSITOR = [
     }
 ];
 var FACTOR = {
-    enter: 0.87,
-    exit: 0.6,
-    morph: 1.2,
+    enter: 0.9,
+    exit: 0.62,
+    morph: 1.15,
     emphasis: 1.5,
     micro: 0.45,
-    glide: 0.75
+    glide: 0.8,
+    pan: 3
 };
 
-// theme.animDuration x profile scale, capped. Never negative.
+// theme.animDuration x profile scale, compressed and capped. Never negative.
 function shellBase(animDuration, profileScale) {
-    var v = Math.round((animDuration || 0) * (profileScale || 0));
-    return Math.max(0, Math.min(v, BASE_MAX));
+    var v = Math.max(0, (animDuration || 0) * (profileScale || 0));
+    if (v > KNEE)
+        v = KNEE + (v - KNEE) * KNEE_SLOPE;
+    return Math.min(Math.round(v), BASE_MAX);
 }
 
-// kind: enter | exit | morph | emphasis | micro | glide -> effective ms.
+// kind: enter | exit | morph | emphasis | micro | glide | pan -> effective ms.
 function token(kind, base) {
     if (!(base > 0) || FACTOR[kind] === undefined)
         return 0;
     return Math.round(Math.min(base * FACTOR[kind], SHELL[kind]));
 }
 
-// Enter and morph motion decelerates: In/InOut families become Out.
+// Soft easings start too slowly to read as a response to a click: the shell
+// uses the crisper cubic for them (the profile keeps them for windows).
+var SOFT = {
+    "OutSine": "OutCubic",
+    "OutQuad": "OutCubic"
+};
+var BOUNCY = /^Out(Back|Elastic|Bounce)$/;
+
+// Enter and morph motion decelerates: In/InOut families become Out, soft
+// curves become OutCubic.
 function enterEasing(name) {
     var n = String(name || "");
     if (n === "Linear")
         return n;
     if (n.indexOf("InOut") === 0)
-        return "Out" + n.substring(5);
-    if (n.indexOf("In") === 0)
-        return "Out" + n.substring(2);
-    return n;
+        n = "Out" + n.substring(5);
+    else if (n.indexOf("In") === 0)
+        n = "Out" + n.substring(2);
+    return SOFT[n] || n;
+}
+
+// Panels, popups and slides never overshoot: a bouncy profile (springs)
+// keeps its OutBack for emphasis and the press spring only.
+function panelEasing(name) {
+    var n = enterEasing(name);
+    return BOUNCY.test(n) ? "OutQuart" : n;
+}
+
+// Leaving accelerates away (a quick, decisive exit); Linear stays linear.
+function exitEasing(name) {
+    return String(name || "") === "Linear" ? "Linear" : "InQuad";
+}
+
+// Delay of item `index` in a staggered list: `step` each, never more than
+// STAGGER_MAX in total, however long the list.
+function stagger(index, step) {
+    var i = Math.max(0, index | 0);
+    var s = Math.max(0, Number(step) || 0);
+    return Math.min(i * s, STAGGER_MAX);
 }
 
 // Leaves of a motion profile whose speed exceeds the compositor caps.

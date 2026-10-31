@@ -7,5 +7,6 @@ var data = {
     "pauseWallpaperOnFullscreen": true,
     "pauseWallpaperWhenCovered": true,
     "dashboardPersistTabs": false,
-    "dashboardMaxPersistentTabs": 2
+    "dashboardMaxPersistentTabs": 2,
+    "unloadIdleViews": true
 }

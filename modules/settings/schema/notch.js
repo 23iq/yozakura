@@ -31,7 +31,7 @@ var category = {
                             "label": "prefs.notch.style.pill"
                         }
                     ],
-                    "label": "prefs.notch.theme",
+                    "label": "prefs.label.island_shape",
                     "description": "prefs.notch.theme.desc",
                     "keywords": "notch style island attached floating pill dot minimal"
                 },
@@ -60,7 +60,7 @@ var category = {
                             "icon": "arrowRight"
                         }
                     ],
-                    "label": "prefs.notch.position",
+                    "label": "prefs.label.island_edge",
                     "description": "prefs.notch.position.desc",
                     "keywords": "notch position top bottom left right side vertical edge"
                 },
@@ -81,7 +81,7 @@ var category = {
                             "label": "prefs.notch.align.end"
                         }
                     ],
-                    "label": "prefs.notch.align",
+                    "label": "prefs.label.island_align",
                     "description": "prefs.notch.align.desc",
                     "keywords": "notch align alignment left right corner start center end"
                 },
@@ -103,17 +103,9 @@ var category = {
                     "keywords": "notch panel expand open hover click activities media downloads"
                 },
                 {
-                    "key": "notch.disableHoverExpansion",
-                    "advanced": true,
-                    "type": "toggle",
-                    "label": "shell.notch.disable_hover_expansion",
-                    "description": "prefs.notch.hover_expansion.desc",
-                    "keywords": "hover expand grow media preview"
-                },
-                {
                     "key": "notch.keepHidden",
                     "type": "toggle",
-                    "label": "shell.notch.keep_hidden",
+                    "label": "prefs.notch.hide_until_hovered",
                     "description": "prefs.notch.keep_hidden.desc",
                     "keywords": "hide notch autohide"
                 },
@@ -136,7 +128,21 @@ var category = {
             "title": "prefs.notch.section.media",
             "entries": [
                 {
+                    // notch.disableHoverExpansion shown positively: on = the
+                    // island grows into the media panel (the key stays).
+                    "key": "notch.disableHoverExpansion",
+                    "type": "toggle",
+                    "invert": true,
+                    "label": "prefs.notch.media_panel",
+                    "description": "prefs.notch.media_panel.desc",
+                    "keywords": "media panel card player hover expand grow preview disable"
+                },
+                {
                     "key": "notch.mediaStyle",
+                    "enabledWhen": {
+                        "key": "notch.disableHoverExpansion",
+                        "equals": false
+                    },
                     "type": "selector",
                     "options": [
                         {
@@ -148,14 +154,18 @@ var category = {
                             "label": "prefs.notch.media_style.artwork"
                         }
                     ],
-                    "label": "prefs.notch.media_style",
+                    "label": "prefs.notch.media_panel_style",
                     "description": "prefs.notch.media_style.desc",
                     "keywords": "media player panel style row artwork album cover spotify"
                 },
                 {
                     "key": "notch.visualizer",
+                    "enabledWhen": {
+                        "key": "notch.disableHoverExpansion",
+                        "equals": false
+                    },
                     "type": "toggle",
-                    "label": "shell.notch.visualizer",
+                    "label": "prefs.notch.media_visualizer",
                     "description": "prefs.notch.visualizer.desc",
                     "keywords": "audio visualizer cava bars music"
                 },
@@ -208,6 +218,18 @@ var category = {
                 {
                     "key": "notifications.notchStyle",
                     "type": "selector",
+                    // only toasts grown from the island use it
+                    "visibleWhen": {
+                        "not": {
+                            "key": "notifications.presentation",
+                            "in": ["corner", "strips"]
+                        }
+                    },
+                    "enabledWhen": {
+                        "key": "notch.enabled",
+                        "equals": true
+                    },
+                    "reason": "prefs.disabled.needs_notch",
                     "options": [
                         {
                             "value": "card",

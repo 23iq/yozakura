@@ -47,6 +47,7 @@ h.singleton('qs.modules.theme', 'Styling', 'QtObject { function radius(n) { retu
 h.singleton('qs.modules.theme', 'Colors', 'QtObject { property color outline: "gray"; property color overSurfaceVariant: "gray" }')
 h.singleton('qs.modules.globals', 'GlobalStates', 'QtObject { property var wallpaperManager: null }')
 h.module('qs.modules.components', {'TintedWallpaper': 'Item { property real radius; property bool tintEnabled; property string source }'})
+h.module('qs.modules.desktop.panorama', {'PanoramaSlice': 'Item { property string sourceFile; property int slotIndex; property int slotCount; property real screenW; property real screenH }'})
 h.stub('OverviewStripWindows', 'Item { property Item strip }')
 h.copy('modules/widgets/overview/OverviewStripCell.qml', siblings=False)
 h.copy('modules/widgets/overview/OverviewStrip.qml', siblings=False)
@@ -95,4 +96,11 @@ ev('searchQuery = "fire"')
 assert ev('matchingWindows.length') == 1
 assert ev('selected') == 7
 assert ev('stepWorkspace(1)') is False  # arrows belong to the matches while searching
+
+# scroll style: no gaps between frames; plain frames without a still wallpaper
+ev('searchQuery = ""')
+assert ev('workspaceSpacing') == 8
+ev('scroll = true')
+assert ev('workspaceSpacing') == 0
+assert ev('scrollSource') == ''
 print('overview-strip: ok')

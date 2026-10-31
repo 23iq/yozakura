@@ -20,7 +20,7 @@ Item {
     property var entry
     readonly property string current: SettingsStore.get("compositor.motionProfile") || MotionProfiles.DEFAULT_ID
     readonly property real durationScale: Number(SettingsStore.get("compositor.motionDurationScale")) || 1
-    readonly property int columns: width < 520 ? 2 : (width < 760 ? 3 : 4)
+    readonly property int columns: Math.max(2, Math.min(4, Math.floor(width / 180)))
 
     implicitHeight: grid.implicitHeight
 

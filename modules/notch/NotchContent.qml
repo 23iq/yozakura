@@ -7,12 +7,9 @@ import Quickshell.Io
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.widgets.defaultview
-import qs.modules.widgets.powermenu
-import qs.modules.widgets.tools
 import qs.modules.services
 import qs.modules.components
 import qs.modules.bar.workspaces
-import qs.modules.aicenter.quickask
 import qs.config
 import qs.modules.shell
 import "./NotchNotificationView.qml"
@@ -31,7 +28,6 @@ Item {
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
     readonly property bool isScreenFocused: YozdService.focusedMonitor && YozdService.focusedMonitor.name === screen.name
 
-    // Monitor reference and refrence to toplevels on monitor
     readonly property var compositorMonitor: YozdService.monitorFor(screen)
     readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !YozdService.clients.values) ? [] : YozdService.clients.values.filter(c => c.workspace.id === compositorMonitor.activeWorkspace.id)
 
@@ -197,12 +193,13 @@ Item {
     // The hitbox for the mask
     readonly property Item notchHitbox: root.reveal ? notchHoverArea : notchHoverRegion
 
-    // Default view component - user@host text
+    // Resting view; auto panels off the notch: PanelSurfaces (layout.panels.host)
     Component {
         id: defaultViewComponent
         DefaultView {
             screenName: root.screen.name
             revealed: root.reveal
+            ownsAutoPanels: (HostRouter.panelsHost ?? "notch") === "notch"
         }
     }
 
@@ -223,38 +220,10 @@ Item {
         container: notchContainer
     }
 
-    // Persistent power menu view
-    Loader {
-        id: persistentPowerMenuViewLoader
-        active: false
-        sourceComponent: Component {
-            PowerMenuView {
-                visible: false
-            }
-        }
-    }
-
-    // Persistent tools menu view
-    Loader {
-        id: persistentToolsMenuViewLoader
-        active: false
-        sourceComponent: Component {
-            ToolsMenuView {
-                visible: false
-            }
-        }
-    }
-
-    // AI quick ask: a notch module (focusable input inside the island);
-    // it switches views like the launcher, unlike the registry's panels.
-    Loader {
-        id: persistentQuickAskLoader
-        active: false
-        sourceComponent: Component {
-            QuickAskCard {
-                visible: false
-            }
-        }
+    // Power menu, tools and AI quick ask views on the notch stack
+    NotchMenuViews {
+        vis: root.screenVisibilities
+        container: notchContainer
     }
 
     // Notification view component
@@ -522,82 +491,17 @@ Item {
         }
     }
 
-    // Listen for dashboard and powermenu state changes
-    Connections {
-        target: screenVisibilities
-
-        function onPowermenuChanged() {
-            // other layout.powermenu.style values open in the menu overlay
-            if (HostRouter.hostFor("powermenu") !== "notch")
-                return;
-            if (screenVisibilities.powermenu) {
-                persistentPowerMenuViewLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentPowerMenuViewLoader.item) {
-                        notchContainer.pushView(persistentPowerMenuViewLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem) {
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
-            }
-        }
-
-        function onAiquickChanged() {
-            if (root.screenVisibilities.aiquick) {
-                persistentQuickAskLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentQuickAskLoader.item) {
-                        notchContainer.pushView(persistentQuickAskLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem)
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                        });
-                    }
-                });
-            } else if (notchContainer.stackView.depth > 1) {
-                notchContainer.stackView.pop();
-                notchContainer.isShowingDefault = true;
-                notchContainer.isShowingNotifications = false;
-            }
-        }
-
-        function onToolsChanged() {
-            // other layout.tools.style values open in the menu overlay
-            if (HostRouter.hostFor("tools") !== "notch")
-                return;
-            if (screenVisibilities.tools) {
-                persistentToolsMenuViewLoader.active = true;
-                Qt.callLater(() => {
-                    if (persistentToolsMenuViewLoader.item) {
-                        notchContainer.pushView(persistentToolsMenuViewLoader.item);
-                        Qt.callLater(() => {
-                            if (notchContainer.stackView.currentItem) {
-                                notchContainer.stackView.currentItem.forceActiveFocus();
-                            }
-                        });
-                    }
-                });
-            } else {
-                if (notchContainer.stackView.depth > 1) {
-                    notchContainer.stackView.pop();
-                    notchContainer.isShowingDefault = true;
-                    notchContainer.isShowingNotifications = false;
-                }
-            }
-        }
-    }
-
     // Export some internal items for Visibilities
     property alias notchContainerRef: notchContainer
+
+    // Loaded only while notch.enabled (UnifiedShellPanel): its geometry is
+    // published while it exists (Visibilities.notchRect & co.)
+    Component.onCompleted: Visibilities.registerNotch(root.screen.name, notchContainer)
+    Component.onDestruction: {
+        Visibilities.unregisterNotch(root.screen.name);
+        if (root.screenVisibilities)
+            root.screenVisibilities.notchRaised = false;
+    }
     // Notch + notification popup: where this item draws (shadow capture)
     readonly property Item visualRegion: notchRegionContainer
 }

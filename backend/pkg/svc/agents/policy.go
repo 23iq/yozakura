@@ -185,8 +185,14 @@ func Classify(tool string, input map[string]any) string {
 }
 
 // unwrapShell turns `/usr/bin/bash -lc "script"` (Codex) into `script`.
+// A shell from a system dir or the Nix store counts as its bare name.
 func unwrapShell(cmd string) string {
 	c := strings.TrimSpace(cmd)
+	if first, rest, ok := strings.Cut(c, " "); ok && strings.Contains(first, "/") {
+		if name := programName(first); name != "" {
+			c = name + " " + rest
+		}
+	}
 	for _, sh := range []string{"bash", "sh", "zsh"} {
 		for _, flag := range []string{" -lc ", " -c "} {
 			for _, prefix := range []string{"/usr/bin/" + sh, "/bin/" + sh, sh} {

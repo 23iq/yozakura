@@ -166,3 +166,13 @@ test('estimateDepth: explicit thickness, then size, then the style size; plus th
     assert.equal(Layout.estimateDepth({ style: 'menubar', thickness: 0, size: 0, margin: -1 }, 30), 26);
     assert.equal(Layout.estimateDepth({ style: 'classic', thickness: 0, size: 0, margin: 4 }, 30), 34);
 });
+test('pairEdge: the notch edge while it exists, else the bar edge', () => {
+    assert.equal(Layout.pairEdge({ position: 'bottom' }, { enabled: true, position: 'left' }), 'left');
+    assert.equal(Layout.pairEdge({ position: 'bottom' }, undefined), 'top');
+    assert.equal(Layout.pairEdge({ position: 'bottom' }, { enabled: false, position: 'top' }), 'bottom');
+    assert.equal(Layout.pairEdge(undefined, { enabled: false }), '');
+    const panels = [{ edge: 'top' }, { edge: 'bottom' }];
+    assert.equal(Layout.primaryIndex(panels, Layout.pairEdge({ position: 'bottom' }, { enabled: false, position: 'top' })), 1);
+    assert.equal(Layout.primaryIndex(panels, Layout.pairEdge({ position: 'bottom' }, { enabled: true, position: 'top' })), 0);
+    assert.equal(Layout.primaryIndex(panels, ''), 0);
+});

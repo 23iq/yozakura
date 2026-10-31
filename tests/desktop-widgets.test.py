@@ -240,7 +240,7 @@ import qs.modules.settings
 import qs.modules.settings.store
 Window {
     id: w
-    width: 1180; height: 900; visible: true
+    width: 1180; height: 1200; visible: true
     function findItem(name, from) {
         var item = from || w.contentItem;
         if (item.objectName === name) return item;

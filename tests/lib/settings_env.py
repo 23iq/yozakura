@@ -78,6 +78,9 @@ QtObject {
         if (cb && method === "voice.status")
             cb({ installed: true, modelPresent: true, serverRunning: false, backend: "vulkan" }, null);
     }
+    function callOk(method, params, onOk, tag) {
+        call(method, params, (r, e) => { if (!e && onOk) onOk(r); });
+    }
 }"""
 
 # App theme auto-connect (modules/services/AppHooksService.qml): the Terminal
@@ -166,6 +169,8 @@ QtObject { property int writes: 0; function callWrite() { writes++ } }"""
 
 MIRROR = [
     "assets/yozakura",  # brand art (About page)
+    "modules/notifications",  # strips preview (Settings > Notifications)
+    "modules/services/activities/NotificationProgress.js",
     "modules/settings",
     "modules/components",
     "modules/aicenter/common",
@@ -198,6 +203,11 @@ MIRROR = [
     "modules/theme/Motion.qml",
     "config/motion/MotionBudget.js",
     "modules/theme/Glass.qml",
+    "modules/theme/Lighting.qml",
+    "modules/theme/LightModel.js",
+    "modules/theme/SunPosition.js",
+    "modules/theme/WeatherFx.qml",
+    "modules/theme/WeatherFxModel.js",
     "modules/theme/GlassModel.js",
     "modules/theme/GlassCurve.js",
     "modules/theme/GlassContrast.js",
@@ -209,7 +219,11 @@ MIRROR = [
     "modules/theme/BarMetrics.qml",
     "modules/shell/EdgeService.qml",
     "modules/shell/EdgeLayout.js",
+    # OSD page: the style preview loads the real OSD styles
+    "modules/shell/osd",
     "modules/shell/LayoutModel.js",
+    "modules/shell/hosts/HostResolve.js",
+    "modules/shell/hosts/SurfaceRegistry.js",
     "modules/services/ShellLayout.qml",
     "modules/notifications/NotificationPolicy.js",
     "modules/widgets/defaultview/activities/ActivityRegistry.js",
@@ -218,12 +232,16 @@ MIRROR = [
     "modules/widgets/presets",
     "config/defaults",
     "config/ColorSpec.js",
+    "config/JsonUtil.js",
     "config/motion",
     "modules/services/CompositorAppearance.js",
     "modules/services/DisplayModel.js",
     "modules/services/KeyboardModel.js",
     "modules/bar/BarLayout.js",
     "modules/bar/BarModuleRegistry.js",
+    "modules/bar/sentence",  # sentence schema lists + its settings preview
+    "modules/services/Plural.js",
+    "modules/bar/modules/AppNames.js",
     "modules/bar/panels/PanelStyles.js",
     "modules/bar/panels/PanelLayout.js",
     "modules/bar/panels/PanelEdit.js",
@@ -365,6 +383,7 @@ QtObject {{
     property var saved: []
     property bool keybindsInitialLoadComplete: true
     property bool specialsReady: true
+    property bool keyboardReady: true
     property int autoSaveHolds: 0
     property bool stagedPause: false
     property bool pauseAutoSave: autoSaveHolds > 0 || stagedPause
@@ -378,6 +397,8 @@ QtObject {{
     property int roundness: theme.roundness
     property string defaultFont: theme.font
     property int animDuration: theme.animDuration
+    // compositor.motionProfile resolved (config/motion); tests flip `disabled`
+    property var motionProfile: ({{ disabled: false }})
     property bool tintIcons: theme.tintIcons
 {saves}
     function isHexColor(c) {{ return typeof c === "string" && (c.trim().startsWith("#") || c.trim().startsWith("rgb")); }}
@@ -487,7 +508,7 @@ QtObject {{
 
 QUICKSHELL = {
     "Singleton": "QtObject { default property list<QtObject> data }",
-    "Quickshell": "pragma Singleton\nQtObject { property var screens: []; function env(n) { return n === 'HOME' ? '/home/user' : '' } "
+    "Quickshell": "pragma Singleton\nQtObject { property var screens: []; property string shellDir: '/nonexistent/yozakura'; function env(n) { return n === 'HOME' ? '/home/user' : '' } "
                   "property var detached: []; function execDetached(a) { detached.push(a) } "
                   "function iconPath(n, f) { return '' } }",
     # Installed apps (special workspaces app picker): looked up by id.
@@ -545,8 +566,21 @@ QtObject {
     property var active: ({ "name": "", "index": 0, "code": "", "short": "" })
     readonly property string shortLabel: active.short
     readonly property bool indicatorVisible: false
+    property bool managed: true
+    property var current: null
+    property bool known: true
+    property bool unreadable: false
+    property bool readFailed: false
+    property string readError: ""
+    property string applyError: ""
+    property var effective: ({ "layouts": [], "switchBind": "none", "options": [], "repeatRate": 25, "repeatDelay": 600 })
     function loadCatalog() {}
     function next() {}
+    function refreshCurrent() {}
+    function retryRead() {}
+    function edit(patch) {}
+    function takeOver() {}
+    function apply() {}
 }"""
 # Displays page (modules/settings/displays): idle stand-in; tests/lib/displays_env.py swaps in the real one.
 DISPLAYS_STUB = """pragma Singleton
@@ -556,6 +590,9 @@ QtObject {
     property bool pending: false
     property var identified: []
     property var conflicts: []
+    property var moveSkipped: []
+    property bool applying: false
+    property var notice: ({ "kind": "", "message": "" })
     signal applyFailed(string message)
     function refresh() {}
     function currentConfigs() { return [] }
@@ -612,11 +649,64 @@ QtObject {
     function refreshStatus() {}
     function previewOf(id, engine) { return undefined }
     function ensure(id, engine) {}
+    function ensureEngine(engine) {}
     function invalidate() {}
     function choose(id) {}
     function installEngine(engine) {}
     function makeFishDefault() {}
     function apply() {}
+}"""
+# Mods page (modules/settings/mods): idle stand-in; tests/mods-ui.test.py swaps in a recording one.
+MODS_STUB = """pragma Singleton
+QtObject {
+    property var mods: []
+    property string baseVersion: ""
+    property string baseRevision: ""
+    property string activeGeneration: ""
+    property string previousGeneration: ""
+    property bool generationCurrent: true
+    property string generationError: ""
+    property bool busy: false
+    property bool loaded: true
+    property bool restartRequired: false
+    property bool bypassVersionCheck: false
+    property bool modsEnabled: true
+    property string errorMessage: ""
+    property string statusMessage: ""
+    property string statusMessageKey: ""
+    property var settingsFields: []
+    property var settingsValues: ({})
+    property bool settingsBusy: false
+    signal settingChanged(string modId, string key, var value)
+    signal installed(string source)
+    function refresh() {}
+    function install(source) {}
+    function installDependencies(id) {}
+    function setEnabled(id, enabled) {}
+    function update(id, enabled) {}
+    function remove(id, enabled) {}
+    function move(id, direction) {}
+    function moveTo(id, position) {}
+    function rebuild() {}
+    function setBypassVersionCheck(enabled) {}
+    function setModsEnabled(enabled) {}
+    function rollback() {}
+    function loadSettings(id) {}
+    function setSetting(id, key, value) {}
+    function restart() {}
+}"""
+# Usage ledger of the AI usage editor (modules/settings/editors/AiUsageData).
+USAGE_STUB = """pragma Singleton
+QtObject {
+    property var info: ({ "ledgerDir": "" })
+    property string pricesError: ""
+    function start() {}
+    function refreshInfo() {}
+}"""
+# About page "Welcome tour" button.
+ONBOARDING_STUB = """pragma Singleton
+QtObject {
+    function open() {}
 }"""
 # Exclusive mode card (modules/settings/system): idle stand-in; tests/lib/exclusive_env.py swaps in the real one.
 EXCLUSIVE_STUB = """pragma Singleton
@@ -642,6 +732,29 @@ QtObject {
     function set(key, value) { const s = Object.assign({}, state); s[key] = value; state = s }
 }"""
 YOZD_STUB = 'pragma Singleton\nimport QtQuick\nQtObject { property string compositorName: "hyprland" }'
+# Active preset status (modules/services/PresetStatusService.qml): no preset
+# active by default; renders and tests set `status` ({active, official,
+# owned, changed, changes}). Actions are recorded in `calls`.
+PRESET_STATUS_STUB = """pragma Singleton
+import QtQuick
+QtObject {
+    property var status: ({ "active": "", "official": false, "owned": false, "changed": 0, "changes": [] })
+    readonly property string active: (status && status.active) || ""
+    readonly property bool official: !!(status && status.official)
+    readonly property bool owned: !!(status && status.owned)
+    readonly property int changed: (status && status.changed) || 0
+    readonly property var changes: (status && status.changes) || []
+    readonly property bool inSession: !!(status && status.session)
+    readonly property bool dirty: active !== "" && changed > 0 && !inSession
+    property bool busy: false
+    property var calls: []
+    function refresh() {}
+    function suggestedName() { return active + " (my)" }
+    function save(done) { calls = calls.concat(["save"]) }
+    function saveAs(name, done) { calls = calls.concat(["saveAs:" + name]) }
+    function undoSave(id, done) { calls = calls.concat(["undo:" + id]) }
+    function revert(done) { calls = calls.concat(["revert"]) }
+}"""
 
 
 class SettingsEnv:
@@ -673,17 +786,21 @@ class SettingsEnv:
         (qs / "config" / "Config.qml").write_text(config_qml(domains, keybinds_qml(binds)))
         self._qmldir(qs / "config", "qs.config", only=["Config"])
         (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
-        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Metrics", "Motion", "BarMetrics"])
+        self._qmldir(qs / "modules/theme", "qs.modules.theme", only=["Colors", "Icons", "Styling", "Glass", "Lighting", "WeatherFx", "Metrics", "Motion", "BarMetrics"])
         self._qmldir(qs / "modules/shell", "qs.modules.shell", only=["EdgeService"])
         # DepthClock (clock style gallery) reads the bar edge
         self.h.module("qs.modules.bar.panels", {
             "Panels": 'pragma Singleton\nQtObject { property string primaryEdge: "top" }'})
         from lockscreen_env import SERVICES as LOCK_SERVICES  # (lockscreen_env imports this module)
+        from osd_env import AUDIO_STUB, OSD_SERVICE_STUB  # (same)
         self.h.module("qs.modules.services", {"I18n": i18n_qml(), "Ai": AI_STUB, "CompositorTomlWriter": TOML_WRITER_STUB,
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
-                                              "TerminalLookService": TERMINAL_LOOK_STUB,
+                                              "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
+                                              "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
+                                              "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
+                                              "PresetStatusService": PRESET_STATUS_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
@@ -702,10 +819,12 @@ class SettingsEnv:
         self._qmldir(qs / "modules/aicenter/providers", "qs.modules.aicenter.providers")
         self._qmldir(qs / "modules/aicenter/agent", "qs.modules.aicenter.agent")
         self._qmldir(qs / "modules/aicenter/header", "qs.modules.aicenter.header")
+        self._qmldir(qs / "modules/notifications", "qs.modules.notifications", only=["ToastCard", "ToastGroup"])
+        self._qmldir(qs / "modules/notifications/strips", "qs.modules.notifications.strips")
         for d in ["modules/settings", "modules/settings/controls", "modules/settings/editors",
                   "modules/settings/previews", "modules/settings/store", "modules/components",
                   "modules/components/surfaceeffects", "modules/components/shape", "modules/components/kit",
-                  "modules/bar/workspaces/indicators", "modules/bar/look",
+                  "modules/bar/workspaces/indicators", "modules/bar/look", "modules/bar/sentence",
                   "modules/aicenter/common", "modules/keybinds", "modules/settings/editors/keybinds",
                   "modules/settings/editors/desktopwidgets", "modules/settings/editors/specials",
                   "modules/settings/editors/routines", "modules/desktop", "modules/desktop/widgets",
@@ -714,7 +833,9 @@ class SettingsEnv:
                   "modules/settings/displays", "modules/settings/keyboard", "modules/settings/system",
                   "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
-                  "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces"]:
+                  "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces",
+                  "modules/settings/changes", "modules/settings/thumbs",
+                  "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 
         # Modules first imported by a URL Loader (lock screen styles) load on

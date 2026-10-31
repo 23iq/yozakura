@@ -11,6 +11,9 @@ JsonAdapter {
     property string wallpaperTransition: "grow"
     property int wallpaperTransitionDuration: 800
     property list<string> wallpaperFolders: []
+    property string wallpaperMode: "fill"
+    property bool panoramaParallax: true
+    property bool depthLayering: false
     property bool depthClock: false
     property string depthClockStyle: "yozakura"
     property string depthClockPosition: "auto"

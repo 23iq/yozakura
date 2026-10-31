@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -132,7 +133,7 @@ func runOnboardingDryRun(args []string, env dryRunEnv, out, errOut io.Writer) in
 	defer logFile.Close()
 	fmt.Fprintf(out, "%s setup wizard, dry run: nothing is changed. Close or finish the wizard to see what it would have done.\n", brand.DisplayName)
 
-	cmd := exec.Command(env.qs, "-p", qml)
+	cmd := exec.CommandContext(context.Background(), env.qs, "-p", qml)
 	cmd.Env = withEnv(env.environ, vars)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile

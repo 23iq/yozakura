@@ -43,7 +43,7 @@ PanelWindow {
 
     // A grown notch (hover, player, notifications) draws below the bar,
     // inside fullscreen AI: AI drops a layer for it, keeping the keyboard.
-    readonly property bool notchRaised: targetScreen ? Visibilities.getForScreen(targetScreen.name).notchRaised : false
+    readonly property bool notchRaised: targetScreen ? Visibilities.hasNotch(targetScreen.name) && Visibilities.getForScreen(targetScreen.name).notchRaised : false
 
     onShellOverlayOpenChanged: if (shellOverlayOpen)
         grabbing = false

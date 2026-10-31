@@ -73,3 +73,10 @@ test('heading font falls back to the body font', () => {
     assert.equal(T.headingFamily({ heading: 'Oswald' }, 'Inter'), 'Oswald');
     assert.equal(defaults.type.headingCase, 'none');
 });
+
+test('the editorial role uses its font, else the system serif alias', () => {
+    assert.equal(T.editorialFamily({ editorial: '' }), 'serif');
+    assert.equal(T.editorialFamily(null), 'serif');
+    assert.equal(T.editorialFamily({ editorial: 'Fraunces' }), 'Fraunces');
+    assert.equal(defaults.type.editorial, '');
+});

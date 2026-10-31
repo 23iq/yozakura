@@ -30,11 +30,11 @@ def load_config() -> dict:
 
 
 def repo_files(*suffixes: str, exclude: tuple[str, ...] = ("backend/", "tests/", "tools/")) -> list[str]:
-    """Tracked + untracked (non-ignored) files with the given suffixes."""
+    """Tracked + untracked (non-ignored) files with the given suffixes (never .claude/, agent worktrees)."""
     out = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"],
                          cwd=REPO, capture_output=True, text=True, check=True).stdout
     return sorted(f for f in set(out.splitlines())
-                  if f.endswith(suffixes) and not f.startswith(exclude) and (REPO / f).is_file())
+                  if f.endswith(suffixes) and not f.startswith((".claude/", *exclude)) and (REPO / f).is_file())
 
 
 def eval_js_data(paths: list[Path]) -> dict[str, object] | None:

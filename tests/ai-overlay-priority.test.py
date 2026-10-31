@@ -112,10 +112,14 @@ for fullscreen in (False, True):
 # A grown notch (hover, player) lifts above AI without taking its keyboard.
 ev("requestFocus()")
 ev('Visibilities.getForScreen("one").notchRaised = true')
+# A stale flag without a notch (notch.enabled off) lifts nothing
+assert ev("compositorLayer") == 3, "no notch, nothing to draw above AI"
+ev('Visibilities.registerNotch("one", parent)')
 assert ev("compositorLayer") == 2, "a grown notch must draw above fullscreen AI"
 assert ev("compositorKeyboardFocus") == 1, "the notch never takes AI keyboard focus"
 ev('Visibilities.getForScreen("one").notchRaised = false')
 assert ev("compositorLayer") == 3
+ev('Visibilities.unregisterNotch("one")')
 
 # An overlay on another monitor must not change this AI window's priority.
 ev('YozdService.focusedMonitor = ({name: "two"}); Visibilities.setActiveModule("dashboard")')

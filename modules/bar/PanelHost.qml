@@ -20,7 +20,7 @@ Item {
     // Only rebuild the panels when this screen's specs really change
     readonly property string specsJson: active ? JSON.stringify(Panels.forScreen(screen.name)) : "[]"
     readonly property var specs: JSON.parse(specsJson)
-    readonly property int primaryIndex: PanelLayout.primaryIndex(specs, Panels.notchEdge)
+    readonly property int primaryIndex: PanelLayout.primaryIndex(specs, Panels.pairEdge)
 
     // Created panels, in spec order (Repeater items are not reactive)
     property var bars: []

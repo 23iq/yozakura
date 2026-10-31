@@ -14,6 +14,7 @@ var EDITORS = {
     "BarPositionPicker": "editors/BarPositionPicker.qml",
     "NumeralCards": "editors/NumeralCards.qml",
     "IndicatorStyleChips": "editors/IndicatorStyleChips.qml",
+    "BranchBlossomChips": "editors/BranchBlossomChips.qml",
     "SurfaceEffectCards": "editors/SurfaceEffectCards.qml",
     "WallpaperGrid": "editors/WallpaperGrid.qml",
     "FolderList": "editors/FolderList.qml",
@@ -24,6 +25,7 @@ var EDITORS = {
     "DesktopWidgetsEditor": "editors/DesktopWidgetsEditor.qml",
     "ActivitiesEditor": "editors/ActivitiesEditor.qml",
     "DashboardTabsEditor": "editors/DashboardTabsEditor.qml",
+    "OrderedListEditor": "editors/OrderedListEditor.qml",
     "IslandActivitiesEditor": "editors/IslandActivitiesEditor.qml",
     "AiAgentsEditor": "editors/AiAgentsEditor.qml",
     "AiMcpEditor": "editors/AiMcpEditor.qml",
@@ -61,12 +63,27 @@ var PREVIEWS = {
     "RoundnessPreview": "previews/RoundnessPreview.qml",
     "MotionPreview": "previews/MotionPreview.qml",
     "PaletteFadePreview": "previews/PaletteFadePreview.qml",
+    "LightingPreview": "previews/LightingPreview.qml",
+    "WeatherFxPreview": "previews/WeatherFxPreview.qml",
     "ClockPreview": "previews/ClockPreview.qml",
+    "SentencePreview": "previews/SentencePreview.qml",
     "TransitionPreview": "previews/TransitionPreview.qml",
+    "PanoramaPreview": "previews/PanoramaPreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
     "WindowsPreview": "previews/WindowsPreview.qml",
+    "OsdPreview": "previews/OsdPreview.qml",
+    "StripsPreview": "previews/StripsPreview.qml",
     "LayoutPreview": "layout/LayoutPreview.qml"
+};
+
+// Card thumbnails of a selector shown as cards (schema `display: "cards"`,
+// `thumb`): one small picture per option (`value`), see controls/CardSelector.
+var THUMBS = {
+    "LanguageThumb": "thumbs/LanguageThumb.qml",
+    "CornerThumb": "thumbs/CornerThumb.qml",
+    "EdgeThumb": "thumbs/EdgeThumb.qml",
+    "PresentationThumb": "thumbs/PresentationThumb.qml"
 };
 
 function editor(name) {
@@ -75,4 +92,8 @@ function editor(name) {
 
 function preview(name) {
     return PREVIEWS[name] || "";
+}
+
+function thumb(name) {
+    return THUMBS[name] || "";
 }

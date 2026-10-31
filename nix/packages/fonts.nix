@@ -10,8 +10,9 @@ with pkgs; [
   dejavu_fonts
   liberation_ttf
 
-  # Nerd Fonts
+  # Nerd Fonts (Iosevka is the default monospace font)
   nerd-fonts.symbols-only
+  nerd-fonts.iosevka
 
   # Noto family
   noto-fonts

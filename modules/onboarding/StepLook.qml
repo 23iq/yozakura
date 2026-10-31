@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
 // Look: a preset ("Style") and the wallpaper, two tabs of one step. Both
 // apply at once; "Preview on desktop" collapses the wizard to see them.
@@ -48,7 +48,7 @@ Item {
     Item {
         id: pages
         anchors.top: toolbar.bottom
-        anchors.topMargin: Math.round(Styling.fontSize(0) * 1.2)
+        anchors.topMargin: Space.l
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
@@ -60,10 +60,10 @@ Item {
             visible: opacity > 0
             opacity: root.tab === "style" ? 1 : 0
             Behavior on opacity {
-                enabled: Config.animDuration > 0
+                enabled: Motion.glide.duration > 0
                 NumberAnimation {
-                    duration: Motion.exit.duration
-                    easing.type: Motion.enter.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
         }
@@ -75,10 +75,10 @@ Item {
             visible: opacity > 0
             opacity: root.tab === "wallpaper" ? 1 : 0
             Behavior on opacity {
-                enabled: Config.animDuration > 0
+                enabled: Motion.glide.duration > 0
                 NumberAnimation {
-                    duration: Motion.exit.duration
-                    easing.type: Motion.enter.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
         }

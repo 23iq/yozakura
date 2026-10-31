@@ -16,6 +16,9 @@ Item {
     property real stepSize: 1
     property string unit: ""
     property var specialValues: []
+    // Shown instead of the number when set (a macro's level name).
+    property string valueLabel: ""
+    property real valueWidth: 0
 
     signal moved(real value)
 
@@ -66,8 +69,9 @@ Item {
         value: root.value
         step: root.stepSize
         showValue: true
+        valueWidth: root.valueWidth
         highlighted: root.activeFocus
-        valueText: Ui.formatValue(root.value, root.unit, root.specialValues, I18n.t)
+        valueText: root.valueLabel !== "" ? root.valueLabel : Ui.formatValue(root.value, root.unit, root.specialValues, I18n.t)
         onMoved: v => {
             root.forceActiveFocus();
             root.emitValue(v);

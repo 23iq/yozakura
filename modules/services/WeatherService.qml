@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import qs.config
 import qs.modules.globals
+import qs.modules.theme
 
 Singleton {
     id: root
@@ -177,6 +178,23 @@ Singleton {
     readonly property int effectiveWeatherCode: debugMode ? debugWeatherCode : weatherCode
     readonly property string effectiveWeatherSymbol: debugMode ? getWeatherCodeEmoji(debugWeatherCode) : weatherSymbol
     readonly property string effectiveWeatherDescription: debugMode ? getWeatherDescription(debugWeatherCode) : weatherDescription
+
+    // The weather drawn on the shell's surfaces (theme.weatherFx, WeatherFx)
+    property Binding fxCode: Binding {
+        target: WeatherFx
+        property: "weatherCode"
+        value: root.effectiveWeatherCode
+    }
+    property Binding fxTemp: Binding {
+        target: WeatherFx
+        property: "temperature"
+        value: Config.weather.unit === "F" ? (root.currentTemp - 32) * 5 / 9 : root.currentTemp
+    }
+    property Binding fxKnown: Binding {
+        target: WeatherFx
+        property: "known"
+        value: root.dataAvailable || root.debugMode
+    }
 
     // Weather effect types based on code
     readonly property string effectiveWeatherEffect: getWeatherEffect(effectiveWeatherCode)
@@ -455,6 +473,12 @@ Singleton {
                     });
                 }
                 root.forecast = forecastData;
+
+                // The place the sun lighting follows (theme.lighting)
+                if (isFinite(data.latitude) && isFinite(data.longitude)) {
+                    Lighting.latitude = data.latitude;
+                    Lighting.longitude = data.longitude;
+                }
 
                 root.weatherSymbol = getWeatherCodeEmoji(root.weatherCode);
                 root.weatherDescription = getWeatherDescription(root.weatherCode);

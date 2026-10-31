@@ -191,7 +191,7 @@ Singleton {
     }
 
     function enforceLimits() {
-        const hide = Policy.overflowPopups(root.popupList, root.cfg ? root.cfg.maxVisible : 3);
+        const hide = Policy.overflowPopups(root.popupList, Policy.popupLimit(root.cfg, root.presentation));
         hide.forEach(id => {
             const n = root.list.find(x => x.id === id);
             if (n) {

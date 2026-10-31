@@ -1,12 +1,12 @@
 pragma ComponentBehavior: Bound
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
-import qs.modules.theme
-import qs.modules.components
 import qs.config
+import qs.modules.components.kit
+import qs.modules.settings.controls
 
-// Label + text field; `edited(text)` fires when editing finishes.
+// Label + text field (kit FieldBox look); `edited(text)` fires when editing
+// finishes.
 ColumnLayout {
     id: root
 
@@ -18,9 +18,9 @@ ColumnLayout {
     signal edited(string text)
 
     Layout.fillWidth: true
-    spacing: 4
+    spacing: Space.xs
 
-    readonly property string currentText: root.multiline ? area.text : field.text
+    readonly property string currentText: root.multiline ? area.text : line.input.text
 
     function commit(text) {
         if (text !== root.value)
@@ -31,52 +31,70 @@ ColumnLayout {
     // still in the field keeps the value.
     Component.onDestruction: root.commit(root.currentText)
 
-    Text {
+    KitText {
         visible: root.label.length > 0
+        role: "secondary"
         text: root.label
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
-        font.weight: Font.Medium
-        color: Colors.overSurfaceVariant
     }
 
-    StyledRect {
+    TextControl {
+        id: line
+        visible: !root.multiline
         Layout.fillWidth: true
-        implicitHeight: root.multiline ? Math.min(Math.max(area.implicitHeight, 60), 180) + 12 : 34
-        variant: "internalbg"
-        radius: Styling.radius(-4)
-        border.width: field.activeFocus || area.activeFocus ? 1 : 0
-        border.color: Colors.primary
+        text: root.value
+        placeholder: root.placeholder
+        monospace: root.mono
+        onEdited: t => root.commit(t)
+    }
 
-        TextField {
-            id: field
-            visible: !root.multiline
-            anchors.fill: parent
-            text: root.value
-            placeholderText: root.placeholder
-            placeholderTextColor: Colors.outline
-            color: Colors.overSurface
-            font.family: root.mono ? Config.theme.monoFont : Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            background: null
-            onEditingFinished: root.commit(text)
+    FieldBox {
+        id: box
+        visible: root.multiline
+        Layout.fillWidth: true
+        implicitHeight: Math.min(Math.max(area.contentHeight, 60), 180) + 2 * Space.s
+        focused: area.activeFocus
+        hovered: areaHover.hovered
+
+        HoverHandler {
+            id: areaHover
+            cursorShape: Qt.IBeamCursor
         }
-        ScrollView {
-            visible: root.multiline
+
+        Flickable {
+            id: scroller
             anchors.fill: parent
-            anchors.margins: 6
-            TextArea {
+            anchors.margins: Space.s
+            contentWidth: width
+            contentHeight: area.contentHeight
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            TextEdit {
                 id: area
+                width: scroller.width
                 text: root.value
-                placeholderText: root.placeholder
-                placeholderTextColor: Colors.outline
-                color: Colors.overSurface
-                wrapMode: TextArea.Wrap
-                font.family: root.mono ? Config.theme.monoFont : Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                background: null
+                wrapMode: TextEdit.Wrap
+                selectByMouse: true
+                font.family: root.mono ? Config.theme.monoFont : Type.bodyFont
+                font.pixelSize: Type.size("secondary")
+                color: Type.text
+                selectionColor: Qt.rgba(Type.accent.r, Type.accent.g, Type.accent.b, 0.3)
+                selectedTextColor: Type.text
                 onActiveFocusChanged: if (!activeFocus)
                     root.commit(text)
+                onCursorRectangleChanged: {
+                    if (cursorRectangle.y < scroller.contentY)
+                        scroller.contentY = cursorRectangle.y;
+                    else if (cursorRectangle.y + cursorRectangle.height > scroller.contentY + scroller.height)
+                        scroller.contentY = cursorRectangle.y + cursorRectangle.height - scroller.height;
+                }
+
+                KitText {
+                    role: "secondary"
+                    text: root.placeholder
+                    color: Type.muted
+                    visible: area.text === "" && !area.activeFocus
+                }
             }
         }
     }

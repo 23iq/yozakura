@@ -2,13 +2,17 @@ package ocr
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"yozakura/backend/pkg/capture"
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/proc"
 )
 
 type Service struct{}
@@ -55,20 +59,20 @@ func (s *Service) text(params json.RawMessage) (any, error) {
 	if _, err := exec.LookPath("tesseract"); err != nil {
 		return nil, fmt.Errorf("tesseract is not installed")
 	}
-	if listed, lerr := exec.Command("tesseract", "--list-langs").Output(); lerr == nil {
+	if listed, lerr := proc.Run(context.Background(), "tesseract", "--list-langs"); lerr == nil {
 		if missing := MissingLangs(langs, string(listed)); len(missing) > 0 {
 			return nil, fmt.Errorf("tesseract language data missing: %s (install the tesseract language packs)", strings.Join(missing, ", "))
 		}
 	}
 
-	cmd := exec.Command("tesseract", "-", "-", "-l", langs)
-	cmd.Stdin = bytes.NewReader(pngBytes)
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	out, err := cmd.Output()
+	out, err := proc.RunWith(context.Background(), proc.Options{Timeout: time.Minute, Stdin: bytes.NewReader(pngBytes)},
+		"tesseract", "-", "-", "-l", langs)
 	if err != nil {
-		if msg := strings.TrimSpace(stderr.String()); msg != "" {
-			return nil, fmt.Errorf("tesseract: %s", msg)
+		var pe *proc.Error
+		if errors.As(err, &pe) {
+			if msg := strings.TrimSpace(pe.Stderr); msg != "" {
+				return nil, fmt.Errorf("tesseract: %s", msg)
+			}
 		}
 		return nil, fmt.Errorf("tesseract: %w", err)
 	}
@@ -122,7 +126,7 @@ func (s *Service) barcode(params json.RawMessage) (any, error) {
 // copyText spawns wl-copy detached: its clipboard-serving child inherits
 // nothing and the handler returns immediately.
 func copyText(text string) {
-	cmd := exec.Command("wl-copy", "--type", "text/plain")
+	cmd := exec.CommandContext(context.Background(), "wl-copy", "--type", "text/plain")
 	cmd.Stdin = strings.NewReader(text)
 	cmd.Stdout = nil
 	cmd.Stderr = nil

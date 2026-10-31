@@ -1,6 +1,7 @@
 .pragma library
 .import "BarModuleRegistry.js" as Modules
 .import "panels/PanelStyles.js" as PanelStyles
+.import "../../config/JsonUtil.js" as JsonUtil
 
 // Pure helpers for the legacy single-bar layout (bar.json "layout" key).
 // Multi-panel configs (bar.panels) go through panels/PanelLayout.js.
@@ -37,10 +38,6 @@ function toArray(value) {
         return out;
     }
     return null;
-}
-
-function clone(value) {
-    return JSON.parse(JSON.stringify(value));
 }
 
 // Returns {style, left, right, drawer, warnings}. Never throws: unknown ids,

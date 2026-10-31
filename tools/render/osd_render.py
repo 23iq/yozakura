@@ -4,7 +4,7 @@
     tools/render/osd_render.py [--out DIR] [--mode dark|light]
                                [--languages ink,glass,tiles] [STYLE ...]
 
-Draws each style of modules/shell/osd/styles (pill, edge, island,
+Draws each style of modules/shell/osd/styles (pill, edge, island, gauge,
 bar-inline) in the states volume / brightness / muted / device switch, once
 per visual language, over your wallpaper with your real config and palette
 (see settings_render.py). The edge and pill styles show their vertical (left/right
@@ -25,7 +25,7 @@ from kit_env import LANGUAGES  # noqa: E402
 from osd_env import OsdEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-STYLES = ["pill", "edge", "island", "bar-inline"]
+STYLES = ["pill", "edge", "island", "bar-inline", "gauge"]
 # name -> (kind, value, muted, device)
 STATES = [
     ("volume", 0.62, False, ""),
@@ -39,6 +39,7 @@ CELL = {
     "pill": "OsdPill { vertical: %s; width: implicitWidth; height: implicitHeight; %s }",
     "edge": "OsdEdge { vertical: %s; width: implicitWidth; height: implicitHeight; %s }",
     "island": "OsdIsland { width: implicitWidth; height: implicitHeight; %s }",
+    "gauge": "OsdGauge { width: implicitWidth; height: implicitHeight; %s }",
     # The bar's controls button, grown by the inline OSD (ControlsButton).
     "bar-inline": """StyledRect {
         variant: "bg"
@@ -101,6 +102,7 @@ def main() -> int:
     ap.add_argument("styles", nargs="*", default=STYLES)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
+    ap.add_argument("--seed", default="", help="palette from this seed colour (matugen), e.g. '#4c8f5a'")
     ap.add_argument("--languages", default=",".join(LANGUAGES))
     args = ap.parse_args()
     out = Path(args.out)
@@ -110,7 +112,7 @@ def main() -> int:
     url = ("file://" + wall) if wall else ""
     for lang in args.languages.split(","):
         theme = {"language": lang, "lightMode": args.mode == "light"}
-        env = OsdEnv(f"osd-render-{lang}", palette=palette(args.mode, state), user_config=True,
+        env = OsdEnv(f"osd-render-{lang}", palette=palette(args.mode, state, args.seed), user_config=True,
                      overrides={"theme": theme}, wallpaper=state)
         for style in args.styles:
             win = env.load(sheet(style, url))

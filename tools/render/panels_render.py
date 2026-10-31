@@ -65,9 +65,11 @@ def find_item(item, name: str):
 
 
 def render(layout: dict, mode: str, size: tuple[int, int], out: Path, state: dict, repo: Path,
-           windows: bool = True, colors: dict | None = None, user_config: bool = True) -> Path:
+           windows: bool = True, colors: dict | None = None, user_config: bool = True,
+           make_env=None) -> Path:
     """colors: the palette (default: yours for `mode`); user_config=False
-    renders the layout over the defaults instead of over your config."""
+    renders the layout over the defaults instead of over your config;
+    make_env: the environment class or factory (default PanelsEnv)."""
     mine = user_domain if user_config else (lambda _name: {})
     theme = {**mine("theme"), **layout.get("theme", {}), "lightMode": mode == "light"}
     bar = {**mine("bar"), **layout.get("bar", {})}
@@ -75,9 +77,10 @@ def render(layout: dict, mode: str, size: tuple[int, int], out: Path, state: dic
     extra = {k: v for k, v in layout.items()
              if k not in ("name", "bar", "theme", "notch", "dock", "label", "actions", "crop")}
     bundled_fonts.register(repo)
-    env = PanelsEnv(f"panels-{layout.get('name', 'layout')}-{mode}", repo=repo, bar=bar, theme=theme,
-                    notch=notch, dock=layout.get("dock"), palette=colors or palette(mode, state), extra=extra)
-    win = env.scene(size[0], size[1], wallpaper=color_source(state), windows=windows)
+    env = (make_env or PanelsEnv)(f"panels-{layout.get('name', 'layout')}-{mode}", repo=repo, bar=bar,
+                                  theme=theme, notch=notch, dock=layout.get("dock"),
+                                  palette=colors or palette(mode, state), extra=extra)
+    win = PanelsEnv.scene(env, size[0], size[1], wallpaper=color_source(state), windows=windows)
     QTest.qWait(1200)
     # "actions": [{"object": "<objectName>", "eval": "<expression>"}] (hover, open popups...)
     for action in layout.get("actions", []):

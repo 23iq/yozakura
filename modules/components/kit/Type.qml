@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 import "../../theme/TypeRoles.js" as TypeRoles
 
 // Type roles and ink colors of the shared kit (modules/components/kit).
@@ -12,13 +13,17 @@ import "../../theme/TypeRoles.js" as TypeRoles
 //   secondary  0.93x, overSurfaceVariant
 //   caption    0.86x, outline (muted)
 //   label      0.78x, semibold, UPPERCASE, tracked, muted: the section label
+//              (the mono font where the language says so: Look.monoLabels)
+// plus one optional voice, `editorial`: 1.1x, regular, the serif display
+// face (theme.type.editorial, else the system serif) for text that reads
+// as prose (the sentence bar); never for controls or labels.
 // The accent (primary) is reserved for active state, progress, today /
 // selected and the single primary action of a surface; never decoration.
 // Progress fills use `progress` (the accent unless theme.progressRole).
 QtObject {
     id: root
 
-    readonly property var roles: ["display", "title", "body", "secondary", "caption", "label"]
+    readonly property var roles: ["display", "title", "body", "secondary", "caption", "label", "editorial"]
     readonly property real base: Config.theme.fontSize
     readonly property var scale: ({
             "display": 3,
@@ -26,11 +31,13 @@ QtObject {
             "body": 1,
             "secondary": 0.93,
             "caption": 0.86,
-            "label": 0.78
+            "label": 0.78,
+            "editorial": 1.1
         })
 
     readonly property string bodyFont: Styling.bodyFont
     readonly property string headingFont: Styling.headingFont
+    readonly property string editorialFont: Styling.editorialFont
 
     // Colors
     readonly property color text: Colors.overBackground
@@ -66,6 +73,10 @@ QtObject {
     }
 
     function family(role: string): string {
+        if (role === "label" && Look.monoLabels)
+            return Config.theme.monoFont;
+        if (role === "editorial")
+            return root.editorialFont;
         return role === "display" || role === "title" ? root.headingFont : root.bodyFont;
     }
 
@@ -78,7 +89,7 @@ QtObject {
     }
 
     function letterSpacing(role: string): real {
-        return role === "label" ? Math.round(root.size("label") * 0.14 * 10) / 10 : 0;
+        return role === "label" ? Math.round(root.size("label") * Look.labelTracking * 10) / 10 : 0;
     }
 
     // label UPPERCASE / title as typed, unless theme.type.headingCase sets a case

@@ -1,17 +1,19 @@
 package caffeine
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/statesfile"
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 const stateKey = "caffeine"
@@ -33,7 +35,7 @@ type Service struct {
 func NewService(p *paths.Paths) *Service {
 	s := &Service{paths: p}
 	s.runFn = func(args ...string) ([]byte, error) {
-		return exec.Command(paths.DaemonBinary(), args...).Output()
+		return proc.Run(context.Background(), paths.DaemonBinary(), args...)
 	}
 	return s
 }
@@ -101,33 +103,17 @@ func (s *Service) Close() error {
 }
 
 func (s *Service) loadPersisted() bool {
-	data, err := os.ReadFile(s.paths.StatesFile())
+	v, _, err := statesfile.Get[bool](s.paths.StatesFile(), stateKey)
 	if err != nil {
-		return false
+		log.Printf("[caffeine] read state: %v", err)
 	}
-	doc := map[string]any{}
-	if err := json.Unmarshal(data, &doc); err != nil {
-		return false
-	}
-	v, ok := doc[stateKey].(bool)
-	return ok && v
+	return v
 }
 
 func (s *Service) persist(v bool) {
-	doc := map[string]any{}
-	if data, err := os.ReadFile(s.paths.StatesFile()); err == nil {
-		_ = json.Unmarshal(data, &doc)
+	if err := statesfile.Set(s.paths.StatesFile(), stateKey, v); err != nil {
+		log.Printf("[caffeine] persist state: %v", err)
 	}
-	doc[stateKey] = v
-	out, err := json.MarshalIndent(doc, "", "  ")
-	if err != nil {
-		return
-	}
-	tmp := s.paths.StatesFile() + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return
-	}
-	_ = os.Rename(tmp, s.paths.StatesFile())
 }
 
 type inhibitorCreateResp struct {

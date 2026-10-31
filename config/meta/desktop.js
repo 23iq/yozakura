@@ -38,6 +38,16 @@ var keys = {
         "unit": "ms",
         "description": "Wallpaper transition duration."
     },
+    "wallpaperMode": {
+        "enum": Enums.WALLPAPER_MODES,
+        "description": "How a still wallpaper fills the screen: fill (cropped to the screen) or panorama (scaled to the screen height; each workspace is a frame of the wide image and the view glides between them)."
+    },
+    "panoramaParallax": {
+        "description": "Panorama parallax: with a depth map next to the image (<name>.depth.png, white = near) or the depth clock's subject cut-out, near parts of the image run ahead while the panorama pans."
+    },
+    "depthLayering": {
+        "description": "Desktop widgets and icons sit behind the wallpaper's foreground subject (needs a <name>.depth.png or the depth model). The bar and popups always stay in front."
+    },
     "wallpaperFolders": {
         "local": true,
         "items": {

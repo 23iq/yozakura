@@ -3,6 +3,7 @@
 .import "../bar/panels/PanelStyles.js" as PanelStyles
 .import "../bar/panels/PanelEdit.js" as PanelEdit
 .import "../bar/BarModuleRegistry.js" as Modules
+.import "../../config/JsonUtil.js" as JsonUtil
 
 // Pure edit operations of the panels editor (editors/PanelsEditor.qml).
 // Every function returns a new list ready for SettingsStore.set("bar.panels",
@@ -38,10 +39,6 @@ function isLegacy(bar) {
 
 function serialize(panels) {
     return PanelLayout.serialize(panels);
-}
-
-function clone(v) {
-    return JSON.parse(JSON.stringify(v));
 }
 
 function uniqueId(panels, base) {
@@ -96,7 +93,7 @@ function removePanel(panels, index) {
 // Set one field of one panel; edge/style changes go through PanelEdit, the
 // same rules the composable layout uses.
 function setField(panels, index, field, value) {
-    var out = clone(panels);
+    var out = JsonUtil.clone(panels);
     if (!out[index])
         return serialize(out);
     out[index] = PanelEdit.apply(out[index], field, value);
@@ -141,7 +138,7 @@ function unused(panel) {
 
 // Move module `id` of panel `index` to `group` at `at` ("available" removes it).
 function moveModule(panels, index, id, group, at) {
-    var out = clone(panels);
+    var out = JsonUtil.clone(panels);
     var p = out[index];
     if (!p)
         return serialize(out);

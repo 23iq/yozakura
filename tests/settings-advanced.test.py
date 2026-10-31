@@ -1,7 +1,7 @@
 """Settings skeleton (S0) behaviour, offscreen.
 
-* `advanced: true` entries render in a collapsed "Advanced" block
-  (schema/Advanced.js); revealing one (a search jump) unfolds it.
+* A collapsible section starts folded, builds its rows lazily and a
+  search jump into it unfolds it (Simple / All: tests/settings-simple.test.py).
 * A section's reset button appears once it has changes and resets only
   that section.
 * The sidebar tree: group ids resolve to their first page, the open group
@@ -29,7 +29,6 @@ import qs.config
 import qs.modules.settings
 import qs.modules.settings.store
 import qs.modules.services
-import "../qs/modules/settings/schema/Advanced.js" as Advanced
 Window {
     id: w
     width: 1100; height: 760; visible: true
@@ -48,11 +47,12 @@ Window {
     SettingsPage {
         objectName: "page"
         anchors.fill: parent
-        category: Advanced.apply({
+        category: ({
             "id": "demo", "icon": "gear", "title": "prefs.cat.bar",
             "sections": [
-                { "id": "main", "title": "prefs.cat.bar", "entries": [w.toggle("bar.compact", false), w.toggle("bar.frameEnabled", true)] },
-                { "id": "other", "title": "prefs.cat.dock", "entries": [w.toggle("bar.availableOnFullscreen", false)] }
+                { "id": "main", "title": "prefs.cat.bar", "entries": [w.toggle("bar.compact", false)] },
+                { "id": "other", "title": "prefs.cat.dock", "entries": [w.toggle("bar.availableOnFullscreen", false)] },
+                { "id": "fold", "title": "prefs.cat.dock", "collapsible": true, "collapsed": true, "entries": [w.toggle("bar.frameEnabled", false)] }
             ]
         })
     }
@@ -72,14 +72,14 @@ def check(cond: bool, what: str) -> None:
 
 
 QTest.qWait(200)
-adv = 'findItem("settingsSection:advanced")'
-check(ev(f"{adv} !== null"), "the page has an Advanced block")
-check(ev(f"{adv}.expanded") is False, "the Advanced block starts collapsed")
+adv = 'findItem("settingsSection:fold")'
+check(ev(f"{adv} !== null"), "the page has a foldable section")
+check(ev(f"{adv}.expanded") is False, "the foldable section starts collapsed")
 check(ev('findItem("settingRow:bar.frameEnabled") === null'), "a folded block builds its rows lazily")
-h.eval(page, 'reveal("advanced", "bar.frameEnabled")')
+h.eval(page, 'reveal("fold", "bar.frameEnabled")')
 QTest.qWait(100)
-check(ev(f"{adv}.expanded") is True, "revealing an advanced entry (a search jump) opens the block")
-check(ev('findItem("settingRow:bar.frameEnabled") !== null'), "the advanced entry renders inside it")
+check(ev(f"{adv}.expanded") is True, "revealing an entry (a search jump) opens the block")
+check(ev('findItem("settingRow:bar.frameEnabled") !== null'), "the entry renders inside it")
 
 # Section reset: the Group's quiet action reads "Reset" while changed
 main = 'findItem("settingsSection:main")'

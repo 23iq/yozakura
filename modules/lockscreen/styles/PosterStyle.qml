@@ -5,6 +5,7 @@ import qs.modules.lockscreen
 import qs.modules.desktop.clockstyles
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.widgets.defaultview
 import qs.config
 import "../../desktop/clockstyles/ClockText.js" as ClockText
@@ -25,8 +26,6 @@ LockStyle {
 
     arrangement: "split"
     clockSide: "left"
-    clusterWidth: 420
-    clusterSpacing: 14
     wallpaperBlur: 0.18
     wallpaperZoom: 1.03
 
@@ -47,7 +46,7 @@ LockStyle {
     component Label: Text {
         color: skin.ink
         font.family: skin.grotesk
-        font.pixelSize: Styling.fontSize(-1)
+        font.pixelSize: Type.size("secondary")
         font.letterSpacing: 1.6
         font.capitalization: Font.AllUppercase
         textFormat: Text.PlainText
@@ -60,7 +59,7 @@ LockStyle {
         radius: skin.blockRadius
         clip: true
         Rectangle {
-            width: 4
+            width: Space.xs
             height: parent.height
             color: parent.tab
         }
@@ -123,7 +122,7 @@ LockStyle {
 
                 Rectangle {
                     width: Math.round(poster.digitSize * 0.18)
-                    height: 4
+                    height: Space.xs
                     color: skin.accent
                 }
                 Text {
@@ -155,12 +154,12 @@ LockStyle {
         LockPasswordBase {
             id: pw
             field: input
-            implicitHeight: 56 + 10 + hintText.height
+            implicitHeight: block.height + Space.s + hintText.height
 
             Block {
                 id: block
                 width: parent.width
-                height: 56
+                height: Space.controlM + Space.s
                 tab: pw.errorShown ? skin.error : (input.activeFocus ? skin.accent : skin.alpha(skin.ink, 0.4))
                 transform: Translate {
                     x: pw.shakeOffset
@@ -169,9 +168,9 @@ LockStyle {
                 TextField {
                     id: input
                     anchors.left: parent.left
-                    anchors.leftMargin: 22
+                    anchors.leftMargin: Space.xl
                     anchors.right: submit.left
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
                     background: null
                     padding: 0
@@ -182,7 +181,7 @@ LockStyle {
                     selectionColor: skin.accent
                     selectedTextColor: skin.overAccent
                     font.family: skin.grotesk
-                    font.pixelSize: pw.hasText ? Styling.fontSize(2) : Styling.fontSize(0)
+                    font.pixelSize: pw.hasText ? Type.size("title") : Type.size("body")
                     font.letterSpacing: pw.hasText ? 5 : 2.4
                     font.capitalization: Font.AllUppercase
                     placeholderText: I18n.t("lockscreen.password")
@@ -191,12 +190,12 @@ LockStyle {
                 }
                 Text {
                     anchors.right: submit.left
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: Space.s
                     anchors.verticalCenter: parent.verticalCenter
                     visible: pw.capsLock
                     text: Icons.capsLock
                     font.family: Icons.font
-                    font.pixelSize: 16
+                    font.pixelSize: Type.iconSize("body")
                     color: skin.accent
                 }
                 Rectangle {
@@ -206,26 +205,15 @@ LockStyle {
                     height: parent.height
                     color: pw.hasText || pw.authenticating ? skin.accent : skin.alpha(skin.ink, 0.08)
                     Behavior on color {
-                        enabled: Config.animDuration > 0
+                        enabled: Motion.micro.duration > 0
                         ColorAnimation {
-                            duration: Motion.enter.duration
+                            duration: Motion.micro.duration
                         }
                     }
-                    Text {
+                    LockSpinner {
                         anchors.centerIn: parent
-                        text: pw.authenticating ? Icons.circleNotch : Icons.arrowRight
-                        font.family: Icons.font
-                        font.pixelSize: 18
+                        busy: pw.authenticating
                         color: pw.hasText || pw.authenticating ? skin.overAccent : skin.ink
-                        RotationAnimator on rotation {
-                            running: pw.authenticating
-                            from: 0
-                            to: 360
-                            duration: 900
-                            loops: Animation.Infinite
-                        }
-                        onTextChanged: if (!pw.authenticating)
-                            rotation = 0
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -238,15 +226,15 @@ LockStyle {
             Label {
                 id: hintText
                 anchors.top: block.bottom
-                anchors.topMargin: 10
+                anchors.topMargin: Space.s
                 text: pw.hint
-                height: Math.max(implicitHeight, Styling.fontSize(-1) + 6)
+                height: Math.max(implicitHeight, Type.size("secondary") + Space.xs)
                 color: pw.errorShown ? skin.error : skin.ink
                 opacity: pw.hint !== "" ? 1 : 0
                 Behavior on opacity {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.micro.duration > 0
                     NumberAnimation {
-                        duration: Motion.enter.duration
+                        duration: Motion.micro.duration
                     }
                 }
             }
@@ -256,49 +244,34 @@ LockStyle {
     mediaCard: Component {
         LockMediaBase {
             id: media
-            implicitHeight: 88
+            implicitHeight: Space.controlL + Space.xl
 
             Block {
                 anchors.fill: parent
 
                 Row {
                     anchors.fill: parent
-                    anchors.leftMargin: 4
-                    spacing: 14
+                    anchors.leftMargin: Space.xs
+                    spacing: Space.m
 
-                    Rectangle {
+                    Art {
                         width: parent.height
                         height: parent.height
-                        color: skin.alpha(skin.ink, 0.08)
-                        Image {
-                            anchors.fill: parent
-                            source: media.artUrl
-                            sourceSize: Qt.size(176, 176)
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            visible: status === Image.Ready
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            visible: media.artUrl === ""
-                            text: Icons.musicNotes
-                            font.family: Icons.font
-                            font.pixelSize: 26
-                            color: skin.accent
-                        }
+                        source: media.artUrl
+                        icon: Icons.musicNotes
+                        radius: 0
                     }
                     Column {
-                        width: parent.width - parent.height - 28
+                        width: parent.width - parent.height - Space.xl
                         anchors.verticalCenter: parent.verticalCenter
-                        spacing: 4
-                        Text {
+                        spacing: Space.xs
+                        KitText {
                             width: parent.width
                             text: media.title.toUpperCase()
-                            textFormat: Text.PlainText
                             elide: Text.ElideRight
                             color: skin.ink
                             font.family: skin.groteskHeavy
-                            font.pixelSize: Styling.fontSize(1)
+                            role: "body"
                         }
                         Label {
                             width: parent.width
@@ -306,11 +279,11 @@ LockStyle {
                             visible: text !== ""
                             elide: Text.ElideRight
                             color: skin.inkSoft
-                            font.pixelSize: Styling.fontSize(-2)
+                            font.pixelSize: Type.size("caption")
                         }
                         Row {
                             width: parent.width
-                            spacing: 4
+                            spacing: Space.xs
                             LockMediaButton {
                                 icon: Icons.previous
                                 glyphColor: skin.ink
@@ -333,11 +306,11 @@ LockStyle {
                                 onClicked: media.next()
                             }
                             NotchVisualizer {
-                                width: parent.width - 106
-                                height: 24
+                                width: parent.width - Space.chip * 2 - Space.controlS - parent.spacing * 3
+                                height: Space.xl
                                 anchors.verticalCenter: parent.verticalCenter
                                 barCount: 20
-                                spacing: 3
+                                spacing: Space.xs
                                 centered: false
                                 idleOpacity: 0.3
                                 visible: media.visualizerEnabled && CavaService.available
@@ -353,7 +326,7 @@ LockStyle {
                 Rectangle {
                     anchors.bottom: parent.bottom
                     width: parent.width * media.progress
-                    height: 3
+                    height: Space.stroke
                     color: skin.accent
                     visible: media.length > 0
                 }
@@ -363,7 +336,7 @@ LockStyle {
 
     status: Component {
         Item {
-            implicitHeight: 26
+            implicitHeight: Space.xl
 
             LockStatusInfo {
                 id: info
@@ -371,10 +344,10 @@ LockStyle {
             Row {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Space.s
                 Rectangle {
-                    width: 10
-                    height: 10
+                    width: Space.s
+                    height: Space.s
                     anchors.verticalCenter: parent.verticalCenter
                     color: skin.accent
                 }

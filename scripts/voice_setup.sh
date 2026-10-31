@@ -63,14 +63,24 @@ info() { printf '\033[0;34m::\033[0m %s\n' "$*" >&2; }
 warn() { printf '\033[0;33m!!\033[0m %s\n' "$*" >&2; }
 fail() { printf '\033[0;31m!!\033[0m %s\n' "$*" >&2; exit 1; }
 
+mkdir -p "$ROOT" "$BIN" "$MODELS"
+
+# A packaging wrapper (the Nix flake) may ship whisper.cpp itself: then
+# there is nothing to build, only the models to fetch below. The backend
+# runs that whisper-server (backend/pkg/svc/voice/paths.go).
+PACKAGED="$(brand_env WHISPER_BIN_DIR)"
+if [[ -n "$PACKAGED" && -x "$PACKAGED/whisper-server" ]]; then
+    command -v curl >/dev/null || fail "curl is required"
+    printf 'backend=%s\nversion=packaged\n' "$(brand_env WHISPER_BACKEND packaged)" >"$ROOT/BUILD_INFO"
+    info "Using the packaged whisper.cpp in $PACKAGED"
+else # source build: clone, configure, build and install into $BIN
+
 for tool in git cmake curl; do
     command -v "$tool" >/dev/null || fail "$tool is required"
 done
 GENERATOR=()
 command -v ninja >/dev/null && GENERATOR=(-G Ninja)
 JOBS="$(( $(nproc) > 2 ? $(nproc) / 2 : 1 ))"
-
-mkdir -p "$ROOT" "$BIN" "$MODELS"
 
 # --- source ------------------------------------------------------------------
 if [[ "$FORCE" == "1" ]]; then
@@ -175,6 +185,7 @@ for exe in whisper-server whisper-cli; do
 done
 printf 'backend=%s\nversion=%s\n' "$BACKEND" "$WHISPER_VERSION" >"$ROOT/BUILD_INFO"
 info "Installed whisper.cpp ($BACKEND) into $BIN"
+fi # end of the source build (skipped for a packaged whisper.cpp)
 
 # --- models ------------------------------------------------------------------
 fetch() {

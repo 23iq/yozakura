@@ -1,6 +1,7 @@
 package voice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -11,7 +12,7 @@ import (
 type Runner func(stdin string, name string, args ...string) error
 
 func execRunner(stdin string, name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...)
 	if stdin != "" {
 		cmd.Stdin = strings.NewReader(stdin)
 	}

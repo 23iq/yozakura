@@ -1,6 +1,7 @@
 package powerprofile
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -8,7 +9,17 @@ import (
 	"sync"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/proc"
 )
+
+// tlpPath resolves a TLP tool: PATH first (NixOS has no /sbin), then the
+// /sbin location sudoers rules usually name. Overridable in tests.
+var tlpPath = func(name string) string {
+	if p, err := exec.LookPath(name); err == nil {
+		return p
+	}
+	return "/sbin/" + name
+}
 
 type backend int
 
@@ -44,7 +55,7 @@ type Service struct {
 func NewService() *Service {
 	s := &Service{}
 	s.execFn = func(name string, args ...string) ([]byte, error) {
-		return exec.Command(name, args...).Output()
+		return proc.Run(context.Background(), name, args...)
 	}
 	return s
 }
@@ -129,10 +140,10 @@ func (s *Service) detect() {
 		return
 	}
 
-	if _, err := s.execFn("/sbin/tlp", "--version"); err == nil {
+	if _, err := s.execFn(tlpPath("tlp"), "--version"); err == nil {
 		s.b = backendTLP
 		s.list = []string{"power-saver", "balanced", "performance"}
-		if out, err := s.execFn("bash", "-c", "/sbin/tlp-stat -p 2>/dev/null | grep -i 'Active profile' | head -1"); err == nil {
+		if out, err := s.execFn("bash", "-c", `"$1" -p 2>/dev/null | grep -i 'Active profile' | head -1`, "tlp-stat", tlpPath("tlp-stat")); err == nil {
 			s.profile = parseTLPProfile(string(out))
 		}
 		return
@@ -216,7 +227,7 @@ func (s *Service) set(params json.RawMessage) (any, error) {
 	case backendPowerProfilesCtl:
 		cmd = []string{"powerprofilesctl", "set", p.Profile}
 	case backendTLP:
-		cmd = []string{"sudo", "/sbin/tlp", p.Profile}
+		cmd = []string{"sudo", tlpPath("tlp"), p.Profile}
 	default:
 		return nil, fmt.Errorf("unsupported backend")
 	}

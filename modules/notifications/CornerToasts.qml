@@ -16,9 +16,8 @@ import "NotificationPolicy.js" as Policy
 Item {
     id: root
 
-    // The UnifiedShellPanel (panel zones, dock, frame) and its notch content
+    // The UnifiedShellPanel (panel zones, dock, frame, notch reveal)
     property var panel: null
-    property var notch: null
     property string screenName: ""
 
     readonly property bool active: Notifications.presentation === "corner" && Notifications.showsOnScreen(screenName)
@@ -26,6 +25,10 @@ Item {
     // leave free (EdgeLayout.freeCorner); otherwise the configured corner
     readonly property bool autoCorner: !Config.notifications || Config.notifications.position === "auto"
     readonly property string cornerPosition: autoCorner && panel && panel.targetScreen ? EdgeService.freeCorner(panel.targetScreen, "auto") : Notifications.cornerPosition
+    // Claimed while shown: the floating card keeps off it (EdgeService.cardRect)
+    readonly property string claimedCorner: active ? cornerPosition : ""
+    onClaimedCornerChanged: EdgeService.claimCorner(root.screenName, root.claimedCorner)
+    Component.onDestruction: EdgeService.claimCorner(root.screenName, "")
     readonly property var anchorsInfo: Policy.anchorsOf(cornerPosition)
     readonly property bool atBottom: anchorsInfo.vertical === "bottom"
     readonly property string side: anchorsInfo.horizontal
@@ -49,10 +52,10 @@ Item {
     }
     function notchInset(edge) {
         // Centered toasts clear the notch on its edge
-        if (root.side !== "center" || !notch || (Config.notchPosition ?? "top") !== edge || !notch.reveal)
+        if (root.side !== "center" || !panel || !panel.notchReveal || (Config.notchPosition ?? "top") !== edge)
             return 0;
-        const n = notch.notchContainerRef;
-        return n ? n.height + Space.xs : 0;
+        const h = Visibilities.notchRect(root.screenName).height;
+        return h > 0 ? h + Space.xs : 0;
     }
     readonly property real insetTop: frameInset + Math.max(barInset("top"), notchInset("top")) + gap
     readonly property real insetBottom: frameInset + Math.max(barInset("bottom"), dockInset("bottom"), notchInset("bottom")) + gap
@@ -97,7 +100,10 @@ Item {
         }
     }
     onActiveChanged: sync()
-    Component.onCompleted: sync()
+    Component.onCompleted: {
+        sync();
+        EdgeService.claimCorner(root.screenName, root.claimedCorner);
+    }
 
     // Horizontal entry offset: from the nearest side (center: from the edge)
     readonly property real enterX: side === "left" ? -(toastWidth * 0.6) : (side === "right" ? toastWidth * 0.6 : 0)

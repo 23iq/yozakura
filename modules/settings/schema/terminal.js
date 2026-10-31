@@ -78,6 +78,8 @@ var category = {
                 },
                 {
                     "key": "terminal.padding",
+                    "reason": "prefs.disabled.needs_kitty",
+                    "advanced": true,
                     "enabledWhen": {
                         "all": [
                             {
@@ -101,6 +103,7 @@ var category = {
                 },
                 {
                     "key": "terminal.cursorShape",
+                    "reason": "prefs.disabled.needs_kitty",
                     "enabledWhen": {
                         "all": [
                             {
@@ -121,6 +124,7 @@ var category = {
                 },
                 {
                     "key": "terminal.cursorBlink",
+                    "reason": "prefs.disabled.needs_kitty",
                     "enabledWhen": {
                         "all": [
                             {
@@ -155,6 +159,7 @@ var category = {
                 },
                 {
                     "key": "general.terminalAdvanced",
+                    "advanced": true,
                     "type": "toggle",
                     "label": "system.terminal.advanced",
                     "description": "system.terminal.advanced_description",
@@ -162,6 +167,7 @@ var category = {
                 },
                 {
                     "key": "general.terminalCommand",
+                    "advanced": true,
                     "type": "text",
                     "monospace": true,
                     "placeholder": "prefs.term.command.placeholder",
@@ -181,6 +187,7 @@ var category = {
             "entries": [
                 {
                     "key": "apps.kitty.font",
+                    "reason": "prefs.disabled.needs_kitty",
                     "type": "font",
                     "sizeKey": "apps.kitty.fontSize",
                     "sizeUnit": "pt",
@@ -197,6 +204,8 @@ var category = {
                 },
                 {
                     "key": "theme.terminalOpacity",
+                    "reason": "prefs.disabled.needs_terminal_theming",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -215,7 +224,7 @@ var category = {
                             };
                         })
                     },
-                    "label": "prefs.term.opacity",
+                    "label": "prefs.label.terminal_opacity",
                     "description": "prefs.term.opacity.desc",
                     "keywords": "kitty terminal opacity transparency background alpha"
                 },

@@ -34,14 +34,14 @@ PanelStyleBase {
     property bool ownShadow: true
 
     // ── Parting around the notch ──
-    readonly property var notchItem: b && !vertical && b.notchPosition === b.barPosition ? Visibilities.getNotchForScreen(b.screen.name) : null
+    readonly property bool notchHere: !!b && !vertical && b.notchPosition === b.barPosition && Visibilities.hasNotch(b.screen.name)
     readonly property bool centered: !!b && b.aligned && b.spec.align !== "start" && b.spec.align !== "end" && (!Config.notch || !Config.notch.align || Config.notch.align === "center")
-    readonly property real claim: notchItem && notchItem.edgeClaim !== undefined ? notchItem.edgeClaim : 0
+    readonly property real claim: notchHere ? Visibilities.notchEdgeClaim(b.screen.name) : 0
     readonly property real leftLength: vertical ? leftRow.implicitHeight : leftRow.implicitWidth
     readonly property real rightLength: dock.runs.right.length > 0 ? (vertical ? rightRow.implicitHeight : rightRow.implicitWidth) : 0
     readonly property real sepBlock: rightLength > 0 ? (vertical ? sep.implicitHeight : sep.implicitWidth) + 2 * spacing : 0
     readonly property bool parted: DockSplit.parts({
-        enabled: !!notchItem && centered,
+        enabled: notchHere && centered,
         left: leftLength,
         right: rightLength,
         pad: pad,

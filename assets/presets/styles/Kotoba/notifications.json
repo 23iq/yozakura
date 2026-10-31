@@ -1,0 +1,10 @@
+{
+    "presentation": "strips",
+    "strips": {
+        "material": "paper",
+        "thread": true,
+        "sway": true,
+        "maxVisible": 4,
+        "edge": "auto"
+    }
+}

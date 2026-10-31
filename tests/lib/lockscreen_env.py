@@ -1,15 +1,11 @@
 """Offscreen environment for the lock screen (modules/lockscreen).
 
-The lock screen files, its styles, the desktop clock text helpers, Icons,
-NotchVisualizer and the clock fonts are the real repo files (mirrored under
-<root>/qs/...); the shell singletons are generated:
-  * Config  - every domain from config/defaults/*.js (settings_env), with
-              `overrides` merged in
-  * Colors  - every role of modules/theme/Colors.qml from a palette dict
-  * I18n    - translations/en.json
-  * MprisController, CavaService, Battery, NetworkService, GlobalStates,
-    Styling, Glass and the Quickshell types the lock surface uses - small
-    stand-ins (fake PAM: only "correct" authenticates)
+Built on SettingsEnv: the lock screen files, its styles, the shared UI kit,
+StyledRect, Styling, Metrics, Motion, Glass, Icons, NotchVisualizer and the
+clock fonts are the real repo files; Config (config/defaults + `overrides`),
+Colors (a palette dict) and I18n are generated. MprisController,
+CavaService, Battery, NetworkService, GlobalStates and the Wayland lock / PAM
+types are small stand-ins (fake PAM: only "correct" authenticates).
 
 Used by tests/lockscreen.test.py and tools/render/lockscreen_render.py.
 """
@@ -18,8 +14,8 @@ from __future__ import annotations
 import json
 import shutil
 
-from qmlharness import REPO, Harness
-from settings_env import DEFAULT_PALETTE, _merge, colors_qml, config_qml, i18n_qml, load_defaults
+from qmlharness import REPO
+from settings_env import SettingsEnv
 from PySide6.QtCore import qInstallMessageHandler
 
 MIRROR = [
@@ -32,6 +28,7 @@ MIRROR = [
     "modules/components/surfaceeffects",
     "assets/fonts/clock",
     "config/ColorSpec.js",
+    "config/JsonUtil.js",
 ]
 
 SERVICES = {
@@ -55,13 +52,6 @@ QtObject { property bool ethernet: false; property bool wifiEnabled: true; prope
  property string networkName: "sakura-5g"; property int networkStrength: 80; function wifiIconForStrength(s) { return Icons.wifiHigh; } }""",
 }
 
-THEME = {
-    "Styling": """pragma Singleton
-import qs.config
-QtObject { function fontSize(n) { return Config.theme.fontSize + n; } function radius(n) { return Config.roundness + n; } }""",
-    "Glass": "pragma Singleton\nQtObject { function lockOpacity(x) { return x; } }",
-    "Motion": "pragma Singleton\nQtObject { property QtObject enter: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject exit: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject morph: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 }; property QtObject emphasis: QtObject { property int duration: 150; property int easing: Easing.OutCubic; property real overshoot: 1 } }",
-}
 
 WALLPAPER = """import QtQuick
 Item { id: w; property string source; property real radius; property bool tintEnabled
@@ -70,13 +60,6 @@ Item { id: w; property string source; property real radius; property bool tintEn
  Image { anchors.fill: parent; source: w.source; fillMode: Image.PreserveAspectCrop; asynchronous: false
          sourceSize.width: 1920 } }"""
 
-QUICKSHELL = {
-    "Quickshell": "pragma Singleton\nQtObject { function env(n) { return n === 'HOME' ? '/nonexistent' : ''; } }",
-}
-QUICKSHELL_IO = {
-    "Process": "QtObject { property var command; property bool running; property QtObject stdout }",
-    "StdioCollector": "QtObject { property string text; property bool waitForEnd; signal streamFinished }",
-}
 QUICKSHELL_WAYLAND = {
     "WlSessionLockSurface": "Item { width: 1280; height: 720; property var screen: null; property color color }",
     "ScreencopyView": "Item { property var captureSource; property bool live; property bool paintCursor; function captureFrame() {} }",
@@ -98,14 +81,11 @@ QtObject { property bool lockscreenVisible: true; property var wallpaperManager:
 }
 
 
-class LockscreenEnv:
+class LockscreenEnv(SettingsEnv):
     def __init__(self, name: str = "lockscreen", *, palette: dict | None = None, overrides: dict | None = None):
-        self.h = Harness(name)
-        self.root = self.h.root
-        domains = load_defaults()
-        for dom, values in (overrides or {}).items():
-            domains[dom] = _merge(domains[dom], values)
-        self.domains = domains
+        # SettingsEnv: real kit (modules/components/kit), StyledRect, Styling,
+        # Metrics, Motion, Glass, Icons; generated Config / Colors / I18n.
+        super().__init__(name, palette=palette, overrides=overrides)
         qs = self.root / "qs"
         for rel in MIRROR:
             src, dst = REPO / rel, qs / rel
@@ -114,45 +94,24 @@ class LockscreenEnv:
             else:
                 dst.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(src, dst)
-        (qs / "config" / "Config.qml").write_text(config_qml(domains))
-        self._qmldir(qs / "config", "qs.config")
-        (qs / "modules/theme/Colors.qml").write_text(colors_qml(palette or DEFAULT_PALETTE))
-        self.h.module("qs.modules.theme", THEME)
-        self.h.module("qs.modules.services", {"I18n": i18n_qml(), **SERVICES})
+        self.h.module("qs.modules.services", SERVICES)
         self.h.module("qs.modules.components", {"TintedWallpaper": WALLPAPER})
         self.h.module("qs.modules.corners", {
             "RoundCorner": "Item { enum CornerEnum { TopRight, BottomRight, TopLeft, BottomLeft } property int corner; property real size }"})
         self.h.module("qs.modules.globals", GLOBALS)
-        self.h.module("Quickshell", QUICKSHELL)
-        self.h.module("Quickshell.Io", QUICKSHELL_IO)
         self.h.module("Quickshell.Wayland", QUICKSHELL_WAYLAND)
         self.h.module("Quickshell.Services.Pam", PAM)
-        self.h.module("Quickshell.Widgets", {"ClippingRectangle": "Rectangle { clip: true }"})
-        for d in ["modules/lockscreen", "modules/lockscreen/styles", "modules/desktop/clockstyles",
-                  "modules/widgets/defaultview", "modules/components/signatures",
-                  "modules/components/surfaceeffects"]:
-            self._qmldir(qs / d, "qs." + d.replace("/", "."))
+        for d in ["modules/lockscreen", "modules/lockscreen/styles"]:
+            self.h._write_qmldir(qs / d, "qs." + d.replace("/", "."))
         # Binding/runtime errors of the lock screen files (not just type errors).
         self.errors: list[str] = []
         self._prev = qInstallMessageHandler(self._on_message)
-        # Styles are loaded by URL (Loader). A module imported for the first
-        # time there is loaded on the QML loader thread, whose warnings reach
-        # the Python message handler and wait for the GIL the main thread
-        # holds: deadlock. Load the modules the styles use up front.
-        self.h.load("import QtQuick\nimport QtQuick.Controls\nimport QtQuick.Effects\nimport QtQuick.Layouts\n"
-                    "import QtQuick.Shapes\nItem { TextField {} }", auto_stub=False)
 
     def _on_message(self, mode, ctx, msg: str) -> None:
         if "/lockscreen/" in msg and any(k in msg for k in ("Error", "rror:", "Unable to assign", "undefined")):
             self.errors.append(msg)
         if self._prev:
             self._prev(mode, ctx, msg)
-
-    def _qmldir(self, d, module: str) -> None:
-        self.h._write_qmldir(d, module)
-
-    def load(self, qml: str):
-        return self.h.load(qml, auto_stub=False)
 
     def lock_screen(self):
         return self.h.load(self.root / "qs/modules/lockscreen/LockScreen.qml", auto_stub=False)

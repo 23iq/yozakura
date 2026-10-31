@@ -3,7 +3,7 @@ import Quickshell
 import Quickshell.Wayland
 import qs.modules.services
 import qs.modules.globals
-import qs.config
+import qs.modules.components.kit
 
 // Layer window for the peek pill: bottom-centre of the screen the wizard
 // opened on, above the bar/dock reserved area. It never takes keyboard focus
@@ -14,7 +14,7 @@ PanelWindow {
 
     property bool shown: false
     readonly property var reservation: Visibilities.reservations ? Visibilities.reservations[OnboardingService.screenName] : null
-    readonly property int gap: 28
+    readonly property int gap: Space.xl
 
     screen: Quickshell.screens.find(s => s.name === OnboardingService.screenName) || Quickshell.screens[0] || null
     anchors.bottom: true

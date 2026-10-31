@@ -39,8 +39,10 @@ QtObject {
     "Styling": "pragma Singleton\nQtObject { function fontSize(o) { return 14 + o; } function radius(o) { return 16 + o; } }",
 })
 h.module("qs.modules.services", {
-    "I18n": "pragma Singleton\nQtObject { function t(k, a) { return a === undefined ? k : k + ':' + a; } }",
+    "I18n": "pragma Singleton\nQtObject { function t(k, a) { return a === undefined ? k : k + ':' + a; } function tn(k, n) { return k + ':' + n; } }",
     "PresetsService": "pragma Singleton\nQtObject { property string activePreset: '' }",
+    "PresetStatusService": "pragma Singleton\nQtObject { property var status: ({}); property string active: ''; "
+                           "property int changed: 0; function suggestedName() { return ''; } function saveAs(n, cb) {} }",
 })
 h.module("qs.modules.globals", {})
 h.module("Quickshell", {"Singleton": "QtObject { default property list<QtObject> data }"})

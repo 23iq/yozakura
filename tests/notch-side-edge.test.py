@@ -1,12 +1,12 @@
 """The real NotchContent on a side edge, with the screen frame on (offscreen):
 a left/right notch is laid out against the frame (never past it, never
 detached from the monitor edge) on both notch styles, resting and hidden."""
-import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO  # noqa: E402
+from lib import qmlharness  # noqa: E402
 from lib import island_stubs  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
@@ -72,6 +72,8 @@ QtObject {
         return screens[n];
     }
     function setActiveModule(m) {}
+    function registerNotch(n, c) {}
+    function unregisterNotch(n) {}
 }""",
     "Notifications": "pragma Singleton\nQtObject { property var popupList: []; property var notchPopupList: []; function showsOnScreen(s) { return true } }",
     "MicrophoneStatus": "pragma Singleton\nQtObject { property bool noticeVisible: false; property string noticeScreen: \"\"; property bool muted: false; property bool available: true }",
@@ -82,6 +84,7 @@ names = ["Notch", "NotchSilhouette", "NotchOutline", "NotchViewTransition", "Not
 files = {n: (notch_dir / f"{n}.qml").read_text() for n in names}
 files["NotchContent"] = files["NotchContent"].replace('import "./NotchNotificationView.qml"\n', "")
 files["NotchNotificationView"] = "Item { property bool notchHovered }"
+files["NotchMenuViews"] = "Item { property var vis; property var container }"
 nd = h.module("qs.modules.notch", files)
 for js in ["NotchShape.js", "NotchReveal.js", "NotchAvoid.js"]:
     (nd / js).write_text((notch_dir / js).read_text())
@@ -93,6 +96,7 @@ h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
 h.module("qs.modules.shell.hosts", {"NotchHostedSurfaces": "Item { property var screen; property var vis; property var container }"})
 h.module("qs.modules.widgets.defaultview", {"DefaultView": """Item {
     property string screenName
+    property bool ownsAutoPanels: true
     property bool revealed
     property bool panelExpanded: false
     property bool modalPanel: false
@@ -147,4 +151,4 @@ for style in ("attached", "island"):
 print("notch on a side edge: flush with the monitor edge under a frame, hidden behind it")
 sys.stdout.flush()
 # Skip the engine teardown (singletons die before the views that read them)
-os._exit(0)
+qmlharness.hard_exit(0)

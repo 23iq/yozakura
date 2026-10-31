@@ -1,8 +1,19 @@
 .pragma library
 .import "barextra.js" as BarExtra
+.import "barsentence.js" as BarSentence
 
 // Bar & Islands: style, module layout, placement, clock, workspaces and
 // auto-hide. Entry format: see modules/settings/AGENTS.md.
+
+// The shared pin (bar.pinnedOnStartup, the pin button) only drives panels
+// whose auto-hide is "auto" (BarContent.qml; a missing value is auto, the
+// legacy true / false are always / never). No panels = the single bar (auto).
+var PIN_APPLIES = {
+    "any": [
+        { "key": "bar.panels", "empty": true },
+        { "key": "bar.panels", "some": { "field": "autohide", "notIn": ["always", "never", true, false] } }
+    ]
+};
 
 var category = {
     "id": "bar",
@@ -64,7 +75,7 @@ var category = {
                     "type": "custom",
                     "component": "BarLayoutEditor",
                     "keys": ["bar.layout.left", "bar.layout.right", "bar.layout.drawer"],
-                    "label": "prefs.bar.layout",
+                    "label": "prefs.label.bar_modules",
                     "description": "prefs.bar.layout.desc",
                     "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
                 }
@@ -82,7 +93,7 @@ var category = {
                     },
                     "type": "custom",
                     "component": "BarPositionPicker",
-                    "label": "prefs.bar.position",
+                    "label": "prefs.label.bar_edge",
                     "description": "prefs.bar.position.desc",
                     "keywords": "position edge top bottom left right vertical horizontal"
                 },
@@ -95,6 +106,7 @@ var category = {
                 },
                 {
                     "key": "bar.frameThickness",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 40,
@@ -145,16 +157,18 @@ var category = {
                     "type": "selector",
                     "label": "prefs.bar.clock_face",
                     "description": "prefs.bar.clock_face.desc",
-                    "keywords": "clock face style digital stacked dot matrix led kanji japanese",
+                    "keywords": "clock face style digital stacked dot matrix led lcd seven segment kanji japanese",
                     "options": [
                         { "value": "digital", "label": "prefs.bar.clock_face.digital" },
                         { "value": "stacked", "label": "prefs.bar.clock_face.stacked" },
                         { "value": "dotMatrix", "label": "prefs.bar.clock_face.dotMatrix" },
-                        { "value": "kanji", "label": "prefs.bar.clock_face.kanji" }
+                        { "value": "kanji", "label": "prefs.bar.clock_face.kanji" },
+                        { "value": "segment", "label": "prefs.bar.clock_face.segment" }
                     ]
                 },
                 {
                     "key": "bar.moduleOptions.clock.pomodoroStyle",
+                    "advanced": true,
                     "type": "selector",
                     "label": "prefs.bar.pomodoro_style",
                     "description": "prefs.bar.pomodoro_style.desc",
@@ -188,6 +202,26 @@ var category = {
             ]
         },
         {
+            "id": "media",
+            "title": "prefs.bar.section.media",
+            "entries": [
+                {
+                    "key": "bar.moduleOptions.media.showTitle",
+                    "type": "toggle",
+                    "label": "prefs.bar.media_title",
+                    "description": "prefs.bar.media_title.desc",
+                    "keywords": "media music player title song track module"
+                },
+                {
+                    "key": "bar.moduleOptions.media.visualizer",
+                    "type": "toggle",
+                    "label": "prefs.bar.media_visualizer",
+                    "description": "prefs.bar.media_visualizer.desc",
+                    "keywords": "media music visualizer cava bars audio module"
+                }
+            ]
+        },
+        {
             "id": "workspaces",
             "title": "prefs.bar.section.workspaces",
             "entries": [
@@ -215,7 +249,50 @@ var category = {
                     "component": "IndicatorStyleChips",
                     "label": "prefs.bar.ws_indicator",
                     "description": "prefs.bar.ws_indicator.desc",
-                    "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink"
+                    "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
+                },
+                {
+                    "key": "workspaces.branchBlossom",
+                    "advanced": true,
+                    "type": "custom",
+                    "component": "BranchBlossomChips",
+                    "visibleWhen": {
+                        "key": "workspaces.indicatorStyle",
+                        "equals": "branch"
+                    },
+                    "label": "prefs.bar.ws_branch_blossom",
+                    "description": "prefs.bar.ws_branch_blossom.desc",
+                    "keywords": "branch blossom flower petal sakura plum round leaf shape workspaces"
+                },
+                {
+                    "key": "workspaces.branchColor",
+                    "advanced": true,
+                    "type": "custom",
+                    "component": "ColorRoleSwatches",
+                    "options": [
+                        { "value": "primary", "label": "prefs.glass.role.primary" },
+                        { "value": "secondary", "label": "prefs.glass.role.secondary" },
+                        { "value": "tertiary", "label": "prefs.glass.role.tertiary" }
+                    ],
+                    "visibleWhen": {
+                        "key": "workspaces.indicatorStyle",
+                        "equals": "branch"
+                    },
+                    "label": "prefs.bar.ws_branch_color",
+                    "description": "prefs.bar.ws_branch_color.desc",
+                    "keywords": "branch blossom colour color palette role accent workspaces"
+                },
+                {
+                    "key": "workspaces.branchPetalFall",
+                    "advanced": true,
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "workspaces.indicatorStyle",
+                        "equals": "branch"
+                    },
+                    "label": "prefs.label.branch_petals",
+                    "description": "prefs.bar.ws_branch_fall.desc",
+                    "keywords": "branch petal fall animation window close workspaces"
                 },
                 {
                     "key": "workspaces.showNumbers",
@@ -258,6 +335,8 @@ var category = {
                 {
                     "key": "bar.pinnedOnStartup",
                     "type": "toggle",
+                    "enabledWhen": PIN_APPLIES,
+                    "reason": "prefs.bar.pin.reason",
                     "label": "prefs.bar.pinned",
                     "description": "prefs.bar.pinned.desc",
                     "keywords": "pin autohide hide show startup visible"
@@ -265,6 +344,8 @@ var category = {
                 {
                     "key": "bar.showPinButton",
                     "type": "toggle",
+                    "enabledWhen": PIN_APPLIES,
+                    "reason": "prefs.bar.pin.reason",
                     "label": "prefs.bar.pin_button",
                     "description": "prefs.bar.pin_button.desc",
                     "keywords": "pin button unpin"
@@ -280,6 +361,11 @@ var category = {
         }
     ]
 };
+
+// The sentence module, after the media one
+category.sections.splice(category.sections.findIndex(function (s) {
+    return s.id === "media";
+}) + 1, 0, ...BarSentence.sections);
 
 // The former "classic" bar options: launcher icon, screens, expert knobs.
 category.sections.push(...BarExtra.sections);

@@ -7,6 +7,7 @@ import qs.modules.lockscreen
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.widgets.defaultview
 import qs.config
 
@@ -44,7 +45,7 @@ LockStyle {
                 required property int index
                 y: index * 3
                 width: parent.width
-                height: 1
+                height: Space.hairline
                 color: skin.alpha(skin.ink, skin.light ? 0.05 : 0.045)
             }
         }
@@ -61,7 +62,7 @@ LockStyle {
 
         Scanlines {
             anchors.fill: parent
-            anchors.margins: 1
+            anchors.margins: Space.xs
         }
         Rectangle {
             visible: box.title !== ""
@@ -154,7 +155,7 @@ LockStyle {
         Column {
             id: clockColumn
             readonly property real digitSize: Math.round(Math.min(skin.view.height * 0.17, skin.view.width * 0.1))
-            spacing: 4
+            spacing: Space.xs
 
             Mono {
                 text: "$ date +%R"
@@ -206,7 +207,7 @@ LockStyle {
                     x: 18
                     y: 20
                     width: parent.width - 36
-                    spacing: 6
+                    spacing: Space.s
 
                     Mono {
                         text: (skin.view.hostname || "localhost") + " login: " + skin.view.username
@@ -292,7 +293,7 @@ LockStyle {
                     x: 18
                     y: 18
                     width: parent.width - 36
-                    spacing: 6
+                    spacing: Space.s
 
                     Row {
                         width: parent.width
@@ -303,7 +304,7 @@ LockStyle {
                         }
                         Row {
                             id: controls
-                            spacing: 6
+                            spacing: Space.s
                             Repeater {
                                 model: [
                                     {
@@ -341,9 +342,9 @@ LockStyle {
                     }
                     NotchVisualizer {
                         width: parent.width
-                        height: 18
+                        height: Space.l
                         barCount: 48
-                        spacing: 3
+                        spacing: Space.xs
                         centered: false
                         idleOpacity: 0.3
                         visible: media.visualizerEnabled && CavaService.available
@@ -361,7 +362,7 @@ LockStyle {
     // tmux-like status bar.
     status: Component {
         Rectangle {
-            implicitHeight: 30
+            implicitHeight: Space.chip
             color: skin.alpha(skin.ink, skin.light ? 0.08 : 0.07)
             border.color: skin.alpha(skin.ink, 0.28)
             border.width: 1
@@ -376,13 +377,13 @@ LockStyle {
 
             Row {
                 anchors.left: parent.left
-                anchors.leftMargin: 4
+                anchors.leftMargin: Space.xs
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Space.s
 
                 Rectangle {
                     width: session.implicitWidth + 16
-                    height: 22
+                    height: Space.keyHint
                     radius: Math.max(0, skin.boxRadius - 2)
                     color: skin.ink
                     Mono {
@@ -401,7 +402,7 @@ LockStyle {
 
             Mono {
                 anchors.right: parent.right
-                anchors.rightMargin: 12
+                anchors.rightMargin: Space.m
                 anchors.verticalCenter: parent.verticalCenter
                 text: [info.networkLabel !== "" ? "net " + info.networkLabel : I18n.t("lockscreen.offline").toLowerCase(), info.batteryAvailable ? "bat " + info.batteryPercent + "%" : "", Qt.formatTime(skin.view.now, "HH:mm")].filter(s => s !== "").join("  │  ")
                 color: info.batteryLow ? skin.error : skin.ink

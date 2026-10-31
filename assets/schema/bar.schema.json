@@ -7,14 +7,14 @@
   "x-file": "config/bar.json",
   "properties": {
     "position": {
-      "title": "Position",
+      "title": "Bar edge",
       "type": "string",
       "default": "top",
       "description": "The screen edge the bar sits on.",
       "x-settings": {
         "category": "bar",
         "section": "placement",
-        "label": "prefs.bar.position",
+        "label": "prefs.label.bar_edge",
         "control": "custom",
         "component": "BarPositionPicker",
         "keywords": "position edge top bottom left right vertical horizontal",
@@ -70,6 +70,7 @@
         "step": 1,
         "unit": "px",
         "keywords": "launcher icon size logo big small",
+        "advanced": true,
         "min": 8,
         "max": 64
       },
@@ -140,6 +141,7 @@
           "key": "bar.frameEnabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 40
       },
@@ -157,7 +159,27 @@
         "section": "autohide",
         "label": "prefs.bar.pinned",
         "control": "toggle",
-        "keywords": "pin autohide hide show startup visible"
+        "keywords": "pin autohide hide show startup visible",
+        "enabledWhen": {
+          "any": [
+            {
+              "key": "bar.panels",
+              "empty": true
+            },
+            {
+              "key": "bar.panels",
+              "some": {
+                "field": "autohide",
+                "notIn": [
+                  "always",
+                  "never",
+                  true,
+                  false
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     "hoverRegionHeight": {
@@ -167,12 +189,13 @@
       "description": "Size of the invisible edge strip that reveals the hidden bar.",
       "x-settings": {
         "category": "bar",
-        "section": "advanced",
+        "section": "expert",
         "label": "prefs.bar.hover_region",
         "control": "slider",
         "step": 1,
         "unit": "px",
         "keywords": "bar hover region trigger strip area reveal autohide",
+        "advanced": true,
         "min": 4,
         "max": 40
       },
@@ -190,7 +213,27 @@
         "section": "autohide",
         "label": "prefs.bar.pin_button",
         "control": "toggle",
-        "keywords": "pin button unpin"
+        "keywords": "pin button unpin",
+        "enabledWhen": {
+          "any": [
+            {
+              "key": "bar.panels",
+              "empty": true
+            },
+            {
+              "key": "bar.panels",
+              "some": {
+                "field": "autohide",
+                "notIn": [
+                  "always",
+                  "never",
+                  true,
+                  false
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     "availableOnFullscreen": {
@@ -237,14 +280,14 @@
       }
     },
     "keepBarShadow": {
-      "title": "Keep bar shadow in frame",
+      "title": "Bar shadow inside the frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar shadow when the bar sits inside the screen frame (styles that can be contained).",
+      "description": "Draw the bar's shadow while it sits inside the screen frame (styles that can be contained).",
       "x-settings": {
         "category": "bar",
-        "section": "advanced",
-        "label": "prefs.bar.keep_shadow",
+        "section": "expert",
+        "label": "prefs.label.bar_shadow_in_frame",
         "control": "toggle",
         "keywords": "frame contain bar shadow keep",
         "visibleWhen": {
@@ -258,18 +301,19 @@
               "equals": true
             }
           ]
-        }
+        },
+        "advanced": true
       }
     },
     "keepBarBorder": {
-      "title": "Keep bar border in frame",
+      "title": "Bar border inside the frame",
       "type": "boolean",
       "default": false,
-      "description": "Keep the bar border when the bar sits inside the screen frame (styles that can be contained).",
+      "description": "Draw the bar's border while it sits inside the screen frame (styles that can be contained).",
       "x-settings": {
         "category": "bar",
-        "section": "advanced",
-        "label": "prefs.bar.keep_border",
+        "section": "expert",
+        "label": "prefs.label.bar_border_in_frame",
         "control": "toggle",
         "keywords": "frame contain bar border outline keep",
         "visibleWhen": {
@@ -283,7 +327,8 @@
               "equals": true
             }
           ]
-        }
+        },
+        "advanced": true
       }
     },
     "clockShowDate": {
@@ -378,6 +423,10 @@
               "systemStats",
               "weather",
               "worldClocks",
+              "media",
+              "notifications",
+              "mic",
+              "sentence",
               "keyboardLayout",
               "controls",
               "battery",
@@ -388,9 +437,9 @@
           "x-settings": {
             "category": "bar",
             "section": "layout",
-            "label": "prefs.bar.layout",
+            "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Layout",
+            "entryTitle": "Bar modules",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules at the start (left/top), in order.",
@@ -428,6 +477,10 @@
               "systemStats",
               "weather",
               "worldClocks",
+              "media",
+              "notifications",
+              "mic",
+              "sentence",
               "keyboardLayout",
               "controls",
               "battery",
@@ -438,9 +491,9 @@
           "x-settings": {
             "category": "bar",
             "section": "layout",
-            "label": "prefs.bar.layout",
+            "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Layout",
+            "entryTitle": "Bar modules",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules at the end (right/bottom), in order.",
@@ -453,9 +506,9 @@
           "x-settings": {
             "category": "bar",
             "section": "layout",
-            "label": "prefs.bar.layout",
+            "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Layout",
+            "entryTitle": "Bar modules",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules tucked into the overflow drawer.",
@@ -478,6 +531,10 @@
               "systemStats",
               "weather",
               "worldClocks",
+              "media",
+              "notifications",
+              "mic",
+              "sentence",
               "keyboardLayout",
               "controls",
               "battery",
@@ -615,6 +672,39 @@
           },
           "additionalProperties": false
         },
+        "media": {
+          "title": "Media",
+          "type": "object",
+          "properties": {
+            "showTitle": {
+              "title": "Track title",
+              "type": "boolean",
+              "default": true,
+              "description": "Show the title next to the album art (horizontal bars).",
+              "x-settings": {
+                "category": "bar",
+                "section": "media",
+                "label": "prefs.bar.media_title",
+                "control": "toggle",
+                "keywords": "media music player title song track module"
+              }
+            },
+            "visualizer": {
+              "title": "Visualizer",
+              "type": "boolean",
+              "default": true,
+              "description": "Small audio bars while something plays.",
+              "x-settings": {
+                "category": "bar",
+                "section": "media",
+                "label": "prefs.bar.media_visualizer",
+                "control": "toggle",
+                "keywords": "media music visualizer cava bars audio module"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
         "clock": {
           "title": "Clock",
           "type": "object",
@@ -642,19 +732,21 @@
                 "section": "clock",
                 "label": "prefs.bar.clock_face",
                 "control": "selector",
-                "keywords": "clock face style digital stacked dot matrix led kanji japanese"
+                "keywords": "clock face style digital stacked dot matrix led lcd seven segment kanji japanese"
               },
               "enum": [
                 "digital",
                 "stacked",
                 "dotMatrix",
-                "kanji"
+                "kanji",
+                "segment"
               ],
               "x-enumLabels": {
                 "digital": "Digital",
                 "stacked": "Stacked",
                 "dotMatrix": "Dot matrix",
-                "kanji": "Kanji (十時 二十五分)"
+                "kanji": "Kanji (十時 二十五分)",
+                "segment": "Segment LCD"
               }
             },
             "pomodoroStyle": {
@@ -667,7 +759,8 @@
                 "section": "clock",
                 "label": "prefs.bar.pomodoro_style",
                 "control": "selector",
-                "keywords": "pomodoro focus timer ring underline countdown island progress clock"
+                "keywords": "pomodoro focus timer ring underline countdown island progress clock",
+                "advanced": true
               },
               "enum": [
                 "ring",
@@ -830,6 +923,185 @@
               "description": "Workspace previews: miniatures shown.",
               "minimum": 1,
               "maximum": 10
+            }
+          },
+          "additionalProperties": false
+        },
+        "sentence": {
+          "title": "Sentence",
+          "type": "object",
+          "properties": {
+            "fragments": {
+              "title": "Fragments",
+              "type": "array",
+              "default": [
+                "clock",
+                "window",
+                "workspace",
+                "battery",
+                "media",
+                "notifications"
+              ],
+              "items": {
+                "enum": [
+                  "clock",
+                  "window",
+                  "workspace",
+                  "battery",
+                  "network",
+                  "volume",
+                  "media",
+                  "notifications",
+                  "weather"
+                ]
+              },
+              "description": "What the line says, in this order. Empty ones (no battery, nothing playing) stay out; a window followed by its workspace reads as one.",
+              "x-settings": {
+                "category": "bar",
+                "section": "sentence",
+                "label": "prefs.bar.sentence_fragments",
+                "control": "custom",
+                "component": "OrderedListEditor",
+                "keywords": "sentence fragments order clock window workspace battery network volume media notifications weather",
+                "advanced": true
+              },
+              "uniqueItems": true
+            },
+            "priority": {
+              "title": "Keep first",
+              "type": "array",
+              "default": [
+                "clock",
+                "media",
+                "window",
+                "battery",
+                "notifications",
+                "workspace",
+                "volume",
+                "weather",
+                "network"
+              ],
+              "items": {
+                "enum": [
+                  "clock",
+                  "window",
+                  "workspace",
+                  "battery",
+                  "network",
+                  "volume",
+                  "media",
+                  "notifications",
+                  "weather"
+                ]
+              },
+              "description": "On a narrow bar the fragments at the bottom of this list drop out first. Nothing is cut mid-word.",
+              "x-settings": {
+                "category": "bar",
+                "section": "sentence",
+                "label": "prefs.bar.sentence_priority",
+                "control": "custom",
+                "component": "OrderedListEditor",
+                "keywords": "sentence priority narrow overflow drop keep",
+                "advanced": true
+              },
+              "uniqueItems": true
+            },
+            "separator": {
+              "title": "Separator",
+              "type": "string",
+              "default": "dash",
+              "description": "What stands between fragments.",
+              "x-settings": {
+                "category": "bar",
+                "section": "sentence",
+                "label": "prefs.bar.sentence_separator",
+                "control": "selector",
+                "preview": "SentencePreview",
+                "keywords": "sentence line separator dash dot comma kotoba words",
+                "advanced": true
+              },
+              "enum": [
+                "dash",
+                "dot",
+                "comma",
+                "none"
+              ],
+              "x-enumLabels": {
+                "dash": "Dash",
+                "dot": "Dot",
+                "comma": "Comma",
+                "none": "None"
+              }
+            },
+            "verbosity": {
+              "title": "Wording",
+              "type": "string",
+              "default": "full",
+              "description": "Short shows just the values; full reads as phrases.",
+              "x-settings": {
+                "category": "bar",
+                "section": "sentence",
+                "label": "prefs.bar.sentence_verbosity",
+                "control": "selector",
+                "keywords": "sentence wording short full phrases words"
+              },
+              "enum": [
+                "short",
+                "full"
+              ],
+              "x-enumLabels": {
+                "short": "Short",
+                "full": "Full"
+              }
+            },
+            "typeface": {
+              "title": "Typeface",
+              "type": "string",
+              "default": "editorial",
+              "description": "The bar text font, or the editorial serif from Icons & type.",
+              "x-settings": {
+                "category": "bar",
+                "section": "sentence",
+                "label": "prefs.bar.sentence_typeface",
+                "control": "selector",
+                "keywords": "sentence font typeface serif editorial",
+                "advanced": true
+              },
+              "enum": [
+                "body",
+                "editorial"
+              ],
+              "x-enumLabels": {
+                "body": "Bar text",
+                "editorial": "Editorial"
+              }
+            },
+            "maxWidth": {
+              "title": "Longest line",
+              "type": "number",
+              "default": 0,
+              "description": "0 uses up to half the bar.",
+              "x-settings": {
+                "category": "bar",
+                "section": "sentence",
+                "label": "prefs.bar.sentence_max_width",
+                "control": "slider",
+                "step": 20,
+                "unit": "px",
+                "keywords": "sentence width length longest line",
+                "advanced": true,
+                "min": 0,
+                "max": 2000,
+                "specialValues": [
+                  {
+                    "value": 0,
+                    "label": "Half the bar"
+                  }
+                ]
+              },
+              "minimum": 0,
+              "maximum": 4000,
+              "x-unit": "px"
             }
           },
           "additionalProperties": false

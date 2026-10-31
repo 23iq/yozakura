@@ -22,6 +22,8 @@ Item {
     property string styleId: Config.workspaces.indicatorStyle
 
     readonly property var style: Styles.get(styleId)
+    // Strip styles (the branch) draw every slot themselves (Workspaces.qml).
+    visible: !root.style.strip
 
     // Two animated indices: idx1 leads, idx2 trails.
     property real idx1: index
@@ -56,6 +58,7 @@ Item {
     // Unsized: the style binds its own geometry to `indicator`.
     Loader {
         objectName: "indicatorStyle"
+        active: !root.style.strip
         source: Qt.resolvedUrl("indicators/" + root.style.component)
         onLoaded: item.indicator = root
     }

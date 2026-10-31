@@ -23,7 +23,7 @@ func TestPolkitCommandPrefersBinaryThenUnit(t *testing.T) {
 	if got := polkitCommand(root); got != "" {
 		t.Fatalf("empty root: %q", got)
 	}
-	touch(t, root, polkitUnit)
+	touch(t, root, polkitUnits[0])
 	if got := polkitCommand(root); got != "systemctl --user start hyprpolkitagent" {
 		t.Fatalf("unit fallback: %q", got)
 	}
@@ -34,6 +34,25 @@ func TestPolkitCommandPrefersBinaryThenUnit(t *testing.T) {
 	touch(t, root, "/usr/lib/hyprpolkitagent/hyprpolkitagent")
 	if got := polkitCommand(root); got != "/usr/lib/hyprpolkitagent/hyprpolkitagent" {
 		t.Fatalf("hyprpolkitagent first: %q", got)
+	}
+}
+
+func TestPolkitCommandFindsNixOSProfile(t *testing.T) {
+	root := t.TempDir()
+	touch(t, root, "/etc/systemd/user/hyprpolkitagent.service")
+	if got := polkitCommand(root); got != "systemctl --user start hyprpolkitagent" {
+		t.Fatalf("NixOS unit: %q", got)
+	}
+	// The module's unit wins over the binary: graphical-session.target
+	// starts it anyway, a second agent would fail to register.
+	touch(t, root, "/run/current-system/sw/libexec/hyprpolkitagent")
+	if got := polkitCommand(root); got != "systemctl --user start hyprpolkitagent" {
+		t.Fatalf("NixOS unit and agent: %q", got)
+	}
+	bare := t.TempDir()
+	touch(t, bare, "/run/current-system/sw/libexec/hyprpolkitagent")
+	if got := polkitCommand(bare); got != "/run/current-system/sw/libexec/hyprpolkitagent" {
+		t.Fatalf("NixOS agent without unit: %q", got)
 	}
 }
 

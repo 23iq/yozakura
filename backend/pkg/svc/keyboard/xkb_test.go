@@ -70,3 +70,22 @@ func TestResolveActive(t *testing.T) {
 		}
 	}
 }
+
+func TestRulesPathsOrder(t *testing.T) {
+	t.Setenv("XKB_CONFIG_ROOT", "")
+	t.Setenv("YOZAKURA_XKB_ROOT", "/nix/store/x-xkeyboard-config/share/X11/xkb")
+	got := RulesPaths()
+	want := []string{
+		"/nix/store/x-xkeyboard-config/share/X11/xkb/rules/evdev.lst",
+		"/nix/store/x-xkeyboard-config/share/X11/xkb/rules/base.lst",
+		"/usr/share/X11/xkb/rules/evdev.lst",
+		"/usr/share/X11/xkb/rules/base.lst",
+		"/run/current-system/sw/share/X11/xkb/rules/evdev.lst",
+		"/run/current-system/sw/share/X11/xkb/rules/base.lst",
+		"/etc/X11/xkb/rules/evdev.lst",
+		"/etc/X11/xkb/rules/base.lst",
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("RulesPaths() = %q\nwant %q", got, want)
+	}
+}

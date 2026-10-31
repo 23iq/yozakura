@@ -2,6 +2,7 @@ package compositor
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -125,7 +126,7 @@ func (m *Manager) Start() error {
 
 // startDaemonLocked launches the daemon; the caller holds daemonMu.
 func (m *Manager) startDaemonLocked() (*exec.Cmd, error) {
-	cmd := exec.Command(m.bin, "-c", m.tomlPath, "daemon")
+	cmd := exec.CommandContext(context.Background(), m.bin, "-c", m.tomlPath, "daemon")
 	cmd.Env = envclean.ChildEnv()
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdout = io.Discard
@@ -236,7 +237,7 @@ func (m *Manager) subscribeLoop() {
 			continue
 		}
 
-		cmd := exec.Command(m.bin, "subscribe")
+		cmd := exec.CommandContext(context.Background(), m.bin, "subscribe")
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
@@ -353,8 +354,9 @@ func (m *Manager) Dispatch(args []string) (string, int, error) {
 	if len(args) == 0 {
 		return "", 0, fmt.Errorf("dispatch: empty args")
 	}
-	cmd := exec.Command(m.bin, args...)
-	out, err := cmd.CombinedOutput()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	out, err := exec.CommandContext(ctx, m.bin, args...).CombinedOutput()
 	exit := 0
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {

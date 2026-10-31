@@ -60,6 +60,7 @@
           "key": "desktop.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 64
       },
@@ -204,6 +205,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 100,
         "max": 3000
       },
@@ -229,6 +231,59 @@
       },
       "x-local": true
     },
+    "wallpaperMode": {
+      "title": "Wallpaper mode",
+      "type": "string",
+      "default": "fill",
+      "description": "Fill crops a still image to the screen. Panorama scales it to the screen height: each workspace is a frame of one wide image and the view glides between them.",
+      "x-settings": {
+        "category": "wallpapers",
+        "section": "panorama",
+        "label": "prefs.wall.mode",
+        "control": "selector",
+        "preview": "PanoramaPreview",
+        "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
+      },
+      "enum": [
+        "fill",
+        "panorama"
+      ],
+      "x-enumLabels": {
+        "fill": "Fill",
+        "panorama": "Panorama"
+      }
+    },
+    "panoramaParallax": {
+      "title": "Parallax",
+      "type": "boolean",
+      "default": true,
+      "description": "Near parts of the image run ahead while the panorama pans. Uses a <name>.depth.png next to the image (white = near) or the depth clock's subject cut-out.",
+      "x-settings": {
+        "category": "wallpapers",
+        "section": "panorama",
+        "label": "prefs.wall.parallax",
+        "control": "toggle",
+        "keywords": "parallax depth layers map near far 3d",
+        "visibleWhen": {
+          "key": "desktop.wallpaperMode",
+          "equals": "panorama"
+        },
+        "advanced": true
+      }
+    },
+    "depthLayering": {
+      "title": "Depth layering",
+      "type": "boolean",
+      "default": false,
+      "description": "Widgets and icons sit behind the wallpaper's foreground subject. Needs a <name>.depth.png next to the image or the depth model. The bar and popups always stay in front.",
+      "x-settings": {
+        "category": "desktop",
+        "section": "widgets",
+        "label": "prefs.desktop.depth_layering",
+        "control": "toggle",
+        "keywords": "depth layer behind subject foreground widgets icons parallax wallpaper"
+      }
+    },
     "depthClock": {
       "title": "Depth clock",
       "type": "boolean",
@@ -243,14 +298,14 @@
       }
     },
     "depthClockStyle": {
-      "title": "Style",
+      "title": "Clock style",
       "type": "string",
       "default": "yozakura",
       "description": "Each style shown on your current wallpaper.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
-        "label": "prefs.desktop.depth_clock_style",
+        "label": "prefs.label.clock_style",
         "control": "custom",
         "component": "ClockStyleGallery",
         "keywords": "clock style yozakura poster kanji mincho look gallery",
@@ -261,18 +316,19 @@
       },
       "enum": [
         "yozakura",
-        "poster"
+        "poster",
+        "segment"
       ]
     },
     "depthClockPosition": {
-      "title": "Position",
+      "title": "Clock position",
       "type": "string",
       "default": "auto",
       "description": "Auto picks the side where the subject leaves the time readable.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
-        "label": "prefs.desktop.depth_clock_position",
+        "label": "prefs.label.clock_position",
         "control": "selector",
         "keywords": "clock side left right auto placement",
         "visibleWhen": {
@@ -310,14 +366,14 @@
       }
     },
     "depthClockInk": {
-      "title": "Colour",
+      "title": "Clock colour",
       "type": "string",
       "default": "auto",
       "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
       "x-settings": {
         "category": "desktop",
         "section": "clock",
-        "label": "prefs.desktop.depth_clock_ink",
+        "label": "prefs.label.clock_colour",
         "control": "custom",
         "component": "ColorRoleSwatches",
         "keywords": "clock colour color ink palette role accent",
@@ -448,6 +504,7 @@
           "key": "desktop.widgetsEnabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 96,
         "specialValues": [

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -10,6 +11,7 @@ import (
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/specials"
 )
 
@@ -82,7 +84,7 @@ func openSpecial(id, hyprName string) error {
 	if err != nil {
 		return fmt.Errorf("%s is not running and %s is not installed", brand.DisplayName, brand.Daemon)
 	}
-	return exec.Command(bin, "workspace", "toggle-special", hyprName).Run()
+	return proc.Do(context.Background(), bin, "workspace", "toggle-special", hyprName)
 }
 
 // runSpecial implements `yozakura special ...`.

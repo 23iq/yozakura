@@ -2,12 +2,9 @@
 { pkgs }:
 
 with pkgs; [
-  # Terminal — none by default; user configures their preferred terminal in
-  # ~/.config/yozakura/config/general.json (Config.general.terminal)
+  # Default terminal (Config.general.terminal picks another one)
+  kitty
   tmux
-
-  # Launcher
-  fuzzel
 
   # Control panels
   networkmanagerapplet

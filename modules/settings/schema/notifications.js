@@ -1,7 +1,8 @@
 .pragma library
 .import "../../notifications/NotificationPolicy.js" as Policy
+.import "../../notifications/strips/StripLayout.js" as StripLayout
 
-// Notifications: presentation (notch-born or corner toasts), timing,
+// Notifications: presentation (notch-born, corner toasts or strips), timing,
 // grouping, sound, per-app rules and Do Not Disturb. Behaviour:
 // modules/notifications/NotificationPolicy.js. Entry format: see
 // modules/settings/AGENTS.md.
@@ -34,9 +35,47 @@ var RULE_ICONS = {
 var DAYS = [1, 2, 3, 4, 5, 6, 0];
 var DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
-var NOT_NOTCH = {
+// The corner applies to corner toasts (and "auto", which may pick them)
+// Corner toasts show: chosen, auto, or the notch chosen while the notch is
+// off (NotificationPolicy.resolvePresentation falls back to the corner).
+var CORNER_TOASTS = {
+    "any": [
+        {
+            "key": "notifications.presentation",
+            "in": ["auto", "corner"]
+        },
+        {
+            "all": [
+                {
+                    "key": "notifications.presentation",
+                    "equals": "notch"
+                },
+                {
+                    "key": "notch.enabled",
+                    "equals": false
+                }
+            ]
+        }
+    ]
+};
+
+var STRIPS = {
     "key": "notifications.presentation",
-    "notEquals": "notch"
+    "equals": "strips"
+};
+
+var MATERIAL_ICONS = {
+    "plain": "minus",
+    "paper": "fileText",
+    "washi": "scroll"
+};
+
+var EDGE_ICONS = {
+    "auto": "magicWand",
+    "top": "arrowUp",
+    "bottom": "arrowDown",
+    "left": "arrowLeft",
+    "right": "arrowRight"
 };
 
 var SCHEDULE_ON = {
@@ -69,6 +108,8 @@ var category = {
                 {
                     "key": "notifications.presentation",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "PresentationThumb",
                     "options": [
                         {
                             "value": "auto",
@@ -84,11 +125,78 @@ var category = {
                             "value": "corner",
                             "label": "prefs.notif.presentation.corner",
                             "icon": "frameCorners"
+                        },
+                        {
+                            "value": "strips",
+                            "label": "prefs.notif.presentation.strips",
+                            "icon": "columns"
                         }
                     ],
-                    "label": "prefs.notif.presentation",
+                    "preview": "StripsPreview",
+                    "label": "prefs.label.notification_style",
                     "description": "prefs.notif.presentation.desc",
-                    "keywords": "notch toast corner popup island style presentation where"
+                    "keywords": "notch toast corner popup island style presentation where strips tanzaku hanging tags"
+                },
+                {
+                    "key": "notifications.strips.edge",
+                    "advanced": true,
+                    "type": "selector",
+                    "options": StripLayout.EDGES.map(function (e) {
+                        return {
+                            "value": e,
+                            "label": "prefs.notif.strips.edge." + e,
+                            "icon": EDGE_ICONS[e]
+                        };
+                    }),
+                    "visibleWhen": STRIPS,
+                    "label": "prefs.notif.strips.edge",
+                    "description": "prefs.notif.strips.edge.desc",
+                    "keywords": "strips edge top bottom left right hang tags"
+                },
+                {
+                    "key": "notifications.strips.material",
+                    "advanced": true,
+                    "type": "selector",
+                    "options": StripLayout.MATERIALS.map(function (m) {
+                        return {
+                            "value": m,
+                            "label": "prefs.notif.strips.material." + m,
+                            "icon": MATERIAL_ICONS[m]
+                        };
+                    }),
+                    "visibleWhen": STRIPS,
+                    "label": "prefs.notif.strips.material",
+                    "description": "prefs.notif.strips.material.desc",
+                    "keywords": "strips material paper washi texture plain"
+                },
+                {
+                    "key": "notifications.strips.thread",
+                    "advanced": true,
+                    "type": "toggle",
+                    "visibleWhen": STRIPS,
+                    "label": "prefs.notif.strips.thread",
+                    "description": "prefs.notif.strips.thread.desc",
+                    "keywords": "strips thread string line hang"
+                },
+                {
+                    "key": "notifications.strips.sway",
+                    "advanced": true,
+                    "type": "toggle",
+                    "visibleWhen": STRIPS,
+                    "label": "prefs.notif.strips.sway",
+                    "description": "prefs.notif.strips.sway.desc",
+                    "keywords": "strips sway swing pendulum animation motion"
+                },
+                {
+                    "key": "notifications.strips.maxVisible",
+                    "advanced": true,
+                    "type": "number",
+                    "min": 1,
+                    "max": 10,
+                    "visibleWhen": STRIPS,
+                    "label": "prefs.notif.strips.max",
+                    "description": "prefs.notif.strips.max.desc",
+                    "keywords": "strips maximum count knot overflow"
                 },
                 {
                     "key": "notifications.position",
@@ -100,7 +208,7 @@ var category = {
                             "icon": POSITION_ICONS[p]
                         };
                     }),
-                    "visibleWhen": NOT_NOTCH,
+                    "visibleWhen": CORNER_TOASTS,
                     "label": "prefs.notif.position",
                     "description": "prefs.notif.position.desc",
                     "keywords": "corner position top bottom left right center"
@@ -190,7 +298,7 @@ var category = {
                         "key": "notifications.sound.enabled",
                         "equals": true
                     },
-                    "label": "prefs.notif.sound_file",
+                    "label": "prefs.label.notification_sound_file",
                     "description": "prefs.notif.sound_file.desc",
                     "keywords": "sound file custom wav ogg chime"
                 }

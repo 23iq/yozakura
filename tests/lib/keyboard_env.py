@@ -59,6 +59,9 @@ QtObject {
             else cb(r === undefined ? null : r, null);
         }
     }
+    function callOk(method, params, onOk, tag) {
+        call(method, params, (r, e) => { if (!e && onOk) onOk(r); });
+    }
     function addSubscription(services, cb) { subs = subs.concat([cb]); }
     function emit(service, data) { subs.forEach(cb => cb(service, data)); }
 }"""
@@ -75,8 +78,6 @@ class KeyboardEnv(DisplaysEnv):
         super().__init__(name, replies=replies, **kw)
         h = self.h
         qs = self.root / "qs"
-        cfg = qs / "config" / "Config.qml"
-        cfg.write_text(cfg.read_text().replace("    property var saved: []", "    property var saved: []\n    property bool keyboardReady: true", 1))
         h.module("qs.modules.services", {"BackendService": BACKEND.replace("({})", "(" + json.dumps(replies) + ")", 1)})
         h.module("qs.modules.services", {"KeyboardService": (REPO / "modules/services/KeyboardService.qml").read_text()})
         shutil.copytree(REPO / "modules/settings/keyboard", qs / "modules/settings/keyboard", dirs_exist_ok=True)

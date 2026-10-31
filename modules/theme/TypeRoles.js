@@ -45,3 +45,11 @@ function headingFamily(typeCfg, bodyFont) {
     var h = typeCfg && typeCfg.heading ? String(typeCfg.heading) : "";
     return h !== "" ? h : bodyFont;
 }
+
+// The editorial role (serif display text, e.g. the sentence bar):
+// theme.type.editorial, else the fontconfig "serif" alias, so the user's
+// own serif face is used and no font name is baked in.
+function editorialFamily(typeCfg) {
+    var e = typeCfg && typeCfg.editorial ? String(typeCfg.editorial) : "";
+    return e !== "" ? e : "serif";
+}

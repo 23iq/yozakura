@@ -28,7 +28,11 @@ QtObject {
              "property string paintBrush: 'b'; property string circleHalf: 'h' }",
     "Styling": "pragma Singleton\nQtObject { function fontSize(o) { return 14 + o; } function radius(o) { return 16 + o; } function srItem(v) { return 'white'; } }",
 })
-h.module("qs.modules.services", {"I18n": "pragma Singleton\nQtObject { function t(k) { return k; } }"})
+h.module("qs.modules.services", {
+    "I18n": "pragma Singleton\nQtObject { function t(k) { return k; } function tn(k, n) { return k + ':' + n; } }",
+    "PresetStatusService": "pragma Singleton\nQtObject { property var status: ({}); property string active: ''; "
+                           "property int changed: 0; function suggestedName() { return ''; } function saveAs(n, cb) {} }",
+})
 h.module("qs.modules.settings.presets", {"PresetThumb": "Item { property var look }"})
 h.singleton("qs.modules.settings.store", "PresetStudio", """QtObject {
     property var calls: []

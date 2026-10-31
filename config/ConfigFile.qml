@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import "ConfigValidator.js" as ConfigValidator
+import "JsonUtil.js" as JsonUtil
 
 // One config domain persisted as <configDir>/<name>.json, bound two-way to its
 // generated adapter (config/adapters/<Name>Adapter.qml). On the first load the
@@ -146,7 +147,7 @@ FileView {
             }
             var validated = ConfigValidator.validate(migrated !== undefined ? migrated : source, defaults);
 
-            if (JSON.stringify(current) !== JSON.stringify(validated)) {
+            if (!JsonUtil.deepEqual(current, validated)) {
                 console.log("Merging and updating " + name + ".json...");
                 file.setText(JSON.stringify(validated, null, 2));
             }
@@ -184,7 +185,7 @@ FileView {
             var added = [];
             for (var key in defaults) {
                 if (current[key] === undefined) {
-                    current[key] = JSON.parse(JSON.stringify(defaults[key]));
+                    current[key] = JsonUtil.clone(defaults[key]);
                     added.push(key);
                 }
             }
@@ -207,7 +208,8 @@ FileView {
         var targetPath = store.configDir + "/" + name + ".json";
         console.log(name + ".json not found, checking preset: " + presetPath);
         var copy = copyProcess.createObject(file, {
-            command: ["cp", "-n", "--", presetPath, targetPath],
+            // Writable even when the preset is read-only (the Nix store)
+            command: ["sh", "-c", 'cp -n -- "$1" "$2" && chmod u+w -- "$2"', "seed-config", presetPath, targetPath],
             whenDone: exitCode => {
                 // Copied: the reload validates it. Otherwise use the defaults.
                 if (exitCode === 0) {

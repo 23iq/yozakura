@@ -3,12 +3,13 @@
 // OSD style registry and the small pure helpers the styles share. Each style
 // is its own component under styles/; OSD.qml loads one through a Loader.
 
-var STYLES = ["pill", "edge", "island", "bar-inline"];
+var STYLES = ["pill", "edge", "island", "bar-inline", "gauge"];
 var FILES = {
     "pill": "styles/OsdPill.qml",
     "edge": "styles/OsdEdge.qml",
     "island": "styles/OsdIsland.qml",
-    "bar-inline": "styles/OsdBarInline.qml"
+    "bar-inline": "styles/OsdBarInline.qml",
+    "gauge": "styles/OsdGauge.qml"
 };
 
 function normalize(style) {
@@ -19,25 +20,32 @@ function fileFor(style) {
     return FILES[normalize(style)];
 }
 
-// ctx: {inlineAvailable, islandHandled}. `window` says whether the OSD
-// window itself shows anything: bar-inline lives in the bar and the island
-// in the notch when those hosts exist; otherwise the window shows the style
-// (island) or falls back to the pill (bar-inline without a bar widget).
+// ctx: {inlineAvailable, islandHandled, notchEnabled}. `window` says
+// whether the OSD window itself shows anything: bar-inline lives in the bar
+// and the island in the notch when those hosts exist (the island only while
+// the notch is on: notch.enabled false hides it, so the window shows the
+// island-look pill itself); otherwise the window shows the style (island)
+// or falls back to the pill (bar-inline without a bar widget).
 function resolve(style, ctx) {
     var c = ctx || {};
     var s = normalize(style);
     if (s === "bar-inline")
         return c.inlineAvailable ? { "style": s, "window": false } : { "style": "pill", "window": true };
     if (s === "island")
-        return { "style": s, "window": !c.islandHandled };
+        return { "style": s, "window": !(c.islandHandled && c.notchEnabled !== false) };
     return { "style": s, "window": true };
 }
 
-// Edge preference handed to EdgeLayout.osdPlacement: the island sits on the
-// notch's edge unless the user picked one.
-function edgePref(style, pref, notchPos) {
-    if (normalize(style) === "island" && (!pref || pref === "auto"))
-        return notchPos === "bottom" ? "bottom" : "top";
+var EDGES = ["top", "bottom", "left", "right"];
+
+// Edge preference handed to EdgeLayout.osdPlacement: unless the user picked
+// one, the island sits on the notch's edge (a side notch included), and on
+// the bar's edge while the notch is off (top without a bar).
+function edgePref(style, pref, notchPos, notchEnabled, barEdge) {
+    if (normalize(style) === "island" && (!pref || pref === "auto")) {
+        var edge = notchEnabled === false ? barEdge : notchPos;
+        return EDGES.indexOf(edge) !== -1 ? edge : "top";
+    }
     return pref || "auto";
 }
 
@@ -49,6 +57,9 @@ function sizeFor(style, vertical, osdW) {
         return vertical ? { "w": 56, "h": Math.round(w * 1.1) } : { "w": w, "h": 56 };
     case "island":
         return { "w": Math.round(w * 0.82), "h": 44 };
+    case "gauge":
+        // An upright instrument on every edge.
+        return { "w": Math.round(w * 0.76), "h": Math.round(w * 0.76 * 0.98) };
     default:
         return vertical ? { "w": 52, "h": Math.round(w * 0.9) } : { "w": w, "h": 52 };
     }

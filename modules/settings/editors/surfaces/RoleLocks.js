@@ -1,6 +1,7 @@
 .pragma library
 .import "../../../theme/VisualLanguage.js" as VisualLanguage
 .import "../../../theme/GlassModel.js" as GlassModel
+.import "../../../../config/JsonUtil.js" as JsonUtil
 
 // Which fields of a surface role the shell can honour right now. The visual
 // language (theme.language) rewrites opacity, border width, gradient and item
@@ -30,7 +31,7 @@ function variantId(prop) {
 }
 
 function same(a, b) {
-    return JSON.stringify(a) === JSON.stringify(b);
+    return JsonUtil.deepEqual(a, b);
 }
 
 function locks(language, glassEnabled, prop) {

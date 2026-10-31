@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -47,7 +48,7 @@ func defaultCmdEnv(out, errOut io.Writer) cmdEnv {
 				if err != nil {
 					self = brand.AppID
 				}
-				c := exec.Command(self, args...)
+				c := exec.CommandContext(context.Background(), self, args...)
 				var buf bytes.Buffer
 				c.Stdout = &buf
 				c.Stderr = errOut

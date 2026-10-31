@@ -1,0 +1,8 @@
+{
+    "launcher": {
+        "host": "auto"
+    },
+    "dashboard": {
+        "host": "auto"
+    }
+}

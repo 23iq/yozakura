@@ -118,7 +118,7 @@ def merge_base(ref: str | None = None) -> str | None:
 def tracked_files(*patterns: str) -> list[str]:
     """Tracked plus untracked-but-not-ignored files (new files are checked too)."""
     out = git("ls-files", "--cached", "--others", "--exclude-standard", "--", *patterns)
-    return sorted({f for f in out.splitlines() if f and (REPO / f).exists()})
+    return sorted({f for f in out.splitlines() if f and not f.startswith(".claude/") and (REPO / f).exists()})
 
 
 def changed_files(*patterns: str, ref: str | None = None) -> tuple[list[str], list[str]] | None:
@@ -136,11 +136,13 @@ def changed_files(*patterns: str, ref: str | None = None) -> tuple[list[str], li
     out = git("diff", "--name-status", "--no-renames", mb, "--", *patterns)
     for line in out.splitlines():
         status, _, path = line.partition("\t")
+        if path.startswith(".claude/"):  # agent worktrees hold full repo copies
+            continue
         if not (REPO / path).exists():
             continue
         (added if status.startswith("A") else modified).add(path)
     for path in git("ls-files", "--others", "--exclude-standard", "--", *patterns).splitlines():
-        if path:
+        if path and not path.startswith(".claude/"):
             added.add(path)
     return sorted(added), sorted(modified - added)
 

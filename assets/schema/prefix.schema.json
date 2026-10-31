@@ -267,10 +267,11 @@
           "description": "fd searches live; plocate uses its database (fast, may lag behind)",
           "x-settings": {
             "category": "launcher",
-            "section": "advanced",
+            "section": "behavior",
             "label": "prefs.launcher.file_backend",
             "control": "selector",
-            "keywords": "fd plocate locate find search tool"
+            "keywords": "fd plocate locate find search tool",
+            "advanced": true
           },
           "enum": [
             "auto",
@@ -290,11 +291,12 @@
           "description": "Maximum results after the files prefix",
           "x-settings": {
             "category": "launcher",
-            "section": "advanced",
+            "section": "behavior",
             "label": "prefs.launcher.file_max",
             "control": "slider",
             "step": 5,
             "keywords": "files results limit count",
+            "advanced": true,
             "min": 5,
             "max": 100
           },
@@ -325,12 +327,13 @@
           "description": "Rates are cached and work offline; refreshed when older than this",
           "x-settings": {
             "category": "launcher",
-            "section": "advanced",
+            "section": "behavior",
             "label": "prefs.launcher.currency_refresh",
             "control": "slider",
             "step": 1,
             "unit": "h",
             "keywords": "currency rates exchange refresh offline cache",
+            "advanced": true,
             "min": 1,
             "max": 72
           },

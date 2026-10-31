@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components.surfaceeffects
 import qs.modules.components.shape
+import "weatherfx"
 
 ClippingRectangle {
     id: root
@@ -254,9 +255,61 @@ ClippingRectangle {
         onLoaded: item.surface = root
     }
 
-    // Glass top-edge highlight: a thin light line fading out at the ends
+    // theme.lighting on surface roots: night dim, sun wash and lit edge
+    // under the content (LitSurface); nothing exists while the light is off.
+    readonly property bool lightLit: Lighting.active && root.glassSurface !== ""
+    readonly property var cornerRadii: [root.topLeftRadius, root.topRightRadius, root.bottomRightRadius, root.bottomLeftRadius]
     Loader {
-        active: root.glassHighlight > 0.001
+        objectName: "lit"
+        anchors.fill: parent
+        active: root.lightLit
+        sourceComponent: LitSurface {
+            radii: root.cornerRadii
+            glassHighlight: root.glassHighlight
+        }
+    }
+
+    // Weather on surfaces (theme.weatherFx): one overlay per surface root,
+    // under the content; nothing exists while the mode is off.
+    // While the surface renders through a layer (shadow / corner mask) every
+    // child change re-renders and re-blurs the whole layer, so the overlay
+    // lives as a sibling just above the surface instead: the shadow depends
+    // on the shape only. Without a layer it stays inside, under the content.
+    Loader {
+        id: weatherHost
+        objectName: "weatherFx"
+        readonly property bool hoisted: root.layer.enabled && root.parent !== null
+        parent: weatherHost.hoisted ? root.parent : root
+        x: weatherHost.hoisted ? root.x : 0
+        y: weatherHost.hoisted ? root.y : 0
+        z: weatherHost.hoisted ? root.z + 0.001 : 0
+        width: root.width
+        height: root.height
+        visible: root.visible
+        opacity: root.opacity
+        active: (WeatherFx.active || WeatherFx.scopes > 0) && root.glassSurface !== "" && WeatherFx.hosts(root.glassSurface)
+        sourceComponent: WeatherOverlay {
+            surface: root
+        }
+    }
+
+    // Cursor lantern (theme.lighting.lantern) on surface roots: a soft glow
+    // over the content where the pointer is, so nearby text and edges
+    // brighten; nothing exists while off.
+    Loader {
+        objectName: "lantern"
+        anchors.fill: parent
+        z: 1
+        active: Lighting.lanternOn && root.glassSurface !== ""
+        sourceComponent: LanternGlow {
+            radii: root.cornerRadii
+        }
+    }
+
+    // Glass top-edge highlight: a thin light line fading out at the ends
+    // (LitSurface draws it while a light is on)
+    Loader {
+        active: root.glassHighlight > 0.001 && !root.lightLit
         anchors.top: parent.top
         anchors.horizontalCenter: parent.horizontalCenter
         width: Math.max(0, parent.width - root.radius * 2)

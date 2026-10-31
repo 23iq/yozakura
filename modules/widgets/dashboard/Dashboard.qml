@@ -130,6 +130,20 @@ NotchAnimationBehavior {
         }
     }
 
+    // Persisted tabs of a closed dashboard are released after a minute
+    IdleUnloader {
+        idle: !root.isVisible
+        active: Config.performance.dashboardPersistTabs && Config.performance.unloadIdleViews
+        onUnload: root.releasePersistedTabs()
+    }
+
+    function releasePersistedTabs() {
+        lruAccessOrder = [0];
+        lruTabsLoaded = ({
+                0: true
+            });
+    }
+
     focus: true
 
     // Usar el comportamiento estándar de animaciones del notch
@@ -385,20 +399,18 @@ NotchAnimationBehavior {
     onImplicitHeightChanged: animatedHeight = implicitHeight
 
     Behavior on animatedWidth {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
-            easing.overshoot: 1.1
         }
     }
 
     Behavior on animatedHeight {
-        enabled: Config.animDuration > 0
+        enabled: Motion.morph.duration > 0
         NumberAnimation {
-            duration: Config.animDuration
+            duration: Motion.morph.duration
             easing.type: Motion.morph.easing
-            easing.overshoot: 1.1
         }
     }
 

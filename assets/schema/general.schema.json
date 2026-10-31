@@ -29,7 +29,8 @@
         "section": "terminal",
         "label": "system.terminal.advanced",
         "control": "toggle",
-        "keywords": "terminal advanced custom command template"
+        "keywords": "terminal advanced custom command template",
+        "advanced": true
       }
     },
     "terminalCommand": {
@@ -46,7 +47,8 @@
         "visibleWhen": {
           "key": "general.terminalAdvanced",
           "equals": true
-        }
+        },
+        "advanced": true
       },
       "format": "command"
     },
@@ -61,6 +63,25 @@
       "type": "boolean",
       "default": false,
       "description": "The one-time \"Try the new look\" card was answered (tried, kept, reverted or dismissed); it is not shown again."
+    },
+    "autoSavePreset": {
+      "title": "Save changes into my preset automatically",
+      "type": "boolean",
+      "default": false,
+      "description": "While one of your own presets is active, changed settings are written into it. Built-in presets are never changed.",
+      "x-settings": {
+        "category": "presets",
+        "section": "presets_saving",
+        "label": "prefs.presets.autosave",
+        "control": "toggle",
+        "keywords": "auto save preset automatically active current own changes"
+      }
+    },
+    "settingsShowAll": {
+      "title": "Show all settings",
+      "type": "boolean",
+      "default": false,
+      "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
     }
   },
   "additionalProperties": false

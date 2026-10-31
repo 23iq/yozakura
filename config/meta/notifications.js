@@ -3,7 +3,7 @@
 
 // Catalog metadata of config/defaults/notifications.js (format: config/meta/Meta.js).
 
-var description = "Notification popups: presentation (notch-born toasts or corner toasts, auto = by the preset's bar style), corner, screens, timeout, stacking, grouping, history size, sound, per-app rules and Do Not Disturb (manual + schedule).";
+var description = "Notification popups: presentation (notch-born toasts, corner toasts or strips hanging from an edge; auto = by the preset's bar style), corner, screens, timeout, stacking, grouping, history size, sound, per-app rules and Do Not Disturb (manual + schedule).";
 
 var keys = {
     "presentation": {
@@ -55,6 +55,25 @@ var keys = {
     },
     "dnd.schedule.days": {
         "description": "Days (0 = Sunday) a Do Not Disturb window starts on."
+    },
+    "strips.material": {
+        "enum": Enums.NOTIFICATION_STRIP_MATERIALS,
+        "description": "Look of the strips: plain, paper or washi (a subtle procedural texture tinted from the palette)."
+    },
+    "strips.edge": {
+        "enum": Enums.NOTIFICATION_STRIP_EDGES,
+        "description": "Edge the strips hang from; auto = top (under a top bar). On a side edge they lie horizontally like tags."
+    },
+    "strips.maxVisible": {
+        "min": 1,
+        "max": 10,
+        "description": "Strips hanging at once; the rest wait behind a +N knot."
+    },
+    "strips.thread": {
+        "description": "Draw the thread each strip hangs on."
+    },
+    "strips.sway": {
+        "description": "A strip sways briefly when it arrives (never with motion off)."
     },
     "notchStyle": {
         "enum": ["card", "compact"],

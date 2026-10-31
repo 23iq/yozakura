@@ -12,6 +12,9 @@ const ROOT = path.join(__dirname, '../modules');
 const ALLOW = {
     'components/surfaceeffects/CrtSurface.qml': 'CRT flicker timings are effect-internal',
     'settings/previews/TransitionPreview.qml': 'previews the wallpaper transition curves',
+    'components/weatherfx/HeatShimmer.qml': 'weather physics (drop fall, shimmer, drift), effect-internal',
+    'components/weatherfx/RainDrop.qml': 'weather physics (drop fall, shimmer, drift), effect-internal',
+    'components/weatherfx/SeasonalDrift.qml': 'weather physics (drop fall, shimmer, drift), effect-internal',
 };
 
 function walk(dir, out = []) {

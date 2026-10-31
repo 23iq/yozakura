@@ -2,6 +2,7 @@
 .import "../../modules/bar/BarLayout.js" as BarLayout
 .import "../../modules/bar/workspaces/WorkspaceNumerals.js" as WorkspaceNumerals
 .import "../../modules/bar/workspaces/indicators/IndicatorStyles.js" as IndicatorStyles
+.import "../../modules/bar/workspaces/branch/BranchGeometry.js" as BranchGeometry
 .import "../../modules/components/surfaceeffects/SurfaceEffects.js" as SurfaceEffects
 .import "../../modules/desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
 .import "../../modules/lockscreen/styles/LockStyleRegistry.js" as LockStyles
@@ -9,6 +10,7 @@
 .import "../../modules/services/voice/VoiceModel.js" as VoiceModel
 .import "../../modules/widgets/launcher/Providers.js" as LauncherProviders
 .import "../../modules/notifications/NotificationPolicy.js" as NotificationPolicy
+.import "../../modules/notifications/strips/StripLayout.js" as StripLayout
 .import "../../modules/theme/AppThemes.js" as AppThemes
 .import "../../modules/specials/Specials.js" as Specials
 
@@ -27,7 +29,8 @@ var GRADIENT_TYPES = ["linear", "radial", "halftone"];
 var WALLPAPER_TRANSITIONS = ["grow", "wipe", "dissolve", "fade", "random", "none"];
 var BAR_STYLES = BarLayout.STYLES;
 var BAR_MODULES = BarLayout.MODULE_IDS;
-var OVERVIEW_STYLES = ["grid", "strip"];
+var OVERVIEW_STYLES = ["grid", "strip", "scroll"];
+var WALLPAPER_MODES = ["fill", "panorama"];
 var PILL_STYLES = ["default", "squished"];
 var NOTCH_STYLES = ["attached", "island", "pill"];
 var ALIGNS = ["start", "center", "end"];
@@ -49,11 +52,14 @@ var CLOCK_POSITIONS = ClockStyles.POSITIONS;
 var NOTIFICATION_PRESENTATIONS = NotificationPolicy.PRESENTATIONS;
 var NOTIFICATION_POSITIONS = NotificationPolicy.POSITIONS;
 var NOTIFICATION_RULE_ACTIONS = NotificationPolicy.RULE_ACTIONS;
+var NOTIFICATION_STRIP_MATERIALS = StripLayout.MATERIALS;
+var NOTIFICATION_STRIP_EDGES = StripLayout.EDGES;
 var THEMED_APPS = AppThemes.ids();
 var LOCK_TONES = LockStyles.TONES;
 var CLOCK_INKS = ClockStyles.INKS;
 var WIDGET_TYPES = WidgetRegistry.ids();
 var WIDGET_VARIANTS = WidgetRegistry.VARIANTS;
+var COLOR_ROLES = BranchGeometry.ROLES;
 
 function clockStyles() {
     return ClockStyles.ids();
@@ -69,6 +75,10 @@ function numeralStyles() {
 
 function indicatorStyles() {
     return IndicatorStyles.ids();
+}
+
+function branchBlossoms() {
+    return BranchGeometry.SHAPES;
 }
 
 function surfaceEffects() {

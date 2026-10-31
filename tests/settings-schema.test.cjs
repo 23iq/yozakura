@@ -61,7 +61,7 @@ test('sidebar groups reference existing categories, each listed once', () => {
 });
 
 test('registry files, legacy panels and links exist', () => {
-    for (const rel of Object.values(Registry.EDITORS).concat(Object.values(Registry.PREVIEWS)))
+    for (const rel of Object.values(Registry.EDITORS).concat(Object.values(Registry.PREVIEWS), Object.values(Registry.THUMBS)))
         assert.ok(fs.existsSync(path.join(repo, 'modules/settings', rel)), rel);
     for (const cat of Categories.categories) {
         if (cat.legacy)
@@ -118,7 +118,8 @@ test('search is generated from the schema', () => {
     const ids = q => SchemaUtil.search(index, q).map(r => r.entryId || r.categoryId);
     assert.ok(ids('kanji').includes('workspaces.numeralStyle'));
     assert.equal(ids('wallpaper folder')[0], 'desktop.wallpaperFolders');
-    assert.equal(ids('roundness')[0], 'theme.roundness');
+    // the knob and its macro row (Look > Quick tune) both lead
+    assert.deepEqual(plain(ids('roundness').slice(0, 2)).sort(), ['macro.roundness', 'theme.roundness']);
     assert.ok(ids('matugen').includes('wallpaper.matugenScheme'));
     assert.ok(ids('blur').includes('windows'), 'legacy topics are searchable');
     assert.deepEqual(plain(ids('zzzzqqq')), []);
@@ -201,4 +202,58 @@ test('migrated system categories replace their legacy panels', () => {
     for (const c of Categories.categories)
         assert.notEqual(c.legacy && c.legacy.source, 'dashboard/controls/SystemPanel.qml', c.id);
     assert.equal(fs.existsSync(path.join(repo, 'modules/widgets/dashboard/controls/SystemPanel.qml')), false);
+});
+
+test('text entries validate with the same pattern the catalog (CLI/MCP) enforces', () => {
+    const { metaFor } = require('../tools/schema/catalog.cjs');
+    const Meta = lib('config/meta/Meta.js');
+    const mismatches = [];
+    for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
+        if (entry.type !== 'text' || !entry.key) continue;
+        const [domain, ...rest] = entry.key.split('.');
+        const meta = Meta.domains[domain];
+        const m = meta && metaFor(meta.keys || {}, rest.join('.'));
+        const catalog = m && m.pattern;
+        if ((catalog || entry.pattern) && catalog !== entry.pattern)
+            mismatches.push(`${entry.key}: ui ${entry.pattern} vs catalog ${catalog}`);
+    }
+    assert.deepEqual(mismatches, []);
+});
+
+test('compositor-specific rows are tagged, dock effects follow dock.enabled', () => {
+    const byKey = {};
+    for (const { entry } of SchemaUtil.flatten(Categories.categories))
+        if (entry.key) byKey[entry.key] = entry;
+    const hyprOnly = ['smartGaps', 'borderAngle', 'inactiveBorderAngle', 'borderPulse.enabled',
+        'borderPulse.intensity', 'dimInactive', 'dimStrength', 'syncShadowColor', 'syncShadowOpacity'];
+    for (const k of hyprOnly)
+        assert.equal(byKey['compositor.' + k].compositor, 'hyprland', k);
+    for (const k of ['activeOpacity', 'inactiveOpacity'])
+        assert.deepEqual(plain(byKey['theme.glass.surfaces.windows.' + k].compositor), ['hyprland', 'mango'], k);
+    for (const k of ['magnification', 'magnificationScale', 'launchBounce'])
+        assert.match(JSON.stringify(byKey['dock.' + k].visibleWhen), /dock\.enabled/, k);
+});
+
+test('rows disabled by the Glass switch say why and offer to turn it on', () => {
+    const Reason = lib('modules/settings/DisabledReason.js');
+    const index = Reason.entryIndex(Categories.categories);
+    const get = k => (k === 'theme.glass.enabled' ? false : undefined);
+    let n = 0;
+    for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
+        if (!entry.key || !entry.key.startsWith('compositor.blur') || !entry.enabledWhen) continue;
+        if (entry.enabledWhen.key !== 'theme.glass.enabled') continue;
+        n++;
+        const note = Reason.explain(entry, get, k => index[k] || null, k => en[k] || k);
+        assert.equal(note.text, 'Needs \u201cGlass effect\u201d on', entry.key);
+        assert.deepEqual(plain({ key: note.fix.key, value: note.fix.value }), { key: 'theme.glass.enabled', value: true });
+    }
+    assert.ok(n >= 10, `${n} blur rows`);
+});
+
+test('shadow offset falls back to "0 0" when malformed', () => {
+    const app = lib('modules/services/CompositorAppearance.js');
+    assert.equal(app.shadowOffset('2 -3'), '2 -3');
+    assert.equal(app.shadowOffset(' 1.5 2 '), '1.5 2');
+    for (const bad of ['', undefined, '2,3', 'a b', '1'])
+        assert.equal(app.shadowOffset(bad), '0 0');
 });

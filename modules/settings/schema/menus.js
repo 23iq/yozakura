@@ -17,7 +17,13 @@ var category = {
             {
                 "key": "layout.powermenu.style",
                 "type": "selector",
+                "surface": "powermenu",
                 "options": [
+                    {
+                        "value": "auto",
+                        "label": "common.auto",
+                        "icon": "magicWand"
+                    },
                     {
                         "value": "notch",
                         "label": "prefs.menus.style.notch",
@@ -41,7 +47,13 @@ var category = {
             {
                 "key": "layout.tools.style",
                 "type": "selector",
+                "surface": "tools",
                 "options": [
+                    {
+                        "value": "auto",
+                        "label": "common.auto",
+                        "icon": "magicWand"
+                    },
                     {
                         "value": "notch",
                         "label": "prefs.menus.style.notch",
@@ -85,6 +97,7 @@ var category = {
             },
             {
                 "key": "theme.popup.gap",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 32,

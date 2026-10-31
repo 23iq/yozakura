@@ -11,11 +11,18 @@
 //   dock   dock.enabled, dock.position, dock.theme (no align: centered)
 // Disabling a part re-homes its content (homeOf): notch activities go to
 // the bar, or to corner pills when the bar is off too; the bar's clock and
-// tray go to the notch (or to the corner pills). Pure, tested in
-// tests/layout-model.test.cjs.
+// tray go to the notch (or to the corner pills). The idle island's own
+// media, notification bell and muted microphone go to the bar module of
+// the same id (BAR_MODULES) while the notch is off, else to the corner
+// pills; while the notch shows them that bar module stays hidden, so
+// nothing shows twice. Pure, tested in tests/layout-model.test.cjs.
 
 var PARTS = ["bar", "dock", "notch"]; // also the stacking order, edge inward
-var CONTENT = ["activities", "clock", "tray"];
+var CONTENT = ["activities", "clock", "tray", "media", "notifications", "mic"];
+// Content the bar shows only through its own bar module (BarModuleRegistry)
+var BAR_MODULES = ["media", "notifications", "mic"];
+// What the idle notch shows of its own (never one of its extra segments)
+var NOTCH_OWN = ["activities", "media", "notifications", "mic"];
 var EDGES = PanelLayout.EDGES;
 // The notch runs upright on the side edges (NotchPlacement, NotchShape.js)
 var NOTCH_EDGES = EDGES.slice();
@@ -29,7 +36,10 @@ var DOCK_STYLES = ["default", "floating", "integrated"];
 var HOMES = {
     "activities": ["notch", "bar"],
     "clock": ["bar", "notch"],
-    "tray": ["bar", "notch"]
+    "tray": ["bar", "notch"],
+    "media": ["notch", "bar"],
+    "notifications": ["notch", "bar"],
+    "mic": ["notch", "bar"]
 };
 
 function _obj(v) {
@@ -55,6 +65,16 @@ function _bar(bar) {
         return x.enabled;
     });
     var style = n.legacy ? _obj(_obj(bar).layout).style : p.style;
+    var modules = [];
+    panels.forEach(function (x) {
+        var g = _obj(x.groups);
+        Object.keys(g).forEach(function (k) {
+            (x.enabled ? g[k] || [] : []).forEach(function (id) {
+                if (modules.indexOf(id) === -1)
+                    modules.push(id);
+            });
+        });
+    });
     return {
         "enabled": on,
         "edge": p.edge || "top",
@@ -65,7 +85,9 @@ function _bar(bar) {
             return x.edge;
         }),
         "style": PanelStyles.has(style) && !PanelStyles.isHidden(style) ? style : "classic",
-        "align": p.align || "fill"
+        "align": p.align || "fill",
+        // Module ids placed on the enabled panels, in panel order
+        "modules": modules
     };
 }
 
@@ -95,13 +117,23 @@ function _on(layout, part) {
     return !!(layout && layout[part] && layout[part].enabled);
 }
 
+// `part` can show `contentId`: it is on and, for the bar, holds the
+// content's own module when it needs one (BAR_MODULES)
+function _holds(layout, part, contentId) {
+    if (!_on(layout, part))
+        return false;
+    if (part !== "bar" || BAR_MODULES.indexOf(contentId) === -1)
+        return true;
+    return (layout.bar.modules || []).indexOf(contentId) !== -1;
+}
+
 // The part showing `contentId` ("bar" | "notch" | "corner"), "" if unknown.
 function homeOf(contentId, layout) {
     var prefs = HOMES[contentId];
     if (!prefs)
         return "";
     for (var i = 0; i < prefs.length; i++)
-        if (_on(layout, prefs[i]))
+        if (_holds(layout, prefs[i], contentId))
             return prefs[i];
     return "corner";
 }
@@ -112,10 +144,10 @@ function _homedIn(layout, home) {
     });
 }
 
-// Content the notch shows besides its own (activities are its own).
+// Content the notch shows besides its own (NOTCH_OWN).
 function notchSegments(layout) {
     return _homedIn(layout, "notch").filter(function (id) {
-        return id !== "activities";
+        return NOTCH_OWN.indexOf(id) === -1;
     });
 }
 

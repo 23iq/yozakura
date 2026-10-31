@@ -12,6 +12,9 @@ Item {
     property real stageHeight: 120
     property bool showTag: true
     default property alias content: area.data
+    // Room a preview that fills the whole stage leaves at the top for the tag
+    // (previews that place themselves lower do not need it).
+    readonly property real tagStrip: showTag ? tagPlate.height + Space.s : 0
 
     implicitHeight: stageHeight
 
@@ -40,6 +43,7 @@ Item {
     }
 
     StyledRect {
+        id: tagPlate
         visible: stage.showTag
         x: Space.s
         y: Space.s

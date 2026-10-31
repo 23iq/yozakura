@@ -26,6 +26,7 @@ h.stub("ToastCard", "Item { property var notification; property int extra; prope
        "signal dismissRequested; signal actionInvoked(string identifier) }")
 h.copy("modules/notifications/CornerToast.qml", siblings=False)
 h.copy("modules/notifications/ToastModel.js", siblings=False)
+h.copy("modules/notifications/ToastGroup.qml", siblings=False)
 
 root = h.load("""import QtQuick
 import qs.modules.services

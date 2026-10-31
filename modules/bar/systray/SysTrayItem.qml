@@ -43,8 +43,8 @@ MouseArea {
     }
 
     acceptedButtons: Qt.LeftButton | Qt.RightButton
-    Layout.fillHeight: bar.orientation === "horizontal"
-    Layout.fillWidth: bar.orientation === "vertical"
+    Layout.fillHeight: bar ? bar.orientation === "horizontal" : false
+    Layout.fillWidth: bar ? bar.orientation === "vertical" : false
     implicitWidth: trayItemSize
     implicitHeight: trayItemSize
 

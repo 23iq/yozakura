@@ -1,13 +1,15 @@
 package server
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
 	"strings"
+
+	"yozakura/backend/pkg/proc"
 )
 
 func preferredColorScheme() (string, error) {
-	out, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "color-scheme").Output()
+	out, err := proc.Run(context.Background(), "gsettings", "get", "org.gnome.desktop.interface", "color-scheme")
 	if err != nil {
 		return "", fmt.Errorf("gsettings get failed: %v", err)
 	}
@@ -27,7 +29,7 @@ func SetDarkMode(on bool) error {
 	if on {
 		scheme = "prefer-dark"
 	}
-	if err := exec.Command("gsettings", "set", "org.gnome.desktop.interface", "color-scheme", scheme).Run(); err != nil {
+	if err := proc.Do(context.Background(), "gsettings", "set", "org.gnome.desktop.interface", "color-scheme", scheme); err != nil {
 		return fmt.Errorf("gsettings set failed: %v", err)
 	}
 	return nil

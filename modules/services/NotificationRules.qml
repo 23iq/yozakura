@@ -113,13 +113,14 @@ QtObject {
     // The panel the notch pairs with (bar.panels): its style decides "auto"
     readonly property var primaryPanel: {
         const list = (Panels.all || []).filter(p => p.enabled);
-        const i = PanelLayout.primaryIndex(list, Panels.notchEdge);
+        const i = PanelLayout.primaryIndex(list, Panels.pairEdge);
         return i === -1 ? null : list[i];
     }
     readonly property string presentation: Policy.resolvePresentation(cfg ? cfg.presentation : "auto", {
         "barStyle": primaryPanel ? primaryPanel.style : "",
         "barPosition": primaryPanel ? primaryPanel.edge : Panels.notchEdge,
-        "notchPosition": Panels.notchEdge
+        "notchPosition": Panels.notchEdge,
+        "notchEnabled": ShellLayout.notchEnabled
     })
     readonly property string cornerPosition: Policy.resolvePosition(cfg ? cfg.position : "auto", {
         "barPosition": Panels.primaryEdge
@@ -149,7 +150,7 @@ QtObject {
     // {popup, sound, priority, timeout} for a new notification
     // ({appName, desktopEntry, urgency, expireTimeout}).
     function decide(info) {
-        return Policy.decide(root.policyConfig(), info, root.silent);
+        return Policy.decide(root.policyConfig(), info, root.silent, root.presentation);
     }
 
     readonly property string defaultSound: Quickshell.shellDir + "/assets/sound/notification-chime.wav"

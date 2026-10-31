@@ -43,6 +43,7 @@ type Deps struct {
 	NotificationsFile string
 	WallpapersFile    string   // <cache dir>/wallpapers.json
 	StateDir          string   // preset trash and trial/edit sessions
+	DataDir           string   // <data dir>: what the last preset applies wrote (presets.Manager.DataDir)
 	BindsFile         string   // binds.json (special workspace bind conflicts)
 	AppDirs           []string // .desktop dirs (nil: the XDG ones)
 	UsageDir          string   // AI usage ledger (pkg/svc/usage)
@@ -65,6 +66,7 @@ func DefaultDeps() Deps {
 		NotificationsFile: p.NotificationsFile(),
 		WallpapersFile:    filepath.Join(p.CacheDir, "wallpapers.json"),
 		StateDir:          p.StateDir,
+		DataDir:           p.DataDir,
 		BindsFile:         p.KeybindsFile(),
 		UsageDir:          usage.DefaultDir(p.DataDir),
 		RoutinesFile:      filepath.Join(p.ConfigDir, "routines.json"),

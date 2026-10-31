@@ -12,7 +12,9 @@ EphemeralProvider {
 
     source: "osd"
 
-    // The island renders routed levels, so the OSD window can stay hidden.
+    // The island renders routed levels, so the OSD window can stay hidden
+    // while the notch is on (OsdStyles.resolve: with notch.enabled off the
+    // window shows the island-look OSD itself).
     Component.onCompleted: OsdService.islandHandled = true
 
     Connections {

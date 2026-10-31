@@ -36,6 +36,7 @@ Item {
         fillMode: Image.PreserveAspectFit
         visible: preview.item && (preview.item.isImage || preview.isImageFile) && !preview.isGifImage
         source: preview.sourceFor(false)
+        sourceSize: Qt.size(width * 2, height * 2)
         clip: true
         cache: false
         asynchronous: true
@@ -47,6 +48,7 @@ Item {
         fillMode: Image.PreserveAspectFit
         visible: preview.item && (preview.item.isImage || preview.isImageFile) && preview.isGifImage
         source: preview.sourceFor(true)
+        sourceSize: Qt.size(width * 2, height * 2)
         clip: true
         cache: false
         asynchronous: true

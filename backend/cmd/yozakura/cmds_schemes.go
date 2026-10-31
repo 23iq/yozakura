@@ -1,18 +1,21 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 // schemePreviewRoles are the palette roles the settings scheme picker draws.
@@ -33,8 +36,8 @@ const schemeCacheVersion = "1"
 // matugenPalette runs matugen without side effects and returns its JSON.
 // A variable so tests can replace it.
 var matugenPalette = func(image, scheme string) ([]byte, error) {
-	return exec.Command("matugen", "image", image, "--dry-run", "-q", "-j", "hex",
-		"--source-color-index", "0", "-t", scheme).Output()
+	return proc.RunWith(context.Background(), proc.Options{Timeout: time.Minute}, "matugen", "image", image, "--dry-run", "-q", "-j", "hex",
+		"--source-color-index", "0", "-t", scheme)
 }
 
 // shellRoleName maps a matugen role to the shell's Colors property name.
@@ -172,9 +175,8 @@ func runSchemes(args []string, cacheDir string) int {
 		return 1
 	}
 	if err := os.MkdirAll(cacheDir, 0o755); err == nil {
-		tmp := cacheFile + ".tmp"
-		if os.WriteFile(tmp, data, 0o644) == nil {
-			os.Rename(tmp, cacheFile)
+		if err := fsutil.WriteFile(cacheFile, data, 0o644); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: cache not written: %v\n", err)
 		}
 	}
 	os.Stdout.Write(data)

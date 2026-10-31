@@ -61,6 +61,8 @@ var category = {
                 {
                     "key": "dock.position",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "EdgeThumb",
                     "visibleWhen": ON,
                     "options": [
                         {
@@ -111,6 +113,7 @@ var category = {
                 },
                 {
                     "key": "dock.height",
+                    "advanced": true,
                     "type": "slider",
                     "min": 24,
                     "max": 128,
@@ -286,20 +289,24 @@ var category = {
                 {
                     "key": "dock.magnification",
                     "type": "toggle",
+                    "visibleWhen": ON,
                     "label": "prefs.dock.magnification",
                     "description": "prefs.dock.magnification.desc",
                     "keywords": "dock magnification zoom magnify icons hover macos"
                 },
                 {
                     "key": "dock.magnificationScale",
+                    "advanced": true,
                     "type": "slider",
                     "min": 1,
                     "max": 2.5,
                     "step": 0.1,
                     "unit": "×",
                     "visibleWhen": {
-                        "key": "dock.magnification",
-                        "equals": true
+                        "all": [ON, {
+                                "key": "dock.magnification",
+                                "equals": true
+                            }]
                     },
                     "label": "prefs.dock.magnification_scale",
                     "description": "prefs.dock.magnification_scale.desc",
@@ -308,6 +315,7 @@ var category = {
                 {
                     "key": "dock.launchBounce",
                     "type": "toggle",
+                    "visibleWhen": ON,
                     "label": "prefs.dock.launch_bounce",
                     "description": "prefs.dock.launch_bounce.desc",
                     "keywords": "dock launch bounce animation opening app"

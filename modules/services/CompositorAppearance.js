@@ -76,6 +76,13 @@ function firstColor(value) {
     return "";
 }
 
+// "x y" shadow offset in px; a half-typed or malformed value falls back to
+// "0 0" so the compositor never receives a table it would reject.
+function shadowOffset(v) {
+    const t = String(v === undefined || v === null ? "" : v).trim();
+    return /^-?\d+(\.\d+)? -?\d+(\.\d+)?$/.test(t) ? t : "0 0";
+}
+
 function num(v, fallback) {
     return (typeof v === "number" && isFinite(v)) ? v : fallback;
 }
@@ -139,7 +146,7 @@ function buildHyprlandConfig(opts) {
                 color: shadowColor,
                 color_inactive: shadowColorInactive,
                 // A half-typed offset must not make Hyprland reject the table.
-                offset: /^-?\d+(\.\d+)? -?\d+(\.\d+)?$/.test(String(c.shadowOffset || "").trim()) ? String(c.shadowOffset).trim() : "0 0",
+                offset: shadowOffset(c.shadowOffset),
                 scale: num(c.shadowScale, 1.0),
             },
             blur: {

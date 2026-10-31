@@ -53,7 +53,7 @@ function fromTemplate(id, tr) {
 }
 
 function clone(v) {
-    return JSON.parse(JSON.stringify(v === undefined ? null : v));
+    return Tools.clone(v);
 }
 
 function newRoutine(name) {

@@ -1,5 +1,7 @@
 .pragma library
 .import "CompositorGate.js" as CompositorGate
+.import "Synonyms.js" as Synonyms
+.import "../../config/JsonUtil.js" as JsonUtil
 
 // Pure helpers for the schema-driven settings (modules/settings/schema).
 // No QML types here: unit tested with node (tests/settings-schema.test.cjs)
@@ -14,7 +16,9 @@
 //   path        file/folder path with a chooser (`pathKind` "file" | "dir")
 //   screens     multi-select of monitors by name ([] = every screen)
 //   multiselect multi-select of `options` (array of values)
-var TYPES = ["toggle", "selector", "slider", "number", "text", "font", "color-role", "custom", "list", "path", "screens", "multiselect"];
+//   macro       a macro slider (`macro`: a Macros.js id) over several keys;
+//               stores nothing itself (no key, nothing to reset)
+var TYPES = ["toggle", "selector", "slider", "number", "text", "font", "color-role", "custom", "list", "path", "screens", "multiselect", "macro"];
 
 // Field types a `list` entry's items may use (controls/ListControl.qml).
 var LIST_FIELD_TYPES = ["text", "number", "selector", "path", "toggle"];
@@ -171,42 +175,7 @@ function withPath(obj, path, value) {
 // tolerance (and NaN equals NaN), list wrappers from JsonAdapter count as
 // arrays, and object keys whose value is undefined are ignored.
 function equal(a, b) {
-    return deepEqual(plain(a), plain(b));
-}
-
-function deepEqual(a, b) {
-    if (a === b)
-        return true;
-    if (typeof a === "number" && typeof b === "number")
-        return (isNaN(a) && isNaN(b)) || Math.abs(a - b) < 1e-9;
-    if (a === null || b === null || typeof a !== "object" || typeof b !== "object")
-        return false;
-    var la = Array.isArray(a), lb = Array.isArray(b);
-    if (la !== lb)
-        return false;
-    if (la) {
-        if (a.length !== b.length)
-            return false;
-        for (var i = 0; i < a.length; i++) {
-            if (!deepEqual(a[i], b[i]))
-                return false;
-        }
-        return true;
-    }
-    var ka = definedKeys(a), kb = definedKeys(b);
-    if (ka.length !== kb.length)
-        return false;
-    for (var j = 0; j < ka.length; j++) {
-        if (!Object.prototype.hasOwnProperty.call(b, ka[j]) || !deepEqual(a[ka[j]], b[ka[j]]))
-            return false;
-    }
-    return true;
-}
-
-function definedKeys(o) {
-    return Object.keys(o).filter(function (k) {
-        return o[k] !== undefined;
-    });
+    return JsonUtil.deepEqual(plain(a), plain(b));
 }
 
 function entryId(entry) {
@@ -227,6 +196,8 @@ function isResettable(entry) {
 // Declarative conditions, so the audit can check the keys they read:
 //   {key, equals} | {key, notEquals} | {key, in: [...]} | {key, truthy: bool}
 //   {key, empty: bool} (missing / empty list / empty object)
+//   {key, some: {field, in | notIn: [...]}} a list holds an object whose
+//   `field` is (not) one of the values (a missing field counts as undefined)
 //   {all: [cond...]} | {any: [cond...]} | {not: cond}
 function evalCondition(cond, get) {
     if (!cond)
@@ -254,6 +225,14 @@ function evalCondition(cond, get) {
         return !!v === !!cond.truthy;
     if (cond.hasOwnProperty("empty"))
         return isEmpty(v) === !!cond.empty;
+    if (cond.some)
+        return Array.prototype.some.call(v || [], function (item) {
+            var f = item ? item[cond.some.field] : undefined;
+            var hit = (cond.some["in"] || cond.some.notIn || []).some(function (x) {
+                return equal(f, x);
+            });
+            return cond.some.notIn ? !hit : hit;
+        });
     return !!v;
 }
 
@@ -429,12 +408,21 @@ function fuzzy(q, target) {
     return qi === q.length && q.length >= 2 ? Math.min(40, s + best * 4) : -1;
 }
 
+// A synonym match (Synonyms.js) ranks a little below a direct one.
+var SYNONYM_PENALTY = 10;
+
 function search(index, query, limit, ctx) {
     var out = [];
+    var alts = Synonyms.alternatives(query);
     for (var i = 0; i < index.length; i++) {
         if (!itemVisible(index[i], ctx))
             continue;
         var s = score(query, index[i]);
+        for (var a = 0; a < alts.length; a++) {
+            var sa = score(alts[a], index[i]);
+            if (sa >= 0)
+                s = Math.max(s, sa - SYNONYM_PENALTY);
+        }
         if (s >= 0)
             out.push({
                 "item": index[i],
@@ -487,14 +475,22 @@ function validateCategory(cat, defaults, tr, registry) {
                 bad(where + ": custom entry needs a component");
             if (registry && e.type === "custom" && e.component && !registry.EDITORS[e.component])
                 bad(where + ": editor '" + e.component + "' is not in Registry.js");
+            if (e.display === "cards" && (e.type !== "selector" || !e.thumb))
+                bad(where + ": cards need a selector with a `thumb`");
+            if (registry && e.thumb && !registry.THUMBS[e.thumb])
+                bad(where + ": thumb '" + e.thumb + "' is not in Registry.js");
             if (registry && e.preview && !registry.PREVIEWS[e.preview])
                 bad(where + ": preview '" + e.preview + "' is not in Registry.js");
-            if (e.type !== "custom" && !e.key)
+            if (e.type === "macro" && (!e.macro || e.key || e.keys))
+                bad(where + ": macro entry needs `macro` and no key");
+            if (e.type !== "custom" && e.type !== "macro" && !e.key)
                 bad(where + ": typed entry needs a key");
-            [e.label, e.description].forEach(function (k) {
+            [e.label, e.description, e.reason].forEach(function (k) {
                 if (k && tr(k) === null)
                     bad(where + ": missing translation '" + k + "'");
             });
+            if (e.invert && e.type !== "toggle")
+                bad(where + ": only a toggle can be inverted");
             if (!e.label && e.type !== "custom")
                 bad(where + ": needs a label");
             entryKeys(e).concat(conditionKeys(e.visibleWhen), conditionKeys(e.enabledWhen)).forEach(function (k) {

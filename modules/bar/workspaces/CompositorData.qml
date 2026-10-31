@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import "SpecialWorkspaces.js" as SpecialWorkspaces
+import "WorkspaceUrgency.js" as WorkspaceUrgency
 import qs.config
 import Quickshell.Wayland
 import qs.modules.services
@@ -65,6 +66,10 @@ Singleton {
         function onRawEvent(event) {
             if (event.name === "fullscreen" || event.name === "configreloaded")
                 Hyprland.refreshToplevels();
+            if (["urgent", "activewindowv2", "closewindow"].includes(event.name)) {
+                root.urgentAddresses = WorkspaceUrgency.onEvent(root.urgentAddresses, event.name, event.data);
+                root.updateUrgency();
+            }
             if (["activespecial", "activespecialv2", "monitoradded", "monitoraddedv2",
                  "monitorremoved", "configreloaded"].includes(event.name))
                 specialRefreshTimer.restart();
@@ -82,6 +87,13 @@ Singleton {
     property var monitors: []
     property var workspaceOccupationMap: ({})
     property var workspaceWindowsMap: ({})
+    // {workspaceId: true} while a workspace wants attention (WorkspaceUrgency.js)
+    property var workspaceUrgentMap: ({})
+    property var urgentAddresses: ({})
+
+    function updateUrgency() {
+        root.workspaceUrgentMap = WorkspaceUrgency.map(root.windowList, YozdService.urgentWorkspaceIds, root.urgentAddresses);
+    }
 
     function updateWindowList() {
         // No-op: state is now pushed inline via yozd subscribe events
@@ -131,6 +143,7 @@ Singleton {
         }
         root.workspaceOccupationMap = occupationMap
         root.workspaceWindowsMap = windowsMap
+        root.updateUrgency()
     }
 
     Component.onCompleted: {
@@ -151,6 +164,14 @@ Singleton {
             root.windowByAddress = tempWinByAddress
             root.addresses = root.windowList.map((win) => win.address)
             updateMaps()
+        }
+    }
+
+    Connections {
+        target: YozdService
+
+        function onUrgentWorkspaceIdsChanged() {
+            root.updateUrgency()
         }
     }
 

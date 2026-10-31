@@ -144,12 +144,18 @@ var keys = {
     "moduleOptions.weather.showDescription": {
         "description": "Weather module: show the condition text."
     },
+    "moduleOptions.media.showTitle": {
+        "description": "Media module: show the track title next to the album art (horizontal bars; a vertical bar shows the art only)."
+    },
+    "moduleOptions.media.visualizer": {
+        "description": "Media module: small audio bars while a player is playing (cava, only while shown)."
+    },
     "moduleOptions.clock.showWeather": {
         "description": "Clock module: lead with the weather symbol (off: the day name, or nothing when the date is shown)."
     },
     "moduleOptions.clock.face": {
-        "enum": ["digital", "stacked", "dotMatrix", "kanji"],
-        "description": "Clock face: digital text, hours over minutes, 3x5 dot matrix or Japanese numerals (十時 二十五分). A vertical bar shows digital as stacked."
+        "enum": ["digital", "stacked", "dotMatrix", "kanji", "segment"],
+        "description": "Clock face: digital text, hours over minutes, 3x5 dot matrix, Japanese numerals (十時 二十五分) or seven-segment LCD digits. A vertical bar shows digital as stacked."
     },
     "moduleOptions.clock.pomodoroStyle": {
         "enum": ["ring", "underline", "countdown", "island"],
@@ -186,6 +192,38 @@ var keys = {
         "min": 1,
         "max": 12,
         "description": "Downloads stack: recent files fanned out."
+    },
+    "moduleOptions.sentence.fragments": {
+        "items": {
+            "enum": ["clock", "window", "workspace", "battery", "network", "volume", "media", "notifications", "weather"]
+        },
+        "uniqueItems": true,
+        "description": "Sentence module: fragments of the line, in order. Empty ones (no battery, nothing playing, no notifications) are left out; a window followed by its workspace reads as one fragment."
+    },
+    "moduleOptions.sentence.priority": {
+        "items": {
+            "enum": ["clock", "window", "workspace", "battery", "network", "volume", "media", "notifications", "weather"]
+        },
+        "uniqueItems": true,
+        "description": "Sentence module: fragments ranked highest first; on a narrow bar the last ones drop out first (never cut mid-word)."
+    },
+    "moduleOptions.sentence.separator": {
+        "enum": ["dash", "dot", "comma", "none"],
+        "description": "Sentence module: what stands between fragments: an em dash, a middle dot, a comma or a plain gap."
+    },
+    "moduleOptions.sentence.verbosity": {
+        "enum": ["short", "full"],
+        "description": "Sentence module: short (just the values, 18:20 · 82%) or full phrases (Saturday, 18:20 · battery 82%)."
+    },
+    "moduleOptions.sentence.typeface": {
+        "enum": ["body", "editorial"],
+        "description": "Sentence module: the bar text font, or the editorial serif (theme.type.editorial)."
+    },
+    "moduleOptions.sentence.maxWidth": {
+        "min": 0,
+        "max": 4000,
+        "unit": "px",
+        "description": "Sentence module: longest the line may get; 0 = half the bar."
     },
     "moduleOptions.workspacePreviews.count": {
         "min": 1,

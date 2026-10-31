@@ -14,6 +14,8 @@ import qs.modules.components.kit
 // caret in the top corner (also a click zone). The on fill cross-fades, the
 // icon pops in on change; keyboard: Enter / Space toggle, Menu or
 // Shift+Enter open the detail, the focus ring fades in. Height: controlM + l.
+// Where the language lights LEDs (Look.ledIndicator) an active tile stays
+// matte: an accent LED in its corner and an accent icon mark the state.
 Item {
     id: root
 
@@ -29,8 +31,10 @@ Item {
     property string tooltipText: ""
     readonly property bool hovered: area.containsMouse || moreArea.containsMouse || root.highlighted
     readonly property bool pressed: area.pressed || moreArea.pressed
-    property color ink: root.active ? Type.accentInk : Type.text
-    property color quietInk: root.active ? Qt.alpha(Type.accentInk, 0.78) : Type.secondary
+    readonly property bool filled: root.active && !Look.ledIndicator
+    property color ink: root.filled ? Type.accentInk : Type.text
+    property color quietInk: root.filled ? Qt.alpha(Type.accentInk, 0.78) : Type.secondary
+    readonly property color glyphInk: root.active && !root.filled ? Type.accent : root.ink
     readonly property real moreW: root.hasMore && !root.vertical ? Space.controlS : 0
     readonly property real radius: Look.bigRadius(root.height)
     property real glyphScale: 1
@@ -126,7 +130,7 @@ Item {
             variant: "primary"
             enableBorder: false
             radius: root.radius
-            opacity: root.active ? 1 : 0
+            opacity: root.filled ? 1 : 0
             visible: opacity > 0
             backgroundOpacity: root.hovered ? 0.9 : 1
 
@@ -153,7 +157,7 @@ Item {
                 text: root.icon
                 font.family: Icons.font
                 font.pixelSize: Type.iconSize("title")
-                color: root.ink
+                color: root.glyphInk
                 scale: root.glyphScale
             }
 
@@ -191,7 +195,7 @@ Item {
                 text: root.icon
                 font.family: Icons.font
                 font.pixelSize: Type.iconSize("title")
-                color: root.ink
+                color: root.glyphInk
                 scale: root.glyphScale
             }
 
@@ -237,7 +241,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Space.hairline
                 height: parent.height * 0.44
-                color: root.active ? Qt.alpha(Type.accentInk, 0.3) : Type.hairline
+                color: root.filled ? Qt.alpha(Type.accentInk, 0.3) : Type.hairline
             }
 
             Text {
@@ -302,6 +306,34 @@ Item {
             enabled: root.enabled
             cursorShape: Qt.PointingHandCursor
             onClicked: root.more()
+        }
+    }
+
+    // The state LED (Look.ledIndicator): top left on a square tile, top
+    // right (before the detail zone) on a wide one.
+    Loader {
+        id: led
+        objectName: "tileLed"
+        active: Look.ledIndicator
+        x: root.vertical ? Space.s : root.width - root.moreW - Space.s - led.width
+        y: Space.s
+        width: Space.s + Space.xs
+        height: Math.max(2, Space.xs - 1)
+        Binding {
+            target: led.item
+            property: "color"
+            value: root.active ? Type.accent : Type.track
+            when: led.item !== null
+        }
+        sourceComponent: Rectangle {
+            radius: height / 2
+
+            Behavior on color {
+                enabled: Motion.micro.duration > 0
+                ColorAnimation {
+                    duration: Motion.micro.duration
+                }
+            }
         }
     }
 

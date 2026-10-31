@@ -253,13 +253,7 @@ Singleton {
         return active ? active.presets : false;
     }
 
-    function getActiveNotchOpen() {
-        let active = Visibilities.getForActive();
-        return active ? (active.launcher || active.dashboard || active.overview) : false;
-    }
-
     // Legacy properties for backward compatibility - use active screen
-    readonly property bool notchOpen: getActiveNotchOpen()
     readonly property bool overviewOpen: getActiveOverview()
     readonly property bool presetsOpen: getActivePresets()
     readonly property bool launcherOpen: getActiveLauncher()
@@ -317,7 +311,7 @@ Singleton {
         "roundness", "oledMode", "lightMode", "font", "fontSize", "monoFont", "monoFontSize",
         "tintIcons", "progressRole", "enableCorners", "animDuration", "paletteTransitionDuration",
         "shadowOpacity", "shadowColor", "shadowXOffset", "shadowYOffset", "shadowBlur",
-        "terminalOpacity", "glass", "surfaceEffect", "surfaceEffectOptions", "density", "shape", "popup", "signatures", "icons", "type", "language"
+        "terminalOpacity", "glass", "surfaceEffect", "surfaceEffectOptions", "density", "shape", "popup", "signatures", "lighting", "weatherFx", "icons", "type", "language"
     ]
     readonly property var _srVariantProps: [
         "gradientType", "gradientAngle", "gradientCenterX", "gradientCenterY",
@@ -468,13 +462,16 @@ Singleton {
     readonly property var _shellSections: {
         "bar": ["position", "launcherIcon", "launcherIconTint", "launcherIconSize", "enableFirefoxPlayer", "screenList", "frameEnabled", "frameThickness", "pinnedOnStartup", "hoverRegionHeight", "showPinButton", "availableOnFullscreen", "use12hFormat", "containBar", "keepBarShadow", "keepBarBorder", "clockShowDate", "layout", "compact", "panels", "moduleOptions"],
         "notch": ["enabled", "position", "align", "hoverRegionHeight", "keepHidden", "visualizer", "mediaStyle", "expandOn", "disableHoverExpansion", "noMediaDisplay", "customText", "style", "activities", "activitiesIn", "liveActivities", "hoverExpandDelay", "hoverCollapseDelay", "expandedMediaWidth", "mediaAnimationDuration", "expandedArtworkSize", "microphoneNoticeDuration"],
-        "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle", "showSpecialWorkspace", "specialWorkspaceAnimationDuration", "specialWorkspaceFont"],
+        "workspaces": ["shown", "showAppIcons", "alwaysShowNumbers", "showNumbers", "dynamic", "numeralStyle", "numeralFont", "indicatorStyle", "branchBlossom", "branchColor", "branchPetalFall", "showSpecialWorkspace", "specialWorkspaceAnimationDuration", "specialWorkspaceFont"],
         "overview": ["style", "rows", "columns", "scale", "workspaceSpacing"],
         "dock": ["enabled", "theme", "position", "height", "iconSize", "spacing", "margin", "hoverRegionHeight", "pinnedOnStartup", "hoverToReveal", "availableOnFullscreen", "showRunningIndicators", "indicator", "showPinButton", "showOverviewButton", "screenList", "keepHidden", "magnification", "magnificationScale", "launchBounce", "ignoredAppRegexes"],
         "lockscreen": ["position", "style", "tone", "blur", "showMedia", "showVisualizer", "showStatus"],
-        "desktop": ["enabled", "iconSize", "spacingVertical", "textColor", "wallpaperTransition", "wallpaperTransitionDuration", "wallpaperFolders", "depthClock", "depthClockStyle", "depthClockPosition", "depthClockVideo", "depthClockInk", "blurWallpaperOnOverview", "widgetsEnabled", "widgets", "widgetGrid", "widgetVariant"],
+        "desktop": ["enabled", "iconSize", "spacingVertical", "textColor", "wallpaperTransition", "wallpaperTransitionDuration", "wallpaperFolders", "wallpaperMode", "panoramaParallax", "depthLayering", "depthClock", "depthClockStyle", "depthClockPosition", "depthClockVideo", "depthClockInk", "blurWallpaperOnOverview", "widgetsEnabled", "widgets", "widgetGrid", "widgetVariant"],
         "system": ["idle", "ocr", "disks", "language", "updateServiceEnabled", "clipboard", "pomodoro", "timers", "focus"],
-        "voice": ["enabled", "model", "language", "activation", "useGpu", "maxSeconds", "idleTimeout", "vadAutoStop", "vadSilenceMs", "vadSensitivity", "noSpeechTimeout", "serverVad", "typingMethod", "punctuation", "trailingSpace", "aiAutoSend", "previewMs"]
+        "voice": ["enabled", "model", "language", "activation", "useGpu", "maxSeconds", "idleTimeout", "vadAutoStop", "vadSilenceMs", "vadSensitivity", "noSpeechTimeout", "serverVad", "typingMethod", "punctuation", "trailingSpace", "aiAutoSend", "previewMs"],
+        "layout": ["launcher", "dashboard", "sheet", "backdrop", "powermenu", "tools", "aiquick", "panels", "cheatsheet", "osd"],
+        "notifications": ["notchStyle", "presentation", "position", "screens", "timeout", "maxVisible", "groupByApp", "strips", "historySize", "sound", "rules", "dnd"],
+        "performance": ["blurTransition", "windowPreview", "wavyLine", "pauseWallpaperOnFullscreen", "pauseWallpaperWhenCovered", "dashboardPersistTabs", "dashboardMaxPersistentTabs", "unloadIdleViews"]
     }
 
     // Create a deep copy of the current shell config
@@ -533,20 +530,26 @@ Singleton {
                         Config.system.ocr[key] = val[key];
                     }
                 }
-                // Nested JsonObject (e.g. system.clipboard): restore its fields in place
-                else if (val && typeof val === 'object' && !Array.isArray(val) && Config[section][prop] && Config[section][prop].objectName !== undefined) {
-                    var fields = Object.keys(val);
-                    for (var f = 0; f < fields.length; f++)
-                        Config[section][prop][fields[f]] = val[fields[f]];
-                }
-                // Deep copy arrays or objects
-                else if (typeof val === 'object' && val !== null) {
-                    Config[section][prop] = JSON.parse(JSON.stringify(val));
-                } else {
-                    Config[section][prop] = val;
+                else {
+                    _restoreValue(Config[section], prop, val);
                 }
             }
         }
+    }
+
+    // Nested JsonObjects (system.clipboard, layout.dashboard.grid,
+    // notifications.dnd.schedule) are restored field by field, in place;
+    // plain values, lists and `var` objects are replaced by a copy.
+    function _restoreValue(holder, prop, val) {
+        var cur = holder[prop];
+        if (val && typeof val === 'object' && !Array.isArray(val) && cur && typeof cur === 'object' && cur.objectName !== undefined) {
+            var fields = Object.keys(val);
+            for (var f = 0; f < fields.length; f++)
+                if (fields[f] !== "objectName")
+                    _restoreValue(cur, fields[f], val[fields[f]]);
+            return;
+        }
+        holder[prop] = (typeof val === 'object' && val !== null) ? JSON.parse(JSON.stringify(val)) : val;
     }
 
     function markShellChanged() {
@@ -559,16 +562,14 @@ Singleton {
 
     function applyShellChanges() {
         if (shellHasChanges) {
-            Config.saveBar();
-            Config.saveNotch();
-            Config.saveWorkspaces();
-            Config.saveOverview();
-            Config.saveDock();
-            Config.saveLockscreen();
-            Config.saveDesktop();
-            Config.saveSystem();
-            Config.saveVoice();
-            
+            // Config.save<Domain>() for every snapshotted domain
+            var domains = Object.keys(_shellSections);
+            for (var i = 0; i < domains.length; i++) {
+                var save = Config["save" + domains[i].charAt(0).toUpperCase() + domains[i].slice(1)];
+                if (typeof save === "function")
+                    save();
+            }
+
             shellHasChanges = false;
             shellSnapshot = null;
         }

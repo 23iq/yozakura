@@ -11,6 +11,7 @@ package presets
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -72,6 +73,9 @@ type Manager struct {
 	WallpaperFile string
 	// StateDir keeps trial/edit sessions and deleted presets (undo).
 	StateDir string
+	// DataDir (<data>/<app>) keeps the record of what the last preset
+	// applies wrote (provenance.go). Empty: no record, nothing is reset.
+	DataDir string
 }
 
 // ActiveFile is the marker the shell reads (PresetsService.activePresetFile).
@@ -373,48 +377,88 @@ func (m *Manager) lock() (func(), error) {
 // hot-reloads them) and marks it active. Values the catalog rejects are
 // reported, not fixed: the shell's validator resets them to defaults.
 func (m *Manager) Apply(name string) (Preset, []catalog.Problem, error) {
+	p, _, problems, err := m.ApplyReport(name)
+	return p, problems, err
+}
+
+// ApplyReport is Apply that also says what it set, reset and kept.
+func (m *Manager) ApplyReport(name string) (Preset, ApplySummary, []catalog.Problem, error) {
+	return m.applyLocked(name, false)
+}
+
+// ApplyExact applies a preset discarding the changes made since (the
+// user's explicit "Revert to preset"): a whole snapshot resets every key it
+// does not name, whoever set it.
+func (m *Manager) ApplyExact(name string) (Preset, ApplySummary, []catalog.Problem, error) {
+	return m.applyLocked(name, true)
+}
+
+func (m *Manager) applyLocked(name string, exact bool) (Preset, ApplySummary, []catalog.Problem, error) {
 	unlock, err := m.lock()
 	if err != nil {
-		return Preset{}, nil, err
+		return Preset{}, ApplySummary{}, nil, err
 	}
 	defer unlock()
-	p, problems, err := m.apply(name)
+	p, sum, problems, err := m.applyReport(name, exact)
 	if err == nil {
 		// A real apply keeps it: a running preview's backup is dropped.
 		m.dropSession(PreviewSession)
 	}
-	return p, problems, err
+	return p, sum, problems, err
 }
 
 func (m *Manager) apply(name string) (Preset, []catalog.Problem, error) {
+	p, _, problems, err := m.applyReport(name, false)
+	return p, problems, err
+}
+
+// applyReport writes a preset over the live config. A whole snapshot
+// (wholeSnapshot) sets every key it names and resets what it does not name
+// only where an earlier preset left it untouched (overProvenance); a
+// partial preset merges over the live config, a complete official set also
+// resets what the earlier preset left behind (resetLeftovers). The record of what was
+// written (applied.json) is updated either way.
+func (m *Manager) applyReport(name string, exact bool) (Preset, ApplySummary, []catalog.Problem, error) {
+	var sum ApplySummary
 	p, err := m.Find(name)
 	if err != nil {
-		return Preset{}, nil, err
+		return Preset{}, sum, nil, err
 	}
 	raw, err := m.dirFiles(p.Path)
 	if err != nil {
-		return p, nil, err
+		return p, sum, nil, err
 	}
+	defined := m.definedKeys(raw, p.Follows)
 	if m.wholeSnapshot(p) {
-		if raw, err = m.overDefaults(raw); err != nil {
-			return p, nil, err
+		if raw, sum, err = m.overProvenance(raw, defined, p.Follows, exact); err != nil {
+			return p, sum, nil, err
 		}
+	} else {
+		if completeSet(p) {
+			if raw, sum, err = m.resetLeftovers(raw, p.Follows); err != nil {
+				return p, sum, nil, err
+			}
+		}
+		sum.Set = setKeys(defined)
 	}
 	if raw, err = m.keepFollowed(raw, p.Follows); err != nil {
-		return p, nil, err
+		return p, sum, nil, err
 	}
 	problems, err := m.applyFiles(raw, true)
 	if err != nil {
-		return p, problems, err
+		return p, sum, problems, err
+	}
+	if err := m.noteApplied(p.Name, withReset(defined, sum.Reset)); err != nil {
+		return p, sum, problems, err
 	}
 	if err := m.setActive(p.Name); err != nil {
-		return p, problems, err
+		return p, sum, problems, err
 	}
 	if err := m.setCurrentParts(SetRef{Layout: p.Layout, Style: p.Style, Palette: p.Palette}); err != nil {
-		return p, problems, err
+		return p, sum, problems, err
 	}
 	p.Active = true
-	return p, problems, nil
+	return p, sum, problems, nil
 }
 
 // legacyPartial are the description prefixes Mix and Duplicate wrote
@@ -438,34 +482,6 @@ func (m *Manager) wholeSnapshot(p Preset) bool {
 		}
 	}
 	return true
-}
-
-// overDefaults merges every catalog domain file over its domain defaults,
-// so applying it resets the settings it predates instead of keeping the
-// live ones (those of the previously applied preset).
-func (m *Manager) overDefaults(raw map[string][]byte) (map[string][]byte, error) {
-	for d, data := range raw {
-		if !m.Cat.HasDomain(d) {
-			continue
-		}
-		defs := m.Cat.DomainDefault(d)
-		base := catalog.NewObject()
-		for _, k := range m.Cat.TopKeys(d) {
-			if v, ok := defs[k]; ok {
-				base.Set(k, v)
-			}
-		}
-		b, err := json.Marshal(base)
-		if err != nil {
-			return raw, err
-		}
-		merged, err := MergeJSON(b, data)
-		if err != nil {
-			return raw, fmt.Errorf("%s.json: %w", d, err)
-		}
-		raw[d] = merged
-	}
-	return raw, nil
 }
 
 // keepFollowed copies the live value of every followed key (info.json
@@ -726,7 +742,9 @@ func swapDir(staging, dir string, exists bool) error {
 			return err
 		}
 		if err := os.Rename(staging, dir); err != nil {
-			_ = os.Rename(old, dir)
+			if rerr := os.Rename(old, dir); rerr != nil {
+				log.Printf("[presets] put back %s: %v", dir, rerr)
+			}
 			return err
 		}
 		return os.RemoveAll(old)

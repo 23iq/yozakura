@@ -25,17 +25,20 @@ Item {
     readonly property real blurMax: 32
 
     // The theme drop shadow (Shadow.qml values), analytic: a MultiEffect
-    // downstream of the mask would resample the layer texture.
+    // downstream of the mask would resample the layer texture. It is drawn
+    // outside the item (not clipped by the mask, so lit shadows keep their
+    // full length), but as a rounded rect: at a cut or tab corner it follows
+    // the radius, not the cut.
     Loader {
         anchors.fill: parent
         active: root.shadow
         sourceComponent: RectangularShadow {
-            offset: Qt.vector2d(Config.theme.shadowXOffset, Config.theme.shadowYOffset)
-            blur: Math.min(1, Config.theme.shadowBlur * Glass.shadowScale) * root.blurMax
+            offset: Qt.vector2d(Lighting.shadowXOffset, Lighting.shadowYOffset)
+            blur: Math.min(1, Lighting.shadowBlur * Glass.shadowScale) * root.blurMax
             radius: Math.max(root.radii.x, root.radii.y, root.radii.z, root.radii.w)
             color: {
-                const c = Qt.color(Config.resolveColor(Config.theme.shadowColor));
-                return Qt.rgba(c.r, c.g, c.b, c.a * Config.theme.shadowOpacity);
+                const c = Lighting.shadowColor;
+                return Qt.rgba(c.r, c.g, c.b, c.a * Lighting.shadowOpacity);
             }
         }
     }

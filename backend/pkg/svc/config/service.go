@@ -27,11 +27,11 @@ func (s *Service) Register(srv *ipc.Server) {
 	srv.Register(&ipc.Service{
 		Name: "config",
 		Methods: map[string]ipc.HandlerFunc{
-			"write":    s.write,
-			"patch":    s.patch,
-			"read":     s.read,
-			"stateGet": s.stateGet,
-			"stateSet": s.stateSet,
+			"write":     s.write,
+			"patch":     s.patch,
+			"read":      s.read,
+			"stateGet":  s.stateGet,
+			"stateSet":  s.stateSet,
 			"statesGet": s.statesGet,
 			"statesSet": s.statesSet,
 		},
@@ -87,11 +87,7 @@ func (s *Service) MigrateStates() error {
 	if err != nil {
 		return err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return fsutil.WriteFile(path, out, 0o644)
 }
 
 // domains lists every config domain Config.qml manages.
@@ -175,8 +171,8 @@ func (s *Service) read(params json.RawMessage) (any, error) {
 // under the daemon lock — fixes the state.json clobbering problem too).
 func (s *Service) patch(params json.RawMessage) (any, error) {
 	var p struct {
-		Domain  string         `json:"domain"`
-		KeyPath []string       `json:"key_path"`
+		Domain  string          `json:"domain"`
+		KeyPath []string        `json:"key_path"`
 		Value   json.RawMessage `json:"value"`
 	}
 	if err := json.Unmarshal(params, &p); err != nil {

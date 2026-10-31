@@ -11,5 +11,8 @@ var data = {
     "specialWorkspaceFont": "",
     "numeralStyle": "arabic",
     "numeralFont": "",
-    "indicatorStyle": "pill"
+    "indicatorStyle": "pill",
+    "branchBlossom": "sakura",
+    "branchColor": "primary",
+    "branchPetalFall": true
 }

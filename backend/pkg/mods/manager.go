@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -21,8 +22,10 @@ import (
 	"sync"
 	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 const stateVersion = 1
@@ -689,8 +692,10 @@ func (m *Manager) updateLocalSource(state State, index int, installed InstalledM
 		return Status{}, fmt.Errorf("prepare package update: %w", err)
 	}
 	restore := func() {
-		_ = os.RemoveAll(packageRoot)
-		_ = os.Rename(backup, packageRoot)
+		_ = os.RemoveAll(packageRoot) // best effort: the rename below overwrites the slot
+		if err := os.Rename(backup, packageRoot); err != nil {
+			log.Printf("[mods] restore previous package %s: %v", packageRoot, err)
+		}
 	}
 	if err := os.Rename(updatedRoot, packageRoot); err != nil {
 		restore()
@@ -1322,9 +1327,7 @@ func (m *Manager) cleanupGenerations(state State) {
 // goes first. Any conflict that also rewrites existing lines is left alone and
 // stops the build.
 func resolveAddedBlocks(generation string) (bool, error) {
-	cmd := exec.Command("git", "diff", "--name-only", "--diff-filter=U")
-	cmd.Dir = generation
-	output, err := cmd.Output()
+	output, err := proc.RunWith(context.Background(), proc.Options{Dir: generation}, "git", "diff", "--name-only", "--diff-filter=U")
 	if err != nil {
 		return false, fmt.Errorf("list conflicts: %w", err)
 	}
@@ -1439,8 +1442,7 @@ func commitComposition(generation, message string) error {
 }
 
 func gitObjectsDir(base string) string {
-	cmd := exec.Command("git", "-C", base, "rev-parse", "--git-path", "objects")
-	output, err := cmd.Output()
+	output, err := proc.Run(context.Background(), "git", "-C", base, "rev-parse", "--git-path", "objects")
 	if err != nil {
 		return ""
 	}
@@ -1593,7 +1595,7 @@ func topologicalOrder(installed []InstalledMod, manifests map[string]Manifest) (
 
 func exportBase(base, destination string) error {
 	if gitRevision(base) != "" {
-		cmd := exec.Command("git", "-C", base, "archive", "--format=tar", "HEAD")
+		cmd := exec.CommandContext(context.Background(), "git", "-C", base, "archive", "--format=tar", "HEAD")
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
 			return err
@@ -1871,31 +1873,7 @@ func fileSHA256(path string) (string, error) {
 }
 
 func writeAtomic(path string, data []byte, mode os.FileMode) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".tmp-")
-	if err != nil {
-		return err
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if err := tmp.Chmod(mode); err != nil {
-		tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmpPath, path)
+	return fsutil.WriteFile(path, data, mode)
 }
 
 // Local git work is fast, but it holds the manager mutex, so a stalled process
@@ -1916,7 +1894,7 @@ func runCommandTimeout(timeout time.Duration, directory, name string, args ...st
 		cancel = stop
 		cmd = exec.CommandContext(ctx, name, args...)
 	} else {
-		cmd = exec.Command(name, args...)
+		cmd = exec.CommandContext(context.Background(), name, args...) // timeout <= 0: caller wants no limit
 	}
 	if cancel != nil {
 		defer cancel()
@@ -2027,8 +2005,7 @@ func gitRevision(directory string) string {
 	if directory == "" {
 		return ""
 	}
-	cmd := exec.Command("git", "-C", directory, "rev-parse", "HEAD")
-	output, err := cmd.Output()
+	output, err := proc.Run(context.Background(), "git", "-C", directory, "rev-parse", "HEAD")
 	if err != nil {
 		return ""
 	}

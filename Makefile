@@ -12,7 +12,7 @@ PY ?= python3
 
 .PHONY: all build vet lint run nix clean dev install \
 	schema extras-catalog check parse-qml lint-qml fmt-check fmt lint-go lint-sh lint-py \
-	test test-js test-py test-go audit baseline
+	test test-js test-py test-go audit baseline layers-baseline ipc-methods
 
 all: build
 
@@ -35,6 +35,13 @@ vet:
 schema: extras-catalog
 	@node tools/schema/gen_schema.cjs
 	@node tools/config/gen_adapters.cjs
+	@$(MAKE) --no-print-directory ipc-methods
+
+## ipc-methods: regenerate assets/schema/ipc-methods.json (every JSON-RPC method
+##         the daemon serves; the ipc-methods audit checks the QML calls
+##         against it, a Go test fails when it is stale)
+ipc-methods:
+	@cd $(BACKEND_DIR) && YOZ_UPDATE_IPC_METHODS=1 $(GO) test ./pkg/daemon -run TestIPCMethodRegistryFresh -count=1 >/dev/null
 
 ## extras-catalog: copy assets/catalog/extras.json into the backend, where
 ##         `yozakura sys` (root) embeds it; a Go test fails when it is stale
@@ -96,6 +103,11 @@ test-go:
 ## audit: dead files, config schema, translations, snapshot keys, monoliths (ARGS=--json)
 audit:
 	@$(PY) tools/audit/audit.py $(AUDIT_ARGS) $(ARGS)
+
+## layers-baseline: re-record tools/lint/baselines/layers.json (only after FIXING
+##         upward imports / cycles; never to silence new ones)
+layers-baseline:
+	@AUDIT_UPDATE_LAYERS=1 $(PY) tools/audit/audit.py --only layers
 
 ## baseline: re-record qmllint/staticcheck/format baselines (justify in the commit!)
 baseline:

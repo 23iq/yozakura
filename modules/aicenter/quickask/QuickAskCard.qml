@@ -12,9 +12,10 @@ import qs.modules.aicenter.markdown
 import qs.modules.aicenter.chat
 import qs.modules.aicenter.transcript
 
-// Quick ask, a notch module (Visibilities "aiquick", pushed into the
-// island like the voice panel): one input, a streamed answer and "continue
-// in the sidebar". Enter asks, Esc closes, Ctrl+Enter → sidebar.
+// Quick ask (Visibilities "aiquick"), shown where layout.aiquick.host
+// resolves: pushed into the island (NotchMenuViews), or a floating card /
+// the spotlight (HostedSurfaces). One input, a streamed answer and
+// "continue in the sidebar". Enter asks, Esc closes, Ctrl+Enter → sidebar.
 FocusScope {
     id: root
 

@@ -25,9 +25,9 @@
 .import "dashboard.js" as Dashboard
 .import "osd.js" as Osd
 .import "menus.js" as Menus
-.import "Advanced.js" as Advanced
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
+.import "presets.js" as Presets
 
 // Settings information architecture: the sidebar tree and its pages.
 //
@@ -36,7 +36,7 @@
 // has several, lists them under itself. A category is one of:
 //   * schema-driven: has `sections` (see appearance.js) - rendered by
 //     SettingsPage.qml, searchable entry by entry; entries flagged
-//     `advanced: true` gather in a collapsed "Advanced" block (Advanced.js);
+//     `advanced: true` show only in the All view (Advanced.js);
 //   * a page: has `page` - a hand-written page mapped by name in
 //     SettingsPageHost.pages (Connect pages host the live device controls).
 // Every category is listed in exactly one group. `resolve(id)` accepts a
@@ -108,7 +108,7 @@ var groups = [
         "id": "presets",
         "icon": "magicWand",
         "title": "prefs.group.presets",
-        "categories": ["presets"]
+        "categories": ["presets", "changes"]
     },
     {
         "id": "system",
@@ -179,13 +179,15 @@ var categories = [
     AiProviders.category,
     AiCode.category,
     page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"),
+    page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom"),
     {
         "id": "presets",
         "icon": "magicWand",
         "title": "prefs.cat.presets",
         "description": "prefs.cat.presets.desc",
         "keywords": "presets studio save load profiles themes layouts looks gallery mixer mix duplicate import export share try",
-        "page": "PresetStudio"
+        "page": "PresetStudio",
+        "sections": Presets.sections
     },
     {
         "id": "displays",
@@ -220,8 +222,6 @@ var categories = [
         "page": "AboutPage"
     }
 ];
-
-categories = categories.map(Advanced.apply);
 
 function byId(id) {
     for (var i = 0; i < categories.length; i++) {

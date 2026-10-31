@@ -122,6 +122,9 @@ func (m *Manager) begin(kind, name string) (*Session, []catalog.Problem, error) 
 	if _, err := m.Export(Current, m.backupFile(kind)); err != nil {
 		return nil, nil, fmt.Errorf("backing up the live config: %w", err)
 	}
+	if err := m.backupApplied(kind); err != nil {
+		return nil, nil, err
+	}
 	if err := m.writeSession(s); err != nil {
 		return nil, nil, err
 	}
@@ -172,6 +175,7 @@ func (m *Manager) end(kind string, keep, save bool) (*Session, error) {
 		return s, err
 	}
 	_ = os.Remove(m.backupFile(kind))
+	_ = os.Remove(m.appliedBackup(kind))
 	return s, os.Remove(m.sessionFile(kind))
 }
 
@@ -217,6 +221,9 @@ func (m *Manager) revert(s *Session) error {
 		if _, ok := raw[d]; !ok {
 			_ = os.Remove(m.Store.File(d))
 		}
+	}
+	if err := m.restoreApplied(s.Kind); err != nil {
+		return err
 	}
 	if err := m.restoreColorPreset(s.PrevColorPreset); err != nil {
 		return err

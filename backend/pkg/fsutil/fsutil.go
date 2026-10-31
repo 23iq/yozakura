@@ -4,6 +4,7 @@
 package fsutil
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 )
@@ -48,7 +49,9 @@ func WriteFile(path string, data []byte, perm os.FileMode) error {
 		return err
 	}
 	if st, err := os.Stat(real); err == nil {
-		perm = st.Mode().Perm()
+		// Kept, but always owner-writable: a copy of a read-only source
+		// (the Nix store) must not stay read-only forever.
+		perm = st.Mode().Perm() | 0o200
 	}
 	tmp, err := os.CreateTemp(dir, "."+filepath.Base(real)+".tmp-*")
 	if err != nil {
@@ -82,6 +85,25 @@ func WriteFile(path string, data []byte, perm os.FileMode) error {
 	ok = true
 	syncDir(dir)
 	return nil
+}
+
+// ReadJSON reads path and decodes it into v.
+func ReadJSON(path string, v any) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, v)
+}
+
+// WriteJSON atomically writes v as two-space indented JSON (no trailing
+// newline, matching the files the backend already writes).
+func WriteJSON(path string, v any, perm os.FileMode) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return err
+	}
+	return WriteFile(path, data, perm)
 }
 
 // syncDir flushes a directory entry change (best effort).

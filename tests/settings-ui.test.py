@@ -117,13 +117,32 @@ check(ev("SettingsStore.hasChanges") is True, "changes bar visible")
 ev("SettingsStore.reset({key: 'bar.compact'})")
 check(ev("Config.bar.compact") is False and h.eval(r, "modified") is False, "reset restores default")
 
-# visibleWhen
+# visibleWhen (bar.frameThickness is advanced: the All view)
+ev("SettingsStore.setShowAll(true)")
 ev("SettingsStore.set('bar.frameEnabled', false)")
 settle(50)
 check(h.eval(row("bar.frameThickness"), "shown") is False, "frame thickness hidden without frame")
 ev("SettingsStore.set('bar.frameEnabled', true)")
 settle(50)
 check(h.eval(row("bar.frameThickness"), "shown") is True, "frame thickness shown with frame")
+ev("SettingsStore.setShowAll(false)")
+
+# Host/style pickers note where they show while the notch is off
+select("menus")
+settle(250)
+pm = row("layout.powermenu.style")
+check(h.eval(pm, "shownAs") == "", "no note while the notch is on")
+ev("SettingsStore.set('notch.enabled', false)")
+settle(50)
+shown_as = h.eval(pm, "shownAs")
+check(shown_as != "" and shown_as != "fullscreen", f"auto power menu notes its fallback label ({shown_as!r})")
+ev("SettingsStore.set('layout.powermenu.style', 'radial')")
+settle(50)
+check(h.eval(pm, "shownAs") == "", "an explicit off-notch style has no note")
+ev("SettingsStore.reset({key: 'layout.powermenu.style'})")
+ev("SettingsStore.reset({key: 'notch.enabled'})")
+settle(50)
+check(h.eval(pm, "shownAs") == "", "note gone with the notch back on")
 
 # Compositor gate note: silent on Hyprland, counts gated entries on niri
 select("windows")
@@ -366,7 +385,8 @@ h.eval(ev('w.findItem("glassLink")'), "clicked()")
 settle(400)
 check(ev("currentCategory") == "appearance", "glass link opens Appearance")
 
-# Windows page: color-role control, nested pulse key, preview
+# Windows page: color-role control, nested pulse key, preview (expert rows: All view)
+ev("SettingsStore.setShowAll(true)")
 select("windows")
 settle(400)
 FIND = """(function(name) {

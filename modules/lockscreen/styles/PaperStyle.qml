@@ -6,6 +6,7 @@ import qs.modules.lockscreen
 import qs.modules.desktop.clockstyles
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.widgets.defaultview
 import qs.config
 import "../../desktop/clockstyles/ClockText.js" as ClockText
@@ -32,8 +33,7 @@ LockStyle {
 
     arrangement: "split"
     clockSide: "right"
-    clusterWidth: 380
-    clusterSpacing: 28
+    clusterWidth: Space.controlXL * 4 - Space.s
     wallpaperBlur: 0.45
     wallpaperSaturation: -0.85
     wallpaperZoom: 1.04
@@ -242,7 +242,7 @@ LockStyle {
             Item {
                 id: line
                 width: parent.width
-                height: 52
+                height: Space.controlM + Space.s
                 transform: Translate {
                     x: pw.shakeOffset
                 }
@@ -251,9 +251,9 @@ LockStyle {
                     id: input
                     anchors.left: parent.left
                     anchors.right: submit.left
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Space.m
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 8
+                    anchors.bottomMargin: Space.s
                     background: null
                     padding: 0
                     echoMode: TextInput.Password
@@ -263,7 +263,7 @@ LockStyle {
                     selectionColor: skin.alpha(skin.ink, 0.25)
                     selectedTextColor: skin.ink
                     font.family: skin.font
-                    font.pixelSize: pw.hasText ? Styling.fontSize(5) : Styling.fontSize(2)
+                    font.pixelSize: Type.size("title")
                     font.letterSpacing: pw.hasText ? 6 : 1.5
                     font.weight: Font.Light
                     placeholderText: I18n.t("lockscreen.password")
@@ -271,28 +271,16 @@ LockStyle {
                     Keys.onReleased: event => pw.observeKey(event)
                 }
 
-                Text {
+                LockSpinner {
                     id: submit
                     anchors.right: parent.right
                     anchors.verticalCenter: input.verticalCenter
-                    text: pw.authenticating ? Icons.circleNotch : Icons.arrowRight
-                    font.family: Icons.font
-                    font.pixelSize: 18
+                    busy: pw.authenticating
                     color: pw.hasText ? skin.ink : skin.alpha(skin.ink, 0.35)
-
-                    RotationAnimator on rotation {
-                        running: pw.authenticating
-                        from: 0
-                        to: 360
-                        duration: 1200
-                        loops: Animation.Infinite
-                    }
-                    onTextChanged: if (!pw.authenticating)
-                        rotation = 0
 
                     MouseArea {
                         anchors.fill: parent
-                        anchors.margins: -8
+                        anchors.margins: -Space.s
                         enabled: pw.hasText && !pw.authenticating
                         cursorShape: Qt.PointingHandCursor
                         onClicked: input.accepted()
@@ -308,22 +296,22 @@ LockStyle {
                 }
             }
 
-            Text {
+            KitText {
                 id: hintText
                 anchors.top: line.bottom
-                anchors.topMargin: 12
+                anchors.topMargin: Space.m
                 text: pw.hint
-                height: Math.max(implicitHeight, Styling.fontSize(-1) + 6)
+                height: Math.max(implicitHeight, Type.size("secondary") + Space.xs)
                 color: pw.errorShown ? skin.shu : skin.inkSoft
                 font.family: skin.font
-                font.pixelSize: Styling.fontSize(-1)
+                role: "secondary"
                 font.letterSpacing: 0.6
                 opacity: pw.hint !== "" ? 1 : 0
 
                 Behavior on opacity {
-                    enabled: Config.animDuration > 0
+                    enabled: Motion.micro.duration > 0
                     NumberAnimation {
-                        duration: Motion.enter.duration
+                        duration: Motion.micro.duration
                     }
                 }
             }
@@ -333,99 +321,79 @@ LockStyle {
     mediaCard: Component {
         LockMediaBase {
             id: media
-            implicitHeight: 64
+            implicitHeight: Space.controlL
 
             Row {
                 anchors.fill: parent
-                spacing: 16
+                spacing: Space.l
 
                 // Artwork as a small print with an ink frame.
-                Rectangle {
-                    width: 64
-                    height: 64
-                    color: skin.alpha(skin.ink, 0.06)
-                    border.color: skin.alpha(skin.ink, 0.5)
-                    border.width: 1
-
-                    Image {
-                        anchors.fill: parent
-                        anchors.margins: 3
-                        source: media.artUrl
-                        sourceSize: Qt.size(128, 128)
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        visible: status === Image.Ready
-                    }
-                    Text {
-                        anchors.centerIn: parent
-                        visible: media.artUrl === ""
-                        text: Icons.musicNotes
-                        font.family: Icons.font
-                        font.pixelSize: 22
-                        color: skin.inkSoft
-                    }
+                Art {
+                    width: Space.controlL
+                    height: Space.controlL
+                    source: media.artUrl
+                    icon: Icons.musicNotes
+                    radius: 0
                 }
 
                 Column {
                     width: parent.width - 80
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 4
+                    spacing: Space.xs
 
                     Row {
                         width: parent.width
-                        spacing: 10
+                        spacing: Space.s
 
-                        Text {
-                            width: parent.width - controls.width - 10
+                        KitText {
+                            width: parent.width - controls.width - Space.s
                             text: media.title
-                            textFormat: Text.PlainText
                             elide: Text.ElideRight
                             color: skin.ink
                             font.family: skin.font
-                            font.pixelSize: Styling.fontSize(1)
+                            role: "body"
                             font.weight: Font.Medium
                         }
                         Row {
                             id: controls
-                            spacing: 2
+                            spacing: Space.xs
                             LockMediaButton {
                                 icon: Icons.previous
                                 glyphColor: skin.ink
-                                implicitWidth: 24
+                                implicitWidth: Space.xl
                                 onClicked: media.previous()
                             }
                             LockMediaButton {
                                 icon: media.playing ? Icons.pause : Icons.play
                                 glyphColor: skin.ink
-                                implicitWidth: 24
+                                implicitWidth: Space.xl
                                 onClicked: media.toggle()
                             }
                             LockMediaButton {
                                 icon: Icons.next
                                 glyphColor: skin.ink
-                                implicitWidth: 24
+                                implicitWidth: Space.xl
                                 onClicked: media.next()
                             }
                         }
                     }
-                    Text {
+                    KitText {
                         width: parent.width
                         text: media.artist
                         visible: text !== ""
-                        textFormat: Text.PlainText
                         elide: Text.ElideRight
                         color: skin.inkSoft
                         font.family: skin.font
-                        font.pixelSize: Styling.fontSize(-1)
+                        role: "secondary"
                     }
                     Item {
                         width: parent.width
-                        height: 16
+                        height: Space.l
 
                         NotchVisualizer {
                             anchors.fill: parent
                             barCount: 40
-                            spacing: 4
+                            spacing: Space.xs
                             centered: false
                             idleOpacity: 0.3
                             visible: media.visualizerEnabled && CavaService.available
@@ -437,7 +405,7 @@ LockStyle {
                         }
                     }
                     Brush {
-                        width: Math.max(8, parent.width * media.progress)
+                        width: Math.max(Space.s, parent.width * media.progress)
                         height: 2
                         visible: media.length > 0
                     }
@@ -448,7 +416,7 @@ LockStyle {
 
     status: Component {
         Item {
-            implicitHeight: 28
+            implicitHeight: Space.xl
 
             LockStatusInfo {
                 id: info
@@ -457,33 +425,33 @@ LockStyle {
             Row {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Space.s
 
                 LockAvatar {
-                    width: 26
-                    height: 26
-                    roundness: 0.1
-                    ink: skin.ink
+                    width: Space.xl
+                    height: Space.xl
+                    radius: Space.smallRadius
+                    name: skin.view.username
                     anchors.verticalCenter: parent.verticalCenter
                 }
-                Text {
+                KitText {
                     anchors.verticalCenter: parent.verticalCenter
                     text: skin.view.username
                     color: skin.ink
                     font.family: skin.font
-                    font.pixelSize: Styling.fontSize(0)
+                    role: "body"
                     font.letterSpacing: 2
                     font.weight: Font.Medium
                 }
             }
 
-            Text {
+            KitText {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 text: [info.networkLabel, info.batteryAvailable ? info.batteryPercent + "%" : ""].filter(s => s !== "").join("   ·   ")
                 color: info.batteryLow ? skin.shu : skin.inkSoft
                 font.family: skin.font
-                font.pixelSize: Styling.fontSize(-1)
+                role: "secondary"
                 font.letterSpacing: 1.5
             }
         }

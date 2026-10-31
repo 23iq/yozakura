@@ -30,6 +30,7 @@ from settings_render import REPO, palette, wallpaper_state  # noqa: E402  (also 
 
 from dashboard_env import DashboardEnv  # noqa: E402
 from kit_env import LANGUAGES  # noqa: E402
+from PySide6.QtCore import QObject  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 # variant -> options: home, notifications (None = the samples), playing, events,
@@ -51,6 +52,9 @@ VARIANTS = {
     "composed-wifi": {"home": "composed", "detail": "wifi"},
     "composed-bluetooth": {"home": "composed", "detail": "bluetooth"},
     "bento": {"home": "bento"},
+    # Off the notch (notch.enabled false, dashboard.host auto): the side sheet
+    "sheet": {"home": "composed", "host": "sheet"},
+    "sheet-stage": {**STAGE, "host": "sheet"},
 }
 SAMPLE_TIMERS = [{"name": "", "leftMs": 17 * 60000 + 24000, "pomodoro": True}]
 
@@ -80,20 +84,51 @@ Window {
     }
 }"""
 
+# The side sheet (modules/shell/hosts/SheetHost.qml) on a 1920x1080 screen
+# under a 48 px top bar: the real HostFrame where SheetHost puts it
+# (EdgeLayout.sheetRect: Space.m inside the work area, at the view's own
+# size), the dashboard filling its slot like DashboardView does.
+SHEET_SCENE = """
+import QtQuick
+import QtQuick.Window
+import qs.modules.theme
+import qs.modules.components.kit
+import qs.modules.shell.hosts
+import qs.modules.widgets.dashboard
+Window {
+    id: win
+    property url wallpaper: ""
+    width: 1920; height: 1080; visible: true; color: "black"
+    Image { anchors.fill: parent; source: win.wallpaper; fillMode: Image.PreserveAspectCrop }
+    HostFrame {
+        id: frame
+        objectName: "sheetFrame"
+        y: 48 + Space.m
+        width: Math.max(Metrics.sheetW, dash.implicitWidth + padding * 2)
+        height: Math.min(dash.implicitHeight + padding * 2, win.height - y - Space.m)
+        x: win.width - width - Space.m
+    }
+    Dashboard { id: dash; objectName: "dashboard"; parent: frame.slot; anchors.fill: parent; leftPanelWidth: 270 }
+}"""
 
-def render(name: str, path: Path, state: dict, colors: dict, overrides: dict, opts: dict) -> Path:
+
+def render(name: str, path: Path, state: dict, colors: dict, overrides: dict, opts: dict | None = None,
+           user_config: bool = True) -> Path:
     """One dashboard scene: `overrides` ({domain: {...}}) over the defaults
-    and your config, `colors` as the palette, `opts` a VARIANTS entry."""
+    and your config (user_config=False: the defaults only), `colors` as
+    the palette, `opts` a VARIANTS entry."""
+    opts = opts or {}
     wall = state.get("thumbs", {}).get(state.get("current", ""), state.get("current", ""))
     url = ("file://" + wall) if wall else ""
-    env = DashboardEnv(name, notifications=opts.get("notifications"), art=url, palette=colors, user_config=True,
+    env = DashboardEnv(name, notifications=opts.get("notifications"), art=url, palette=colors, user_config=user_config,
                        overrides=overrides, wallpaper=state, playing=opts.get("playing", True),
                        timers=SAMPLE_TIMERS if opts.get("timers") else [])
-    win = env.load(SCENE)
+    win = env.load(SHEET_SCENE if opts.get("host") == "sheet" else SCENE)
     win.setProperty("wallpaper", url)
     dash = env.h.find(win, "dashboard")
-    if opts.get("events"):
-        cal = env.h.find(win, "calendarEvents")
+    # Only the stage home lists events (a set's own home may not)
+    cal = win.findChild(QObject, "calendarEvents") if opts.get("events") else None
+    if cal is not None:
         env.h.eval(cal, "available = true")
         env.h.eval(cal, f"this.events = {sample_events()}")
     if opts.get("detail"):

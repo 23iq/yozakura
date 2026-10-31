@@ -10,6 +10,7 @@ import qs.config
 import qs.modules.settings.store
 import qs.modules.settings.presets
 import "schema/Categories.js" as Categories
+import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
 
 // Settings window content: sidebar (groups, search) + the current page
@@ -19,6 +20,16 @@ Item {
 
     property string currentCategory: ""
     readonly property bool compact: width < 860
+    // Compact: the icon rail has no search field. Ctrl+F or the rail's search
+    // button slides the full sidebar over the page until a pick or Escape.
+    property bool searchOpen: false
+    readonly property bool railed: compact && !searchOpen
+    readonly property real railWidth: 76
+    function openSearch() {
+        if (compact)
+            searchOpen = true;
+        Qt.callLater(sidebar.focusSearch);
+    }
     property var pendingReveal: null
 
     // Accepts a category id or a sidebar group id (Categories.resolve).
@@ -31,9 +42,13 @@ Item {
             return;
         const changed = c.id !== currentCategory || !page.category;
         currentCategory = c.id;
+        searchOpen = false;
         GlobalStates.settingsCategory = c.id;
-        if (changed)
+        if (changed) {
+            // Rows a search revealed in the Simple view fold back away.
+            SettingsStore.clearRevealed();
             page.load(c);
+        }
     }
 
     function navigate(categoryId, sectionId, entryId) {
@@ -46,6 +61,20 @@ Item {
             revealTimer.restart();
         else
             select(categoryId);
+    }
+
+    // The active preset's actions (sidebar footer, changes sheet, toast).
+    // Staged edits are written first, so the preset gets what the user sees.
+    function presetAction(id) {
+        const toast = (ok, message, undo) => PresetStudio.notify(message, undo ? "save:" + undo : "");
+        if (id === "save")
+            PresetStudio.afterFlush(() => PresetStatusService.save(toast));
+        else if (id === "saveAs")
+            saveAsDialog.ask(I18n.t("presets.status.dialog_save_as"), PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()), I18n.t("prefs.presets.save"), "", n => PresetStudio.afterFlush(() => PresetStatusService.saveAs(n, toast)));
+        else if (id === "changes")
+            changesSheet.open = true;
+        else if (id === "revert")
+            PresetStatusService.revert(toast);
     }
 
     function step(delta) {
@@ -80,7 +109,12 @@ Item {
 
     Shortcut {
         sequences: [StandardKey.Find]
-        onActivated: sidebar.focusSearch()
+        onActivated: shell.openSearch()
+    }
+    Shortcut {
+        sequences: [StandardKey.Cancel]
+        enabled: shell.searchOpen
+        onActivated: shell.searchOpen = false
     }
     Shortcut {
         sequences: [StandardKey.Save]
@@ -117,6 +151,7 @@ Item {
     // against the page.
     Rectangle {
         id: sidebarBg
+        z: shell.searchOpen ? 5 : 0
         width: sidebar.width
         height: parent.height
         color: Look.groupFill
@@ -130,12 +165,17 @@ Item {
 
     SettingsSidebar {
         id: sidebar
-        width: shell.compact ? 76 : 264
+        z: shell.searchOpen ? 6 : 0
+        width: shell.railed ? shell.railWidth : 264
         height: parent.height
-        compact: shell.compact
+        compact: shell.railed
         currentCategory: shell.currentCategory
         onCategorySelected: id => shell.select(id)
-        onResultActivated: r => shell.navigate(r.categoryId, r.sectionId, r.entryId)
+        onResultActivated: r => {
+            shell.searchOpen = false;
+            shell.navigate(r.categoryId, r.sectionId, r.entryId);
+        }
+        onPresetAction: id => shell.presetAction(id)
 
         Behavior on width {
             enabled: Config.animDuration > 0
@@ -146,12 +186,33 @@ Item {
         }
     }
 
+    // The rail's search button (the field itself needs the wide sidebar).
+    IconButton {
+        objectName: "railSearch"
+        visible: shell.railed
+        size: "s"
+        icon: Icons.magnifyingGlass
+        x: (shell.railWidth - width) / 2
+        y: sidebar.height - height - Space.l
+        onClicked: shell.openSearch()
+    }
+
     Item {
         id: content
-        anchors.left: sidebar.right
+        anchors.left: parent.left
+        anchors.leftMargin: shell.compact ? shell.railWidth : sidebar.width
         anchors.right: parent.right
         height: parent.height
         clip: true
+
+        // Click outside the opened search sidebar closes it.
+        MouseArea {
+            anchors.fill: parent
+            z: 4
+            enabled: shell.searchOpen
+            visible: shell.searchOpen
+            onClicked: shell.searchOpen = false
+        }
 
         PresetEditBanner {
             id: editBanner
@@ -189,7 +250,22 @@ Item {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 22
             z: 3
+            onDetailsRequested: shell.presetAction("changes")
         }
+    }
+
+    PresetChangesSheet {
+        id: changesSheet
+        objectName: "presetChangesSheet"
+        anchors.fill: parent
+        index: sidebar.index
+        onClosed: open = false
+        onActionRequested: id => shell.presetAction(id)
+        onNavigate: (c, s, e) => shell.navigate(c, s, e)
+    }
+
+    PresetNameDialog {
+        id: saveAsDialog
     }
 
     // Closing the window with unsaved staged changes asks first

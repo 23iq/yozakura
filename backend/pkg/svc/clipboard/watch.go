@@ -3,6 +3,7 @@ package clipboard
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"log"
 	"os"
 	"os/exec"
@@ -10,6 +11,7 @@ import (
 	"syscall"
 
 	"yozakura/backend/pkg/envclean"
+	"yozakura/backend/pkg/proc"
 )
 
 // watchProc runs `wl-paste --watch` and handles every clipboard change
@@ -27,13 +29,13 @@ type eventSender interface {
 }
 
 // ensureWatcher starts the watcher once.
-func (s *Service) ensureWatcher(sub eventSender) {
+func (s *Service) ensureWatcher() {
 	if s.watch != nil {
 		return
 	}
 	w := &watchProc{svc: s, stopCh: make(chan struct{})}
 	s.watch = w
-	go w.run(sub)
+	go w.run()
 }
 
 func (w *watchProc) stop() {
@@ -44,7 +46,7 @@ func (w *watchProc) stop() {
 	}
 }
 
-func (w *watchProc) run(sub eventSender) {
+func (w *watchProc) run() {
 	if _, err := exec.LookPath("wl-paste"); err != nil {
 		return
 	}
@@ -54,7 +56,7 @@ func (w *watchProc) run(sub eventSender) {
 			return
 		default:
 		}
-		cmd := exec.Command("wl-paste", "--watch", "sh", "-c", "cat >/dev/null; echo REFRESH_LIST")
+		cmd := exec.CommandContext(context.Background(), "wl-paste", "--watch", "sh", "-c", "cat >/dev/null; echo REFRESH_LIST")
 		cmd.Env = envclean.ChildEnv()
 		// Put the watcher in its own process group so we can kill the
 		// entire group (sh + wl-paste + descendants) on stop. Without
@@ -78,7 +80,7 @@ func (w *watchProc) run(sub eventSender) {
 					continue
 				}
 				if w.svc.checkAndInsert() {
-					sub.Send("clipboard.refresh", map[string]any{"ok": true})
+					w.svc.emitRefresh()
 				}
 			}
 		}()
@@ -101,7 +103,7 @@ func (w *watchProc) run(sub eventSender) {
 // unpinned store. Returns whether content was captured.
 func (s *Service) checkAndInsert() bool {
 	// Files first (text/uri-list).
-	if out, err := exec.Command("wl-paste", "--type", "text/uri-list").Output(); err == nil {
+	if out, err := proc.Run(context.Background(), "wl-paste", "--type", "text/uri-list"); err == nil {
 		content := bytes.ReplaceAll(out, []byte("\r"), nil)
 		size := int64(0)
 		if p := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(string(content)), "file://")); p != "" {
@@ -113,13 +115,13 @@ func (s *Service) checkAndInsert() bool {
 	}
 
 	// Images.
-	if types, err := exec.Command("wl-paste", "--list-types").Output(); err == nil {
+	if types, err := proc.Run(context.Background(), "wl-paste", "--list-types"); err == nil {
 		for _, line := range strings.Split(string(types), "\n") {
 			mime := strings.TrimSpace(line)
 			if !strings.HasPrefix(mime, "image/") {
 				continue
 			}
-			data, err := exec.Command("wl-paste", "--type", mime).Output()
+			data, err := proc.Run(context.Background(), "wl-paste", "--type", mime)
 			if err == nil && len(data) > 0 {
 				return s.insertUnpinned(mime, data, true, int64(len(data)))
 			}
@@ -128,7 +130,7 @@ func (s *Service) checkAndInsert() bool {
 
 	// Plain text — prefer UTF-8 charset to preserve unicode characters.
 	for _, mime := range []string{"text/plain;charset=utf-8", "text/plain"} {
-		if out, err := exec.Command("wl-paste", "--type", mime).Output(); err == nil {
+		if out, err := proc.Run(context.Background(), "wl-paste", "--type", mime); err == nil {
 			content := bytes.ReplaceAll(out, []byte("\r"), nil)
 			return s.insertUnpinned(mime, content, false, int64(len(content)))
 		}

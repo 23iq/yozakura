@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/paths"
 )
 
 // overlaySample is the hl.config() table as the shell sends it (decoded
@@ -187,5 +188,14 @@ func TestRenderHyprlandLuaStartsShellWithoutBase(t *testing.T) {
 	want := "if base then\n    base()\nelse\n    hl.on(\"hyprland.start\", function()\n        hl.exec_cmd(\"/opt/bin/yozakura\")\n    end)\nend\n"
 	if !strings.Contains(out, want) {
 		t.Fatalf("missing fallback autostart:\n%s", out)
+	}
+}
+
+func TestShellBinaryPrefersLauncher(t *testing.T) {
+	launcher := filepath.Join(t.TempDir(), "yozakura")
+	os.WriteFile(launcher, []byte("#!/bin/sh\n"), 0o755)
+	t.Setenv(paths.LauncherEnv, launcher)
+	if got := shellBinary(); got != launcher {
+		t.Errorf("shellBinary() = %q, want the launcher %q", got, launcher)
 	}
 }

@@ -2,6 +2,9 @@
 .import "glass.js" as Glass
 .import "motion.js" as Motion
 .import "surfaces.js" as Surfaces
+.import "lighting.js" as Lighting
+.import "weatherfx.js" as WeatherFx
+.import "macros.js" as Macros
 
 // Appearance: theme mode, palette, typography, shape, glass and motion.
 // Entry format: see modules/settings/AGENTS.md.
@@ -29,14 +32,17 @@ var category = {
                 {
                     "key": "theme.language",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "LanguageThumb",
                     "label": "prefs.appearance.language",
                     "description": "prefs.appearance.language.desc",
-                    "keywords": "visual language style ink glass tiles solid classic look kit",
+                    "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit",
                     "options": [
                         { "value": "ink", "label": "prefs.appearance.language.ink" },
                         { "value": "glass", "label": "prefs.appearance.language.glass" },
                         { "value": "tiles", "label": "prefs.appearance.language.tiles" },
-                        { "value": "classic", "label": "prefs.appearance.language.classic" }
+                        { "value": "classic", "label": "prefs.appearance.language.classic" },
+                        { "value": "device", "label": "prefs.appearance.language.device" }
                     ]
                 }
             ]
@@ -101,6 +107,8 @@ var category = {
                 {
                     "key": "theme.shape.corners",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "CornerThumb",
                     "label": "prefs.appearance.corner_style",
                     "description": "prefs.appearance.corner_style.desc",
                     "keywords": "corner style shape squircle cut chamfer tab rounded",
@@ -127,6 +135,7 @@ var category = {
                 },
                 {
                     "key": "theme.shape.cutSize",
+                    "advanced": true,
                     "type": "slider",
                     "min": 2,
                     "max": 32,
@@ -183,6 +192,7 @@ var category = {
                 },
                 {
                     "key": "theme.signatures.petalShape",
+                    "advanced": true,
                     "type": "selector",
                     "visibleWhen": {
                         "key": "theme.signatures.petals",
@@ -218,6 +228,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.intensity",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -232,6 +243,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.flicker",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "theme.surfaceEffect",
@@ -243,6 +255,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.grain",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -257,6 +270,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.brushHighlights",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "theme.surfaceEffect",
@@ -271,8 +285,17 @@ var category = {
     ]
 };
 
+// Quick tune (schema/macros.js: the macro sliders) right after "mode".
+category.sections.splice(1, 0, ...Macros.sections);
+
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);
+
+// Weather on surfaces (schema/weatherfx.js) closes "effects".
+category.sections.find(s => s.id === "effects").entries.push(...WeatherFx.entries);
+
+// Lighting (schema/lighting.js) right after "effects".
+category.sections.splice(category.sections.findIndex(s => s.id === "effects") + 1, 0, ...Lighting.sections);
 
 // Surface roles and the shell shadow (schema/surfaces.js), then Motion
 // (schema/motion.js: profile, speed, shell timing) close the page.

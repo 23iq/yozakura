@@ -1,0 +1,457 @@
+{
+ "protocol": 1,
+ "services": [
+  {
+   "name": "agents",
+   "methods": [
+    "cancel",
+    "close",
+    "configure",
+    "create",
+    "delete",
+    "events",
+    "list_agents",
+    "models",
+    "respond",
+    "send",
+    "sessions",
+    "update"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "apphooks",
+   "methods": [
+    "apply",
+    "ensure",
+    "revert",
+    "status"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "caffeine",
+   "methods": [
+    "get",
+    "restore",
+    "set"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "clipboard",
+   "methods": [
+    "check",
+    "clear",
+    "clearClipboard",
+    "copy",
+    "dataUrl",
+    "delete",
+    "emojiType",
+    "getContent",
+    "imagePath",
+    "list",
+    "reorder",
+    "setAlias",
+    "setTmpMode",
+    "swap",
+    "togglePin"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "compositor",
+   "methods": [
+    "dispatch",
+    "eval",
+    "render",
+    "state",
+    "write"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "config",
+   "methods": [
+    "patch",
+    "read",
+    "stateGet",
+    "stateSet",
+    "statesGet",
+    "statesSet",
+    "write"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "displays",
+   "methods": [
+    "apply",
+    "conflicts",
+    "identify",
+    "keep",
+    "list",
+    "moveConflicts",
+    "revert"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "exclusive",
+   "methods": [
+    "enable",
+    "plan",
+    "restore",
+    "status"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "extras",
+   "methods": [
+    "cancel",
+    "catalog",
+    "install",
+    "log",
+    "ollamaPull",
+    "setLoginShell",
+    "status",
+    "upgradeAndRetry"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "focus",
+   "methods": [
+    "get",
+    "set"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "fs",
+   "methods": [
+    "list",
+    "repos"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "gamemode",
+   "methods": [
+    "get",
+    "set",
+    "toggle"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "ipc",
+   "methods": [
+    "hello",
+    "methods"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "keyboard",
+   "methods": [
+    "active",
+    "apply",
+    "catalog",
+    "current",
+    "next"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "keystore",
+   "methods": [
+    "delete",
+    "get",
+    "has",
+    "list",
+    "set"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "linkpreview",
+   "methods": [
+    "fetch"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "mcp",
+   "methods": [
+    "all_tools",
+    "call",
+    "configure",
+    "servers",
+    "status",
+    "tools"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "mods",
+   "methods": [
+    "install",
+    "installDependencies",
+    "move",
+    "rebuild",
+    "remove",
+    "rollback",
+    "setBypassVersionCheck",
+    "setEnabled",
+    "setModsEnabled",
+    "setSetting",
+    "settings",
+    "status",
+    "update"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "network",
+   "methods": [
+    "connect",
+    "disconnect",
+    "enable",
+    "networks",
+    "status"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "nightlight",
+   "methods": [
+    "get",
+    "set",
+    "toggle"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "notify",
+   "methods": [
+    "send"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "ocr",
+   "methods": [
+    "barcode",
+    "text"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "powerprofile",
+   "methods": [
+    "available",
+    "current",
+    "set"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "preset",
+   "methods": [
+    "list",
+    "load",
+    "status"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "providers",
+   "methods": [
+    "list",
+    "models.info",
+    "ollama.probe",
+    "test"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "recorder",
+   "methods": [
+    "dir",
+    "start",
+    "status",
+    "stop"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "routines",
+   "methods": [
+    "delete",
+    "get",
+    "grant",
+    "list",
+    "run",
+    "save",
+    "tools"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "screenshot",
+   "methods": [
+    "capture",
+    "dir",
+    "frame",
+    "list",
+    "release"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "sleep",
+   "methods": [
+    "setCommands"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "system",
+   "methods": [
+    "shutdown"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "systemmonitor",
+   "methods": [
+    "configure",
+    "getState",
+    "getStatic"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "tasks",
+   "methods": [
+    "accept",
+    "activity",
+    "cancel",
+    "configure",
+    "create",
+    "debug",
+    "delete",
+    "diff",
+    "discard",
+    "followup",
+    "get",
+    "git",
+    "list",
+    "open",
+    "plan.update",
+    "project.get",
+    "project.set",
+    "run",
+    "settings",
+    "templates.get",
+    "templates.list"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "term",
+   "methods": [
+    "apply",
+    "presets",
+    "preview",
+    "status"
+   ],
+   "subscribe": false
+  },
+  {
+   "name": "timers",
+   "methods": [
+    "add",
+    "cancel",
+    "dismiss",
+    "list",
+    "parse",
+    "pause",
+    "pomodoro",
+    "quick",
+    "reminderAdd",
+    "reminderCancel",
+    "reset",
+    "restore",
+    "resume",
+    "start",
+    "stopwatch",
+    "stopwatchSet"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "transfers",
+   "methods": [
+    "action",
+    "configure",
+    "status"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "ui",
+   "methods": [
+    "run",
+    "toggle"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "usage",
+   "methods": [
+    "alerts.set",
+    "claudeLimits.enable",
+    "clear",
+    "info",
+    "limits.get",
+    "limits.set",
+    "record",
+    "session",
+    "summary"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "voice",
+   "methods": [
+    "cancel",
+    "press",
+    "release",
+    "start",
+    "status",
+    "stop",
+    "type",
+    "unload",
+    "warm"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "wallpaper",
+   "methods": [
+    "set"
+   ],
+   "subscribe": true
+  },
+  {
+   "name": "weather",
+   "methods": [
+    "get"
+   ],
+   "subscribe": false
+  }
+ ]
+}

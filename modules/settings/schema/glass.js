@@ -43,6 +43,7 @@ var sections = [
         "entries": [
             {
                 "key": "theme.glass.advanced.opacity",
+                "advanced": true,
                 "type": "slider",
                 "min": 0.2,
                 "max": 1,
@@ -63,6 +64,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.advanced.tintStrength",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 0.6,
@@ -83,6 +85,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.advanced.borderHighlight",
+                "advanced": true,
                 "type": "slider",
                 "min": 0,
                 "max": 1,
@@ -103,6 +106,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.tintRole",
+                "advanced": true,
                 "type": "selector",
                 "options": [
                     {
@@ -132,6 +136,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.highlightRole",
+                "advanced": true,
                 "type": "selector",
                 "options": [
                     {
@@ -173,6 +178,7 @@ var sections = [
         "entries": [
             {
                 "id": "theme.glass.surfaces",
+                "advanced": true,
                 "type": "custom",
                 "component": "GlassSurfacesEditor",
                 "keys": [
@@ -197,6 +203,8 @@ var sections = [
             },
             {
                 "key": "theme.glass.surfaces.windows.activeOpacity",
+                "advanced": true,
+                "compositor": ["hyprland", "mango"],
                 "type": "slider",
                 "min": 0.3,
                 "max": 1,
@@ -217,6 +225,8 @@ var sections = [
             },
             {
                 "key": "theme.glass.surfaces.windows.inactiveOpacity",
+                "advanced": true,
+                "compositor": ["hyprland", "mango"],
                 "type": "slider",
                 "min": 0.3,
                 "max": 1,

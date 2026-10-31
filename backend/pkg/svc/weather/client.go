@@ -19,6 +19,9 @@ const (
 // WeatherResponse mirrors the open-meteo payload consumed by WeatherService.qml.
 type WeatherResponse struct {
 	Error          string        `json:"error,omitempty"`
+	// Grid point open-meteo answered for (the shell's sun lighting)
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 	CurrentWeather *CurrentWeather `json:"current_weather"`
 	Daily          *Daily        `json:"daily"`
 }

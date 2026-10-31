@@ -59,7 +59,7 @@ Singleton {
     // only when that panel is a classic bar (BarContent.integratedDockEnabled).
     function integratedDockHosted(screen) {
         const list = configuredPanels(screen);
-        const i = PanelLayout.primaryIndex(list, Config.notch ? Config.notch.position : "top");
+        const i = PanelLayout.primaryIndex(list, PanelLayout.pairEdge(Config.bar, Config.notch));
         return i !== -1 && list[i].style === "classic";
     }
 
@@ -111,8 +111,8 @@ Singleton {
         return EdgeLayout.sheetSide(envFor(screen), pref || "auto");
     }
 
-    function sheetRect(screen, pref, width) {
-        return EdgeLayout.sheetRect(envFor(screen), pref || "auto", width);
+    function sheetRect(screen, pref, width, height, margin) {
+        return EdgeLayout.sheetRect(envFor(screen), pref || "auto", width, height || 0, margin || 0);
     }
 
     function spotlightRect(screen, size) {
@@ -127,6 +127,25 @@ Singleton {
     // `.dir` is where its panels open (toward the screen center)
     function notchRect(screen, size) {
         return EdgeLayout.notchRect(envFor(screen), size);
+    }
+
+    // Floating card of `size` {w, h} beside the bar (CardHost), clear of
+    // the corner claimed on its screen
+    function cardRect(screen, size, margin) {
+        const claimed = screen && screen.name ? (root.cornerClaims[screen.name] || "") : "";
+        return EdgeLayout.cardRect(envFor(screen), size, "auto", margin, claimed);
+    }
+
+    // Corner taken per screen name (the corner toasts: CornerToasts), so
+    // the card never lands on them; "" = none
+    property var cornerClaims: ({})
+
+    function claimCorner(name, corner) {
+        if (!name || (root.cornerClaims[name] || "") === (corner || ""))
+            return;
+        const m = Object.assign({}, root.cornerClaims);
+        m[name] = corner || "";
+        root.cornerClaims = m;
     }
 
     function freeCorner(screen, pref) {

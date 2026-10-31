@@ -70,6 +70,16 @@ Item {
             color: Look.groupHighlight
         }
 
+        // Dark bottom edge: the other half of a bevel (device).
+        Rectangle {
+            visible: !root.bare && Look.groupShade.a > 0
+            x: box.radius
+            y: box.height - box.border.width - height
+            width: box.width - box.radius * 2
+            height: Space.hairline
+            color: Look.groupShade
+        }
+
         Column {
             id: inner
             x: root.padding

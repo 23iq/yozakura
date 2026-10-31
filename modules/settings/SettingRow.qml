@@ -5,7 +5,6 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components.kit
 import qs.modules.services
-import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.editors
 import qs.modules.settings.previews
@@ -13,12 +12,16 @@ import qs.modules.settings.store
 import "SchemaUtil.js" as SchemaUtil
 import "Registry.js" as Registry
 import "Ui.js" as Ui
+import "../shell/hosts/HostResolve.js" as HostResolve
 
 // One schema entry: label (body) and description (caption) on the left,
 // the typed control on the right (or stacked full width for rich editors)
 // and a quiet reset while the value differs from its default, plus an
-// optional live preview below. Hidden entries (visibleWhen) collapse with
-// an animation.
+// optional live preview below. Hidden entries (visibleWhen, or `advanced`
+// in the Simple view) collapse with an animation; a greyed one
+// (enabledWhen) says why below it (DisabledNote). A toggle with
+// `invert: true` shows on for a false value (a positive name for a
+// double-negative key such as notch.disableHoverExpansion).
 Item {
     id: row
 
@@ -26,33 +29,47 @@ Item {
 
     readonly property string entryId: SchemaUtil.entryId(entry)
     readonly property string type: entry.type
-    readonly property bool shown: SettingsStore.visible(entry)
+    readonly property bool shown: SettingsStore.visible(entry) && SettingsStore.inView(entry)
     readonly property bool active: SettingsStore.enabled(entry)
+    // The row above in the section: a run of rows greyed by the same
+    // condition says why once, under its first shown row.
+    property var previousEntry: null
+    readonly property bool noteRepeats: !!previousEntry && JSON.stringify(previousEntry.enabledWhen) === JSON.stringify(entry.enabledWhen) && SettingsStore.visible(previousEntry) && SettingsStore.inView(previousEntry)
+    readonly property var note: row.active || row.noteRepeats ? null : SettingsStore.disabledNote(entry)
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < 600
-    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && narrow) || (narrow && type === "slider")
+    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && (narrow || entry.display === "cards")) || (narrow && (type === "slider" || type === "macro"))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
+    // A host/style picker (entry.surface) while the notch is off: the
+    // option it shows as instead of the chosen one ("" otherwise)
+    readonly property string shownAs: {
+        if (!entry.surface)
+            return "";
+        const host = HostResolve.shownInstead(HostResolve.layoutWith(entry.surface, row.value), entry.surface, {
+            "notchEnabled": SettingsStore.get("notch.enabled") !== false
+        });
+        const opt = host ? (entry.options || []).find(o => o.value === host) : null;
+        return opt ? I18n.t(opt.label) : host;
+    }
 
     objectName: "settingRow:" + entryId
-    implicitHeight: shown ? body.implicitHeight : 0
+    // Showing / hiding (Simple <-> All, visibleWhen) folds the row open or
+    // shut; its own content changes (wrapping on a resize) apply at once, so
+    // a window resize never animates hundreds of row heights.
+    property real unfolded: shown ? 1 : 0
+    implicitHeight: (body.implicitHeight + (note ? disabledNote.implicitHeight + Space.s : 0)) * unfolded
     height: implicitHeight
-    opacity: shown ? 1 : 0
+    opacity: unfolded
     visible: opacity > 0
-    clip: true
+    clip: unfolded < 1
 
-    Behavior on implicitHeight {
-        enabled: Config.animDuration > 0
+    Behavior on unfolded {
+        enabled: Motion.glide.duration > 0
         NumberAnimation {
-            duration: Motion.morph.duration
-            easing.type: Motion.morph.easing
-        }
-    }
-    Behavior on opacity {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Motion.enter.duration
+            duration: row.shown ? Motion.glide.duration : Motion.exit.duration
+            easing.type: row.shown ? Motion.glide.easing : Motion.exit.easing
         }
     }
 
@@ -96,31 +113,12 @@ Item {
             width: parent.width
             spacing: Space.l
 
-            ColumnLayout {
+            SettingLabel {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 Layout.minimumHeight: Space.rowHeight - body.topPadding - body.bottomPadding
-                spacing: Space.xs / 2
-
-                Item {
-                    Layout.fillHeight: true
-                }
-                KitText {
-                    Layout.fillWidth: true
-                    role: "body"
-                    text: I18n.t(row.entry.label)
-                    wrapMode: Text.WordWrap
-                }
-                KitText {
-                    Layout.fillWidth: true
-                    visible: !!row.entry.description
-                    role: "caption"
-                    text: row.entry.description ? I18n.t(row.entry.description) : ""
-                    wrapMode: Text.WordWrap
-                }
-                Item {
-                    Layout.fillHeight: true
-                }
+                entry: row.entry
+                shownAs: row.shownAs
             }
 
             // Reset to default: a quiet button before the control, there only
@@ -148,7 +146,7 @@ Item {
             Loader {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : -1
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? Math.min(Space.px(380), row.width * 0.5) : -1)
                 active: row.built && !row.stacked
                 sourceComponent: row.controlComponent()
             }
@@ -172,6 +170,13 @@ Item {
         }
     }
 
+    DisabledNote {
+        id: disabledNote
+        y: body.implicitHeight
+        width: parent.width
+        note: row.note
+    }
+
     function controlComponent() {
         switch (type) {
         case "toggle":
@@ -181,7 +186,7 @@ Item {
         case "number":
             return numberComponent;
         case "selector":
-            return selectorComponent;
+            return entry.display === "cards" ? cardsComponent : selectorComponent;
         case "text":
             return textComponent;
         case "font":
@@ -198,6 +203,8 @@ Item {
             return screensComponent;
         case "multiselect":
             return multiselectComponent;
+        case "macro":
+            return macroComponent;
         }
         return null;
     }
@@ -205,8 +212,8 @@ Item {
     Component {
         id: toggleComponent
         ToggleControl {
-            checked: !!row.value
-            onToggled: v => SettingsStore.set(row.entry.key, v)
+            checked: row.entry.invert ? !row.value : !!row.value
+            onToggled: v => SettingsStore.set(row.entry.key, row.entry.invert ? !v : v)
         }
     }
 
@@ -317,6 +324,23 @@ Item {
             options: row.entry.options
             values: SchemaUtil.plain(row.value) || []
             onChanged: v => SettingsStore.set(row.entry.key, v)
+        }
+    }
+
+    Component {
+        id: cardsComponent
+        CardSelector {
+            entry: row.entry
+            options: row.entry.options
+            value: row.value
+            onSelected: v => SettingsStore.set(row.entry.key, v)
+        }
+    }
+
+    Component {
+        id: macroComponent
+        MacroSlider {
+            entry: row.entry
         }
     }
 

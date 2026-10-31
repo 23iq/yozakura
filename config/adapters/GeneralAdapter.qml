@@ -8,4 +8,6 @@ JsonAdapter {
     property string terminalCommand: "$TERMINAL -e $COMMAND"
     property bool onboardingDone: false
     property bool newLookOffered: false
+    property bool autoSavePreset: false
+    property bool settingsShowAll: false
 }

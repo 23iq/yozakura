@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -155,7 +156,7 @@ func runBrightnessRestore(monitor string) {
 // Empty positional args are passed through to preserve the documented
 // "<monitor>" parameter that distinguishes "all" from a specific target.
 func daemonRun(args ...string) {
-	cmd := exec.Command(paths.DaemonBinary(), args...)
+	cmd := exec.CommandContext(context.Background(), paths.DaemonBinary(), args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -227,7 +228,7 @@ func qsPidPath() string {
 // down" or "IPC disconnect" to the user.
 func notifyQsBrightness(pid int, method, arg0, monitor string) {
 	args := []string{"ipc", "--pid", strconv.Itoa(pid), "call", "brightness", method, arg0, monitor}
-	cmd := exec.Command("qs", args...)
+	cmd := exec.CommandContext(context.Background(), "qs", args...)
 	cmd.Stdout = nil
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

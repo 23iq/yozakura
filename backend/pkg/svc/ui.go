@@ -25,7 +25,7 @@ func (u *UIService) Register(srv *ipc.Server) {
 }
 
 func (u *UIService) run(params RawParams) (any, error) {
-	cmd := paramsGet(params, "command")
+	cmd := ParseParams(params).Str("command")
 	if cmd == "" {
 		return nil, errorsNew("ui.run: missing command")
 	}
@@ -38,7 +38,7 @@ func (u *UIService) run(params RawParams) (any, error) {
 // toggle carries state-flipping commands (e.g. bar) as a distinct event
 // kind, separate from the run actions.
 func (u *UIService) toggle(params RawParams) (any, error) {
-	cmd := paramsGet(params, "command")
+	cmd := ParseParams(params).Str("command")
 	if cmd == "" {
 		return nil, errorsNew("ui.toggle: missing command")
 	}

@@ -17,16 +17,18 @@ var data = {
         "weight": "bold"
     },
     // Type roles: body follows `font`; heading "" = the body font;
-    // headingCase: none | upper | lower | title.
+    // headingCase: none | upper | lower | title; editorial: the serif
+    // display face of editorial text (sentence bar), "" = the system serif.
     "type": {
         "heading": "",
-        "headingCase": "none"
+        "headingCase": "none",
+        "editorial": ""
     },
     "enableCorners": true,
     "animDuration": 300,
     // Metrics density: compact | cozy | roomy (cozy = the historical sizes).
     "density": "cozy",
-    // Visual language (modules/theme/VisualLanguage.js): ink | glass | tiles | classic.
+    // Visual language (modules/theme/VisualLanguage.js): ink | glass | tiles | classic | device.
     "language": "ink",
     // Corner shape: round | squircle | cut | tab; popupCorners "" follows corners.
     "shape": {
@@ -46,6 +48,31 @@ var data = {
         "brushHighlight": true,
         "petals": true,
         "petalShape": "petal"
+    },
+    // One light source for the shell's shadows (modules/theme/Lighting.qml):
+    // mode off (the shadow* values as is) | fixed (light from `angle`,
+    // degrees clockwise from the top) | sun (the real sun at the weather
+    // location). lantern: off | night | always (a soft glow follows the
+    // pointer over shell surfaces). strength: subtle | normal | dramatic
+    // scales shadows, lit edges, the sun wash, the night dim and the lantern.
+    "lighting": {
+        "mode": "off",
+        "angle": -35,
+        "lantern": "off",
+        "strength": "normal"
+    },
+    // Weather on surfaces (modules/theme/WeatherFx.qml): the current weather
+    // drawn onto the shell's surfaces. mode off | subtle | vivid; per-effect
+    // toggles: rain (droplets), frost (frost + settling snow below 0 °C),
+    // heat (shimmer on the bar above 30 °C), fog (haze), seasonal (a petal
+    // in spring, a leaf in autumn landing on the bar).
+    "weatherFx": {
+        "mode": "off",
+        "rain": true,
+        "frost": true,
+        "heat": false,
+        "fog": true,
+        "seasonal": false
     },
     "paletteTransitionDuration": 600,
     "shadowOpacity": 0.5,

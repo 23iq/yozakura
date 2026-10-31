@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
@@ -13,6 +15,7 @@ import qs.modules.globals
 import qs.modules.components
 import qs.config
 import qs.modules.notifications
+import qs.modules.notifications.strips
 import qs.modules.shell.rehome
 
 PanelWindow {
@@ -33,9 +36,12 @@ PanelWindow {
     // Dynamic keyboard focus: Exclusive when a notch module is open (so text fields work),
     // None otherwise (so compositor receives normal input).
     WlrLayershell.keyboardFocus: {
-        if (notchContent.screenNotchOpen || notchContent.panelModal) {
+        if (unifiedPanel.notchOpen || unifiedPanel.notchPanelModal) {
             return WlrKeyboardFocus.Exclusive;
         }
+        // An open notification strip reads Enter / Delete
+        if (stripsView.wantsKeyboard)
+            return WlrKeyboardFocus.OnDemand;
         return WlrKeyboardFocus.None;
     }
     WlrLayershell.namespace: Brand.namespace("")
@@ -44,7 +50,7 @@ PanelWindow {
 
     // Whether we need to capture full-screen input for click-outside detection.
     // True when notch modules are open OR any FocusGrab is active (e.g., BarPopups).
-    readonly property bool needsFullScreenInput: notchContent.screenNotchOpen || notchContent.panelModal || FocusGrabManager.hasActiveGrab
+    readonly property bool needsFullScreenInput: notchOpen || notchPanelModal || FocusGrabManager.hasActiveGrab
 
     // Bar panels of this screen (bar.panels, or the legacy bar); the
     // primary one is what the notch, frame and activities pair with
@@ -83,15 +89,18 @@ PanelWindow {
     readonly property alias dockFullscreen: dockContent.activeWindowFullscreen
     readonly property int dockHeight: dockContent.dockSize + dockContent.totalMargin
 
-    readonly property alias notchHoverActive: notchContent.hoverActive
-    readonly property alias notchOpen: notchContent.screenNotchOpen
-    readonly property alias notchReveal: notchContent.reveal
+    // The notch exists only while notch.enabled (notchLoader); every
+    // reader goes through these null-safe values or Visibilities.notchRect
+    readonly property NotchContent notchContent: notchLoader.item as NotchContent
+    readonly property bool notchHoverActive: notchContent ? notchContent.hoverActive : false
+    readonly property bool notchOpen: notchContent ? notchContent.screenNotchOpen : false
+    readonly property bool notchReveal: notchContent ? notchContent.reveal : false
+    readonly property bool notchPanelModal: notchContent ? notchContent.panelModal : false
 
     // Generic names for external compatibility (Visibilities expects these on the panel object)
     readonly property bool pinned: barPinned
     readonly property bool reveal: barEnabled ? barContent.reveal : false
     readonly property bool hoverActive: barHoverActive // Default hoverActive points to bar
-    readonly property alias notch_hoverActive: notchContent.hoverActive // Used by bar to check notch
 
     readonly property bool unifiedEffectActive: false // Flag to notify children to disable internal borders
 
@@ -112,7 +121,6 @@ PanelWindow {
         Visibilities.registerBarPanel(screen.name, unifiedPanel);
         Visibilities.registerNotchPanel(screen.name, unifiedPanel);
         Visibilities.registerDockPanel(screen.name, dockContent);
-        Visibilities.registerNotch(screen.name, notchContent.notchContainerRef);
         Visibilities.registerDock(screen.name, dockContent);
     }
 
@@ -123,7 +131,6 @@ PanelWindow {
         Visibilities.unregisterNotchPanel(screen.name);
         Visibilities.unregisterDockPanel(screen.name);
         Visibilities.unregisterBar(screen.name);
-        Visibilities.unregisterNotch(screen.name);
         Visibilities.unregisterDock(screen.name);
     }
 
@@ -139,16 +146,15 @@ PanelWindow {
     mask: Region {
         // Full-screen capture when any module/popup is open
         item: unifiedPanel.needsFullScreenInput ? fullScreenMask : null
-        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
+        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.stripsRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
     }
 
     readonly property Region notchRegion: Region {
-        // A disabled notch takes input only while it shows a view
-        item: ShellLayout.notchEnabled || notchContent.reveal ? notchContent.notchHitbox : null
+        item: unifiedPanel.notchContent ? unifiedPanel.notchContent.notchHitbox : null
     }
     // A notch moved off the bar: the bridge from its edge down to it
     readonly property Region notchStemRegion: Region {
-        item: notchContent.notchStemHitbox
+        item: unifiedPanel.notchContent ? unifiedPanel.notchContent.notchStemHitbox : null
     }
     readonly property Region dockRegion: Region {
         // Only include the dock hitbox if the dock is actually enabled and visible on this screen.
@@ -163,6 +169,9 @@ PanelWindow {
     readonly property Region toastRegion: Region {
         item: cornerToasts.active ? cornerToasts.hitbox : null
     }
+    readonly property Region stripsRegion: Region {
+        item: stripsView.active ? stripsView.hitbox : null
+    }
     readonly property Region cornerPillsRegion: Region {
         item: cornerPills.hitbox
     }
@@ -171,11 +180,12 @@ PanelWindow {
     FocusGrab {
         id: focusGrab
         windows: [unifiedPanel]
-        active: notchContent.screenNotchOpen || notchContent.panelModal
+        active: unifiedPanel.notchOpen || unifiedPanel.notchPanelModal
 
         onCleared: {
             Visibilities.setActiveModule("");
-            notchContent.dismissPanel();
+            if (unifiedPanel.notchContent)
+                unifiedPanel.notchContent.dismissPanel();
         }
     }
 
@@ -193,8 +203,8 @@ PanelWindow {
 
         onClicked: {
             FocusGrabManager.clearTopGrab();
-            if (notchContent.panelModal)
-                notchContent.dismissPanel();
+            if (unifiedPanel.notchPanelModal)
+                unifiedPanel.notchContent.dismissPanel();
         }
     }
 
@@ -206,13 +216,16 @@ PanelWindow {
         id: visualContent
         anchors.fill: parent
 
+        // Pointer of the cursor lantern for every surface of this panel
+        LanternScope {}
+
         // Shadows below every surface, each re-rendered on its own
         PanelShadows {
             anchors.fill: parent
             z: 0
             frame: frameContent
             bars: panelHost.bars
-            notch: notchContent
+            notch: unifiedPanel.notchContent
             dock: dockContent
             activities: activityHost
             barEnabled: unifiedPanel.barEnabled
@@ -250,17 +263,21 @@ PanelWindow {
             anchors.fill: parent
             screenName: unifiedPanel.targetScreen.name
             bar: unifiedPanel.barContent
-            notch: notchContent
+            notch: unifiedPanel.notchContent
             barEnabled: unifiedPanel.barEnabled
             z: 3
         }
 
-        NotchContent {
-            id: notchContent
-            unifiedEffectActive: unifiedPanel.unifiedEffectActive
+        // The island: only while notch.enabled, so nothing depends on it
+        Loader {
+            id: notchLoader
             anchors.fill: parent
-            screen: unifiedPanel.targetScreen
+            active: Config.notchReady && ShellLayout.notchEnabled
             z: 4
+            sourceComponent: NotchContent {
+                unifiedEffectActive: unifiedPanel.unifiedEffectActive
+                screen: unifiedPanel.targetScreen
+            }
         }
 
         // Re-homed content when the bar and/or notch are off (ShellLayout)
@@ -276,7 +293,15 @@ PanelWindow {
             id: cornerToasts
             anchors.fill: parent
             panel: unifiedPanel
-            notch: notchContent
+            screenName: unifiedPanel.targetScreen.name
+            z: 5
+        }
+
+        // Hanging strips (notifications.presentation "strips")
+        StripsView {
+            id: stripsView
+            anchors.fill: parent
+            panel: unifiedPanel
             screenName: unifiedPanel.targetScreen.name
             z: 5
         }

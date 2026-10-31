@@ -17,6 +17,7 @@ h.module("Quickshell", {
     "Scope": "Item {}",
     "Singleton": "QtObject {}",
     "ShellScreen": "QtObject { property string name; property int width; property int height }",
+    "Region": "QtObject { property Item item }",
 })
 h.singleton("Quickshell", "Quickshell", 'QtObject { property var screens: [{name: "A"}, {name: "B"}] }')
 h.singleton("qs.config", "Config", """QtObject {
@@ -26,6 +27,7 @@ h.singleton("qs.config", "Config", """QtObject {
         property QtObject dashboard: QtObject { property string host: "sheet" }
         property QtObject sheet: QtObject { property string side: "auto" }
         property QtObject cheatsheet: QtObject { property string host: "sheet" }
+        property QtObject aiquick: QtObject { property string host: "auto" }
     }
     property QtObject bar: QtObject { property string position: "top"; property bool frameEnabled: false }
     property QtObject dock: QtObject { property string position: "bottom"; property int height: 64; property bool enabled: true }
@@ -38,6 +40,7 @@ QtObject {
     property int d: Config.animDuration
     property QtObject enter: QtObject { property int duration: Motion.d; property int easing: Easing.OutCubic; property real overshoot: 1 }
     property QtObject exit: QtObject { property int duration: Math.round(Motion.d * 0.7); property int easing: Easing.OutCubic; property real overshoot: 1 }
+    property QtObject glide: QtObject { property int duration: Motion.d; property int easing: Easing.OutCubic; property real overshoot: 1 }
 }""",
     "Metrics": "pragma Singleton\nQtObject { property int padding: 16; property int sheetW: 420 }",
     "BarMetrics": "pragma Singleton\nQtObject { property int moduleSize: 40; property int notchRestHeight: 36 }",
@@ -48,7 +51,18 @@ for f in ("Motion", "Metrics", "BarMetrics"):
     p = h.root / "qs/modules/theme" / f"{f}.qml"
     p.write_text("import qs.config\n" + p.read_text())
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }", "Shadow": "Item {}"})
+# The card host (HostedSurfaces: AI quick ask; tests/card-host.test.py)
+h.module("qs.modules.components.kit", {
+    "Space": "pragma Singleton\nQtObject { property int m: 12; property int l: 16 }",
+    "Surface": "Item { property int padding; property bool floating; default property alias content: body.data\n"
+               "    Item { id: body; anchors.fill: parent } }",
+})
 h.module("qs.modules.services", {"FocusGrab": "QtObject { property var windows; property bool active; signal cleared }"})
+h.singleton("qs.modules.services", "ShellLayout", """QtObject {
+    property bool notchEnabled: true
+    property bool barEnabled: true
+    property var layout: ({bar: {edges: ["top"]}})
+}""")
 h.singleton("qs.modules.services", "Visibilities", """QtObject {
     id: vroot
     property Component flags: Component { QtObject { property bool launcher; property bool dashboard; property bool powermenu; property bool tools; property bool aiquick; property bool keybinds } }
@@ -73,14 +87,19 @@ h.copy("modules/shell/EdgeService.qml", "qs/modules/shell")
 h.module("qs.modules.shell", {})
 
 src = (REPO / "modules/shell/hosts/SurfaceHost.qml").read_text()
-item = src.replace("import Quickshell.Wayland\n", "").replace("PanelWindow {", "Item {\n    property var screen\n    width: 1920\n    height: 1080", 1)
+item = src.replace("import Quickshell.Wayland\n", "").replace("PanelWindow {", "Item {\n    property var screen\n    property var mask\n    width: 1920\n    height: 1080", 1)
 item = re.sub(r"\n    anchors \{[^}]*\}", "", item, count=1)
 item = "\n".join(ln for ln in item.split("\n") if not re.match(r'\s*(color: "transparent"|exclusionMode:|WlrLayershell\.)', ln))
 HOSTS = "qs/modules/shell/hosts"
 h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
-for f in ("HostFrame", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
+for f in ("HostFrame", "CardHost", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS, replace={"layer.enabled: true": "layer.enabled: false"})
 h.module("qs.modules.shell.hosts", {})
+h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})
+h.module("qs.modules.widgets.tools", {"ToolsMenuView": "Item {}"})
+h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
+h.copy("modules/notch/NotchMenuViews.qml", "qs/modules/notch")
+h.module("qs.modules.notch", {})
 
 root = h.load("""import QtQuick
 import QtQuick.Window
@@ -88,6 +107,7 @@ import Quickshell
 import qs.modules.shell.hosts
 import qs.config
 import qs.modules.services
+import qs.modules.notch
 Window {
     width: 1920; height: 1080; visible: true
     property ShellScreen a: ShellScreen { name: "A"; width: 1920; height: 1080 }
@@ -108,6 +128,7 @@ Window {
         function pushView(v) { pushes++; stackView.depth++; stackView.currentItem = v; }
     }
     NotchHostedSurfaces { objectName: "nhA"; screen: a; vis: Visibilities.getForScreen("A"); container: container }
+    NotchMenuViews { vis: Visibilities.getForScreen("A"); container: container }
     Item {
         id: otherContainer
         property bool isShowingDefault: true
@@ -252,5 +273,42 @@ h.eval(root, 'container.stackView.depth = 1; container.stackView.currentItem = n
 h.eval(root, 'Visibilities.setActiveModule("")')
 pump(10)
 assert not ev(nhA, "host.isOpen") and ev(c, "stackView.depth") == 1
+# The notch off: an explicit "notch" host opens off it at runtime (spotlight),
+# menus go to the overlay and never push onto the notch stack; config untouched.
+h.eval(root, 'Config.layout.launcher.host = "notch"')
+h.eval(root, "ShellLayout.notchEnabled = false")
+h.eval(root, 'Visibilities.setActiveModule("launcher")')
+pump(10)
+assert not ev(nhA, "host.isOpen") and ev(ev(hsA, "spotlight"), "isOpen"), "notch-off launcher not in spotlight"
+assert ev(root, "Config.layout.launcher.host") == "notch", "config rewritten"
+assert ev(root, 'HostRouter.hostFor("powermenu")') == "overlay"
+h.eval(root, 'Visibilities.setActiveModule("")')
+pump(10)
+pushes = ev(c, "pushes")
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = true')
+pump(20)
+assert ev(c, "pushes") == pushes and ev(c, "stackView.depth") == 1, "power menu pushed onto a disabled notch"
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = false')
+# The notch on: the auto power menu is the notch's own view again
+h.eval(root, "ShellLayout.notchEnabled = true")
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = true')
+pump(20)
+assert ev(c, "pushes") == pushes + 1, "auto power menu not pushed onto the notch"
+h.eval(root, 'Visibilities.getForScreen("A").powermenu = false')
+pump(20)
+assert ev(c, "stackView.depth") == 1, "power menu not popped"
+# A quick ask open on the notch, rerouted to the card while open: popped,
+# and closing it later pops nothing it does not own
+h.eval(root, 'Visibilities.getForScreen("A").aiquick = true')
+pump(20)
+assert ev(c, "stackView.depth") == 2, "quick ask not pushed onto the notch"
+h.eval(root, 'Config.layout.aiquick.host = "card"')
+pump(20)
+assert ev(root, 'HostRouter.hostFor("aiquick")') == "card"
+assert ev(c, "stackView.depth") == 1, "rerouted quick ask left on the notch stack"
+h.eval(root, 'Visibilities.getForScreen("A").aiquick = false')
+pump(20)
+assert ev(c, "stackView.depth") == 1
+h.eval(root, 'Config.layout.aiquick.host = "auto"')
 print("hosts: ok")
 h.exit(0)

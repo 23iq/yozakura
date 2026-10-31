@@ -121,7 +121,10 @@ Item {
     // Videos: only with a matte and when the subject actually reaches the
     // time at some point, otherwise playing the (2x taller) matte stream
     // buys nothing.
-    readonly property bool canDepth: placement.depth && info !== null && (isVideo ? (!!info.matte && placement.reach > 0.01) : !!info.cutout)
+    // A panorama pans its image away from the crop the cut-out matches: the
+    // subject comes back through desktop depth layering there instead.
+    readonly property bool panorama: !isVideo && (Config.desktop.wallpaperMode ?? "fill") === "panorama"
+    readonly property bool canDepth: placement.depth && info !== null && !panorama && (isVideo ? (!!info.matte && placement.reach > 0.01) : !!info.cutout)
     readonly property bool wantsDepth: canDepth && (!isVideo || matteActive)
     readonly property bool depthActive: wantsDepth && (isVideo || cutout.status === Image.Ready)
     // Sharpened matte edge (render time, so cached masks stay valid).

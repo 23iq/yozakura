@@ -7,6 +7,29 @@
 
 var EXTENSIONS = ["jpg", "jpeg", "png", "webp", "tif", "tiff", "gif", "mp4", "webm", "mov", "avi", "mkv"];
 
+// Depth maps for the panorama parallax / depth layering live next to their
+// image as <name>.depth.png: they are not wallpapers themselves.
+var DEPTH_SUFFIX = /\.depth\.png$/i;
+
+function isDepthMap(path) {
+    return DEPTH_SUFFIX.test(String(path || ""));
+}
+
+// Scan output -> { wallpapers, depthMaps }, both sorted, empties dropped.
+function splitScan(files) {
+    var walls = [];
+    var maps = [];
+    (files || []).forEach(function (f) {
+        if (!f)
+            return;
+        (isDepthMap(f) ? maps : walls).push(f);
+    });
+    return {
+        wallpapers: walls.sort(),
+        depthMaps: maps.sort()
+    };
+}
+
 function normalize(path) {
     var p = String(path || "").trim();
     while (p.length > 1 && p.charAt(p.length - 1) === "/")
@@ -24,6 +47,24 @@ function effective(primary, extras) {
             out.push(p);
     }
     return out;
+}
+
+// BUNDLED is the tail of the example wallpapers folder shipped with the
+// shell. Its absolute location moves when the shell does (each Nix update is
+// a new store path, mods run from a generation dir), so a saved path into
+// an older copy is moved onto the current one; other paths stay as they are.
+var BUNDLED = "/assets/wallpapers_example";
+
+function rebaseBundled(path, bundledDir) {
+    var p = String(path || "");
+    var dir = normalize(bundledDir);
+    var at = p.indexOf(BUNDLED);
+    if (!dir || at < 0)
+        return p;
+    var tail = p.substring(at + BUNDLED.length);
+    if (tail !== "" && tail.charAt(0) !== "/")
+        return p;
+    return dir + tail;
 }
 
 // Extra folders only (normalized, primary and duplicates removed).

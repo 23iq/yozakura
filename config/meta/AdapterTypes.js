@@ -18,6 +18,7 @@ var types = {
         "animDuration": "int",
         "shape.cutSize": "int",
         "popup.gap": "int",
+        "lighting.angle": "int",
         "fontSize": "int",
         "monoFontSize": "int",
         "paletteTransitionDuration": "int",
@@ -123,6 +124,7 @@ var types = {
         "historySize": "int",
         "maxVisible": "int",
         "screens": "list<string>",
+        "strips.maxVisible": "int",
         "timeout": "int"
     },
     "apps": {

@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"yozakura/backend/pkg/brand"
 )
 
 // VADModelFile is the Silero VAD model scripts/voice_setup.sh downloads.
@@ -20,7 +22,17 @@ func NewInstall(dataDir string) Install {
 	return Install{Root: filepath.Join(dataDir, "whisper")}
 }
 
-func (i Install) ServerBin() string { return filepath.Join(i.Root, "bin", "whisper-server") }
+// ServerBin is the whisper-server a packaging wrapper provides
+// ($<APP>_WHISPER_BIN_DIR, Nix's whisper-cpp) or the one voice_setup.sh
+// built under Root.
+func (i Install) ServerBin() string {
+	if dir := brand.Env("WHISPER_BIN_DIR"); dir != "" {
+		if bin := filepath.Join(dir, "whisper-server"); fileExists(bin) {
+			return bin
+		}
+	}
+	return filepath.Join(i.Root, "bin", "whisper-server")
+}
 func (i Install) ModelsDir() string { return filepath.Join(i.Root, "models") }
 func (i Install) VADModel() string  { return filepath.Join(i.ModelsDir(), VADModelFile) }
 

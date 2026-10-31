@@ -8,7 +8,9 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/paths"
 )
 
 // Hyprland appearance overlay.
@@ -62,9 +64,13 @@ func HyprlandOverlayFiles(in Input, dir string, gameMode bool) map[string]string
 	}
 }
 
-// shellBinary is the command that starts the shell: the running CLI by
-// absolute path, falling back to its name on PATH. Overridable in tests.
+// shellBinary is the command that starts the shell: the packaging launcher
+// when one is set (paths.Launcher), else the running CLI by absolute path,
+// falling back to its name on PATH. Overridable in tests.
 var shellBinary = func() string {
+	if l := paths.Launcher(""); l != "" {
+		return l
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return brand.AppID

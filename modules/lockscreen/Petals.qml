@@ -4,20 +4,26 @@ import QtQuick.Particles
 import qs.config
 import qs.modules.theme
 import qs.modules.components.signatures
+import qs.modules.components.kit
 
 // Signature (theme.signatures.petals): a few sakura petals, or maple leaves
 // (theme.signatures.petalShape "leaf"), falling slowly behind the lock screen
 // content. At most `cap` alive at once, palette colors; no particle system
-// exists while the signature is off or quiet.
+// exists while the signature is off or quiet, or the motion profile is off
+// (even when the profile does not drive the shell's own durations).
+// Petal spin is a share of `lifeMs` (Motion has no ambient token).
 Loader {
     id: root
 
     readonly property int cap: 40
     readonly property int lifeMs: 20000
+    // One full turn takes 0.45-0.9 of this (petals), leaves turn slower.
+    readonly property int spinMs: lifeMs
     readonly property bool leaves: (Config.theme.signatures || {}).petalShape === "leaf"
+    readonly property bool motionOff: !!Config.motionProfile && !!Config.motionProfile.disabled
 
     anchors.fill: parent
-    active: Signatures.petals
+    active: Signatures.petals && !motionOff
 
     sourceComponent: Item {
         id: sky
@@ -38,8 +44,8 @@ Loader {
             lifeSpan: root.lifeMs
             lifeSpanVariation: 4000
             maximumEmitted: root.cap
-            size: 9
-            sizeVariation: 4
+            size: Space.s
+            sizeVariation: Space.xs
             velocity: AngleDirection {
                 angle: 90
                 angleVariation: 12
@@ -66,15 +72,15 @@ Loader {
             Rectangle {
                 id: petalItem
                 readonly property int pick: Math.floor(Math.random() * sky.tints.length)
-                width: 9
-                height: 6
+                width: Space.s
+                height: Math.round(Space.s * 0.66)
                 radius: height / 2
                 color: Qt.alpha(sky.tints[pick], 0.45)
                 rotation: Math.random() * 360
                 RotationAnimator on rotation {
                     from: petalItem.rotation
                     to: petalItem.rotation + (Math.random() < 0.5 ? -360 : 360)
-                    duration: 9000 + Math.random() * 9000
+                    duration: Math.round(root.spinMs * (0.45 + Math.random() * 0.45))
                     loops: Animation.Infinite
                 }
             }
@@ -87,13 +93,13 @@ Loader {
                 id: leafItem
                 readonly property int pick: Math.floor(Math.random() * sky.tints.length)
                 objectName: "mapleLeaf"
-                size: 10 + Math.random() * 6
+                size: Space.s + Math.random() * Space.s * 0.75
                 color: Qt.alpha(sky.tints[pick], 0.6)
                 rotation: Math.random() * 360
                 RotationAnimator on rotation {
                     from: leafItem.rotation
                     to: leafItem.rotation + (Math.random() < 0.5 ? -200 : 200)
-                    duration: 7000 + Math.random() * 7000
+                    duration: Math.round(root.spinMs * (0.35 + Math.random() * 0.35))
                     loops: Animation.Infinite
                 }
             }

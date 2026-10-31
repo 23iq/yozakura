@@ -92,6 +92,11 @@ yozakura preset list [--json]             # official first, * = active (also: `y
 yozakura preset apply "Neon Tokyo"        # copies the preset's files over the live config (also: `yozakura preset "Neon Tokyo"`)
 yozakura preset save Backup [--force]     # live config -> user preset (private domains + machine-local keys never included)
 yozakura preset save "Only colors" --domains theme
+yozakura preset status [--json]          # active preset, built-in or yours, settings changed since it was applied
+yozakura preset save --current [--json]  # write the live config into the active user preset (prints an undo id)
+yozakura preset save --current --as "Mine"  # built-in active: save as a new preset, which becomes active
+yozakura preset save --undo <id>         # put the preset back as it was before that save
+yozakura preset apply "Kōyō" --exact     # revert to the preset completely (plain apply keeps settings you changed)
 yozakura preset diff Backup current       # key-by-key differences ("current" = live config, files allowed)
 yozakura preset export current look.json  # single-file bundle {"format":"yozakura-preset","version":1,...}
 yozakura preset import look.json --name Shared [--force]
@@ -108,6 +113,16 @@ yozakura preset set-info Ink --description "..."
 yozakura preset try CRT                 # trial: backs up the live look; `try --keep` / `try --revert`
 yozakura preset edit Ink                  # applies it so settings edit it; `edit --save [--keep]` / `edit --cancel`
 ```
+
+Applying never overwrites the user's own settings: `~/.local/share/yozakura/presets/applied.json`
+records what the last preset wrote. A key the new preset does not name is reset to its default
+only while it still holds that recorded value; anything the user changed is kept (reported as
+`keptUserValues` by `apply --json` / the MCP `preset_apply`). Without a record nothing is reset.
+System domains (keyboard, displays, general, ...) are never written. The settings sidebar footer
+shows the active preset and its changes (`PresetStatusService`, pushed by the backend
+`preset.status` event); `general.autoSavePreset` (off by default) saves changes into an active
+user preset automatically, never into a built-in. Code: `backend/pkg/presets/{provenance,status}.go`,
+`backend/pkg/svc/preset/status.go`, `modules/settings/presets/PresetStatus*`.
 
 Special workspaces (Hyprland scratchpads; global like the keybinds, never in
 presets; stored in `specials.json`):
@@ -442,7 +457,7 @@ MCP equivalent is `config_set {"key": ..., "value": ...}`.
 60. **Try for a moment**: `preset try CRT`, then `preset try --keep` or `--revert` (the settings studio counts down 10 s and reverts by itself).
 61. **Combine presets**: `preset mix Blend --layout Kaze --colors "Neon Tokyo" --windows CRT --desktop Sumi-e --lockscreen defaults`.
 62. **Customise a built-in**: `preset duplicate "Neon Tokyo" Mine`, `preset edit Mine`, change settings, `preset edit --save`.
-63. **Where does a preset differ?** `preset show Mine --against "Neon Tokyo"`.
+63. **Where does a preset differ?** `preset show Mine --against "Neon Tokyo"`. Changes since the active preset: `preset status`; keep them in it: `preset save --current`.
 64. **Undo everything in one domain**: `config reset compositor --yes`.
 
 ### Special workspaces
@@ -538,6 +553,7 @@ combo.
 | Timers, stopwatch, reminders, focus | `backend/pkg/svc/timers` (parser `parse.go`/`quick.go`, state machine `engine.go`, IPC `methods.go`), CLI `cmds_timers.go`, MCP `timer_tools.go`; shell: `modules/services/TimersService.qml` (thin client), `FocusMode.qml`, `QuickNote.qml`, `UtilityCommands.qml`, `modules/services/timers/*.js`, notch `activities/TimerActivity.qml` + `panels/Timer*`, `AlarmPanel`, `QuickInputField`, launcher `providers/TimersProvider.qml` | `system.pomodoro.*`, `system.timers.*`, `system.focus.*`, `prefix.timers` | `backend/pkg/svc/timers/*_test.go`, `timer_tools_test.go`, `cmds_timers_test.go`, `tests/timers-*.test.*`, `tests/timer-panels.test.py`, `tests/notify-request.test.cjs` |
 | Displays and keyboard | `backend/pkg/svc/displays` (confirm session, conflicts), `backend/pkg/svc/keyboard` (XKB catalog, active layout), CLI `cmds_display.go`/`cmds_keyboard.go`, MCP `display_apply_tools.go`/`monitor_layout.go`/`keyboard_tools.go`; shell `modules/services/DisplaysService.qml`, settings `modules/settings/displays/`, `modules/settings/keyboard/` | `displays.monitors`, `keyboard.*` | `backend/pkg/svc/displays/*_test.go`, `cmds_display_test.go`, `cmds_keyboard_test.go`, `display_apply_tools_test.go` |
 | Installer and onboarding dry run | `install.sh` (compositor choice, `--dry-run`, `--force`, reboot; pacman/dnf/zypper/apt), `backend/pkg/deps/packages.tsv`, `scripts/deps/`, `backend/cmd/yozakura/cmds_onboarding_dryrun.go`, `onboarding-dryrun.qml`, `modules/globals/DryRun.qml`, `modules/services/DryRunMethods.js` + `DryRunBackend.js` | `general.onboardingDone` | `tests/install-sh.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs` |
+| Nix package and NixOS module | `flake.nix`, `nix/packages/` (`default.nix` launcher exports `YOZAKURA_LAUNCHER`, `_QS`, `_NIX_ENV`, `_XKB_ROOT`, `_WHISPER_BIN_DIR`, `_DEPTH_PYTHON`), `nix/modules/default.nix`, `docs/nixos.md` | — | `backend/pkg/paths` (`Launcher`), `backend/pkg/deps` (Nix roots), CI job `nix` |
 | Exclusive mode (Hyprland) | `backend/pkg/exclusive`, `backend/pkg/svc/exclusive`, CLI `cmds_exclusive.go`, `modules/services/ExclusiveService.qml`, `modules/settings/system/ExclusiveCard.qml` | none (backups in `~/.local/share/yozakura/backups/`) | `backend/pkg/exclusive/*_test.go`, `cmds_exclusive_test.go`, `tests/exclusive-ui.test.py` |
 | App hooks and env cleanup | `backend/pkg/apphooks` (per-app hooks), `backend/pkg/svc/apphooks` (IPC), `backend/pkg/envclean` (PATH-like vars), `modules/services/AppHooksService.qml` | `apps.theming.*` | `backend/pkg/apphooks/*_test.go`, `backend/pkg/envclean/envclean_test.go` |
 | Lock screen | `modules/lockscreen/` | `lockscreen.*` | `tests/lockscreen.test.py` |

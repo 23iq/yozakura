@@ -77,6 +77,14 @@ var category = {
                         { "value": "lower", "label": "prefs.icons_type.case.lower" },
                         { "value": "title", "label": "prefs.icons_type.case.title" }
                     ]
+                },
+                {
+                    "key": "theme.type.editorial",
+                    "type": "text",
+                    "placeholder": "prefs.icons_type.editorial_font.placeholder",
+                    "label": "prefs.icons_type.editorial_font",
+                    "description": "prefs.icons_type.editorial_font.desc",
+                    "keywords": "editorial serif font typeface family sentence bar"
                 }
             ]
         }

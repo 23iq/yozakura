@@ -64,6 +64,10 @@ Item {
     // applies to the screen that actually has the fullscreen window
     readonly property bool activeWindowFullscreen: CompositorData.monitorHasFullscreen(compositorMonitor)
 
+    // The weather overlays of this screen rest under a fullscreen window
+    onActiveWindowFullscreenChanged: if (screen)
+        WeatherFx.setCovered(screen.name, activeWindowFullscreen)
+
     // Whether auto-hide should be active (not pinned, or fullscreen forces it)
     readonly property bool shouldAutoHide: !pinned || activeWindowFullscreen
 
@@ -80,26 +84,16 @@ Item {
     // Track if mouse is over bar area
     readonly property bool isMouseOverBar: barMouseArea.containsMouse
 
-    // Check if notch hover is active (for synchronized reveal when bar is at same side)
-    // NOTE: We access Visibilities.notchPanels directly because UnifiedShellPanel registers itself as the panel ref
+    // The notch on this bar's edge is hovered: reveal together. The
+    // UnifiedShellPanel (Visibilities.notchPanels) reports false while the
+    // notch is off (notch.enabled)
     readonly property var notchPanelRef: Visibilities.notchPanels[screen.name]
     readonly property string notchPosition: (Config.notchPosition !== undefined ? Config.notchPosition : "top")
-    readonly property bool notchHoverActive: {
-        if (barPosition !== notchPosition)
-            return false;
-        if (notchPanelRef) {
-            // UnifiedShellPanel exposes 'notchHoverActive' property alias pointing to notchContent.hoverActive
-            if (typeof notchPanelRef.notchHoverActive !== 'undefined')
-                return notchPanelRef.notchHoverActive;
-            if (typeof notchPanelRef.hoverActive !== 'undefined')
-                return notchPanelRef.hoverActive;
-        }
-        return false;
-    }
+    readonly property bool notchHoverActive: barPosition === notchPosition && !!notchPanelRef && notchPanelRef.notchHoverActive === true
 
-    // Check if notch is open (dashboard, powermenu, etc.)
+    // A surface is open on this screen (launcher, dashboard, powermenu, tools)
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
-    readonly property bool notchOpen: screenVisibilities ? (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools) : false
+    readonly property bool surfaceOpen: screenVisibilities ? (screenVisibilities.launcher || screenVisibilities.dashboard || screenVisibilities.powermenu || screenVisibilities.tools) : false
 
     // Radius logic for "Squished" style
     readonly property real outerRadius: Styling.radius(0)
@@ -133,7 +127,7 @@ Item {
     property bool drawerHovered: false
     property bool drawerExpanded: false
     // Keep the drawer open while one of its menus/popups is in use
-    readonly property bool drawerHold: notchOpen || (screenVisibilities && screenVisibilities.presets) || popupOpen
+    readonly property bool drawerHold: surfaceOpen || (screenVisibilities && screenVisibilities.presets) || popupOpen
     // One of this bar's popups is open: the pointer is over its window, not
     // the bar, so an auto-hidden bar must stay revealed under it
     readonly property bool popupOpen: {
@@ -198,7 +192,7 @@ Item {
 
         // Show if: hovering, notch hovering (when at top), notch open
         // IMPORTANT: notchHoverActive must be checked to synchronize with notch
-        return isMouseOverBar || hoverActive || notchHoverActive || notchOpen || popupOpen;
+        return isMouseOverBar || hoverActive || notchHoverActive || surfaceOpen || popupOpen;
     }
 
     // Timer to delay hiding the bar after mouse leaves

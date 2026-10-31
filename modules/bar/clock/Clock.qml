@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.bar.look
+import "../../widgets/dashboard/widgets/WidgetFormat.js" as WidgetFormat
 
 // Bar clock: the weather symbol (or day name), a clock face
 // (bar.moduleOptions.clock.face, ClockFaces.js; a vertical bar shows digital
@@ -17,7 +18,7 @@ Item {
     id: root
 
     required property var bar
-    property bool vertical: bar.orientation === "vertical"
+    property bool vertical: bar ? bar.orientation === "vertical" : false
     property bool isHovered: false
     property bool layerEnabled: true
 
@@ -82,10 +83,13 @@ Item {
                 id: lead
                 visible: root.vertical || root.weatherAvailable || !root.showDate
                 Layout.alignment: Qt.AlignCenter
-                text: root.weatherAvailable ? WeatherService.weatherSymbol : root.dayAbbrev
+                // The weather as an icon-font glyph in the module ink: a colour
+                // emoji turns pale on a light pill
+                readonly property string glyph: root.weatherAvailable ? (Icons[WidgetFormat.weatherGlyph(WeatherService.effectiveWeatherCode, WeatherService.effectiveIsDay)] || "") : ""
+                text: root.weatherAvailable ? (lead.glyph || WeatherService.weatherSymbol) : root.dayAbbrev
                 color: root.fg
                 font.pixelSize: root.weatherAvailable ? BarLook.iconSize(root.moduleSize) : root.textSize
-                font.family: BarLook.textFont
+                font.family: lead.glyph ? Icons.font : BarLook.textFont
                 font.weight: BarLook.textWeight
             }
 
@@ -158,7 +162,8 @@ Item {
         }
 
         // system.timers.clockClick: the left button opens the clock panel
-        // or the notch timers hub, the right button the other one
+        // or the timers hub (the notch or a card, layout.panels.host), the
+        // right button the other one
         MouseArea {
             anchors.fill: parent
             hoverEnabled: false
@@ -174,28 +179,12 @@ Item {
         }
     }
 
-    BarPopup {
+    ClockPopup {
         id: clockPopup
         anchorItem: buttonBg
         bar: root.bar
-        variant: "transparent"
-        popupPadding: 0
-
-        contentWidth: panel.implicitWidth
-        contentHeight: panel.implicitHeight
-
-        onIsOpenChanged: {
-            if (isOpen && !WeatherService.dataAvailable)
-                WeatherService.updateWeather();
-        }
-
-        ClockPanel {
-            id: panel
-            width: implicitWidth
-            height: implicitHeight
-            now: root.now
-            use12h: root.use12h
-        }
+        now: root.now
+        use12h: root.use12h
     }
 
     PomodoroSync {

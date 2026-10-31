@@ -18,6 +18,7 @@ RowLayout {
     spacing: 12
 
     StyledRect {
+        id: preview
         objectName: "surfacePreview"
         variant: Roles.variantId(root.prop)
         Layout.preferredWidth: 120
@@ -31,7 +32,7 @@ RowLayout {
             font.family: Config.theme.font
             font.pixelSize: Styling.fontSize(2)
             font.bold: true
-            color: parent.item
+            color: preview.item
         }
     }
 

@@ -26,14 +26,14 @@
       }
     },
     "language": {
-      "title": "Language",
+      "title": "Interface language",
       "type": "string",
       "default": "auto",
       "description": "Language of the whole shell. Auto follows your system locale.",
       "x-settings": {
         "category": "system",
         "section": "language",
-        "label": "settings.system.language",
+        "label": "prefs.label.interface_language",
         "control": "custom",
         "component": "LanguagePicker",
         "keywords": "language locale translation i18n english spanish russian auto"
@@ -414,14 +414,14 @@
           }
         },
         "soundFile": {
-          "title": "Sound file",
+          "title": "Alarm sound file",
           "type": "string",
           "default": "",
           "description": "Empty: the built-in tone",
           "x-settings": {
             "category": "timers",
             "section": "alarm",
-            "label": "prefs.timers.sound_file",
+            "label": "prefs.label.alarm_sound_file",
             "control": "path",
             "keywords": "alarm sound file tone custom",
             "visibleWhen": {

@@ -22,7 +22,7 @@ test('mutating methods are intercepted, reads pass through', () => {
     for (const m of ['displays.list', 'displays.conflicts', 'keyboard.catalog',
         'extras.catalog', 'extras.status', 'extras.log', 'term.presets', 'term.preview', 'term.status',
         'exclusive.status', 'exclusive.plan', 'config.statesGet', 'compositor.state', 'providers.ollama.probe',
-        'weather.get', 'clipboard.getContent'])
+        'weather.get', 'clipboard.getContent', 'ipc.hello'])
         assert.ok(!D.isMutating(m), m);
     // compositor.dispatch: daemon CLI queries are reads, the rest mutates
     for (const args of [['layout', 'list'], ['system', 'get-compositor'], ['monitor', 'status']])

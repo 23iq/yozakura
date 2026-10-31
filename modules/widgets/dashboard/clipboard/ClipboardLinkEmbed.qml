@@ -96,6 +96,7 @@ Rectangle {
                 mipmap: true
                 anchors.fill: parent
                 source: embed.preview && embed.preview.image ? embed.preview.image : ""
+                sourceSize: Qt.size(Math.max(width, height) * 2, Math.max(width, height) * 2)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
@@ -242,6 +243,7 @@ Rectangle {
                 mipmap: true
                 anchors.fill: parent
                 source: embed.preview && embed.preview.image ? embed.preview.image : ""
+                sourceSize: Qt.size(Math.max(width, height) * 2, Math.max(width, height) * 2)
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true

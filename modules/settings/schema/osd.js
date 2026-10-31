@@ -28,11 +28,16 @@ var sections = [
                     {
                         "value": "bar-inline",
                         "label": "prefs.osd.style.bar_inline"
+                    },
+                    {
+                        "value": "gauge",
+                        "label": "prefs.osd.style.gauge"
                     }
                 ],
-                "label": "prefs.osd.style",
+                "preview": "OsdPreview",
+                "label": "prefs.label.osd_style",
                 "description": "prefs.osd.style.desc",
-                "keywords": "osd volume brightness on screen display pill island bar edge indicator"
+                "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
             },
             {
                 "key": "layout.osd.position",
@@ -69,6 +74,7 @@ var sections = [
             },
             {
                 "key": "layout.osd.timeout",
+                "advanced": true,
                 "type": "slider",
                 "min": 800,
                 "max": 8000,

@@ -71,6 +71,7 @@ var category = {
             "entries": [
                 {
                     "key": "desktop.wallpaperTransition",
+                    "reason": "prefs.disabled.motion_off",
                     "enabledWhen": ANIMATED,
                     "type": "selector",
                     "options": [
@@ -106,6 +107,8 @@ var category = {
                 },
                 {
                     "key": "desktop.wallpaperTransitionDuration",
+                    "reason": "prefs.disabled.motion_off",
+                    "advanced": true,
                     "enabledWhen": ANIMATED,
                     "type": "slider",
                     "min": 100,
@@ -119,6 +122,42 @@ var category = {
                     "label": "prefs.wall.transition_duration",
                     "description": "prefs.wall.transition_duration.desc",
                     "keywords": "transition duration speed time"
+                }
+            ]
+        },
+        {
+            "id": "panorama",
+            "title": "prefs.wall.section.panorama",
+            "entries": [
+                {
+                    "key": "desktop.wallpaperMode",
+                    "type": "selector",
+                    "options": [
+                        {
+                            "value": "fill",
+                            "label": "prefs.wall.mode.fill"
+                        },
+                        {
+                            "value": "panorama",
+                            "label": "prefs.wall.mode.panorama"
+                        }
+                    ],
+                    "preview": "PanoramaPreview",
+                    "label": "prefs.wall.mode",
+                    "description": "prefs.wall.mode.desc",
+                    "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
+                },
+                {
+                    "key": "desktop.panoramaParallax",
+                    "advanced": true,
+                    "type": "toggle",
+                    "visibleWhen": {
+                        "key": "desktop.wallpaperMode",
+                        "equals": "panorama"
+                    },
+                    "label": "prefs.wall.parallax",
+                    "description": "prefs.wall.parallax.desc",
+                    "keywords": "parallax depth layers map near far 3d"
                 }
             ]
         },

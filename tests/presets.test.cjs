@@ -1,7 +1,8 @@
 // Built-in presets (assets/presets/{layouts,styles,palettes,sets}): every key
 // is a real config key with a valid value, each part only carries the keys
 // its kind owns, composition order and the legacy single-folder fallback,
-// and the 10 sets stay distinct (>= 4 of the six axes, one signature each).
+// and the 14 sets stay distinct (>= 4 of the six axes, one signature each);
+// the island-less sets keep the notch off and their hosts on auto.
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -18,7 +19,8 @@ const schema = dom => {
     return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : {};
 };
 
-const SETS = ['CRT', 'Glacier', 'Kaze', 'Kōyō', 'Metro', 'Neon Tokyo', 'Shōji', 'Sumi-e', 'Yozakura', 'Yozakura Night'];
+const SETS = ['CRT', 'Device', 'Emaki', 'Glacier', 'Hanami', 'Kaze', 'Kotoba', 'Kōyō', 'Metro', 'Neon Tokyo', 'Shōji',
+    'Sumi-e', 'Yozakura', 'Yozakura Night'];
 
 // Every folder that carries domain files: [label, folder].
 function folders() {
@@ -48,12 +50,12 @@ function check(where, value, defaults, sch, problems) {
     }
 }
 
-test('the built-in sets are the 10 concepts, each with its parts and an info.json', () => {
+test('the built-in sets are the 14 concepts, each with its parts and an info.json', () => {
     assert.deepEqual(P.listSets(), SETS);
     assert.equal(P.listParts('layout').length, 5);
     assert.deepEqual(P.listParts('layout'), ['Classic', 'Engawa', 'Ma', 'Tatami', 'Yozakura']);
     assert.ok(P.listParts('style').length >= 10);
-    assert.equal(P.listParts('palette').length, 10);
+    assert.equal(P.listParts('palette').length, 14);
     for (const [label, folder] of folders()) {
         const info = P.info(folder);
         assert.equal(typeof info.author, 'string', `${label}: info.author`);
@@ -218,7 +220,12 @@ const SIGNATURES = {
     'Metro': c => c.theme.type.headingCase === 'lower' && c.theme.icons.weight === 'regular' && c.layout.launcher.resultStyle === 'grid' && c.layout.dashboard.home === 'bento',
     'Neon Tokyo': c => c.theme.popup.tail === true && c.theme.type.headingCase === 'upper',
     'Shōji': c => c.theme.lightMode === true && c.bar.frameEnabled === true && c.theme.srFrame.inheritBg === false,
-    'Sumi-e': c => c.theme.surfaceEffect === 'ink' && c.theme.signatures.brushHighlight && c.desktop.depthClock && c.desktop.depthClockStyle === 'yozakura'
+    'Sumi-e': c => c.theme.surfaceEffect === 'ink' && c.theme.signatures.brushHighlight && c.desktop.depthClock && c.desktop.depthClockStyle === 'yozakura',
+    'Kotoba': c => c.bar.panels.some(p => Object.values(p.groups).some(g => g.includes('sentence')))
+        && c.notifications.presentation === 'strips' && c.theme.type.editorial !== '',
+    'Hanami': c => c.workspaces.indicatorStyle === 'branch' && c.theme.lighting.mode === 'sun' && c.theme.weatherFx.mode !== 'off',
+    'Emaki': c => c.desktop.wallpaperMode === 'panorama' && c.overview.style === 'scroll',
+    'Device': c => c.theme.language === 'device' && c.bar.moduleOptions.clock.face === 'segment' && c.layout.osd.style === 'gauge'
 };
 
 test('each set has its own signature', () => {
@@ -245,6 +252,16 @@ test('motion stays within the budget', () => {
     }
 });
 
-test('only the Shōji set is light', () => {
-    assert.deepEqual(SETS.filter(n => P.composeSet(n).theme.lightMode), ['Shōji']);
+test('only the Hanami and Shōji sets are light', () => {
+    assert.deepEqual(SETS.filter(n => P.composeSet(n).theme.lightMode), ['Hanami', 'Shōji']);
+});
+
+test('the island-less sets keep the notch off and open everything on auto hosts', () => {
+    const islandless = SETS.filter(n => P.composeSet(n).notch.enabled === false);
+    assert.deepEqual(islandless, ['CRT', 'Device', 'Emaki', 'Hanami', 'Kotoba', 'Metro']);
+    for (const n of ['Device', 'Emaki', 'Hanami', 'Kotoba', 'Metro']) {
+        const l = P.composeSet(n).layout;
+        assert.equal(l.launcher.host, 'auto', `${n}: launcher host`);
+        assert.equal(l.dashboard.host, 'auto', `${n}: dashboard host`);
+    }
 });

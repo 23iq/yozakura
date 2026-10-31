@@ -129,8 +129,11 @@ Singleton {
     Process {
         id: ensureConfigDir
         running: true
-        // $1 preset dir, $2 config dir, then the domain names.
-        command: ["sh", "-c", 'src="$1"; dst="$2"; shift 2; mkdir -p "$dst" || exit 0; for f in "$@"; do cp -n "$src/$f.json" "$dst/$f.json" 2>/dev/null; done; echo "Preset files copied if missing"', "seed-config", root.presetDir, root.configDir, "theme", "bar", "workspaces", "overview", "notch", "compositor", "performance", "desktop", "lockscreen", "dock", "ai", "system"]
+        // $1 preset dir, $2 config dir, then the domain names. Copies of
+        // read-only sources (the Nix store) are made writable: the config
+        // files are saved with QSaveFile, which refuses read-only files;
+        // older copies from a read-only preset dir are repaired too.
+        command: ["sh", "-c", 'src="$1"; dst="$2"; shift 2; mkdir -p "$dst" || exit 0; for f in "$@"; do cp -n "$src/$f.json" "$dst/$f.json" 2>/dev/null && chmod u+w "$dst/$f.json"; done; [ -w "$src" ] || chmod u+w "$dst/"*.json 2>/dev/null; echo "Preset files copied if missing"', "seed-config", root.presetDir, root.configDir, "theme", "bar", "workspaces", "overview", "notch", "compositor", "performance", "desktop", "lockscreen", "dock", "ai", "system"]
     }
 
     // Auto-migrate hyprland.json → compositor.json for existing users

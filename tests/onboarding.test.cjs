@@ -138,3 +138,15 @@ test('pullState: Ollama model chips follow their pull job', () => {
     eq(M.pulledModels({ models: [{ id: 'llama3.2:latest' }, { id: 'gemma3:4b' }] }), ['llama3.2', 'gemma3']);
     eq(M.pulledModels(null), []);
 });
+
+test('the wizard is built from the kit: no raw sizes, durations or colour washes', () => {
+    for (const f of fs.readdirSync(dir).filter(n => n.endsWith('.qml'))) {
+        const src = fs.readFileSync(path.join(dir, f), 'utf8');
+        assert.ok(!/Styling\.fontSize\(/.test(src), f + ': raw font size (use KitText roles / Type)');
+        assert.ok(!/duration:\s*\d/.test(src), f + ': raw duration (use Motion tokens)');
+        assert.ok(!/settings\/Ui\.js/.test(src), f + ': Ui.js colour washes (use Type / Look)');
+        assert.ok(!/"#[0-9a-fA-F]{3,8}"/.test(src), f + ': hex colour');
+    }
+    for (const gone of ['NavButton.qml', 'SectionLabel.qml'])
+        assert.ok(!fs.existsSync(path.join(dir, gone)), gone + ' duplicates the kit (FocusChip / kit SectionLabel)');
+});

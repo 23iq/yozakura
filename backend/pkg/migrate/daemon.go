@@ -1,14 +1,15 @@
 package migrate
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 // DaemonMove is one legacy compositor-daemon file and its new location.
@@ -60,6 +61,6 @@ func MigrateDaemonFiles(moves []DaemonMove) ([]DaemonMove, error) {
 // own socket, so the old one would only duplicate idle monitors and config
 // generation.
 func StopLegacyDaemon() {
-	_ = exec.Command("pkill", "-f", brand.LegacyDaemon+".*daemon").Run()
-	_ = exec.Command("pkill", "-f", brand.LegacyDaemon+" subscribe").Run()
+	_ = proc.Do(context.Background(), "pkill", "-f", brand.LegacyDaemon+".*daemon")
+	_ = proc.Do(context.Background(), "pkill", "-f", brand.LegacyDaemon+" subscribe")
 }
