@@ -54,7 +54,9 @@ Singleton {
     signal failed(string message)
     property string lastError: ""
 
-    // ── notch hub: quick input (+ list), one screen at a time ──
+    // ── timers hub: quick input (+ list), one screen at a time; shown by
+    // whichever host layout.panels.host resolves to (the notch or a card,
+    // PanelSurfaces): callers only set this state ──
     property bool hubOpen: false
     property string hubScreen: ""
     // "timer" (quick timer input) | "note" (quick note capture)

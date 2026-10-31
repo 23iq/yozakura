@@ -6,7 +6,8 @@ import qs.modules.services
 import "HostRouter.js" as Routes
 
 // Maps layout.launcher.host / layout.dashboard.host to a surface host
-// ("notch" | "spotlight" | "sheet"), layout.cheatsheet.host (fullscreen too)
+// ("notch" | "spotlight" | "sheet"), layout.aiquick.host / layout.panels.host
+// (a floating "card" too), layout.cheatsheet.host (fullscreen too)
 // and layout.powermenu/tools.style ("overlay" off the notch). The host is
 // resolved (HostResolve.js): "auto", an unknown value or the notch while
 // notch.enabled is off fall back at runtime; the config is never rewritten.
@@ -27,6 +28,10 @@ Singleton {
     readonly property string cheatsheetHost: Routes.hostFor(root.layout, "cheatsheet", root.ctx)
     readonly property string powermenuStyle: Routes.menuStyle(root.layout, "powermenu", root.ctx)
     readonly property string toolsStyle: Routes.menuStyle(root.layout, "tools", root.ctx)
+    // AI quick ask (notch | card | spotlight) and the notch's auto panels
+    // (notch | card: PanelSurfaces)
+    readonly property string aiquickHost: Routes.hostFor(root.layout, "aiquick", root.ctx)
+    readonly property string panelsHost: Routes.hostFor(root.layout, "panels", root.ctx)
 
     property var _warned: ({})
 

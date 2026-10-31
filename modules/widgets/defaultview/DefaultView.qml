@@ -59,16 +59,27 @@ Item {
     }
 
     // ── panels ──
-    readonly property var panelAvailability: controller.availability({
+    // The auto panels (voice, timer hub, alarm) are the notch's while
+    // layout.panels.host resolves to it; off it PanelSurfaces shows them
+    // and the notch neither opens nor reveals itself for them
+    property bool ownsAutoPanels: true
+    readonly property var panelAvailability: controller.availability(Object.assign({
         // disableHoverExpansion keeps the compact player instead of a card
         player: root.mediaEnabled && !!root.activePlayer && !Config.notch.disableHoverExpansion,
         transfers: header.activitiesOn ? ActivityService.transfers.length : 0,
         timers: header.activitiesOn ? ActivityService.tasks.filter(a => a.source === "timers").length : 0,
-        privacy: header.activitiesOn ? ActivityService.privacy.length : 0,
-        voice: VoiceService.panelOpen && (VoiceService.panelScreen === "" || VoiceService.panelScreen === root.screenName),
-        timerHub: TimersService.hubOpen && (TimersService.hubScreen === "" || TimersService.hubScreen === root.screenName),
-        alarm: TimersService.ringing > 0 && ((Config.system?.timers?.alarmPanel ?? true) || (Config.system?.timers?.alarmRepeat ?? 3) === 0) && (TimersService.alarmScreen === "" || TimersService.alarmScreen === root.screenName)
-    })
+        privacy: header.activitiesOn ? ActivityService.privacy.length : 0
+    }, root.ownsAutoPanels ? controller.autoContext({
+        screen: root.screenName,
+        voiceOpen: VoiceService.panelOpen,
+        voiceScreen: VoiceService.panelScreen,
+        hubOpen: TimersService.hubOpen,
+        hubScreen: TimersService.hubScreen,
+        ringing: TimersService.ringing,
+        alarmPanel: Config.system?.timers?.alarmPanel,
+        alarmRepeat: Config.system?.timers?.alarmRepeat,
+        alarmScreen: TimersService.alarmScreen
+    }) : {}))
     readonly property bool clickMode: controller.clickMode
     readonly property bool panelExpanded: controller.expanded
     // The open panel wants keyboard focus / click-outside (registry `modal`)

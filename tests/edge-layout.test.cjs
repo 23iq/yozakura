@@ -181,3 +181,28 @@ test('multiple panel depths replace the legacy bar on each occupied edge', () =>
     e.panels = [];
     assert.equal(L.workArea(e).y, 0);
 });
+test('cards sit beside the bar, inside the work area, on every edge', () => {
+    const want = { top: 'top-right', bottom: 'bottom-right', left: 'top-left', right: 'top-right' };
+    for (const bar of EDGES) for (const dock of EDGES) {
+        const e = env(bar, dock, 'top');
+        e.notch.visible = false;
+        const r = L.cardRect(e, { w: 460, h: 300 }, 'auto', 12);
+        const w = L.workArea(e);
+        assert.ok(r.x >= w.x + 12 && r.y >= w.y + 12 && r.x + r.w <= w.x + w.w - 12 && r.y + r.h <= w.y + w.h - 12, `${bar}/${dock}`);
+        assert.ok(r.corner.split('-').includes(bar), `${bar}/${dock}: ${r.corner}`);
+        if (dock === 'bottom')
+            assert.equal(r.corner, want[bar], `${bar}/${dock}`);
+    }
+    // A left bar with the dock on the top: the free bottom-left corner
+    assert.equal(L.cardCorner(env('left', 'top', 'top')), 'bottom-left');
+    // Glides out of the bar's edge; too big shrinks to the work area
+    assert.equal(L.cardRect(env('left', 'bottom', 'top'), { w: 400, h: 200 }, 'auto', 10).from, 'left');
+    assert.equal(L.cardRect(env('left', 'bottom', 'top'), { w: 400, h: 200 }, 'bottom-right', 10).from, 'bottom');
+    const big = L.cardRect(env('top', 'bottom', 'top'), { w: 5000, h: 5000 }, 'auto', 10);
+    assert.equal(big.from, 'top');
+    assert.equal(big.w, 1920 - 20);
+    // No bar: the free corner
+    const none = env('top', 'bottom', 'top');
+    none.bar.visible = false;
+    assert.equal(L.cardCorner(none), L.freeCorner(none, 'auto'));
+});

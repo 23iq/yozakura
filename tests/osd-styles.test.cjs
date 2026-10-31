@@ -25,6 +25,9 @@ test('bar-inline falls back to pill without a bar widget', () => {
 test('island hides the window only when the notch handles it', () => {
     assert.equal(S.resolve('island', { islandHandled: true }).window, false);
     assert.equal(S.resolve('island', { islandHandled: false }).window, true);
+    // The notch off: the island-look OSD shows in its own window
+    assert.equal(S.resolve('island', { islandHandled: true, notchEnabled: false }).window, true);
+    assert.equal(S.resolve('island', { islandHandled: true, notchEnabled: true }).window, false);
     assert.equal(S.resolve('pill', {}).window, true);
 });
 test('every style on every bar edge stays on screen and off the bar', () => {
@@ -59,6 +62,16 @@ test('island follows the notch edge when auto', () => {
     assert.equal(S.edgePref('island', 'auto', 'bottom'), 'bottom');
     assert.equal(S.edgePref('island', 'left', 'bottom'), 'left');
     assert.equal(S.edgePref('pill', 'auto', 'bottom'), 'auto');
+    // A side notch keeps its edge
+    assert.equal(S.edgePref('island', 'auto', 'left', true, 'top'), 'left');
+    assert.equal(S.edgePref('island', 'auto', 'right'), 'right');
+    assert.equal(S.edgePref('island', 'auto', 'bogus'), 'top');
+});
+test('island with the notch off sits on the bar edge', () => {
+    for (const bar of EDGES)
+        assert.equal(S.edgePref('island', 'auto', 'top', false, bar), bar);
+    assert.equal(S.edgePref('island', 'auto', 'bottom', false, ''), 'top');
+    assert.equal(S.edgePref('island', 'right', 'top', false, 'left'), 'right');
 });
 test('wheel steps and clamping', () => {
     assert.equal(S.wheelStep(120), 0.05);

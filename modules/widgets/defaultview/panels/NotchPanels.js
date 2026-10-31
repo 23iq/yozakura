@@ -129,6 +129,24 @@ function availability(ctx) {
     return out;
 }
 
+// Availability of the auto panels on `s.screen` from the services' state
+// (the notch's DefaultView and PanelSurfaces, its host off the notch):
+//   s = { screen, voiceOpen, voiceScreen, hubOpen, hubScreen, ringing,
+//         alarmPanel, alarmRepeat, alarmScreen }; a "" screen = every one.
+// The alarm panel shows when system.timers.alarmPanel is on, or when the
+// tone repeats until stopped (alarmRepeat 0) so there is always a Stop.
+function autoContext(s) {
+    var c = s || {};
+    function here(name) {
+        return !name || name === c.screen;
+    }
+    return {
+        voice: !!c.voiceOpen && here(c.voiceScreen),
+        timerHub: !!c.hubOpen && here(c.hubScreen),
+        alarm: (c.ringing || 0) > 0 && (c.alarmPanel !== false || c.alarmRepeat === 0) && here(c.alarmScreen)
+    };
+}
+
 // First auto panel that is available and not dismissed ("" when none)
 function autoPanel(available, dismissed) {
     for (var i = 0; i < PANELS.length; i++) {

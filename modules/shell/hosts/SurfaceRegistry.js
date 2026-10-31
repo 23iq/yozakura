@@ -5,7 +5,7 @@
 // first available host wins (HostResolve.js). Nothing here writes config.
 
 // Hosts. `needsNotch`: only while notch.enabled. `built: false`: not
-// implemented yet, `standIn` shows instead.
+// implemented yet, `standIn` shows instead (none today).
 var HOSTS = {
     "notch": {
         "needsNotch": true
@@ -15,12 +15,8 @@ var HOSTS = {
     // Menu overlay styles (modules/widgets/menus/MenuOverlay.qml)
     "fullscreen": {},
     "radial": {},
-    // Small floating card at a free edge/corner (EdgeService). TODO(N3):
-    // build modules/shell/hosts/CardHost.qml and drop `built`/`standIn`.
-    "card": {
-        "built": false,
-        "standIn": "spotlight"
-    }
+    // Small floating card beside the bar (CardHost.qml, EdgeService.cardRect)
+    "card": {}
 };
 
 // Surfaces: `key` under Config.layout, `allowed` = its explicit values
@@ -52,13 +48,13 @@ var SURFACES = {
         "allowed": ["fullscreen", "spotlight", "sheet"],
         "auto": ["fullscreen"]
     },
-    // AI quick ask. TODO(N3): route it (HostRouter keeps it in the notch).
+    // AI quick ask (HostedSurfaces off the notch)
     "aiquick": {
         "key": "aiquick.host",
-        "allowed": ["notch", "card"],
+        "allowed": ["notch", "card", "spotlight"],
         "auto": ["notch", "card"]
     },
-    // Notch auto panels (voice, timer hub, alarm). TODO(N3): route them.
+    // Notch auto panels (voice, timer hub, alarm; PanelSurfaces off the notch)
     "panels": {
         "key": "panels.host",
         "allowed": ["notch", "card"],

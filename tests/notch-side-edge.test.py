@@ -94,6 +94,7 @@ h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
 h.module("qs.modules.shell.hosts", {"NotchHostedSurfaces": "Item { property var screen; property var vis; property var container }"})
 h.module("qs.modules.widgets.defaultview", {"DefaultView": """Item {
     property string screenName
+    property bool ownsAutoPanels: true
     property bool revealed
     property bool panelExpanded: false
     property bool modalPanel: false

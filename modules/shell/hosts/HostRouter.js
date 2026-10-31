@@ -9,11 +9,12 @@
 // router only decides where it shows (HostResolve.js picks the host).
 
 var HOSTS = ["notch", "spotlight", "sheet"];
-// Modules that can leave the notch (layout.<module>.host).
-var ROUTABLE = ["launcher", "dashboard"];
+// Modules that can leave the notch (layout.<module>.host); aiquick also
+// opens in a floating card.
+var ROUTABLE = ["launcher", "dashboard", "aiquick"];
 // Modules the notch shows unless their layout.<module>.style moves them to
 // the menu overlay (modules/widgets/menus/MenuOverlay.qml).
-var NOTCH_ONLY = ["powermenu", "tools", "aiquick"];
+var NOTCH_ONLY = ["powermenu", "tools"];
 // layout.<module>.style values besides "auto"; the first is the notch.
 var MENU_STYLES = {
     "powermenu": Registry.SURFACES.powermenu.allowed,
@@ -43,12 +44,13 @@ function menuStyle(layout, module, ctx) {
     return Resolve.resolve(layout, module, ctx);
 }
 
+// The host of a module, or of "panels" (the notch's auto panels: voice,
+// timer hub, alarm; PanelSurfaces.qml off the notch).
 function hostFor(layout, module, ctx) {
-    if (module === "cheatsheet" || ROUTABLE.indexOf(module) !== -1)
+    if (module === "cheatsheet" || module === "panels" || ROUTABLE.indexOf(module) !== -1)
         return Resolve.resolve(layout, module, ctx);
     if (MENU_STYLES[module])
         return menuStyle(layout, module, ctx) === "notch" ? "notch" : "overlay";
-    // aiquick: notch-only until the card host lands (SurfaceRegistry)
     return "notch";
 }
 

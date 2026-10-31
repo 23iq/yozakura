@@ -42,7 +42,8 @@ Singleton {
     // pill while the others show the level inline.
     readonly property var route: OsdStyles.resolve(root.style, {
         "inlineAvailable": root.inlineHosts > 0,
-        "islandHandled": root.islandHandled
+        "islandHandled": root.islandHandled,
+        "notchEnabled": ShellLayout.notchEnabled
     })
 
     // Last event, for hosts that mount after it fired.
@@ -66,7 +67,8 @@ Singleton {
     function routeForScreen(screenName: string): var {
         return OsdStyles.resolve(root.style, {
             "inlineAvailable": (root.inlineScreens[screenName || ""] || 0) > 0 || (root.inlineScreens[""] || 0) > 0,
-            "islandHandled": root.islandHandled
+            "islandHandled": root.islandHandled,
+            "notchEnabled": ShellLayout.notchEnabled
         });
     }
 

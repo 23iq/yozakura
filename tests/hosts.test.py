@@ -17,6 +17,7 @@ h.module("Quickshell", {
     "Scope": "Item {}",
     "Singleton": "QtObject {}",
     "ShellScreen": "QtObject { property string name; property int width; property int height }",
+    "Region": "QtObject { property Item item }",
 })
 h.singleton("Quickshell", "Quickshell", 'QtObject { property var screens: [{name: "A"}, {name: "B"}] }')
 h.singleton("qs.config", "Config", """QtObject {
@@ -38,6 +39,7 @@ QtObject {
     property int d: Config.animDuration
     property QtObject enter: QtObject { property int duration: Motion.d; property int easing: Easing.OutCubic; property real overshoot: 1 }
     property QtObject exit: QtObject { property int duration: Math.round(Motion.d * 0.7); property int easing: Easing.OutCubic; property real overshoot: 1 }
+    property QtObject glide: QtObject { property int duration: Motion.d; property int easing: Easing.OutCubic; property real overshoot: 1 }
 }""",
     "Metrics": "pragma Singleton\nQtObject { property int padding: 16; property int sheetW: 420 }",
     "BarMetrics": "pragma Singleton\nQtObject { property int moduleSize: 40; property int notchRestHeight: 36 }",
@@ -48,6 +50,12 @@ for f in ("Motion", "Metrics", "BarMetrics"):
     p = h.root / "qs/modules/theme" / f"{f}.qml"
     p.write_text("import qs.config\n" + p.read_text())
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }", "Shadow": "Item {}"})
+# The card host (HostedSurfaces: AI quick ask; tests/card-host.test.py)
+h.module("qs.modules.components.kit", {
+    "Space": "pragma Singleton\nQtObject { property int m: 12; property int l: 16 }",
+    "Surface": "Item { property int padding; property bool floating; default property alias content: body.data\n"
+               "    Item { id: body; anchors.fill: parent } }",
+})
 h.module("qs.modules.services", {"FocusGrab": "QtObject { property var windows; property bool active; signal cleared }"})
 h.singleton("qs.modules.services", "ShellLayout", """QtObject {
     property bool notchEnabled: true
@@ -78,12 +86,12 @@ h.copy("modules/shell/EdgeService.qml", "qs/modules/shell")
 h.module("qs.modules.shell", {})
 
 src = (REPO / "modules/shell/hosts/SurfaceHost.qml").read_text()
-item = src.replace("import Quickshell.Wayland\n", "").replace("PanelWindow {", "Item {\n    property var screen\n    width: 1920\n    height: 1080", 1)
+item = src.replace("import Quickshell.Wayland\n", "").replace("PanelWindow {", "Item {\n    property var screen\n    property var mask\n    width: 1920\n    height: 1080", 1)
 item = re.sub(r"\n    anchors \{[^}]*\}", "", item, count=1)
 item = "\n".join(ln for ln in item.split("\n") if not re.match(r'\s*(color: "transparent"|exclusionMode:|WlrLayershell\.)', ln))
 HOSTS = "qs/modules/shell/hosts"
 h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
-for f in ("HostFrame", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
+for f in ("HostFrame", "CardHost", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS, replace={"layer.enabled: true": "layer.enabled: false"})
 h.module("qs.modules.shell.hosts", {})
 h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})

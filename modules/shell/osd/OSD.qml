@@ -45,7 +45,7 @@ PanelWindow {
 
     readonly property var route: OsdService.routeForScreen(root.targetScreen ? root.targetScreen.name : "")
     readonly property string styleName: root.route.style
-    readonly property string edgeName: OsdStyles.edgePref(root.styleName, Config.layout.osd.position, Config.notch.position)
+    readonly property string edgeName: OsdStyles.edgePref(root.styleName, Config.layout.osd.position, Config.notch.position, ShellLayout.notchEnabled, ShellLayout.barEnabled ? ShellLayout.layout.bar.edge : "")
     readonly property bool vertical: EdgeService.osdPlacement(root.targetScreen, root.edgeName, {
         "w": 1,
         "h": 1
