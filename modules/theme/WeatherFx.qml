@@ -125,5 +125,7 @@ QtObject {
     // a light one (white on white would vanish)
     readonly property color ice: root._light ? Colors.outline : Colors.overBackground
     readonly property color mist: root.ice
+    // Grey haze on a light surface reads far fainter than white on a dark one
+    readonly property real mistGain: root._light ? 2.4 : 1
     readonly property color warm: Colors.tertiary
 }
