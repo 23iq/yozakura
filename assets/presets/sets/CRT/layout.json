@@ -5,7 +5,8 @@
         "icons": false
     },
     "dashboard": {
-        "home": "composed"
+        "home": "composed",
+        "host": "auto"
     },
     "osd": {
         "style": "edge"
