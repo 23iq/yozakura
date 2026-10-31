@@ -645,6 +645,123 @@
       },
       "additionalProperties": false
     },
+    "weatherFx": {
+      "title": "Weather fx",
+      "type": "object",
+      "description": "The current weather drawn onto the shell's surfaces: droplets, frost, heat shimmer, haze and seasonal petals.",
+      "properties": {
+        "mode": {
+          "title": "Weather on surfaces",
+          "type": "string",
+          "default": "off",
+          "description": "The current weather drawn onto the bar, notch, dock and popups: a few raindrops, frost in the corners below 0 °C, a soft haze in fog. Never over text.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.weatherfx.mode",
+            "control": "selector",
+            "preview": "WeatherFxPreview",
+            "keywords": "weather on surfaces rain droplets snow frost heat fog mist petals leaves season ambient"
+          },
+          "enum": [
+            "off",
+            "subtle",
+            "vivid"
+          ],
+          "x-enumLabels": {
+            "off": "Off",
+            "subtle": "Subtle",
+            "vivid": "Vivid"
+          }
+        },
+        "rain": {
+          "title": "Raindrops",
+          "type": "boolean",
+          "default": true,
+          "description": "Drops rest on surfaces while it rains; now and then one runs down. Denser in heavy rain than in drizzle.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.weatherfx.rain",
+            "control": "toggle",
+            "keywords": "rain drizzle droplets drops water glass",
+            "visibleWhen": {
+              "key": "theme.weatherFx.mode",
+              "notEquals": "off"
+            }
+          }
+        },
+        "frost": {
+          "title": "Frost and snow",
+          "type": "boolean",
+          "default": true,
+          "description": "Below 0 °C frost creeps in from the corners; while it snows, flakes settle on the top edge.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.weatherfx.frost",
+            "control": "toggle",
+            "keywords": "frost ice snow cold winter flakes freezing",
+            "visibleWhen": {
+              "key": "theme.weatherFx.mode",
+              "notEquals": "off"
+            }
+          }
+        },
+        "heat": {
+          "title": "Heat shimmer",
+          "type": "boolean",
+          "default": false,
+          "description": "Above 30 °C a faint shimmer passes over the bar now and then.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.weatherfx.heat",
+            "control": "toggle",
+            "keywords": "heat hot shimmer summer haze",
+            "visibleWhen": {
+              "key": "theme.weatherFx.mode",
+              "notEquals": "off"
+            }
+          }
+        },
+        "fog": {
+          "title": "Fog haze",
+          "type": "boolean",
+          "default": true,
+          "description": "A soft haze over surfaces in fog and mist.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.weatherfx.fog",
+            "control": "toggle",
+            "keywords": "fog mist haze",
+            "visibleWhen": {
+              "key": "theme.weatherFx.mode",
+              "notEquals": "off"
+            }
+          }
+        },
+        "seasonal": {
+          "title": "Seasonal petals",
+          "type": "boolean",
+          "default": false,
+          "description": "In spring a petal, in autumn a leaf, occasionally lands on the bar and slides off. The season follows your weather location's hemisphere.",
+          "x-settings": {
+            "category": "appearance",
+            "section": "effects",
+            "label": "prefs.weatherfx.seasonal",
+            "control": "toggle",
+            "keywords": "season petals leaves spring autumn fall sakura maple",
+            "visibleWhen": {
+              "key": "theme.weatherFx.mode",
+              "notEquals": "off"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "paletteTransitionDuration": {
       "title": "Color Fade",
       "type": "number",
