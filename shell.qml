@@ -231,14 +231,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Loader {
-            id: screenshotOverlayLoader
-            active: SuspendManager.wakeReady
-            required property ShellScreen modelData
-            sourceComponent: ScreenshotOverlay {
-                targetScreen: screenshotOverlayLoader.modelData
-            }
-        }
+        ScreenshotOverlayHost {}
     }
 
     // Screen recording tool

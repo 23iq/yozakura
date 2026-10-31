@@ -114,6 +114,9 @@ var performance = {
             "min": 1,
             "max": 3,
             "description": "Most dashboard tabs kept loaded."
+        },
+        "unloadIdleViews": {
+            "description": "Release kept-loaded dashboard tabs a minute after the dashboard closes."
         }
     }
 };

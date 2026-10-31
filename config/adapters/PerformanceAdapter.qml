@@ -10,4 +10,5 @@ JsonAdapter {
     property bool pauseWallpaperWhenCovered: true
     property bool dashboardPersistTabs: false
     property int dashboardMaxPersistentTabs: 2
+    property bool unloadIdleViews: true
 }

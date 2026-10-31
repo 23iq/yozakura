@@ -2033,6 +2033,8 @@
   "prefs.sys.dashboard_persist.desc": "Keep dashboard tabs loaded after leaving them: faster switching, more memory.",
   "prefs.sys.dashboard_max_tabs": "Tabs kept loaded",
   "prefs.sys.dashboard_max_tabs.desc": "Most dashboard tabs kept in memory at once.",
+  "prefs.sys.unload_idle_views": "Release idle tabs",
+  "prefs.sys.unload_idle_views.desc": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
   "prefs.sys.lock_cmd.desc": "Runs when the session locks (loginctl lock-session, idle listeners).",
   "prefs.sys.idle_listeners.desc": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
   "prefs.sys.idle_listeners.empty": "No idle listeners: the screen never dims, locks or sleeps by itself.",

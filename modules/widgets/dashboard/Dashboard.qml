@@ -130,6 +130,20 @@ NotchAnimationBehavior {
         }
     }
 
+    // Persisted tabs of a closed dashboard are released after a minute
+    IdleUnloader {
+        idle: !root.isVisible
+        active: Config.performance.dashboardPersistTabs && Config.performance.unloadIdleViews
+        onUnload: root.releasePersistedTabs()
+    }
+
+    function releasePersistedTabs() {
+        lruAccessOrder = [0];
+        lruTabsLoaded = ({
+                0: true
+            });
+    }
+
     focus: true
 
     // Usar el comportamiento estándar de animaciones del notch

@@ -201,7 +201,7 @@ Singleton {
     }
 
     property Timer _tick: Timer {
-        interval: 30000
+        interval: 60000
         running: root.started
         repeat: true
         onTriggered: root.now = Date.now()

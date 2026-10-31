@@ -7851,6 +7851,23 @@
           },
           "minimum": 1,
           "maximum": 3
+        },
+        "unloadIdleViews": {
+          "title": "Release idle tabs",
+          "type": "boolean",
+          "default": true,
+          "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
+          "x-settings": {
+            "category": "dashboard",
+            "section": "advanced",
+            "label": "prefs.sys.unload_idle_views",
+            "control": "toggle",
+            "keywords": "dashboard tabs memory unload idle release",
+            "visibleWhen": {
+              "key": "performance.dashboardPersistTabs",
+              "equals": true
+            }
+          }
         }
       },
       "additionalProperties": false

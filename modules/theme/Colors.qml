@@ -72,10 +72,9 @@ FileView {
         crossfadeTimer.restart();
     }
 
-    property Timer crossfadeTimer: Timer {
+    // One step per frame (vsync), no timer wake-ups in between
+    property FrameAnimation crossfadeTimer: FrameAnimation {
         id: crossfadeTimer
-        interval: 16
-        repeat: true
         onTriggered: {
             const x = Math.min(1, (Date.now() - colors._blendStart) / colors._blendDuration);
             if (x >= 1) {
