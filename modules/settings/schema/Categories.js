@@ -108,7 +108,7 @@ var groups = [
         "id": "presets",
         "icon": "magicWand",
         "title": "prefs.group.presets",
-        "categories": ["presets"]
+        "categories": ["presets", "changes"]
     },
     {
         "id": "system",
@@ -179,6 +179,7 @@ var categories = [
     AiProviders.category,
     AiCode.category,
     page("mods", "puzzlePiece", "Mods", "mods extensions plugins modifications install"),
+    page("changes", "listChecks", "Changes", "changes changed modified differences diff what did i change reset defaults preset custom"),
     {
         "id": "presets",
         "icon": "magicWand",

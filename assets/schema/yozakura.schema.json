@@ -2755,7 +2755,27 @@
             "section": "autohide",
             "label": "prefs.bar.pinned",
             "control": "toggle",
-            "keywords": "pin autohide hide show startup visible"
+            "keywords": "pin autohide hide show startup visible",
+            "enabledWhen": {
+              "any": [
+                {
+                  "key": "bar.panels",
+                  "empty": true
+                },
+                {
+                  "key": "bar.panels",
+                  "some": {
+                    "field": "autohide",
+                    "notIn": [
+                      "always",
+                      "never",
+                      true,
+                      false
+                    ]
+                  }
+                }
+              ]
+            }
           }
         },
         "hoverRegionHeight": {
@@ -2789,7 +2809,27 @@
             "section": "autohide",
             "label": "prefs.bar.pin_button",
             "control": "toggle",
-            "keywords": "pin button unpin"
+            "keywords": "pin button unpin",
+            "enabledWhen": {
+              "any": [
+                {
+                  "key": "bar.panels",
+                  "empty": true
+                },
+                {
+                  "key": "bar.panels",
+                  "some": {
+                    "field": "autohide",
+                    "notIn": [
+                      "always",
+                      "never",
+                      true,
+                      false
+                    ]
+                  }
+                }
+              ]
+            }
           }
         },
         "availableOnFullscreen": {
@@ -7757,7 +7797,20 @@
             "section": "activities",
             "label": "prefs.notifications.notch_style",
             "control": "selector",
-            "keywords": "notification notch compact card one line"
+            "keywords": "notification notch compact card one line",
+            "visibleWhen": {
+              "not": {
+                "key": "notifications.presentation",
+                "in": [
+                  "corner",
+                  "strips"
+                ]
+              }
+            },
+            "enabledWhen": {
+              "key": "notch.enabled",
+              "equals": true
+            }
           },
           "enum": [
             "card",
@@ -7806,10 +7859,26 @@
             "control": "selector",
             "keywords": "corner position top bottom left right center",
             "visibleWhen": {
-              "key": "notifications.presentation",
-              "in": [
-                "auto",
-                "corner"
+              "any": [
+                {
+                  "key": "notifications.presentation",
+                  "in": [
+                    "auto",
+                    "corner"
+                  ]
+                },
+                {
+                  "all": [
+                    {
+                      "key": "notifications.presentation",
+                      "equals": "notch"
+                    },
+                    {
+                      "key": "notch.enabled",
+                      "equals": false
+                    }
+                  ]
+                }
               ]
             }
           },
@@ -10851,10 +10920,10 @@
           "maximum": 1
         },
         "terminalOpacity": {
-          "title": "Terminal background opacity",
+          "title": "Terminal base opacity",
           "type": "number",
           "default": -1,
-          "description": "Background opacity of the generated kitty, ghostty, foot and alacritty themes, before glass. From preset follows the preset's background surface. With Glass off it is used as is.",
+          "description": "The opacity the kitty, ghostty, foot and alacritty themes are designed with. The Glass amount then scales it: more glass, more see-through. From preset follows the preset's background surface. With Glass off it is used as is.",
           "x-settings": {
             "category": "terminal",
             "section": "kitty",
@@ -17751,6 +17820,11 @@
       "description": "Install and manage modifications."
     },
     {
+      "id": "changes",
+      "title": "Changes",
+      "description": "Everything you changed, page by page. Reset one setting or open it."
+    },
+    {
       "id": "presets",
       "title": "Presets",
       "description": "Your looks: gallery, try, mix and edit presets."
@@ -17859,7 +17933,8 @@
       "id": "presets",
       "title": "Presets",
       "categories": [
-        "presets"
+        "presets",
+        "changes"
       ]
     },
     {

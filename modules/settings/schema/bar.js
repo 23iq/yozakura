@@ -5,6 +5,16 @@
 // Bar & Islands: style, module layout, placement, clock, workspaces and
 // auto-hide. Entry format: see modules/settings/AGENTS.md.
 
+// The shared pin (bar.pinnedOnStartup, the pin button) only drives panels
+// whose auto-hide is "auto" (BarContent.qml; a missing value is auto, the
+// legacy true / false are always / never). No panels = the single bar (auto).
+var PIN_APPLIES = {
+    "any": [
+        { "key": "bar.panels", "empty": true },
+        { "key": "bar.panels", "some": { "field": "autohide", "notIn": ["always", "never", true, false] } }
+    ]
+};
+
 var category = {
     "id": "bar",
     "icon": "squaresFour",
@@ -325,6 +335,8 @@ var category = {
                 {
                     "key": "bar.pinnedOnStartup",
                     "type": "toggle",
+                    "enabledWhen": PIN_APPLIES,
+                    "reason": "prefs.bar.pin.reason",
                     "label": "prefs.bar.pinned",
                     "description": "prefs.bar.pinned.desc",
                     "keywords": "pin autohide hide show startup visible"
@@ -332,6 +344,8 @@ var category = {
                 {
                     "key": "bar.showPinButton",
                     "type": "toggle",
+                    "enabledWhen": PIN_APPLIES,
+                    "reason": "prefs.bar.pin.reason",
                     "label": "prefs.bar.pin_button",
                     "description": "prefs.bar.pin_button.desc",
                     "keywords": "pin button unpin"

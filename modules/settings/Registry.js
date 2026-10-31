@@ -77,10 +77,23 @@ var PREVIEWS = {
     "LayoutPreview": "layout/LayoutPreview.qml"
 };
 
+// Card thumbnails of a selector shown as cards (schema `display: "cards"`,
+// `thumb`): one small picture per option (`value`), see controls/CardSelector.
+var THUMBS = {
+    "LanguageThumb": "thumbs/LanguageThumb.qml",
+    "CornerThumb": "thumbs/CornerThumb.qml",
+    "EdgeThumb": "thumbs/EdgeThumb.qml",
+    "PresentationThumb": "thumbs/PresentationThumb.qml"
+};
+
 function editor(name) {
     return EDITORS[name] || "";
 }
 
 function preview(name) {
     return PREVIEWS[name] || "";
+}
+
+function thumb(name) {
+    return THUMBS[name] || "";
 }
