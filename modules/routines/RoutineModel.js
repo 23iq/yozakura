@@ -52,7 +52,9 @@ function fromTemplate(id, tr) {
     return newRoutine("");
 }
 
-var clone = Tools.clone;
+function clone(v) {
+    return Tools.clone(v);
+}
 
 function newRoutine(name) {
     return { id: "", name: String(name || ""), icon: "lightning", keywords: "", continueOnError: false, steps: [] };
