@@ -22,7 +22,7 @@ STYLES = re.findall(r'^\s*id: "(\w+)"', (REPO / "modules/lockscreen/styles/LockS
 assert len(STYLES) >= 6, STYLES
 en = json.loads((REPO / "translations/en.json").read_text())
 
-env = LockscreenEnv("lockscreen", overrides={"theme": {"animDuration": 20}})
+env = LockscreenEnv("lockscreen", overrides={"theme": {"animDuration": 100}})
 h = env.h
 
 
