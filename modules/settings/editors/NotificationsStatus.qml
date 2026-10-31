@@ -20,9 +20,9 @@ Item {
         id: line
 
         width: parent.width
-        icon: root.dnd ? "bellZ" : (root.presentation === "notch" ? "dotsThree" : "frameCorners")
+        icon: root.dnd ? "bellZ" : (root.presentation === "notch" ? "dotsThree" : (root.presentation === "strips" ? "columns" : "frameCorners"))
         tone: root.dnd ? "warn" : "ok"
-        title: root.presentation === "notch" ? I18n.t("prefs.notif.status.notch") : I18n.t("prefs.notif.status.corner", I18n.t("prefs.notif.position." + root.position))
+        title: root.presentation === "notch" ? I18n.t("prefs.notif.status.notch") : (root.presentation === "strips" ? I18n.t("prefs.notif.status.strips") : I18n.t("prefs.notif.status.corner", I18n.t("prefs.notif.position." + root.position)))
         detail: root.dnd ? I18n.t("prefs.notif.status.dnd") : I18n.t("prefs.notif.status.live")
 
         PillButton {
