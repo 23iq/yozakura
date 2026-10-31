@@ -113,7 +113,7 @@ QtObject {
     // The panel the notch pairs with (bar.panels): its style decides "auto"
     readonly property var primaryPanel: {
         const list = (Panels.all || []).filter(p => p.enabled);
-        const i = PanelLayout.primaryIndex(list, Panels.notchEdge);
+        const i = PanelLayout.primaryIndex(list, Panels.pairEdge);
         return i === -1 ? null : list[i];
     }
     readonly property string presentation: Policy.resolvePresentation(cfg ? cfg.presentation : "auto", {

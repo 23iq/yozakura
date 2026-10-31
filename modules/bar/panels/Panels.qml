@@ -18,12 +18,15 @@ Singleton {
     readonly property var all: resolved.panels
     readonly property bool legacy: resolved.legacy
     readonly property string notchEdge: Config.notchPosition !== undefined ? Config.notchPosition : "top"
+    // Edge the primary panel sits on: the notch's, or with the notch off
+    // (notch.enabled) the bar's own (PanelLayout.pairEdge)
+    readonly property string pairEdge: PanelLayout.pairEdge(Config.bar, Config.notch)
 
     // Edge of the panel the notch pairs with (or of the first panel): what
     // "the bar position" means for code that only knows one bar.
     readonly property string primaryEdge: {
         const list = all.filter(p => p.enabled);
-        const i = PanelLayout.primaryIndex(list, notchEdge);
+        const i = PanelLayout.primaryIndex(list, pairEdge);
         return i === -1 ? "top" : list[i].edge;
     }
 

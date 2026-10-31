@@ -59,7 +59,7 @@ Singleton {
     // only when that panel is a classic bar (BarContent.integratedDockEnabled).
     function integratedDockHosted(screen) {
         const list = configuredPanels(screen);
-        const i = PanelLayout.primaryIndex(list, Config.notch ? Config.notch.position : "top");
+        const i = PanelLayout.primaryIndex(list, PanelLayout.pairEdge(Config.bar, Config.notch));
         return i !== -1 && list[i].style === "classic";
     }
 
