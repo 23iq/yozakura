@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.globals
 import qs.config
@@ -58,29 +59,26 @@ Item {
         }
     }
 
-    readonly property int gutter: Math.round(Styling.fontSize(0) * 2.2)
-
-    StyledRect {
+    Surface {
         id: card
         objectName: "onboardingCard"
-        variant: "popup"
         glassSurface: "popups"
         enableShadow: true
+        padding: Space.xl
         anchors.centerIn: parent
-        width: Math.min(1120, parent.width - Math.max(48, parent.width * 0.1))
-        height: Math.min(780, parent.height - Math.max(48, parent.height * 0.1))
-        radius: Styling.radius(10)
+        width: Math.min(Space.px(1120), parent.width - Math.max(Space.px(48), parent.width * 0.1))
+        height: Math.min(Space.px(780), parent.height - Math.max(Space.px(48), parent.height * 0.1))
         opacity: root.shown ? 1 : 0
         scale: root.shown ? 1 : 0.96
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
                 duration: Motion.enter.duration
                 easing.type: Motion.enter.easing
             }
         }
         Behavior on scale {
-            enabled: Config.animDuration > 0
+            enabled: Motion.morph.duration > 0
             NumberAnimation {
                 duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
@@ -93,31 +91,27 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: root.gutter
-            height: Math.round(Styling.fontSize(0) * 2.4)
+            height: Space.controlS
 
             Row {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Space.s
                 SakuraLogo {
-                    size: Math.round(Styling.fontSize(0) * 1.6)
+                    size: Type.iconSize("title")
                     anchors.verticalCenter: parent.verticalCenter
                 }
-                Text {
+                KitText {
                     anchors.verticalCenter: parent.verticalCenter
+                    role: "body"
                     text: Brand.displayName
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
-                    font.weight: Font.Bold
-                    color: Colors.overBackground
+                    font.weight: Font.DemiBold
                 }
-                Text {
+                KitText {
                     anchors.verticalCenter: parent.verticalCenter
+                    role: "body"
+                    color: Type.secondary
                     text: I18n.t("onboarding.setup")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
-                    color: Colors.overSurfaceVariant
                 }
                 DryRunBadge {
                     anchors.verticalCenter: parent.verticalCenter
@@ -132,12 +126,11 @@ Item {
                 onPicked: i => root.wizard.go(i)
             }
 
-            NavButton {
+            FocusChip {
                 objectName: "onboardingSkipAll"
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !root.wizard.isLast
-                kind: "ghost"
                 text: I18n.t("onboarding.skip_setup")
                 onClicked: root.wizard.skipRequested = true
             }
@@ -150,10 +143,10 @@ Item {
             anchors.right: parent.right
             anchors.top: header.bottom
             anchors.bottom: footer.top
-            anchors.leftMargin: root.gutter * 1.6
-            anchors.rightMargin: root.gutter * 1.6
-            anchors.topMargin: root.gutter
-            anchors.bottomMargin: root.gutter * 0.6
+            anchors.leftMargin: Space.xl
+            anchors.rightMargin: Space.xl
+            anchors.topMargin: Space.xl
+            anchors.bottomMargin: Space.l
             clip: true
 
             StepScaffold {
@@ -178,18 +171,18 @@ Item {
                 NumberAnimation {
                     target: slide
                     property: "x"
-                    from: root.wizard.direction * 48
+                    from: root.wizard.direction * Space.xxl
                     to: 0
-                    duration: Config.animDuration * 1.4
-                    easing.type: Motion.emphasis.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
                 NumberAnimation {
                     target: scaffold
                     property: "opacity"
                     from: 0
                     to: 1
-                    duration: Config.animDuration * 1.4
-                    easing.type: Motion.emphasis.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
         }
@@ -200,37 +193,33 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: root.gutter
-            height: next.implicitHeight
+            height: Space.controlS
 
-            Text {
+            KitText {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
+                role: "caption"
+                color: Type.muted
                 text: I18n.t("onboarding.step_of", root.wizard.index + 1, root.wizard.count)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.outline
             }
 
             Row {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
-                NavButton {
+                spacing: Space.s
+                FocusChip {
                     objectName: "onboardingBack"
                     visible: !root.wizard.isFirst
-                    kind: "ghost"
-                    icon: "caretLeft"
+                    icon: Icons.caretLeft
                     text: I18n.t("onboarding.back")
                     onClicked: root.wizard.back()
                 }
-                NavButton {
+                FocusChip {
                     id: next
                     objectName: "onboardingNext"
                     // the summary step has its own big "Start using" button
                     visible: !root.wizard.isLast
-                    kind: "filled"
-                    trailingIcon: "caretRight"
+                    primary: true
                     text: root.wizard.isFirst ? I18n.t("onboarding.get_started") : I18n.t("onboarding.continue")
                     onClicked: root.wizard.next()
                 }
@@ -240,6 +229,7 @@ Item {
 
     SkipConfirm {
         anchors.fill: card
+        radius: card.radius
         wizard: root.wizard
     }
 
