@@ -130,6 +130,14 @@ var MODULES = [
         "file": "modules/MicChip.qml"
     },
     {
+        // The bar read as one line of text, each fragment clickable
+        // (sentence/Sentence.js); options in moduleOptions.sentence
+        "id": "sentence",
+        "icon": "textAa",
+        "label": "prefs.bar.module.sentence",
+        "file": "modules/Sentence.qml"
+    },
+    {
         "id": "keyboardLayout",
         "icon": "keyboard",
         "label": "prefs.bar.module.keyboardLayout",

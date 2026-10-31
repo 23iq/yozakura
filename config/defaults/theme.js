@@ -17,10 +17,12 @@ var data = {
         "weight": "bold"
     },
     // Type roles: body follows `font`; heading "" = the body font;
-    // headingCase: none | upper | lower | title.
+    // headingCase: none | upper | lower | title; editorial: the serif
+    // display face of editorial text (sentence bar), "" = the system serif.
     "type": {
         "heading": "",
-        "headingCase": "none"
+        "headingCase": "none",
+        "editorial": ""
     },
     "enableCorners": true,
     "animDuration": 300,

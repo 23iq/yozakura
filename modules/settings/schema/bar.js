@@ -1,5 +1,6 @@
 .pragma library
 .import "barextra.js" as BarExtra
+.import "barsentence.js" as BarSentence
 
 // Bar & Islands: style, module layout, placement, clock, workspaces and
 // auto-hide. Entry format: see modules/settings/AGENTS.md.
@@ -341,6 +342,11 @@ var category = {
         }
     ]
 };
+
+// The sentence module, after the media one
+category.sections.splice(category.sections.findIndex(function (s) {
+    return s.id === "media";
+}) + 1, 0, ...BarSentence.sections);
 
 // The former "classic" bar options: launcher icon, screens, expert knobs.
 category.sections.push(...BarExtra.sections);

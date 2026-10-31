@@ -285,6 +285,9 @@ var keys = {
     "type.heading": {
         "description": "Font family of page, section and panel titles; empty uses theme.font."
     },
+    "type.editorial": {
+        "description": "Font family of the editorial type role (serif display text such as the sentence bar); empty uses the system serif face."
+    },
     "type.headingCase": {
         "enum": ["none", "upper", "lower", "title"],
         "description": "Letter case applied to titles: none, upper, lower or title."
