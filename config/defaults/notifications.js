@@ -14,6 +14,17 @@ var data = {
     "timeout": 5000,
     "maxVisible": 3,
     "groupByApp": true,
+    // presentation "strips": tanzaku hanging on a thread from a screen edge
+    // (modules/notifications/strips/). material plain | paper | washi
+    // (a procedural texture tinted from the palette), edge auto | top |
+    // bottom | left | right (auto = top, under a top bar).
+    "strips": {
+        "material": "plain",
+        "thread": true,
+        "sway": true,
+        "maxVisible": 5,
+        "edge": "auto"
+    },
     "historySize": 100,
     "sound": {
         "enabled": false,

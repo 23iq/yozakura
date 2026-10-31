@@ -124,6 +124,7 @@ var types = {
         "historySize": "int",
         "maxVisible": "int",
         "screens": "list<string>",
+        "strips.maxVisible": "int",
         "timeout": "int"
     },
     "apps": {
