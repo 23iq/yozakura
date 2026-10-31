@@ -1486,7 +1486,8 @@
             "label": "prefs.ai.ollama_endpoint",
             "control": "text",
             "keywords": "ollama endpoint url host port server remote local"
-          }
+          },
+          "pattern": "^$|^https?://\\S+$"
         },
         "keepAlive": {
           "title": "Keep Ollama models loaded",
@@ -1499,7 +1500,8 @@
             "label": "prefs.ai.ollama_keep_alive",
             "control": "text",
             "keywords": "ollama keep alive unload memory vram minutes"
-          }
+          },
+          "pattern": "^$|^-?\\d+(\\.\\d+)?(ms|s|m|h)?$"
         }
       },
       "additionalProperties": false
@@ -1520,7 +1522,8 @@
             "label": "prefs.ai.lmstudio_endpoint",
             "control": "text",
             "keywords": "lm studio lmstudio endpoint url server port local"
-          }
+          },
+          "pattern": "^$|^https?://\\S+$"
         }
       },
       "additionalProperties": false

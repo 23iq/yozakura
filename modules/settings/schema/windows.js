@@ -346,6 +346,7 @@ var category = {
                     "key": "compositor.shadowOffset",
                     "compositor": "hyprland",
                     "type": "text",
+                    "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$",
                     "placeholder": "prefs.windows.shadow_offset.placeholder",
                     "monospace": true,
                     "visibleWhen": {

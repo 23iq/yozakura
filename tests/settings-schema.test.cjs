@@ -202,3 +202,27 @@ test('migrated system categories replace their legacy panels', () => {
         assert.notEqual(c.legacy && c.legacy.source, 'dashboard/controls/SystemPanel.qml', c.id);
     assert.equal(fs.existsSync(path.join(repo, 'modules/widgets/dashboard/controls/SystemPanel.qml')), false);
 });
+
+test('text entries validate with the same pattern the catalog (CLI/MCP) enforces', () => {
+    const { metaFor } = require('../tools/schema/catalog.cjs');
+    const Meta = lib('config/meta/Meta.js');
+    const mismatches = [];
+    for (const { entry } of SchemaUtil.flatten(Categories.categories)) {
+        if (entry.type !== 'text' || !entry.key) continue;
+        const [domain, ...rest] = entry.key.split('.');
+        const meta = Meta.domains[domain];
+        const m = meta && metaFor(meta.keys || {}, rest.join('.'));
+        const catalog = m && m.pattern;
+        if ((catalog || entry.pattern) && catalog !== entry.pattern)
+            mismatches.push(`${entry.key}: ui ${entry.pattern} vs catalog ${catalog}`);
+    }
+    assert.deepEqual(mismatches, []);
+});
+
+test('shadow offset falls back to "0 0" when malformed', () => {
+    const app = lib('modules/services/CompositorAppearance.js');
+    assert.equal(app.shadowOffset('2 -3'), '2 -3');
+    assert.equal(app.shadowOffset(' 1.5 2 '), '1.5 2');
+    for (const bad of ['', undefined, '2,3', 'a b', '1'])
+        assert.equal(app.shadowOffset(bad), '0 0');
+});
