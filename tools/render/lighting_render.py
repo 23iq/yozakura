@@ -5,6 +5,8 @@
                                     [--language ink|glass|tiles ...]
                                     [--time morning|noon|evening|night ...]
                                     [--mode sun|fixed|off]
+                                    [--strength subtle|normal|dramatic]
+                                    [--corners round|cut|squircle]
 
 Draws a floating bar and a kit panel (real StyledRect surfaces with the
 theme shadow, lit edge and cursor lantern, over the example wallpaper) at
@@ -54,11 +56,11 @@ import qs.modules.components.kit
 
 Window {
     width: %(w)d; height: %(h)d; visible: true; color: "black"
-    function setLight(ms, lat, lon, mode, lantern) {
+    function setLight(ms, lat, lon, mode, lantern, strength) {
         Lighting.latitude = lat;
         Lighting.longitude = lon;
         Lighting.overrideTime = ms;
-        Config.theme.lighting = Object.assign({}, Config.theme.lighting, { mode: mode, lantern: lantern });
+        Config.theme.lighting = Object.assign({}, Config.theme.lighting, { mode: mode, lantern: lantern, strength: strength });
     }
     Item {
         objectName: "scene"
@@ -148,14 +150,16 @@ def epoch_ms(iso: str) -> int:
     return int(datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp() * 1000)
 
 
-def render(out: Path, pal: str, lang: str, times: list[str], mode: str, wall: str) -> list[Path]:
-    env = KitEnv(f"lighting-{pal}-{lang}", palette=palette(pal), overrides={"theme": {"language": lang, "shape": {"popupCorners": "round"}}})
+def render(out: Path, pal: str, lang: str, times: list[str], mode: str, wall: str, strength: str,
+           corners: str = "round") -> list[Path]:
+    env = KitEnv(f"lighting-{pal}-{lang}", palette=palette(pal),
+                 overrides={"theme": {"language": lang, "shape": {"popupCorners": corners}}})
     win = env.load(SCENE % {"w": W, "h": H, "wall": wallpaper(wall)})
     panel = env.h.find(win, "panel")
     paths = []
     for t in times:
         night = t == "night"
-        env.h.eval(win, f"setLight({epoch_ms(TIMES[t])}, {PLACE[0]}, {PLACE[1]}, '{mode}', '{'night' if night else 'off'}')")
+        env.h.eval(win, f"setLight({epoch_ms(TIMES[t])}, {PLACE[0]}, {PLACE[1]}, '{mode}', '{'night' if night else 'off'}', '{strength}')")
         QTest.qWait(150)
         # The lantern follows the pointer: hover the panel's upper rows
         px = int(panel.property("x") + panel.property("width") * 0.38)
@@ -190,13 +194,16 @@ def main() -> int:
     ap.add_argument("--language", action="append", choices=["ink", "glass", "tiles", "classic"])
     ap.add_argument("--time", action="append", choices=list(TIMES))
     ap.add_argument("--mode", default="sun", choices=["sun", "fixed", "off"])
+    ap.add_argument("--strength", default="normal", choices=["subtle", "normal", "dramatic"])
+    ap.add_argument("--corners", default="round", choices=["round", "cut", "squircle"],
+                    help="popup corner style (cut/squircle render through CornerMask)")
     ap.add_argument("--wallpaper", default="09", help="assets/wallpapers_example number (09: light, shows shadows)")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     times = args.time or list(TIMES)
     for pal in args.palette or ["default", "green"]:
-        grid = [render(out, pal, lang, times, args.mode, args.wallpaper)
+        grid = [render(out, pal, lang, times, args.mode, args.wallpaper, args.strength, args.corners)
                 for lang in args.language or ["ink", "glass", "tiles"]]
         sheet(out, pal, grid)
     return 0

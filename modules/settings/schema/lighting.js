@@ -48,6 +48,32 @@ var sections = [
                 "keywords": "light angle direction shadow side"
             },
             {
+                "key": "theme.lighting.strength",
+                "type": "selector",
+                "preview": "LightingPreview",
+                "visibleWhen": {
+                    "key": "theme.lighting.mode",
+                    "notEquals": "off"
+                },
+                "label": "prefs.lighting.strength",
+                "description": "prefs.lighting.strength.desc",
+                "options": [
+                    {
+                        "value": "subtle",
+                        "label": "prefs.lighting.strength.subtle"
+                    },
+                    {
+                        "value": "normal",
+                        "label": "prefs.lighting.strength.normal"
+                    },
+                    {
+                        "value": "dramatic",
+                        "label": "prefs.lighting.strength.dramatic"
+                    }
+                ],
+                "keywords": "lighting strength intensity subtle dramatic shadow length glow"
+            },
+            {
                 "key": "theme.lighting.lantern",
                 "type": "selector",
                 "label": "prefs.lighting.lantern",

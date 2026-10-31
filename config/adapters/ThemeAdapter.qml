@@ -42,6 +42,7 @@ JsonAdapter {
         property string mode: "off"
         property int angle: -35
         property string lantern: "off"
+        property string strength: "normal"
     }
     property int paletteTransitionDuration: 600
     property real shadowOpacity: 0.5

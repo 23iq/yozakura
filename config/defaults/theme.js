@@ -51,11 +51,13 @@ var data = {
     // mode off (the shadow* values as is) | fixed (light from `angle`,
     // degrees clockwise from the top) | sun (the real sun at the weather
     // location). lantern: off | night | always (a soft glow follows the
-    // pointer over shell surfaces).
+    // pointer over shell surfaces). strength: subtle | normal | dramatic
+    // scales shadows, lit edges, the sun wash, the night dim and the lantern.
     "lighting": {
         "mode": "off",
         "angle": -35,
-        "lantern": "off"
+        "lantern": "off",
+        "strength": "normal"
     },
     "paletteTransitionDuration": 600,
     "shadowOpacity": 0.5,

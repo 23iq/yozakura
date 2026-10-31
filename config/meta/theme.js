@@ -321,6 +321,10 @@ var keys = {
         "unit": "deg",
         "description": "fixed mode: where the light comes from, degrees clockwise from the top of the screen."
     },
+    "lighting.strength": {
+        "enum": ["subtle", "normal", "dramatic"],
+        "description": "How strongly the light shows: shadow length and softness, the lit edge, the warm sun wash, the night dim and the lantern."
+    },
     "lighting.lantern": {
         "enum": ["off", "night", "always"],
         "description": "A soft light that follows the pointer over shell surfaces: off, only after sunset, or always."
