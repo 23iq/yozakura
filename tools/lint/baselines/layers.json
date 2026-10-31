@@ -1,0 +1,136 @@
+{
+ "upward": {
+  "bar -> shell": 2,
+  "components -> bar": 1,
+  "components -> services": 4,
+  "components -> shell": 2,
+  "config -> services": 1,
+  "dock -> shell": 1,
+  "globals -> services": 1,
+  "keybinds -> shell": 1,
+  "notch -> shell": 3,
+  "notifications -> shell": 1,
+  "services -> bar": 4,
+  "services -> desktop": 1,
+  "services -> onboarding": 1,
+  "services -> settings": 2,
+  "services -> specials": 1,
+  "services -> widgets": 1,
+  "settings -> shell": 2,
+  "widgets -> shell": 3
+ },
+ "cycles": [
+  [
+   "aicenter",
+   "settings"
+  ],
+  [
+   "bar",
+   "components"
+  ],
+  [
+   "bar",
+   "corners"
+  ],
+  [
+   "bar",
+   "dock"
+  ],
+  [
+   "bar",
+   "notch"
+  ],
+  [
+   "bar",
+   "services"
+  ],
+  [
+   "bar",
+   "shell"
+  ],
+  [
+   "bar",
+   "widgets"
+  ],
+  [
+   "components",
+   "shell"
+  ],
+  [
+   "config",
+   "globals"
+  ],
+  [
+   "config",
+   "services"
+  ],
+  [
+   "config",
+   "theme"
+  ],
+  [
+   "desktop",
+   "services"
+  ],
+  [
+   "desktop",
+   "widgets"
+  ],
+  [
+   "dock",
+   "shell"
+  ],
+  [
+   "globals",
+   "services"
+  ],
+  [
+   "keybinds",
+   "settings"
+  ],
+  [
+   "keybinds",
+   "shell"
+  ],
+  [
+   "notch",
+   "shell"
+  ],
+  [
+   "notch",
+   "widgets"
+  ],
+  [
+   "notifications",
+   "shell"
+  ],
+  [
+   "onboarding",
+   "services"
+  ],
+  [
+   "services",
+   "settings"
+  ],
+  [
+   "services",
+   "specials"
+  ],
+  [
+   "services",
+   "widgets"
+  ],
+  [
+   "settings",
+   "terminal"
+  ],
+  [
+   "settings",
+   "widgets"
+  ],
+  [
+   "shell",
+   "widgets"
+  ]
+ ]
+}

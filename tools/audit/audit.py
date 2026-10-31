@@ -8,8 +8,9 @@ Usage:
   audit.py --strict        treat warnings as errors
   audit.py --quiet         only print errors and the summary
 
-Checks: dead-code, qs-scanner, brand-literals, shell-injection, config-keys, settings-schema, snapshot-keys, translations, monoliths.
-Hard failures (severity "error"): shell/QML injection patterns, config schema mismatches, unknown config
+Checks: dead-code, qs-scanner, brand-literals, shell-injection, config-keys, settings-schema, snapshot-keys, translations, monoliths, layers, ipc-methods.
+Hard failures (severity "error"): shell/QML injection patterns, new upward/cyclic
+imports (layers, ratchet baseline), unknown backend methods (ipc-methods), config schema mismatches, unknown config
 keys used in code, missing translations. Warnings: dead files, snapshot
 coverage, unused/stale translations, monoliths. Allowlists live in
 tools/audit/config.json - every entry needs a reason.
@@ -27,6 +28,8 @@ from checks import (  # noqa: E402
     brand_literals,
     config_keys,
     dead_code,
+    ipc_methods,
+    layers,
     monoliths,
     qs_scanner,
     schema_fresh,
@@ -37,7 +40,7 @@ from checks import (  # noqa: E402
 )
 from lib.model import ERROR, INFO, WARN, load_config  # noqa: E402
 
-CHECKS = {m.CHECK: m for m in (config_keys, translations, brand_literals, dead_code, qs_scanner, shell_injection, settings_schema, schema_fresh, snapshot_keys, monoliths)}
+CHECKS = {m.CHECK: m for m in (config_keys, translations, brand_literals, dead_code, qs_scanner, shell_injection, settings_schema, schema_fresh, snapshot_keys, monoliths, layers, ipc_methods)}
 _ICON = {ERROR: "[fail]", WARN: "[warn]", INFO: "[info]"}
 
 

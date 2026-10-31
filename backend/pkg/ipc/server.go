@@ -83,10 +83,12 @@ type Server struct {
 }
 
 func NewServer(path string) *Server {
-	return &Server{
+	s := &Server{
 		path:     path,
 		services: make(map[string]*Service),
 	}
+	s.registerBuiltin()
+	return s
 }
 
 func (s *Server) Register(svc *Service) {

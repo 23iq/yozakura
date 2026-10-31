@@ -24,7 +24,7 @@ CHECK = "brand-literals"
 def _tracked() -> list[str]:
     out = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"],
                          cwd=REPO, capture_output=True, text=True, check=True).stdout
-    return sorted(set(out.splitlines()))
+    return sorted(f for f in set(out.splitlines()) if not f.startswith(".claude/"))
 
 
 def _text(path) -> str | None:

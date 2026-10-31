@@ -289,7 +289,7 @@ def _files() -> list[str]:
     out = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard"],
                          cwd=REPO, capture_output=True, text=True, check=True).stdout
     return sorted(f for f in set(out.splitlines())
-                  if f.endswith((".qml", ".js")) and not f.startswith(("tests/", "tools/", "backend/"))
+                  if f.endswith((".qml", ".js")) and not f.startswith((".claude/", "tests/", "tools/", "backend/"))
                   and "node_modules/" not in f and (REPO / f).is_file())
 
 
