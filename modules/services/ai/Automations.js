@@ -61,6 +61,13 @@ function dueSchedules(list, now, lastRuns) {
     return { due: due, key: key };
 }
 
+// Milliseconds until just after the next minute boundary: schedules are
+// cron-minute precise, so one check per minute is enough.
+function msToNextMinute(now) {
+    var t = now instanceof Date ? now.getTime() : now;
+    return 60000 - (t % 60000) + 250;
+}
+
 function _regex(pattern) {
     try {
         return new RegExp(pattern, "m");

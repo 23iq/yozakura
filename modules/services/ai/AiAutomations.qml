@@ -105,12 +105,15 @@ QtObject {
     }
 
     // ── schedule ──
+    // Only runs while a schedule exists, once per minute at the boundary
+    readonly property bool hasSchedules: Logic.active(root.list, "schedule").length > 0
     property Timer clock: Timer {
-        interval: 20000
-        running: true
+        interval: 1000
+        running: root.hasSchedules
         repeat: true
         triggeredOnStart: true
         onTriggered: {
+            interval = Logic.msToNextMinute(Date.now());
             const r = Logic.dueSchedules(root.list, new Date(), root._lastRuns);
             for (const a of r.due) {
                 root._lastRuns[a.id] = r.key;
