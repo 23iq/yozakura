@@ -249,6 +249,7 @@ func (m *Manager) applyPart(kind, name string) (Part, []catalog.Problem, error) 
 	if err != nil {
 		return p, nil, err
 	}
+	defined := m.definedKeys(files, nil)
 	for d, data := range files {
 		if d == WallpaperDomain || !m.Cat.HasDomain(d) {
 			continue
@@ -261,6 +262,9 @@ func (m *Manager) applyPart(kind, name string) (Part, []catalog.Problem, error) 
 	}
 	problems, err := m.applyFiles(files, true)
 	if err != nil {
+		return p, problems, err
+	}
+	if err := m.noteApplied(kind+":"+p.Name, defined); err != nil {
 		return p, problems, err
 	}
 	ref := m.CurrentParts()
