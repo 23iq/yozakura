@@ -13,6 +13,7 @@ import qs.modules.globals
 import qs.modules.components
 import qs.config
 import qs.modules.notifications
+import qs.modules.notifications.strips
 import qs.modules.shell.rehome
 
 PanelWindow {
@@ -36,6 +37,9 @@ PanelWindow {
         if (notchContent.screenNotchOpen || notchContent.panelModal) {
             return WlrKeyboardFocus.Exclusive;
         }
+        // An open notification strip reads Enter / Delete
+        if (stripsView.wantsKeyboard)
+            return WlrKeyboardFocus.OnDemand;
         return WlrKeyboardFocus.None;
     }
     WlrLayershell.namespace: Brand.namespace("")
@@ -139,7 +143,7 @@ PanelWindow {
     mask: Region {
         // Full-screen capture when any module/popup is open
         item: unifiedPanel.needsFullScreenInput ? fullScreenMask : null
-        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
+        regions: [unifiedPanel.notchRegion, unifiedPanel.notchStemRegion, unifiedPanel.dockRegion, unifiedPanel.activityLeftRegion, unifiedPanel.activityRightRegion, unifiedPanel.toastRegion, unifiedPanel.stripsRegion, unifiedPanel.cornerPillsRegion].concat(panelHost.hitRegions)
     }
 
     readonly property Region notchRegion: Region {
@@ -162,6 +166,9 @@ PanelWindow {
     }
     readonly property Region toastRegion: Region {
         item: cornerToasts.active ? cornerToasts.hitbox : null
+    }
+    readonly property Region stripsRegion: Region {
+        item: stripsView.active ? stripsView.hitbox : null
     }
     readonly property Region cornerPillsRegion: Region {
         item: cornerPills.hitbox
@@ -280,6 +287,15 @@ PanelWindow {
             anchors.fill: parent
             panel: unifiedPanel
             notch: notchContent
+            screenName: unifiedPanel.targetScreen.name
+            z: 5
+        }
+
+        // Hanging strips (notifications.presentation "strips")
+        StripsView {
+            id: stripsView
+            anchors.fill: parent
+            panel: unifiedPanel
             screenName: unifiedPanel.targetScreen.name
             z: 5
         }
