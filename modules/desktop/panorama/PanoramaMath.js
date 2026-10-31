@@ -37,9 +37,20 @@ function layout(imgW, imgH, screenW, screenH) {
     };
 }
 
-// Viewport x of workspace slot `index` (0-based) out of `count`. Slots are a
-// whole screen apart when the image is wide enough (each workspace its own
-// frame), centred on the image; otherwise they spread evenly over the travel.
+// Pan step between neighbouring workspace frames: N workspaces span exactly
+// the image (first frame at its left edge, last at its right edge), so frames
+// never wrap around or reach past the image. An image narrower than the
+// screen has no travel, hence no step.
+function frameStep(count, travel) {
+    if (!(travel > 0))
+        return 0;
+    var n = Math.max(1, Math.floor(count || 1));
+    return travel / Math.max(1, n - 1);
+}
+
+// Viewport x of workspace slot `index` (0-based) out of `count`: index * step,
+// clamped into 0..travel. A single workspace sits centred. Every parallax
+// layer starts and ends its pan on these same x values (layerX).
 function slotX(index, count, travel, screenW) {
     if (!(travel > 0))
         return 0;
@@ -47,10 +58,7 @@ function slotX(index, count, travel, screenW) {
     if (n === 1)
         return travel / 2;
     var i = Math.max(0, Math.min(n - 1, Math.floor(index || 0)));
-    var span = (n - 1) * screenW;
-    if (span <= travel)
-        return (travel - span) / 2 + i * screenW;
-    return i * travel / (n - 1);
+    return Math.min(travel, i * frameStep(n, travel));
 }
 
 // Where this monitor sits in its workspace list -> { index, count }.

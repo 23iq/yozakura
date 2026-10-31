@@ -138,3 +138,16 @@ test('urgency: windows, tags and Hyprland urgent events', () => {
     assert.deepEqual(plain(urgency.onEvent({ x: true }, "workspacev2", "1")), { x: true });
     assert.deepEqual(plain(urgency.map(null, null, null)), {});
 });
+
+test('urgency stays readable: alert role when it contrasts, else ink', () => {
+    const c = (r, g, b) => ({ r, g, b });
+    const white = c(1, 1, 1), black = c(0, 0, 0);
+    const pink = c(1, 0.71, 0.67), darkBg = c(0.1, 0.07, 0.07);
+    assert.ok(Math.abs(geo.contrast(white, black) - 21) < 1e-9);
+    // error on a dark bar: readable, kept
+    assert.equal(geo.readable(pink, darkBg, white, black), pink);
+    // error close to its ground (pink blossom): falls back to the better ink
+    assert.equal(geo.readable(pink, pink, white, black), black);
+    assert.equal(geo.readable(pink, c(0.1, 0.1, 0.1), pink, black), pink);
+    assert.ok(geo.haloRadius(30) + geo.haloWidth(30) / 2 <= 15);
+});
