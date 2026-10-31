@@ -28,6 +28,7 @@
 .import "Advanced.js" as Advanced
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
+.import "presets.js" as Presets
 
 // Settings information architecture: the sidebar tree and its pages.
 //
@@ -185,7 +186,8 @@ var categories = [
         "title": "prefs.cat.presets",
         "description": "prefs.cat.presets.desc",
         "keywords": "presets studio save load profiles themes layouts looks gallery mixer mix duplicate import export share try",
-        "page": "PresetStudio"
+        "page": "PresetStudio",
+        "sections": Presets.sections
     },
     {
         "id": "displays",
