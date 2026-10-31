@@ -1,10 +1,7 @@
 .pragma library
+.import "JsonUtil.js" as JsonUtil
 .import "../modules/globals/BrandActions.js" as BrandActions
 .import "../modules/keybinds/KeyNames.js" as KeyNames
-
-function clone(obj) {
-    return JSON.parse(JSON.stringify(obj || {}));
-}
 
 function formatOffset(value) {
     if (value === undefined || value === null || value === "") {
@@ -354,7 +351,7 @@ function describeAction(action) {
 function ensureAction(action) {
     if (!action) return null;
     if (action.id) {
-        const fixed = clone(action);
+        const fixed = JsonUtil.clone(action);
         fixed.id = BrandActions.normalizeAction(fixed.id);
         if (!fixed.args) {
             fixed.args = defaultArgs(fixed.id);

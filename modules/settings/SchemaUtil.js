@@ -1,5 +1,6 @@
 .pragma library
 .import "CompositorGate.js" as CompositorGate
+.import "../../config/JsonUtil.js" as JsonUtil
 
 // Pure helpers for the schema-driven settings (modules/settings/schema).
 // No QML types here: unit tested with node (tests/settings-schema.test.cjs)
@@ -171,42 +172,7 @@ function withPath(obj, path, value) {
 // tolerance (and NaN equals NaN), list wrappers from JsonAdapter count as
 // arrays, and object keys whose value is undefined are ignored.
 function equal(a, b) {
-    return deepEqual(plain(a), plain(b));
-}
-
-function deepEqual(a, b) {
-    if (a === b)
-        return true;
-    if (typeof a === "number" && typeof b === "number")
-        return (isNaN(a) && isNaN(b)) || Math.abs(a - b) < 1e-9;
-    if (a === null || b === null || typeof a !== "object" || typeof b !== "object")
-        return false;
-    var la = Array.isArray(a), lb = Array.isArray(b);
-    if (la !== lb)
-        return false;
-    if (la) {
-        if (a.length !== b.length)
-            return false;
-        for (var i = 0; i < a.length; i++) {
-            if (!deepEqual(a[i], b[i]))
-                return false;
-        }
-        return true;
-    }
-    var ka = definedKeys(a), kb = definedKeys(b);
-    if (ka.length !== kb.length)
-        return false;
-    for (var j = 0; j < ka.length; j++) {
-        if (!Object.prototype.hasOwnProperty.call(b, ka[j]) || !deepEqual(a[ka[j]], b[ka[j]]))
-            return false;
-    }
-    return true;
-}
-
-function definedKeys(o) {
-    return Object.keys(o).filter(function (k) {
-        return o[k] !== undefined;
-    });
+    return JsonUtil.deepEqual(plain(a), plain(b));
 }
 
 function entryId(entry) {
