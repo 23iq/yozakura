@@ -642,6 +642,29 @@ QtObject {
     function set(key, value) { const s = Object.assign({}, state); s[key] = value; state = s }
 }"""
 YOZD_STUB = 'pragma Singleton\nimport QtQuick\nQtObject { property string compositorName: "hyprland" }'
+# Active preset status (modules/services/PresetStatusService.qml): no preset
+# active by default; renders and tests set `status` ({active, official,
+# owned, changed, changes}). Actions are recorded in `calls`.
+PRESET_STATUS_STUB = """pragma Singleton
+import QtQuick
+QtObject {
+    property var status: ({ "active": "", "official": false, "owned": false, "changed": 0, "changes": [] })
+    readonly property string active: (status && status.active) || ""
+    readonly property bool official: !!(status && status.official)
+    readonly property bool owned: !!(status && status.owned)
+    readonly property int changed: (status && status.changed) || 0
+    readonly property var changes: (status && status.changes) || []
+    readonly property bool inSession: !!(status && status.session)
+    readonly property bool dirty: active !== "" && changed > 0 && !inSession
+    property bool busy: false
+    property var calls: []
+    function refresh() {}
+    function suggestedName() { return active + " (my)" }
+    function save(done) { calls = calls.concat(["save"]) }
+    function saveAs(name, done) { calls = calls.concat(["saveAs:" + name]) }
+    function undoSave(id, done) { calls = calls.concat(["undo:" + id]) }
+    function revert(done) { calls = calls.concat(["revert"]) }
+}"""
 
 
 class SettingsEnv:
@@ -683,7 +706,7 @@ class SettingsEnv:
                                               "BackendService": BACKEND_STUB, "UpdateService": UPDATE_STUB,
                                               "Notifications": NOTIFICATIONS_STUB, "AppSearch": APP_SEARCH_STUB,
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
-                                              "TerminalLookService": TERMINAL_LOOK_STUB,
+                                              "TerminalLookService": TERMINAL_LOOK_STUB, "PresetStatusService": PRESET_STATUS_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})
         self.h.module("qs.modules.specials", {"SpecialsService": SPECIALS_STUB})
         self.h.module("qs.modules.globals", {"GlobalStates": global_states_qml(wallpaper or {}),
