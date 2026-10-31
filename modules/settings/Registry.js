@@ -61,6 +61,7 @@ var PREVIEWS = {
     "RoundnessPreview": "previews/RoundnessPreview.qml",
     "MotionPreview": "previews/MotionPreview.qml",
     "PaletteFadePreview": "previews/PaletteFadePreview.qml",
+    "LightingPreview": "previews/LightingPreview.qml",
     "ClockPreview": "previews/ClockPreview.qml",
     "TransitionPreview": "previews/TransitionPreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",

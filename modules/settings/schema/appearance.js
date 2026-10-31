@@ -2,6 +2,7 @@
 .import "glass.js" as Glass
 .import "motion.js" as Motion
 .import "surfaces.js" as Surfaces
+.import "lighting.js" as Lighting
 
 // Appearance: theme mode, palette, typography, shape, glass and motion.
 // Entry format: see modules/settings/AGENTS.md.
@@ -273,6 +274,9 @@ var category = {
 
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);
+
+// Lighting (schema/lighting.js) right after "effects".
+category.sections.splice(category.sections.findIndex(s => s.id === "effects") + 1, 0, ...Lighting.sections);
 
 // Surface roles and the shell shadow (schema/surfaces.js), then Motion
 // (schema/motion.js: profile, speed, shell timing) close the page.
