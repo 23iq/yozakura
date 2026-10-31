@@ -1,9 +1,12 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.desktop.panorama
 
 // One workspace frame of the overview filmstrip: wallpaper, number, click and
 // drop target. Windows are drawn above it by OverviewStrip (OverviewWindow).
@@ -16,6 +19,11 @@ Item {
     property bool selected: false
     property bool dropHover: false
     property color ringColor: Styling.srItem("overprimary")
+    // Scroll style: this workspace's frame of the panorama wallpaper.
+    property string panoramaSource: ""
+    property int slotCount: 1
+    property real screenW: 1920
+    property real screenH: 1080
 
     signal picked
     signal opened
@@ -32,13 +40,31 @@ Item {
         }
     }
 
+    Loader {
+        anchors.fill: parent
+        active: root.panoramaSource !== ""
+        sourceComponent: slice
+    }
+
+    Component {
+        id: slice
+        PanoramaSlice {
+            sourceFile: root.panoramaSource
+            slotIndex: root.workspaceId - 1
+            slotCount: root.slotCount
+            screenW: root.screenW
+            screenH: root.screenH
+        }
+    }
+
     TintedWallpaper {
         id: wallpaper
         anchors.fill: parent
+        visible: root.panoramaSource === ""
         radius: Styling.radius(2)
         tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
         source: {
-            if (!GlobalStates.wallpaperManager)
+            if (!GlobalStates.wallpaperManager || root.panoramaSource !== "")
                 return "";
             const path = GlobalStates.wallpaperManager.getLockscreenFramePath(GlobalStates.wallpaperManager.currentWallpaper);
             return path ? "file://" + path : "";
