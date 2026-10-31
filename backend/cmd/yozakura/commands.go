@@ -80,7 +80,7 @@ func rebuildModsAfterUpdate() {
 func runRefresh() {
 	fmt.Println("Refreshing " + brand.DisplayName + " profile...")
 	name := brand.AppID
-	if out, err := exec.Command("nix", "profile", "list", "--json").Output(); err == nil {
+	if out, err := exec.CommandContext(context.Background(), "nix", "profile", "list", "--json").Output(); err == nil {
 		if found := profileElement(out); found != "" {
 			name = found
 		}
