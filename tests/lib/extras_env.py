@@ -36,6 +36,9 @@ QtObject {
         if (r !== undefined && r !== null && r.error) cb(null, r.error);
         else cb(r === undefined ? null : r, null);
     }
+    function callOk(method, params, onOk, tag) {
+        call(method, params, (r, e) => { if (!e && onOk) onOk(r); });
+    }
     function addSubscription(services, cb) { subs = subs.concat([cb]); return subs.length; }
     function emit(service, data) { subs.forEach(cb => cb(service, data)); }
 }"""

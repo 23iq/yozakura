@@ -50,6 +50,8 @@ h.module("Quickshell.Io", {
     function writeAdapter() {}
 }""",
 })
+h.copy("config/JsonUtil.js")
+h.copy("config/JsonUtil.js", dest="config")
 h.copy("config/ConfigFile.qml")
 h.copy("config/AliasGate.qml")
 

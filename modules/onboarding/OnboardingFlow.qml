@@ -37,6 +37,8 @@ Item {
             root.wizard.remember("initialPreset", PresetsService.activePreset || "");
         root.wizard.initialPreset = root.wizard.choices.initialPreset;
         root.wizard.detect();
+        // first step once the card exists
+        Qt.callLater(root.loadStep);
     }
 
     Keys.onPressed: event => {
@@ -257,12 +259,5 @@ Item {
         function onIndexChanged() {
             root.loadStep();
         }
-    }
-
-    Timer {
-        // first step once the card exists
-        interval: 0
-        running: true
-        onTriggered: root.loadStep()
     }
 }

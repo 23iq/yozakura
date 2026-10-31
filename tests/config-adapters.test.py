@@ -172,6 +172,8 @@ check(json.loads(h.eval(kb, "JSON.stringify(custom)")) == ref["custom"] and len(
 check(json.loads(h.eval(kb, "JSON.stringify(disabled)")) == [], "KeybindsAdapter: no core bind disabled by default")
 
 # ---- ConfigFile: load / validate / fill / write-back ----
+h.copy("config/JsonUtil.js")
+h.copy("config/JsonUtil.js", dest="config")
 h.copy("config/ConfigFile.qml")
 scene = h.load("""import QtQuick
 QtObject {

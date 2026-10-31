@@ -32,13 +32,9 @@ Singleton {
     readonly property string blocked: root.active ? "" : (root.status.reason ?? "")
 
     function refresh() {
-        BackendService.call("exclusive.status", {}, (result, error) => {
-            if (error) {
-                console.warn("ExclusiveService: status failed", JSON.stringify(error));
-                return;
-            }
+        BackendService.callOk("exclusive.status", {}, result => {
             root.status = result || root.status;
-        });
+        }, "ExclusiveService");
     }
 
     function loadPlan() {

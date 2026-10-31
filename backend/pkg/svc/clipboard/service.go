@@ -27,6 +27,8 @@ type Service struct {
 	initErr    error
 	cacheMu    sync.Mutex
 	imageCache map[string]string
+	senderMu   sync.Mutex
+	sender     eventSender
 }
 
 // NewService keeps daemon boot cheap: the encrypted stores (and the
@@ -98,7 +100,25 @@ func (s *Service) Close() {
 func (s *Service) subscribe(sub *ipc.Subscriber) {
 	// Start the watcher only for the first subscriber; the watcher
 	// emits clipboard.refresh events on every change.
-	s.ensureWatcher(sub)
+	s.setSender(sub)
+	s.ensureWatcher()
+}
+
+func (s *Service) setSender(e eventSender) {
+	s.senderMu.Lock()
+	s.sender = e
+	s.senderMu.Unlock()
+}
+
+// emitRefresh tells the newest subscriber that the history changed, so the
+// UI re-lists after a mutation as it does after a copy.
+func (s *Service) emitRefresh() {
+	s.senderMu.Lock()
+	e := s.sender
+	s.senderMu.Unlock()
+	if e != nil {
+		e.Send("clipboard.refresh", map[string]any{"ok": true})
+	}
 }
 
 // --- IPC handlers ---
@@ -148,6 +168,7 @@ func (s *Service) delete(params json.RawMessage) (any, error) {
 	if err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
+	s.emitRefresh()
 	return map[string]any{"hash": hash}, nil
 }
 
@@ -160,6 +181,7 @@ func (s *Service) clear(_ json.RawMessage) (any, error) {
 		return map[string]any{"error": err.Error()}, nil
 	}
 	exec.Command("wl-copy", "--clear").Run()
+	s.emitRefresh()
 	return map[string]any{"ok": true}, nil
 }
 
@@ -179,6 +201,7 @@ func (s *Service) togglePin(params json.RawMessage) (any, error) {
 	if err := st.togglePin(id); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
+	s.emitRefresh()
 	return map[string]any{"ok": true}, nil
 }
 
@@ -199,6 +222,7 @@ func (s *Service) setAlias(params json.RawMessage) (any, error) {
 	if err := st.setAlias(id, p.Alias); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
+	s.emitRefresh()
 	return map[string]any{"ok": true}, nil
 }
 
@@ -219,6 +243,7 @@ func (s *Service) reorder(params json.RawMessage) (any, error) {
 	if err := st.reorder(id, p.NewIndex); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
+	s.emitRefresh()
 	return map[string]any{"ok": true}, nil
 }
 
@@ -240,6 +265,7 @@ func (s *Service) swap(params json.RawMessage) (any, error) {
 	if err := st.swap(id1, id2); err != nil {
 		return map[string]any{"error": err.Error()}, nil
 	}
+	s.emitRefresh()
 	return map[string]any{"ok": true}, nil
 }
 
