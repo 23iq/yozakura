@@ -12,7 +12,11 @@ import qs.modules.shell
 // Small pills in the free screen corner (EdgeLayout.freeCorner) for content
 // that lost its home: live activities with the notch off and no horizontal
 // bar to hold them, the clock and tray with both the bar and notch off
-// (ShellLayout.cornerContent). Each pill slides in from its corner.
+// (ShellLayout.cornerContent), and the idle island's media, muted mic and
+// bell with the notch off and no bar module for them. The island pills show
+// only while there is something to see (a player, a muted mic or its
+// notice, notifications or do-not-disturb). Each pill slides in from its
+// corner.
 Item {
     id: root
 
@@ -20,10 +24,20 @@ Item {
     property var panel: null
 
     readonly property var content: ShellLayout.cornerContent
+    readonly property string screenName: panel && panel.targetScreen ? panel.targetScreen.name : ""
     readonly property bool showActivities: root.content.indexOf("activities") !== -1 && ActivityService.presentation === "corner" && ActivityService.count > 0
     readonly property bool showClock: root.content.indexOf("clock") !== -1
     readonly property bool showTray: root.content.indexOf("tray") !== -1
-    readonly property bool active: !!panel && !panel.hasFullscreenWindow && (showActivities || showClock || showTray)
+    readonly property bool showMedia: root.content.indexOf("media") !== -1 && !!MprisController.activePlayer
+    readonly property bool micNotice: MicrophoneStatus.noticeVisible === true && MicrophoneStatus.noticeScreen === root.screenName
+    readonly property bool showMic: root.content.indexOf("mic") !== -1 && MicrophoneStatus.available === true && (MicrophoneStatus.muted === true || root.micNotice)
+    readonly property bool showBell: root.content.indexOf("notifications") !== -1 && ((Notifications.list ? Notifications.list.length : 0) > 0 || Notifications.silent === true)
+    readonly property bool active: !!panel && !panel.hasFullscreenWindow && (showActivities || showClock || showTray || showMedia || showMic || showBell)
+    // Where the pills' popups open: away from the corner's edge
+    readonly property var popupBar: ({
+            "barPosition": root.atBottom ? "bottom" : "top",
+            "screen": root.panel ? root.panel.targetScreen : null
+        })
 
     readonly property string corner: panel && panel.targetScreen ? EdgeService.freeCorner(panel.targetScreen, "auto") : "top-right"
     readonly property bool atBottom: corner.indexOf("bottom") === 0
@@ -78,6 +92,27 @@ Item {
                     visible: root.showClock
                     anchors.verticalCenter: parent.verticalCenter
                 }
+            }
+        }
+
+        Pill {
+            shown: root.showMic || root.showBell
+            RehomedAlerts {
+                popupBar: root.popupBar
+                size: root.pillH
+                showMic: root.showMic
+                showBell: root.showBell
+                micNotice: root.micNotice
+            }
+        }
+
+        Pill {
+            shown: root.showMedia
+            RehomedMedia {
+                popupBar: root.popupBar
+                screenName: root.screenName
+                size: root.pillH
+                shown: root.active
             }
         }
 
