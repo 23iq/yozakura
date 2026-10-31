@@ -378,6 +378,8 @@ QtObject {{
     property int roundness: theme.roundness
     property string defaultFont: theme.font
     property int animDuration: theme.animDuration
+    // compositor.motionProfile resolved (config/motion); tests flip `disabled`
+    property var motionProfile: ({{ disabled: false }})
     property bool tintIcons: theme.tintIcons
 {saves}
     function isHexColor(c) {{ return typeof c === "string" && (c.trim().startsWith("#") || c.trim().startsWith("rgb")); }}
