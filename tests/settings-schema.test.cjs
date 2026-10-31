@@ -219,6 +219,20 @@ test('text entries validate with the same pattern the catalog (CLI/MCP) enforces
     assert.deepEqual(mismatches, []);
 });
 
+test('compositor-specific rows are tagged, dock effects follow dock.enabled', () => {
+    const byKey = {};
+    for (const { entry } of SchemaUtil.flatten(Categories.categories))
+        if (entry.key) byKey[entry.key] = entry;
+    const hyprOnly = ['smartGaps', 'borderAngle', 'inactiveBorderAngle', 'borderPulse.enabled',
+        'borderPulse.intensity', 'dimInactive', 'dimStrength', 'syncShadowColor', 'syncShadowOpacity'];
+    for (const k of hyprOnly)
+        assert.equal(byKey['compositor.' + k].compositor, 'hyprland', k);
+    for (const k of ['activeOpacity', 'inactiveOpacity'])
+        assert.deepEqual(plain(byKey['theme.glass.surfaces.windows.' + k].compositor), ['hyprland', 'mango'], k);
+    for (const k of ['magnification', 'magnificationScale', 'launchBounce'])
+        assert.match(JSON.stringify(byKey['dock.' + k].visibleWhen), /dock\.enabled/, k);
+});
+
 test('shadow offset falls back to "0 0" when malformed', () => {
     const app = lib('modules/services/CompositorAppearance.js');
     assert.equal(app.shadowOffset('2 -3'), '2 -3');

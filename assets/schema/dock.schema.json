@@ -507,7 +507,11 @@
         "section": "effects",
         "label": "prefs.dock.magnification",
         "control": "toggle",
-        "keywords": "dock magnification zoom magnify icons hover macos"
+        "keywords": "dock magnification zoom magnify icons hover macos",
+        "visibleWhen": {
+          "key": "dock.enabled",
+          "equals": true
+        }
       }
     },
     "magnificationScale": {
@@ -524,8 +528,16 @@
         "unit": "×",
         "keywords": "dock magnification scale zoom amount size",
         "visibleWhen": {
-          "key": "dock.magnification",
-          "equals": true
+          "all": [
+            {
+              "key": "dock.enabled",
+              "equals": true
+            },
+            {
+              "key": "dock.magnification",
+              "equals": true
+            }
+          ]
         },
         "min": 1,
         "max": 2.5
@@ -543,7 +555,11 @@
         "section": "effects",
         "label": "prefs.dock.launch_bounce",
         "control": "toggle",
-        "keywords": "dock launch bounce animation opening app"
+        "keywords": "dock launch bounce animation opening app",
+        "visibleWhen": {
+          "key": "dock.enabled",
+          "equals": true
+        }
       }
     }
   },

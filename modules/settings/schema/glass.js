@@ -197,6 +197,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.surfaces.windows.activeOpacity",
+                "compositor": ["hyprland", "mango"],
                 "type": "slider",
                 "min": 0.3,
                 "max": 1,
@@ -217,6 +218,7 @@ var sections = [
             },
             {
                 "key": "theme.glass.surfaces.windows.inactiveOpacity",
+                "compositor": ["hyprland", "mango"],
                 "type": "slider",
                 "min": 0.3,
                 "max": 1,
