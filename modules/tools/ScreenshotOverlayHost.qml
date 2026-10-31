@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.modules.services
@@ -35,10 +36,11 @@ Scope {
         id: overlay
         active: root.path !== ""
         sourceComponent: ScreenshotOverlay {
+            id: shot
             targetScreen: root.modelData
             imagePath: root.path
             onImagePathChanged: {
-                if (imagePath === "")
+                if (shot.imagePath === "")
                     root.path = "";
             }
         }

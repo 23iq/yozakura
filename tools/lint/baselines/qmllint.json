@@ -654,8 +654,10 @@
    "unqualified|Unqualified access|screenrecordPopup|y: modelData.at[1] - screenrecordPopup.screen.y": 1
   },
   "modules/tools/ScreenshotOverlay.qml": {
-   "missing-property|Member \"containsMouse\" not found on type \"QQuickItem\"|containsMouse|show: parent.containsMouse": 4,
-   "missing-property|Member \"cursor\" not found on type \"QuickshellGlobal\"|cursor|var cursor = Quickshell.cursor;": 1
+   "missing-property|Member \"containsMouse\" not found on type \"QQuickItem\"|containsMouse|show: parent.containsMouse": 4
+  },
+  "modules/tools/ScreenshotOverlayHost.qml": {
+   "missing-property|Member \"cursor\" not found on type \"QuickshellGlobal\"|cursor|const cursor = Quickshell.cursor;": 1
   },
   "modules/tools/ScreenshotTool.qml": {
    "unqualified|Unqualified access|close|Keys.onEscapePressed: close()": 1,
