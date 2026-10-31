@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/catalog"
 	"yozakura/backend/pkg/paths"
@@ -50,11 +51,10 @@ func MarkOnboardingDone(path string, create, overwrite bool) (bool, error) {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return false, err
 	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, out, 0o644); err != nil {
+	if err := fsutil.WriteFile(path, out, 0o644); err != nil {
 		return false, err
 	}
-	return true, os.Rename(tmp, path)
+	return true, nil
 }
 
 // EnsureOnboardingFlag runs on every start before the shell: an install

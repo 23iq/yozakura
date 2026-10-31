@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/fsutil"
 
 	"yozakura/backend/pkg/paths"
 )
@@ -172,9 +173,8 @@ func runSchemes(args []string, cacheDir string) int {
 		return 1
 	}
 	if err := os.MkdirAll(cacheDir, 0o755); err == nil {
-		tmp := cacheFile + ".tmp"
-		if os.WriteFile(tmp, data, 0o644) == nil {
-			os.Rename(tmp, cacheFile)
+		if err := fsutil.WriteFile(cacheFile, data, 0o644); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: cache not written: %v\n", err)
 		}
 	}
 	os.Stdout.Write(data)

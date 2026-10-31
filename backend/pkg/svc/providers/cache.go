@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"yozakura/backend/pkg/fsutil"
 )
 
 // ollamaCache is ~/.cache/<app>/ollama-models.json: model details keyed by
@@ -48,12 +49,7 @@ func (s *Service) saveOllamaCache(c *ollamaCache) {
 	if err != nil {
 		return
 	}
-	tmp := s.ollamaCachePath() + ".tmp"
-	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+	if err := fsutil.WriteFile(s.ollamaCachePath(), data, 0o644); err != nil {
 		log.Printf("[providers] cache write: %v", err)
-		return
-	}
-	if err := os.Rename(tmp, s.ollamaCachePath()); err != nil {
-		log.Printf("[providers] cache rename: %v", err)
 	}
 }

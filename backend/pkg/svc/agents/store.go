@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"yozakura/backend/pkg/fsutil"
 )
 
 // On-disk layout (dir = ~/.local/share/yozakura/agents):
@@ -45,9 +46,8 @@ func (m *Manager) saveLocked() {
 		return
 	}
 	path := filepath.Join(m.dir, "sessions.json")
-	tmp := path + ".tmp"
-	if os.WriteFile(tmp, data, 0o600) == nil {
-		_ = os.Rename(tmp, path)
+	if err := fsutil.WriteFile(path, data, 0o600); err != nil {
+		log.Printf("[agents] save sessions: %v", err)
 	}
 }
 
