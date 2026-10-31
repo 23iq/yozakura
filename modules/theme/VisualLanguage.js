@@ -186,8 +186,26 @@ var INSTRUMENT = {
     label: { mono: false, tracking: 0.14 }
 };
 
-function kit(lang) {
-    return KIT[normalize(lang)];
+// `glassOn` (theme.glass.enabled): false turns the see-through parts off
+// (the frosted window background and translucent floats become opaque), so
+// "Glass effect" off holds in the glass language too; its cards keep their
+// tonal boxes over the opaque window.
+function kit(lang, glassOn) {
+    var spec = KIT[normalize(lang)];
+    if (glassOn !== false || (!spec.window && !(spec.float && spec.float.fillOpacity < 1)))
+        return spec;
+    var out = {};
+    for (var k in spec)
+        out[k] = spec[k];
+    out.window = null;
+    if (spec.float) {
+        var f = {};
+        for (var fk in spec.float)
+            f[fk] = spec.float[fk];
+        f.fillOpacity = 1;
+        out.float = f;
+    }
+    return out;
 }
 
 function instrument(lang) {

@@ -13,7 +13,8 @@ QtObject {
     id: root
 
     readonly property string language: VisualLanguage.normalize(Config.theme.language)
-    readonly property var spec: VisualLanguage.kit(Config.theme.language)
+    // Glass off (theme.glass.enabled) makes the glass language opaque.
+    readonly property var spec: VisualLanguage.kit(Config.theme.language, Config.theme.glass ? Config.theme.glass.enabled : true)
     readonly property var group: root.spec.group
     readonly property var control: root.spec.control
     readonly property var instrument: VisualLanguage.instrument(Config.theme.language)
