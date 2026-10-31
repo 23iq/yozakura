@@ -3,9 +3,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
-import qs.config
-import qs.modules.settings.keyboard
-import "../settings/Ui.js" as Ui
+import qs.modules.components.kit
 import "OnboardingModel.js" as Model
 
 // Welcome: the blossom unfolds, then the greeting, what setup covers and
@@ -20,169 +18,175 @@ Item {
                 "value": l.code,
                 "label": l.code === "auto" ? I18n.t("onboarding.system.language.auto") : l.name
             }))
+    readonly property var features: [
+        {
+            "icon": "monitor",
+            "text": "onboarding.welcome.f_displays"
+        },
+        {
+            "icon": "palette",
+            "text": "onboarding.welcome.f_look"
+        },
+        {
+            "icon": "terminal",
+            "text": "onboarding.welcome.f_terminal"
+        },
+        {
+            "icon": "squaresFour",
+            "text": "onboarding.welcome.f_apps"
+        },
+        {
+            "icon": "sparkle",
+            "text": "onboarding.welcome.f_ai"
+        }
+    ]
 
     function pickLanguage(code) {
         wizard.set("system.language", code);
         wizard.remember("language", code);
     }
-    property real reveal: Config.animDuration > 0 ? 0 : 1
+
+    // 0..1 progress of a part that fades up between `from` and `from + 1/k`.
+    function stage(k, from) {
+        return Math.min(1, Math.max(0, root.reveal * k - from));
+    }
+
+    property real reveal: Motion.emphasis.duration > 0 ? 0 : 1
 
     NumberAnimation on reveal {
-        running: Config.animDuration > 0
+        running: Motion.emphasis.duration > 0
         from: 0
         to: 1
-        duration: Math.max(1400, Config.animDuration * 6)
+        duration: Motion.emphasis.duration * 3
         easing.type: Motion.morph.easing
     }
 
     Column {
         anchors.centerIn: parent
-        width: Math.min(parent.width, 760)
-        spacing: Math.round(Styling.fontSize(0) * 1.4)
+        width: Math.min(parent.width, Space.px(760))
+        spacing: Space.l
 
         SakuraLogo {
             objectName: "welcomeLogo"
             anchors.horizontalCenter: parent.horizontalCenter
-            size: Math.min(200, Math.round(root.height * 0.3))
+            size: Math.min(Space.px(200), Math.round(root.height * 0.3))
         }
 
-        Text {
+        KitText {
             width: parent.width
+            role: "display"
             horizontalAlignment: Text.AlignHCenter
-            text: I18n.t("onboarding.welcome.title", Brand.displayName)
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(16)
-            font.weight: Font.Bold
-            color: Colors.overBackground
-            opacity: Math.min(1, Math.max(0, root.reveal * 2.2 - 0.6))
+            text: I18n.t("onboarding.welcome.title", Brand.displayName)
+            opacity: root.stage(2.2, 0.6)
             transform: Translate {
-                y: (1 - Math.min(1, Math.max(0, root.reveal * 2.2 - 0.6))) * 14
+                y: (1 - root.stage(2.2, 0.6)) * Space.m
             }
         }
 
-        Text {
+        KitText {
             width: parent.width
+            role: "body"
             horizontalAlignment: Text.AlignHCenter
-            text: I18n.t("onboarding.welcome.subtitle")
             wrapMode: Text.WordWrap
             lineHeight: 1.25
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(2)
-            color: Colors.overSurfaceVariant
-            opacity: Math.min(1, Math.max(0, root.reveal * 2.2 - 0.9))
+            color: Type.secondary
+            text: I18n.t("onboarding.welcome.subtitle")
+            opacity: root.stage(2.2, 0.9)
         }
 
+        // What setup covers: quiet glyph + caption pairs (not buttons).
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Math.round(Styling.fontSize(0) * 0.7)
-            topPadding: Math.round(Styling.fontSize(0) * 0.6)
-
+            spacing: Space.xl
             Repeater {
-                model: [
-                    {
-                        "icon": "monitor",
-                        "text": "onboarding.welcome.f_displays"
-                    },
-                    {
-                        "icon": "palette",
-                        "text": "onboarding.welcome.f_look"
-                    },
-                    {
-                        "icon": "terminal",
-                        "text": "onboarding.welcome.f_terminal"
-                    },
-                    {
-                        "icon": "squaresFour",
-                        "text": "onboarding.welcome.f_apps"
-                    },
-                    {
-                        "icon": "sparkle",
-                        "text": "onboarding.welcome.f_ai"
-                    }
-                ]
-                delegate: Rectangle {
-                    id: chip
+                model: root.features
+                delegate: Row {
+                    id: feature
                     required property var modelData
                     required property int index
-                    readonly property real t: Math.min(1, Math.max(0, root.reveal * 3 - 1.4 - index * 0.18))
-                    width: chipRow.implicitWidth + Math.round(Styling.fontSize(0) * 1.6)
-                    height: Math.round(Styling.fontSize(0) * 2.4)
-                    radius: Math.min(height / 2, Styling.radius(4))
-                    color: Ui.alpha(Colors.primary, 0.12)
-                    opacity: t
+                    readonly property real t: root.stage(3, 1.4 + index * 0.18)
+                    spacing: Space.s
+                    opacity: feature.t
                     transform: Translate {
-                        y: (1 - chip.t) * 10
+                        y: (1 - feature.t) * Space.s
                     }
-                    Row {
-                        id: chipRow
-                        anchors.centerIn: parent
-                        spacing: 8
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: Icons[chip.modelData.icon] ?? ""
-                            font.family: Icons.font
-                            font.pixelSize: Styling.fontSize(0)
-                            color: Colors.primary
-                        }
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: I18n.t(chip.modelData.text)
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: Font.Medium
-                            color: Colors.overBackground
-                        }
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: Icons[feature.modelData.icon] ?? ""
+                        font.family: Icons.font
+                        font.pixelSize: Type.iconSize("secondary")
+                        color: Type.secondary
+                    }
+                    KitText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        role: "secondary"
+                        text: I18n.t(feature.modelData.text)
                     }
                 }
             }
         }
 
-        Row {
-            id: languageRow
+        Divider {
+            anchors.horizontalCenter: parent.horizontalCenter
+            width: Math.min(parent.width, Space.px(480))
+            opacity: root.stage(2.4, 1.3)
+        }
+
+        Column {
             objectName: "languageRow"
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: Math.round(Styling.fontSize(0) * 0.8)
-            topPadding: Math.round(Styling.fontSize(0) * 0.8)
-            opacity: Math.min(1, Math.max(0, root.reveal * 2.4 - 1.3))
+            spacing: Space.m
+            opacity: root.stage(2.4, 1.3)
 
             Row {
-                anchors.verticalCenter: languageChips.verticalCenter
-                spacing: 6
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Space.s
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     text: Icons.translate
                     font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
-                    color: Colors.overSurfaceVariant
+                    font.pixelSize: Type.iconSize("secondary")
+                    color: Type.secondary
                 }
-                Text {
+                KitText {
                     anchors.verticalCenter: parent.verticalCenter
+                    role: "secondary"
                     text: I18n.t("onboarding.system.language")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurfaceVariant
                 }
             }
 
-            KeyChips {
+            // Exclusive language choice: the lit chip is the current one.
+            Row {
                 id: languageChips
                 objectName: "languageChips"
-                options: root.languages
-                value: root.language
+                anchors.horizontalCenter: parent.horizontalCenter
+                spacing: Space.s
+
+                signal selected(string value)
+
                 onSelected: code => root.pickLanguage(code)
+
+                Repeater {
+                    model: root.languages
+                    delegate: FocusChip {
+                        required property var modelData
+                        text: modelData.label
+                        active: modelData.value === root.language
+                        Accessible.role: Accessible.RadioButton
+                        onClicked: languageChips.selected(modelData.value)
+                    }
+                }
             }
         }
 
-        Text {
+        KitText {
             width: parent.width
+            role: "caption"
             horizontalAlignment: Text.AlignHCenter
-            topPadding: Math.round(Styling.fontSize(0) * 0.4)
+            wrapMode: Text.WordWrap
             text: I18n.t("onboarding.welcome.hint")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.outline
-            opacity: Math.min(1, Math.max(0, root.reveal * 2 - 1))
+            opacity: root.stage(2, 1)
         }
     }
 }

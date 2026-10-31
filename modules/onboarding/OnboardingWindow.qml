@@ -4,7 +4,6 @@ import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
-import qs.config
 
 // Full-screen first-run wizard on the screen it opened on: a frosted scrim
 // (the layer namespace gets the compositor blur) and the wizard card.
@@ -39,9 +38,9 @@ PanelWindow {
         color: Colors.background
         opacity: root.shown ? 0.62 : 0
         Behavior on opacity {
-            enabled: Config.animDuration > 0
+            enabled: Motion.enter.duration > 0
             NumberAnimation {
-                duration: Config.animDuration * 1.5
+                duration: Motion.enter.duration
                 easing.type: Motion.enter.easing
             }
         }

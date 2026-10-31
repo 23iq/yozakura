@@ -1,12 +1,12 @@
 import QtQuick
-import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.globals
-import qs.config
 
 // "DRY RUN — nothing is changed": shown on the wizard card header and the
 // peek pill while the wizard runs as `<app> onboarding --dry-run` (DryRun).
+// A status badge in the theme's error variant (its ink is the variant's).
 StyledRect {
     id: root
 
@@ -15,20 +15,16 @@ StyledRect {
     objectName: "dryRunBadge"
     visible: DryRun.active
     variant: "error"
-    radius: height / 2
-    readonly property int padX: Math.round(Styling.fontSize(0) * 0.8)
-    readonly property int padY: Math.round(Styling.fontSize(0) * 0.3)
-    implicitWidth: label.implicitWidth + 2 * root.padX
-    implicitHeight: label.implicitHeight + 2 * root.padY
+    enableShadow: false
+    radius: Look.chipRadius(height)
+    implicitWidth: label.implicitWidth + Space.m * 2
+    implicitHeight: label.implicitHeight + Space.xs * 2
 
-    Text {
+    KitText {
         id: label
         anchors.centerIn: parent
+        role: "label"
         text: I18n.t("onboarding.dryrun.badge")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(0)
-        font.weight: Font.Black
-        font.letterSpacing: 0.5
         color: root.item
     }
 }

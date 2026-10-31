@@ -1,8 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
-import qs.config
-import "../settings/Ui.js" as Ui
+import qs.modules.components.kit
 
 // Step progress: one dot per step, the current one stretched into a pill.
 // Dots of visited steps are clickable.
@@ -11,11 +10,11 @@ Row {
 
     property int count: 0
     property int current: 0
-    readonly property int dot: Math.max(6, Math.round(Styling.fontSize(-4) * 0.75))
+    readonly property int dot: Space.px(6)
 
     signal picked(int index)
 
-    spacing: Math.round(dot * 0.8)
+    spacing: Space.xs + Space.px(1)
 
     Repeater {
         model: root.count
@@ -28,27 +27,27 @@ Row {
             width: active ? root.dot * 3.4 : root.dot
             height: root.dot
             radius: height / 2
-            color: active || visited ? Colors.primary : Ui.alpha(Colors.overBackground, 0.22)
+            color: active || visited ? Type.progress : Type.track
             opacity: visited && !area.containsMouse ? 0.55 : 1
 
             Behavior on width {
-                enabled: Config.animDuration > 0
+                enabled: Motion.glide.duration > 0
                 NumberAnimation {
-                    duration: Motion.morph.duration
-                    easing.type: Motion.morph.easing
+                    duration: Motion.glide.duration
+                    easing.type: Motion.glide.easing
                 }
             }
             Behavior on color {
-                enabled: Config.animDuration > 0
+                enabled: Motion.micro.duration > 0
                 ColorAnimation {
-                    duration: Motion.enter.duration
+                    duration: Motion.micro.duration
                 }
             }
 
             MouseArea {
                 id: area
                 anchors.fill: parent
-                anchors.margins: -4
+                anchors.margins: -Space.xs
                 enabled: d.visited
                 hoverEnabled: true
                 cursorShape: d.visited ? Qt.PointingHandCursor : Qt.ArrowCursor

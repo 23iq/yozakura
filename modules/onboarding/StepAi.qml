@@ -3,6 +3,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.extras
+import qs.modules.components.kit
 
 // AI & voice from the extras catalog, in three sections: AI agents (CLI
 // agents with their own login), Local AI & GPU (Ollama with a "pull a
@@ -55,13 +56,8 @@ Item {
             checked: root.aiOn
             onToggled: v => root.wizard.set("ai.enabled", v)
         }
-        footer: Column {
-            spacing: 8
-            SectionLabel {
-                width: parent.width
-                icon: "plugsConnected"
-                text: I18n.t("onboarding.ai.cloud")
-            }
+        footer: Group {
+            label: I18n.t("onboarding.ai.cloud")
             ChoiceRow {
                 objectName: "aiProviders"
                 width: parent.width
