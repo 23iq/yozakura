@@ -54,6 +54,8 @@ MIRROR_FILES = [
     "modules/theme/Lighting.qml",
     "modules/theme/LightModel.js",
     "modules/theme/SunPosition.js",
+    "modules/theme/WeatherFx.qml",
+    "modules/theme/WeatherFxModel.js",
     "modules/theme/GlassModel.js",
     "modules/theme/GlassCurve.js",
     "modules/theme/GlassContrast.js",

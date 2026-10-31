@@ -111,11 +111,16 @@ function apply(lang, variant, cfg) {
 //             controls become a solid accent fill with the on-accent glyph
 //   window    the background of an app window (settings): null keeps the
 //             theme's "bg" surface; glass is a translucent frosted fill
+//   weather   theme.weatherFx (WeatherFx.qml): `drop` = how a rain drop
+//             reads ("bead" refracting glass bead, "flat" solid tile dot,
+//             "glint" a tiny highlight for hairline languages), `alpha` =
+//             multiplier of every weather effect's opacity
 //   light     theme.lighting (Lighting.qml): `edge` = strength of the lit
 //             top edge of shell surfaces (0: the language draws no edges),
 //             `lantern` = peak alpha of the cursor lantern glow
 var KIT = {
     "ink": {
+        weather: { drop: "glint", alpha: 0.9 },
         group: { fill: "", fillOpacity: 0, outline: 0, highlight: 0, radius: "none", padding: "", gap: "l", inset: "l", divider: true },
         dividers: true,
         control: { fill: "overBackground", rest: 0, hoverFill: "overBackground", hover: 0.08, edge: 0, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
@@ -124,6 +129,7 @@ var KIT = {
         light: { edge: 0, lantern: 0.09 }
     },
     "glass": {
+        weather: { drop: "bead", alpha: 1 },
         group: { fill: "surface", fillOpacity: 0.4, outline: 0.10, highlight: 0.2, radius: "card", padding: "m", gap: "m", inset: "m", divider: false },
         dividers: true,
         control: { fill: "overBackground", rest: 0.07, hoverFill: "overBackground", hover: 0.14, edge: 0.12, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
@@ -132,6 +138,7 @@ var KIT = {
         light: { edge: 0.34, lantern: 0.12 }
     },
     "tiles": {
+        weather: { drop: "flat", alpha: 0.9 },
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
         dividers: false,
         control: { fill: "surfaceContainerHigh", rest: 1, hoverFill: "surfaceContainerHighest", hover: 1, edge: 0, shape: "square", weight: 500, activeWeight: 600, solidActive: true },
@@ -140,6 +147,7 @@ var KIT = {
         light: { edge: 0.12, lantern: 0.09 }
     },
     "classic": {
+        weather: { drop: "bead", alpha: 0.85 },
         group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "l", divider: false },
         dividers: true,
         control: null,

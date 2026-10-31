@@ -57,6 +57,19 @@ var data = {
         "angle": -35,
         "lantern": "off"
     },
+    // Weather on surfaces (modules/theme/WeatherFx.qml): the current weather
+    // drawn onto the shell's surfaces. mode off | subtle | vivid; per-effect
+    // toggles: rain (droplets), frost (frost + settling snow below 0 °C),
+    // heat (shimmer on the bar above 30 °C), fog (haze), seasonal (a petal
+    // in spring, a leaf in autumn landing on the bar).
+    "weatherFx": {
+        "mode": "off",
+        "rain": true,
+        "frost": true,
+        "heat": false,
+        "fog": true,
+        "seasonal": false
+    },
     "paletteTransitionDuration": 600,
     "shadowOpacity": 0.5,
     "shadowColor": "shadow",

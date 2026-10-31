@@ -317,7 +317,7 @@ Singleton {
         "roundness", "oledMode", "lightMode", "font", "fontSize", "monoFont", "monoFontSize",
         "tintIcons", "progressRole", "enableCorners", "animDuration", "paletteTransitionDuration",
         "shadowOpacity", "shadowColor", "shadowXOffset", "shadowYOffset", "shadowBlur",
-        "terminalOpacity", "glass", "surfaceEffect", "surfaceEffectOptions", "density", "shape", "popup", "signatures", "lighting", "icons", "type", "language"
+        "terminalOpacity", "glass", "surfaceEffect", "surfaceEffectOptions", "density", "shape", "popup", "signatures", "lighting", "weatherFx", "icons", "type", "language"
     ]
     readonly property var _srVariantProps: [
         "gradientType", "gradientAngle", "gradientCenterX", "gradientCenterY",

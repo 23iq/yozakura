@@ -43,6 +43,14 @@ JsonAdapter {
         property int angle: -35
         property string lantern: "off"
     }
+    property JsonObject weatherFx: JsonObject {
+        property string mode: "off"
+        property bool rain: true
+        property bool frost: true
+        property bool heat: false
+        property bool fog: true
+        property bool seasonal: false
+    }
     property int paletteTransitionDuration: 600
     property real shadowOpacity: 0.5
     property string shadowColor: "shadow"

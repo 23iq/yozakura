@@ -179,6 +179,23 @@ Singleton {
     readonly property string effectiveWeatherSymbol: debugMode ? getWeatherCodeEmoji(debugWeatherCode) : weatherSymbol
     readonly property string effectiveWeatherDescription: debugMode ? getWeatherDescription(debugWeatherCode) : weatherDescription
 
+    // The weather drawn on the shell's surfaces (theme.weatherFx, WeatherFx)
+    property Binding fxCode: Binding {
+        target: WeatherFx
+        property: "weatherCode"
+        value: root.effectiveWeatherCode
+    }
+    property Binding fxTemp: Binding {
+        target: WeatherFx
+        property: "temperature"
+        value: Config.weather.unit === "F" ? (root.currentTemp - 32) * 5 / 9 : root.currentTemp
+    }
+    property Binding fxKnown: Binding {
+        target: WeatherFx
+        property: "known"
+        value: root.dataAvailable || root.debugMode
+    }
+
     // Weather effect types based on code
     readonly property string effectiveWeatherEffect: getWeatherEffect(effectiveWeatherCode)
     readonly property real effectiveWeatherIntensity: getWeatherIntensity(effectiveWeatherCode)
