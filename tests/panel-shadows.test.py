@@ -47,7 +47,19 @@ h.module("qs.modules.components", {"StyledRect": """Rectangle {
     gradient: Gradient { GradientStop { position: 0; color: "#f04020" } GradientStop { position: 1; color: "#2060f0" } }
 }"""})
 h.copy("modules/components/ShadowCaster.qml")
-h.module("qs.modules.theme", {"Styling": "pragma Singleton\nQtObject { function radius(o) { return 0 } }"})
+h.module("qs.modules.theme", {
+    "Styling": "pragma Singleton\nQtObject { function radius(o) { return 0 } }",
+    # Lighting off: the theme shadow, exactly what Config.theme says.
+    "Lighting": """pragma Singleton
+import qs.config
+QtObject {
+    readonly property int shadowXOffset: Config.theme.shadowXOffset
+    readonly property int shadowYOffset: Config.theme.shadowYOffset
+    readonly property real shadowBlur: Config.theme.shadowBlur
+    readonly property real shadowOpacity: Config.theme.shadowOpacity
+    readonly property color shadowColor: Config.resolveColor(Config.theme.shadowColor)
+}""",
+})
 h.copy("modules/frame/FrameFill.qml")
 h.copy("modules/frame/FrameLines.qml")
 

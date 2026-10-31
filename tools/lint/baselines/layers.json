@@ -8,7 +8,7 @@
   "dock -> shell": 1,
   "globals -> services": 1,
   "keybinds -> shell": 1,
-  "notch -> shell": 3,
+  "notch -> shell": 4,
   "notifications -> shell": 1,
   "services -> bar": 4,
   "services -> desktop": 1,
