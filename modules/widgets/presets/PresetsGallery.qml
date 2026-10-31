@@ -75,6 +75,8 @@ FocusScope {
     function promptDone(mode, target, value) {
         if (mode === "save")
             PresetParts.save(value);
+        else if (mode === "saveas")
+            PresetStatusService.saveAs(value, (ok, message) => PresetsService.notify(ok, message, "", message));
         else if (mode === "rename")
             PresetParts.rename(target, value);
         else if (mode === "delete")
@@ -131,6 +133,12 @@ FocusScope {
 
         TryNewLookCard {
             width: parent.width
+        }
+
+        ActivePresetRow {
+            width: parent.width
+            visible: !prompt.open && action !== ""
+            onSaveAsRequested: prompt.ask("saveas", PresetStatusService.active, PresetModel.uniqueName(PresetStudio.presets, PresetStatusService.suggestedName()))
         }
 
         CurrentLookRow {
