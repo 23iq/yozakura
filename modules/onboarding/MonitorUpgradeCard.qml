@@ -7,6 +7,7 @@ import qs.modules.components.kit
 import "../services/DisplayModel.js" as DisplayModel
 import "../settings/displays/DisplayFormat.js" as DisplayFormat
 import "OnboardingModel.js" as Model
+import "../../config/JsonUtil.js" as JsonUtil
 
 // One monitor in the Displays step (a block of the step's "Monitors"
 // group): what it runs now, a one-click upgrade to its best refresh rate,
@@ -67,7 +68,7 @@ Item {
 
     implicitHeight: column.implicitHeight
 
-    onOutputChanged: if (root.draft && root.output && JSON.stringify(root.draft) === JSON.stringify(root.live))
+    onOutputChanged: if (root.draft && root.output && JsonUtil.deepEqual(root.draft, root.live))
         root.draft = null
 
     Column {
@@ -189,7 +190,7 @@ Item {
                 width: parent ? parent.width : 0
                 config: root.config
                 output: root.output
-                dirty: root.draft !== null && JSON.stringify(root.draft) !== JSON.stringify(root.live)
+                dirty: root.draft !== null && !JsonUtil.deepEqual(root.draft, root.live)
                 busy: root.busy
                 onPatch: values => root.patch(values)
                 onResolutionPicked: (w, h) => root.pickResolution(w, h)

@@ -1,4 +1,5 @@
 .pragma library
+.import "../../config/JsonUtil.js" as JsonUtil
 
 // Pure helpers for the routine editor's tool steps. The catalog comes from
 // the backend (`routines.tools`: [{name, title, description, category,
@@ -19,7 +20,7 @@ var DEFAULTS = {
 var UNITS = { percent: "%", delta: "%", minutes: "min", temperature: "K" };
 
 function clone(v) {
-    return JSON.parse(JSON.stringify(v === undefined ? null : v));
+    return JsonUtil.clone(v === undefined ? null : v);
 }
 
 function prettify(id) {

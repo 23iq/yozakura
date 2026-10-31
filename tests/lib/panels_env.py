@@ -82,6 +82,7 @@ MIRROR_FILES = [
     "modules/widgets/powermenu/PowerButton.qml",
     "modules/widgets/presets/PresetsButton.qml",
     "config/ColorSpec.js",
+    "config/JsonUtil.js",
     "modules/specials/Specials.js",
     "assets/yozakura/yozakura-icon.svg",
 ]

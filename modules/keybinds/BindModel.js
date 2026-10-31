@@ -3,6 +3,7 @@
 .import "../../config/CoreBinds.js" as CoreBinds
 .import "KeyNames.js" as KeyNames
 .import "../globals/BrandActions.js" as BrandActions
+.import "../../config/JsonUtil.js" as JsonUtil
 
 // binds.json as a flat list of rows for the cheatsheet and the editor:
 // grouping, search, conflict detection and the pure edits of the custom
@@ -128,7 +129,7 @@ function bindGroup(actions) {
 }
 
 function plain(v) {
-    return v === undefined ? undefined : JSON.parse(JSON.stringify(v));
+    return JsonUtil.clone(v);
 }
 
 function keyOf(k) {
@@ -687,7 +688,7 @@ function isCoreModified(row, current) {
     var def = CoreBinds.defaultBind(entry);
     var k = row.keys[0] || keyOf(null);
     var a = row.actions[0] || {};
-    return KeyNames.comboId(k.modifiers, k.key) !== KeyNames.comboId(def.modifiers, def.key) || a.id !== def.action.id || JSON.stringify(a.args || {}) !== JSON.stringify(def.action.args) || !row.enabled;
+    return KeyNames.comboId(k.modifiers, k.key) !== KeyNames.comboId(def.modifiers, def.key) || a.id !== def.action.id || !JsonUtil.deepEqual(a.args || {}, def.action.args) || !row.enabled;
 }
 
 // Custom bind as stored in binds.json.

@@ -150,62 +150,39 @@ QtObject {
         });
     }
 
+    // Mutations only log failures; the daemon emits clipboard.refresh after
+    // each one and bindWatcher() re-lists on it.
+    function _mut(method, params, onOk) {
+        BackendService.callOk("clipboard." + method, params, onOk, "ClipboardService");
+    }
+
     function deleteItem(id) {
-        BackendService.call("clipboard.delete", {id: id}, (result, error) => {
-            if (error || !result) {
-                console.warn("ClipboardService: delete failed:", error || "no data");
-                return;
-            }
+        root._mut("delete", {id: id}, result => {
             // Clear the live clipboard if it matches the deleted item
-            var deletedHash = result.hash || "";
+            var deletedHash = result && result.hash || "";
             if (deletedHash.length > 0) {
                 clearClipboardIfMatches.deletedHash = deletedHash;
                 clearClipboardIfMatches.running = true;
             }
-            Qt.callLater(root.list);
         });
     }
 
     function clear() {
-        BackendService.call("clipboard.clear", {}, (result, error) => {
-            if (error) {
-                console.warn("ClipboardService: clear failed:", error);
-                return;
-            }
-            Qt.callLater(root.list);
-        });
+        root._mut("clear", {});
     }
 
     function togglePin(id) {
-        BackendService.call("clipboard.togglePin", {id: id}, (result, error) => {
-            if (error) {
-                console.warn("ClipboardService: togglePin failed:", error);
-                return;
-            }
-            Qt.callLater(root.list);
-        });
+        root._mut("togglePin", {id: id});
     }
 
     function setAlias(id, alias) {
-        BackendService.call("clipboard.setAlias", {id: id, alias: alias}, (result, error) => {
-            if (error) {
-                console.warn("ClipboardService: setAlias failed:", error);
-                return;
-            }
-            Qt.callLater(root.list);
-        });
+        root._mut("setAlias", {id: id, alias: alias});
     }
 
     // Reorder item by moving it to a new index
     function reorderItem(itemId, newIndex) {
         if (newIndex < 0) newIndex = 0;
-        BackendService.call("clipboard.reorder", {id: itemId, new_index: newIndex}, (result, error) => {
-            if (error) {
-                console.warn("ClipboardService: reorder failed:", error);
-                return;
-            }
-            Qt.callLater(root.list);
-        });
+        root._mut("reorder", {id: itemId, new_index: newIndex});
     }
 
     // Move item up (decrease index)
@@ -258,24 +235,12 @@ QtObject {
 
     // Swap display indices between two items
     function swapItems(itemId1, itemId2) {
-        BackendService.call("clipboard.swap", {id1: itemId1, id2: itemId2}, (result, error) => {
-            if (error) {
-                console.warn("ClipboardService: swap failed:", error);
-                return;
-            }
-            Qt.callLater(root.list);
-        });
+        root._mut("swap", {id1: itemId1, id2: itemId2});
     }
 
     // Copy an item back to the clipboard (text, file URI or image blob).
     function copyItem(id, mime) {
-        BackendService.call("clipboard.copy", {id: id, mime: mime || ""}, (result, error) => {
-            if (error) {
-                console.warn("ClipboardService: copy failed:", error);
-                return;
-            }
-            Qt.callLater(root.checkClipboard);
-        });
+        BackendService.callOk("clipboard.copy", {id: id, mime: mime || ""}, () => Qt.callLater(root.checkClipboard), "ClipboardService");
     }
 
     function checkClipboard() {

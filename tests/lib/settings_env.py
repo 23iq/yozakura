@@ -78,6 +78,9 @@ QtObject {
         if (cb && method === "voice.status")
             cb({ installed: true, modelPresent: true, serverRunning: false, backend: "vulkan" }, null);
     }
+    function callOk(method, params, onOk, tag) {
+        call(method, params, (r, e) => { if (!e && onOk) onOk(r); });
+    }
 }"""
 
 # App theme auto-connect (modules/services/AppHooksService.qml): the Terminal
@@ -225,6 +228,7 @@ MIRROR = [
     "modules/widgets/presets",
     "config/defaults",
     "config/ColorSpec.js",
+    "config/JsonUtil.js",
     "config/motion",
     "modules/services/CompositorAppearance.js",
     "modules/services/DisplayModel.js",

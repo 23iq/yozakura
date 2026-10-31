@@ -1,4 +1,5 @@
 .pragma library
+.import "JsonUtil.js" as JsonUtil
 
 // keyboard.json written before keyboard.managed existed
 // (tests/keyboard-model.test.cjs). The shell used to create the file with
@@ -21,8 +22,8 @@ function _layouts(list) {
 
 function _same(key, a, b) {
     if (key === "layouts")
-        return JSON.stringify(_layouts(a)) === JSON.stringify(_layouts(b));
-    return JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+        return JsonUtil.deepEqual(_layouts(a), _layouts(b));
+    return JsonUtil.deepEqual(a === undefined ? null : a, b === undefined ? null : b);
 }
 
 // The managed value for a parsed keyboard.json without the key: true when

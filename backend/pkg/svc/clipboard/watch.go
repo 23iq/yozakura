@@ -29,13 +29,13 @@ type eventSender interface {
 }
 
 // ensureWatcher starts the watcher once.
-func (s *Service) ensureWatcher(sub eventSender) {
+func (s *Service) ensureWatcher() {
 	if s.watch != nil {
 		return
 	}
 	w := &watchProc{svc: s, stopCh: make(chan struct{})}
 	s.watch = w
-	go w.run(sub)
+	go w.run()
 }
 
 func (w *watchProc) stop() {
@@ -46,7 +46,7 @@ func (w *watchProc) stop() {
 	}
 }
 
-func (w *watchProc) run(sub eventSender) {
+func (w *watchProc) run() {
 	if _, err := exec.LookPath("wl-paste"); err != nil {
 		return
 	}
@@ -80,7 +80,7 @@ func (w *watchProc) run(sub eventSender) {
 					continue
 				}
 				if w.svc.checkAndInsert() {
-					sub.Send("clipboard.refresh", map[string]any{"ok": true})
+					w.svc.emitRefresh()
 				}
 			}
 		}()

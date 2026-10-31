@@ -6,8 +6,7 @@ const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/services/KeyboardModel.js'), 'utf8').replace('.pragma library', '');
 const M = new Function(src + '; return {shortName, toSettings, hasOption, setOption, addLayout, removeLayout, moveLayout, setVariant, searchLayouts, variantOptions, groupOptions, defaultsForLocale, effective, planEdit, fromConfig, touchesCompositor};')();
-const migSrc = fs.readFileSync(path.join(__dirname, '..', 'config/KeyboardMigration.js'), 'utf8').replace('.pragma library', '');
-const Mig = new Function(migSrc + '; return {legacyManaged};')();
+const Mig = require('./lib/qmljs.cjs').loadLibrary(path.join(__dirname, '..', 'config/KeyboardMigration.js'));
 const defSrc = fs.readFileSync(path.join(__dirname, '..', 'config/defaults/keyboard.js'), 'utf8').replace('.pragma library', '');
 const DEFAULTS = new Function(defSrc + '; return data;')();
 

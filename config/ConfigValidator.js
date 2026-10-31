@@ -4,10 +4,7 @@
 .import "../modules/lockscreen/styles/LockStyleRegistry.js" as LockStyles
 .import "meta/Enums.js" as Enums
 .import "meta/KeyAliases.js" as KeyAliases
-
-function clone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
+.import "JsonUtil.js" as JsonUtil
 
 // Key-alias migration (config/meta/KeyAliases.js) over the raw, not yet
 // validated, domain objects {domain: object|null}; mutates them. Copies
@@ -57,10 +54,10 @@ function migrateAliases(raws, list) {
 // `over` laid onto a copy of `base`: objects merge, anything else replaces.
 function overlay(base, over) {
     if (!isObject(over))
-        return clone(over);
-    var out = isObject(base) ? clone(base) : {};
+        return JsonUtil.clone(over);
+    var out = isObject(base) ? JsonUtil.clone(base) : {};
     for (var k in over)
-        out[k] = isObject(over[k]) ? overlay(out[k], over[k]) : clone(over[k]);
+        out[k] = isObject(over[k]) ? overlay(out[k], over[k]) : JsonUtil.clone(over[k]);
     return out;
 }
 
@@ -84,19 +81,19 @@ function walk(obj, path, create) {
 
 function validate(current, defaults, keyName) {
     if (current === undefined || current === null) {
-        return clone(defaults);
+        return JsonUtil.clone(defaults);
     }
 
     if (Array.isArray(defaults)) {
         if (!Array.isArray(current)) {
-            return clone(defaults);
+            return JsonUtil.clone(defaults);
         }
         return current;
     }
 
     if (typeof defaults === 'object') {
         if (typeof current !== 'object' || Array.isArray(current)) {
-            return clone(defaults);
+            return JsonUtil.clone(defaults);
         }
 
         var result = {};

@@ -28,6 +28,7 @@ MIRROR = [
     "modules/components/surfaceeffects",
     "assets/fonts/clock",
     "config/ColorSpec.js",
+    "config/JsonUtil.js",
 ]
 
 SERVICES = {

@@ -90,6 +90,19 @@ Singleton {
         }
     }
 
+    // call() for the common case: runs onOk(result) on success; an error is
+    // logged as "<tag>: <method> failed: <error>" and onOk is skipped.
+    function callOk(method, params, onOk, tag) {
+        root.call(method, params, (result, error) => {
+            if (error) {
+                console.warn((tag || "BackendService") + ": " + method + " failed:", error);
+                return;
+            }
+            if (onOk)
+                onOk(result);
+        });
+    }
+
     function notify(method, params) {
         if (!params) params = {};
         root.call(method, params, undefined);
@@ -165,8 +178,10 @@ Singleton {
 
     property bool socketAvailable: false
     onSocketAvailableChanged: {
-        if (!socketAvailable) probeTimer.running = true;
-        else root._checkProtocol();
+        // The probe only matters while disconnected.
+        probeTimer.running = !socketAvailable;
+        if (socketAvailable)
+            root._checkProtocol();
     }
 
     // Connect on the spot instead of waiting for probeTimer's first tick;
