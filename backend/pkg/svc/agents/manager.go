@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"yozakura/backend/pkg/paths"
 )
 
 // AgentConfig is the per-agent part of agents.configure.
@@ -286,7 +287,7 @@ func (m *Manager) startOptionsLocked(s *session) (StartOptions, error) {
 	}
 	if s.meta.Mode == ModeAssistant && !haveYZ {
 		if exe, err := os.Executable(); err == nil {
-			mcp = append(mcp, withShellEnv(MCPServer{Name: YozakuraMCPName, Transport: "stdio", Command: exe, Args: []string{"mcp"}}))
+			mcp = append(mcp, withShellEnv(MCPServer{Name: YozakuraMCPName, Transport: "stdio", Command: paths.Launcher(exe), Args: []string{"mcp"}}))
 		}
 	}
 	if s.meta.Mode == ModeOneshot {

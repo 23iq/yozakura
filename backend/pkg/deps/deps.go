@@ -10,6 +10,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"yozakura/backend/pkg/brand"
 )
 
 //go:embed packages.tsv
@@ -116,13 +118,72 @@ type Checker struct {
 	Fonts    func() string // lower-cased `fc-list : family` output
 	Distro   string
 	HasPkg   func(distro, pkg string) bool
+	// NixRoots are Nix profile dirs (bin/, lib/, libexec/, share/) where
+	// absolute FHS checks are looked up too: see nixAlternatives.
+	NixRoots []string
 
 	fonts *string
 }
 
+// nixRoots are the profiles a Nix install spreads the dependencies over:
+// the package's own env (exported by its launcher), the NixOS system
+// profile and the user profiles. None outside NixOS and Nix installs.
+func nixRoots(distro string) []string {
+	var roots []string
+	if env := brand.Env("NIX_ENV"); env != "" {
+		roots = append(roots, env)
+	}
+	if distro != "nixos" && len(roots) == 0 {
+		return nil
+	}
+	roots = append(roots, "/run/current-system/sw")
+	if u := os.Getenv("USER"); u != "" {
+		roots = append(roots, "/etc/profiles/per-user/"+u)
+	}
+	if home, err := os.UserHomeDir(); err == nil {
+		roots = append(roots, filepath.Join(home, ".nix-profile"))
+	}
+	return roots
+}
+
+// fhsPrefixes map an FHS location in a check to the profile subdirs it
+// becomes under a Nix root (Qt's qt6/ is qt-6/ there).
+var fhsPrefixes = []struct{ prefix, sub string }{
+	{"/usr/lib/*-linux-gnu/", "lib"},
+	{"/usr/lib*/", "lib"},
+	{"/usr/libexec/", "libexec"},
+	{"/usr/share/", "share"},
+}
+
+// nixAlternatives rewrites an absolute FHS check for each Nix root:
+// /usr/lib*/qt6/x -> <root>/lib/qt-6/x, and helper programs that distros
+// keep in lib/ (portals, polkit agents) also under <root>/libexec/.
+func nixAlternatives(alt string, roots []string) []string {
+	var out []string
+	for _, fp := range fhsPrefixes {
+		rest, ok := strings.CutPrefix(alt, fp.prefix)
+		if !ok {
+			continue
+		}
+		subs := []string{fp.sub}
+		if fp.sub == "lib" {
+			rest = strings.Replace(rest, "qt6/", "qt-6/", 1)
+			subs = append(subs, "libexec")
+		}
+		for _, root := range roots {
+			for _, sub := range subs {
+				out = append(out, filepath.Join(root, sub, rest))
+			}
+		}
+		break
+	}
+	return out
+}
+
 // NewChecker uses the real system.
 func NewChecker() *Checker {
-	return &Checker{LookPath: exec.LookPath, Glob: filepath.Glob, Fonts: systemFonts, Distro: Distro(), HasPkg: hasPackage}
+	distro := Distro()
+	return &Checker{LookPath: exec.LookPath, Glob: filepath.Glob, Fonts: systemFonts, Distro: distro, HasPkg: hasPackage, NixRoots: nixRoots(distro)}
 }
 
 // Present reports whether any alternative of d is satisfied. Rows without
@@ -154,8 +215,10 @@ func (c *Checker) Present(d Dep) bool {
 				return true
 			}
 		case strings.HasPrefix(alt, "/"):
-			if m, _ := c.Glob(alt); len(m) > 0 {
-				return true
+			for _, p := range append([]string{alt}, nixAlternatives(alt, c.NixRoots)...) {
+				if m, _ := c.Glob(p); len(m) > 0 {
+					return true
+				}
 			}
 		case strings.HasPrefix(alt, "flatpak:"):
 			for _, dir := range flatpakDirs() {

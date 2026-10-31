@@ -81,3 +81,16 @@ func TestScopeDecide(t *testing.T) {
 		}
 	}
 }
+
+func TestUnwrapShellNixPaths(t *testing.T) {
+	for _, in := range []string{
+		"bash -lc 'git status'",
+		"/bin/sh -c 'git status'",
+		"/run/current-system/sw/bin/bash -lc 'git status'",
+		"/nix/store/0123456789abcdfghijklmnpqrsvwxyz-bash-5.3p15/bin/bash -c \"git status\"",
+	} {
+		if got := unwrapShell(in); got != "git status" {
+			t.Errorf("unwrapShell(%q) = %q", in, got)
+		}
+	}
+}

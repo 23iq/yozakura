@@ -36,6 +36,9 @@ func (f *fakeExec) run(name string, args ...string) ([]byte, error) {
 
 func newTestService(t *testing.T, resp map[string]execCall) *Service {
 	t.Helper()
+	old := tlpPath
+	tlpPath = func(name string) string { return "/sbin/" + name }
+	t.Cleanup(func() { tlpPath = old })
 	s := NewService()
 	f := &fakeExec{resp: resp}
 	s.execFn = f.run
@@ -78,7 +81,7 @@ func TestTLPFallback(t *testing.T) {
 	s := newTestService(t, map[string]execCall{
 		"powerprofilesctl version": {err: errors.New("not found")},
 		"/sbin/tlp --version":      {out: []byte("TLP 1.6\n")},
-		"bash -c /sbin/tlp-stat -p 2>/dev/null | grep -i 'Active profile' | head -1": {
+		"bash -c \"$1\" -p 2>/dev/null | grep -i 'Active profile' | head -1 tlp-stat /sbin/tlp-stat": {
 			out: []byte("Active profile: balanced"),
 		},
 	})

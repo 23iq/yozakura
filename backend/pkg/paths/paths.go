@@ -119,6 +119,22 @@ var DaemonBinEnv = brand.EnvPrefix + "DAEMON_BIN"
 // not whichever one comes first on PATH.
 var AppBinEnv = brand.EnvPrefix + "BIN"
 
+// LauncherEnv names the env var a packaging wrapper sets to the stable
+// command that starts the app. On Nix the running binary is a store path
+// behind a wrapper script: it changes on every update, is garbage-collected
+// later and skips the wrapper's environment, so it must never be written
+// into compositor configs.
+var LauncherEnv = brand.EnvPrefix + "LAUNCHER"
+
+// Launcher returns the command to persist in configs (autostart, binds):
+// $<APP>_LAUNCHER when it names an executable, else fallback.
+func Launcher(fallback string) string {
+	if v := os.Getenv(LauncherEnv); v != "" && isExecutable(v) {
+		return v
+	}
+	return fallback
+}
+
 func isExecutable(path string) bool {
 	info, err := os.Stat(path)
 	return err == nil && info.Mode().IsRegular() && info.Mode()&0o111 != 0

@@ -72,3 +72,15 @@ test('a hidden start folder is scanned (~/.wallpapers)', () => {
     assert.deepEqual(out, ['.wallpapers/one.PNG']);
     fs.rmSync(tmp, { recursive: true, force: true });
 });
+
+test('rebaseBundled moves paths into an older bundled copy onto the current one', () => {
+    const cur = '/nix/store/new-yozakura-shell/assets/wallpapers_example';
+    assert.equal(F.rebaseBundled('/nix/store/old-yozakura-shell/assets/wallpapers_example', cur), cur);
+    assert.equal(F.rebaseBundled('/nix/store/old-yozakura-shell/assets/wallpapers_example/', cur), cur + '/');
+    assert.equal(F.rebaseBundled('/nix/store/old/assets/wallpapers_example/sub/a.jpg', cur + '/'), cur + '/sub/a.jpg');
+    assert.equal(F.rebaseBundled(cur + '/a.jpg', cur), cur + '/a.jpg');
+    assert.equal(F.rebaseBundled('/home/u/Pictures/a.jpg', cur), '/home/u/Pictures/a.jpg');
+    assert.equal(F.rebaseBundled('/x/assets/wallpapers_example2/a.jpg', cur), '/x/assets/wallpapers_example2/a.jpg');
+    assert.equal(F.rebaseBundled('', cur), '');
+    assert.equal(F.rebaseBundled('/old/assets/wallpapers_example/a.jpg', ''), '/old/assets/wallpapers_example/a.jpg');
+});

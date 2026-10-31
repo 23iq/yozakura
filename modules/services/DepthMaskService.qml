@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import qs.modules.globals
+import "../globals/BrandActions.js" as BrandActions
 
 // Foreground ("depth") masks for the desktop depth clock.
 //
@@ -24,7 +25,9 @@ Singleton {
     id: root
 
     readonly property string dataDir: Brand.dataDir
-    readonly property string venvPython: dataDir + "/venv-depth/bin/python"
+    // The Python with rembg: one a packaging wrapper ships (the Nix flake's
+    // <APP>_DEPTH_PYTHON) or the venv scripts/depth_setup.sh creates.
+    readonly property string venvPython: Quickshell.env(BrandActions.envPrefix + "DEPTH_PYTHON") || dataDir + "/venv-depth/bin/python"
     readonly property string modelsDir: dataDir + "/depth-models"
     // QUICKSHELL-GIT: readonly property string cacheDir: Quickshell.cachePath("depth")
     readonly property string cacheDir: Brand.cacheDir + "/depth"

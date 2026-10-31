@@ -157,19 +157,22 @@ with their scripts in `~/.local/src/yozakura/scripts/`.
   Hyprland) are skipped.
 - **Fedora**: enables the `lionheartp/Hyprland` COPR (Hyprland, quickshell,
   matugen, portals, hyprpolkitagent, kitty) and installs the rest with dnf.
-- **NixOS**: use the flake. The NixOS module installs the package and enables
-  Hyprland (with UWSM and its session), portals, polkit and its agent,
-  PipeWire, Bluetooth, NetworkManager, UPower and the fonts:
+- **NixOS**: use the flake. Its NixOS module installs the package and sets
+  up the compositor (Hyprland with UWSM; niri and MangoWC as options),
+  portals, polkit and its agent, PipeWire, Bluetooth, NetworkManager, UPower,
+  groups, DDC/CI, the fonts and, optionally, dictation, the depth clock and
+  the SDDM theme:
 
   ```nix
   # flake.nix
   inputs.yozakura.url = "github:23iq/yozakura";
   # in your nixosSystem modules:
   yozakura.nixosModules.default
+  { programs.yozakura.users = [ "you" ]; }
   ```
 
-  Then run `yozakura install hyprland` once. Run on NixOS, the script adds the
-  flake package to your nix profile instead (no system services).
+  Then run `yozakura install hyprland` once. [docs/nixos.md](docs/nixos.md)
+  covers every option, updates and Home Manager.
 - **Others**: the script builds and installs Yozakura and leaves the packages
   to you; `yozakura doctor` lists what is missing.
 

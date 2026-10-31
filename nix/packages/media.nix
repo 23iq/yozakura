@@ -15,7 +15,12 @@ with pkgs; [
   gst_all_1.gst-plugins-bad
   gst_all_1.gst-libav
 
-  # Audio
+  # Audio: wpctl and pw-record/pw-play from PipeWire, pactl/paplay/
+  # parecord (media idle inhibit, sounds, voice fallback), event sounds
   pipewire
   wireplumber
+  pulseaudio
+  libcanberra-gtk3
+  sound-theme-freedesktop
+  cava
 ]

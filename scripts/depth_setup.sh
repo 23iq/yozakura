@@ -41,6 +41,9 @@ else
     RUNTIME="onnxruntime"
 fi
 
+# The model name is data: passed as argv, never spliced into the code.
+FETCH_MODEL='import sys; from rembg import new_session; new_session(sys.argv[1])'
+
 info() { printf '\033[0;34m::\033[0m %s\n' "$*" >&2; }
 fail() { printf '\033[0;31m!!\033[0m %s\n' "$*" >&2; exit 1; }
 
@@ -50,6 +53,17 @@ if [[ "$FORCE" == "1" && -d "$VENV" ]]; then
 fi
 
 mkdir -p "$DATA_DIR" "$MODELS"
+
+# A packaging wrapper (the Nix flake) may ship the Python with rembg
+# itself (DepthMaskService.qml runs it): only the model is fetched then.
+PACKAGED="$(brand_env DEPTH_PYTHON)"
+if [[ -n "$PACKAGED" && -x "$PACKAGED" ]]; then
+    info "Using the packaged Python $PACKAGED; downloading model '$MODEL' into $MODELS"
+    [[ "$GPU" == "1" ]] && info "--gpu does not apply to the packaged Python (CPU onnxruntime)"
+    U2NET_HOME="$MODELS" "$PACKAGED" -c "$FETCH_MODEL" "$MODEL"
+    info "Depth clock backend ready. Change the wallpaper (or restart the shell) to generate masks."
+    exit 0
+fi
 
 UV="$(command -v uv || true)"
 [[ -z "$UV" && -x "$HOME/.local/bin/uv" ]] && UV="$HOME/.local/bin/uv"
@@ -86,6 +100,6 @@ if [[ "$GPU" == "1" ]]; then
 fi
 
 info "Downloading model '$MODEL' into $MODELS"
-U2NET_HOME="$MODELS" "$VENV/bin/python" -c "from rembg import new_session; new_session('$MODEL')"
+U2NET_HOME="$MODELS" "$VENV/bin/python" -c "$FETCH_MODEL" "$MODEL"
 
 info "Depth clock backend ready. Change the wallpaper (or restart the shell) to generate masks."

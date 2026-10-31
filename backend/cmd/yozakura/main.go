@@ -432,7 +432,7 @@ func runShell() {
 	}
 
 	if home, err := os.UserHomeDir(); err == nil {
-		repairHyprlandEntry(home, currentExecutable())
+		repairHyprlandEntry(home, paths.Launcher(currentExecutable()))
 	}
 
 	runDetached("pkill -f 'dunst|mako|swaync'")
@@ -616,8 +616,10 @@ func processIsThisExecutable(pid int) bool {
 var startDaemon = startDetachedDaemon
 
 func startDetachedDaemon() {
+	// The launcher (a packaging wrapper) re-exports the environment of the
+	// current version; the running binary may be an old store path.
 	exe, _ := os.Executable()
-	cmd := exec.Command(exe)
+	cmd := exec.Command(paths.Launcher(exe))
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err == nil {
 		cmd.Process.Release()

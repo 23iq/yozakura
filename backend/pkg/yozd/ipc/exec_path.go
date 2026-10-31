@@ -6,11 +6,16 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/paths"
 )
 
 // execBinDir returns the directory holding the daemon binary; the CLI is
-// installed next to it. Overridable in tests.
+// installed next to it. A packaging launcher (paths.Launcher, the stable
+// Nix profile path) wins over the running store binary. Overridable in tests.
 var execBinDir = func() string {
+	if l := paths.Launcher(""); l != "" {
+		return filepath.Dir(l)
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return ""

@@ -17,11 +17,13 @@ Item {
 
     property var entry
     property bool installed: false
+    property bool nixos: false
     property string syncedAt: ""
     // The command is copied for the user to paste in a terminal (it needs
-    // root, so the shell never runs it): the path is shell-quoted.
+    // root, so the shell never runs it): the path is shell-quoted. On NixOS
+    // the store is read-only: the flake's module option installs the theme.
     readonly property string installScript: Quickshell.shellDir + "/scripts/install-sddm-theme.sh"
-    readonly property string installCommand: "sudo '" + installScript.replace(/'/g, "'\\''") + "'"
+    readonly property string installCommand: nixos ? "programs." + Brand.appId + ".sddm.enable = true;" : "sudo '" + installScript.replace(/'/g, "'\\''") + "'"
 
     implicitHeight: column.implicitHeight + 28
 
@@ -34,11 +36,16 @@ Item {
 
     Process {
         id: probe
-        command: ["sh", "-c", "f=\"$1/theme.conf\"; [ -r \"$f\" ] && date -r \"$f\" '+%Y-%m-%d %H:%M'", "sh", Brand.sddmDataDir]
+        // Lines: "nixos" or "", "installed" when the shared dir is ours to
+        // write (the NixOS module creates it before the first sync), the
+        // last sync time.
+        command: ["sh", "-c", "[ -e /etc/NIXOS ] && echo nixos || echo; f=\"$1/theme.conf\"; { [ -r \"$f\" ] || { [ -d \"$1\" ] && [ -w \"$1\" ]; }; } && echo installed || echo; [ -r \"$f\" ] && date -r \"$f\" '+%Y-%m-%d %H:%M'", "sh", Brand.sddmDataDir]
         stdout: StdioCollector {
             onStreamFinished: {
-                root.syncedAt = text.trim();
-                root.installed = root.syncedAt !== "";
+                const lines = text.split("\n");
+                root.nixos = lines[0] === "nixos";
+                root.installed = lines[1] === "installed";
+                root.syncedAt = (lines[2] || "").trim();
             }
         }
     }
@@ -80,7 +87,7 @@ Item {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: root.installed ? I18n.t("prefs.lockscreen.sddm.installed", root.syncedAt) : I18n.t("prefs.lockscreen.sddm.not_installed")
+                text: !root.installed ? I18n.t(root.nixos ? "prefs.lockscreen.sddm.not_installed_nixos" : "prefs.lockscreen.sddm.not_installed") : root.syncedAt ? I18n.t("prefs.lockscreen.sddm.installed", root.syncedAt) : I18n.t("prefs.lockscreen.sddm.installed_unsynced")
                 font.family: Config.theme.font
                 font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.Medium

@@ -38,3 +38,22 @@ func TestUserDirFallsBack(t *testing.T) {
 		t.Fatalf("PicturesDir fallback = %q", got)
 	}
 }
+
+func TestLauncherPrefersExecutableEnv(t *testing.T) {
+	dir := t.TempDir()
+	launcher := filepath.Join(dir, "yozakura")
+	os.WriteFile(launcher, []byte("#!/bin/sh\n"), 0o755)
+
+	t.Setenv(LauncherEnv, launcher)
+	if got := Launcher("/nix/store/x/bin/yozakura"); got != launcher {
+		t.Errorf("Launcher() = %q, want %q", got, launcher)
+	}
+	t.Setenv(LauncherEnv, filepath.Join(dir, "missing"))
+	if got := Launcher("/fallback"); got != "/fallback" {
+		t.Errorf("missing launcher must fall back, got %q", got)
+	}
+	t.Setenv(LauncherEnv, "")
+	if got := Launcher("/fallback"); got != "/fallback" {
+		t.Errorf("unset launcher must fall back, got %q", got)
+	}
+}

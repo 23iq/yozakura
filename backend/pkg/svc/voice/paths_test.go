@@ -22,3 +22,21 @@ func TestBackendReadsBuildInfo(t *testing.T) {
 		}
 	}
 }
+
+func TestServerBinPrefersPackagedWhisper(t *testing.T) {
+	i := Install{Root: "/data/whisper"}
+	t.Setenv("YOZAKURA_WHISPER_BIN_DIR", "")
+	if got := i.ServerBin(); got != "/data/whisper/bin/whisper-server" {
+		t.Errorf("default = %q", got)
+	}
+	dir := t.TempDir()
+	t.Setenv("YOZAKURA_WHISPER_BIN_DIR", dir)
+	if got := i.ServerBin(); got != "/data/whisper/bin/whisper-server" {
+		t.Errorf("env dir without the binary must fall back, got %q", got)
+	}
+	bin := filepath.Join(dir, "whisper-server")
+	os.WriteFile(bin, []byte("#!/bin/sh\n"), 0o755)
+	if got := i.ServerBin(); got != bin {
+		t.Errorf("packaged = %q, want %q", got, bin)
+	}
+}

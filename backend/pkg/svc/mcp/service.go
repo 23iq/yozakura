@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/paths"
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/mcp"
@@ -68,6 +69,7 @@ type Service struct {
 // NewService builds the service with every source enabled.
 func NewService() *Service {
 	exe, _ := os.Executable()
+	exe = paths.Launcher(exe)
 	s := &Service{
 		cfg:     Config{Sources: Sources{true, true, true}, Yozakura: true},
 		exe:     exe,
