@@ -52,6 +52,7 @@ var sections = [
             },
             {
                 "key": "ai.usage.warnAt",
+                "advanced": true,
                 "type": "slider",
                 "min": 50,
                 "max": 100,
@@ -63,6 +64,7 @@ var sections = [
             },
             {
                 "key": "ai.usage.criticalAt",
+                "advanced": true,
                 "type": "slider",
                 "min": 50,
                 "max": 100,
@@ -82,6 +84,7 @@ var sections = [
             },
             {
                 "key": "ai.usage.decimals",
+                "advanced": true,
                 "type": "slider",
                 "min": 2,
                 "max": 4,

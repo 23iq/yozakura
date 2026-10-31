@@ -91,7 +91,7 @@
       "description": "Most dashboard tabs kept in memory at once.",
       "x-settings": {
         "category": "dashboard",
-        "section": "advanced",
+        "section": "memory",
         "label": "prefs.sys.dashboard_max_tabs",
         "control": "number",
         "keywords": "dashboard tabs memory limit",
@@ -99,6 +99,7 @@
           "key": "performance.dashboardPersistTabs",
           "equals": true
         },
+        "advanced": true,
         "min": 1,
         "max": 3
       },
@@ -112,14 +113,15 @@
       "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
       "x-settings": {
         "category": "dashboard",
-        "section": "advanced",
+        "section": "memory",
         "label": "prefs.sys.unload_idle_views",
         "control": "toggle",
         "keywords": "dashboard tabs memory unload idle release",
         "visibleWhen": {
           "key": "performance.dashboardPersistTabs",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     }
   },

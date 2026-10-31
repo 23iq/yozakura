@@ -142,12 +142,13 @@
       "description": "Gap between workspace previews in the overview.",
       "x-settings": {
         "category": "overview",
-        "section": "advanced",
+        "section": "size",
         "label": "prefs.overview.spacing",
         "control": "slider",
         "step": 1,
         "unit": "px",
         "keywords": "overview spacing gap between workspaces",
+        "advanced": true,
         "min": 0,
         "max": 64
       },

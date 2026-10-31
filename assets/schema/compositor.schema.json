@@ -25,7 +25,8 @@
         "visibleWhen": {
           "key": "compositor.syncBorderColor",
           "equals": false
-        }
+        },
+        "advanced": true
       }
     },
     "borderAngle": {
@@ -41,6 +42,7 @@
         "step": 5,
         "unit": "deg",
         "keywords": "gradient angle rotation border",
+        "advanced": true,
         "min": 0,
         "max": 360
       },
@@ -79,6 +81,7 @@
         "step": 5,
         "unit": "deg",
         "keywords": "gradient angle inactive border",
+        "advanced": true,
         "min": 0,
         "max": 360
       },
@@ -103,6 +106,7 @@
           "key": "compositor.syncBorderWidth",
           "equals": false
         },
+        "advanced": true,
         "min": 0,
         "max": 20
       },
@@ -117,7 +121,7 @@
       "description": "Radius of window corners.",
       "x-settings": {
         "category": "appearance",
-        "section": "advanced",
+        "section": "shape",
         "label": "prefs.windows.rounding",
         "control": "slider",
         "step": 1,
@@ -127,6 +131,7 @@
           "key": "compositor.syncRoundness",
           "equals": false
         },
+        "advanced": true,
         "min": 0,
         "max": 40
       },
@@ -141,10 +146,11 @@
       "description": "Round window corners like the rest of the shell (Appearance › Shape).",
       "x-settings": {
         "category": "appearance",
-        "section": "advanced",
+        "section": "shape",
         "label": "prefs.windows.sync_rounding",
         "control": "toggle",
-        "keywords": "sync rounding roundness corners shell theme"
+        "keywords": "sync rounding roundness corners shell theme",
+        "advanced": true
       }
     },
     "syncBorderWidth": {
@@ -157,7 +163,8 @@
         "section": "borders",
         "label": "prefs.windows.sync_border_width",
         "control": "toggle",
-        "keywords": "sync border width shell"
+        "keywords": "sync border width shell",
+        "advanced": true
       }
     },
     "syncBorderColor": {
@@ -170,7 +177,8 @@
         "section": "borders",
         "label": "prefs.windows.sync_border_color",
         "control": "toggle",
-        "keywords": "sync border color accent shell"
+        "keywords": "sync border color accent shell",
+        "advanced": true
       }
     },
     "syncShadowOpacity": {
@@ -187,7 +195,8 @@
         "visibleWhen": {
           "key": "compositor.shadowEnabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "syncShadowColor": {
@@ -204,7 +213,8 @@
         "visibleWhen": {
           "key": "compositor.shadowEnabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "gapsIn": {
@@ -289,6 +299,7 @@
           "key": "compositor.dimInactive",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -349,6 +360,7 @@
           "key": "compositor.shadowEnabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 100
       },
@@ -372,6 +384,7 @@
           "key": "compositor.shadowEnabled",
           "equals": true
         },
+        "advanced": true,
         "min": 1,
         "max": 4
       },
@@ -392,7 +405,8 @@
         "visibleWhen": {
           "key": "compositor.shadowEnabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "shadowIgnoreWindow": {
@@ -423,7 +437,8 @@
               "equals": false
             }
           ]
-        }
+        },
+        "advanced": true
       },
       "format": "color"
     },
@@ -441,7 +456,8 @@
         "visibleWhen": {
           "key": "compositor.shadowEnabled",
           "equals": true
-        }
+        },
+        "advanced": true
       },
       "format": "color"
     },
@@ -469,6 +485,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -489,7 +506,8 @@
         "visibleWhen": {
           "key": "compositor.shadowEnabled",
           "equals": true
-        }
+        },
+        "advanced": true
       },
       "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$"
     },
@@ -509,6 +527,7 @@
           "key": "compositor.shadowEnabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -578,6 +597,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 1,
         "max": 10
       },
@@ -602,7 +622,8 @@
         "enabledWhen": {
           "key": "theme.glass.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "blurExplicitIgnoreAlpha": {
@@ -623,7 +644,8 @@
         "enabledWhen": {
           "key": "theme.glass.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "blurIgnoreAlphaValue": {
@@ -654,6 +676,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -678,7 +701,8 @@
         "enabledWhen": {
           "key": "theme.glass.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "blurXray": {
@@ -699,7 +723,8 @@
         "enabledWhen": {
           "key": "theme.glass.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "blurNoise": {
@@ -722,6 +747,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 0.2
       },
@@ -748,6 +774,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 2
       },
@@ -774,6 +801,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 2
       },
@@ -800,6 +828,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -826,6 +855,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -850,7 +880,8 @@
         "enabledWhen": {
           "key": "theme.glass.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "blurPopups": {
@@ -902,6 +933,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -926,7 +958,8 @@
         "enabledWhen": {
           "key": "theme.glass.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "blurInputMethodsIgnorealpha": {
@@ -957,6 +990,7 @@
           "key": "theme.glass.enabled",
           "equals": true
         },
+        "advanced": true,
         "min": 0,
         "max": 1
       },
@@ -1016,14 +1050,15 @@
       "description": "Animation when switching workspaces. Slides follow the bar's direction.",
       "x-settings": {
         "category": "appearance",
-        "section": "advanced",
+        "section": "motion",
         "label": "prefs.motion.workspace_style",
         "control": "selector",
         "keywords": "workspace switch animation slide fade",
         "visibleWhen": {
           "key": "compositor.motionProfile",
           "notEquals": "off"
-        }
+        },
+        "advanced": true
       },
       "enum": [
         "auto",
@@ -1045,14 +1080,15 @@
       "description": "Slowly rotates gradient borders in a loop.",
       "x-settings": {
         "category": "appearance",
-        "section": "advanced",
+        "section": "motion",
         "label": "prefs.motion.border_loop",
         "control": "selector",
         "keywords": "border gradient rotate loop spin animation",
         "visibleWhen": {
           "key": "compositor.motionProfile",
           "notEquals": "off"
-        }
+        },
+        "advanced": true
       },
       "enum": [
         "auto",
@@ -1072,7 +1108,7 @@
       "description": "Higher is slower (100 is the slowest).",
       "x-settings": {
         "category": "appearance",
-        "section": "advanced",
+        "section": "motion",
         "label": "prefs.motion.border_loop_speed",
         "control": "slider",
         "step": 1,
@@ -1089,6 +1125,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 0,
         "max": 100,
         "specialValues": [
@@ -1114,10 +1151,11 @@
       "description": "The profile also sets the speed and easing of the shell's own animations.",
       "x-settings": {
         "category": "appearance",
-        "section": "advanced",
+        "section": "motion",
         "label": "prefs.motion.shell",
         "control": "toggle",
-        "keywords": "shell animations speed easing follow profile"
+        "keywords": "shell animations speed easing follow profile",
+        "advanced": true
       }
     },
     "motionOverrides": {
@@ -1169,6 +1207,7 @@
               "key": "compositor.borderPulse.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },

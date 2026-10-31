@@ -35,7 +35,7 @@ var sections = [
                     }
                 ],
                 "preview": "OsdPreview",
-                "label": "prefs.osd.style",
+                "label": "prefs.label.osd_style",
                 "description": "prefs.osd.style.desc",
                 "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
             },
@@ -74,6 +74,7 @@ var sections = [
             },
             {
                 "key": "layout.osd.timeout",
+                "advanced": true,
                 "type": "slider",
                 "min": 800,
                 "max": 8000,

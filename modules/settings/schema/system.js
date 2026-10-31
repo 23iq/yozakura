@@ -41,7 +41,7 @@ var category = {
                     "key": "system.language",
                     "type": "custom",
                     "component": "LanguagePicker",
-                    "label": "settings.system.language",
+                    "label": "prefs.label.interface_language",
                     "description": "prefs.sys.language.desc",
                     "keywords": "language locale translation i18n english spanish russian auto"
                 }

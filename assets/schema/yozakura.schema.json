@@ -142,6 +142,7 @@
             "step": 10,
             "unit": "px",
             "keywords": "compact width sidebar size",
+            "advanced": true,
             "min": 320,
             "max": 900
           },
@@ -196,6 +197,7 @@
             "step": 20,
             "unit": "px",
             "keywords": "wide layout width",
+            "advanced": true,
             "min": 600,
             "max": 2400
           },
@@ -239,6 +241,7 @@
             "label": "ai.max_tool_rounds",
             "control": "number",
             "keywords": "tool rounds loop limit",
+            "advanced": true,
             "min": 1,
             "max": 30
           },
@@ -257,6 +260,7 @@
             "control": "number",
             "unit": "min",
             "keywords": "memory unload idle performance",
+            "advanced": true,
             "min": 1,
             "max": 240
           },
@@ -716,6 +720,7 @@
                 "control": "number",
                 "unit": "px",
                 "keywords": "quick ask width",
+                "advanced": true,
                 "min": 380,
                 "max": 1200
               },
@@ -1106,17 +1111,18 @@
               }
             },
             "opacity": {
-              "title": "Background opacity",
+              "title": "Sidebar opacity",
               "type": "number",
               "default": 1,
               "description": "Opacity of the AI bar background; 1 follows the theme.",
               "x-settings": {
                 "category": "ai",
                 "section": "bar_appearance",
-                "label": "prefs.ai.opacity",
+                "label": "prefs.label.sidebar_opacity",
                 "control": "slider",
                 "step": 0.05,
                 "keywords": "opacity transparency background surface",
+                "advanced": true,
                 "min": 0.4,
                 "max": 1
               },
@@ -1417,6 +1423,7 @@
                 "step": 5,
                 "unit": "%",
                 "keywords": "context window warning amber threshold percent full",
+                "advanced": true,
                 "min": 50,
                 "max": 95
               },
@@ -1436,6 +1443,7 @@
                 "step": 1,
                 "unit": "%",
                 "keywords": "context window critical red threshold percent full",
+                "advanced": true,
                 "min": 60,
                 "max": 100
               },
@@ -1472,6 +1480,7 @@
                   "key": "ai.context.autoCompact",
                   "equals": true
                 },
+                "advanced": true,
                 "min": 50,
                 "max": 100
               },
@@ -1489,6 +1498,7 @@
                 "label": "prefs.ai.keep_turns",
                 "control": "number",
                 "keywords": "compact keep recent turns messages verbatim",
+                "advanced": true,
                 "min": 0,
                 "max": 20
               },
@@ -1518,7 +1528,8 @@
                 "section": "context",
                 "label": "prefs.ai.context_overrides",
                 "control": "list",
-                "keywords": "context window override model size tokens custom"
+                "keywords": "context window override model size tokens custom",
+                "advanced": true
               }
             }
           },
@@ -1540,6 +1551,7 @@
                 "control": "number",
                 "step": 1024,
                 "keywords": "ollama num_ctx context length tokens memory vram local",
+                "advanced": true,
                 "min": 0,
                 "max": 1048576,
                 "specialValues": [
@@ -1562,7 +1574,8 @@
                 "section": "local",
                 "label": "prefs.ai.ollama_endpoint",
                 "control": "text",
-                "keywords": "ollama endpoint url host port server remote local"
+                "keywords": "ollama endpoint url host port server remote local",
+                "advanced": true
               },
               "pattern": "^$|^https?://\\S+$"
             },
@@ -1576,7 +1589,8 @@
                 "section": "local",
                 "label": "prefs.ai.ollama_keep_alive",
                 "control": "text",
-                "keywords": "ollama keep alive unload memory vram minutes"
+                "keywords": "ollama keep alive unload memory vram minutes",
+                "advanced": true
               },
               "pattern": "^$|^-?\\d+(\\.\\d+)?(ms|s|m|h)?$"
             }
@@ -1598,7 +1612,8 @@
                 "section": "local",
                 "label": "prefs.ai.lmstudio_endpoint",
                 "control": "text",
-                "keywords": "lm studio lmstudio endpoint url server port local"
+                "keywords": "lm studio lmstudio endpoint url server port local",
+                "advanced": true
               },
               "pattern": "^$|^https?://\\S+$"
             }
@@ -1623,6 +1638,7 @@
                 "step": 30,
                 "unit": "s",
                 "keywords": "timeout request seconds slow hang",
+                "advanced": true,
                 "min": 0,
                 "max": 3600,
                 "specialValues": [
@@ -1646,6 +1662,7 @@
                 "label": "prefs.ai.providers.retries",
                 "control": "number",
                 "keywords": "retry retries rate limit 429 overloaded network error",
+                "advanced": true,
                 "min": 0,
                 "max": 5
               },
@@ -1695,6 +1712,7 @@
                 "step": 15,
                 "unit": "s",
                 "keywords": "probe detect auto refresh interval local ollama lm studio",
+                "advanced": true,
                 "min": 0,
                 "max": 3600,
                 "specialValues": [
@@ -1717,7 +1735,8 @@
                 "section": "requests",
                 "label": "prefs.ai.providers.headers",
                 "control": "list",
-                "keywords": "custom endpoint headers proxy auth authorization openai compatible"
+                "keywords": "custom endpoint headers proxy auth authorization openai compatible",
+                "advanced": true
               },
               "x-secret": true
             },
@@ -1731,7 +1750,8 @@
                 "section": "requests",
                 "label": "prefs.ai.providers.openrouter_attribution",
                 "control": "toggle",
-                "keywords": "openrouter referer title attribution headers app"
+                "keywords": "openrouter referer title attribution headers app",
+                "advanced": true
               }
             }
           },
@@ -2168,6 +2188,7 @@
                 "step": 5,
                 "unit": "%",
                 "keywords": "limit warning amber threshold percent",
+                "advanced": true,
                 "min": 50,
                 "max": 100
               },
@@ -2187,6 +2208,7 @@
                 "step": 5,
                 "unit": "%",
                 "keywords": "limit critical red second threshold percent",
+                "advanced": true,
                 "min": 50,
                 "max": 100
               },
@@ -2270,6 +2292,7 @@
                 "control": "slider",
                 "step": 1,
                 "keywords": "cost decimals precision cents",
+                "advanced": true,
                 "min": 2,
                 "max": 4
               },
@@ -2580,14 +2603,14 @@
       "x-file": "config/bar.json",
       "properties": {
         "position": {
-          "title": "Position",
+          "title": "Bar edge",
           "type": "string",
           "default": "top",
           "description": "The screen edge the bar sits on.",
           "x-settings": {
             "category": "bar",
             "section": "placement",
-            "label": "prefs.bar.position",
+            "label": "prefs.label.bar_edge",
             "control": "custom",
             "component": "BarPositionPicker",
             "keywords": "position edge top bottom left right vertical horizontal",
@@ -2643,6 +2666,7 @@
             "step": 1,
             "unit": "px",
             "keywords": "launcher icon size logo big small",
+            "advanced": true,
             "min": 8,
             "max": 64
           },
@@ -2713,6 +2737,7 @@
               "key": "bar.frameEnabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 40
           },
@@ -2740,12 +2765,13 @@
           "description": "Size of the invisible edge strip that reveals the hidden bar.",
           "x-settings": {
             "category": "bar",
-            "section": "advanced",
+            "section": "expert",
             "label": "prefs.bar.hover_region",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "bar hover region trigger strip area reveal autohide",
+            "advanced": true,
             "min": 4,
             "max": 40
           },
@@ -2810,14 +2836,14 @@
           }
         },
         "keepBarShadow": {
-          "title": "Keep bar shadow in frame",
+          "title": "Bar shadow inside the frame",
           "type": "boolean",
           "default": false,
-          "description": "Keep the bar shadow when the bar sits inside the screen frame (styles that can be contained).",
+          "description": "Draw the bar's shadow while it sits inside the screen frame (styles that can be contained).",
           "x-settings": {
             "category": "bar",
-            "section": "advanced",
-            "label": "prefs.bar.keep_shadow",
+            "section": "expert",
+            "label": "prefs.label.bar_shadow_in_frame",
             "control": "toggle",
             "keywords": "frame contain bar shadow keep",
             "visibleWhen": {
@@ -2831,18 +2857,19 @@
                   "equals": true
                 }
               ]
-            }
+            },
+            "advanced": true
           }
         },
         "keepBarBorder": {
-          "title": "Keep bar border in frame",
+          "title": "Bar border inside the frame",
           "type": "boolean",
           "default": false,
-          "description": "Keep the bar border when the bar sits inside the screen frame (styles that can be contained).",
+          "description": "Draw the bar's border while it sits inside the screen frame (styles that can be contained).",
           "x-settings": {
             "category": "bar",
-            "section": "advanced",
-            "label": "prefs.bar.keep_border",
+            "section": "expert",
+            "label": "prefs.label.bar_border_in_frame",
             "control": "toggle",
             "keywords": "frame contain bar border outline keep",
             "visibleWhen": {
@@ -2856,7 +2883,8 @@
                   "equals": true
                 }
               ]
-            }
+            },
+            "advanced": true
           }
         },
         "clockShowDate": {
@@ -2965,9 +2993,9 @@
               "x-settings": {
                 "category": "bar",
                 "section": "layout",
-                "label": "prefs.bar.layout",
+                "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Layout",
+                "entryTitle": "Bar modules",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules at the start (left/top), in order.",
@@ -3019,9 +3047,9 @@
               "x-settings": {
                 "category": "bar",
                 "section": "layout",
-                "label": "prefs.bar.layout",
+                "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Layout",
+                "entryTitle": "Bar modules",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules at the end (right/bottom), in order.",
@@ -3034,9 +3062,9 @@
               "x-settings": {
                 "category": "bar",
                 "section": "layout",
-                "label": "prefs.bar.layout",
+                "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Layout",
+                "entryTitle": "Bar modules",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules tucked into the overflow drawer.",
@@ -3287,7 +3315,8 @@
                     "section": "clock",
                     "label": "prefs.bar.pomodoro_style",
                     "control": "selector",
-                    "keywords": "pomodoro focus timer ring underline countdown island progress clock"
+                    "keywords": "pomodoro focus timer ring underline countdown island progress clock",
+                    "advanced": true
                   },
                   "enum": [
                     "ring",
@@ -3489,7 +3518,8 @@
                     "label": "prefs.bar.sentence_fragments",
                     "control": "custom",
                     "component": "OrderedListEditor",
-                    "keywords": "sentence fragments order clock window workspace battery network volume media notifications weather"
+                    "keywords": "sentence fragments order clock window workspace battery network volume media notifications weather",
+                    "advanced": true
                   },
                   "uniqueItems": true
                 },
@@ -3527,7 +3557,8 @@
                     "label": "prefs.bar.sentence_priority",
                     "control": "custom",
                     "component": "OrderedListEditor",
-                    "keywords": "sentence priority narrow overflow drop keep"
+                    "keywords": "sentence priority narrow overflow drop keep",
+                    "advanced": true
                   },
                   "uniqueItems": true
                 },
@@ -3542,7 +3573,8 @@
                     "label": "prefs.bar.sentence_separator",
                     "control": "selector",
                     "preview": "SentencePreview",
-                    "keywords": "sentence line separator dash dot comma kotoba words"
+                    "keywords": "sentence line separator dash dot comma kotoba words",
+                    "advanced": true
                   },
                   "enum": [
                     "dash",
@@ -3588,7 +3620,8 @@
                     "section": "sentence",
                     "label": "prefs.bar.sentence_typeface",
                     "control": "selector",
-                    "keywords": "sentence font typeface serif editorial"
+                    "keywords": "sentence font typeface serif editorial",
+                    "advanced": true
                   },
                   "enum": [
                     "body",
@@ -3612,6 +3645,7 @@
                     "step": 20,
                     "unit": "px",
                     "keywords": "sentence width length longest line",
+                    "advanced": true,
                     "min": 0,
                     "max": 2000,
                     "specialValues": [
@@ -3660,7 +3694,8 @@
             "visibleWhen": {
               "key": "compositor.syncBorderColor",
               "equals": false
-            }
+            },
+            "advanced": true
           }
         },
         "borderAngle": {
@@ -3676,6 +3711,7 @@
             "step": 5,
             "unit": "deg",
             "keywords": "gradient angle rotation border",
+            "advanced": true,
             "min": 0,
             "max": 360
           },
@@ -3714,6 +3750,7 @@
             "step": 5,
             "unit": "deg",
             "keywords": "gradient angle inactive border",
+            "advanced": true,
             "min": 0,
             "max": 360
           },
@@ -3738,6 +3775,7 @@
               "key": "compositor.syncBorderWidth",
               "equals": false
             },
+            "advanced": true,
             "min": 0,
             "max": 20
           },
@@ -3752,7 +3790,7 @@
           "description": "Radius of window corners.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "shape",
             "label": "prefs.windows.rounding",
             "control": "slider",
             "step": 1,
@@ -3762,6 +3800,7 @@
               "key": "compositor.syncRoundness",
               "equals": false
             },
+            "advanced": true,
             "min": 0,
             "max": 40
           },
@@ -3776,10 +3815,11 @@
           "description": "Round window corners like the rest of the shell (Appearance › Shape).",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "shape",
             "label": "prefs.windows.sync_rounding",
             "control": "toggle",
-            "keywords": "sync rounding roundness corners shell theme"
+            "keywords": "sync rounding roundness corners shell theme",
+            "advanced": true
           }
         },
         "syncBorderWidth": {
@@ -3792,7 +3832,8 @@
             "section": "borders",
             "label": "prefs.windows.sync_border_width",
             "control": "toggle",
-            "keywords": "sync border width shell"
+            "keywords": "sync border width shell",
+            "advanced": true
           }
         },
         "syncBorderColor": {
@@ -3805,7 +3846,8 @@
             "section": "borders",
             "label": "prefs.windows.sync_border_color",
             "control": "toggle",
-            "keywords": "sync border color accent shell"
+            "keywords": "sync border color accent shell",
+            "advanced": true
           }
         },
         "syncShadowOpacity": {
@@ -3822,7 +3864,8 @@
             "visibleWhen": {
               "key": "compositor.shadowEnabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "syncShadowColor": {
@@ -3839,7 +3882,8 @@
             "visibleWhen": {
               "key": "compositor.shadowEnabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "gapsIn": {
@@ -3924,6 +3968,7 @@
               "key": "compositor.dimInactive",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -3984,6 +4029,7 @@
               "key": "compositor.shadowEnabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 100
           },
@@ -4007,6 +4053,7 @@
               "key": "compositor.shadowEnabled",
               "equals": true
             },
+            "advanced": true,
             "min": 1,
             "max": 4
           },
@@ -4027,7 +4074,8 @@
             "visibleWhen": {
               "key": "compositor.shadowEnabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "shadowIgnoreWindow": {
@@ -4058,7 +4106,8 @@
                   "equals": false
                 }
               ]
-            }
+            },
+            "advanced": true
           },
           "format": "color"
         },
@@ -4076,7 +4125,8 @@
             "visibleWhen": {
               "key": "compositor.shadowEnabled",
               "equals": true
-            }
+            },
+            "advanced": true
           },
           "format": "color"
         },
@@ -4104,6 +4154,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4124,7 +4175,8 @@
             "visibleWhen": {
               "key": "compositor.shadowEnabled",
               "equals": true
-            }
+            },
+            "advanced": true
           },
           "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$"
         },
@@ -4144,6 +4196,7 @@
               "key": "compositor.shadowEnabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4213,6 +4266,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 1,
             "max": 10
           },
@@ -4237,7 +4291,8 @@
             "enabledWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "blurExplicitIgnoreAlpha": {
@@ -4258,7 +4313,8 @@
             "enabledWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "blurIgnoreAlphaValue": {
@@ -4289,6 +4345,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4313,7 +4370,8 @@
             "enabledWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "blurXray": {
@@ -4334,7 +4392,8 @@
             "enabledWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "blurNoise": {
@@ -4357,6 +4416,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 0.2
           },
@@ -4383,6 +4443,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 2
           },
@@ -4409,6 +4470,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 2
           },
@@ -4435,6 +4497,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4461,6 +4524,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4485,7 +4549,8 @@
             "enabledWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "blurPopups": {
@@ -4537,6 +4602,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4561,7 +4627,8 @@
             "enabledWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "blurInputMethodsIgnorealpha": {
@@ -4592,6 +4659,7 @@
               "key": "theme.glass.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -4651,14 +4719,15 @@
           "description": "Animation when switching workspaces. Slides follow the bar's direction.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "motion",
             "label": "prefs.motion.workspace_style",
             "control": "selector",
             "keywords": "workspace switch animation slide fade",
             "visibleWhen": {
               "key": "compositor.motionProfile",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           },
           "enum": [
             "auto",
@@ -4680,14 +4749,15 @@
           "description": "Slowly rotates gradient borders in a loop.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "motion",
             "label": "prefs.motion.border_loop",
             "control": "selector",
             "keywords": "border gradient rotate loop spin animation",
             "visibleWhen": {
               "key": "compositor.motionProfile",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           },
           "enum": [
             "auto",
@@ -4707,7 +4777,7 @@
           "description": "Higher is slower (100 is the slowest).",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "motion",
             "label": "prefs.motion.border_loop_speed",
             "control": "slider",
             "step": 1,
@@ -4724,6 +4794,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 100,
             "specialValues": [
@@ -4749,10 +4820,11 @@
           "description": "The profile also sets the speed and easing of the shell's own animations.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "motion",
             "label": "prefs.motion.shell",
             "control": "toggle",
-            "keywords": "shell animations speed easing follow profile"
+            "keywords": "shell animations speed easing follow profile",
+            "advanced": true
           }
         },
         "motionOverrides": {
@@ -4804,6 +4876,7 @@
                   "key": "compositor.borderPulse.enabled",
                   "equals": true
                 },
+                "advanced": true,
                 "min": 0,
                 "max": 1
               },
@@ -4877,6 +4950,7 @@
               "key": "desktop.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 64
           },
@@ -5021,6 +5095,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 100,
             "max": 3000
           },
@@ -5082,7 +5157,8 @@
             "visibleWhen": {
               "key": "desktop.wallpaperMode",
               "equals": "panorama"
-            }
+            },
+            "advanced": true
           }
         },
         "depthLayering": {
@@ -5112,14 +5188,14 @@
           }
         },
         "depthClockStyle": {
-          "title": "Style",
+          "title": "Clock style",
           "type": "string",
           "default": "yozakura",
           "description": "Each style shown on your current wallpaper.",
           "x-settings": {
             "category": "desktop",
             "section": "clock",
-            "label": "prefs.desktop.depth_clock_style",
+            "label": "prefs.label.clock_style",
             "control": "custom",
             "component": "ClockStyleGallery",
             "keywords": "clock style yozakura poster kanji mincho look gallery",
@@ -5135,14 +5211,14 @@
           ]
         },
         "depthClockPosition": {
-          "title": "Position",
+          "title": "Clock position",
           "type": "string",
           "default": "auto",
           "description": "Auto picks the side where the subject leaves the time readable.",
           "x-settings": {
             "category": "desktop",
             "section": "clock",
-            "label": "prefs.desktop.depth_clock_position",
+            "label": "prefs.label.clock_position",
             "control": "selector",
             "keywords": "clock side left right auto placement",
             "visibleWhen": {
@@ -5180,14 +5256,14 @@
           }
         },
         "depthClockInk": {
-          "title": "Colour",
+          "title": "Clock colour",
           "type": "string",
           "default": "auto",
           "description": "Auto picks light or dark ink from the wallpaper; a palette colour follows your theme.",
           "x-settings": {
             "category": "desktop",
             "section": "clock",
-            "label": "prefs.desktop.depth_clock_ink",
+            "label": "prefs.label.clock_colour",
             "control": "custom",
             "component": "ColorRoleSwatches",
             "keywords": "clock colour color ink palette role accent",
@@ -5318,6 +5394,7 @@
               "key": "desktop.widgetsEnabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 96,
             "specialValues": [
@@ -5539,6 +5616,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 24,
             "max": 128
           },
@@ -5585,7 +5663,7 @@
           "description": "Gap between the dock icons.",
           "x-settings": {
             "category": "dock",
-            "section": "advanced",
+            "section": "size",
             "label": "prefs.dock.spacing",
             "control": "slider",
             "step": 1,
@@ -5603,6 +5681,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 32
           },
@@ -5617,7 +5696,7 @@
           "description": "Distance between the dock and the screen edge.",
           "x-settings": {
             "category": "dock",
-            "section": "advanced",
+            "section": "size",
             "label": "prefs.dock.margin",
             "control": "slider",
             "step": 1,
@@ -5635,6 +5714,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 64
           },
@@ -5649,7 +5729,7 @@
           "description": "Size of the invisible edge strip that reveals the hidden dock.",
           "x-settings": {
             "category": "dock",
-            "section": "advanced",
+            "section": "autohide",
             "label": "prefs.dock.hover_region",
             "control": "slider",
             "step": 1,
@@ -5675,6 +5755,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 64
           },
@@ -5875,14 +5956,15 @@
           "description": "App ids matching one of these regular expressions never appear in the dock.",
           "x-settings": {
             "category": "dock",
-            "section": "advanced",
+            "section": "content",
             "label": "prefs.dock.ignored",
             "control": "list",
             "keywords": "dock ignore hide apps regex filter exclude app id class",
             "visibleWhen": {
               "key": "dock.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "screenList": {
@@ -5980,6 +6062,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 1,
             "max": 2.5
           },
@@ -6036,7 +6119,8 @@
             "section": "terminal",
             "label": "system.terminal.advanced",
             "control": "toggle",
-            "keywords": "terminal advanced custom command template"
+            "keywords": "terminal advanced custom command template",
+            "advanced": true
           }
         },
         "terminalCommand": {
@@ -6053,7 +6137,8 @@
             "visibleWhen": {
               "key": "general.terminalAdvanced",
               "equals": true
-            }
+            },
+            "advanced": true
           },
           "format": "command"
         },
@@ -6081,6 +6166,12 @@
             "control": "toggle",
             "keywords": "auto save preset automatically active current own changes"
           }
+        },
+        "settingsShowAll": {
+          "title": "Show all settings",
+          "type": "boolean",
+          "default": false,
+          "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
         }
       },
       "additionalProperties": false
@@ -6790,14 +6881,14 @@
               }
             },
             "style": {
-              "title": "Style",
+              "title": "On-screen display style",
               "type": "string",
               "default": "pill",
               "description": "How the volume and brightness indicator looks and where it lives.",
               "x-settings": {
                 "category": "osd",
                 "section": "osd",
-                "label": "prefs.osd.style",
+                "label": "prefs.label.osd_style",
                 "control": "selector",
                 "preview": "OsdPreview",
                 "keywords": "osd volume brightness on screen display pill island bar edge gauge needle dial instrument indicator"
@@ -6830,6 +6921,7 @@
                 "step": 100,
                 "unit": "ms",
                 "keywords": "osd duration timeout how long hide",
+                "advanced": true,
                 "min": 800,
                 "max": 8000
               },
@@ -7017,14 +7109,14 @@
           "description": "Show the notch at rest. Off, its live activities move to the bar (or to corner pills without a bar) and it only appears while it shows a view."
         },
         "position": {
-          "title": "Position",
+          "title": "Island edge",
           "type": "string",
           "default": "top",
           "description": "The screen edge the notch sits on. On a side edge it stands upright and opens toward the center.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
-            "label": "prefs.notch.position",
+            "label": "prefs.label.island_edge",
             "control": "selector",
             "keywords": "notch position top bottom left right side vertical edge",
             "visibleWhen": {
@@ -7046,14 +7138,14 @@
           }
         },
         "align": {
-          "title": "Alignment",
+          "title": "Island alignment",
           "type": "string",
           "default": "center",
           "description": "Where the notch sits along its edge. Panels always open toward the middle of the screen.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
-            "label": "prefs.notch.align",
+            "label": "prefs.label.island_align",
             "control": "selector",
             "keywords": "notch align alignment left right corner start center end",
             "visibleWhen": {
@@ -7079,7 +7171,7 @@
           "description": "Height of the edge area that reveals a hidden notch.",
           "x-settings": {
             "category": "notch",
-            "section": "advanced",
+            "section": "notch",
             "label": "prefs.notch.hover_region",
             "control": "slider",
             "step": 1,
@@ -7089,6 +7181,7 @@
               "key": "notch.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 8,
             "max": 40
           },
@@ -7097,14 +7190,14 @@
           "x-unit": "px"
         },
         "keepHidden": {
-          "title": "Keep Hidden",
+          "title": "Hide until hovered",
           "type": "boolean",
           "default": false,
           "description": "Hide the notch until the pointer reaches it.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
-            "label": "shell.notch.keep_hidden",
+            "label": "prefs.notch.hide_until_hovered",
             "control": "toggle",
             "keywords": "hide notch autohide",
             "visibleWhen": {
@@ -7166,20 +7259,21 @@
           }
         },
         "disableHoverExpansion": {
-          "title": "Disable Hover Expansion",
+          "title": "Media panel",
           "type": "boolean",
           "default": true,
-          "description": "Don't grow the notch into a media preview on hover.",
+          "description": "The island grows into a panel for the playing track: art, controls and the visualizer (on hover or click, see Open Panels On).",
           "x-settings": {
             "category": "notch",
-            "section": "advanced",
-            "label": "shell.notch.disable_hover_expansion",
+            "section": "media",
+            "label": "prefs.notch.media_panel",
             "control": "toggle",
-            "keywords": "hover expand grow media preview",
+            "keywords": "media panel card player hover expand grow preview disable",
             "visibleWhen": {
               "key": "notch.enabled",
               "equals": true
-            }
+            },
+            "invert": true
           }
         },
         "hoverExpandDelay": {
@@ -7262,36 +7356,44 @@
           "x-unit": "ms"
         },
         "visualizer": {
-          "title": "Audio Visualizer",
+          "title": "Visualizer in the media panel",
           "type": "boolean",
           "default": true,
           "description": "Audio bars next to the playing media.",
           "x-settings": {
             "category": "notch",
             "section": "media",
-            "label": "shell.notch.visualizer",
+            "label": "prefs.notch.media_visualizer",
             "control": "toggle",
             "keywords": "audio visualizer cava bars music",
             "visibleWhen": {
               "key": "notch.enabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "notch.disableHoverExpansion",
+              "equals": false
             }
           }
         },
         "mediaStyle": {
-          "title": "Media Panel Style",
+          "title": "Media panel style",
           "type": "string",
           "default": "row",
           "description": "Row: art, title and controls in one compact row. Artwork: large album art on a card tinted by the cover.",
           "x-settings": {
             "category": "notch",
             "section": "media",
-            "label": "prefs.notch.media_style",
+            "label": "prefs.notch.media_panel_style",
             "control": "selector",
             "keywords": "media player panel style row artwork album cover spotify",
             "visibleWhen": {
               "key": "notch.enabled",
               "equals": true
+            },
+            "enabledWhen": {
+              "key": "notch.disableHoverExpansion",
+              "equals": false
             }
           },
           "enum": [
@@ -7304,14 +7406,14 @@
           }
         },
         "style": {
-          "title": "Style",
+          "title": "Island shape",
           "type": "string",
           "default": "attached",
           "description": "Attached to the screen edge, a floating island, or a pill that shrinks to a dot when idle.",
           "x-settings": {
             "category": "notch",
             "section": "notch",
-            "label": "prefs.notch.theme",
+            "label": "prefs.label.island_shape",
             "control": "selector",
             "keywords": "notch style island attached floating pill dot minimal",
             "visibleWhen": {
@@ -7667,14 +7769,14 @@
           }
         },
         "presentation": {
-          "title": "Style",
+          "title": "Notification style",
           "type": "string",
           "default": "auto",
           "description": "Notch: toasts are born from the notch and grow with its shape. Corner: classic toasts. Auto follows the bar style of the preset (islands → notch, taskbars → corner). Strips: narrow strips hanging on a thread from a screen edge; pull one down to read it, flick it up to dismiss.",
           "x-settings": {
             "category": "notifications",
             "section": "presentation",
-            "label": "prefs.notif.presentation",
+            "label": "prefs.label.notification_style",
             "control": "selector",
             "preview": "StripsPreview",
             "keywords": "notch toast corner popup island style presentation where strips tanzaku hanging tags"
@@ -7821,7 +7923,8 @@
                 "visibleWhen": {
                   "key": "notifications.presentation",
                   "equals": "strips"
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "plain",
@@ -7848,7 +7951,8 @@
                 "visibleWhen": {
                   "key": "notifications.presentation",
                   "equals": "strips"
-                }
+                },
+                "advanced": true
               }
             },
             "sway": {
@@ -7865,7 +7969,8 @@
                 "visibleWhen": {
                   "key": "notifications.presentation",
                   "equals": "strips"
-                }
+                },
+                "advanced": true
               }
             },
             "maxVisible": {
@@ -7883,6 +7988,7 @@
                   "key": "notifications.presentation",
                   "equals": "strips"
                 },
+                "advanced": true,
                 "min": 1,
                 "max": 10
               },
@@ -7903,7 +8009,8 @@
                 "visibleWhen": {
                   "key": "notifications.presentation",
                   "equals": "strips"
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "auto",
@@ -7965,14 +8072,14 @@
               }
             },
             "file": {
-              "title": "Sound file",
+              "title": "Notification sound",
               "type": "string",
               "default": "",
               "description": "Any file pw-play or paplay can play. Empty uses the built-in tone.",
               "x-settings": {
                 "category": "notifications",
                 "section": "sound",
-                "label": "prefs.notif.sound_file",
+                "label": "prefs.label.notification_sound_file",
                 "control": "path",
                 "keywords": "sound file custom wav ogg chime",
                 "visibleWhen": {
@@ -8300,12 +8407,13 @@
           "description": "Gap between workspace previews in the overview.",
           "x-settings": {
             "category": "overview",
-            "section": "advanced",
+            "section": "size",
             "label": "prefs.overview.spacing",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "overview spacing gap between workspaces",
+            "advanced": true,
             "min": 0,
             "max": 64
           },
@@ -8408,7 +8516,7 @@
           "description": "Most dashboard tabs kept in memory at once.",
           "x-settings": {
             "category": "dashboard",
-            "section": "advanced",
+            "section": "memory",
             "label": "prefs.sys.dashboard_max_tabs",
             "control": "number",
             "keywords": "dashboard tabs memory limit",
@@ -8416,6 +8524,7 @@
               "key": "performance.dashboardPersistTabs",
               "equals": true
             },
+            "advanced": true,
             "min": 1,
             "max": 3
           },
@@ -8429,14 +8538,15 @@
           "description": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
           "x-settings": {
             "category": "dashboard",
-            "section": "advanced",
+            "section": "memory",
             "label": "prefs.sys.unload_idle_views",
             "control": "toggle",
             "keywords": "dashboard tabs memory unload idle release",
             "visibleWhen": {
               "key": "performance.dashboardPersistTabs",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         }
       },
@@ -8710,10 +8820,11 @@
               "description": "fd searches live; plocate uses its database (fast, may lag behind)",
               "x-settings": {
                 "category": "launcher",
-                "section": "advanced",
+                "section": "behavior",
                 "label": "prefs.launcher.file_backend",
                 "control": "selector",
-                "keywords": "fd plocate locate find search tool"
+                "keywords": "fd plocate locate find search tool",
+                "advanced": true
               },
               "enum": [
                 "auto",
@@ -8733,11 +8844,12 @@
               "description": "Maximum results after the files prefix",
               "x-settings": {
                 "category": "launcher",
-                "section": "advanced",
+                "section": "behavior",
                 "label": "prefs.launcher.file_max",
                 "control": "slider",
                 "step": 5,
                 "keywords": "files results limit count",
+                "advanced": true,
                 "min": 5,
                 "max": 100
               },
@@ -8768,12 +8880,13 @@
               "description": "Rates are cached and work offline; refreshed when older than this",
               "x-settings": {
                 "category": "launcher",
-                "section": "advanced",
+                "section": "behavior",
                 "label": "prefs.launcher.currency_refresh",
                 "control": "slider",
                 "step": 1,
                 "unit": "h",
                 "keywords": "currency rates exchange refresh offline cache",
+                "advanced": true,
                 "min": 1,
                 "max": 72
               },
@@ -8795,14 +8908,14 @@
       "x-file": "config/specials.json",
       "properties": {
         "enabled": {
-          "title": "Special workspaces",
+          "title": "Use special workspaces",
           "type": "boolean",
           "default": true,
           "description": "Their keys, window rules, app launching and preload. Off keeps the list but does nothing.",
           "x-settings": {
             "category": "specials",
             "section": "behaviour",
-            "label": "prefs.specials.enabled",
+            "label": "prefs.label.use_specials",
             "control": "toggle",
             "keywords": "on off disable binds rules launch"
           }
@@ -8824,6 +8937,7 @@
               "key": "specials.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 2000,
             "max": 60000
           },
@@ -8848,6 +8962,7 @@
               "key": "specials.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 30000
           },
@@ -9005,14 +9120,14 @@
           }
         },
         "language": {
-          "title": "Language",
+          "title": "Interface language",
           "type": "string",
           "default": "auto",
           "description": "Language of the whole shell. Auto follows your system locale.",
           "x-settings": {
             "category": "system",
             "section": "language",
-            "label": "settings.system.language",
+            "label": "prefs.label.interface_language",
             "control": "custom",
             "component": "LanguagePicker",
             "keywords": "language locale translation i18n english spanish russian auto"
@@ -9393,14 +9508,14 @@
               }
             },
             "soundFile": {
-              "title": "Sound file",
+              "title": "Alarm sound file",
               "type": "string",
               "default": "",
               "description": "Empty: the built-in tone",
               "x-settings": {
                 "category": "timers",
                 "section": "alarm",
-                "label": "prefs.timers.sound_file",
+                "label": "prefs.label.alarm_sound_file",
                 "control": "path",
                 "keywords": "alarm sound file tone custom",
                 "visibleWhen": {
@@ -9753,6 +9868,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 64
           },
@@ -10083,13 +10199,14 @@
           "description": "Speed of every animation. Off disables them.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "motion",
             "label": "prefs.motion.shell_base",
             "control": "slider",
             "preview": "MotionPreview",
             "step": 25,
             "unit": "ms",
             "keywords": "animation speed duration fast slow motion reduce",
+            "advanced": true,
             "min": 0,
             "max": 300,
             "specialValues": [
@@ -10223,6 +10340,7 @@
                     }
                   ]
                 },
+                "advanced": true,
                 "min": 2,
                 "max": 32
               },
@@ -10289,6 +10407,7 @@
                 "step": 1,
                 "unit": "px",
                 "keywords": "popup gap distance margin offset bar",
+                "advanced": true,
                 "min": 0,
                 "max": 32
               },
@@ -10344,7 +10463,8 @@
                 "visibleWhen": {
                   "key": "theme.signatures.petals",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "petal",
@@ -10404,6 +10524,7 @@
                   "key": "theme.lighting.mode",
                   "equals": "fixed"
                 },
+                "advanced": true,
                 "min": -180,
                 "max": 180
               },
@@ -10421,7 +10542,8 @@
                 "section": "lighting",
                 "label": "prefs.lighting.lantern",
                 "control": "selector",
-                "keywords": "lantern cursor pointer glow light night hover"
+                "keywords": "lantern cursor pointer glow light night hover",
+                "advanced": true
               },
               "enum": [
                 "off",
@@ -10449,7 +10571,8 @@
                 "visibleWhen": {
                   "key": "theme.lighting.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "subtle",
@@ -10618,6 +10741,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 1500,
             "specialValues": [
@@ -10643,6 +10767,7 @@
             "control": "slider",
             "step": 0.05,
             "keywords": "shell shadow opacity darkness alpha strength",
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -10659,7 +10784,8 @@
             "section": "shellShadow",
             "label": "prefs.surfaces.shadow_color",
             "control": "color-role",
-            "keywords": "shell shadow color glow palette role"
+            "keywords": "shell shadow color glow palette role",
+            "advanced": true
           },
           "format": "color"
         },
@@ -10670,12 +10796,13 @@
           "description": "Moves the shell shadow left or right.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "shellShadow",
             "label": "prefs.surfaces.shadow_x",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "shell shadow offset horizontal x left right",
+            "advanced": true,
             "min": -20,
             "max": 20
           },
@@ -10690,12 +10817,13 @@
           "description": "Moves the shell shadow up or down.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "shellShadow",
             "label": "prefs.surfaces.shadow_y",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "shell shadow offset vertical y up down",
+            "advanced": true,
             "min": -20,
             "max": 20
           },
@@ -10710,11 +10838,12 @@
           "description": "0 is a hard edge, 1 a soft, wide shadow.",
           "x-settings": {
             "category": "appearance",
-            "section": "advanced",
+            "section": "shellShadow",
             "label": "prefs.surfaces.shadow_blur",
             "control": "slider",
             "step": 0.05,
             "keywords": "shell shadow blur softness diffusion hard soft",
+            "advanced": true,
             "min": 0,
             "max": 1
           },
@@ -10722,14 +10851,14 @@
           "maximum": 1
         },
         "terminalOpacity": {
-          "title": "Background opacity",
+          "title": "Terminal background opacity",
           "type": "number",
           "default": -1,
           "description": "Background opacity of the generated kitty, ghostty, foot and alacritty themes, before glass. From preset follows the preset's background surface. With Glass off it is used as is.",
           "x-settings": {
             "category": "terminal",
             "section": "kitty",
-            "label": "prefs.term.opacity",
+            "label": "prefs.label.terminal_opacity",
             "control": "slider",
             "step": 0.01,
             "keywords": "kitty terminal opacity transparency background alpha",
@@ -10753,6 +10882,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 0,
             "max": 1,
             "specialValues": [
@@ -10805,6 +10935,7 @@
                   "key": "theme.surfaceEffect",
                   "notEquals": "none"
                 },
+                "advanced": true,
                 "min": 0,
                 "max": 1
               },
@@ -10825,7 +10956,8 @@
                 "visibleWhen": {
                   "key": "theme.surfaceEffect",
                   "equals": "crt"
-                }
+                },
+                "advanced": true
               }
             },
             "grain": {
@@ -10844,6 +10976,7 @@
                   "key": "theme.surfaceEffect",
                   "equals": "ink"
                 },
+                "advanced": true,
                 "min": 0,
                 "max": 1
               },
@@ -10864,7 +10997,8 @@
                 "visibleWhen": {
                   "key": "theme.surfaceEffect",
                   "equals": "ink"
-                }
+                },
+                "advanced": true
               }
             }
           },
@@ -10971,7 +11105,8 @@
                 "visibleWhen": {
                   "key": "theme.glass.enabled",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "primary",
@@ -11000,7 +11135,8 @@
                 "visibleWhen": {
                   "key": "theme.glass.enabled",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "enum": [
                 "overBackground",
@@ -11038,6 +11174,7 @@
                       "key": "theme.glass.enabled",
                       "equals": true
                     },
+                    "advanced": true,
                     "min": 0.2,
                     "max": 1,
                     "specialValues": [
@@ -11086,6 +11223,7 @@
                       "key": "theme.glass.enabled",
                       "equals": true
                     },
+                    "advanced": true,
                     "min": 0,
                     "max": 0.6,
                     "specialValues": [
@@ -11134,6 +11272,7 @@
                       "key": "theme.glass.enabled",
                       "equals": true
                     },
+                    "advanced": true,
                     "min": 0,
                     "max": 1,
                     "specialValues": [
@@ -11231,6 +11370,7 @@
                           "key": "theme.glass.enabled",
                           "equals": true
                         },
+                        "advanced": true,
                         "min": 0.3,
                         "max": 1,
                         "specialValues": [
@@ -11279,6 +11419,7 @@
                           "key": "theme.glass.enabled",
                           "equals": true
                         },
+                        "advanced": true,
                         "min": 0.3,
                         "max": 1,
                         "specialValues": [
@@ -11742,7 +11883,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11757,7 +11898,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11776,7 +11917,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11793,7 +11934,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11809,7 +11950,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11825,7 +11966,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11842,7 +11983,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11859,7 +12000,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11875,7 +12016,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11891,7 +12032,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11906,7 +12047,7 @@
               "default": "background",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11924,7 +12065,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11939,7 +12080,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11954,7 +12095,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -11993,7 +12134,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12008,7 +12149,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12027,7 +12168,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12044,7 +12185,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12060,7 +12201,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12076,7 +12217,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12093,7 +12234,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12110,7 +12251,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12126,7 +12267,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12142,7 +12283,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12157,7 +12298,7 @@
               "default": "background",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12175,7 +12316,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12190,7 +12331,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12205,7 +12346,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12244,7 +12385,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12259,7 +12400,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12278,7 +12419,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12295,7 +12436,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12311,7 +12452,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12327,7 +12468,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12344,7 +12485,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12361,7 +12502,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12377,7 +12518,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12393,7 +12534,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12408,7 +12549,7 @@
               "default": "background",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12426,7 +12567,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12441,7 +12582,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12456,7 +12597,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12495,7 +12636,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12510,7 +12651,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12529,7 +12670,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12546,7 +12687,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12562,7 +12703,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12578,7 +12719,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12595,7 +12736,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12612,7 +12753,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12628,7 +12769,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12644,7 +12785,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12659,7 +12800,7 @@
               "default": "surfaceDim",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12677,7 +12818,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12692,7 +12833,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12707,7 +12848,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12738,7 +12879,7 @@
               "default": true,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12760,7 +12901,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12775,7 +12916,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12794,7 +12935,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12811,7 +12952,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12827,7 +12968,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12843,7 +12984,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12860,7 +13001,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12877,7 +13018,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12893,7 +13034,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12909,7 +13050,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12924,7 +13065,7 @@
               "default": "background",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12942,7 +13083,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12957,7 +13098,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -12972,7 +13113,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13011,7 +13152,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13026,7 +13167,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13045,7 +13186,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13062,7 +13203,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13078,7 +13219,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13094,7 +13235,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13111,7 +13252,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13128,7 +13269,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13144,7 +13285,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13160,7 +13301,7 @@
               "default": "surfaceBright",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13175,7 +13316,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13193,7 +13334,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13208,7 +13349,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13223,7 +13364,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13262,7 +13403,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13277,7 +13418,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13296,7 +13437,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13313,7 +13454,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13329,7 +13470,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13345,7 +13486,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13362,7 +13503,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13379,7 +13520,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13395,7 +13536,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13411,7 +13552,7 @@
               "default": "background",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13426,7 +13567,7 @@
               "default": "surface",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13444,7 +13585,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13459,7 +13600,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13474,7 +13615,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13513,7 +13654,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13528,7 +13669,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13547,7 +13688,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13564,7 +13705,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13580,7 +13721,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13596,7 +13737,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13613,7 +13754,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13630,7 +13771,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13646,7 +13787,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13662,7 +13803,7 @@
               "default": "surfaceVariant",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13677,7 +13818,7 @@
               "default": "surfaceBright",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13695,7 +13836,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13710,7 +13851,7 @@
               "default": "overBackground",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13725,7 +13866,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13764,7 +13905,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13779,7 +13920,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13798,7 +13939,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13815,7 +13956,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13831,7 +13972,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13847,7 +13988,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13864,7 +14005,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13881,7 +14022,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13897,7 +14038,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13913,7 +14054,7 @@
               "default": "overPrimaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13928,7 +14069,7 @@
               "default": "primary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13946,7 +14087,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13961,7 +14102,7 @@
               "default": "overPrimary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -13976,7 +14117,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14015,7 +14156,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14030,7 +14171,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14049,7 +14190,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14066,7 +14207,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14082,7 +14223,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14098,7 +14239,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14115,7 +14256,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14132,7 +14273,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14148,7 +14289,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14164,7 +14305,7 @@
               "default": "primary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14179,7 +14320,7 @@
               "default": "overPrimaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14197,7 +14338,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14212,7 +14353,7 @@
               "default": "overPrimary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14227,7 +14368,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14266,7 +14407,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14281,7 +14422,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14300,7 +14441,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14317,7 +14458,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14333,7 +14474,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14349,7 +14490,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14366,7 +14507,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14383,7 +14524,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14399,7 +14540,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14415,7 +14556,7 @@
               "default": "primaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14430,7 +14571,7 @@
               "default": "overPrimary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14448,7 +14589,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14463,7 +14604,7 @@
               "default": "primary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14478,7 +14619,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14517,7 +14658,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14532,7 +14673,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14551,7 +14692,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14568,7 +14709,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14584,7 +14725,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14600,7 +14741,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14617,7 +14758,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14634,7 +14775,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14650,7 +14791,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14666,7 +14807,7 @@
               "default": "overSecondaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14681,7 +14822,7 @@
               "default": "secondary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14699,7 +14840,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14714,7 +14855,7 @@
               "default": "overSecondary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14729,7 +14870,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14768,7 +14909,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14783,7 +14924,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14802,7 +14943,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14819,7 +14960,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14835,7 +14976,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14851,7 +14992,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14868,7 +15009,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14885,7 +15026,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14901,7 +15042,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14917,7 +15058,7 @@
               "default": "secondary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14932,7 +15073,7 @@
               "default": "overSecondaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14950,7 +15091,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14965,7 +15106,7 @@
               "default": "overSecondary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -14980,7 +15121,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15019,7 +15160,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15034,7 +15175,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15053,7 +15194,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15070,7 +15211,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15086,7 +15227,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15102,7 +15243,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15119,7 +15260,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15136,7 +15277,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15152,7 +15293,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15168,7 +15309,7 @@
               "default": "secondaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15183,7 +15324,7 @@
               "default": "overSecondary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15201,7 +15342,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15216,7 +15357,7 @@
               "default": "secondary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15231,7 +15372,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15270,7 +15411,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15285,7 +15426,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15304,7 +15445,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15321,7 +15462,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15337,7 +15478,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15353,7 +15494,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15370,7 +15511,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15387,7 +15528,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15403,7 +15544,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15419,7 +15560,7 @@
               "default": "overTertiaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15434,7 +15575,7 @@
               "default": "tertiary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15452,7 +15593,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15467,7 +15608,7 @@
               "default": "overTertiary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15482,7 +15623,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15521,7 +15662,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15536,7 +15677,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15555,7 +15696,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15572,7 +15713,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15588,7 +15729,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15604,7 +15745,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15621,7 +15762,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15638,7 +15779,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15654,7 +15795,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15670,7 +15811,7 @@
               "default": "tertiary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15685,7 +15826,7 @@
               "default": "overTertiaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15703,7 +15844,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15718,7 +15859,7 @@
               "default": "overTertiary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15733,7 +15874,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15772,7 +15913,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15787,7 +15928,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15806,7 +15947,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15823,7 +15964,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15839,7 +15980,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15855,7 +15996,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15872,7 +16013,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15889,7 +16030,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15905,7 +16046,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15921,7 +16062,7 @@
               "default": "tertiaryContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15936,7 +16077,7 @@
               "default": "overTertiary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15954,7 +16095,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15969,7 +16110,7 @@
               "default": "tertiary",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -15984,7 +16125,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16023,7 +16164,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16038,7 +16179,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16057,7 +16198,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16074,7 +16215,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16090,7 +16231,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16106,7 +16247,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16123,7 +16264,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16140,7 +16281,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16156,7 +16297,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16172,7 +16313,7 @@
               "default": "overErrorContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16187,7 +16328,7 @@
               "default": "error",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16205,7 +16346,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16220,7 +16361,7 @@
               "default": "overError",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16235,7 +16376,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16274,7 +16415,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16289,7 +16430,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16308,7 +16449,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16325,7 +16466,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16341,7 +16482,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16357,7 +16498,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16374,7 +16515,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16391,7 +16532,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16407,7 +16548,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16423,7 +16564,7 @@
               "default": "error",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16438,7 +16579,7 @@
               "default": "overErrorContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16456,7 +16597,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16471,7 +16612,7 @@
               "default": "overError",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16486,7 +16627,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16525,7 +16666,7 @@
               },
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16540,7 +16681,7 @@
               "default": "linear",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16559,7 +16700,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16576,7 +16717,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16592,7 +16733,7 @@
               "default": 0.5,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16608,7 +16749,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16625,7 +16766,7 @@
               "default": 2,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16642,7 +16783,7 @@
               "default": 0,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16658,7 +16799,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16674,7 +16815,7 @@
               "default": "errorContainer",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16689,7 +16830,7 @@
               "default": "overError",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16707,7 +16848,7 @@
               ],
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16722,7 +16863,7 @@
               "default": "error",
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16737,7 +16878,7 @@
               "default": 1,
               "x-settings": {
                 "category": "appearance",
-                "section": "advanced",
+                "section": "surfaces",
                 "label": "prefs.surfaces.roles",
                 "entry": "theme.surfaces",
                 "entryTitle": "Surface styles",
@@ -16799,14 +16940,14 @@
           }
         },
         "language": {
-          "title": "Language",
+          "title": "Speech language",
           "type": "string",
           "default": "auto",
           "description": "Language you speak. Auto detects it every time.",
           "x-settings": {
             "category": "voice",
             "section": "recognition",
-            "label": "voice.settings.language",
+            "label": "prefs.label.speech_language",
             "control": "selector",
             "keywords": "speech recognition language auto detect english russian japanese",
             "enabledWhen": {
@@ -16978,6 +17119,7 @@
                 }
               ]
             },
+            "advanced": true,
             "min": 300,
             "max": 5000
           },
@@ -16999,7 +17141,8 @@
             "enabledWhen": {
               "key": "voice.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           },
           "enum": [
             0.2,
@@ -17158,6 +17301,7 @@
               "key": "voice.enabled",
               "equals": true
             },
+            "advanced": true,
             "min": 0,
             "max": 5000,
             "specialValues": [
@@ -17384,7 +17528,8 @@
             "visibleWhen": {
               "key": "workspaces.indicatorStyle",
               "equals": "branch"
-            }
+            },
+            "advanced": true
           },
           "enum": [
             "sakura",
@@ -17408,7 +17553,8 @@
             "visibleWhen": {
               "key": "workspaces.indicatorStyle",
               "equals": "branch"
-            }
+            },
+            "advanced": true
           },
           "enum": [
             "primary",
@@ -17422,20 +17568,21 @@
           }
         },
         "branchPetalFall": {
-          "title": "Falling petals",
+          "title": "Petals fall from the branch",
           "type": "boolean",
           "default": true,
           "description": "A petal falls when a window closes (only with animations on).",
           "x-settings": {
             "category": "bar",
             "section": "workspaces",
-            "label": "prefs.bar.ws_branch_fall",
+            "label": "prefs.label.branch_petals",
             "control": "toggle",
             "keywords": "branch petal fall animation window close workspaces",
             "visibleWhen": {
               "key": "workspaces.indicatorStyle",
               "equals": "branch"
-            }
+            },
+            "advanced": true
           }
         }
       },

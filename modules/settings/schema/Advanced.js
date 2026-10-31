@@ -1,56 +1,50 @@
 .pragma library
 
-// Advanced block: schema entries flagged `advanced: true` leave their
-// section and gather, in page order, in one collapsed "Advanced" section at
-// the end of the page. Categories.js applies it to every category, so the
-// renderer, search (results point at this block, and revealing an entry
-// unfolds it), resets and the generated catalog all see the same sections.
-// A section whose entries are all advanced disappears; an entry keeps its
-// section's `compositor` restriction.
+// Simple / All view of a settings page (general.settingsShowAll, the
+// toggle in the sidebar). Schema entries flagged `advanced: true` are the
+// expert knobs: raw px / ms numbers, plumbing "Match shell ..." switches,
+// endpoints, per-surface opacities. Simple (the default) hides them and a
+// section left without rows; All shows every entry in place, next to the
+// row it refines. Search always indexes every entry: jumping to an advanced
+// one in Simple reveals just that row (`revealed`: {entryId: true}).
 
-var SECTION_ID = "advanced";
-
-function apply(cat) {
-    if (!cat || !cat.sections)
-        return cat;
-    var moved = [];
-    var sections = [];
-    cat.sections.forEach(function (sec) {
-        var basic = (sec.entries || []).filter(function (e) {
-            return !e.advanced;
-        });
-        (sec.entries || []).forEach(function (e) {
-            if (e.advanced)
-                moved.push(sec.compositor && !e.compositor ? copy(e, {
-                    "compositor": sec.compositor
-                }) : e);
-        });
-        if (basic.length === (sec.entries || []).length)
-            sections.push(sec);
-        else if (basic.length > 0)
-            sections.push(copy(sec, {
-                "entries": basic
-            }));
-    });
-    if (moved.length === 0)
-        return cat;
-    sections.push({
-        "id": SECTION_ID,
-        "title": "prefs.common.advanced",
-        "collapsible": true,
-        "collapsed": true,
-        "entries": moved
-    });
-    return copy(cat, {
-        "sections": sections
-    });
+function entryId(entry) {
+    return entry ? (entry.id || entry.key || "") : "";
 }
 
-function copy(obj, extra) {
-    var out = {};
-    for (var k in obj)
-        out[k] = obj[k];
-    for (var e in extra)
-        out[e] = extra[e];
-    return out;
+// Is the entry shown in the current view?
+function shown(entry, showAll, revealed) {
+    if (!entry || !entry.advanced || showAll)
+        return true;
+    return !!(revealed && revealed[entryId(entry)]);
+}
+
+// Advanced entries of a category hidden by Simple right now. `visible`
+// (optional): the page's own filter (compositor gate, visibleWhen), so the
+// count only names rows All would really show.
+function hiddenCount(cat, showAll, revealed, visible) {
+    if (showAll || !cat || !cat.sections)
+        return 0;
+    var n = 0;
+    cat.sections.forEach(function (sec) {
+        (sec.entries || []).forEach(function (e) {
+            if (!shown(e, false, revealed) && (!visible || visible(e, sec)))
+                n++;
+        });
+    });
+    return n;
+}
+
+// Count of every advanced entry (the audit / tests).
+function advancedCount(categories) {
+    var n = 0;
+    (categories || []).forEach(function (cat) {
+        (cat.sections || []).forEach(function (sec) {
+            (sec.entries || []).forEach(function (e) {
+                if (e.advanced)
+                    n++;
+            });
+        });
+    });
+    return n;
 }

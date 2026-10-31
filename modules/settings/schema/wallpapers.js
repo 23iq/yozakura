@@ -71,6 +71,7 @@ var category = {
             "entries": [
                 {
                     "key": "desktop.wallpaperTransition",
+                    "reason": "prefs.disabled.motion_off",
                     "enabledWhen": ANIMATED,
                     "type": "selector",
                     "options": [
@@ -106,6 +107,8 @@ var category = {
                 },
                 {
                     "key": "desktop.wallpaperTransitionDuration",
+                    "reason": "prefs.disabled.motion_off",
+                    "advanced": true,
                     "enabledWhen": ANIMATED,
                     "type": "slider",
                     "min": 100,
@@ -146,6 +149,7 @@ var category = {
                 },
                 {
                     "key": "desktop.panoramaParallax",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "desktop.wallpaperMode",

@@ -16,6 +16,9 @@ modules/settings/
 ├── SettingsPage.qml        renders one schema category (PageHeader + SettingsSection...)
 ├── SettingsSection.qml     titled card of SettingRow
 ├── SettingRow.qml          label/description/modified dot/reset + typed control + preview
+├── SettingLabel.qml        a row's label column; DisabledNote.qml: why a row is greyed + [Turn on]
+├── DisabledReason.js       pure: the failing condition -> reason text / the one switch that fixes it
+├── ViewToggle.qml          sidebar Simple / All switch; SimpleFooter.qml: "N more ... Show all"
 ├── connect/ConnectPage.qml Network/Bluetooth/Sound/Effects pages: the live device panels
 ├── mods/                   the Mods page (ModsEditor + parts, ModsModel.js)
 ├── AboutPage / PlaceholderPage / PageHeader / PillButton / NavItem / ChangesBar
@@ -94,7 +97,14 @@ it is saved), `options`
 key a composite entry reads/resets), `sizeKey` (font), `resettable: false`,
 `compositor` (entry or section shown only on that compositor, e.g. `"hyprland"`),
 `id` (when there is no single `key`), `target` (PageLink), `sizeUnit`
-(font), `surface` (a host/style picker's `modules/shell/hosts/SurfaceRegistry.js`
+(font), `advanced` (expert knob: raw px / ms, "Match shell ..." plumbing,
+endpoints, per-surface opacities; shown only in the All view, see below),
+`reason` (i18n key: why the row is greyed when `enabledWhen` is not one
+switch; a single-toggle condition is named automatically with a [Turn on]
+action, tests/settings-advanced.test.cjs enforces it), `invert` (a toggle
+shown on for `false`: a positive name for a double-negative key such as
+notch.disableHoverExpansion "Media panel"; the key never changes),
+`surface` (a host/style picker's `modules/shell/hosts/SurfaceRegistry.js`
 id: the row notes "Island is off - shown as X" while the notch is off).
 
 Collection types (controls/ListControl, PathControl, ScreensControl,
@@ -119,6 +129,15 @@ Section fields: `id`, `title`, `entries`, and `collapsible: true` (+
 `collapsed: true` to start folded) for advanced options; a search jump into
 a folded section unfolds it. A category file may pull sections from a
 sibling file (appearance.js splices in `schema/glass.js`).
+
+## SIMPLE / ALL
+`general.settingsShowAll` (machine-local, the sidebar ViewToggle; default
+Simple). Simple hides `advanced` entries and sections left empty, keeps an
+advanced entry the user changed, and ends the page with SimpleFooter. All
+shows every entry in place. Search indexes everything; a jump to an
+advanced entry reveals it in Simple (`SettingsStore.revealed`, cleared on
+page change). A new feature is ONE obvious row in Simple (on/off or style),
+its fine options `advanced`. Helpers: `schema/Advanced.js`.
 
 ## ADDING A CATEGORY
 Create `schema/<id>.js` exporting `category = {id, icon, title, description,

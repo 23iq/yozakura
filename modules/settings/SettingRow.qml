@@ -18,8 +18,11 @@ import "../shell/hosts/HostResolve.js" as HostResolve
 // One schema entry: label (body) and description (caption) on the left,
 // the typed control on the right (or stacked full width for rich editors)
 // and a quiet reset while the value differs from its default, plus an
-// optional live preview below. Hidden entries (visibleWhen) collapse with
-// an animation.
+// optional live preview below. Hidden entries (visibleWhen, or `advanced`
+// in the Simple view) collapse with an animation; a greyed one
+// (enabledWhen) says why below it (DisabledNote). A toggle with
+// `invert: true` shows on for a false value (a positive name for a
+// double-negative key such as notch.disableHoverExpansion).
 Item {
     id: row
 
@@ -27,8 +30,13 @@ Item {
 
     readonly property string entryId: SchemaUtil.entryId(entry)
     readonly property string type: entry.type
-    readonly property bool shown: SettingsStore.visible(entry)
+    readonly property bool shown: SettingsStore.visible(entry) && SettingsStore.inView(entry)
     readonly property bool active: SettingsStore.enabled(entry)
+    // The row above in the section: a run of rows greyed by the same
+    // condition says why once, under its first shown row.
+    property var previousEntry: null
+    readonly property bool noteRepeats: !!previousEntry && JSON.stringify(previousEntry.enabledWhen) === JSON.stringify(entry.enabledWhen) && SettingsStore.visible(previousEntry) && SettingsStore.inView(previousEntry)
+    readonly property var note: row.active || row.noteRepeats ? null : SettingsStore.disabledNote(entry)
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < 600
@@ -48,7 +56,7 @@ Item {
     }
 
     objectName: "settingRow:" + entryId
-    implicitHeight: shown ? body.implicitHeight : 0
+    implicitHeight: shown ? body.implicitHeight + (note ? disabledNote.implicitHeight + Space.s : 0) : 0
     height: implicitHeight
     opacity: shown ? 1 : 0
     visible: opacity > 0
@@ -108,40 +116,12 @@ Item {
             width: parent.width
             spacing: Space.l
 
-            ColumnLayout {
+            SettingLabel {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 Layout.minimumHeight: Space.rowHeight - body.topPadding - body.bottomPadding
-                spacing: Space.xs / 2
-
-                Item {
-                    Layout.fillHeight: true
-                }
-                KitText {
-                    Layout.fillWidth: true
-                    role: "body"
-                    text: I18n.t(row.entry.label)
-                    wrapMode: Text.WordWrap
-                }
-                KitText {
-                    Layout.fillWidth: true
-                    visible: !!row.entry.description
-                    role: "caption"
-                    // A dimmed row says why, when the entry names a reason.
-                    text: !row.active && row.entry.disabledReason ? I18n.t(row.entry.disabledReason) : (row.entry.description ? I18n.t(row.entry.description) : "")
-                    wrapMode: Text.WordWrap
-                }
-                KitText {
-                    objectName: "rowShownAs"
-                    Layout.fillWidth: true
-                    visible: row.shownAs !== ""
-                    role: "caption"
-                    text: row.shownAs !== "" ? I18n.t("prefs.layout.island_off").arg(row.shownAs) : ""
-                    wrapMode: Text.WordWrap
-                }
-                Item {
-                    Layout.fillHeight: true
-                }
+                entry: row.entry
+                shownAs: row.shownAs
             }
 
             // Reset to default: a quiet button before the control, there only
@@ -193,6 +173,13 @@ Item {
         }
     }
 
+    DisabledNote {
+        id: disabledNote
+        y: body.implicitHeight
+        width: parent.width
+        note: row.note
+    }
+
     function controlComponent() {
         switch (type) {
         case "toggle":
@@ -226,8 +213,8 @@ Item {
     Component {
         id: toggleComponent
         ToggleControl {
-            checked: !!row.value
-            onToggled: v => SettingsStore.set(row.entry.key, v)
+            checked: row.entry.invert ? !row.value : !!row.value
+            onToggled: v => SettingsStore.set(row.entry.key, row.entry.invert ? !v : v)
         }
     }
 

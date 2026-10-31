@@ -119,3 +119,14 @@ test('kit window: only glass draws a translucent window background', () => {
     for (const lang of ['ink', 'tiles', 'classic', 'device'])
         assert.equal(V.kit(lang).window, null);
 });
+
+test('kit: Glass effect off makes the glass language opaque, other languages unchanged', () => {
+    const on = plain(V.kit('glass', true)), off = plain(V.kit('glass', false));
+    assert.ok(on.window && on.window.fillOpacity < 1, 'glass window is translucent while glass is on');
+    assert.equal(off.window, null, 'no frosted window with glass off');
+    assert.equal(off.float.fillOpacity, 1, 'floats are opaque with glass off');
+    assert.deepEqual(off.group, on.group, 'cards keep their tonal box');
+    assert.ok(V.kit('glass').window, 'no flag keeps the language spec');
+    for (const l of ['ink', 'tiles', 'classic', 'device'])
+        assert.equal(V.kit(l, false), V.kit(l), l);
+});

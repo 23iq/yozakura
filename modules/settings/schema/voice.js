@@ -137,7 +137,7 @@ var category = {
                         };
                     }),
                     "enabledWhen": ON,
-                    "label": "voice.settings.language",
+                    "label": "prefs.label.speech_language",
                     "description": "prefs.voice.language.desc",
                     "keywords": "speech recognition language auto detect english russian japanese"
                 },
@@ -145,6 +145,7 @@ var category = {
                 toggle("voice.vadAutoStop", "voice.settings.vad_auto_stop", "vad silence pause auto stop", "prefs.voice.vad_auto_stop.desc"),
                 {
                     "key": "voice.vadSilenceMs",
+                    "advanced": true,
                     "type": "slider",
                     "min": 300,
                     "max": 5000,
@@ -164,6 +165,7 @@ var category = {
                 },
                 {
                     "key": "voice.vadSensitivity",
+                    "advanced": true,
                     "type": "selector",
                     "options": [
                         {
@@ -230,6 +232,7 @@ var category = {
                 toggle("voice.aiAutoSend", "voice.settings.ai_auto_send", "assistant ai voice send immediately", "prefs.voice.ai_auto_send.desc"),
                 {
                     "key": "voice.previewMs",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 5000,

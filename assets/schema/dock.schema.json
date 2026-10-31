@@ -98,6 +98,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 24,
         "max": 128
       },
@@ -144,7 +145,7 @@
       "description": "Gap between the dock icons.",
       "x-settings": {
         "category": "dock",
-        "section": "advanced",
+        "section": "size",
         "label": "prefs.dock.spacing",
         "control": "slider",
         "step": 1,
@@ -162,6 +163,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 0,
         "max": 32
       },
@@ -176,7 +178,7 @@
       "description": "Distance between the dock and the screen edge.",
       "x-settings": {
         "category": "dock",
-        "section": "advanced",
+        "section": "size",
         "label": "prefs.dock.margin",
         "control": "slider",
         "step": 1,
@@ -194,6 +196,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 0,
         "max": 64
       },
@@ -208,7 +211,7 @@
       "description": "Size of the invisible edge strip that reveals the hidden dock.",
       "x-settings": {
         "category": "dock",
-        "section": "advanced",
+        "section": "autohide",
         "label": "prefs.dock.hover_region",
         "control": "slider",
         "step": 1,
@@ -234,6 +237,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 0,
         "max": 64
       },
@@ -434,14 +438,15 @@
       "description": "App ids matching one of these regular expressions never appear in the dock.",
       "x-settings": {
         "category": "dock",
-        "section": "advanced",
+        "section": "content",
         "label": "prefs.dock.ignored",
         "control": "list",
         "keywords": "dock ignore hide apps regex filter exclude app id class",
         "visibleWhen": {
           "key": "dock.enabled",
           "equals": true
-        }
+        },
+        "advanced": true
       }
     },
     "screenList": {
@@ -539,6 +544,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 1,
         "max": 2.5
       },

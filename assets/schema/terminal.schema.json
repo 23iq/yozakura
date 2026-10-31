@@ -110,6 +110,7 @@
             }
           ]
         },
+        "advanced": true,
         "min": 0,
         "max": 64
       },

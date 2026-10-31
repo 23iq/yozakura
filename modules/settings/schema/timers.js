@@ -95,7 +95,7 @@ var category = {
                     "filter": "Audio | *.wav *.ogg *.oga *.mp3 *.flac *.opus",
                     "placeholder": "prefs.timers.sound_file.placeholder",
                     "visibleWhen": SOUND_ON,
-                    "label": "prefs.timers.sound_file",
+                    "label": "prefs.label.alarm_sound_file",
                     "description": "prefs.timers.sound_file.desc",
                     "keywords": "alarm sound file tone custom"
                 },

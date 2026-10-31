@@ -95,7 +95,7 @@ Item {
             opacity: hidden && !isSelected ? 0.45 : 1
 
             Repeater {
-                model: panel.sk.shapes
+                model: panel.sk ? panel.sk.shapes : []
                 delegate: Rectangle {
                     required property var modelData
                     x: modelData.x
@@ -116,7 +116,7 @@ Item {
             }
 
             Repeater {
-                model: panel.sk.icons
+                model: panel.sk ? panel.sk.icons : []
                 delegate: Text {
                     required property var modelData
                     x: modelData.x

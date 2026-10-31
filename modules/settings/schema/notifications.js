@@ -113,12 +113,13 @@ var category = {
                         }
                     ],
                     "preview": "StripsPreview",
-                    "label": "prefs.notif.presentation",
+                    "label": "prefs.label.notification_style",
                     "description": "prefs.notif.presentation.desc",
                     "keywords": "notch toast corner popup island style presentation where strips tanzaku hanging tags"
                 },
                 {
                     "key": "notifications.strips.edge",
+                    "advanced": true,
                     "type": "selector",
                     "options": StripLayout.EDGES.map(function (e) {
                         return {
@@ -134,6 +135,7 @@ var category = {
                 },
                 {
                     "key": "notifications.strips.material",
+                    "advanced": true,
                     "type": "selector",
                     "options": StripLayout.MATERIALS.map(function (m) {
                         return {
@@ -149,6 +151,7 @@ var category = {
                 },
                 {
                     "key": "notifications.strips.thread",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": STRIPS,
                     "label": "prefs.notif.strips.thread",
@@ -157,6 +160,7 @@ var category = {
                 },
                 {
                     "key": "notifications.strips.sway",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": STRIPS,
                     "label": "prefs.notif.strips.sway",
@@ -165,6 +169,7 @@ var category = {
                 },
                 {
                     "key": "notifications.strips.maxVisible",
+                    "advanced": true,
                     "type": "number",
                     "min": 1,
                     "max": 10,
@@ -273,7 +278,7 @@ var category = {
                         "key": "notifications.sound.enabled",
                         "equals": true
                     },
-                    "label": "prefs.notif.sound_file",
+                    "label": "prefs.label.notification_sound_file",
                     "description": "prefs.notif.sound_file.desc",
                     "keywords": "sound file custom wav ogg chime"
                 }

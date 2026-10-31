@@ -111,6 +111,7 @@ var category = {
                 },
                 {
                     "key": "dock.height",
+                    "advanced": true,
                     "type": "slider",
                     "min": 24,
                     "max": 128,
@@ -293,6 +294,7 @@ var category = {
                 },
                 {
                     "key": "dock.magnificationScale",
+                    "advanced": true,
                     "type": "slider",
                     "min": 1,
                     "max": 2.5,

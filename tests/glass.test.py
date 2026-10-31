@@ -38,6 +38,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.settings
+import qs.modules.settings.store
 Window {
     id: w
     width: 1000; height: 900; visible: true
@@ -126,6 +127,10 @@ check(abs(ev("Config.theme.glass.amount") - 0.7) < 1e-6, "slider writes theme.gl
 ev('w.findItem("glassFollowPreset").children[1].clicked(null)')
 settle()
 check(ev("Config.theme.glass.amount") == -1, "chip resets to the preset's amount")
+
+# Expert sections show in the All view (Simple hides advanced rows).
+ev("SettingsStore.setShowAll(true)")
+settle()
 
 # Advanced section is folded; a search jump unfolds it.
 adv = ev('w.findItem("settingsSection:glassAdvanced")')

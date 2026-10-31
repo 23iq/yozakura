@@ -44,8 +44,11 @@ Item {
         currentCategory = c.id;
         searchOpen = false;
         GlobalStates.settingsCategory = c.id;
-        if (changed)
+        if (changed) {
+            // Rows a search revealed in the Simple view fold back away.
+            SettingsStore.clearRevealed();
             page.load(c);
+        }
     }
 
     function navigate(categoryId, sectionId, entryId) {

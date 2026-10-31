@@ -18,6 +18,7 @@ var category = {
             "entries": [
                 {
                     "key": "overview.style",
+                    "reason": "prefs.disabled.scrolling_overview",
                     "enabledWhen": {
                         "key": "compositor.layout",
                         "notEquals": "scrolling"
@@ -51,6 +52,7 @@ var category = {
                 },
                 {
                     "key": "overview.rows",
+                    "reason": "prefs.disabled.one_row_overview",
                     "enabledWhen": {
                         "not": {
                             "all": [

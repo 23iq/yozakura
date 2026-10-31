@@ -65,6 +65,7 @@
         "step": 10,
         "unit": "px",
         "keywords": "compact width sidebar size",
+        "advanced": true,
         "min": 320,
         "max": 900
       },
@@ -119,6 +120,7 @@
         "step": 20,
         "unit": "px",
         "keywords": "wide layout width",
+        "advanced": true,
         "min": 600,
         "max": 2400
       },
@@ -162,6 +164,7 @@
         "label": "ai.max_tool_rounds",
         "control": "number",
         "keywords": "tool rounds loop limit",
+        "advanced": true,
         "min": 1,
         "max": 30
       },
@@ -180,6 +183,7 @@
         "control": "number",
         "unit": "min",
         "keywords": "memory unload idle performance",
+        "advanced": true,
         "min": 1,
         "max": 240
       },
@@ -639,6 +643,7 @@
             "control": "number",
             "unit": "px",
             "keywords": "quick ask width",
+            "advanced": true,
             "min": 380,
             "max": 1200
           },
@@ -1029,17 +1034,18 @@
           }
         },
         "opacity": {
-          "title": "Background opacity",
+          "title": "Sidebar opacity",
           "type": "number",
           "default": 1,
           "description": "Opacity of the AI bar background; 1 follows the theme.",
           "x-settings": {
             "category": "ai",
             "section": "bar_appearance",
-            "label": "prefs.ai.opacity",
+            "label": "prefs.label.sidebar_opacity",
             "control": "slider",
             "step": 0.05,
             "keywords": "opacity transparency background surface",
+            "advanced": true,
             "min": 0.4,
             "max": 1
           },
@@ -1340,6 +1346,7 @@
             "step": 5,
             "unit": "%",
             "keywords": "context window warning amber threshold percent full",
+            "advanced": true,
             "min": 50,
             "max": 95
           },
@@ -1359,6 +1366,7 @@
             "step": 1,
             "unit": "%",
             "keywords": "context window critical red threshold percent full",
+            "advanced": true,
             "min": 60,
             "max": 100
           },
@@ -1395,6 +1403,7 @@
               "key": "ai.context.autoCompact",
               "equals": true
             },
+            "advanced": true,
             "min": 50,
             "max": 100
           },
@@ -1412,6 +1421,7 @@
             "label": "prefs.ai.keep_turns",
             "control": "number",
             "keywords": "compact keep recent turns messages verbatim",
+            "advanced": true,
             "min": 0,
             "max": 20
           },
@@ -1441,7 +1451,8 @@
             "section": "context",
             "label": "prefs.ai.context_overrides",
             "control": "list",
-            "keywords": "context window override model size tokens custom"
+            "keywords": "context window override model size tokens custom",
+            "advanced": true
           }
         }
       },
@@ -1463,6 +1474,7 @@
             "control": "number",
             "step": 1024,
             "keywords": "ollama num_ctx context length tokens memory vram local",
+            "advanced": true,
             "min": 0,
             "max": 1048576,
             "specialValues": [
@@ -1485,7 +1497,8 @@
             "section": "local",
             "label": "prefs.ai.ollama_endpoint",
             "control": "text",
-            "keywords": "ollama endpoint url host port server remote local"
+            "keywords": "ollama endpoint url host port server remote local",
+            "advanced": true
           },
           "pattern": "^$|^https?://\\S+$"
         },
@@ -1499,7 +1512,8 @@
             "section": "local",
             "label": "prefs.ai.ollama_keep_alive",
             "control": "text",
-            "keywords": "ollama keep alive unload memory vram minutes"
+            "keywords": "ollama keep alive unload memory vram minutes",
+            "advanced": true
           },
           "pattern": "^$|^-?\\d+(\\.\\d+)?(ms|s|m|h)?$"
         }
@@ -1521,7 +1535,8 @@
             "section": "local",
             "label": "prefs.ai.lmstudio_endpoint",
             "control": "text",
-            "keywords": "lm studio lmstudio endpoint url server port local"
+            "keywords": "lm studio lmstudio endpoint url server port local",
+            "advanced": true
           },
           "pattern": "^$|^https?://\\S+$"
         }
@@ -1546,6 +1561,7 @@
             "step": 30,
             "unit": "s",
             "keywords": "timeout request seconds slow hang",
+            "advanced": true,
             "min": 0,
             "max": 3600,
             "specialValues": [
@@ -1569,6 +1585,7 @@
             "label": "prefs.ai.providers.retries",
             "control": "number",
             "keywords": "retry retries rate limit 429 overloaded network error",
+            "advanced": true,
             "min": 0,
             "max": 5
           },
@@ -1618,6 +1635,7 @@
             "step": 15,
             "unit": "s",
             "keywords": "probe detect auto refresh interval local ollama lm studio",
+            "advanced": true,
             "min": 0,
             "max": 3600,
             "specialValues": [
@@ -1640,7 +1658,8 @@
             "section": "requests",
             "label": "prefs.ai.providers.headers",
             "control": "list",
-            "keywords": "custom endpoint headers proxy auth authorization openai compatible"
+            "keywords": "custom endpoint headers proxy auth authorization openai compatible",
+            "advanced": true
           },
           "x-secret": true
         },
@@ -1654,7 +1673,8 @@
             "section": "requests",
             "label": "prefs.ai.providers.openrouter_attribution",
             "control": "toggle",
-            "keywords": "openrouter referer title attribution headers app"
+            "keywords": "openrouter referer title attribution headers app",
+            "advanced": true
           }
         }
       },
@@ -2091,6 +2111,7 @@
             "step": 5,
             "unit": "%",
             "keywords": "limit warning amber threshold percent",
+            "advanced": true,
             "min": 50,
             "max": 100
           },
@@ -2110,6 +2131,7 @@
             "step": 5,
             "unit": "%",
             "keywords": "limit critical red second threshold percent",
+            "advanced": true,
             "min": 50,
             "max": 100
           },
@@ -2193,6 +2215,7 @@
             "control": "slider",
             "step": 1,
             "keywords": "cost decimals precision cents",
+            "advanced": true,
             "min": 2,
             "max": 4
           },

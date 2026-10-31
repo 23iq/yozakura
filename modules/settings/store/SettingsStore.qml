@@ -9,6 +9,9 @@ import "../SchemaUtil.js" as SchemaUtil
 import "../SettingsDefaults.js" as SettingsDefaults
 import "../CompositorGate.js" as CompositorGate
 import "../ResetModel.js" as ResetModel
+import "../schema/Advanced.js" as Advanced
+import "../schema/Categories.js" as Categories
+import "../DisabledReason.js" as DisabledReason
 
 // Read/write access to settings keys for the schema renderer.
 //
@@ -29,6 +32,42 @@ Singleton {
 
     // Set by the settings window to flash an entry after a search jump.
     property string highlightedEntry: ""
+
+    // Simple / All view (schema/Advanced.js): All also shows the entries
+    // flagged `advanced`. Remembered in general.settingsShowAll (saved at
+    // once, never staged). A search jump reveals its advanced entry in
+    // Simple until the page changes; changed advanced entries stay shown.
+    readonly property bool showAll: Config.general.settingsShowAll === true
+    property var revealed: ({})
+
+    function setShowAll(value) {
+        root.revealed = {};
+        root.set("general.settingsShowAll", !!value);
+    }
+
+    function revealEntry(entryId) {
+        if (!entryId || root.revealed[entryId])
+            return;
+        const next = Object.assign({}, root.revealed);
+        next[entryId] = true;
+        root.revealed = next;
+    }
+
+    function clearRevealed() {
+        if (Object.keys(root.revealed).length > 0)
+            root.revealed = {};
+    }
+
+    // Shown in the current view: an advanced entry the user changed stays
+    // in Simple too, so a changed value is never out of sight.
+    function inView(entry) {
+        return Advanced.shown(entry, root.showAll, root.revealed) || root.isModified(entry);
+    }
+
+    function sectionInView(section) {
+        const entries = (section && section.entries) || [];
+        return entries.length === 0 || entries.some(e => root.inView(e));
+    }
 
     signal navigateRequested(string categoryId, string sectionId, string entryId)
     // A settings control (or reset) changed `key`: lets an editor react to
@@ -241,6 +280,14 @@ Singleton {
 
     function enabled(entry) {
         return SchemaUtil.evalCondition(entry.enabledWhen, root.get);
+    }
+
+    // key -> the schema entry that edits it (DisabledReason names it).
+    readonly property var entryByKey: DisabledReason.entryIndex(Categories.categories)
+
+    // {text, fix: {key, value, on} | null} for a greyed entry, else null.
+    function disabledNote(entry) {
+        return DisabledReason.explain(entry, root.get, k => root.entryByKey[k] || null, k => I18n.t(k));
     }
 
     function apply() {

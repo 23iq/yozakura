@@ -130,6 +130,7 @@ var category = {
                 },
                 {
                     "key": "theme.shape.cutSize",
+                    "advanced": true,
                     "type": "slider",
                     "min": 2,
                     "max": 32,
@@ -186,6 +187,7 @@ var category = {
                 },
                 {
                     "key": "theme.signatures.petalShape",
+                    "advanced": true,
                     "type": "selector",
                     "visibleWhen": {
                         "key": "theme.signatures.petals",
@@ -221,6 +223,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.intensity",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -235,6 +238,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.flicker",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "theme.surfaceEffect",
@@ -246,6 +250,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.grain",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
@@ -260,6 +265,7 @@ var category = {
                 },
                 {
                     "key": "theme.surfaceEffectOptions.brushHighlights",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "theme.surfaceEffect",

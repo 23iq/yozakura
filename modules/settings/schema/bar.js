@@ -65,7 +65,7 @@ var category = {
                     "type": "custom",
                     "component": "BarLayoutEditor",
                     "keys": ["bar.layout.left", "bar.layout.right", "bar.layout.drawer"],
-                    "label": "prefs.bar.layout",
+                    "label": "prefs.label.bar_modules",
                     "description": "prefs.bar.layout.desc",
                     "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
                 }
@@ -83,7 +83,7 @@ var category = {
                     },
                     "type": "custom",
                     "component": "BarPositionPicker",
-                    "label": "prefs.bar.position",
+                    "label": "prefs.label.bar_edge",
                     "description": "prefs.bar.position.desc",
                     "keywords": "position edge top bottom left right vertical horizontal"
                 },
@@ -96,6 +96,7 @@ var category = {
                 },
                 {
                     "key": "bar.frameThickness",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 40,
@@ -157,6 +158,7 @@ var category = {
                 },
                 {
                     "key": "bar.moduleOptions.clock.pomodoroStyle",
+                    "advanced": true,
                     "type": "selector",
                     "label": "prefs.bar.pomodoro_style",
                     "description": "prefs.bar.pomodoro_style.desc",
@@ -241,6 +243,7 @@ var category = {
                 },
                 {
                     "key": "workspaces.branchBlossom",
+                    "advanced": true,
                     "type": "custom",
                     "component": "BranchBlossomChips",
                     "visibleWhen": {
@@ -253,6 +256,7 @@ var category = {
                 },
                 {
                     "key": "workspaces.branchColor",
+                    "advanced": true,
                     "type": "custom",
                     "component": "ColorRoleSwatches",
                     "options": [
@@ -270,12 +274,13 @@ var category = {
                 },
                 {
                     "key": "workspaces.branchPetalFall",
+                    "advanced": true,
                     "type": "toggle",
                     "visibleWhen": {
                         "key": "workspaces.indicatorStyle",
                         "equals": "branch"
                     },
-                    "label": "prefs.bar.ws_branch_fall",
+                    "label": "prefs.label.branch_petals",
                     "description": "prefs.bar.ws_branch_fall.desc",
                     "keywords": "branch petal fall animation window close workspaces"
                 },
