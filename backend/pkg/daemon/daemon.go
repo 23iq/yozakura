@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -20,6 +21,7 @@ import (
 	"yozakura/backend/pkg/migrate"
 	"yozakura/backend/pkg/mods"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/svc"
 	"yozakura/backend/pkg/svc/agents"
 	apphookssvc "yozakura/backend/pkg/svc/apphooks"
@@ -486,7 +488,7 @@ func waitForProcess(cmd *exec.Cmd) <-chan error {
 // spawnQS launches Quickshell as a child of the current process, in its
 // own process group so a single SIGKILL cleans up all of qs's descendants.
 func (d *Daemon) spawnQS(qsBin, shellQML string) error {
-	cmd := exec.Command(qsBin, "-p", shellQML)
+	cmd := exec.CommandContext(context.Background(), qsBin, "-p", shellQML)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -599,7 +601,7 @@ var strayHelperPatterns = []string{
 // Cheap and idempotent.
 func sweepStrayHelpers() {
 	for _, p := range strayHelperPatterns {
-		_ = exec.Command("pkill", "-f", p).Run()
+		_ = proc.Do(context.Background(), "pkill", "-f", p)
 	}
 }
 

@@ -1,13 +1,14 @@
 package powerprofile
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"os/exec"
 	"strings"
 	"sync"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/proc"
 )
 
 type backend int
@@ -44,7 +45,7 @@ type Service struct {
 func NewService() *Service {
 	s := &Service{}
 	s.execFn = func(name string, args ...string) ([]byte, error) {
-		return exec.Command(name, args...).Output()
+		return proc.Run(context.Background(), name, args...)
 	}
 	return s
 }

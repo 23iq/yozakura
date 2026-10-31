@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"yozakura/backend/pkg/brand"
 	"fmt"
 	"image"
@@ -116,7 +117,7 @@ func pruneStaleSwatches(current string) {
 // that inherits our pipes and lives until the content is replaced. Waiting
 // on it would stall everything queued after the copy.
 func copyText(text string) {
-	cmd := exec.Command("wl-copy", "--type", "text/plain")
+	cmd := exec.CommandContext(context.Background(), "wl-copy", "--type", "text/plain")
 	cmd.Stdin = strings.NewReader(text)
 	cmd.Stdout = nil
 	cmd.Stderr = nil

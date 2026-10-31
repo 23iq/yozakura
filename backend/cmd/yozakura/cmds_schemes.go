@@ -1,18 +1,20 @@
 package main
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 	"yozakura/backend/pkg/brand"
 
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 // schemePreviewRoles are the palette roles the settings scheme picker draws.
@@ -33,8 +35,8 @@ const schemeCacheVersion = "1"
 // matugenPalette runs matugen without side effects and returns its JSON.
 // A variable so tests can replace it.
 var matugenPalette = func(image, scheme string) ([]byte, error) {
-	return exec.Command("matugen", "image", image, "--dry-run", "-q", "-j", "hex",
-		"--source-color-index", "0", "-t", scheme).Output()
+	return proc.RunWith(context.Background(), proc.Options{Timeout: time.Minute}, "matugen", "image", image, "--dry-run", "-q", "-j", "hex",
+		"--source-color-index", "0", "-t", scheme)
 }
 
 // shellRoleName maps a matugen role to the shell's Colors property name.

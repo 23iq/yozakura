@@ -277,7 +277,7 @@ func newStreamClient(r io.Reader, w io.WriteCloser) *Client {
 // StartStdio spawns a stdio server. env entries are added to the
 // inherited environment. Stderr is kept (last 4 KiB) for error reports.
 func StartStdio(command string, args []string, env map[string]string, dir string) (*Client, error) {
-	cmd := exec.Command(command, args...)
+	cmd := exec.CommandContext(context.Background(), command, args...)
 	cmd.Env = os.Environ()
 	for k, v := range env {
 		cmd.Env = append(cmd.Env, k+"="+v)

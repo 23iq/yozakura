@@ -1,10 +1,10 @@
 package caffeine
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -12,6 +12,7 @@ import (
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 const stateKey = "caffeine"
@@ -33,7 +34,7 @@ type Service struct {
 func NewService(p *paths.Paths) *Service {
 	s := &Service{paths: p}
 	s.runFn = func(args ...string) ([]byte, error) {
-		return exec.Command(paths.DaemonBinary(), args...).Output()
+		return proc.Run(context.Background(), paths.DaemonBinary(), args...)
 	}
 	return s
 }

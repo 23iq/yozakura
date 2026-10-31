@@ -1,6 +1,7 @@
 package voice
 
 import (
+	"context"
 	"errors"
 	"io"
 	"os/exec"
@@ -75,7 +76,7 @@ var errStart = errors.New("capture: start failed")
 
 // startCapture runs argv with stdout piped to the returned Capture.
 func startCapture(argv []string) (*procCapture, error) {
-	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd := exec.CommandContext(context.Background(), argv[0], argv[1:]...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
 	out, err := cmd.StdoutPipe()
 	if err != nil {

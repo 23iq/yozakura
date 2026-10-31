@@ -1,8 +1,11 @@
 package exclusive
 
 import (
-	"os/exec"
+	"context"
 	"strings"
+	"time"
+
+	"yozakura/backend/pkg/proc"
 )
 
 // ExecSystemd drives `systemctl --user` through argv (no shell). Run is
@@ -16,7 +19,7 @@ func (s ExecSystemd) run(args ...string) ([]byte, error) {
 	if s.Run != nil {
 		return s.Run(full...)
 	}
-	return exec.Command("systemctl", full...).CombinedOutput()
+	return proc.RunWith(context.Background(), proc.Options{Timeout: time.Minute, Combined: true}, "systemctl", full...)
 }
 
 func (s ExecSystemd) IsEnabled(unit string) bool {

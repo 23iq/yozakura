@@ -306,7 +306,7 @@ func startWhisperServer(spec ServerSpec, port int, logPath string) (*exec.Cmd, e
 	if !fileExists(spec.Model) {
 		return nil, fmt.Errorf("model not found: %s", spec.Model)
 	}
-	cmd := exec.Command(spec.Bin, ServerArgs(spec, port)...)
+	cmd := exec.CommandContext(context.Background(), spec.Bin, ServerArgs(spec, port)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
 	var logFile *os.File
 	if logPath != "" {

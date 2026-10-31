@@ -1,6 +1,7 @@
 package network
 
 import (
+	"context"
 	"bufio"
 	"encoding/json"
 	"os/exec"
@@ -8,6 +9,7 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/proc"
 )
 
 // Service wraps NetworkManager via the nmcli CLI (mirroring NetworkService.qml)
@@ -67,7 +69,7 @@ func (s *Service) snapshot() state {
 	st := state{}
 
 	// device statuses + connectivity
-	out, _ := exec.Command("sh", "-c", "nmcli -t -f TYPE,STATE d status && nmcli -t -f CONNECTIVITY g").Output()
+	out, _ := proc.Run(context.Background(), "sh", "-c", "nmcli -t -f TYPE,STATE d status && nmcli -t -f CONNECTIVITY g")
 	lines := strings.Fields(string(out))
 	if len(lines) > 0 {
 		conn := lines[len(lines)-1]
@@ -103,19 +105,19 @@ func (s *Service) snapshot() state {
 	}
 
 	// active connection name
-	if out, err := exec.Command("sh", "-c", "nmcli -t -f NAME c show --active | head -1").Output(); err == nil {
+	if out, err := proc.Run(context.Background(), "sh", "-c", "nmcli -t -f NAME c show --active | head -1"); err == nil {
 		st.NetworkName = strings.TrimSpace(string(out))
 	}
 
 	// strength of in-use AP
-	if out, err := exec.Command("sh", "-c", "nmcli -f IN-USE,SIGNAL,SSID device wifi | awk '/^\\*/{if (NR!=1) {print $2}}'").Output(); err == nil {
+	if out, err := proc.Run(context.Background(), "sh", "-c", "nmcli -f IN-USE,SIGNAL,SSID device wifi | awk '/^\\*/{if (NR!=1) {print $2}}'"); err == nil {
 		if v, convErr := strconv.Atoi(strings.TrimSpace(string(out))); convErr == nil {
 			st.Strength = v
 		}
 	}
 
 	// radio
-	if out, err := exec.Command("nmcli", "radio", "wifi").Output(); err == nil {
+	if out, err := proc.Run(context.Background(), "nmcli", "radio", "wifi"); err == nil {
 		st.WifiEnabled = strings.TrimSpace(string(out)) == "enabled"
 	}
 
@@ -134,7 +136,7 @@ func (s *Service) networks(params json.RawMessage) (any, error) {
 }
 
 func (s *Service) listNetworks() []apEntry {
-	out, err := exec.Command("nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY", "device", "wifi").Output()
+	out, err := proc.Run(context.Background(), "nmcli", "-g", "ACTIVE,SIGNAL,FREQ,SSID,BSSID,SECURITY", "device", "wifi")
 	if err != nil {
 		return nil
 	}
@@ -180,7 +182,7 @@ func (s *Service) enable(params json.RawMessage) (any, error) {
 	if p.Enabled {
 		arg = "on"
 	}
-	exec.Command("nmcli", "radio", "wifi", arg).Run()
+	proc.Do(context.Background(), "nmcli", "radio", "wifi", arg)
 	return s.snapshot(), nil
 }
 
@@ -194,10 +196,10 @@ func (s *Service) connect(params json.RawMessage) (any, error) {
 		return map[string]any{"error": "missing ssid"}, nil
 	}
 	if p.Password != "" {
-		_ = exec.Command("nmcli", "connection", "modify", p.SSID, "wifi-sec.psk", p.Password).Run()
+		_ = proc.Do(context.Background(), "nmcli", "connection", "modify", p.SSID, "wifi-sec.psk", p.Password)
 	}
-	if err := exec.Command("nmcli", "dev", "wifi", "connect", p.SSID).Run(); err != nil {
-		out, _ := exec.Command("nmcli", "dev", "wifi", "connect", p.SSID).CombinedOutput()
+	if err := proc.Do(context.Background(), "nmcli", "dev", "wifi", "connect", p.SSID); err != nil {
+		out, _ := proc.Combined(context.Background(), "nmcli", "dev", "wifi", "connect", p.SSID)
 		if strings.Contains(string(out), "Secrets were required") {
 			return map[string]any{"need_password": true}, nil
 		}
@@ -212,7 +214,7 @@ func (s *Service) disconnect(params json.RawMessage) (any, error) {
 	}
 	json.Unmarshal(params, &p)
 	if p.SSID != "" {
-		exec.Command("nmcli", "connection", "down", p.SSID).Run()
+		proc.Do(context.Background(), "nmcli", "connection", "down", p.SSID)
 	}
 	return s.snapshot(), nil
 }
@@ -220,7 +222,16 @@ func (s *Service) disconnect(params json.RawMessage) (any, error) {
 // subscribe emits a full state snapshot once, then on every nmcli monitor event.
 func (s *Service) subscribe(sub *ipc.Subscriber) {
 	sub.Send("network.state", s.snapshot())
-	monitor := exec.Command("nmcli", "monitor")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		select {
+		case <-sub.StopCh():
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+	monitor := exec.CommandContext(ctx, "nmcli", "monitor")
 	stdout, err := monitor.StdoutPipe()
 	if err != nil {
 		return

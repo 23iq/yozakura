@@ -1,6 +1,7 @@
 package sysinstall
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -139,7 +140,7 @@ func ExecRunner(out io.Writer) Runner {
 		if err != nil {
 			return err
 		}
-		cmd := exec.Command(bin, args...)
+		cmd := exec.CommandContext(context.Background(), bin, args...)
 		cmd.Env = childEnv
 		cmd.Dir = "/"
 		cmd.Stdout, cmd.Stderr = pw, pw

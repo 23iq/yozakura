@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"yozakura/backend/pkg/daemon"
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 	"yozakura/backend/pkg/svc/compositor"
 )
 
@@ -438,7 +440,7 @@ func runShell() {
 	runDetached("pkill -f 'dunst|mako|swaync'")
 	runDetached("pkill -f 'easyeffects.*gapplication-service' ; nohup easyeffects --gapplication-service >/dev/null 2>&1 &")
 
-	if iconTheme, err := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme").Output(); err == nil {
+	if iconTheme, err := proc.Run(context.Background(), "gsettings", "get", "org.gnome.desktop.interface", "icon-theme"); err == nil {
 		os.Setenv("QS_ICON_THEME", strings.Trim(strings.TrimSpace(string(iconTheme)), "'"))
 	}
 	// keep the session's own value for the generated Qt env (QtEnv)
@@ -505,11 +507,11 @@ func shellDir() string {
 }
 
 func runDetached(cmd string) {
-	exec.Command("sh", "-c", cmd).Start()
+	exec.CommandContext(context.Background(), "sh", "-c", cmd).Start()
 }
 
 func execCommand(name string, args ...string) {
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -617,7 +619,7 @@ var startDaemon = startDetachedDaemon
 
 func startDetachedDaemon() {
 	exe, _ := os.Executable()
-	cmd := exec.Command(exe)
+	cmd := exec.CommandContext(context.Background(), exe)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err == nil {
 		cmd.Process.Release()
@@ -678,12 +680,12 @@ func quitShell() {
 }
 
 func cleanupOrphans() {
-	exec.Command("pkill", "-f", `tail -f .*`+brand.AppID+`_ipc\.pipe`).Run()
-	exec.Command("pkill", "-f", brand.Daemon+".*daemon").Run()
-	exec.Command("pkill", "-f", brand.Daemon+" subscribe").Run()
+	proc.Do(context.Background(), "pkill", "-f", `tail -f .*`+brand.AppID+`_ipc\.pipe`)
+	proc.Do(context.Background(), "pkill", "-f", brand.Daemon+".*daemon")
+	proc.Do(context.Background(), "pkill", "-f", brand.Daemon+" subscribe")
 	migrate.StopLegacyDaemon()
-	exec.Command("pkill", "-f", "qs.*shell.qml").Run()
-	exec.Command("pkill", "-f", "wl-paste --watch").Run()
+	proc.Do(context.Background(), "pkill", "-f", "qs.*shell.qml")
+	proc.Do(context.Background(), "pkill", "-f", "wl-paste --watch")
 	_ = os.Remove(ipcPipePath())
 	_ = os.Remove("/tmp/" + brand.AppID + "_ipc.pipe")
 }

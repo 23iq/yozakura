@@ -1,6 +1,7 @@
 package recorder
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -118,7 +119,7 @@ func (s *Service) start(params json.RawMessage) (any, error) {
 
 	args = append(args, "-o", outPath)
 
-	cmd := exec.Command("gpu-screen-recorder", args...)
+	cmd := exec.CommandContext(context.Background(), "gpu-screen-recorder", args...)
 	cmd.Stdout = os.Stderr
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {

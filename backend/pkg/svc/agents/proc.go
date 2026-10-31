@@ -2,6 +2,7 @@ package agents
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"io"
 	"os"
@@ -26,7 +27,7 @@ type proc struct {
 // startProc spawns bin in cwd; onLine is called from the reader goroutine
 // for every stdout line, onExit once after the process is reaped.
 func startProc(bin string, args []string, cwd string, env []string, onLine func([]byte), onExit func(err error, stderr string)) (*proc, error) {
-	cmd := exec.Command(bin, args...)
+	cmd := exec.CommandContext(context.Background(), bin, args...) // stopped by stop() via its process group
 	cmd.Dir = cwd
 	cmd.Env = append(cleanEnv(os.Environ()), env...)
 	// Own group (stop() signals it) and SIGTERM when the daemon dies.

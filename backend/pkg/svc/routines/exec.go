@@ -29,7 +29,7 @@ func ExecArgv(ctx context.Context, argv []string) (string, error) {
 	if name == brand.Daemon {
 		name = paths.DaemonBinary()
 	}
-	cmd := exec.Command(name, argv[1:]...)
+	cmd := exec.CommandContext(context.Background(), name, argv[1:]...)
 	if home, err := os.UserHomeDir(); err == nil {
 		cmd.Dir = home
 	}

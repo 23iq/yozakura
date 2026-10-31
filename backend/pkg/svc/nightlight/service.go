@@ -11,6 +11,7 @@
 package nightlight
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"os/exec"
@@ -18,6 +19,7 @@ import (
 
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
+	"yozakura/backend/pkg/proc"
 )
 
 type Service struct {
@@ -37,7 +39,7 @@ type Service struct {
 // runFn is the package-level indirection used by enable/disable so tests
 // can swap in fakes without going through real processes.
 var runFn = func(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+	cmd := exec.CommandContext(context.Background(), name, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Start()
@@ -67,7 +69,7 @@ func (s *Service) defaultStart(temp uint32) error {
 		return err
 	}
 	// We don't capture the cmd here because runFn may not have used
-	// exec.Command. The defaultStop uses exec.Command("pkill", "wlsunset")
+	// exec.CommandContext. The defaultStop uses proc.Do("pkill", "wlsunset")
 	// instead.
 	return nil
 }
@@ -76,7 +78,7 @@ func (s *Service) defaultStop() {
 	// Best-effort kill — wlsunset doesn't have a stop signal we can send
 	// portably, so we pkill any running instances. Process exit cleans
 	// itself up.
-	exec.Command("pkill", "-f", "wlsunset").Run()
+	proc.Do(context.Background(), "pkill", "-f", "wlsunset")
 }
 
 const stateKey = "nightlight"
