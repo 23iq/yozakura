@@ -13,7 +13,8 @@ modules/lockscreen/
 ├── LockPasswordBase.qml  # Password logic shared by every style: hints, shake, signals LockScreen uses
 ├── LockMediaBase.qml     # MPRIS state + cava gate (`shown`, `visualizerEnabled`) shared by media cards
 ├── LockStatusInfo.qml    # Network/battery values for status strips
-├── LockAvatar.qml        # ~/.face.icon | ~/.face, rounded, glyph fallback
+├── LockAvatar.qml        # kit Avatar of ~/.face.icon | ~/.face, initials fallback
+├── LockSpinner.qml       # submit glyph: arrow, kit-cycle spinner while PAM checks
 ├── LockClock / LockDigit / LockPasswordPill / LockMediaCard / LockMediaButton /
 │   LockStatusRow / LockGlass / LockTextShadow   # parts of the glass style (palette-parametrised)
 └── styles/
@@ -43,6 +44,11 @@ checks the registry and layout; `tools/render/lockscreen_render.py` renders ever
 Config (`config/defaults/lockscreen.js`): `style`, `tone` (style|theme|light|dark), `blur`
 (-1 = style's own), `position`, `showStatus`, `showMedia`, `showVisualizer`. Settings:
 `modules/settings/schema/lockscreen.js` (gallery: `editors/LockStyleGallery.qml`, live LockViews).
+
+Sizes, gaps, text and motion come from the kit (`Type` roles via `KitText`, `Space`,
+`Motion.micro/spring`, `Art`/`Avatar`) in the style's own palette (fixed tones: the kit's
+theme-coloured controls are not used directly); `tests/lockscreen-kit.test.cjs` rejects raw
+font sizes and durations.
 
 ## WHERE TO LOOK
 | Symbol | Location | Role |
