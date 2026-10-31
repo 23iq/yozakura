@@ -40,7 +40,7 @@ Item {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < 600
-    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && narrow) || (narrow && type === "slider")
+    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && (narrow || entry.display === "cards")) || (narrow && (type === "slider" || type === "macro"))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
     // A host/style picker (entry.surface) while the notch is off: the
@@ -149,7 +149,7 @@ Item {
             Loader {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : -1
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? Math.min(Space.px(380), row.width * 0.5) : -1)
                 active: row.built && !row.stacked
                 sourceComponent: row.controlComponent()
             }
@@ -189,7 +189,7 @@ Item {
         case "number":
             return numberComponent;
         case "selector":
-            return selectorComponent;
+            return entry.display === "cards" ? cardsComponent : selectorComponent;
         case "text":
             return textComponent;
         case "font":
@@ -206,6 +206,8 @@ Item {
             return screensComponent;
         case "multiselect":
             return multiselectComponent;
+        case "macro":
+            return macroComponent;
         }
         return null;
     }
@@ -325,6 +327,23 @@ Item {
             options: row.entry.options
             values: SchemaUtil.plain(row.value) || []
             onChanged: v => SettingsStore.set(row.entry.key, v)
+        }
+    }
+
+    Component {
+        id: cardsComponent
+        CardSelector {
+            entry: row.entry
+            options: row.entry.options
+            value: row.value
+            onSelected: v => SettingsStore.set(row.entry.key, v)
+        }
+    }
+
+    Component {
+        id: macroComponent
+        MacroSlider {
+            entry: row.entry
         }
     }
 

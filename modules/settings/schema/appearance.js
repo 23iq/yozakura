@@ -4,6 +4,7 @@
 .import "surfaces.js" as Surfaces
 .import "lighting.js" as Lighting
 .import "weatherfx.js" as WeatherFx
+.import "macros.js" as Macros
 
 // Appearance: theme mode, palette, typography, shape, glass and motion.
 // Entry format: see modules/settings/AGENTS.md.
@@ -31,6 +32,8 @@ var category = {
                 {
                     "key": "theme.language",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "LanguageThumb",
                     "label": "prefs.appearance.language",
                     "description": "prefs.appearance.language.desc",
                     "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit",
@@ -104,6 +107,8 @@ var category = {
                 {
                     "key": "theme.shape.corners",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "CornerThumb",
                     "label": "prefs.appearance.corner_style",
                     "description": "prefs.appearance.corner_style.desc",
                     "keywords": "corner style shape squircle cut chamfer tab rounded",
@@ -279,6 +284,9 @@ var category = {
         }
     ]
 };
+
+// Quick tune (schema/macros.js: the macro sliders) right after "mode".
+category.sections.splice(1, 0, ...Macros.sections);
 
 // Glass sections (schema/glass.js) go right after "shape".
 category.sections.splice(category.sections.findIndex(s => s.id === "shape") + 1, 0, ...Glass.sections);

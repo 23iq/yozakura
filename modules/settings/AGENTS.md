@@ -21,6 +21,9 @@ modules/settings/
 ├── ViewToggle.qml          sidebar Simple / All switch; SimpleFooter.qml: "N more ... Show all"
 ├── connect/ConnectPage.qml Network/Bluetooth/Sound/Effects pages: the live device panels
 ├── mods/                   the Mods page (ModsEditor + parts, ModsModel.js)
+├── changes/                the Changes page (ChangesPage, ChangeRow; ChangesModel.js pure)
+├── thumbs/                 small card previews for `display: "cards"` selectors
+├── Macros.js, Synonyms.js  pure: macro sliders' key mapping; search synonyms (en + ru)
 ├── AboutPage / PlaceholderPage / PageHeader / PillButton / NavItem / ChangesBar
 ├── SchemaUtil.js           pure: keys, conditions, validation, search index (node-tested)
 ├── SettingsDefaults.js     default of any key, from config/defaults/*.js
@@ -85,14 +88,21 @@ a new mixable aspect is one entry in `backend/pkg/presets/aspects.go` (+
 
 Entry fields: `key` (dotted, `domain.prop[.sub]`; `wallpaper.*` keys live in
 ~/.cache/yozakura/wallpapers.json), `type` (`toggle | selector | slider | number
-| text | font | color-role | list | path | screens | multiselect | custom`;
+| text | font | color-role | list | path | screens | multiselect | macro | custom`;
+`macro` = one slider over several keys, `"macro": "<id>"` from `Macros.js`, see MACROS;
 `color-role` = palette swatches + alpha for a color spec, with `gradient:
 true` a list of up to 4 stops), `label`, `description`, `keywords`,
 `placeholder` (i18n key), `pattern` (regex a `text` value must match before
 it is saved), `options`
 (`[{value, label, icon}]`), `min/max/step/unit`, `specialValues`
 (`[{value, label}]`), `visibleWhen` / `enabledWhen` (declarative:
-`{key, equals|notEquals|in|truthy}`, `{all|any: [...]}`, `{not: ...}`),
+`{key, equals|notEquals|in|truthy|empty}`, `{key, some: {field, in|notIn}}`
+(a list holds an item whose field is / is not one of the values; a missing field
+counts as not in), `{all|any: [...]}`, `{not: ...}`),
+`display: "cards"` + `thumb` (a selector shown as preview cards,
+controls/CardSelector; the thumb is a `thumbs/<Name>.qml` registered in
+`Registry.THUMBS`, with `property var entry` and `property var value`; use it
+only where the choice is visual),
 `preview` (Registry name), `component` (custom editor name), `keys` (every
 key a composite entry reads/resets), `sizeKey` (font), `resettable: false`,
 `compositor` (entry or section shown only on that compositor, e.g. `"hyprland"`),
@@ -138,6 +148,26 @@ shows every entry in place. Search indexes everything; a jump to an
 advanced entry reveals it in Simple (`SettingsStore.revealed`, cleared on
 page change). A new feature is ONE obvious row in Simple (on/off or style),
 its fine options `advanced`. Helpers: `schema/Advanced.js`.
+
+## MACROS
+Look > "Quick tune" (`schema/macros.js`): Motion, Density, Roundness, Depth,
+Glass. `Macros.js` (pure, tests/settings-macros.test.cjs) lists each macro's
+keys and points; a point leaving a key out does not care about it. The
+slider shows the point every key matches, else "Custom" with the handle on
+the nearest point. Moving it writes ONLY the keys that differ through
+`SettingsStore.set` (staged, Discard undoes it); nothing is written until the
+user moves it. Defaults must sit on a point. Compositor-only keys carry
+`compositor: [...]` and are skipped elsewhere.
+
+## SEARCH SYNONYMS / CHANGES PAGE
+`Synonyms.js` (tests/settings-synonyms.test.cjs): words people type (en + ru)
+-> the words the schema uses; `SchemaUtil.search` also scores each
+substituted query, a little below direct hits. Add a row when a common word
+finds nothing. The "Changes" page (`changes/`, pure `ChangesModel.js`,
+tests/settings-changes.test.cjs) lists every entry `isModified` by page with
+reset + open; while a preset is applied it can list the differences from the
+preset instead (backend `preset.status` via PresetStatusService; reflects
+applied config, not staged edits).
 
 ## ADDING A CATEGORY
 Create `schema/<id>.js` exporting `category = {id, icon, title, description,

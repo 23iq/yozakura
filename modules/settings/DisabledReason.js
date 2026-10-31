@@ -36,7 +36,7 @@ function wanted(leaf) {
         return typeof leaf.notEquals === "boolean" ? !leaf.notEquals : undefined;
     if (leaf.hasOwnProperty("truthy"))
         return !!leaf.truthy;
-    if (leaf.hasOwnProperty("in") || leaf.hasOwnProperty("empty"))
+    if (leaf.hasOwnProperty("in") || leaf.hasOwnProperty("empty") || leaf.hasOwnProperty("some"))
         return undefined;
     return true;
 }

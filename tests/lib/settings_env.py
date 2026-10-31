@@ -834,6 +834,7 @@ class SettingsEnv:
                   "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
                   "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces",
+                  "modules/settings/changes", "modules/settings/thumbs",
                   "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 

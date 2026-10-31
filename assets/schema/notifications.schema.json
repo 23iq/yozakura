@@ -16,7 +16,20 @@
         "section": "activities",
         "label": "prefs.notifications.notch_style",
         "control": "selector",
-        "keywords": "notification notch compact card one line"
+        "keywords": "notification notch compact card one line",
+        "visibleWhen": {
+          "not": {
+            "key": "notifications.presentation",
+            "in": [
+              "corner",
+              "strips"
+            ]
+          }
+        },
+        "enabledWhen": {
+          "key": "notch.enabled",
+          "equals": true
+        }
       },
       "enum": [
         "card",
@@ -65,10 +78,26 @@
         "control": "selector",
         "keywords": "corner position top bottom left right center",
         "visibleWhen": {
-          "key": "notifications.presentation",
-          "in": [
-            "auto",
-            "corner"
+          "any": [
+            {
+              "key": "notifications.presentation",
+              "in": [
+                "auto",
+                "corner"
+              ]
+            },
+            {
+              "all": [
+                {
+                  "key": "notifications.presentation",
+                  "equals": "notch"
+                },
+                {
+                  "key": "notch.enabled",
+                  "equals": false
+                }
+              ]
+            }
           ]
         }
       },

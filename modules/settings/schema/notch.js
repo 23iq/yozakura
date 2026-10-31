@@ -218,6 +218,18 @@ var category = {
                 {
                     "key": "notifications.notchStyle",
                     "type": "selector",
+                    // only toasts grown from the island use it
+                    "visibleWhen": {
+                        "not": {
+                            "key": "notifications.presentation",
+                            "in": ["corner", "strips"]
+                        }
+                    },
+                    "enabledWhen": {
+                        "key": "notch.enabled",
+                        "equals": true
+                    },
+                    "reason": "prefs.disabled.needs_notch",
                     "options": [
                         {
                             "value": "card",

@@ -20,6 +20,9 @@ Item {
     property bool vertical: false
     property string icon: ""
     property bool showValue: false
+    // Width kept for the value text (0 = its own), so a value that changes
+    // length (a level name) does not resize the track.
+    property real valueWidth: 0
     property string valueText: Math.round(root.fraction * 100) + "%"
     property bool highlighted: false
     property bool iconClickable: false
@@ -159,7 +162,7 @@ Item {
             Layout.row: 0
             Layout.column: root.vertical ? 0 : 2
             Layout.alignment: Qt.AlignCenter
-            Layout.minimumWidth: root.vertical ? 0 : Type.size("secondary") * 2.4
+            Layout.minimumWidth: root.vertical ? 0 : Math.max(root.valueWidth, Type.size("secondary") * 2.4)
         }
     }
 }

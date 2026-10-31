@@ -36,9 +36,27 @@ var DAYS = [1, 2, 3, 4, 5, 6, 0];
 var DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 // The corner applies to corner toasts (and "auto", which may pick them)
+// Corner toasts show: chosen, auto, or the notch chosen while the notch is
+// off (NotificationPolicy.resolvePresentation falls back to the corner).
 var CORNER_TOASTS = {
-    "key": "notifications.presentation",
-    "in": ["auto", "corner"]
+    "any": [
+        {
+            "key": "notifications.presentation",
+            "in": ["auto", "corner"]
+        },
+        {
+            "all": [
+                {
+                    "key": "notifications.presentation",
+                    "equals": "notch"
+                },
+                {
+                    "key": "notch.enabled",
+                    "equals": false
+                }
+            ]
+        }
+    ]
 };
 
 var STRIPS = {
@@ -90,6 +108,8 @@ var category = {
                 {
                     "key": "notifications.presentation",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "PresentationThumb",
                     "options": [
                         {
                             "value": "auto",

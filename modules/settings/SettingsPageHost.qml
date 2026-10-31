@@ -12,6 +12,7 @@ import qs.modules.settings.mods
 // Not used here: lets Quickshell's scanner reach these page directories.
 import qs.modules.settings.layout
 import qs.modules.settings.system
+import qs.modules.settings.changes
 
 // The page of the settings window. `load()` always starts a fresh instance
 // (scroll reset, enter motion). Schema categories render through
@@ -125,9 +126,16 @@ Loader {
         }
     }
     // Hand-written pages by Categories.js `page` name.
+    Component {
+        id: changesPage
+        ChangesPage {
+            category: host.category
+        }
+    }
     readonly property var pages: ({
             "AboutPage": aboutPage,
             "Bluetooth": bluetoothPage,
+            "Changes": changesPage,
             "Displays": displaysPage,
             "Effects": effectsPage,
             "Extras": extrasPage,

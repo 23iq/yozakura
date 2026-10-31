@@ -915,10 +915,10 @@
       "maximum": 1
     },
     "terminalOpacity": {
-      "title": "Terminal background opacity",
+      "title": "Terminal base opacity",
       "type": "number",
       "default": -1,
-      "description": "Background opacity of the generated kitty, ghostty, foot and alacritty themes, before glass. From preset follows the preset's background surface. With Glass off it is used as is.",
+      "description": "The opacity the kitty, ghostty, foot and alacritty themes are designed with. The Glass amount then scales it: more glass, more see-through. From preset follows the preset's background surface. With Glass off it is used as is.",
       "x-settings": {
         "category": "terminal",
         "section": "kitty",

@@ -159,7 +159,27 @@
         "section": "autohide",
         "label": "prefs.bar.pinned",
         "control": "toggle",
-        "keywords": "pin autohide hide show startup visible"
+        "keywords": "pin autohide hide show startup visible",
+        "enabledWhen": {
+          "any": [
+            {
+              "key": "bar.panels",
+              "empty": true
+            },
+            {
+              "key": "bar.panels",
+              "some": {
+                "field": "autohide",
+                "notIn": [
+                  "always",
+                  "never",
+                  true,
+                  false
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     "hoverRegionHeight": {
@@ -193,7 +213,27 @@
         "section": "autohide",
         "label": "prefs.bar.pin_button",
         "control": "toggle",
-        "keywords": "pin button unpin"
+        "keywords": "pin button unpin",
+        "enabledWhen": {
+          "any": [
+            {
+              "key": "bar.panels",
+              "empty": true
+            },
+            {
+              "key": "bar.panels",
+              "some": {
+                "field": "autohide",
+                "notIn": [
+                  "always",
+                  "never",
+                  true,
+                  false
+                ]
+              }
+            }
+          ]
+        }
       }
     },
     "availableOnFullscreen": {

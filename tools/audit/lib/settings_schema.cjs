@@ -19,7 +19,7 @@ for (const g of Categories.groups)
 
 const out = {
     groups: Categories.groups.map(g => ({ id: g.id, title: g.title, categories: g.categories })),
-    registry: Object.values(Registry.EDITORS).concat(Object.values(Registry.PREVIEWS)),
+    registry: Object.values(Registry.EDITORS).concat(Object.values(Registry.PREVIEWS), Object.values(Registry.THUMBS)),
     categories: Categories.categories.map(c => ({
         id: c.id,
         grouped: grouped.has(c.id),

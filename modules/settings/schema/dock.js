@@ -61,6 +61,8 @@ var category = {
                 {
                     "key": "dock.position",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "EdgeThumb",
                     "visibleWhen": ON,
                     "options": [
                         {

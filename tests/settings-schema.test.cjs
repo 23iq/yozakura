@@ -61,7 +61,7 @@ test('sidebar groups reference existing categories, each listed once', () => {
 });
 
 test('registry files, legacy panels and links exist', () => {
-    for (const rel of Object.values(Registry.EDITORS).concat(Object.values(Registry.PREVIEWS)))
+    for (const rel of Object.values(Registry.EDITORS).concat(Object.values(Registry.PREVIEWS), Object.values(Registry.THUMBS)))
         assert.ok(fs.existsSync(path.join(repo, 'modules/settings', rel)), rel);
     for (const cat of Categories.categories) {
         if (cat.legacy)
@@ -118,7 +118,8 @@ test('search is generated from the schema', () => {
     const ids = q => SchemaUtil.search(index, q).map(r => r.entryId || r.categoryId);
     assert.ok(ids('kanji').includes('workspaces.numeralStyle'));
     assert.equal(ids('wallpaper folder')[0], 'desktop.wallpaperFolders');
-    assert.equal(ids('roundness')[0], 'theme.roundness');
+    // the knob and its macro row (Look > Quick tune) both lead
+    assert.deepEqual(plain(ids('roundness').slice(0, 2)).sort(), ['macro.roundness', 'theme.roundness']);
     assert.ok(ids('matugen').includes('wallpaper.matugenScheme'));
     assert.ok(ids('blur').includes('windows'), 'legacy topics are searchable');
     assert.deepEqual(plain(ids('zzzzqqq')), []);
