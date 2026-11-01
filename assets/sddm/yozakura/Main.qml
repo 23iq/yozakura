@@ -16,7 +16,7 @@
 // broken sync never leaves the login screen unusable; an unknown style or
 // one that fails to load falls back to glass.
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Controls.Basic
 import QtQuick.Effects
 import "Styles.js" as Styles
 
