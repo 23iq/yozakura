@@ -575,7 +575,7 @@ func (g *Generator) GenerateWindowRules(rules []ipc.WindowRule) string {
 		block := r.Float != nil || r.NoBlur != nil || r.NoShadow != nil ||
 			r.Rounding != nil || r.BorderSize != nil || r.Pin != nil ||
 			r.Fullscreen != nil || r.IdleInhibit != nil || r.NoScreenShare != nil ||
-			r.Move != nil || r.Size != nil
+			r.Move != nil || r.Size != nil || r.Workspace != nil
 
 		if legacy && !block {
 			matchExpr := convertNiriMatch(r.Match)
@@ -591,6 +591,15 @@ func (g *Generator) GenerateWindowRules(rules []ipc.WindowRule) string {
 
 		if r.Float != nil {
 			b.WriteString(fmt.Sprintf("    open-floating %s\n", boolKdl(*r.Float)))
+		}
+		if r.Workspace != nil {
+			// "special:X [silent]" (the shell's special workspaces) is the
+			// named workspace X; plain names pass through.
+			ws := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(*r.Workspace), " silent"))
+			ws = strings.TrimPrefix(ws, "special:")
+			if ws != "" {
+				b.WriteString(fmt.Sprintf("    open-on-workspace %s\n", kdlQuote(ws)))
+			}
 		}
 		if r.Fullscreen != nil {
 			b.WriteString(fmt.Sprintf("    open-fullscreen %s\n", boolKdl(*r.Fullscreen)))

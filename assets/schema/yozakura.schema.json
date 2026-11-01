@@ -9042,16 +9042,69 @@
         "workspaces": {
           "title": "Special workspaces",
           "type": "array",
-          "default": [],
-          "description": "Each has a name, icon, accent, a toggle key, a key that sends the active window there, and apps that open in it. They are global like your keybinds: switching presets never changes them.",
-          "x-settings": {
-            "category": "specials",
-            "section": "list",
-            "label": "prefs.specials.list",
-            "control": "custom",
-            "component": "SpecialsEditor",
-            "keywords": "add special workspace template chat music dev notes custom bind toggle send window apps class command rule"
-          },
+          "default": [
+            {
+              "id": "social",
+              "name": "social",
+              "icon": "chatDots",
+              "accent": "primary",
+              "toggle": {
+                "modifiers": [],
+                "key": ""
+              },
+              "send": {
+                "modifiers": [],
+                "key": ""
+              },
+              "preload": false,
+              "apps": [
+                {
+                  "id": "ayugram",
+                  "name": "AyuGram",
+                  "icon": "telegram",
+                  "match": "com\\.ayugram\\.desktop|AyuGram",
+                  "command": "ayugram-desktop",
+                  "ifRunning": "nothing",
+                  "rule": false
+                },
+                {
+                  "id": "vesktop",
+                  "name": "Vesktop",
+                  "icon": "vesktop",
+                  "match": "vesktop",
+                  "command": "vesktop",
+                  "ifRunning": "nothing",
+                  "rule": false
+                }
+              ]
+            },
+            {
+              "id": "dev",
+              "name": "dev",
+              "icon": "code",
+              "accent": "secondary",
+              "toggle": {
+                "modifiers": [],
+                "key": ""
+              },
+              "send": {
+                "modifiers": [],
+                "key": ""
+              },
+              "preload": false,
+              "apps": [
+                {
+                  "id": "terminal",
+                  "name": "Terminal",
+                  "icon": "terminal",
+                  "match": "special\\.dev",
+                  "command": "ghostty --class=special.dev --gtk-single-instance=false",
+                  "ifRunning": "nothing",
+                  "rule": false
+                }
+              ]
+            }
+          ],
           "items": {
             "type": "object",
             "properties": {
@@ -9157,6 +9210,15 @@
               "id",
               "name"
             ]
+          },
+          "description": "Each has a name, icon, accent, a toggle key, a key that sends the active window there, and apps that open in it. They are global like your keybinds: switching presets never changes them.",
+          "x-settings": {
+            "category": "specials",
+            "section": "list",
+            "label": "prefs.specials.list",
+            "control": "custom",
+            "component": "SpecialsEditor",
+            "keywords": "add special workspace template chat music dev notes custom bind toggle send window apps class command rule"
           }
         }
       },

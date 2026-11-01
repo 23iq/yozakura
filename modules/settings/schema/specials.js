@@ -74,10 +74,10 @@ var category = {
     ]
 };
 
-// Special workspaces are a Hyprland feature.
+// Special workspaces: Hyprland specials, niri named workspaces.
 category.sections.forEach(function (section) {
-    section.compositor = "hyprland";
+    section.compositor = ["hyprland", "niri"];
     section.entries.forEach(function (entry) {
-        entry.compositor = "hyprland";
+        entry.compositor = ["hyprland", "niri"];
     });
 });

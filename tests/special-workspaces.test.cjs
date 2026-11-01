@@ -38,3 +38,15 @@ test('the shown workspace is the open special, else the active one', () => {
     assert.equal(shown({id: -99, name: 'special:'}, 1, 'special'), true);
     assert.equal(shown(null, 1, ''), false);
 });
+
+test('niri: the active named workspace of an output is its open special', () => {
+    const wss = [
+        {id: 1, name: '', monitor: 'DP-1', active: true},
+        {id: 2, name: 'social', monitor: 'DP-2', active: true},
+        {id: 3, name: 'dev', monitor: 'DP-1', active: false},
+        {id: 4, name: 'other', monitor: 'DP-3', active: true}
+    ];
+    const got = JSON.parse(JSON.stringify(parser.namesFromNiriWorkspaces(wss, ['social', 'dev'])));
+    assert.deepEqual(got, {'DP-2': 'social'});
+    assert.deepEqual(JSON.parse(JSON.stringify(parser.namesFromNiriWorkspaces(wss, []))), {});
+});

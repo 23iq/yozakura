@@ -78,7 +78,7 @@ Item {
     // Plain `var` views of YozdService's list holders.
     readonly property var _clients: YozdService.clients
     readonly property var _workspaces: YozdService.workspaces
-    readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !_clients || !_clients.values) ? [] : Specials.visibleClients(_clients.values, _workspaces ? _workspaces.values : [], compositorMonitor.activeWorkspace.id, openSpecial)
+    readonly property var toplevels: (!compositorMonitor || !compositorMonitor.activeWorkspace || !_clients || !_clients.values) ? [] : Specials.visibleClients(_clients.values, _workspaces ? _workspaces.values : [], compositorMonitor.activeWorkspace.id, openSpecial, YozdService.compositorName === "niri" ? CompositorData.niriSpecialNames : null)
 
     // Check if there are any windows on the current monitor and workspace
     readonly property bool hasWindows: toplevels.length > 0

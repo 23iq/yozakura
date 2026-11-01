@@ -29,7 +29,8 @@ Run the parsing tests with `node tests/special-workspaces.test.cjs`.
 ## Special workspaces (scratchpads with apps)
 
 Settings > Special workspaces (also an optional onboarding step; new installs
-have none) manages named Hyprland special workspaces. Each one has:
+have `social` and `dev`) manages named Hyprland special workspaces
+(on niri: its named workspaces, see below). Each one has:
 
 - a display name; the Hyprland name `special:<name>` is derived safely
   (whitespace and `, : [ ] $ ...` become `-`, unique per list). Renaming moves
@@ -67,3 +68,24 @@ nothing. `--dry-run` shows what it would do.
 
 Tests: `node --test tests/specials.test.cjs`, `python3 tests/specials-ui.test.py`,
 `go test ./pkg/specials ./pkg/presets ./cmd/yozakura` (in `backend/`).
+
+## niri (named workspaces)
+
+On niri a special is a named workspace with the same name (`social`, `dev`);
+the same `specials.workspaces` config, settings page, launcher, dashboard and
+bar indicator apply. No `workspace "x"` entry is needed in `config.kdl`: the
+first toggle names an empty workspace of the focused output
+(`set-workspace-name`), and niri keeps named workspaces while empty.
+
+- Toggle: `yozakura special toggle <id>` focuses the workspace, starts its
+  apps that are not running and, pressed again, returns to the previous
+  workspace (`focus-workspace-previous`). Bind it in `config.kdl`:
+  `Mod+S { spawn "yozakura" "special" "toggle" "social"; }`
+  `Mod+D { spawn "yozakura" "special" "toggle" "dev"; }`
+  (a plain `focus-workspace "social"` works too but neither returns nor
+  launches apps). The `toggle`/`send` combos of an item are not generated
+  into niri's config.
+- niri cannot spawn a window onto another workspace: apps start on the
+  focused workspace (the special itself when toggled) and strays are moved in
+  once they map. An app with `rule` on gets `open-on-workspace` in the
+  generated window rules.

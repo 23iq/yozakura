@@ -8,7 +8,8 @@ import qs.modules.services
 import qs.modules.bar.workspaces
 import "Specials.js" as Specials
 
-// Special workspaces at runtime (Hyprland scratchpads, config
+// Special workspaces at runtime (Hyprland scratchpads / niri named
+// workspaces, config
 // specials.workspaces; logic in Specials.js):
 //   * opening a special (its bind, the dashboard, the launcher, the CLI)
 //     launches its apps that are not running, straight into it, and moves
@@ -17,6 +18,8 @@ import "Specials.js" as Specials
 //     fork: late windows are adopted and moved in);
 //   * renaming a special moves its open windows to the new name;
 //   * preload: at login the apps of specials with `preload` start hidden.
+// On niri a window cannot be spawned onto a workspace: the apps start where
+// you are and are adopted (moved to the named workspace) once they map.
 // On compositors without special workspaces everything is inert
 // (`supported` false) and the UI hides itself.
 Singleton {
@@ -30,7 +33,9 @@ Singleton {
     // Plain `var` views of YozdService's list holders.
     readonly property var _clients: YozdService.clients
     readonly property var _workspaces: YozdService.workspaces
-    readonly property var windows: Specials.windowsOf(_clients ? _clients.values : [], _workspaces ? _workspaces.values : [])
+    // niri tells specials apart by workspace name (see Specials.windowSpecial)
+    readonly property var namedFilter: YozdService.compositorName === "niri" ? Object.values(root.names) : null
+    readonly property var windows: Specials.windowsOf(_clients ? _clients.values : [], _workspaces ? _workspaces.values : [], root.namedFilter)
     readonly property var counts: Specials.counts(windows)
     // Hyprland names of the specials open on some monitor.
     readonly property var openNames: {

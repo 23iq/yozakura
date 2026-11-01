@@ -6,6 +6,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Hyprland
 import "SpecialWorkspaces.js" as SpecialWorkspaces
+import "../../specials/Specials.js" as Specials
 import "WorkspaceUrgency.js" as WorkspaceUrgency
 import qs.config
 import Quickshell.Wayland
@@ -16,7 +17,24 @@ Singleton {
     property var specialWorkspaceNames: ({})
     property bool specialRefreshPending: false
 
+    // niri: the configured special names (their named workspaces).
+    readonly property var niriSpecialNames: YozdService.compositorName === "niri" && Config.specialsReady && Config.specials.enabled
+        ? Object.values(Specials.hyprNames(Array.from(Config.specials.workspaces || []).map(Specials.normalize))) : []
+    onNiriSpecialNamesChanged: refreshSpecialWorkspaces()
+
+    Connections {
+        target: YozdService.workspaces
+        function onValuesChanged() {
+            if (YozdService.compositorName === "niri")
+                root.refreshSpecialWorkspaces();
+        }
+    }
+
     function refreshSpecialWorkspaces() {
+        if (YozdService.compositorName === "niri") {
+            root.specialWorkspaceNames = SpecialWorkspaces.namesFromNiriWorkspaces(YozdService.workspaces.values, root.niriSpecialNames);
+            return;
+        }
         // Tracked whenever on Hyprland, indicator or not: SpecialsService
         // launches a special's apps when it opens and the dock hides over
         // an open special's windows.

@@ -140,9 +140,10 @@ test('bind rows join the keybinds model (cheatsheet, conflicts, TOML)', () => {
     eq(S.compositorBinds([tg])[0], { name: 'Telegram', enabled: true, keys: [{ modifiers: ['SUPER'], key: 'S' }], actions: [{ id: 'workspace.toggle-special-named', args: { name: 'Telegram' } }] });
 });
 
-test('only Hyprland is supported', () => {
+test('Hyprland and niri are supported', () => {
     assert.ok(S.supported('hyprland'));
-    assert.ok(!S.supported('niri'));
+    assert.ok(S.supported('niri'));
+    assert.ok(!S.supported('mango'));
     assert.ok(!S.supported(''));
 });
 
@@ -166,4 +167,17 @@ test('visible clients follow an open special over the active workspace', () => {
     eq(S.visibleClients(clients, workspaces, 1, 'Telegram').map(c => c.address), ['b']);
     eq(S.visibleClients(clients, workspaces, 1, 'Dev').map(c => c.address), ['c']);
     eq(S.visibleClients(clients, workspaces, 1, 'Empty'), [], 'an empty special shows nothing');
+});
+
+test('niri: a special is the named workspace a window is on', () => {
+    const wss = [{ id: 1, name: '' }, { id: 7, name: 'social' }, { id: 8, name: 'scratch' }];
+    const named = ['social', 'dev'];
+    const win = id => ({ workspace: { id, name: String(id) } });
+    assert.strictEqual(S.windowSpecial(win(7), wss, named), 'social');
+    assert.strictEqual(S.windowSpecial(win(1), wss, named), '');
+    assert.strictEqual(S.windowSpecial(win(8), wss, named), '', 'other named workspaces are not specials');
+    assert.strictEqual(S.windowSpecial(win(99), wss, named), '');
+    const ws = S.windowsOf([{ address: 'a', class: 'x', workspace: { id: 7 } }, { address: 'b', class: 'y', workspace: { id: 1 } }], wss, named);
+    eq(S.counts(ws), { social: 1 });
+    eq(S.visibleClients([win(7), win(1)], wss, 1, 'social', named).length, 1);
 });

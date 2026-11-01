@@ -12,7 +12,9 @@
 //    preload, apps: [{id, name, icon, match, command, ifRunning, rule}]}
 
 // Compositors with named special workspaces; elsewhere the feature hides.
-var COMPOSITORS = ["hyprland"];
+// niri has no scratchpads: a special is one of its named workspaces (same
+// name), and "open" means that workspace is the active one of an output.
+var COMPOSITORS = ["hyprland", "niri"];
 
 var IF_RUNNING = ["nothing", "move"];
 
@@ -328,12 +330,22 @@ function classMatches(pattern, cls) {
 // The special a client is on ("" for a normal workspace). yozd reports the
 // workspace as a numeric id (special ones are negative) or, right after a
 // move event, by name ("special:X").
-function windowSpecial(client, workspaces) {
+// `named` (niri): the special names; a workspace carrying one of them is that
+// special (ids are positive there, the name comes from the workspace list).
+function windowSpecial(client, workspaces, named) {
     var ws = client && client.workspace ? client.workspace : {};
     var name = String(ws.name || "");
     if (name.indexOf("special:") === 0)
         return name.substring(8);
     var id = Number(ws.id);
+    if (named) {
+        var wl = list(workspaces);
+        for (var j = 0; j < wl.length; j++) {
+            if (Number(wl[j].id) === id)
+                return list(named).indexOf(String(wl[j].name || "")) !== -1 ? String(wl[j].name) : "";
+        }
+        return "";
+    }
     if (!(id < 0))
         return "";
     var l = list(workspaces);
@@ -349,10 +361,10 @@ function windowSpecial(client, workspaces) {
 // The clients a monitor shows: those on its open special (Hyprland keeps
 // the normal workspace active underneath one) or else on its active
 // workspace. `specialName` is the open special's name without "special:".
-function visibleClients(clients, workspaces, activeWorkspaceId, specialName) {
+function visibleClients(clients, workspaces, activeWorkspaceId, specialName, named) {
     if (specialName)
         return list(clients).filter(function (c) {
-            return windowSpecial(c, workspaces) === specialName;
+            return windowSpecial(c, workspaces, named) === specialName;
         });
     return list(clients).filter(function (c) {
         return c && c.workspace && c.workspace.id === activeWorkspaceId;
@@ -360,12 +372,12 @@ function visibleClients(clients, workspaces, activeWorkspaceId, specialName) {
 }
 
 // [{address, class, special}] from YozdService clients + workspaces.
-function windowsOf(clients, workspaces) {
+function windowsOf(clients, workspaces, named) {
     return list(clients).map(function (c) {
         return {
             "address": String(c.address || ""),
             "class": String(c.class || ""),
-            "special": windowSpecial(c, workspaces)
+            "special": windowSpecial(c, workspaces, named)
         };
     });
 }

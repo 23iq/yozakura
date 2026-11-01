@@ -456,3 +456,12 @@ func TestGenerateKeybindsDedupesCombos(t *testing.T) {
 		t.Fatalf("expected two duplicates reported, got %+v", sk)
 	}
 }
+
+func TestGenerateWindowRulesSpecialWorkspace(t *testing.T) {
+	g := &Generator{}
+	ws := "special:social silent"
+	out := g.GenerateWindowRules([]ipc.WindowRule{{Match: "class:^(vesktop)$", Workspace: &ws}})
+	if !strings.Contains(out, `open-on-workspace "social"`) {
+		t.Fatalf("expected open-on-workspace, got: %s", out)
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -493,9 +494,18 @@ func (n *Niri) MoveToWorkspaceSilent(windowID, workspaceID string) error {
 }
 
 func (n *Niri) moveWindowToWorkspace(windowID, workspaceID string, focus bool) error {
-	ref, err := n.workspaceReference(workspaceID)
-	if err != nil {
-		return err
+	var ref map[string]interface{}
+	if name, ok := specialName(workspaceID); ok {
+		if err := n.ensureNamedWorkspace(name, true); err != nil {
+			return err
+		}
+		ref = map[string]interface{}{"reference": nameRef(name)}
+	} else {
+		var err error
+		ref, err = n.workspaceReference(workspaceID)
+		if err != nil {
+			return err
+		}
 	}
 
 	args := map[string]interface{}{
@@ -656,8 +666,93 @@ func (n *Niri) MoveWindowPixel(id string, x, y int) error {
 	return n.requestAction(map[string]interface{}{"MoveFloatingWindow": args})
 }
 
+// Special workspaces map to niri's named workspaces: the name is the special
+// name as the shell derives it (safe, unique). The workspace is created on
+// demand by naming an empty one (no static `workspace "x"` needed in the niri
+// config), and survives while empty because niri keeps named workspaces.
+
+// specialName extracts the name of a Hyprland-style special target
+// ("special:Telegram", "special:Telegram silent").
+func specialName(target string) (string, bool) {
+	t := strings.TrimSpace(target)
+	t = strings.TrimSuffix(t, " silent")
+	name, ok := strings.CutPrefix(t, "special:")
+	name = strings.TrimSpace(name)
+	if !ok || name == "" {
+		return "", false
+	}
+	return name, true
+}
+
+func nameRef(name string) map[string]interface{} {
+	return map[string]interface{}{"Name": name}
+}
+
+// ensureNamedWorkspace makes sure a workspace called name exists. When it is
+// missing, an empty unnamed workspace on the focused output is focused and
+// named; focus then returns to where it was when keepFocus is set.
+func (n *Niri) ensureNamedWorkspace(name string, keepFocus bool) error {
+	wss, err := n.ListWorkspaces()
+	if err != nil {
+		return err
+	}
+	var focused *ipc.Workspace
+	for i := range wss {
+		if wss[i].Name == name {
+			return nil
+		}
+		if v, ok := wss[i].Metadata["focused"].(bool); ok && v {
+			focused = &wss[i]
+		}
+	}
+	if focused == nil {
+		return fmt.Errorf("no focused workspace found")
+	}
+	var empty *ipc.Workspace
+	for i := range wss {
+		w := &wss[i]
+		if w.Name == "" && w.MonitorID == focused.MonitorID && w.Metadata["active_window_id"] == "" {
+			// Prefer the focused workspace itself when it is empty.
+			if w.ID == focused.ID || empty == nil {
+				empty = w
+			}
+		}
+	}
+	if empty == nil {
+		return fmt.Errorf("no empty workspace to name %q", name)
+	}
+	if empty.ID != focused.ID {
+		id, err := parseUint64ID(empty.ID)
+		if err != nil {
+			return err
+		}
+		if err := n.requestAction(map[string]interface{}{"FocusWorkspace": map[string]interface{}{"reference": map[string]interface{}{"Id": id}}}); err != nil {
+			return err
+		}
+	}
+	if err := n.requestAction(map[string]interface{}{"SetWorkspaceName": map[string]interface{}{"name": name}}); err != nil {
+		return err
+	}
+	if keepFocus && empty.ID != focused.ID {
+		return n.requestAction(map[string]interface{}{"FocusWorkspacePrevious": map[string]interface{}{}})
+	}
+	return nil
+}
+
+// ToggleSpecialWorkspace focuses the named workspace, or returns to the
+// previously focused one when it is already focused.
 func (n *Niri) ToggleSpecialWorkspace(name string) error {
-	return ipc.ErrNotSupported
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ipc.ErrNotSupported
+	}
+	if ws, err := n.ActiveWorkspace(); err == nil && ws.Name == name {
+		return n.requestAction(map[string]interface{}{"FocusWorkspacePrevious": map[string]interface{}{}})
+	}
+	if err := n.ensureNamedWorkspace(name, false); err != nil {
+		return err
+	}
+	return n.requestAction(map[string]interface{}{"FocusWorkspace": map[string]interface{}{"reference": nameRef(name)}})
 }
 
 func (n *Niri) ToggleOverview() error {
@@ -752,8 +847,14 @@ func (n *Niri) Execute(command string) error {
 	})
 }
 
-// ExecuteIn: niri has no special workspaces.
-func (n *Niri) ExecuteIn(command, workspace string) error { return ipc.ErrNotSupported }
+// ExecuteIn runs command. niri cannot spawn onto a workspace, so the target
+// is ignored here: toggling a special focuses its workspace, which is where
+// the new window then maps, and the shell (SpecialsService) moves stray
+// windows in once they map, as for single-instance apps on Hyprland. Not
+// creating the workspace here avoids racing the toggle that creates it.
+func (n *Niri) ExecuteIn(command, workspace string) error {
+	return n.Execute(command)
+}
 
 func (n *Niri) Exit() error {
 	return n.requestAction(map[string]interface{}{

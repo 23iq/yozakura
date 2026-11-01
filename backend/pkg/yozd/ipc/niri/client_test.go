@@ -1021,3 +1021,116 @@ func TestToggleOverviewAction(t *testing.T) {
 		t.Fatalf("ToggleOverview() error = %v", err)
 	}
 }
+
+// wsHandler answers Workspaces requests with the given list and acks actions.
+func wsHandler(wss []map[string]interface{}) fakeHandler {
+	return func(req json.RawMessage) (any, error) {
+		if strings.Contains(string(req), `"Workspaces"`) {
+			return map[string]interface{}{"Workspaces": wss}, nil
+		}
+		return nil, nil
+	}
+}
+
+func ws(id, idx int, name interface{}, focused bool, win interface{}) map[string]interface{} {
+	return map[string]interface{}{"id": id, "idx": idx, "name": name, "output": "DP-1",
+		"is_active": focused, "is_focused": focused, "is_urgent": false, "active_window_id": win}
+}
+
+func actionsOf(f *fakeNiri) []string {
+	var out []string
+	for _, r := range f.requestsSnapshot() {
+		if !strings.Contains(string(r), `"Action"`) {
+			continue
+		}
+		out = append(out, string(r))
+	}
+	return out
+}
+
+func TestToggleSpecialFocusesExistingNamed(t *testing.T) {
+	f := newFakeNiri(t, wsHandler([]map[string]interface{}{
+		ws(1, 1, nil, true, 7), ws(2, 2, "social", false, 9), ws(3, 3, nil, false, nil)}))
+	if err := f.Client().ToggleSpecialWorkspace("social"); err != nil {
+		t.Fatal(err)
+	}
+	acts := actionsOf(f)
+	if len(acts) != 1 {
+		t.Fatalf("actions = %v", acts)
+	}
+	jsonEq(t, json.RawMessage(acts[0]), `{"Action":{"FocusWorkspace":{"reference":{"Name":"social"}}}}`)
+}
+
+func TestToggleSpecialReturnsWhenFocused(t *testing.T) {
+	f := newFakeNiri(t, wsHandler([]map[string]interface{}{
+		ws(1, 1, nil, false, 7), ws(2, 2, "social", true, 9)}))
+	if err := f.Client().ToggleSpecialWorkspace("social"); err != nil {
+		t.Fatal(err)
+	}
+	acts := actionsOf(f)
+	if len(acts) != 1 {
+		t.Fatalf("actions = %v", acts)
+	}
+	jsonEq(t, json.RawMessage(acts[0]), `{"Action":{"FocusWorkspacePrevious":{}}}`)
+}
+
+func TestToggleSpecialCreatesByNamingEmptyWorkspace(t *testing.T) {
+	f := newFakeNiri(t, wsHandler([]map[string]interface{}{
+		ws(1, 1, nil, true, 7), ws(3, 2, nil, false, nil)}))
+	if err := f.Client().ToggleSpecialWorkspace("dev"); err != nil {
+		t.Fatal(err)
+	}
+	acts := actionsOf(f)
+	want := []string{
+		`{"Action":{"FocusWorkspace":{"reference":{"Id":3}}}}`,
+		`{"Action":{"SetWorkspaceName":{"name":"dev"}}}`,
+		`{"Action":{"FocusWorkspace":{"reference":{"Name":"dev"}}}}`,
+	}
+	if len(acts) != len(want) {
+		t.Fatalf("actions = %v", acts)
+	}
+	for i := range want {
+		jsonEq(t, json.RawMessage(acts[i]), want[i])
+	}
+}
+
+func TestMoveToSpecialSilentKeepsFocus(t *testing.T) {
+	f := newFakeNiri(t, wsHandler([]map[string]interface{}{
+		ws(1, 1, nil, true, 7), ws(3, 2, nil, false, nil)}))
+	if err := f.Client().MoveToWorkspaceSilent("7", "special:dev"); err != nil {
+		t.Fatal(err)
+	}
+	acts := actionsOf(f)
+	want := []string{
+		`{"Action":{"FocusWorkspace":{"reference":{"Id":3}}}}`,
+		`{"Action":{"SetWorkspaceName":{"name":"dev"}}}`,
+		`{"Action":{"FocusWorkspacePrevious":{}}}`,
+		`{"Action":{"MoveWindowToWorkspace":{"window_id":7,"reference":{"Name":"dev"},"focus":false}}}`,
+	}
+	if len(acts) != len(want) {
+		t.Fatalf("actions = %v", acts)
+	}
+	for i := range want {
+		jsonEq(t, json.RawMessage(acts[i]), want[i])
+	}
+}
+
+func TestExecuteInSpecialJustSpawns(t *testing.T) {
+	f := newFakeNiri(t, wsHandler([]map[string]interface{}{
+		ws(1, 1, nil, true, 7), ws(2, 2, "social", false, nil)}))
+	if err := f.Client().ExecuteIn("vesktop", "special:social silent"); err != nil {
+		t.Fatal(err)
+	}
+	acts := actionsOf(f)
+	if len(acts) != 1 || !strings.Contains(acts[0], `"Spawn"`) {
+		t.Fatalf("actions = %v", acts)
+	}
+}
+
+func TestSpecialName(t *testing.T) {
+	for in, want := range map[string]string{"special:a": "a", "special:a silent": "a", "special:": "", "3": ""} {
+		if got, _ := specialName(in); got != want {
+			t.Errorf("specialName(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

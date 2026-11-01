@@ -28,3 +28,16 @@ function isShown(workspace, activeId, specialName) {
     }
     return workspace.id === activeId;
 }
+
+// niri: a special is a named workspace. {output: name} for the configured
+// special names (`known`) that are the active workspace of their output.
+// `workspaces` is YozdService.workspaces.values ({name, monitor, active}).
+function namesFromNiriWorkspaces(workspaces, known) {
+    const names = {};
+    const list = Array.from(known || []);
+    for (const ws of workspaces || []) {
+        if (ws && ws.active && ws.name && list.indexOf(ws.name) !== -1)
+            names[ws.monitor] = ws.name;
+    }
+    return names;
+}
