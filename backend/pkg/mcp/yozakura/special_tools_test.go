@@ -14,9 +14,10 @@ func TestSpecialTools(t *testing.T) {
 	d.AppDirs = []string{"../../specials/testdata/apps"}
 	d.BindsFile = "../../specials/testdata/binds.json"
 
-	empty := callTool(t, d, "specials_list", `{}`)
-	assert.False(t, empty.IsError, empty.Text())
-	assert.Contains(t, empty.Text(), `"specials": []`)
+	defaults := callTool(t, d, "specials_list", `{}`)
+	assert.False(t, defaults.IsError, defaults.Text())
+	assert.Contains(t, defaults.Text(), `"workspace": "special:social"`, "social and dev ship as defaults")
+	assert.Contains(t, defaults.Text(), `"workspace": "special:dev"`)
 
 	add := callTool(t, d, "special_add", `{"name":"Discord","toggle":"SUPER+D","send":"SUPER+ALT+D","accent":"tertiary"}`)
 	assert.False(t, add.IsError, add.Text())
@@ -49,12 +50,14 @@ func TestSpecialTools(t *testing.T) {
 		}
 	}
 	assert.NoError(t, json.Unmarshal([]byte(list.Text()), &got), list.Text())
-	if assert.Len(t, got.Specials, 2) {
-		assert.Equal(t, "Chat", got.Specials[0].Name)
-		assert.Equal(t, "special:Chat", got.Specials[0].Workspace)
-		assert.Equal(t, 1, got.Specials[0].Windows)
-		assert.True(t, got.Specials[0].Preload)
-		assert.Len(t, got.Specials[0].Apps, 2)
+	// social and dev (defaults), then Chat and Telegram
+	if assert.Len(t, got.Specials, 4) {
+		chat := got.Specials[2]
+		assert.Equal(t, "Chat", chat.Name)
+		assert.Equal(t, "special:Chat", chat.Workspace)
+		assert.Equal(t, 1, chat.Windows)
+		assert.True(t, chat.Preload)
+		assert.Len(t, chat.Apps, 2)
 	}
 
 	open := callTool(t, d, "special_open", `{"name":"chat"}`)
