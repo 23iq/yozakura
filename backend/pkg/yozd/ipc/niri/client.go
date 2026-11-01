@@ -21,6 +21,8 @@ type Niri struct {
 
 	kbMu    sync.Mutex // guards kbNames
 	kbNames []string   // layout names from the last KeyboardLayouts reply or event
+
+	fs fsTracker // fullscreen state, derived from window sizes (fullscreen.go)
 }
 
 func New() (*Niri, error) {
@@ -197,6 +199,19 @@ func (n *Niri) ListWindows() ([]ipc.Window, error) {
 	if err := json.Unmarshal(variant, &niriWindows); err != nil {
 		return nil, err
 	}
+	n.refreshOutputSizes()
+	entries := make([]windowEntry, len(niriWindows))
+	for i, w := range niriWindows {
+		e := windowEntry{id: w.ID}
+		if w.WorkspaceID != nil {
+			e.output = wsOutputMap[fmt.Sprintf("%d", *w.WorkspaceID)]
+		}
+		if w.Layout != nil {
+			e.size = w.Layout.WindowSize
+		}
+		entries[i] = e
+	}
+	fullscreen := n.fs.resetWindows(entries)
 
 	windows := make([]ipc.Window, len(niriWindows))
 	for i, w := range niriWindows {
@@ -236,7 +251,7 @@ func (n *Niri) ListWindows() ([]ipc.Window, error) {
 			WorkspaceID:  wsID,
 			IsFocused:    w.IsFocused,
 			IsFloating:   w.IsFloating,
-			IsFullscreen: false,
+			IsFullscreen: fullscreen[w.ID],
 			IsHidden:     false,
 			Metadata:     metadata,
 		}
@@ -1000,6 +1015,10 @@ func (n *Niri) handleEvent(name string, data json.RawMessage, event *ipc.Event) 
 			event.Payload["id"] = nil
 		}
 	case "WindowLayoutsChanged":
+		// The server refreshes its cache on a fullscreen change only
+		if n.fs.layoutsChanged(data) {
+			event.Type = ipc.EventFullscreenChanged
+		}
 		var d struct {
 			Changes [][2]json.RawMessage `json:"changes"`
 		}
