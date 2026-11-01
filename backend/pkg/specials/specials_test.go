@@ -163,18 +163,22 @@ func TestStoreRoundTrip(t *testing.T) {
 	s := Store{Config: &catalog.Store{Cat: cat, File: func(d string) string { return filepath.Join(dir, d+".json") }}}
 	list, err := s.Load()
 	must(t, assert.NoError(t, err))
-	assert.Empty(t, list, "no specials by default")
+	must(t, assert.Len(t, list, 2, "social and dev ship as defaults"))
+	assert.Equal(t, "social", list[0].ID)
+	assert.Equal(t, "dev", list[1].ID)
 	list, _, err = Add(list, "Telegram", "telegram", "primary")
 	must(t, assert.NoError(t, err))
-	list[0].Apps = []App{{ID: "org.telegram.desktop", Match: "org.telegram.desktop", Command: "Telegram"}}
+	mine := len(list) - 1
+	list[mine].Apps = []App{{ID: "org.telegram.desktop", Match: "org.telegram.desktop", Command: "Telegram"}}
 	must(t, assert.NoError(t, s.Save(list)))
 	back, err := s.Load()
 	must(t, assert.NoError(t, err))
-	assert.Equal(t, "nothing", back[0].Apps[0].IfRunning)
-	assert.Equal(t, "Telegram", back[0].Name)
-	bad := append(back, Special{ID: "x", Name: "telegram"})
+	must(t, assert.Len(t, back, 3))
+	assert.Equal(t, "nothing", back[mine].Apps[0].IfRunning)
+	assert.Equal(t, "Telegram", back[mine].Name)
+	bad := append(append([]Special{}, back...), Special{ID: "x", Name: "telegram"})
 	assert.Error(t, s.Save(bad), "clashing names are refused")
-	back[0].Accent = "#ff0000"
+	back[mine].Accent = "#ff0000"
 	assert.Error(t, s.Save(back), "accents are palette roles")
 }
 

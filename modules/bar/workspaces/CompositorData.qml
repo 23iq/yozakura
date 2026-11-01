@@ -16,6 +16,8 @@ Singleton {
     id: root
     property var specialWorkspaceNames: ({})
     property bool specialRefreshPending: false
+    // `var`, not the QtObject type, so `.values` resolves for qmllint.
+    readonly property var _workspaces: YozdService.workspaces
 
     // niri: the configured special names (their named workspaces).
     readonly property var niriSpecialNames: YozdService.compositorName === "niri" && Config.specialsReady && Config.specials.enabled
@@ -32,7 +34,7 @@ Singleton {
 
     function refreshSpecialWorkspaces() {
         if (YozdService.compositorName === "niri") {
-            root.specialWorkspaceNames = SpecialWorkspaces.namesFromNiriWorkspaces(YozdService.workspaces.values, root.niriSpecialNames);
+            root.specialWorkspaceNames = SpecialWorkspaces.namesFromNiriWorkspaces(root._workspaces ? root._workspaces.values : [], root.niriSpecialNames);
             return;
         }
         // Tracked whenever on Hyprland, indicator or not: SpecialsService
