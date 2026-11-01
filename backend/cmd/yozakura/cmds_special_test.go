@@ -40,7 +40,8 @@ func TestSpecialCommands(t *testing.T) {
 	env, opened := testSpecialEnv(t)
 	out, _, code := specialRun(t, env, "list")
 	assert.Equal(t, 0, code)
-	assert.Contains(t, out, "No special workspaces")
+	assert.Contains(t, out, "social  (special:social, id social)")
+	assert.Contains(t, out, "dev  (special:dev, id dev)")
 
 	out, errOut, code := specialRun(t, env, "add", "My Chat", "--toggle", "SUPER+S", "--send", "SUPER+ALT+S", "--accent", "tertiary")
 	assert.Equal(t, 0, code, errOut)
@@ -66,9 +67,11 @@ func TestSpecialCommands(t *testing.T) {
 	out, _, _ = specialRun(t, env, "list", "--json")
 	var list []map[string]any
 	assert.NoError(t, json.Unmarshal([]byte(out), &list))
-	if assert.Len(t, list, 1) {
-		assert.Equal(t, "special:My-Chat", list[0]["workspace"])
-		apps := list[0]["apps"].([]any)
+	// social and dev ship as defaults; the added workspace comes last.
+	if assert.Len(t, list, 3) {
+		mine := list[2]
+		assert.Equal(t, "special:My-Chat", mine["workspace"])
+		apps := mine["apps"].([]any)
 		assert.Len(t, apps, 2)
 		assert.Equal(t, "move", apps[0].(map[string]any)["ifRunning"])
 		assert.Equal(t, true, apps[0].(map[string]any)["rule"])
@@ -104,10 +107,10 @@ func TestSpecialImportBinds(t *testing.T) {
 
 	out, errOut, code = specialRun(t, env, "import-binds")
 	assert.Equal(t, 0, code, errOut)
-	for _, n := range []string{"Imported Telegram", "Imported Discord", "Imported Dev", "Backup: "} {
+	for _, n := range []string{"Imported Telegram", "Imported Discord", "Filled the binds of dev", "Backup: "} {
 		assert.Contains(t, out, n)
 	}
-	assert.Contains(t, out, "Conflict: SUPER+C (Dev toggle) is also the custom bind \"Close Window\"")
+	assert.Contains(t, out, "Conflict: SUPER+C (dev toggle) is also the custom bind \"Close Window\"")
 	out, _, _ = specialRun(t, env, "list")
 	assert.Contains(t, out, "Telegram  (special:Telegram, id telegram)  toggle SUPER+S, send SUPER+ALT+S")
 	assert.Contains(t, out, "apps: Discord")
