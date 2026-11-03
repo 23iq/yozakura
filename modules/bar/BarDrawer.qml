@@ -14,6 +14,8 @@ Item {
     property real spacing: 4
     property real outerRadius: 0
     property real innerRadius: 0
+    // Concentric floor of the drawer's outer end (BarModuleGroup.startFloor)
+    property real startFloor: 0
     property bool enableShadow: true
 
     readonly property bool vertical: barRoot ? barRoot.orientation === "vertical" : false
@@ -63,6 +65,7 @@ Item {
             outerRadius: drawer.outerRadius
             innerRadius: drawer.innerRadius
             endConnected: true
+            startFloor: drawer.startFloor
             enableShadow: drawer.enableShadow
         }
     }

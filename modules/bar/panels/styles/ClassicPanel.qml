@@ -18,6 +18,7 @@ PanelStyleBase {
     padding: barBg.padding
     startReach: padding + classicStartReach
     endReach: padding + classicEndReach
+    centerReach: classicCenter.visible ? classicCenter.width / 2 : 0
 
     readonly property Item contentItem: (classic.vertical ? verticalLoader.item : horizontalLoader.item) as Item
     readonly property int contentImplicitWidth: contentItem ? contentItem.implicitWidth : 0
@@ -255,6 +256,7 @@ PanelStyleBase {
 
         // Horizontal center group, absolutely centered on the panel
         PanelCenterGroup {
+            id: classicCenter
             barRoot: classic.b
             active: classic.b !== null && !classic.vertical && classic.b.centerIds.length > 0
             anchors.centerIn: parent

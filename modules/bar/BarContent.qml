@@ -293,19 +293,27 @@ Item {
     readonly property real startExtent: {
         if (orientation !== "horizontal")
             return 0;
+        // An aligned panel with nothing at its start (a resting dock: all
+        // of it is center content) leaves the edge before it free
         if (aligned)
-            return spanStart + (styleItem ? styleItem.startReach : 0);
+            return styleItem && styleItem.startReach > 0 ? spanStart + styleItem.startReach : frameOffset;
         return frameOffset + leftOuterMargin + (styleItem ? styleItem.startReach : 0);
     }
     readonly property real endExtent: {
         if (orientation !== "horizontal")
             return 0;
         if (aligned)
-            return edgeLength - spanStart - spanLength + (styleItem ? styleItem.endReach : 0);
+            return styleItem && styleItem.endReach > 0 ? edgeLength - spanStart - spanLength + styleItem.endReach : frameOffset;
         return frameOffset + rightOuterMargin + (styleItem ? styleItem.endReach : 0);
     }
     // Fillet of the tab-shaped styles (0 for strips)
     readonly property real islandFillet: styleItem ? styleItem.fillet : 0
+    // Span of the content in the middle of the panel (center group/tab,
+    // resting dock), empty (centerStart == centerEnd) when there is none
+    readonly property real centerReach: orientation === "horizontal" && styleItem ? styleItem.centerReach : 0
+    readonly property real centerMid: aligned ? spanStart + spanLength / 2 : edgeLength / 2
+    readonly property real centerStart: centerMid - centerReach
+    readonly property real centerEnd: centerMid + centerReach
 
     // Base outer margin for reservation logic (4px + border when !containBar)
     readonly property int baseOuterMargin: effectiveOuterMargin

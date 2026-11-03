@@ -16,6 +16,12 @@ Item {
     property bool flush: true
     property real fillet: Config.roundness > 0 ? Config.roundness + 4 : 0
     property real cornerRadius: Config.roundness > 0 ? Config.roundness + 4 : 0
+    // Radius the module boxes need at the tab's rounded ends to stay inside
+    // them (concentric, as BarLayout.concentricRadius); a flush end is
+    // square (it merges with the frame)
+    readonly property real concentricRadius: Math.max(0, cornerRadius - Math.max(0, padding))
+    readonly property real startFloor: flush && side === "start" ? 0 : concentricRadius
+    readonly property real endFloor: flush && side === "end" ? 0 : concentricRadius
     // Disable the size animation while the content animates itself
     property bool animateSize: true
 

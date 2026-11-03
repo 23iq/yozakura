@@ -23,6 +23,7 @@ PanelStyleBase {
     startReach: startIsland.visible ? startIsland.width : 0
     endReach: endIsland.visible ? endIsland.width : 0
     fillet: startIsland.fillet
+    centerReach: centerIsland.visible ? (islands.vertical ? centerIsland.height : centerIsland.width) / 2 + centerIsland.fillet : 0
 
     Bar.BarIsland {
         id: startIsland
@@ -48,6 +49,8 @@ PanelStyleBase {
                 ids: islands.b.startIds
                 outerRadius: islands.b.outerRadius
                 innerRadius: islands.b.innerRadius
+                startFloor: startIsland.startFloor
+                endFloor: startIsland.endFloor
                 enableShadow: false
             }
         }
@@ -78,6 +81,8 @@ PanelStyleBase {
                 ids: islands.showCenter ? islands.b.centerIds : []
                 outerRadius: islands.b.outerRadius
                 innerRadius: islands.b.innerRadius
+                startFloor: centerIsland.startFloor
+                endFloor: centerIsland.endFloor
                 enableShadow: false
             }
         }
@@ -114,6 +119,7 @@ PanelStyleBase {
                 expanded: islands.b.drawerExpanded
                 outerRadius: islands.b.outerRadius
                 innerRadius: islands.b.innerRadius
+                startFloor: endIsland.startFloor
                 enableShadow: false
             }
 
@@ -130,6 +136,8 @@ PanelStyleBase {
                     outerRadius: islands.b.outerRadius
                     innerRadius: islands.b.innerRadius
                     startConnected: islandDrawer.open
+                    startFloor: endIsland.startFloor
+                    endFloor: endIsland.endFloor
                     enableShadow: false
                 }
             }

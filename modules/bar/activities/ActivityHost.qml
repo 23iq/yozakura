@@ -65,8 +65,12 @@ Item {
 
     // ── Free span along the edge ──
     readonly property real notchWidth: Visibilities.notchRect(host.screenName).width
-    readonly property real notchStart: (width - notchWidth) / 2
-    readonly property real notchEnd: (width + notchWidth) / 2
+    // The middle of the edge they go around: the notch, and the bar's own
+    // center content on that edge (center group/tab, a resting dock), which
+    // is all there is with the notch off
+    readonly property bool barCenter: place.sameEdge && !!bar && bar.centerReach > 0
+    readonly property real notchStart: barCenter ? Math.min((width - notchWidth) / 2, bar.centerStart) : (width - notchWidth) / 2
+    readonly property real notchEnd: barCenter ? Math.max((width + notchWidth) / 2, bar.centerEnd) : (width + notchWidth) / 2
     readonly property real margin: Math.max(8, roundFillet)
     readonly property real leftLimit: {
         if (place.sameEdge && bar)

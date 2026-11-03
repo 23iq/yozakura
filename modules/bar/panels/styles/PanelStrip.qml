@@ -37,6 +37,7 @@ PanelStyleBase {
     padding: crossPadding
     startReach: endPadding + (vertical ? startGroup.implicitHeight : startGroup.implicitWidth)
     endReach: endPadding + (vertical ? endGroup.implicitHeight : endGroup.implicitWidth)
+    centerReach: stripCenter.visible ? (vertical ? stripCenter.height : stripCenter.width) / 2 : 0
 
     Bar.BarBg {
         anchors.fill: parent
@@ -104,6 +105,7 @@ PanelStyleBase {
     }
 
     PanelCenterGroup {
+        id: stripCenter
         barRoot: strip.b
         rowSpacing: strip.spacing
         columnSpacing: strip.spacing

@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.modules.bar as Bar
 import qs.modules.bar.panels
+import qs.modules.bar.look
 import "DockSplit.js" as DockSplit
 
 // "dock": a floating container detached from the edge, sized to its
@@ -91,6 +92,8 @@ PanelStyleBase {
     sideMargin: 0
     startReach: parted ? geo.startReach : 0
     endReach: parted ? geo.endReach : 0
+    // Resting, the whole capsule sits in the middle of its span
+    centerReach: parted ? 0 : implicitLength / 2
 
     readonly property real radius: Math.min(Styling.radius(10), dock.implicitThickness / 2)
 
@@ -134,9 +137,17 @@ PanelStyleBase {
         y: dock.vertical ? dock.mid + dock.geo.seam - height / 2 : (parent.height - height) / 2
     }
 
+    // Radius the module boxes need at the capsule's rounded ends (concentric);
+    // none while the capsule is invisible (dock-like on a transparent bar)
+    readonly property bool capsuleShown: surface !== "barbg" || BarLook.barSurface
+    readonly property real concentricRadius: capsuleShown ? Math.max(0, radius - pad) : 0
+    readonly property real partedRadius: capsuleShown ? Math.max(0, radius * part - pad) : 0
+
     component Run: GridLayout {
         id: run
         property var ids: []
+        property real startFloor: 0
+        property real endFloor: 0
         flow: dock.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
         rowSpacing: dock.spacing
         columnSpacing: dock.spacing
@@ -149,6 +160,8 @@ PanelStyleBase {
             // Non-flat modules (dock-like) draw their group pills
             outerRadius: dock.b ? dock.b.outerRadius : 0
             innerRadius: dock.b ? dock.b.innerRadius : 0
+            startFloor: run.startFloor
+            endFloor: run.endFloor
             enableShadow: false
             separatorStyle: "line"
         }
@@ -157,6 +170,8 @@ PanelStyleBase {
     Run {
         id: leftRow
         ids: dock.runs.left
+        startFloor: dock.concentricRadius
+        endFloor: dock.runs.right.length > 0 ? dock.partedRadius : dock.concentricRadius
         x: dock.vertical ? (parent.width - width) / 2 : dock.mid + dock.geo.leftRun
         y: dock.vertical ? dock.mid + dock.geo.leftRun : (parent.height - height) / 2
     }
@@ -165,6 +180,8 @@ PanelStyleBase {
         id: rightRow
         visible: dock.runs.right.length > 0
         ids: dock.runs.right
+        startFloor: dock.partedRadius
+        endFloor: dock.concentricRadius
         x: dock.vertical ? (parent.width - width) / 2 : dock.mid + dock.geo.rightRun
         y: dock.vertical ? dock.mid + dock.geo.rightRun : (parent.height - height) / 2
     }

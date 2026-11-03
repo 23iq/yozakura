@@ -269,7 +269,9 @@ Item {
         vertical: workspacesWidget.orientation === "vertical"
         ranges: workspacesWidget.occupiedRanges
         slot: workspacesWidget.workspaceButtonWidth
-        radius: workspacesWidget.startRadius > 0 ? Math.max(workspacesWidget.startRadius - widgetPadding, 0) : 0
+        // startRadius arrives final (clamped, maybe floored): measure from
+        // at least the theme radius so square languages keep their ranges
+        radius: workspacesWidget.startRadius > 0 ? Math.max(Math.max(workspacesWidget.startRadius, Styling.radius(0)) - widgetPadding, 0) : 0
     }
 
     // Active workspace indicator (style: workspaces.indicatorStyle)

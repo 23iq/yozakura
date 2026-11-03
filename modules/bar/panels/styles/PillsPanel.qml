@@ -21,6 +21,7 @@ PanelStyleBase {
     sideMargin: Metrics.spacing
     startReach: startPill.visible ? (vertical ? startPill.height : startPill.width) : 0
     endReach: endPill.visible ? (vertical ? endPill.height : endPill.width) : 0
+    centerReach: centerPill.visible ? (vertical ? centerPill.height : centerPill.width) / 2 : 0
 
     // Pinned to the screen edge across the panel (left/right/top/bottom)
     function crossPos(item) {
@@ -41,6 +42,8 @@ PanelStyleBase {
             ids: pills.b ? pills.b.startIds : []
             outerRadius: pills.b ? pills.b.outerRadius : 0
             innerRadius: pills.b ? pills.b.innerRadius : 0
+            startFloor: startPill.concentricRadius
+            endFloor: startPill.concentricRadius
             enableShadow: false
         }
     }
@@ -59,6 +62,8 @@ PanelStyleBase {
             ids: pills.b ? pills.b.centerIds : []
             outerRadius: pills.b ? pills.b.outerRadius : 0
             innerRadius: pills.b ? pills.b.innerRadius : 0
+            startFloor: centerPill.concentricRadius
+            endFloor: centerPill.concentricRadius
             enableShadow: false
         }
     }
@@ -84,6 +89,7 @@ PanelStyleBase {
             expanded: pills.b ? pills.b.drawerExpanded : false
             outerRadius: pills.b ? pills.b.outerRadius : 0
             innerRadius: pills.b ? pills.b.innerRadius : 0
+            startFloor: endPill.concentricRadius
             enableShadow: false
         }
 
@@ -93,6 +99,8 @@ PanelStyleBase {
             outerRadius: pills.b ? pills.b.outerRadius : 0
             innerRadius: pills.b ? pills.b.innerRadius : 0
             startConnected: pillDrawer.open
+            startFloor: endPill.concentricRadius
+            endFloor: endPill.concentricRadius
             enableShadow: false
         }
     }

@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.bar.look
 
 // One floating pill of the "pills" style: the bar surface sized to the
 // modules it holds (children go into its row/column). The theme shadow is
@@ -19,6 +20,10 @@ StyledRect {
     default property alias content: layout.data
 
     readonly property real bodyLength: (vertical ? layout.implicitHeight : layout.implicitWidth) + 2 * pad
+    // Radius the module boxes need at the pill's ends to stay inside them
+    // (concentric, BarLayout.concentricRadius); none while the bar surface
+    // is transparent (no pill to stay inside)
+    readonly property real concentricRadius: BarLook.barSurface ? Math.max(0, radius - pad) : 0
 
     visible: hasContent
     variant: "barbg"

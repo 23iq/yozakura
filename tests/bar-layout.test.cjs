@@ -71,6 +71,37 @@ test('pin visibility and pill radii follow the visible items', () => {
     assert.deepEqual(plain(layoutLib.edgeRadii(0, 1, 16, 8, true, false)), { start: 8, end: 16 });
 });
 
+test('module boxes stay concentric with a rounded container', () => {
+    assert.equal(layoutLib.concentricRadius(14, 2), 12);
+    assert.equal(layoutLib.concentricRadius(4, 6), 0);
+    assert.equal(layoutLib.concentricRadius(undefined, 2), 0);
+    // Square languages clamp every corner to a tight tile...
+    const tight = v => Math.min(v, 2);
+    assert.deepEqual(plain(layoutLib.boxRadii(0, 1, 10, 10, false, false, 0, 0, tight)), { start: 2, end: 2 });
+    // ...but the outer ends of a group follow the container's rounded ends
+    assert.deepEqual(plain(layoutLib.boxRadii(0, 1, 10, 10, false, false, 12, 0, tight)), { start: 12, end: 2 });
+    assert.deepEqual(plain(layoutLib.boxRadii(2, 3, 10, 10, false, false, 12, 12, tight)), { start: 2, end: 12 });
+    // Inner modules and connected edges never take a floor
+    assert.deepEqual(plain(layoutLib.boxRadii(1, 3, 10, 10, false, false, 12, 12, tight)), { start: 2, end: 2 });
+    assert.deepEqual(plain(layoutLib.boxRadii(0, 1, 10, 10, true, false, 12, 12, tight)), { start: 2, end: 12 });
+    // Round languages already larger than the floor keep their radius
+    assert.deepEqual(plain(layoutLib.boxRadii(0, 1, 16, 8, false, false, 12, 12)), { start: 16, end: 16 });
+});
+
+/** Worst overshoot (px) of a box corner of radius r, inset by `inset`, past a
+ * container corner of radius R (0 = inside). */
+function overshoot(R, inset, r) {
+    const d = Math.hypot(R - inset - r, R - inset - r) + r;
+    return Math.max(0, d - R);
+}
+
+test('the concentric floor removes the overshoot the tight tiles had', () => {
+    // Islands tab (roundness 10): R 14, padding 2 (0 when compact), tiles r 2
+    assert.ok(overshoot(14, 2, 2) > 1, 'the bug: a tight tile pokes out of the tab corner');
+    for (const [R, inset] of [[14, 2], [14, 0], [14, 4], [12, 2], [20, 5]])
+        assert.equal(overshoot(R, inset, layoutLib.concentricRadius(R, inset)), 0);
+});
+
 test('config validator keeps layout arrays and rejects unknown styles', () => {
     const merged = plain(validator.validate({ position: 'top', layout: { style: 'islands', left: ['clock'] } }, barDefaults));
     assert.equal(merged.layout.style, 'islands');
