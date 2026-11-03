@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import qs.modules.services
+import "WorkspaceDismiss.js" as WorkspaceDismiss
 
 Singleton {
     id: root
@@ -262,5 +263,17 @@ Singleton {
         function onFocusedMonitorChanged() {
             moveActiveModuleToFocusedScreen();
         }
+    }
+
+    // The workspace on the screen showing the open module; a switch under
+    // it closes the module (WorkspaceDismiss.js: Hyprland would jump back
+    // on close otherwise).
+    readonly property var _modulePlace: WorkspaceDismiss.place(root.lastFocusedScreen, YozdService.monitorFor(root.lastFocusedScreen))
+    property var _lastPlace: null
+    on_ModulePlaceChanged: {
+        const prev = root._lastPlace;
+        root._lastPlace = root._modulePlace;
+        if (WorkspaceDismiss.shouldDismiss(prev, root._modulePlace, root.currentActiveModule))
+            Qt.callLater(() => root.setActiveModule(""));
     }
 }

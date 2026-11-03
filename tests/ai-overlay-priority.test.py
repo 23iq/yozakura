@@ -46,6 +46,7 @@ h.singleton("qs.modules.globals", "GlobalStates", """QtObject {
 }""")
 h.singleton("qs.modules.services", "YozdService", """QtObject {
     property var focusedMonitor: ({name: "one"})
+    function monitorFor(s) { return null; }
 }""")
 h.copy("modules/services/Visibilities.qml", "qs/modules/services")
 h.module("qs.modules.services", {})
