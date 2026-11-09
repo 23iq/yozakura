@@ -25,32 +25,31 @@ ColumnLayout {
 
     signal edited
 
-    spacing: 6
+    spacing: Space.s
 
     function focusField() {
         field.forceActiveFocus();
     }
 
-    Text {
+    AiText {
+        role: "secondary"
         visible: root.label.length > 0
         text: root.label
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-1)
         font.weight: Font.Medium
-        color: Colors.overSurface
+        color: Type.text
     }
     StyledRect {
         Layout.fillWidth: true
         implicitHeight: Math.max(field.implicitHeight, 36) + 4
         variant: field.activeFocus ? "focus" : "pane"
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         enableBorder: true
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: 12
-            anchors.rightMargin: 4
-            spacing: 2
+            anchors.leftMargin: Space.m
+            anchors.rightMargin: Space.xs
+            spacing: Space.xs / 2
             TextField {
                 id: field
                 objectName: root.objectName ? root.objectName + "Input" : ""
@@ -63,7 +62,7 @@ ColumnLayout {
                 selectionColor: Colors.primary
                 selectedTextColor: Colors.overPrimary
                 font.family: root.mono || (root.secret && root.revealed) ? Config.theme.monoFont : Config.theme.font
-                font.pixelSize: BarLook.font(-1)
+                font.pixelSize: BarLook.size("secondary")
                 background: null
                 leftPadding: 0
                 rightPadding: 0
@@ -91,13 +90,11 @@ ColumnLayout {
             }
         }
     }
-    Text {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         visible: root.hint.length > 0
         text: root.hint
         wrapMode: Text.Wrap
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-3)
-        color: Colors.outline
     }
 }

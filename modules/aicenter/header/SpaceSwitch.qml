@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
@@ -28,9 +29,9 @@ StyledRect {
     property bool iconsOnly: false
 
     variant: "common"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
     implicitHeight: 32
-    implicitWidth: segments.implicitWidth + 6
+    implicitWidth: segments.implicitWidth + 2 * Space.xs
 
     StyledRect {
         id: highlight
@@ -40,7 +41,7 @@ StyledRect {
         width: target ? target.width : 0
         x: 3 + (target ? target.x : 0)
         variant: "focus"
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         Behavior on x {
             enabled: BarLook.animDuration > 0
             NumberAnimation {
@@ -73,20 +74,19 @@ StyledRect {
                 Row {
                     id: content
                     anchors.centerIn: parent
-                    spacing: 6
-                    Text {
+                    spacing: Space.s
+                    Icon {
+                        role: "caption"
                         anchors.verticalCenter: parent.verticalCenter
-                        text: segment.modelData.icon
-                        font.family: Icons.font
-                        font.pixelSize: BarLook.font(-2)
+                        icon: segment.modelData.icon
+                        size: BarLook.size("caption")
                         color: segment.index === root.current ? Colors.primary : Colors.outline
                     }
-                    Text {
+                    AiText {
+                        role: "caption"
                         anchors.verticalCenter: parent.verticalCenter
                         visible: !root.iconsOnly
                         text: segment.modelData.label
-                        font.family: Config.theme.font
-                        font.pixelSize: BarLook.font(-2)
                         font.weight: segment.index === root.current ? Font.DemiBold : Font.Normal
                         color: segment.index === root.current ? Colors.overSurface : Colors.outline
                     }

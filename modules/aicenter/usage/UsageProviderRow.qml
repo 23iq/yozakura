@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -21,13 +22,13 @@ ColumnLayout {
 
     readonly property string icon: UsageFormat.providerIcon(row.key)
 
-    spacing: 2
+    spacing: Space.xs / 2
 
     StyledRect {
         objectName: "usageProvider_" + root.row.key
         Layout.fillWidth: true
-        implicitHeight: head.implicitHeight + 16
-        radius: Styling.radius(-2)
+        implicitHeight: head.implicitHeight + 2 * Space.s
+        radius: Look.radius("control")
         variant: hover.hovered || root.expanded ? "common" : "transparent"
         enableBorder: false
 
@@ -44,14 +45,14 @@ ColumnLayout {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: 10
-            anchors.rightMargin: 10
-            spacing: 10
+            anchors.leftMargin: Space.s
+            anchors.rightMargin: Space.s
+            spacing: Space.s
 
             StyledRect {
-                Layout.preferredWidth: 28
-                Layout.preferredHeight: 28
-                radius: 14
+                Layout.preferredWidth: Space.controlXS
+                Layout.preferredHeight: Space.controlXS
+                radius: Look.radius("round", height)
                 variant: "internalbg"
                 enableBorder: false
                 Image {
@@ -60,57 +61,52 @@ ColumnLayout {
                     source: root.icon ? Qt.resolvedUrl("../../../assets/aiproviders/" + root.icon) : ""
                     sourceSize: Qt.size(16, 16)
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     anchors.centerIn: parent
                     visible: root.icon.length === 0
                     text: UsageFormat.providerLabel(root.row.key).charAt(0).toUpperCase()
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
                     font.weight: Font.DemiBold
-                    color: Colors.overSurfaceVariant
+                    color: Type.secondary
                 }
             }
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 1
-                Text {
+                spacing: Space.hairline
+                AiText {
+                    role: "secondary"
                     Layout.fillWidth: true
                     text: UsageFormat.providerLabel(root.row.key)
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-1)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("ai.usage.requests").arg(root.row.requests || 0) + "  ·  " + I18n.t("ai.usage.tokens_in_out").arg(UsageFormat.tokens(root.row.inputTokens)).arg(UsageFormat.tokens(root.row.outputTokens))
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-4)
-                    color: Colors.outline
                 }
             }
             UsageSparkline {
                 visible: (root.series || []).length > 1
-                values: root.series
+                series: root.series
                 Layout.alignment: Qt.AlignVCenter
             }
-            Text {
+            AiText {
                 objectName: "usageProviderCost"
+                role: "secondary"
                 text: UsageFormat.totalsCost(root.row, root.costOpts) || "—"
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-1)
                 font.features: {
                     "tnum": 1
                 }
-                color: Colors.overSurface
+                color: Type.text
             }
-            Text {
-                text: Icons.caretDown
+            Icon {
+                role: "caption"
+                tone: "muted"
+                icon: Icons.caretDown
                 rotation: root.expanded ? 180 : 0
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-5)
-                color: Colors.outline
+                size: BarLook.size("caption")
                 Behavior on rotation {
                     enabled: BarLook.animDuration > 0
                     NumberAnimation {
@@ -127,33 +123,30 @@ ColumnLayout {
             id: modelRow
             required property var modelData
             Layout.fillWidth: true
-            Layout.leftMargin: 48
-            Layout.rightMargin: 34
-            spacing: 8
-            Text {
+            Layout.leftMargin: Space.xxl + Space.l
+            Layout.rightMargin: Space.xxl
+            spacing: Space.s
+            AiText {
+                mono: true
+                role: "caption"
                 Layout.fillWidth: true
                 text: modelRow.modelData.key || I18n.t("ai.model_default")
                 elide: Text.ElideMiddle
-                font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.font(-4)
-                color: Colors.overSurfaceVariant
+                color: Type.secondary
             }
-            Text {
+            AiText {
+                role: "caption"
                 text: UsageFormat.tokens((modelRow.modelData.inputTokens || 0) + (modelRow.modelData.outputTokens || 0))
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
-                color: Colors.outline
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.preferredWidth: 72
                 horizontalAlignment: Text.AlignRight
                 text: UsageFormat.totalsCost(modelRow.modelData, root.costOpts) || "—"
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
                 font.features: {
                     "tnum": 1
                 }
-                color: Colors.overSurfaceVariant
+                color: Type.secondary
             }
         }
     }

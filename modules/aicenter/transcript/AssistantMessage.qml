@@ -34,36 +34,34 @@ Item {
     ColumnLayout {
         id: col
         width: parent.width
-        spacing: 4
+        spacing: Space.xs
 
         RowLayout {
             visible: root.groupStart && (BarLook.avatars || root.streaming && root.text.length === 0)
-            spacing: 6
+            spacing: Space.s
             StyledRect {
                 visible: BarLook.avatars
                 Layout.preferredWidth: 22
                 Layout.preferredHeight: 22
                 variant: "common"
-                radius: height / 2
-                Text {
+                radius: Look.radius("round", height)
+                Icon {
+                    role: "caption"
+                    tone: "accent"
                     anchors.centerIn: parent
-                    text: Icons.sparkle
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(-3)
-                    color: Colors.primary
+                    icon: Icons.sparkle
+                    size: BarLook.size("caption")
                 }
             }
-            Text {
+            AiText {
+                role: "caption"
                 visible: BarLook.avatars && root.engine.length > 0
                 text: root.engine
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
                 font.weight: Font.Medium
-                color: Colors.outline
             }
             Spinner {
                 running: root.streaming && root.text.length === 0
-                font.pixelSize: BarLook.font(-3)
+                font.pixelSize: BarLook.size("caption")
             }
         }
 
@@ -72,15 +70,13 @@ Item {
             Layout.fillWidth: true
             text: root.text
             streaming: root.streaming
-            fontSize: BarLook.font(0)
+            fontSize: BarLook.size("body")
         }
 
-        Text {
+        AiText {
+            role: "caption"
             visible: BarLook.timestamps && root.ts > 0
             text: BarLook.time(root.ts)
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-4)
-            color: Colors.outline
         }
     }
 
@@ -93,9 +89,9 @@ Item {
         opacity: hover.hovered && !root.streaming && root.text.length > 0 ? 1 : 0
         z: 2
         variant: "popup"
-        radius: Styling.radius(-4)
-        implicitWidth: actionRow.implicitWidth + 6
-        implicitHeight: actionRow.implicitHeight + 4
+        radius: Look.radius("control")
+        implicitWidth: actionRow.implicitWidth + 2 * Space.xs
+        implicitHeight: actionRow.implicitHeight + Space.xs
         Behavior on opacity {
             enabled: BarLook.animDuration > 0
             NumberAnimation {
@@ -105,7 +101,7 @@ Item {
         Row {
             id: actionRow
             anchors.centerIn: parent
-            spacing: 2
+            spacing: Space.xs / 2
             CopyButton {
                 copyText: Markdown.plain(root.text)
             }

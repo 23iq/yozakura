@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.modules.aicenter.common
@@ -31,8 +32,8 @@ RowLayout {
             objectName: "runCard_" + runIndex
             Layout.fillWidth: true
             Layout.preferredWidth: 1
-            implicitHeight: cardCol.implicitHeight + 16
-            radius: Styling.radius(-2)
+            implicitHeight: cardCol.implicitHeight + 2 * Space.s
+            radius: Look.radius("control")
             variant: root.run === card.runIndex ? "focus" : (hover.hovered ? "common" : "pane")
             border.width: root.run === card.runIndex ? 1 : 0
             border.color: Colors.primary
@@ -48,58 +49,58 @@ RowLayout {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 8
-                spacing: 4
+                anchors.margins: Space.s
+                spacing: Space.xs
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: Space.s
                     AgentIcons {
                         agents: [card.modelData.agent]
                     }
-                    UiText {
+                    AiText {
+                        role: "caption"
+                        font.weight: Font.DemiBold
+                        color: Type.text
                         Layout.fillWidth: true
                         text: TaskModel.agentLabel(card.modelData.agent, Ai.agents ? Ai.agents.agents : [])
-                        strong: true
-                        size: -2
                     }
                     StatusIcon {
                         status: card.modelData.status || ""
                     }
                 }
                 RowLayout {
-                    spacing: 8
-                    UiText {
+                    spacing: Space.s
+                    AiText {
+                        role: "caption"
                         text: I18n.t("ai.files_changed").replace("%1", card.stats.files)
-                        muted: true
-                        size: -3
                     }
-                    UiText {
+                    AiText {
+                        role: "caption"
                         text: "+" + card.stats.insertions
                         color: Colors.success
                         mono: true
-                        size: -4
                     }
-                    UiText {
+                    AiText {
+                        role: "caption"
                         text: "−" + card.stats.deletions
                         color: Colors.error
                         mono: true
-                        size: -4
                     }
-                    Glyph {
+                    Icon {
+                        role: "caption"
+                        size: BarLook.size("caption")
+                        color: Colors[card.check && card.check.status === "pass" ? "success" : "error"] ?? Type.text
                         visible: card.check !== null
-                        text: card.check && card.check.status === "pass" ? Icons.checkCircle : Icons.xCircle
-                        role: card.check && card.check.status === "pass" ? "success" : "error"
-                        size: -3
+                        icon: card.check && card.check.status === "pass" ? Icons.checkCircle : Icons.xCircle
                     }
                 }
-                UiText {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     visible: text.length > 0
                     text: card.modelData.summary || card.modelData.error || ""
                     wrapMode: Text.Wrap
                     maximumLineCount: 3
-                    muted: true
-                    size: -3
                 }
             }
         }

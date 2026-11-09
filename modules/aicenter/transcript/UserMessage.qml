@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -27,7 +28,7 @@ Item {
         id: row
         width: parent.width
         layoutDirection: BarLook.bubbles ? Qt.RightToLeft : Qt.LeftToRight
-        spacing: 8
+        spacing: Space.s
 
         StyledRect {
             visible: BarLook.avatars
@@ -35,20 +36,19 @@ Item {
             Layout.preferredWidth: 26
             Layout.preferredHeight: 26
             variant: "focus"
-            radius: height / 2
-            Text {
+            radius: Look.radius("round", height)
+            AiText {
+                role: "caption"
                 anchors.centerIn: parent
                 text: root.initial
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
                 font.weight: Font.DemiBold
-                color: Colors.overSurface
+                color: Type.text
             }
         }
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 4
+            spacing: Space.xs
 
             AttachmentStrip {
                 attachments: root.attachments
@@ -64,10 +64,10 @@ Item {
                 Layout.preferredWidth: BarLook.bubbles ? Math.min(root.maxBubble - (BarLook.avatars ? 34 : 0), body.implicitWidth + 2 * BarLook.pad) : -1
                 implicitHeight: body.implicitHeight + BarLook.pad
                 variant: BarLook.bubbles ? "focus" : "internalbg"
-                radius: Styling.radius(BarLook.bubbles ? 2 : -4)
+                radius: BarLook.bubbles ? Look.radius("surface") : Look.radius("control")
                 // Hairline edge: keeps the bubble readable on low-contrast palettes.
                 border.width: 1
-                border.color: Qt.rgba(Colors.outlineVariant.r, Colors.outlineVariant.g, Colors.outlineVariant.b, 0.45)
+                border.color: Look.alpha("outlineVariant", 0.45)
                 TextEdit {
                     id: body
                     x: BarLook.pad
@@ -79,20 +79,18 @@ Item {
                     selectByMouse: true
                     textFormat: TextEdit.PlainText
                     font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(0)
+                    font.pixelSize: BarLook.size("body")
                     color: Colors.overSurface
                     selectionColor: Colors.primary
                     selectedTextColor: Colors.overPrimary
                 }
             }
 
-            Text {
+            AiText {
+                role: "caption"
                 visible: BarLook.timestamps && root.ts > 0
                 Layout.alignment: BarLook.bubbles ? Qt.AlignRight : Qt.AlignLeft
                 text: BarLook.time(root.ts)
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
-                color: Colors.outline
             }
         }
     }

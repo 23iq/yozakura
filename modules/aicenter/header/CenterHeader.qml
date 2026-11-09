@@ -26,7 +26,7 @@ RowLayout {
     readonly property bool code: GlobalStates.aiSpace === "code"
     readonly property string size: GlobalStates.assistantFullscreen ? "fullscreen" : (GlobalStates.assistantWide ? "wide" : "compact")
 
-    spacing: 2
+    spacing: Space.xs / 2
 
     // compact -> wide -> fullscreen -> compact
     function cycleSize() {

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -24,7 +25,7 @@ RowLayout {
             context: Icons.stack
         })
 
-    spacing: 4
+    spacing: Space.xs
     visible: badges.length > 0
 
     Repeater {
@@ -34,9 +35,9 @@ RowLayout {
             required property var modelData
             readonly property string label: modelData.kind === "context" ? modelData.text : (modelData.kind === "chatOnly" ? I18n.t("ai.badge_chat_only") : "")
             objectName: "badge_" + modelData.kind
-            implicitHeight: badgeRow.implicitHeight + 4
+            implicitHeight: badgeRow.implicitHeight + Space.xs
             implicitWidth: badgeRow.implicitWidth + (label ? 10 : 8)
-            radius: height / 2
+            radius: Look.radius("round", height)
             variant: modelData.kind === "chatOnly" ? "internalbg" : "common"
             HoverHandler {
                 id: badgeHover
@@ -48,18 +49,17 @@ RowLayout {
             RowLayout {
                 id: badgeRow
                 anchors.centerIn: parent
-                spacing: 3
-                Text {
-                    text: root.glyphs[badge.modelData.kind] || ""
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(-5)
+                spacing: Space.xs
+                Icon {
+                    role: "caption"
+                    icon: root.glyphs[badge.modelData.kind] || ""
+                    size: BarLook.size("caption")
                     color: badge.modelData.kind === "chatOnly" ? Colors.outline : Colors.overSurfaceVariant
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     visible: badge.label.length > 0
                     text: badge.label
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-5)
                     color: badge.modelData.kind === "chatOnly" ? Colors.outline : Colors.overSurfaceVariant
                 }
             }

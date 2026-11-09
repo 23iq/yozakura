@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
@@ -60,7 +61,7 @@ StyledRect {
     variant: frameWrapped ? "transparent" : "bg"
     glassSurface: Config.ai.appearance.glass === false ? "" : "sidebars"
     backgroundOpacity: Config.ai.appearance.opacity < 1 ? Config.ai.appearance.opacity : -1
-    radius: frameWrapped ? 0 : Styling.radius(0)
+    radius: frameWrapped ? 0 : Look.radius("surface")
 
     function focusComposer() {
         composer.focusInput();
@@ -209,8 +210,8 @@ StyledRect {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 8
+        anchors.margins: Space.s
+        spacing: Space.s
         CenterHeader {
             id: header
             Layout.fillWidth: true
@@ -238,13 +239,13 @@ StyledRect {
             id: body
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 10
+            spacing: Space.s
             // The conversation column sits in the middle of the whole bar, not
             // of the space left of the docked history: it reserves the same
             // width on its right, as long as that leaves a readable column.
-            // The row fills the bar inside its 10 px margins; sizing from the
+            // The row fills the bar inside its Space.s margins; sizing from the
             // bar (not from the row) keeps the layout free of binding loops.
-            readonly property real avail: root.width - 20
+            readonly property real avail: root.width - 2 * Space.s
             readonly property bool centered: !changesPane.visible
             readonly property real reserve: sessionList.visible ? sessionList.Layout.preferredWidth + spacing : 0
             readonly property real columnLimit: GlobalStates.assistantFullscreen && !root.taskMode ? 960 : avail
@@ -278,8 +279,8 @@ StyledRect {
                 Layout.preferredWidth: body.centered ? body.columnWidth : -1
                 Layout.leftMargin: body.centered ? Math.max(0, (body.avail - body.columnWidth) / 2 - body.reserve) : 0
                 Layout.maximumWidth: GlobalStates.assistantFullscreen && !root.taskMode ? 960 : Number.POSITIVE_INFINITY
-                Layout.minimumWidth: Math.min(320, root.width - 20)
-                spacing: 6
+                Layout.minimumWidth: Math.min(320, root.width - 2 * Space.s)
+                spacing: Space.s
                 Item {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
@@ -291,14 +292,13 @@ StyledRect {
                         sourceComponent: root.hasConversation ? transcriptC : (root.code ? (root.codeChat ? codeEmptyC : tasksC) : welcomeC)
                     }
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     visible: !!Ai.noticeError
                     text: Ai.noticeError || ""
                     wrapMode: Text.Wrap
-                    color: Colors.error
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
+                    color: Type.danger
                 }
                 ContextNotice {
                     Layout.fillWidth: true
@@ -313,8 +313,8 @@ StyledRect {
                 TaskOptions {
                     id: taskOptions
                     Layout.fillWidth: true
-                    Layout.leftMargin: 4
-                    Layout.rightMargin: 4
+                    Layout.leftMargin: Space.xs
+                    Layout.rightMargin: Space.xs
                     visible: root.code && Ai.activeAgent === null
                     project: root.project
                     chat: root.codeChat
@@ -331,8 +331,8 @@ StyledRect {
                 ComposerStatus {
                     Layout.fillWidth: true
                     visible: !root.taskMode
-                    Layout.leftMargin: 4
-                    Layout.rightMargin: 4
+                    Layout.leftMargin: Space.xs
+                    Layout.rightMargin: Space.xs
                     contextUsed: Ai.contextState ? Ai.contextState.used : 0
                     contextWindow: Ai.contextState ? Ai.contextState.window : 0
                     contextSource: Ai.contextState ? Ai.contextState.source : ""
@@ -411,7 +411,7 @@ StyledRect {
     SessionDrawer {
         id: drawer
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: Space.s
         space: GlobalStates.aiSpace
         visible: root.historyOpen && !root.historyDocked
         z: 10
@@ -419,7 +419,7 @@ StyledRect {
     }
     ChangesPane {
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: Space.s
         // In narrow sizes the changes action opens this drawer.
         visible: root.changesDrawerOpen && !root.changesDocked && root.code && Ai.activeAgent !== null
         z: 9
@@ -430,8 +430,8 @@ StyledRect {
         anchors.top: parent.top
         anchors.bottom: parent.bottom
         anchors.right: parent.right
-        anchors.margins: 10
-        width: Math.min(parent.width - 20, 380)
+        anchors.margins: Space.s
+        width: Math.min(parent.width - 2 * Space.s, 380)
         visible: root.settingsOpen && root.code
         z: 11
         onCloseRequested: root.closeOverlay("settings")
@@ -440,7 +440,7 @@ StyledRect {
     FolderPicker {
         id: folderPicker
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: Space.s
         z: 13
         onChosen: dir => Ai.chooseProject(dir)
         onCloseRequested: root.closeOverlay("folder")
@@ -448,7 +448,7 @@ StyledRect {
     ConnectSheet {
         id: connectSheet
         anchors.fill: parent
-        anchors.margins: 10
+        anchors.margins: Space.s
         z: 13
         // Closed by itself (Esc, saved) or replaced by another overlay.
         onCloseRequested: root.closeOverlay("connect")
@@ -456,8 +456,8 @@ StyledRect {
     UsageScreen {
         // Below the header, so its usage button toggles the screen.
         anchors.fill: parent
-        anchors.margins: 10
-        anchors.topMargin: 10 + header.height + 8
+        anchors.margins: Space.s
+        anchors.topMargin: Space.s + header.height + Space.s
         visible: root.usageOpen
         z: 12
         onCloseRequested: root.closeOverlay("usage")

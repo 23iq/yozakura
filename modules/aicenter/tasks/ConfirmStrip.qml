@@ -25,8 +25,8 @@ StyledRect {
     }
 
     visible: false
-    implicitHeight: row.implicitHeight + 12
-    radius: Styling.radius(-4)
+    implicitHeight: row.implicitHeight + 2 * Space.s
+    radius: Look.radius("control")
     variant: root.danger ? "errorfocus" : "focus"
     Keys.onReturnPressed: {
         root.close();
@@ -40,14 +40,14 @@ StyledRect {
     RowLayout {
         id: row
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 6
-        spacing: 6
-        UiText {
+        anchors.leftMargin: Space.s
+        anchors.rightMargin: Space.s
+        spacing: Space.s
+        AiText {
+            role: "caption"
             Layout.fillWidth: true
             text: root.text
             wrapMode: Text.Wrap
-            size: -2
             color: Styling.srItem(root.variant)
         }
         Chip {

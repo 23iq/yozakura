@@ -39,29 +39,28 @@ StyledRect {
 
     visible: Config.ai.strip.context !== false && window > 0 && level !== "ok" && dismissedKey !== sessionKey && (agent || canCompact || compacting)
     variant: level === "critical" ? "error" : "common"
-    radius: Styling.radius(-4)
-    implicitHeight: row.implicitHeight + 12
+    radius: Look.radius("control")
+    implicitHeight: row.implicitHeight + 2 * Space.s
 
     RowLayout {
         id: row
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.leftMargin: 10
-        anchors.rightMargin: 6
-        spacing: 8
-        Text {
-            text: Icons.stack
-            font.family: Icons.font
-            font.pixelSize: BarLook.font(-2)
+        anchors.leftMargin: Space.s
+        anchors.rightMargin: Space.s
+        spacing: Space.s
+        Icon {
+            role: "caption"
+            icon: Icons.stack
+            size: BarLook.size("caption")
             color: root.level === "critical" ? Styling.srItem("error") : Colors.warning
         }
-        Text {
+        AiText {
+            role: "caption"
             Layout.fillWidth: true
             text: root.message
             wrapMode: Text.Wrap
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-3)
             color: root.level === "critical" ? Styling.srItem("error") : Colors.overSurfaceVariant
         }
         Chip {

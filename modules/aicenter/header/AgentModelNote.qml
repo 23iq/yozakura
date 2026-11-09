@@ -22,28 +22,28 @@ Item {
     signal retryRequested
     signal manualPicked(string model)
 
-    implicitHeight: Math.max(32, line.implicitHeight + 8)
+    implicitHeight: Math.max(32, line.implicitHeight + 2 * Space.xs)
 
     RowLayout {
         id: line
         anchors.fill: parent
-        anchors.leftMargin: 38
-        anchors.rightMargin: 10
-        spacing: 8
+        // in line with the names of ModelPickerRow (past its 18 px provider icon)
+        anchors.leftMargin: Space.s * 2 + 18
+        anchors.rightMargin: Space.s
+        spacing: Space.s
         Spinner {
             visible: root.status === "loading"
             running: visible
         }
-        Text {
+        KitText {
             objectName: "agentModelStatus"
+            role: "caption"
             Layout.fillWidth: true
             visible: !root.manual
             text: root.status === "loading" ? I18n.t("ai.loading_models") : (root.status === "error" ? I18n.t("ai.picker_models_failed") + (root.error ? ": " + root.error : "") : I18n.t("ai.picker_no_agent_models"))
             wrapMode: Text.Wrap
             maximumLineCount: 2
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             color: root.status === "error" ? Colors.error : Colors.outline
         }
         Chip {
@@ -61,10 +61,10 @@ Item {
             placeholderTextColor: Colors.outline
             color: Colors.overSurface
             font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
+            font.pixelSize: Type.size("caption")
             background: StyledRect {
                 variant: "common"
-                radius: Styling.radius(-6)
+                radius: Look.radius("small")
             }
             onAccepted: if (text.trim().length > 0)
                 root.manualPicked(text.trim())

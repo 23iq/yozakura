@@ -65,7 +65,7 @@ FocusScope {
     readonly property bool hasAnswer: lastAssistant !== null
 
     implicitWidth: Math.max(380, Config.ai.quickAsk.width ?? 560)
-    implicitHeight: col.implicitHeight + 8
+    implicitHeight: col.implicitHeight + 2 * Space.xs
 
     Component.onCompleted: {
         Ai._ensureInit();
@@ -98,18 +98,17 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 4
-        spacing: 10
+        anchors.margins: Space.xs
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
 
-            Text {
-                text: GlobalStates.quickAskKind === "shell" ? Icons.command : Icons.sparkle
-                font.family: Icons.font
-                font.pixelSize: 16
-                color: Colors.primary
+            Icon {
+                role: "secondary"
+                tone: "accent"
+                icon: GlobalStates.quickAskKind === "shell" ? Icons.command : Icons.sparkle
             }
             TextField {
                 id: input
@@ -119,7 +118,7 @@ FocusScope {
                 placeholderTextColor: Colors.outline
                 color: Colors.overBackground
                 font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(1)
+                font.pixelSize: Type.size("body")
                 background: null
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape) {
@@ -177,17 +176,15 @@ FocusScope {
             ColumnLayout {
                 id: answer
                 width: answerFlick.width
-                spacing: 8
-                Text {
+                spacing: Space.s
+                KitText {
+                    role: "caption"
                     visible: root.lastQuestion.length > 0
                     Layout.fillWidth: true
                     text: root.lastQuestion
                     elide: Text.ElideRight
                     maximumLineCount: 2
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.outline
                 }
                 ThinkingBlock {
                     visible: root.lastAssistant !== null && root.lastAssistant.thinking.length > 0 && Config.ai.showThinking
@@ -216,12 +213,10 @@ FocusScope {
         RowLayout {
             visible: root.hasAnswer
             Layout.fillWidth: true
-            spacing: 4
-            Text {
+            spacing: Space.xs
+            KitText {
+                role: "caption"
                 text: I18n.t("ai.quick_keys")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-4)
-                color: Colors.outline
                 Layout.fillWidth: true
             }
             CopyButton {

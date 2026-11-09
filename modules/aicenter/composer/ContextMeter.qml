@@ -27,13 +27,13 @@ RowLayout {
 
     readonly property real fraction: ContextMath.fraction(used, window)
     readonly property string level: ContextMath.level(fraction, Config.ai.context.warnAt, Config.ai.context.criticalAt)
-    readonly property color tone: level === "critical" ? Colors.error : (level === "warn" ? Colors.warning : Colors.primary)
+    readonly property color tone: level === "critical" ? Type.danger : (level === "warn" ? Colors.warning : Type.progress)
 
-    spacing: 6
+    spacing: Space.s
 
     Item {
         implicitWidth: meter.implicitWidth
-        implicitHeight: meter.implicitHeight + 4
+        implicitHeight: meter.implicitHeight + Space.xs
         Layout.alignment: Qt.AlignVCenter
         HoverHandler {
             id: hover
@@ -41,33 +41,18 @@ RowLayout {
         RowLayout {
             id: meter
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-            StyledRect {
+            spacing: Space.s
+            LevelMeter {
                 objectName: "contextBar"
-                Layout.preferredWidth: 48
-                Layout.preferredHeight: 4
-                variant: "internalbg"
-                radius: 2
-                // Fill of the meter.
-                Rectangle {
-                    width: parent.width * root.fraction
-                    height: parent.height
-                    radius: parent.radius
-                    color: root.tone
-                    Behavior on width {
-                        enabled: BarLook.animDuration > 0
-                        NumberAnimation {
-                            duration: BarLook.animDuration / 2
-                            easing.type: Motion.morph.easing
-                        }
-                    }
-                }
+                Layout.preferredWidth: Space.xxl + Space.l
+                Layout.preferredHeight: Space.xs
+                level: root.fraction
+                tone: root.tone
             }
-            Text {
+            AiText {
                 objectName: "contextLabel"
+                role: "caption"
                 text: ContextMath.label(root.used, root.window)
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
                 font.features: {
                     "tnum": 1
                 }

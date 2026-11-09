@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.modules.aicenter.common
@@ -23,7 +24,7 @@ Row {
             required property string modelData
             width: root.size + 4
             height: root.size + 4
-            radius: height / 2
+            radius: Look.radius("round", height)
             variant: "internalbg"
             enableBorder: true
             HoverHandler {
@@ -36,10 +37,13 @@ Row {
                 color: Colors.overSurface
                 visible: icon.length > 0
             }
-            Glyph {
+            Icon {
+                role: "secondary"
+                size: BarLook.size("secondary")
+                tone: "text"
                 anchors.centerIn: parent
                 visible: TaskModel.agentIcon(badge.modelData).length === 0
-                text: Icons.terminal
+                icon: Icons.terminal
                 font.pixelSize: root.size - 5
             }
             StyledToolTip {

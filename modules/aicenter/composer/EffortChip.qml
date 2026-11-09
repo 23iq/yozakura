@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -30,9 +31,9 @@ StyledRect {
     }
 
     visible: Config.ai.strip.effort !== false && levels.length > 0
-    implicitWidth: row.implicitWidth + 14
-    implicitHeight: row.implicitHeight + 8
-    radius: Styling.radius(-4)
+    implicitWidth: row.implicitWidth + 2 * Space.s
+    implicitHeight: row.implicitHeight + 2 * Space.xs
+    radius: Look.radius("control")
     variant: hover.hovered || popup.opened ? "common" : "transparent"
 
     HoverHandler {
@@ -55,62 +56,59 @@ StyledRect {
     RowLayout {
         id: row
         anchors.centerIn: parent
-        spacing: 5
-        Text {
-            text: Icons.brain
-            font.family: Icons.font
-            font.pixelSize: BarLook.font(-3)
+        spacing: Space.xs
+        Icon {
+            role: "caption"
+            icon: Icons.brain
+            size: BarLook.size("caption")
             color: root.level && root.level !== "off" && root.level !== "none" ? Colors.primary : Colors.outline
         }
         // The level a turn will use: chosen, else the engine's own default
         // (outlined brain = auto); the popup spells out "Auto (medium)".
-        Text {
+        AiText {
             objectName: "composerEffortLabel"
+            role: "caption"
             text: !root.level && Ai.effort && Ai.effort.autoHint ? root.label(Ai.effort.autoHint) : root.label(root.level)
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-3)
-            color: Colors.overSurfaceVariant
+            color: Type.secondary
         }
-        Text {
-            text: Icons.caretDown
-            font.family: Icons.font
-            font.pixelSize: BarLook.font(-5)
-            color: Colors.outline
+        Icon {
+            role: "caption"
+            tone: "muted"
+            icon: Icons.caretDown
+            size: BarLook.size("caption")
         }
     }
 
     Popup {
         id: popup
         objectName: "effortSelector"
-        y: -height - 6
+        y: -height - Space.s
         // Kept inside the window in the compact bar.
-        margins: 8
-        padding: 6
+        margins: Space.s
+        padding: Space.s
         closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
         background: StyledRect {
             variant: "popup"
-            radius: Styling.radius(-2)
+            radius: Look.radius("control")
             enableShadow: true
         }
         contentItem: ColumnLayout {
-            spacing: 6
-            Text {
-                Layout.leftMargin: 4
+            spacing: Space.s
+            AiText {
+                role: "caption"
+                Layout.leftMargin: Space.xs
                 text: I18n.t("ai.effort")
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
                 font.weight: Font.DemiBold
-                color: Colors.outline
             }
             StyledRect {
                 variant: "internalbg"
-                radius: Styling.radius(-4)
-                implicitWidth: segments.implicitWidth + 6
-                implicitHeight: segments.implicitHeight + 6
+                radius: Look.radius("control")
+                implicitWidth: segments.implicitWidth + 2 * Space.xs
+                implicitHeight: segments.implicitHeight + 2 * Space.xs
                 RowLayout {
                     id: segments
                     anchors.centerIn: parent
-                    spacing: 2
+                    spacing: Space.xs / 2
                     Repeater {
                         model: root.options
                         delegate: StyledRect {
@@ -118,9 +116,9 @@ StyledRect {
                             required property string modelData
                             readonly property bool current: modelData === root.level
                             objectName: "effortOption_" + (modelData || "auto")
-                            implicitWidth: Math.max(48, segLabel.implicitWidth + 18)
-                            implicitHeight: segLabel.implicitHeight + 10
-                            radius: Styling.radius(-6)
+                            implicitWidth: Math.max(48, segLabel.implicitWidth + 2 * Space.s)
+                            implicitHeight: segLabel.implicitHeight + 2 * Space.xs
+                            radius: Look.radius("small")
                             variant: current ? "primary" : (segHover.hovered ? "focus" : "transparent")
                             opacity: Ai.busy && !current ? 0.5 : 1
                             Behavior on opacity {
@@ -139,12 +137,11 @@ StyledRect {
                                         popup.close();
                                 }
                             }
-                            Text {
+                            AiText {
                                 id: segLabel
+                                role: "caption"
                                 anchors.centerIn: parent
                                 text: seg.modelData ? root.label(seg.modelData) : I18n.t("ai.effort_level.auto")
-                                font.family: Config.theme.font
-                                font.pixelSize: BarLook.font(-3)
                                 font.weight: seg.current ? Font.DemiBold : Font.Normal
                                 color: seg.current ? Styling.srItem("primary") : Colors.overSurface
                             }
@@ -152,14 +149,12 @@ StyledRect {
                     }
                 }
             }
-            Text {
-                Layout.leftMargin: 4
+            AiText {
+                role: "caption"
+                Layout.leftMargin: Space.xs
                 Layout.maximumWidth: segments.implicitWidth
                 text: Ai.busy ? I18n.t("ai.settings_busy") : I18n.t("ai.effort_remembered")
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-5)
-                color: Colors.outline
             }
         }
     }

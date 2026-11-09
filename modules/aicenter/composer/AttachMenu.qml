@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -14,7 +15,7 @@ Popup {
 
     signal picked(string kind)
 
-    padding: 6
+    padding: Space.s
     modal: false
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -60,12 +61,12 @@ Popup {
 
     background: StyledRect {
         variant: "popup"
-        radius: Styling.radius(-2)
+        radius: Look.radius("control")
         enableShadow: true
     }
 
     contentItem: Column {
-        spacing: 2
+        spacing: Space.xs / 2
         Repeater {
             model: root.items
             delegate: StyledRect {
@@ -73,7 +74,7 @@ Popup {
                 required property var modelData
                 width: 236
                 height: 32
-                radius: Styling.radius(-6)
+                radius: Look.radius("small")
                 variant: hov.hovered ? "focus" : "transparent"
                 HoverHandler {
                     id: hov
@@ -86,28 +87,24 @@ Popup {
                 }
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 10
-                    anchors.rightMargin: 10
-                    spacing: 10
-                    Text {
-                        text: entry.modelData.icon
-                        font.family: Icons.font
-                        font.pixelSize: 14
-                        color: Colors.primary
+                    anchors.leftMargin: Space.s
+                    anchors.rightMargin: Space.s
+                    spacing: Space.s
+                    Icon {
+                        role: "caption"
+                        tone: "accent"
+                        icon: entry.modelData.icon
                     }
-                    Text {
+                    KitText {
+                        role: "secondary"
                         Layout.fillWidth: true
                         text: entry.modelData.label
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.overSurface
+                        color: Type.text
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         visible: entry.modelData.key.length > 0
                         text: "Ctrl+Shift+" + entry.modelData.key
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-4)
-                        color: Colors.outline
                     }
                 }
             }

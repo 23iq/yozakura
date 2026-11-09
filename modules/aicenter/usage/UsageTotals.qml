@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -20,46 +21,43 @@ StyledRect {
     readonly property string costText: UsageFormat.totalsCost(totals, costOpts)
 
     variant: "common"
-    radius: Styling.radius(0)
+    radius: Look.radius("surface")
     enableBorder: false
-    implicitHeight: content.implicitHeight + 28
+    implicitHeight: content.implicitHeight + 2 * Space.m
 
     RowLayout {
         id: content
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: 16
-        spacing: 12
+        anchors.margins: Space.l
+        spacing: Space.m
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
-            Text {
+            spacing: Space.xs / 2
+            AiText {
                 objectName: "usageTotalCost"
+                role: "title"
                 text: root.costText || UsageFormat.tokens((root.totals.inputTokens || 0) + (root.totals.outputTokens || 0))
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(8)
                 font.weight: Font.DemiBold
                 font.features: {
                     "tnum": 1
                 }
-                color: Colors.overSurface
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: I18n.t("ai.usage.tokens_in_out").arg(UsageFormat.tokens(root.totals.inputTokens)).arg(UsageFormat.tokens(root.totals.outputTokens)) + "  ·  " + I18n.t("ai.usage.requests").arg(root.totals.requests || 0) + ((root.totals.cachedTokens || 0) > 0 ? "  ·  " + I18n.t("ai.usage.cached").arg(UsageFormat.tokens(root.totals.cachedTokens)) : "")
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
-                color: Colors.overSurfaceVariant
+                color: Type.secondary
             }
         }
         UsageSparkline {
             visible: (root.series || []).length > 1
-            values: root.series
-            barWidth: 6
-            chartHeight: 32
+            series: root.series
+            implicitWidth: Space.controlL + Space.l
+            implicitHeight: Space.xxl
             Layout.alignment: Qt.AlignVCenter
         }
     }

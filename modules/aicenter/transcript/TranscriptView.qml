@@ -4,6 +4,7 @@ import QtQuick.Controls
 import qs.modules.services
 import qs.modules.aicenter.common
 import qs.modules.theme
+import qs.modules.components.kit
 
 // The conversation of any engine: an HTTP chat (`session`, a ChatSession)
 // or a CLI agent session (`agentId`). Styles: "compact" (Assistant) and
@@ -80,8 +81,8 @@ Item {
         anchors.fill: parent
         model: root.model.rows
         clip: true
-        topMargin: 12
-        bottomMargin: 16
+        topMargin: Space.m
+        bottomMargin: Space.l
         leftMargin: BarLook.pad
         rightMargin: BarLook.pad
         cacheBuffer: 2000

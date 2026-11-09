@@ -70,7 +70,7 @@ StyledRect {
     }
 
     variant: "pane"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
 
     ColumnLayout {
         anchors.fill: parent
@@ -102,26 +102,29 @@ StyledRect {
             objectName: "waitingBanner"
             Layout.fillWidth: true
             visible: root.permissionWaiting
-            implicitHeight: bannerRow.implicitHeight + 12
-            radius: Styling.radius(-4)
+            implicitHeight: bannerRow.implicitHeight + 2 * Space.s
+            radius: Look.radius("control")
             variant: "common"
             border.width: 1
             border.color: Colors.warning
             RowLayout {
                 id: bannerRow
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 6
-                spacing: 8
-                Glyph {
-                    text: Icons.hand
-                    role: "warning"
+                anchors.leftMargin: Space.s
+                anchors.rightMargin: Space.s
+                spacing: Space.s
+                Icon {
+                    role: "secondary"
+                    size: BarLook.size("secondary")
+                    color: Colors.warning
+                    icon: Icons.hand
                 }
-                UiText {
+                AiText {
+                    role: "caption"
+                    font.weight: Font.DemiBold
+                    color: Type.text
                     Layout.fillWidth: true
                     text: I18n.t("ai.tasks.activity_waiting").replace("%1", root.current ? TaskModel.agentLabel(root.current.agent, Ai.agents ? Ai.agents.agents : []) : "")
-                    size: -2
-                    strong: true
                 }
                 Chip {
                     visible: root.tab !== "transcript"
@@ -143,7 +146,7 @@ StyledRect {
             RowLayout {
                 id: tabsRow
                 width: Math.max(tabsView.width, implicitWidth)
-                spacing: 4
+                spacing: Space.xs
                 Repeater {
                     model: (root.task ? root.task.runs || [] : []).length > 1 ? root.task.runs : []
                     delegate: Chip {
@@ -197,11 +200,12 @@ StyledRect {
                     persistKey: root.current ? "task:" + root.task.id + ":" + root.run : ""
                     agentLabel: root.current ? TaskModel.agentLabel(root.current.agent, Ai.agents ? Ai.agents.agents : []) : ""
                 }
-                UiText {
+                AiText {
+                    role: "secondary"
+                    color: Type.muted
                     anchors.centerIn: parent
                     visible: !root.current || !root.current.sessionId
                     text: I18n.t(root.task && root.task.status === "queued" ? "ai.tasks.queued_hint" : "ai.tasks.no_session")
-                    muted: true
                 }
             }
             TaskChanges {

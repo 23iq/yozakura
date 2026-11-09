@@ -25,11 +25,11 @@ ColumnLayout {
     readonly property var info: TaskModel.statusInfo(root.task ? root.task.status : "")
     readonly property var acts: TaskModel.actions(root.task)
 
-    spacing: 6
+    spacing: Space.s
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 6
+        spacing: Space.s
         IconButton {
             size: "xs"
             objectName: "taskBack"
@@ -40,14 +40,13 @@ ColumnLayout {
         }
         StatusIcon {
             status: root.task ? root.task.status : ""
-            size: 1
         }
-        UiText {
+        AiText {
             objectName: "taskTitle"
+            role: "body"
+            font.weight: Font.DemiBold
             Layout.fillWidth: true
             text: root.task ? root.task.title : ""
-            size: 2
-            strong: true
             color: Colors.overBackground
         }
         IconButton {
@@ -88,62 +87,60 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: root.showBack ? 36 : 0
-        spacing: 8
+        spacing: Space.s
         StyledRect {
-            implicitWidth: statusText.implicitWidth + 14
-            implicitHeight: statusText.implicitHeight + 4
-            radius: height / 2
+            implicitWidth: statusText.implicitWidth + 2 * Space.s
+            implicitHeight: statusText.implicitHeight + Space.xs
+            radius: Look.radius("round", height)
             variant: "internalbg"
             border.width: 1
             border.color: Colors[root.info.color] !== undefined ? Colors[root.info.color] : Colors.outline
-            UiText {
+            AiText {
                 id: statusText
+                role: "caption"
                 anchors.centerIn: parent
                 text: I18n.t("ai.tasks.status." + (root.task ? root.task.status : "queued"))
-                size: -3
                 color: Colors[root.info.color] !== undefined ? Colors[root.info.color] : Colors.outline
             }
         }
         AgentIcons {
             agents: TaskModel.taskAgents(root.task)
         }
-        UiText {
+        AiText {
+            role: "caption"
             visible: !!root.run
             Layout.fillWidth: true
             Layout.maximumWidth: implicitWidth
             elide: Text.ElideRight
             text: root.run ? [TaskModel.agentLabel(root.run.agent, Ai.agents ? Ai.agents.agents : []), root.run.model, root.run.effort].filter(Boolean).join(" · ") : ""
-            muted: true
-            size: -3
         }
-        Glyph {
+        Icon {
+            role: "caption"
+            size: BarLook.size("caption")
+            tone: "muted"
             visible: branchLabel.text.length > 0
-            text: Icons.gitBranch
-            role: "outline"
-            size: -3
+            icon: Icons.gitBranch
         }
-        UiText {
+        AiText {
             id: branchLabel
+            role: "caption"
             Layout.fillWidth: true
             text: root.task && root.task.inPlace ? I18n.t("ai.tasks.in_place_badge") + " · " + (root.task.baseBranch || "") : (root.run ? root.run.branch || "" : "")
             mono: true
-            muted: true
-            size: -4
             elide: Text.ElideMiddle
         }
-        UiText {
+        AiText {
+            role: "caption"
             text: [TaskModel.elapsed(root.task, root.now), Config.ai.tasks.showCosts ? TaskModel.cost(root.task) : ""].filter(Boolean).join(" · ")
-            muted: true
-            size: -3
         }
     }
 
-    UiText {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         visible: !!root.task && !!root.task.error
         text: root.task ? root.task.error || "" : ""
         color: Colors.error
         wrapMode: Text.Wrap
-        size: -2
     }
 }

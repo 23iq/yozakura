@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -22,11 +23,10 @@ ColumnLayout {
 
     spacing: BarLook.gap
 
-    UiText {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         text: root.run ? I18n.t("ai.tasks.attempts_of").replace("%1", root.run.attempts || 0).replace("%2", root.maxAttempts || "–") : ""
-        muted: true
-        size: -2
     }
 
     Repeater {
@@ -36,8 +36,8 @@ ColumnLayout {
             required property var modelData
             required property int index
             Layout.fillWidth: true
-            implicitHeight: line.implicitHeight + 12
-            radius: Styling.radius(-4)
+            implicitHeight: line.implicitHeight + 2 * Space.s
+            radius: Look.radius("control")
             variant: root.current === row.modelData ? "focus" : (hover.hovered ? "common" : "pane")
             HoverHandler {
                 id: hover
@@ -49,52 +49,54 @@ ColumnLayout {
             RowLayout {
                 id: line
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 10
-                spacing: 8
-                Glyph {
-                    text: row.modelData.status === "pass" ? Icons.checkCircle : (row.modelData.status === "skipped" ? Icons.minusCircle : (row.modelData.status === "timeout" ? Icons.hourglass : Icons.xCircle))
-                    role: row.modelData.status === "pass" ? "success" : (row.modelData.status === "skipped" ? "outline" : "error")
+                anchors.leftMargin: Space.s
+                anchors.rightMargin: Space.s
+                spacing: Space.s
+                Icon {
+                    role: "secondary"
+                    size: BarLook.size("secondary")
+                    color: Colors[row.modelData.status === "pass" ? "success" : (row.modelData.status === "skipped" ? "outline" : "error")] ?? Type.text
+                    icon: row.modelData.status === "pass" ? Icons.checkCircle : (row.modelData.status === "skipped" ? Icons.minusCircle : (row.modelData.status === "timeout" ? Icons.hourglass : Icons.xCircle))
                 }
-                UiText {
+                AiText {
+                    role: "caption"
+                    color: Type.text
                     Layout.fillWidth: true
                     text: row.modelData.command || I18n.t("ai.tasks.no_check")
                     mono: true
-                    size: -2
                 }
-                UiText {
+                AiText {
+                    role: "caption"
                     text: I18n.t("ai.tasks.check." + (row.modelData.status || "skipped")) + (row.modelData.exitCode ? " · " + row.modelData.exitCode : "")
-                    muted: true
-                    size: -3
                 }
-                UiText {
+                AiText {
+                    role: "caption"
                     text: Math.round((row.modelData.durationMs || 0) / 100) / 10 + "s"
-                    muted: true
-                    size: -3
                 }
             }
         }
     }
 
-    UiText {
+    AiText {
+        role: "secondary"
+        color: Type.muted
         visible: root.checks.length === 0
         Layout.fillWidth: true
         Layout.topMargin: BarLook.gap
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
         text: I18n.t("ai.tasks.no_checks")
-        muted: true
     }
 
     StyledRect {
         Layout.fillWidth: true
         Layout.fillHeight: true
         visible: root.current !== null && !!root.current.outputTail
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         variant: "internalbg"
         ScrollView {
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: Space.s
             TextArea {
                 objectName: "checkOutput"
                 readOnly: true
@@ -102,7 +104,7 @@ ColumnLayout {
                 wrapMode: TextArea.WrapAnywhere
                 text: root.current ? root.current.outputTail || "" : ""
                 font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-3)
+                font.pixelSize: BarLook.monoSize("caption")
                 color: Colors.overSurface
                 background: null
             }

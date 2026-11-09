@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -19,38 +20,36 @@ StyledRect {
     property double now: Date.now()
 
     readonly property string level: UsageFormat.level(win.percent || 0, Config.ai.usage.warnAt, Config.ai.usage.criticalAt)
-    readonly property color tone: level === "critical" ? Colors.error : (level === "warn" ? Colors.warning : Colors.primary)
+    readonly property color tone: level === "critical" ? Type.danger : (level === "warn" ? Colors.warning : Type.progress)
     readonly property double msLeft: UsageFormat.msUntil(win.resetsAt, now)
 
     variant: "common"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
     enableBorder: false
-    implicitHeight: column.implicitHeight + 20
+    implicitHeight: column.implicitHeight + 2 * Space.s
 
     ColumnLayout {
         id: column
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.margins: 12
-        spacing: 6
+        anchors.margins: Space.m
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 6
-            Text {
+            spacing: Space.s
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: UsageFormat.providerLabel(root.win.provider) + "  ·  " + (UsageFormat.windowKey(root.win.id) ? I18n.t(UsageFormat.windowKey(root.win.id)) : root.win.id)
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
-                color: Colors.overSurface
+                color: Type.text
             }
-            Text {
+            AiText {
                 objectName: "usageLimitPercent"
+                role: "caption"
                 text: Math.round(root.win.percent || 0) + "%"
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
                 font.weight: Font.DemiBold
                 font.features: {
                     "tnum": 1
@@ -58,35 +57,18 @@ StyledRect {
                 color: root.level === "ok" ? Colors.overSurface : root.tone
             }
         }
-        StyledRect {
+        LevelMeter {
             Layout.fillWidth: true
-            Layout.preferredHeight: 6
-            variant: "internalbg"
-            radius: 3
-            enableBorder: false
-            // Fill of the window bar.
-            Rectangle {
-                width: parent.width * Math.max(0, Math.min(1, (root.win.percent || 0) / 100))
-                height: parent.height
-                radius: parent.radius
-                color: root.tone
-                Behavior on width {
-                    enabled: BarLook.animDuration > 0
-                    NumberAnimation {
-                        duration: BarLook.animDuration
-                        easing.type: Motion.morph.easing
-                    }
-                }
-            }
+            Layout.preferredHeight: Space.s - Space.xs / 2
+            level: (root.win.percent || 0) / 100
+            tone: root.tone
         }
-        Text {
+        AiText {
+            role: "caption"
             Layout.fillWidth: true
             visible: text.length > 0
             text: root.msLeft > 0 ? I18n.t("ai.usage.resets_in").arg(UsageFormat.duration(root.msLeft, root.units)) : ""
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-4)
-            color: Colors.outline
         }
     }
 }

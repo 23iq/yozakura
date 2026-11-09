@@ -43,7 +43,7 @@ StyledRect {
 
     // Opaque: it covers the conversation.
     variant: "bg"
-    radius: Styling.radius(0)
+    radius: Look.radius("surface")
 
     function refresh() {
         if (!visible)
@@ -93,32 +93,29 @@ StyledRect {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 14
-        spacing: 12
+        anchors.margins: Space.m
+        spacing: Space.m
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
-            Text {
-                text: Icons.chartBar
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(1)
-                color: Colors.primary
+            spacing: Space.s
+            Icon {
+                role: "body"
+                tone: "accent"
+                icon: Icons.chartBar
+                size: BarLook.size("body")
             }
             // The compact bar keeps the range tabs, not the title.
             Item {
                 Layout.fillWidth: true
                 visible: root.width < 400
             }
-            Text {
+            AiText {
                 Layout.fillWidth: true
                 visible: root.width >= 400
                 text: I18n.t("ai.usage.title")
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(1)
                 font.weight: Font.DemiBold
-                color: Colors.overSurface
             }
             UsageRangeTabs {
                 range: root.range
@@ -143,7 +140,7 @@ StyledRect {
             ColumnLayout {
                 id: body
                 width: parent.width
-                spacing: 10
+                spacing: Space.s
 
                 UsageTotals {
                     Layout.fillWidth: true
@@ -152,17 +149,15 @@ StyledRect {
                     series: root.sparklines ? UsageFormat.series((root.days ? root.days.rows : []).filter(r => !UsageFormat.isHidden(r.provider, root.hidden)), "", root.dayKeys) : []
                 }
 
-                Text {
+                AiText {
                     objectName: "usageEmpty"
+                    role: "caption"
                     Layout.fillWidth: true
-                    Layout.topMargin: 6
+                    Layout.topMargin: Space.s
                     visible: !root.loading && root.rows.length === 0
                     text: I18n.t("ai.usage.empty")
                     wrapMode: Text.Wrap
                     horizontalAlignment: Text.AlignHCenter
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.outline
                 }
 
                 Repeater {
@@ -177,25 +172,21 @@ StyledRect {
                     }
                 }
 
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
-                    Layout.topMargin: 8
+                    Layout.topMargin: Space.s
                     text: I18n.t("ai.usage.subscriptions")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
                     font.weight: Font.DemiBold
                     font.capitalization: Font.AllUppercase
-                    color: Colors.outline
                 }
-                Text {
+                AiText {
                     objectName: "usageNoLimits"
+                    role: "caption"
                     Layout.fillWidth: true
                     visible: root.windows.length === 0
                     text: I18n.t("ai.usage.no_limits")
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
-                    color: Colors.outline
                 }
                 Repeater {
                     model: root.windows
@@ -208,17 +199,15 @@ StyledRect {
                     }
                 }
 
-                Text {
+                AiText {
                     objectName: "usageFootnote"
+                    role: "caption"
                     Layout.fillWidth: true
-                    Layout.topMargin: 8
+                    Layout.topMargin: Space.s
                     text: I18n.t("ai.usage.footnote") + (UsageService.info.pricesOverride ? "  <a href=\"prices\">" + I18n.t("ai.usage.edit_prices") + "</a>" : "")
                     textFormat: Text.StyledText
                     linkColor: Colors.primary
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-4)
-                    color: Colors.outline
                     onLinkActivated: UsageService.openPrices()
                     HoverHandler {
                         cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor

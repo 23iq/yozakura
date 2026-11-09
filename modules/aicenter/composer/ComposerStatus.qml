@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -43,7 +44,7 @@ RowLayout {
     readonly property var parts: !model ? [] : (isAgent ? [(Ai.effort && Ai.effort.modelLabel) || settings.model || I18n.t("ai.model_default")] : [model.name])
     readonly property string agentStatus: Ai.activeAgent ? Ai.activeAgent.status : ""
 
-    spacing: 8
+    spacing: Space.s
 
     StyledRect {
         objectName: "composerEngine"
@@ -51,9 +52,9 @@ RowLayout {
         // Shrinks (eliding the label) before the right-hand items.
         Layout.fillWidth: true
         Layout.maximumWidth: implicitWidth
-        implicitWidth: engineRow.implicitWidth + 16
-        implicitHeight: engineRow.implicitHeight + 8
-        radius: Styling.radius(-4)
+        implicitWidth: engineRow.implicitWidth + 2 * Space.s
+        implicitHeight: engineRow.implicitHeight + 2 * Space.xs
+        radius: Look.radius("control")
         variant: engineHover.hovered ? "common" : "transparent"
         HoverHandler {
             id: engineHover
@@ -66,44 +67,42 @@ RowLayout {
             id: engineRow
             anchors.centerIn: parent
             width: Math.min(implicitWidth, parent.width - 16)
-            spacing: 6
-            Text {
-                text: Icons.sparkle
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-3)
+            spacing: Space.s
+            Icon {
+                role: "caption"
+                icon: Icons.sparkle
+                size: BarLook.size("caption")
                 color: root.model ? Colors.primary : Colors.outline
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: [root.engineLabel].concat(root.parts.filter(p => p)).join("  ·  ")
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
-                color: Colors.overSurfaceVariant
+                color: Type.secondary
             }
-            Text {
-                text: Icons.caretDown
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-5)
-                color: Colors.outline
+            Icon {
+                role: "caption"
+                tone: "muted"
+                icon: Icons.caretDown
+                size: BarLook.size("caption")
             }
         }
     }
 
     EffortChip {
-        Layout.leftMargin: -6
+        Layout.leftMargin: -Space.s
     }
 
     StatusDot {
         visible: root.agentStatus === "waiting" || root.agentStatus === "running" || root.agentStatus === "starting"
         status: root.agentStatus || "idle"
     }
-    Text {
+    AiText {
+        role: "caption"
         // The dot alone in the compact bar: the model name needs the room.
         visible: root.agentStatus === "waiting" && root.width >= 400
         text: I18n.t("ai.status_waiting")
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-4)
         color: Colors.warning
     }
 

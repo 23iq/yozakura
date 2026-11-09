@@ -16,7 +16,7 @@ Flow {
 
     signal removeRequested(int index)
 
-    spacing: 6
+    spacing: Space.s
     visible: attachments.length > 0
 
     function iconFor(a) {
@@ -49,10 +49,10 @@ Flow {
                     variant: "common"
                     width: 64
                     height: 64
-                    radius: Styling.radius(-6)
+                    radius: Look.radius("small")
                     Image {
                         anchors.fill: parent
-                        anchors.margins: 2
+                        anchors.margins: Space.xs / 2
                         fillMode: Image.PreserveAspectCrop
                         source: "data:" + entry.modelData.mimeType + ";base64," + entry.modelData.base64
                         asynchronous: true

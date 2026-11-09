@@ -111,15 +111,18 @@ ColumnLayout {
             RowLayout {
                 Layout.fillWidth: true
                 visible: root.check !== null
-                spacing: 6
-                Glyph {
-                    text: root.check && root.check.status === "pass" ? Icons.checkCircle : Icons.xCircle
-                    role: root.check && root.check.status === "pass" ? "success" : "error"
+                spacing: Space.s
+                Icon {
+                    role: "secondary"
+                    size: BarLook.size("secondary")
+                    color: Colors[root.check && root.check.status === "pass" ? "success" : "error"] ?? Type.text
+                    icon: root.check && root.check.status === "pass" ? Icons.checkCircle : Icons.xCircle
                 }
-                UiText {
+                AiText {
+                    role: "caption"
+                    color: Type.text
                     Layout.fillWidth: true
                     text: root.check ? I18n.t("ai.tasks.check_line").replace("%1", root.check.command || "").replace("%2", I18n.t("ai.tasks.check." + root.check.status)).replace("%3", root.current.attempts || 0) : ""
-                    size: -2
                 }
             }
 
@@ -127,41 +130,40 @@ ColumnLayout {
                 Layout.fillWidth: true
                 visible: !!root.current && !!root.current.summary
                 text: root.current ? root.current.summary || "" : ""
-                fontSize: BarLook.font(-1)
+                fontSize: BarLook.size("secondary")
             }
 
-            UiText {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: !!root.current && !!root.current.error
                 text: root.current ? root.current.error || "" : ""
                 color: Colors.error
                 wrapMode: Text.Wrap
-                size: -2
             }
 
-            UiText {
+            AiText {
+                role: "caption"
                 text: I18n.t("ai.tasks.commit_message")
-                muted: true
-                size: -3
                 visible: root.reviewable
             }
             StyledRect {
                 Layout.fillWidth: true
                 visible: root.reviewable
-                implicitHeight: Math.min(140, message.implicitHeight + 8)
-                radius: Styling.radius(-4)
+                implicitHeight: Math.min(140, message.implicitHeight + 2 * Space.xs)
+                radius: Look.radius("control")
                 variant: "common"
                 border.width: message.activeFocus ? 1 : 0
                 border.color: Colors.primary
                 ScrollView {
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: Space.xs
                     TextArea {
                         id: message
                         objectName: "commitMessage"
                         wrapMode: TextArea.Wrap
                         font.family: Config.theme.monoFont
-                        font.pixelSize: BarLook.mono(-2)
+                        font.pixelSize: BarLook.monoSize("caption")
                         color: Colors.overSurface
                         selectionColor: Colors.primary
                         selectedTextColor: Colors.overPrimary
@@ -174,23 +176,26 @@ ColumnLayout {
                 objectName: "reviewError"
                 Layout.fillWidth: true
                 visible: root.error.length > 0
-                implicitHeight: errorText.implicitHeight + 14
-                radius: Styling.radius(-4)
+                implicitHeight: errorText.implicitHeight + 2 * Space.s
+                radius: Look.radius("control")
                 variant: "error"
                 RowLayout {
                     id: errorText
                     anchors.fill: parent
-                    anchors.margins: 7
-                    spacing: 8
-                    Glyph {
-                        text: Icons.warning
+                    anchors.margins: Space.s
+                    spacing: Space.s
+                    Icon {
+                        role: "secondary"
+                        size: BarLook.size("secondary")
+                        tone: "text"
+                        icon: Icons.warning
                         color: Styling.srItem("error")
                     }
-                    UiText {
+                    AiText {
+                        role: "caption"
                         Layout.fillWidth: true
                         text: I18n.t("ai.tasks.action_failed").replace("%1", root.error)
                         wrapMode: Text.Wrap
-                        size: -2
                         color: Styling.srItem("error")
                     }
                 }
@@ -216,7 +221,7 @@ ColumnLayout {
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 TextField {
                     id: changesField
                     objectName: "requestChanges"
@@ -226,10 +231,10 @@ ColumnLayout {
                     placeholderTextColor: Colors.outline
                     color: Colors.overSurface
                     font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-1)
+                    font.pixelSize: BarLook.size("secondary")
                     background: StyledRect {
                         variant: "common"
-                        radius: Styling.radius(-4)
+                        radius: Look.radius("control")
                     }
                     onAccepted: root.sendChanges()
                     Keys.onEscapePressed: {

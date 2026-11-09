@@ -25,7 +25,7 @@ RowLayout {
     signal pickRequested
     readonly property bool narrow: width < 420
 
-    spacing: 6
+    spacing: Space.s
 
     function shortPath(p) {
         return p && home && p.indexOf(home) === 0 ? "~" + p.substring(home.length) : (p || "");
@@ -63,9 +63,9 @@ RowLayout {
         Layout.fillWidth: true
         Layout.maximumWidth: implicitWidth
         Layout.minimumWidth: Math.min(implicitWidth, 120)
-        implicitWidth: projectRow.implicitWidth + 16
-        implicitHeight: 28
-        radius: Styling.radius(-4)
+        implicitWidth: projectRow.implicitWidth + 2 * Space.s
+        implicitHeight: Space.controlXS
+        radius: Look.radius("control")
         variant: projectHover.hovered || menu.visible ? "focus" : "common"
         HoverHandler {
             id: projectHover
@@ -78,51 +78,49 @@ RowLayout {
             id: projectRow
             anchors.centerIn: parent
             width: Math.min(implicitWidth, parent.width - 16)
-            spacing: 6
-            Text {
-                text: Icons.folderOpen
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-2)
-                color: Colors.primary
+            spacing: Space.s
+            Icon {
+                role: "caption"
+                tone: "accent"
+                icon: Icons.folderOpen
+                size: BarLook.size("caption")
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.baseName(root.project)
                 elide: Text.ElideMiddle
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
                 font.weight: Font.DemiBold
-                color: Colors.overSurface
+                color: Type.text
             }
-            Text {
-                text: Icons.caretDown
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-5)
-                color: Colors.outline
+            Icon {
+                role: "caption"
+                tone: "muted"
+                icon: Icons.caretDown
+                size: BarLook.size("caption")
             }
         }
 
         Popup {
             id: menu
-            y: parent.height + 4
+            y: parent.height + Space.xs
             width: Math.min(Math.max(260, parent.width), root.width)
-            padding: 6
+            padding: Space.s
             background: StyledRect {
                 variant: "popup"
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
                 enableShadow: true
             }
             contentItem: ColumnLayout {
-                spacing: 2
-                Text {
-                    Layout.leftMargin: 8
-                    Layout.topMargin: 2
+                spacing: Space.xs / 2
+                AiText {
+                    mono: true
+                    role: "caption"
+                    Layout.leftMargin: Space.s
+                    Layout.topMargin: Space.xs / 2
                     text: root.shortPath(root.project)
                     elide: Text.ElideMiddle
                     Layout.maximumWidth: menu.width - 24
-                    font.family: Config.theme.monoFont
-                    font.pixelSize: BarLook.mono(-3)
-                    color: Colors.outline
                 }
                 Repeater {
                     model: root.recents
@@ -130,8 +128,8 @@ RowLayout {
                         id: recentItem
                         required property string modelData
                         Layout.fillWidth: true
-                        implicitHeight: 30
-                        radius: Styling.radius(-6)
+                        implicitHeight: Space.controlXS
+                        radius: Look.radius("small")
                         variant: itemHover.hovered ? "common" : "transparent"
                         HoverHandler {
                             id: itemHover
@@ -145,29 +143,28 @@ RowLayout {
                         }
                         RowLayout {
                             anchors.fill: parent
-                            anchors.leftMargin: 8
-                            anchors.rightMargin: 8
-                            spacing: 8
-                            Text {
-                                text: Icons.folder
-                                font.family: Icons.font
-                                font.pixelSize: BarLook.font(-2)
-                                color: Colors.outline
+                            anchors.leftMargin: Space.s
+                            anchors.rightMargin: Space.s
+                            spacing: Space.s
+                            Icon {
+                                role: "caption"
+                                tone: "muted"
+                                icon: Icons.folder
+                                size: BarLook.size("caption")
                             }
-                            Text {
+                            AiText {
+                                role: "caption"
                                 Layout.fillWidth: true
                                 text: root.shortPath(recentItem.modelData)
                                 elide: Text.ElideMiddle
-                                font.family: Config.theme.font
-                                font.pixelSize: BarLook.font(-2)
-                                color: Colors.overSurface
+                                color: Type.text
                             }
                         }
                     }
                 }
                 Chip {
                     objectName: "projectOpenFolder"
-                    Layout.topMargin: 2
+                    Layout.topMargin: Space.xs / 2
                     icon: Icons.plus
                     text: I18n.t("ai.open_folder")
                     quiet: true
@@ -208,33 +205,31 @@ RowLayout {
         }
         Popup {
             id: instructionsMenu
-            y: parent.height + 4
+            y: parent.height + Space.xs
             x: Math.min(0, root.width - parent.x - width)
             width: Math.min(300, root.width)
-            padding: 10
+            padding: Space.s
             background: StyledRect {
                 variant: "popup"
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
                 enableShadow: true
             }
             contentItem: ColumnLayout {
-                spacing: 8
-                Text {
+                spacing: Space.s
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("ai.tasks.instructions_missing")
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     visible: root.createError.length > 0
                     text: root.createError
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
-                    color: Colors.error
+                    color: Type.danger
                 }
                 Chip {
                     objectName: "createInstructions"
