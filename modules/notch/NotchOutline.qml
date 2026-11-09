@@ -1,11 +1,14 @@
 import QtQuick
+import QtQuick.Shapes
 import qs.modules.theme
 import qs.config
 
 // Outline of the attached notch: one continuous stroke along the body and
 // its two concave screen corners, drawn for a top or bottom `edge` (a side
-// notch turns this item, see NotchSilhouette).
-Canvas {
+// notch turns this item, see NotchSilhouette). A GPU path (Shape, curve
+// renderer): a size change while the notch morphs updates the path, it
+// never repaints and re-uploads a canvas texture.
+Shape {
     id: root
 
     property string edge: "top"
@@ -16,54 +19,75 @@ Canvas {
     readonly property var borderData: Config.theme.srBg.border
     readonly property int borderWidth: borderData[1]
     readonly property color borderColor: Config.resolveColor(borderData[0])
-    readonly property string paintKey: [width, height, edge, cornerSize, radius, borderWidth, borderColor, Colors.primary].join("|")
-    onPaintKeyChanged: requestPaint()
 
-    antialiasing: true
+    // Drawn for the top edge; the bottom edge is its mirror image
+    readonly property real o: root.borderWidth / 2 // keep the stroke inside
+    readonly property real c: root.cornerSize
+    readonly property real r: Math.max(0, root.radius - root.o)
+    readonly property real rawR: root.radius
+    readonly property real yBottom: root.height - root.o
+    readonly property real wCenter: root.width - root.c * 2
 
-    onPaint: {
-        const ctx = getContext("2d");
-        ctx.clearRect(0, 0, width, height);
-        if (borderWidth <= 0)
-            return;
-        ctx.strokeStyle = borderColor;
-        ctx.lineWidth = borderWidth;
-        ctx.lineJoin = "round";
-        ctx.lineCap = "round";
+    preferredRendererType: Shape.CurveRenderer
+    // Without concave corners the stroke runs along the item's edges and,
+    // like the canvas it replaced, is cut there (a cheap scissor)
+    clip: root.c < root.borderWidth
+    transform: Scale {
+        origin.y: root.height / 2
+        yScale: root.edge === "bottom" ? -1 : 1
+    }
 
-        const o = borderWidth / 2; // keep the stroke inside
-        const c = cornerSize;
-        const r = radius;
-        const wCenter = width - c * 2;
-        const yBottom = height - o;
-        ctx.beginPath();
-        if (edge === "top") {
-            ctx.moveTo(o, o);
-            if (c > 0)
-                ctx.arc(o, c, c - o, 3 * Math.PI / 2, 2 * Math.PI);
-            ctx.lineTo(c, yBottom - r);
-            if (r > 0)
-                ctx.arcTo(c, yBottom, c + r, yBottom, r - o);
-            ctx.lineTo(c + wCenter - r, yBottom);
-            if (r > 0)
-                ctx.arcTo(c + wCenter, yBottom, c + wCenter, yBottom - r, r - o);
-            ctx.lineTo(c + wCenter, c);
-            if (c > 0)
-                ctx.arc(width - o, c, c - o, Math.PI, 3 * Math.PI / 2);
-        } else {
-            ctx.moveTo(o, yBottom);
-            if (c > 0)
-                ctx.arc(o, height - c, c - o, Math.PI / 2, 0, true);
-            ctx.lineTo(c, o + r);
-            if (r > 0)
-                ctx.arcTo(c, o, c + r, o, r - o);
-            ctx.lineTo(c + wCenter - r, o);
-            if (r > 0)
-                ctx.arcTo(c + wCenter, o, c + wCenter, o + r, r - o);
-            ctx.lineTo(c + wCenter, height - c);
-            if (c > 0)
-                ctx.arc(width - o, height - c, c - o, Math.PI, Math.PI / 2, true);
+    ShapePath {
+        strokeColor: root.borderWidth > 0 ? root.borderColor : "transparent"
+        strokeWidth: root.borderWidth
+        fillColor: "transparent"
+        joinStyle: ShapePath.RoundJoin
+        capStyle: ShapePath.RoundCap
+
+        startX: root.o
+        startY: root.o
+        // concave corner along the edge (left)
+        PathArc {
+            x: root.c > 0 ? root.c : root.o // no concave corner: stay put
+            y: root.c > 0 ? root.c : root.o
+            radiusX: Math.max(0, root.c - root.o)
+            radiusY: Math.max(0, root.c - root.o)
+            direction: PathArc.Clockwise
         }
-        ctx.stroke();
+        PathLine {
+            x: root.c
+            y: root.yBottom - (root.rawR > 0 ? root.r : 0)
+        }
+        // corners facing the screen center
+        PathArc {
+            x: root.c + (root.rawR > 0 ? root.r : 0)
+            y: root.yBottom
+            radiusX: root.r
+            radiusY: root.r
+            direction: PathArc.Counterclockwise
+        }
+        PathLine {
+            x: root.c + root.wCenter - (root.rawR > 0 ? root.r : 0)
+            y: root.yBottom
+        }
+        PathArc {
+            x: root.c + root.wCenter
+            y: root.yBottom - (root.rawR > 0 ? root.r : 0)
+            radiusX: root.r
+            radiusY: root.r
+            direction: PathArc.Counterclockwise
+        }
+        PathLine {
+            x: root.c + root.wCenter
+            y: root.c
+        }
+        // concave corner along the edge (right)
+        PathArc {
+            x: root.c > 0 ? root.width - root.o : root.width
+            y: root.c > 0 ? root.o : 0
+            radiusX: Math.max(0, root.c - root.o)
+            radiusY: Math.max(0, root.c - root.o)
+            direction: PathArc.Clockwise
+        }
     }
 }

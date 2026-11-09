@@ -310,16 +310,14 @@ Item {
 
             // Opacity animation
             opacity: root.reveal ? 1 : 0
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.enter.easing
-                }
+            RenderFade on opacity {
+                duration: root.fadeDuration
+                easingType: root.fadeEasing
             }
 
             // Slide behind the edge when hidden
             transform: Translate {
+                id: notchSlide
                 x: root.reveal ? 0 : root.hideOffset.x
                 y: root.reveal ? 0 : root.hideOffset.y
                 Behavior on x {
@@ -400,12 +398,9 @@ Item {
 
             // Apply same reveal animation as notch
             opacity: root.reveal ? 1 : 0
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.enter.easing
-                }
+            RenderFade on opacity {
+                duration: root.fadeDuration
+                easingType: root.fadeEasing
             }
 
             transform: Translate {
@@ -502,6 +497,15 @@ Item {
         if (root.screenVisibilities)
             root.screenVisibilities.notchRaised = false;
     }
-    // Notch + notification popup: where this item draws (shadow capture)
+    // Notch + notification popup: where this item draws
     readonly property Item visualRegion: notchRegionContainer
+    // The notch's silhouette in this item's coordinates (it fills the
+    // panel), with the reveal slide: its analytic shadow follows it every
+    // frame without capturing anything (PanelShadows)
+    readonly property Item silhouette: notchContainer.silhouette
+    readonly property rect silhouetteRect: Qt.rect(notchRegionContainer.x + notchAnimationContainer.x + notchSlide.x + notchContainer.x + silhouette.x, notchRegionContainer.y + notchAnimationContainer.y + notchSlide.y + notchContainer.y + silhouette.y, silhouette.width, silhouette.height)
+    // Reveal fade (render thread): the shadow fades in step with its own
+    // RenderFade of the same duration and easing
+    readonly property int fadeDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+    readonly property int fadeEasing: Motion.enter.easing
 }

@@ -3,25 +3,28 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.config
 import qs.modules.components
+import qs.modules.components.shape
 import qs.modules.globals
+import "FrameShadow.js" as FrameShadow
 
-// Theme shadows of the unified panel's surfaces, one ShadowCaster per
-// surface instead of one MultiEffect over a full-screen layer. Sits below
-// every surface (shadows never darken a neighbour: the notch's shadow ends
-// under the frame, so fillets merge seamlessly), and a change inside one
-// surface (cava, clock, a hover) only re-renders that surface's region.
+// Theme shadows of the unified panel's surfaces. Sits below every surface
+// (shadows never darken a neighbour: the notch's shadow ends under the
+// frame, so fillets merge seamlessly).
 //
-// Each caster captures a rectangle around its surface's visuals: the
-// surface item itself fills the panel, so the rectangle comes from the
-// surface's own geometry (hitboxes, notch region, bar strip), grown by the
-// widest fillet and snapped to a 16 px grid so animated sizes do not
-// reallocate textures every frame.
+// Surfaces with a known rounded shape that animate (the notch's morph and
+// reveal, the dock's reveal, the frame's growth) cast an analytic shadow
+// (ShapeShadow): one quad driven by their geometry, no capture, no blur
+// pass, no texture, so a morph costs nothing extra per frame. Bar panels
+// and live activities have free-form silhouettes (groups, pills, chips)
+// and keep a captured shadow (ShadowCaster) of a rectangle around them,
+// grown by the widest fillet and snapped to a 16 px grid so animated sizes
+// do not reallocate textures every frame.
 Item {
     id: root
 
     // Surfaces (untyped: their types live in modules that import this one's
-    // siblings; ShadowCaster only needs them as Items)
-    property Item frame: null
+    // siblings)
+    property var frame: null
     // Every bar panel of the screen (PanelHost.bars); one caster each
     property var bars: []
     property var notch: null
@@ -47,10 +50,6 @@ Item {
         return x1 > x0 && y1 > y0 ? Qt.rect(x0, y0, x1 - x0, y1 - y0) : Qt.rect(0, 0, 0, 0);
     }
 
-    function itemRegion(item) {
-        return item && item.visible ? root.region(item.x, item.y, item.width, item.height) : Qt.rect(0, 0, 0, 0);
-    }
-
     // A bar panel: its span along the edge (the whole edge, or a floating
     // panel's own span) and its full depth, independent of the reveal
     // animation so a sliding panel is never clipped
@@ -73,22 +72,6 @@ Item {
         }
     }
 
-    // Dock: the band along its edge, also independent of reveal
-    readonly property rect dockRect: {
-        const d = root.dock;
-        if (!d)
-            return Qt.rect(0, 0, 0, 0);
-        const t = d.dockSize + d.totalMargin + root.frameThickness * 2;
-        switch (d.position) {
-        case "left":
-            return root.region(0, 0, t, root.height);
-        case "right":
-            return root.region(root.width - t, 0, t, root.height);
-        default:
-            return root.region(0, root.height - t, root.width, t);
-        }
-    }
-
     readonly property rect activityRect: {
         const a = root.activities;
         const l = a ? a.leftHitbox : null;
@@ -103,12 +86,37 @@ Item {
         return root.region(x0, y0, x1 - x0, y1 - y0);
     }
 
-    ShadowCaster {
-        source: root.frame
-        active: root.frameEnabled
-        sourceRect: Qt.rect(0, 0, root.width, root.height)
+    // The frame's hole grown past every screen edge whose side has no
+    // thickness (far enough that no blur or light offset reaches back)
+    function openHole(hole, f) {
+        const b = FrameShadow.openHole({
+            "x": hole.x,
+            "y": hole.y,
+            "w": hole.width,
+            "h": hole.height
+        }, {
+            "left": f.leftThickness,
+            "top": f.topThickness,
+            "right": f.rightThickness,
+            "bottom": f.bottomThickness
+        }, root.width + root.height);
+        return Qt.rect(b.x, b.y, b.w, b.h);
     }
-    // A contained panel is part of the frame's silhouette: the frame casts it
+
+    // Frame: everything outside its rounded hole (a contained panel is part
+    // of the frame's silhouette, it narrows the hole). A side of thickness 0
+    // (a fullscreen window hides it) draws nothing, so it casts nothing: the
+    // hole runs past that screen edge instead of ending on it.
+    ShapeShadow {
+        active: root.frameEnabled && !!root.frame && root.frame.hasHole
+        inverted: true
+        box: root.frame ? root.openHole(root.frame.holeRect, root.frame) : Qt.rect(0, 0, 0, 0)
+        radii: {
+            const r = root.frame ? Math.min(root.frame.innerRadius, root.frame.holeRect.width / 2, root.frame.holeRect.height / 2) : 0;
+            return Qt.vector4d(r, r, r, r);
+        }
+        strength: root.frame ? root.frame.fillAlpha : 1
+    }
     Repeater {
         model: root.bars
         delegate: ShadowCaster {
@@ -119,17 +127,40 @@ Item {
             sourceRect: root.barRect(caster.modelData)
         }
     }
-    ShadowCaster {
-        source: root.dock
-        active: root.dockEnabled
-        sourceRect: root.dockRect
+    // Dock: its body and (default theme) two concave corners, sliding with
+    // the reveal and fading in step with it (same RenderFade)
+    ShapeShadow {
+        readonly property var surface: root.dock ? root.dock.surface : null
+        active: root.dockEnabled && !!surface && root.dock.visible
+        box: root.dock ? root.dock.surfaceRect : Qt.rect(0, 0, 0, 0)
+        radii: surface ? surface.shadowRadii : Qt.vector4d(0, 0, 0, 0)
+        fillet: surface && surface.isDefault ? surface.cornerSize : 0
+        edge: surface ? surface.position : "bottom"
+        strength: surface ? surface.fillAlpha : 1
+        opacity: root.dock && root.dock.reveal ? 1 : 0
+        RenderFade on opacity {
+            duration: root.dock ? root.dock.fadeDuration : 0
+            easingType: root.dock ? root.dock.fadeEasing : Easing.Linear
+        }
     }
     ShadowCaster {
         source: root.activities
         sourceRect: root.activityRect
     }
-    ShadowCaster {
-        source: root.notch
-        sourceRect: root.itemRegion(root.notch ? root.notch.visualRegion : null)
+    // Notch: its silhouette as it morphs (radii, concave corners of the
+    // attached style), sliding with the reveal and fading in step with it
+    ShapeShadow {
+        readonly property var silhouette: root.notch ? root.notch.silhouette : null
+        active: !!silhouette && root.notch.visible
+        box: root.notch ? root.notch.silhouetteRect : Qt.rect(0, 0, 0, 0)
+        radii: silhouette ? Qt.vector4d(silhouette.tl, silhouette.tr, silhouette.br, silhouette.bl) : Qt.vector4d(0, 0, 0, 0)
+        fillet: silhouette && silhouette.attached ? silhouette.cornerSize : 0
+        edge: silhouette ? silhouette.position : "top"
+        strength: silhouette ? silhouette.surfaceAlpha : 1
+        opacity: root.notch && root.notch.reveal ? 1 : 0
+        RenderFade on opacity {
+            duration: root.notch ? root.notch.fadeDuration : 0
+            easingType: root.notch ? root.notch.fadeEasing : Easing.Linear
+        }
     }
 }

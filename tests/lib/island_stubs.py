@@ -27,6 +27,8 @@ def island(name: str, config_extra: str = "") -> Harness:
         "StyledRect": "Rectangle { property string variant; property bool enableBorder; property bool enableShadow; property bool cornerStyled: true; property bool animateRadius; property string glassSurface; property color item: \"white\" }",
         "StyledToolTip": "Item { property string tooltipText; property bool show }",
         "Separator": "Item { property bool vert; implicitWidth: 2; implicitHeight: 2 }",
+        # Real: NotchContent's reveal fade (a plain OpacityAnimator Behavior)
+        "RenderFade": (REPO / "modules/components/RenderFade.qml").read_text(),
     })
     kit_stubs.install(h)
     h.module("Quickshell.Widgets", {"IconImage": "Image { property real implicitSize }"})

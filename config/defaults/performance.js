@@ -1,7 +1,7 @@
 .pragma library
 
 var data = {
-    "blurTransition": true,
+    "blurTransition": false,
     "windowPreview": true,
     "wavyLine": true,
     "pauseWallpaperOnFullscreen": true,

@@ -55,6 +55,11 @@ test('status script reports installed apps and last written outputs', () => {
     const bin = path.join(home, 'bin');
     fs.mkdirSync(bin);
     fs.writeFileSync(path.join(bin, 'kitty'), '#!/bin/sh\n', { mode: 0o755 });
+    // The script's `stat`, wherever this system keeps it (NixOS has no
+    // /usr/bin/stat), without exposing the rest of the real PATH
+    const stat = (process.env.PATH || '').split(':').map(d => path.join(d, 'stat')).find(f => fs.existsSync(f));
+    if (stat)
+        fs.symlinkSync(stat, path.join(bin, 'stat'));
     const out = execFileSync('sh', ['-c', A.statusScript(), 'status', cache, 'yozakura'], {
         env: { HOME: home, PATH: `${bin}:/usr/bin:/bin`, XDG_CONFIG_HOME: path.join(home, '.config'), XDG_DATA_HOME: path.join(home, '.local/share') },
         encoding: 'utf8'
