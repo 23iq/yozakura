@@ -3,9 +3,11 @@ package videoproxy
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -149,4 +151,33 @@ func TestPruneKeepsTheMostRecent(t *testing.T) {
 	assert.FileExists(t, paths[0])
 	assert.FileExists(t, paths[len(paths)-1])
 	assert.NoFileExists(t, paths[1])
+}
+
+func TestPartialFilesArePerProcessAndStaleOnesRemoved(t *testing.T) {
+	f := &fake{}
+	m, src := newTestManager(t, f, "ffmpeg", "ffprobe")
+	must(t, assert.NoError(t, os.MkdirAll(m.Dir, 0o755)))
+	stale := filepath.Join(m.Dir, "old.mp4.1.part")
+	fresh := filepath.Join(m.Dir, "running.mp4.2.part")
+	for _, p := range []string{stale, fresh} {
+		must(t, assert.NoError(t, os.WriteFile(p, nil, 0o644)))
+	}
+	old := time.Now().Add(-2 * transcodeTimeout)
+	must(t, assert.NoError(t, os.Chtimes(stale, old, old)))
+
+	assert.Equal(t, StatePending, m.Request(Request{Path: src, Width: 1920, Height: 1080}).State)
+	assert.Equal(t, StateReady, wait(t, f).State)
+	must(t, assert.Len(t, f.runs, 1))
+	out := f.runs[0][len(f.runs[0])-1]
+	assert.True(t, strings.HasSuffix(out, fmt.Sprintf(".%d.part", os.Getpid())), out)
+	assert.NoFileExists(t, stale, "left by a dead daemon")
+	assert.FileExists(t, fresh, "may belong to a running encoder")
+}
+
+func TestRunTranscodeReportsStderr(t *testing.T) {
+	err := runTranscode(context.Background(), "sh", "-c", "echo bad input >&2; exit 3")
+	if assert.Error(t, err) {
+		assert.Contains(t, err.Error(), "bad input")
+	}
+	assert.NoError(t, runTranscode(context.Background(), "true"))
 }

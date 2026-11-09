@@ -23,7 +23,7 @@ media = h.root / "media"  # removed with the harness tree
 media.mkdir()
 subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=pink:s=64x36:rate=10", "-t", "1",
                 "-c:v", "libx264", "-pix_fmt", "yuv420p", str(media / "big.mp4")], check=True, timeout=60)
-for name in ["small", "err", "a", "b", "copy-big", "copy-a"]:
+for name in ["small", "err", "a", "b", "race", "copy-big", "copy-a", "copy-race"]:
     shutil.copy(media / "big.mp4", media / f"{name}.mp4")
 M = str(media)
 
@@ -143,5 +143,14 @@ check("stale answer ignored", ev("first.playingFile") != f("/c/a.mp4"), ev("firs
 check("still waiting for b", ev("first.playingFile") == "")
 pump(3300)
 check("no answer after 3 s: the original plays", ev("first.playingFile") == f("/v/b.mp4"))
+
+# --- the finished event overtakes the "pending" answer ------------------------
+ev('second.sourceFile = "/v/race.mp4"')
+n = len(calls()) - 1
+ev('BackendService.event({ source: "/v/race.mp4", width: 320, height: 180, state: "ready", path: "/c/race.mp4" })')
+ev(f'BackendService.answer({n}, {{ source: "/v/race.mp4", width: 320, height: 180, state: "pending" }})')
+check("late pending answer keeps the copy", ev("second.playingFile") == f("/c/race.mp4"), ev("second.playingFile"))
+check("late pending answer keeps the state",
+      ev('VideoProxyService._known[VideoProxyService._key("/v/race.mp4", 320, 180)].state') == "ready")
 
 h.exit(0 if ok else 1)

@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"yozakura/backend/pkg/proc"
@@ -79,10 +80,7 @@ func New(ctx context.Context, dir string) *Manager {
 		probe: func(ctx context.Context, path string) ([]byte, error) {
 			return proc.Run(ctx, "ffprobe", ProbeArgs(path)...)
 		},
-		run: func(ctx context.Context, name string, args ...string) error {
-			_, err := proc.RunWith(ctx, proc.Options{Timeout: transcodeTimeout}, name, args...)
-			return err
-		},
+		run:     runTranscode,
 		ctx:     ctx,
 		pending: map[string]bool{},
 		failed:  map[string]bool{},
@@ -90,6 +88,21 @@ func New(ctx context.Context, dir string) *Manager {
 		// One transcode at a time: they are CPU heavy and rare.
 		sem: make(chan struct{}, 1),
 	}
+}
+
+// runTranscode runs the encoder bound to ctx and transcodeTimeout. The
+// child dies with the daemon (Pdeathsig): a restart must not leave an
+// orphan encoder running for minutes, or writing next to the new one.
+func runTranscode(ctx context.Context, name string, args ...string) error {
+	ctx, cancel := context.WithTimeout(ctx, transcodeTimeout)
+	defer cancel()
+	cmd := proc.Command(ctx, name, args...)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGKILL}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return &proc.Error{Name: name, Args: args, Err: err, Stderr: string(out)}
+	}
+	return nil
 }
 
 func (m *Manager) available() bool {
@@ -205,7 +218,9 @@ func (m *Manager) make(src, dst string, plan Plan) error {
 	if err := os.MkdirAll(m.Dir, 0o755); err != nil {
 		return err
 	}
-	tmp := dst + ".part"
+	m.removeStaleParts()
+	// Per process: an encoder of an earlier daemon never shares the file.
+	tmp := fmt.Sprintf("%s.%d.part", dst, os.Getpid())
 	defer os.Remove(tmp)
 	args := Args(src, tmp, plan)
 	name := "ffmpeg"
@@ -217,6 +232,23 @@ func (m *Manager) make(src, dst string, plan Plan) error {
 		return err
 	}
 	return os.Rename(tmp, dst)
+}
+
+// removeStaleParts deletes partial files left by a daemon that died
+// mid-transcode (older than any running job can be).
+func (m *Manager) removeStaleParts() {
+	entries, err := os.ReadDir(m.Dir)
+	if err != nil {
+		return
+	}
+	for _, e := range entries {
+		if !strings.HasSuffix(e.Name(), ".part") {
+			continue
+		}
+		if fi, err := e.Info(); err == nil && time.Since(fi.ModTime()) > transcodeTimeout {
+			_ = os.Remove(filepath.Join(m.Dir, e.Name()))
+		}
+	}
 }
 
 // prune keeps the Keep most recently used proxies (always `keep`).

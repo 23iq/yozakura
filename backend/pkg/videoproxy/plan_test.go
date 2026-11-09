@@ -83,3 +83,19 @@ func must(t *testing.T, ok bool) {
 		t.FailNow()
 	}
 }
+
+func TestParseProbeRotation(t *testing.T) {
+	side, err := ParseProbe([]byte(`{"streams":[{"width":1920,"height":1080,"avg_frame_rate":"30/1",` +
+		`"tags":{},"side_data_list":[{"rotation":-90}]}]}`))
+	assert.NoError(t, err)
+	assert.Equal(t, 1080, side.Width, "display matrix")
+	assert.Equal(t, 1920, side.Height)
+
+	tag, err := ParseProbe([]byte(`{"streams":[{"width":1920,"height":1080,"avg_frame_rate":"30/1","tags":{"rotate":"270"}}]}`))
+	assert.NoError(t, err)
+	assert.Equal(t, 1080, tag.Width, "rotate tag")
+
+	flip, err := ParseProbe([]byte(`{"streams":[{"width":1920,"height":1080,"avg_frame_rate":"30/1","side_data_list":[{"rotation":180}]}]}`))
+	assert.NoError(t, err)
+	assert.Equal(t, 1920, flip.Width, "upside down keeps the size")
+}

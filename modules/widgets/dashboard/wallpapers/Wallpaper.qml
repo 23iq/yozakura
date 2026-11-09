@@ -34,6 +34,8 @@ PanelWindow {
     // Extra folders (Config.desktop.wallpaperFolders) scanned with wallpaperDir.
     readonly property var extraDirs: WallpaperFolders.extras(wallpaperDir, (Config.desktop.wallpaperFolders || []).map(expandTilde))
     readonly property var scanDirs: WallpaperFolders.effective(wallpaperDir, extraDirs)
+    // Thumbnail folders besides wallpaperDir (also a kept bundled wallpaper's).
+    readonly property var thumbDirs: WallpaperFolders.thumbFolders(wallpaperPaths, scanDirs, extraDirs, fallbackDir)
     property string fallbackDir: decodeURIComponent(Qt.resolvedUrl("../../../../assets/wallpapers_example").toString().replace("file://", ""))
     property var wallpaperPaths: []
     // <name>.depth.png files found by the scan (PanoramaDepth), not wallpapers.
@@ -73,7 +75,7 @@ PanelWindow {
         "fullscreen": fullscreenActive,
         "covered": coverage.covered,
         "idleSeconds": IdleService.elapsedIdleTime,
-        "onBattery": Battery.available && !Battery.isPluggedIn
+        "onBattery": Battery.onBattery
     }, Config.performance)
     // ...or windows hiding every wallpaper pixel (tiled with gaps 0, monocle)
     readonly property WallpaperCoverage coverage: WallpaperCoverage {
@@ -183,7 +185,7 @@ PanelWindow {
 
     function getThumbnailPath(filePath) {
         // QUICKSHELL-GIT: Quickshell.cacheDir instead of ~/.cache/yozakura
-        return WallpaperFolders.thumbnailPath(filePath, wallpaperDir, extraDirs, Brand.cacheDir, Qt.md5);
+        return WallpaperFolders.thumbnailPath(filePath, wallpaperDir, thumbDirs, Brand.cacheDir, Qt.md5);
     }
 
     // Value saved in wallpapers.json for a wallpaper path.
@@ -675,7 +677,7 @@ PanelWindow {
     WallpaperCacheJobs {
         id: cacheJobs
         fallbackDir: wallpaper.fallbackDir
-        extraDirs: wallpaper.extraDirs
+        extraDirs: wallpaper.thumbDirs
         onThumbnailsGenerated: wallpaper.thumbnailsVersion++
     }
 

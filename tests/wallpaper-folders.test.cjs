@@ -91,3 +91,15 @@ test('rebaseBundled moves paths into an older bundled copy onto the current one'
     assert.equal(F.rebaseBundled('', cur), '');
     assert.equal(F.rebaseBundled('/old/assets/wallpapers_example/a.jpg', ''), '/old/assets/wallpapers_example/a.jpg');
 });
+
+test('thumbFolders adds the bundled folder only for a kept bundled wallpaper', () => {
+    const b = '/nix/store/x-shell/assets/wallpapers_example';
+    const user = ['/home/u/Pictures/a.jpg', '/home/u/Pictures/b.mp4'];
+    assert.deepEqual(plain(F.thumbFolders(user, ['/home/u/Pictures'], [], b)), []);
+    assert.deepEqual(plain(F.thumbFolders(user.concat([b + '/wallpaper-08.png']), ['/home/u/Pictures'], ['/srv/w'], b + '/')),
+        ['/srv/w', b]);
+    // The bundled folder is scanned (primary or extra): its own thumbnails.
+    assert.deepEqual(plain(F.thumbFolders([b + '/wallpaper-08.png'], [b], [], b)), []);
+    assert.deepEqual(plain(F.thumbFolders([b + '/wallpaper-08.png'], ['/home/u/Pictures', b], [b], b)), [b]);
+    assert.deepEqual(plain(F.thumbFolders(null, null, null, '')), []);
+});

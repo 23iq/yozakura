@@ -38,8 +38,10 @@ type Plan struct {
 	Rate          string
 }
 
-// ParseProbe reads `ffprobe -show_entries stream=width,height,avg_frame_rate
-// -of json` output.
+// ParseProbe reads ProbeArgs output. Width and Height are the displayed
+// size: a stream rotated by 90/270 degrees (phone videos; display matrix
+// side data or the older "rotate" tag) has them swapped, as ffmpeg
+// autorotates before the scale filter.
 func ParseProbe(data []byte) (Info, error) {
 	var doc struct {
 		Streams []struct {
@@ -47,6 +49,12 @@ func ParseProbe(data []byte) (Info, error) {
 			Height       int    `json:"height"`
 			AvgFrameRate string `json:"avg_frame_rate"`
 			RFrameRate   string `json:"r_frame_rate"`
+			Tags         struct {
+				Rotate string `json:"rotate"`
+			} `json:"tags"`
+			SideData []struct {
+				Rotation float64 `json:"rotation"`
+			} `json:"side_data_list"`
 		} `json:"streams"`
 	}
 	if err := json.Unmarshal(data, &doc); err != nil {
@@ -62,7 +70,17 @@ func ParseProbe(data []byte) (Info, error) {
 			rate = s.RFrameRate
 			fps = parseRate(rate)
 		}
-		return Info{Width: s.Width, Height: s.Height, FPS: fps, Rate: rate}, nil
+		w, h := s.Width, s.Height
+		rot, _ := strconv.ParseFloat(s.Tags.Rotate, 64)
+		for _, sd := range s.SideData {
+			if sd.Rotation != 0 {
+				rot = sd.Rotation
+			}
+		}
+		if q := int(math.Round(math.Abs(rot)/90)) % 4; q == 1 || q == 3 {
+			w, h = h, w
+		}
+		return Info{Width: w, Height: h, FPS: fps, Rate: rate}, nil
 	}
 	return Info{}, fmt.Errorf("no video stream")
 }
@@ -122,7 +140,8 @@ func even(v float64) int {
 // ProbeArgs are the ffprobe arguments for `path`.
 func ProbeArgs(path string) []string {
 	return []string{"-v", "error", "-select_streams", "v:0",
-		"-show_entries", "stream=width,height,avg_frame_rate,r_frame_rate", "-of", "json", "--", path}
+		"-show_entries", "stream=width,height,avg_frame_rate,r_frame_rate:stream_tags=rotate:stream_side_data=rotation",
+		"-of", "json", "--", path}
 }
 
 // Args are the ffmpeg arguments that write the proxy of `src` to `dst`

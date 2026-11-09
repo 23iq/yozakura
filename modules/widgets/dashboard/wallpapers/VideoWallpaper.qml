@@ -79,7 +79,9 @@ Item {
         if (_completed)
             restartPlayback();
     }
-    onWidthChanged: {
+    onWidthChanged: _sizeKnown()
+    onHeightChanged: _sizeKnown()
+    function _sizeKnown() {
         if (_awaitingSize && width > 0 && height > 0) {
             _awaitingSize = false;
             restartPlayback();
@@ -104,6 +106,7 @@ Item {
         _token++;
         _playing = "";
         proxyTimeout.stop();
+        _awaitingSize = false;
         if (!sourceFile)
             return;
         if (matteMode || !downscale) {

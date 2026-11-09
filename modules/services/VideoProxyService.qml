@@ -36,9 +36,17 @@ Singleton {
         });
     }
 
-    // A backend answer or event: remember it and wake the waiters.
+    function _final(state) {
+        return state === "ready" || state === "original";
+    }
+
+    // A backend answer or event: remember it and wake the waiters. A late
+    // "pending" answer never replaces a final state the event already set.
     function _settle(res) {
         const key = root._key(res.source, res.width, res.height);
+        const prev = root._known[key];
+        if (res.state === "pending" && prev && root._final(prev.state))
+            return;
         const known = Object.assign({}, root._known);
         known[key] = {
             "state": res.state,
@@ -99,7 +107,10 @@ Singleton {
                 });
                 return;
             }
-            if (res.state === "pending")
+            // The finished event can overtake this answer: then the
+            // waiter already got the copy and must not go back.
+            const settled = root._known[key];
+            if (res.state === "pending" && !(settled && root._final(settled.state)))
                 cb(file);
             root._settle(res);
         });
