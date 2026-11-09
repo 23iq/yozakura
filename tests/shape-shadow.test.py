@@ -204,8 +204,13 @@ case("square box", "Config.theme.shadowBlur = 0.6; shape = 0; r = 0")
 case("offset and opacity", "Config.theme.shadowBlur = 0.6; Config.theme.shadowXOffset = 4; "
      "Config.theme.shadowYOffset = 7; Config.theme.shadowOpacity = 0.35; r = 30")
 h.eval(root, "Config.theme.shadowXOffset = 0; Config.theme.shadowYOffset = 3; Config.theme.shadowOpacity = 0.6")
+# The concave fillets where the notch meets the screen edge are the worst
+# spot: the MultiEffect reference blurs them slightly differently per Qt
+# release (8 on Qt 6.12, 9 on the CI's 6.11.2), so they get a little slack.
+NOTCH_TOL = 12
 for edge in ("top", "bottom", "left", "right"):
-    case(f"attached notch on {edge}", f"Config.theme.shadowBlur = 0.6; shape = 1; edge = '{edge}'; r = 24; fil = 20")
+    case(f"attached notch on {edge}", f"Config.theme.shadowBlur = 0.6; shape = 1; edge = '{edge}'; r = 24; fil = 20",
+         NOTCH_TOL)
 for rad in (22, 0):
     case(f"frame hole radius {rad}", f"Config.theme.shadowBlur = 0.6; shape = 2; edge = 'top'; r = {rad}")
 
