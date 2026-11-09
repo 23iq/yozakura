@@ -35,7 +35,11 @@ ColumnLayout {
             text: KeybindsStore.editorQuery
             placeholderText: I18n.t("binds.search_placeholder")
             trailing: clearComponent
+            // Escape clears through the store: the field's own clear()
+            // would assign the text and break the binding above.
+            clearOnEscape: false
             onSearchTextChanged: t => KeybindsStore.editorQuery = t
+            onEscapePressed: KeybindsStore.editorQuery = ""
 
             // Modal: lives in the window's overlay, not in this layout.
             KeybindAddDialog {

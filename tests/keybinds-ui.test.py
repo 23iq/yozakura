@@ -258,6 +258,18 @@ check(find("keybindRow:core:system.tools") is not None and find("keybindRow:core
 chip = find("keybindsConflicts")
 h.eval(chip, "clicked()")
 check(ev("KeybindsStore.conflictFilter") is False, "clicking the chip shows everything again")
+# Escape in the toolbar search clears through the store, so the field keeps
+# following KeybindsStore.editorQuery afterwards (clear button, resets).
+ev('KeybindsStore.editorQuery = "abc"')
+field = ev('w.findItem("keybindsSearch").field')
+check(h.eval(field, "text") == "abc", "the search field shows the store query")
+key(field, Qt.Key_Escape)
+QTest.qWait(50)
+check(ev("KeybindsStore.editorQuery") == "", "Escape clears the query")
+ev('KeybindsStore.editorQuery = "xyz"')
+check(h.eval(field, "text") == "xyz", "the field still follows the store after Escape")
+ev('KeybindsStore.editorQuery = ""')
+check(h.eval(field, "text") == "", "clearing the store clears the field")
 ev('KeybindsStore.hyprBinds = [{modmask: 64, key: "1", has_description: true, description: "Discord", submap: ""}]')
 check(ev("KeybindsStore.conflictText('custom:1')") == "Compositor: Discord", "native compositor bind conflict")
 ev("KeybindsStore.hyprBinds = []")
