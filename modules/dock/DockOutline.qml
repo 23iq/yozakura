@@ -1,32 +1,36 @@
 import QtQuick
-import qs.modules.theme
 import qs.config
+import qs.modules.theme
 
-// Unified outline of the default-theme dock (body + concave corners),
-// drawn over its content. Repaints only when the dock resizes or the
-// border changes, never per animation frame (the reveal is a transform).
+// The outline of the default dock shape (DockShape): the theme's "bg"
+// border traced around the rounded body and its edge fillets, open on the
+// screen edge side.
 Canvas {
-    id: outlineCanvas
+    id: root
 
+    property bool shown: true
     property string position: "bottom"
-    property bool isDefault: true
-    property bool unifiedEffectActive: false
     property int cornerSize: 0
-    // Body corner radii (tl, tr, br, bl), as DockSurface draws them
-    property vector4d radii: Qt.vector4d(0, 0, 0, 0)
-    readonly property bool isBottom: outlineCanvas.position === "bottom"
-    readonly property bool isLeft: outlineCanvas.position === "left"
-    readonly property bool isRight: outlineCanvas.position === "right"
+    property DockShape shape: null
+    readonly property bool isBottom: root.position === "bottom"
+    readonly property bool isLeft: root.position === "left"
+    readonly property bool isRight: root.position === "right"
     antialiasing: true
+
+    onShownChanged: root.requestPaint()
+    onPositionChanged: root.requestPaint()
+    onCornerSizeChanged: root.requestPaint()
+    onWidthChanged: root.requestPaint()
+    onHeightChanged: root.requestPaint()
 
     readonly property var borderData: Config.theme.srBg.border
     readonly property int borderWidth: borderData[1]
     readonly property color borderColor: Config.resolveColor(borderData[0])
 
-    visible: outlineCanvas.isDefault && borderWidth > 0 && !outlineCanvas.unifiedEffectActive
+    visible: root.shown && borderWidth > 0
 
     onPaint: {
-        if (!outlineCanvas.isDefault)
+        if (!root.shown || !root.shape)
             return;
         var ctx = getContext("2d");
         ctx.clearRect(0, 0, width, height);
@@ -40,18 +44,18 @@ Canvas {
         ctx.lineCap = "butt";
 
         var offset = borderWidth / 2;
-        var cs = outlineCanvas.cornerSize;
+        var cs = root.cornerSize;
         var hasFillets = cs > offset;
         var filletRadius = hasFillets ? cs - offset : 0;
 
-        var tl = outlineCanvas.radii.x;
-        var tr = outlineCanvas.radii.y;
-        var bl = outlineCanvas.radii.w;
-        var br = outlineCanvas.radii.z;
+        var tl = root.shape.topLeftRadius;
+        var tr = root.shape.topRightRadius;
+        var bl = root.shape.bottomLeftRadius;
+        var br = root.shape.bottomRightRadius;
 
         ctx.beginPath();
 
-        if (outlineCanvas.isBottom) {
+        if (root.isBottom) {
             if (hasFillets) {
                 ctx.moveTo(offset, height - offset);
                 ctx.arc(offset, height - cs, filletRadius, Math.PI / 2, 0, true);
@@ -81,7 +85,7 @@ Canvas {
                     ctx.lineTo(width - offset, offset);
                 ctx.lineTo(width - offset, height - offset);
             }
-        } else if (outlineCanvas.isLeft) {
+        } else if (root.isLeft) {
             if (hasFillets) {
                 ctx.moveTo(offset, offset);
                 ctx.arc(cs, offset, filletRadius, Math.PI, Math.PI / 2, true);
@@ -111,7 +115,7 @@ Canvas {
                     ctx.lineTo(width - offset, height - offset);
                 ctx.lineTo(offset, height - offset);
             }
-        } else if (outlineCanvas.isRight) {
+        } else if (root.isRight) {
             if (hasFillets) {
                 ctx.moveTo(width - offset, offset);
                 ctx.arc(width - cs, offset, filletRadius, 0, Math.PI / 2, false);
@@ -149,18 +153,29 @@ Canvas {
     Connections {
         target: Colors
         function onPrimaryChanged() {
-            outlineCanvas.requestPaint();
+            root.requestPaint();
+        }
+    }
+    // The body's corners follow the theme radius (Look.radius "surface")
+    Connections {
+        target: root.shape
+        function onTopLeftRadiusChanged() {
+            root.requestPaint();
+        }
+        function onTopRightRadiusChanged() {
+            root.requestPaint();
+        }
+        function onBottomLeftRadiusChanged() {
+            root.requestPaint();
+        }
+        function onBottomRightRadiusChanged() {
+            root.requestPaint();
         }
     }
     Connections {
         target: Config.theme.srBg
         function onBorderChanged() {
-            outlineCanvas.requestPaint();
+            root.requestPaint();
         }
     }
-    onPositionChanged: outlineCanvas.requestPaint()
-    onCornerSizeChanged: outlineCanvas.requestPaint()
-    onRadiiChanged: outlineCanvas.requestPaint()
-    onWidthChanged: outlineCanvas.requestPaint()
-    onHeightChanged: outlineCanvas.requestPaint()
 }

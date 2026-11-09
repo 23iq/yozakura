@@ -1,16 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
-import qs.modules.corners
 import qs.modules.globals
 import qs.config
 import qs.modules.bar.panels
@@ -23,7 +19,7 @@ Item {
 
     required property ShellScreen screen
     property bool unifiedEffectActive: false
-    
+
     // Pass pinned state from parent or config
     readonly property bool keepHidden: Config.dock?.keepHidden ?? false
     property bool pinned: Config.dock?.pinnedOnStartup ?? false
@@ -87,11 +83,12 @@ Item {
     // Fullscreen detection - scoped to this monitor so the effect only
     // applies to the screen that actually has the fullscreen window
     readonly property bool activeWindowFullscreen: {
-        if (!compositorMonitor || !toplevels) return false;
+        if (!compositorMonitor || !toplevels)
+            return false;
 
         for (var i = 0; i < toplevels.length; i++) {
             if (toplevels[i].fullscreen == true && toplevels[i].monitor === compositorMonitor.id) {
-               return true;
+                return true;
             }
         }
         return false;
@@ -110,7 +107,7 @@ Item {
             return (Config.dock?.hoverToReveal && dockMouseArea.containsMouse);
         }
 
-        return root.pinned || (Config.dock?.hoverToReveal && dockMouseArea.containsMouse) || !hasWindows
+        return root.pinned || (Config.dock?.hoverToReveal && dockMouseArea.containsMouse) || !hasWindows;
     }
 
     readonly property int totalMargin: root.windowSideMargin + root.edgeSideMargin
@@ -138,8 +135,8 @@ Item {
     // Content sizing helper
     Item {
         id: dockContent
-        implicitWidth: root.isVertical ? root.dockSize : dockLayoutHorizontal.implicitWidth + 16
-        implicitHeight: root.isVertical ? dockLayoutVertical.implicitHeight + 16 : root.dockSize
+        implicitWidth: root.isVertical ? root.dockSize : dockLayoutHorizontal.implicitWidth + Space.s * 2
+        implicitHeight: root.isVertical ? dockLayoutVertical.implicitHeight + Space.s * 2 : root.dockSize
     }
 
     MouseArea {
@@ -154,14 +151,17 @@ Item {
         x: {
             const base = root.isBottom ? (parent.width - width) / 2 : (root.isLeft ? 0 : parent.width - width);
             // If left, keep at 0 to cover the frame area. If right, keep at right edge.
-            if (root.isLeft) return 0;
-            if (root.isRight) return parent.width - width;
+            if (root.isLeft)
+                return 0;
+            if (root.isRight)
+                return parent.width - width;
             return base;
         }
         y: {
             const base = root.isVertical ? (parent.height - height) / 2 : parent.height - height;
             // If bottom, keep at bottom edge to cover the frame area.
-            if (root.isBottom) return parent.height - height;
+            if (root.isBottom)
+                return parent.height - height;
             return base;
         }
 
@@ -222,13 +222,16 @@ Item {
             // Position using x/y
             x: {
                 const base = root.isBottom ? (parent.width - width) / 2 : (root.isLeft ? root.edgeSideMargin : parent.width - width - root.edgeSideMargin);
-                if (root.isLeft) return base + root.edgeOffset;
-                if (root.isRight) return base - root.edgeOffset;
+                if (root.isLeft)
+                    return base + root.edgeOffset;
+                if (root.isRight)
+                    return base - root.edgeOffset;
                 return base;
             }
             y: {
                 const base = root.isVertical ? (parent.height - height) / 2 : parent.height - height - root.edgeSideMargin;
-                if (root.isBottom) return base - root.edgeOffset;
+                if (root.isBottom)
+                    return base - root.edgeOffset;
                 return base;
             }
 
@@ -289,289 +292,38 @@ Item {
             }
 
             // Horizontal layout
-            RowLayout {
+            DockItems {
                 id: dockLayoutHorizontal
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
                 anchors.topMargin: (dockContent.implicitHeight - implicitHeight) / 2
-                spacing: Config.dock?.spacing ?? 4
                 visible: !root.isVertical
-
-                Loader {
-                    active: Config.dock?.showPinButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignVCenter
-
-                    sourceComponent: Button {
-                        id: pinButton
-                        implicitWidth: 32
-                        implicitHeight: 32
-
-                        background: StyledRect {
-                            visible: root.pinned || pinButton.hovered
-                            variant: root.pinned ? "primary" : "focus"
-                            radius: Styling.radius(-2)
-                            enableShadow: false
-                            enableBorder: false
-                        }
-
-                        contentItem: Text {
-                            text: Icons.pin
-                            font.family: Icons.font
-                            font.pixelSize: 16
-                            color: root.pinned ? Styling.srItem("primary") : Colors.overBackground
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-
-                            rotation: root.pinned ? 0 : 45
-                            Behavior on rotation {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: Motion.exit.duration
-                                }
-                            }
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Motion.exit.duration
-                                }
-                            }
-                        }
-
-                        onClicked: root.pinned = !root.pinned
-
-                        StyledToolTip {
-                            show: pinButton.hovered
-                            tooltipText: root.pinned ? I18n.t("dock.tooltip.unpin_dock") : I18n.t("dock.tooltip.pin_dock")
-                        }
-                    }
-                }
-
-                Loader {
-                    active: Config.dock?.showPinButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignVCenter
-
-                    sourceComponent: Divider {
-                        vertical: true
-                        implicitHeight: (Config.dock?.iconSize ?? 40) * 0.6
-                    }
-                }
-
-                Repeater {
-                    model: TaskbarApps.apps
-
-                    DockAppButton {
-                        required property var modelData
-                        appToplevel: modelData
-                        Layout.alignment: Qt.AlignVCenter
-                        dockPosition: "bottom"
-                    }
-                }
-
-                Loader {
-                    active: Config.dock?.showOverviewButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignVCenter
-
-                    sourceComponent: Divider {
-                        vertical: true
-                        implicitHeight: (Config.dock?.iconSize ?? 40) * 0.6
-                    }
-                }
-
-                Loader {
-                    active: Config.dock?.showOverviewButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignVCenter
-
-                    sourceComponent: Button {
-                        id: overviewButton
-                        implicitWidth: 32
-                        implicitHeight: 32
-
-                        background: StyledRect {
-                            visible: overviewButton.hovered
-                            variant: "focus"
-                            radius: Styling.radius(-2)
-                            enableShadow: false
-                            enableBorder: false
-                        }
-
-                        contentItem: Text {
-                            text: Icons.overview
-                            font.family: Icons.font
-                            font.pixelSize: 18
-                            color: Colors.overBackground
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        onClicked: {
-                            if (YozdService.compositorName === "niri") {
-                                YozdService.dispatch("overview toggle");
-                                return;
-                            }
-                            let visibilities = Visibilities.getForScreen(root.screen.name);
-                            if (visibilities) {
-                                visibilities.overview = !visibilities.overview;
-                            }
-                        }
-
-                        StyledToolTip {
-                            show: overviewButton.hovered
-                            tooltipText: I18n.t("bar.tooltip.overview")
-                        }
-                    }
-                }
+                screen: root.screen
+                pinned: root.pinned
+                onPinToggled: root.pinned = !root.pinned
             }
 
             // Vertical layout
-            ColumnLayout {
+            DockItems {
                 id: dockLayoutVertical
                 anchors.horizontalCenter: parent.horizontalCenter
                 y: dockContainer.cornerSize + (dockContent.implicitHeight - implicitHeight) / 2
-                spacing: Config.dock?.spacing ?? 4
                 visible: root.isVertical
-
-                Loader {
-                    active: Config.dock?.showPinButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignHCenter
-
-                    sourceComponent: Button {
-                        id: pinButtonV
-                        implicitWidth: 32
-                        implicitHeight: 32
-
-                        background: StyledRect {
-                            visible: root.pinned || pinButtonV.hovered
-                            variant: root.pinned ? "primary" : "focus"
-                            radius: Styling.radius(-2)
-                            enableShadow: false
-                            enableBorder: false
-                        }
-
-                        contentItem: Text {
-                            text: Icons.pin
-                            font.family: Icons.font
-                            font.pixelSize: 16
-                            color: root.pinned ? Styling.srItem("primary") : Colors.overBackground
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-
-                            rotation: root.pinned ? 0 : 45
-                            Behavior on rotation {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: Motion.exit.duration
-                                }
-                            }
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Motion.exit.duration
-                                }
-                            }
-                        }
-
-                        onClicked: root.pinned = !root.pinned
-
-                        StyledToolTip {
-                            show: pinButtonV.hovered
-                            tooltipText: root.pinned ? I18n.t("dock.tooltip.unpin_dock") : I18n.t("dock.tooltip.pin_dock")
-                        }
-                    }
-                }
-
-                Loader {
-                    active: Config.dock?.showPinButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignHCenter
-
-                    sourceComponent: Divider {
-                        implicitWidth: (Config.dock?.iconSize ?? 40) * 0.6
-                    }
-                }
-
-                Repeater {
-                    model: TaskbarApps.apps
-
-                    DockAppButton {
-                        required property var modelData
-                        appToplevel: modelData
-                        Layout.alignment: Qt.AlignHCenter
-                        dockPosition: root.position
-                    }
-                }
-
-                Loader {
-                    active: Config.dock?.showOverviewButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignHCenter
-
-                    sourceComponent: Divider {
-                        implicitWidth: (Config.dock?.iconSize ?? 40) * 0.6
-                    }
-                }
-
-                Loader {
-                    active: Config.dock?.showOverviewButton ?? true
-                    visible: active
-                    Layout.alignment: Qt.AlignHCenter
-
-                    sourceComponent: Button {
-                        id: overviewButtonV
-                        implicitWidth: 32
-                        implicitHeight: 32
-
-                        background: StyledRect {
-                            visible: overviewButtonV.hovered
-                            variant: "focus"
-                            radius: Styling.radius(-2)
-                            enableShadow: false
-                            enableBorder: false
-                        }
-
-                        contentItem: Text {
-                            text: Icons.overview
-                            font.family: Icons.font
-                            font.pixelSize: 18
-                            color: Colors.overBackground
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                        }
-
-                        onClicked: {
-                            if (YozdService.compositorName === "niri") {
-                                YozdService.dispatch("overview toggle");
-                                return;
-                            }
-                            let visibilities = Visibilities.getForScreen(root.screen.name);
-                            if (visibilities) {
-                                visibilities.overview = !visibilities.overview;
-                            }
-                        }
-
-                        StyledToolTip {
-                            show: overviewButtonV.hovered
-                            tooltipText: I18n.t("bar.tooltip.overview")
-                        }
-                    }
-                }
+                vertical: true
+                position: root.position
+                screen: root.screen
+                pinned: root.pinned
+                onPinToggled: root.pinned = !root.pinned
             }
 
-            // Unified outline over the content
+            // Unified outline
             DockOutline {
                 anchors.fill: parent
                 z: 5000
+                shown: root.isDefault && !root.unifiedEffectActive
                 position: root.position
-                isDefault: root.isDefault
-                unifiedEffectActive: root.unifiedEffectActive
                 cornerSize: dockContainer.cornerSize
-                radii: dockSurface.shadowRadii
+                shape: dockSurface.shape
             }
         }
     }

@@ -18,6 +18,12 @@ h.singleton("qs.config", "Config", 'QtObject { property QtObject dock: QtObject 
             "property int animDuration: 0 }")
 h.singleton("qs.modules.theme", "Styling", 'QtObject { function srItem(n) { return "#ff0000" } }')
 h.singleton("qs.modules.theme", "Colors", 'QtObject { property color overBackground: "#ffffff" }')
+h.module("qs.modules.components.kit", {
+    "Mark": (ROOT / "modules/components/kit/Mark.qml").read_text().replace("import qs.modules.components.kit", "")
+    .replace("Type.text", '"white"'),
+    "Space": "pragma Singleton\nQtObject { property int xs: 4 }",
+    "Type": 'pragma Singleton\nQtObject { property color accent: "#ff0000"; property color text: "#ffffff" }',
+})
 h.copy("modules/dock/DockIndicator.qml")
 for f in sorted((ROOT / "modules/dock/indicators").glob("*.qml")):
     h.copy(f.relative_to(ROOT))

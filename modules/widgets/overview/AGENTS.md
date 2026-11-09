@@ -23,7 +23,7 @@ Mission Control-style workspace overview. Two layout modes: grid (default) and s
 | Entry point | `OverviewPopup.qml` | PanelWindow with layershell, search input, loads OverviewView |
 | Grid layout | `Overview.qml` | Workspace grid, window positioning, active indicator |
 | Scrolling layout | `ScrollingOverview.qml` | Vertical Flickable, workspace list, auto-scroll to active |
-| Window rendering | `OverviewWindow.qml` | ScreencopyView preview, drag handling, tooltip |
+| Window rendering | `OverviewWindow.qml` (grid) + `OverviewWindowFace.qml` (shared with the scrolling view) | ScreencopyView preview, outline, tooltip in the face; drag handling in the window |
 | Search logic | `Overview.qml:60-134` | Fuzzy matching algorithm, score calculation |
 | Workspace groups | `Overview.qml:31` | `workspaceGroup = floor((activeWorkspaceId - 1) / workspacesShown)` |
 
@@ -32,7 +32,7 @@ Mission Control-style workspace overview. Two layout modes: grid (default) and s
 - Uses `YozdService.dispatch()` for Hyprland commands (workspace switch, window move/focus)
 - Uses `CompositorData.windowList` and `CompositorData.monitors` for window data
 - Uses `ToplevelManager.toplevels` + `ScreencopyView` for live window previews
-- Uses `Styling.srItem("overprimary")` for overview accent color
+- Built from the UI kit: `Type.accent` for the active / selected outline (`WorkspaceRing`), `Scrim` backdrop, `Look.radius` roles (workspaces "box", windows "small")
 - Config keys: `Config.overview.scale`, `rows`, `columns`, `workspaceSpacing`
 - Two layouts via conditional Component in `OverviewView`: `GlobalStates.compositorLayout === "scrolling"`
 - Drag reparenting in scrolling mode uses `dragOverlay` Item to escape clipping

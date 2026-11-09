@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.modules.components.kit
 import qs.config
 import qs.modules.theme
 
@@ -7,10 +8,9 @@ import qs.modules.theme
 IndicatorBase {
     id: root
 
-    mark: Rectangle {
+    mark: Mark {
         width: root.vertical ? root.across : root.along
         height: root.vertical ? root.along : root.across
-        radius: Math.min(width, height) / 2
         color: root.tint
 
         Behavior on color {

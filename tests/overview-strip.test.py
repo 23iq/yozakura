@@ -48,7 +48,15 @@ h.singleton('qs.modules.theme', 'Colors', 'QtObject { property color outline: "g
 h.singleton('qs.modules.globals', 'GlobalStates', 'QtObject { property var wallpaperManager: null }')
 h.module('qs.modules.components', {'TintedWallpaper': 'Item { property real radius; property bool tintEnabled; property string source }'})
 h.module('qs.modules.desktop.panorama', {'PanoramaSlice': 'Item { property string sourceFile; property int slotIndex; property int slotCount; property real screenW; property real screenH }'})
+h.module('qs.modules.components.kit', {
+    'Space': 'pragma Singleton\nQtObject { property int xs: 4; property int s: 8; property int hairline: 1 }',
+    'Look': 'pragma Singleton\nQtObject { function radius(role, h) { return 4; } }',
+    'Type': 'pragma Singleton\nQtObject { property color accent: "red"; property color secondary: "gray" }',
+    'KitText': 'Text { property string role; property bool tabular }',
+    'Mark': 'Rectangle {}',
+})
 h.stub('OverviewStripWindows', 'Item { property Item strip }')
+h.copy('modules/widgets/overview/WorkspaceRing.qml', siblings=False)
 h.copy('modules/widgets/overview/OverviewStripCell.qml', siblings=False)
 h.copy('modules/widgets/overview/OverviewStrip.qml', siblings=False)
 root = h.load('''import QtQuick

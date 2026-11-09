@@ -11,6 +11,7 @@ import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 
 Item {
@@ -27,7 +28,6 @@ Item {
     required property int barReserved
     required property var windowList
     required property bool isActive
-    required property color activeBorderColor
     property string focusedWindowAddress: ""
     property string searchQuery: ""
     property int draggingFromWorkspace: -1
@@ -166,7 +166,7 @@ Item {
             TintedWallpaper {
                 id: workspaceWallpaper
                 anchors.fill: parent
-                radius: Styling.radius(1)
+                radius: Look.radius("box")
                 tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
 
                 property string lockscreenFramePath: {
@@ -178,21 +178,18 @@ Item {
             }
 
             // Semi-transparent overlay
-            Rectangle {
+            Mark {
                 anchors.fill: parent
-                radius: Styling.radius(1)
+                radius: Look.radius("box")
                 color: Colors.background
                 opacity: 0.3
             }
         }
 
         // Border indicator for drag target
-        Rectangle {
+        WorkspaceRing {
             anchors.fill: parent
-            color: "transparent"
-            radius: Styling.radius(1)
-            border.width: root.draggingTargetWorkspace === root.workspaceId && root.draggingFromWorkspace !== root.workspaceId ? 2 : 0
-            border.color: Colors.outline
+            target: root.draggingTargetWorkspace === root.workspaceId && root.draggingFromWorkspace !== root.workspaceId
             z: 100
         }
 
@@ -282,9 +279,11 @@ Item {
                     readonly property var toplevel: {
                         const toplevels = ToplevelManager.toplevels.values;
                         const cls = windowData.class || "";
-                        if (!cls) return null;
+                        if (!cls)
+                            return null;
                         const candidates = toplevels.filter(t => t.appId === cls);
-                        if (candidates.length <= 1) return candidates[0] || null;
+                        if (candidates.length <= 1)
+                            return candidates[0] || null;
                         return candidates.find(t => t.title === (windowData.title || "")) || candidates[0];
                     }
 
@@ -314,7 +313,6 @@ Item {
                     readonly property real targetHeight: Math.round(((windowData && windowData.size && windowData.size[1] !== undefined ? windowData.size[1] : 100) || 100) * scale_)
                     readonly property bool compactMode: targetHeight < 60 || targetWidth < 60
                     readonly property string iconPath: AppSearch.guessIcon((windowData && windowData.class !== undefined ? windowData.class : "") || "")
-                    readonly property int calculatedRadius: Styling.radius(-2)
                     readonly property bool isMatched: root.checkWindowMatched((windowData && windowData.address !== undefined ? windowData.address : undefined))
                     readonly property bool isSelected: root.checkWindowSelected((windowData && windowData.address !== undefined ? windowData.address : undefined))
 
@@ -368,95 +366,18 @@ Item {
                         }
                     }
 
-                    ClippingRectangle {
-                        anchors.fill: parent
-                        radius: windowDelegate.calculatedRadius
-                        antialiasing: true
-                        color: "transparent"
-                        border.color: Colors.background
-                        border.width: 0
-
-                        ScreencopyView {
-                            id: windowPreview
-                            anchors.fill: parent
-                            captureSource: Config.performance.windowPreview && GlobalStates.overviewOpen ? windowDelegate.toplevel : null
-                            live: GlobalStates.overviewOpen
-                            visible: Config.performance.windowPreview
-                        }
-                    }
-
-                    // Background when no preview
-                    Rectangle {
-                        id: previewBackground
-                        anchors.fill: parent
-                        radius: windowDelegate.calculatedRadius
-                        color: windowDelegate.dragging ? Colors.surfaceBright : windowDelegate.hovered ? Colors.surface : Colors.background
-                        border.color: windowDelegate.isSelected ? Colors.tertiary : windowDelegate.isMatched ? Styling.srItem("overprimary") : Styling.srItem("overprimary")
-                        border.width: windowDelegate.isSelected ? 3 : windowDelegate.isMatched ? 2 : (windowDelegate.hovered ? 2 : 0)
-                        visible: !Config.performance.windowPreview
-
-                        Behavior on color {
-                            enabled: (Config.animDuration !== undefined ? Config.animDuration : 0) > 0
-                            ColorAnimation {
-                                duration: Motion.exit.duration
-                            }
-                        }
-                    }
-
-                    // Icon
-                    Image {
-                        mipmap: true
-                        id: windowIcon
-                        readonly property real iconSize: Math.round(Math.min(windowDelegate.targetWidth, windowDelegate.targetHeight) * (windowDelegate.compactMode ? 0.6 : 0.35))
-                        anchors.centerIn: parent
-                        width: iconSize
-                        height: iconSize
-                        source: Quickshell.iconPath(windowDelegate.iconPath, "image-missing")
-                        sourceSize: Qt.size(iconSize, iconSize)
-                        asynchronous: true
-                        visible: !Config.performance.windowPreview
-                        z: 10
-                    }
-
-                    // Overlay when preview is available (only show on interaction)
-                    Rectangle {
-                        id: previewOverlay
-                        anchors.fill: parent
-                        radius: windowDelegate.calculatedRadius
-                        color: windowDelegate.dragging ? Qt.rgba(Colors.surfaceContainerHighest.r, Colors.surfaceContainerHighest.g, Colors.surfaceContainerHighest.b, 0.5) : windowDelegate.hovered ? Qt.rgba(Colors.surfaceContainer.r, Colors.surfaceContainer.g, Colors.surfaceContainer.b, 0.2) : "transparent"
-                        border.color: windowDelegate.isSelected ? Colors.tertiary : windowDelegate.isMatched ? Styling.srItem("overprimary") : Styling.srItem("overprimary")
-                        border.width: windowDelegate.isSelected ? 3 : windowDelegate.isMatched ? 2 : (windowDelegate.hovered ? 2 : 0)
-                        visible: Config.performance.windowPreview && (windowDelegate.hovered || windowDelegate.dragging || windowDelegate.isMatched || windowDelegate.isSelected)
-                        z: 5
-                    }
-
-                    // Corner icon when preview available
-                    Image {
-                        mipmap: true
-                        visible: windowPreview.hasContent && !windowDelegate.compactMode && Config.performance.windowPreview
-                        anchors.bottom: parent.bottom
-                        anchors.right: parent.right
-                        anchors.margins: 4
-                        width: 16
-                        height: 16
-                        source: Quickshell.iconPath(windowDelegate.iconPath, "image-missing")
-                        sourceSize: Qt.size(16, 16)
-                        asynchronous: true
-                        opacity: 0.8
-                        z: 10
-                    }
-
-                    // XWayland indicator
-                    Rectangle {
-                        visible: (windowDelegate.windowData && windowDelegate.windowData.xwayland !== undefined ? windowDelegate.windowData.xwayland : false) || false
-                        anchors.top: parent.top
-                        anchors.right: parent.right
-                        anchors.margins: 2
-                        width: 6
-                        height: 6
-                        radius: 3
-                        color: Colors.error
-                        z: 10
+                    OverviewWindowFace {
+                        id: face
+                        toplevel: windowDelegate.toplevel
+                        windowData: windowDelegate.windowData
+                        iconPath: windowDelegate.iconPath
+                        hovered: windowDelegate.hovered
+                        pressed: windowDelegate.dragging
+                        matched: windowDelegate.isMatched
+                        selected: windowDelegate.isSelected
+                        compact: windowDelegate.compactMode
+                        fallbackOnEmpty: false
+                        tooltipShown: dragArea.containsMouse && !windowDelegate.dragging
                     }
 
                     MouseArea {
@@ -552,17 +473,17 @@ Item {
                                             // Calculate position for floating window in target workspace
                                             const draggedX = windowDelegate.x;
                                             const draggedY = windowDelegate.y;
-                                            
+
                                             const workspaceGlobalPos = windowsContainer.mapToItem(root.dragOverlay, 0, 0);
                                             const relativeX = draggedX - workspaceGlobalPos.x;
                                             const relativeY = draggedY - workspaceGlobalPos.y;
-                                            
+
                                             const workspaceX = relativeX - root.horizontalScrollOffset - root.viewportOffset;
                                             const workspaceY = relativeY;
-                                            
+
                                             const monitorWidth = ((monitorData && monitorData.width !== undefined ? monitorData.width : 1920) || 1920) / ((monitorData && monitorData.scale !== undefined ? monitorData.scale : 1.0) || 1.0);
                                             const monitorHeight = ((monitorData && monitorData.height !== undefined ? monitorData.height : 1080) || 1080) / ((monitorData && monitorData.scale !== undefined ? monitorData.scale : 1.0) || 1.0);
-                                            
+
                                             let adjustedMonitorWidth = monitorWidth;
                                             let adjustedMonitorHeight = monitorHeight;
                                             if (barPosition === "left" || barPosition === "right") {
@@ -571,27 +492,27 @@ Item {
                                             if (barPosition === "top" || barPosition === "bottom") {
                                                 adjustedMonitorHeight -= barReserved;
                                             }
-                                            
+
                                             const actualX = workspaceX / scale_;
                                             const actualY = workspaceY / scale_;
-                                            
+
                                             const percentageX = Math.round((actualX / adjustedMonitorWidth) * 100);
                                             const percentageY = Math.round((actualY / adjustedMonitorHeight) * 100);
-                                            
+
                                             // Move to workspace and set position
                                             YozdService.dispatch(`movetoworkspacesilent ${targetWs}, address:${(windowDelegate.windowData && windowDelegate.windowData.address !== undefined ? windowDelegate.windowData.address : "")}`);
                                             YozdService.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${(windowDelegate.windowData && windowDelegate.windowData.address !== undefined ? windowDelegate.windowData.address : "")}`);
-                                            
+
                                             // Force immediate window data update
                                             CompositorData.updateWindowList();
                                         } else {
                                             // Just move workspace without repositioning for tiled windows
                                             YozdService.dispatch(`movetoworkspacesilent ${targetWs}, address:${(windowDelegate.windowData && windowDelegate.windowData.address !== undefined ? windowDelegate.windowData.address : "")}`);
-                                            
+
                                             // Force immediate window data update
                                             CompositorData.updateWindowList();
                                         }
-                                        
+
                                         // Restore original parent and reset position
                                         if (windowDelegate.originalParent) {
                                             windowDelegate.parent = windowDelegate.originalParent;
@@ -599,30 +520,29 @@ Item {
                                         }
                                         windowDelegate.x = windowDelegate.initX;
                                         windowDelegate.y = windowDelegate.initY;
-                                        
                                     } else if ((windowDelegate.windowData && windowDelegate.windowData.floating !== undefined ? windowDelegate.windowData.floating : false) && (windowDelegate.x !== windowDelegate.initX || windowDelegate.y !== windowDelegate.initY)) {
                                         // Dropped on same workspace and window is floating - reposition it
                                         // The window is currently in the drag overlay with global coordinates
-                                        
+
                                         // Store current drag position
                                         const draggedX = windowDelegate.x;
                                         const draggedY = windowDelegate.y;
-                                        
+
                                         // Get the workspace container position
                                         const workspaceGlobalPos = windowsContainer.mapToItem(root.dragOverlay, 0, 0);
-                                        
+
                                         // Calculate position relative to workspace
                                         const relativeX = draggedX - workspaceGlobalPos.x;
                                         const relativeY = draggedY - workspaceGlobalPos.y;
-                                        
+
                                         // Remove horizontal scroll offset to get actual position in workspace
                                         const workspaceX = relativeX - root.horizontalScrollOffset - root.viewportOffset;
                                         const workspaceY = relativeY;
-                                        
+
                                         // Convert to percentage of workspace dimensions (in scaled space)
                                         const monitorWidth = ((monitorData && monitorData.width !== undefined ? monitorData.width : 1920) || 1920) / ((monitorData && monitorData.scale !== undefined ? monitorData.scale : 1.0) || 1.0);
                                         const monitorHeight = ((monitorData && monitorData.height !== undefined ? monitorData.height : 1080) || 1080) / ((monitorData && monitorData.scale !== undefined ? monitorData.scale : 1.0) || 1.0);
-                                        
+
                                         // Adjust for bar reserved space
                                         let adjustedMonitorWidth = monitorWidth;
                                         let adjustedMonitorHeight = monitorHeight;
@@ -632,37 +552,37 @@ Item {
                                         if (barPosition === "top" || barPosition === "bottom") {
                                             adjustedMonitorHeight -= barReserved;
                                         }
-                                        
+
                                         // Convert from scaled overview space to actual position
                                         const actualX = workspaceX / scale_;
                                         const actualY = workspaceY / scale_;
-                                        
+
                                         // Calculate percentage
                                         const percentageX = Math.round((actualX / adjustedMonitorWidth) * 100);
                                         const percentageY = Math.round((actualY / adjustedMonitorHeight) * 100);
-                                        
+
                                         // Dispatch movewindowpixel command
                                         YozdService.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${(windowDelegate.windowData && windowDelegate.windowData.address !== undefined ? windowDelegate.windowData.address : "")}`);
-                                        
+
                                         // Force immediate window data update
                                         CompositorData.updateWindowList();
-                                        
+
                                         // Restore original parent
                                         if (windowDelegate.originalParent) {
                                             windowDelegate.parent = windowDelegate.originalParent;
                                             windowDelegate.originalParent = null;
                                         }
-                                        
+
                                         // Set override position for immediate visual update
                                         // Calculate what baseX/baseY should be at the dropped position
                                         windowDelegate.overrideBaseX = relativeX;
                                         windowDelegate.overrideBaseY = relativeY;
                                         windowDelegate.useOverridePosition = true;
-                                        
+
                                         // Force position to dropped location
                                         windowDelegate.x = relativeX;
                                         windowDelegate.y = relativeY;
-                                        
+
                                         // Start timer to clear override
                                         resetOverrideTimer.restart();
                                     } else {
@@ -702,30 +622,6 @@ Item {
                                     YozdService.dispatch(`focuswindow address:${windowDelegate.windowData.address}`);
                                 });
                             }
-                        }
-                    }
-
-                    // Tooltip
-                    Rectangle {
-                        visible: dragArea.containsMouse && !windowDelegate.dragging && windowDelegate.windowData
-                        anchors.bottom: parent.top
-                        anchors.bottomMargin: 8
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        width: tooltipText.implicitWidth + 16
-                        height: tooltipText.implicitHeight + 8
-                        color: Colors.inverseSurface
-                        radius: Styling.radius(0) / 2
-                        opacity: 0.9
-                        z: 1000
-
-                        Text {
-                            id: tooltipText
-                            anchors.centerIn: parent
-                            text: `${(windowDelegate.windowData && windowDelegate.windowData.title !== undefined ? windowDelegate.windowData.title : "") || ""}\n[${(windowDelegate.windowData && windowDelegate.windowData.class !== undefined ? windowDelegate.windowData.class : "") || ""}]${(windowDelegate.windowData && windowDelegate.windowData.xwayland !== undefined ? windowDelegate.windowData.xwayland : false) ? " [XWayland]" : ""}`
-                            font.family: Config.theme.font
-                            font.pixelSize: 10
-                            color: Colors.inverseOnSurface
-                            horizontalAlignment: Text.AlignHCenter
                         }
                     }
                 }

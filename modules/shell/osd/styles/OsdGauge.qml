@@ -97,7 +97,7 @@ Surface {
     Repeater {
         model: 21
 
-        Rectangle {
+        Mark {
             id: tick
             required property int index
             readonly property bool major: tick.index % 2 === 0
@@ -109,6 +109,7 @@ Surface {
             x: tick.at.x - width / 2
             y: tick.at.y - height / 2
             rotation: tick.deg + 90
+            radius: 0
             antialiasing: true
             color: tick.index / 20 <= root.needle + 1e-6 && root.needle > 0.005 ? Type.secondary : Type.track
         }
@@ -121,22 +122,20 @@ Surface {
         y: root.hub.y
         rotation: root.startAngle + root.sweep * root.needle
 
-        Rectangle {
+        Mark {
             x: -root.dialR * 0.14
             y: -height / 2
             width: root.dialR * 0.88
             height: Space.stroke - 1
-            radius: height / 2
             antialiasing: true
             color: Type.accent
         }
     }
 
-    Rectangle {
+    Mark {
         objectName: "gaugeHub"
         width: Space.s + Space.xs
         height: width
-        radius: width / 2
         x: root.hub.x - width / 2
         y: root.hub.y - height / 2
         color: Type.accent

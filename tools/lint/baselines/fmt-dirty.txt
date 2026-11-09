@@ -52,7 +52,6 @@ modules/components/Tinted.qml
 modules/components/TintedWallpaper.qml
 modules/components/WavyLine.qml
 modules/corners/ScreenCorners.qml
-modules/dock/DockContent.qml
 modules/frame/ScreenFrameContent.qml
 modules/globals/GlobalStates.qml
 modules/notch/Notch.qml
@@ -113,9 +112,6 @@ modules/theme/PywalGenerator.qml
 modules/theme/PywalZenGenerator.qml
 modules/theme/QtCtGenerator.qml
 modules/theme/SpicetifyGenerator.qml
-modules/tools/ScreenrecordTool.qml
-modules/tools/ScreenshotOverlay.qml
-modules/tools/ScreenshotTool.qml
 modules/widgets/config/AiPanel.qml
 modules/widgets/dashboard/Dashboard.qml
 modules/widgets/dashboard/controls/ColorButton.qml
@@ -130,11 +126,7 @@ modules/widgets/defaultview/ExpandedMedia.qml
 modules/widgets/defaultview/IslandHeader.qml
 modules/widgets/defaultview/MediaSummary.qml
 modules/widgets/defaultview/NotchVisualizer.qml
-modules/widgets/overview/Overview.qml
-modules/widgets/overview/OverviewPopup.qml
 modules/widgets/overview/OverviewView.qml
-modules/widgets/overview/OverviewWindow.qml
-modules/widgets/overview/ScrollingWorkspace.qml
 modules/widgets/presets/PresetsButton.qml
 modules/widgets/tools/ToolsMenuView.qml
 shell.qml

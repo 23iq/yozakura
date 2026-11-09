@@ -4,9 +4,9 @@ import QtQuick
 import qs.config
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
 import qs.modules.settings.controls
 import "TermModel.js" as TermModel
-import "../settings/Ui.js" as Ui
 
 // Prompt presets as cards: each shows its real prompt line (rendered by the
 // engine, or approximated) on a strip of your terminal background. Picking
@@ -24,7 +24,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: TerminalLookService.presets
@@ -52,18 +52,19 @@ Item {
                     }
                 }
 
-                Rectangle {
+                // A strip of the terminal background (graphics, not a box).
+                Mark {
                     anchors.fill: parent
-                    radius: Math.min(Styling.radius(0), 12)
+                    radius: Look.radius("control", height)
                     color: Colors.background
-                    border.width: 1
-                    border.color: Ui.alpha(Colors.outlineVariant, 0.5)
+                    border.width: Space.hairline
+                    border.color: Qt.alpha(Colors.outlineVariant, 0.5)
 
                     Item {
                         id: strip
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
+                        anchors.leftMargin: Space.s
+                        anchors.rightMargin: Space.s
                         clip: true
 
                         // Natural size, scaled down to fit the strip; long
@@ -114,16 +115,17 @@ Item {
                             }
                         }
 
-                        Rectangle {
+                        Mark {
                             anchors.right: parent.right
-                            width: 36
+                            radius: 0
+                            width: Space.controlS
                             height: parent.height
                             visible: prompt.overflows && card.result !== undefined
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
                                 GradientStop {
                                     position: 0
-                                    color: Ui.alpha(Colors.background, 0)
+                                    color: Qt.alpha(Colors.background, 0)
                                 }
                                 GradientStop {
                                     position: 1
@@ -135,38 +137,34 @@ Item {
                         // Placeholder bars while the engine renders.
                         Row {
                             anchors.verticalCenter: parent.verticalCenter
-                            spacing: 6
+                            spacing: Space.xs
                             visible: !card.result
                             Repeater {
                                 model: [46, 78, 30]
-                                delegate: Rectangle {
+                                delegate: Mark {
                                     required property int modelData
                                     width: modelData
-                                    height: 14
-                                    radius: 7
-                                    color: Ui.alpha(Colors.overSurface, 0.08)
+                                    height: Type.size("body")
+                                    color: Type.placeholder
                                 }
                             }
                         }
                     }
 
-                    Rectangle {
+                    Mark {
                         objectName: "nerdFreeBadge"
                         visible: !card.modelData.nerdFont
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 6
-                        width: badgeText.implicitWidth + 14
-                        height: 18
-                        radius: 9
-                        color: Ui.alpha(Colors.tertiary, 0.18)
-                        Text {
+                        anchors.margins: Space.xs
+                        width: badgeText.implicitWidth + Space.m
+                        height: badgeText.implicitHeight + Space.xs
+                        color: Qt.alpha(Colors.tertiary, 0.18)
+                        KitText {
                             id: badgeText
                             anchors.centerIn: parent
+                            role: "label"
                             text: I18n.t("prefs.term.look.nerd_free")
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-5)
-                            font.weight: Font.DemiBold
                             color: Colors.tertiary
                         }
                     }

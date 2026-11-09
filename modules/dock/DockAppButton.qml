@@ -35,8 +35,8 @@ Button {
     readonly property int instanceCount: (isSeparator || !appToplevel) ? 0 : appToplevel.toplevelCount
 
     enabled: !isSeparator
-    implicitWidth: isSeparator ? (isVertical ? iconSize * 0.6 : 2) : iconSize + 8
-    implicitHeight: isSeparator ? (isVertical ? 2 : iconSize * 0.6) : iconSize + 8
+    implicitWidth: isSeparator ? (isVertical ? iconSize * 0.6 : 2) : iconSize + Space.s
+    implicitHeight: isSeparator ? (isVertical ? 2 : iconSize * 0.6) : iconSize + Space.s
 
     padding: 0
     topPadding: 0
@@ -49,7 +49,7 @@ Button {
             anchors.centerIn: parent
             width: parent.width
             height: parent.height
-            radius: Styling.radius(-2)
+            radius: Look.radius("control", height)
             variant: "focus"
             visible: !root.isSeparator && (root.hovered || root.pressed)
             opacity: root.pressed ? 1 : 0.7

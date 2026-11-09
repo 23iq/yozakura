@@ -7,12 +7,11 @@ import Quickshell.Wayland
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.bar.workspaces
 import qs.modules.services
 import qs.config
 import qs.modules.bar.panels
-
-
 
 Item {
     id: overviewRoot
@@ -23,8 +22,7 @@ Item {
     readonly property int columns: Config.overview.columns
     readonly property int workspacesShown: rows * columns
     readonly property real workspaceSpacing: Config.overview.workspaceSpacing
-    readonly property real workspacePadding: 8
-    readonly property color activeBorderColor: Styling.srItem("overprimary")
+    readonly property real workspacePadding: Space.s
 
     // Use the screen's monitor instead of focused monitor for multi-monitor support
     property var currentScreen: null  // This will be set from parent
@@ -227,28 +225,21 @@ Item {
 
                     Repeater {
                         model: overviewRoot.columns
-                        Rectangle {
+                        Item {
                             id: workspace
                             property int colIndex: index
                             property int workspaceValue: overviewRoot.workspaceGroup * workspacesShown + rowIndex * overviewRoot.columns + colIndex + 1
-                            property color defaultWorkspaceColor: Colors.background
-                            property color hoveredWorkspaceColor: Colors.surfaceContainer
-                            property color hoveredBorderColor: Colors.outline
                             property bool hoveredWhileDragging: false
 
                             implicitWidth: overviewRoot.workspaceImplicitWidth + workspacePadding
                             implicitHeight: overviewRoot.workspaceImplicitHeight + workspacePadding
-                            color: "transparent"
-                            radius: Styling.radius(2)
-                            border.width: 2
-                            border.color: hoveredWhileDragging ? hoveredBorderColor : "transparent"
                             clip: true
 
                             // Wallpaper background for each workspace
                             TintedWallpaper {
                                 id: workspaceWallpaper
                                 anchors.fill: parent
-                                radius: Styling.radius(2)
+                                radius: Look.radius("box")
                                 tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
 
                                 property string lockscreenFramePath: {
@@ -276,6 +267,11 @@ Item {
                                         YozdService.dispatch(`workspace ${workspaceValue}`);
                                     }
                                 }
+                            }
+
+                            WorkspaceRing {
+                                anchors.fill: parent
+                                target: workspace.hoveredWhileDragging
                             }
 
                             DropArea {
@@ -317,12 +313,14 @@ Item {
                 }).map(win => ({
                             windowData: win,
                             toplevel: (() => {
-                                const cls = win.class || "";
-                                if (!cls) return null;
-                                const candidates = toplevels.filter(t => t.appId === cls);
-                                if (candidates.length <= 1) return candidates[0] || null;
-                                return candidates.find(t => t.title === (win.title || "")) || candidates[0];
-                            })()
+                                    const cls = win.class || "";
+                                    if (!cls)
+                                        return null;
+                                    const candidates = toplevels.filter(t => t.appId === cls);
+                                    if (candidates.length <= 1)
+                                        return candidates[0] || null;
+                                    return candidates.find(t => t.title === (win.title || "")) || candidates[0];
+                                })()
                         }));
             }
 
@@ -372,7 +370,7 @@ Item {
                 }
             }
 
-            Rectangle {
+            WorkspaceRing {
                 id: focusedWorkspaceIndicator
                 property int activeWorkspaceInGroup: (monitor?.activeWorkspace?.id || 1) - (overviewRoot.workspaceGroup * overviewRoot.workspacesShown)
                 property int activeWorkspaceRowIndex: Math.floor((activeWorkspaceInGroup - 1) / overviewRoot.columns)
@@ -382,10 +380,7 @@ Item {
                 y: Math.round((overviewRoot.workspaceImplicitHeight + workspacePadding + workspaceSpacing) * activeWorkspaceRowIndex)
                 width: Math.round(overviewRoot.workspaceImplicitWidth + workspacePadding)
                 height: Math.round(overviewRoot.workspaceImplicitHeight + workspacePadding)
-                color: "transparent"
-                radius: Styling.radius(2)
-                border.width: 2
-                border.color: overviewRoot.activeBorderColor
+                active: true
 
                 Behavior on x {
                     enabled: Config.animDuration > 0

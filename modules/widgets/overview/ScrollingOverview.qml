@@ -8,6 +8,7 @@ import qs.modules.theme
 import qs.modules.bar.workspaces
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 import qs.modules.bar.panels
 
@@ -19,8 +20,7 @@ Item {
     readonly property int totalWorkspaces: Config.overview.rows * Config.overview.columns
     readonly property int visibleWorkspaces: 3  // Show 3 workspaces at a time in viewport
     readonly property real workspaceSpacing: Config.overview.workspaceSpacing
-    readonly property real workspacePadding: 4
-    readonly property color activeBorderColor: Styling.srItem("overprimary")
+    readonly property real workspacePadding: Space.xs
 
     // Monitor info
     property var currentScreen: null
@@ -272,7 +272,6 @@ Item {
                         barReserved: scrollingOverviewRoot.barReserved
                         windowList: scrollingOverviewRoot.windowList
                         isActive: (scrollingOverviewRoot.monitor?.activeWorkspace?.id || 0) === workspaceId
-                        activeBorderColor: scrollingOverviewRoot.activeBorderColor
                         focusedWindowAddress: scrollingOverviewRoot.focusedWindowAddress
 
                         // Search integration
@@ -305,7 +304,7 @@ Item {
             }
 
             // Floating active workspace indicator (inside content, moves with scroll)
-            Rectangle {
+            WorkspaceRing {
                 id: focusedWorkspaceIndicator
                 readonly property int activeWorkspaceId: scrollingOverviewRoot.monitor?.activeWorkspace?.id || 1
 
@@ -313,10 +312,7 @@ Item {
                 y: (activeWorkspaceId - 1) * (workspaceHeight + workspaceSpacing)
                 width: workspaceWidth
                 height: workspaceHeight
-                color: "transparent"
-                radius: Styling.radius(1)
-                border.width: 2
-                border.color: scrollingOverviewRoot.activeBorderColor
+                active: true
                 z: 10
 
                 Behavior on y {

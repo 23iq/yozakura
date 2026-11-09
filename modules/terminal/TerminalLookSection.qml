@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.settings
 import qs.modules.settings.store
 import qs.modules.extras
+import qs.modules.components.kit
 import "TermModel.js" as TermModel
 
 // Terminal look, shared by Settings > Terminal & Apps and onboarding: the
@@ -34,7 +35,7 @@ Column {
     readonly property bool engineInstalling: root.promptOn && root.installing(root.engineExtra)
     readonly property var engineProgress: ExtrasService.progress[root.engineExtra] ?? null
 
-    spacing: 12
+    spacing: Space.m
 
     function _ensure() {
         TerminalLookService.ensure(root.prompt, root.engine);
@@ -102,11 +103,12 @@ Column {
         title: I18n.t("prefs.term.look.engine_queued", ExtrasService.displayName(root.engineExtra))
         message: root.engineProgress && root.engineProgress.phase ? root.engineProgress.phase : I18n.t("prefs.term.look.engine_queued.desc")
 
-        ProgressTrack {
+        ProgressLine {
+            readonly property real percent: root.engineProgress && root.engineProgress.percent !== undefined ? root.engineProgress.percent : -1
             anchors.verticalCenter: parent.verticalCenter
-            width: 140
-            height: 6
-            percent: root.engineProgress && root.engineProgress.percent !== undefined ? root.engineProgress.percent : -1
+            width: Space.xxl * 4
+            indeterminate: percent < 0
+            value: Math.max(0, percent) / 100
         }
     }
 

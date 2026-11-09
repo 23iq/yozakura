@@ -176,16 +176,6 @@
   "rectangle": 2,
   "text": 6
  },
- "modules/dock": {
-  "font-size": 4,
-  "rectangle": 1,
-  "text": 4,
-  "radius": 7
- },
- "modules/dock/indicators": {
-  "spacing": 1,
-  "rectangle": 5
- },
  "modules/extras": {
   "spacing": 44,
   "font-size": 1,
@@ -328,28 +318,8 @@
   "rectangle": 1,
   "radius": 1
  },
- "modules/shell/osd": {
-  "rectangle": 2,
-  "text": 1
- },
- "modules/shell/osd/styles": {
-  "rectangle": 3
- },
  "modules/shell/rehome": {
   "text": 1
- },
- "modules/terminal": {
-  "spacing": 11,
-  "rectangle": 12,
-  "text": 6,
-  "radius": 2
- },
- "modules/tools": {
-  "spacing": 9,
-  "font-size": 5,
-  "rectangle": 15,
-  "text": 6,
-  "radius": 4
  },
  "modules/widgets/dashboard/clipboard": {
   "spacing": 22,
@@ -422,16 +392,6 @@
  },
  "modules/widgets/launcher": {
   "text": 2
- },
- "modules/widgets/overview": {
-  "spacing": 13,
-  "font-size": 4,
-  "rectangle": 19,
-  "text": 5,
-  "radius": 15
- },
- "modules/widgets/powermenu/styles": {
-  "rectangle": 1
  },
  "modules/widgets/presets": {
   "rectangle": 1,
