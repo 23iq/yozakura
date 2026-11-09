@@ -29,6 +29,9 @@ Shape {
     readonly property real wCenter: root.width - root.c * 2
 
     preferredRendererType: Shape.CurveRenderer
+    // Without concave corners the stroke runs along the item's edges and,
+    // like the canvas it replaced, is cut there (a cheap scissor)
+    clip: root.c < root.borderWidth
     transform: Scale {
         origin.y: root.height / 2
         yScale: root.edge === "bottom" ? -1 : 1
@@ -45,8 +48,8 @@ Shape {
         startY: root.o
         // concave corner along the edge (left)
         PathArc {
-            x: root.c
-            y: root.c
+            x: root.c > 0 ? root.c : root.o // no concave corner: stay put
+            y: root.c > 0 ? root.c : root.o
             radiusX: Math.max(0, root.c - root.o)
             radiusY: Math.max(0, root.c - root.o)
             direction: PathArc.Clockwise
@@ -80,8 +83,8 @@ Shape {
         }
         // concave corner along the edge (right)
         PathArc {
-            x: root.width - root.o
-            y: root.o
+            x: root.c > 0 ? root.width - root.o : root.width
+            y: root.c > 0 ? root.o : 0
             radiusX: Math.max(0, root.c - root.o)
             radiusY: Math.max(0, root.c - root.o)
             direction: PathArc.Clockwise
