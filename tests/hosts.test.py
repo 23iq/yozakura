@@ -50,6 +50,7 @@ QtObject {
 for f in ("Motion", "Metrics", "BarMetrics"):
     p = h.root / "qs/modules/theme" / f"{f}.qml"
     p.write_text("import qs.config\n" + p.read_text())
+h.copy("modules/components/SurfaceLatch.qml", "qs/modules/components", siblings=False)
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }", "Shadow": "Item {}"})
 # The card host (HostedSurfaces: AI quick ask; tests/card-host.test.py)
 h.module("qs.modules.components.kit", {
@@ -192,8 +193,12 @@ for edge in ("top", "bottom", "left", "right"):
             assert r["w"] == 900 + 2 * 16, tag  # view wider than Metrics.sheetW
         # Escape from the focused view closes through Visibilities
         QTest.keyClick(root, Qt.Key_Escape)
-        pump(10)
-        assert not ev(host, "isOpen") and not ev(host, "visible"), f"{tag}: escape"
+        pump(1)
+        # SurfaceLatch: focus is released at once, the unmap a frame later
+        assert not ev(host, "isOpen") and not ev(host, "view.activeFocus"), f"{tag}: escape"
+        assert ev(host, "visible"), f"{tag}: unmapped in the focus-drop tick"
+        pump(40)
+        assert not ev(host, "visible"), f"{tag}: escape"
         assert not ev(vis, f'getForScreen("A").{module}'), tag
 
 # Click outside (on the scrim) closes; a click on the frame does not.

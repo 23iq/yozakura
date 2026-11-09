@@ -35,6 +35,9 @@ FloatingWindow {
     Component.onCompleted: _homed = targetScreen !== null
     // Moving to another output after ours went away (see rehome()).
     property bool rehoming: false
+    // Our output is gone and the move has not happened yet: QtWayland may
+    // hide the surface meanwhile, which is not the user closing it.
+    readonly property bool outputGone: homed && SettingsScreen.indexIn(Quickshell.screens, targetScreen) < 0
 
     // Our output disappeared: once the outputs have settled, move to the
     // first one (one move, not one per hotplug event).
@@ -117,7 +120,7 @@ FloatingWindow {
     onVisibleChanged: {
         if (visible) {
             preparePlacement();
-        } else if (GlobalStates.settingsWindowVisible && !rehoming) {
+        } else if (GlobalStates.settingsWindowVisible && !rehoming && !outputGone) {
             GlobalStates.settingsWindowVisible = false;
         }
     }
