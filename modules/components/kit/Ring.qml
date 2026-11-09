@@ -3,13 +3,15 @@ import QtQuick.Shapes
 import qs.modules.components.kit
 
 // A progress ring (`value` 0..1) with its children centered inside
-// (pomodoro time, hold-to-confirm glyph). Same stroke as the line controls.
+// (pomodoro time, hold-to-confirm glyph). Same stroke as the line controls;
+// `color` / `trackColor` tint the arc and the track (a phase colour).
 Item {
     id: root
 
     property real value: 0
     property real thickness: Space.stroke
     property color color: Type.progress
+    property color trackColor: Type.track
     readonly property real fraction: Math.max(0, Math.min(1, root.value))
     readonly property real arcRadius: (Math.min(width, height) - root.thickness) / 2
     default property alias content: center.data
@@ -22,7 +24,7 @@ Item {
         preferredRendererType: Shape.CurveRenderer
 
         ShapePath {
-            strokeColor: Type.track
+            strokeColor: root.trackColor
             strokeWidth: root.thickness
             fillColor: "transparent"
             PathAngleArc {

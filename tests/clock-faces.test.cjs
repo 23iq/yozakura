@@ -90,6 +90,13 @@ test('pomodoro styles: ring default, slots, island has no bar view', () => {
     assert.equal(pomo.resolve('underline').slot, 'overlay');
     assert.equal(pomo.resolve('island').slot, 'none');
     assert.equal(pomo.resolve('island').url, '');
+    // every bar view exists (the ring is the kit Ring: indicators/PhaseRing.qml)
+    for (const id of plain(pomo.ids())) {
+        const url = pomo.resolve(id).url;
+        if (url)
+            assert.ok(require('node:fs').existsSync(path.join(__dirname, '../modules/bar/clock', url)), url);
+    }
+    assert.equal(pomo.resolve('ring').url, 'indicators/PhaseRing.qml');
 });
 
 test('pomodoro state: idle, running work, break, ringing', () => {
