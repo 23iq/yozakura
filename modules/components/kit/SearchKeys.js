@@ -7,6 +7,8 @@
 //   ctx.atStart     the cursor is at the start / ctx.atEnd at the end
 //   ctx.tabNav      Tab / Shift+Tab are captured (handleTabNavigation)
 //   ctx.freeCursor  Left / Right always navigate (disableCursorNavigation)
+//   ctx.homeEnd     Home / End move the list selection (handleHomeEnd);
+//                   otherwise they move the cursor inside the text
 
 var KEY = {
     Escape: 0x01000000,
@@ -36,8 +38,11 @@ PLAIN[KEY.Down] = "downPressed";
 PLAIN[KEY.Up] = "upPressed";
 PLAIN[KEY.PageDown] = "pageDownPressed";
 PLAIN[KEY.PageUp] = "pageUpPressed";
-PLAIN[KEY.Home] = "homePressed";
-PLAIN[KEY.End] = "endPressed";
+
+// Home / End: only for a field that opts in (ctx.homeEnd).
+var HOME_END = {};
+HOME_END[KEY.Home] = "homePressed";
+HOME_END[KEY.End] = "endPressed";
 
 // Ctrl shortcuts.
 var CTRLS = {};
@@ -65,5 +70,7 @@ function action(key, mods, ctx) {
         return c.freeCursor || c.atStart || c.empty ? "leftPressed" : "";
     if (key === KEY.Right)
         return c.freeCursor || c.atEnd || c.empty ? "rightPressed" : "";
+    if (HOME_END[key])
+        return c.homeEnd ? HOME_END[key] : "";
     return PLAIN[key] || "";
 }

@@ -4,7 +4,8 @@ import qs.config
 import qs.modules.components.kit
 
 // The seek bar of a media player: the kit LineSlider with the shell's wavy
-// fill while playing (performance.wavyLine). It follows the player's
+// fill while playing (performance.wavyLine) and its playhead knob always
+// shown. It follows the player's
 // position except while dragged; the seek happens on release, the wheel
 // is left to the surface under it.
 LineSlider {
@@ -17,6 +18,7 @@ LineSlider {
     implicitHeight: Space.l
     wavy: Config.performance ? Config.performance.wavyLine !== false : true
     playing: root.isPlaying
+    alwaysShowKnob: true
     wheelEnabled: false
 
     // The dragged fraction, kept apart from `value` (the Binding below puts

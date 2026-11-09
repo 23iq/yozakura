@@ -11,7 +11,8 @@ IconButton {
 
     signal toggled
 
-    size: "s"
+    // A chip's height (32 px): the dock's buttons stay compact
+    size: "chip"
     active: root.pinned
     icon: root.pinned ? Icons.pin : Icons.unpin
     tooltip: root.pinned ? I18n.t("dock.tooltip.unpin_dock") : I18n.t("dock.tooltip.pin_dock")

@@ -7,7 +7,9 @@ import qs.modules.components.kit
 // than two values. Repaints only when the values, size or color change.
 // A sample appended to a full window (same length, oldest dropped) slides
 // the drawn curve in from the right (a GPU translation of the painted
-// canvas, no per-frame repaint) instead of jumping.
+// canvas, no per-frame repaint) instead of jumping. `capacity` (> 0) is the
+// window the history fills: fewer values sit at their place on the right
+// (one step apart, as in a full window) instead of stretching to the width.
 Item {
     id: root
 
@@ -15,9 +17,12 @@ Item {
     property color color: Type.progress
     property real lineWidth: Space.stroke - 1
     property real fillOpacity: 0.28
+    property int capacity: 0
     readonly property int count: root.values && root.values.length > 0 ? root.values.length : 0
-    // One step between samples (the canvas holds one extra off the left edge).
-    readonly property real step: root.count > 2 ? root.width / (root.count - 2) : root.width
+    // Sample slots across the window: the values, or the whole capacity
+    readonly property int slots: Math.max(root.count, root.capacity)
+    // One step between samples (a full window holds one extra off the left edge).
+    readonly property real step: root.slots > 2 ? root.width / (root.slots - 2) : root.width
     property real shift: 0
     property var _last: []
 
@@ -56,10 +61,12 @@ Item {
 
     Canvas {
         id: canvas
-        // The last sample sits on the right edge; the first one, one step
-        // left of the visible area (until there are only two).
-        x: (root.count > 2 ? -root.step : 0) + root.shift
-        width: root.count > 2 ? root.step * (root.count - 1) : root.width
+        objectName: "sparklineCanvas"
+        // The last sample sits on the right edge; in a full window the
+        // first one is one step left of the visible area (until there are
+        // only two).
+        x: root.width - width + root.shift
+        width: root.slots > 2 ? root.step * Math.max(1, root.count - 1) : root.width
         height: root.height
         antialiasing: true
 

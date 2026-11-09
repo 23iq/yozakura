@@ -174,7 +174,10 @@ Item {
     readonly property alias silhouette: silhouetteItem
     NotchSilhouette {
         id: silhouetteItem
-        anchors.centerIn: parent
+        // Centered on whole pixels (a half-pixel origin shows the seam
+        // between the attached body and its concave corners)
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
         width: parent.implicitWidth
         height: parent.implicitHeight
         position: notchContainer.position

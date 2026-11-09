@@ -13,6 +13,7 @@ SearchField {
     required property ListView list
 
     rule: true
+    handleHomeEnd: true
 
     onSearchTextChanged: text => {
         field.tab.searchText = text;

@@ -47,15 +47,21 @@ Item {
     readonly property int edgeGap: (Config.notchTheme === "island" ? 4 : 0) + (vertical ? 0 : frameOffset)
     readonly property int popupGap: 4
     // {x, y} of a `w` x `h` child of `box` against the notch edge (`gap`
-    // from it), centered along it
+    // from it), centered along it, on whole pixels: the attached notch's
+    // body and concave corners are separate antialiased pieces, and a
+    // half-pixel origin turns their shared edge into a visible seam
     function edgePlace(box, w, h, gap) {
-        return NotchShape.viewPos(root.notchPosition, {
+        const p = NotchShape.viewPos(root.notchPosition, {
             w: box.width,
             h: box.height
         }, {
             w: w,
             h: h
         }, gap);
+        return {
+            x: Math.round(p.x),
+            y: Math.round(p.y)
+        };
     }
     // Notch region on its edge (align, bar/dock/frame insets, hover strip)
     readonly property NotchPlacement placement: NotchPlacement {
@@ -385,8 +391,8 @@ Item {
                 w: width,
                 h: height
             }, 0)
-            x: at.x
-            y: at.y
+            x: Math.round(at.x)
+            y: Math.round(at.y)
 
             // Target width (animated below); 0 while hidden
             readonly property real targetWidth: shouldShowNotificationPopup ? Math.round(popupHovered ? 420 + 48 : 320 + 48) : 0
@@ -405,6 +411,7 @@ Item {
             }
 
             transform: Translate {
+                id: popupSlide
                 x: root.reveal ? 0 : root.hideOffset.x
                 y: root.reveal ? 0 : root.hideOffset.y
                 Behavior on x {
@@ -505,6 +512,12 @@ Item {
     // frame without capturing anything (PanelShadows)
     readonly property Item silhouette: notchContainer.silhouette
     readonly property rect silhouetteRect: Qt.rect(notchRegionContainer.x + notchAnimationContainer.x + notchSlide.x + notchContainer.x + silhouette.x, notchRegionContainer.y + notchAnimationContainer.y + notchSlide.y + notchContainer.y + silhouette.y, silhouette.width, silhouette.height)
+    // The notification popup under the open notch, likewise (its own
+    // reveal slide included); empty while it is hidden
+    readonly property rect notificationPopupRect: notificationPopupContainer.visible ? Qt.rect(notchRegionContainer.x + notificationPopupContainer.x + popupSlide.x, notchRegionContainer.y + notificationPopupContainer.y + popupSlide.y, notificationPopupContainer.width, notificationPopupContainer.height) : Qt.rect(0, 0, 0, 0)
+    readonly property real notificationPopupRadius: notificationPopupContainer.radius
+    // Alpha of its surface (fill colour x variant opacity)
+    readonly property real notificationPopupAlpha: notificationPopupContainer.rectOpacity * (notificationPopupContainer.hasSolidColor ? notificationPopupContainer.solidColor.a : 1)
     // Reveal fade (render thread): the shadow fades in step with its own
     // RenderFade of the same duration and easing
     readonly property int fadeDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0

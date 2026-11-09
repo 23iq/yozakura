@@ -147,6 +147,7 @@ DesktopWidget {
                     anchors.verticalCenter: parent.verticalCenter
                     height: Math.min(parent.height, Math.round(30 * root.k))
                     values: (row.modelData.values ?? []).slice(-root.capacity)
+                    capacity: root.capacity
                     color: row.modelData.color
                     lineWidth: Math.max(1.5, 2 * root.k)
                 }

@@ -4,7 +4,8 @@ import qs.modules.components
 import "KitStates.js" as KitStates
 import qs.modules.components.kit
 
-// Icon button. Sizes "xs" (28, dense toolbars) / "s" (36) / "m" (40) / "l" (64, a
+// Icon button. Sizes "xs" (28, dense toolbars) / "chip" (32, a chip's height:
+// the dock's own buttons) / "s" (36) / "m" (40) / "l" (64, a
 // hero action) / "xl" (96, hero actions on large screens). Rest and hover / `highlighted`
 // are the language's control box (Look: a ghost in ink, translucent with a
 // hairline in glass, a solid squarer tile in tiles), `active` an accent tint
@@ -49,6 +50,7 @@ StyledRect {
 
     implicitWidth: ({
             "xs": Space.controlXS,
+            "chip": Space.chip,
             "s": Space.controlS,
             "l": Space.controlL,
             "xl": Space.controlXL
@@ -89,7 +91,7 @@ StyledRect {
         anchors.centerIn: parent
         text: root.icon
         font.family: Icons.font
-        font.pixelSize: root.size === "xl" ? Math.round(Type.size("display") * 0.95) : (root.size === "l" ? Type.iconSize("title") + 4 : (root.size === "xs" ? Type.iconSize("caption") : Type.iconSize("body") + (root.size === "s" ? -1 : 2)))
+        font.pixelSize: root.size === "xl" ? Math.round(Type.size("display") * 0.95) : (root.size === "l" ? Type.iconSize("title") + 4 : (root.size === "xs" ? Type.iconSize("caption") : Type.iconSize("body") + (root.size === "s" || root.size === "chip" ? -1 : 2)))
         color: Type.inkColor(KitStates.ink(root.look))
         scale: root.glyphScale
     }

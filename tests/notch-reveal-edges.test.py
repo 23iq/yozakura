@@ -138,5 +138,9 @@ for pos in EDGES:
     h.eval(root, f"setPos('{pos}')")
     settle(200)
     assert h.eval(nc, "reveal") == (pos == "left"), f"{pos}: shown only on the bar's edge while a window is open"
+    # Whole-pixel origin: a half pixel turns the attached body / concave
+    # corner junction into a visible seam
+    sx, sy = ev(nc, "[silhouetteRect.x, silhouetteRect.y]")
+    assert sx == round(sx) and sy == round(sy), f"{pos}: silhouette on whole pixels ({sx}, {sy})"
 
 print("notch reveal edges: keepHidden on every edge incl. the bar's, hover strip shows, follows the pin otherwise passed")

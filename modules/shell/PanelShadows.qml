@@ -163,4 +163,21 @@ Item {
             easingType: root.notch ? root.notch.fadeEasing : Easing.Linear
         }
     }
+    // The notch's notification popup (a rounded box beside the open notch),
+    // sliding and fading with the same reveal
+    ShapeShadow {
+        id: popupShadow
+        active: !!root.notch && root.notch.visible
+        box: root.notch ? root.notch.notificationPopupRect : Qt.rect(0, 0, 0, 0)
+        radii: {
+            const r = root.notch ? Math.min(root.notch.notificationPopupRadius, popupShadow.box.width / 2, popupShadow.box.height / 2) : 0;
+            return Qt.vector4d(r, r, r, r);
+        }
+        strength: root.notch ? root.notch.notificationPopupAlpha : 1
+        opacity: root.notch && root.notch.reveal ? 1 : 0
+        RenderFade on opacity {
+            duration: root.notch ? root.notch.fadeDuration : 0
+            easingType: root.notch ? root.notch.fadeEasing : Easing.Linear
+        }
+    }
 }

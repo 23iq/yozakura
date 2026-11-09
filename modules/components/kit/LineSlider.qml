@@ -6,7 +6,7 @@ import qs.modules.components
 import qs.modules.components.kit
 
 // A 3px line slider: track, accent fill, a knob that shows while hovered or
-// dragged. Drag or click to set, the wheel adjusts by `step`. Optional
+// dragged (always with `alwaysShowKnob`: a media timeline's playhead). Drag or click to set, the wheel adjusts by `step`. Optional
 // leading `icon` and value text (`showValue`, `valueText`). `vertical: true`
 // stacks value / track / icon top to bottom. `moved(value)` on user changes;
 // `iconClickable` makes the icon a button (`iconClicked()`, e.g. mute).
@@ -35,6 +35,7 @@ Item {
     property real level: -1
     property color fillColor: Type.progress
     property bool wavy: false
+    property bool alwaysShowKnob: false
     property bool playing: false
     property bool wheelEnabled: true
     readonly property real fraction: root.to === root.from ? 0 : Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
@@ -147,13 +148,14 @@ Item {
 
             Rectangle {
                 id: knob
+                objectName: "lineSliderKnob"
                 width: Space.m
                 height: width
                 radius: width / 2
                 color: root.fillColor
                 x: root.vertical ? (area.width - width) / 2 : root.fraction * area.width - width / 2
                 y: root.vertical ? (1 - root.fraction) * area.height - height / 2 : (area.height - height) / 2
-                scale: root.hovered || root.pressed ? 1 : 0
+                scale: root.alwaysShowKnob || root.hovered || root.pressed ? 1 : 0
                 Behavior on scale {
                     enabled: Motion.enter.duration > 0
                     NumberAnimation {
