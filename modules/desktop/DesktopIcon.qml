@@ -148,6 +148,8 @@ Item {
                 return "image://icon/" + root.itemIcon;
             }
             fillMode: Image.PreserveAspectFit
+            // Decode at the shown size (x2 for HiDPI), not the file's size
+            sourceSize: Qt.size(Config.desktop.iconSize * 2, Config.desktop.iconSize * 2)
             asynchronous: true
             smooth: true
             cache: false
@@ -192,6 +194,7 @@ Item {
                     return "image://icon/" + root.itemIcon;
                 }
                 fillMode: Image.PreserveAspectFit
+                sourceSize: Qt.size(Config.desktop.iconSize * 2, Config.desktop.iconSize * 2)
                 asynchronous: true
                 smooth: true
                 cache: false
