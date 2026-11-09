@@ -320,6 +320,7 @@
   {
    "name": "system",
    "methods": [
+    "heartbeat",
     "shutdown"
    ],
    "subscribe": false
