@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.theme
 import qs.config
 import qs.modules.settings.store
+import "SettingsScreen.js" as SettingsScreen
 
 FloatingWindow {
     id: settingsWindow
@@ -20,25 +21,42 @@ FloatingWindow {
 
     color: "transparent"
 
-    // Resolve the target screen before the backing window is created.
-    // Changing `screen` while the window is visible forces quickshell to
-    // hide/show the window, which fires onVisibleChanged(false) and would
-    // be misread as an external close.
-    // Deliberately not bound to focusedMonitor so refocusing another
-    // monitor while open never remaps this window.
-    screen: screenByName(GlobalStates.settingsTargetScreenName)
+    // The output, set once by the shell's Loader as an initial property
+    // (before the backing window exists). Never bound: changing `screen`
+    // while the window is visible forces quickshell to hide/show it, which
+    // fires onVisibleChanged(false) (misread as an external close) and,
+    // during output churn, crashes QtWayland. Refocusing another monitor
+    // never remaps this window either.
+    property ShellScreen targetScreen: null
+    screen: targetScreen
+    // Opened on a named output (else the compositor placed it: never moved).
+    readonly property bool homed: _homed
+    property bool _homed: false
+    Component.onCompleted: _homed = targetScreen !== null
+    // Moving to another output after ours went away (see rehome()).
+    property bool rehoming: false
 
-    function screenByName(name) {
-        if (!name)
-            return null;
-
-        for (let i = 0; i < Quickshell.screens.length; i++) {
-            if (Quickshell.screens[i].name === name) {
-                return Quickshell.screens[i];
-            }
+    // Our output disappeared: once the outputs have settled, move to the
+    // first one (one move, not one per hotplug event).
+    SettleGate {
+        id: outputs
+        value: Quickshell.screens
+        interval: 400
+        onSettledChanged: {
+            if (settled)
+                settingsWindow.rehome();
         }
+    }
 
-        return null;
+    function rehome() {
+        if (!settingsWindow.homed)
+            return;
+        const target = SettingsScreen.rehomeTarget(outputs.output, settingsWindow.targetScreen);
+        if (!target)
+            return;
+        settingsWindow.rehoming = true;
+        settingsWindow.targetScreen = target;
+        Qt.callLater(() => settingsWindow.rehoming = false);
     }
 
     function preparePlacement() {
@@ -99,7 +117,7 @@ FloatingWindow {
     onVisibleChanged: {
         if (visible) {
             preparePlacement();
-        } else if (GlobalStates.settingsWindowVisible) {
+        } else if (GlobalStates.settingsWindowVisible && !rehoming) {
             GlobalStates.settingsWindowVisible = false;
         }
     }

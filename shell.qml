@@ -37,6 +37,7 @@ import qs.modules.keybinds
 import qs.modules.onboarding
 import qs.modules.specials
 import "modules/tools"
+import "modules/settings/SettingsScreen.js" as SettingsScreen
 
 ShellRoot {
     id: root
@@ -69,8 +70,16 @@ ShellRoot {
 
         Loader {
             id: desktopLoader
-            active: (Config.desktop.enabled || DesktopWidgets.wanted || (Config.desktop.depthLayering && Config.desktop.depthClock)) && SuspendManager.wakeReady
+            active: desktopWanted.output === true && SuspendManager.wakeReady
             required property ShellScreen modelData
+            // Config flags a preset or settings burst may flip several
+            // times in a row: debounced, so the window is not torn down and
+            // recreated over and over (a QtWayland crash source).
+            SettleGate {
+                id: desktopWanted
+                value: !!(Config.desktop.enabled || DesktopWidgets.wanted || (Config.desktop.depthLayering && Config.desktop.depthClock))
+                interval: 300
+            }
             sourceComponent: Desktop {
                 screen: desktopLoader.modelData
             }
@@ -91,8 +100,14 @@ ShellRoot {
                 targetScreen: screenShellContainer.modelData
             }
 
+            // Debounced like the desktop window above.
+            SettleGate {
+                id: cornersWanted
+                value: !!(Config.theme.enableCorners && Config.roundness > 0)
+                interval: 300
+            }
             Loader {
-                active: Config.theme.enableCorners && Config.roundness > 0
+                active: cornersWanted.output === true
                 sourceComponent: ScreenCorners {
                     screen: screenShellContainer.modelData
                 }
@@ -288,10 +303,21 @@ ShellRoot {
     }
 
     // Settings
+    // Its output is an initial property resolved once per open: a `screen`
+    // binding would move the mapped window on every output change.
     Loader {
         id: settingsWindowLoader
         active: SuspendManager.wakeReady && GlobalStates.settingsWindowVisible
-        source: "modules/settings/SettingsWindow.qml"
+        function load() {
+            if (active)
+                setSource("modules/settings/SettingsWindow.qml", {
+                    "targetScreen": SettingsScreen.byName(Quickshell.screens, GlobalStates.settingsTargetScreenName)
+                });
+            else
+                setSource("");
+        }
+        onActiveChanged: load()
+        Component.onCompleted: load()
     }
 
     // First-run setup wizard (OnboardingService: auto-shown once on a fresh
