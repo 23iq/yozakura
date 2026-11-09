@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.components
 import qs.modules.components.shape
 import qs.modules.globals
+import "FrameShadow.js" as FrameShadow
 
 // Theme shadows of the unified panel's surfaces. Sits below every surface
 // (shadows never darken a neighbour: the notch's shadow ends under the
@@ -85,12 +86,31 @@ Item {
         return root.region(x0, y0, x1 - x0, y1 - y0);
     }
 
+    // The frame's hole grown past every screen edge whose side has no
+    // thickness (far enough that no blur or light offset reaches back)
+    function openHole(hole, f) {
+        const b = FrameShadow.openHole({
+            "x": hole.x,
+            "y": hole.y,
+            "w": hole.width,
+            "h": hole.height
+        }, {
+            "left": f.leftThickness,
+            "top": f.topThickness,
+            "right": f.rightThickness,
+            "bottom": f.bottomThickness
+        }, root.width + root.height);
+        return Qt.rect(b.x, b.y, b.w, b.h);
+    }
+
     // Frame: everything outside its rounded hole (a contained panel is part
-    // of the frame's silhouette, it narrows the hole)
+    // of the frame's silhouette, it narrows the hole). A side of thickness 0
+    // (a fullscreen window hides it) draws nothing, so it casts nothing: the
+    // hole runs past that screen edge instead of ending on it.
     ShapeShadow {
         active: root.frameEnabled && !!root.frame && root.frame.hasHole
         inverted: true
-        box: root.frame ? root.frame.holeRect : Qt.rect(0, 0, 0, 0)
+        box: root.frame ? root.openHole(root.frame.holeRect, root.frame) : Qt.rect(0, 0, 0, 0)
         radii: {
             const r = root.frame ? Math.min(root.frame.innerRadius, root.frame.holeRect.width / 2, root.frame.holeRect.height / 2) : 0;
             return Qt.vector4d(r, r, r, r);
