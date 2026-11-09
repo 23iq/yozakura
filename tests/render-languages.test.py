@@ -16,7 +16,7 @@ assert langs == ["ink", "glass", "tiles", "classic", "device"], langs
 assert bar_matrix.LANGUAGES == langs, "the bar matrix renders every language"
 
 plan = render_sweep.sheets(langs, "dark")
-assert set(plan) == {"kit", "kit-bold", "settings", "dashboard", "bar-matrix", "osd"}, plan
+assert set(plan) == {"kit", "kit-bold", "settings", "dashboard", "bar-matrix", "osd", "dashtabs"}, plan
 for name, argv in plan.items():
     assert (REPO / "tools" / "render" / argv[0]).is_file(), argv[0]
     joined = " ".join(argv)

@@ -351,33 +351,12 @@
   "text": 6,
   "radius": 4
  },
- "modules/widgets/dashboard/clipboard": {
-  "spacing": 22,
-  "font-size": 14,
-  "rectangle": 12,
-  "text": 27,
-  "radius": 6
- },
- "modules/widgets/dashboard/controls": {
-  "spacing": 44,
-  "font-size": 10,
-  "rectangle": 4,
-  "text": 40,
-  "radius": 11
- },
  "modules/widgets/dashboard/emoji": {
   "text": 4
  },
  "modules/widgets/dashboard/home": {
   "rectangle": 2,
   "text": 2
- },
- "modules/widgets/dashboard/metrics": {
-  "spacing": 33,
-  "font-size": 9,
-  "rectangle": 8,
-  "text": 27,
-  "radius": 5
  },
  "modules/widgets/dashboard/notes": {
   "spacing": 17,
@@ -393,11 +372,7 @@
   "text": 4
  },
  "modules/widgets/dashboard/wallpapers": {
-  "spacing": 10,
-  "font-size": 3,
-  "rectangle": 12,
-  "text": 6,
-  "radius": 5
+  "rectangle": 3
  },
  "modules/widgets/dashboard/widgets": {
   "spacing": 3,

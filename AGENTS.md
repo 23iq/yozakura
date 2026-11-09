@@ -139,7 +139,7 @@ row text: 24 px in the unboxed family (ink), 28 px in every boxed one), `groupGa
 `box` | `big` | `control` | `small` | `button` | `chip` | `round`. `SectionLabel` text sits at
 `Look.rowInset`, on the line of the rows under it. Visual checks are offscreen only: `tools/render/*_render.py`
 (private Xvfb, `kit_render.py` = the whole kit per language, `make render-sweep` = kit, settings,
-dashboard, bar matrix and OSD in every language into `.cache/render/sweep/`); never the live display.
+dashboard (+ its tool tabs, `dashtabs_render.py`), bar matrix and OSD in every language into `.cache/render/sweep/`); never the live display.
 Every render tool iterates `tests/lib/languages.py` (the list of `VisualLanguage.js`).
 
 ## CODE MAP
@@ -232,7 +232,7 @@ A change is done only when all of these hold:
 | `make baseline` | Re-record lint/format baselines (rarely; justify it). |
 | `make layers-baseline` | Re-record `tools/lint/baselines/layers.json` after *fixing* layer violations (never to hide new ones). |
 | `make kit-literals-baseline` | Re-record `tools/lint/baselines/kit-literals.json` after *replacing* literals with kit tokens (never to hide new ones). |
-| `make render-sweep` | Offscreen renders of the kit, settings, dashboard, bar matrix and OSDs in every visual language (`ARGS="ink --only kit"`). |
+| `make render-sweep` | Offscreen renders of the kit, settings, dashboard (and its tool tabs), bar matrix and OSDs in every visual language (`ARGS="ink --only kit"`). |
 | `make ipc-methods` | Regenerate `assets/schema/ipc-methods.json` (part of `make schema`). |
 
 Architecture guards (in `make audit`): `layers` orders the modules foundation
@@ -296,7 +296,7 @@ make install    # sudo install of ./yozakura to /usr/local/bin
 ## NOTES
 - Config keys are declared once, in `config/defaults/<domain>.js`; `config/adapters/` is generated
   (`make schema`, `tools/config/gen_adapters.cjs`). Use `pauseAutoSave` for bulk edits.
-- Large files (>800 lines, `make audit` lists them): `PresetsTab`, `MetricsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
+- Large files (>800 lines, `make audit` lists them): `PresetsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `MetricsTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
 - The `qs.` import prefix is a Quickshell VFS construct, not a physical directory.
 - `screenshotToolMode` in `GlobalStates.qml` is **DEPRECATED**.
 - **No QML disk cache for the shell.** Quickshell serves `import qs.*` files from its VFS
