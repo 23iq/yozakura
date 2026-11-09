@@ -153,13 +153,10 @@ FileView {
             // they are (not journaled: a follow-up of the journaled change).
             if (DryRun.active)
                 return;
-            if (colors.appThemed("kitty"))
-                kittyGenerator.generate(colors);
             // Same opacity/font inputs as kitty.
-            for (const id of ["ghostty", "foot", "alacritty"]) {
-                if (colors.appThemed(id))
-                    colors[id + "Generator"].generate(colors);
-            }
+            const names = ["kitty", "ghostty", "foot", "alacritty"].filter(id => colors.appThemed(id)).map(id => id + "Generator");
+            for (const name of colors.generatorCache.take(names, colors.generatorInputs(), false))
+                colors[name].generate(colors);
         }
     }
 
@@ -171,7 +168,34 @@ FileView {
     // Settings "regenerate app themes now": every enabled generator, now.
     signal appThemesRegenerated
     function regenerateApps() {
+        colors._forceGeneration = true;
         generationTimer.restart();
+    }
+
+    // Generators run only when what they read changed since their last run
+    // (GeneratorCache.qml / GenCache.js); "regenerate now" forces them.
+    property bool _forceGeneration: false
+    property GeneratorCache generatorCache: GeneratorCache {}
+
+    function generatorInputs() {
+        const t = Config.theme;
+        const term = Config.terminal;
+        const kitty = Config.apps ? Config.apps.kitty : null;
+        const lock = Config.lockscreen;
+        const wm = GlobalStates.wallpaperManager;
+        return {
+            "palette": colors.text(),
+            "oled": Config.oledMode,
+            "lightMode": t ? t.lightMode : null,
+            "font": t ? t.font : null,
+            "srBgOpacity": t && t.srBg ? t.srBg.opacity : null,
+            "terminalOpacity": Glass.terminalOpacity,
+            "terminal": term ? [term.enabled, term.padding, term.cursorShape, term.cursorBlink] : null,
+            "kitty": kitty ? [kitty.font, kitty.fontSize] : null,
+            "lockscreen": lock ? [lock.style, lock.tone, lock.blur, lock.position, lock.showStatus] : null,
+            "wallpaper": wm ? (wm.currentWallpaper || "") : "",
+            "shellDir": Quickshell.shellDir
+        };
     }
 
     // Re-run when an app is switched back on, and when the kitty font changes.
@@ -267,12 +291,11 @@ FileView {
             // follow-up of the journaled change, also runs at startup).
             if (DryRun.active)
                 return;
-            const names = AppThemes.generatorsFor(Config.apps ? Config.apps.theming : null);
-            for (let i = 0; i < names.length; i++) {
-                const generator = colors[names[i]];
-                if (generator)
-                    generator.generate(colors);
-            }
+            const names = AppThemes.generatorsFor(Config.apps ? Config.apps.theming : null).filter(n => !!colors[n]);
+            const force = colors._forceGeneration;
+            colors._forceGeneration = false;
+            for (const name of colors.generatorCache.take(names, colors.generatorInputs(), force))
+                colors[name].generate(colors);
             colors.appThemesRegenerated();
         }
     }
