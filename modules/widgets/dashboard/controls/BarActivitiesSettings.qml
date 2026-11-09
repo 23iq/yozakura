@@ -3,8 +3,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.services
-import qs.modules.theme
 import qs.modules.globals
+import qs.modules.components.kit
 import qs.config
 
 // Settings > Shell > Bar: the "Live Activities" group (bar.json
@@ -14,7 +14,7 @@ import qs.config
 ColumnLayout {
     id: group
 
-    spacing: 8
+    spacing: Space.s
 
     readonly property var current: Config.notch.liveActivities ? Config.notch.liveActivities : ({})
     readonly property bool masterEnabled: group.current.enabled ?? true
@@ -33,13 +33,9 @@ ColumnLayout {
 
     readonly property var downloads: group.current.downloads || ({})
 
-    Text {
+    KitText {
+        role: "label"
         text: I18n.t("shell.activities")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
-        font.weight: Font.Medium
-        color: Colors.overSurfaceVariant
-        Layout.bottomMargin: -4
     }
 
     SettingsToggleRow {
