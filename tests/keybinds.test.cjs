@@ -218,6 +218,18 @@ test('rows: core binds then custom ones, grouped by action', () => {
     assert.strictEqual(legacy.at(-1).group, 'windows');
 });
 
+// The recovery key: `<app> reload` restarts the whole shell and starts a
+// daemon when none runs, so the cheatsheet must always show it.
+test('cheatsheet lists the reload bind, which needs no live daemon', () => {
+    const groups = Model.grouped(Model.buildRows(data()));
+    const reload = groups.flatMap(g => g.rows).find(r => r.uid === 'core:system.reload');
+    assert.ok(reload, 'reload bind missing from the cheatsheet rows');
+    assert.ok(reload.enabled);
+    const action = Actions.ACTION_CATALOG.find(a => a.id === reload.actions[0].id);
+    assert.strictEqual(action.dispatcher, 'exec');
+    assert.strictEqual(action.argument, Brand.command('reload'));
+});
+
 test('titles use translations with the catalog label as fallback', () => {
     const rows = Model.buildRows(data([{ keys: [{ modifiers: ['SUPER'], key: '3' }], actions: [{ id: 'workspace.switch', args: { index: '3' } }] }]));
     const ws = rows.at(-1);

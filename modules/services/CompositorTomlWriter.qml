@@ -215,6 +215,8 @@ Singleton {
             // (keyboard.managed): the compositor's own settings stay.
             keyboard: KeyboardService.compositorInput(),
             windowRules: root.specialsOn() ? Specials.windowRules(Config.specials.workspaces) : [],
+            // The stock terminal bind execs it directly (works with the shell down).
+            terminal: Config.generalReady ? (Config.general.terminal || "") : "",
         };
     }
 
@@ -511,6 +513,11 @@ Singleton {
         function onRepeatRateChanged() { root.callWrite(); }
         function onRepeatDelayChanged() { root.callWrite(); }
         function onManagedChanged() { root.callWrite(); }
+    }
+
+    property Connections terminalConnections: Connections {
+        target: Config.generalReady ? Config.general : null
+        function onTerminalChanged() { root.callWrite(); }
     }
 
     property Connections qtThemingConnections: Connections {
