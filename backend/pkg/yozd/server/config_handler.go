@@ -74,86 +74,92 @@ func (h *ConfigHandler) ApplyConfig(payload ipc.ConfigUniversal) error {
 	if h.generator == nil {
 		return fmt.Errorf("ConfigGenerator not supported for this compositor")
 	}
-	outputsStr := h.generator.GenerateOutputs(payload.Monitors)
-	keyboardStr := h.generator.GenerateKeyboard(payload.Keyboard)
-	startupStr := h.generator.GenerateStartup(payload.Exec, ipc.StartupOnce(payload, !h.isHyprland()))
-	appStr := h.generator.GenerateAppearance(payload.Appearance)
-	bindStr := h.generator.GenerateKeybinds(payload.Keybinds)
-	rulesStr := h.generator.GenerateWindowRules(payload.WindowRules)
-	layerStr := h.generator.GenerateLayerRules(payload.LayerRules)
-
-	var fullConfig strings.Builder
-	fullConfig.WriteString(bannerFor(h.generator))
-	fullConfig.WriteString(h.generator.GenerateEnv(payload.Env))
-	fullConfig.WriteString(outputsStr)
-	fullConfig.WriteString(keyboardStr)
-	fullConfig.WriteString(startupStr)
-	if startupStr != "" {
-		fullConfig.WriteString("\n")
-	}
-	fullConfig.WriteString(appStr)
-	fullConfig.WriteString("\n")
-	fullConfig.WriteString(bindStr)
-	fullConfig.WriteString("\n")
-	fullConfig.WriteString(rulesStr)
-	fullConfig.WriteString("\n")
-	fullConfig.WriteString(layerStr)
-
 	configPath := h.paths.primary
 	if configPath == "" {
 		configPath = DefaultOutputPath()
 	}
+	conf := h.renderConf(payload)
+	luaPath, lua := "", ""
+	if h.luaGen != nil && h.paths.alt != "" {
+		luaPath, lua = h.paths.alt, h.renderLua(payload)
+	}
+	if h.isHyprland() {
+		return h.applyHyprland(payload, configPath, conf, luaPath, lua)
+	}
+	// niri / MangoWC: no runtime keyword API, so every change reloads;
+	// only a byte-identical regeneration is skipped.
+	if fileHolds(configPath, conf) {
+		fmt.Printf("Config unchanged: %s (no reload)\n", configPath)
+		return nil
+	}
+	if err := writeGenerated(configPath, conf); err != nil {
+		return err
+	}
+	return h.loadGeneratedConfig(configPath)
+}
 
-	dir := filepath.Dir(configPath)
+// renderConf renders the primary generated file.
+func (h *ConfigHandler) renderConf(payload ipc.ConfigUniversal) string {
+	startupStr := h.generator.GenerateStartup(payload.Exec, ipc.StartupOnce(payload, !h.isHyprland()))
+	var b strings.Builder
+	b.WriteString(bannerFor(h.generator))
+	b.WriteString(h.generator.GenerateEnv(payload.Env))
+	b.WriteString(h.generator.GenerateOutputs(payload.Monitors))
+	b.WriteString(h.generator.GenerateKeyboard(payload.Keyboard))
+	b.WriteString(startupStr)
+	if startupStr != "" {
+		b.WriteString("\n")
+	}
+	b.WriteString(h.generator.GenerateAppearance(payload.Appearance))
+	b.WriteString("\n")
+	b.WriteString(h.generator.GenerateKeybinds(payload.Keybinds))
+	b.WriteString("\n")
+	b.WriteString(h.generator.GenerateWindowRules(payload.WindowRules))
+	b.WriteString("\n")
+	b.WriteString(h.generator.GenerateLayerRules(payload.LayerRules))
+	return b.String()
+}
+
+// renderLua renders the Hyprland Lua sibling of the generated file.
+func (h *ConfigHandler) renderLua(payload ipc.ConfigUniversal) string {
+	luaStartup := h.luaGen.GenerateStartupLua(payload.Exec, payload.ExecOnce)
+	var b strings.Builder
+	b.WriteString(luaBanner)
+	b.WriteString("\n")
+	b.WriteString(h.luaGen.GenerateEnvLua(payload.Env))
+	b.WriteString(h.luaGen.GenerateOutputsLua(payload.Monitors))
+	b.WriteString(h.luaGen.GenerateKeyboardLua(payload.Keyboard))
+	if luaStartup != "" {
+		b.WriteString("\n")
+		b.WriteString(luaStartup)
+	}
+	b.WriteString("\n")
+	b.WriteString(h.luaGen.GenerateAppearanceLua(payload.Appearance))
+	b.WriteString("\n")
+	b.WriteString(h.luaGen.GenerateKeybindsLua(payload.Keybinds))
+	b.WriteString("\n")
+	b.WriteString(h.luaGen.GenerateWindowRulesLua(payload.WindowRules))
+	b.WriteString("\n")
+	b.WriteString(h.luaGen.GenerateLayerRulesLua(payload.LayerRules))
+	return b.String()
+}
+
+func writeGenerated(path, content string) error {
+	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", dir, err)
 	}
-
-	if err := fsutil.WriteFile(configPath, []byte(fullConfig.String()), 0o644); err != nil {
-		return fmt.Errorf("failed to write config to %s: %w", configPath, err)
+	if err := fsutil.WriteFile(path, []byte(content), 0o644); err != nil {
+		return fmt.Errorf("failed to write config to %s: %w", path, err)
 	}
-	fmt.Printf("Config written to: %s\n", configPath)
+	fmt.Printf("Config written to: %s\n", path)
+	return nil
+}
 
-	if h.luaGen != nil && h.paths.alt != "" {
-		luaOutputs := h.luaGen.GenerateOutputsLua(payload.Monitors)
-		luaKeyboard := h.luaGen.GenerateKeyboardLua(payload.Keyboard)
-		luaStartup := h.luaGen.GenerateStartupLua(payload.Exec, payload.ExecOnce)
-		luaApp := h.luaGen.GenerateAppearanceLua(payload.Appearance)
-		luaBinds := h.luaGen.GenerateKeybindsLua(payload.Keybinds)
-		luaRules := h.luaGen.GenerateWindowRulesLua(payload.WindowRules)
-		luaLayers := h.luaGen.GenerateLayerRulesLua(payload.LayerRules)
-
-		var luaConfig strings.Builder
-		luaConfig.WriteString(luaBanner)
-		luaConfig.WriteString("\n")
-		luaConfig.WriteString(h.luaGen.GenerateEnvLua(payload.Env))
-		luaConfig.WriteString(luaOutputs)
-		luaConfig.WriteString(luaKeyboard)
-		if luaStartup != "" {
-			luaConfig.WriteString("\n")
-			luaConfig.WriteString(luaStartup)
-		}
-		luaConfig.WriteString("\n")
-		luaConfig.WriteString(luaApp)
-		luaConfig.WriteString("\n")
-		luaConfig.WriteString(luaBinds)
-		luaConfig.WriteString("\n")
-		luaConfig.WriteString(luaRules)
-		luaConfig.WriteString("\n")
-		luaConfig.WriteString(luaLayers)
-
-		luaPath := h.paths.alt
-		if err := fsutil.WriteFile(luaPath, []byte(luaConfig.String()), 0o644); err != nil {
-			return fmt.Errorf("failed to write Lua config to %s: %w", luaPath, err)
-		}
-		fmt.Printf("Lua config written to: %s\n", luaPath)
-	}
-
-	fmt.Printf("Generated Appearance:\n%s\n", appStr)
-	fmt.Printf("Generated Keybinds:\n%s\n", bindStr)
-	fmt.Printf("Generated Window Rules:\n%s\n", rulesStr)
-	fmt.Printf("Generated Layer Rules:\n%s\n", layerStr)
-	return h.loadGeneratedConfig(configPath)
+// fileHolds reports whether path exists with exactly content.
+func fileHolds(path, content string) bool {
+	data, err := os.ReadFile(path)
+	return err == nil && string(data) == content
 }
 
 func (h *ConfigHandler) loadGeneratedConfig(path string) error {
@@ -167,7 +173,9 @@ func (h *ConfigHandler) loadGeneratedConfig(path string) error {
 	return nil
 }
 
+// isHyprland reports a Hyprland handler (the generator, not the client
+// type, so tests can drive the Hyprland path with a fake compositor).
 func (h *ConfigHandler) isHyprland() bool {
-	_, ok := h.compositor.(*hyprland.Hyprland)
+	_, ok := h.generator.(*hyprland.Generator)
 	return ok
 }

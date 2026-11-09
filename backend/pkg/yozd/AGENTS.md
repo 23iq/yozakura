@@ -49,5 +49,17 @@ pkg/yozd/
   optional `ipc.BindLister`) and `Config.SkippedBinds`
   (`yozd config skipped-binds`; generators that drop binds implement
   `ipc.BindSkipper`; niri drops release, duplicate-combo and unmappable binds).
+- Generated config apply (`server/config_handler.go`): a byte-identical
+  regeneration neither writes nor reloads. On Hyprland the sections are
+  diffed (`server/reload_plan.go`): appearance/keyboard-only changes go out
+  live (`keyword` batch, or `eval` on Lua Hyprland) without a reload; binds,
+  rules, monitors, env, startup, animations or a removed key reload. A new
+  section that a runtime command can carry belongs in `liveSections`. The
+  live-path write runs under `Hyprland.SuppressAutoreload` (runtime
+  `misc:disable_autoreload`, restored after a quiet period, untouched when
+  the user turned it off), else Hyprland's own autoreload would reload on
+  the write. Generators must be deterministic: range over
+  `ipc.SortedKeybindNames`, never over a map, or no regeneration is ever
+  byte-identical.
 - Tests: `go test ./pkg/yozd/... ./cmd/yozd` (mock compositor, no live
   session needed).
