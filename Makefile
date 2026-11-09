@@ -12,7 +12,7 @@ PY ?= python3
 
 .PHONY: all build vet lint run nix clean dev install \
 	schema extras-catalog check parse-qml lint-qml fmt-check fmt lint-go lint-sh lint-py \
-	test test-js test-py test-go audit baseline layers-baseline ipc-methods
+	test test-js test-py test-go audit baseline layers-baseline kit-literals-baseline ipc-methods render-sweep
 
 all: build
 
@@ -108,6 +108,11 @@ audit:
 ##         upward imports / cycles; never to silence new ones)
 layers-baseline:
 	@AUDIT_UPDATE_LAYERS=1 $(PY) tools/audit/audit.py --only layers
+
+## kit-literals-baseline: re-record tools/lint/baselines/kit-literals.json (only
+##         after REPLACING literals with kit tokens; never to silence new ones)
+kit-literals-baseline:
+	@AUDIT_UPDATE_KIT_LITERALS=1 $(PY) tools/audit/audit.py --only kit-literals
 
 ## baseline: re-record qmllint/staticcheck/format baselines (justify in the commit!)
 baseline:
