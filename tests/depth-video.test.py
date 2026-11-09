@@ -14,14 +14,73 @@ Needs ffmpeg and a GL context: tests/lib/headless.py re-runs it under a
 private Xvfb (offscreen has no GL here and renders shader effects
 black).
 Set DEPTH_VIDEO_FRAMES=<dir> to keep the rendered frames.
+
+The checks run in a child process watched by a small supervisor: some
+QtMultimedia builds deadlock natively inside processEvents() (seen with
+Qt 6.12's FFmpeg backend on the corrupt-matte step), where no in-process
+timer can fire. When the child prints nothing for DEPTH_VIDEO_STALL seconds
+(default 20, 30 in CI) it is killed: outside CI that is a SKIP (this environment
+cannot play the clips), in CI (CI set) a fast FAIL.
 """
 import os
 import pathlib
 import re
+import select
 import shutil
+import signal
 import subprocess
 import sys
 import time
+
+_CHILD = 'DEPTH_VIDEO_CHILD'
+
+
+def _supervise() -> int:
+    strict = bool(os.environ.get('CI'))
+    stall = float(os.environ.get('DEPTH_VIDEO_STALL', '30' if strict else '20'))
+    env = dict(os.environ, **{_CHILD: '1', 'PYTHONUNBUFFERED': '1'})
+    proc = subprocess.Popen([sys.executable, *sys.argv], env=env, stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT, start_new_session=True)
+    out, last, stalled = b'', time.monotonic(), False
+    try:
+        fd = proc.stdout.fileno()
+        while True:
+            ready, _, _ = select.select([fd], [], [], 0.5)
+            if ready:
+                chunk = os.read(fd, 65536)
+                if not chunk:
+                    break
+                sys.stdout.buffer.write(chunk)
+                sys.stdout.flush()
+                out += chunk
+                last = time.monotonic()
+            elif time.monotonic() - last > stall:
+                stalled = True
+                break
+        rc = proc.wait() if not stalled else 124
+    finally:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)  # the child, its Xvfb and media threads
+        except ProcessLookupError:
+            pass
+        proc.wait()
+    played = b'PASS first frame not black' in out
+    if stalled:
+        why = (f'QtMultimedia stopped responding for {stall:.0f}s '
+               + ('after playback started (native deadlock in this Qt build)' if played else 'before the first video frame'))
+    elif rc and b'"QtMultimedia" is not installed' in out:
+        why = 'QtMultimedia QML module not installed'
+    else:
+        return rc
+    if strict:
+        print(f'FAIL depth video: {why}')
+        return 1
+    print(f'SKIP depth video ({why})')
+    return 0
+
+
+if os.environ.get(_CHILD) != '1':
+    sys.exit(_supervise())
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib import headless  # noqa: E402

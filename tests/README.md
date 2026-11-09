@@ -10,6 +10,30 @@ Run everything with `make test` (or `make check` for the full gate).
 
 Every `*.test.py` is run as a script; a non-zero exit code is a failure.
 
+## Parallel runs, shards, timings
+
+`tools/lint/run_tests.py` runs the Python tests in parallel (each in its own
+process group), the slowest first, and prints each result as it finishes:
+
+| Make / env | Effect |
+|------------|--------|
+| `JOBS=N` / `YOZAKURA_TEST_JOBS` | workers (default: CPU count; `JOBS=1` = serial, for debugging) |
+| `SHARD=i/N` / `YOZAKURA_TEST_SHARD` | only shard `i` of `N`; greedy bin packing over `tests/timings.json`, the same split on every machine |
+| `YOZAKURA_TEST_RETRY=1` | re-run failed tests once, serially; a pass is reported as `flaky (passed on retry)` and does not fail (CI sets it) |
+| `YOZAKURA_TEST_TIMEOUT` | in-test watchdog (`headless.py`), default 45 s |
+| `YOZAKURA_TEST_HARD_TIMEOUT` | runner kill timeout per test, default 90 s |
+
+`tests/timings.json` holds seconds per test file; `make test-timings` re-runs
+the suite and rewrites it (do it when you add a slow test; a missing entry
+just runs first and weighs 2 s in the shard split). Each run also caches
+this machine's times in `.cache/test-py-times.json`.
+
+Tests run side by side, so a test must never write to a fixed shared path
+(`/tmp/foo.png`, a fixed home): use the harness temp dir (`h.root`), and
+`qmlharness.HARNESS_HOME` (the runner sets `YOZAKURA_HARNESS_HOME` to a fresh
+directory per test; default `/tmp/qmlharness-home`). Debug output files go
+behind an env var (`AI_WORKSPACE_SHOTS=<dir>`, `DEPTH_VIDEO_FRAMES=<dir>`).
+
 ## Writing a QML test: `tests/lib/qmlharness.py`
 
 Do not hand-copy files and hand-write qmldir files (that is how tests broke
@@ -59,9 +83,10 @@ inherited display (Xwayland `:0`) is never used. `tools/check.sh` and
 `run_tests.py` also strip the display variables.
 
 Timeouts: importing `headless` arms a watchdog that dumps every thread's
-stack and exits after `YOZAKURA_TEST_TIMEOUT` seconds (default 120);
-`run_tests.py` runs each test in its own process group and kills the group
-after `YOZAKURA_TEST_HARD_TIMEOUT` (default 240). Tests that play media end
+stack and exits after `YOZAKURA_TEST_TIMEOUT` seconds (default 45; the
+slowest passing test takes ~20 s); `run_tests.py` runs each test in its own
+process group and kills the group after `YOZAKURA_TEST_HARD_TIMEOUT`
+(default 90). Tests that play media end
 with `h.exit(code)` (harness) so Qt Multimedia is never torn down from the
 interpreter's exit path.
 

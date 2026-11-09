@@ -1,0 +1,25 @@
+name: make check
+description: >
+  Run `make check` for a subset of gates. Missing optional tools are
+  reported as SKIP by the gate; CI provides every tool, so a SKIP here means
+  the toolchain setup broke and fails the job.
+
+inputs:
+  checks:
+    description: Space-separated make targets (the CHECKS of `make check`)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        BASE: origin/main
+        CHECKS: ${{ inputs.checks }}
+      run: |
+        set -o pipefail
+        make check 2>&1 | tee /tmp/check.log
+        if grep -q '\[skip\]' /tmp/check.log; then
+          echo "::error::make check skipped a gate; a CI tool is missing"
+          exit 1
+        fi
