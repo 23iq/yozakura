@@ -175,7 +175,7 @@
  },
  "modules/lockscreen/styles": {
   "rectangle": 24,
-  "text": 13
+  "text": 11
  },
  "modules/notch": {
   "rectangle": 2

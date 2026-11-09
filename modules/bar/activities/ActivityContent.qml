@@ -11,7 +11,7 @@ Row {
     property var activity: null
     property int overflowCount: 0
     property real indicatorSize: 16
-    property real fontSize: Styling.fontSize(-1)
+    property real fontSize: Type.size("secondary")
 
     readonly property bool isOverflow: activity === null
     readonly property color accent: {

@@ -34,6 +34,7 @@ h.module("qs.modules.components.kit", {
     "KitText": "Text { property string role; property bool tabular }",
     "Icon": "Text { property string icon; property string role; property string tone; property int size; text: icon }",
     "Look": "pragma Singleton\nQtObject { property int activeLabelWeight: Font.Medium }",
+    "Type": "pragma Singleton\nQtObject { function size(r) { return r === \"caption\" ? 12 : 13 } }",
 })
 h.singleton("qs.modules.services.activities", "ActivityService", """QtObject {
     property var activities: []

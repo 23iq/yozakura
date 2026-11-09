@@ -217,14 +217,12 @@ LockStyle {
                         color: skin.alpha(skin.ink, 0.5)
                         font: input.font
                     }
-                    Text {
+                    Icon {
                         anchors.left: parent.left
                         anchors.leftMargin: Space.l
                         anchors.verticalCenter: parent.verticalCenter
                         visible: pw.capsLock
-                        text: Icons.capsLock
-                        font.family: Icons.font
-                        font.pixelSize: Type.iconSize("body")
+                        icon: Icons.capsLock
                         color: skin.accent
                     }
                     Rectangle {
