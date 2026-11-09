@@ -56,6 +56,7 @@ h.module("qs.modules.theme", {
     "Colors": "pragma Singleton\nQtObject { property color scrim: '#000000' }",
     "Styling": "pragma Singleton\nQtObject { function radius(o) { return 16 + o; } }",
 })
+h.copy("modules/components/SurfaceLatch.qml", "qs/modules/components", siblings=False)
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }"})
 h.module("qs.modules.components.kit", {
     "Space": "pragma Singleton\nQtObject { property int s: 8; property int m: 12; property int l: 16 }",
@@ -182,7 +183,7 @@ for edge in ("top", "bottom", "left", "right"):
     assert ev(card, "area.corner").split("-").count(edge) == 1, f"{edge}: {ev(card, 'area.corner')}"
     # Escape -> the panel's dismissed() -> TimersService.closeHub()
     QTest.keyClick(root, Qt.Key_Escape)
-    pump(20)
+    pump(40)  # SurfaceLatch unmaps a frame after the close
     assert not ev(card, "isOpen") and not ev(card, "visible"), f"{edge}: escape"
     assert not ev(root, "TimersService.hubOpen"), f"{edge}: hub not closed"
     assert ev(psA, "shownId") == "", f"{edge}: panel kept after closing"

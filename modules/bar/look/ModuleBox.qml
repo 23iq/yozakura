@@ -15,8 +15,10 @@ import qs.modules.bar.look
 //   hover   the language's control hover (Look.controlFill)
 //   active  the kit's accent state: a tint with accent ink, a solid accent
 //           fill in tiles (and classic)
-// `startRadius` / `endRadius` join a run of modules into one group shape
-// (BarLayout.edgeRadii); `ink` is the color for the module's content.
+// `startRadius` / `endRadius` join a run of modules into one group shape;
+// they arrive final (BarLayout.boxRadii in BarModuleGroup: the language's
+// clamp, concentric with a rounded container's ends). `ink` is the color for
+// the module's content.
 Item {
     id: root
 
@@ -34,8 +36,8 @@ Item {
     // "none" | "surface" (the theme's bg pill) | "group" (the language's box)
     readonly property string rest: BarLook.restLook(root.flat)
 
-    readonly property real r1: BarLook.groupRadius(root.startRadius)
-    readonly property real r2: BarLook.groupRadius(root.endRadius)
+    readonly property real r1: root.startRadius
+    readonly property real r2: root.endRadius
     // Flat modules have no group shape: states get a chip-like box
     readonly property real stateRadius: Look.chipRadius(Math.min(root.width, root.height))
     readonly property bool shaped: !root.flat && (root.r1 > 0 || root.r2 > 0)

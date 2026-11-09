@@ -57,11 +57,11 @@ PanelWindow {
 
     screen: targetScreen
     color: "transparent"
-    visible: host.active || host.hitbox.visible
+    visible: host.shown
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: shellOverlayOpen || notchRaised ? WlrLayer.Top : WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("aicenter")
-    WlrLayershell.keyboardFocus: !host.active || shellOverlayOpen ? WlrKeyboardFocus.None : (grabbing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
+    WlrLayershell.keyboardFocus: !host.keyboardWanted || shellOverlayOpen ? WlrKeyboardFocus.None : (grabbing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand)
 
     anchors {
         top: true

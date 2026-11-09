@@ -131,6 +131,31 @@ function edgeRadii(index, count, outer, inner, startConnected, endConnected) {
     };
 }
 
+// Radius of a box inset by `inset` px inside a container rounded by
+// `containerRadius`, so the two curves stay concentric (0 when the container
+// is square there).
+function concentricRadius(containerRadius, inset) {
+    return Math.max(0, (Number(containerRadius) || 0) - Math.max(0, Number(inset) || 0));
+}
+
+// Final corner radii of the module boxes of a group: edgeRadii, passed
+// through the language's `clamp` (square languages keep tiles tight), then
+// raised to `startFloor` / `endFloor` on the group's outer ends. The floors
+// are the concentric radii of the container's rounded ends (a tab, pill or
+// dock capsule), so a tight tile never pokes out of its rounded corner.
+function boxRadii(index, count, outer, inner, startConnected, endConnected, startFloor, endFloor, clamp) {
+    var r = edgeRadii(index, count, outer, inner, startConnected, endConnected);
+    var c = typeof clamp === "function" ? clamp : function (v) {
+        return v;
+    };
+    var startOuter = index === 0 && !startConnected;
+    var endOuter = index === count - 1 && !endConnected;
+    return {
+        "start": startOuter ? Math.max(c(r.start), startFloor || 0) : c(r.start),
+        "end": endOuter ? Math.max(c(r.end), endFloor || 0) : c(r.end)
+    };
+}
+
 // ids with a "__sep__" marker between consecutive modules (strip styles)
 function withSeparators(ids) {
     var out = [];

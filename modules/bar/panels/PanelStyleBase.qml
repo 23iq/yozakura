@@ -28,6 +28,10 @@ Item {
     // so live activities next to the notch stop before it
     property real startReach: 0
     property real endReach: 0
+    // Half the length of the content in the middle of the panel (center
+    // group, center tab with its fillets, a resting dock capsule), so live
+    // activities placed in the middle of the edge (notch off) go around it
+    property real centerReach: 0
     // Fillet of tab-shaped styles, 0 for strips
     property real fillet: 0
 }

@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.bar.look
 import "BarLayout.js" as BarLayout
 
 // One group of bar modules. The root is a Repeater, so the modules become
@@ -16,6 +17,11 @@ Repeater {
     // A connected edge joins another pill run (integrated dock, drawer)
     property bool startConnected: false
     property bool endConnected: false
+    // Minimum radius of the group's outer ends: the concentric radius of the
+    // rounded container end the group sits in (BarLayout.concentricRadius),
+    // 0 where the container is square (screen edge, flush corner)
+    property real startFloor: 0
+    property real endFloor: 0
     property bool enableShadow: true
     property int forcedAlignment: 0
     // Gap slots: modules without their own background on any style
@@ -32,7 +38,8 @@ Repeater {
         required property int index
 
         readonly property int moduleIndex: group.separator !== "" ? Math.floor(index / 2) : index
-        readonly property var radii: BarLayout.edgeRadii(moduleIndex, group.ids.length, group.outerRadius, group.innerRadius, group.startConnected, group.endConnected)
+        // Final box radii (the language's clamp + the container floors)
+        readonly property var radii: BarLayout.boxRadii(moduleIndex, group.ids.length, group.outerRadius, group.innerRadius, group.startConnected, group.endConnected, group.startFloor, group.endFloor, BarLook.groupRadius)
 
         barRoot: group.barRoot
         moduleId: modelData

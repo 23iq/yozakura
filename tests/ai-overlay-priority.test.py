@@ -10,6 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
 
+from PySide6.QtCore import QElapsedTimer  # noqa: E402
+
 h = Harness("ai-overlay-priority")
 h.module("Quickshell", {
     "Singleton": "Item {}",
@@ -55,6 +57,8 @@ h.singleton("qs.modules.theme", "Motion", """QtObject {
     property var enter: ({duration: 0})
 }""")
 h.singleton("qs.modules.aicenter.common", "BarLook", "QtObject { property int animDuration: 0 }")
+h.copy("modules/components/SurfaceLatch.qml", "qs/modules/components", siblings=False)
+h.module("qs.modules.components", {})
 h.copy("modules/aicenter/AiCenterHost.qml")
 h.stub("AiCenterPanel", "Item { property bool frameWrapped; function focusComposer() {} }")
 window = h.copy("modules/aicenter/AiCenterWindow.qml", siblings=False)
@@ -129,4 +133,12 @@ ev("requestFocus()")
 assert ev("compositorKeyboardFocus") == 1
 ev("GlobalStates.assistantVisible = false")
 assert ev("compositorKeyboardFocus") == 0, "hidden AI never requests keyboard focus"
+# The surface unmaps a frame after the keyboard drop, never in the same tick
+# (QtWayland crash on Hyprland with an active text-input).
+assert ev("visible"), "unmap must not share the tick with the keyboard drop"
+timer = QElapsedTimer()
+timer.start()
+while timer.elapsed() < 80:
+    h.app.processEvents()
+assert not ev("visible"), "closed AI window unmaps after the hold"
 print("ai-overlay-priority: ok")
