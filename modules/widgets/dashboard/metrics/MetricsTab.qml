@@ -9,6 +9,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
 import qs.config
+import qs.modules.components.kit
 
 Rectangle {
     id: root
@@ -333,8 +334,7 @@ Rectangle {
                     Layout.rightMargin: 16
                     spacing: 8
 
-                    Separator {
-                        Layout.preferredHeight: 2
+                    Divider {
                         Layout.fillWidth: true
                     }
 
@@ -345,8 +345,7 @@ Rectangle {
                         color: Colors.overBackground
                     }
 
-                    Separator {
-                        Layout.preferredHeight: 2
+                    Divider {
                         Layout.fillWidth: true
                     }
                 }
@@ -390,8 +389,7 @@ Rectangle {
                                     elide: Text.ElideMiddle
                                 }
 
-                                Separator {
-                                    Layout.preferredHeight: 2
+                                Divider {
                                     Layout.fillWidth: true
                                 }
 
@@ -451,8 +449,7 @@ Rectangle {
                                     elide: Text.ElideMiddle
                                 }
 
-                                Separator {
-                                    Layout.preferredHeight: 2
+                                Divider {
                                     Layout.fillWidth: true
                                 }
 
@@ -522,8 +519,7 @@ Rectangle {
                                         elide: Text.ElideMiddle
                                     }
 
-                                    Separator {
-                                        Layout.preferredHeight: 2
+                                    Divider {
                                         Layout.fillWidth: true
                                     }
 
@@ -607,8 +603,7 @@ Rectangle {
                                         elide: Text.ElideMiddle
                                     }
 
-                                    Separator {
-                                        Layout.preferredHeight: 2
+                                    Divider {
                                         Layout.fillWidth: true
                                     }
 
@@ -890,12 +885,11 @@ Rectangle {
                         }
 
                         // Separator
-                        Separator {
+                        Divider {
                             Layout.fillHeight: true
-                            Layout.preferredWidth: 2
                             Layout.topMargin: 4
                             Layout.bottomMargin: 4
-                            vert: true
+                            vertical: true
                         }
 
                         // Decrease interval button

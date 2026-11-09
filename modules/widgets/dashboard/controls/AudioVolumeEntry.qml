@@ -8,6 +8,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 
 Item {
     id: root
@@ -130,7 +131,7 @@ Item {
             }
 
             // Separator line
-            Separator {
+            Divider {
                 Layout.fillWidth: true
             }
 

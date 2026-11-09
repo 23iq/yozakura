@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.services
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services.activities
 import qs.modules.widgets.defaultview.activities
 import qs.config
@@ -174,12 +175,13 @@ Item {
         anchors.left: leadingRow.right
         anchors.verticalCenter: parent.verticalCenter
     }
-    Separator {
+    Divider {
         id: separator1
         visible: !root.vertical
-        vert: true
+        vertical: true
+        height: Space.l
         anchors.left: userInfo.right
-        anchors.leftMargin: 4
+        anchors.leftMargin: Space.xs
         anchors.verticalCenter: parent.verticalCenter
     }
     NotificationIndicator {
@@ -217,12 +219,13 @@ Item {
             }
         }
     }
-    Separator {
+    Divider {
         id: separator2
         visible: !root.vertical
-        vert: true
+        vertical: true
+        height: Space.l
         anchors.right: micIndicator.left
-        anchors.rightMargin: 4
+        anchors.rightMargin: Space.xs
         anchors.verticalCenter: parent.verticalCenter
     }
     Loader {

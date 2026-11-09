@@ -33,8 +33,12 @@ QtObject {
     property int groupRadius: 0; property int groupPadding: 0; property int groupGap: 16; property int surfacePadding: 16
     property bool boxedControls: false; property bool solidActive: false; property bool squareControls: false
     property int labelWeight: Font.Normal; property int activeLabelWeight: Font.Medium
-    function controlFill(h) { return "transparent" }
+    property int rowInset: 8; property int contentInset: 24; property int ruleGap: 8
+    property int screenGap: 24; property int boxPadding: 12; property int boxRadius: 12
+    property bool barSurfacePill: false; property int barLabelWeight: Font.Medium
+    function controlFill(h) { return "transparent" } function raisedFill(h) { return "transparent" }
     function buttonRadius(h) { return h / 2 } function chipRadius(h) { return Math.min(12, h / 2) }
+    function radius(role, h) { return role === "round" ? h / 2 : Math.min(12, (h > 0 ? h : 1e6) / 2) }
 }"""
 
 TYPES = {
@@ -45,6 +49,8 @@ TYPES = {
                "font.family: Type.family(role); font.pixelSize: Type.size(role); elide: Text.ElideRight }",
     "SectionLabel": "Item { property string text; property string action; signal triggered; implicitHeight: 14 }",
     "Divider": "Item { property bool vertical: false; implicitHeight: 1 }",
+    "Icon": "Text { property string icon; property string role: 'body'; property string tone; property int size: 0; "
+            "text: icon; font.pixelSize: size > 0 ? size : Type.iconSize(role) }",
     "Group": "Column { property string label; property string actionText; property bool divider: false; "
              "property int padding: 0; signal actionTriggered; spacing: 12 }",
     "IconButton": "Item { property string icon; property string size: 'm'; property bool active: false; "
