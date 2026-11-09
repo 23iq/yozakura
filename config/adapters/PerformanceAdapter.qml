@@ -3,7 +3,7 @@
 import Quickshell.Io
 
 JsonAdapter {
-    property bool blurTransition: true
+    property bool blurTransition: false
     property bool windowPreview: true
     property bool wavyLine: true
     property bool pauseWallpaperOnFullscreen: true

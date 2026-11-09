@@ -8503,7 +8503,7 @@
         "blurTransition": {
           "title": "Blur Transition",
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Animated blur when opening panels",
           "x-settings": {
             "category": "system",
