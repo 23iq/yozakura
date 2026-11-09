@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.settings.editors.routines
 import "../../routines/RoutineModel.js" as RoutineModel
 
@@ -122,8 +123,8 @@ ColumnLayout {
         spacing: 6
         Chip {
             objectName: "newRoutine"
-            glyph: Icons.plus
-            label: I18n.t("routines.new")
+            icon: Icons.plus
+            text: I18n.t("routines.new")
             active: true
             onClicked: root.startNew("")
         }
@@ -132,8 +133,8 @@ ColumnLayout {
             delegate: Chip {
                 required property var modelData
                 objectName: "template:" + modelData.id
-                glyph: Icons[modelData.icon]
-                label: I18n.t(modelData.name)
+                icon: Icons[modelData.icon]
+                text: I18n.t(modelData.name)
                 onClicked: root.startNew(modelData.id)
             }
         }

@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/ProviderPresets.js" as Presets
 
 // "Connect a provider": step 1 picks a provider (ProviderGrid), step 2
@@ -93,9 +94,10 @@ StyledRect {
             Layout.fillWidth: true
             spacing: 8
             IconButton {
+                size: "xs"
                 objectName: "connectBack"
                 visible: root.provider !== ""
-                glyph: Icons.arrowLeft
+                icon: Icons.arrowLeft
                 tooltip: I18n.t("ai.connect.back")
                 onClicked: root.back()
             }
@@ -122,9 +124,10 @@ StyledRect {
                 }
             }
             IconButton {
+                size: "xs"
                 objectName: "connectClose"
                 visible: !root.embedded
-                glyph: Icons.cancel
+                icon: Icons.cancel
                 tooltip: I18n.t("ai.close")
                 onClicked: root.close()
             }

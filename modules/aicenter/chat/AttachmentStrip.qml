@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Attachment thumbnails/chips under a user message or in the composer.
 Flow {
@@ -61,9 +62,8 @@ Flow {
                         visible: root.removable
                         anchors.top: parent.top
                         anchors.right: parent.right
-                        size: 20
-                        iconSize: 10
-                        glyph: Icons.cancel
+                        size: "xs"
+                        icon: Icons.cancel
                         onClicked: root.removeRequested(entry.index)
                     }
                 }
@@ -71,8 +71,8 @@ Flow {
             Component {
                 id: chipC
                 Chip {
-                    glyph: root.iconFor(entry.modelData)
-                    label: entry.modelData.name || entry.modelData.kind
+                    icon: root.iconFor(entry.modelData)
+                    text: entry.modelData.name || entry.modelData.kind
                     closable: root.removable
                     maxLabelWidth: 160
                     onCloseClicked: root.removeRequested(entry.index)

@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/ContextMath.js" as ContextMath
 
 // Context window meter of the composer strip: a thin bar and `62k/200k`,
@@ -84,10 +85,10 @@ RowLayout {
         objectName: "composerCompact"
         visible: !root.agent && root.level !== "ok" && (root.canCompact || root.compacting)
         enabled: root.canCompact && !root.compacting
-        implicitHeight: 22
-        glyph: Icons.arrowsInSimple
-        label: root.compacting ? I18n.t("ai.compacting") : I18n.t("ai.compact")
-        variant: root.level === "critical" ? "error" : "common"
+        dense: true
+        icon: Icons.arrowsInSimple
+        text: root.compacting ? I18n.t("ai.compacting") : I18n.t("ai.compact")
+        danger: root.level === "critical"
         onClicked: root.compactRequested()
     }
 }

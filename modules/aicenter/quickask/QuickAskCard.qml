@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import qs.modules.aicenter.chat
 import qs.modules.aicenter.transcript
@@ -139,7 +140,7 @@ FocusScope {
             Chip {
                 visible: Ai.quickModel !== null
                 image: Ai.quickModel ? Ai.quickModel.icon : ""
-                label: Ai.quickModel ? Ai.quickModel.name : ""
+                text: Ai.quickModel ? Ai.quickModel.name : ""
                 maxLabelWidth: 140
                 onClicked: {
                     GlobalStates.hideQuickAsk();
@@ -227,8 +228,8 @@ FocusScope {
                 copyText: root.lastAssistant ? root.lastAssistant.content : ""
             }
             Chip {
-                glyph: Icons.sidebarSimple
-                label: I18n.t("ai.to_sidebar")
+                icon: Icons.sidebarSimple
+                text: I18n.t("ai.to_sidebar")
                 onClicked: Ai.continueInSidebar()
             }
         }

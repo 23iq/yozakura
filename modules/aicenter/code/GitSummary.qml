@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Git state of the project in the ProjectBar (tasks.git): branch, ahead /
 // behind, changed files. Click: a Commit popover (message typed by the
@@ -220,10 +221,10 @@ StyledRect {
                 Chip {
                     objectName: "commitWriteAi"
                     visible: Config.ai.tasks.commitWithAi
-                    glyph: Icons.sparkle
-                    label: root.writing ? I18n.t("ai.git.writing") : I18n.t("ai.git.write_ai")
+                    icon: Icons.sparkle
+                    text: root.writing ? I18n.t("ai.git.writing") : I18n.t("ai.git.write_ai")
                     enabled: !root.writing && root.changed > 0
-                    variant: "transparent"
+                    quiet: true
                     onClicked: root.writeMessage()
                 }
                 Item {
@@ -231,8 +232,8 @@ StyledRect {
                 }
                 Chip {
                     objectName: "commitButton"
-                    glyph: Icons.accept
-                    label: I18n.t("ai.git.commit")
+                    icon: Icons.accept
+                    text: I18n.t("ai.git.commit")
                     active: true
                     enabled: message.text.trim().length > 0 && root.changed > 0 && !committer.running
                     onClicked: root.commit()

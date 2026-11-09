@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "PickerModel.js" as PickerModel
 import "AgentPickerRows.js" as AgentRows
 import "../../services/ai/Providers.js" as Providers
@@ -245,9 +246,10 @@ Popup {
                 horizontalAlignment: Text.AlignHCenter
             }
             IconButton {
+                size: "xs"
                 objectName: "pickerRefresh"
                 visible: !(Ai.catalog !== null && Ai.catalog.fetching)
-                glyph: Icons.arrowsClockwise
+                icon: Icons.arrowsClockwise
                 tooltip: I18n.t("ai.refresh_models")
                 onClicked: root.refresh()
             }
@@ -365,8 +367,8 @@ Popup {
             visible: root.filterKind !== "agent"
             Chip {
                 objectName: "pickerConnect"
-                glyph: Icons.plus
-                label: I18n.t("ai.connect_provider")
+                icon: Icons.plus
+                text: I18n.t("ai.connect_provider")
                 onClicked: {
                     root.connectRequested("");
                     root.close();

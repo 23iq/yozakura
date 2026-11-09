@@ -113,8 +113,8 @@ ev(top, "Ai.setSpace('code')")
 ev(top, "Ai.agents.activeId = ''")
 pump(200)
 # Task options show the concrete default model / effort before the first task.
-assert ev(find("taskModel"), "label") == "Opus 5.5"
-assert ev(find("taskEffort"), "label") == "high"
+assert ev(find("taskModel"), "text") == "Opus 5.5"
+assert ev(find("taskEffort"), "text") == "high"
 
 # Project ▾ -> Open folder… opens the in-bar picker (no zenity).
 click("projectButton")

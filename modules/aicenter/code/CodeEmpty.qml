@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Code space without an open session: pick the agent; the first message
 // from the composer starts a session in the project of the ProjectBar.
@@ -61,8 +62,8 @@ Item {
                 delegate: Chip {
                     id: chip
                     required property var modelData
-                    glyph: chip.modelData.available ? Icons.robot : Icons.warning
-                    label: chip.modelData.label + (chip.modelData.available ? "" : " · " + I18n.t("ai.not_installed"))
+                    icon: chip.modelData.available ? Icons.robot : Icons.warning
+                    text: chip.modelData.label + (chip.modelData.available ? "" : " · " + I18n.t("ai.not_installed"))
                     active: Ai.agentSettings.agent === chip.modelData.id
                     enabled: chip.modelData.available
                     opacity: enabled ? 1 : 0.55

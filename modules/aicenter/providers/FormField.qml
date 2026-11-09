@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Labelled text field of the Connect sheet. `secret` hides the text (API
 // keys) with a show/hide toggle; every field has a paste button.
@@ -70,9 +71,8 @@ ColumnLayout {
             }
             IconButton {
                 objectName: root.objectName ? root.objectName + "Paste" : ""
-                glyph: Icons.clipboardText
-                size: 28
-                iconSize: 14
+                icon: Icons.clipboardText
+                size: "xs"
                 tooltip: I18n.t("ai.connect.paste")
                 onClicked: {
                     field.selectAll();
@@ -83,9 +83,8 @@ ColumnLayout {
             IconButton {
                 objectName: root.objectName ? root.objectName + "Reveal" : ""
                 visible: root.secret
-                glyph: Icons.eye
-                size: 28
-                iconSize: 14
+                icon: Icons.eye
+                size: "xs"
                 active: root.revealed
                 tooltip: root.revealed ? I18n.t("ai.connect.hide") : I18n.t("ai.connect.show")
                 onClicked: root.revealed = !root.revealed

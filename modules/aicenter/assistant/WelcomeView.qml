@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "Suggestions.js" as Suggestions
 import "../../services/ai/EngineSelection.js" as Selection
 
@@ -136,8 +137,8 @@ Item {
                 delegate: Chip {
                     id: chip
                     required property var modelData
-                    glyph: Icons[chip.modelData.icon] || Icons.sparkle
-                    label: root.label(chip.modelData)
+                    icon: Icons[chip.modelData.icon] || Icons.sparkle
+                    text: root.label(chip.modelData)
                     maxLabelWidth: 300
                     onClicked: root.suggestion(root.label(chip.modelData), chip.modelData.context)
                 }

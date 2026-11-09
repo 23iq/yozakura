@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import "../lib/Markdown.js" as Markdown
 
@@ -110,10 +111,9 @@ Item {
             }
             IconButton {
                 visible: root.canRetry
-                glyph: Icons.arrowCounterClockwise
+                icon: Icons.arrowCounterClockwise
                 tooltip: I18n.t("ai.retry")
-                size: 24
-                iconSize: 13
+                size: "xs"
                 onClicked: root.retryRequested()
             }
         }

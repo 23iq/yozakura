@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Board without tasks: what tasks are, the keyboard, template chips.
 Item {
@@ -51,8 +52,8 @@ Item {
                 delegate: Chip {
                     id: chip
                     required property var modelData
-                    glyph: Icons.lightningBolt
-                    label: "/" + chip.modelData.id
+                    icon: Icons.lightningBolt
+                    text: "/" + chip.modelData.id
                     mono: true
                     onClicked: root.templateChosen("/" + chip.modelData.id + " ")
                 }

@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/tasks/TaskModel.js" as TaskModel
 import "../../services/ai/EffortPrefs.js" as Prefs
 
@@ -125,7 +126,7 @@ RowLayout {
                 id: agentChip
                 required property var modelData
                 objectName: "taskAgent_" + modelData.id
-                label: agentChip.modelData.label
+                text: agentChip.modelData.label
                 active: root.agents.indexOf(agentChip.modelData.id) >= 0
                 onClicked: root.toggleAgent(agentChip.modelData.id)
             }
@@ -139,9 +140,9 @@ RowLayout {
         Chip {
             objectName: "taskModel"
             visible: !root.chat && root.single.length > 0 && ((root.catalog.models || []).length > 0 || root.catalog.loading === true)
-            label: root.modelLabel
+            text: root.modelLabel
             trailingIcon: Icons.caretDown
-            variant: "transparent"
+            quiet: true
             onClicked: modelMenu.open()
             OptionMenu {
                 id: modelMenu
@@ -166,10 +167,10 @@ RowLayout {
         Chip {
             objectName: "taskEffort"
             visible: !root.chat && root.single.length > 0 && root.efforts.length > 0
-            glyph: Icons.brain
-            label: root.effortLabel
+            icon: Icons.brain
+            text: root.effortLabel
             trailingIcon: Icons.caretDown
-            variant: "transparent"
+            quiet: true
             onClicked: effortMenu.open()
             OptionMenu {
                 id: effortMenu
@@ -191,16 +192,16 @@ RowLayout {
         Chip {
             objectName: "taskPlanFirst"
             visible: !root.chat
-            glyph: Icons.listChecks
-            label: I18n.t("ai.tasks.plan_first")
+            icon: Icons.listChecks
+            text: I18n.t("ai.tasks.plan_first")
             active: root.planFirst
             onClicked: root.planFirst = !root.planFirst
         }
         Chip {
             objectName: "taskInPlace"
             visible: !root.chat
-            glyph: Icons.gitBranch
-            label: I18n.t("ai.tasks.in_place")
+            icon: Icons.gitBranch
+            text: I18n.t("ai.tasks.in_place")
             active: root.inPlace
             enabled: root.agents.length <= 1
             opacity: enabled ? 1 : 0.5
@@ -215,9 +216,10 @@ RowLayout {
         size: -3
     }
     IconButton {
+        size: "xs"
         objectName: "taskTemplates"
         visible: !root.chat && root.templates.length > 0
-        glyph: Icons.lightningBolt
+        icon: Icons.lightningBolt
         tooltip: I18n.t("ai.tasks.templates") + " (/)"
         onClicked: templateMenu.open()
         OptionMenu {
@@ -234,8 +236,9 @@ RowLayout {
         }
     }
     IconButton {
+        size: "xs"
         objectName: "taskChatToggle"
-        glyph: root.chat ? Icons.kanban : Icons.chatDots
+        icon: root.chat ? Icons.kanban : Icons.chatDots
         tooltip: I18n.t(root.chat ? "ai.tasks.to_tasks" : "ai.tasks.to_chat")
         onClicked: root.chatToggled(!root.chat)
     }

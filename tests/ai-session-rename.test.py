@@ -23,11 +23,11 @@ h.module("qs.modules.theme", {
 h.module("qs.modules.components", {"StyledRect": "Rectangle { property string variant }"})
 h.singleton("qs.modules.services", "I18n", "QtObject { function t(k) { return k } }")
 h.module("qs.modules.aicenter.common", {
-    "IconButton": "Item { property string glyph; property int size; property int iconSize; property bool active; "
-                  "property bool danger; property string tooltip; signal clicked }",
     "StatusDot": "Item { property string status }",
 })
 h.module("qs.modules.components.kit", {
+    "IconButton": "Item { property string icon; property string size; property bool active; "
+                  "property bool danger; property string tooltip; signal clicked }",
     "Type": "pragma Singleton\nQtObject { property color text; property color accent: 'red'; "
             "function family(r) { return 'Sans' } function size(r) { return 13 } }",
     "Look": "pragma Singleton\nQtObject { property int labelWeight: Font.Normal }",

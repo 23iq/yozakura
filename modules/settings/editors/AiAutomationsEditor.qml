@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.settings.editors.keybinds
 import "../../services/ai/Cron.js" as Cron
 import "../../services/ai/Automations.js" as Logic
@@ -81,8 +82,8 @@ ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 8
                     IconButton {
-                        glyph: card.open ? Icons.caretUp : Icons.caretDown
-                        size: 24
+                        icon: card.open ? Icons.caretUp : Icons.caretDown
+                        size: "xs"
                         onClicked: card.open = !card.open
                     }
                     ColumnLayout {
@@ -105,9 +106,9 @@ ColumnLayout {
                         }
                     }
                     IconButton {
-                        glyph: Icons.trash
+                        icon: Icons.trash
                         danger: true
-                        size: 24
+                        size: "xs"
                         tooltip: I18n.t("ai.delete")
                         onClicked: root.remove(card.index)
                     }
@@ -217,8 +218,8 @@ ColumnLayout {
     }
 
     Chip {
-        glyph: Icons.plus
-        label: I18n.t("ai.add_automation")
+        icon: Icons.plus
+        text: I18n.t("ai.add_automation")
         onClicked: root.add()
     }
 }

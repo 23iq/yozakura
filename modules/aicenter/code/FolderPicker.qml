@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "FolderPath.js" as FolderPath
 
 // The Code project picker, a sheet inside the AI bar. Empty field: recent
@@ -161,7 +162,8 @@ StyledRect {
                 }
             }
             IconButton {
-                glyph: Icons.cancel
+                size: "xs"
+                icon: Icons.cancel
                 tooltip: I18n.t("ai.close")
                 onClicked: root.close()
             }
@@ -215,24 +217,24 @@ StyledRect {
                 }
                 IconButton {
                     objectName: "folderHome"
-                    glyph: Icons.folder
-                    size: 28
+                    icon: Icons.folder
+                    size: "xs"
                     tooltip: I18n.t("ai.folder.home")
                     onClicked: root.browse(root.home)
                 }
                 IconButton {
                     objectName: "folderHidden"
                     visible: root.browsing
-                    glyph: Icons.eye
-                    size: 28
+                    icon: Icons.eye
+                    size: "xs"
                     active: root.showHidden
                     tooltip: I18n.t("ai.folder.hidden")
                     onClicked: root.showHidden = !root.showHidden
                 }
                 IconButton {
                     visible: !root.browsing
-                    glyph: Icons.arrowsClockwise
-                    size: 28
+                    icon: Icons.arrowsClockwise
+                    size: "xs"
                     tooltip: I18n.t("ai.folder.rescan")
                     onClicked: browser.loadRepos(true)
                 }
@@ -355,9 +357,9 @@ StyledRect {
             spacing: 8
             Chip {
                 objectName: "folderSystemDialog"
-                glyph: Icons.appWindow
-                label: I18n.t("ai.folder.system_dialog")
-                variant: "transparent"
+                icon: Icons.appWindow
+                text: I18n.t("ai.folder.system_dialog")
+                quiet: true
                 maxLabelWidth: 120
                 onClicked: root.systemDialog()
             }
@@ -367,8 +369,8 @@ StyledRect {
             Chip {
                 objectName: "folderChoose"
                 Layout.maximumWidth: root.width * 0.6
-                glyph: Icons.folderOpen
-                label: root.target ? I18n.t("ai.folder.use").arg(root.target === root.home ? "~" : FolderPath.baseName(root.target)) : I18n.t("ai.folder.use_none")
+                icon: Icons.folderOpen
+                text: root.target ? I18n.t("ai.folder.use").arg(root.target === root.home ? "~" : FolderPath.baseName(root.target)) : I18n.t("ai.folder.use_none")
                 maxLabelWidth: Math.max(60, root.width * 0.6 - 40)
                 active: root.target !== ""
                 enabled: root.target !== ""

@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.markdown
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/AgentTimeline.js" as Timeline
 
 // "The agent wants to …" card: Allow / Allow for this session / Deny.
@@ -124,9 +125,9 @@ StyledRect {
 
         Chip {
             visible: root.pending && (root.detail.length > 0 || root.diff.length > 0)
-            label: I18n.t("ai.details")
+            text: I18n.t("ai.details")
             trailingIcon: root.detailsOpen ? Icons.caretUp : Icons.caretDown
-            variant: "transparent"
+            quiet: true
             onClicked: root.detailsOpen = !root.detailsOpen
         }
 

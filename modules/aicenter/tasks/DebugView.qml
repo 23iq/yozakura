@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Session log of a run (tasks.debug): launch command (redacted argv),
 // working directory, process state, stderr and the raw event tail.
@@ -65,7 +66,8 @@ ColumnLayout {
             wrapMode: Text.Wrap
         }
         IconButton {
-            glyph: Icons.copy
+            size: "xs"
+            icon: Icons.copy
             tooltip: I18n.t("ai.copy")
             onClicked: {
                 log.selectAll();
@@ -74,8 +76,9 @@ ColumnLayout {
             }
         }
         IconButton {
+            size: "xs"
             objectName: "debugRefresh"
-            glyph: Icons.arrowsClockwise
+            icon: Icons.arrowsClockwise
             tooltip: I18n.t("ai.tasks.refresh")
             onClicked: root.reload()
         }

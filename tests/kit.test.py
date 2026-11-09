@@ -37,6 +37,9 @@ Window {
         IconButton { objectName: "btnM"; icon: Icons.gear }
         Chip { objectName: "chip"; icon: Icons.wifiHigh; text: "Wi-Fi" }
         Chip { objectName: "primaryChip"; text: "Apply"; primary: true }
+        Chip { objectName: "pillChip"; icon: Icons.gear; text: "claude-opus-5-5-long-model"; trailingIcon: Icons.gear; mono: true; maxLabelWidth: 40; quiet: true; dense: true }
+        Chip { objectName: "closeChip"; text: "file.txt"; closable: true }
+        IconButton { objectName: "btnXS"; size: "xs"; icon: Icons.gear; danger: true; tooltip: "Delete" }
         Switch { objectName: "switch"; onToggled: v => parent.Window.window.flips = parent.Window.window.flips.concat([v]) }
         Dropdown { objectName: "dropdown"; value: "b"
                    options: [{ value: "a", text: "Alpha" }, { value: "b", text: "Beta" }, { value: "c", text: "Gamma" }]
@@ -107,6 +110,20 @@ for lang, density in CASES:
     section = get("section")
     h.eval(section, "triggered()")
     assert win.property("triggered") == 1, tag
+
+    # Dense toolbar button: xs size, destructive tint only while hovered
+    xs = get("btnXS")
+    assert xs.property("width") == space("controlXS") == int(28 * factor + 0.5), tag
+    assert xs.property("look") == "normal", tag
+    xs.setProperty("highlighted", True)
+    assert xs.property("look") == "danger" and xs.property("variant") == "error", tag
+    xs.setProperty("highlighted", False)
+    # Picker pills: quiet (no box at rest), dense, a capped middle-elided label
+    pill = get("pillChip")
+    assert pill.property("height") == space("chip") - space("s"), tag
+    assert pill.property("variant") == "transparent" and pill.property("boxed") is False, tag
+    assert pill.property("implicitWidth") < pill.property("fullWidth"), tag
+    assert h.find(get("closeChip"), "chipClose").property("visible") is True, tag
 
     # IconButton sizes and states
     s, m = get("btnS"), get("btnM")

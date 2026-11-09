@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.transcript
 import "../../services/tasks/TaskModel.js" as TaskModel
 
@@ -124,7 +125,7 @@ StyledRect {
                 }
                 Chip {
                     visible: root.tab !== "transcript"
-                    label: I18n.t("ai.tasks.show_request")
+                    text: I18n.t("ai.tasks.show_request")
                     onClicked: root.tab = "transcript"
                 }
             }
@@ -151,7 +152,7 @@ StyledRect {
                         required property int index
                         readonly property int runIndex: runChip.modelData.index !== undefined ? runChip.modelData.index : runChip.index
                         objectName: "runChip_" + runIndex
-                        label: (runIndex + 1) + " · " + TaskModel.agentLabel(runChip.modelData.agent, Ai.agents ? Ai.agents.agents : [])
+                        text: (runIndex + 1) + " · " + TaskModel.agentLabel(runChip.modelData.agent, Ai.agents ? Ai.agents.agents : [])
                         active: root.run === runIndex
                         onClicked: TasksService.selectedRun = runIndex
                     }
@@ -165,8 +166,8 @@ StyledRect {
                         id: tabChip
                         required property string modelData
                         objectName: "tab_" + modelData
-                        label: I18n.t("ai.tasks.tab." + tabChip.modelData)
-                        variant: root.tab === tabChip.modelData ? "primary" : "transparent"
+                        text: I18n.t("ai.tasks.tab." + tabChip.modelData)
+                        quiet: true
                         onClicked: root.tab = tabChip.modelData
                     }
                 }

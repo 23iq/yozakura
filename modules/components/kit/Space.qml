@@ -34,6 +34,7 @@ QtObject {
         return Math.min(r, h / 2);
     }
 
+    readonly property int controlXS: px(28)
     readonly property int controlS: px(36)
     readonly property int controlM: px(40)
     readonly property int controlL: px(64)

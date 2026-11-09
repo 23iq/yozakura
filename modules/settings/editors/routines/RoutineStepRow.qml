@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.settings.controls
 import qs.modules.settings.editors.keybinds
 import "../../../../config/KeybindActions.js" as KeybindActions
@@ -88,16 +89,16 @@ StyledRect {
                 color: Colors.error
             }
             IconButton {
-                glyph: Icons.arrowUp
-                size: 24
+                icon: Icons.arrowUp
+                size: "xs"
                 enabled: root.stepIndex > 0
                 opacity: enabled ? 1 : 0.35
                 tooltip: I18n.t("routines.move_up")
                 onClicked: root.moved(-1)
             }
             IconButton {
-                glyph: Icons.arrowDown
-                size: 24
+                icon: Icons.arrowDown
+                size: "xs"
                 enabled: root.stepIndex < root.count - 1
                 opacity: enabled ? 1 : 0.35
                 tooltip: I18n.t("routines.move_down")
@@ -105,9 +106,9 @@ StyledRect {
             }
             IconButton {
                 objectName: "removeStep"
-                glyph: Icons.trash
+                icon: Icons.trash
                 danger: true
-                size: 24
+                size: "xs"
                 tooltip: I18n.t("routines.remove_step")
                 onClicked: root.removed()
             }
