@@ -79,3 +79,17 @@ test('focus history: a newly focused client gets the next lower id, staying focu
     assert.equal(kept.changed, false);
     assert.equal(kept.counter, -2);
 });
+
+test('pickFocused follows focus and keeps the last client while nothing is focused', () => {
+    let r = C.merge([], [win('0xa', { is_focused: true }), win('0xb')], 0);
+    let f = C.pickFocused(r.values, null);
+    assert.equal(f.address, '0xa');
+    r = C.merge(r.values, [win('0xa'), win('0xb', { is_focused: true })], r.counter);
+    f = C.pickFocused(r.values, f);
+    assert.equal(f.address, '0xb');
+    r = C.merge(r.values, [win('0xa'), win('0xb', { title: 'new' })], r.counter);
+    f = C.pickFocused(r.values, f);
+    assert.equal(f, r.values[1]);
+    assert.equal(f.title, 'new');
+    assert.equal(C.pickFocused(C.merge(r.values, [win('0xa')], r.counter).values, f), null);
+});

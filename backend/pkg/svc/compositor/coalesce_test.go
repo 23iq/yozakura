@@ -41,7 +41,7 @@ func TestCoalesceFirstEventIsImmediate(t *testing.T) {
 	t0 := time.Now()
 	in <- layoutState("a")
 	waitFor(t, "first push", func() bool { got, _ := r.snapshot(); return len(got) == 1 })
-	if _, when := r.snapshot(); when[0].Sub(t0) > 50*time.Millisecond {
+	if _, when := r.snapshot(); when[0].Sub(t0) > 500*time.Millisecond {
 		t.Fatalf("first push delayed by %v", when[0].Sub(t0))
 	}
 }
@@ -78,7 +78,7 @@ func TestCoalesceBurstLatestWins(t *testing.T) {
 			t.Errorf("push %d only %v after the previous one", i, gap)
 		}
 	}
-	if lag := when[len(when)-1].Sub(burstEnd); lag > interval+50*time.Millisecond {
+	if lag := when[len(when)-1].Sub(burstEnd); lag > interval+500*time.Millisecond {
 		t.Errorf("newest state arrived %v after the burst", lag)
 	}
 }

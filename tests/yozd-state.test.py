@@ -126,4 +126,11 @@ check('other client change replaces only that client', h.eval(root, 'svc.clients
       and h.eval(root, 'svc.clients.values[0] === saved'))
 check('focusedClient untouched by another client changing', c3['focusedClientChanges'] == c2['focusedClientChanges'])
 
+focus_other = state('changed', title3='renamed')
+for w in focus_other['windows']:
+    w['is_focused'] = w['id'] == '0x3'
+push(focus_other)
+check('focusedClient follows focus to another window', h.eval(root, 'svc.focusedClient.address') == '0x3'
+      and h.eval(root, 'svc.focusedClient === svc.clients.values[3]'))
+
 sys.exit(0 if ok_all else 1)

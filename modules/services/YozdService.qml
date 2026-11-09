@@ -137,9 +137,7 @@ Singleton {
             if (merged.changed) {
                 root.clients.values = merged.values;
             }
-            const values = merged.values;
-            const prevAddr = root.focusedClient ? root.focusedClient.address : undefined;
-            const focused = values.find(w => w.address === prevAddr) || values.find(w => w.is_focused) || null;
+            const focused = YozdClients.pickFocused(merged.values, root.focusedClient);
             if (focused !== root.focusedClient) {
                 root.focusedClient = focused;
             }

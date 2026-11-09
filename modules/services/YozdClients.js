@@ -85,3 +85,19 @@ function merge(prev, windows, counter) {
         counter: counter
     };
 }
+
+// The client focusedClient should point at: the focused one; while no
+// window has focus (a layer surface such as the launcher took it) the
+// previous focused client stays, refreshed to its current object.
+function pickFocused(values, prev) {
+    for (let i = 0; i < values.length; i++) {
+        if (values[i].is_focused)
+            return values[i];
+    }
+    const addr = prev ? prev.address : undefined;
+    for (let i = 0; i < values.length; i++) {
+        if (values[i].address === addr)
+            return values[i];
+    }
+    return null;
+}
