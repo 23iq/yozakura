@@ -12,10 +12,11 @@ os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401
 from lib import aiscene  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer, QUrl, qInstallMessageHandler  # noqa: E402
+from PySide6.QtCore import QUrl, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlEngine, QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
+from lib.waits import settle, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 app = QGuiApplication([])
@@ -44,11 +45,6 @@ view.show()
 top = view.rootObject()
 
 
-def pump(ms=150):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
 
 
 def ev(expr, target=None):
@@ -77,7 +73,7 @@ def picker():
 
 ev("Ai.setSpace('assistant')")
 ev("openPicker()")
-pump(300)
+settle()
 p = picker()
 assert ev("opened", p), "the picker opens"
 assert find("pickerRow_m:agent:claude") is not None, "agents are listed"
@@ -86,7 +82,7 @@ assert ev("rows.find(r => r.key === 'm:agent:claude').expandable", p)
 
 # Tapping the agent expands its models (no engine change yet).
 assert ev("activate(rows.findIndex(r => r.key === 'm:agent:claude'))", p)
-pump()
+wait_until(lambda: ev("opened", p))
 assert ev("opened", p), "expanding keeps the picker open"
 assert ev("Ai.agentPicks.length") == 0
 assert find("pickerRow_am:claude:sonnet") is not None, "expanded agents list their models"
@@ -95,14 +91,14 @@ assert find("pickerRow_amm:claude") is not None, "agents that accept any id get 
 
 # One tap on a child = engine + model.
 ev("activated()", find("pickerRow_am:claude:sonnet"))
-pump()
+wait_until(lambda: ev("Ai.agentPicks[0]") == "claude/sonnet")
 assert ev("Ai.agentPicks[0]") == "claude/sonnet", ev("JSON.stringify(Ai.agentPicks)")
 assert not ev("opened", p), "picking closes the picker"
 assert ev("Ai.mode") == "agent"
 
 # Reopening: expanded on the current agent, its model marked.
 ev("openPicker()")
-pump(300)
+settle()
 row = find("pickerRow_am:claude:sonnet")
 assert row is not None, "the current agent opens expanded"
 assert ev("current", row), "the chosen agent model is marked"
@@ -111,26 +107,26 @@ assert ev("rows[selectedIndex].key", p) == "am:claude:sonnet", "the selection st
 
 # The agent default alias is passed as "" (the CLI resolves it).
 ev("activated()", find("pickerRow_am:claude:default"))
-pump()
+wait_until(lambda: ev("Ai.agentPicks[1]") == "claude/")
 assert ev("Ai.agentPicks[1]") == "claude/"
 
 # Search finds agent models by name.
 ev("openPicker()")
-pump(300)
+settle()
 ev("Ai.pickedAgentModel = 'sonnet'")
 find("pickerSearch").setProperty("text", "sonnet")
-pump()
+wait_until(lambda: find("pickerRow_am:claude:sonnet") is not None)
 assert find("pickerRow_am:claude:sonnet") is not None, "a search lists matching agent models"
 assert find("pickerRow_am:claude:default") is None, "non-matching agent models are hidden"
 assert find("pickerRow_m:anthropic:claude-sonnet-4-5") is not None, "HTTP models still match"
 find("pickerSearch").setProperty("text", "")
-pump()
+settle()
 
 # Manual model id.
 field = find("agentManualModel", find("pickerRow_amm:claude"))
 field.setProperty("text", "claude-haiku-4-5")
 ev("accepted()", field)
-pump()
+wait_until(lambda: ev("Ai.agentPicks[2]") == "claude/claude-haiku-4-5")
 assert ev("Ai.agentPicks[2]") == "claude/claude-haiku-4-5", ev("JSON.stringify(Ai.agentPicks)")
 
 bad = [m for m in errors if "Binding loop" not in m and "/assets/aiproviders/" not in m]

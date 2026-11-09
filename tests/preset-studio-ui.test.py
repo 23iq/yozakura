@@ -22,9 +22,9 @@ headless.ensure(gl=True)
 
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
-from PySide6.QtTest import QTest  # noqa: E402
 from preset_sandbox import PresetSandbox  # noqa: E402
 from settings_env import BRAND_CACHE, SettingsEnv  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 errors: list[str] = []
 _prev = qInstallMessageHandler(None)
@@ -97,11 +97,7 @@ def w(expr):
 
 
 def wait_for(expr, ms=8000, obj=None):
-    for _ in range(ms // 50):
-        if ev(expr, obj):
-            return True
-        QTest.qWait(50)
-    return False
+    return wait_until(lambda: ev(expr, obj), timeout_ms=ms)
 
 
 def calls_with(*prefix):
@@ -113,21 +109,21 @@ ev("PresetStudio.trialSeconds = 1")
 ev('select("presets")')
 check(wait_for("PresetStudio.loaded"), "the studio loads the preset list through the CLI")
 listed = sb.json("list", "--json")
-QTest.qWait(300)
+wait_for(f'countPrefix("presetCard:") === {len(listed)}', obj=win)
 check(w('countPrefix("presetCard:")') == len(listed), f"one card per preset ({len(listed)})")
 check(ev("PresetStudio.aspects.length") == 6, "aspects come from `preset aspects`")
 
 # Filters / search
 w('cur().filter = "light"')
-QTest.qWait(100)
 light = [p for p in listed if p["look"]["theme.lightMode"]]
+wait_for(f'countPrefix("presetCard:") === {len(light)}', obj=win)
 check(w('countPrefix("presetCard:")') == len(light), "the light filter shows light presets only")
 w('cur().filter = "all"')
 w('cur().query = "neon"')
-QTest.qWait(100)
+wait_for('countPrefix("presetCard:") === 1', obj=win)
 check(w('countPrefix("presetCard:")') == 1, "search narrows the gallery")
 w('cur().query = ""')
-QTest.qWait(100)
+wait_for(f'countPrefix("presetCard:") === {len(listed)}', obj=win)
 
 # Unified gallery: Sets | Layout | Style | Palette, the current parts row
 check(w('countPrefix("galleryTab:")') == 4, "the gallery has the four tabs")
@@ -136,19 +132,19 @@ code, out, _ = sb.run(["parts", "--json"])
 if code == 0:
     layouts = json.loads(out).get("layouts") or []
     w('findItem("galleryTab:layout").clicked()')
-    QTest.qWait(200)
+    wait_for(f'cur().tab === "layout" && countPrefix("partCard:layout:") === {len(layouts)}', obj=win)
+    settle()
     check(w('cur().tab') == "layout", "a tab click switches the gallery")
     check(w('countPrefix("partCard:layout:")') == len(layouts), f"one card per layout ({len(layouts)})")
     check(w('countPrefix("presetCard:")') == 0, "set cards hide on a part tab")
+    # The layout cards render their miniatures (checked below); leaving the
+    # tab mid-grab would drop the PNG.
+    wait_until(lambda: len(list((BRAND_CACHE / "preset-thumbs").glob("*.png"))) >= 2, timeout_ms=8000, step_ms=20)
     w('findItem("galleryTab:sets").clicked()')
-    QTest.qWait(100)
+    wait_for(f'cur().tab === "sets" && countPrefix("presetCard:") === {len(listed)}', obj=win)
 
 # Thumbnails: rendered lazily, saved to the cache
 thumbs = BRAND_CACHE / "preset-thumbs"
-for _ in range(160):
-    if len(list(thumbs.glob("*.png"))) >= 2:
-        break
-    QTest.qWait(50)
 check(len(list(thumbs.glob("*.png"))) >= 2, "thumbnails are rendered and cached as PNGs")
 check(ev("PresetStudio.rendering <= PresetStudio.maxRendering"), "thumbnail rendering is throttled")
 
@@ -186,13 +182,13 @@ check(sb.run(["active"])[1].strip() == "Neon Tokyo", "the previous preset is bac
 
 # Duplicate through the name dialog
 w('pg().handle("Neon Tokyo", "duplicate")')
-QTest.qWait(400)
+wait_for('findItem("presetNameField") !== null && findItem("presetNameField").visible', obj=win)
 check(w('findItem("presetNameField").visible'), "duplicate asks for a name")
 w('findItem("presetNameField").input.text = "sumi-e"')
-QTest.qWait(50)
+settle()
 check(not w('findItem("presetNameConfirm").enabled'), "a built-in name is refused in the dialog")
 w('findItem("presetNameField").input.text = "Neon Mine"')
-QTest.qWait(50)
+wait_for('findItem("presetNameConfirm").enabled', obj=win)
 check(w('findItem("presetNameConfirm").enabled'), "a free name is accepted")
 w('findItem("presetNameConfirm").clicked()')
 check(wait_for('pg().view === "editor" && pg().editing === "Neon Mine"', obj=win), "duplicating opens the copy in the editor")
@@ -220,7 +216,8 @@ check(sb.run(["active"])[1].strip() == "Neon Tokyo", "the look from before the e
 
 # Built-in editor is read-only
 ev('select("presets")')
-QTest.qWait(300)
+wait_for('pg() !== null', obj=win)
+settle()
 w('pg().show("editor:Sumi-e")')
 check(wait_for("cur().inspection !== null", obj=win), "a built-in preset opens in the editor")
 check(w("cur().official") and not w('findItem("editorEditLive").visible'), "built-ins cannot be edited live")
@@ -237,13 +234,13 @@ w('pg().show("mixer")')
 check(wait_for("Object.keys(cur().sources).length === 6", obj=win), "the mixer starts with a source per aspect")
 w('cur().sources = ' + json.dumps({"layout": "Kaze", "colors": "Neon Tokyo", "windows": "CRT", "desktop": "Sumi-e",
                                    "lockscreen": "Neon Mine"}))
-QTest.qWait(50)
+wait_for('cur().look["bar.panels"] !== undefined && cur().look["bar.panels"][0].edge === "left"', obj=win)
 check(w('cur().look["bar.panels"][0].edge') == "left", "the preview composes the layout source")
 check(w('cur().look["wallpaper.activeColorPreset"]') == "Neon", "…and the colors source")
 w('cur().askName("Blend", cur().sources)')
-QTest.qWait(100)
+wait_for('findItem("presetNameField") !== null && findItem("presetNameField").visible', obj=win)
 w('findItem("presetNameField").input.text = "Blend"')
-QTest.qWait(50)
+wait_for('findItem("presetNameConfirm").enabled', obj=win)
 w('findItem("presetNameConfirm").clicked()')
 check(wait_for('PresetStudio.find("Blend") !== null'), "create saves the mix (`preset mix`)")
 mix = calls_with("mix", "Blend")

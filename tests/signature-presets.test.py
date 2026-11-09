@@ -17,7 +17,7 @@ from panels_env import PanelsEnv  # noqa: E402
 from sentence_env import sentence_panels_env, uses_sentence  # noqa: E402
 import qmlharness  # noqa: E402
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 problems: list[str] = []
 qInstallMessageHandler(lambda _m, _c, msg: problems.append(msg) if any(
@@ -65,10 +65,11 @@ for name in panel_presets:
                    dock=read(name, "dock") or None, extra={"workspaces": read(name, "workspaces")})
     ENVS.append(env)
     win = PanelsEnv.scene(env, 1600, 900, windows=False)
-    QTest.qWait(250)
     host = env.h.find(win, "host")
-    count = env.h.eval(host, "bars.length")
     enabled = [p for p in read(name, "bar")["panels"] if p.get("enabled", True) and p.get("style") != "none"]
+    wait_until(lambda: env.h.eval(host, "bars.length") == len(enabled))  # noqa: B023
+    settle(3)
+    count = env.h.eval(host, "bars.length")
     assert count == len(enabled), (name, count, len(enabled))
 
     lines = visual(win.contentItem(), "frameLines")
@@ -80,11 +81,14 @@ for name in panel_presets:
         assert not shown(visual(win.contentItem(), "notch")), (name, "no island")
 
     if name == "Kotoba":
+        wait_until(lambda: shown(visual(win.contentItem(), "sentenceLine")))  # noqa: B023
         line = visual(win.contentItem(), "sentenceLine")
         assert shown(line), (name, "sentence line")
     if name == "Hanami":
+        wait_until(lambda: shown(of_type(win.contentItem(), "BranchStrip")))  # noqa: B023
         assert shown(of_type(win.contentItem(), "BranchStrip")), (name, "sakura branch")
     if name == "Device":
+        wait_until(lambda: shown(visual(win.contentItem(), "faceSegment")))  # noqa: B023
         assert shown(visual(win.contentItem(), "faceSegment")), (name, "segment clock")
 
     if name == "Neon Tokyo":

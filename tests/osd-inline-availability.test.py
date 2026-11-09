@@ -8,6 +8,7 @@ from panels_env import PanelsEnv  # noqa: E402
 from panels_stubs import COMPOSITOR_DATA  # noqa: E402
 from qmlharness import REPO  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 env = PanelsEnv("osd-inline-availability", bar={
     "pinnedOnStartup": False, "frameEnabled": False, "containBar": False,
@@ -57,7 +58,7 @@ assert h.eval(svc, "route.window"), "a hidden unpinned bar must not suppress the
 h.eval(svc, 'report("volume", 0.2, false, "", "")')
 assert not inline.property("shown")
 h.eval(bar, "hoverActive = true")
-QTest.qWait(80)
+wait_until(lambda: h.eval(svc, 'routeForScreen("DP-1").window') is False)
 assert h.eval(svc, 'routeForScreen("DP-1").window') is False
 assert h.eval(svc, 'routeForScreen("DP-2").window') is True, "another screen has no inline host"
 assert svc.property("inlineHosts") == 1, svc.property("inlineHosts")
@@ -70,14 +71,14 @@ assert not h.eval(bar, "reveal")
 assert h.eval(svc, 'routeForScreen("DP-1").window'), "fullscreen-hidden bar must fall back"
 compositor.setProperty("fullscreen", False)
 h.eval(window, 'Config.bar.layout = ({style: "classic", left: [], right: [], drawer: ["controls"]})')
-QTest.qWait(100)
+wait_until(lambda: svc.property("inlineHosts") == 0)
 assert svc.property("inlineHosts") == 0, "collapsed drawer cannot host an OSD"
 bar = controls(window.contentItem())[0].property("bar")
 h.eval(bar, "hoverActive = true; drawerHovered = true; drawerExpanded = true")
-QTest.qWait(500)
+wait_until(lambda: svc.property("inlineHosts") == 1)
 assert svc.property("inlineHosts") == 1
 h.eval(bar, "drawerHovered = false; drawerExpanded = false; hoverActive = false")
-QTest.qWait(500)
+wait_until(lambda: svc.property("inlineHosts") == 0)
 assert svc.property("inlineHosts") == 0
 assert h.eval(svc, 'routeForScreen("DP-1").window')
 h.exit(0)

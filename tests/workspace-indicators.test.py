@@ -13,7 +13,7 @@ headless.ensure(gl=True)
 
 from panels_env import PanelsEnv  # noqa: E402
 import qmlharness  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_stable, wait_until  # noqa: E402
 
 STYLES = ["pill", "underline", "dot", "brush", "bracket"]
 FILLED = {"pill": True, "underline": False, "dot": False, "brush": True, "bracket": False}
@@ -44,20 +44,23 @@ for edge in ["top", "left"]:
         extra={"workspaces": {"showNumbers": True, "alwaysShowNumbers": True, "shown": 6}})
     envs.append(env)
     win = env.scene(1600, 900, windows=False)
-    QTest.qWait(400)
     h = env.h
 
     def ev(expr, h=h, win=win):
         return h.eval(win, "(function(){" + FIND + "return (" + expr + ");})()")
 
+    wait_until(lambda: ev('findItem("activeIndicator", contentItem) !== null'))
+    settle()
     check(ev('findItem("activeIndicator", contentItem) !== null'), f"{edge}: workspaces have an active indicator")
     vertical = edge == "left"
     check(ev('findItem("activeIndicator", contentItem).vertical') == vertical, f"{edge}: orientation follows the bar")
     for style in STYLES:
         ev(f'Config.workspaces.indicatorStyle = "{style}"')
-        QTest.qWait(250)
         ind = 'findItem("activeIndicator", contentItem)'
         item = 'findItem("indicatorStyle", ' + ind + ').item'
+        wait_until(lambda: ev(item + " !== null && " + item + ".indicator === " + ind))  # noqa: B023
+        wait_stable(lambda: ev("[" + item + ".x, " + item + ".y, " + item + ".width, " + item + ".height, "  # noqa: B023
+                               + ind + ".width, " + ind + ".height].join()"), stable_ms=50)  # noqa: B023
         check(ev(item + " !== null"), f"{edge}/{style}: style component loads")
         if ev(item + " === null"):
             continue
@@ -78,7 +81,7 @@ for edge in ["top", "left"]:
             check(ev(item + ".width") == w - 8 and ev(item + ".height") == hgt - 8, f"{edge}: pill keeps its 4 px inset")
     # unknown ids fall back to the pill
     ev('Config.workspaces.indicatorStyle = "zigzag"')
-    QTest.qWait(200)
+    wait_until(lambda: ev('findItem("activeIndicator", contentItem).style.id') == "pill")
     check(ev('findItem("activeIndicator", contentItem).style.id') == "pill", f"{edge}: unknown style falls back to pill")
     errors = [e for e in h.type_errors if "indicators" in e or "ActiveIndicator" in e or "WorkspaceButton" in e]
     check(not errors, f"{edge}: no QML errors: {errors}")

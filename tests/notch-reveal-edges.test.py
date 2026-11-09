@@ -13,6 +13,7 @@ from lib.qmlharness import REPO  # noqa: E402
 from lib import island_stubs  # noqa: E402
 from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import settle, wait_until  # noqa: E402
 
 h = island_stubs.island("notch-reveal-edges", """
         property string notchStyle: "attached"
@@ -74,6 +75,10 @@ for n in ["Notch", "NotchSilhouette", "NotchOutline", "NotchViewTransition", "No
     text = text.replace('import "./NotchNotificationView.qml"\n', "").replace("import Quickshell.Io\n", "").replace("import Quickshell\n", "")
     text = text.replace("required property ShellScreen screen", "required property var screen")
     text = text.replace("id: notchRegionContainer\n", 'id: notchRegionContainer\n        objectName: "nrc"\n')
+    if n == "NotchContent":
+        # The hide-after-leave delay (1 s) is not under test, only that leaving hides.
+        assert "id: hideDelayTimer\n        interval: 1000\n" in text
+        text = text.replace("id: hideDelayTimer\n        interval: 1000\n", "id: hideDelayTimer\n        interval: 60\n")
     (nd / f"{n}.qml").write_text(text)
 (nd / "styles").mkdir(exist_ok=True)
 (nd / "styles/NotchStyles.js").write_text((notch_dir / "styles/NotchStyles.js").read_text())
@@ -103,9 +108,11 @@ def ev(obj, expr):
     return v.toVariant() if hasattr(v, "toVariant") else v
 
 
-def settle(ms=1300):
+def away():
+    """Pointer off the island, then let the (shortened) hide delay run."""
     QTest.mouseMove(root, QPoint(960, 540))
-    QTest.qWait(ms)
+    wait_until(lambda: not h.eval(nc, "reveal"))
+    settle()
 
 
 def pixels(sample=4):
@@ -122,21 +129,24 @@ EDGES = ["top", "bottom", "left", "right"]
 h.eval(root, "setKeepHidden(true)")
 for pos in EDGES:
     h.eval(root, f"setPos('{pos}')")
-    settle()
+    away()
     assert not h.eval(nc, "reveal"), f"{pos}: keepHidden hides the island"
+    wait_until(lambda: pixels() == 0, step_ms=20)
     assert pixels() == 0, f"{pos}: nothing of the hidden island is drawn"
     sx, sy, sw, sh = ev(nc, "[placement.hoverStrip.x, placement.hoverStrip.y, placement.hoverStrip.w, placement.hoverStrip.h]")
     QTest.mouseMove(root, QPoint(int(sx + sw / 2), int(sy + sh / 2)))
-    QTest.qWait(200)
+    wait_until(lambda: h.eval(nc, "reveal"))
     assert h.eval(nc, "reveal"), f"{pos}: the pointer on the edge strip shows it"
-    settle(1500)
+    away()
     assert not h.eval(nc, "reveal"), f"{pos}: and leaving hides it again"
 
 # no keepHidden: the bar's edge follows the bar's pin, the others hide behind the window
 h.eval(root, "setKeepHidden(false)")
 for pos in EDGES:
     h.eval(root, f"setPos('{pos}')")
-    settle(200)
+    QTest.mouseMove(root, QPoint(960, 540))
+    wait_until(lambda: h.eval(nc, "reveal") == (pos == "left"))  # noqa: B023
+    settle()
     assert h.eval(nc, "reveal") == (pos == "left"), f"{pos}: shown only on the bar's edge while a window is open"
     # Whole-pixel origin: a half pixel turns the attached body / concave
     # corner junction into a visible seam

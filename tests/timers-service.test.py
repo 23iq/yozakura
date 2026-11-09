@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO, Harness  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 ok_all = True
 
@@ -117,7 +117,7 @@ def ev(expr):
 
 def emit(service, data):
     ev(f"BackendService.emit({json.dumps(service)}, {json.dumps(data)})")
-    QTest.qWait(5)
+    pump(5)
 
 
 def calls():
@@ -154,7 +154,7 @@ t1 = acts[0]
 check("ring style with label mm:ss and progress", t1["indicator"] == "ring" and t1["label"] in ("01:05", "01:04") and 0.45 < t1["progress"] < 0.51, t1)
 check("detail is the name", t1["detail"] == "tea")
 ev("Config.system = Object.assign({}, Config.system, { timers: Object.assign({}, Config.system.timers, { notchStyle: 'text', showSeconds: false }) })")
-QTest.qWait(5)
+pump(5)
 t1 = json.loads(ev("JSON.stringify(acts[0])"))
 check("text style: no ring, compact label", t1["indicator"] == "glyph" and t1["progress"] == -1 and t1["label"] == "2m", t1)
 
@@ -174,9 +174,11 @@ check("alarm rings once now", ev("TimersService.alarm.ringing") and len(ev("JSON
 first = json.loads(ev("JSON.stringify(Quickshell.ran[0])"))
 check("tone through pw-play/paplay with the file as argv", first[0] == "sh" and first[4] == "/shell/assets/sound/polite-warning-tone.wav", first)
 check("alarm screen = focused", ev("TimersService.alarmScreen") == "DP-1")
-QTest.qWait(1300)
+wait_until(lambda: ev("Quickshell.ran.length") >= 2, timeout_ms=4000)  # alarmInterval: 1 s
 check("repeats every alarmInterval until alarmRepeat", ev("Quickshell.ran.length") == 2, ev("Quickshell.ran.length"))
-QTest.qWait(1200)
+# The ring after the last one would come one alarmInterval later: by then
+# the alarm stops instead.
+wait_until(lambda: not ev("TimersService.alarm.ringing"), timeout_ms=4000)
 check("stops after alarmRepeat rings", ev("Quickshell.ran.length") == 2 and not ev("TimersService.alarm.ringing"))
 ev("TimerActivity.activate(acts[0], Qt.LeftButton, 'DP-1')")
 check("click on a ringing timer dismisses it", json.loads(calls())[-1] == {"method": "timers.dismiss", "params": {"id": "t1"}})
@@ -246,7 +248,7 @@ check("focus: DND restored", ev("Notifications.dnd.join(',')") == "true,false")
 reported = json.loads(ev("JSON.stringify(BackendService.notified)"))
 check("focus: the end is mirrored too", reported[-1]["params"]["active"] is False, reported[-1])
 check("focus: its ringing timer is dismissed", json.loads(calls())[-1] == {"method": "timers.dismiss", "params": {"id": "t9"}})
-QTest.qWait(900)
+wait_until(lambda: json.loads(ev("JSON.stringify(Notifications.sent)")) != [])  # summaryDelay
 sent = json.loads(ev("JSON.stringify(Notifications.sent)"))
 check("focus: one summary notification", len(sent) == 1, sent)
 if sent:

@@ -14,8 +14,8 @@ import json
 from island_env import IslandEnv
 from panels_env import PanelsEnv
 from panels_stubs import GLOBAL_STATES
-from PySide6.QtTest import QTest
 from qmlharness import REPO
+from waits import settle, wait_stable, wait_until
 
 
 def i18n_qml(lang: str) -> str:
@@ -109,7 +109,13 @@ def sentence_scene(name: str, *, edge: str = "top", width: int = 1600, height: i
     svc = env.h.load("import QtQuick\nimport qs.config\nimport qs.modules.services\nimport qs.modules.globals\nQtObject {}")
     env.h.eval(svc, f"MprisController.player.trackArtist = {json.dumps(TRACK[0])}; "
                     f"MprisController.player.trackTitle = {json.dumps(TRACK[1])}")
-    QTest.qWait(700)
+    line = lambda: find(win.contentItem(), "sentenceLine")  # noqa: E731
+    if wait_until(lambda: line() is not None, timeout_ms=3000):
+        # Fragments measure and drop over a few frames.
+        wait_stable(lambda: env.h.eval(line(), "JSON.stringify([shownCount, keep, fragments.map(f => f.text)])"),
+                    stable_ms=100)
+    else:
+        settle(3)
     return env, win, svc
 
 

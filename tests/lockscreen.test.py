@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from lockscreen_env import LockscreenEnv  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 STYLES = re.findall(r'^\s*id: "(\w+)"', (REPO / "modules/lockscreen/styles/LockStyleRegistry.js").read_text(), re.M)
@@ -82,7 +82,7 @@ def check_style(style: str) -> None:
     assert ev("passwordPill.hint") == en["lockscreen.caps_lock"], f"{style}: typing again hides the stale error"
     ev('passwordPill.wrongPasswordFinished.connect(function() { passwordPill.field.text = "cleared" }); passwordPill.playWrongPassword()')
     assert ev("passwordPill.showError"), f"{style}: shake shows the error state"
-    QTest.qWait(600)
+    wait_until(lambda: ev("passwordPill.field.text") == "cleared")
     assert ev("passwordPill.field.text") == "cleared", f"{style}: shake must hand off to LockScreen when done"
     assert ev("passwordPill.shakeOffset") == 0
     ev('passwordPill.field.accepted.connect(function() { passwordPill.field.text = "accepted" })')
@@ -100,24 +100,24 @@ def check_style(style: str) -> None:
     assert lev("startAnim"), "lock starts its entry animation"
     assert lev("passwordInput !== null")
     lev('passwordInput.text = "   "; passwordInput.accepted()')
-    QTest.qWait(50)
+    pump(50)  # nothing may start: give a deferred PAM start the chance to show
     assert lev("pamAuth.starts") == 0, f"{style}: blank submit must not start PAM"
     lev('passwordInput.text = "wrong"; passwordInput.accepted()')
     assert lev("passwordInput.text") == "", "field clears immediately on submit"
     assert lev("authenticating"), "submit marks authenticating"
-    QTest.qWait(50)
+    wait_until(lambda: lev("pamAuth.starts") == 1 and lev("errorMessage") != "")
     assert lev("pamAuth.starts") == 1 and lev("pamAuth.received") == "wrong", "PAM receives the typed password"
     assert lev("authPasswordHolder.password") == "", "holder cleared after PAM completes"
     assert lev("errorMessage") == "Authentication failed"
     assert lev("passwordInputBox.showError"), f"{style}: failure shakes the field"
-    QTest.qWait(600)
+    wait_until(lambda: not lev("authenticating") and not lev("passwordInputBox.showError"))
     assert not lev("authenticating") and not lev("passwordInputBox.showError"), "shake end resets state"
     assert lev("GlobalStates.lockscreenVisible"), "wrong password must keep the session locked"
     lev('passwordInput.text = "correct"; passwordInput.accepted()')
-    QTest.qWait(50)
+    wait_until(lambda: lev("pamAuth.received") == "correct")
     assert lev("pamAuth.received") == "correct"
     assert not lev("startAnim") and lev("errorMessage") == "", "success starts the exit animation"
-    QTest.qWait(200)
+    wait_until(lambda: not lev("GlobalStates.lockscreenVisible"))
     assert not lev("GlobalStates.lockscreenVisible"), f"{style}: success unlocks after the exit animation"
     print(f"{style}: view, media/cava gating, password hints/shake and auth flow passed")
 

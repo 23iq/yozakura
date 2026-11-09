@@ -14,6 +14,7 @@ from lib import headless  # noqa: E402,F401
 from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from sentence_env import find, sentence_scene  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 
 def texts(h, win) -> list:
@@ -26,7 +27,7 @@ def click(win, name: str, button=Qt.MouseButton.LeftButton) -> None:
     assert item is not None and item.isVisible(), name
     p = item.mapToItem(None, item.width() / 2, item.height() / 2)
     QTest.mouseClick(win, button, Qt.KeyboardModifier.NoModifier, QPoint(round(p.x()), round(p.y())))
-    QTest.qWait(300)
+    settle()
 
 
 # Wide top bar, English: every fragment, in order, lead capitalized
@@ -42,15 +43,17 @@ assert any(t.startswith("online") for t in said), said
 
 # Nothing playing: the track hides, the rest stays
 h.eval(svc, "MprisController.activePlayer = null")
-QTest.qWait(300)
+wait_until(lambda: not any("Aruarian" in t for t in texts(h, win)))
 assert not any("Aruarian" in t for t in texts(h, win)), "no player: no track"
 
 # Click: the clock opens its popup, the window the overview, the network
 # its settings page; right click on the notifications toggles DND
 click(win, "sentence:clock")
 popup = find(win.contentItem(), "clockPopup")
+wait_until(lambda: h.eval(popup, "isOpen") is True)
 assert popup is not None and h.eval(popup, "isOpen") is True, "clock: the calendar popup"
 click(win, "sentence:clock")
+wait_until(lambda: h.eval(popup, "isOpen") is False)
 click(win, "sentence:window")
 assert "overview" in json.loads(h.eval(svc, "JSON.stringify(GlobalShortcuts.ran)")), "window: the overview"
 click(win, "sentence:network")
@@ -85,7 +88,7 @@ assert find(win.contentItem(), "sentenceLine") is not None
 # Off: taking the module out of the bar leaves no line, no popups, nothing
 env.h.eval(svc, "(function(){ var p = JSON.parse(JSON.stringify(Config.bar.panels)); "
                 "p[0].groups.start = ['launcher']; Config.bar.panels = p; })()")
-QTest.qWait(400)
+wait_until(lambda: find(win.contentItem(), "sentenceLine") is None)
 assert find(win.contentItem(), "sentenceLine") is None, "module removed: the sentence line is gone"
 print("sentence bar: order, empty hides, actions, narrow drops, vertical turns, notch keeps the track")
 env.h.exit(0)

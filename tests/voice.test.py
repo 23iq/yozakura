@@ -23,6 +23,7 @@ from PySide6.QtCore import QSize  # noqa: E402
 from PySide6.QtGui import QColor  # noqa: E402
 from PySide6.QtQuick import QQuickItem, QQuickWindow  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import wait_until  # noqa: E402
 
 ok_all = True
 
@@ -109,7 +110,7 @@ check("transcribing keeps the panel", ev("module()") == "voice" and ev("voice.el
 ev('emitState({state: "done", session: 1, target: "dictation", text: "Привет, мир.", language: "ru"})')
 QTest.qWait(40)
 check("dictation closes the panel before typing", ev("module()") == "" and "voice.type" not in ev("methods()").split(","))
-QTest.qWait(250)
+wait_until(lambda: ev("methods()").split(",")[-1] == "voice.type")
 check("dictation types the transcript", ev("methods()").split(",")[-1] == "voice.type" and ev("lastParams().text") == "Привет, мир.")
 
 # Voice to AI goes through Ai.handleVoice; the target follows the sidebar state.
@@ -143,7 +144,7 @@ QTest.qWait(20)
 ev('emitState({state: "empty", session: 6, target: "ai", reason: "no_speech"})')
 QTest.qWait(20)
 check("empty result is shown", ev("module()") == "voice")
-QTest.qWait(1500)
+wait_until(lambda: ev("module()") == "")
 check("empty result dismisses itself", ev("module()") == "")
 
 # ------------------------------------------------------------------- view

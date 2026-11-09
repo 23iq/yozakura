@@ -17,6 +17,7 @@ from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv, default_binds  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 SPECIALS = [
     {"id": "telegram", "name": "Telegram", "icon": "telegram", "accent": "primary",
@@ -113,7 +114,7 @@ QTest.qWait(100)
 names = [i["name"] for i in items()]
 check(names[-1] == "Special 1", f"custom template name {names}")
 ev('w.findItem("template:custom").clicked()')
-QTest.qWait(100)
+wait_until(lambda: [i["name"] for i in items()][-1] == "Special 2")
 check([i["name"] for i in items()][-1] == "Special 2", "second custom is Special 2")
 new_id = items()[-1]["id"]
 check(ev(f'w.findItem("specialCard:{new_id}").expanded') is True, "a new special opens expanded")
@@ -121,10 +122,10 @@ check(ev(f'w.findItem("specialCard:{new_id}").expanded') is True, "a new special
 # Rename through the card; duplicates are flagged, not written silently.
 card = f'w.findItem("specialCard:{new_id}")'
 ev(f'{card}.patched({{"name": "Music"}})')
-QTest.qWait(50)
+wait_until(lambda: items()[-1]["name"] == "Music")
 check(items()[-1]["name"] == "Music", "renamed")
 ev(f'{card}.patched({{"name": "telegram"}})')
-QTest.qWait(50)
+wait_until(lambda: ev(f'{card}.problem') != "")
 check(ev(f'{card}.problem') != "", "duplicate name shows a problem")
 ev(f'{card}.patched({{"name": "Music", "accent": "cyan", "icon": "musicNotes"}})')
 QTest.qWait(50)
@@ -144,11 +145,11 @@ check(search is not None, "app search field")
 
 # Binds recorded on the card land in specials.json and in the keybinds rows.
 ev(f'{card}.patched({{"toggle": {{"modifiers": ["SUPER"], "key": "M"}}}})')
-QTest.qWait(50)
+wait_until(lambda: f"special:{new_id}:toggle" in json.loads(ev("w.rows()")))
 check(f"special:{new_id}:toggle" in json.loads(ev("w.rows()")), "new bind row")
 ev(f'{card}.appRemoved(0)')
 ev(f'{card}.removeRequested()')
-QTest.qWait(50)
+wait_until(lambda: len(items()) == 4)
 check(len(items()) == 4, "removed")
 
 out = Path(sys.argv[1]) if len(sys.argv) > 1 else None

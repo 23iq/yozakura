@@ -16,6 +16,7 @@ from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv, default_binds  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 ROUTINES = [
     {"id": "morning", "name": "Morning", "icon": "sun", "steps": [
@@ -91,7 +92,7 @@ def calls() -> list:
 
 ev(f"w.setRoutines({json.dumps(json.dumps(ROUTINES))})")
 ev('select("routines")')
-QTest.qWait(600)
+wait_until(lambda: ["refresh"] in calls())
 check(["refresh"] in calls(), "the page refreshes the list")
 for rid in ("morning", "night"):
     check(ev(f'w.findItem("routineCard:{rid}") !== null'), f"card for {rid}")
@@ -123,10 +124,10 @@ check(any(r["name"] == "Night" and len(r["steps"]) == 3 for r in json.loads(ev("
 # Edit a saved routine: a draft (dirty) until Save, step edits apply.
 card = 'w.findItem("routineCard:morning")'
 ev(f'w.findItem("toggleRoutine", {card}).clicked()')
-QTest.qWait(150)
+wait_until(lambda: ev(f"{card}.expanded"))
 check(ev(f"{card}.expanded"), "card expands")
 ev(f'w.findItem("addStep:delay", {card}).clicked()')
-QTest.qWait(100)
+wait_until(lambda: ev(f"{card}.dirty") is True)
 check(ev(f"{card}.dirty") is True, "edit makes a draft")
 check(ev(f"{card}.routine.steps.length") == 3, "delay step added")
 step = f'w.findItem("routineStep:2", {card})'
@@ -140,7 +141,7 @@ check(ev(f"{card}.routine.steps[2].ms") == 2500, "delay edited")
 
 # An invalid step blocks Save.
 ev(f'w.findItem("routineStep:1", {card}).patched({{"tool": "routine_run"}})')
-QTest.qWait(50)
+wait_until(lambda: ev(f"{card}.problems.length") == 1)
 check(ev(f"{card}.problems.length") == 1, "blocked tool is a problem")
 check(ev(f'w.findItem("saveRoutine", {card}).enabled') is False, "save disabled while invalid")
 ev(f'w.findItem("routineStep:1", {card}).patched({{"tool": "volume_set", "args": {{"percent": 30}}}})')
@@ -152,14 +153,14 @@ step1 = f'w.findItem("routineStep:1", {card})'
 check(ev(f'w.findItem("stepSummary", {step1}).text') == "Set volume to 30%", "tool step summary sentence")
 check(ev(f'w.findItem("toolForm", {step1}) !== null'), "argument form rendered")
 ev(f'w.findItem("changeTool", {step1}).clicked()')
-QTest.qWait(100)
+wait_until(lambda: ev(f'w.findItem("tool:dnd_set", {step1}).visible') is True)
 check(ev(f'w.findItem("tool:dnd_set", {step1}).visible') is True, "picker lists the catalog")
 ev(f'w.findItem("tool:dnd_set", {step1}).clicked()')
-QTest.qWait(100)
+wait_until(lambda: ev(f'w.findItem("stepSummary", {step1}).text') == "Turn on Do Not Disturb")
 check(ev(f"JSON.stringify({card}.routine.steps[1])") == '{"kind":"tool","tool":"dnd_set","args":{"enabled":true}}', "picked tool starts with its defaults")
 check(ev(f'w.findItem("stepSummary", {step1}).text') == "Turn on Do Not Disturb", "summary follows the tool")
 ev(f'w.findItem("routineStep:1", {card}).patched({{"tool": "volume_set", "args": {{"percent": 999}}}})')
-QTest.qWait(50)
+wait_until(lambda: ev(f"{card}.problems.length") == 1 and ev(f'w.findItem("saveRoutine", {card}).enabled') is False)
 check(ev(f"{card}.problems.length") == 1 and ev(f'w.findItem("saveRoutine", {card}).enabled') is False, "schema range blocks save")
 ev(f'w.findItem("routineStep:1", {card}).patched({{"args": {{"percent": 30}}}})')
 QTest.qWait(50)
@@ -188,11 +189,11 @@ check(ev(f"{card}.dirty") is False, "saved card is clean")
 
 # Delete needs a second click.
 ev(f'w.findItem("deleteRoutine", {card}).clicked()')
-QTest.qWait(50)
+pump(50)  # nothing may follow
 check(not any(c[0] == "delete" for c in calls()), "first click only arms")
 check(ev(f"{card}.armed") is True, "armed")
 ev(f'w.findItem("deleteRoutine", {card}).clicked()')
-QTest.qWait(150)
+wait_until(lambda: ["delete", "morning"] in calls())
 check(["delete", "morning"] in calls(), "second click deletes")
 
 out = Path(sys.argv[1]) if len(sys.argv) > 1 else None

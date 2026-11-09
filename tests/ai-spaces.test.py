@@ -15,11 +15,12 @@ os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401
 from lib import aiscene  # noqa: E402
-from PySide6.QtCore import QObject, QUrl, QCoreApplication, QElapsedTimer, Qt  # noqa: E402
+from PySide6.QtCore import QObject, QUrl, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlEngine, QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
+from lib.waits import settle, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 app = QGuiApplication([])
@@ -62,11 +63,6 @@ view.show()
 top = view.rootObject()
 
 
-def pump(ms=120):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
 
 
 def ev(target, expr):
@@ -79,7 +75,7 @@ def ev(target, expr):
 def click(obj):
     point = obj.mapToScene(obj.boundingRect().center())
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
-    pump()
+    settle()
 
 
 def find(name, item=None):
@@ -110,7 +106,7 @@ def visible(name):
     return obj is not None and obj.property("visible")
 
 
-pump()
+settle()
 # Assistant empty state: greeting + contextual chips from Ai.ambientContext().
 assert ev(top, "space()") == "assistant"
 assert visible("welcomeView"), "empty assistant chat shows the welcome view"
@@ -124,17 +120,17 @@ assert not visible("projectBar") and not visible("headerSettings"), "gear and pr
 
 # No usable model: one call to action that opens the inline Connect sheet.
 ev(top, "noModels()")
-pump()
+wait_until(lambda: visible("connectModel") and not visible("suggestionChips"))
 assert visible("connectModel") and not visible("suggestionChips")
 ev(find("welcomeView"), "connectRequested()")
-pump()
+wait_until(lambda: ev(top, "settingsOpened()") == 1)
 assert ev(top, "settingsOpened()") == 1, "the call to action asks for a connection"
 assert find("connectSheet").property("opened"), "the Connect sheet opens inside the bar"
 click(find("connectClose"))
-pump(200)
+wait_until(lambda: not find("connectSheet").property("opened"))
 assert not find("connectSheet").property("opened")
 ev(top, "someModels()")
-pump()
+settle()
 
 # Space switch -> Code: project bar, gear, detailed transcript of the agent.
 click(find("space_code"))
@@ -143,7 +139,7 @@ assert visible("projectBar") and visible("headerSettings")
 assert ev(find("projectButton"), "children.length") > 0
 assert not visible("welcomeView")
 ev(top, "wide()")
-pump(200)
+wait_until(lambda: visible("headerHistory") is False)
 assert visible("headerHistory") is False, "wide sizes dock the history column"
 drawer_rows = None
 for obj in top.findChildren(QObject):
@@ -162,7 +158,7 @@ for obj in top.findChildren(QObject):
 
 # Action rows: undoable tool call shows Undo, which runs the descriptor once.
 ev(top, "addUndoable()")
-pump(200)
+settle()
 rows = find_all("actionRow")
 assert len(rows) == 2, len(rows)
 undoable = [r for r in rows if r.property("canUndo")]
@@ -172,7 +168,7 @@ assert undo_chip.property("visible")
 # A failed undo shows why and offers a retry.
 ev(top, "setUndoFails('timer already finished')")
 ev(undoable[0], "undoRequested(undoInfo)")
-pump()
+wait_until(lambda: undoable[0].property("canUndo"))
 assert undoable[0].property("canUndo"), "a failed undo can be retried"
 assert find("actionUndoError", undoable[0]).property("visible")
 assert "timer already finished" in find("actionUndoError", undoable[0]).property("text")
@@ -180,33 +176,33 @@ assert undo_chip.property("text") == "Retry undo", undo_chip.property("text")
 assert not find("actionTitle", undoable[0]).property("text").startswith("Undone")
 ev(top, "setUndoFails('')")
 ev(undoable[0], "undoRequested(undoInfo)")
-pump()
+wait_until(lambda: json.loads(ev(top, "undone()")) == ["timer_cancel", "timer_cancel"])
 assert json.loads(ev(top, "undone()")) == ["timer_cancel", "timer_cancel"]
 assert not undoable[0].property("canUndo"), "undo is offered once"
 assert not find("actionUndoError", undoable[0]).property("visible")
 assert find("actionTitle", undoable[0]).property("text").startswith("Undone")
 # The state lives in the row model: rebuilt rows (recycled delegates) stay undone.
 ev(find("workspaceChatList").parentItem(), "model.rebuild()")
-pump(200)
+settle()
 rows = find_all("actionRow")
 assert len(rows) == 2 and not any(r.property("canUndo") for r in rows), "a rebuilt transcript keeps the undo done"
 undoable = rows
 other = [r for r in rows if not r.property("canUndo")][0]
 assert not other.property("expanded"), "tool details start collapsed (ai.behavior.collapseTools)"
 ev(other, "expanded = true")
-pump()
+wait_until(lambda: other.property("implicitHeight") > 30)
 assert other.property("implicitHeight") > 30
 
 # Streaming into a source row patches its transcript rows in place.
 chat_list = find("workspaceChatList")
 before = chat_list.property("count")
 ev(top, "stream('Started. Enjoy your tea!')")
-pump()
+wait_until(lambda: chat_list.property("count") == before)
 assert chat_list.property("count") == before, "a streamed token must not add or drop rows"
 texts = json.loads(ev(chat_list, "JSON.stringify(Array.from({length: count}, (_, i) => model.get(i).text))"))
 assert "Started. Enjoy your tea!" in texts, texts
 
 view.close()
 view.deleteLater()
-pump(50)
+settle()
 print("ai-spaces: ok")

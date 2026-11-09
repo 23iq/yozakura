@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from osd_env import OsdEnv  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 SCENE = """import QtQuick
 import QtQuick.Window
@@ -23,18 +23,18 @@ for lang in ("ink", "device"):
     win = env.load(SCENE)
     g = h.find(win, "gauge")
     ev = h.eval
-    QTest.qWait(800)  # the needle settles
+    wait_until(lambda: abs(g.property("needle") - 0.62) < 0.01)  # the needle settles  # noqa: B023
     assert abs(g.property("needle") - 0.62) < 0.01, lang
     assert g.property("width") > 100 and g.property("height") > 100, lang
     assert ev(g, "segment") is (lang == "device"), lang
 
     ev(g, "muted = true")
-    QTest.qWait(800)
+    wait_until(lambda: g.property("needle") < 0.01)  # noqa: B023
     assert g.property("needle") < 0.01, "muted drops the needle"
     assert ev(g, "readout.accent") is True and ev(g, "deviceLine") == "", lang
 
     ev(g, "muted = false; device = 'Headphones'")
-    QTest.qWait(50)
+    wait_until(lambda: ev(g, "deviceLine") == "Headphones")  # noqa: B023
     assert ev(g, "deviceLine") == "Headphones", lang
 
 print("osd-gauge: ok")

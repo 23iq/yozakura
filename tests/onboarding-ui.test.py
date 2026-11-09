@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from onboarding_env import OnboardingEnv  # noqa: E402
 
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -188,7 +189,7 @@ h.eval(step, 'seedKeyboard("ru_RU")')
 check(ev('StateService.get("onboarding.keyboardSeeded", false)') is False, "no seeding before the keyboard config is loaded")
 ev("Config.keyboardReady = true")
 check(ev('StateService.get("onboarding.keyboardSeeded", false)') is True, "seeding is retried once the keyboard config loads")
-QTest.qWait(600)
+pump(450)  # past KeyboardService's apply debounce (400 ms)
 check(not any(c["method"] == "keyboard.apply" for c in json.loads(ev("JSON.stringify(BackendService.calls)"))), "a suggestion applies nothing")
 ev('StateService.set("onboarding.keyboardSeeded", false)')
 h.eval(step, 'seedKeyboard("ru_RU")')
@@ -266,10 +267,10 @@ ev('GlobalShortcuts.run("keybinds")')
 check(ev("wizard.tour.cheatsheet") == "done", "pressing the cheatsheet bind completes the task")
 check(ev("OnboardingService.peek") is True, "wizard peeks (pill) while the panel is open")
 ev('Visibilities.currentActiveModule = "keybinds"')
-QTest.qWait(1400)
+pump(1300)  # past the 1 s minimum peek (polled every 250 ms)
 check(ev("OnboardingService.peek") is True, "stays peeking while the panel is open")
 ev('Visibilities.currentActiveModule = ""')
-QTest.qWait(600)
+wait_until(lambda: ev("OnboardingService.peek") is False)
 check(ev("OnboardingService.peek") is False, "comes back when the panel closes")
 ev('GlobalShortcuts.run("dashboard")')
 check(ev("wizard.activeTask.id") == "launcher", "unrelated commands do not complete tasks")

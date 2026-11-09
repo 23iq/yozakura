@@ -7,12 +7,11 @@ flight must run once afterwards (not be dropped); and the exit handler must
 not pile up one extra connection per call.
 """
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 h = Harness('compositor-toml-writer')
 h.singleton('Quickshell', 'Quickshell', 'QtObject { function env(n) { return "/tmp"; } }')
@@ -52,13 +51,10 @@ writer_qml = h.copy('modules/services/CompositorTomlWriter.qml', 'modules/servic
 writer = h.load(writer_qml)
 h.allow_type_errors = True  # Singleton base type is stubbed by the auto-stubber
 
-
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-        time.sleep(0.001)
+# The coalescing is under test, not the 700 ms: a shorter debounce (the
+# drag below keeps the same 7x margin between its steps and the debounce).
+DEBOUNCE = 250
+h.eval(writer, f"writeDebounce.interval = {DEBOUNCE}")
 
 
 ok_all = True
@@ -77,32 +73,34 @@ def proc(expr):
 # A burst of 20 changes in one tick -> one write carrying the last revision.
 for i in range(1, 21):
     h.eval(writer, f'revision = {i}; callWrite()')
-pump(1000)
+wait_until(lambda: proc('starts') >= 1)
+pump(2 * DEBOUNCE)  # and no second one
 check('burst of 20 requests spawns one write', proc('starts') == 1, f'(starts={proc("starts")})')
 check('the write carries the final state', '"revision":20' in str(proc('payloads[ipcProcess.payloads.length - 1]')))
 
 # A request while the write is still running is queued, then sent once.
 h.eval(writer, 'revision = 21; callWrite()')
-pump(1000)
+pump(2 * DEBOUNCE)
 check('no second spawn while a write is in flight', proc('starts') == 1)
 h.eval(writer, 'ipcProcess.finish(0)')
-pump(50)
+wait_until(lambda: proc('starts') == 2)
 check('queued request runs after the in-flight write', proc('starts') == 2, f'(starts={proc("starts")})')
 check('queued write carries the newest state', '"revision":21' in str(proc('payloads[ipcProcess.payloads.length - 1]')))
 
 # Exits do not accumulate handlers: a successful exit with nothing queued
 # spawns nothing more, however many writes came before.
 h.eval(writer, 'ipcProcess.finish(0)')
-pump(300)
+pump(DEBOUNCE + 50)
 check('idle exit spawns nothing', proc('starts') == 2, f'(starts={proc("starts")})')
 
-# A slider drag: a change every 100 ms for 1.3 s is one write after it
+# A slider drag: a change every DEBOUNCE/7 for 13 steps is one write after it
 # settles, not one per step (each write regenerates the compositor config).
 for i in range(30, 43):
     h.eval(writer, f'revision = {i}; callWrite()')
-    pump(100)
+    pump(DEBOUNCE // 7)
 check('no write while the drag is still moving', proc('starts') == 2, f'(starts={proc("starts")})')
-pump(1000)
+wait_until(lambda: proc('starts') >= 3)
+pump(DEBOUNCE)  # and only one
 check('one write once the drag settles', proc('starts') == 3, f'(starts={proc("starts")})')
 check('the settled write carries the last step', '"revision":42' in str(proc('payloads[ipcProcess.payloads.length - 1]')))
 

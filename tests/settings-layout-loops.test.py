@@ -20,8 +20,8 @@ headless.ensure(gl=True)
 
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
-from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
+from waits import settle  # noqa: E402
 
 env = SettingsEnv("settings-layout-loops")
 h = env.h
@@ -68,10 +68,10 @@ shell = h.find(win, "shell")
 dropdown = h.find(win, "dropdown")
 natural = h.eval(dropdown, "implicitWidth")
 h.eval(dropdown, "width = 640")
-QTest.qWait(50)
+settle()
 check(abs(h.eval(dropdown, "implicitWidth") - natural) < 0.5, "Dropdown implicitWidth does not follow width")
 h.eval(dropdown, "width = 120")
-QTest.qWait(50)
+settle()
 check(abs(h.eval(dropdown, "implicitWidth") - natural) < 0.5, "Dropdown implicitWidth does not follow a narrow width")
 
 categories = ["appearance", "wallpapers", "layout", "bar", "notch", "dashboard", "launcher", "dock", "overview",
@@ -87,12 +87,15 @@ for w, ht in ((1180, 780), (1100, 760), (900, 700)):
     for cat in categories:
         before = len(loops)
         h.eval(shell, f'select("{cat}")')
-        QTest.qWait(120)
+        # Built, then a few frames so a polish loop has the chance to show.
+        check(env.wait_page(win), f"{cat} at {w}x{ht}: page built")
+        settle(1)
         check(len(loops) == before, f"{cat} at {w}x{ht}: layout loop\n  " + "\n  ".join(loops[before:before + 3]))
 
 # Notifications > corner position shows the dropdown: no loop when visible.
 h.eval(shell, 'select("notifications")')
 h.eval(shell, "SettingsStore.set('notifications.presentation', 'corner')")
-QTest.qWait(300)
+check(env.wait_page(win), "notifications page built")
+settle(6)
 check(not loops, "notifications with the position dropdown shown: layout loop\n  " + "\n  ".join(loops[:3]))
 print("ok")

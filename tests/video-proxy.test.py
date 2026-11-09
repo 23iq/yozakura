@@ -22,7 +22,10 @@ os.environ["QT_LOGGING_RULES"] = ";".join(filter(None, [os.environ.get("QT_LOGGI
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO, Harness  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer  # noqa: E402
+from lib import waits  # noqa: E402
+from lib.waits import wait_until  # noqa: E402
+
+waits.keep_deferred_deletes()  # as the bare processEvents() loop before: no media teardown mid-test
 
 h = Harness("video-proxy")
 # Real (tiny) files: the players open whatever they are given.
@@ -65,7 +68,12 @@ palette = ["background", "overBackground", "shadow", "surface", "surfaceBright",
            "lightYellow", "cyan", "lightCyan", "magenta", "lightMagenta"]
 h.module("qs.modules.theme", {"Colors": "pragma Singleton\nimport QtQuick\nQtObject {\n"
                               + "\n".join(f'    property color {n}: "#808080"' for n in palette) + "\n}"})
-h.copy("modules/widgets/dashboard/wallpapers/VideoWallpaper.qml", siblings=False)
+# The silent-backend fallback waits 3 s for an answer; that it falls back is
+# under test, not the 3 s: 300 ms here.
+TIMEOUT = "id: proxyTimeout\n        interval: 3000\n"
+assert TIMEOUT in (REPO / "modules/widgets/dashboard/wallpapers/VideoWallpaper.qml").read_text()
+h.copy("modules/widgets/dashboard/wallpapers/VideoWallpaper.qml", siblings=False,
+       replace={TIMEOUT: TIMEOUT.replace("3000", "300")})
 
 root = h.load(f("""import QtQuick
 import qs.config
@@ -95,18 +103,11 @@ def js(expr):
     return json.loads(ev("JSON.stringify(" + expr + ")"))
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-
-
 def calls():
     return js("BackendService.calls.map(c => ({ method: c.method, params: c.params }))")
 
 
-pump(50)
+wait_until(lambda: len(calls()) == 1)
 # --- the original plays while the copy is made, then the copy ----------------
 check("asks for a copy at the item's size",
       calls() == [{"method": "wallpaper.videoProxy", "params": {"path": f("/v/big.mp4"), "width": 320, "height": 180}}],
@@ -148,7 +149,7 @@ check("stale answer ignored", ev("first.playingFile") != f("/c/a.mp4"), ev("firs
 
 # --- a silent backend does not keep the wallpaper empty ----------------------
 check("still waiting for b", ev("first.playingFile") == "")
-pump(3300)
+wait_until(lambda: ev("first.playingFile") == f("/v/b.mp4"))
 check("no answer after 3 s: the original plays", ev("first.playingFile") == f("/v/b.mp4"))
 
 # --- the finished event overtakes the "pending" answer ------------------------

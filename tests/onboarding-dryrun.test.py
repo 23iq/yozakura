@@ -21,7 +21,7 @@ from extras_env import CATALOG, PLATFORM, STATUS  # noqa: E402
 from onboarding_env import OnboardingEnv  # noqa: E402
 from qmlharness import REPO, dryrun_qml  # noqa: E402
 
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -80,6 +80,12 @@ h.module("qs.modules.globals", {"DryRun": dryrun_qml({"DRYRUN": "1", "DRYRUN_FAI
 services = env.root / "qs/modules/services"
 for lib in ("DryRunBackend.js", "DryRunMethods.js"):
     (services / lib).write_text((REPO / "modules/services" / lib).read_text())
+# The fake install's pace (4 s in 500 ms steps; DryRunBackend.js's own timing
+# is covered by its .test.cjs) is not under test here: run it 4x faster.
+dry = (services / "DryRunBackend.js").read_text()
+assert "var INSTALL_MS = 4000;\nvar INSTALL_STEP_MS = 500;" in dry
+(services / "DryRunBackend.js").write_text(dry.replace("var INSTALL_MS = 4000;\nvar INSTALL_STEP_MS = 500;",
+                                                         "var INSTALL_MS = 1000;\nvar INSTALL_STEP_MS = 125;"))
 backend = (REPO / "modules/services/BackendService.qml").read_text().replace("pragma Singleton\n", "")
 h.module("qs.modules.services", {"BackendService": "pragma Singleton\n" + backend})
 
@@ -127,7 +133,8 @@ def journal():
 STEPS = ["welcome", "displays", "look", "terminal", "apps", "ai", "keybinds", "finish"]
 ev("OnboardingService.open()")
 ev("flowLoader.active = true")
-QTest.qWait(80)
+wait_until(lambda: h.find(win, "flow") is not None)
+settle()
 
 # Badge on the card header and on the peek pill.
 flow = h.find(win, "flow")
@@ -140,19 +147,19 @@ check(pill_badge is not None and h.eval(pill_badge, "visible") is True, "the pee
 
 # Displays: Use 165 Hz -> journaled, fake countdown, Keep -> journaled; nothing reaches the socket.
 ev(f"wizard.go({STEPS.index('displays')})")
-QTest.qWait(150)
+wait_until(lambda: "displays.list" in sent() and vfind("upgradeButton", vfind("monitorCard:DP-1")) is not None)
 check("displays.list" in sent(), "reads still go to the backend")
 up = vfind("upgradeButton", vfind("monitorCard:DP-1"))
 check(up is not None, "the 60 Hz monitor offers its upgrade")
 if up is not None:
     h.eval(up, "clicked()")
-QTest.qWait(80)
+wait_until(lambda: "apply display DP-1 2560x1440@165" in journal() and ev("DisplaysService.pending") is True)
 check("apply display DP-1 2560x1440@165" in journal(), f"apply is journaled, got {journal()}")
 check(ev("DisplaysService.pending") is True, "the fake session is pending")
-QTest.qWait(1300)
+wait_until(lambda: ev("DisplaysService.session.remaining") <= 14)  # the fake countdown ticks each second
 check(ev("DisplaysService.session.remaining") in (13, 14), f"countdown ticks, got {ev('DisplaysService.session.remaining')}")
 ev("DisplaysService.keep()")
-QTest.qWait(80)
+wait_until(lambda: ev("DisplaysService.session.state") == "kept")
 check(ev("DisplaysService.session.state") == "kept", "Keep ends the fake session")
 check("keep display change" in journal(), "keep is journaled")
 check(any(m.get("name") == "DP-1" and m.get("refresh") == 165 for m in json.loads(ev("JSON.stringify(Config.displays.monitors)"))),
@@ -161,31 +168,33 @@ check(not {"displays.apply", "displays.keep"} & set(sent()), f"no display change
 
 # Install: queued, fake progress to 100 %, then installed; the fail list fails.
 ev("ExtrasService.load()")
-QTest.qWait(80)
+settle()
 ev(f'ExtrasService.install(["{OK_ID}", "{FAIL_ID}"])')
-QTest.qWait(80)
+wait_until(lambda: f"install {OK_ID}, {FAIL_ID}" in journal() and ev(f'ExtrasService.cardState("{OK_ID}")') == "installing")
 check(f"install {OK_ID}, {FAIL_ID}" in journal(), f"install is journaled, got {journal()}")
 check(ev(f'ExtrasService.cardState("{OK_ID}")') == "installing", "the card shows the fake install")
-QTest.qWait(4400)
-check(ev(f'ExtrasService.status["{OK_ID}"].state') == "installed", "after ~4 s it is installed")
+wait_until(lambda: ev(f'ExtrasService.status["{OK_ID}"].state') == "installed"
+           and ev(f'ExtrasService.progress["{FAIL_ID}"].state') == "failed")
+check(ev(f'ExtrasService.status["{OK_ID}"].state') == "installed", "after the fake progress it is installed")
 check(ev(f'ExtrasService.progress["{FAIL_ID}"].state') == "failed"
       and ev(f'ExtrasService.progress["{FAIL_ID}"].reason') == "network", "the fail list fails with reason network")
 check("extras.install" not in sent(), f"no install reached the backend: {sent()}")
 
 # Identify: numbers only in this instance; a status refresh is not forced.
 ev("DisplaysService.identify()")
-QTest.qWait(80)
+wait_until(lambda: ev("DisplaysService.identified.length") == 1)
 check(ev("DisplaysService.identified.length") == 1, "identify shows the numbers here")
 check("displays.identify" not in sent(), "identify never reaches the backend (it would draw on the real shell)")
 ev("ExtrasService.refresh()")
-QTest.qWait(80)
+wait_until(lambda: "extras.status" in sent())
+settle()
 status_params = json.loads(ev("JSON.stringify(Wire.params.filter((p, i) => Wire.sent[i] === 'extras.status'))"))
 check(status_params and all(not (p or {}).get("refresh") for p in status_params), f"no forced re-detection: {status_params}")
 
 # Fail closed: a method not known as a read is mocked, journaled, never sent.
 ev('BackendService.call("nightlight.set", {"enabled": true}, () => {})')
 ev('BackendService.call("weather.get", {}, () => {})')
-QTest.qWait(80)
+wait_until(lambda: "weather.get" in sent() and "unmocked call nightlight.set" in journal())
 check("nightlight.set" not in sent(), f"an unknown method never reaches the backend: {sent()}")
 check("unmocked call nightlight.set" in journal(), f"it is journaled, got {journal()}")
 check("weather.get" in sent(), "a known read still does")

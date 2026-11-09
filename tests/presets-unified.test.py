@@ -11,8 +11,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
 from lib import kit_stubs  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer, QEvent, QPoint, Qt  # noqa: E402
+from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 PARTS = {
     "layouts": [{"kind": "layout", "name": "Classic", "official": True}, {"kind": "layout", "name": "Tatami", "official": True}],
@@ -115,14 +116,6 @@ Window {
 root.requestActivate()
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        h.app.processEvents()
-        QCoreApplication.sendPostedEvents(None, QEvent.DeferredDelete)
-
-
 def calls():
     return [json.loads(c) for c in json.loads(h.eval(root, "JSON.stringify(PresetStudio.calls)"))]
 
@@ -147,7 +140,8 @@ def click(name):
 
 QTest.mouseMove(root, QPoint(1190, 990))  # keep the pointer off the cards
 h.eval(root, "openGallery()")
-pump(100)
+wait_until(lambda: ["parts", "--json"] in calls()
+           and h.eval(h.find(root, "currentLookText"), "text") == "Classic · Yoru · presets.current.custom")
 assert ["parts", "--json"] in calls(), calls()
 assert h.eval(h.find(root, "currentLookText"), "text") == "Classic · Yoru · presets.current.custom"
 
@@ -159,10 +153,10 @@ assert gal("tab") == "style"
 assert [c["title"] for c in json.loads(h.eval(root, "JSON.stringify(gallery.cards)"))] == ["Yoru", "Kaze"]
 assert gal("currentIndex") == 0
 QTest.keyClick(root, Qt.Key_Right)
-pump(120)
+wait_until(lambda: calls() == [["apply", "--part", "style", "--preview", "Kaze"]])
 assert calls() == [["apply", "--part", "style", "--preview", "Kaze"]], calls()
 QTest.keyClick(root, Qt.Key_Return)
-pump(50)
+wait_until(lambda: calls()[-1] == ["apply", "--part", "style", "Kaze"])
 assert calls()[-1] == ["apply", "--part", "style", "Kaze"], calls()
 h.eval(root, "closeGallery()")
 pump(50)
@@ -180,7 +174,7 @@ h.eval(h.find(root, "galleryPrompt"), "submit()")
 assert calls() == [], calls()
 h.eval(h.find(root, "promptName"), "text = 'Evening'")
 click("promptConfirm")
-pump(30)
+wait_until(lambda: ["save", "Evening"] in calls())
 assert ["save", "Evening"] in calls(), calls()
 assert h.eval(h.find(root, "galleryPrompt"), "open") is False
 
@@ -188,7 +182,7 @@ assert h.eval(h.find(root, "galleryPrompt"), "open") is False
 reset()
 h.eval(root, "gallery.select(2)")
 QTest.keyClick(root, Qt.Key_F2)
-pump(30)
+wait_until(lambda: h.eval(h.find(root, "galleryPrompt"), "mode") == "rename")
 assert h.eval(h.find(root, "galleryPrompt"), "mode") == "rename"
 assert h.eval(h.find(root, "promptName"), "text") == "Mine"
 h.eval(h.find(root, "promptName"), "text = 'Ours'")
@@ -209,14 +203,14 @@ pump(50)
 reset()
 assert h.eval(h.find(root, "tryNewLook"), "visible") is True
 click("newLookTry")
-pump(30)
+wait_until(lambda: calls() == [["apply", "--preview", "Yozakura"]])
 assert calls() == [["apply", "--preview", "Yozakura"]], calls()
 assert h.eval(root, "PresetNewLook.phase") == "trying"
 assert h.eval(h.find(root, "newLookText"), "text") == "presets.newlook.countdown:1"
 QTest.keyClick(root, Qt.Key_Right)  # no gallery preview while trying
 pump(80)
 assert calls() == [["apply", "--preview", "Yozakura"]], calls()
-pump(1400)
+wait_until(lambda: calls()[-1] == ["revert"])
 assert calls()[-1] == ["revert"], calls()
 assert h.eval(root, "PresetNewLook.phase") == "done"
 assert execs() == [["yozakura", "config", "set", "general.newLookOffered", "true"]], execs()
@@ -228,7 +222,7 @@ reset()
 click("newLookTry")
 pump(30)
 click("newLookKeep")
-pump(30)
+wait_until(lambda: calls() == [["apply", "--preview", "Yozakura"], ["apply", "Yozakura"]])
 assert calls() == [["apply", "--preview", "Yozakura"], ["apply", "Yozakura"]], calls()
 assert len(execs()) == 1
 

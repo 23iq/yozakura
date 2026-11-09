@@ -15,6 +15,7 @@ from keyboard_env import KeyboardEnv  # noqa: E402
 
 from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -83,7 +84,7 @@ check(picker.property("visible") is True, "picker opens")
 res = js("results.map(l => l.name)", picker)
 check("us" not in res and "ru" in res, "picker hides layouts already configured")
 h.find(win, "pickerSearch").setProperty("text", "russ")
-QTest.qWait(50)
+wait_until(lambda: js("results.map(l => l.name)", picker) == ["ru"])
 check(js("results.map(l => l.name)", picker) == ["ru"], "search filters by description")
 ev("picked('ru')", picker)
 QTest.qWait(50)
@@ -98,13 +99,13 @@ check(ev("picking", h.find(win, "layoutList")) is False, "picking a layout close
 check(ev("indicator.visible") is True, "indicator shows with two layouts")
 check(cfg("KeyboardService.shortLabel") == "EN", "before any layout event the label is the first layout (EN)")
 ev("BackendService.emit('keyboard.layout', {name: 'Russian', index: 1, code: 'ru', short: 'RU'})")
-QTest.qWait(80)
+wait_until(lambda: h.find(win, "layoutLabel").property("text") == "RU")
 check(h.find(win, "layoutLabel").property("text") == "RU", "indicator shows RU after the keyboard.layout event")
 ev("KeyboardService.next()")
 check(len(calls("keyboard.next")) == 1, "next calls keyboard.next")
 before = len(calls("keyboard.next"))
 QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, QPoint(40, 1518))
-QTest.qWait(80)
+wait_until(lambda: len(calls("keyboard.next")) == before + 1)
 check(len(calls("keyboard.next")) == before + 1, "clicking the indicator calls keyboard.next")
 
 # showIndicator off hides it
@@ -128,10 +129,10 @@ check(cfg("Array.from(Config.keyboard.options)") == [], "toggle off removes it")
 
 # All options by group
 ev("showAll = true", h.find(win, "optionsCard"))
-QTest.qWait(50)
+wait_until(lambda: js("groups.map(g => g.name)", h.find(win, "optionsCard")) == ["caps", "compose"])
 check(js("groups.map(g => g.name)", h.find(win, "optionsCard")) == ["caps", "compose"], "all options lists catalog groups (switching handled by chips)")
 ev("openGroup = 'caps'", h.find(win, "optionsCard"))
-QTest.qWait(50)
+wait_until(lambda: item(page, "opt:caps:swapescape") is not None)
 check(item(page, "opt:caps:swapescape") is not None, "open group lists its options")
 
 # Repeat sliders
@@ -140,16 +141,16 @@ QTest.qWait(450)  # saved after the slider debounce
 check(ev("Config.keyboard.repeatRate") == 40, "rate slider writes repeatRate")
 
 # debounced apply
-QTest.qWait(900)
+wait_until(lambda: len(calls("keyboard.apply")) >= 1)
 check(len(calls("keyboard.apply")) >= 1, "changes are applied through keyboard.apply")
 
 # Errors are visible: a failed apply and a failed read, each with Retry
 check(h.find(win, "keyboardProblem") is not None and h.find(win, "keyboardProblem").property("visible") is False, "no problem banner while all is well")
 ev("KeyboardService.applyError = 'niri: not supported'")
-QTest.qWait(50)
+wait_until(lambda: h.find(win, "keyboardProblem").property("visible") is True)
 check(h.find(win, "keyboardProblem").property("visible") is True, "a failed apply shows a banner")
 ev("KeyboardService.applyError = ''; KeyboardService.readError = 'no reply'; KeyboardService.readFailed = true")
-QTest.qWait(50)
+wait_until(lambda: h.find(win, "keyboardProblem").property("visible") is True)
 check(h.find(win, "keyboardProblem").property("visible") is True, "a failed read shows a banner")
 before = len(calls("keyboard.current"))
 ev("KeyboardService.retryRead()")

@@ -13,12 +13,11 @@ border.
 """
 import json
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 h = Harness('compositor-motion')
 h.singleton('Quickshell', 'Quickshell', '''QtObject {
@@ -88,14 +87,6 @@ pulse_qml = h.copy('modules/services/BorderPulse.qml', 'modules/services')
 h.allow_type_errors = True
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-        time.sleep(0.002)
-
-
 ok_all = True
 
 
@@ -110,24 +101,26 @@ def check(name, ok, detail=''):
 
 
 motion = h.load(motion_qml)
-pump(400)
+APPLY = 150  # CompositorMotion's apply debounce
+wait_until(lambda: len(js(motion, 'BackendService.sent')) >= 1)
+pump(APPLY + 100)  # and only once
 sent = js(motion, 'BackendService.sent')
 check('profile applied live once at start', len(sent) == 1, f'({len(sent)})')
 check('live chunk is the sakura profile', 'sakuraOvershoot' in sent[0] and 'style = "loop"' in sent[0])
 check('one line, no semicolons', '\n' not in sent[0] and ';' not in sent[0])
 h.eval(motion, 'Config.compositor.motionProfile = "springs"')
-pump(400)
+wait_until(lambda: len(js(motion, 'BackendService.sent')) >= 2)
 sent = js(motion, 'BackendService.sent')
 check('a profile change re-applies', len(sent) == 2 and 'spring = "springsBounce"' in sent[-1])
 h.eval(motion, 'GameModeClient.toggled = true; Config.compositor.motionDurationScale = 2')
-pump(400)
+pump(APPLY + 150)  # nothing may follow
 check('nothing applied during GameMode', len(js(motion, 'BackendService.sent')) == 2)
 h.eval(motion, 'GameModeClient.toggled = false')
 pump(100)
 sent = js(motion, 'BackendService.sent')
 check('GameMode exit restores the profile', len(sent) == 3 and 'speed = 7' in sent[-1], f'({len(sent)})')
 h.eval(motion, 'Panels.primaryEdge = "left"')
-pump(400)
+wait_until(lambda: 'slidevert' in js(motion, 'BackendService.sent')[-1])
 check('vertical bar re-applies with vertical slides', 'slidevert' in js(motion, 'BackendService.sent')[-1])
 
 pulse = h.load(pulse_qml)

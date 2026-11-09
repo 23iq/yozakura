@@ -15,6 +15,7 @@ from lib import headless  # noqa: E402,F401
 from island_env import IslandEnv  # noqa: E402
 from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import wait_until  # noqa: E402
 
 env = IslandEnv("notch-segment-hover", notch={"style": "pill", "expandOn": "hover"}, theme={"language": "ink"})
 win = env.scene()
@@ -45,7 +46,7 @@ assert h.eval(header, "hoverTrigger") == "tasks" or h.eval(controller, "openPane
 assert h.eval(controller, "openPanel") == "transfers", "the downloads segment opens the transfers panel under a real pointer"
 
 QTest.mouseMove(win, QPoint(5, 500))
-QTest.qWait(500)
+wait_until(lambda: h.eval(controller, "openPanel") == "")
 assert h.eval(controller, "openPanel") == "", "leaving the notch closes it"
 
 rest_on("trailingSegment")

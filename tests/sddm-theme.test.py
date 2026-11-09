@@ -25,6 +25,7 @@ import headless  # noqa: E402,F401  (offscreen, never the live session)
 from PySide6.QtCore import Qt, qInstallMessageHandler  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from sddm_env import THEME, SddmEnv, read_conf  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts" / "lib"))
 import brand  # noqa: E402
@@ -132,8 +133,8 @@ def type_text(view, text: str) -> None:
 
 def check_style(style: str, expect: str) -> None:
     env = SddmEnv({"style": style, "tone": "dark", "fontSize": "14", "roundness": "16"}, size=(1280, 720))
-    QTest.qWait(250)
     ev = env.eval
+    wait_until(lambda: ev("styleId") == expect and ev("style !== null && passwordField !== null && passwordField.activeFocus"))
     if ev("styleId") != expect or ev("styleFailed") or ev("style === null"):
         fail(f"{style}: loads as {expect}")
     if not ev("passwordField !== null && passwordField.activeFocus"):
@@ -169,7 +170,7 @@ def check_style(style: str, expect: str) -> None:
     env.stub("sddm.loginFailed()")
     if not ev("showError") or ev("style.hint") != "Wrong password" or not ev("style.errorShown"):
         fail(f"{style}: wrong password hint")
-    QTest.qWait(500)
+    wait_until(lambda: ev("passwordField.text") == "" and not ev("authenticating") and ev("style.shakeOffset") == 0)
     if ev("passwordField.text") != "" or ev("authenticating") or ev("style.shakeOffset") != 0:
         fail(f"{style}: shake end clears the field and unlocks it")
     if not ev("passwordField.activeFocus"):
@@ -183,14 +184,14 @@ def check_style(style: str, expect: str) -> None:
         fail(f"{style}: information message shown")
 
     env.stub("sddm.loginSucceeded()")
-    QTest.qWait(800)
+    wait_until(lambda: ev("loginOk") and not ev("startAnim") and ev("reveal") <= 0.05)
     if not ev("loginOk") or ev("startAnim") or ev("reveal") > 0.05:
         fail(f"{style}: success fades the chrome out")
     env.view.close()
 
     # Secondary screen: clock only.
     env2 = SddmEnv({"style": style}, size=(1280, 720), primary=False)
-    QTest.qWait(150)
+    wait_until(lambda: env2.eval("style !== null && style.cluster !== null"))
     if env2.eval("style.cluster.visible"):
         fail(f"{style}: no password field on secondary screens")
     env2.view.close()
@@ -207,7 +208,7 @@ with tempfile.TemporaryDirectory(prefix="sddm-broken-") as tmp:
     shutil.copytree(THEME, broken)
     (broken / "styles" / "PaperStyle.qml").write_text("import QtQuick\nNotAType {}\n")
     env = SddmEnv({"style": "paper"}, size=(1280, 720), theme=broken)
-    QTest.qWait(200)
+    wait_until(lambda: env.eval("styleFailed && styleId === 'glass' && passwordField !== null && passwordField.activeFocus"))
     if not env.eval("styleFailed") or env.eval("styleId") != "glass" or not env.eval("passwordField.activeFocus"):
         fail("a broken style falls back to glass with a focused field")
     env.view.close()
