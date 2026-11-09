@@ -91,55 +91,32 @@
  },
  "modules/bar": {
   "rectangle": 5,
-  "text": 6,
-  "radius": 2
+  "radius": 1
  },
  "modules/bar/activities": {
-  "rectangle": 3,
-  "text": 3
- },
- "modules/bar/clock": {
-  "spacing": 1,
-  "font-size": 1,
-  "text": 4
+  "rectangle": 3
  },
  "modules/bar/clock/faces": {
-  "font-size": 1,
-  "rectangle": 1,
-  "text": 4
+  "rectangle": 1
  },
  "modules/bar/clock/indicators": {
-  "rectangle": 1,
-  "text": 1
- },
- "modules/bar/islandchips": {
-  "text": 7
+  "rectangle": 1
  },
  "modules/bar/look": {
   "rectangle": 3
  },
  "modules/bar/modules": {
-  "spacing": 18,
-  "rectangle": 6,
-  "text": 25,
-  "radius": 3
+  "rectangle": 5
  },
  "modules/bar/panels/styles": {
-  "spacing": 22,
-  "rectangle": 3,
-  "radius": 2
- },
- "modules/bar/sentence": {
-  "text": 2
+  "rectangle": 3
  },
  "modules/bar/systray": {
-  "rectangle": 3,
-  "text": 4
+  "rectangle": 3
  },
  "modules/bar/workspaces": {
-  "spacing": 1,
   "rectangle": 2,
-  "text": 3
+  "text": 1
  },
  "modules/components": {
   "spacing": 8,
@@ -155,9 +132,7 @@
   "radius": 1
  },
  "modules/desktop": {
-  "spacing": 3,
-  "rectangle": 5,
-  "text": 3
+  "rectangle": 3
  },
  "modules/desktop/clockstyles": {
   "rectangle": 2,
@@ -167,14 +142,10 @@
   "rectangle": 1
  },
  "modules/desktop/widgets": {
-  "spacing": 11,
-  "rectangle": 9,
-  "text": 8,
-  "radius": 2
+  "rectangle": 5
  },
  "modules/desktop/widgets/types": {
-  "rectangle": 2,
-  "text": 6
+  "rectangle": 2
  },
  "modules/dock": {
   "font-size": 4,
@@ -187,11 +158,7 @@
   "rectangle": 5
  },
  "modules/extras": {
-  "spacing": 44,
-  "font-size": 1,
-  "rectangle": 16,
-  "text": 28,
-  "radius": 5
+  "rectangle": 8
  },
  "modules/frame": {
   "rectangle": 3,
@@ -203,17 +170,15 @@
  },
  "modules/lockscreen": {
   "rectangle": 6,
-  "text": 12,
+  "text": 6,
   "radius": 4
  },
  "modules/lockscreen/styles": {
   "rectangle": 24,
-  "text": 16
+  "text": 13
  },
  "modules/notch": {
-  "spacing": 5,
-  "rectangle": 2,
-  "radius": 1
+  "rectangle": 2
  },
  "modules/notifications/strips": {
   "rectangle": 4
@@ -349,7 +314,7 @@
   "font-size": 5,
   "rectangle": 15,
   "text": 6,
-  "radius": 4
+  "radius": 3
  },
  "modules/widgets/dashboard/clipboard": {
   "spacing": 22,
@@ -397,13 +362,13 @@
   "font-size": 3,
   "rectangle": 12,
   "text": 6,
-  "radius": 5
+  "radius": 4
  },
  "modules/widgets/dashboard/widgets": {
   "spacing": 3,
   "rectangle": 1,
   "text": 12,
-  "radius": 4
+  "radius": 3
  },
  "modules/widgets/dashboard/widgets/time": {
   "text": 1
