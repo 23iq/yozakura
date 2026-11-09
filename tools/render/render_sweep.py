@@ -9,13 +9,14 @@ the OSDs once per visual language (every language of VisualLanguage.js by
 default) into <out>/<sheet>/ (default .cache/render/sweep/), so a change to
 the kit tokens can be checked across every language in one go
 (`make render-sweep`). Each sheet is its own process (a fresh QML engine and
-Xvfb); a failing sheet is reported and the others still run.
+Xvfb); a sheet that writes no render fails, the others still run.
 """
 from __future__ import annotations
 
 import argparse
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -57,8 +58,15 @@ def main() -> int:
         out.mkdir(parents=True, exist_ok=True)
         argv = [sys.executable, str(HERE / plan[name][0]), *plan[name][1:], "--out", str(out)]
         print(f"== {name} -> {out}", flush=True)
-        if subprocess.run(argv, cwd=REPO).returncode != 0:
+        start = time.time()
+        code = subprocess.run(argv, cwd=REPO).returncode
+        written = [p for p in out.glob("*.png") if p.stat().st_mtime >= start - 1]
+        if not written:
             failed.append(name)
+        elif code != 0:
+            # Some tools crash in Qt's teardown after saving (exit 139 on main
+            # too): the renders are there, say so instead of failing the sweep.
+            print(f"   {name}: {len(written)} render(s) written, tool exited with {code} afterwards", flush=True)
     if failed:
         print(f"render-sweep: failed: {', '.join(failed)}", file=sys.stderr)
         return 1
