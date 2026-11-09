@@ -1,15 +1,13 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Io
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
+// EasyEffects (settings Connect page), from the kit: the on / bypass
+// switch with the open-app and refresh actions, the output and input
+// presets as chips (the loaded one active), and what is loaded now.
 Item {
     id: root
 
@@ -27,337 +25,165 @@ Item {
     property int maxContentWidth: 480
     readonly property int contentWidth: Math.min(width, maxContentWidth)
     readonly property real sideMargin: (width - contentWidth) / 2
+    readonly property bool available: EasyEffectsService.available
+    readonly property bool hasPresets: EasyEffectsService.outputPresets.length > 0 || EasyEffectsService.inputPresets.length > 0
 
-    // Presets section - fills entire width for scroll/drag
-    Flickable {
-        id: mainFlickable
-        anchors.fill: parent
-        contentHeight: mainColumn.implicitHeight
-        clip: true
+    // One line of the "active" section: a glyph and the loaded preset.
+    component ActiveLine: Row {
+        id: line
 
-        ColumnLayout {
-            id: mainColumn
-            width: mainFlickable.width
-            spacing: 8
+        property string icon: ""
+        property string text: ""
 
-            // Header wrapper
-            Item {
-                Layout.fillWidth: true
-                Layout.preferredHeight: titlebar.height
+        visible: line.text !== ""
+        leftPadding: Look.rowInset
+        spacing: Space.m
 
-                PanelTitlebar {
-                    id: titlebar
-                    width: root.contentWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    title: I18n.t("effects.title")
-                    statusText: EasyEffectsService.bypassed ? I18n.t("effects.bypassed") : ""
-                    statusColor: Colors.error
-                    showToggle: EasyEffectsService.available
-                    toggleChecked: !EasyEffectsService.bypassed
+        Icon {
+            anchors.verticalCenter: parent.verticalCenter
+            icon: line.icon
+            role: "secondary"
+            tone: "secondary"
+        }
 
-                    actions: EasyEffectsService.available ? [
-                        {
-                            icon: Icons.popOpen,
-                            tooltip: I18n.t("effects.open"),
-                            onClicked: function () {
-                                EasyEffectsService.openApp();
-                            }
-                        },
-                        {
-                            icon: Icons.sync,
-                            tooltip: I18n.t("effects.refresh"),
-                            onClicked: function () {
-                                EasyEffectsService.refresh();
-                            }
-                        }
-                    ] : []
+        KitText {
+            anchors.verticalCenter: parent.verticalCenter
+            role: "secondary"
+            text: line.text
+        }
+    }
 
-                    onToggleChanged: checked => {
-                        if (checked !== !EasyEffectsService.bypassed) {
-                            EasyEffectsService.setBypass(!checked);
-                        }
-                    }
+    // A section of presets: its label over one chip per preset.
+    component PresetSection: ColumnLayout {
+        id: section
+
+        property string label: ""
+        property var presets: []
+        property string activePreset: ""
+
+        signal picked(string preset)
+
+        visible: section.presets.length > 0
+        spacing: Space.s
+
+        SectionLabel {
+            Layout.fillWidth: true
+            text: section.label
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            Layout.leftMargin: Look.rowInset
+            Layout.rightMargin: Look.rowInset
+            spacing: Space.s
+
+            Repeater {
+                model: section.presets
+
+                Chip {
+                    required property string modelData
+                    objectName: "preset_" + modelData
+                    active: section.activePreset === modelData
+                    icon: active ? Icons.sparkle : ""
+                    text: modelData
+                    onClicked: section.picked(modelData)
                 }
             }
+        }
+    }
 
-            // Content wrapper - centered
-            Item {
+    DeviceListHeader {
+        id: header
+        objectName: "effectsHeader"
+        x: root.sideMargin
+        width: root.contentWidth
+        showSwitch: root.available
+        checked: !EasyEffectsService.bypassed
+        status: EasyEffectsService.bypassed ? I18n.t("effects.bypassed") : ""
+        actions: root.available ? [
+            {
+                icon: Icons.popOpen,
+                tooltip: I18n.t("effects.open"),
+                onClicked: () => EasyEffectsService.openApp()
+            },
+            {
+                icon: Icons.sync,
+                tooltip: I18n.t("effects.refresh"),
+                onClicked: () => EasyEffectsService.refresh()
+            }
+        ] : []
+        onToggled: value => {
+            if (value !== !EasyEffectsService.bypassed)
+                EasyEffectsService.setBypass(!value);
+        }
+    }
+
+    Flickable {
+        id: flickable
+        anchors.fill: parent
+        anchors.topMargin: header.height + Space.s
+        contentHeight: content.implicitHeight
+        clip: true
+        boundsBehavior: Flickable.StopAtBounds
+
+        ColumnLayout {
+            id: content
+            x: root.sideMargin
+            width: root.contentWidth
+            spacing: Space.l
+
+            KitText {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: Space.xxl
+                visible: !root.available
+                role: "caption"
+                text: I18n.t("effects.not_installed")
+            }
+
+            PresetSection {
                 Layout.fillWidth: true
-                Layout.preferredHeight: presetsColumn.implicitHeight
+                visible: root.available && presets.length > 0
+                label: I18n.t("effects.output_presets")
+                presets: EasyEffectsService.outputPresets
+                activePreset: EasyEffectsService.activeOutputPreset
+                onPicked: preset => EasyEffectsService.loadOutputPreset(preset)
+            }
 
-                ColumnLayout {
-                    id: presetsColumn
-                    width: root.contentWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 12
+            PresetSection {
+                Layout.fillWidth: true
+                visible: root.available && presets.length > 0
+                label: I18n.t("effects.input_presets")
+                presets: EasyEffectsService.inputPresets
+                activePreset: EasyEffectsService.activeInputPreset
+                onPicked: preset => EasyEffectsService.loadInputPreset(preset)
+            }
 
-                    // Not available state
-                    Text {
-                        visible: !EasyEffectsService.available
-                        text: I18n.t("effects.not_installed")
-                        font.family: Config.theme.font
-                        font.pixelSize: Config.theme.fontSize
-                        color: Colors.overSurfaceVariant
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: 32
-                    }
+            KitText {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: Space.l
+                visible: root.available && !root.hasPresets
+                role: "caption"
+                text: I18n.t("presets.no_presets")
+            }
 
-                    // Output presets
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: EasyEffectsService.available && EasyEffectsService.outputPresets.length > 0
+            ColumnLayout {
+                Layout.fillWidth: true
+                visible: root.available && (EasyEffectsService.activeOutputPreset || EasyEffectsService.activeInputPreset)
+                spacing: Space.s
 
-                        Text {
-                            text: I18n.t("effects.output_presets")
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: Font.Medium
-                            color: Colors.overSurfaceVariant
-                        }
+                SectionLabel {
+                    Layout.fillWidth: true
+                    text: I18n.t("common.active")
+                }
 
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 6
+                ActiveLine {
+                    icon: Icons.speakerHigh
+                    text: EasyEffectsService.activeOutputPreset
+                }
 
-                            Repeater {
-                                model: EasyEffectsService.outputPresets
-
-                                delegate: Button {
-                                    id: presetButton
-                                    required property string modelData
-                                    flat: true
-
-                                    property bool isActive: EasyEffectsService.activeOutputPreset === modelData
-
-                                    background: StyledRect {
-                                        variant: presetButton.isActive ? "primary" : (presetButton.hovered ? "focus" : "common")
-                                        radius: presetButton.isActive ? Styling.radius(-4) : Styling.radius(4)
-                                    }
-
-                                    contentItem: Row {
-                                        spacing: presetButton.isActive ? 6 : 0
-                                        leftPadding: 12
-                                        rightPadding: 12
-                                        topPadding: 6
-                                        bottomPadding: 6
-
-                                        Behavior on spacing {
-                                            enabled: Config.animDuration > 0
-                                            NumberAnimation {
-                                                duration: Config.animDuration / 3
-                                                easing.type: Motion.morph.easing
-                                            }
-                                        }
-
-                                        // Icon with reveal animation
-                                        Item {
-                                            width: presetButton.isActive ? presetIcon.implicitWidth : 0
-                                            height: presetIcon.implicitHeight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            clip: true
-
-                                            Behavior on width {
-                                                enabled: Config.animDuration > 0
-                                                NumberAnimation {
-                                                    duration: Config.animDuration / 3
-                                                    easing.type: Motion.morph.easing
-                                                }
-                                            }
-
-                                            Text {
-                                                id: presetIcon
-                                                text: Icons.sparkle
-                                                font.family: Icons.font
-                                                font.pixelSize: Styling.fontSize(-1)
-                                                color: Styling.srItem("primary")
-                                                opacity: presetButton.isActive ? 1 : 0
-
-                                                Behavior on opacity {
-                                                    enabled: Config.animDuration > 0
-                                                    NumberAnimation {
-                                                        duration: Config.animDuration / 3
-                                                        easing.type: Motion.enter.easing
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        Text {
-                                            text: presetButton.modelData
-                                            font.family: Config.theme.font
-                                            font.pixelSize: Styling.fontSize(-1)
-                                            font.weight: presetButton.isActive ? Font.Bold : Font.Normal
-                                            color: presetButton.isActive ? Styling.srItem("primary") : Colors.overBackground
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-
-                                    onClicked: EasyEffectsService.loadOutputPreset(modelData)
-                                }
-                            }
-                        }
-                    }
-
-                    // Input presets
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
-                        visible: EasyEffectsService.available && EasyEffectsService.inputPresets.length > 0
-
-                        Text {
-                            text: I18n.t("effects.input_presets")
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: Font.Medium
-                            color: Colors.overSurfaceVariant
-                        }
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: 6
-
-                            Repeater {
-                                model: EasyEffectsService.inputPresets
-
-                                delegate: Button {
-                                    id: inputPresetButton
-                                    required property string modelData
-                                    flat: true
-
-                                    property bool isActive: EasyEffectsService.activeInputPreset === modelData
-
-                                    background: StyledRect {
-                                        variant: inputPresetButton.isActive ? "primary" : (inputPresetButton.hovered ? "focus" : "common")
-                                        radius: inputPresetButton.isActive ? Styling.radius(-4) : Styling.radius(4)
-                                    }
-
-                                    contentItem: Row {
-                                        spacing: inputPresetButton.isActive ? 6 : 0
-                                        leftPadding: 12
-                                        rightPadding: 12
-                                        topPadding: 6
-                                        bottomPadding: 6
-
-                                        Behavior on spacing {
-                                            enabled: Config.animDuration > 0
-                                            NumberAnimation {
-                                                duration: Config.animDuration / 3
-                                                easing.type: Motion.morph.easing
-                                            }
-                                        }
-
-                                        // Icon with reveal animation
-                                        Item {
-                                            width: inputPresetButton.isActive ? inputPresetIcon.implicitWidth : 0
-                                            height: inputPresetIcon.implicitHeight
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            clip: true
-
-                                            Behavior on width {
-                                                enabled: Config.animDuration > 0
-                                                NumberAnimation {
-                                                    duration: Config.animDuration / 3
-                                                    easing.type: Motion.morph.easing
-                                                }
-                                            }
-
-                                            Text {
-                                                id: inputPresetIcon
-                                                text: Icons.sparkle
-                                                font.family: Icons.font
-                                                font.pixelSize: Styling.fontSize(-1)
-                                                color: Styling.srItem("primary")
-                                                opacity: inputPresetButton.isActive ? 1 : 0
-
-                                                Behavior on opacity {
-                                                    enabled: Config.animDuration > 0
-                                                    NumberAnimation {
-                                                        duration: Config.animDuration / 3
-                                                        easing.type: Motion.enter.easing
-                                                    }
-                                                }
-                                            }
-                                        }
-
-                                        Text {
-                                            text: inputPresetButton.modelData
-                                            font.family: Config.theme.font
-                                            font.pixelSize: Styling.fontSize(-1)
-                                            font.weight: inputPresetButton.isActive ? Font.Bold : Font.Normal
-                                            color: inputPresetButton.isActive ? Styling.srItem("primary") : Colors.overBackground
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                    }
-
-                                    onClicked: EasyEffectsService.loadInputPreset(modelData)
-                                }
-                            }
-                        }
-                    }
-
-                    // Empty state
-                    Text {
-                        visible: EasyEffectsService.available && EasyEffectsService.outputPresets.length === 0 && EasyEffectsService.inputPresets.length === 0
-                        text: I18n.t("presets.no_presets")
-                        font.family: Config.theme.font
-                        font.pixelSize: Config.theme.fontSize
-                        color: Colors.overSurfaceVariant
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: 16
-                    }
-
-                    // Current status
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        Layout.topMargin: 16
-                        spacing: 4
-                        visible: EasyEffectsService.available && (EasyEffectsService.activeOutputPreset || EasyEffectsService.activeInputPreset)
-
-                        Text {
-                            text: I18n.t("common.active")
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: Font.Medium
-                            color: Colors.overSurfaceVariant
-                        }
-
-                        RowLayout {
-                            spacing: 16
-                            visible: EasyEffectsService.activeOutputPreset
-
-                            Text {
-                                text: Icons.speakerHigh
-                                font.family: Icons.font
-                                font.pixelSize: 14
-                                color: Styling.srItem("overprimary")
-                            }
-                            Text {
-                                text: EasyEffectsService.activeOutputPreset
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-1)
-                                color: Colors.overBackground
-                            }
-                        }
-
-                        RowLayout {
-                            spacing: 16
-                            visible: EasyEffectsService.activeInputPreset
-
-                            Text {
-                                text: Icons.mic
-                                font.family: Icons.font
-                                font.pixelSize: 14
-                                color: Styling.srItem("overprimary")
-                            }
-                            Text {
-                                text: EasyEffectsService.activeInputPreset
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-1)
-                                color: Colors.overBackground
-                            }
-                        }
-                    }
+                ActiveLine {
+                    icon: Icons.mic
+                    text: EasyEffectsService.activeInputPreset
                 }
             }
         }

@@ -170,12 +170,11 @@ Item {
         spacing: Space.s
         visible: ClipboardService.items.length === 0
 
-        Text {
-            text: Icons.clipboard
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("display")
-            color: Type.muted
+        Icon {
             anchors.horizontalCenter: parent.horizontalCenter
+            icon: Icons.clipboard
+            role: "display"
+            tone: "muted"
         }
 
         KitText {

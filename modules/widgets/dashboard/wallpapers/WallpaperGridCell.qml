@@ -4,12 +4,12 @@ import QtQuick
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.globals
-import qs.config
+import qs.modules.components.kit
 
 // One thumbnail of the wallpapers tab grid. The thumbnail (never the
 // original file) is only loaded while the cell is near the viewport and the
 // dashboard is open. Hover selects, click applies (per screen if enabled).
-Rectangle {
+Item {
     id: cell
 
     required property string modelData
@@ -22,7 +22,6 @@ Rectangle {
 
     width: cell.grid.cellWidth
     height: cell.grid.cellHeight
-    color: "transparent"
 
     property bool isCurrentWallpaper: cell.tab.screenWallpaper === cell.modelData
 
@@ -48,8 +47,8 @@ Rectangle {
 
         ClippingRectangle {
             anchors.fill: parent
-            color: Colors.surface
-            radius: Styling.radius(4)
+            color: Type.placeholder
+            radius: Look.radius("box")
 
             // Lazy loader que solo carga cuando el item está visible
             Loader {
@@ -60,20 +59,17 @@ Rectangle {
                 active: cell.isInViewport && cell.tab.visible && GlobalStates.dashboardOpen
                 asynchronous: true
 
-                // Placeholder mientras carga
-                Rectangle {
+                // Placeholder while the thumbnail loads
+                Item {
                     anchors.fill: parent
-                    color: Colors.surface
                     visible: !thumbLoader.active || thumbLoader.status !== Loader.Ready
 
-                    Text {
+                    Icon {
                         id: spinner
                         anchors.centerIn: parent
-                        text: Icons.circleNotch
-                        font.family: Icons.font
-                        font.pixelSize: 24
-                        color: Colors.overSurfaceVariant
-                        rotation: 0
+                        icon: Icons.circleNotch
+                        role: "title"
+                        tone: "muted"
 
                         NumberAnimation on rotation {
                             from: 0
@@ -123,19 +119,11 @@ Rectangle {
         }
     }
 
-    // Animaciones de color y escala.
-    Behavior on color {
-        enabled: Config.animDuration > 0
-        ColorAnimation {
-            duration: Config.animDuration / 2
-            easing.type: Motion.morph.easing
-        }
-    }
-
+    // Press feedback.
     Behavior on scale {
-        enabled: Config.animDuration > 0
+        enabled: Motion.micro.duration > 0
         NumberAnimation {
-            duration: Config.animDuration / 3
+            duration: Motion.micro.duration
             easing.type: Motion.morph.easing
         }
     }

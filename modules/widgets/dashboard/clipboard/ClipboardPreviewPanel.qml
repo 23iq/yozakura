@@ -26,7 +26,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: separator.top
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: Space.s
 
             ClipboardImagePreview {
                 anchors.fill: parent
@@ -36,7 +36,7 @@ Item {
 
             ClipboardTextPreview {
                 anchors.fill: parent
-                visible: previewPanel.currentItem && !previewPanel.currentItem.isImage && !previewPanel.currentItem.isFile
+                visible: !!(previewPanel.currentItem && !previewPanel.currentItem.isImage && !previewPanel.currentItem.isFile)
                 item: previewPanel.currentItem
                 content: previewPanel.content
                 linkPreview: previewPanel.tab.linkPreviewData
@@ -48,7 +48,7 @@ Item {
             ClipboardFilePreview {
                 id: filePreview
                 anchors.fill: parent
-                visible: previewPanel.currentItem && previewPanel.currentItem.isFile && !filePreview.isImage
+                visible: !!(previewPanel.currentItem && previewPanel.currentItem.isFile && !filePreview.isImage)
                 item: previewPanel.currentItem
                 content: previewPanel.content
                 onOpenRequested: itemId => previewPanel.open(itemId)
@@ -77,18 +77,13 @@ Item {
     }
 
     // Nothing selected
-    Column {
+    Icon {
+        objectName: "previewEmpty"
         anchors.centerIn: parent
-        spacing: 16
         visible: !previewPanel.currentItem
-
-        Text {
-            text: Icons.cactus
-            font.family: Icons.font
-            font.pixelSize: 48
-            color: Colors.surfaceBright
-            anchors.horizontalCenter: parent.horizontalCenter
-            textFormat: Text.RichText
-        }
+        icon: Icons.cactus
+        size: Space.xxl + Space.l
+        tone: "muted"
+        opacity: 0.5
     }
 }

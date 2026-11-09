@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 import "ClipboardView.js" as ClipboardView
 
 // Metadata strip under the preview: MIME type, size, date, checksum, plus
@@ -16,15 +16,15 @@ Item {
 
     Row {
         anchors.fill: parent
-        spacing: 8
+        spacing: Space.s
 
         Grid {
             // Always reserve space for the buttons when there is an item
-            width: parent.width - (meta.item ? 36 + 8 : 0)
+            width: parent.width - (meta.item ? Space.controlS + Space.s : 0)
             height: parent.height
             columns: 2
-            columnSpacing: 16
-            rowSpacing: 4
+            columnSpacing: Space.l
+            rowSpacing: Space.xs
 
             ClipboardMetadataField {
                 width: (parent.width - parent.columnSpacing) / 2
@@ -55,7 +55,7 @@ Item {
         }
 
         ClipboardMetadataActions {
-            width: 36
+            width: Space.controlS
             height: parent.height
             visible: meta.item !== null
             item: meta.item

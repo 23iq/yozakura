@@ -1,77 +1,87 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
-import qs.modules.theme
 import qs.modules.components
-import qs.config
+import qs.modules.components.kit
 
-// Settings row: label + clamped integer input (+ optional suffix).
+// Settings row: label + clamped integer input (+ optional suffix) in the
+// kit's control box.
 RowLayout {
-    id: numberInputRowRoot
+    id: root
+
     property string label: ""
     property int value: 0
     property int minValue: 0
     property int maxValue: 100
     property string suffix: ""
+
     signal valueEdited(int newValue)
 
     Layout.fillWidth: true
-    spacing: 8
+    spacing: Space.s
 
-    Text {
-        text: numberInputRowRoot.label
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(0)
-        color: Colors.overBackground
+    KitText {
         Layout.fillWidth: true
+        role: "body"
+        text: root.label
     }
 
     StyledRect {
-        variant: "common"
-        Layout.preferredWidth: 60
-        Layout.preferredHeight: 32
-        radius: Styling.radius(-2)
+        id: box
+        readonly property bool lit: field.activeFocus || hover.hovered
+        Layout.preferredWidth: Space.controlL
+        Layout.preferredHeight: Space.chip
+        variant: box.lit ? "focus" : "common"
+        backgroundOpacity: Look.boxedControls ? 0 : -1
+        radius: Look.radius("chip", height)
+
+        ControlBox {
+            radius: box.radius
+            hovered: box.lit
+        }
+
+        HoverHandler {
+            id: hover
+        }
 
         TextInput {
-            id: numberTextInput
+            id: field
+            objectName: "numberField"
             anchors.fill: parent
-            anchors.margins: 8
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
-            color: Colors.overBackground
+            anchors.margins: Space.s
+            font.family: Type.family("body")
+            font.pixelSize: Type.size("body")
+            color: Type.text
+            selectionColor: Qt.rgba(Type.accent.r, Type.accent.g, Type.accent.b, 0.3)
+            selectedTextColor: Type.text
             selectByMouse: true
             clip: true
             verticalAlignment: TextInput.AlignVCenter
             horizontalAlignment: TextInput.AlignHCenter
             validator: IntValidator {
-                bottom: numberInputRowRoot.minValue
-                top: numberInputRowRoot.maxValue
+                bottom: root.minValue
+                top: root.maxValue
             }
 
-            // Sync text when external value changes
-            readonly property int configValue: numberInputRowRoot.value
+            // Follow the bound value while not editing
+            readonly property int configValue: root.value
             onConfigValueChanged: {
-                if (!activeFocus && text !== configValue.toString()) {
+                if (!activeFocus && text !== configValue.toString())
                     text = configValue.toString();
-                }
             }
             Component.onCompleted: text = configValue.toString()
 
             onEditingFinished: {
-                let newVal = parseInt(text);
-                if (!isNaN(newVal)) {
-                    newVal = Math.max(numberInputRowRoot.minValue, Math.min(numberInputRowRoot.maxValue, newVal));
-                    numberInputRowRoot.valueEdited(newVal);
-                }
+                const v = parseInt(text);
+                if (!isNaN(v))
+                    root.valueEdited(Math.max(root.minValue, Math.min(root.maxValue, v)));
             }
         }
     }
 
-    Text {
-        text: numberInputRowRoot.suffix
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(0)
-        color: Colors.overSurfaceVariant
-        visible: numberInputRowRoot.suffix !== ""
+    KitText {
+        visible: root.suffix !== ""
+        role: "body"
+        color: Type.secondary
+        text: root.suffix
     }
 }

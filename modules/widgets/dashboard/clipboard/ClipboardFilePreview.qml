@@ -1,6 +1,6 @@
 import QtQuick
 import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 import "ClipboardView.js" as ClipboardView
 
 // Preview of a copied non-image file (text/uri-list): icon, file name and
@@ -28,50 +28,36 @@ Item {
 
     Column {
         anchors.centerIn: parent
-        spacing: 16
+        spacing: Space.l
 
-        Rectangle {
-            width: 120
-            height: 120
-            color: Colors.surfaceBright
-            radius: Styling.radius(4)
+        Art {
             anchors.horizontalCenter: parent.horizontalCenter
-
-            Text {
-                anchors.centerIn: parent
-                text: Icons.file
-                textFormat: Text.RichText
-                font.family: Icons.font
-                font.pixelSize: 48
-                color: Styling.srItem("overprimary")
-            }
+            width: Space.controlXL
+            height: Space.controlXL
+            icon: Icons.file
         }
 
         Column {
-            width: preview.width - 16
-            spacing: 8
+            width: preview.width - Space.l
+            spacing: Space.s
             anchors.horizontalCenter: parent.horizontalCenter
 
-            Text {
-                text: preview.item ? ClipboardView.uriFileName(preview.content) : ""
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize + 2
-                font.weight: Font.Bold
-                color: Colors.overBackground
-                horizontalAlignment: Text.AlignHCenter
+            KitText {
+                objectName: "fileName"
                 width: parent.width
+                role: "title"
+                horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
+                text: preview.item ? ClipboardView.uriFileName(preview.content) : ""
             }
 
-            Text {
-                text: preview.item ? ClipboardView.uriDirectory(preview.content) : ""
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize - 1
-                color: Colors.outline
-                horizontalAlignment: Text.AlignHCenter
+            KitText {
                 width: parent.width
+                role: "caption"
+                horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 elide: Text.ElideMiddle
+                text: preview.item ? ClipboardView.uriDirectory(preview.content) : ""
             }
         }
     }

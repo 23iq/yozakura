@@ -4,8 +4,8 @@
     tools/render/render_sweep.py [--out DIR] [--mode dark|light] [--only kit,settings,...]
                                  [LANGUAGE ...]
 
-Runs the kit sheets, the settings window, the dashboard, the bar matrix and
-the OSDs once per visual language (every language of VisualLanguage.js by
+Runs the kit sheets, the settings window, the dashboard (and its tool tabs),
+the bar matrix and the OSDs once per visual language (every language of VisualLanguage.js by
 default) into <out>/<sheet>/ (default .cache/render/sweep/), so a change to
 the kit tokens can be checked across every language in one go
 (`make render-sweep`). Each sheet is its own process (a fresh QML engine and
@@ -35,6 +35,7 @@ def sheets(langs: list[str], mode: str) -> dict[str, list[str]]:
         "dashboard": ["dashboard_render.py", "--mode", mode, *langs],
         "bar-matrix": ["panels_render.py", "--bar-matrix", "--mode", mode],
         "osd": ["osd_render.py", "--mode", mode, "--languages", joined],
+        "dashtabs": ["dashtabs_render.py", "--mode", mode, *langs],
     }
 
 
@@ -43,7 +44,7 @@ def main() -> int:
     ap.add_argument("languages", nargs="*", default=LANGUAGES)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "sweep"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
-    ap.add_argument("--only", default="", help="comma separated sheets (kit, kit-bold, settings, dashboard, bar-matrix, osd)")
+    ap.add_argument("--only", default="", help="comma separated sheets (kit, kit-bold, settings, dashboard, bar-matrix, osd, dashtabs)")
     args = ap.parse_args()
     unknown = set(args.languages) - set(LANGUAGES)
     if unknown:

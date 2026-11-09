@@ -2,13 +2,13 @@ import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 import "clipboard_utils.js" as ClipboardUtils
 
 // Scrollable preview of a text item: link embed / loading state / plain URL
 // card for links, then the full text.
 Flickable {
-    id: preview
+    id: textPreview
 
     // Selected item (or null), its full content, the link preview metadata
     // and whether it is still being fetched.
@@ -27,76 +27,68 @@ Flickable {
     Column {
         id: textPreviewColumn
         width: parent.width
-        spacing: 12
+        spacing: Space.m
 
         ClipboardLinkEmbed {
-            preview: preview.linkPreview
-            url: preview.content
+            preview: textPreview.linkPreview
+            url: textPreview.content
         }
 
         // Loading indicator for the link preview
-        Rectangle {
-            id: linkPreviewLoadingRect
+        ClipboardCard {
+            id: loadingCard
+            objectName: "linkLoading"
             width: parent.width
-            height: 60
-            visible: preview.loadingLinkPreview && preview.item && ClipboardUtils.isUrl(preview.content)
-            color: Colors.surface
-            radius: Styling.radius(4)
+            height: loadingRow.implicitHeight + Look.boxPadding * 2
+            interactive: false
+            visible: !!(textPreview.loadingLinkPreview && textPreview.item && ClipboardUtils.isUrl(textPreview.content))
 
             Row {
+                id: loadingRow
                 anchors.centerIn: parent
-                spacing: 12
+                spacing: Space.m
 
-                Text {
-                    text: Icons.spinnerGap
-                    font.family: Icons.font
-                    font.pixelSize: 20
-                    color: Styling.srItem("overprimary")
-                    textFormat: Text.RichText
+                Icon {
+                    anchors.verticalCenter: parent.verticalCenter
+                    icon: Icons.spinnerGap
+                    role: "title"
+                    tone: "progress"
 
                     RotationAnimator on rotation {
                         from: 0
                         to: 360
                         duration: 1000
                         loops: Animation.Infinite
-                        running: linkPreviewLoadingRect.visible
+                        running: loadingCard.visible
                     }
                 }
 
-                Text {
+                KitText {
+                    anchors.verticalCenter: parent.verticalCenter
+                    role: "caption"
                     text: I18n.t("clipboard.loading_preview")
-                    font.family: Config.theme.font
-                    font.pixelSize: Config.theme.fontSize
-                    color: Colors.outline
                 }
             }
         }
 
         // Plain URL card when there is no embed
-        Item {
+        ClipboardUrlCard {
+            id: urlCard
             width: parent.width
-            height: urlCard.visible ? 60 : 0
-            visible: preview.item && ClipboardUtils.isUrl(preview.content) && !preview.loadingLinkPreview && (!preview.linkPreview || (!preview.linkPreview.title && !preview.linkPreview.description && !preview.linkPreview.image))
-
-            ClipboardUrlCard {
-                id: urlCard
-                anchors.centerIn: parent
-                width: parent.width
-                item: preview.item
-                url: preview.content
-                onOpenRequested: itemId => preview.openRequested(itemId)
-            }
+            visible: !!(textPreview.item && ClipboardUtils.isUrl(textPreview.content) && !textPreview.loadingLinkPreview && (!textPreview.linkPreview || (!textPreview.linkPreview.title && !textPreview.linkPreview.description && !textPreview.linkPreview.image)))
+            clipItem: textPreview.item
+            url: textPreview.content
+            onOpenRequested: itemId => textPreview.openRequested(itemId)
         }
 
-        Text {
+        KitText {
             id: previewText
-            text: preview.content
-            font.family: Config.theme.font
-            font.pixelSize: Config.theme.fontSize
-            color: Colors.overBackground
-            wrapMode: Text.Wrap
+            objectName: "previewText"
             width: parent.width
-            textFormat: Text.PlainText
+            role: "body"
+            text: textPreview.content
+            wrapMode: Text.Wrap
+            elide: Text.ElideNone
         }
     }
 
