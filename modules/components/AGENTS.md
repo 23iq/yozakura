@@ -35,6 +35,9 @@ Atomic design library for the Yozakura shell. 26 QML components + 29 GLSL shader
 | `CarouselProgress.qml` | Step-based progress dots |
 | `DiagonalStripePattern.qml` | Decorative pattern overlay |
 | `BgShadow.qml` / `Shadow.qml` | Drop shadow effects |
+| `ShadowCaster.qml` | Captured theme shadow of part of a larger item (free-form silhouettes: bar panels, activities) |
+| `shape/ShapeShadow.qml` | Analytic theme shadow of a rounded box / attached fillets / frame hole: uniforms only, fixed cost while it morphs (`shape_shadow.frag`, blur model `ShadowBlur.js`) |
+| `RenderFade.qml` | `RenderFade on opacity`: render-thread fade (OpacityAnimator), off at duration 0 |
 | `Outline.qml` | Border outline effect |
 | `Tinted.qml` / `TintedWallpaper.qml` | Color tint overlays |
 
