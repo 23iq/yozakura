@@ -75,7 +75,7 @@ QtObject {
     property var outputPresets: ["Loudness", "Bass Boost", "Night", "Podcast"]
     property var inputPresets: ["Noise Gate", "Voice"]
     property string activeOutputPreset: "Loudness"; property string activeInputPreset: ""
-    function initialize() {} function refresh() {} function openApp() {} function setBypass(b) { bypassed = b }
+    function initialize() {} function setConsumer(key, on) {} function refresh() {} function openApp() {} function setBypass(b) { bypassed = b }
     function loadOutputPreset(p) { activeOutputPreset = p } function loadInputPreset(p) { activeInputPreset = p }
 }"""
 
