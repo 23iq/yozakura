@@ -30,7 +30,7 @@ from island_env import IslandEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 USER_CONFIG = Path.home() / ".config" / "yozakura" / "config"
-LANGUAGES = ["ink", "glass", "tiles"]
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 STYLES = ["attached", "island", "pill"]
 # name -> (JS on the window, panel to open through the controller)
 STATES = {

@@ -4,7 +4,7 @@
     tools/render/kit_render.py [--out DIR] [--mode dark|light] [--sheet NAME] [LANGUAGE ...]
 
 Draws tools/render/KitGallery.qml (every modules/components/kit component in
-its states) once per visual language (ink, glass, tiles by default) with your
+its states) once per visual language (all five by default) with your
 real config, palette and wallpaper (see settings_render.py). Writes
 <out>/<prefix>-<language>.png (prefix: kit). `--sheet KitGalleryBold` draws the
 big controls (Tile, LevelSlider, Segmented, Sparkline) instead (prefix: kit-bold).

@@ -35,7 +35,7 @@ from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import DEFAULT_PALETTE  # noqa: E402
 
 EDGES = ["top", "left"]
-LANGUAGES = ["ink", "glass", "tiles"]
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 GREEN = "#4c8c4a"
 SCALE = 3
 

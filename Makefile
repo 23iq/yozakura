@@ -109,6 +109,12 @@ audit:
 layers-baseline:
 	@AUDIT_UPDATE_LAYERS=1 $(PY) tools/audit/audit.py --only layers
 
+## render-sweep: kit, settings, dashboard, bar matrix and OSD renders in every
+##         visual language, offscreen, into .cache/render/sweep/ (ARGS: languages,
+##         --only kit,settings, --mode light)
+render-sweep:
+	@$(PY) tools/render/render_sweep.py $(ARGS)
+
 ## kit-literals-baseline: re-record tools/lint/baselines/kit-literals.json (only
 ##         after REPLACING literals with kit tokens; never to silence new ones)
 kit-literals-baseline:
