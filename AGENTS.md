@@ -130,7 +130,7 @@ marks only active, progress, selected/today and one primary action per surface.
 `theme.language` (`ink` hairlines | `glass` frosted cards | `tiles` solid tiles | `classic`
 the sr* variants as configured | `device` a hardware instrument: matte boxes with a 1 px edge,
 knobs, segment readouts, LEDs) is decided in `modules/theme/VisualLanguage.js` (`kit()`) and read
-through `Look`; components never branch on the language name (`make audit` has no allowlist for it).
+through `Look`; components never branch on the language name.
 Tokens from `Look`: `surfacePadding` + `groupPadding` + `rowInset` = `contentInset` (Surface edge to
 row text: 24 px in the unboxed family (ink), 28 px in every boxed one), `groupGap` (between groups),
 `ruleGap` (under a Group divider), `screenGap` (between the blocks / columns of a screen),

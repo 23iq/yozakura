@@ -158,7 +158,10 @@ Window {
                         }
                     }
                     KitText {
+                        width: parent.width
                         role: "caption"
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
                         text: "title · body · secondary · caption/muted · accent · progress"
                     }
                 }
@@ -167,7 +170,8 @@ Window {
                     width: parent.width
                     divider: true
                     label: "Radius"
-                    Row {
+                    Flow {
+                        width: parent.width
                         spacing: Space.s
                         Repeater {
                             model: ["surface", "group", "box", "big", "control", "chip", "button", "small", "round"]
