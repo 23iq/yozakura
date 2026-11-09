@@ -25,10 +25,10 @@ Item {
     // language, past the content into the box padding)
     AlbumBackdrop {
         anchors.fill: parent
-        anchors.margins: -Math.max(Look.groupPadding, Space.m)
+        anchors.margins: -Look.boxPadding
         artwork: root.player?.trackArtUrl ?? ""
         strength: 0.45
-        radius: Math.max(Look.groupRadius, Space.controlRadius)
+        radius: Look.boxRadius
     }
 
     Art {

@@ -52,6 +52,10 @@ Window {
         ProgressLine { objectName: "progress"; width: 200; value: 0.5 }
         Ring { objectName: "ring"; value: 0.4; KitText { text: "18:24" } }
         Art { objectName: "art" }
+        Icon { objectName: "icon"; icon: Icons.gear }
+        Icon { objectName: "iconCaption"; icon: Icons.gear; role: "caption" }
+        Icon { objectName: "iconAccent"; icon: Icons.gear; tone: "accent" }
+        Icon { objectName: "iconSized"; icon: Icons.gear; size: 30 }
         Surface { objectName: "surface"; Item { width: 100; height: 50 } }
         Surface { objectName: "floatSurface"; floating: true; Item { width: 100; height: 40 } }
         Group { objectName: "group"; width: 300; label: "Notifications"; actionText: "Clear"; divider: true
@@ -218,7 +222,11 @@ for lang, density in CASES:
     # Surface: the popup box with the standard padding around its content
     surf = get("surface")
     pad = look("surfacePadding")
-    assert surf.property("variant") == "popup" and pad == space({"ink": "l", "glass": "m", "tiles": "s"}.get(lang, "l")), tag
+    assert surf.property("variant") == "popup" and pad == space("l" if lang == "ink" else "s"), tag
+    # One content inset per family: Surface edge -> row text
+    inset = look("contentInset")
+    assert inset == pad + look("groupPadding") + look("rowInset"), tag
+    assert inset == (space("l") + space("s") if lang == "ink" else space("s") + space("m") + space("s")), (tag, inset)
     assert surf.property("implicitWidth") == 100 + 2 * pad, (tag, surf.property("implicitWidth"))
     assert surf.property("radius") == space("surfaceRadius"), tag
 
@@ -232,7 +240,7 @@ for lang, density in CASES:
     if lang == "ink":  # no box, a hairline above, content flush with the label
         assert fill.alpha() == 0 and h.eval(box, "border.width") == 0, tag
         assert rule.property("visible") and group.property("padding") == 0, tag
-        assert box.property("y") == space("l") + 1, tag
+        assert box.property("y") == space("s") + 1, tag  # rule + Look.ruleGap
     else:
         assert fill.alpha() > 0 and not rule.property("visible"), tag
         assert group.property("padding") == space("m"), tag
@@ -247,5 +255,31 @@ for lang, density in CASES:
     # chrome: what the group adds around its content (two items + one gap here)
     content = 40 + space("m") + 20
     assert abs(group.property("chrome") - (group.property("implicitHeight") - content)) < 0.5, (tag, group.property("chrome"))
+    # Section labels sit on the line of the row text under them
+    assert h.eval(get("section"), "children[0].x") == look("rowInset") == space("s"), tag
+    assert h.eval(get("groupLabel"), "children[0].x") == look("rowInset"), tag
+
+    # Look.radius(role): the one radius API
+    assert h.eval(win, 'Look.radius("surface")') == space("surfaceRadius"), tag
+    assert h.eval(win, 'Look.radius("group")') == look("groupRadius"), tag
+    assert h.eval(win, 'Look.radius("box")') == look("boxRadius") > 0, tag
+    assert h.eval(win, 'Look.radius("chip", 30)') == h.eval(win, "Look.chipRadius(30)"), tag
+    assert h.eval(win, 'Look.radius("button", 30)') == h.eval(win, "Look.buttonRadius(30)"), tag
+    assert h.eval(win, 'Look.radius("big", 80)') == h.eval(win, "Look.bigRadius(80)"), tag
+    assert h.eval(win, 'Look.radius("small", 4)') == min(space("smallRadius"), 2), tag
+    assert h.eval(win, 'Look.radius("control")') == space("controlRadius"), tag
+    assert h.eval(win, 'Look.radius("round", 30)') == h.eval(win, "Space.round(30)"), tag
+    # Screen tokens: boxed screens space their blocks like their groups
+    gap = look("screenGap")
+    assert gap == (space("xl") if lang == "ink" else look("groupGap")), (tag, gap)
+    assert look("boxPadding") == space("m"), tag
+
+    # Icon: a role-sized glyph in a role colour
+    ic = get("icon")
+    assert h.eval(ic, "font.pixelSize") == h.eval(win, 'Type.iconSize("body")'), tag
+    assert h.eval(get("iconCaption"), "font.pixelSize") == h.eval(win, 'Type.iconSize("caption")'), tag
+    assert h.eval(get("iconCaption"), "color.toString()") == h.eval(win, "Type.muted.toString()"), tag
+    assert h.eval(get("iconAccent"), "color.toString()") == h.eval(win, "Type.accent.toString()"), tag
+    assert h.eval(get("iconSized"), "font.pixelSize") == 30, tag
 
 print("kit: ok")

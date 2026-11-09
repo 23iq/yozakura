@@ -11,13 +11,14 @@ function barSurface(barBgOpacity, containBar, frameEnabled) {
 
 // Rest look of a module's box:
 //   "none"     flat modules
-//   "surface"  the theme's "bg" pill: classic, or a transparent bar where the
+//   "surface"  the theme's "bg" pill: `surfacePill` (Look.barSurfacePill:
+//              classic), or a transparent bar where the
 //              group box has to be the surface (except solid tiles)
 //   "group"    the language's group box on a visible bar surface
-function restLook(language, flat, surface, solidGroups) {
+function restLook(surfacePill, flat, surface, solidGroups) {
     if (flat)
         return "none";
-    if (language === "classic")
+    if (surfacePill === true)
         return "surface";
     if (surface || solidGroups)
         return "group";

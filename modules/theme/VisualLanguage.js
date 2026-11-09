@@ -105,7 +105,18 @@ function apply(lang, variant, cfg) {
 //             control radius + 4 | "small"), inner padding (Space key or
 //             ""), `gap` between stacked groups and `inset` (Surface
 //             padding) as Space keys, `divider`: Group.divider draws its
-//             hairline above the group
+//             hairline above the group, `ruleGap` (Space key) the room
+//             between that hairline and the group below it.
+//             Content inset (Surface edge -> row text) = inset + padding +
+//             ROW_INSET: one value for the unboxed family (ink, 24 px) and
+//             one for every boxed language (28 px); see contentInset()
+//   screen    `gap` between the blocks / columns of a screen (dashboard,
+//             stage, cheatsheet) and `boxPadding`, the padding of a box a
+//             component draws itself even where groups have none (hero
+//             panels, artwork backdrops), as Space keys
+//   bar       the bar modules: `surfacePill` = every module group sits on
+//             the theme's "bg" pill (classic), `weight` = module label
+//             weight (0: the language's active label weight)
 //   dividers  whether Divider hairlines are drawn at all
 //   control   the rest / hover box of IconButton and Chip (null: the
 //             theme's "common" / "focus" variants as configured), `shape`
@@ -132,8 +143,10 @@ function apply(lang, variant, cfg) {
 //             labels in the mono font, letter spacing as a share of the size
 var KIT = {
     "ink": {
+        screen: { gap: "xl", boxPadding: "m" },
+        bar: { surfacePill: false, weight: 0 },
         weather: { drop: "glint", alpha: 0.9 },
-        group: { fill: "", fillOpacity: 0, outline: 0, highlight: 0, radius: "none", padding: "", gap: "l", inset: "l", divider: true },
+        group: { fill: "", fillOpacity: 0, outline: 0, highlight: 0, radius: "none", padding: "", gap: "l", inset: "l", divider: true, ruleGap: "s" },
         dividers: true,
         control: { fill: "overBackground", rest: 0, hoverFill: "overBackground", hover: 0.08, edge: 0, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
         float: null,
@@ -141,8 +154,10 @@ var KIT = {
         light: { edge: 0.3, wash: 0, dim: 0.12, lantern: 0.26 }
     },
     "glass": {
+        screen: { gap: "m", boxPadding: "m" },
+        bar: { surfacePill: false, weight: 0 },
         weather: { drop: "bead", alpha: 1 },
-        group: { fill: "surface", fillOpacity: 0.4, outline: 0.10, highlight: 0.2, radius: "card", padding: "m", gap: "m", inset: "m", divider: false },
+        group: { fill: "surface", fillOpacity: 0.4, outline: 0.10, highlight: 0.2, radius: "card", padding: "m", gap: "m", inset: "s", divider: false },
         dividers: true,
         control: { fill: "overBackground", rest: 0.07, hoverFill: "overBackground", hover: 0.14, edge: 0.12, shape: "round", weight: 400, activeWeight: 500, solidActive: false },
         float: { fill: "surface", fillOpacity: 0.62, outline: 0.18, highlight: 0.28 },
@@ -150,6 +165,8 @@ var KIT = {
         light: { edge: 0.8, wash: 0.36, dim: 0.18, lantern: 0.34 }
     },
     "tiles": {
+        screen: { gap: "s", boxPadding: "m" },
+        bar: { surfacePill: false, weight: 0 },
         weather: { drop: "flat", alpha: 0.9 },
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0, highlight: 0, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
         dividers: false,
@@ -159,6 +176,8 @@ var KIT = {
         light: { edge: 0.5, wash: 0.3, dim: 0.18, lantern: 0.3 }
     },
     "device": {
+        screen: { gap: "s", boxPadding: "m" },
+        bar: { surfacePill: false, weight: 0 },
         group: { fill: "surfaceContainer", fillOpacity: 1, outline: 0.09, highlight: 0.05, shade: 0.24, radius: "small", padding: "m", gap: "s", inset: "s", divider: false },
         dividers: true,
         control: { fill: "surfaceContainerHigh", rest: 1, hoverFill: "surfaceContainerHighest", hover: 1, edge: 0.1, shape: "square", weight: 500, activeWeight: 600, solidActive: false },
@@ -176,8 +195,10 @@ var KIT = {
         }
     },
     "classic": {
+        screen: { gap: "m", boxPadding: "m" },
+        bar: { surfacePill: true, weight: 500 },
         weather: { drop: "bead", alpha: 0.85 },
-        group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "l", divider: false },
+        group: { fill: "surfaceContainer", fillOpacity: 0.6, outline: 0, highlight: 0, radius: "card", padding: "m", gap: "m", inset: "s", divider: false },
         dividers: true,
         control: null,
         float: null,
@@ -185,6 +206,19 @@ var KIT = {
         light: { edge: 0.55, wash: 0.3, dim: 0.16, lantern: 0.3 }
     }
 };
+
+// Base (cozy density) px of the Space keys, for the pure checks below; the
+// shell scales them with the density (Space.qml).
+var SPACE = { "": 0, xs: 4, s: 8, m: 12, l: 16, xl: 24, xxl: 32 };
+// Horizontal inset of a ListRow's content inside its box (Space key).
+var ROW_INSET = "s";
+
+// Distance (base px) from a Surface edge to the text of a ListRow inside a
+// Group: Surface padding + group padding + row inset.
+function contentInset(lang) {
+    var g = KIT[normalize(lang)].group;
+    return SPACE[g.inset] + SPACE[g.padding] + SPACE[ROW_INSET];
+}
 
 // Defaults of `instrument` for the languages that do not set it.
 var INSTRUMENT = {

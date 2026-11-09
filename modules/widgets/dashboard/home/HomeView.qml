@@ -16,8 +16,8 @@ import qs.modules.components.kit
 Item {
     id: root
 
-    // Around the column divider; boxed groups sit one group gap apart.
-    readonly property int gap: Look.groupBoxed ? Math.round(Look.groupGap / 2) : Space.xl
+    // Around the column divider: the columns sit one screen gap apart.
+    readonly property int gap: Math.round(Look.screenGap / 2)
     readonly property int leftW: Metrics.sheetW
     readonly property int rightW: Metrics.launcherLeftPanelW
     // What the right column shows instead of the month and notifications.

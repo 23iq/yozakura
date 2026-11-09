@@ -29,7 +29,7 @@ Item {
     // The "bg" pill casts the theme shadow
     property bool shadow: false
 
-    readonly property string look: KitStates.look(root.active && (Look.solidActive || BarLook.classic), root.active, root.hovered)
+    readonly property string look: KitStates.look(root.active && (Look.solidActive || BarLook.surfacePill), root.active, root.hovered)
     readonly property color ink: BarLook.ink(root.look)
     // "none" | "surface" (the theme's bg pill) | "group" (the language's box)
     readonly property string rest: BarLook.restLook(root.flat)
@@ -51,7 +51,7 @@ Item {
         variant: "bg"
         enableShadow: root.shadow
         effectSurface: "bar"
-        enableBorder: BarLook.classic
+        enableBorder: BarLook.surfacePill
         topLeftRadius: root.r1
         topRightRadius: root.vertical ? root.r1 : root.r2
         bottomLeftRadius: root.vertical ? root.r2 : root.r1
@@ -62,7 +62,7 @@ Item {
     Rectangle {
         objectName: "moduleGroupBox"
         anchors.fill: parent
-        visible: (root.rest === "group" && Look.groupBoxed) || (root.rest === "surface" && !BarLook.classic && border.width > 0)
+        visible: (root.rest === "group" && Look.groupBoxed) || (root.rest === "surface" && !BarLook.surfacePill && border.width > 0)
         color: root.rest === "group" ? Look.groupFill : "transparent"
         border.width: Look.groupOutline.a > 0 ? Space.hairline : 0
         border.color: Look.groupOutline
@@ -87,7 +87,7 @@ Item {
         anchors.fill: parent
         visible: opacity > 0
         opacity: root.look === "hover" ? 1 : 0
-        color: BarLook.classic ? Qt.rgba(Type.text.r, Type.text.g, Type.text.b, 0.1) : Look.controlFill(true)
+        color: BarLook.surfacePill ? Qt.rgba(Type.text.r, Type.text.g, Type.text.b, 0.1) : Look.controlFill(true)
         topLeftRadius: root.shaped ? root.r1 : root.stateRadius
         topRightRadius: root.shaped ? (root.vertical ? root.r1 : root.r2) : root.stateRadius
         bottomLeftRadius: root.shaped ? (root.vertical ? root.r2 : root.r1) : root.stateRadius

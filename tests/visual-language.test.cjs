@@ -130,3 +130,32 @@ test('kit: Glass effect off makes the glass language opaque, other languages unc
     for (const l of ['ink', 'tiles', 'classic', 'device'])
         assert.equal(V.kit(l, false), V.kit(l), l);
 });
+
+test('kit: one content inset per family (Surface edge -> row text)', () => {
+    assert.equal(V.contentInset('ink'), 24, 'unboxed: surface padding + row inset');
+    for (const lang of ['glass', 'tiles', 'classic', 'device'])
+        assert.equal(V.contentInset(lang), 28, `${lang}: boxed family`);
+    assert.equal(V.contentInset('chrome'), V.contentInset('ink'));
+});
+
+test('kit: only ruled (unboxed) groups leave room under their hairline', () => {
+    assert.equal(V.kit('ink').group.ruleGap, 's');
+    for (const lang of ['glass', 'tiles', 'classic', 'device'])
+        assert.ok(!V.kit(lang).group.divider && !V.kit(lang).group.ruleGap, lang);
+    // the break of a ruled ink section: parent gap + hairline + rule gap
+    const g = V.kit('ink').group;
+    assert.ok(V.SPACE[g.gap] + 1 + V.SPACE[g.ruleGap] <= 25);
+});
+
+test('kit: every language names its screen gap, box padding and bar look', () => {
+    for (const lang of V.LANGUAGES) {
+        const k = V.kit(lang);
+        assert.ok(k.screen.gap in V.SPACE && k.screen.boxPadding in V.SPACE, lang);
+        assert.equal(typeof k.bar.surfacePill, 'boolean', lang);
+        assert.equal(typeof k.bar.weight, 'number', lang);
+        // boxed screens space their blocks like their groups
+        if (k.group.fillOpacity > 0)
+            assert.equal(k.screen.gap, k.group.gap, lang);
+    }
+    assert.equal(V.kit('ink').screen.gap, 'xl');
+});

@@ -31,7 +31,7 @@ Button {
     // pill's tint, the on-accent ink on a solid fill: tiles, classic, brush),
     // accent on the bar background (underline, dot, bracket styles).
     readonly property string indicatorStyle: Config.workspaces.indicatorStyle
-    readonly property bool solidIndicator: IndicatorStyles.filled(root.indicatorStyle) && (root.indicatorStyle !== "pill" || Look.solidActive || BarLook.classic)
+    readonly property bool solidIndicator: IndicatorStyles.filled(root.indicatorStyle) && (root.indicatorStyle !== "pill" || Look.solidActive || BarLook.surfacePill)
     readonly property color activeColor: root.solidIndicator ? Styling.srItem("primary") : Type.accent
     // Strip styles (the branch) draw the slot themselves: the button only
     // takes clicks and focus.

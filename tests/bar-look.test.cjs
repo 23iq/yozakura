@@ -5,6 +5,9 @@ const path = require('node:path');
 
 const qmljs = require('./lib/qmljs.cjs');
 const Rules = qmljs.loadLibrary(path.join(__dirname, '..', 'modules/bar/look/BarLookRules.js'));
+const V = qmljs.loadLibrary(path.join(__dirname, '..', 'modules/theme/VisualLanguage.js'));
+// The language decides the pill through its kit spec (never by name).
+const pill = lang => V.kit(lang).bar.surfacePill;
 
 test('bar surface: a visible strip or a containing frame', () => {
     assert.equal(Rules.barSurface(0, false, false), false);
@@ -15,13 +18,20 @@ test('bar surface: a visible strip or a containing frame', () => {
 });
 
 test('rest look of a module box per language', () => {
-    assert.equal(Rules.restLook('ink', true, true, false), 'none', 'flat modules have no box');
-    assert.equal(Rules.restLook('classic', false, true, false), 'surface', 'classic keeps the bg pill');
-    assert.equal(Rules.restLook('ink', false, true, false), 'group', 'on a visible bar: the group box');
-    assert.equal(Rules.restLook('glass', false, true, false), 'group');
-    assert.equal(Rules.restLook('ink', false, false, false), 'surface', 'transparent bar: the pill is the surface');
-    assert.equal(Rules.restLook('glass', false, false, false), 'surface');
-    assert.equal(Rules.restLook('tiles', false, false, true), 'group', 'solid tiles stand on their own');
+    assert.equal(Rules.restLook(pill('ink'), true, true, false), 'none', 'flat modules have no box');
+    assert.equal(Rules.restLook(pill('classic'), false, true, false), 'surface', 'classic keeps the bg pill');
+    assert.equal(Rules.restLook(pill('ink'), false, true, false), 'group', 'on a visible bar: the group box');
+    assert.equal(Rules.restLook(pill('glass'), false, true, false), 'group');
+    assert.equal(Rules.restLook(pill('ink'), false, false, false), 'surface', 'transparent bar: the pill is the surface');
+    assert.equal(Rules.restLook(pill('glass'), false, false, false), 'surface');
+    assert.equal(Rules.restLook(pill('tiles'), false, false, true), 'group', 'solid tiles stand on their own');
+    assert.deepEqual([...V.LANGUAGES].filter(pill), ['classic'], 'only classic keeps the theme pill');
+});
+
+test('bar label weight comes from the language spec', () => {
+    assert.equal(V.kit('classic').bar.weight, 500, 'classic: medium');
+    for (const lang of ['ink', 'glass', 'tiles', 'device'])
+        assert.equal(V.kit(lang).bar.weight, 0, `${lang}: the active label weight`);
 });
 
 test('module text role and glyph size', () => {

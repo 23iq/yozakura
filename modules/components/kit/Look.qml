@@ -43,6 +43,25 @@ QtObject {
     // Space between stacked groups, and the padding of a Surface around them.
     readonly property int groupGap: Space[root.group.gap]
     readonly property int surfacePadding: Space[root.group.inset]
+    // Horizontal inset of row content (ListRow, SettingRow) inside its box;
+    // section labels sit on the same line (SectionLabel.inset).
+    readonly property int rowInset: Space[VisualLanguage.ROW_INSET]
+    // Surface edge -> row text: one value per family (unboxed / boxed).
+    readonly property int contentInset: root.surfacePadding + root.groupPadding + root.rowInset
+    // Room between a Group's divider hairline and the group under it.
+    readonly property int ruleGap: root.group.ruleGap ? Space[root.group.ruleGap] : 0
+
+    // Screens (dashboard, stage, cheatsheet): the gap between their blocks /
+    // columns, and the padding of a box a component draws itself even where
+    // groups are unboxed (hero panels, artwork backdrops), with its radius.
+    readonly property int screenGap: Space[root.spec.screen.gap]
+    readonly property int boxPadding: Space[root.spec.screen.boxPadding]
+    readonly property int boxRadius: root.groupRadius || Space.controlRadius
+
+    // Bar modules (BarLook): classic keeps the theme's "bg" pill under every
+    // module group and its own label weight.
+    readonly property bool barSurfacePill: root.spec.bar.surfacePill
+    readonly property int barLabelWeight: root.spec.bar.weight || root.activeLabelWeight
 
     // Floating surfaces (Surface `floating`: OSDs): null keeps the theme's
     // popup surface (ink, classic); glass is a translucent frosted box with
@@ -111,6 +130,42 @@ QtObject {
     // Opacity of the accent tint that marks a selected / active item
     // (KitStates "active"): for lists that draw their own selection box.
     readonly property real activeTint: KitStates.opacity("active", false)
+
+    // The one radius API of the kit, by role (h: the item height; omit it
+    // for the roles that do not depend on it):
+    //   surface  windows, popups, OSDs (Space.surfaceRadius)
+    //   group    the language's group box (0 in ink: no box)
+    //   box      a box drawn even without group boxes (boxRadius)
+    //   big      Tile, LevelSlider (bigRadius)
+    //   control  the control radius, capped at h / 2
+    //   small    the small radius, capped at h / 2
+    //   button   IconButton (buttonRadius)
+    //   chip     Chip, ListRow, Dropdown (chipRadius)
+    //   round    fully round (Space.round, needs h)
+    function radius(role: string, h: real): real {
+        const hh = h > 0 ? h : 1e6;
+        switch (role) {
+        case "surface":
+            return Space.clampRadius(Space.surfaceRadius, hh);
+        case "group":
+            return root.groupRadius;
+        case "box":
+            return root.boxRadius;
+        case "big":
+            return root.bigRadius(hh);
+        case "small":
+            return Space.clampRadius(Space.smallRadius, hh);
+        case "button":
+            return root.buttonRadius(hh);
+        case "chip":
+            return root.chipRadius(hh);
+        case "round":
+            return Space.round(h > 0 ? h : 0);
+        default:
+            // "control" and unknown roles
+            return Space.clampRadius(Space.controlRadius, hh);
+        }
+    }
 
     // Icon buttons: round, or the control radius in square languages.
     function buttonRadius(h: real): real {
