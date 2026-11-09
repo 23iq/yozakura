@@ -26,7 +26,7 @@ Item {
             spacing: BarLook.gap
             Icon {
                 role: "title"
-                tone: "accent"
+                tone: "secondary"
                 Layout.alignment: Qt.AlignHCenter
                 icon: Icons.terminalWindow
                 size: BarLook.size("title")

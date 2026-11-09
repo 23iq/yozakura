@@ -47,7 +47,7 @@ Item {
                 radius: Look.radius("round", height)
                 Icon {
                     role: "caption"
-                    tone: "accent"
+                    tone: "secondary"
                     anchors.centerIn: parent
                     icon: Icons.sparkle
                     size: BarLook.size("caption")

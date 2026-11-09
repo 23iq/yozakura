@@ -92,7 +92,7 @@ Popup {
                     spacing: Space.s
                     Icon {
                         role: "caption"
-                        tone: "accent"
+                        tone: "secondary"
                         icon: entry.modelData.icon
                     }
                     KitText {

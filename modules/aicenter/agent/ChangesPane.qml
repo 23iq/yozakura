@@ -73,7 +73,7 @@ StyledRect {
             Layout.fillWidth: true
             Icon {
                 role: "caption"
-                tone: "accent"
+                tone: "secondary"
                 icon: Icons.gitDiff
             }
             KitText {

@@ -61,7 +61,7 @@ StyledRect {
             role: "secondary"
             icon: root.row.git ? Icons.gitBranch : (root.row.type === "recent" ? Icons.clockCounterClockwise : Icons.folder)
             size: BarLook.size("secondary")
-            color: root.row.git ? Colors.primary : Colors.outline
+            color: root.row.git ? Type.accent : Type.muted
         }
         ColumnLayout {
             Layout.fillWidth: true

@@ -61,7 +61,7 @@ StyledRect {
             role: "caption"
             icon: Icons.brain
             size: BarLook.size("caption")
-            color: root.level && root.level !== "off" && root.level !== "none" ? Colors.primary : Colors.outline
+            color: root.level && root.level !== "off" && root.level !== "none" ? Type.accent : Type.muted
         }
         // The level a turn will use: chosen, else the engine's own default
         // (outlined brain = auto); the popup spells out "Auto (medium)".

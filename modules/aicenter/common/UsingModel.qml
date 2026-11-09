@@ -35,7 +35,7 @@ StyledRect {
         spacing: Space.s
         Icon {
             role: "caption"
-            tone: "accent"
+            tone: "secondary"
             icon: Icons.sparkle
             size: BarLook.size("caption")
         }

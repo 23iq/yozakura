@@ -68,7 +68,7 @@ StyledRect {
         Icon {
             role: "secondary"
             icon: root.entry.kind === "agent" ? Icons.terminalWindow : Icons.chatTeardrop
-            color: root.entry.kind === "agent" ? Colors.tertiary : Colors.primary
+            tone: "secondary"
         }
         ColumnLayout {
             Layout.fillWidth: true

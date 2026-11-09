@@ -101,7 +101,7 @@ StyledRect {
             spacing: Space.s
             Icon {
                 role: "body"
-                tone: "accent"
+                tone: "secondary"
                 icon: Icons.chartBar
                 size: BarLook.size("body")
             }

@@ -80,7 +80,7 @@ StyledRect {
                         anchors.verticalCenter: parent.verticalCenter
                         icon: segment.modelData.icon
                         size: BarLook.size("caption")
-                        color: segment.index === root.current ? Colors.primary : Colors.outline
+                        color: segment.index === root.current ? Type.accent : Type.muted
                     }
                     AiText {
                         role: "caption"

@@ -35,7 +35,7 @@ StyledRect {
     radius: Look.radius("control")
     variant: selected || hover.hovered ? "focus" : "common"
     border.width: waiting || current || selected ? 1 : 0
-    border.color: waiting ? Colors.warning : Colors.primary
+    border.color: waiting ? Colors.warning : Type.accent
 
     Behavior on border.width {
         enabled: BarLook.animDuration > 0

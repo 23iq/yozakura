@@ -50,7 +50,7 @@ StyledRect {
     radius: Look.radius("surface")
     implicitHeight: col.implicitHeight + 2 * Space.s
     border.width: 1
-    border.color: input.activeFocus || drop.containsDrag ? Colors.primary : Look.alpha("outlineVariant", 0.6)
+    border.color: input.activeFocus || drop.containsDrag ? Type.accent : Look.alpha("outlineVariant", 0.6)
 
     function focusInput() {
         input.forceActiveFocus();
@@ -213,7 +213,7 @@ StyledRect {
                     spacing: Space.s
                     Icon {
                         role: "secondary"
-                        tone: "accent"
+                        tone: "secondary"
                         icon: Icons.fileText
                         size: BarLook.size("secondary")
                     }
@@ -250,7 +250,7 @@ StyledRect {
                     role: "caption"
                     text: entry.modelData.cmd
                     font.family: Type.monoFont
-                    color: Type.accent
+                    color: Type.text
                 }
                 KitText {
                     role: "caption"

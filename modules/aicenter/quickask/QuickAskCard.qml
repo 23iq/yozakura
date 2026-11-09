@@ -107,7 +107,7 @@ FocusScope {
 
             Icon {
                 role: "secondary"
-                tone: "accent"
+                tone: "secondary"
                 icon: GlobalStates.quickAskKind === "shell" ? Icons.command : Icons.sparkle
             }
             TextField {

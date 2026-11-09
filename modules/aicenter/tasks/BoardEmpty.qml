@@ -26,7 +26,7 @@ Item {
                 Layout.alignment: Qt.AlignHCenter
                 icon: Icons.kanban
                 size: Math.round(Space.xxl * BarLook.fontScale)
-                tone: "accent"
+                tone: "secondary"
             }
             AiText {
                 Layout.alignment: Qt.AlignHCenter

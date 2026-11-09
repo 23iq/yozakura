@@ -72,7 +72,7 @@ RowLayout {
                 role: "caption"
                 icon: Icons.sparkle
                 size: BarLook.size("caption")
-                color: root.model ? Colors.primary : Colors.outline
+                color: root.model ? Type.accent : Type.muted
             }
             AiText {
                 role: "caption"

@@ -81,7 +81,7 @@ RowLayout {
             spacing: Space.s
             Icon {
                 role: "caption"
-                tone: "accent"
+                tone: "secondary"
                 icon: Icons.folderOpen
                 size: BarLook.size("caption")
             }

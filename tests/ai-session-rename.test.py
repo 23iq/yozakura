@@ -33,7 +33,7 @@ h.module("qs.modules.components.kit", {
     "Look": "pragma Singleton\nQtObject { property int labelWeight: Font.Normal; function radius(r, h) { return 8 } }",
     "Space": "pragma Singleton\nQtObject { property int hairline: 1; property int xs: 4; property int s: 8 }",
     "KitText": "Text { property string role }",
-    "Icon": "Text { property string role; property string icon; text: icon }",
+    "Icon": "Text { property string role; property string tone; property string icon; text: icon }",
 })
 h.copy("modules/components/kit/InlineEdit.qml", "qs/modules/components/kit", siblings=False)
 h.module("qs.modules.components.kit", {})

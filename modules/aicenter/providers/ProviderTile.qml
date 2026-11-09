@@ -58,7 +58,7 @@ StyledRect {
         ProviderIcon {
             icon: root.preset.icon || ""
             size: 26
-            color: root.connected ? Colors.primary : Colors.overSurface
+            color: root.connected ? Type.accent : Type.text
         }
         ColumnLayout {
             Layout.fillWidth: true
