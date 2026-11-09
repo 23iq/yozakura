@@ -16,8 +16,10 @@ runs end up on one server, and the loser's tests die or hang when the
 winner's server goes away.)
 
 Every test also gets a watchdog: after YOZAKURA_TEST_TIMEOUT seconds
-(default 120) all thread stacks are dumped to stderr and the process exits,
-so a stuck event loop, GL grab or media teardown can never hang a run.
+(default 45; the slowest passing test takes ~20 s; 0 disables it) all
+thread stacks are dumped to stderr and the process exits, so a stuck event
+loop, GL grab or media teardown can never hang a run. Override it per test
+run, e.g. `YOZAKURA_TEST_TIMEOUT=300 python tests/x.test.py` under a debugger.
 """
 from __future__ import annotations
 
@@ -31,7 +33,7 @@ import subprocess
 import sys
 
 _MARK = "YOZAKURA_TEST_XVFB"
-TIMEOUT = float(os.environ.get("YOZAKURA_TEST_TIMEOUT", "120"))
+TIMEOUT = float(os.environ.get("YOZAKURA_TEST_TIMEOUT", "45"))
 
 if TIMEOUT > 0:
     faulthandler.dump_traceback_later(TIMEOUT, exit=True)

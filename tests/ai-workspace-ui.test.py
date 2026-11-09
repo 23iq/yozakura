@@ -1,4 +1,7 @@
-"""Responsive AI host behavior using the real QML host."""
+"""Responsive AI host behavior using the real QML host.
+
+Set AI_WORKSPACE_SHOTS=<dir> to keep the rendered screenshots.
+"""
 import os
 import sys
 from pathlib import Path
@@ -7,6 +10,16 @@ os.environ['QT_QUICK_CONTROLS_STYLE'] = 'Basic'
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib.qmlharness import Harness  # noqa: E402
+
+SHOTS = os.environ.get('AI_WORKSPACE_SHOTS')
+
+
+def shot(img, name):
+    """Screenshots are only written on request (never to a fixed /tmp path)."""
+    if SHOTS:
+        Path(SHOTS).mkdir(parents=True, exist_ok=True)
+        img.save(str(Path(SHOTS) / name))
+
 
 h = Harness('ai-workspace')
 h.singleton('qs.config', 'Config', 'QtObject { property int animDuration: 0; property var ai: ({enabled: true, unloadAfterMinutes: 10}); property var bar: ({frameEnabled: false}) }')
@@ -123,7 +136,7 @@ effort_choice = workspace.findChild(QObject, 'workspaceEffortChoice')
 assert effort_choice.property('visible'), 'native default model should expose declared efforts'
 evaluate(effort_choice, 'currentIndex = 0; activated(0)')
 assert evaluate(workspace, 'configuredEffort()') == '', 'engine default effort must send an empty value'
-view.grabWindow().save('/tmp/ai-workspace-settings.png')
+shot(view.grabWindow(), 'ai-workspace-settings.png')
 engine_picker = workspace.findChild(QObject, 'workspaceEnginePicker')
 evaluate(workspace, 'disableAgent()')
 assert evaluate(engine_picker, 'activate(rows.findIndex(r => r.type === "model" && r.entry.kind === "agent"))') is False, 'unavailable engine must reject keyboard/tap selection'
@@ -181,7 +194,7 @@ Item {
     if isinstance(geometry, tuple):
         geometry = geometry[0]
     assert geometry == 1440, 'fullscreen with frame must fill host'
-    render_view.grabWindow().save(f'/tmp/ai-workspace-fullscreen-{palette}.png')
+    shot(render_view.grabWindow(), f'ai-workspace-fullscreen-{palette}.png')
     render_view.close()
     render_view.deleteLater()
     QCoreApplication.processEvents()

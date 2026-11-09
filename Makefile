@@ -12,7 +12,7 @@ PY ?= python3
 
 .PHONY: all build vet lint run nix clean dev install \
 	schema extras-catalog check parse-qml lint-qml fmt-check fmt lint-go lint-sh lint-py \
-	test test-js test-py test-go audit baseline layers-baseline kit-literals-baseline ipc-methods render-sweep
+	test test-js test-py test-go test-timings audit baseline layers-baseline kit-literals-baseline ipc-methods render-sweep
 
 all: build
 
@@ -90,7 +90,16 @@ lint-sh:
 lint-py:
 	@$(PY) tools/lint/scripts_lint.py py
 
-## test: node, python (PySide6) and go test suites
+# Python QML tests run in parallel (tools/lint/run_tests.py): JOBS=N workers
+# (default: CPU count, JOBS=1 = serial), SHARD=i/N a timing-balanced subset.
+ifdef JOBS
+export YOZAKURA_TEST_JOBS := $(JOBS)
+endif
+ifdef SHARD
+export YOZAKURA_TEST_SHARD := $(SHARD)
+endif
+
+## test: node, python (PySide6) and go test suites (JOBS=N, SHARD=i/N)
 test:
 	@$(PY) tools/lint/run_tests.py js py go
 test-js:
@@ -99,6 +108,12 @@ test-py:
 	@$(PY) tools/lint/run_tests.py py
 test-go:
 	@$(PY) tools/lint/run_tests.py go
+
+## test-timings: run every python test and re-record tests/timings.json (the
+##         longest-first order and the SHARD split); refresh it when tests are
+##         added or their run time changes a lot
+test-timings:
+	@$(PY) tools/lint/run_tests.py --timings py
 
 ## audit: dead files, config schema, translations, snapshot keys, monoliths (ARGS=--json)
 audit:

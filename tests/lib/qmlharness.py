@@ -88,7 +88,9 @@ def _qml_body(body: str, singleton: bool = False) -> str:
     return ("pragma Singleton\n" if singleton or has_pragma else "") + body + "\n"
 
 
-HARNESS_HOME = "/tmp/qmlharness-home"
+# Fake $HOME for Brand paths. The test runner gives every test its own
+# (YOZAKURA_HARNESS_HOME) so parallel tests never share or wipe one.
+HARNESS_HOME = os.environ.get("YOZAKURA_HARNESS_HOME", "/tmp/qmlharness-home")
 
 
 def brand_qml(home: str = HARNESS_HOME) -> str:

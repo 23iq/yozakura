@@ -228,7 +228,8 @@ A change is done only when all of these hold:
 | `make fmt-check` / `make fmt` | qmlformat (settings pinned in `.qmlformat.ini`) + gofmt; ratchet via `fmt-dirty.txt`. |
 | `make lint-go` | `go vet` (strict) + `staticcheck` (baselined). |
 | `make lint-sh` / `make lint-py` | shellcheck / ruff (`ruff.toml`), strict. |
-| `make test` | `node --test tests/`, every `tests/*.test.py`, `go test ./...`. |
+| `make test` | `node --test tests/`, every `tests/*.test.py`, `go test ./...`. Python tests run in parallel, longest first: `JOBS=N` (`YOZAKURA_TEST_JOBS`, default CPU count, `JOBS=1` = serial), `SHARD=i/N` (`YOZAKURA_TEST_SHARD`, timing-balanced subset), `YOZAKURA_TEST_RETRY=1` (re-run failures once; a pass is reported as flaky, CI sets it), `YOZAKURA_TEST_TIMEOUT` (in-test watchdog, 45 s) / `YOZAKURA_TEST_HARD_TIMEOUT` (kill, 90 s). Tests must not share fixed paths: each gets its own `YOZAKURA_HARNESS_HOME`. |
+| `make test-timings` | Re-run every Python test and re-record `tests/timings.json` (order + shard split); refresh after adding slow tests. |
 | `make audit` | Knip-like report (`tools/audit/`, `ARGS=--json`): config schema, translations, dead files, snapshot coverage, monoliths, generated catalog freshness, shell/QML injection. Allowlists with reasons in `tools/audit/config.json`. |
 | `make schema` | Regenerate the settings catalog `assets/schema/*.schema.json` (JSON Schema 2020-12). |
 | `make baseline` | Re-record lint/format baselines (rarely; justify it). |
