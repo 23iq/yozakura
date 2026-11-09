@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // A provider without a connection in the model picker:
 // `OpenAI — not connected  [Connect]`.
@@ -61,9 +62,9 @@ StyledRect {
         }
         Chip {
             objectName: "connect_" + (root.provider.id || "")
-            implicitHeight: 24
-            glyph: Icons.plug
-            label: I18n.t("ai.connect")
+            dense: true
+            icon: Icons.plug
+            text: I18n.t("ai.connect")
             onClicked: root.connectRequested()
         }
     }

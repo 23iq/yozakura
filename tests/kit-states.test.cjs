@@ -34,3 +34,17 @@ test('glyph ink follows the look', () => {
     assert.equal(K.ink('active'), 'accent');
     assert.equal(K.ink('hover'), 'text');
 });
+
+test('danger: an error tint while hovered or active, a filled error action as primary', () => {
+    assert.equal(K.look(false, false, false, true), 'normal', 'at rest a destructive control is plain');
+    assert.equal(K.look(false, false, true, true), 'danger');
+    assert.equal(K.look(false, true, false, true), 'danger');
+    assert.equal(K.look(true, false, false, true), 'dangerFill');
+    assert.equal(K.look(false, false, true), 'hover', 'no danger flag: the usual looks');
+    assert.equal(K.variant('danger'), 'error');
+    assert.equal(K.variant('dangerFill'), 'error');
+    assert.equal(K.opacity('danger', true), K.TINT_HOVER);
+    assert.equal(K.opacity('dangerFill', false), 1);
+    assert.equal(K.ink('danger'), 'danger');
+    assert.equal(K.ink('dangerFill'), 'dangerInk');
+});

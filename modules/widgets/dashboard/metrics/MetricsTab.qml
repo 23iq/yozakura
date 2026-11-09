@@ -9,6 +9,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
 import qs.config
+import qs.modules.components.kit
 
 Rectangle {
     id: root
@@ -333,8 +334,7 @@ Rectangle {
                     Layout.rightMargin: 16
                     spacing: 8
 
-                    Separator {
-                        Layout.preferredHeight: 2
+                    Divider {
                         Layout.fillWidth: true
                     }
 
@@ -345,8 +345,7 @@ Rectangle {
                         color: Colors.overBackground
                     }
 
-                    Separator {
-                        Layout.preferredHeight: 2
+                    Divider {
                         Layout.fillWidth: true
                     }
                 }
@@ -390,8 +389,7 @@ Rectangle {
                                     elide: Text.ElideMiddle
                                 }
 
-                                Separator {
-                                    Layout.preferredHeight: 2
+                                Divider {
                                     Layout.fillWidth: true
                                 }
 
@@ -451,8 +449,7 @@ Rectangle {
                                     elide: Text.ElideMiddle
                                 }
 
-                                Separator {
-                                    Layout.preferredHeight: 2
+                                Divider {
                                     Layout.fillWidth: true
                                 }
 
@@ -522,8 +519,7 @@ Rectangle {
                                         elide: Text.ElideMiddle
                                     }
 
-                                    Separator {
-                                        Layout.preferredHeight: 2
+                                    Divider {
                                         Layout.fillWidth: true
                                     }
 
@@ -607,8 +603,7 @@ Rectangle {
                                         elide: Text.ElideMiddle
                                     }
 
-                                    Separator {
-                                        Layout.preferredHeight: 2
+                                    Divider {
                                         Layout.fillWidth: true
                                     }
 
@@ -852,25 +847,24 @@ Rectangle {
                         }
 
                         // Zoom slider
-                        StyledSlider {
+                        LineSlider {
+                            id: zoomSlider
                             Layout.fillWidth: true
                             Layout.preferredHeight: parent.height
-                            vertical: false
-                            value: (root.chartZoom - 0.2) / 2.8  // Map 0.2-3.0 to 0-1
-                            progressColor: Styling.srItem("overprimary")
-                            backgroundColor: Colors.surface
-                            tooltipText: root.chartZoom ? `${root.chartZoom.toFixed(1)}×` : "1.0×"
-                            thickness: 3
-                            handleSpacing: 2
-                            wavy: false
-                            icon: ""
-                            iconPos: "start"
-                            stepSize: 0.1
-                            snapMode: "always"
-                            onValueChanged: {
-                                const newZoom = 0.2 + (value * 2.8);  // Map 0-1 to 0.2-3.0
-                                root.chartZoom = newZoom;
-                                StateService.set("metricsChartZoom", newZoom);
+                            from: 0.2
+                            to: 3.0
+                            step: 0.1
+                            onMoved: v => {
+                                const zoom = Math.round(v * 10) / 10;
+                                root.chartZoom = zoom;
+                                StateService.set("metricsChartZoom", zoom);
+                            }
+
+                            Binding {
+                                target: zoomSlider
+                                property: "value"
+                                value: root.chartZoom || 1
+                                when: !zoomSlider.pressed
                             }
                         }
 
@@ -890,12 +884,11 @@ Rectangle {
                         }
 
                         // Separator
-                        Separator {
+                        Divider {
                             Layout.fillHeight: true
-                            Layout.preferredWidth: 2
                             Layout.topMargin: 4
                             Layout.bottomMargin: 4
-                            vert: true
+                            vertical: true
                         }
 
                         // Decrease interval button

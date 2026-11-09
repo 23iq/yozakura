@@ -2,7 +2,7 @@
 """Render theme.lighting offscreen (private Xvfb, never the live desktop).
 
     tools/render/lighting_render.py [--out DIR] [--palette default|green ...]
-                                    [--language ink|glass|tiles ...]
+                                    [--language ink|glass|tiles|classic|device ...]
                                     [--time morning|noon|evening|night ...]
                                     [--mode sun|fixed|off]
                                     [--strength subtle|normal|dramatic]
@@ -34,6 +34,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401  (wraps the Window a
 from PySide6.QtTest import QTest  # noqa: E402
 
 from kit_env import KitEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 from settings_env import DEFAULT_PALETTE  # noqa: E402
 
 PLACE = (40.4, -3.7)
@@ -191,7 +192,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--palette", action="append", choices=["default", "green"])
-    ap.add_argument("--language", action="append", choices=["ink", "glass", "tiles", "classic"])
+    ap.add_argument("--language", action="append", choices=LANGUAGES)
     ap.add_argument("--time", action="append", choices=list(TIMES))
     ap.add_argument("--mode", default="sun", choices=["sun", "fixed", "off"])
     ap.add_argument("--strength", default="normal", choices=["subtle", "normal", "dramatic"])
@@ -204,7 +205,7 @@ def main() -> int:
     times = args.time or list(TIMES)
     for pal in args.palette or ["default", "green"]:
         grid = [render(out, pal, lang, times, args.mode, args.wallpaper, args.strength, args.corners)
-                for lang in args.language or ["ink", "glass", "tiles"]]
+                for lang in args.language or LANGUAGES]
         sheet(out, pal, grid)
     return 0
 

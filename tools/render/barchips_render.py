@@ -2,7 +2,7 @@
 """Render the island's bar chips (media, notifications, mic) offscreen
 (private Xvfb, never the live desktop).
 
-    tools/render/barchips_render.py [--out DIR] [--languages ink,glass,tiles]
+    tools/render/barchips_render.py [--out DIR] [--languages ink,glass,tiles,classic,device]
                                     [--edges top,left] [--styles classic,islands]
                                     [--palettes user,green] [--no-popups]
 
@@ -27,6 +27,7 @@ from settings_render import REPO, color_source, palette, wallpaper_state  # noqa
 
 import bundled_fonts  # noqa: E402
 from island_env import IslandEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
 from PySide6.QtCore import QRect  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
@@ -154,7 +155,7 @@ def render(name: str, pal: dict, art: str, style: str, edge: str, lang: str, out
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "barchips"))
-    ap.add_argument("--languages", default="ink,glass,tiles")
+    ap.add_argument("--languages", default=",".join(LANGUAGES))
     ap.add_argument("--edges", default="top,left")
     ap.add_argument("--styles", default="classic,islands")
     ap.add_argument("--palettes", default="user,green")

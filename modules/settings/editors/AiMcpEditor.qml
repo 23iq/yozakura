@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // MCP servers: the built-in yozakura server plus servers imported from
 // Claude Code, Codex and OpenCode. Enable/disable each, inspect its tools.
@@ -81,8 +82,8 @@ ColumnLayout {
                         }
                     }
                     Chip {
-                        glyph: Icons.wrench
-                        label: I18n.t("ai.view_tools")
+                        icon: Icons.wrench
+                        text: I18n.t("ai.view_tools")
                         active: root.expanded === row.modelData.name
                         onClicked: root.toggleTools(row.modelData.name)
                     }

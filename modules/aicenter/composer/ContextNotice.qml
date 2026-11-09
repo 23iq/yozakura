@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/ContextMath.js" as ContextMath
 
 // Notice at the end of the transcript when the context window fills up:
@@ -67,16 +68,15 @@ StyledRect {
             objectName: "noticeCompact"
             visible: !root.agent
             enabled: root.canCompact && !root.compacting
-            implicitHeight: 24
-            glyph: Icons.arrowsInSimple
-            label: root.compacting ? I18n.t("ai.compacting") : I18n.t("ai.compact")
+            dense: true
+            icon: Icons.arrowsInSimple
+            text: root.compacting ? I18n.t("ai.compacting") : I18n.t("ai.compact")
             onClicked: root.compactRequested()
         }
         IconButton {
-            glyph: Icons.cancel
+            icon: Icons.cancel
             tooltip: I18n.t("ai.dismiss")
-            size: 22
-            iconSize: 11
+            size: "xs"
             onClicked: root.dismissedKey = root.sessionKey
         }
     }

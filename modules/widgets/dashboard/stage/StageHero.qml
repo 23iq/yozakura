@@ -64,12 +64,12 @@ Group {
     }
 
     readonly property bool ownBox: !Look.groupBoxed
-    readonly property real boxRadius: Look.groupRadius || Space.controlRadius
+    readonly property real boxRadius: Look.boxRadius
 
     fill: true
     // Natural, not the filled height (a filled Group would echo its height).
     implicitHeight: root.naturalHeight
-    padding: Math.max(Look.groupPadding, Space.l)
+    padding: Look.boxPadding
 
     Item {
         width: parent.width

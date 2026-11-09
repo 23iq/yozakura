@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import "../../services/ai/AgentTimeline.js" as Timeline
 import "../lib/Diff.js" as Diff
@@ -148,18 +149,17 @@ StyledRect {
             Chip {
                 objectName: "actionUndo"
                 visible: root.canUndo
-                glyph: Icons.arrowCounterClockwise
-                label: root.undoError ? I18n.t("ai.undo_retry") : (root.undoInfo && root.undoInfo.label ? root.undoInfo.label : I18n.t("ai.undo"))
+                icon: Icons.arrowCounterClockwise
+                text: root.undoError ? I18n.t("ai.undo_retry") : (root.undoInfo && root.undoInfo.label ? root.undoInfo.label : I18n.t("ai.undo"))
                 maxLabelWidth: 120
-                variant: "transparent"
+                quiet: true
                 onClicked: root.undoRequested(root.undoInfo)
             }
             IconButton {
                 visible: root.hasDetails
-                glyph: root.expanded ? Icons.caretUp : Icons.caretDown
+                icon: root.expanded ? Icons.caretUp : Icons.caretDown
                 tooltip: root.expanded ? I18n.t("ai.hide_details") : I18n.t("ai.details")
-                size: 22
-                iconSize: 11
+                size: "xs"
                 onClicked: root.expanded = !root.expanded
             }
         }

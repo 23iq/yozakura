@@ -9,6 +9,7 @@ import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 
 Button {
@@ -67,10 +68,10 @@ Button {
         Loader {
             active: root.isSeparator
             anchors.centerIn: parent
-            sourceComponent: Separator {
-                vert: !root.isVertical
-                implicitWidth: root.isVertical ? root.iconSize * 0.6 : 2
-                implicitHeight: root.isVertical ? 2 : root.iconSize * 0.6
+            sourceComponent: Divider {
+                vertical: !root.isVertical
+                implicitWidth: root.isVertical ? root.iconSize * 0.6 : Space.hairline
+                implicitHeight: root.isVertical ? Space.hairline : root.iconSize * 0.6
             }
         }
 

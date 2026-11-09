@@ -8,6 +8,7 @@ import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 import "."
 
@@ -167,13 +168,12 @@ PanelWindow {
                 }
 
                 // Search input
-                SearchInput {
+                SearchField {
                     id: searchInput
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 48
                     Layout.alignment: Qt.AlignVCenter
 
-                    variant: "common"
+                    boxed: true
                     placeholderText: I18n.t("overview.search")
                     handleTabNavigation: true
                     clearOnEscape: false

@@ -8,17 +8,13 @@ Atomic design library for the Yozakura shell. 26 QML components + 29 GLSL shader
 | Component | Role |
 |-----------|------|
 | `StyledRect.qml` | **THE** base container. 300+ usages. `variant` prop selects style from `Styling.qml` |
-| `Separator.qml` | Visual divider between sections |
 | `ActionGrid.qml` | Flexible button grid (row or grid layout). Used by PowerMenu, ToolsMenu |
 
 ### Input
 | Component | Role |
 |-----------|------|
-| `SearchInput.qml` | Text entry with icon, prefix, escape-to-clear |
-| `StyledSlider.qml` | Standard slider (volume, brightness, progress) |
-| `PositionSlider.qml` | Media position/seek slider |
+| `PositionSlider.qml` | Media seek bar: the kit LineSlider (wavy while playing), seeks on release |
 | `CircularControl.qml` | Circular knob for volume/mic |
-| `ToggleButton.qml` | Icon button with tooltip and toggle state |
 
 ### Display & Feedback
 | Component | Role |

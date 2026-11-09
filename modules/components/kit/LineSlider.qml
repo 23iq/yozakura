@@ -1,6 +1,8 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components
 import qs.modules.components.kit
 
 // A 3px line slider: track, accent fill, a knob that shows while hovered or
@@ -10,6 +12,10 @@ import qs.modules.components.kit
 // `iconClickable` makes the icon a button (`iconClicked()`, e.g. mute).
 // `level` (0..1, -1 = none) draws a live meter over the track (an input's
 // signal level); the icon sits in a fixed cell so stacked sliders align.
+// `fillColor` tints the fill and knob (a muted or warning level), `wavy`
+// draws a horizontal fill as the shell's animated wave while `playing`
+// (media timelines), `wheelEnabled: false` ignores the wheel (seek bars).
+// Owners keep `value` in sync with a Binding { when: !slider.pressed }.
 Item {
     id: root
 
@@ -27,6 +33,10 @@ Item {
     property bool highlighted: false
     property bool iconClickable: false
     property real level: -1
+    property color fillColor: Type.progress
+    property bool wavy: false
+    property bool playing: false
+    property bool wheelEnabled: true
     readonly property real fraction: root.to === root.from ? 0 : Math.max(0, Math.min(1, (root.value - root.from) / (root.to - root.from)))
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property bool pressed: mouse.pressed
@@ -91,12 +101,14 @@ Item {
                 color: Type.track
 
                 Rectangle {
+                    objectName: "sliderFill"
+                    visible: !root.wavy || root.vertical
                     x: 0
                     y: root.vertical ? parent.height - height : 0
                     width: root.vertical ? parent.width : parent.width * root.fraction
                     height: root.vertical ? parent.height * root.fraction : parent.height
                     radius: parent.radius
-                    color: Type.progress
+                    color: root.fillColor
                 }
 
                 // Live level, quieter than the value it rides on.
@@ -114,12 +126,31 @@ Item {
                 }
             }
 
+            // The wavy fill of a media timeline (flat while paused).
+            Loader {
+                objectName: "sliderWave"
+                active: root.wavy && !root.vertical
+                visible: active
+                x: track.x
+                anchors.verticalCenter: parent.verticalCenter
+                width: track.width * root.fraction
+                height: area.height
+                sourceComponent: CarouselProgress {
+                    frequency: root.playing ? 8 : 0
+                    amplitudeMultiplier: root.playing ? 1 : 0
+                    color: root.fillColor
+                    lineWidth: Space.stroke
+                    fullLength: track.width
+                    active: root.playing
+                }
+            }
+
             Rectangle {
                 id: knob
                 width: Space.m
                 height: width
                 radius: width / 2
-                color: Type.progress
+                color: root.fillColor
                 x: root.vertical ? (area.width - width) / 2 : root.fraction * area.width - width / 2
                 y: root.vertical ? (1 - root.fraction) * area.height - height / 2 : (area.height - height) / 2
                 scale: root.hovered || root.pressed ? 1 : 0
@@ -147,6 +178,10 @@ Item {
                         mouse.track(m);
                 }
                 onWheel: w => {
+                    if (!root.wheelEnabled) {
+                        w.accepted = false;
+                        return;
+                    }
                     const d = (w.angleDelta.y !== 0 ? w.angleDelta.y : w.angleDelta.x) > 0 ? 1 : -1;
                     root.setFraction(root.fraction + d * root.step / (root.to - root.from));
                 }

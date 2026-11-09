@@ -2,7 +2,7 @@
 """Render the OSD styles offscreen (private Xvfb, never the live desktop).
 
     tools/render/osd_render.py [--out DIR] [--mode dark|light]
-                               [--languages ink,glass,tiles] [STYLE ...]
+                               [--languages ink,glass,tiles,classic,device] [STYLE ...]
 
 Draws each style of modules/shell/osd/styles (pill, edge, island, gauge,
 bar-inline) in the states volume / brightness / muted / device switch, once

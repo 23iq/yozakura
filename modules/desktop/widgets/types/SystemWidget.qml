@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.modules.services
 import qs.modules.theme
 import qs.modules.desktop.widgets
+import qs.modules.components.kit
 import "../NetRate.js" as NetRate
 
 // CPU, RAM, GPU temperature and network throughput, each with a
@@ -148,7 +149,6 @@ DesktopWidget {
                     anchors.verticalCenter: parent.verticalCenter
                     height: Math.min(parent.height, Math.round(30 * root.k))
                     values: (row.modelData.values ?? []).slice(-root.capacity)
-                    capacity: root.capacity
                     color: row.modelData.color
                     lineWidth: Math.max(1.5, 2 * root.k)
                 }

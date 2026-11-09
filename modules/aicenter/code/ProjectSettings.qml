@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Task settings of the project (tasks.project.get/set): check command
 // (with the auto-detected suggestion), fix attempts, merge mode, check
@@ -15,6 +16,7 @@ import qs.modules.aicenter.common
 // ai.tasks.fallbackAgent). Every change is saved at once.
 IconButton {
     id: root
+    size: "xs"
     objectName: "projectSettings"
 
     property string dir: ""
@@ -28,7 +30,7 @@ IconButton {
         }, patch), (res, error) => root.error = error || "");
     }
 
-    glyph: Icons.faders
+    icon: Icons.faders
     tooltip: I18n.t("ai.tasks.project_settings")
     active: popup.opened
     onClicked: {
@@ -84,18 +86,18 @@ IconButton {
                 spacing: 6
                 Chip {
                     visible: !!root.info && !!root.info.suggestedCheck
-                    glyph: Icons.sparkle
-                    label: I18n.t("ai.tasks.use_detected").replace("%1", root.info ? root.info.suggestedCheck || "" : "")
+                    icon: Icons.sparkle
+                    text: I18n.t("ai.tasks.use_detected").replace("%1", root.info ? root.info.suggestedCheck || "" : "")
                     mono: true
-                    variant: "transparent"
+                    quiet: true
                     onClicked: root.set({
                         "resetCheck": true
                     })
                 }
                 Chip {
-                    label: I18n.t("ai.tasks.no_check")
+                    text: I18n.t("ai.tasks.no_check")
                     active: !!root.info && root.info.checkCommand === ""
-                    variant: active ? "primary" : "transparent"
+                    quiet: true
                     onClicked: root.set({
                         "checkCommand": ""
                     })
@@ -161,7 +163,7 @@ IconButton {
                         delegate: Chip {
                             id: mode
                             required property string modelData
-                            label: I18n.t("prefs.ai.tasks.merge_" + mode.modelData)
+                            text: I18n.t("prefs.ai.tasks.merge_" + mode.modelData)
                             active: !!root.info && root.info.mergeMode === mode.modelData
                             onClicked: root.set({
                                 "mergeMode": mode.modelData
@@ -196,7 +198,7 @@ IconButton {
                         delegate: Chip {
                             id: fb
                             required property string modelData
-                            label: fb.modelData ? I18n.t("prefs.ai.tasks.agent_" + fb.modelData) : I18n.t("prefs.ai.tasks.fallback_none")
+                            text: fb.modelData ? I18n.t("prefs.ai.tasks.agent_" + fb.modelData) : I18n.t("prefs.ai.tasks.fallback_none")
                             active: Config.ai.tasks.fallbackAgent === fb.modelData
                             onClicked: SettingsStore.set("ai.tasks.fallbackAgent", fb.modelData)
                         }

@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Extra row under an expanded CLI agent in the picker: its model list
 // loading / failed (with Retry) / empty, or (`manual`) a field to type a
@@ -47,8 +48,8 @@ Item {
         }
         Chip {
             visible: !root.manual && root.status !== "loading"
-            glyph: Icons.arrowsClockwise
-            label: I18n.t("ai.retry_models")
+            icon: Icons.arrowsClockwise
+            text: I18n.t("ai.retry_models")
             onClicked: root.retryRequested()
         }
         TextField {

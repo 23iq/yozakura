@@ -11,6 +11,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.config
 import qs.modules.dock
+import qs.modules.components.kit
 
 Button {
     id: root
@@ -66,10 +67,10 @@ Button {
         Loader {
             active: root.isSeparator
             anchors.centerIn: parent
-            sourceComponent: Separator {
-                vert: !root.isVertical
-                implicitWidth: root.isVertical ? root.iconSize : 2
-                implicitHeight: root.isVertical ? 2 : root.iconSize
+            sourceComponent: Divider {
+                vertical: !root.isVertical
+                implicitWidth: root.isVertical ? root.iconSize : Space.hairline
+                implicitHeight: root.isVertical ? Space.hairline : root.iconSize
             }
         }
 

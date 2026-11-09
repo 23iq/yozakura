@@ -20,12 +20,6 @@ Item {
     required property var player
     required property bool notchHovered
 
-    onPlayerChanged: {
-        if (!player) {
-            positionSlider.value = 0;
-        }
-    }
-
     property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing
     property real position: player?.position ?? 0.0
     property real length: player?.length ?? 1.0
@@ -109,21 +103,8 @@ Item {
         running: compactPlayer.isPlaying && compactPlayer.visible
         interval: 1000
         repeat: true
-        onTriggered: {
-            if (!positionSlider.isDragging) {
-                positionSlider.value = compactPlayer.length > 0 ? Math.min(1.0, compactPlayer.position / compactPlayer.length) : 0;
-            }
-            compactPlayer.player?.positionChanged();
-        }
-    }
-
-    Connections {
-        target: compactPlayer.player
-        function onPositionChanged() {
-            if (!positionSlider.isDragging && compactPlayer.player) {
-                positionSlider.value = compactPlayer.length > 0 ? Math.min(1.0, compactPlayer.position / compactPlayer.length) : 0;
-            }
-        }
+        // MPRIS positions do not notify: tick them (PositionSlider follows).
+        onTriggered: compactPlayer.player?.positionChanged()
     }
 
     StyledRect {
@@ -402,7 +383,6 @@ Item {
                 Layout.rightMargin: compactPlayer.notchHovered ? 0 : 8
                 player: compactPlayer.player
                 visible: compactPlayer.notchHovered
-                hasArtwork: compactPlayer.hasArtwork || compactPlayer.wallpaperPath !== ""
             }
 
             Text {

@@ -10,6 +10,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 
 Item {
     id: root
@@ -194,11 +195,10 @@ Item {
                     }
 
                     // Separator
-                    Separator {
+                    Divider {
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 2
-                        Layout.topMargin: 8
-                        Layout.bottomMargin: 8
+                        Layout.topMargin: Space.s
+                        Layout.bottomMargin: Space.s
                     }
 
                     // Section: Volume Mixer

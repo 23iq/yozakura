@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Copies `text` to the clipboard and flashes a check mark.
 IconButton {
@@ -11,10 +12,9 @@ IconButton {
 
     property string copyText: ""
 
-    glyph: copied ? Icons.accept : Icons.copy
+    icon: copied ? Icons.accept : Icons.copy
     tooltip: I18n.t("ai.copy")
-    size: 24
-    iconSize: 13
+    size: "xs"
     property bool copied: false
 
     onClicked: {

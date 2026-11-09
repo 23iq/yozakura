@@ -9,6 +9,7 @@ import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.corners
 import qs.modules.globals
 import qs.config
@@ -352,8 +353,8 @@ Item {
                     visible: active
                     Layout.alignment: Qt.AlignVCenter
 
-                    sourceComponent: Separator {
-                        vert: true
+                    sourceComponent: Divider {
+                        vertical: true
                         implicitHeight: (Config.dock?.iconSize ?? 40) * 0.6
                     }
                 }
@@ -374,8 +375,8 @@ Item {
                     visible: active
                     Layout.alignment: Qt.AlignVCenter
 
-                    sourceComponent: Separator {
-                        vert: true
+                    sourceComponent: Divider {
+                        vertical: true
                         implicitHeight: (Config.dock?.iconSize ?? 40) * 0.6
                     }
                 }
@@ -490,8 +491,7 @@ Item {
                     visible: active
                     Layout.alignment: Qt.AlignHCenter
 
-                    sourceComponent: Separator {
-                        vert: false
+                    sourceComponent: Divider {
                         implicitWidth: (Config.dock?.iconSize ?? 40) * 0.6
                     }
                 }
@@ -512,8 +512,7 @@ Item {
                     visible: active
                     Layout.alignment: Qt.AlignHCenter
 
-                    sourceComponent: Separator {
-                        vert: false
+                    sourceComponent: Divider {
                         implicitWidth: (Config.dock?.iconSize ?? 40) * 0.6
                     }
                 }

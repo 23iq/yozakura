@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import "../lib/Diff.js" as Diff
 
@@ -91,8 +92,9 @@ StyledRect {
                 color: Colors.outline
             }
             IconButton {
+                size: "xs"
                 visible: root.closable
-                glyph: Icons.cancel
+                icon: Icons.cancel
                 tooltip: I18n.t("ai.close")
                 onClicked: root.closeRequested()
             }

@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.chat
 import "Mentions.js" as Mentions
 
@@ -363,7 +364,8 @@ StyledRect {
             spacing: 4
 
             IconButton {
-                glyph: Icons.plus
+                size: "xs"
+                icon: Icons.plus
                 tooltip: I18n.t("ai.attach")
                 onClicked: menu.open()
                 AttachMenu {
@@ -373,13 +375,15 @@ StyledRect {
                 }
             }
             IconButton {
-                glyph: Icons.cursorText
+                size: "xs"
+                icon: Icons.cursorText
                 tooltip: I18n.t("ai.ctx_selection")
                 visible: !root.compact
                 onClicked: root.addContext("selection")
             }
             IconButton {
-                glyph: Icons.selection
+                size: "xs"
+                icon: Icons.selection
                 tooltip: I18n.t("ai.ctx_region")
                 visible: !root.compact
                 onClicked: root.addContext("region")
@@ -395,7 +399,8 @@ StyledRect {
                 color: Colors.outline
             }
             IconButton {
-                glyph: root.busy ? Icons.stop : Icons.paperPlaneRight
+                size: "xs"
+                icon: root.busy ? Icons.stop : Icons.paperPlaneRight
                 tooltip: root.busy ? I18n.t("ai.stop") + " (Ctrl+.)" : I18n.t("ai.send")
                 active: root.busy || input.text.trim().length > 0 || root.attachments.length > 0
                 onClicked: root.busy ? root.stopRequested() : root.submit()

@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/tasks/TaskModel.js" as TaskModel
 
 // Header of the open task: back (compact), status, title, agents, branch,
@@ -30,9 +31,10 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: 6
         IconButton {
+            size: "xs"
             objectName: "taskBack"
             visible: root.showBack
-            glyph: Icons.caretLeft
+            icon: Icons.caretLeft
             tooltip: I18n.t("ai.tasks.back") + " (Esc)"
             onClicked: root.backRequested()
         }
@@ -49,31 +51,35 @@ ColumnLayout {
             color: Colors.overBackground
         }
         IconButton {
+            size: "xs"
             objectName: "taskCancel"
             visible: root.acts.cancel
-            glyph: Icons.stop
+            icon: Icons.stop
             tooltip: I18n.t("ai.tasks.cancel_task")
             onClicked: TasksService.cancel(root.task.id)
         }
         IconButton {
+            size: "xs"
             visible: !!root.run && !!root.run.worktree && root.task.status !== "accepted" && root.task.status !== "discarded"
-            glyph: Icons.folderOpen
+            icon: Icons.folderOpen
             tooltip: I18n.t("ai.tasks.open_folder")
             onClicked: Qt.openUrlExternally("file://" + root.run.worktree)
         }
         IconButton {
+            size: "xs"
             objectName: "taskDiscard"
             visible: root.acts.discard
             danger: true
-            glyph: Icons.trash
+            icon: Icons.trash
             tooltip: I18n.t("ai.tasks.discard") + " (D)"
             onClicked: root.discardRequested()
         }
         IconButton {
+            size: "xs"
             objectName: "taskDelete"
             visible: root.acts.remove
             danger: true
-            glyph: Icons.broom
+            icon: Icons.broom
             tooltip: I18n.t("ai.tasks.delete")
             onClicked: root.deleteRequested()
         }

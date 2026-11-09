@@ -100,9 +100,12 @@ Item {
         }
     }
 
+    // Row content sits at the kit's row inset, on the line of the section
+    // label above it (SectionLabel.inset).
     Column {
         id: body
-        width: parent.width
+        x: Look.rowInset
+        width: parent.width - Look.rowInset * 2
         topPadding: Space.s
         bottomPadding: Space.s
         spacing: Space.m
@@ -172,8 +175,9 @@ Item {
 
     DisabledNote {
         id: disabledNote
+        x: Look.rowInset
         y: body.implicitHeight
-        width: parent.width
+        width: parent.width - Look.rowInset * 2
         note: row.note
     }
 

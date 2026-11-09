@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Code space: project ▾ (recent folders, "Open folder…" = pickRequested,
 // the in-bar FolderPicker), git summary with
@@ -167,9 +168,9 @@ RowLayout {
                 Chip {
                     objectName: "projectOpenFolder"
                     Layout.topMargin: 2
-                    glyph: Icons.plus
-                    label: I18n.t("ai.open_folder")
-                    variant: "transparent"
+                    icon: Icons.plus
+                    text: I18n.t("ai.open_folder")
+                    quiet: true
                     onClicked: {
                         menu.close();
                         root.pickRequested();
@@ -194,10 +195,10 @@ RowLayout {
         Layout.fillWidth: true
         Layout.maximumWidth: implicitWidth
         Layout.minimumWidth: 34
-        glyph: root.instructions ? Icons.fileText : Icons.warning
-        label: root.narrow ? "" : (root.instructions || I18n.t("ai.no_instructions"))
+        icon: root.instructions ? Icons.fileText : Icons.warning
+        text: root.narrow ? "" : (root.instructions || I18n.t("ai.no_instructions"))
         maxLabelWidth: 140
-        variant: "transparent"
+        quiet: true
         opacity: root.instructions ? 1 : 0.7
         onClicked: {
             if (root.instructions)
@@ -237,8 +238,8 @@ RowLayout {
                 }
                 Chip {
                     objectName: "createInstructions"
-                    glyph: Icons.sparkle
-                    label: I18n.t("ai.tasks.create_instructions")
+                    icon: Icons.sparkle
+                    text: I18n.t("ai.tasks.create_instructions")
                     active: true
                     onClicked: {
                         instructionsMenu.close();

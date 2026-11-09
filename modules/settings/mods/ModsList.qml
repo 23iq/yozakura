@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
@@ -49,8 +50,9 @@ ModsCard {
 
     title: I18n.t("mods.installed_count", String(allMods.length))
     trailing: [
-        SearchInput {
-            width: Metrics.menuW + 60
+        SearchField {
+            width: Metrics.menuW + Space.controlL
+            boxed: true
             visible: list.allMods.length > 0
             placeholderText: I18n.t("mods.search")
             clearOnEscape: true

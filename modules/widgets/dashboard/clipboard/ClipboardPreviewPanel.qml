@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 
 // Right side of the clipboard tab: preview of the selected item (image, text
 // / link, or file) above its metadata; a placeholder when nothing is selected.
@@ -54,14 +55,13 @@ Item {
             }
         }
 
-        Separator {
+        Divider {
             id: separator
             anchors.bottom: metadataSection.top
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: Space.s
             anchors.left: parent.left
             anchors.right: parent.right
-            height: 2
-            vert: false
+            vertical: false
         }
 
         ClipboardMetadata {

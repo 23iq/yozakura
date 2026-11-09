@@ -16,7 +16,7 @@ StyledRect {
 
     variant: "primary"
     enableBorder: false
-    backgroundOpacity: Look.solidActive || BarLook.classic ? -1 : KitStates.TINT
+    backgroundOpacity: Look.solidActive || BarLook.surfacePill ? -1 : KitStates.TINT
     x: margin
     y: margin
     width: indicator ? Math.max(0, indicator.width - margin * 2) : 0

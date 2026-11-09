@@ -2,7 +2,7 @@
 """Render the settings chrome with the active preset footer offscreen
 (private Xvfb, never the live desktop).
 
-    tools/render/presetstatus_render.py [--out DIR] [--languages ink,glass,tiles]
+    tools/render/presetstatus_render.py [--out DIR] [--languages ink,glass,tiles,classic,device]
                                         [--mode dark|light] [--size 1180x780]
                                         [--sheet] [--compact] [--accent HEX]
 
@@ -28,6 +28,7 @@ headless.ensure(gl=True)
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 from settings_render import palette, wallpaper_state  # noqa: E402
 
 CHANGES = [
@@ -47,7 +48,7 @@ STATES = {
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
-    ap.add_argument("--languages", default="ink,glass,tiles")
+    ap.add_argument("--languages", default=",".join(LANGUAGES))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
     ap.add_argument("--size", default="1180x780")
     ap.add_argument("--states", default=",".join(STATES))

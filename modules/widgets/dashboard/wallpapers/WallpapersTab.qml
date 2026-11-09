@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.modules.services
 import qs.config
@@ -255,17 +256,16 @@ FocusScope {
             z: 1000 // Asegurar que el menú desplegable se dibuje por encima del resto del contenido
 
             // Barra de búsqueda centrada
-            SearchInput {
+            SearchField {
                 id: wallpaperSearchInput
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 text: searchText
                 placeholderText: I18n.t("wallpapers.search")
-                iconText: ""
+                boxed: true
                 clearOnEscape: false
                 handleTabNavigation: true
                 disableCursorNavigation: true
-                radius: Styling.radius(4)
 
                 // Manejo de eventos de búsqueda y teclado.
                 onSearchTextChanged: text => {

@@ -1,11 +1,13 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Controls as QQC
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.config
 
 // Edits apply only to the selected session, or to its pending launch.
@@ -56,7 +58,8 @@ StyledRect {
                     font.pixelSize: Styling.fontSize(0)
                 }
                 IconButton {
-                    glyph: Icons.cancel
+                    size: "xs"
+                    icon: Icons.cancel
                     tooltip: I18n.t("ai.close")
                     onClicked: root.closeRequested()
                 }
@@ -70,8 +73,8 @@ StyledRect {
                 font.pixelSize: Styling.fontSize(-2)
             }
             Chip {
-                label: I18n.t("ai.engine_default")
-                glyph: Icons.pin
+                text: I18n.t("ai.engine_default")
+                icon: Icons.pin
                 enabled: !!Ai.currentModel && Ai.currentModel.available !== false
                 onClicked: Ai.setDefaultModel(Ai.currentModel.id)
             }
@@ -140,8 +143,8 @@ StyledRect {
             }
             Chip {
                 visible: root.isAgent
-                glyph: Icons.clockCounterClockwise
-                label: I18n.t("ai.retry_models")
+                icon: Icons.clockCounterClockwise
+                text: I18n.t("ai.retry_models")
                 onClicked: root.refresh()
             }
             Text {
@@ -175,12 +178,12 @@ StyledRect {
             // The project of the Code space; changing it opens a new session there.
             Chip {
                 objectName: "settingsBrowse"
-                glyph: Icons.folderOpen
-                label: I18n.t("ai.browse")
+                icon: Icons.folderOpen
+                text: I18n.t("ai.browse")
                 visible: root.isAgent
                 onClicked: root.browseRequested()
             }
-            Switch {
+            QQC.Switch {
                 id: approvalSwitch
                 Layout.fillWidth: true
                 visible: root.isAgent

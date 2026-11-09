@@ -38,6 +38,7 @@ QtObject {
     readonly property string bodyFont: Styling.bodyFont
     readonly property string headingFont: Styling.headingFont
     readonly property string editorialFont: Styling.editorialFont
+    readonly property string monoFont: Config.theme.monoFont
 
     // Colors
     readonly property color text: Colors.overBackground
@@ -48,6 +49,26 @@ QtObject {
     readonly property color placeholder: Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.06)
     readonly property color accent: Colors.primary
     readonly property color accentInk: Colors.overPrimary
+    // Destructive controls (KitStates "danger"): the error ink, and the ink
+    // on a filled error action.
+    readonly property color danger: Colors.error
+    readonly property color dangerInk: Colors.overError
+
+    // The ink colour of a KitStates.ink() name.
+    function inkColor(name: string): color {
+        switch (name) {
+        case "accentInk":
+            return root.accentInk;
+        case "accent":
+            return root.accent;
+        case "danger":
+            return root.danger;
+        case "dangerInk":
+            return root.dangerInk;
+        default:
+            return root.text;
+        }
+    }
     // Progress fills, rings and slider fills: theme.progressRole lets a set
     // show its palette's second accent (secondary / tertiary) there.
     readonly property string progressRole: Config.theme.progressRole || "primary"

@@ -2,7 +2,7 @@
 """Render the sentence bar (bar module `sentence`) offscreen (private Xvfb,
 never the live desktop).
 
-    tools/render/sentence_render.py [--out DIR] [--languages ink,glass,tiles]
+    tools/render/sentence_render.py [--out DIR] [--languages ink,glass,tiles,classic,device]
                                     [--views wide,narrow,left,right]
                                     [--palettes default,green] [--langs en,ru]
                                     [--extras]
@@ -33,6 +33,7 @@ from PySide6.QtCore import QPoint, QRect, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from sentence_env import find, sentence_scene  # noqa: E402
 from settings_env import DEFAULT_PALETTE  # noqa: E402
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 
 H = 900
 VIEWS = {"wide": ("top", 1600), "narrow": ("top", 900), "left": ("left", 1600), "right": ("right", 1600)}
@@ -87,7 +88,7 @@ def extras(out: Path) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "sentence"))
-    ap.add_argument("--languages", default="ink,glass,tiles")
+    ap.add_argument("--languages", default=",".join(LANGUAGES))
     ap.add_argument("--views", default="wide,narrow,left,right")
     ap.add_argument("--palettes", default="default,green")
     ap.add_argument("--langs", default="en,ru")

@@ -8,6 +8,7 @@ import qs.modules.components.kit as Kit
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // One saved conversation or agent session in the history list.
 StyledRect {
@@ -121,32 +122,30 @@ StyledRect {
             }
         }
         IconButton {
-            glyph: Icons.stop
-            size: 24
+            icon: Icons.stop
+            size: "xs"
             visible: hov.hovered && !root.renaming && ["running", "starting", "waiting"].indexOf(root.entry.status) >= 0
             tooltip: I18n.t("ai.stop")
             onClicked: root.stopped()
         }
         IconButton {
-            glyph: Icons.notePencil
-            size: 24
+            icon: Icons.notePencil
+            size: "xs"
             visible: hov.hovered && !root.renaming
             tooltip: I18n.t("ai.rename")
             onClicked: root.renaming = true
         }
         IconButton {
-            glyph: Icons.pin
-            size: 24
-            iconSize: 12
+            icon: Icons.pin
+            size: "xs"
             active: !!root.entry.pinned
             visible: !root.renaming && (hov.hovered || root.entry.pinned)
             tooltip: root.entry.pinned ? I18n.t("ai.unpin") : I18n.t("ai.pin")
             onClicked: root.pinToggled()
         }
         IconButton {
-            glyph: Icons.trash
-            size: 24
-            iconSize: 12
+            icon: Icons.trash
+            size: "xs"
             danger: true
             visible: hov.hovered && !root.renaming
             tooltip: I18n.t("ai.delete")

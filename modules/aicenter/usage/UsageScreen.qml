@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/UsageFormat.js" as UsageFormat
 
 // Usage screen of the AI bar: Today / Week / Month totals, one row per
@@ -124,8 +125,9 @@ StyledRect {
                 onPicked: r => root.range = r
             }
             IconButton {
+                size: "xs"
                 objectName: "usageClose"
-                glyph: Icons.cancel
+                icon: Icons.cancel
                 tooltip: I18n.t("ai.close") + " (Esc)"
                 onClicked: root.closeRequested()
             }

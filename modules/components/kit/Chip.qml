@@ -10,32 +10,44 @@ import qs.modules.components.kit
 // button). The hit area is at least 36 px tall. `showLabel: false` keeps
 // only the icon (crowded rows); fullWidth / compactWidth are the widths
 // with and without the label, for layouts that decide it.
+// Pickers and attachments: `image` (a logo) instead of the icon, a
+// `trailingIcon` (a menu caret) or `closable` (an x -> closeClicked()),
+// `mono` labels, `maxLabelWidth` (> 0: the label elides in the middle).
+// `quiet`: no box at rest (a toolbar of chips), `danger`: a destructive or
+// failing state (error tint), `dense`: the short height of inline pills.
 StyledRect {
     id: root
 
     property string icon: ""
     property string text: ""
+    property url image: ""
+    property string trailingIcon: ""
+    property bool closable: false
+    property bool mono: false
+    property real maxLabelWidth: 0
     property bool active: false
     property bool primary: false
+    property bool quiet: false
+    property bool danger: false
+    property bool dense: false
     property bool highlighted: false
     property bool showLabel: true
-    readonly property real compactWidth: glyph.implicitWidth + Space.m * 2
-    readonly property real fullWidth: glyph.implicitWidth + (root.text !== "" ? Space.s + label.implicitWidth : 0) + Space.m * 2
+    readonly property bool hasImage: root.image.toString() !== ""
+    readonly property real compactWidth: lead.implicitWidth + Space.m * 2
+    readonly property real fullWidth: lead.implicitWidth + (root.text !== "" ? Space.s + label.implicitWidth : 0) + Space.m * 2
     readonly property bool hovered: mouse.containsMouse || root.highlighted
-    readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive), root.active, root.hovered && root.enabled)
-    readonly property bool boxed: Look.boxedControls && (root.look === "normal" || root.look === "hover")
-    readonly property color ink: {
-        const k = KitStates.ink(root.look);
-        return k === "accentInk" ? Type.accentInk : (k === "accent" ? Type.accent : Type.text);
-    }
+    readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive && !root.danger), root.active, root.hovered && root.enabled, root.danger)
+    readonly property bool boxed: Look.boxedControls && !(root.quiet && root.look === "normal") && (root.look === "normal" || root.look === "hover")
+    readonly property color ink: Type.inkColor(KitStates.ink(root.look))
 
     signal clicked
+    signal closeClicked
 
-    implicitHeight: Space.chip
+    implicitHeight: root.dense ? Space.chip - Space.s : Space.chip
     implicitWidth: row.implicitWidth + Space.m * 2
-    variant: KitStates.variant(root.look, "common")
+    variant: KitStates.variant(root.look, root.quiet ? "transparent" : "common")
     backgroundOpacity: root.boxed ? 0 : KitStates.opacity(root.look, root.hovered)
-    enableBorder: !root.boxed && !root.active && !root.primary
+    enableBorder: !root.boxed && !root.active && !root.primary && !root.quiet
     radius: Look.chipRadius(height)
     opacity: root.enabled ? 1 : 0.38
 
@@ -54,24 +66,62 @@ StyledRect {
         anchors.centerIn: parent
         spacing: Space.s
 
-        Text {
-            id: glyph
-            visible: root.icon !== ""
+        Item {
+            id: lead
+            visible: root.icon !== "" || root.hasImage
             anchors.verticalCenter: parent.verticalCenter
-            text: root.icon
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("secondary")
-            color: root.ink
+            implicitWidth: root.hasImage ? Type.iconSize("secondary") : glyph.implicitWidth
+            implicitHeight: Type.iconSize("secondary")
+
+            Icon {
+                id: glyph
+                anchors.centerIn: parent
+                visible: !root.hasImage
+                icon: root.icon
+                role: "secondary"
+                color: root.ink
+            }
+
+            Image {
+                anchors.fill: parent
+                visible: root.hasImage
+                source: root.image
+                sourceSize: Qt.size(width * 2, height * 2)
+                fillMode: Image.PreserveAspectFit
+            }
         }
 
         KitText {
             id: label
-            visible: root.text !== "" && (root.showLabel || root.icon === "")
+            visible: root.text !== "" && (root.showLabel || (root.icon === "" && !root.hasImage))
             anchors.verticalCenter: parent.verticalCenter
+            width: root.maxLabelWidth > 0 ? Math.min(implicitWidth, root.maxLabelWidth) : implicitWidth
             role: "secondary"
             text: root.text
             color: root.ink
+            elide: root.maxLabelWidth > 0 ? Text.ElideMiddle : Text.ElideRight
+            font.family: root.mono ? Type.monoFont : Type.family("secondary")
             font.weight: root.active || root.primary ? Look.activeLabelWeight : Look.labelWeight
+        }
+
+        Icon {
+            visible: root.trailingIcon !== "" && !root.closable
+            anchors.verticalCenter: parent.verticalCenter
+            icon: root.trailingIcon
+            role: "caption"
+            color: root.ink
+            opacity: 0.7
+        }
+
+        Icon {
+            id: closeGlyph
+            objectName: "chipClose"
+            visible: root.closable
+            anchors.verticalCenter: parent.verticalCenter
+            icon: Icons.cancel
+            role: "caption"
+            color: root.ink
+            opacity: closeMouse.containsMouse ? 1 : 0.6
         }
     }
 
@@ -83,5 +133,18 @@ StyledRect {
         hoverEnabled: true
         cursorShape: root.enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
         onClicked: root.clicked()
+    }
+
+    // Over the chip's own area: the x closes instead of clicking.
+    MouseArea {
+        id: closeMouse
+        visible: root.closable
+        x: row.x + closeGlyph.x - Space.xs
+        y: 0
+        width: closeGlyph.width + Space.xs * 2
+        height: root.height
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.closeClicked()
     }
 }

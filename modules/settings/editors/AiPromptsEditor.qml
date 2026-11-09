@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "PromptsEdit.js" as PromptsEdit
 
 // Selection actions (popup near the cursor) and the prompt library.
@@ -80,8 +81,8 @@ ColumnLayout {
                         RowLayout {
                             Layout.fillWidth: true
                             IconButton {
-                                glyph: item.open ? Icons.caretUp : Icons.caretDown
-                                size: 24
+                                icon: item.open ? Icons.caretUp : Icons.caretDown
+                                size: "xs"
                                 onClicked: item.open = !item.open
                             }
                             Text {
@@ -99,9 +100,9 @@ ColumnLayout {
                                 color: Colors.outline
                             }
                             IconButton {
-                                glyph: Icons.trash
+                                icon: Icons.trash
                                 danger: true
-                                size: 24
+                                size: "xs"
                                 onClicked: root.edit(group.modelData.list, item.ref, null)
                             }
                         }
@@ -141,8 +142,8 @@ ColumnLayout {
             }
 
             Chip {
-                glyph: Icons.plus
-                label: group.modelData.list === "actions" ? I18n.t("ai.add_action") : I18n.t("ai.add_prompt")
+                icon: Icons.plus
+                text: group.modelData.list === "actions" ? I18n.t("ai.add_action") : I18n.t("ai.add_prompt")
                 onClicked: root.edit(group.modelData.list, null, group.modelData.list === "actions" ? {
                     id: "custom-" + Date.now(),
                     label: I18n.t("ai.new_action"),

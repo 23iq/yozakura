@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import "../../services/tasks/TaskModel.js" as TaskModel
 
@@ -239,24 +240,24 @@ ColumnLayout {
                 Chip {
                     objectName: "requestChangesSend"
                     visible: changesField.text.trim().length > 0
-                    glyph: Icons.paperPlaneRight
-                    label: I18n.t("ai.tasks.request_changes")
+                    icon: Icons.paperPlaneRight
+                    text: I18n.t("ai.tasks.request_changes")
                     onClicked: root.sendChanges()
                 }
                 Chip {
                     objectName: "reviewDiscard"
                     visible: root.acts.discard
-                    glyph: Icons.trash
-                    label: I18n.t("ai.tasks.discard")
-                    variant: "transparent"
+                    icon: Icons.trash
+                    text: I18n.t("ai.tasks.discard")
+                    quiet: true
                     enabled: !root.busy
                     onClicked: root.discard()
                 }
                 Chip {
                     objectName: "reviewAccept"
                     visible: root.reviewable
-                    glyph: Icons.accept
-                    label: I18n.t("ai.tasks.accept")
+                    icon: Icons.accept
+                    text: I18n.t("ai.tasks.accept")
                     active: true
                     enabled: !root.busy
                     onClicked: root.accept()

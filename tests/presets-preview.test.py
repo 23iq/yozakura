@@ -50,17 +50,13 @@ h.singleton("qs.modules.settings.store", "PresetStudio", """QtObject {
 }""")
 h.module("qs.modules.components", {
     "StyledRect": "Item { property string variant; property real radius; property bool enableShadow }",
-    "SearchInput": """FocusScope {
-    property string text; property string placeholderText; property string iconText
-    property bool clearOnEscape
-    signal accepted; signal escapePressed; signal leftPressed; signal rightPressed; signal upPressed; signal downPressed
-    function focusInput() { forceActiveFocus(); }
-}""",
 })
 kit_stubs.install(h)
 h.module("qs.modules.components.kit", {
     "SearchField": "FocusScope { property string text; property string glyph; property bool clearOnEscape; "
-                   "signal accepted; signal escapePressed; function focusInput() { forceActiveFocus(); } }",
+                   "property string placeholderText; property bool rule; property bool boxed; "
+                   "signal accepted; signal escapePressed; signal leftPressed; signal rightPressed; "
+                   "signal upPressed; signal downPressed; function focusInput() { forceActiveFocus(); } }",
 })
 h.module("qs.modules.widgets.presets.store", {
     "PresetParts": "pragma Singleton\nQtObject { property var parts: ({ current: {} }); function refresh() {} "

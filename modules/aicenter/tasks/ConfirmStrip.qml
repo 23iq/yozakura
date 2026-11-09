@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Inline confirmation: a question with Confirm / Cancel (Enter / Esc).
 StyledRect {
@@ -51,8 +52,8 @@ StyledRect {
         }
         Chip {
             objectName: "confirmCancel"
-            label: I18n.t("ai.tasks.cancel_action")
-            variant: "transparent"
+            text: I18n.t("ai.tasks.cancel_action")
+            quiet: true
             onClicked: {
                 root.close();
                 root.cancelled();
@@ -60,8 +61,9 @@ StyledRect {
         }
         Chip {
             objectName: "confirmOk"
-            label: root.confirmLabel
-            variant: root.danger ? "error" : "primary"
+            text: root.confirmLabel
+            primary: true
+            danger: root.danger
             onClicked: {
                 root.close();
                 root.confirmed();

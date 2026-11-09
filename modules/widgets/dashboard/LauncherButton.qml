@@ -2,22 +2,21 @@ import QtQuick
 import qs.modules.globals
 import qs.modules.services
 import qs.config
-import qs.modules.components
+import qs.modules.bar.look
 
-ToggleButton {
-    buttonIcon: Config.bar.launcherIcon || Qt.resolvedUrl("../../../assets/yozakura/yozakura-icon.svg").toString().replace("file://", "")
-    iconTint: Config.bar.launcherIconTint
-    iconFullTint: Config.bar.launcherIconTint
-    iconSize: Config.bar.launcherIconSize
+// Bar module: the launcher logo (bar.launcherIcon: a glyph or an image
+// path, tinted with bar.launcherIconTint); opens / closes the launcher.
+BarModuleButton {
+    objectName: "launcherButton"
+    glyph: Config.bar.launcherIcon || Qt.resolvedUrl("../../../assets/yozakura/yozakura-icon.svg").toString().replace("file://", "")
+    tint: Config.bar.launcherIconTint
+    imageSize: Config.bar.launcherIconSize
     tooltipText: I18n.t("bar.tooltip.launcher")
+    active: GlobalStates.launcherOpen
 
-    onToggle: function () {
-        if (GlobalStates.launcherOpen) {
-            GlobalStates.clearLauncherState();
-            Visibilities.setActiveModule("");
-        } else {
-            GlobalStates.clearLauncherState();
-            Visibilities.setActiveModule("launcher");
-        }
+    onClicked: {
+        const open = GlobalStates.launcherOpen;
+        GlobalStates.clearLauncherState();
+        Visibilities.setActiveModule(open ? "" : "launcher");
     }
 }

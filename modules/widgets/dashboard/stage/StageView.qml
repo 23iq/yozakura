@@ -25,7 +25,7 @@ Item {
     id: root
 
     // Between the columns (around the divider where groups have no box).
-    readonly property int gap: Look.groupBoxed ? Look.groupGap : Space.l
+    readonly property int gap: Look.screenGap
     readonly property real leftW: toggles.rowWidth + Look.groupPadding * 2
     readonly property bool showMetrics: Config.layout.dashboard.showMetrics ?? true
     readonly property bool playing: hero.playing
