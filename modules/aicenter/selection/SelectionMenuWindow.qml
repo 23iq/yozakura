@@ -252,13 +252,18 @@ PanelWindow {
                     else if (list[win.selectedIndex])
                         win.actions.run(list[win.selectedIndex]);
                 }
-                // A digit typed into the empty field picks that action.
+                // A digit typed into the empty field picks that action (not
+                // a lone digit left over after deleting the rest of a question).
+                property string previous: ""
                 onSearchTextChanged: value => {
-                    if (!/^[1-9]$/.test(value))
+                    const wasEmpty = ask.previous === "";
+                    ask.previous = value;
+                    if (!wasEmpty || !/^[1-9]$/.test(value))
                         return;
                     const action = win.actions.actions[Number(value) - 1];
                     if (!action)
                         return;
+                    ask.previous = "";
                     ask.clear();
                     win.actions.run(action);
                 }

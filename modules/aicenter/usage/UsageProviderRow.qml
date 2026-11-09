@@ -88,6 +88,7 @@ ColumnLayout {
                 }
             }
             UsageSparkline {
+                objectName: "usageSparkline_" + root.row.key
                 visible: (root.series || []).length > 1
                 series: root.series
                 Layout.alignment: Qt.AlignVCenter

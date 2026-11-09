@@ -66,13 +66,13 @@ RowLayout {
         RowLayout {
             id: engineRow
             anchors.centerIn: parent
-            width: Math.min(implicitWidth, parent.width - 16)
+            width: Math.min(implicitWidth, parent.width - 2 * Space.s)
             spacing: Space.s
             Icon {
                 role: "caption"
                 icon: Icons.sparkle
                 size: BarLook.size("caption")
-                color: root.model ? Type.accent : Type.muted
+                color: root.model ? Type.secondary : Type.muted
             }
             AiText {
                 role: "caption"

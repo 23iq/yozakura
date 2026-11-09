@@ -85,7 +85,7 @@ StyledRect {
         }
         Icon {
             role: "label"
-            tone: "accent"
+            tone: "secondary"
             visible: root.isDefault
             icon: Icons.pin
         }

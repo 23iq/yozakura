@@ -26,7 +26,7 @@ h.singleton("qs.modules.theme", "Icons", "QtObject { property string font: 'Sans
 h.singleton("qs.modules.theme", "Motion", "QtObject { property var exit: ({duration: 0}); property var morph: ({easing: Easing.OutCubic}) }")
 h.module("qs.modules.components", {"StyledRect": "Rectangle { property string variant; property bool enableShadow; color: 'transparent' }"})
 h.module("qs.modules.components.kit", {
-    "Space": "pragma Singleton\nQtObject { property int xs: 4; property int s: 8; property int m: 12; property int l: 16; property int xl: 24 }",
+    "Space": "pragma Singleton\nQtObject { property int xs: 4; property int s: 8; property int m: 12; property int l: 16; property int xl: 24; property int controlM: 40 }",
     "Look": "pragma Singleton\nQtObject { property int rowInset: 12; function radius(r, h) { return 8 } }",
     "Type": "pragma Singleton\nQtObject { property color text: 'white'; property color accent: 'pink'; property color danger: 'red'; "
             "function family(r) { return 'Sans' } function size(r) { return 13 } }",
@@ -117,6 +117,10 @@ h.eval(ask, 'text = ""; searchTextChanged("3")')
 assert h.eval(root, "state.ran.join()") == "b,c", "a digit runs that action"
 h.eval(ask, 'searchTextChanged("7")')
 assert h.eval(root, "state.ran.join()") == "b,c", "a digit without an action does nothing"
+h.eval(ask, 'searchTextChanged(""); searchTextChanged("a1"); searchTextChanged("1")')
+assert h.eval(root, "state.ran.join()") == "b,c", "a digit left after deleting text is not a pick"
+h.eval(ask, 'searchTextChanged(""); searchTextChanged("1")')
+assert h.eval(root, "state.ran.join()") == "b,c,a", "a digit typed into the empty field picks"
 h.eval(ask, "escapePressed()")
 assert h.eval(root, "state.closed") == 1
 rows = h.eval(h.find(root, "selectionMenu"), "JSON.stringify(col.children.filter(c => c.title !== undefined).map(c => [c.title, c.highlighted]))")

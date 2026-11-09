@@ -248,6 +248,14 @@ click(find("usageRange_week"))
 pump(300)
 summary_calls = json.loads(ev("calls('usage.summary')"))
 assert {"range": "week", "groupBy": "provider_day"} in summary_calls, summary_calls
+# every day of the range is on screen: the kit Sparkline keeps its first
+# sample off the left edge, so the oldest day is repeated into that slot
+spark = find("usageSparkline_anthropic")
+assert spark is not None and shown("usageSparkline_anthropic"), "the week range draws a per-day sparkline"
+days = ev("series.length", spark)
+vals = json.loads(ev("JSON.stringify(values)", spark))
+assert days > 1 and len(vals) == days + 1 and vals[0] == vals[1], (days, vals)
+assert max(vals) == 1, f"scaled to the busiest day: {vals}"
 # new records refresh the screen
 n = len(summary_calls)
 ev("BackendService.emit('usage.updated', {record: {provider: 'openai'}})")
