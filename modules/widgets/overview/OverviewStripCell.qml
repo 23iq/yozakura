@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.config
 import qs.modules.desktop.panorama
@@ -18,7 +19,6 @@ Item {
     property real emphasis: 1
     property bool selected: false
     property bool dropHover: false
-    property color ringColor: Styling.srItem("overprimary")
     // Scroll style: this workspace's frame of the panorama wallpaper.
     property string panoramaSource: ""
     property int slotCount: 1
@@ -61,7 +61,7 @@ Item {
         id: wallpaper
         anchors.fill: parent
         visible: root.panoramaSource === ""
-        radius: Styling.radius(2)
+        radius: Look.radius("box")
         tintEnabled: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
         source: {
             if (!GlobalStates.wallpaperManager || root.panoramaSource !== "")
@@ -71,13 +71,11 @@ Item {
         }
     }
 
-    Rectangle {
+    WorkspaceRing {
         id: ring
         anchors.fill: parent
-        radius: Styling.radius(2)
-        color: "transparent"
-        border.width: root.selected || root.dropHover ? 2 : 0
-        border.color: root.selected ? root.ringColor : Colors.outline
+        active: root.selected
+        target: root.dropHover
 
         Behavior on border.width {
             enabled: root.motion.enter.duration > 0
@@ -88,16 +86,16 @@ Item {
         }
     }
 
-    Text {
+    KitText {
         anchors.left: parent.left
         anchors.top: parent.top
-        anchors.margins: 8
+        anchors.margins: Space.s
         z: 100000
+        role: "secondary"
+        tabular: true
         text: root.workspaceId
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         font.weight: root.selected ? Font.Bold : Font.Medium
-        color: root.selected ? root.ringColor : Colors.overSurfaceVariant
+        color: root.selected ? Type.accent : Type.secondary
     }
 
     MouseArea {

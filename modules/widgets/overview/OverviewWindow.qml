@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 
 Item {
@@ -59,12 +60,17 @@ Item {
     readonly property real targetWindowHeight: Math.round((windowData?.size[1] || 100) * scale)
     readonly property bool compactMode: targetWindowHeight < 60 || targetWindowWidth < 60
     readonly property string iconPath: AppSearch.guessIcon(windowData?.class || "")
-    readonly property int calculatedRadius: Styling.radius(-2)
 
     signal dragStarted
     signal dragFinished(int targetWorkspace)
     signal windowClicked
     signal windowClosed
+
+    // The overview that lays the windows out (Overview or OverviewStrip: dragArea >
+    // window > windowSpace > belt > overview); duck-typed, both expose the grid.
+    function overviewHost() {
+        return root.parent.parent.parent;
+    }
 
     x: initX
     y: initY
@@ -124,121 +130,18 @@ Item {
         }
     }
 
-    ClippingRectangle {
-        anchors.fill: parent
-        radius: root.calculatedRadius
-        antialiasing: true
-        border.color: Colors.background
-        border.width: 0
-
-        ScreencopyView {
-            id: windowPreview
-            anchors.fill: parent
-            captureSource: Config.performance.windowPreview && GlobalStates.overviewOpen ? root.toplevel : null
-            live: GlobalStates.overviewOpen
-            visible: Config.performance.windowPreview
-        }
-    }
-
-    // Background rectangle with rounded corners
-    Rectangle {
-        id: previewBackground
-        anchors.fill: parent
-        radius: root.calculatedRadius
-        color: pressed ? Colors.surfaceBright : hovered ? Colors.surface : Colors.background
-        border.color: root.isSearchSelected ? Colors.tertiary : root.isSearchMatch ? Styling.srItem("overprimary") : Styling.srItem("overprimary")
-        border.width: root.isSearchSelected ? 3 : root.isSearchMatch ? 2 : (hovered ? 2 : 0)
-        visible: !windowPreview.hasContent || !Config.performance.windowPreview
-
-        Behavior on color {
-            enabled: Config.animDuration > 0
-            ColorAnimation {
-                duration: Motion.exit.duration
-            }
-        }
-
-        Behavior on border.width {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Motion.exit.duration
-            }
-        }
-    }
-
-    // Overlay content when preview is not available
-    Image {
-        mipmap: true
-        id: windowIcon
-        readonly property real iconSize: Math.round(Math.min(root.targetWindowWidth, root.targetWindowHeight) * (root.compactMode ? 0.6 : 0.35))
-        anchors.centerIn: parent
-        width: iconSize
-        height: iconSize
-        source: Quickshell.iconPath(root.iconPath, "image-missing")
-        sourceSize: Qt.size(iconSize, iconSize)
-        asynchronous: true
-        visible: !windowPreview.hasContent || !Config.performance.windowPreview
-        z: 10
-    }
-
-    // Overlay border and effects when preview is available
-    Rectangle {
-        id: previewOverlay
-        anchors.fill: parent
-        radius: root.calculatedRadius
-        color: pressed ? Qt.rgba(Colors.surfaceContainerHighest.r, Colors.surfaceContainerHighest.g, Colors.surfaceContainerHighest.b, 0.5) : hovered ? Qt.rgba(Colors.surfaceContainer.r, Colors.surfaceContainer.g, Colors.surfaceContainer.b, 0.2) : "transparent"
-        border.color: root.isSearchSelected ? Colors.tertiary : root.isSearchMatch ? Styling.srItem("overprimary") : Styling.srItem("overprimary")
-        border.width: root.isSearchSelected ? 3 : root.isSearchMatch ? 2 : (hovered ? 2 : 0)
-        visible: windowPreview.hasContent && Config.performance.windowPreview
-        z: 5
-
-        Behavior on border.width {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Motion.exit.duration
-            }
-        }
-    }
-
-    // Search match glow effect
-    Rectangle {
-        visible: root.isSearchSelected && !root.Drag.active
-        anchors.fill: parent
-        anchors.margins: -4
-        radius: root.calculatedRadius + 4
-        color: "transparent"
-        border.color: Colors.tertiary
-        border.width: 2
-        opacity: 0.6
-        z: -1
-    }
-
-    // Overlay icon when preview is available (smaller, in corner)
-    Image {
-        mipmap: true
-        visible: windowPreview.hasContent && !root.compactMode && Config.performance.windowPreview
-        anchors.bottom: parent.bottom
-        anchors.right: parent.right
-        anchors.margins: 4
-        width: 16
-        height: 16
-        source: Quickshell.iconPath(root.iconPath, "image-missing")
-        sourceSize: Qt.size(16, 16)
-        asynchronous: true
-        opacity: 0.8
-        z: 10
-    }
-
-    // XWayland indicator
-    Rectangle {
-        visible: root.windowData?.xwayland || false
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.margins: 2
-        width: 6
-        height: 6
-        radius: 3
-        color: Colors.error
-        z: 10
+    OverviewWindowFace {
+        id: face
+        toplevel: root.toplevel
+        windowData: root.windowData
+        iconPath: root.iconPath
+        hovered: root.hovered
+        pressed: root.pressed
+        matched: root.isSearchMatch
+        selected: root.isSearchSelected
+        compact: root.compactMode
+        glow: root.isSearchSelected && !root.Drag.active
+        tooltipShown: dragArea.containsMouse && !root.Drag.active
     }
 
     MouseArea {
@@ -260,7 +163,7 @@ Item {
         }
 
         onReleased: mouse => {
-            const overviewRoot = parent.parent.parent.parent;
+            const overviewRoot = root.overviewHost();
             let targetWorkspace = overviewRoot.draggingTargetWorkspace;
 
             root.pressed = false;
@@ -272,11 +175,9 @@ Item {
                     // Calculate which workspace we're over based on position
                     const workspaceColIndex = Math.floor((root.x - root.xOffset + root.availableWorkspaceWidth / 2) / (root.availableWorkspaceWidth + overviewRoot.workspacePadding + overviewRoot.workspaceSpacing));
                     const workspaceRowIndex = Math.floor((root.y - root.yOffset + root.availableWorkspaceHeight / 2) / (root.availableWorkspaceHeight + overviewRoot.workspacePadding + overviewRoot.workspaceSpacing));
-                    
-                    if (workspaceColIndex >= 0 && workspaceColIndex < overviewRoot.columns && 
-                        workspaceRowIndex >= 0 && workspaceRowIndex < overviewRoot.rows) {
-                        targetWorkspace = overviewRoot.workspaceGroup * overviewRoot.workspacesShown + 
-                                        workspaceRowIndex * overviewRoot.columns + workspaceColIndex + 1;
+
+                    if (workspaceColIndex >= 0 && workspaceColIndex < overviewRoot.columns && workspaceRowIndex >= 0 && workspaceRowIndex < overviewRoot.rows) {
+                        targetWorkspace = overviewRoot.workspaceGroup * overviewRoot.workspacesShown + workspaceRowIndex * overviewRoot.columns + workspaceColIndex + 1;
                     } else {
                         // Out of bounds, default to current workspace
                         targetWorkspace = windowData?.workspace.id;
@@ -296,29 +197,29 @@ Item {
                         const targetRowIndex = Math.floor((targetWorkspace - 1) % overviewRoot.workspacesShown / overviewRoot.columns);
                         const targetXOffset = Math.round((overviewRoot.workspaceImplicitWidth + overviewRoot.workspacePadding + overviewRoot.workspaceSpacing) * targetColIndex + overviewRoot.workspacePadding / 2);
                         const targetYOffset = Math.round((overviewRoot.workspaceImplicitHeight + overviewRoot.workspacePadding + overviewRoot.workspaceSpacing) * targetRowIndex + overviewRoot.workspacePadding / 2);
-                        
+
                         // Calculate relative position in target workspace
                         const relativeX = root.x - targetXOffset;
                         const relativeY = root.y - targetYOffset;
-                        
+
                         // Convert to percentage
                         const percentageX = Math.round((relativeX / root.availableWorkspaceWidth) * 100);
                         const percentageY = Math.round((relativeY / root.availableWorkspaceHeight) * 100);
-                        
+
                         // Move to workspace and set position
                         YozdService.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${windowData?.address}`);
                         YozdService.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${windowData?.address}`);
-                        
+
                         // Force immediate window data update
                         CompositorData.updateWindowList();
                     } else {
                         // Just move workspace without repositioning
                         YozdService.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${windowData?.address}`);
-                        
+
                         // Force immediate window data update
                         CompositorData.updateWindowList();
                     }
-                    
+
                     // Reset position in overview
                     root.x = root.initX;
                     root.y = root.initY;
@@ -326,26 +227,26 @@ Item {
                     // Dropped on same workspace and floating - reposition
                     const relativeX = root.x - root.xOffset;
                     const relativeY = root.y - root.yOffset;
-                    
+
                     const percentageX = Math.round((relativeX / root.availableWorkspaceWidth) * 100);
                     const percentageY = Math.round((relativeY / root.availableWorkspaceHeight) * 100);
-                    
+
                     const draggedX = root.x;
                     const draggedY = root.y;
-                    
+
                     YozdService.dispatch(`movewindowpixel exact ${percentageX}% ${percentageY}%, address:${windowData?.address}`);
-                    
+
                     // Force immediate window data update
                     CompositorData.updateWindowList();
-                    
+
                     // Set override position for immediate visual update
                     root.overrideX = draggedX;
                     root.overrideY = draggedY;
                     root.useOverridePosition = true;
-                    
+
                     root.x = draggedX;
                     root.y = draggedY;
-                    
+
                     resetOverrideTimer.restart();
                 } else {
                     // Reset position for non-floating or non-moved windows
@@ -375,30 +276,6 @@ Item {
                 // Double click closes overview and focuses window
                 root.windowClicked();
             }
-        }
-    }
-
-    // Tooltip
-    Rectangle {
-        visible: dragArea.containsMouse && !root.Drag.active && root.windowData
-        anchors.bottom: parent.top
-        anchors.bottomMargin: 8
-        anchors.horizontalCenter: parent.horizontalCenter
-        width: tooltipText.implicitWidth + 16
-        height: tooltipText.implicitHeight + 8
-        color: Colors.inverseSurface
-        radius: Styling.radius(0) / 2
-        opacity: 0.9
-        z: 1000
-
-        Text {
-            id: tooltipText
-            anchors.centerIn: parent
-            text: `${root.windowData?.title || ""}\n[${root.windowData?.class || ""}]${root.windowData?.xwayland ? " [XWayland]" : ""}`
-            font.family: Config.theme.font
-            font.pixelSize: 10
-            color: Colors.inverseOnSurface
-            horizontalAlignment: Text.AlignHCenter
         }
     }
 }

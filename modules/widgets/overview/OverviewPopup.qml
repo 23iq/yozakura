@@ -84,34 +84,18 @@ PanelWindow {
     }
 
     // Semi-transparent backdrop
-    Rectangle {
+    Scrim {
         id: backdrop
-        anchors.fill: parent
-        color: Colors.scrim
-        opacity: overviewOpen ? 0.5 : 0
-
-        Behavior on opacity {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Motion.enter.duration
-                easing.type: Motion.enter.easing
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: {
-                Visibilities.setActiveModule("");
-            }
-        }
+        shown: overviewPopup.overviewOpen
+        onClicked: Visibilities.setActiveModule("")
     }
 
     // Main content column (search + overview)
     Item {
         id: mainContainer
         anchors.centerIn: parent
-        width: Math.max(searchContainer.width, overviewContainer.width + (scrollbarContainer.visible ? scrollbarContainer.width + 8 : 0))
-        height: searchContainer.height + 8 + overviewContainer.height
+        width: Math.max(searchContainer.width, overviewContainer.width + (scrollbarContainer.visible ? scrollbarContainer.width + Space.s : 0))
+        height: searchContainer.height + Space.s + overviewContainer.height
 
         opacity: overviewOpen ? 1 : 0
         scale: overviewOpen ? 1 : 0.9
@@ -140,31 +124,25 @@ PanelWindow {
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
             width: Math.min(400, overviewContainer.width)
-            height: 80
-            radius: Styling.radius(24)
+            height: searchRow.implicitHeight + Space.l * 2
+            radius: Look.radius("surface", height)
 
             // The rect\'s own shadow (also drawn by a corner style\'s mask)
             enableShadow: true
 
             RowLayout {
+                id: searchRow
                 anchors.fill: parent
-                anchors.margins: 16
-                spacing: 8
+                anchors.margins: Space.l
+                spacing: Space.s
 
-                // Icon container
-                Rectangle {
-                    Layout.preferredWidth: 48
-                    Layout.preferredHeight: 48
+                Icon {
+                    Layout.preferredWidth: Space.controlM
+                    Layout.preferredHeight: Space.controlM
                     Layout.alignment: Qt.AlignVCenter
-                    color: "transparent"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: Icons.overview
-                        font.family: Icons.font
-                        font.pixelSize: 24
-                        color: Styling.srItem("overprimary")
-                    }
+                    icon: Icons.overview
+                    role: "title"
+                    tone: "secondary"
                 }
 
                 // Search input
@@ -179,11 +157,11 @@ PanelWindow {
                     clearOnEscape: false
 
                     // Match counter suffix
-                    Text {
+                    KitText {
                         id: matchCounter
                         visible: overviewLoader.item && overviewLoader.item.searchQuery.length > 0
                         anchors.right: parent.right
-                        anchors.rightMargin: 16
+                        anchors.rightMargin: Space.l
                         anchors.verticalCenter: parent.verticalCenter
                         text: {
                             if (!overviewLoader.item)
@@ -194,9 +172,9 @@ PanelWindow {
                             }
                             return "0";
                         }
-                        font.family: Config.theme.font
-                        font.pixelSize: Config.theme.fontSize - 2
-                        color: (overviewLoader.item && overviewLoader.item.matchingWindows.length > 0) ? Styling.srItem("overprimary") : Colors.error
+                        role: "caption"
+                        tabular: true
+                        color: (overviewPopup.overviewView && overviewPopup.overviewView.matchingWindows.length > 0) ? Type.accent : Type.danger
                         opacity: 0.8
                     }
 
@@ -219,7 +197,7 @@ PanelWindow {
                             overviewLoader.item.selectNextMatch();
                         }
                     }
-                    
+
                     onShiftTabPressed: {
                         if (searchInput.text.length === 0) {
                             overviewPopup.stepWorkspace(-1);
@@ -274,17 +252,17 @@ PanelWindow {
         Item {
             id: overviewContainer
             anchors.top: searchContainer.bottom
-            anchors.topMargin: 8
+            anchors.topMargin: Space.s
             anchors.horizontalCenter: parent.horizontalCenter
-            width: overviewLoader.item ? overviewLoader.item.implicitWidth + 48 : 400
-            height: overviewLoader.item ? overviewLoader.item.implicitHeight + 48 : 300
+            width: overviewPopup.overviewView ? overviewPopup.overviewView.implicitWidth + Space.xl * 2 : 400
+            height: overviewPopup.overviewView ? overviewPopup.overviewView.implicitHeight + Space.xl * 2 : 300
 
             // Background panel
             StyledRect {
                 id: overviewBackground
                 variant: "bg"
                 anchors.fill: parent
-                radius: Styling.radius(20)
+                radius: Look.radius("surface")
 
                 // The rect\'s own shadow (also drawn by a corner style\'s mask)
                 enableShadow: true
@@ -308,11 +286,11 @@ PanelWindow {
             visible: overviewLoader.item && overviewLoader.item.needsScrollbar
             variant: "bg"
             anchors.left: overviewContainer.right
-            anchors.leftMargin: 8
+            anchors.leftMargin: Space.s
             anchors.verticalCenter: overviewContainer.verticalCenter
-            width: 32
+            width: Space.xxl
             height: Math.max(overviewContainer.height * 0.6, 200)
-            radius: Styling.radius(0)
+            radius: Look.radius("surface", width)
 
             // The rect\'s own shadow (also drawn by a corner style\'s mask)
             enableShadow: true
@@ -332,8 +310,8 @@ PanelWindow {
             ScrollBar {
                 id: externalScrollBar
                 anchors.centerIn: parent
-                height: parent.height - 16
-                width: 12
+                height: parent.height - Space.l
+                width: Space.m
                 orientation: Qt.Vertical
                 policy: ScrollBar.AlwaysOn
 
@@ -353,10 +331,9 @@ PanelWindow {
                     }
                 }
 
-                contentItem: Rectangle {
-                    implicitWidth: 12
-                    radius: Styling.radius(-10)
-                    color: externalScrollBar.pressed ? Styling.srItem("overprimary") : (externalScrollBar.hovered ? Qt.lighter(Styling.srItem("overprimary"), 1.2) : Styling.srItem("overprimary"))
+                contentItem: Mark {
+                    implicitWidth: Space.m
+                    color: externalScrollBar.hovered && !externalScrollBar.pressed ? Qt.lighter(Type.accent, 1.2) : Type.accent
 
                     Behavior on color {
                         enabled: Config.animDuration > 0
@@ -366,11 +343,9 @@ PanelWindow {
                     }
                 }
 
-                background: Rectangle {
-                    implicitWidth: 12
-                    radius: Styling.radius(-10)
-                    color: Colors.surfaceContainer
-                    opacity: 0.3
+                background: Mark {
+                    implicitWidth: Space.m
+                    color: Type.track
                 }
             }
         }
