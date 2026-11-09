@@ -16,15 +16,14 @@ Item {
     implicitWidth: root.vertical ? Space.stroke : 120
     implicitHeight: root.vertical ? 120 : Space.stroke
 
-    Rectangle {
+    Mark {
         id: groove
         anchors.centerIn: parent
         width: root.vertical ? Space.stroke : parent.width
         height: root.vertical ? parent.height : Space.stroke
-        radius: Space.stroke / 2
         color: Type.track
 
-        Rectangle {
+        Mark {
             x: 0
             y: root.vertical ? groove.height - height : 0
             width: root.vertical ? groove.width : groove.width * root.fraction
