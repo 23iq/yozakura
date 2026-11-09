@@ -113,9 +113,9 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ## UI KIT
 Screens are built only from `modules/components/kit/` (`import qs.modules.components.kit`):
 `Type`/`KitText` roles, `Space` tokens, `Group`, `SectionLabel`, `Divider`, `ListRow`,
-`SearchField` (`boxed` toolbar variant), `IconButton` (`xs`..`xl`, `danger`, `tooltip`), `ActionButton`,
+`SearchField` (`boxed` toolbar variant, `handleHomeEnd` for a list under it), `IconButton` (`xs`..`xl`, `danger`, `tooltip`), `ActionButton`,
 `Chip` (`image`, `trailingIcon`, `closable`, `quiet`, `danger`, `dense`), `Switch`, `LineSlider` (`wavy`
-media timelines, `fillColor`), `ProgressLine`, `Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`, `InlineLink` (a
+media timelines with `alwaysShowKnob`, `fillColor`), `ProgressLine`, `Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`, `InlineLink` (a
 link in running text), `Icon` (an icon-font glyph sized by a Type role, `Type.iconSize(role)`, in an ink
 `tone`: text / secondary / muted / accent / progress / accentInk), `Mark` (a solid graphic shape, not a box:
 indicator dots, grooves, ticks, swatches; round by default), `Scrim` (the dimming layer behind a modal

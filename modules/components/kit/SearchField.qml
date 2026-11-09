@@ -16,10 +16,12 @@ import "SearchKeys.js" as SearchKeys
 // `leading` / `trailing` replace the glyph / hints.
 //
 // Keyboard (SearchKeys.js): Enter -> accepted (Shift: shiftAccepted),
-// Escape -> escapePressed (and clears with `clearOnEscape`), arrows / Page /
-// Home / End -> the matching *Pressed signal (Left / Right only at the text
-// edges unless `disableCursorNavigation`), Tab / Shift+Tab with
-// `handleTabNavigation`, Backspace on empty, Ctrl+R / P / Up / Down.
+// Escape -> escapePressed (and clears with `clearOnEscape`), arrows / Page
+// -> the matching *Pressed signal (Left / Right only at the text edges
+// unless `disableCursorNavigation`), Home / End -> homePressed / endPressed
+// with `handleHomeEnd` (a list under the field; otherwise they move the
+// cursor), Tab / Shift+Tab with `handleTabNavigation`, Backspace on empty,
+// Ctrl+R / P / Up / Down.
 Item {
     id: root
 
@@ -32,6 +34,7 @@ Item {
     property bool boxed: false
     property bool clearOnEscape: true
     property bool handleTabNavigation: false
+    property bool handleHomeEnd: false
     property bool passwordMode: false
     property bool disableCursorNavigation: false
     property Component leading: glyphComponent
@@ -124,6 +127,7 @@ Item {
                     atStart: textField.cursorPosition === 0,
                     atEnd: textField.cursorPosition === textField.text.length,
                     tabNav: root.handleTabNavigation,
+                    homeEnd: root.handleHomeEnd,
                     freeCursor: root.disableCursorNavigation
                 });
                 if (signalName === "")

@@ -208,7 +208,7 @@ check("expanded row grows by the options list", len(expanded) == 1 and expanded[
 ev("selectedIndex = 0")
 check("changing selection collapses the menu", ev("expandedItemIndex") == -1)
 
-# Search field keys (SearchInput signals).
+# Search field keys (kit SearchField signals).
 search = next(o for o in walk() if o.metaObject().indexOfSignal("shiftAccepted()") >= 0)
 reset_calls()
 ev("selectedIndex = 1")

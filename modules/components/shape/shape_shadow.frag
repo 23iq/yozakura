@@ -139,6 +139,12 @@ void main() {
         fragColor = vec4(0.0);
         return;
     }
+    // deep under the frame (outside its hole): full shadow, no blur sums;
+    // only the band within the blur's reach of the hole edge pays for them
+    if (ubuf.invertedFlag > 0.5 && d > reach + 1.0) {
+        fragColor = ubuf.color * ubuf.qt_Opacity;
+        return;
+    }
 
     float cover = ubuf.sharpWeight * clamp(0.5 - body, 0.0, 1.0);
     for (int i = 0; i < 4; i++) {

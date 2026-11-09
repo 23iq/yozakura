@@ -11,7 +11,8 @@ IconButton {
 
     required property ShellScreen screen
 
-    size: "s"
+    // A chip's height (32 px): the dock's buttons stay compact
+    size: "chip"
     icon: Icons.overview
     tooltip: I18n.t("bar.tooltip.overview")
     onClicked: {

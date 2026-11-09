@@ -1,7 +1,7 @@
 """Small kit-built pieces of the shell surfaces: the overview's WorkspaceRing
 (accent on the active workspace, outline on a drop target), the capture
 tools' CaptureHighlight (accent outline + wash only while lit) and the
-dock's DockPinButton (accent while pinned, its glyph and tooltip follow)."""
+dock's DockPinButton (32 px, accent while pinned, its glyph and tooltip follow)."""
 import functools
 import json
 import sys
@@ -64,6 +64,7 @@ for lang in ("ink", "glass"):
 
     pin = get("pin")
     check(pin.property("active") is False and pin.property("icon") == ev("Icons.unpin"), f"{lang}: unpinned look")
+    check(h.eval(pin, "width") == ev("Space.chip") == 32, f"{lang}: the dock keeps its 32 px buttons")
     win.requestActivate()
     QTest.qWait(30)
     px, py = json.loads(h.eval(pin, "(function () { var p = mapToItem(null, width / 2, height / 2); return JSON.stringify([p.x, p.y]); })()"))

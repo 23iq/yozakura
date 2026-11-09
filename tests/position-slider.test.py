@@ -1,7 +1,7 @@
 """Media seek bar (modules/components/PositionSlider.qml, on the kit
 LineSlider): it follows the player while idle, a drag seeks once on release
 to the dragged position (not back to where the player was), the wheel is left
-to the surface under it, and a player that cannot seek is never written."""
+to the surface under it, the playhead knob always shows, and a player that cannot seek is never written."""
 import sys
 from pathlib import Path
 
@@ -43,6 +43,8 @@ assert abs(seek.property("value") - 0.25) < 1e-6, seek.property("value")
 player.setProperty("position", 100)
 assert abs(seek.property("value") - 0.5) < 1e-6, "follows the player while idle"
 assert seek.property("wheelEnabled") is False, "the wheel is left to the surface under it"
+assert seek.property("hovered") is False and h.eval(h.find(seek, "lineSliderKnob"), "scale") == 1, \
+    "the playhead knob shows without hover (alwaysShowKnob)"
 
 player.setProperty("seeks", 0)
 origin = h.eval(seek, "mapToItem(null, 0, height / 2)")

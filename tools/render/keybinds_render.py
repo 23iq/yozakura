@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from settings_render import REPO, palette, wallpaper_state  # noqa: E402  (also enters the private Xvfb)
 
 from PySide6.QtTest import QTest  # noqa: E402
-from settings_env import USER_BINDS, SettingsEnv, default_binds  # noqa: E402
+from settings_env import APP_ID, USER_BINDS, SettingsEnv, default_binds  # noqa: E402
 
 
 def hypr_binds() -> list:
@@ -39,7 +39,9 @@ def hypr_binds() -> list:
 
 def with_cheatsheet_bind(binds: dict) -> dict:
     """The shell's repair pass adds new core binds; mirror it for the render."""
-    app = next((k for k in binds if k not in ("custom", "disabled")), None)
+    # The app root: the one object section ("custom", "disabled" and
+    # "migrations" are lists)
+    app = APP_ID if isinstance(binds.get(APP_ID), dict) else next((k for k, v in binds.items() if isinstance(v, dict)), None)
     if app and "keybinds" not in binds[app].get("system", {}):
         binds[app].setdefault("system", {})["keybinds"] = {
             "modifiers": ["SUPER"], "key": "SLASH", "action": {"id": app + ".keybinds", "args": {}}}

@@ -45,9 +45,17 @@ test('ctrl shortcuts win over the plain arrows', () => {
 
 test('navigation keys always emit', () => {
     const plain = { Escape: 'escapePressed', Up: 'upPressed', Down: 'downPressed', PageUp: 'pageUpPressed',
-                    PageDown: 'pageDownPressed', Home: 'homePressed', End: 'endPressed' };
+                    PageDown: 'pageDownPressed' };
     for (const [name, sig] of Object.entries(plain))
         assert.equal(K.action(key[name], 0, mid), sig, name);
     assert.equal(K.action(0x41, 0, mid), '', 'letters are typed');
     assert.equal(K.action(key.Escape, 0), 'escapePressed', 'no context');
+});
+
+test('home / end move the cursor unless the field opts in (handleHomeEnd)', () => {
+    assert.equal(K.action(key.Home, 0, mid), '', 'home stays in the text');
+    assert.equal(K.action(key.End, 0, mid), '', 'end stays in the text');
+    assert.equal(K.action(key.Home, 0), '', 'no context');
+    assert.equal(K.action(key.Home, 0, { homeEnd: true }), 'homePressed');
+    assert.equal(K.action(key.End, 0, { homeEnd: true }), 'endPressed');
 });
