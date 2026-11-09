@@ -147,6 +147,15 @@ Item {
     
     property real innerRadius: targetInnerRadius
 
+    // --- Shadow shape (PanelShadows draws it analytically) ---
+
+    readonly property bool hasHole: frameFill.hasHole
+    readonly property rect holeRect: Qt.rect(frameFill.holeX, frameFill.holeY, frameFill.holeWidth, frameFill.holeHeight)
+    // Alpha of the frame's fill (colour x variant opacity, as StyledRect
+    // draws it): the shadow is as strong as a captured one would be
+    readonly property var fillConfig: Styling.getStyledRectConfig("frame") || {}
+    readonly property real fillAlpha: Glass.variantOpacity("frame", fillConfig.opacity, "") * (fillConfig.color ? Config.resolveColor(fillConfig.color).a : 1)
+
     // --- Visuals ---
 
     FrameFill {

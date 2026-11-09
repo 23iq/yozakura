@@ -320,6 +320,7 @@ Item {
 
             // Slide behind the edge when hidden
             transform: Translate {
+                id: notchSlide
                 x: root.reveal ? 0 : root.hideOffset.x
                 y: root.reveal ? 0 : root.hideOffset.y
                 Behavior on x {
@@ -502,6 +503,12 @@ Item {
         if (root.screenVisibilities)
             root.screenVisibilities.notchRaised = false;
     }
-    // Notch + notification popup: where this item draws (shadow capture)
+    // Notch + notification popup: where this item draws
     readonly property Item visualRegion: notchRegionContainer
+    // The notch's silhouette in this item's coordinates (it fills the
+    // panel), with the reveal slide and fade: its analytic shadow follows
+    // it every frame without capturing anything (PanelShadows)
+    readonly property Item silhouette: notchContainer.silhouette
+    readonly property rect silhouetteRect: Qt.rect(notchRegionContainer.x + notchAnimationContainer.x + notchSlide.x + notchContainer.x + silhouette.x, notchRegionContainer.y + notchAnimationContainer.y + notchSlide.y + notchContainer.y + silhouette.y, silhouette.width, silhouette.height)
+    readonly property real silhouetteOpacity: notchRegionContainer.visible ? notchAnimationContainer.opacity : 0
 }
