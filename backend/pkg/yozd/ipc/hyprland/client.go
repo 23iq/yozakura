@@ -823,9 +823,16 @@ func (h *Hyprland) BatchKeybinds(jsonPayload string) error {
 	return err
 }
 
+// RawBatch sends ';'-separated commands as one [[BATCH]] request. Hyprland
+// answers each command in turn and concatenates the replies, and a
+// rejected `keyword` does not fail the request as a whole: every reply is
+// checked (checkBatchReply).
 func (h *Hyprland) RawBatch(command string) error {
-	_, err := h.dispatch("[[BATCH]]" + command)
-	return err
+	resp, err := h.dispatch("[[BATCH]]" + command)
+	if err != nil {
+		return err
+	}
+	return checkBatchReply(strings.Split(command, ";"), resp)
 }
 
 func (h *Hyprland) GetAnimations() (interface{}, error) {

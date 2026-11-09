@@ -150,14 +150,21 @@ func (d *Daemon) heartbeat(raw json.RawMessage) (any, error) {
 	return map[string]any{"ok": true}, nil
 }
 
+// ErrShellCrashLoop is why the daemon exits when the shell crash loops.
+var ErrShellCrashLoop = errors.New("the shell keeps crashing; stopped")
+
 // scheduleRestart counts an exit (cause) and returns when to start the
-// shell again, or nil once it is crash looping (the user is told then).
+// shell again, or nil once it is crash looping (the user is told then and
+// the daemon exits: idling without a shell would keep holding the
+// instance lock, and with an unknown or dead session the next login's
+// daemon would find it "already running" and show no shell. A shell
+// keybind or `reload` starts a fresh daemon, with a fresh guard).
 func (d *Daemon) scheduleRestart(cause error) <-chan time.Time {
 	delay, giveUp := d.guard.record(d.hooks.now())
 	if giveUp {
-		log.Printf("[yozakura] qs crashed more than %d times in %v (last: %v); not restarting it", CrashLoopMax, CrashWindow, cause)
+		log.Printf("[yozakura] qs crashed more than %d times in %v (last: %v); not restarting it, exiting", CrashLoopMax, CrashWindow, cause)
 		d.hooks.alert(brand.DisplayName+" shell keeps crashing",
-			fmt.Sprintf("Stopped restarting it. Run `%s reload` (or the reload keybind) to try again; logs: `%s doctor`.", brand.AppID, brand.AppID))
+			fmt.Sprintf("Stopped it. Run `%s reload` (or press a shell keybind) to try again; logs: `%s doctor`.", brand.AppID, brand.AppID))
 		return nil
 	}
 	log.Printf("[yozakura] qs exited (%v); restarting in %v", cause, delay)
@@ -169,7 +176,7 @@ func (d *Daemon) scheduleRestart(cause error) <-chan time.Time {
 // and keeps the mod-activation rollback. It returns nil for a requested
 // shutdown or the end of the Wayland session (the shell exits with the
 // compositor at logout) and an error when the daemon has to exit because
-// of the shell.
+// of the shell (ErrShellCrashLoop, a failed rollback start).
 func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-chan time.Time) error {
 	var restartCh <-chan time.Time
 	for {
@@ -188,7 +195,10 @@ func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-c
 			}
 			healthCh = nil
 		case <-d.hooks.tick:
-			if d.qsPid.Load() == 0 && d.sessionEnded(false) {
+			// no shell to exit with the compositor: dial its socket, a
+			// crashed compositor leaves the file behind (cheap, and only
+			// while a restart is pending)
+			if d.qsPid.Load() == 0 && d.sessionEnded(true) {
 				return nil
 			}
 			if pid := int(d.qsPid.Load()); pid > 0 && d.wd.expired(d.hooks.now()) {
@@ -202,7 +212,10 @@ func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-c
 				return nil
 			}
 			if err := d.startQS(shellQML); err != nil {
-				restartCh = d.scheduleRestart(fmt.Errorf("spawn: %w", err))
+				if restartCh = d.scheduleRestart(fmt.Errorf("spawn: %w", err)); restartCh == nil {
+					d.shutdown()
+					return ErrShellCrashLoop
+				}
 			}
 		case err := <-d.qsDone:
 			d.qsExited()
@@ -225,23 +238,28 @@ func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-c
 					continue
 				}
 			}
-			restartCh = d.scheduleRestart(err)
+			if restartCh = d.scheduleRestart(err); restartCh == nil {
+				d.shutdown()
+				return ErrShellCrashLoop
+			}
 		}
 	}
 }
 
 // alertUser shows a notification without the shell (it is the usual
 // notification server): notify-send for another server, then Hyprland's
-// own overlay. Runs in the background; never blocks supervision.
+// own overlay. Synchronous (bounded to 3 s per try): the daemon exits
+// right after it, which would kill a background sender before it ran.
 func alertUser(title, body string) {
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	try := func(name string, args ...string) bool {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
-		if proc.Do(ctx, "notify-send", "-u", "critical", "-a", brand.DisplayName, title, body) == nil {
-			return
-		}
-		if os.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "" {
-			_ = proc.Do(ctx, "hyprctl", "notify", "3", "30000", "0", title+": "+body)
-		}
-	}()
+		return proc.Do(ctx, name, args...) == nil
+	}
+	if try("notify-send", "-u", "critical", "-a", brand.DisplayName, title, body) {
+		return
+	}
+	if os.Getenv("HYPRLAND_INSTANCE_SIGNATURE") != "" {
+		try("hyprctl", "notify", "3", "30000", "0", title+": "+body)
+	}
 }

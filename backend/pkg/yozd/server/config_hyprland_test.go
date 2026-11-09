@@ -18,6 +18,8 @@ type fakeHypr struct {
 	lua     bool
 	reloads int
 	batches []string
+	// batchErr / reloadErr fail RawBatch / ReloadConfig
+	batchErr, reloadErr error
 	// suppressed counts live writes guarded against Hyprland's own
 	// autoreload; released counts the matching releases.
 	suppressed, released int
@@ -28,13 +30,21 @@ func (f *fakeHypr) SuppressAutoreload() func() {
 	return func() { f.released++ }
 }
 
-func (f *fakeHypr) ReloadConfig() error       { f.reloads++; return nil }
-func (f *fakeHypr) RawBatch(cmd string) error { f.batches = append(f.batches, cmd); return nil }
-func (f *fakeHypr) UsesLuaConfig() bool       { return f.lua }
+func (f *fakeHypr) ReloadConfig() error { f.reloads++; return f.reloadErr }
+func (f *fakeHypr) RawBatch(cmd string) error {
+	f.batches = append(f.batches, cmd)
+	return f.batchErr
+}
+func (f *fakeHypr) UsesLuaConfig() bool { return f.lua }
 
 func hyprHandler(t *testing.T, lua bool) (*ConfigHandler, *fakeHypr, string) {
 	t.Helper()
 	dir := t.TempDir()
+	// never the developer's own Hyprland config
+	userConf := filepath.Join(dir, "user-hyprland.conf")
+	old := hyprUserConfig
+	hyprUserConfig = func() string { return userConf }
+	t.Cleanup(func() { hyprUserConfig = old })
 	f := &fakeHypr{Compositor: mock.NewCompositor(), lua: lua}
 	conf := filepath.Join(dir, "hyprland.yozd.conf")
 	return &ConfigHandler{

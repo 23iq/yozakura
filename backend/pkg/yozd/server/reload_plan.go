@@ -130,8 +130,10 @@ func removesKeys(prev, next string) bool {
 
 // keywordCommands returns the `keyword` commands that move a running
 // hyprlang Hyprland from prev to next, or ok=false when a value cannot go
-// through a batch request (batch commands are separated by ';').
-func keywordCommands(prev, next string) (cmds []string, ok bool) {
+// through a batch request (batch commands are separated by ';') or a changed key
+// is in overridden (the user sets it again after the generated file: a
+// keyword would beat their value until the next reload).
+func keywordCommands(prev, next string, overridden map[string]bool) (cmds []string, ok bool) {
 	old := map[string]string{}
 	for _, e := range flattenHyprlang(prev) {
 		old[e.key] = e.value
@@ -140,7 +142,7 @@ func keywordCommands(prev, next string) (cmds []string, ok bool) {
 		if v, seen := old[e.key]; seen && v == e.value {
 			continue
 		}
-		if strings.Contains(e.value, ";") {
+		if strings.Contains(e.value, ";") || overridden[e.key] {
 			return nil, false
 		}
 		cmds = append(cmds, "keyword "+e.key+" "+e.value)
@@ -171,7 +173,7 @@ func luaEvalCommand(chunk string) (cmd string, ok bool) {
 
 // liveCommands builds the runtime commands for the live sections of plan.
 // ok=false means a section cannot be applied live and Hyprland must reload.
-func liveCommands(prev, next configSections, live []string, lua bool) (cmds []string, ok bool) {
+func liveCommands(prev, next configSections, live []string, lua bool, overridden map[string]bool) (cmds []string, ok bool) {
 	for _, name := range live {
 		if lua {
 			cmd, good := luaEvalCommand(next[name].lua)
@@ -183,7 +185,7 @@ func liveCommands(prev, next configSections, live []string, lua bool) (cmds []st
 			}
 			continue
 		}
-		kw, good := keywordCommands(prev[name].conf, next[name].conf)
+		kw, good := keywordCommands(prev[name].conf, next[name].conf, overridden)
 		if !good {
 			return nil, false
 		}

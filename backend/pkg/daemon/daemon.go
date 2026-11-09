@@ -333,6 +333,10 @@ func New() (*Daemon, error) {
 			// the shell's GUI thread is alive (freeze watchdog)
 			"heartbeat": d.heartbeat,
 		},
+		// The heartbeat shares the shell's request socket with slow
+		// ordered calls (a compositor dispatch may take its 30 s timeout):
+		// it must answer at once or the watchdog kills a healthy shell.
+		Async: map[string]bool{"heartbeat": true},
 	})
 
 	d.ui = uiSvc
@@ -368,8 +372,8 @@ func (d *Daemon) TriggerShutdown() {
 
 // Run blocks until an IPC shutdown is requested or a terminating signal
 // is received. A Quickshell child that exits on its own (or freezes) is
-// restarted with backoff until it crash loops (qssupervise.go); the daemon
-// stays up either way. On exit it tears down every child it owns in the
+// restarted with backoff until it crash loops (qssupervise.go), when the
+// daemon exits with ErrShellCrashLoop. On exit it tears down every child it owns in the
 // right order:
 //
 //  1. close the IPC listener (refuse new connections)

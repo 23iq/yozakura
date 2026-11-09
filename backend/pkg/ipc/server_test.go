@@ -101,3 +101,50 @@ func TestSubscriberStopsWhenClientCloses(t *testing.T) {
 		t.Fatal("subscriber still registered after its client closed")
 	}
 }
+
+// The shell's freeze-watchdog heartbeat (async) shares its connection with
+// slow ordered calls: it must be answered while one runs, and the ordered
+// calls behind the slow one still run in order after it.
+func TestAsyncHeartbeatAnsweredBehindSlowOrderedCall(t *testing.T) {
+	sock := filepath.Join(t.TempDir(), "s.sock")
+	srv := NewServer(sock)
+	release := make(chan struct{})
+	beats := make(chan struct{}, 1)
+	srv.Register(&Service{
+		Name: "t",
+		Methods: map[string]HandlerFunc{
+			"slow":      func(json.RawMessage) (any, error) { <-release; return "slow", nil },
+			"next":      func(json.RawMessage) (any, error) { return "next", nil },
+			"heartbeat": func(json.RawMessage) (any, error) { beats <- struct{}{}; return "beat", nil },
+		},
+		Async: map[string]bool{"heartbeat": true},
+	})
+	assert.NoError(t, srv.Listen())
+	defer srv.Close()
+	go srv.Serve()
+
+	conn, err := net.Dial("unix", sock)
+	assert.NoError(t, err)
+	defer conn.Close()
+	_, _ = conn.Write([]byte(`{"id":1,"method":"t.slow"}` + "\n" +
+		`{"id":2,"method":"t.next"}` + "\n" +
+		`{"id":3,"method":"t.heartbeat"}` + "\n"))
+	select {
+	case <-beats:
+	case <-time.After(3 * time.Second):
+		close(release)
+		t.Fatal("heartbeat was not processed while a slow ordered call was in flight")
+	}
+	r := bufio.NewReader(conn)
+	_ = conn.SetReadDeadline(time.Now().Add(3 * time.Second))
+	line, err := r.ReadBytes('\n')
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"id":3,"result":"beat"}`, string(line))
+	close(release)
+	line, err = r.ReadBytes('\n')
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"id":1,"result":"slow"}`, string(line))
+	line, err = r.ReadBytes('\n')
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"id":2,"result":"next"}`, string(line))
+}

@@ -52,7 +52,7 @@ func TestPlanAppearanceOnlyIsLive(t *testing.T) {
 	if !reflect.DeepEqual(p.Live, []string{secAppearance}) {
 		t.Fatalf("live = %v, want [appearance]", p.Live)
 	}
-	cmds, ok := liveCommands(prev, next, p.Live, false)
+	cmds, ok := liveCommands(prev, next, p.Live, false, nil)
 	if !ok {
 		t.Fatal("liveCommands refused a plain appearance change")
 	}
@@ -108,7 +108,7 @@ func TestPlanMixedChangeReloadsOnce(t *testing.T) {
 }
 
 func TestKeywordCommandsRejectsSemicolon(t *testing.T) {
-	if _, ok := keywordCommands("", "general {\n    layout = a;b\n}\n"); ok {
+	if _, ok := keywordCommands("", "general {\n    layout = a;b\n}\n", nil); ok {
 		t.Fatal("a ';' would split the batch request; must fall back to reload")
 	}
 }
@@ -129,7 +129,7 @@ func TestLiveCommandsLuaUsesEval(t *testing.T) {
 	prev := baseSections()
 	next := with(prev, secAppearance, "general {\n    gaps_in = 2\n}\n")
 	next[secAppearance] = section{conf: next[secAppearance].conf, lua: "hl.config({\n    general = { gaps_in = 2 },\n})\n"}
-	cmds, ok := liveCommands(prev, next, []string{secAppearance}, true)
+	cmds, ok := liveCommands(prev, next, []string{secAppearance}, true, nil)
 	if !ok || len(cmds) != 1 || cmds[0] != "eval hl.config({ general = { gaps_in = 2 }, })" {
 		t.Fatalf("lua live commands = %q (ok=%v)", cmds, ok)
 	}

@@ -45,6 +45,9 @@ func (u *UIService) Register(srv *ipc.Server) {
 		Methods: map[string]ipc.HandlerFunc{
 			"run":    u.run,
 			"toggle": u.toggle,
+			// how many shells listen: a CLI whose command was queued
+			// waits on it to know the command was delivered
+			"shells": func(RawParams) (any, error) { return u.Subscribers(), nil },
 		},
 		Subscribe: u.subscribe,
 	})

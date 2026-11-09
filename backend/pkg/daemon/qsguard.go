@@ -9,8 +9,9 @@ import (
 // kill, watchdog kill) is started again after RestartBaseDelay, doubling
 // with every further exit inside CrashWindow up to RestartMaxDelay. More
 // than CrashLoopMax exits inside CrashWindow is a crash loop: the daemon
-// stops restarting, stays up (IPC, yozd, clipboard keep working) and tells
-// the user how to recover.
+// tells the user how to recover and exits non-zero, releasing its instance
+// lock (an idle daemon could outlive its session and block the next
+// login's); a shell keybind or `reload` starts a fresh one.
 const (
 	RestartBaseDelay = 1 * time.Second
 	RestartMaxDelay  = 16 * time.Second
@@ -90,8 +91,10 @@ func (w *watchdog) disarm() {
 
 // expired reports whether the shell missed its heartbeats for
 // WatchdogTimeout. A check that itself comes much later than WatchdogCheck
-// (the machine was suspended, the daemon was stopped) restarts the grace
-// period instead: the shell could not beat while nothing ran.
+// (the daemon was SIGSTOPped or starved by the scheduler) restarts the
+// grace period instead: heartbeats the shell sent meanwhile may still sit
+// unread on the socket. System suspend needs no special case: the
+// monotonic clock behind time.Now does not advance while suspended.
 func (w *watchdog) expired(now time.Time) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()

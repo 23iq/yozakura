@@ -121,22 +121,41 @@ func (h *ConfigHandler) applyHyprland(payload ipc.ConfigUniversal, confPath, con
 		return nil
 	case plan.Reload:
 		fmt.Printf("Config changed (%s): reloading\n", strings.Join(plan.Changed, ", "))
-		return h.loadGeneratedConfig(confPath)
+		return h.reloadOrForget(confPath)
 	}
-	if err := h.applyLive(prev, next, plan.Live); err != nil {
+	if err := h.applyLive(confPath, prev, next, plan.Live); err != nil {
+		// a rejected keyword is not applied: the reload loads the file
 		fmt.Printf("Live config update failed (%v): reloading\n", err)
-		return h.loadGeneratedConfig(confPath)
+		return h.reloadOrForget(confPath)
 	}
 	return nil
 }
 
+// reloadOrForget reloads Hyprland; when that fails the running state is
+// unknown, so the applied record is dropped and the next apply reloads
+// instead of diffing against values that never took effect. Caller holds
+// appliedMu.
+func (h *ConfigHandler) reloadOrForget(confPath string) error {
+	err := h.loadGeneratedConfig(confPath)
+	if err != nil {
+		delete(applied, confPath)
+	}
+	return err
+}
+
 // applyLive sends the changed live sections as one batch request.
-func (h *ConfigHandler) applyLive(prev, next configSections, live []string) error {
+func (h *ConfigHandler) applyLive(confPath string, prev, next configSections, live []string) error {
 	lua := false
 	if lc, ok := h.compositor.(luaConfigurer); ok {
 		lua = lc.UsesLuaConfig() && h.luaGen != nil && h.paths.alt != ""
 	}
-	cmds, ok := liveCommands(prev, next, live, lua)
+	var overridden map[string]bool
+	if !lua {
+		// a keyword would beat the user's own later setting until the
+		// next reload; a reload keeps their value in charge
+		overridden = userOverrides(hyprUserConfig(), confPath)
+	}
+	cmds, ok := liveCommands(prev, next, live, lua, overridden)
 	if !ok {
 		return fmt.Errorf("sections %s cannot be applied at runtime", strings.Join(live, ", "))
 	}

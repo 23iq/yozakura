@@ -123,7 +123,8 @@ func waitResult(t *testing.T, res chan error) error {
 }
 
 // A crashing shell is restarted with doubling delays; past the crash-loop
-// limit the daemon alerts the user and stays up until asked to stop.
+// limit the daemon alerts the user and exits non-zero (releasing its
+// instance lock) instead of idling without a shell.
 func TestSuperviseRestartsWithBackoffThenGivesUp(t *testing.T) {
 	d, f := newFakeShell(t)
 	if err := d.startQS("shell.qml"); err != nil {
@@ -148,19 +149,16 @@ func TestSuperviseRestartsWithBackoffThenGivesUp(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("crash loop not reported")
 	}
+	if err := waitResult(t, res); !errors.Is(err, ErrShellCrashLoop) {
+		t.Fatalf("crash loop: daemon returned %v, want ErrShellCrashLoop", err)
+	}
 	select {
 	case <-f.delays:
 		t.Fatal("restarted a crash-looping shell")
-	case err := <-res:
-		t.Fatalf("daemon exited on a crash loop: %v", err)
-	case <-time.After(50 * time.Millisecond):
+	default:
 	}
 	if d.qsPid.Load() != 0 {
 		t.Fatal("a dead shell is still tracked")
-	}
-	d.TriggerShutdown()
-	if err := waitResult(t, res); err != nil {
-		t.Fatalf("requested shutdown: %v", err)
 	}
 }
 
@@ -279,27 +277,35 @@ func TestSuperviseStopsWhenSessionEnds(t *testing.T) {
 	}
 }
 
-// A shell given up on (crash loop) leaves nothing to exit at logout; the
-// watchdog tick notices the compositor is gone.
-func TestSuperviseStopsAfterGiveUpWhenSessionEnds(t *testing.T) {
+// While a restart is pending no shell runs to exit at logout; the watchdog
+// tick notices the compositor is gone, dialling its socket (a crashed
+// compositor leaves the file behind).
+func TestSuperviseTickProbesSessionWhileRestartPending(t *testing.T) {
 	d, f := newFakeShell(t)
+	probes := make(chan bool, 4)
+	d.hooks.sessionGone = func(probe bool) bool {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+		if f.gone {
+			probes <- probe
+		}
+		return f.gone && probe
+	}
 	if err := d.startQS("shell.qml"); err != nil {
 		t.Fatal(err)
 	}
 	_, res := runSupervise(d)
-	for i := 0; i < CrashLoopMax; i++ {
-		f.running() <- errors.New("segfault")
-		_, fire := f.nextDelay()
-		fire <- f.now
-	}
 	f.running() <- errors.New("segfault")
-	<-f.alerts
+	f.nextDelay()
 	f.mu.Lock()
 	f.gone = true
 	f.mu.Unlock()
 	f.tick <- f.now
 	if err := waitResult(t, res); err != nil {
 		t.Fatalf("session end: %v", err)
+	}
+	if !<-probes {
+		t.Fatal("the tick only stat'ed the socket")
 	}
 }
 

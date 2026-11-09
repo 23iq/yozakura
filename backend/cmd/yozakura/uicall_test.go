@@ -6,6 +6,8 @@ import (
 	"errors"
 	"testing"
 	"time"
+
+	"yozakura/backend/pkg/svc"
 )
 
 // fakeUI simulates a daemon that is down until started and needs a few
@@ -22,16 +24,34 @@ type fakeUI struct {
 	result     string
 	now        time.Time
 	slept      time.Duration
+	noWayland  bool
+	// shellAfter: polls until a shell subscribes (0: none ever does)
+	shellAfter int
+	shells     int
+	// dieAfter: ui.shells polls before the daemon exits (gave up)
+	dieAfter int
 }
 
 func (f *fakeUI) env() uiEnv {
 	return uiEnv{
-		alive: func() bool { return f.alive },
+		alive:   func() bool { return f.alive },
+		wayland: func() bool { return !f.noWayland },
 		call: func(m string, p any) (json.RawMessage, error) {
 			b, _ := json.Marshal(p)
 			f.calls = append(f.calls, m+" "+string(b))
 			if !f.answering {
 				return nil, errors.New("dial: no such file")
+			}
+			if m == "ui.shells" {
+				if f.dieAfter > 0 {
+					f.dieAfter--
+					if f.dieAfter == 0 {
+						f.alive, f.answering = false, false
+						f.result = "ok" // the fresh daemon's shell takes it
+						f.readyAfter = 2
+					}
+				}
+				return json.Marshal(f.shells)
 			}
 			res := f.result
 			if res == "" {
@@ -54,6 +74,12 @@ func (f *fakeUI) env() uiEnv {
 				f.readyAfter--
 				if f.readyAfter == 0 {
 					f.answering = true
+				}
+			}
+			if f.shellAfter > 0 {
+				f.shellAfter--
+				if f.shellAfter == 0 {
+					f.shells = 1
 				}
 			}
 		},
@@ -143,12 +169,11 @@ func TestRunTerminalWithoutShellOpensItDirectly(t *testing.T) {
 	}
 }
 
-// A command only queued (no shell yet) succeeds but says so: a `lock`
-// that nothing received has not locked the screen.
+// A command only queued (no shell yet) succeeds but says so.
 func TestRunUIReportsQueuedCommand(t *testing.T) {
 	f := &fakeUI{alive: true, answering: true, result: "queued"}
 	var errOut bytes.Buffer
-	if code := runUI("ui.run", "lockscreen", f.env(), &errOut); code != 0 {
+	if code := runUI("ui.run", "launcher", f.env(), &errOut); code != 0 {
 		t.Fatalf("exit %d", code)
 	}
 	if !bytes.Contains(errOut.Bytes(), []byte("queued")) {
@@ -159,5 +184,66 @@ func TestRunUIReportsQueuedCommand(t *testing.T) {
 	runUI("ui.run", "lockscreen", f.env(), &errOut)
 	if errOut.Len() != 0 {
 		t.Fatalf("delivered command printed %q", errOut.String())
+	}
+}
+
+// Outside a Wayland session (SSH, cron) no daemon is started: it could
+// not show a shell and would hold the next login's instance lock.
+func TestRunUIRefusesToStartWithoutWayland(t *testing.T) {
+	f := &fakeUI{now: time.Unix(0, 0), noWayland: true}
+	var errOut bytes.Buffer
+	if code := runUI("ui.run", "lockscreen", f.env(), &errOut); code != 1 {
+		t.Fatalf("exit %d", code)
+	}
+	if f.starts != 0 || !bytes.Contains(errOut.Bytes(), []byte("WAYLAND_DISPLAY")) {
+		t.Fatalf("starts %d err %q", f.starts, errOut.String())
+	}
+	// a running daemon is still used
+	f = &fakeUI{alive: true, answering: true, noWayland: true}
+	if code := runUI("ui.toggle", "bar", f.env(), &bytes.Buffer{}); code != 0 {
+		t.Fatalf("live daemon without WAYLAND_DISPLAY: exit %d", code)
+	}
+}
+
+// A queued `lock` succeeds only once a shell picked it up: hypridle's
+// before_sleep_cmd suspends as soon as it returns.
+func TestRunLockWaitsForAShell(t *testing.T) {
+	f := &fakeUI{alive: true, answering: true, result: "queued", now: time.Unix(0, 0), shellAfter: 5}
+	var errOut bytes.Buffer
+	if code := runUI("ui.run", "lockscreen", f.env(), &errOut); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	if f.calls[0] != `ui.run {"command":"lockscreen"}` || f.calls[len(f.calls)-1] != "ui.shells null" {
+		t.Fatalf("calls %v", f.calls)
+	}
+}
+
+func TestRunLockFailsWhenNoShellComes(t *testing.T) {
+	f := &fakeUI{alive: true, answering: true, result: "queued", now: time.Unix(0, 0)}
+	var errOut bytes.Buffer
+	if code := runUI("ui.run", "lockscreen", f.env(), &errOut); code != 1 {
+		t.Fatalf("exit %d", code)
+	}
+	if f.slept >= svc.UIPendingTTL {
+		t.Fatalf("waited %v, past the queued command's %v lifetime", f.slept, svc.UIPendingTTL)
+	}
+	if errOut.Len() == 0 {
+		t.Fatal("no error for a lock that did not happen")
+	}
+}
+
+// The daemon gave up on a crash-looping shell and exited while `lock`
+// waited: a fresh daemon (fresh crash guard, new shell) gets the lock.
+func TestRunLockRestartsADaemonThatGaveUp(t *testing.T) {
+	f := &fakeUI{alive: true, answering: true, result: "queued", now: time.Unix(0, 0), dieAfter: 2}
+	var errOut bytes.Buffer
+	if code := runUI("ui.run", "lockscreen", f.env(), &errOut); code != 0 {
+		t.Fatalf("exit %d: %s", code, errOut.String())
+	}
+	if f.starts != 1 {
+		t.Fatalf("starts %d, want the dead daemon started again", f.starts)
+	}
+	if last := f.calls[len(f.calls)-1]; last != `ui.run {"command":"lockscreen"}` {
+		t.Fatalf("last call %q", last)
 	}
 }

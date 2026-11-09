@@ -58,7 +58,15 @@ pkg/yozd/
   live-path write runs under `Hyprland.SuppressAutoreload` (runtime
   `misc:disable_autoreload`, restored after a quiet period, untouched when
   the user turned it off), else Hyprland's own autoreload would reload on
-  the write. Generators must be deterministic: range over
+  the write. Every reply of the `[[BATCH]]` is checked
+  (`ipc/hyprland/batch.go`: a `keyword` must answer `ok`); a rejected one
+  falls back to a reload, and a failed reload drops the applied record so
+  the next apply reloads too. A live `keyword` beats a value the user's own
+  config sets after sourcing the generated file until the next reload, so
+  keys the user sets again after it (`server/hypr_overrides.go`, following
+  `source =` from `~/.config/hypr/hyprland.conf`, our generated entry files
+  excluded; hyprlang only, a Lua config is not inspected) reload instead.
+  Generators must be deterministic: range over
   `ipc.SortedKeybindNames`, never over a map, or no regeneration is ever
   byte-identical.
 - Tests: `go test ./pkg/yozd/... ./cmd/yozd` (mock compositor, no live

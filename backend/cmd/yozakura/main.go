@@ -124,6 +124,7 @@ func main() {
 	}
 
 	if len(args) == 0 {
+		refuseWithoutWayland(errNoWaylandStart)
 		refuseIfLegacyRunning() // before migration touches user files
 	}
 	migrateLegacy()
@@ -525,6 +526,7 @@ func execCommand(name string, args ...string) {
 // shut down via IPC, waiting for it to actually die, and re-execing
 // ourselves in the background.
 func restartShell() {
+	refuseWithoutWayland(errNoWaylandReload)
 	// Concurrent reloads collapse into one: the loser waits for the winner
 	// to finish and does nothing, instead of racing it into a second daemon.
 	rl, err := instancelock.TryAcquire(instancelock.ReloadPath())

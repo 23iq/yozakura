@@ -107,9 +107,12 @@ func TestWatchdogArmsOnFirstHeartbeat(t *testing.T) {
 	}
 }
 
-// A long gap between checks (suspend, stopped daemon) restarts the grace
-// period instead of killing a shell that could not run either.
-func TestWatchdogGraceAfterSuspend(t *testing.T) {
+// A long gap between checks (the daemon was SIGSTOPped or starved by the
+// scheduler, so the heartbeats queued on its socket are still unread)
+// restarts the grace period instead of killing a shell that kept beating.
+// System suspend never shows up here: time.Now's monotonic reading does not
+// advance while suspended, for the check and the heartbeats alike.
+func TestWatchdogGraceAfterDaemonStall(t *testing.T) {
 	var w watchdog
 	now := time.Unix(1000, 0)
 	w.beat(now)
@@ -119,7 +122,7 @@ func TestWatchdogGraceAfterSuspend(t *testing.T) {
 	}
 	now = now.Add(time.Hour)
 	if w.expired(now) {
-		t.Fatal("killed right after resume")
+		t.Fatal("killed right after the daemon ran again")
 	}
 	if _, exp := tickUntil(&w, now, WatchdogTimeout-WatchdogCheck); exp {
 		t.Fatal("grace period too short")

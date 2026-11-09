@@ -159,6 +159,20 @@ func (s *Server) handleConn(conn net.Conn) {
 	var pending sync.WaitGroup
 	defer pending.Wait()
 
+	// Ordered (non-async) requests run one at a time, in order, on this
+	// worker, so the reader keeps reading while one is slow: an async
+	// request behind it (the shell's freeze-watchdog heartbeat shares its
+	// socket with compositor calls that may take their whole timeout) runs
+	// at once instead of waiting for it.
+	serial := make(chan Request, serialQueue)
+	defer close(serial)
+	go func() {
+		for req := range serial {
+			s.handleOne(writer, &wmu, &req)
+			pending.Done()
+		}
+	}()
+
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
@@ -176,17 +190,21 @@ func (s *Server) handleConn(conn net.Conn) {
 			s.streamSubscribe(conn, writer, &req)
 			return
 		}
+		pending.Add(1)
 		if s.isAsync(req.Method) {
-			pending.Add(1)
 			go func(req Request) {
 				defer pending.Done()
 				s.handleOne(writer, &wmu, &req)
 			}(req)
 			continue
 		}
-		s.handleOne(writer, &wmu, &req)
+		serial <- req
 	}
 }
+
+// serialQueue is how many ordered requests may wait behind a slow one
+// before the reader stops reading the connection.
+const serialQueue = 256
 
 type lockedWriter struct {
 	w  *bufio.Writer
