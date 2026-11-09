@@ -105,6 +105,11 @@ TMP="$(mktemp -d "$TARGET/.tmp.XXXXXX")"
 trap 'rm -rf "$TMP"' EXIT
 
 wall="$(jq -r '.currentWall // ""' <<<"$WALLS_JSON")"
+# Bundled wallpapers are saved as "bundled:<path>" (store-independent, see
+# modules/widgets/dashboard/wallpapers/WallpaperRefs.js).
+if [[ "$wall" == bundled:* ]]; then
+  wall="$REPO_DIR/assets/wallpapers_example/${wall#bundled:}"
+fi
 stamp_file="$TARGET/.wallpaper-stamp"
 stamp=""
 if [[ -n "$wall" && -r "$wall" ]]; then

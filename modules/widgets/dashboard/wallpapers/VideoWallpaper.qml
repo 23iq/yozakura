@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtMultimedia
 import qs.modules.globals
+import qs.modules.services
 import qs.modules.theme
+import qs.config
 
 Item {
     id: videoWallpaper
@@ -25,6 +27,11 @@ Item {
     // covers this monitor). pause() keeps the last frame on the
     // VideoOutput, so resuming never flashes black.
     property bool paused: false
+    // Play a screen-sized copy when the video is larger than the screen or
+    // faster than 30 fps (VideoProxyService; the original until it exists).
+    property bool downscale: Config.performance.videoWallpaperDownscale ?? true
+    // The file the player plays: sourceFile, its copy or the matte stream.
+    readonly property string playingFile: _playing
     signal requestVideoSync
     // Matte mode only: the matte stream could not be played (missing,
     // pruned or corrupt). contentReady stays false so a transition never
@@ -56,6 +63,10 @@ Item {
     // Start once every initial binding (source, matte, start position) is
     // in, instead of once per property.
     property bool _completed: false
+    property string _playing: ""
+    // Bumped by every restart: answers for an older source are dropped.
+    property int _token: 0
+    property bool _awaitingSize: false
     onSourceFileChanged: {
         if (_completed)
             restartPlayback();
@@ -63,6 +74,18 @@ Item {
     onMatteChanged: {
         if (_completed)
             restartPlayback();
+    }
+    onDownscaleChanged: {
+        if (_completed)
+            restartPlayback();
+    }
+    onWidthChanged: _sizeKnown()
+    onHeightChanged: _sizeKnown()
+    function _sizeKnown() {
+        if (_awaitingSize && width > 0 && height > 0) {
+            _awaitingSize = false;
+            restartPlayback();
+        }
     }
     Component.onCompleted: {
         _completed = true;
@@ -80,19 +103,57 @@ Item {
 
     function restartPlayback() {
         contentReady = false;
+        _token++;
+        _playing = "";
+        proxyTimeout.stop();
+        _awaitingSize = false;
         if (!sourceFile)
             return;
+        if (matteMode || !downscale) {
+            _use(matteMode ? matte.file : sourceFile);
+            return;
+        }
+        if (width <= 0 || height <= 0) {
+            _awaitingSize = true;
+            return;
+        }
+        const token = _token;
+        const dpr = Screen.devicePixelRatio > 0 ? Screen.devicePixelRatio : 1;
+        // A backend that never answers must not keep the wallpaper black.
+        proxyTimeout.restart();
+        VideoProxyService.request(sourceFile, width * dpr, height * dpr, file => {
+            if (token === videoWallpaper._token)
+                videoWallpaper._use(file);
+        });
+    }
+
+    // Plays `file`; a later switch (original -> its copy) keeps the position.
+    function _use(file) {
+        if (!file || file === _playing)
+            return;
+        const first = _playing === "";
+        const position = first ? startPositionMs : player.position;
+        _playing = file;
         player.stop();
-        player.source = "file://" + (matteMode ? matte.file : sourceFile);
-        if (startPositionMs >= 0)
-            player.setPosition(startPositionMs);
+        player.source = "file://" + file;
+        if (position >= 0)
+            player.setPosition(position);
         // Paused state still loads and shows the first frame.
         if (paused)
             player.pause();
         else
             player.play();
-        if (startPositionMs < 0)
+        if (first && startPositionMs < 0)
             syncDebounce.restart();
+    }
+
+    Timer {
+        id: proxyTimeout
+        interval: 3000
+        onTriggered: {
+            if (videoWallpaper._playing === "")
+                videoWallpaper._use(videoWallpaper.sourceFile);
+        }
     }
 
     // Re-align with another player of the same loop (variant swap).

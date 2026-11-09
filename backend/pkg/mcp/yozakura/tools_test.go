@@ -491,6 +491,11 @@ func TestWallpaperTools(t *testing.T) {
 	assert.NotContains(t, res.Text(), "c.jpg")
 	assert.Contains(t, res.Text(), `"total": 2`)
 
+	// A bundled wallpaper is saved as an id and reported as a real path.
+	assert.NoError(t, os.WriteFile(d.WallpapersFile, []byte(`{"currentWall":"bundled:wallpaper-01.png","wallPath":"`+walls+`"}`), 0o644))
+	bundled := filepath.Join(d.ShellSource, "assets", "wallpapers_example", "wallpaper-01.png")
+	assert.Contains(t, callTool(t, d, "wallpapers_list", `{}`).Text(), `"current": "`+bundled+`"`)
+
 	assert.True(t, callTool(t, d, "wallpaper_set", `{"path":"relative.png"}`).IsError)
 	assert.True(t, callTool(t, d, "wallpaper_set", `{"path":"`+walls+`/notes.txt"}`).IsError)
 	assert.True(t, callTool(t, d, "wallpaper_set", `{"path":"`+walls+`/missing.png"}`).IsError)

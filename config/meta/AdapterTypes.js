@@ -111,7 +111,8 @@ var types = {
         "shadowRenderPower": "int"
     },
     "performance": {
-        "dashboardMaxPersistentTabs": "int"
+        "dashboardMaxPersistentTabs": "int",
+        "pauseWallpaperIdleDelay": "int"
     },
     "voice": {
         "idleTimeout": "int",

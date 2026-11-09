@@ -205,7 +205,7 @@ func New() (*Daemon, error) {
 	nlSvc.Register(d.srv)
 	d.nightlight = nlSvc
 
-	wallpaperSvc := wallpaper.NewService()
+	wallpaperSvc := wallpaper.NewService(context.Background(), d.paths.CacheDir)
 	wallpaperSvc.Register(d.srv)
 
 	presetSvc := preset.NewService(d.paths)
@@ -474,8 +474,8 @@ func (d *Daemon) spawnQS(qsBin, shellQML string) error {
 	if os.Getenv("MALLOC_CONF") == "" {
 		env = append(env, "MALLOC_CONF=dirty_decay_ms:1000,muzzy_decay_ms:1000")
 	}
-	if os.Getenv("QT_MEDIA_BACKEND") == "" {
-		env = append(env, "QT_MEDIA_BACKEND=gstreamer")
+	if backend := mediaBackend(os.Getenv, pathExists); backend != "" {
+		env = append(env, "QT_MEDIA_BACKEND="+backend)
 	}
 	cmd.Env = env
 	if err := cmd.Start(); err != nil {
