@@ -13,7 +13,16 @@ import qs.config
 Item {
     id: root
 
-    Component.onCompleted: EasyEffectsService.initialize()
+    // Polled only while shown (EasyEffectsService.setConsumer); the window
+    // check covers a Settings window kept alive hidden between opens.
+    readonly property string consumerKey: "easyeffects-panel-" + Date.now().toString(36) + Math.random().toString(36).slice(2)
+    readonly property bool shown: root.visible && root.Window.window !== null && root.Window.window.visible
+    onShownChanged: EasyEffectsService.setConsumer(root.consumerKey, root.shown)
+    Component.onCompleted: {
+        EasyEffectsService.initialize();
+        EasyEffectsService.setConsumer(root.consumerKey, root.shown);
+    }
+    Component.onDestruction: EasyEffectsService.setConsumer(root.consumerKey, false)
 
     property int maxContentWidth: 480
     readonly property int contentWidth: Math.min(width, maxContentWidth)
