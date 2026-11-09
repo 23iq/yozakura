@@ -152,7 +152,7 @@ func main() {
 			fmt.Println("Error: No command specified for run")
 			os.Exit(1)
 		}
-		mustCall("ui.run", map[string]any{"command": cmd})
+		os.Exit(runUI("ui.run", cmd, defaultUIEnv(), os.Stderr))
 	case "toggle":
 		cmd := ""
 		if len(args) > 1 {
@@ -162,11 +162,11 @@ func main() {
 			fmt.Println("Error: No command specified for toggle")
 			os.Exit(1)
 		}
-		mustCall("ui.toggle", map[string]any{"command": cmd})
+		os.Exit(runUI("ui.toggle", cmd, defaultUIEnv(), os.Stderr))
 	case "lock":
-		mustCall("ui.run", map[string]any{"command": "lockscreen"})
+		os.Exit(runUI("ui.run", "lockscreen", defaultUIEnv(), os.Stderr))
 	case "onboarding":
-		mustCall("ui.run", map[string]any{"command": "onboarding"})
+		os.Exit(runUI("ui.run", "onboarding", defaultUIEnv(), os.Stderr))
 	case "reload":
 		restartShell()
 	case "quit":
