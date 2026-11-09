@@ -143,7 +143,7 @@ Item {
         anchors.fill: parent
         variant: tile.selected || tile.dragging ? "primary" : "focus"
         backgroundOpacity: tile.dragging ? 0.18 : 0.08
-        radius: Styling.radius(4)
+        radius: Look.radius("box")
         visible: opacity > 0
         opacity: tile.editing ? 1 : 0
 

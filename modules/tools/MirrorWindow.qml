@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.config
 
@@ -52,7 +53,7 @@ PanelWindow {
         width: currentWidth
         height: currentHeight
         color: camera.cameraStatus === Camera.ActiveStatus ? "transparent" : "black"
-        radius: Styling.radius(8)
+        radius: Look.radius("surface")
 
         CaptureSession {
             id: captureSession

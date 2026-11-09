@@ -450,7 +450,7 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: "transparent"
-            radius: Styling.radius(4)
+            radius: Look.radius("box")
             clip: true
 
             // Calcular tamaño de celda basado en columnas y proporción 1:1

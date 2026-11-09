@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 
 Item {
@@ -236,7 +237,7 @@ Item {
         anchors.margins: 2
         width: 6
         height: 6
-        radius: 3
+        radius: Look.radius("round", height)
         color: Colors.error
         z: 10
     }
