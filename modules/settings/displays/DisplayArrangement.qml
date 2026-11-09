@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.config
 import "../Ui.js" as Ui
 import "DisplayFormat.js" as DisplayFormat
+import qs.modules.components.kit
 
 // The arrangement canvas: every enabled monitor as a scaled tile; drag one
 // to move it (snaps to the others' edges on release). Disabled monitors sit
@@ -28,7 +29,7 @@ StyledRect {
     readonly property var disabled: configs.filter(c => c.enabled === false)
 
     variant: "pane"
-    radius: Styling.radius(4)
+    radius: Look.radius("box")
     enableShadow: false
     readonly property int margin: 16
     readonly property int canvasHeight: 308
@@ -108,13 +109,12 @@ StyledRect {
         }
     }
 
-    Text {
+    KitText {
+        role: "caption"
         anchors.left: canvas.left
         anchors.bottom: canvas.bottom
-        anchors.margins: 4
+        anchors.margins: Space.xs
         text: I18n.t("prefs.displays.arrange_hint")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Ui.alpha(Colors.overSurfaceVariant, 0.8)
     }
 
@@ -125,7 +125,7 @@ StyledRect {
         x: root.margin
         y: canvas.y + canvas.height + 8
         width: parent.width - root.margin * 2
-        spacing: 8
+        spacing: Space.s
 
         Repeater {
             model: root.disabled
@@ -147,20 +147,16 @@ StyledRect {
                 Row {
                     id: offRow
                     anchors.centerIn: parent
-                    spacing: 6
-                    Text {
+                    spacing: Space.s
+                    Icon {
+                        tone: "secondary"
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Icons.xCircle ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(0)
-                        color: Colors.overSurfaceVariant
+                        icon: Icons.xCircle ?? ""
                     }
-                    Text {
+                    KitText {
+                        role: "secondary"
                         anchors.verticalCenter: parent.verticalCenter
                         text: DisplayFormat.title(DisplayFormat.outputFor(root.outputs, off.modelData.name), off.modelData) + "  ·  " + I18n.t("prefs.displays.disabled")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.overSurfaceVariant
                     }
                 }
                 MouseArea {

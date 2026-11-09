@@ -45,11 +45,10 @@ Item {
         }
     }
 
-    Text {
+    Icon {
         anchors.centerIn: parent
-        text: root.icon
-        font.family: Icons.font
-        font.pixelSize: Math.min(Type.iconSize("body"), Math.round(root.width * 0.55))
+        icon: root.icon
+        size: Math.min(Type.iconSize("body"), Math.round(root.width * 0.55))
         color: root.filled ? root.overAccent : root.glyphColor
     }
 

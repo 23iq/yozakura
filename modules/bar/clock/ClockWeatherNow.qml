@@ -34,12 +34,11 @@ Row {
     }
     spacing: Space.s
 
-    Text {
+    Icon {
         anchors.verticalCenter: parent.verticalCenter
-        text: Icons[WidgetFormat.weatherGlyph(WeatherService.effectiveWeatherCode, WeatherService.effectiveIsDay)] || Icons.sun
-        font.family: Icons.font
-        font.pixelSize: Type.iconSize("title")
-        color: Type.secondary
+        icon: Icons[WidgetFormat.weatherGlyph(WeatherService.effectiveWeatherCode, WeatherService.effectiveIsDay)] || Icons.sun
+        role: "title"
+        tone: "secondary"
     }
     KitText {
         objectName: "clockPanelTemp"

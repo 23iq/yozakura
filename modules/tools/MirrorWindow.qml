@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.config
 
@@ -25,7 +26,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     visible: GlobalStates.mirrorWindowVisible
 
-    property int xPos: Screen.width - root.currentWidth - 20
+    property int xPos: Screen.width - root.currentWidth - Space.l
     property int yPos: (Screen.height / 2) - (root.currentHeight / 2)
     property bool isSquare: true
     property bool isFlipped: true
@@ -51,8 +52,8 @@ PanelWindow {
         y: yPos
         width: currentWidth
         height: currentHeight
-        color: camera.cameraStatus === Camera.ActiveStatus ? "transparent" : "black"
-        radius: Styling.radius(8)
+        color: camera.active ? "transparent" : Colors.scrim
+        radius: Look.radius("surface", height)
 
         CaptureSession {
             id: captureSession
@@ -100,15 +101,16 @@ PanelWindow {
             }
 
             // Controls Overlay
-            Row {
+            Surface {
                 anchors.bottom: parent.bottom
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.bottomMargin: 20
-                spacing: 16
+                anchors.bottomMargin: Space.l
                 z: 3
+                floating: true
+                padding: Space.xs
 
                 // Show only on hover or when buttons are pressed
-                opacity: (dragArea.containsMouse || controlHover.containsMouse) ? 1.0 : 0.0
+                opacity: (dragArea.containsMouse || controlHover.hovered) ? 1.0 : 0.0
                 Behavior on opacity {
                     NumberAnimation {
                         duration: Motion.enter.duration
@@ -119,24 +121,12 @@ PanelWindow {
                     id: controlHover
                 }
 
-                // Toggle Ratio Button
-                Rectangle {
-                    width: 40
-                    height: 40
-                    radius: 20
-                    color: Colors.surface
+                Row {
+                    spacing: Space.s
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: root.isSquare ? Icons.arrowsOut : Icons.crop
-                        font.family: Icons.font
-                        color: Colors.overBackground
-                        font.pixelSize: 20
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                    // Toggle Ratio Button
+                    IconButton {
+                        icon: root.isSquare ? Icons.arrowsOut : Icons.crop
                         onClicked: {
                             root.isSquare = !root.isSquare;
                             // Reset size logic
@@ -149,48 +139,18 @@ PanelWindow {
                             }
                         }
                     }
-                }
 
-                // Flip Button
-                Rectangle {
-                    width: 40
-                    height: 40
-                    radius: 20
-                    color: Colors.surface
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: Icons.flipX
-                        font.family: Icons.font
-                        color: Colors.overBackground
-                        font.pixelSize: 20
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                    // Flip Button
+                    IconButton {
+                        icon: Icons.flipX
+                        active: root.isFlipped
                         onClicked: root.isFlipped = !root.isFlipped
                     }
-                }
 
-                // Close Button
-                StyledRect {
-                    width: 40
-                    height: 40
-                    radius: 20
-                    variant: "error"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: Icons.cancel
-                        font.family: Icons.font
-                        color: Styling.srItem("error")
-                        font.pixelSize: 20
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
+                    // Close Button
+                    IconButton {
+                        icon: Icons.cancel
+                        danger: true
                         onClicked: GlobalStates.mirrorWindowVisible = false
                     }
                 }
@@ -230,6 +190,7 @@ PanelWindow {
 
     // --- Resize Handle Component Definition ---
     component ResizeHandle: MouseArea {
+        id: handle
         property int mode: 0 // 0:BR, 1:BL, 2:TR, 3:TL
         width: 20
         height: 20
@@ -316,13 +277,12 @@ PanelWindow {
             }
         }
 
-        Text {
+        Icon {
             anchors.centerIn: parent
-            text: mode == 0 || mode == 3 ? Icons.caretDoubleDown : Icons.caretDoubleUp
-            rotation: mode == 0 ? -45 : mode == 1 ? 45 : mode == 2 ? -135 : 135
-            font.family: Icons.font
-            color: Styling.srItem("overprimary")
-            font.pixelSize: 12
+            icon: handle.mode == 0 || handle.mode == 3 ? Icons.caretDoubleDown : Icons.caretDoubleUp
+            rotation: handle.mode == 0 ? -45 : handle.mode == 1 ? 45 : handle.mode == 2 ? -135 : 135
+            role: "caption"
+            tone: "text"
             opacity: (dragArea.containsMouse || parent.containsMouse) ? 0.8 : 0
         }
     }

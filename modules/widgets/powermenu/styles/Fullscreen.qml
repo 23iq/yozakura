@@ -80,15 +80,11 @@ FocusScope {
         onDone: root.closeRequested()
     }
 
-    Rectangle {
-        anchors.fill: parent
+    Scrim {
         color: Colors.background
-        opacity: 0.72 * root.progress
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.closeRequested()
-        }
+        strength: 0.72 * root.progress
+        animated: false
+        onClicked: root.closeRequested()
     }
 
     Column {

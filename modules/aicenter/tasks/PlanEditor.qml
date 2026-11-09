@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import "../../services/tasks/TaskModel.js" as TaskModel
 
@@ -64,12 +65,11 @@ ColumnLayout {
 
     spacing: BarLook.gap
 
-    UiText {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: root.editable ? I18n.t("ai.tasks.plan_hint") : (root.task && root.task.status === "planning" ? I18n.t("ai.tasks.planning") : I18n.t("ai.tasks.plan_used"))
-        muted: true
-        size: -2
     }
 
     Flickable {
@@ -82,7 +82,7 @@ ColumnLayout {
         ColumnLayout {
             id: stepCol
             width: parent.width
-            spacing: 4
+            spacing: Space.xs
             Repeater {
                 model: root.steps.length
                 delegate: StyledRect {
@@ -90,21 +90,20 @@ ColumnLayout {
                     required property int index
                     objectName: "planStep_" + index
                     Layout.fillWidth: true
-                    implicitHeight: Math.max(36, field.implicitHeight + 8)
-                    radius: Styling.radius(-4)
+                    implicitHeight: Math.max(36, field.implicitHeight + 2 * Space.xs)
+                    radius: Look.radius("control")
                     variant: field.activeFocus ? "focus" : "pane"
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 4
-                        spacing: 6
-                        UiText {
+                        anchors.leftMargin: Space.s
+                        anchors.rightMargin: Space.xs
+                        spacing: Space.s
+                        AiText {
+                            role: "caption"
                             Layout.alignment: Qt.AlignTop
-                            Layout.topMargin: 8
+                            Layout.topMargin: Space.s
                             text: (stepRow.index + 1) + "."
                             mono: true
-                            muted: true
-                            size: -2
                         }
                         TextArea {
                             id: field
@@ -113,7 +112,7 @@ ColumnLayout {
                             wrapMode: TextArea.Wrap
                             text: root.steps[stepRow.index] || ""
                             font.family: Config.theme.font
-                            font.pixelSize: BarLook.font(-1)
+                            font.pixelSize: BarLook.size("secondary")
                             color: Colors.overSurface
                             selectionColor: Colors.primary
                             selectedTextColor: Colors.overPrimary
@@ -123,28 +122,25 @@ ColumnLayout {
                         }
                         IconButton {
                             visible: root.editable
-                            size: 24
-                            iconSize: 12
-                            glyph: Icons.caretUp
+                            size: "xs"
+                            icon: Icons.caretUp
                             enabled: stepRow.index > 0
                             tooltip: I18n.t("ai.tasks.move_up")
                             onClicked: root.edit(TaskModel.planMove(root.steps, stepRow.index, stepRow.index - 1))
                         }
                         IconButton {
                             visible: root.editable
-                            size: 24
-                            iconSize: 12
-                            glyph: Icons.caretDown
+                            size: "xs"
+                            icon: Icons.caretDown
                             enabled: stepRow.index < root.steps.length - 1
                             tooltip: I18n.t("ai.tasks.move_down")
                             onClicked: root.edit(TaskModel.planMove(root.steps, stepRow.index, stepRow.index + 1))
                         }
                         IconButton {
                             visible: root.editable
-                            size: 24
-                            iconSize: 12
+                            size: "xs"
                             danger: true
-                            glyph: Icons.trash
+                            icon: Icons.trash
                             tooltip: I18n.t("ai.tasks.remove_step")
                             onClicked: root.edit(TaskModel.planRemove(root.steps, stepRow.index))
                         }
@@ -154,9 +150,9 @@ ColumnLayout {
             Chip {
                 objectName: "planAddStep"
                 visible: root.editable
-                glyph: Icons.plus
-                label: I18n.t("ai.tasks.add_step")
-                variant: "transparent"
+                icon: Icons.plus
+                text: I18n.t("ai.tasks.add_step")
+                quiet: true
                 onClicked: root.edit(TaskModel.planInsert(root.steps, -1, ""))
             }
             MarkdownView {
@@ -167,19 +163,19 @@ ColumnLayout {
         }
     }
 
-    UiText {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         visible: root.error.length > 0
         text: root.error
         color: Colors.error
         wrapMode: Text.Wrap
-        size: -2
     }
 
     RowLayout {
         Layout.fillWidth: true
         visible: root.editable
-        spacing: 6
+        spacing: Space.s
         TextField {
             id: reviseField
             objectName: "planRevise"
@@ -188,30 +184,30 @@ ColumnLayout {
             placeholderTextColor: Colors.outline
             color: Colors.overSurface
             font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-1)
+            font.pixelSize: BarLook.size("secondary")
             background: StyledRect {
                 variant: "common"
-                radius: Styling.radius(-4)
+                radius: Look.radius("control")
             }
             onAccepted: root.revise()
         }
         Chip {
             visible: reviseField.text.trim().length > 0
-            glyph: Icons.arrowsClockwise
-            label: I18n.t("ai.tasks.revise")
+            icon: Icons.arrowsClockwise
+            text: I18n.t("ai.tasks.revise")
             onClicked: root.revise()
         }
         Chip {
             objectName: "planSave"
             visible: root.dirty
-            glyph: Icons.accept
-            label: I18n.t("ai.tasks.save_plan")
+            icon: Icons.accept
+            text: I18n.t("ai.tasks.save_plan")
             onClicked: root.save()
         }
         Chip {
             objectName: "planRun"
-            glyph: Icons.play
-            label: I18n.t("ai.tasks.run_plan")
+            icon: Icons.play
+            text: I18n.t("ai.tasks.run_plan")
             active: true
             enabled: TaskModel.planClean(root.steps).length > 0
             onClicked: root.run()

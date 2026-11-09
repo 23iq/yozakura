@@ -8,6 +8,7 @@ import qs.modules.settings
 import qs.modules.settings.controls
 import "../BarModules.js" as BarModules
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Generic drag & drop editor of bar modules split in groups (the legacy
 // bar.layout editor and the panels editor use it). One MouseArea on top
@@ -184,13 +185,13 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 14
+        spacing: Space.l
 
         Grid {
             id: zones
             width: parent.width
             columns: root.columns
-            spacing: 10
+            spacing: Space.m
 
             Repeater {
                 id: zoneRepeater
@@ -214,12 +215,11 @@ Item {
             hint: I18n.t("prefs.bar.group.available.hint")
         }
 
-        Text {
+        KitText {
+            role: "caption"
             width: parent.width
             wrapMode: Text.WordWrap
             text: I18n.t("prefs.bar.layout.keys")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             color: Ui.alpha(Colors.overSurfaceVariant, 0.8)
         }
     }
@@ -280,7 +280,7 @@ Item {
     }
 
     // Floating chip under the pointer while dragging.
-    Chip {
+    ModuleChip {
         id: ghost
         visible: root.dragging
         moduleId: root.pressId || "launcher"
@@ -317,7 +317,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
-            radius: Math.min(Styling.radius(2), 18)
+            radius: Look.radius("box")
             color: zone.target ? Ui.alpha(Colors.primary, 0.1) : Ui.alpha(Colors.overBackground, zone.group === "available" ? 0.03 : 0.05)
             border.width: zone.target ? 2 : 1
             border.color: zone.target ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.7)
@@ -333,28 +333,25 @@ Item {
             id: zoneHeader
             x: 12
             y: 10
-            spacing: 6
-            Text {
+            spacing: Space.s
+            Icon {
+                role: "label"
+                tone: "secondary"
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons[zone.icon] ?? ""
-                font.family: Icons.font
-                font.pixelSize: 12
-                color: Colors.overSurfaceVariant
+                icon: Icons[zone.icon] ?? ""
             }
-            Text {
+            KitText {
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
                 text: zone.title
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.Bold
                 color: Colors.overSurfaceVariant
             }
-            Text {
+            KitText {
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
                 visible: zone.hint !== ""
                 text: "· " + zone.hint
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 color: Ui.alpha(Colors.overSurfaceVariant, 0.7)
             }
         }
@@ -364,7 +361,7 @@ Item {
             x: 10
             y: 34
             width: parent.width - 20
-            spacing: 6
+            spacing: Space.s
             move: Transition {
                 enabled: Config.animDuration > 0
                 NumberAnimation {
@@ -377,7 +374,7 @@ Item {
             Repeater {
                 id: chipRepeater
                 model: zone.ids
-                delegate: Chip {
+                delegate: ModuleChip {
                     required property string modelData
                     moduleId: modelData
                     group: zone.group
@@ -385,18 +382,17 @@ Item {
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             anchors.centerIn: flow
             anchors.verticalCenterOffset: 6
             visible: zone.ids.length === 0
             text: zone.group === "available" ? I18n.t("prefs.bar.group.all_used") : I18n.t("prefs.bar.group.empty")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Ui.alpha(Colors.overSurfaceVariant, 0.6)
         }
     }
 
-    component Chip: Item {
+    component ModuleChip: Item {
         id: chip
         property string moduleId
         property string group
@@ -427,31 +423,28 @@ Item {
             id: row
             anchors.verticalCenter: parent.verticalCenter
             x: 11
-            spacing: 7
+            spacing: Space.s
             opacity: chip.slot ? 0.45 : 1
 
-            Text {
+            Icon {
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons[chip.info.icon] ?? ""
-                font.family: Icons.font
-                font.pixelSize: 14
+                icon: Icons[chip.info.icon] ?? ""
                 color: chip.group === "available" ? Colors.overSurfaceVariant : Colors.primary
             }
-            Text {
+            KitText {
+                role: "secondary"
                 anchors.verticalCenter: parent.verticalCenter
                 text: I18n.t(chip.info.label)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.Medium
                 color: chip.group === "available" ? Colors.overSurfaceVariant : Colors.overBackground
             }
-            Text {
+            Icon {
                 id: removeIcon
+                role: "label"
                 anchors.verticalCenter: parent.verticalCenter
                 visible: !chip.slot && chip.group !== "ghost"
-                text: chip.group === "available" ? Icons.plus : Icons.cancel
-                font.family: Icons.font
-                font.pixelSize: 11
+                icon: chip.group === "available" ? Icons.plus : Icons.cancel
                 color: chip.group === "available" ? Colors.primary : Colors.overSurfaceVariant
                 opacity: chip.group === "available" || chip.hovered || chip.selected ? 0.9 : 0.35
             }

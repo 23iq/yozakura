@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Git state of the project in the ProjectBar (tasks.git): branch, ahead /
 // behind, changed files. Click: a Commit popover (message typed by the
@@ -45,9 +46,9 @@ StyledRect {
     }
 
     visible: root.branch.length > 0
-    implicitWidth: row.implicitWidth + 14
-    implicitHeight: 28
-    radius: Styling.radius(-4)
+    implicitWidth: row.implicitWidth + 2 * Space.s
+    implicitHeight: Space.controlXS
+    radius: Look.radius("control")
     variant: hover.hovered || popup.opened ? "common" : "transparent"
 
     HoverHandler {
@@ -64,46 +65,44 @@ StyledRect {
     RowLayout {
         id: row
         anchors.centerIn: parent
-        width: Math.min(implicitWidth, root.width - 14)
-        spacing: 5
-        Text {
-            text: Icons.gitBranch
-            font.family: Icons.font
-            font.pixelSize: BarLook.font(-2)
-            color: Colors.outline
+        width: Math.min(implicitWidth, root.width - 2 * Space.s)
+        spacing: Space.xs
+        Icon {
+            role: "caption"
+            tone: "muted"
+            icon: Icons.gitBranch
+            size: BarLook.size("caption")
         }
-        Text {
+        AiText {
             objectName: "gitBranch"
+            mono: true
+            role: "caption"
             visible: !root.compact
             Layout.fillWidth: true
             Layout.maximumWidth: 160
             text: root.branch
             elide: Text.ElideMiddle
-            font.family: Config.theme.monoFont
-            font.pixelSize: BarLook.mono(-3)
-            color: Colors.overSurface
+            color: Type.text
         }
-        Text {
+        AiText {
+            mono: true
+            role: "caption"
             visible: !root.compact && !!root.git && (root.git.ahead > 0 || root.git.behind > 0)
             text: root.git ? (root.git.ahead > 0 ? "↑" + root.git.ahead : "") + (root.git.behind > 0 ? " ↓" + root.git.behind : "") : ""
-            font.family: Config.theme.monoFont
-            font.pixelSize: BarLook.mono(-4)
-            color: Colors.outline
         }
         StyledRect {
             visible: root.changed > 0
             Layout.minimumWidth: implicitWidth
-            implicitWidth: changedText.implicitWidth + 10
-            implicitHeight: changedText.implicitHeight + 2
-            radius: height / 2
+            implicitWidth: changedText.implicitWidth + 2 * Space.xs
+            implicitHeight: changedText.implicitHeight + 2 * Space.hairline
+            radius: Look.radius("round", height)
             variant: "internalbg"
-            Text {
+            AiText {
                 id: changedText
                 objectName: "gitChanged"
+                role: "caption"
                 anchors.centerIn: parent
                 text: "● " + root.changed
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
                 color: Colors.warning
             }
         }
@@ -149,43 +148,41 @@ StyledRect {
 
     Popup {
         id: popup
-        y: parent.height + 4
+        y: parent.height + Space.xs
         // Inside the project bar: shifted left when it would overflow.
         width: Math.min(380, root.parent ? root.parent.width : 380)
         x: Math.max(-root.x, Math.min(0, (root.parent ? root.parent.width : 0) - root.x - width))
-        padding: 10
+        padding: Space.s
         background: StyledRect {
             variant: "popup"
-            radius: Styling.radius(-2)
+            radius: Look.radius("control")
             enableShadow: true
         }
         contentItem: ColumnLayout {
-            spacing: 8
-            Text {
+            spacing: Space.s
+            AiText {
                 objectName: "gitPopupBranch"
+                mono: true
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.branch + (root.git && root.git.ahead > 0 ? "  ↑" + root.git.ahead : "") + (root.git && root.git.behind > 0 ? "  ↓" + root.git.behind : "")
                 elide: Text.ElideMiddle
-                font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-2)
-                color: Colors.overSurface
+                color: Type.text
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.git ? I18n.t("ai.git.summary").replace("%1", root.git.staged || 0).replace("%2", root.git.unstaged || 0).replace("%3", root.git.untracked || 0) + (root.git.conflicts > 0 ? " · " + I18n.t("ai.git.conflicts").replace("%1", root.git.conflicts) : "") : ""
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
-                color: Colors.outline
             }
             StyledRect {
                 Layout.fillWidth: true
                 implicitHeight: 96
-                radius: Styling.radius(-4)
+                radius: Look.radius("control")
                 variant: "common"
                 ScrollView {
                     anchors.fill: parent
-                    anchors.margins: 4
+                    anchors.margins: Space.xs
                     TextArea {
                         id: message
                         objectName: "commitInput"
@@ -193,7 +190,7 @@ StyledRect {
                         placeholderTextColor: Colors.outline
                         wrapMode: TextArea.Wrap
                         font.family: Config.theme.monoFont
-                        font.pixelSize: BarLook.mono(-2)
+                        font.pixelSize: BarLook.monoSize("caption")
                         color: Colors.overSurface
                         background: null
                         Keys.onPressed: event => {
@@ -205,25 +202,24 @@ StyledRect {
                     }
                 }
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: root.error.length > 0
                 text: root.error
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
-                color: Colors.error
+                color: Type.danger
             }
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Chip {
                     objectName: "commitWriteAi"
                     visible: Config.ai.tasks.commitWithAi
-                    glyph: Icons.sparkle
-                    label: root.writing ? I18n.t("ai.git.writing") : I18n.t("ai.git.write_ai")
+                    icon: Icons.sparkle
+                    text: root.writing ? I18n.t("ai.git.writing") : I18n.t("ai.git.write_ai")
                     enabled: !root.writing && root.changed > 0
-                    variant: "transparent"
+                    quiet: true
                     onClicked: root.writeMessage()
                 }
                 Item {
@@ -231,8 +227,8 @@ StyledRect {
                 }
                 Chip {
                     objectName: "commitButton"
-                    glyph: Icons.accept
-                    label: I18n.t("ai.git.commit")
+                    icon: Icons.accept
+                    text: I18n.t("ai.git.commit")
                     active: true
                     enabled: message.text.trim().length > 0 && root.changed > 0 && !committer.running
                     onClicked: root.commit()

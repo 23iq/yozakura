@@ -7,6 +7,7 @@ import qs.modules.bar
 import qs.modules.notch
 import qs.modules.services
 import qs.modules.services.activities
+import qs.modules.components.kit
 import "ActivityLayout.js" as Layout
 
 // Live activities for one screen. Reads where the notch and the bar are and
@@ -136,7 +137,7 @@ Item {
             gap: host.place.mode === "tab" ? host.spacing : host.spacing * 2
             spacing: host.spacing
             indicatorSize: BarMetrics.iconSize(16)
-            fontSize: Styling.fontSize(BarMetrics.compact ? -2 : -1)
+            fontSize: Type.size(BarMetrics.compact ? "caption" : "secondary")
         }
     }
 }

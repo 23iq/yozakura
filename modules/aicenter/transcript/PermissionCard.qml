@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.markdown
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/AgentTimeline.js" as Timeline
 
 // "The agent wants to …" card: Allow / Allow for this session / Deny.
@@ -33,8 +34,8 @@ StyledRect {
     signal decided(string decision)
 
     variant: pending ? "pane" : "common"
-    radius: Styling.radius(-2)
-    implicitHeight: col.implicitHeight + 24
+    radius: Look.radius("control")
+    implicitHeight: col.implicitHeight + 2 * Space.m
     border.width: pending ? 1 : 0
     border.color: Colors.primary
     focus: pending
@@ -69,53 +70,46 @@ StyledRect {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 12
-        spacing: 10
+        anchors.margins: Space.m
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.s
 
             StyledRect {
                 variant: root.pending ? "primary" : (root.status === "allowed" ? "common" : "error")
-                Layout.preferredWidth: 30
-                Layout.preferredHeight: 30
-                radius: Styling.radius(-4)
-                Text {
+                Layout.preferredWidth: Space.controlXS
+                Layout.preferredHeight: Space.controlXS
+                radius: Look.radius("control")
+                Icon {
+                    role: "secondary"
                     anchors.centerIn: parent
-                    text: root.pending ? Icons.shieldWarning : (root.status === "allowed" ? Icons.checkCircle : Icons.xCircle)
-                    font.family: Icons.font
-                    font.pixelSize: 15
+                    icon: root.pending ? Icons.shieldWarning : (root.status === "allowed" ? Icons.checkCircle : Icons.xCircle)
                     color: Styling.srItem(parent.variant)
                 }
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 1
-                Text {
+                spacing: Space.hairline
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: root.pending ? I18n.t("ai.perm_wants").replace("%1", root.agentLabel || I18n.t("ai.the_agent")) : (root.status === "allowed" ? (root.decision === "allow_session" ? I18n.t("ai.perm_allowed_session") : (root.decision === "auto" ? I18n.t("ai.perm_auto") : I18n.t("ai.perm_allowed"))) : I18n.t("ai.perm_denied"))
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.outline
                 }
                 RowLayout {
-                    spacing: 6
+                    spacing: Space.s
                     Layout.fillWidth: true
-                    Text {
-                        text: root._icon(root.category)
-                        font.family: Icons.font
-                        font.pixelSize: 13
-                        color: Colors.overSurface
+                    Icon {
+                        role: "label"
+                        tone: "text"
+                        icon: root._icon(root.category)
                     }
-                    Text {
+                    KitText {
                         Layout.fillWidth: true
                         text: root.title || root.tool
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(0)
                         font.weight: Font.DemiBold
-                        color: Colors.overSurface
                         elide: Text.ElideMiddle
                     }
                 }
@@ -124,13 +118,14 @@ StyledRect {
 
         Chip {
             visible: root.pending && (root.detail.length > 0 || root.diff.length > 0)
-            label: I18n.t("ai.details")
+            text: I18n.t("ai.details")
             trailingIcon: root.detailsOpen ? Icons.caretUp : Icons.caretDown
-            variant: "transparent"
+            quiet: true
             onClicked: root.detailsOpen = !root.detailsOpen
         }
 
-        Text {
+        KitText {
+            role: "caption"
             visible: root.detailsOpen && root.pending && root.detail.length > 0 && root.diff.length === 0
             Layout.fillWidth: true
             text: root.detail
@@ -138,9 +133,8 @@ StyledRect {
             wrapMode: Text.WrapAnywhere
             maximumLineCount: 8
             elide: Text.ElideRight
-            font.family: Config.theme.monoFont
-            font.pixelSize: Styling.monoFontSize(-3)
-            color: Colors.overSurfaceVariant
+            font.family: Type.monoFont
+            color: Type.secondary
         }
 
         DiffView {
@@ -154,18 +148,17 @@ StyledRect {
         RowLayout {
             visible: root.pending
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Space.s
 
             Button {
                 id: allowBtn
                 text: I18n.t("ai.allow")
                 focusPolicy: Qt.NoFocus
                 onClicked: root.decided("allow")
-                Layout.preferredHeight: 30
-                contentItem: Text {
+                Layout.preferredHeight: Space.controlXS
+                contentItem: KitText {
+                    role: "secondary"
                     text: allowBtn.text
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     font.weight: Font.DemiBold
                     color: Styling.srItem("primary")
                     horizontalAlignment: Text.AlignHCenter
@@ -173,10 +166,10 @@ StyledRect {
                 }
                 background: StyledRect {
                     variant: allowBtn.hovered ? "primaryfocus" : "primary"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                 }
-                leftPadding: 14
-                rightPadding: 14
+                leftPadding: Space.m
+                rightPadding: Space.m
             }
             Button {
                 id: sessionBtn
@@ -184,21 +177,20 @@ StyledRect {
                 text: I18n.t("ai.allow_session")
                 focusPolicy: Qt.NoFocus
                 onClicked: root.decided("allow_session")
-                Layout.preferredHeight: 30
-                contentItem: Text {
+                Layout.preferredHeight: Space.controlXS
+                contentItem: KitText {
+                    role: "secondary"
                     text: sessionBtn.text
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurface
+                    color: Type.text
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
                 background: StyledRect {
                     variant: sessionBtn.hovered ? "focus" : "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                 }
-                leftPadding: 12
-                rightPadding: 12
+                leftPadding: Space.m
+                rightPadding: Space.m
             }
             Item {
                 Layout.fillWidth: true
@@ -208,31 +200,28 @@ StyledRect {
                 text: I18n.t("ai.deny")
                 focusPolicy: Qt.NoFocus
                 onClicked: root.decided("deny")
-                Layout.preferredHeight: 30
-                contentItem: Text {
+                Layout.preferredHeight: Space.controlXS
+                contentItem: KitText {
+                    role: "secondary"
                     text: denyBtn.text
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     color: denyBtn.hovered ? Styling.srItem("error") : Colors.error
                     horizontalAlignment: Text.AlignHCenter
                     verticalAlignment: Text.AlignVCenter
                 }
                 background: StyledRect {
                     variant: "error"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                     opacity: denyBtn.hovered ? 1 : 0
                 }
-                leftPadding: 12
-                rightPadding: 12
+                leftPadding: Space.m
+                rightPadding: Space.m
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             visible: root.pending
             text: I18n.t("ai.perm_keys_hint")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-4)
-            color: Colors.outline
             opacity: 0.8
         }
     }

@@ -1,7 +1,8 @@
 """The kit's big controls (Tile, LevelSlider, Segmented, Sparkline) and
 their tokens (Look.raisedFill / bigRadius, Type.load) in every visual
 language: raised at rest, solid accent when on, the detail zones, the
-slider's fill holding its icon, the sliding segment pill."""
+slider's fill holding its icon, the sliding segment pill, a Sparkline's
+capacity window."""
 import functools
 import sys
 from pathlib import Path
@@ -35,6 +36,7 @@ Window {
                     onActivated: i => parent.Window.window.picked = i }
         Sparkline { objectName: "spark"; width: 80; height: 20; values: [0.1, 0.5, 0.3] }
         Sparkline { objectName: "sparkEmpty"; values: [] }
+        Sparkline { objectName: "sparkCap"; width: 80; height: 20; capacity: 10; values: [0.1, 0.5, 0.3] }
     }
 }"""
 
@@ -105,5 +107,17 @@ for lang in ("ink", "glass", "tiles", "classic"):
 
     # Sparkline counts its values; fewer than two draw nothing.
     assert get("spark").property("count") == 3 and get("sparkEmpty").property("count") == 0, tag
+    # Without a capacity the values span the width (one extra off the left
+    # edge); with one, early samples sit one window step apart on the right.
+    def canvas_box(name, h=h, get=get):
+        c = h.find(get(name), "sparklineCanvas")
+        return c.property("x"), c.property("width")
+
+    sx, sw = canvas_box("spark")
+    assert abs(sx + 80) < 1e-6 and abs(sw - 160) < 1e-6, (tag, sx, sw)
+    step = get("sparkCap").property("step")
+    assert abs(step - 80 / 8) < 1e-6, (tag, step)
+    cx, cw = canvas_box("sparkCap")
+    assert abs(cw - 2 * step) < 1e-6 and abs(cx + cw - 80) < 1e-6, (tag, cx, cw)
 
 print("kit-bold: ok")

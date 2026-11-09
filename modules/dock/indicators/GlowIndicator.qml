@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.modules.components.kit
 import qs.config
 import qs.modules.theme
 
@@ -13,11 +14,10 @@ IndicatorBase {
         width: root.size
         height: root.size
 
-        Rectangle {
+        Mark {
             anchors.centerIn: parent
             width: parent.width * 2.6
             height: width
-            radius: width / 2
             color: root.tint
             opacity: root.active ? 0.25 : 0
 
@@ -29,9 +29,8 @@ IndicatorBase {
             }
         }
 
-        Rectangle {
+        Mark {
             anchors.fill: parent
-            radius: width / 2
             color: root.tint
         }
     }

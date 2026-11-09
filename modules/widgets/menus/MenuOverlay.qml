@@ -3,6 +3,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
+import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.shell
@@ -34,19 +35,22 @@ PanelWindow {
     }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    visible: root.open || hideTimer.running
+    // Latched (SurfaceLatch): never unmapped and remapped in one tick.
+    visible: latch.shown
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("menu")
-    WlrLayershell.keyboardFocus: root.open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: latch.keyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
-    onOpenChanged: root.open ? root.begin() : hideTimer.restart()
+    onOpenChanged: {
+        if (root.open)
+            root.begin();
+    }
     Component.onCompleted: {
         if (root.open)
             root.begin();
     }
 
     function begin() {
-        hideTimer.stop();
         root.shownModule = root.module;
         root.cursorReady = !MenuStyles.atCursor(HostRouter.menuStyle(root.module));
         if (!root.cursorReady) {
@@ -82,9 +86,11 @@ PanelWindow {
         onTriggered: root.placeAt(null)
     }
 
-    Timer {
-        id: hideTimer
-        interval: Motion.exit.duration + 20
+    SurfaceLatch {
+        id: latch
+        active: root.open
+        holdMs: Motion.exit.duration
+        focusHost: root.contentItem
     }
 
     FocusGrab {

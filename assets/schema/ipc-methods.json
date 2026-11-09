@@ -320,6 +320,7 @@
   {
    "name": "system",
    "methods": [
+    "heartbeat",
     "shutdown"
    ],
    "subscribe": false
@@ -405,6 +406,7 @@
    "name": "ui",
    "methods": [
     "run",
+    "shells",
     "toggle"
    ],
    "subscribe": true
@@ -442,7 +444,8 @@
   {
    "name": "wallpaper",
    "methods": [
-    "set"
+    "set",
+    "videoProxy"
    ],
    "subscribe": true
   },

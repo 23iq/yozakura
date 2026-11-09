@@ -28,11 +28,10 @@ Column {
         })
         selected: root.connected
         leading: Component {
-            Text {
-                text: Icons[DeviceGlyphs.bluetoothGlyph(root.device?.icon)] || Icons.bluetooth
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("body")
-                color: root.connected ? Type.accent : Type.secondary
+            Icon {
+                icon: Icons[DeviceGlyphs.bluetoothGlyph(root.device?.icon)] || Icons.bluetooth
+                role: "body"
+                tone: root.connected ? "accent" : "secondary"
             }
         }
         onClicked: root.expanded = !root.expanded

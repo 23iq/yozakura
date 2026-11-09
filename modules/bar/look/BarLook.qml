@@ -19,13 +19,15 @@ import "BarLookRules.js" as Rules
 QtObject {
     id: root
 
-    readonly property bool classic: Look.language === "classic"
+    // Module groups on the theme's "bg" pill as configured (classic): no
+    // language box, the theme border and shadow, solid active states
+    readonly property bool surfacePill: Look.barSurfacePill
     readonly property real denseBelow: 32
     // A visible strip / pill / frame under the modules (BarLookRules)
     readonly property bool barSurface: Rules.barSurface(Config.theme.srBarBg ? Config.theme.srBarBg.opacity : 0, Config.bar.containBar, Config.bar.frameEnabled)
 
     function restLook(flat: bool): string {
-        return Rules.restLook(Look.language, flat, root.barSurface, Look.group.fillOpacity >= 1);
+        return Rules.restLook(root.surfacePill, flat, root.barSurface, Look.group.fillOpacity >= 1);
     }
 
     function textRole(moduleSize: real): string {
@@ -37,7 +39,7 @@ QtObject {
     }
 
     // Module labels (clock, window menu, layouts): one weight per language
-    readonly property int textWeight: root.classic ? Font.Medium : Look.activeLabelWeight
+    readonly property int textWeight: Look.barLabelWeight
     readonly property string textFont: Type.bodyFont
 
     function iconSize(moduleSize: real): int {

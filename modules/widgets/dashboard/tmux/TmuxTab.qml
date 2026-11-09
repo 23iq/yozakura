@@ -309,7 +309,6 @@ Item {
                 list: resultsList
                 text: root.searchText
                 placeholderText: I18n.t("tmux.search")
-                iconText: ""
                 prefixIcon: root.prefixIcon
             }
 

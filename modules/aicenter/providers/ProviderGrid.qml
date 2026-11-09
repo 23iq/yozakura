@@ -49,12 +49,10 @@ Flickable {
                 required property var modelData
                 Layout.fillWidth: true
                 spacing: BarLook.gap
-                Text {
+                AiText {
+                    role: "caption"
                     text: I18n.t(group.modelData.title)
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
                     font.weight: Font.Medium
-                    color: Colors.outline
                 }
                 GridLayout {
                     Layout.fillWidth: true

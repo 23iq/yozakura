@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.displays
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Key repeat sliders plus a field to try them out.
 KeyboardCard {
@@ -55,25 +56,21 @@ KeyboardCard {
     Item {
         width: parent.width
         height: 106
-        Rectangle {
-            x: 20
-            width: parent.width - 40
-            height: 1
-            color: Ui.alpha(Colors.outlineVariant, 0.45)
+        Divider {
+            x: Look.rowInset
+            width: parent.width - Look.rowInset * 2
         }
-        Text {
-            x: 20
+        KitText {
+            role: "secondary"
+            x: Look.rowInset
             y: 18
             text: I18n.t("prefs.keyboard.try")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.DemiBold
-            color: Colors.overSurfaceVariant
         }
         TryTypingField {
-            x: 20
+            x: Look.rowInset
             y: 40
-            width: parent.width - 40
+            width: parent.width - Look.rowInset * 2
         }
     }
 }

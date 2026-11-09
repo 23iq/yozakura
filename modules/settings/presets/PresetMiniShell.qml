@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 import "../Ui.js" as Ui
 import "../../../config/ColorSpec.js" as ColorSpec
 
@@ -120,7 +121,9 @@ Item {
     }
     Rectangle {
         anchors.fill: parent
-        color: root.v("theme.lightMode", false) ? "#ffffff" : "#000000"
+        // A veil in the preset's own background (white-ish in light mode),
+        // stronger on OLED looks.
+        color: root.c("background")
         opacity: root.v("theme.oledMode", false) ? 0.35 : 0.08
     }
 
@@ -131,18 +134,19 @@ Item {
         anchors.verticalCenter: parent.verticalCenter
         spacing: 2 * root.u
         readonly property bool poster: root.v("desktop.depthClockStyle", "yozakura") === "poster"
-        Text {
+        KitText {
             text: "21:47"
+            tabular: true
             font.family: root.v("theme.font", "")
-            font.pixelSize: (parent.poster ? 150 : 110) * root.u
+            font.pixelSize: Math.max(1, (parent.poster ? 150 : 110) * root.u)
             font.weight: parent.poster ? Font.Black : Font.Light
             color: root.c("overBackground")
             opacity: 0.92
         }
-        Text {
+        KitText {
             text: parent.poster ? "SUNDAY" : "日曜日 · 10月5日"
             font.family: root.v("theme.font", "")
-            font.pixelSize: 26 * root.u
+            font.pixelSize: Math.max(1, 26 * root.u)
             font.letterSpacing: parent.poster ? 6 * root.u : 0
             color: root.c("primary")
         }
@@ -165,6 +169,9 @@ Item {
         readonly property real border: root.v("compositor.borderSize", 2) > 0 ? Math.max(1, root.v("compositor.borderSize", 2) * root.u) : 0
 
         MiniWindow {
+            shell: root
+            winRadius: work.winRadius
+            border: work.border
             x: 0
             y: 0
             width: (parent.width - root.gapIn) * 0.58
@@ -172,82 +179,23 @@ Item {
             focused: true
         }
         MiniWindow {
+            shell: root
+            winRadius: work.winRadius
+            border: work.border
             x: (parent.width - root.gapIn) * 0.58 + root.gapIn
             y: 0
             width: parent.width - x
             height: (parent.height - root.gapIn) / 2
         }
         MiniWindow {
+            shell: root
+            winRadius: work.winRadius
+            border: work.border
             x: (parent.width - root.gapIn) * 0.58 + root.gapIn
             y: (parent.height - root.gapIn) / 2 + root.gapIn
             width: parent.width - x
             height: (parent.height - root.gapIn) / 2
             lines: 2
-        }
-    }
-
-    component MiniWindow: Item {
-        id: win
-        property bool focused: false
-        property int lines: 4
-
-        Rectangle {
-            visible: root.v("compositor.shadowEnabled", true)
-            anchors.fill: parent
-            anchors.topMargin: 3 * root.u
-            anchors.leftMargin: 1 * root.u
-            anchors.rightMargin: -1 * root.u
-            anchors.bottomMargin: -5 * root.u
-            radius: work.winRadius
-            color: Qt.rgba(0, 0, 0, 0.28)
-        }
-        Rectangle {
-            anchors.fill: parent
-            radius: work.winRadius
-            color: Ui.alpha(root.c("surfaceContainerLow"), root.glass ? 0.84 : 1)
-            border.width: work.border
-            border.color: win.focused ? root.borderColor(root.v("compositor.activeBorderColor", ["primary"]), "primary") : root.borderColor(root.v("compositor.inactiveBorderColor", ["surface"]), "surface")
-
-            Column {
-                x: 12 * root.u + work.border
-                y: 12 * root.u + work.border
-                width: parent.width - 2 * x
-                spacing: 8 * root.u
-                Rectangle {
-                    width: parent.width * 0.45
-                    height: 9 * root.u
-                    radius: height / 2
-                    color: root.c("overBackground")
-                    opacity: 0.85
-                }
-                Repeater {
-                    model: win.lines
-                    Rectangle {
-                        required property int index
-                        width: parent.width * (0.9 - (index % 3) * 0.17)
-                        height: 6 * root.u
-                        radius: height / 2
-                        color: root.c("overSurfaceVariant")
-                        opacity: 0.45
-                    }
-                }
-                Row {
-                    visible: win.focused
-                    spacing: 6 * root.u
-                    Rectangle {
-                        width: 46 * root.u
-                        height: 16 * root.u
-                        radius: Math.min(height / 2, root.radius)
-                        color: root.c("primary")
-                    }
-                    Rectangle {
-                        width: 34 * root.u
-                        height: 16 * root.u
-                        radius: Math.min(height / 2, root.radius)
-                        color: root.c("secondaryContainer")
-                    }
-                }
-            }
         }
     }
 
@@ -280,101 +228,9 @@ Item {
         line: Ui.alpha(root.c("outlineVariant"), 0.5)
     }
 
-    Item {
-        id: bar
+    MiniShellBar {
         visible: !root.usePanels
-        readonly property real m: root.islands && !root.contained ? root.gapOut : 0
-        readonly property real along: root.frameThick + m
-        x: root.edge === "left" ? m : (root.edge === "right" ? root.width - root.barThick - m : along)
-        y: root.edge === "top" ? m : (root.edge === "bottom" ? root.height - root.barThick - m : along)
-        width: root.vertical ? root.barThick : root.width - 2 * along
-        height: root.vertical ? root.height - 2 * along : root.barThick
-
-        // Islands: three floating groups
-        Repeater {
-            model: root.islands ? 3 : 0
-            Rectangle {
-                required property int index
-                readonly property real len: [0.26, 0.16, 0.2][index] * (root.vertical ? bar.height : bar.width)
-                readonly property real pos: index === 0 ? 0 : (index === 1 ? ((root.vertical ? bar.height : bar.width) - len) / 2 : (root.vertical ? bar.height : bar.width) - len)
-                x: root.vertical ? 4 * root.u : pos
-                y: root.vertical ? pos : 4 * root.u
-                width: root.vertical ? bar.width - 8 * root.u : len
-                height: root.vertical ? len : bar.height - 8 * root.u
-                radius: Math.min(root.radius, Math.min(width, height) / 2)
-                color: root.contained ? Ui.alpha(root.c("surfaceContainer"), 0.9) : root.chrome
-            }
-        }
-
-        // Workspaces
-        Grid {
-            id: ws
-            readonly property string style: root.v("workspaces.numeralStyle", "arabic")
-            readonly property var glyphs: style === "roman" ? ["I", "II", "III", "IV"] : (style === "kanji" ? ["一", "二", "三", "四"] : ["1", "2", "3", "4"])
-            columns: root.vertical ? 1 : 4
-            spacing: 6 * root.u
-            x: root.vertical ? (bar.width - width) / 2 : 14 * root.u
-            y: root.vertical ? 14 * root.u : (bar.height - height) / 2
-            Repeater {
-                model: 4
-                Rectangle {
-                    required property int index
-                    width: index === 0 && !root.vertical ? 30 * root.u : 18 * root.u
-                    height: index === 0 && root.vertical ? 30 * root.u : 18 * root.u
-                    radius: Math.min(root.radius, height / 2)
-                    color: index === 0 ? root.c("primary") : "transparent"
-                    Text {
-                        anchors.centerIn: parent
-                        text: ws.glyphs[parent.index]
-                        font.family: root.v("theme.font", "")
-                        font.pixelSize: 11 * root.u
-                        font.weight: Font.Bold
-                        color: parent.index === 0 ? root.c("overPrimary") : root.c("overSurfaceVariant")
-                    }
-                }
-            }
-        }
-
-        // Integrated dock apps
-        Row {
-            visible: root.dockOn && root.dockTheme === "integrated" && !root.vertical
-            anchors.centerIn: parent
-            anchors.horizontalCenterOffset: bar.width * 0.18
-            spacing: 5 * root.u
-            Repeater {
-                model: 4
-                Rectangle {
-                    required property int index
-                    width: 18 * root.u
-                    height: width
-                    radius: Math.min(root.radius * 0.6, width / 2)
-                    color: [root.c("primary"), root.c("tertiary"), root.c("secondary"), root.c("primaryContainer")][index]
-                }
-            }
-        }
-
-        // Clock
-        Text {
-            visible: !root.vertical
-            anchors.right: parent.right
-            anchors.rightMargin: 16 * root.u
-            anchors.verticalCenter: parent.verticalCenter
-            text: "21:47"
-            font.family: root.v("theme.font", "")
-            font.pixelSize: 15 * root.u
-            font.weight: Font.DemiBold
-            color: root.c("overBackground")
-        }
-        Rectangle {
-            visible: root.vertical
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 14 * root.u
-            width: 18 * root.u
-            height: 18 * root.u
-            radius: width / 2
-            color: root.c("primary")
-        }
+        shell: root
     }
 
     // Notch

@@ -3,6 +3,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Placeholder for a planned setting: shows the row with a badge.
 Item {
@@ -22,19 +23,17 @@ Item {
         Row {
             id: label
             anchors.centerIn: parent
-            spacing: 6
-            Text {
+            spacing: Space.s
+            Icon {
+                role: "label"
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons.sparkle
-                font.family: Icons.font
-                font.pixelSize: 12
+                icon: Icons.sparkle
                 color: Colors.tertiary
             }
-            Text {
+            KitText {
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
                 text: I18n.t("common.coming_soon")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 font.weight: Font.DemiBold
                 color: Colors.tertiary
             }

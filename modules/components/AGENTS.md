@@ -8,17 +8,13 @@ Atomic design library for the Yozakura shell. 26 QML components + 29 GLSL shader
 | Component | Role |
 |-----------|------|
 | `StyledRect.qml` | **THE** base container. 300+ usages. `variant` prop selects style from `Styling.qml` |
-| `Separator.qml` | Visual divider between sections |
 | `ActionGrid.qml` | Flexible button grid (row or grid layout). Used by PowerMenu, ToolsMenu |
 
 ### Input
 | Component | Role |
 |-----------|------|
-| `SearchInput.qml` | Text entry with icon, prefix, escape-to-clear |
-| `StyledSlider.qml` | Standard slider (volume, brightness, progress) |
-| `PositionSlider.qml` | Media position/seek slider |
+| `PositionSlider.qml` | Media seek bar: the kit LineSlider (wavy while playing), seeks on release |
 | `CircularControl.qml` | Circular knob for volume/mic |
-| `ToggleButton.qml` | Icon button with tooltip and toggle state |
 
 ### Display & Feedback
 | Component | Role |
@@ -35,6 +31,9 @@ Atomic design library for the Yozakura shell. 26 QML components + 29 GLSL shader
 | `CarouselProgress.qml` | Step-based progress dots |
 | `DiagonalStripePattern.qml` | Decorative pattern overlay |
 | `BgShadow.qml` / `Shadow.qml` | Drop shadow effects |
+| `ShadowCaster.qml` | Captured theme shadow of part of a larger item (free-form silhouettes: bar panels, activities) |
+| `shape/ShapeShadow.qml` | Analytic theme shadow of a rounded box / attached fillets / frame hole: uniforms only, fixed cost while it morphs (`shape_shadow.frag`, blur model `ShadowBlur.js`) |
+| `RenderFade.qml` | `RenderFade on opacity`: render-thread fade (OpacityAnimator), off at duration 0 |
 | `Outline.qml` | Border outline effect |
 | `Tinted.qml` / `TintedWallpaper.qml` | Color tint overlays |
 

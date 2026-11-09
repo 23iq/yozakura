@@ -2,7 +2,6 @@ package niri
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"yozakura/backend/pkg/brand"
@@ -78,10 +77,10 @@ func keybindPlan(config ipc.ConfigKeybinds) (planned []plannedBind, skipped []ip
 	}
 
 	if config.Shell != nil {
-		for _, name := range sortedKeys(config.Shell.System) {
+		for _, name := range ipc.SortedKeybindNames(config.Shell.System) {
 			add(config.Shell.System[name], brand.DisplayName+" System: "+name)
 		}
-		for _, name := range sortedKeys(config.Shell.Binds) {
+		for _, name := range ipc.SortedKeybindNames(config.Shell.Binds) {
 			add(config.Shell.Binds[name], brand.DisplayName+": "+name)
 		}
 	}
@@ -89,15 +88,6 @@ func keybindPlan(config ipc.ConfigKeybinds) (planned []plannedBind, skipped []ip
 		add(kb, fmt.Sprintf("Custom Bind %d", i))
 	}
 	return planned, skipped
-}
-
-func sortedKeys(m map[string]ipc.Keybind) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // SkippedKeybinds implements ipc.BindSkipper.

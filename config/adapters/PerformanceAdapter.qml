@@ -3,12 +3,17 @@
 import Quickshell.Io
 
 JsonAdapter {
-    property bool blurTransition: true
+    property bool blurTransition: false
     property bool windowPreview: true
     property bool wavyLine: true
     property bool pauseWallpaperOnFullscreen: true
     property bool pauseWallpaperWhenCovered: true
+    property bool pauseWallpaperOnIdle: true
+    property int pauseWallpaperIdleDelay: 60
+    property bool pauseWallpaperOnBattery: false
+    property bool videoWallpaperDownscale: true
     property bool dashboardPersistTabs: false
     property int dashboardMaxPersistentTabs: 2
     property bool unloadIdleViews: true
+    property int settingsKeepAliveMinutes: 5
 }

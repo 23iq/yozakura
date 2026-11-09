@@ -50,6 +50,20 @@ Singleton {
         onTriggered: root.tryConnect()
     }
 
+    // Freeze watchdog: the GUI thread reports it is alive; the daemon kills
+    // and restarts a shell that stops (backend/pkg/daemon/qsguard.go,
+    // HeartbeatInterval). A dry-run shell is not the supervised one.
+    Timer {
+        id: heartbeatTimer
+        interval: 3000
+        repeat: true
+        triggeredOnStart: true
+        running: root.socketAvailable && !DryRun.active
+        onTriggered: root.notify("system.heartbeat", {
+            pid: Quickshell.processId
+        })
+    }
+
     // If the socket isn't connected yet, queue the request and drain it
     // once connected — otherwise requests fired during startup are
     // silently dropped ("device not open").

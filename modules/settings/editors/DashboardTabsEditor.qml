@@ -8,6 +8,7 @@ import qs.modules.settings.store
 import qs.config
 import "../controls"
 import "../../widgets/dashboard/DashboardTabs.js" as DashboardTabs
+import qs.modules.components.kit
 
 // Dashboard tabs (modules/widgets/dashboard/DashboardTabs.js): rail order
 // (drag the grip or use the arrows) and visibility. Writes layout.dashboard.tabs.
@@ -52,7 +53,7 @@ ColumnLayout {
                 y: grip.active ? grip.activeTranslation.y : 0
                 variant: grip.active ? "focus" : "common"
                 enableShadow: grip.active
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
 
                 RowLayout {
                     anchors.fill: parent
@@ -61,10 +62,9 @@ ColumnLayout {
                     spacing: Metrics.spacing
 
                     // Drag grip
-                    Text {
-                        text: Icons.dotsNine
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(2)
+                    Icon {
+                        role: "title"
+                        icon: Icons.dotsNine
                         color: grip.active ? Colors.primary : Colors.outline
                         Accessible.name: I18n.t("prefs.dashboard.drag")
 
@@ -85,13 +85,11 @@ ColumnLayout {
                         spacing: 0
                         Repeater {
                             model: [-1, 1]
-                            delegate: Text {
+                            delegate: Icon {
                                 id: arrow
                                 required property int modelData
                                 readonly property bool usable: modelData < 0 ? row.index > 0 : row.index < root.tabs.length - 1
-                                text: modelData < 0 ? Icons.caretUp : Icons.caretDown
-                                font.family: Icons.font
-                                font.pixelSize: Styling.fontSize(1)
+                                icon: modelData < 0 ? Icons.caretUp : Icons.caretDown
                                 color: arrowArea.containsMouse && usable ? Colors.primary : Colors.outline
                                 opacity: usable ? 1 : 0.3
                                 Accessible.role: Accessible.Button
@@ -108,18 +106,15 @@ ColumnLayout {
                         }
                     }
 
-                    Text {
-                        text: row.meta ? (Icons[row.meta.icon] || "") : ""
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(4)
+                    Icon {
+                        role: "title"
+                        icon: row.meta ? (Icons[row.meta.icon] || "") : ""
                         color: row.modelData.visible ? Colors.primary : Colors.outline
                     }
 
-                    Text {
+                    KitText {
                         Layout.fillWidth: true
                         text: row.meta ? I18n.t(row.meta.labelKey) : row.modelData.id
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(0)
                         font.weight: Font.DemiBold
                         color: row.modelData.visible ? Colors.overSurface : Colors.outline
                         elide: Text.ElideRight

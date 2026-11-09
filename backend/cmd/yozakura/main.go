@@ -124,6 +124,7 @@ func main() {
 	}
 
 	if len(args) == 0 {
+		refuseWithoutWayland(errNoWaylandStart)
 		refuseIfLegacyRunning() // before migration touches user files
 	}
 	migrateLegacy()
@@ -152,7 +153,7 @@ func main() {
 			fmt.Println("Error: No command specified for run")
 			os.Exit(1)
 		}
-		mustCall("ui.run", map[string]any{"command": cmd})
+		os.Exit(runUI("ui.run", cmd, defaultUIEnv(), os.Stderr))
 	case "toggle":
 		cmd := ""
 		if len(args) > 1 {
@@ -162,11 +163,11 @@ func main() {
 			fmt.Println("Error: No command specified for toggle")
 			os.Exit(1)
 		}
-		mustCall("ui.toggle", map[string]any{"command": cmd})
+		os.Exit(runUI("ui.toggle", cmd, defaultUIEnv(), os.Stderr))
 	case "lock":
-		mustCall("ui.run", map[string]any{"command": "lockscreen"})
+		os.Exit(runUI("ui.run", "lockscreen", defaultUIEnv(), os.Stderr))
 	case "onboarding":
-		mustCall("ui.run", map[string]any{"command": "onboarding"})
+		os.Exit(runUI("ui.run", "onboarding", defaultUIEnv(), os.Stderr))
 	case "reload":
 		restartShell()
 	case "quit":
@@ -525,6 +526,7 @@ func execCommand(name string, args ...string) {
 // shut down via IPC, waiting for it to actually die, and re-execing
 // ourselves in the background.
 func restartShell() {
+	refuseWithoutWayland(errNoWaylandReload)
 	// Concurrent reloads collapse into one: the loser waits for the winner
 	// to finish and does nothing, instead of racing it into a second daemon.
 	rl, err := instancelock.TryAcquire(instancelock.ReloadPath())

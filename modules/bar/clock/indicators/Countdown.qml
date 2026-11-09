@@ -1,5 +1,6 @@
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 
 // The phase time left ("12:34") next to the clock, tabular digits in a box
 // sized for "00:00" so the bar never jitters while it ticks. A vertical bar
@@ -22,7 +23,8 @@ Item {
         text: root.indicator.vertical ? "00" : (root.label.length > 5 ? "0:00:00" : "00:00")
     }
 
-    Text {
+    // The indicator's own face font (ClockFaces), not a kit role.
+    KitText {
         id: digits
         objectName: "pomodoroCountdownText"
         anchors.centerIn: parent
@@ -32,9 +34,7 @@ Item {
         font.family: root.indicator.fontFamily
         font.pixelSize: root.indicator.fontSize
         font.weight: root.indicator.fontWeight
-        font.features: {
-            "tnum": 1
-        }
+        tabular: true
         lineHeight: 0.9
     }
 

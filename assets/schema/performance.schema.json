@@ -9,7 +9,7 @@
     "blurTransition": {
       "title": "Blur Transition",
       "type": "boolean",
-      "default": true,
+      "default": false,
       "description": "Animated blur when opening panels",
       "x-settings": {
         "category": "system",
@@ -71,6 +71,68 @@
         "keywords": "video wallpaper covered tiled windows gaps monocle pause"
       }
     },
+    "pauseWallpaperOnIdle": {
+      "title": "Pause Wallpaper When Idle",
+      "type": "boolean",
+      "default": true,
+      "description": "Pause video wallpapers while you are away (no input and nothing inhibiting idle)",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.pause_wallpaper_idle",
+        "control": "toggle",
+        "keywords": "video wallpaper idle away afk inactive pause"
+      }
+    },
+    "pauseWallpaperIdleDelay": {
+      "title": "Idle Pause Delay",
+      "type": "number",
+      "default": 60,
+      "description": "Seconds without input before the video wallpaper pauses",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.pause_wallpaper_idle_delay",
+        "control": "number",
+        "step": 5,
+        "unit": "s",
+        "keywords": "video wallpaper idle delay seconds timeout pause",
+        "visibleWhen": {
+          "key": "performance.pauseWallpaperOnIdle",
+          "equals": true
+        },
+        "min": 5,
+        "max": 3600
+      },
+      "minimum": 5,
+      "maximum": 3600
+    },
+    "pauseWallpaperOnBattery": {
+      "title": "Pause Wallpaper on Battery",
+      "type": "boolean",
+      "default": false,
+      "description": "Pause video wallpapers while the laptop runs on battery",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.pause_wallpaper_battery",
+        "control": "toggle",
+        "keywords": "video wallpaper battery power laptop unplugged pause"
+      }
+    },
+    "videoWallpaperDownscale": {
+      "title": "Downscale Video Wallpapers",
+      "type": "boolean",
+      "default": true,
+      "description": "Play a cached copy scaled to the screen at up to 30 fps when the video is larger (made once with ffmpeg)",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.video_downscale",
+        "control": "toggle",
+        "keywords": "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"
+      }
+    },
     "dashboardPersistTabs": {
       "title": "Persist Dashboard Tabs",
       "type": "boolean",
@@ -123,6 +185,25 @@
         },
         "advanced": true
       }
+    },
+    "settingsKeepAliveMinutes": {
+      "title": "Keep Settings loaded",
+      "type": "number",
+      "default": 5,
+      "description": "Minutes the closed Settings window stays loaded so it reopens at once; 0 releases it on close.",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "prefs.sys.settings_keep_alive",
+        "control": "number",
+        "unit": "min",
+        "keywords": "settings window keep loaded memory reopen instant release",
+        "advanced": true,
+        "min": 0,
+        "max": 120
+      },
+      "minimum": 0,
+      "maximum": 120
     }
   },
   "additionalProperties": false

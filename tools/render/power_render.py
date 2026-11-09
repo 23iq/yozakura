@@ -4,7 +4,7 @@
     tools/render/power_render.py [--out DIR] [--mode dark|light] [--style S ...] [LANGUAGE ...]
 
 Draws layout.powermenu.style fullscreen / radial / notch once per visual
-language (ink, glass, tiles by default) with your real config, palette and
+language (every one of VisualLanguage.js by default) with your real config, palette and
 wallpaper (see settings_render.py), each at rest (a plain action focused)
 and "holding" (Shut down held, its ring half full). Writes
 <out>/power-<style>[-holding]-<language>.png. Nothing runs: the commands

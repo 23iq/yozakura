@@ -24,7 +24,7 @@ Item {
     readonly property var columnModel: BindModel.columns(groups, Math.max(1, Math.floor((width + gap) / (minColumnWidth + gap))))
     readonly property var ordered: columnModel.reduce((acc, col) => acc.concat(col.reduce((a, g) => a.concat(g.rows), [])), [])
     readonly property string selectedUid: selectedIndex >= 0 && selectedIndex < ordered.length ? ordered[selectedIndex].uid : ""
-    readonly property int gap: Look.groupBoxed ? Look.groupGap : Space.xxl
+    readonly property int gap: Look.screenGap
     readonly property int minColumnWidth: Math.round(Type.size("body") * 26)
 
     onQueryChanged: selectedIndex = query !== "" && ordered.length > 0 ? 0 : -1

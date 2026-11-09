@@ -6,6 +6,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.config
 
 // Edits apply only to the selected session, or to its pending launch.
@@ -28,7 +29,7 @@ StyledRect {
     // Opaque: it covers the transcript.
     variant: "bg"
     enableShadow: true
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
 
     function refresh() {
         if (isAgent && Ai.agents)
@@ -40,46 +41,42 @@ StyledRect {
     ScrollView {
         id: scroll
         anchors.fill: parent
-        anchors.margins: 12
+        anchors.margins: Space.m
         clip: true
         contentWidth: availableWidth
         ColumnLayout {
             width: scroll.availableWidth
-            spacing: 10
+            spacing: Space.s
             RowLayout {
                 Layout.fillWidth: true
-                Text {
+                KitText {
                     Layout.fillWidth: true
                     text: I18n.t("ai.session_settings")
-                    color: Colors.overSurface
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
                 }
                 IconButton {
-                    glyph: Icons.cancel
+                    size: "xs"
+                    icon: Icons.cancel
                     tooltip: I18n.t("ai.close")
                     onClicked: root.closeRequested()
                 }
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: Ai.busy
                 wrapMode: Text.Wrap
                 text: I18n.t("ai.settings_busy")
-                color: Colors.outline
-                font.pixelSize: Styling.fontSize(-2)
             }
             Chip {
-                label: I18n.t("ai.engine_default")
-                glyph: Icons.pin
+                text: I18n.t("ai.engine_default")
+                icon: Icons.pin
                 enabled: !!Ai.currentModel && Ai.currentModel.available !== false
                 onClicked: Ai.setDefaultModel(Ai.currentModel.id)
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: root.isAgent
                 text: I18n.t("ai.choose_model")
-                color: Colors.outline
-                font.pixelSize: Styling.fontSize(-2)
             }
             SettingsChoice {
                 Layout.fillWidth: true
@@ -106,18 +103,17 @@ StyledRect {
                 color: Colors.overSurface
                 background: StyledRect {
                     variant: "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                 }
                 onEditingFinished: Ai.configureAgent({
                     model: text,
                     effort: ""
                 })
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: root.efforts.length > 0
                 text: I18n.t("ai.effort")
-                color: Colors.outline
-                font.pixelSize: Styling.fontSize(-2)
             }
             SettingsChoice {
                 Layout.fillWidth: true
@@ -140,23 +136,22 @@ StyledRect {
             }
             Chip {
                 visible: root.isAgent
-                glyph: Icons.clockCounterClockwise
-                label: I18n.t("ai.retry_models")
+                icon: Icons.clockCounterClockwise
+                text: I18n.t("ai.retry_models")
                 onClicked: root.refresh()
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: !!root.catalog.error
                 text: root.catalog.error || ""
                 wrapMode: Text.Wrap
-                color: Colors.error
-                font.pixelSize: Styling.fontSize(-2)
+                color: Type.danger
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: root.isAgent
                 text: I18n.t("ai.agent_folder")
-                color: Colors.outline
-                font.pixelSize: Styling.fontSize(-2)
             }
             TextField {
                 Layout.fillWidth: true
@@ -166,7 +161,7 @@ StyledRect {
                 color: Colors.overSurface
                 background: StyledRect {
                     variant: "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                 }
                 onEditingFinished: Ai.configureAgent({
                     cwd: text
@@ -175,53 +170,38 @@ StyledRect {
             // The project of the Code space; changing it opens a new session there.
             Chip {
                 objectName: "settingsBrowse"
-                glyph: Icons.folderOpen
-                label: I18n.t("ai.browse")
+                icon: Icons.folderOpen
+                text: I18n.t("ai.browse")
                 visible: root.isAgent
                 onClicked: root.browseRequested()
             }
-            Switch {
-                id: approvalSwitch
+            RowLayout {
                 Layout.fillWidth: true
                 visible: root.isAgent
-                enabled: !Ai.busy
-                checked: root.settings.yolo === true
-                onToggled: Ai.configureAgent({
-                    yolo: checked
-                })
-                contentItem: Text {
-                    text: I18n.t("ai.yolo_label")
-                    color: Colors.overSurface
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    wrapMode: Text.Wrap
-                    leftPadding: 54
-                    verticalAlignment: Text.AlignVCenter
+                spacing: Space.s
+                Switch {
+                    id: approvalSwitch
+                    enabled: !Ai.busy
+                    checked: root.settings.yolo === true
+                    onToggled: value => Ai.configureAgent({
+                            yolo: value
+                        })
                 }
-                indicator: StyledRect {
-                    x: 0
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: 44
-                    height: 24
-                    variant: approvalSwitch.checked ? "primary" : "common"
-                    radius: Styling.radius(-4)
-                    border.width: 1
-                    border.color: Colors.outlineVariant
-                    StyledRect {
-                        x: approvalSwitch.checked ? 23 : 3
-                        y: 3
-                        width: 18
-                        height: 18
-                        variant: "focus"
-                        radius: Styling.radius(-6)
+                KitText {
+                    Layout.fillWidth: true
+                    role: "caption"
+                    text: I18n.t("ai.yolo_label")
+                    color: Type.text
+                    wrapMode: Text.Wrap
+                    TapHandler {
+                        onTapped: approvalSwitch.flip()
                     }
                 }
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: root.isAgent
                 text: I18n.t("ai.system_prompt")
-                color: Colors.outline
-                font.pixelSize: Styling.fontSize(-2)
             }
             TextArea {
                 Layout.fillWidth: true
@@ -233,7 +213,7 @@ StyledRect {
                 wrapMode: TextArea.Wrap
                 background: StyledRect {
                     variant: "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                 }
                 onActiveFocusChanged: if (!activeFocus && text !== (root.settings.systemPrompt || ""))
                     Ai.configureAgent({

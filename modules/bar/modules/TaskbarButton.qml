@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import "DockMagnify.js" as DockMagnify
 import "AppNames.js" as AppNames
 
@@ -34,17 +35,17 @@ Item {
     readonly property real iconSize: Math.round(cell * (dock ? 0.84 : 0.62) * magnify)
     property int lastFocused: -1
 
-    implicitWidth: separator ? (vertical ? cell : Math.round(cell * 0.32)) : (vertical ? cell : Math.round(cell * magnify) + (showLabel ? label.implicitWidth + 10 : 0))
+    implicitWidth: separator ? (vertical ? cell : Math.round(cell * 0.32)) : (vertical ? cell : Math.round(cell * magnify) + (showLabel ? label.implicitWidth + Space.m : 0))
     implicitHeight: separator ? (vertical ? Math.round(cell * 0.32) : cell) : (vertical ? Math.round(cell * magnify) : cell)
 
     // Hover / pressed backdrop (taskbar) — docks only magnify
     StyledRect {
         visible: !btn.dock && !btn.separator && (mouse.containsMouse || btn.focused)
         anchors.fill: parent
-        anchors.margins: 2
+        anchors.margins: Space.hairline * 2
         variant: "focus"
         enableShadow: false
-        radius: Styling.radius(-4)
+        radius: Look.radius("control", height)
         opacity: btn.focused ? 0.75 : 0.55
     }
 
@@ -62,7 +63,7 @@ Item {
         width: btn.iconSize
         height: btn.iconSize
         // Docks grow out of the panel, away from the screen edge
-        x: btn.vertical ? (btn.edge === "right" ? btn.width - width - (btn.dock ? btn.cell * 0.08 : (btn.cell - width) / 2) : (btn.dock ? btn.cell * 0.08 : (btn.cell - width) / 2)) : (btn.showLabel ? 6 : (btn.width - width) / 2)
+        x: btn.vertical ? (btn.edge === "right" ? btn.width - width - (btn.dock ? btn.cell * 0.08 : (btn.cell - width) / 2) : (btn.dock ? btn.cell * 0.08 : (btn.cell - width) / 2)) : (btn.showLabel ? Space.xs : (btn.width - width) / 2)
         y: btn.vertical ? (btn.height - height) / 2 : (btn.edge === "top" ? (btn.dock ? btn.cell * 0.08 : (btn.cell - height) / 2) : btn.height - height - (btn.dock ? btn.cell * 0.08 : (btn.cell - height) / 2)) - bounce.offset
 
         Image {
@@ -99,17 +100,15 @@ Item {
         }
     }
 
-    Text {
+    KitText {
         id: label
         visible: btn.showLabel && !btn.separator && !btn.vertical
         anchors.verticalCenter: parent.verticalCenter
-        x: iconBox.x + iconBox.width + 8
+        x: iconBox.x + iconBox.width + Space.s
+        role: "secondary"
+        color: Type.text
         text: btn.name
-        elide: Text.ElideRight
         width: Math.min(implicitWidth, 140)
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
-        color: Colors.overBackground
     }
 
     // Running indicators: dots (dock) or an underline pill (taskbar)
@@ -117,14 +116,14 @@ Item {
         visible: btn.running && !btn.vertical
         anchors.horizontalCenter: iconBox.horizontalCenter
         y: btn.edge === "top" ? 1 : btn.height - height - (btn.dock ? 1 : 2)
-        spacing: 3
+        spacing: Space.xs
         Repeater {
             model: btn.dock ? DockMagnify.dotCount(btn.windows) : 1
             delegate: Rectangle {
                 width: btn.dock ? 5 : (btn.focused ? btn.cell * 0.42 : btn.cell * 0.18)
                 height: btn.dock ? 5 : 3
                 radius: height / 2
-                color: btn.focused ? Colors.primary : Colors.overSurfaceVariant
+                color: btn.focused ? Type.accent : Type.secondary
                 opacity: btn.focused ? 1 : 0.7
                 Behavior on width {
                     enabled: Config.animDuration > 0
@@ -140,14 +139,14 @@ Item {
         visible: btn.running && btn.vertical
         anchors.verticalCenter: iconBox.verticalCenter
         x: btn.edge === "right" ? 1 : btn.width - width - 1
-        spacing: 3
+        spacing: Space.xs
         Repeater {
             model: btn.dock ? DockMagnify.dotCount(btn.windows) : 1
             delegate: Rectangle {
                 width: btn.dock ? 5 : 3
                 height: btn.dock ? 5 : (btn.focused ? btn.cell * 0.42 : btn.cell * 0.18)
                 radius: width / 2
-                color: btn.focused ? Colors.primary : Colors.overSurfaceVariant
+                color: btn.focused ? Type.accent : Type.secondary
             }
         }
     }

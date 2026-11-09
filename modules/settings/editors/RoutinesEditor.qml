@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.settings.editors.routines
 import "../../routines/RoutineModel.js" as RoutineModel
 
@@ -34,7 +35,7 @@ ColumnLayout {
         return root.saved.find(r => r.id === key) || null;
     }
 
-    spacing: 10
+    spacing: Space.m
 
     function setMap(name, key, value) {
         const next = Object.assign({}, root[name]);
@@ -108,22 +109,21 @@ ColumnLayout {
 
     Component.onCompleted: RoutinesService.refresh()
 
-    Text {
+    KitText {
+        role: "caption"
         Layout.fillWidth: true
         text: I18n.t("routines.hint")
         wrapMode: Text.WordWrap
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overSurfaceVariant
     }
 
     Flow {
         Layout.fillWidth: true
-        spacing: 6
+        spacing: Space.s
         Chip {
             objectName: "newRoutine"
-            glyph: Icons.plus
-            label: I18n.t("routines.new")
+            icon: Icons.plus
+            text: I18n.t("routines.new")
             active: true
             onClicked: root.startNew("")
         }
@@ -132,23 +132,22 @@ ColumnLayout {
             delegate: Chip {
                 required property var modelData
                 objectName: "template:" + modelData.id
-                glyph: Icons[modelData.icon]
-                label: I18n.t(modelData.name)
+                icon: Icons[modelData.icon]
+                text: I18n.t(modelData.name)
                 onClicked: root.startNew(modelData.id)
             }
         }
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         Layout.fillWidth: true
         visible: root.cards.length === 0
-        topPadding: 8
-        bottomPadding: 8
+        topPadding: Space.s
+        bottomPadding: Space.s
         text: I18n.t("routines.empty")
         wrapMode: Text.WordWrap
         horizontalAlignment: Text.AlignHCenter
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         color: Colors.outline
     }
 

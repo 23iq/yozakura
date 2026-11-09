@@ -60,24 +60,22 @@ Item {
                 icon: Icons.musicNotes
                 radius: Space.clampRadius(Space.smallRadius, root.artSize)
             }
-            Text {
+            Icon {
                 anchors.centerIn: parent
                 visible: root.artUrl === ""
-                text: Icons.musicNotes
-                font.family: Icons.font
-                font.pixelSize: root.glyphSize
+                icon: Icons.musicNotes
+                size: root.glyphSize
                 color: root.ink
                 opacity: root.hasPlayer ? 1 : 0.5
             }
         }
 
-        Text {
+        // The host's text size and font (island / bar module).
+        KitText {
             objectName: "mediaTitle"
             visible: root.titleShown
             width: Math.min(implicitWidth, root.maxTitleWidth)
             text: root.title
-            elide: Text.ElideRight
-            textFormat: Text.PlainText
             font.family: root.textFont
             font.pixelSize: root.textSize
             font.weight: root.textWeight

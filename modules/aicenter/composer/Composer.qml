@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.chat
 import "Mentions.js" as Mentions
 
@@ -46,10 +47,10 @@ StyledRect {
     signal escapePressed
 
     variant: "common"
-    radius: Styling.radius(2)
-    implicitHeight: col.implicitHeight + 16
+    radius: Look.radius("surface")
+    implicitHeight: col.implicitHeight + 2 * Space.s
     border.width: 1
-    border.color: input.activeFocus || drop.containsDrag ? Colors.primary : Qt.rgba(Colors.outlineVariant.r, Colors.outlineVariant.g, Colors.outlineVariant.b, 0.6)
+    border.color: input.activeFocus || drop.containsDrag ? Type.accent : Look.alpha("outlineVariant", 0.6)
 
     function focusInput() {
         input.forceActiveFocus();
@@ -184,8 +185,8 @@ StyledRect {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 8
-        spacing: 6
+        anchors.margins: Space.s
+        spacing: Space.s
 
         Repeater {
             model: root.mention ? root.mentionResults : []
@@ -194,8 +195,8 @@ StyledRect {
                 required property var modelData
                 required property int index
                 Layout.fillWidth: true
-                implicitHeight: 28
-                radius: Styling.radius(-6)
+                implicitHeight: Space.controlXS
+                radius: Look.radius("small")
                 variant: hit.index === root.mentionIndex ? "focus" : "transparent"
                 HoverHandler {
                     cursorShape: Qt.PointingHandCursor
@@ -207,39 +208,34 @@ StyledRect {
                 }
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
-                    spacing: 8
-                    Text {
-                        text: Icons.fileText
-                        font.family: Icons.font
-                        font.pixelSize: BarLook.font(-1)
-                        color: Colors.primary
+                    anchors.leftMargin: Space.s
+                    anchors.rightMargin: Space.s
+                    spacing: Space.s
+                    Icon {
+                        role: "secondary"
+                        tone: "secondary"
+                        icon: Icons.fileText
+                        size: BarLook.size("secondary")
                     }
-                    Text {
+                    AiText {
+                        role: "secondary"
                         text: hit.modelData.split("/").pop()
-                        font.family: Config.theme.font
-                        font.pixelSize: BarLook.font(-1)
-                        color: Colors.overSurface
+                        color: Type.text
                     }
-                    Text {
+                    AiText {
+                        role: "caption"
                         Layout.fillWidth: true
                         text: hit.modelData.indexOf("/") >= 0 ? hit.modelData.slice(0, hit.modelData.lastIndexOf("/")) : ""
-                        font.family: Config.theme.font
-                        font.pixelSize: BarLook.font(-2)
-                        color: Colors.outline
                         elide: Text.ElideLeft
                     }
                 }
             }
         }
-        Text {
+        AiText {
+            role: "caption"
             visible: root.mention !== null && !root.mentionSearching && root.mentionResults.length === 0 && root.mention.query.length > 0
-            Layout.leftMargin: 6
+            Layout.leftMargin: Space.s
             text: I18n.t("ai.mention_none")
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-2)
-            color: Colors.outline
         }
 
         Repeater {
@@ -248,20 +244,18 @@ StyledRect {
                 id: entry
                 required property var modelData
                 Layout.fillWidth: true
-                Layout.leftMargin: 6
-                spacing: 8
-                Text {
+                Layout.leftMargin: Space.s
+                spacing: Space.s
+                KitText {
+                    role: "caption"
                     text: entry.modelData.cmd
-                    font.family: Config.theme.monoFont
-                    font.pixelSize: Styling.monoFontSize(-2)
-                    color: Colors.primary
+                    font.family: Type.monoFont
+                    color: Type.text
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: entry.modelData.desc
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.outline
                     elide: Text.ElideRight
                 }
             }
@@ -269,7 +263,7 @@ StyledRect {
 
         AttachmentStrip {
             Layout.fillWidth: true
-            Layout.leftMargin: 4
+            Layout.leftMargin: Space.xs
             attachments: root.attachments
             removable: true
             onRemoveRequested: index => {
@@ -288,15 +282,15 @@ StyledRect {
                 placeholderTextColor: Colors.outline
                 wrapMode: TextArea.Wrap
                 font.family: Config.theme.font
-                font.pixelSize: BarLook.font(0)
+                font.pixelSize: BarLook.size("body")
                 color: Colors.overBackground
                 selectionColor: Colors.primary
                 selectedTextColor: Colors.overPrimary
                 background: null
-                leftPadding: 6
-                rightPadding: 6
-                topPadding: 4
-                bottomPadding: 4
+                leftPadding: Space.s
+                rightPadding: Space.s
+                topPadding: Space.xs
+                bottomPadding: Space.xs
                 onTextChanged: root.updateMention()
                 onCursorPositionChanged: root.updateMention()
 
@@ -360,26 +354,29 @@ StyledRect {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 4
+            spacing: Space.xs
 
             IconButton {
-                glyph: Icons.plus
+                size: "xs"
+                icon: Icons.plus
                 tooltip: I18n.t("ai.attach")
                 onClicked: menu.open()
                 AttachMenu {
                     id: menu
-                    y: -implicitHeight - 6
+                    y: -implicitHeight - Space.s
                     onPicked: kind => root.addContext(kind)
                 }
             }
             IconButton {
-                glyph: Icons.cursorText
+                size: "xs"
+                icon: Icons.cursorText
                 tooltip: I18n.t("ai.ctx_selection")
                 visible: !root.compact
                 onClicked: root.addContext("selection")
             }
             IconButton {
-                glyph: Icons.selection
+                size: "xs"
+                icon: Icons.selection
                 tooltip: I18n.t("ai.ctx_region")
                 visible: !root.compact
                 onClicked: root.addContext("region")
@@ -387,15 +384,14 @@ StyledRect {
             Item {
                 Layout.fillWidth: true
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: !root.compact && input.text.length > 0
                 text: I18n.t(root.enterSends ? "ai.enter_hint" : "ai.ctrl_enter_hint")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-4)
-                color: Colors.outline
             }
             IconButton {
-                glyph: root.busy ? Icons.stop : Icons.paperPlaneRight
+                size: "xs"
+                icon: root.busy ? Icons.stop : Icons.paperPlaneRight
                 tooltip: root.busy ? I18n.t("ai.stop") + " (Ctrl+.)" : I18n.t("ai.send")
                 active: root.busy || input.text.trim().length > 0 || root.attachments.length > 0
                 onClicked: root.busy ? root.stopRequested() : root.submit()

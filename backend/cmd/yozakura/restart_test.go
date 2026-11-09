@@ -34,6 +34,7 @@ func fastTimeouts(t *testing.T) {
 func TestConcurrentReloadsStartOneDaemon(t *testing.T) {
 	fastTimeouts(t)
 	t.Setenv("XDG_RUNTIME_DIR", t.TempDir())
+	t.Setenv("WAYLAND_DISPLAY", "wayland-test") // reload refuses outside a session
 	var started int32
 	var holder instancelock.Lock
 	startDaemon = fakeDaemon(t, &started, &holder)

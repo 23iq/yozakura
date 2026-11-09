@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.bar.look
 
 // Menubar "Window" menu for the focused window: close, fullscreen, float,
 // pin, center and move to another workspace.
@@ -19,7 +20,7 @@ BarModuleBase {
     readonly property int workspaces: Config.workspaces && Config.workspaces.shown ? Config.workspaces.shown : 10
     readonly property int currentWorkspace: client && client.workspace ? client.workspace.id : 0
 
-    contentLength: vertical ? moduleSize : label.implicitWidth + (flat ? 16 : 28)
+    contentLength: vertical ? moduleSize : label.implicitWidth + (flat ? Space.l : Space.xl + Space.xs)
 
     function run(cmd) {
         YozdService.dispatch(cmd);
@@ -33,13 +34,21 @@ BarModuleBase {
         hovered: mouse.containsMouse
     }
 
-    Text {
+    KitText {
         id: label
+        visible: !root.vertical
         anchors.centerIn: parent
-        text: root.vertical ? (Icons.list ?? "") : I18n.t("bar.app_menu.window")
-        font.family: root.vertical ? Icons.font : root.textFont
-        font.pixelSize: root.vertical ? root.iconSize : root.textSize
+        role: BarLook.textRole(root.moduleSize)
+        text: I18n.t("bar.app_menu.window")
         font.weight: root.textWeight
+        color: surface.foreground
+    }
+
+    Icon {
+        visible: root.vertical
+        anchors.centerIn: parent
+        icon: Icons.list ?? ""
+        size: root.iconSize
         color: surface.foreground
     }
 

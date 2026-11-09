@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.markdown
 import "Transcript.js" as Transcript
 
@@ -157,28 +158,26 @@ Item {
     Component {
         id: errorC
         RowLayout {
-            spacing: 8
-            Text {
+            spacing: Space.s
+            Icon {
+                role: "body"
                 Layout.alignment: Qt.AlignTop
-                text: Icons.warning
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(0)
+                icon: Icons.warning
+                size: BarLook.size("body")
                 color: Colors.error
             }
-            Text {
+            AiText {
+                role: "secondary"
                 Layout.fillWidth: true
                 text: root.text
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-1)
-                color: Colors.error
+                color: Type.danger
             }
             IconButton {
                 visible: root.canRetry
-                glyph: Icons.arrowCounterClockwise
+                icon: Icons.arrowCounterClockwise
                 tooltip: I18n.t("ai.retry")
-                size: 24
-                iconSize: 13
+                size: "xs"
                 onClicked: root.retryRequested(root.source)
             }
         }
@@ -191,14 +190,12 @@ Item {
     }
     Component {
         id: noticeC
-        Text {
+        AiText {
+            role: "caption"
             text: root.text
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
             textFormat: Text.MarkdownText
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-2)
-            color: Colors.outline
         }
     }
 }

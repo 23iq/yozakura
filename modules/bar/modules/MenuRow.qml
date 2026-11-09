@@ -21,11 +21,9 @@ ListRow {
     title: row.label
     onClicked: row.triggered()
 
-    leading: Text {
-        text: Icons[row.icon] ?? ""
-        font.family: Icons.font
-        font.pixelSize: Type.iconSize("body")
-        color: row.danger ? Colors.error : Type.secondary
+    leading: Icon {
+        icon: Icons[row.icon] ?? ""
+        color: row.danger ? Type.danger : Type.secondary
     }
 
     trailing: row.hint !== "" ? hintComponent : null

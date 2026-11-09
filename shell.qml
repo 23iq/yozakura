@@ -37,6 +37,7 @@ import qs.modules.keybinds
 import qs.modules.onboarding
 import qs.modules.specials
 import "modules/tools"
+import "modules/settings/SettingsScreen.js" as SettingsScreen
 
 ShellRoot {
     id: root
@@ -51,8 +52,17 @@ ShellRoot {
         Component.onCompleted: Visibilities.setContextMenu(contextMenu)
     }
 
+    // Screens for the always-present per-screen windows (wallpaper, desktop,
+    // corners, panel, OSD): the outputs at startup pass at once, a hotplugged
+    // one only after the output list held still, so no window is created on
+    // an output in the tick it appears (a QtWayland crash).
+    SettledScreens {
+        id: settledScreens
+        source: Quickshell.screens
+    }
+
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Loader {
             id: wallpaperLoader
@@ -65,12 +75,20 @@ ShellRoot {
     }
 
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Loader {
             id: desktopLoader
-            active: (Config.desktop.enabled || DesktopWidgets.wanted || (Config.desktop.depthLayering && Config.desktop.depthClock)) && SuspendManager.wakeReady
+            active: desktopWanted.output === true && SuspendManager.wakeReady
             required property ShellScreen modelData
+            // Config flags a preset or settings burst may flip several
+            // times in a row: debounced, so the window is not torn down and
+            // recreated over and over (a QtWayland crash source).
+            SettleGate {
+                id: desktopWanted
+                value: !!(Config.desktop.enabled || DesktopWidgets.wanted || (Config.desktop.depthLayering && Config.desktop.depthClock))
+                interval: 300
+            }
             sourceComponent: Desktop {
                 screen: desktopLoader.modelData
             }
@@ -79,7 +97,7 @@ ShellRoot {
 
     // Visual panel & reservations
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Item {
             id: screenShellContainer
@@ -91,8 +109,14 @@ ShellRoot {
                 targetScreen: screenShellContainer.modelData
             }
 
+            // Debounced like the desktop window above.
+            SettleGate {
+                id: cornersWanted
+                value: !!(Config.theme.enableCorners && Config.roundness > 0)
+                interval: 300
+            }
             Loader {
-                active: Config.theme.enableCorners && Config.roundness > 0
+                active: cornersWanted.output === true
                 sourceComponent: ScreenCorners {
                     screen: screenShellContainer.modelData
                 }
@@ -140,9 +164,13 @@ ShellRoot {
             return screens.filter(screen => list.indexOf(screen.name) !== -1);
         }
 
-        Loader {
+        // Kept loaded while the closed window is still mapped: its
+        // SurfaceLatch drops keyboard focus first and unmaps a frame later,
+        // so the window is never destroyed in the focus tick.
+        LatchedLoader {
             id: overviewLoader
-            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false)
+            allowed: SuspendManager.wakeReady
+            wanted: Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false
             required property ShellScreen modelData
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
@@ -160,9 +188,13 @@ ShellRoot {
             return screens.filter(screen => list.indexOf(screen.name) !== -1);
         }
 
-        Loader {
+        // Kept loaded while the closed window is still mapped: its
+        // SurfaceLatch drops keyboard focus first and unmaps a frame later,
+        // so the window is never destroyed in the focus tick.
+        LatchedLoader {
             id: presetsLoader
-            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false)
+            allowed: SuspendManager.wakeReady
+            wanted: Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false
             required property ShellScreen modelData
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
@@ -287,11 +319,27 @@ ShellRoot {
         source: "modules/tools/MirrorWindow.qml"
     }
 
-    // Settings
-    Loader {
+    // Settings: created asynchronously on the first open (a large tree with
+    // no QML disk cache), then kept hidden for
+    // performance.settingsKeepAliveMinutes after closing so it reopens at once.
+    // Its output is an initial property resolved once per creation (a
+    // `screen` binding would move the mapped window on every output change);
+    // a kept window moves itself while hidden (SettingsWindow.retarget()).
+    KeepAliveLoader {
         id: settingsWindowLoader
-        active: SuspendManager.wakeReady && GlobalStates.settingsWindowVisible
-        source: "modules/settings/SettingsWindow.qml"
+        allowed: SuspendManager.wakeReady
+        wanted: GlobalStates.settingsWindowVisible
+        keepFor: Math.max(0, Config.performance.settingsKeepAliveMinutes) * 60000
+        function load() {
+            if (active)
+                setSource("modules/settings/SettingsWindow.qml", {
+                    "targetScreen": SettingsScreen.byName(Quickshell.screens, GlobalStates.settingsTargetScreenName)
+                });
+            else
+                setSource("");
+        }
+        onActiveChanged: load()
+        Component.onCompleted: load()
     }
 
     // First-run setup wizard (OnboardingService: auto-shown once on a fresh
@@ -312,9 +360,11 @@ ShellRoot {
         DisplayOverlays {}
     }
 
-    // AI selection actions popup (only exists while open)
-    Loader {
-        active: Ai.selection !== null && Ai.selection.visible
+    // AI selection actions popup (only exists while open, and while its
+    // latch keeps it mapped after closing: keyboard focus drops first, the
+    // window goes a frame later, never in the same tick)
+    LatchedLoader {
+        wanted: Ai.selection !== null && Ai.selection.visible
         sourceComponent: SelectionMenuWindow {
             actions: Ai.selection
         }
@@ -326,7 +376,7 @@ ShellRoot {
     // the OSD is the only thing that sets osdVisible true, but it has
     // to be loaded before its signal handlers can run.
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Loader {
             id: osdLoader
@@ -335,14 +385,6 @@ ShellRoot {
             sourceComponent: OSD {
                 targetScreen: osdLoader.modelData
             }
-        }
-    }
-
-    // Init clipboard service
-    Connections {
-        target: ClipboardService
-        function onListCompleted() {
-        // Service initialized and ready
         }
     }
 
@@ -358,11 +400,6 @@ ShellRoot {
                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
                 _ = WallpaperCommandService; // Force init (IPC wallpaper.set subscriber)
                 _ = PresetCommandService;    // Force init (IPC preset.load subscriber)
-                // PresetsService.initialize() is normally triggered lazily
-                // when the user opens the Presets tab; the CLI preset
-                // command needs the list available at boot, so kick it off
-                // here too.
-                PresetsService.initialize();
             });
         }
     }
@@ -381,6 +418,12 @@ ShellRoot {
             _ = SpecialsService.active; // special workspaces: launch-on-open, renames, preload
             _ = TimersService.ready; // timers: notch activity, alarm sound, hub
             _ = FocusMode.active; // focus mode: ends with its timer, restores DND
+            // Clipboard history list: the copies themselves are recorded by
+            // the backend's wl-paste watcher, this only binds the refresh.
+            _ = ClipboardService.items;
+            // The preset list (normally scanned when the Presets tab opens)
+            // for the "new look" offer; `preset.load` does not need it.
+            PresetsService.initialize();
         }
     }
 }

@@ -9,6 +9,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.store
 import qs.config
 import "../../../keybinds/BindModel.js" as BindModel
+import qs.modules.components.kit
 
 // Expanded editor of a bind. The usual case is one step: record the keys,
 // pick what they do (an app, a shell panel, a window action...). Custom
@@ -26,7 +27,7 @@ ColumnLayout {
     // Open by default when the bind already uses advanced features.
     property bool advanced: BindModel.isAdvanced(bind)
 
-    spacing: 10
+    spacing: Space.m
 
     function setKey(i, k) {
         const keys = root.bind.keys.slice();
@@ -62,7 +63,7 @@ ColumnLayout {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Space.s
 
             Repeater {
                 model: root.bind.keys
@@ -99,7 +100,7 @@ ColumnLayout {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
 
             Repeater {
                 model: root.special ? [] : root.bind.actions
@@ -148,27 +149,26 @@ ColumnLayout {
     // Footer: on/off, Advanced, reset or delete
     RowLayout {
         Layout.fillWidth: true
-        Layout.leftMargin: 12
-        Layout.rightMargin: 12
-        Layout.bottomMargin: 10
-        spacing: 10
+        Layout.leftMargin: Space.m
+        Layout.rightMargin: Space.m
+        Layout.bottomMargin: Space.m
+        spacing: Space.m
 
         ToggleControl {
             objectName: "keybindEnabled"
             checked: root.bind.enabled
             onToggled: v => KeybindsStore.setEnabled(root.bind.uid, v)
         }
-        Text {
+        KitText {
+            role: "caption"
             text: I18n.t("binds.enabled")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
 
         AddLink {
             objectName: "keybindAdvanced"
             visible: root.custom
-            Layout.leftMargin: 6
+            Layout.leftMargin: Space.s
             icon: root.advanced ? "caretUp" : "caretDown"
             text: I18n.t("binds.advanced")
             onClicked: root.advanced = !root.advanced
@@ -208,18 +208,17 @@ ColumnLayout {
         default property alias content: slot.data
 
         Layout.fillWidth: true
-        Layout.leftMargin: 12
-        Layout.rightMargin: 12
-        spacing: 12
+        Layout.leftMargin: Space.m
+        Layout.rightMargin: Space.m
+        spacing: Space.m
 
-        Text {
+        KitText {
+            role: "caption"
             Layout.preferredWidth: 72
             Layout.alignment: Qt.AlignTop
-            Layout.topMargin: 10
+            Layout.topMargin: Space.m
             text: form.label
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
         ColumnLayout {

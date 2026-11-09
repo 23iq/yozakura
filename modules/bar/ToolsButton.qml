@@ -1,17 +1,17 @@
 import QtQuick
-import qs.modules.components
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.bar.look
 
-ToggleButton {
+// Bar module: opens / closes the tools menu (accent while it is open).
+BarModuleButton {
     id: toolsButton
-    buttonIcon: Icons.toolbox
+    objectName: "toolsButton"
+
+    readonly property bool open: Visibilities.currentActiveModule === "tools"
+
+    glyph: Icons.toolbox
     tooltipText: I18n.t("bar.tooltip.tools")
-    onToggle: function () {
-        if (Visibilities.currentActiveModule === "tools") {
-            Visibilities.setActiveModule("");
-        } else {
-            Visibilities.setActiveModule("tools");
-        }
-    }
+    active: toolsButton.open
+    onClicked: Visibilities.setActiveModule(toolsButton.open ? "" : "tools")
 }

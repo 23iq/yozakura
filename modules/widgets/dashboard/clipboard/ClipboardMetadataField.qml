@@ -1,6 +1,5 @@
 import QtQuick
-import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 
 // Label + value pair of the metadata strip.
 Column {
@@ -12,23 +11,17 @@ Column {
     property bool elideValue: false
     property int valueElide: Text.ElideRight
 
-    spacing: 2
+    spacing: Space.xs / 2
 
-    Text {
+    KitText {
+        role: "caption"
         text: field.label
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
-        font.weight: Font.Medium
-        color: Colors.outline
     }
 
-    Text {
-        text: field.value
-        font.family: Config.theme.font
-        font.pixelSize: Config.theme.fontSize
-        font.weight: Font.Normal
-        color: Colors.overBackground
-        elide: field.elideValue ? field.valueElide : Text.ElideNone
+    KitText {
         width: field.elideValue ? field.width : implicitWidth
+        role: "body"
+        text: field.value
+        elide: field.elideValue ? field.valueElide : Text.ElideNone
     }
 }

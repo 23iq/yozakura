@@ -33,7 +33,7 @@ StyledRect {
     signal doubleClicked
 
     implicitHeight: Space.rowHeight
-    implicitWidth: row.implicitWidth + Space.s * 2
+    implicitWidth: row.implicitWidth + Look.rowInset * 2
     // Boxed languages paint hover through ControlBox below. Switching this
     // invisible surface to focus would rebuild its corner mask and load
     // highlight effects on every pointer entry (and tear them down on exit).
@@ -71,8 +71,8 @@ StyledRect {
     RowLayout {
         id: row
         anchors.fill: parent
-        anchors.leftMargin: Space.s
-        anchors.rightMargin: Space.s
+        anchors.leftMargin: Look.rowInset
+        anchors.rightMargin: Look.rowInset
         spacing: Space.m
 
         Loader {

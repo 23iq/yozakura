@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.settings.editors.keybinds
 import "../../services/ai/Cron.js" as Cron
 import "../../services/ai/Automations.js" as Logic
@@ -18,7 +19,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 10
+    spacing: Space.m
 
     readonly property var items: (Config.ai.automations || []).map(a => Logic.normalize(a))
 
@@ -66,7 +67,7 @@ ColumnLayout {
             property bool open: false
             Layout.fillWidth: true
             variant: "common"
-            radius: Styling.radius(-2)
+            radius: Look.radius("control")
             implicitHeight: autoCol.implicitHeight + 16
 
             ColumnLayout {
@@ -74,40 +75,37 @@ ColumnLayout {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 8
-                spacing: 8
+                anchors.margins: Space.s
+                spacing: Space.s
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Space.s
                     IconButton {
-                        glyph: card.open ? Icons.caretUp : Icons.caretDown
-                        size: 24
+                        icon: card.open ? Icons.caretUp : Icons.caretDown
+                        size: "xs"
                         onClicked: card.open = !card.open
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0
-                        Text {
+                        KitText {
+                            role: "secondary"
                             text: card.modelData.name || card.modelData.id
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
                             font.weight: Font.DemiBold
                             color: Colors.overSurface
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             Layout.fillWidth: true
                             elide: Text.ElideRight
                             text: I18n.t("ai.trigger_" + card.modelData.trigger.type) + (card.modelData.trigger.type === "schedule" ? " · " + card.modelData.trigger.cron : "") + " → " + I18n.t("ai.output_" + card.modelData.output)
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-3)
-                            color: Colors.outline
                         }
                     }
                     IconButton {
-                        glyph: Icons.trash
+                        icon: Icons.trash
                         danger: true
-                        size: 24
+                        size: "xs"
                         tooltip: I18n.t("ai.delete")
                         onClicked: root.remove(card.index)
                     }
@@ -123,7 +121,7 @@ ColumnLayout {
                 ColumnLayout {
                     visible: card.open
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Space.s
                     AiTextRow {
                         label: I18n.t("ai.name")
                         value: card.modelData.name
@@ -187,13 +185,11 @@ ColumnLayout {
                                 output: v
                             })
                     }
-                    Text {
+                    KitText {
+                        role: "secondary"
                         visible: card.modelData.output === "routine"
                         text: I18n.t("routines.automation_pick")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
                         font.weight: Font.Medium
-                        color: Colors.overSurfaceVariant
                     }
                     RoutinePickerField {
                         objectName: "automationRoutine"
@@ -217,8 +213,8 @@ ColumnLayout {
     }
 
     Chip {
-        glyph: Icons.plus
-        label: I18n.t("ai.add_automation")
+        icon: Icons.plus
+        text: I18n.t("ai.add_automation")
         onClicked: root.add()
     }
 }

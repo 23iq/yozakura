@@ -143,6 +143,8 @@ Item {
         glyph: view.modeIcon !== "" ? view.modeIcon : Icons.magnifyingGlass
         hints: Providers.hintPrefixes(Config.prefix, Config.prefix.launcher.disabled)
         handleTabNavigation: true
+        // Home / End select the first / last result
+        handleHomeEnd: true
         disableCursorNavigation: view.gridActive
 
         onSearchTextChanged: text => {

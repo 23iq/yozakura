@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.modules.components
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.theme
@@ -99,10 +100,21 @@ PanelWindow {
     }
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    visible: root.isOpen || root.progress > 0
+    // Latched (SurfaceLatch): on close the focused field (a search box)
+    // lets go of the input method first, then keyboard focus drops, and
+    // the surface unmaps at least a frame later, also with 0 ms motion.
+    visible: latch.shown || root.progress > 0
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace(root.hostName)
-    WlrLayershell.keyboardFocus: root.isOpen && root.modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: latch.keyboard && root.modal ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    SurfaceLatch {
+        id: latch
+        active: root.isOpen
+        holdMs: root.exitMotion.duration
+        // The view's slot: its window's focused field lets go on close.
+        focusHost: root.slot
+    }
 
     FocusGrab {
         windows: [root]

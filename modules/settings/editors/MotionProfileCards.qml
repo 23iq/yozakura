@@ -10,6 +10,7 @@ import qs.config
 import "../Ui.js" as Ui
 import "../../../config/motion/MotionProfiles.js" as MotionProfiles
 import "../../../config/motion/MotionSpec.js" as MotionSpec
+import qs.modules.components.kit
 
 // Motion profile picker (compositor.motionProfile): one card per profile of
 // config/motion, each looping a mini window that pops in and out with the
@@ -28,7 +29,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: MotionProfiles.all()
@@ -107,7 +108,7 @@ Item {
             Column {
                 x: 8
                 y: 8
-                spacing: 4
+                spacing: Space.xs
                 Repeater {
                     model: 3
                     delegate: Rectangle {
@@ -169,17 +170,16 @@ Item {
             visible: !mini.spec.enabled
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: 6
+            anchors.margins: Space.s
             width: offText.implicitWidth + 12
             height: 18
             radius: 9
             color: Ui.alpha(Colors.surfaceContainerLowest, 0.8)
-            Text {
+            KitText {
                 id: offText
+                role: "caption"
                 anchors.centerIn: parent
                 text: I18n.t("prefs.common.off")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-4)
                 color: Colors.overSurfaceVariant
             }
         }

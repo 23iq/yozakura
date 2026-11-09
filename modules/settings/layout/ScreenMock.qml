@@ -8,6 +8,7 @@ import "../Ui.js" as Ui
 import "LayoutSketch.js" as LayoutSketch
 import "PartMeta.js" as PartMeta
 import "../../shell/LayoutModel.js" as LayoutModel
+import qs.modules.components.kit
 
 // The layout builder's live screen: the Layout preview (where views open)
 // with the bar, notch and dock as draggable chips stacked on their edges,
@@ -156,15 +157,14 @@ LayoutPreview {
         Row {
             id: pillRow
             anchors.centerIn: parent
-            spacing: 4
+            spacing: Space.xs
             Repeater {
                 model: ShellLayout.cornerContent
-                Text {
+                Icon {
+                    role: "caption"
+                    tone: "text"
                     required property string modelData
-                    text: Icons[root.contentIcon(modelData)] || ""
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(-3)
-                    color: Colors.overBackground
+                    icon: Icons[root.contentIcon(modelData)] || ""
                 }
             }
         }
@@ -177,7 +177,7 @@ LayoutPreview {
         y: root.shelf.y
         width: root.shelf.width
         height: root.shelf.height
-        radius: Math.min(Styling.radius(-2), height / 2)
+        radius: Look.radius("control", height)
         color: root.dragTarget === "off" ? Ui.alpha(Colors.primary, 0.16) : Ui.alpha(Colors.surfaceContainerHigh, 0.6)
         border.width: 1
         border.color: root.dragTarget === "off" ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.6)
@@ -188,24 +188,24 @@ LayoutPreview {
         }
         Row {
             anchors.left: parent.left
-            anchors.leftMargin: 12
+            anchors.leftMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
-            Text {
-                text: Icons.eye
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.overSurfaceVariant
+            spacing: Space.s
+            Icon {
+                role: "secondary"
+                tone: "secondary"
+                icon: Icons.eye
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: I18n.t("prefs.layout.shelf")
                 font.family: Styling.defaultFont
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.DemiBold
                 color: Colors.overSurfaceVariant
             }
         }
-        Text {
+        KitText {
+            role: "caption"
             anchors.verticalCenter: parent.verticalCenter
             x: 80
             width: parent.width - 92
@@ -213,7 +213,6 @@ LayoutPreview {
             text: I18n.t("prefs.layout.shelf.empty")
             elide: Text.ElideRight
             font.family: Styling.defaultFont
-            font.pixelSize: Styling.fontSize(-3)
             color: Ui.alpha(Colors.overSurfaceVariant, 0.75)
         }
     }

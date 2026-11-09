@@ -155,10 +155,10 @@ FocusScope {
             onClosed: search.focusInput()
         }
 
-        SearchInput {
+        SearchField {
             id: search
             width: parent.width
-            iconText: Icons.magnifyingGlass
+            rule: true
             placeholderText: I18n.t("presets.gallery.search")
             clearOnEscape: false
             onTextChanged: root.query = text

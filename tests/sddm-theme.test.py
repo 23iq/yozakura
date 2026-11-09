@@ -44,7 +44,7 @@ def fail(msg: str) -> None:
 
 # ---------------------------------------------------------------- sync script
 
-def run_sync(lock: dict, theme: dict) -> dict:
+def run_sync(lock: dict, theme: dict, current_wall: str | None = None) -> dict:
     with tempfile.TemporaryDirectory(prefix="sddm-sync-test-") as tmp:
         t = Path(tmp)
         home, target = t / "home", t / "target"
@@ -56,7 +56,7 @@ def run_sync(lock: dict, theme: dict) -> dict:
         wall = t / "wall.png"
         subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=pink:s=64x36",
                         "-frames:v", "1", str(wall)], check=True)
-        (cache / "wallpapers.json").write_text(json.dumps({"currentWall": str(wall)}))
+        (cache / "wallpapers.json").write_text(json.dumps({"currentWall": current_wall or str(wall)}))
         (cache / "colors.json").write_text(json.dumps({
             "background": "#120c0f", "primary": "#ffafd7", "primaryFixed": "#ffd8e9", "secondaryFixed": "#ffd8e9",
             "overSecondaryFixed": "#330d24", "red": "#ffb2b9", "shadow": "#000000"}))
@@ -71,6 +71,8 @@ def run_sync(lock: dict, theme: dict) -> dict:
         conf = read_conf(target / "theme.conf")
         conf["_fonts"] = sorted(p.name for p in (target / "fonts").iterdir())
         conf["_wallpaper"] = (target / "wallpaper-blur.jpg").exists()
+        stamp = target / ".wallpaper-stamp"
+        conf["_stamp"] = stamp.read_text() if stamp.exists() else ""
         return conf
 
 
@@ -102,7 +104,11 @@ if c.get("tone") != "dark":
 c = run_sync({"style": "aurora"}, {"lightMode": False})
 if c.get("tone") != "light":
     fail("tone 'style' (default) uses the style's own tone (aurora: light)")
-print("sddm-sync.sh: style, tone, blur, fonts and palette exported")
+# A bundled wallpaper is saved as a store-independent id (WallpaperRefs.js).
+c = run_sync({}, {}, current_wall="bundled:wallpaper-01.png")
+if not c["_wallpaper"] or not c["_stamp"].startswith(str(REPO / "assets/wallpapers_example/wallpaper-01.png") + "|"):
+    fail(f"bundled:<id> resolves to the shell's bundled file: {c['_stamp']!r}")
+print("sddm-sync.sh: style, tone, blur, fonts, palette and bundled wallpaper ids exported")
 
 # ------------------------------------------------------------------- theme
 

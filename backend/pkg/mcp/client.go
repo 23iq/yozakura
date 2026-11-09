@@ -15,6 +15,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	procutil "yozakura/backend/pkg/proc"
 )
 
 // DefaultTimeout bounds a single request when the caller's ctx has none.
@@ -285,7 +286,7 @@ func StartStdio(command string, args []string, env map[string]string, dir string
 	cmd.Dir = dir
 	// Own process group so Close can stop npx-style launchers together with
 	// the grandchildren that inherit our pipes; die with the daemon.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} // StartTied adds Pdeathsig
 	// Don't let a lingering grandchild holding stderr block Wait forever.
 	cmd.WaitDelay = 2 * time.Second
 	stdin, err := cmd.StdinPipe()
@@ -298,7 +299,7 @@ func StartStdio(command string, args []string, env map[string]string, dir string
 	}
 	tail := &tailBuffer{max: 4096}
 	cmd.Stderr = tail
-	if err := cmd.Start(); err != nil {
+	if err := procutil.StartTied(cmd); err != nil {
 		return nil, err
 	}
 	c := newStreamClient(stdout, stdin)

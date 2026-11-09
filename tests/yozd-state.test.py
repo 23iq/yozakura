@@ -5,6 +5,10 @@ terminal spinner sends several per second) must update the clients but leave
 the workspace/monitor arrays and the focused monitor/workspace objects alone,
 so monitorFor() bindings in the bar, notch, dock and wallpaper do not re-run.
 A real monitor/workspace change must still be published.
+
+Clients are diffed by address (YozdClients.js): unchanged clients keep their
+object identity, an identical snapshot publishes nothing, and focusedClient is
+only replaced when the focused client itself changed.
 """
 import json
 import sys
@@ -34,12 +38,15 @@ Item {
     property int focusedMonitorChanges: 0
     property int workspaceChanges: 0
     property int clientChanges: 0
+    property int focusedClientChanges: 0
+    property var saved: null
     property var mon: s.monitorFor("DP-1")
     onMonChanged: monitorBindingRuns++
     YozdService { id: s }
     Connections { target: s; function onFocusedMonitorChanged() { focusedMonitorChanges++; } }
     Connections { target: s.workspaces; function onValuesChanged() { workspaceChanges++; } }
     Connections { target: s.clients; function onValuesChanged() { clientChanges++; } }
+    Connections { target: s; function onFocusedClientChanged() { focusedClientChanges++; } }
 }''', auto_stub=False)
 
 ok_all = True
@@ -51,9 +58,9 @@ def check(name, ok, detail=''):
     print(('PASS ' if ok else 'FAIL ') + name + (' ' + detail if detail else ''))
 
 
-def state(title, active_ws=1):
+def state(title, active_ws=1, title3='w3'):
     return {
-        'windows': [{'id': f'0x{i}', 'app_id': 'kitty', 'title': title if i == 0 else f'w{i}',
+        'windows': [{'id': f'0x{i}', 'app_id': 'kitty', 'title': title if i == 0 else (title3 if i == 3 else f'w{i}'),
                      'workspace_id': str(1 + i % 5), 'is_focused': i == 0, 'is_floating': False,
                      'is_fullscreen': False, 'is_hidden': False,
                      'metadata': {'monitor_id': '0', 'x': 0, 'y': 0, 'width': 100, 'height': 100}}
@@ -70,7 +77,8 @@ def push(st):
 
 
 def counters():
-    return {k: root.property(k) for k in ('monitorBindingRuns', 'focusedMonitorChanges', 'workspaceChanges', 'clientChanges')}
+    return {k: root.property(k) for k in ('monitorBindingRuns', 'focusedMonitorChanges', 'workspaceChanges', 'clientChanges',
+                                                'focusedClientChanges')}
 
 
 push(state('spinner 0'))
@@ -94,5 +102,35 @@ check('workspace switch is published', final['workspaceChanges'] == after['works
 check('monitor change re-runs monitorFor() bindings', final['monitorBindingRuns'] > after['monitorBindingRuns'])
 check('active workspace reflected', h.eval(root, 'svc.focusedMonitor.activeWorkspace.id') == 2
       and h.eval(root, 'svc.focusedWorkspace.id') == 2)
+
+
+# Identity-preserving client diff.
+push(state('same'))
+h.eval(root, 'saved = svc.clients.values[3]')
+c0 = counters()
+push(state('same'))
+c1 = counters()
+check('identical snapshot does not republish clients', c1['clientChanges'] == c0['clientChanges'])
+check('identical snapshot keeps focusedClient', c1['focusedClientChanges'] == c0['focusedClientChanges'])
+push(state('changed'))
+c2 = counters()
+check('focused title change republishes clients', c2['clientChanges'] == c1['clientChanges'] + 1)
+check('unchanged client keeps its object', h.eval(root, 'svc.clients.values[3] === saved'))
+check('focused client is replaced when it changed', c2['focusedClientChanges'] == c1['focusedClientChanges'] + 1
+      and h.eval(root, 'svc.focusedClient.title') == 'changed'
+      and h.eval(root, 'svc.focusedClient === svc.clients.values[0]'))
+h.eval(root, 'saved = svc.focusedClient')
+push(state('changed', title3='renamed'))
+c3 = counters()
+check('other client change replaces only that client', h.eval(root, 'svc.clients.values[3].title') == 'renamed'
+      and h.eval(root, 'svc.clients.values[0] === saved'))
+check('focusedClient untouched by another client changing', c3['focusedClientChanges'] == c2['focusedClientChanges'])
+
+focus_other = state('changed', title3='renamed')
+for w in focus_other['windows']:
+    w['is_focused'] = w['id'] == '0x3'
+push(focus_other)
+check('focusedClient follows focus to another window', h.eval(root, 'svc.focusedClient.address') == '0x3'
+      and h.eval(root, 'svc.focusedClient === svc.clients.values[3]'))
 
 sys.exit(0 if ok_all else 1)

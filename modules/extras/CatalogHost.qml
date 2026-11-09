@@ -5,6 +5,7 @@ import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import "ExtrasModel.js" as ExtrasModel
 
 // Everything a catalog screen needs, reusable by Settings > Apps & Extras
@@ -35,13 +36,13 @@ Item {
     property alias minCardWidth: grid.minCardWidth
     property alias sections: grid.sections
     property real maxContentWidth: 1040
-    property real sideMargin: 32
-    property real topMargin: 36
+    property real sideMargin: Space.xxl
+    property real topMargin: Space.xxl
     property alias selected: grid.selected
     readonly property alias grid: grid
     property bool _preselected: false
 
-    implicitHeight: column.implicitHeight + root.topMargin + stack.height + 44
+    implicitHeight: column.implicitHeight + root.topMargin + stack.height + Space.xxl + Space.m
 
     function reasonsText(reasons) {
         const lines = Object.keys(reasons || {}).map(id => ExtrasService.displayName(id) + " — " + I18n.t("extras.ui.reason." + reasons[id]));
@@ -95,7 +96,7 @@ Item {
             width: Math.min(root.width - 2 * root.sideMargin, root.maxContentWidth)
             x: (root.width - width) / 2
             y: root.topMargin
-            spacing: 22
+            spacing: Space.xl
 
             Loader {
                 width: parent.width
@@ -128,8 +129,8 @@ Item {
         width: Math.min(column.width, 860)
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 22
-        spacing: 10
+        anchors.bottomMargin: Space.xl
+        spacing: Space.s
 
         ExtrasNotice {
             objectName: "offlineNotice"
@@ -142,7 +143,7 @@ Item {
             ExtrasButton {
                 enabled: !ExtrasService.checking
                 text: ExtrasService.checking ? I18n.t("extras.ui.offline.checking") : I18n.t("extras.ui.offline.check")
-                icon: "arrowsClockwise"
+                iconName: "arrowsClockwise"
                 onClicked: ExtrasService.refresh()
             }
         }

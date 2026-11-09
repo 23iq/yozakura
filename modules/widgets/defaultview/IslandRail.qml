@@ -26,7 +26,7 @@ Column {
     UserInfo {
         anchors.horizontalCenter: parent.horizontalCenter
     }
-    Separator {
+    Divider {
         anchors.horizontalCenter: parent.horizontalCenter
         implicitWidth: Math.round(root.discSize * 0.6)
     }

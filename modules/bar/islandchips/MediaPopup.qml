@@ -78,12 +78,11 @@ BarPopup {
             topPadding: Space.m
             spacing: Space.s
 
-            Text {
+            Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: Icons.musicNotes
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("title")
-                color: Type.muted
+                icon: Icons.musicNotes
+                role: "title"
+                tone: "muted"
             }
             KitText {
                 anchors.horizontalCenter: parent.horizontalCenter

@@ -2,7 +2,7 @@
 """Render theme.weatherFx offscreen (private Xvfb, never the live desktop).
 
     tools/render/weatherfx_render.py [--out DIR] [--palette default|green ...]
-                                     [--language ink|glass|tiles|classic ...]
+                                     [--language ink|glass|tiles|classic|device ...]
                                      [--condition rain|frost|fog|heat|petals ...]
                                      [--mode subtle|vivid] [--light]
     tools/render/weatherfx_render.py --cpu [--seconds N]
@@ -36,6 +36,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401  (wraps the Window a
 from PySide6.QtTest import QTest  # noqa: E402
 
 from kit_env import KitEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 from settings_env import DEFAULT_PALETTE  # noqa: E402
 
 CONDITIONS = {
@@ -238,7 +239,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--palette", action="append", choices=["default", "green"])
-    ap.add_argument("--language", action="append", choices=["ink", "glass", "tiles", "classic"])
+    ap.add_argument("--language", action="append", choices=LANGUAGES)
     ap.add_argument("--condition", action="append", choices=list(CONDITIONS))
     ap.add_argument("--mode", default="subtle", choices=["subtle", "vivid"])
     ap.add_argument("--light", action="store_true", help="light theme palette")
@@ -253,7 +254,7 @@ def main() -> int:
     conds = args.condition or ["rain", "frost", "fog", "heat", "petals"]
     for pal in args.palette or ["default", "green"]:
         grid = [render(out, pal, lang, conds, args.mode, args.wallpaper, args.light)
-                for lang in args.language or ["ink", "glass", "tiles"]]
+                for lang in args.language or LANGUAGES]
         sheet(out, f"weatherfx-{pal}{'-light' if args.light else ''}", grid)
     return 0
 

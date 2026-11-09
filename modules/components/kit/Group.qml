@@ -12,7 +12,8 @@ import qs.modules.components.kit
 //   }
 //
 // The box comes from the visual language (Look / VisualLanguage.kit):
-//   ink    no box: label + content; `divider: true` draws a hairline above
+//   ink    no box: label + content; `divider: true` draws a hairline above,
+//          Look.ruleGap over the content (the parent gap stays above it)
 //   glass  a frosted translucent card, light top edge and a faint outline
 //   tiles  a solid square-ish tile, separated from its neighbours by gaps
 // `padding` is the inner padding of the box (0 when there is none).
@@ -52,7 +53,7 @@ Item {
     Rectangle {
         id: box
         objectName: "groupBox"
-        y: root.ruled ? Space.l + rule.height : 0
+        y: root.ruled ? rule.height + Look.ruleGap : 0
         width: parent.width
         height: root.fill ? Math.max(0, root.height - y) : inner.implicitHeight + root.padding * 2
         radius: Look.groupRadius

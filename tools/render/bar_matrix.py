@@ -7,9 +7,11 @@ bar-popup-<popup>-<language>.png.
 """
 from __future__ import annotations
 
+import languages  # tests/lib (on the path of every render tool)
+
 STYLES = ["classic", "floating", "islands", "pills", "dock-like"]
 EDGES = ["top", "left"]
-LANGUAGES = ["ink", "glass", "tiles"]
+LANGUAGES = languages.LANGUAGES  # every visual language (VisualLanguage.js)
 
 START = ["launcher", "workspaces", "layoutSelector", "appMenu"]
 END = ["downloads", "systray", "controls", "battery", "clock", "power"]

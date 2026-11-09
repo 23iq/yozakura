@@ -6,16 +6,15 @@ import "../components/kit/ProgressMotion.js" as ProgressMotion
 // The submit glyph of a password field: `idleIcon` (an arrow) at rest, a
 // calm spinning notch while `busy` (PAM is checking). One turn takes the
 // kit's indeterminate progress cycle; still when motion is off.
-Text {
+Icon {
     id: root
 
     property bool busy: false
     property string idleIcon: Icons.arrowRight
     readonly property int cycle: ProgressMotion.cycle(Motion.emphasis.duration)
 
-    text: root.busy ? Icons.circleNotch : root.idleIcon
-    font.family: Icons.font
-    font.pixelSize: Type.iconSize("secondary")
+    icon: root.busy ? Icons.circleNotch : root.idleIcon
+    role: "secondary"
 
     RotationAnimator on rotation {
         running: root.busy && root.cycle > 0

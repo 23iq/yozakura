@@ -3,6 +3,7 @@ import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 import "ExtrasUi.js" as Ui
 
 // Modal viewer of one install job's log (`extras.log`, tail 256 KiB):
@@ -32,9 +33,9 @@ Popup {
 
     parent: Overlay.overlay
     anchors.centerIn: parent
-    width: Math.min((parent ? parent.width : 800) - 48, 760)
-    height: Math.min((parent ? parent.height : 700) - 48, 560)
-    padding: 22
+    width: Math.min((parent ? parent.width : 800) - Space.xxl * 2, 760)
+    height: Math.min((parent ? parent.height : 700) - Space.xxl * 2, 560)
+    padding: Look.surfacePadding
     modal: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -66,30 +67,21 @@ Popup {
         }
     }
 
-    background: Rectangle {
-        radius: Math.min(Styling.radius(6), 26)
-        color: Colors.surfaceContainerHigh
-        border.width: 1
-        border.color: Ui.alpha(Colors.outline, 0.35)
-    }
+    background: Surface {}
 
     contentItem: Item {
         Item {
             id: header
             width: parent.width
-            height: 40
+            height: Space.controlM
 
-            Text {
+            KitText {
                 anchors.left: parent.left
                 anchors.right: close.left
-                anchors.rightMargin: 12
+                anchors.rightMargin: Space.m
                 anchors.verticalCenter: parent.verticalCenter
+                role: "title"
                 text: I18n.t("extras.ui.log.title", popup.name)
-                elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(2)
-                font.weight: Font.Bold
-                color: Colors.overBackground
             }
             ExtrasButton {
                 id: close
@@ -97,26 +89,24 @@ Popup {
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
                 kind: "ghost"
-                icon: "cancel"
+                iconName: "cancel"
                 text: I18n.t("extras.ui.close")
                 onClicked: popup.close()
             }
         }
 
-        Rectangle {
+        // The log reads as an inset screen of the popup.
+        Well {
             anchors.top: header.bottom
-            anchors.topMargin: 14
+            anchors.topMargin: Space.m
             anchors.bottom: parent.bottom
             width: parent.width
-            radius: Math.min(Styling.radius(2), 14)
-            color: Colors.surfaceContainerLowest
-            border.width: 1
-            border.color: Ui.alpha(Colors.outlineVariant, 0.6)
+            radius: Look.radius("control")
 
             Flickable {
                 id: flick
                 anchors.fill: parent
-                anchors.margins: 2
+                anchors.margins: Space.hairline * 2
                 clip: true
                 contentWidth: width
                 contentHeight: area.implicitHeight
@@ -136,9 +126,9 @@ Popup {
                     text: popup.loading ? I18n.t("extras.ui.log.loading") : (popup.text !== "" ? popup.text : I18n.t("extras.ui.log.empty"))
                     font.family: Config.theme.monoFont
                     font.pixelSize: Styling.monoFontSize(-2)
-                    color: Colors.overSurface
-                    selectionColor: Ui.alpha(Colors.primary, 0.4)
-                    padding: 14
+                    color: Type.text
+                    selectionColor: Ui.alpha(Type.accent, 0.4)
+                    padding: Space.m
                 }
             }
         }

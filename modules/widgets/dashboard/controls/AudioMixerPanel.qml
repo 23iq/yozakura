@@ -1,16 +1,15 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
-import Quickshell.Services.Pipewire
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
+// The audio mixer (settings Connect page), from the kit: the output /
+// input switch with the protection and pavucontrol actions, the devices of
+// that side (the default one selected), then the device volume and one
+// volume per app stream, scrolling.
 Item {
     id: root
 
@@ -18,229 +17,119 @@ Item {
     readonly property int contentWidth: Math.min(width, maxContentWidth)
     readonly property real sideMargin: (width - contentWidth) / 2
 
-    property bool showOutput: true  // true = output, false = input
+    // true = output, false = input
+    property bool showOutput: true
+    readonly property var appNodes: root.showOutput ? Audio.outputAppNodes : Audio.inputAppNodes
 
-    // Scrollable content - fills entire width for scroll/drag
+    DeviceListHeader {
+        id: header
+        objectName: "mixerHeader"
+        x: root.sideMargin
+        width: root.contentWidth
+        showSwitch: false
+        leading: Component {
+            Segmented {
+                objectName: "mixerSide"
+                model: [
+                    {
+                        "name": "mixerOutput",
+                        "icon": Icons.speakerHigh,
+                        "text": I18n.t("mixer.output")
+                    },
+                    {
+                        "name": "mixerInput",
+                        "icon": Icons.mic,
+                        "text": I18n.t("mixer.input")
+                    }
+                ]
+                currentIndex: root.showOutput ? 0 : 1
+                onActivated: index => root.showOutput = index === 0
+            }
+        }
+        actions: [
+            {
+                icon: Audio.protectionEnabled ? Icons.shieldCheck : Icons.shield,
+                tooltip: Audio.protectionEnabled ? I18n.t("mixer.protection_enabled") : I18n.t("mixer.protection_disabled"),
+                onClicked: () => Audio.setProtectionEnabled(!Audio.protectionEnabled)
+            },
+            {
+                icon: Icons.popOpen,
+                tooltip: I18n.t("mixer.open_pavucontrol"),
+                onClicked: () => Quickshell.execDetached(["pavucontrol"])
+            }
+        ]
+    }
+
     Flickable {
         id: flickable
         anchors.fill: parent
-        contentHeight: contentColumn.implicitHeight
+        anchors.topMargin: header.height + Space.s
+        contentHeight: content.implicitHeight
         clip: true
+        boundsBehavior: Flickable.StopAtBounds
 
         ColumnLayout {
-            id: contentColumn
-            width: flickable.width
-            spacing: 8
+            id: content
+            x: root.sideMargin
+            width: root.contentWidth
+            spacing: Space.s
 
-            // Header wrapper
-            Item {
+            SectionLabel {
                 Layout.fillWidth: true
-                Layout.preferredHeight: titlebar.height
+                text: root.showOutput ? I18n.t("mixer.output_device") : I18n.t("mixer.input_device")
+            }
 
-                PanelTitlebar {
-                    id: titlebar
-                    width: root.contentWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    title: I18n.t("mixer.title")
+            Repeater {
+                model: root.showOutput ? Audio.outputDevices : Audio.inputDevices
 
-                    actions: [
-                        {
-                            icon: Audio.protectionEnabled ? Icons.shieldCheck : Icons.shield,
-                            tooltip: Audio.protectionEnabled ? I18n.t("mixer.protection_enabled") : I18n.t("mixer.protection_disabled"),
-                            onClicked: function () {
-                                Audio.setProtectionEnabled(!Audio.protectionEnabled);
-                            }
-                        },
-                        {
-                            icon: Icons.popOpen,
-                            tooltip: I18n.t("mixer.open_pavucontrol"),
-                            onClicked: function () {
-                                Quickshell.execDetached(["pavucontrol"]);
-                            }
-                        }
-                    ]
-
-                    // Output/Input toggle buttons
-                    RowLayout {
-                        spacing: 4
-
-                        // Output Button
-                        StyledRect {
-                            id: outputBtn
-                            property bool isSelected: root.showOutput
-                            property bool isHovered: false
-
-                            variant: isSelected ? "primary" : (isHovered ? "focus" : "common")
-                            Layout.preferredHeight: 32
-                            Layout.preferredWidth: outputContent.width + 24
-                            radius: isSelected ? Styling.radius(-4) : Styling.radius(0)
-
-                            Row {
-                                id: outputContent
-                                anchors.centerIn: parent
-                                spacing: 8
-
-                                Text {
-                                    text: Icons.speakerHigh
-                                    font.family: Icons.font
-                                    font.pixelSize: 14
-                                    color: outputBtn.item
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-
-                                Text {
-                                    text: I18n.t("mixer.output")
-                                    font.family: Config.theme.font
-                                    font.pixelSize: Styling.fontSize(-1)
-                                    font.weight: Font.Medium
-                                    color: outputBtn.item
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: outputBtn.isHovered = true
-                                onExited: outputBtn.isHovered = false
-                                onClicked: root.showOutput = true
-                            }
-                        }
-
-                        // Input Button
-                        StyledRect {
-                            id: inputBtn
-                            property bool isSelected: !root.showOutput
-                            property bool isHovered: false
-
-                            variant: isSelected ? "primary" : (isHovered ? "focus" : "common")
-                            Layout.preferredHeight: 32
-                            Layout.preferredWidth: inputContent.width + 24
-                            radius: isSelected ? Styling.radius(-4) : Styling.radius(0)
-
-                            Row {
-                                id: inputContent
-                                anchors.centerIn: parent
-                                spacing: 8
-
-                                Text {
-                                    text: Icons.mic
-                                    font.family: Icons.font
-                                    font.pixelSize: 14
-                                    color: inputBtn.item
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-
-                                Text {
-                                    text: I18n.t("mixer.input")
-                                    font.family: Config.theme.font
-                                    font.pixelSize: Styling.fontSize(-1)
-                                    font.weight: Font.Medium
-                                    color: inputBtn.item
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                hoverEnabled: true
-                                cursorShape: Qt.PointingHandCursor
-                                onEntered: inputBtn.isHovered = true
-                                onExited: inputBtn.isHovered = false
-                                onClicked: root.showOutput = false
-                            }
-                        }
-                    }
+                delegate: AudioDeviceItem {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    node: modelData
+                    isOutput: root.showOutput
+                    isSelected: (root.showOutput ? Audio.sink : Audio.source) === modelData
                 }
             }
 
-            // Content wrapper - centered
-            Item {
+            Divider {
                 Layout.fillWidth: true
-                Layout.preferredHeight: innerContent.implicitHeight
+                Layout.topMargin: Space.s
+                Layout.bottomMargin: Space.s
+            }
 
-                ColumnLayout {
-                    id: innerContent
-                    width: root.contentWidth
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    spacing: 8
+            SectionLabel {
+                Layout.fillWidth: true
+                text: I18n.t("mixer.volume_mixer")
+            }
 
-                    // Section: Devices
-                    Text {
-                        text: root.showOutput ? I18n.t("mixer.output_device") : I18n.t("mixer.input_device")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        font.weight: Font.Medium
-                        color: Colors.overSurfaceVariant
-                    }
+            AudioVolumeEntry {
+                Layout.fillWidth: true
+                Layout.leftMargin: Look.rowInset
+                Layout.rightMargin: Look.rowInset
+                node: root.showOutput ? Audio.sink : Audio.source
+                icon: root.showOutput ? Icons.speakerHigh : Icons.mic
+                isMainDevice: true
+            }
 
-                    // Device list
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 4
+            Repeater {
+                model: root.appNodes
 
-                        Repeater {
-                            model: root.showOutput ? Audio.outputDevices : Audio.inputDevices
-
-                            delegate: AudioDeviceItem {
-                                required property var modelData
-                                Layout.fillWidth: true
-                                node: modelData
-                                isOutput: root.showOutput
-                                isSelected: (root.showOutput ? Audio.sink : Audio.source) === modelData
-                            }
-                        }
-                    }
-
-                    // Separator
-                    Separator {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 2
-                        Layout.topMargin: 8
-                        Layout.bottomMargin: 8
-                    }
-
-                    // Section: Volume Mixer
-                    Text {
-                        text: I18n.t("mixer.volume_mixer")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        font.weight: Font.Medium
-                        color: Colors.overSurfaceVariant
-                    }
-
-                    // Main volume control
-                    AudioVolumeEntry {
-                        Layout.fillWidth: true
-                        node: root.showOutput ? Audio.sink : Audio.source
-                        icon: root.showOutput ? Icons.speakerHigh : Icons.mic
-                        isMainDevice: true
-                    }
-
-                    // App volume controls
-                    Repeater {
-                        model: root.showOutput ? Audio.outputAppNodes : Audio.inputAppNodes
-
-                        delegate: AudioVolumeEntry {
-                            required property var modelData
-                            Layout.fillWidth: true
-                            node: modelData
-                            isMainDevice: false
-                        }
-                    }
-
-                    // Empty state for apps
-                    Text {
-                        visible: (root.showOutput ? Audio.outputAppNodes : Audio.inputAppNodes).length === 0
-                        text: I18n.t("mixer.no_apps")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.outline
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: 16
-                    }
+                delegate: AudioVolumeEntry {
+                    required property var modelData
+                    Layout.fillWidth: true
+                    Layout.leftMargin: Look.rowInset
+                    Layout.rightMargin: Look.rowInset
+                    node: modelData
                 }
+            }
+
+            KitText {
+                objectName: "mixerNoApps"
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: Space.l
+                visible: root.appNodes.length === 0
+                role: "caption"
+                text: I18n.t("mixer.no_apps")
             }
         }
     }

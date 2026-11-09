@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
+import qs.modules.components.kit
 
 // Package metadata of the selected mod: author, license, source, page,
 // revision, load order (move up/down), permissions, required commands,
@@ -112,10 +113,9 @@ ColumnLayout {
             value: modelData.id
             mono: true
 
-            Text {
+            KitText {
+                role: "caption"
                 text: I18n.t(ModsModel.dependencyKey(depRow.modelData))
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.Medium
                 color: depRow.modelData.enabled ? Colors.success : Colors.warning
             }
@@ -150,7 +150,7 @@ ColumnLayout {
         Layout.leftMargin: Metrics.menuW - 40 + Metrics.spacing + 2
         Layout.preferredHeight: fileList.implicitHeight + Metrics.spacing * 2
         variant: "common"
-        radius: Styling.radius(-2)
+        radius: Look.radius("control")
         enableShadow: false
 
         Column {
@@ -158,17 +158,17 @@ ColumnLayout {
             x: Metrics.spacing
             y: Metrics.spacing
             width: parent.width - Metrics.spacing * 2
-            spacing: 2
+            spacing: Space.xs / 2
 
             Repeater {
                 model: meta.files
 
-                delegate: Text {
+                delegate: KitText {
+                    role: "caption"
                     required property string modelData
                     width: fileList.width
                     text: modelData
                     font.family: Config.theme.monoFont
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overBackground
                     elide: Text.ElideLeft
                 }

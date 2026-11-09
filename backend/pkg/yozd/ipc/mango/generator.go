@@ -253,13 +253,13 @@ func (g *Generator) GenerateKeybinds(config ipc.ConfigKeybinds) string {
 
 	if config.Shell != nil {
 		if config.Shell.System != nil {
-			for name, kb := range config.Shell.System {
-				addBind(kb, brand.DisplayName+" System: "+name)
+			for _, name := range ipc.SortedKeybindNames(config.Shell.System) {
+				addBind(config.Shell.System[name], brand.DisplayName+" System: "+name)
 			}
 		}
 		if config.Shell.Binds != nil {
-			for name, kb := range config.Shell.Binds {
-				addBind(kb, brand.DisplayName+": "+name)
+			for _, name := range ipc.SortedKeybindNames(config.Shell.Binds) {
+				addBind(config.Shell.Binds[name], brand.DisplayName+": "+name)
 			}
 		}
 	}

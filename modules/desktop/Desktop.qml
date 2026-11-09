@@ -11,6 +11,7 @@ import qs.modules.theme
 import qs.config
 import qs.modules.globals
 import qs.modules.bar.panels
+import qs.modules.components.kit
 
 PanelWindow {
     id: desktop
@@ -78,11 +79,11 @@ PanelWindow {
         id: iconContainer
         visible: desktop.iconsEnabled
         anchors.fill: parent
-        anchors.margins: 16
-        anchors.bottomMargin: desktop.barPosition === "bottom" ? desktop.barSize + 16 : 16
-        anchors.topMargin: desktop.barPosition === "top" ? desktop.barSize + 16 : 16
-        anchors.leftMargin: desktop.barPosition === "left" ? desktop.barSize + 16 : 16
-        anchors.rightMargin: desktop.barPosition === "right" ? desktop.barSize + 16 : 16
+        anchors.margins: Space.l
+        anchors.bottomMargin: desktop.barPosition === "bottom" ? desktop.barSize + Space.l : Space.l
+        anchors.topMargin: desktop.barPosition === "top" ? desktop.barSize + Space.l : Space.l
+        anchors.leftMargin: desktop.barPosition === "left" ? desktop.barSize + Space.l : Space.l
+        anchors.rightMargin: desktop.barPosition === "right" ? desktop.barSize + Space.l : Space.l
 
         property int cellHeight: Config.desktop.iconSize + 40 + Config.desktop.spacingVertical
         property int cellWidth: cellHeight
@@ -254,12 +255,13 @@ PanelWindow {
 
                     property int visualIndex: delegateRoot.index
 
+                    // Drop target outline (the slot the icon lands in).
                     Rectangle {
                         anchors.fill: parent
                         color: "transparent"
-                        border.color: Styling.srItem("overprimary")
-                        border.width: 2
-                        radius: Styling.radius(0) / 2
+                        border.color: Type.accent
+                        border.width: Space.stroke - 1
+                        radius: Look.radius("control")
                         visible: parent.containsDrag
                         opacity: 0.5
                     }
@@ -289,20 +291,13 @@ PanelWindow {
         suspended: desktop.editing
     }
 
-    Rectangle {
+    Surface {
         anchors.centerIn: parent
-        width: 200
-        height: 60
-        color: Qt.rgba(0, 0, 0, 0.7)
-        radius: Styling.radius(0)
+        floating: true
         visible: desktop.iconsEnabled && !DesktopService.initialLoadComplete
 
-        Text {
-            anchors.centerIn: parent
+        KitText {
             text: I18n.t("lockscreen.loading")
-            color: "white"
-            font.family: Config.defaultFont
-            font.pixelSize: Styling.fontSize(0)
         }
     }
 }

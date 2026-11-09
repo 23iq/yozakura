@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.config
 import "../lib/Markdown.js" as Markdown
 import "../../globals/Urls.js" as Urls
@@ -14,10 +15,10 @@ ColumnLayout {
     property string text: ""
     property bool streaming: false
     property color textColor: Colors.overBackground
-    property int fontSize: Styling.fontSize(0)
+    property int fontSize: Type.size("body")
     readonly property var segments: Markdown.segments(text)
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: root.segments

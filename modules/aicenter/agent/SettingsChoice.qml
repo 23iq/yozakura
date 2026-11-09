@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.config
 
@@ -9,32 +10,30 @@ ComboBox {
     id: root
     textRole: "name"
     valueRole: "id"
-    implicitHeight: 36
-    leftPadding: 10
-    rightPadding: 30
+    implicitHeight: Space.controlS
+    leftPadding: Space.s
+    rightPadding: Space.xxl
     opacity: enabled ? 1 : 0.55
-    contentItem: Text {
+    contentItem: KitText {
+        role: "secondary"
         text: root.displayText
-        color: Colors.overSurface
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
+        color: Type.text
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
     }
     background: StyledRect {
         variant: "common"
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         border.width: root.activeFocus ? 1 : 0
         border.color: Colors.primary
     }
-    indicator: Text {
+    indicator: Icon {
+        role: "label"
+        tone: "muted"
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: Space.s
         anchors.verticalCenter: parent.verticalCenter
-        text: Icons.caretUpDown
-        font.family: Icons.font
-        font.pixelSize: 12
-        color: Colors.outline
+        icon: Icons.caretUpDown
     }
     delegate: ItemDelegate {
         id: entry
@@ -42,21 +41,20 @@ ComboBox {
         required property var modelData
         width: root.width
         highlighted: root.highlightedIndex === index
-        contentItem: Text {
+        contentItem: KitText {
+            role: "secondary"
             text: entry.modelData.name
-            color: Colors.overSurface
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
+            color: Type.text
         }
         background: StyledRect {
             variant: entry.highlighted ? "focus" : "transparent"
-            radius: Styling.radius(-4)
+            radius: Look.radius("control")
         }
     }
     popup: Popup {
-        y: root.height + 4
+        y: root.height + Space.xs
         width: root.width
-        padding: 6
+        padding: Space.s
         implicitHeight: Math.min(contentItem.implicitHeight + 12, 280)
         contentItem: ListView {
             clip: true
@@ -67,7 +65,7 @@ ComboBox {
         }
         background: StyledRect {
             variant: "popup"
-            radius: Styling.radius(-4)
+            radius: Look.radius("control")
         }
     }
 }

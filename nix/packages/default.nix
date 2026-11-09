@@ -87,7 +87,11 @@ let
     export QML2_IMPORT_PATH="${envYozakura}/lib/qt-6/qml''${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}"
     export QML_IMPORT_PATH="$QML2_IMPORT_PATH"
     export GST_PLUGIN_SYSTEM_PATH_1_0="${envYozakura}/lib/gstreamer-1.0''${GST_PLUGIN_SYSTEM_PATH_1_0:+:$GST_PLUGIN_SYSTEM_PATH_1_0}"
-    export QT_MEDIA_BACKEND="''${QT_MEDIA_BACKEND:-gstreamer}"
+    # FFmpeg decodes video wallpapers on the GPU (VA-API) where GStreamer
+    # falls back to the CPU under Quickshell; nixpkgs' qtmultimedia ships
+    # both plugins. The backend sets it the same way (pkg/daemon/mediabackend.go);
+    # QT_MEDIA_BACKEND=gstreamer in the session overrides it.
+    export QT_MEDIA_BACKEND="''${QT_MEDIA_BACKEND:-ffmpeg}"
     exec ${quickshellPkg}/bin/qs "$@"
   '';
 

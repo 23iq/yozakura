@@ -5,6 +5,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.config
 
@@ -86,13 +87,13 @@ PanelWindow {
         screenrecordPopup.currentMode = ScreenRecorder.canRecordDirectly ? "region" : "portal";
         screenrecordPopup.recordAudioOutput = false;
         screenrecordPopup.recordAudioInput = false;
-        
+
         // Fetch windows for window mode
         Screenshot.fetchWindows();
-        
+
         // Go directly to active state (no freeze needed)
         screenrecordPopup.state = "active";
-        
+
         // Force focus
         if (modeGrid)
             modeGrid.forceActiveFocus();
@@ -113,8 +114,8 @@ PanelWindow {
                 var x = Math.round(selectionRect.x);
                 var y = Math.round(selectionRect.y);
 
-				x = x + screenrecordPopup.focusedMonitor.x;
-				y = y + screenrecordPopup.focusedMonitor.y;
+                x = x + screenrecordPopup.focusedMonitor.x;
+                y = y + screenrecordPopup.focusedMonitor.y;
 
                 var regionStr = w + "x" + h + "+" + x + "+" + y;
 
@@ -168,10 +169,10 @@ PanelWindow {
         Keys.onEscapePressed: screenrecordPopup.close()
 
         // Dimmer overlay (semi-transparent)
-        Rectangle {
-            anchors.fill: parent
-            color: "black"
-            opacity: screenrecordPopup.state === "active" ? 0.4 : 0
+        Scrim {
+            strength: 0.4
+            animated: false
+            dismissable: false
             visible: screenrecordPopup.state === "active" && screenrecordPopup.currentMode !== "screen" && screenrecordPopup.currentMode !== "portal"
         }
 
@@ -181,20 +182,12 @@ PanelWindow {
 
             Repeater {
                 model: screenrecordPopup.activeWindows
-                delegate: Rectangle {
+                delegate: CaptureHighlight {
                     x: modelData.at[0] - screenrecordPopup.screen.x
                     y: modelData.at[1] - screenrecordPopup.screen.y
                     width: modelData.size[0]
                     height: modelData.size[1]
-                    color: "transparent"
-                    border.color: hoverHandler.hovered ? Styling.srItem("overprimary") : "transparent"
-                    border.width: 2
-
-                    Rectangle {
-                        anchors.fill: parent
-                        color: Styling.srItem("overprimary")
-                        opacity: hoverHandler.hovered ? 0.2 : 0
-                    }
+                    lit: hoverHandler.hovered
 
                     HoverHandler {
                         id: hoverHandler
@@ -274,8 +267,8 @@ PanelWindow {
                     var x = Math.round(selectionRect.x);
                     var y = Math.round(selectionRect.y);
 
-					x = x + screenrecordPopup.focusedMonitor.x;
-					y = y + screenrecordPopup.focusedMonitor.y;
+                    x = x + screenrecordPopup.focusedMonitor.x;
+                    y = y + screenrecordPopup.focusedMonitor.y;
 
                     var regionStr = w + "x" + h + "+" + x + "+" + y;
 
@@ -285,68 +278,37 @@ PanelWindow {
             }
         }
 
-        Rectangle {
+        CaptureHighlight {
             id: selectionRect
             visible: screenrecordPopup.state === "active" && screenrecordPopup.currentMode === "region"
-            color: "transparent"
-            border.color: Styling.srItem("overprimary")
-            border.width: 2
-
-            Rectangle {
-                anchors.fill: parent
-                color: Styling.srItem("overprimary")
-                opacity: 0.2
-            }
         }
 
-        Rectangle {
-            id: controlsBar
+        CaptureBar {
+            id: modeGrid
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottomMargin: 50
-
-            width: modeGrid.width + 32
-            height: modeGrid.height + 32
-
-            radius: Styling.radius(20)
-            color: Colors.background
-            border.color: Colors.surface
-            border.width: 1
+            anchors.bottomMargin: Space.xxl
             visible: screenrecordPopup.state === "active"
+            actions: screenrecordPopup.getModes()
 
-            MouseArea {
-                anchors.fill: parent
-                hoverEnabled: true
-                preventStealing: true
-            }
-
-            ActionGrid {
-                id: modeGrid
-                anchors.centerIn: parent
-                actions: screenrecordPopup.getModes()
-                buttonSize: 48
-                iconSize: 24
-                spacing: 10
-
-                onCurrentIndexChanged: {
-                    // Skip toggles and separator
-                    if (currentIndex > 2) {
-                        var captureIndex = currentIndex - 3;
-                        var captureOptions = ["region", "window", "screen", "portal"];
-                        if (captureIndex >= 0 && captureIndex < captureOptions.length) {
-                            screenrecordPopup.currentMode = captureOptions[captureIndex];
-                        }
+            onCurrentIndexChanged: {
+                // Skip toggles and separator
+                if (currentIndex > 2) {
+                    var captureIndex = currentIndex - 3;
+                    var captureOptions = ["region", "window", "screen", "portal"];
+                    if (captureIndex >= 0 && captureIndex < captureOptions.length) {
+                        screenrecordPopup.currentMode = captureOptions[captureIndex];
                     }
                 }
+            }
 
-                onActionTriggered: action => {
-                    if (action.name === "audio") {
-                        screenrecordPopup.recordAudioOutput = !screenrecordPopup.recordAudioOutput;
-                    } else if (action.name === "mic") {
-                        screenrecordPopup.recordAudioInput = !screenrecordPopup.recordAudioInput;
-                    } else {
-                        screenrecordPopup.executeCapture();
-                    }
+            onActionTriggered: action => {
+                if (action.name === "audio") {
+                    screenrecordPopup.recordAudioOutput = !screenrecordPopup.recordAudioOutput;
+                } else if (action.name === "mic") {
+                    screenrecordPopup.recordAudioInput = !screenrecordPopup.recordAudioInput;
+                } else {
+                    screenrecordPopup.executeCapture();
                 }
             }
         }

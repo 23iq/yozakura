@@ -4,6 +4,7 @@ import Quickshell.Wayland
 import qs.modules.globals
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
 import qs.modules.bar.workspaces
 import qs.modules.bar.panels
 import qs.config
@@ -35,7 +36,7 @@ Item {
     readonly property var motion: Motion
     readonly property real previewScale: Config.overview.scale
     readonly property real workspaceSpacing: scroll ? 0 : Config.overview.workspaceSpacing
-    readonly property real workspacePadding: 8
+    readonly property real workspacePadding: Space.s
     readonly property int rows: 1
     readonly property int columns: count
     readonly property int workspacesShown: count

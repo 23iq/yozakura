@@ -128,19 +128,19 @@ Item {
             stackUp: root.atBottom
         }
 
+        // Enter, leave and make room on the render thread (Animators): a
+        // busy GUI thread (a new toast being created) never stalls them
         add: Transition {
             id: addTrans
             enabled: Motion.enter.duration > 0
             ParallelAnimation {
-                NumberAnimation {
-                    property: "opacity"
+                OpacityAnimator {
                     from: 0
                     to: 1
                     duration: Motion.enter.duration
                     easing.type: Motion.enter.easing
                 }
-                NumberAnimation {
-                    property: "x"
+                XAnimator {
                     from: root.enterX
                     to: 0
                     duration: Motion.enter.duration
@@ -148,15 +148,13 @@ Item {
                     easing.overshoot: Motion.enter.overshoot
                 }
                 // Centered toasts come in from the screen edge instead
-                NumberAnimation {
-                    property: "y"
+                YAnimator {
                     from: addTrans.ViewTransition.destination.y + root.enterY
                     to: addTrans.ViewTransition.destination.y
                     duration: root.enterY !== 0 ? Motion.enter.duration : 0
                     easing.type: Motion.enter.easing
                 }
-                NumberAnimation {
-                    property: "scale"
+                ScaleAnimator {
                     from: 0.92
                     to: 1
                     duration: Motion.enter.duration
@@ -168,20 +166,17 @@ Item {
         remove: Transition {
             enabled: Motion.exit.duration > 0
             ParallelAnimation {
-                NumberAnimation {
-                    property: "opacity"
+                OpacityAnimator {
                     to: 0
                     duration: Motion.exit.duration
                     easing.type: Motion.exit.easing
                 }
-                NumberAnimation {
-                    property: "x"
+                XAnimator {
                     to: root.enterX
                     duration: Motion.exit.duration
                     easing.type: Motion.exit.easing
                 }
-                NumberAnimation {
-                    property: "scale"
+                ScaleAnimator {
                     to: 0.95
                     duration: Motion.exit.duration
                     easing.type: Motion.exit.easing
@@ -190,10 +185,15 @@ Item {
         }
         displaced: Transition {
             enabled: Motion.morph.duration > 0
-            NumberAnimation {
-                properties: "x,y"
-                duration: Motion.morph.duration
-                easing.type: Motion.morph.easing
+            ParallelAnimation {
+                XAnimator {
+                    duration: Motion.morph.duration
+                    easing.type: Motion.morph.easing
+                }
+                YAnimator {
+                    duration: Motion.morph.duration
+                    easing.type: Motion.morph.easing
+                }
             }
         }
     }

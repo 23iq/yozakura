@@ -23,14 +23,17 @@ h.module("qs.modules.theme", {
 h.module("qs.modules.components", {"StyledRect": "Rectangle { property string variant }"})
 h.singleton("qs.modules.services", "I18n", "QtObject { function t(k) { return k } }")
 h.module("qs.modules.aicenter.common", {
-    "IconButton": "Item { property string glyph; property int size; property int iconSize; property bool active; "
-                  "property bool danger; property string tooltip; signal clicked }",
     "StatusDot": "Item { property string status }",
 })
 h.module("qs.modules.components.kit", {
+    "IconButton": "Item { property string icon; property string size; property bool active; "
+                  "property bool danger; property string tooltip; signal clicked }",
     "Type": "pragma Singleton\nQtObject { property color text; property color accent: 'red'; "
             "function family(r) { return 'Sans' } function size(r) { return 13 } }",
-    "Look": "pragma Singleton\nQtObject { property int labelWeight: Font.Normal }",
+    "Look": "pragma Singleton\nQtObject { property int labelWeight: Font.Normal; function radius(r, h) { return 8 } }",
+    "Space": "pragma Singleton\nQtObject { property int hairline: 1; property int xs: 4; property int s: 8 }",
+    "KitText": "Text { property string role }",
+    "Icon": "Text { property string role; property string tone; property string icon; text: icon }",
 })
 h.copy("modules/components/kit/InlineEdit.qml", "qs/modules/components/kit", siblings=False)
 h.module("qs.modules.components.kit", {})
@@ -55,7 +58,7 @@ def ev(expr):
 
 def shown(cls, text=None):
     return [o for o in row.findChildren(QObject)
-            if o.metaObject().className().startswith(cls) and o.property("visible")
+            if (o.inherits(cls) or o.metaObject().className().startswith(cls)) and o.property("visible")
             and (text is None or o.property("text") == text)]
 
 

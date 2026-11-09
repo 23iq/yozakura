@@ -176,8 +176,8 @@ Window {{
         id: notch
         objectName: "notch"
         width: implicitWidth; height: implicitHeight
-        x: win.edge === "left" ? 0 : (win.width - width) / 2
-        y: win.edge === "left" ? (win.height - height) / 2 : 0
+        x: win.edge === "left" ? 0 : Math.round((win.width - width) / 2)
+        y: win.edge === "left" ? Math.round((win.height - height) / 2) : 0
         screenName: "DP-1"
         visibilities: Visibilities.getForScreen("DP-1")
         defaultViewComponent: Component {{

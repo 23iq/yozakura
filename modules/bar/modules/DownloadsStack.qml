@@ -66,13 +66,12 @@ BarModuleBase {
 
         // Nothing downloaded yet: the kit glyph (an icon theme may lack
         // folder-download, which left an empty box)
-        Text {
+        Icon {
             objectName: "downloadsEmptyGlyph"
             anchors.centerIn: parent
             visible: root.files.length === 0
-            text: Icons.downloadSimple
-            font.family: Icons.font
-            font.pixelSize: root.iconSize
+            icon: Icons.downloadSimple
+            size: root.iconSize
             color: surface.foreground
         }
 
@@ -131,19 +130,13 @@ BarModuleBase {
         width: size
         height: size
 
-        Rectangle {
+        // An image download: its thumbnail as kit Art.
+        Art {
             anchors.fill: parent
             visible: tile.file !== null && Downloads.isImage(tile.file.name)
-            radius: 4
-            color: "white"
-            Image {
-                anchors.fill: parent
-                anchors.margins: 2
-                source: parent.visible ? tile.file.url : ""
-                sourceSize: Qt.size(tile.size * 2, tile.size * 2)
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-            }
+            source: visible ? tile.file.url : ""
+            icon: Icons.image
+            radius: Look.radius("small", height)
         }
         // The theme's type icon; Quickshell.iconPath(.., true) is "" when the
         // theme lacks it, then a kit file glyph (never a blank tile)
@@ -154,12 +147,11 @@ BarModuleBase {
             source: tile.themeIcon
             sourceSize: Qt.size(tile.size * 2, tile.size * 2)
         }
-        Text {
+        Icon {
             anchors.centerIn: parent
             visible: tile.file !== null && !Downloads.isImage(tile.file.name) && tile.themeIcon === ""
-            text: Icons.file
-            font.family: Icons.font
-            font.pixelSize: root.iconSize
+            icon: Icons.file
+            size: root.iconSize
             color: surface.foreground
         }
     }

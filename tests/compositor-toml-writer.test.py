@@ -1,6 +1,6 @@
 """CompositorTomlWriter coalesces compositor.write requests.
 
-Every write spawns the yozakura CLI and makes the daemon regenerate and reload the
+Every write spawns the yozakura CLI and makes the daemon regenerate the
 compositor config. A burst of changes (a preset load touches ~20 keys) must
 produce one write with the final values; a request while a write is in
 flight must run once afterwards (not be dropped); and the exit handler must
@@ -77,13 +77,13 @@ def proc(expr):
 # A burst of 20 changes in one tick -> one write carrying the last revision.
 for i in range(1, 21):
     h.eval(writer, f'revision = {i}; callWrite()')
-pump(400)
+pump(1000)
 check('burst of 20 requests spawns one write', proc('starts') == 1, f'(starts={proc("starts")})')
 check('the write carries the final state', '"revision":20' in str(proc('payloads[ipcProcess.payloads.length - 1]')))
 
 # A request while the write is still running is queued, then sent once.
 h.eval(writer, 'revision = 21; callWrite()')
-pump(300)
+pump(1000)
 check('no second spawn while a write is in flight', proc('starts') == 1)
 h.eval(writer, 'ipcProcess.finish(0)')
 pump(50)
@@ -95,5 +95,15 @@ check('queued write carries the newest state', '"revision":21' in str(proc('payl
 h.eval(writer, 'ipcProcess.finish(0)')
 pump(300)
 check('idle exit spawns nothing', proc('starts') == 2, f'(starts={proc("starts")})')
+
+# A slider drag: a change every 100 ms for 1.3 s is one write after it
+# settles, not one per step (each write regenerates the compositor config).
+for i in range(30, 43):
+    h.eval(writer, f'revision = {i}; callWrite()')
+    pump(100)
+check('no write while the drag is still moving', proc('starts') == 2, f'(starts={proc("starts")})')
+pump(1000)
+check('one write once the drag settles', proc('starts') == 3, f'(starts={proc("starts")})')
+check('the settled write carries the last step', '"revision":42' in str(proc('payloads[ipcProcess.payloads.length - 1]')))
 
 sys.exit(0 if ok_all else 1)

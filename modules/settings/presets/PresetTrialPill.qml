@@ -7,6 +7,7 @@ import qs.modules.settings
 import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Countdown while a preset is on trial: Keep it, or Revert now; at zero
 // the previous look comes back by itself.
@@ -49,7 +50,7 @@ Item {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 12
+        spacing: Space.m
 
         // Countdown ring
         Item {
@@ -87,20 +88,18 @@ Item {
                     }
                 }
             }
-            Text {
+            KitText {
+                role: "caption"
                 anchors.centerIn: parent
                 text: PresetModel.seconds(PresetStudio.trialLeft)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.Bold
                 color: Colors.primary
             }
         }
-        Text {
+        KitText {
+            role: "secondary"
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.t("prefs.presets.trying", PresetStudio.trial ? PresetStudio.trial.preset : "")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.Bold
             color: Colors.overBackground
         }

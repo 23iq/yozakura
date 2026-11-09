@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // One-of picker drawn as chips, each with a small live preview strip (3
 // slots of `slot` px on the background) and a caption. `preview` is
@@ -27,7 +28,7 @@ Item {
     Flow {
         id: flow
         width: parent.width
-        spacing: 8
+        spacing: Space.s
 
         Repeater {
             model: root.ids
@@ -67,14 +68,13 @@ Item {
                     }
                 }
 
-                Text {
+                KitText {
                     id: caption
+                    role: "secondary"
                     anchors.left: strip.right
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
                     text: I18n.t(root.labelPrefix + chip.modelData)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     font.weight: chip.selected ? Font.DemiBold : Font.Normal
                     color: chip.selected ? Colors.primary : Colors.overBackground
                 }

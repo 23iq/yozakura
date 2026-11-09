@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.services
 import "../../Ui.js" as Ui
 import "../../../specials/Specials.js" as Specials
+import qs.modules.components.kit
 
 // Accent of a special workspace: palette roles only (Specials.ACCENTS),
 // drawn in the live palette so every wallpaper and preset works.
@@ -13,7 +14,7 @@ Row {
     property string value: "primary"
     signal picked(string role)
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: Specials.ACCENTS

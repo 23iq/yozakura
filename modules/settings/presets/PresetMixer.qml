@@ -10,6 +10,7 @@ import qs.modules.settings
 import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Mixer: build a new preset by taking each aspect (layout, colors & glass,
 // windows & motion, desktop, lockscreen) from any preset, preview the
@@ -61,12 +62,12 @@ Item {
         id: preview
         x: root.wide ? root.width - width : 0
         width: root.wide ? Math.round(root.width * 0.46) : root.width
-        spacing: 12
+        spacing: Space.m
 
         ClippingRectangle {
             width: parent.width
             height: Math.round(width * 9 / 16)
-            radius: Math.min(Styling.radius(4), 20)
+            radius: Look.radius("box")
             color: Colors.surfaceContainerHigh
             border.width: 1
             border.color: Ui.alpha(Colors.outlineVariant, 0.6)
@@ -78,16 +79,15 @@ Item {
                 wallpaper: root.wallpaper
             }
         }
-        Text {
+        KitText {
+            role: "caption"
             width: parent.width
             text: I18n.t("prefs.presets.mixer.preview_hint")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
             wrapMode: Text.WordWrap
         }
         Row {
-            spacing: 8
+            spacing: Space.s
             PillButton {
                 objectName: "mixerCreate"
                 kind: "filled"
@@ -115,7 +115,7 @@ Item {
         id: list
         y: root.wide ? 0 : preview.height + 20
         width: root.wide ? root.width - preview.width - 24 : root.width
-        spacing: 10
+        spacing: Space.m
 
         Repeater {
             model: PresetStudio.aspects
@@ -124,7 +124,7 @@ Item {
                 required property var modelData
                 width: list.width
                 height: Math.max(76, rowText.implicitHeight + 28)
-                radius: Math.min(Styling.radius(3), 18)
+                radius: Look.radius("box")
                 color: Colors.surfaceContainer
                 border.width: 1
                 border.color: Ui.alpha(Colors.outlineVariant, 0.5)
@@ -136,38 +136,32 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     width: 40
                     height: 40
-                    radius: Math.min(Styling.radius(2), 14)
+                    radius: Look.radius("box")
                     color: Ui.alpha(Colors.primary, 0.14)
-                    Text {
+                    Icon {
+                        tone: "accent"
                         anchors.centerIn: parent
-                        text: Icons[PresetModel.aspectIcon(row.modelData.id)] ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: 19
-                        color: Colors.primary
+                        icon: Icons[PresetModel.aspectIcon(row.modelData.id)] ?? ""
                     }
                 }
                 Column {
                     id: rowText
                     anchors.left: tile.right
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Space.m
                     anchors.right: picker.left
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    Text {
+                    spacing: Space.xs / 2
+                    KitText {
                         width: parent.width
                         text: I18n.t("prefs.presets.aspect." + row.modelData.id)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(0)
                         font.weight: Font.DemiBold
-                        color: Colors.overBackground
                         elide: Text.ElideRight
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         width: parent.width
                         text: I18n.t("prefs.presets.aspect." + row.modelData.id + ".desc")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
                         color: Colors.overSurfaceVariant
                         wrapMode: Text.WordWrap
                         maximumLineCount: 2
@@ -177,7 +171,7 @@ Item {
                 PresetPicker {
                     id: picker
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Space.l
                     anchors.verticalCenter: parent.verticalCenter
                     width: Math.min(200, row.width * 0.42)
                     value: root.sources[row.modelData.id] || ""

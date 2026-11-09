@@ -11,6 +11,22 @@ func intPtr(v int) *int       { return &v }
 func strPtr(s string) *string { return &s }
 func boolPtr(b bool) *bool    { return &b }
 
+// Shell binds come in maps; the generated text must not depend on Go's
+// map order, or every regeneration reloads MangoWC.
+func TestGenerateKeybindsShellMapsAreStable(t *testing.T) {
+	system := map[string]ipc.Keybind{}
+	for _, k := range []string{"a", "b", "c", "d", "e", "f", "g", "h"} {
+		system["bind_"+k] = ipc.Keybind{Modifiers: []string{"SUPER"}, Key: k, Dispatcher: "exec", Argument: "x", Enabled: true}
+	}
+	cfg := ipc.ConfigKeybinds{Shell: &ipc.ShellKeybinds{System: system, Binds: system}}
+	first := NewGenerator().GenerateKeybinds(cfg)
+	for i := 0; i < 20; i++ {
+		if got := NewGenerator().GenerateKeybinds(cfg); got != first {
+			t.Fatalf("keybinds differ between runs:\n%s\n---\n%s", first, got)
+		}
+	}
+}
+
 func TestGenerateAppearanceGapsAndBorder(t *testing.T) {
 	g := &Generator{}
 	out := g.GenerateAppearance(ipc.ConfigAppearance{

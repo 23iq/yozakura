@@ -3,6 +3,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.settings
 import qs.config
+import qs.modules.components.kit
 
 // Shown while Yozakura does not manage the keyboard (keyboard.managed):
 // "Using your compositor's keyboard settings", the first change takes them
@@ -14,30 +15,26 @@ Column {
 
     readonly property bool unreadable: KeyboardService.unreadable
 
-    spacing: 10
+    spacing: Space.m
 
     Row {
         width: parent.width
-        spacing: 10
+        spacing: Space.m
 
-        Text {
+        Icon {
             id: icon
             anchors.verticalCenter: parent.verticalCenter
-            text: root.unreadable ? Icons.warning : Icons.info
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(1)
+            icon: root.unreadable ? Icons.warning : Icons.info
             color: root.unreadable ? Colors.error : Colors.primary
         }
 
-        Text {
+        KitText {
             objectName: "unmanagedText"
+            role: "secondary"
             width: root.width - icon.width - parent.spacing
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.t(root.unreadable ? "prefs.keyboard.unreadable" : "prefs.keyboard.unmanaged")
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
         }
     }
 

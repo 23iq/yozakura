@@ -25,6 +25,8 @@ function hideAssistant() {}
 h.singleton('qs.modules.theme', 'Styling', 'QtObject {}')
 h.singleton('qs.modules.services', 'Ai', 'QtObject {}')
 h.singleton('qs.modules.aicenter.common', 'BarLook', 'QtObject { property int animDuration: 0 }')
+h.copy('modules/components/SurfaceLatch.qml', 'qs/modules/components', siblings=False)
+h.module('qs.modules.components', {})
 p = h.copy('modules/aicenter/AiCenterHost.qml')
 (p.parent / 'AiCenterPanel.qml').write_text('import QtQuick\nItem { property bool frameWrapped: false; function focusComposer() {} }')
 wrapper = p.parent / 'HostScene.qml'

@@ -2,13 +2,15 @@
 """Render Settings > Apps & Extras offscreen (private Xvfb, never the desktop).
 
     tools/render/extras_render.py [--out DIR] [--mode dark|light|both] [--size 1280x1100]
+                                [--languages ink,glass,...]
 
 The real catalog (assets/catalog/extras.json) behind the scripted backend of
 tests/lib/extras_env.py; palette and wallpaper come from your setup like
 settings_render.py. Views: `page` (idle catalog), `states` (selection,
 installing, failed, installed cards, the multilib confirm and the install
 bar), `search` (a greyed entry unavailable here), `log` (the log popup).
-Writes <out>/<view>-<mode>.png.
+Writes <out>/<view>-<language>-<mode>.png (`--languages`: every visual
+language by default).
 """
 from __future__ import annotations
 
@@ -30,6 +32,7 @@ from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtGui import QCursor  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_render import palette, wallpaper_state  # noqa: E402
+from languages import LANGUAGES  # noqa: E402
 
 INSTALLED = {"firefox": "pkg", "kitty": "pkg", "fish": "pkg", "mpv": "pkg", "nautilus": "pkg", "telegram": "flatpak",
              "fastfetch": "pkg", "claude-code": "bin"}
@@ -62,20 +65,22 @@ def main() -> int:
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "extras"))
     ap.add_argument("--mode", default="both", choices=["dark", "light", "both"])
     ap.add_argument("--size", default="1280x1100")
+    ap.add_argument("--languages", default=",".join(LANGUAGES), help="theme.language values, one render set each")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
-    for mode in (["dark", "light"] if args.mode == "both" else [args.mode]):
-        render(mode, state, out, w, h)
+    for lang in [x for x in args.languages.split(",") if x]:
+        for mode in (["dark", "light"] if args.mode == "both" else [args.mode]):
+            render(mode, state, out, w, h, lang)
     return 0
 
 
-def render(mode: str, state: dict, out: Path, w: int, h: int) -> None:
+def render(mode: str, state: dict, out: Path, w: int, h: int, lang: str) -> None:
     cat = full_catalog()
-    env = ExtrasEnv(f"extras-{mode}", palette=with_ansi(palette(mode, state), mode == "dark"), user_config=True, wallpaper=state,
-                    overrides={"theme": {"lightMode": mode == "light"}}, catalog=cat, status=status(cat),
+    env = ExtrasEnv(f"extras-{lang}-{mode}", palette=with_ansi(palette(mode, state), mode == "dark"), user_config=True, wallpaper=state,
+                    overrides={"theme": {"lightMode": mode == "light", "language": lang}}, catalog=cat, status=status(cat),
                     platform={"distro": "fedora", "gpu": "amd", "hasFlatpak": True, "hasNpm": True, "multilib": False},
                     replies={"extras.install": {"error": 'needs_confirm: {"kind":"multilib","entries":["steam"]}'},
                              "extras.log": {"text": LOG}})
@@ -95,7 +100,7 @@ Window {{
         QCursor.setPos(win.mapToGlobal(QPoint(w - 4, 4)))
         QTest.mouseMove(win, QPoint(w - 4, 4))
         QTest.qWait(wait)
-        path = out / f"{name}-{mode}.png"
+        path = out / f"{name}-{lang}-{mode}.png"
         win.grabWindow().save(str(path))
         print(path)
 

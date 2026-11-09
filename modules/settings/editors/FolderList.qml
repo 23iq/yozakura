@@ -12,6 +12,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../../widgets/dashboard/wallpapers/WallpaperFolders.js" as WallFolders
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Wallpaper folders: the primary one (wallPath, wallpapers.json, applied
 // immediately) and extra ones (desktop.wallpaperFolders, staged with the
@@ -112,7 +113,7 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 10
+        spacing: Space.m
 
         Repeater {
             model: root.folders
@@ -128,7 +129,7 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Math.min(Styling.radius(2), 18)
+                    radius: Look.radius("box")
                     color: Ui.alpha(Colors.overBackground, folderRow.isPrimary ? 0.07 : 0.045)
                     border.width: 1
                     border.color: folderRow.isPrimary ? Ui.alpha(Colors.primary, 0.45) : Ui.alpha(Colors.outlineVariant, 0.6)
@@ -141,22 +142,21 @@ Item {
                     height: 36
                     radius: 12
                     color: folderRow.isPrimary ? Ui.alpha(Colors.primary, 0.18) : Ui.alpha(Colors.overBackground, 0.1)
-                    Text {
+                    Icon {
                         anchors.centerIn: parent
-                        text: Icons.folder
-                        font.family: Icons.font
-                        font.pixelSize: 17
+                        icon: Icons.folder
                         color: folderRow.isPrimary ? Colors.primary : Colors.overSurfaceVariant
                     }
                 }
                 Column {
                     anchors.left: folderIcon.right
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Space.m
                     anchors.right: actions.left
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
-                    Text {
+                    spacing: Space.xs / 2
+                    KitText {
+                        role: "caption"
                         width: parent.width
                         text: folderRow.modelData
                         font.family: Config.theme.monoFont
@@ -164,20 +164,19 @@ Item {
                         color: Colors.overBackground
                         elide: Text.ElideMiddle
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         width: parent.width
                         text: (folderRow.isPrimary ? I18n.t("prefs.wall.primary") + " · " : "") + I18n.t("prefs.wall.folder_count", folderRow.count)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
                         color: folderRow.isPrimary ? Colors.primary : Colors.overSurfaceVariant
                     }
                 }
                 Row {
                     id: actions
                     anchors.right: parent.right
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: Space.s
                     PillButton {
                         visible: folderRow.isPrimary
                         kind: "ghost"
@@ -206,7 +205,7 @@ Item {
         // Add a folder
         Row {
             width: parent.width
-            spacing: 8
+            spacing: Space.s
 
             TextControl {
                 id: pathInput
@@ -238,13 +237,12 @@ Item {
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             width: parent.width
             visible: root.message !== ""
             text: root.message
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: root.messageIsError ? Colors.error : Colors.overSurfaceVariant
         }
     }

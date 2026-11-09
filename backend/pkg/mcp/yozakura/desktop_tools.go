@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/mcp"
+	"yozakura/backend/pkg/wallref"
 )
 
 // Window is the compositor-neutral window view.
@@ -83,6 +84,8 @@ func (d Deps) wallpaperState() (current, dir string) {
 		WallPath    string `json:"wallPath"`
 	}
 	_ = json.Unmarshal(data, &st)
+	// Bundled wallpapers are saved as ids (pkg/wallref).
+	st.CurrentWall = wallref.Resolve(st.CurrentWall, wallref.BundledDir(d.ShellSource))
 	dir = st.WallPath
 	if dir == "" && st.CurrentWall != "" {
 		dir = filepath.Dir(st.CurrentWall)

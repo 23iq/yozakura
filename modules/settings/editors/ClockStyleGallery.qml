@@ -6,6 +6,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../../desktop/clockstyles/ClockStyleRegistry.js" as ClockStyles
+import qs.modules.components.kit
 
 // Depth clock style picker: every registered style (ClockStyleRegistry.js)
 // rendered live on the current wallpaper with its subject cutout and the
@@ -24,7 +25,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: ClockStyles.styles

@@ -3,6 +3,7 @@ package ipc
 import (
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -80,4 +81,17 @@ func ExpandPath(p, relTo string) string {
 		return filepath.Join(relTo, p)
 	}
 	return p
+}
+
+// SortedKeybindNames returns the names of m in sorted order. Generators
+// range over it instead of the map so a regenerated config is
+// byte-identical when nothing changed (Go randomizes map order, and the
+// config handler skips the write and reload only for identical output).
+func SortedKeybindNames(m map[string]Keybind) []string {
+	names := make([]string, 0, len(m))
+	for name := range m {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }

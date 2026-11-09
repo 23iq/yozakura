@@ -7,6 +7,7 @@ import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Trust prompt. Installing and enabling both bring somebody else's code
 // into the shell, so both say whose code it is before it happens.
@@ -50,7 +51,7 @@ Item {
         width: Math.min(dialog.width - 48, Metrics.sheetW + 40)
         height: confirmColumn.implicitHeight + 36
         variant: "popup"
-        radius: Styling.radius(4)
+        radius: Look.radius("box")
         focus: true
 
         Keys.onEscapePressed: dialog.cancelled()
@@ -65,32 +66,27 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 18
+            anchors.margins: Space.l
             spacing: Metrics.spacing + 2
 
-            Text {
+            KitText {
+                role: "title"
                 Layout.fillWidth: true
                 text: dialog.bypass ? I18n.t("mods.confirm_bypass_title") : (dialog.enabling ? I18n.t("mods.confirm_enable_title") : I18n.t("mods.confirm_install_title"))
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(2)
                 font.weight: Font.DemiBold
-                color: Colors.overBackground
                 wrapMode: Text.Wrap
             }
 
-            Text {
+            KitText {
+                role: "secondary"
                 Layout.fillWidth: true
                 text: dialog.bypass ? I18n.t("mods.confirm_bypass_body") : (dialog.enabling ? I18n.t("mods.confirm_enable_body") : I18n.t("mods.confirm_install_body"))
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
                 wrapMode: Text.Wrap
             }
 
-            Rectangle {
+            Divider {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 1
-                color: Ui.alpha(Colors.outlineVariant, 0.45)
             }
 
             ModsLinkRow {
@@ -136,7 +132,7 @@ Item {
 
             RowLayout {
                 Layout.fillWidth: true
-                Layout.topMargin: 4
+                Layout.topMargin: Space.xs
                 spacing: Metrics.spacing
 
                 Item {

@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.config
 import "../../../../config/KeybindActions.js" as KeybindActions
 import "../../../routines/RoutineModel.js" as RoutineModel
+import qs.modules.components.kit
 
 // Result of a test run: a summary line and one line per step
 // (✓ ok, ✕ failed with its error, – skipped).
@@ -27,7 +28,7 @@ StyledRect {
     objectName: "routineReport"
     visible: report !== null
     variant: summary.ok ? "common" : "error"
-    radius: Styling.radius(-3)
+    radius: Look.radius("control")
     implicitHeight: col.implicitHeight + 16
 
     ColumnLayout {
@@ -35,13 +36,12 @@ StyledRect {
         x: 10
         y: 8
         width: parent.width - 20
-        spacing: 4
+        spacing: Space.xs
 
-        Text {
+        KitText {
+            role: "secondary"
             Layout.fillWidth: true
             text: root.summary.ok ? I18n.t("routines.report_ok", root.summary.done, root.summary.total) : I18n.t("routines.report_failed", root.summary.done, root.summary.total)
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.DemiBold
             color: root.item
         }
@@ -51,20 +51,18 @@ StyledRect {
                 id: line
                 required property var modelData
                 Layout.fillWidth: true
-                spacing: 8
-                Text {
-                    text: line.modelData.status === "ok" ? Icons.accept : (line.modelData.status === "failed" ? Icons.cancel : Icons.minus)
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(-2)
+                spacing: Space.s
+                Icon {
+                    role: "caption"
+                    icon: line.modelData.status === "ok" ? Icons.accept : (line.modelData.status === "failed" ? Icons.cancel : Icons.minus)
                     color: root.item
                     opacity: line.modelData.status === "skipped" ? 0.5 : 1
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: (line.modelData.index + 1) + ". " + root.labelOf(line.modelData) + (line.modelData.error ? " — " + line.modelData.error : "")
                     wrapMode: Text.WordWrap
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
                     color: root.item
                     opacity: line.modelData.status === "skipped" ? 0.5 : 0.9
                 }

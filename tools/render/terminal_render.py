@@ -3,6 +3,7 @@
 never the desktop).
 
     tools/render/terminal_render.py [--out DIR] [--mode dark|light|both] [--size 1280x1100]
+                                    [--language ink|glass|tiles|classic|device ...]
 
 The prompt previews are real: every preset is rendered by the installed
 Starship in the backend's fixture repo with your palette
@@ -13,7 +14,8 @@ settings_render.py. Views: `page` (preview, notices, gallery), `gallery`
 `approx` (oh-my-posh missing, fish not the login shell, a foreign prompt
 in config.fish, fastfetch greeting, block cursor), `notices` (no Nerd Font
 on the system, the engine installing for this prompt).
-Writes <out>/<view>-<mode>.png.
+Writes <out>/<view>-<mode>.png (your theme.language), or
+<out>/<view>-<mode>-<language>.png per --language.
 """
 from __future__ import annotations
 
@@ -32,6 +34,7 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from extras_env import full_catalog  # noqa: E402
+from languages import LANGUAGES  # noqa: E402
 from extras_render import with_ansi  # noqa: E402
 from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtGui import QCursor  # noqa: E402
@@ -63,23 +66,28 @@ def main() -> int:
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "terminal"))
     ap.add_argument("--mode", default="both", choices=["dark", "light", "both"])
     ap.add_argument("--size", default="1280x1100")
+    ap.add_argument("--language", action="append", choices=LANGUAGES,
+                    help="visual language(s) to draw (default: the one in your config)")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
     for mode in (["dark", "light"] if args.mode == "both" else [args.mode]):
-        render(mode, state, out, w, h)
+        for lang in args.language or [""]:
+            render(mode, state, out, w, h, lang)
     return 0
 
 
-def render(mode: str, state: dict, out: Path, w: int, h: int) -> None:
+def render(mode: str, state: dict, out: Path, w: int, h: int, lang: str = "") -> None:
+    theme = {"lightMode": mode == "light", **({"language": lang} if lang else {})}
+    tag = f"{mode}-{lang}" if lang else mode
     pal = with_ansi(palette(mode, state), mode == "dark")
     presets, pvs = previews(pal)
     status = {**STATUS, "engineInstalled": {"starship": True, "ohmyposh": False}}
-    env = TerminalEnv(f"terminal-{mode}", palette=pal, user_config=True, wallpaper=state, presets=presets,
+    env = TerminalEnv(f"terminal-{tag}", palette=pal, user_config=True, wallpaper=state, presets=presets,
                       previews=pvs, status=status, catalog=full_catalog(),
-                      overrides={"theme": {"lightMode": mode == "light"},
+                      overrides={"theme": theme,
                                  "terminal": {"enabled": False, "engine": "starship", "prompt": "sakura-powerline"}})
     win = env.load(f"""
 import QtQuick
@@ -98,7 +106,7 @@ Window {{
         QCursor.setPos(win.mapToGlobal(QPoint(w - 4, 4)))
         QTest.mouseMove(win, QPoint(w - 4, 4))
         QTest.qWait(wait)
-        path = out / f"{name}-{mode}.png"
+        path = out / f"{name}-{tag}.png"
         win.grabWindow().save(str(path))
         print(path)
 

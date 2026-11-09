@@ -7,6 +7,7 @@ import qs.config
 import "../Ui.js" as Ui
 import "../../services/DisplayModel.js" as DisplayModel
 import "DisplayFormat.js" as DisplayFormat
+import qs.modules.components.kit
 
 // One monitor on the arrangement canvas: a rounded pane with a dimmed
 // wallpaper thumbnail, number badge, model and connector. Dragging moves it
@@ -41,7 +42,7 @@ StyledRect {
     signal dropped(real lx, real ly)
 
     variant: selected ? "focus" : "pane"
-    radius: Math.min(Styling.radius(4), 22)
+    radius: Look.radius("box")
     width: Math.max(logical.w * pxScale, 8)
     height: Math.max(logical.h * pxScale, 8)
     x: baseX + gx
@@ -133,11 +134,10 @@ StyledRect {
         radius: width / 2
         visible: tile.height > 52
         color: tile.selected ? Colors.primary : Ui.alpha(Colors.overBackground, 0.14)
-        Text {
+        KitText {
+            role: "secondary"
             anchors.centerIn: parent
             text: tile.number
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.Bold
             color: tile.selected ? Colors.overPrimary : Colors.overBackground
         }
@@ -147,36 +147,31 @@ StyledRect {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: tile.height < 110 ? 10 : 0
         width: parent.width - 24
-        spacing: 2
+        spacing: Space.xs / 2
 
-        Text {
+        KitText {
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: DisplayFormat.title(tile.output, tile.config)
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.weight: Font.DemiBold
-            color: Colors.overBackground
         }
-        Text {
+        KitText {
+            role: "caption"
             width: parent.width
             visible: tile.height > 60
             horizontalAlignment: Text.AlignHCenter
             text: tile.config.name
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
-        Text {
+        KitText {
+            role: "caption"
             width: parent.width
             visible: tile.height > 84
             horizontalAlignment: Text.AlignHCenter
             text: DisplayFormat.formatResolution(tile.config.width, tile.config.height) + (tile.config.refresh > 0 ? "  \u00b7  " + DisplayFormat.formatHz(tile.config.refresh) : "")
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
     }

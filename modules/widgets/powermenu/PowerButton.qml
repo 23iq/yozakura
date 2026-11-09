@@ -1,17 +1,17 @@
 import QtQuick
-import qs.modules.components
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.bar.look
 
-ToggleButton {
+// Bar module: opens / closes the power menu (accent while it is open).
+BarModuleButton {
     id: powerButton
-    buttonIcon: Icons.shutdown
+    objectName: "powerButton"
+
+    readonly property bool open: Visibilities.currentActiveModule === "powermenu"
+
+    glyph: Icons.shutdown
     tooltipText: I18n.t("bar.tooltip.powermenu")
-    onToggle: function () {
-        if (Visibilities.currentActiveModule === "powermenu") {
-            Visibilities.setActiveModule("");
-        } else {
-            Visibilities.setActiveModule("powermenu");
-        }
-    }
+    active: powerButton.open
+    onClicked: Visibilities.setActiveModule(powerButton.open ? "" : "powermenu")
 }

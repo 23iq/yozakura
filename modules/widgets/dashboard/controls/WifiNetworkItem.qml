@@ -34,20 +34,18 @@ Column {
         }
         selected: root.active
         leading: Component {
-            Text {
-                text: Icons[DeviceGlyphs.wifiGlyph(root.network?.strength)]
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("body")
-                color: root.active ? Type.accent : Type.secondary
+            Icon {
+                icon: Icons[DeviceGlyphs.wifiGlyph(root.network?.strength)]
+                role: "body"
+                tone: root.active ? "accent" : "secondary"
             }
         }
         trailing: Component {
-            Text {
+            Icon {
                 visible: root.network?.isSecure ?? false
-                text: Icons.lock
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("caption")
-                color: Type.muted
+                icon: Icons.lock
+                role: "caption"
+                tone: "muted"
             }
         }
         onClicked: root.expanded = !root.expanded

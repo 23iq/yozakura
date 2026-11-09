@@ -3,7 +3,7 @@
 live desktop).
 
     tools/render/activitychip_render.py [--out DIR] [--mode dark|light]
-                                        [--languages ink,glass,tiles] [--edges top,left]
+                                        [--languages ink,glass,tiles,classic,device] [--edges top,left]
 
 A dock-like bar (start: systemStats, launcher, workspaces; end: controls,
 clock) sharing its edge with a pill notch, ActivityService.presentation
@@ -26,6 +26,7 @@ from settings_render import REPO, color_source, palette, wallpaper_state  # noqa
 
 import bundled_fonts  # noqa: E402
 from island_env import IslandEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
 from PySide6.QtCore import QPoint, QRect  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
@@ -95,7 +96,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "activity-chip"))
     ap.add_argument("--mode", default="dark", choices=["dark", "light"])
-    ap.add_argument("--languages", default="ink,glass,tiles")
+    ap.add_argument("--languages", default=",".join(LANGUAGES))
     ap.add_argument("--edges", default="top,left")
     args = ap.parse_args()
     out = Path(args.out)

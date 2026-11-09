@@ -150,6 +150,8 @@ binary.
 - Quickshell runs through a second wrapper. That wrapper prepends the Qt
   plugins (multimedia, image formats), the QML modules and the GStreamer
   plugins, so video wallpapers and media work whatever the session sets.
+  Video is decoded by Qt's FFmpeg backend (VA-API on the GPU); set
+  `QT_MEDIA_BACKEND=gstreamer` in the session to use GStreamer instead.
   The package links only `bin/` and `share/` into profiles, so these Qt
   files never reach the system profile's `lib/qt-6`.
 - `PATH` puts `/run/wrappers/bin` first, so NixOS's privileged wrappers

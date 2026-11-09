@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -31,9 +32,28 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.appId + "-ai-selection"
-    WlrLayershell.keyboardFocus: actions.working ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: latch.keyboard && !actions.working ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    // Latched (SurfaceLatch): on close the ask field lets go of the input
+    // method, then keyboard focus drops, and the surface unmaps at least a
+    // frame later; shell.qml keeps the window loaded while `mapped`, so it
+    // is never destroyed in the tick its keyboard focus goes away.
+    visible: latch.shown
+    readonly property bool mapped: latch.shown
+
+    SurfaceLatch {
+        id: latch
+        active: win.actions.visible
+        holdMs: Motion.exit.duration
+        focusHost: menu
+    }
 
     property int selectedIndex: 0
+
+    function step(delta: int) {
+        const n = win.actions.actions.length;
+        win.selectedIndex = Math.max(0, Math.min(n - 1, win.selectedIndex + delta));
+    }
 
     mask: Region {
         item: win.actions.working ? menu : backdrop
@@ -45,17 +65,16 @@ PanelWindow {
         onClicked: win.actions.close()
     }
 
-    StyledRect {
+    Surface {
         id: menu
         objectName: "selectionMenu"
-        variant: "popup"
-        radius: Styling.radius(0)
+        padding: Space.s
         enableShadow: true
-        width: Math.min(win.width - Styling.fontSize(0) * 2, win.actions.hasResult ? Config.ai.sidebarWidth : Config.ai.sidebarWidth * 0.75)
-        height: col.implicitHeight + 16
+        width: Math.min(win.width - Space.xl * 2, win.actions.hasResult ? Config.ai.sidebarWidth : Config.ai.sidebarWidth * 0.75)
+        height: implicitHeight
         readonly property point local: win.actions.cursor.x >= 0 ? Qt.point(win.actions.cursor.x - win.targetScreen.x, win.actions.cursor.y - win.targetScreen.y) : Qt.point((win.width - width) / 2, win.height / 3)
-        x: Math.max(8, Math.min(win.width - width - 8, local.x + 12))
-        y: Math.max(8, Math.min(win.height - height - 8, local.y + 16))
+        x: Math.max(Space.s, Math.min(win.width - width - Space.s, local.x + Space.m))
+        y: Math.max(Space.s, Math.min(win.height - height - Space.s, local.y + Space.l))
         focus: true
 
         scale: 0.96
@@ -63,10 +82,18 @@ PanelWindow {
         Component.onCompleted: {
             scale = 1;
             opacity = 1;
-            ask.forceActiveFocus();
+            ask.focusInput();
         }
         Connections {
             target: win.actions
+            // Fades out while latched closed; reopened before the unmap,
+            // it comes back with the ask field focused.
+            function onVisibleChanged() {
+                menu.scale = win.actions.visible ? 1 : 0.96;
+                menu.opacity = win.actions.visible ? 1 : 0;
+                if (win.actions.visible)
+                    ask.focusInput();
+            }
             function onHasResultChanged() {
                 if (win.actions.hasResult)
                     resultText.forceActiveFocus();
@@ -86,59 +113,52 @@ PanelWindow {
 
         ColumnLayout {
             id: col
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.margins: 8
-            spacing: 4
+            width: parent.width
+            spacing: Space.xs
 
-            Text {
+            // The selected text, quoted.
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
-                Layout.leftMargin: 6
+                Layout.leftMargin: Look.rowInset
+                Layout.rightMargin: Look.rowInset
                 text: "“" + win.actions.text.replace(/\s+/g, " ").substring(0, 120) + "”"
-                elide: Text.ElideRight
                 maximumLineCount: 2
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 font.italic: true
-                color: Colors.outline
             }
 
             RowLayout {
                 visible: win.actions.working
                 Layout.fillWidth: true
-                Layout.margins: 6
-                spacing: 8
+                Layout.margins: Look.rowInset
+                spacing: Space.s
                 Spinner {}
-                Text {
+                KitText {
+                    role: "secondary"
                     Layout.fillWidth: true
                     text: win.actions.workingLabel + "…"
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
             }
 
-            Text {
+            KitText {
+                role: "caption"
                 visible: win.actions.error.length > 0
                 Layout.fillWidth: true
-                Layout.margins: 6
+                Layout.margins: Look.rowInset
                 text: win.actions.error
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.error
+                color: Type.danger
             }
 
-            Text {
+            KitText {
                 visible: win.actions.hasResult
                 Layout.fillWidth: true
-                Layout.margins: Styling.fontSize(-6)
+                Layout.leftMargin: Look.rowInset
+                Layout.rightMargin: Look.rowInset
+                Layout.topMargin: Space.xs
                 text: I18n.t("ai.selection_preview")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
-                color: Colors.overSurface
             }
 
             ScrollView {
@@ -154,12 +174,14 @@ PanelWindow {
                     selectByMouse: true
                     textFormat: TextEdit.PlainText
                     wrapMode: TextEdit.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurface
+                    font.family: Type.family("body")
+                    font.pixelSize: Type.size("secondary")
+                    color: Type.text
+                    selectionColor: Qt.alpha(Type.accent, 0.3)
+                    selectedTextColor: Type.text
                     background: StyledRect {
                         variant: "common"
-                        radius: Styling.radius(-4)
+                        radius: Look.radius("control")
                     }
                     Keys.onEscapePressed: win.actions.close()
                 }
@@ -168,145 +190,104 @@ PanelWindow {
             RowLayout {
                 visible: win.actions.hasResult
                 Layout.fillWidth: true
-                Button {
-                    id: copyButton
+                spacing: Space.s
+                // Applying the result is the one primary action here.
+                Chip {
                     objectName: "selectionCopy"
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    primary: true
+                    icon: Icons.clipboardText
                     text: I18n.t("ai.selection_apply")
                     onClicked: win.actions.copyResult()
-                    contentItem: Text {
-                        text: copyButton.text
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        color: Colors.overSurface
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                    background: StyledRect {
-                        variant: copyButton.hovered ? "focus" : "common"
-                        radius: Styling.radius(-4)
-                    }
                 }
-                Button {
-                    id: continueButton
+                Chip {
                     objectName: "selectionContinue"
                     Layout.fillWidth: true
+                    Layout.preferredWidth: 1
+                    icon: Icons.sidebarSimple
                     text: I18n.t("ai.selection_continue")
                     onClicked: win.actions.openResult()
-                    contentItem: Text {
-                        text: continueButton.text
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        color: Colors.overSurface
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-                    background: StyledRect {
-                        variant: continueButton.hovered ? "focus" : "common"
-                        radius: Styling.radius(-4)
-                    }
                 }
             }
 
             Repeater {
                 model: win.actions.working || win.actions.hasResult ? [] : win.actions.actions
-                delegate: StyledRect {
+                delegate: ListRow {
                     id: entry
                     required property var modelData
                     required property int index
                     Layout.fillWidth: true
-                    implicitHeight: 34
-                    radius: Styling.radius(-6)
-                    variant: entry.index === win.selectedIndex ? "focus" : (hov.hovered ? "common" : "transparent")
+                    // A dense menu: control-height rows, not list-height.
+                    implicitHeight: Space.controlM
+                    title: entry.modelData.label
+                    highlighted: entry.index === win.selectedIndex
+                    onClicked: win.actions.run(entry.modelData)
                     HoverHandler {
-                        id: hov
                         onHoveredChanged: if (hovered)
                             win.selectedIndex = entry.index
                     }
-                    TapHandler {
-                        onTapped: win.actions.run(entry.modelData)
+                    leading: Component {
+                        Icon {
+                            role: "body"
+                            tone: "secondary"
+                            icon: Icons[entry.modelData.icon] || Icons.sparkle
+                        }
                     }
-                    RowLayout {
-                        anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 10
-                        spacing: 10
-                        Text {
-                            text: Icons[entry.modelData.icon] || Icons.sparkle
-                            font.family: Icons.font
-                            font.pixelSize: 14
-                            color: Colors.primary
-                        }
-                        Text {
-                            Layout.fillWidth: true
-                            text: entry.modelData.label
-                            elide: Text.ElideRight
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            color: Colors.overSurface
-                        }
-                        Text {
-                            text: entry.modelData.output === "sidebar" ? Icons.sidebarSimple : (entry.modelData.output === "clipboard" ? Icons.clipboardText : Icons.cursorText)
-                            font.family: Icons.font
-                            font.pixelSize: 11
-                            color: Colors.outline
-                        }
-                        Text {
-                            visible: entry.index < 9
-                            text: entry.index + 1
-                            font.family: Config.theme.monoFont
-                            font.pixelSize: Styling.monoFontSize(-4)
-                            color: Colors.outline
+                    trailing: Component {
+                        Row {
+                            spacing: Space.s
+                            // Where the result goes: replace, sidebar or clipboard.
+                            Icon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                role: "caption"
+                                tone: "muted"
+                                icon: entry.modelData.output === "sidebar" ? Icons.sidebarSimple : (entry.modelData.output === "clipboard" ? Icons.clipboardText : Icons.cursorText)
+                            }
+                            KeyHint {
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: entry.index < 9
+                                text: entry.index + 1
+                            }
                         }
                     }
                 }
             }
 
-            TextField {
+            SearchField {
                 id: ask
                 objectName: "selectionAsk"
                 visible: !win.actions.working && !win.actions.hasResult
                 Layout.fillWidth: true
-                Layout.topMargin: 4
+                Layout.topMargin: Space.xs
+                boxed: true
+                glyph: Icons.sparkle
                 placeholderText: I18n.t("ai.ask_selection")
-                placeholderTextColor: Colors.outline
-                color: Colors.overBackground
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                leftPadding: 28
-                background: StyledRect {
-                    variant: "common"
-                    radius: Styling.radius(-4)
-                    Text {
-                        x: 9
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: Icons.sparkle
-                        font.family: Icons.font
-                        font.pixelSize: 12
-                        color: Colors.primary
-                    }
-                }
-                Keys.onPressed: event => {
+                clearOnEscape: false
+                onEscapePressed: win.actions.close()
+                onDownPressed: win.step(1)
+                onUpPressed: win.step(-1)
+                onAccepted: {
                     const list = win.actions.actions;
-                    if (event.key === Qt.Key_Escape) {
-                        win.actions.close();
-                        event.accepted = true;
-                    } else if (event.key === Qt.Key_Down) {
-                        win.selectedIndex = Math.min(list.length - 1, win.selectedIndex + 1);
-                        event.accepted = true;
-                    } else if (event.key === Qt.Key_Up) {
-                        win.selectedIndex = Math.max(0, win.selectedIndex - 1);
-                        event.accepted = true;
-                    } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (ask.text.trim())
-                            win.actions.ask(ask.text);
-                        else if (list[win.selectedIndex])
-                            win.actions.run(list[win.selectedIndex]);
-                        event.accepted = true;
-                    } else if (ask.text.length === 0 && event.key >= Qt.Key_1 && event.key <= Qt.Key_9) {
-                        const i = event.key - Qt.Key_1;
-                        if (list[i])
-                            win.actions.run(list[i]);
-                        event.accepted = true;
-                    }
+                    if (ask.text.trim())
+                        win.actions.ask(ask.text);
+                    else if (list[win.selectedIndex])
+                        win.actions.run(list[win.selectedIndex]);
+                }
+                // A digit typed into the empty field picks that action (not
+                // a lone digit left over after deleting the rest of a question).
+                property string previous: ""
+                onSearchTextChanged: value => {
+                    const wasEmpty = ask.previous === "";
+                    ask.previous = value;
+                    if (!wasEmpty || !/^[1-9]$/.test(value))
+                        return;
+                    const action = win.actions.actions[Number(value) - 1];
+                    if (!action)
+                        return;
+                    ask.previous = "";
+                    ask.clear();
+                    win.actions.run(action);
                 }
             }
         }

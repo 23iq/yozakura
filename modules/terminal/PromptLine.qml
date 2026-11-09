@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.components.kit
 import "TermModel.js" as TermModel
 
 // One terminal line of styled spans ({text, fg, bg, bold, italic,
@@ -69,19 +70,19 @@ Item {
             width: modelData.width
             height: root.lineHeight
 
-            Rectangle {
+            Mark {
                 anchors.fill: parent
+                radius: 0
                 visible: run.modelData.bg !== ""
                 color: run.modelData.bg || "transparent"
             }
-            Text {
+            KitText {
                 y: Math.round((root.lineHeight - regular.height) / 2)
                 text: run.modelData.text
-                textFormat: Text.PlainText
                 color: run.modelData.fg || root.foreground
                 font.family: root.fontFamily
                 font.pixelSize: root.pixelSize
-                font.bold: run.modelData.bold
+                font.weight: run.modelData.bold ? Font.Bold : Font.Normal
                 font.italic: run.modelData.italic
                 font.underline: run.modelData.underline
             }

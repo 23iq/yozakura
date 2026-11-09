@@ -188,14 +188,12 @@ LockStyle {
                     placeholderTextColor: skin.alpha(skin.ink, 0.5)
                     Keys.onReleased: event => pw.observeKey(event)
                 }
-                Text {
+                Icon {
                     anchors.right: submit.left
                     anchors.rightMargin: Space.s
                     anchors.verticalCenter: parent.verticalCenter
                     visible: pw.capsLock
-                    text: Icons.capsLock
-                    font.family: Icons.font
-                    font.pixelSize: Type.iconSize("body")
+                    icon: Icons.capsLock
                     color: skin.accent
                 }
                 Rectangle {

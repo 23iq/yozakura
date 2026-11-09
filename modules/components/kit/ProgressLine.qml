@@ -3,7 +3,8 @@ import qs.modules.theme
 import qs.modules.components.kit
 import "ProgressMotion.js" as ProgressMotion
 
-// A thin progress line: track + accent fill (`value` 0..1). With
+// A thin progress line: track + accent fill (`value` 0..1; `fillColor`
+// tints it: a series colour shared with a chart legend). With
 // `indeterminate` (unknown progress) a calm accent segment sweeps across
 // the track instead; the sweep runs only while the line is visible and
 // rests centered when motion is off.
@@ -12,6 +13,7 @@ Rectangle {
 
     property real value: 0
     property bool indeterminate: false
+    property color fillColor: Type.progress
     readonly property real fraction: Math.max(0, Math.min(1, root.value))
     readonly property int cycle: ProgressMotion.cycle(Motion.emphasis.duration)
     readonly property bool sweeping: sweep.running
@@ -27,7 +29,7 @@ Rectangle {
         width: parent.width * root.fraction
         height: parent.height
         radius: parent.radius
-        color: Type.progress
+        color: root.fillColor
 
         Behavior on width {
             enabled: Motion.morph.duration > 0
@@ -45,7 +47,7 @@ Rectangle {
         width: seg.width
         height: parent.height
         radius: parent.radius
-        color: Type.progress
+        color: root.fillColor
     }
 
     NumberAnimation {

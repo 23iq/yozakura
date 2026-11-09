@@ -7,6 +7,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Modal name prompt over the studio (save current look, duplicate,
 // rename, mix): validates like the backend and explains why a name is
@@ -85,7 +86,7 @@ Item {
         anchors.centerIn: parent
         width: Math.min(parent.width - 48, 440)
         height: column.implicitHeight + 44
-        radius: Math.min(Styling.radius(6), 26)
+        radius: Look.radius("surface")
         color: Colors.surfaceContainerHigh
         border.width: 1
         border.color: Ui.alpha(Colors.outline, 0.35)
@@ -99,15 +100,13 @@ Item {
             x: 22
             y: 22
             width: parent.width - 44
-            spacing: 14
+            spacing: Space.l
 
-            Text {
+            KitText {
+                role: "title"
                 width: parent.width
                 text: root.title
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(3)
                 font.weight: Font.Bold
-                color: Colors.overBackground
                 wrapMode: Text.WordWrap
             }
             TextControl {
@@ -117,18 +116,17 @@ Item {
                 placeholder: I18n.t("prefs.presets.name.placeholder")
                 invalid: root.problem !== "" && input.text !== ""
             }
-            Text {
+            KitText {
+                role: "caption"
                 width: parent.width
                 visible: root.problem !== "" && field.input.text !== ""
                 text: I18n.t(root.problem)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.error
                 wrapMode: Text.WordWrap
             }
             Row {
                 anchors.right: parent.right
-                spacing: 8
+                spacing: Space.s
                 PillButton {
                     kind: "ghost"
                     text: I18n.t("common.cancel")

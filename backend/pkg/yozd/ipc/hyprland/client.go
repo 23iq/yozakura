@@ -23,6 +23,7 @@ type Hyprland struct {
 	versionMu      sync.Mutex
 	versionKnown   bool
 	useLuaDispatch bool
+	autoreload     autoreloadGuard
 }
 
 func New() (*Hyprland, error) {
@@ -90,6 +91,11 @@ func (h *Hyprland) supportsLuaDispatchers() bool {
 	h.versionMu.Unlock()
 	return useLuaDispatch
 }
+
+// UsesLuaConfig reports whether the running Hyprland reads the Lua config
+// (0.55+): runtime option changes then go through `eval hl.config(...)`
+// instead of `keyword`.
+func (h *Hyprland) UsesLuaConfig() bool { return h.supportsLuaDispatchers() }
 
 func (h *Hyprland) dispatchVersioned(legacy, lua string) (string, error) {
 	if h.supportsLuaDispatchers() {
@@ -817,9 +823,16 @@ func (h *Hyprland) BatchKeybinds(jsonPayload string) error {
 	return err
 }
 
+// RawBatch sends ';'-separated commands as one [[BATCH]] request. Hyprland
+// answers each command in turn and concatenates the replies, and a
+// rejected `keyword` does not fail the request as a whole: every reply is
+// checked (checkBatchReply).
 func (h *Hyprland) RawBatch(command string) error {
-	_, err := h.dispatch("[[BATCH]]" + command)
-	return err
+	resp, err := h.dispatch("[[BATCH]]" + command)
+	if err != nil {
+		return err
+	}
+	return checkBatchReply(strings.Split(command, ";"), resp)
 }
 
 func (h *Hyprland) GetAnimations() (interface{}, error) {

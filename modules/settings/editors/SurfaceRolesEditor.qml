@@ -45,7 +45,7 @@ ColumnLayout {
         return current;
     }
 
-    spacing: 16
+    spacing: Space.l
 
     RolePicker {
         Layout.fillWidth: true

@@ -215,7 +215,7 @@ func writeKeybinds(b *strings.Builder, in Input) {
 				if !actionCompatibleWithLayout(action, in.Layout) {
 					continue
 				}
-				resolved := ResolveAction(EnsureAction(action))
+				resolved := directTerminal(ResolveAction(EnsureAction(action)), in.Terminal)
 				if resolved == nil {
 					continue
 				}

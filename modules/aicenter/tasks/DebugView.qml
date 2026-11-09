@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // Session log of a run (tasks.debug): launch command (redacted argv),
 // working directory, process state, stderr and the raw event tail.
@@ -56,16 +57,17 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 6
-        UiText {
+        spacing: Space.s
+        AiText {
+            role: "caption"
             Layout.fillWidth: true
             text: root.error || (root.loading ? I18n.t("ai.tasks.loading") : I18n.t("ai.tasks.debug_hint"))
             color: root.error ? Colors.error : Colors.outline
-            size: -2
             wrapMode: Text.Wrap
         }
         IconButton {
-            glyph: Icons.copy
+            size: "xs"
+            icon: Icons.copy
             tooltip: I18n.t("ai.copy")
             onClicked: {
                 log.selectAll();
@@ -74,8 +76,9 @@ ColumnLayout {
             }
         }
         IconButton {
+            size: "xs"
             objectName: "debugRefresh"
-            glyph: Icons.arrowsClockwise
+            icon: Icons.arrowsClockwise
             tooltip: I18n.t("ai.tasks.refresh")
             onClicked: root.reload()
         }
@@ -84,11 +87,11 @@ ColumnLayout {
     StyledRect {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         variant: "internalbg"
         ScrollView {
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: Space.s
             TextArea {
                 id: log
                 objectName: "debugLog"
@@ -97,7 +100,7 @@ ColumnLayout {
                 wrapMode: TextArea.WrapAnywhere
                 text: root.text
                 font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-4)
+                font.pixelSize: BarLook.monoSize("caption")
                 color: Colors.overSurface
                 background: null
             }

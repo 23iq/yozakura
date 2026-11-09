@@ -4,14 +4,18 @@ import qs.modules.components
 import "KitStates.js" as KitStates
 import qs.modules.components.kit
 
-// Icon button. Sizes "s" (36) / "m" (40) / "l" (64, a hero action) / "xl" (96, hero
-// actions on large screens). Rest and hover / `highlighted`
+// Icon button. Sizes "xs" (28, dense toolbars) / "chip" (32, a chip's height:
+// the dock's own buttons) / "s" (36) / "m" (40) / "l" (64, a
+// hero action) / "xl" (96, hero actions on large screens). Rest and hover / `highlighted`
 // are the language's control box (Look: a ghost in ink, translucent with a
 // hairline in glass, a solid squarer tile in tiles), `active` an accent tint
 // with an accent glyph (a solid accent fill in tiles), `primary` the one
 // filled accent action of a surface. `focusable`: reachable by Tab (Enter /
 // Space click, a fading focus ring); off by default (rows own their keys).
 // `pulse()` pops the glyph (an icon that changed meaning: play / pause).
+// `danger`: a destructive action (error tint and glyph while hovered or
+// active; with `primary` the filled error action). `tooltip` shows a hint
+// on hover.
 StyledRect {
     id: root
 
@@ -21,10 +25,12 @@ StyledRect {
     property bool primary: false
     property bool highlighted: false
     property bool focusable: false
+    property bool danger: false
+    property string tooltip: ""
     property real glyphScale: 1
     readonly property bool hovered: mouse.containsMouse || root.highlighted
     readonly property bool pressed: mouse.pressed
-    readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive), root.active, root.hovered && root.enabled)
+    readonly property string look: KitStates.look(root.primary || (root.active && Look.solidActive && !root.danger), root.active, root.hovered && root.enabled, root.danger)
     readonly property bool boxed: Look.boxedControls && (root.look === "normal" || root.look === "hover")
 
     signal clicked
@@ -43,6 +49,8 @@ StyledRect {
     }
 
     implicitWidth: ({
+            "xs": Space.controlXS,
+            "chip": Space.chip,
             "s": Space.controlS,
             "l": Space.controlL,
             "xl": Space.controlXL
@@ -83,11 +91,8 @@ StyledRect {
         anchors.centerIn: parent
         text: root.icon
         font.family: Icons.font
-        font.pixelSize: root.size === "xl" ? Math.round(Type.size("display") * 0.95) : (root.size === "l" ? Type.iconSize("title") + 4 : Type.iconSize("body") + (root.size === "s" ? -1 : 2))
-        color: {
-            const k = KitStates.ink(root.look);
-            return k === "accentInk" ? Type.accentInk : (k === "accent" ? Type.accent : Type.text);
-        }
+        font.pixelSize: root.size === "xl" ? Math.round(Type.size("display") * 0.95) : (root.size === "l" ? Type.iconSize("title") + 4 : (root.size === "xs" ? Type.iconSize("caption") : Type.iconSize("body") + (root.size === "s" || root.size === "chip" ? -1 : 2)))
+        color: Type.inkColor(KitStates.ink(root.look))
         scale: root.glyphScale
     }
 
@@ -102,6 +107,11 @@ StyledRect {
     FocusRing {
         radius: root.radius + Space.stroke
         shown: root.focusable && root.activeFocus
+    }
+
+    StyledToolTip {
+        tooltipText: root.tooltip
+        show: root.hovered && root.tooltip !== ""
     }
 
     SequentialAnimation {

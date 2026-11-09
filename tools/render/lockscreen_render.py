@@ -56,6 +56,8 @@ def wallpaper(arg: str) -> str:
         cur = json.loads((CACHE / "wallpapers.json").read_text()).get("currentWall", "")
     except (OSError, ValueError):
         cur = ""
+    if cur.startswith("bundled:"):  # store-independent id (WallpaperRefs.js)
+        cur = str(REPO / "assets" / "wallpapers_example" / cur[len("bundled:"):])
     if cur and Path(cur).suffix.lower() in VIDEO:
         frame = CACHE / "lockscreen" / (Path(cur).name + ".jpg")
         cur = str(frame) if frame.exists() else ""

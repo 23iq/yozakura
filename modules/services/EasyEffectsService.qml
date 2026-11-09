@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import qs.modules.services
 
 Singleton {
     id: root
@@ -20,6 +21,30 @@ Singleton {
     // Currently active presets
     property string activeOutputPreset: ""
     property string activeInputPreset: ""
+
+    // Views showing the state register by a unique key (setConsumer, like
+    // CavaService / SystemResources): the state is only polled while one is
+    // shown, and refreshed at once when the first one appears.
+    property var _consumers: ({})
+    property int consumerCount: 0
+    readonly property bool polling: available && consumerCount > 0
+
+    function setConsumer(key, active) {
+        if (!key || (!!_consumers[key]) === !!active)
+            return;
+        const next = Object.assign({}, _consumers);
+        if (active)
+            next[key] = true;
+        else
+            delete next[key];
+        _consumers = next;
+        consumerCount = Object.keys(next).length;
+    }
+
+    onPollingChanged: {
+        if (polling)
+            pollTimer.triggered();
+    }
 
     // Toggle bypass state
     function toggleBypass() {
@@ -214,10 +239,10 @@ Singleton {
         }
     }
 
-    // Periodically poll state
-    property var pollTimer: Timer {
+    // Periodically poll state while a view shows it
+    property Timer pollTimer: Timer {
         interval: 5000
-        running: root.available && !SuspendManager.isSuspending
+        running: root.polling && !SuspendManager.isSuspending
         repeat: true
         onTriggered: {
             bypassStateProcess.running = true;

@@ -217,14 +217,12 @@ LockStyle {
                         color: skin.alpha(skin.ink, 0.5)
                         font: input.font
                     }
-                    Text {
+                    Icon {
                         anchors.left: parent.left
                         anchors.leftMargin: Space.l
                         anchors.verticalCenter: parent.verticalCenter
                         visible: pw.capsLock
-                        text: Icons.capsLock
-                        font.family: Icons.font
-                        font.pixelSize: Type.iconSize("body")
+                        icon: Icons.capsLock
                         color: skin.accent
                     }
                     Rectangle {
@@ -399,19 +397,15 @@ LockStyle {
                     anchors.centerIn: parent
                     spacing: Space.s
 
-                    Text {
+                    Icon {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: info.networkIcon
-                        font.family: Icons.font
-                        font.pixelSize: Type.iconSize("body")
+                        icon: info.networkIcon
                         color: skin.ink
                     }
-                    Text {
+                    Icon {
                         anchors.verticalCenter: parent.verticalCenter
                         visible: info.batteryAvailable
-                        text: info.batteryIcon
-                        font.family: Icons.font
-                        font.pixelSize: Type.iconSize("body")
+                        icon: info.batteryIcon
                         color: info.batteryLow ? skin.error : skin.ink
                     }
                     KitText {

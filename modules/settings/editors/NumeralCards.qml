@@ -9,6 +9,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../../bar/workspaces/WorkspaceNumerals.js" as WorkspaceNumerals
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Numeral system picker; every registered system (WorkspaceNumerals.js)
 // previewed as workspace pills 1..4.
@@ -26,7 +27,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: root.systems
@@ -44,7 +45,7 @@ Item {
 
                 Row {
                     anchors.centerIn: parent
-                    spacing: 6
+                    spacing: Space.s
                     Repeater {
                         model: 4
                         Rectangle {

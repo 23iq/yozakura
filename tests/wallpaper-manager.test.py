@@ -138,7 +138,34 @@ ev('ProcLog.find("/w").finish("", 0)')
 check("empty folder switches to the fallback", ev("manager.usingFallback") is True)
 ev('ProcLog.find("/fallback").finish("/fallback/z.jpg\\n/fallback/y.jpg\\n", 0)')
 check("fallback paths are used", js("manager.wallpaperPaths") == ["/fallback/y.jpg", "/fallback/z.jpg"])
-check("first fallback wallpaper is saved", ev("adapter.currentWall") == "/fallback/y.jpg" and ev("manager.currentIndex") == 0)
+check("first fallback wallpaper is saved as a bundled id",
+      ev("adapter.currentWall") == "bundled:y.jpg" and ev("manager.currentIndex") == 0, ev("adapter.currentWall"))
+
+# --- scanner: the bundled folder is scanned with the wallpaper folders -----
+ev('manager.wallpaperPaths = []; manager.usingFallback = false; adapter.currentWall = "bundled:y.jpg"')
+ev('scanner.scan(["/w"])')
+check("scan includes the bundled folder", js('ProcLog.find("/w").command')[-2:] == ["/w", "/fallback"])
+ev('ProcLog.find("/w").finish("/w/clip.mp4\\n/fallback/y.jpg\\n/fallback/z.jpg\\n", 0)')
+check("bundled files are known", js("scanner.bundledPaths") == ["/fallback/y.jpg", "/fallback/z.jpg"])
+check("a saved bundled wallpaper outside the folder stays selected",
+      js("manager.wallpaperPaths") == ["/w/clip.mp4", "/fallback/y.jpg"] and ev("manager.currentIndex") == 1,
+      str(js("manager.wallpaperPaths")))
+
+# --- scanner: legacy store path of a renamed bundled file -> basename -------
+ev('manager.wallpaperPaths = []; adapter.currentWall = "/nix/store/old-shell/assets/wallpapers_example/old/z.jpg"')
+ev('scanner.scan(["/w"])')
+ev('ProcLog.find("/w").finish("/w/clip.mp4\\n/fallback/y.jpg\\n/fallback/z.jpg\\n", 0)')
+check("an old store path is matched by name and saved as an id",
+      ev("adapter.currentWall") == "bundled:z.jpg" and js("manager.wallpaperPaths")[ev("manager.currentIndex")] == "/fallback/z.jpg",
+      ev("adapter.currentWall"))
+
+# --- scanner: missing saved wallpaper prefers an image over a video --------
+ev('manager.wallpaperPaths = []; adapter.currentWall = "/gone/x.png"')
+ev('scanner.scan(["/w"])')
+ev('ProcLog.find("/w").finish("/w/a.mp4\\n/w/b.png\\n", 0)')
+check("a missing saved wallpaper falls back to an image, not a video",
+      js("manager.wallpaperPaths") == ["/w/a.mp4", "/w/b.png"] and ev("manager.currentIndex") == 1)
+check("the missing saved wallpaper is kept", ev("adapter.currentWall") == "/gone/x.png")
 
 # --- scanner: subfolders --------------------------------------------------
 ev('scanner.scanSubfolders("/w")')

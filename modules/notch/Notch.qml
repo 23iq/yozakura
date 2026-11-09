@@ -169,9 +169,15 @@ Item {
         }
     }
 
-    // Background (style, edge, radii): never rotated content
+    // Background (style, edge, radii): never rotated content; its shape
+    // also drives the notch's analytic shadow (PanelShadows)
+    readonly property alias silhouette: silhouetteItem
     NotchSilhouette {
-        anchors.centerIn: parent
+        id: silhouetteItem
+        // Centered on whole pixels (a half-pixel origin shows the seam
+        // between the attached body and its concave corners)
+        x: Math.round((parent.width - width) / 2)
+        y: Math.round((parent.height - height) / 2)
         width: parent.implicitWidth
         height: parent.implicitHeight
         position: notchContainer.position
@@ -216,18 +222,20 @@ Item {
                 }
             }
 
-            // Propiedad para controlar el blur durante las transiciones
+            // Optional blur while the view changes (performance.blurTransition,
+            // off by default): it renders the whole stack through a layer, so
+            // the layer exists only while that blur runs. Without it a view
+            // change is the opacity-only NotchViewTransition.
+            readonly property bool blurOnTransition: Config.performance.blurTransition && Config.animDuration > 0
             property real transitionBlur: 0.0
 
-            // Aplicar MultiEffect con blur animable
-            layer.enabled: transitionBlur > 0.0
+            layer.enabled: blurOnTransition && transitionBlur > 0.0
             layer.effect: MultiEffect {
-                blurEnabled: Config.performance.blurTransition
+                blurEnabled: true
                 blurMax: 64
                 blur: Math.min(Math.max(stackContainer.transitionBlur, 0.0), 1.0)
             }
 
-            // Animación simple de blur → nitidez durante transiciones
             PropertyAnimation {
                 id: blurTransitionAnimation
                 target: stackContainer
@@ -254,9 +262,9 @@ Item {
                     isShowingNotifications = false;
                 }
 
-                // Activar blur al inicio de transición y animarlo a nítido
+                // Blurred at the start of a transition, sharp at its end
                 onBusyChanged: {
-                    if (busy) {
+                    if (busy && stackContainer.blurOnTransition) {
                         stackContainer.transitionBlur = 1.0;
                         blurTransitionAnimation.start();
                     }

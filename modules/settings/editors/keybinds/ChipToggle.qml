@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.config
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Toggle chip (modifiers while recording, layout restrictions).
 Item {
@@ -35,12 +36,11 @@ Item {
         }
     }
 
-    Text {
+    KitText {
         id: label
+        role: "caption"
         anchors.centerIn: parent
         text: root.text
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         font.weight: Font.DemiBold
         color: root.checked ? Colors.overPrimary : Colors.overBackground
     }

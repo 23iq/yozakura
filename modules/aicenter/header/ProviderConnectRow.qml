@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // A provider without a connection in the model picker:
 // `OpenAI — not connected  [Connect]`.
@@ -18,7 +19,7 @@ StyledRect {
     signal connectRequested
 
     implicitHeight: 38
-    radius: Styling.radius(-6)
+    radius: Look.radius("small")
     variant: selected ? "focus" : (hover.hovered ? "common" : "transparent")
 
     HoverHandler {
@@ -31,9 +32,9 @@ StyledRect {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 6
-        spacing: 10
+        anchors.leftMargin: Space.s
+        anchors.rightMargin: Space.s
+        spacing: Space.s
         Image {
             visible: !!root.provider.icon
             source: root.provider.icon ? Qt.resolvedUrl("../../../assets/aiproviders/" + root.provider.icon) : ""
@@ -42,28 +43,25 @@ StyledRect {
             Layout.preferredHeight: 18
             opacity: 0.45
         }
-        Text {
+        Icon {
+            role: "secondary"
+            tone: "muted"
             visible: !root.provider.icon
             Layout.preferredWidth: 18
             horizontalAlignment: Text.AlignHCenter
-            text: Icons.plug
-            font.family: Icons.font
-            font.pixelSize: 15
-            color: Colors.outline
+            icon: Icons.plug
         }
-        Text {
+        KitText {
+            role: "caption"
             Layout.fillWidth: true
             text: (root.provider.label || root.provider.id || "") + "  —  " + I18n.t("ai.not_connected")
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.outline
         }
         Chip {
             objectName: "connect_" + (root.provider.id || "")
-            implicitHeight: 24
-            glyph: Icons.plug
-            label: I18n.t("ai.connect")
+            dense: true
+            icon: Icons.plug
+            text: I18n.t("ai.connect")
             onClicked: root.connectRequested()
         }
     }

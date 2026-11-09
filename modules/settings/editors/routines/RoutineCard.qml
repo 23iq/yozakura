@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.settings.controls
 import qs.modules.settings.editors
 import "../../../routines/RoutineModel.js" as RoutineModel
@@ -57,7 +58,7 @@ StyledRect {
 
     objectName: "routineCard:" + (routine.id || "new")
     variant: expanded ? "pane" : "common"
-    radius: Styling.radius(-1)
+    radius: Look.radius("control")
     implicitHeight: col.implicitHeight + 20
 
     function patch(fields) {
@@ -69,43 +70,38 @@ StyledRect {
         x: 10
         y: 10
         width: parent.width - 20
-        spacing: 10
+        spacing: Space.m
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
 
             StyledRect {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
                 variant: "primary"
-                Text {
+                Icon {
                     anchors.centerIn: parent
-                    text: Icons[root.routine.icon] || Icons.lightning
-                    font.family: Icons.font
-                    font.pixelSize: 18
+                    icon: Icons[root.routine.icon] || Icons.lightning
                     color: parent.item
                 }
             }
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
-                Text {
+                KitText {
                     Layout.fillWidth: true
                     text: root.routine.name || I18n.t("routines.untitled")
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
                     font.weight: Font.DemiBold
                     color: Colors.overSurface
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("routines.launcher.steps", (root.routine.steps || []).length) + (root.dirty ? " · " + I18n.t("routines.unsaved") : "")
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     color: root.dirty ? Colors.primary : Colors.outline
                 }
             }
@@ -115,15 +111,15 @@ StyledRect {
             IconButton {
                 objectName: "runRoutine"
                 visible: !root.isNew && !root.dirty
-                glyph: Icons.play
-                size: 28
+                icon: Icons.play
+                size: "xs"
                 tooltip: I18n.t("routines.run")
                 onClicked: root.runRequested()
             }
             IconButton {
                 objectName: "toggleRoutine"
-                glyph: root.expanded ? Icons.caretUp : Icons.caretDown
-                size: 28
+                icon: root.expanded ? Icons.caretUp : Icons.caretDown
+                size: "xs"
                 tooltip: I18n.t(root.expanded ? "routines.collapse" : "routines.edit")
                 onClicked: root.toggleRequested()
             }
@@ -132,7 +128,7 @@ StyledRect {
         ColumnLayout {
             visible: root.expanded
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
 
             AiTextRow {
                 objectName: "routineName"
@@ -145,13 +141,13 @@ StyledRect {
             }
             Flow {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Repeater {
                     model: RoutineModel.ICONS
                     delegate: IconButton {
                         required property string modelData
-                        glyph: Icons[modelData] || ""
-                        size: 30
+                        icon: Icons[modelData] || ""
+                        size: "xs"
                         active: root.routine.icon === modelData
                         onClicked: root.patch({
                             "icon": modelData
@@ -194,14 +190,14 @@ StyledRect {
 
             Flow {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Repeater {
                     model: [["action", "keyboard"], ["tool", "wrench"], ["delay", "hourglass"]]
                     delegate: Chip {
                         required property var modelData
                         objectName: "addStep:" + modelData[0]
-                        glyph: Icons[modelData[1]]
-                        label: I18n.t("routines.add_" + modelData[0])
+                        icon: Icons[modelData[1]]
+                        text: I18n.t("routines.add_" + modelData[0])
                         onClicked: root.edited(RoutineModel.withStep(root.routine, RoutineModel.newStep(modelData[0])))
                     }
                 }
@@ -212,58 +208,56 @@ StyledRect {
                 report: root.report
                 steps: root.routine.steps || []
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: root.error !== ""
                 text: root.error
                 wrapMode: Text.WordWrap
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.error
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: Space.s
                 Chip {
                     objectName: "saveRoutine"
                     active: root.dirty && root.problems.length === 0
                     enabled: root.problems.length === 0 && (root.dirty || root.isNew) && !root.busy
                     opacity: enabled ? 1 : 0.45
-                    glyph: Icons.accept
-                    label: I18n.t("routines.save")
+                    icon: Icons.accept
+                    text: I18n.t("routines.save")
                     onClicked: root.saveRequested()
                 }
                 Chip {
                     objectName: "testRoutine"
                     enabled: root.problems.length === 0 && (root.routine.steps || []).length > 0 && !root.busy
                     opacity: enabled ? 1 : 0.45
-                    glyph: Icons.play
-                    label: I18n.t("routines.test")
+                    icon: Icons.play
+                    text: I18n.t("routines.test")
                     onClicked: root.testRequested()
                 }
                 Chip {
                     visible: root.dirty && !root.isNew
-                    glyph: Icons.arrowCounterClockwise
-                    label: I18n.t("routines.discard")
+                    icon: Icons.arrowCounterClockwise
+                    text: I18n.t("routines.discard")
                     onClicked: root.discardRequested()
                 }
                 Item {
                     Layout.fillWidth: true
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     visible: root.armed
                     text: I18n.t("routines.delete_confirm")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.error
                 }
                 IconButton {
                     objectName: "deleteRoutine"
-                    glyph: Icons.trash
+                    icon: Icons.trash
                     danger: true
                     active: root.armed
-                    size: 28
+                    size: "xs"
                     tooltip: I18n.t(root.isNew ? "routines.discard" : "routines.delete")
                     // Saved routines need a second click (binds may run them).
                     onClicked: {

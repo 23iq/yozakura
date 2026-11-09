@@ -3,6 +3,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 import qs.modules.desktop.widgets
 import "WidgetRegistry.js" as Registry
 import "../../widgets/dashboard/widgets/WidgetRegistry.js" as Shared
@@ -100,7 +101,7 @@ Item {
         anchors.fill: parent
         variant: Config.desktop.widgetVariant ?? "pane"
         glassSurface: "widgets"
-        radius: Math.min(Styling.radius(4), Math.min(width, height) / 4)
+        radius: Math.min(Look.radius("surface"), Math.min(width, height) / 4)
         enableShadow: true
 
         Loader {
@@ -144,13 +145,14 @@ Item {
 
     // ---- edit chrome ----
 
+    // Edit outline: the widget is the selected / grabbed object.
     Rectangle {
         anchors.fill: parent
-        anchors.margins: -3
-        radius: surface.radius + 3
+        anchors.margins: -Space.stroke
+        radius: surface.radius + Space.stroke
         color: "transparent"
-        border.width: 2
-        border.color: root.overlapsClock ? Colors.error : Colors.primary
+        border.width: Space.stroke - 1
+        border.color: root.overlapsClock ? Type.danger : Type.accent
         opacity: root.editing ? (drag.containsMouse || drag.pressed || resize.pressed ? 1 : 0.6) : 0
         visible: opacity > 0
         Behavior on opacity {
@@ -193,81 +195,58 @@ Item {
     }
 
     // Type label above the widget.
-    Row {
+    Chip {
         visible: root.editing
         anchors.left: parent.left
         anchors.bottom: parent.top
-        anchors.bottomMargin: 8
-        spacing: 6
-
-        Rectangle {
-            height: 24
-            width: chip.implicitWidth + 18
-            radius: 12
-            color: Qt.rgba(Colors.surfaceContainerHighest.r, Colors.surfaceContainerHighest.g, Colors.surfaceContainerHighest.b, 0.92)
-            Text {
-                id: chip
-                anchors.centerIn: parent
-                text: (Icons[root.type?.icon ?? ""] ?? "") + "  " + (root.type ? I18n.t(root.type.labelKey) : "")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                font.weight: Font.DemiBold
-                color: Colors.overSurface
-            }
-        }
+        anchors.bottomMargin: Space.s
+        dense: true
+        icon: Icons[root.type?.icon ?? ""] ?? ""
+        text: root.type ? I18n.t(root.type.labelKey) : ""
     }
 
-    WidgetButton {
+    IconButton {
         objectName: "removeWidget"
         visible: root.editing
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 6
-        size: 28
-        icon: "cancel"
-        label: I18n.t("desktop.widgets.remove")
-        ink: Colors.overError
-        fill: Colors.error
-        hoverFill: Qt.lighter(Colors.error, 1.15)
+        anchors.margins: Space.s
+        size: "xs"
+        icon: Icons.cancel
+        tooltip: I18n.t("desktop.widgets.remove")
+        danger: true
+        primary: true
+        Accessible.name: I18n.t("desktop.widgets.remove")
         onClicked: root.removeRequested()
     }
 
     // Overlap warning: the depth clock is drawn under the subject, so a
     // widget over it hides the clock.
-    Rectangle {
+    Chip {
         visible: root.overlapsClock
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.bottomMargin: 10
-        height: 26
-        width: Math.min(parent.width - 20, warn.implicitWidth + 22)
-        radius: 13
-        color: Colors.error
-        Text {
-            id: warn
-            anchors.centerIn: parent
-            width: parent.width - 16
-            horizontalAlignment: Text.AlignHCenter
-            elide: Text.ElideRight
-            text: Icons.warning + "  " + I18n.t("desktop.widgets.overlaps_clock")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
-            font.weight: Font.DemiBold
-            color: Colors.overError
-        }
+        anchors.bottomMargin: Space.s
+        dense: true
+        danger: true
+        active: true
+        icon: Icons.warning
+        text: I18n.t("desktop.widgets.overlaps_clock")
+        maxLabelWidth: Math.max(0, root.width - Space.xxl * 2)
     }
 
+    // Resize handle: an accent knob on the corner of the grabbed widget.
     Rectangle {
         id: handle
         visible: root.editing
-        width: 22
-        height: 22
-        radius: 11
-        x: parent.width - width / 2 - 4
-        y: parent.height - height / 2 - 4
-        color: Colors.primary
-        border.width: 2
-        border.color: Colors.overPrimary
+        width: Space.keyHint
+        height: Space.keyHint
+        radius: Look.radius("round", height)
+        x: parent.width - width / 2 - Space.xs
+        y: parent.height - height / 2 - Space.xs
+        color: Type.accent
+        border.width: Space.stroke - 1
+        border.color: Type.accentInk
         scale: resize.containsMouse || resize.pressed ? 1.15 : 1
         Behavior on scale {
             enabled: Config.animDuration > 0
@@ -280,7 +259,7 @@ Item {
             id: resize
             objectName: "resizeWidget"
             anchors.fill: parent
-            anchors.margins: -6
+            anchors.margins: -Space.s
             hoverEnabled: true
             cursorShape: Qt.SizeFDiagCursor
             property point origin

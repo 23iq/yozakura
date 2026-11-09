@@ -1,8 +1,7 @@
 import QtQuick
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 import "ClipboardView.js" as ClipboardView
 import "clipboard_utils.js" as ClipboardUtils
 
@@ -16,76 +15,31 @@ Column {
 
     signal openRequested(string itemId)
 
-    spacing: 4
+    spacing: Space.xs
 
-    StyledRect {
-        width: height
-        height: 36
-        variant: metadataOpenButtonMouseArea.containsMouse ? "focus" : "common"
-        color: metadataOpenButtonMouseArea.containsMouse ? Colors.surfaceBright : Colors.surface
-        radius: Styling.radius(0)
+    IconButton {
+        objectName: "metadataOpen"
+        size: "s"
+        icon: Icons.popOpen
         visible: !!actions.item && (actions.item.isFile || actions.item.isImage || ClipboardUtils.isUrl(actions.content))
-
-        Behavior on color {
-            enabled: Config.animDuration > 0
-            ColorAnimation {
-                duration: Config.animDuration / 2
-                easing.type: Motion.morph.easing
-            }
-        }
-
-        MouseArea {
-            id: metadataOpenButtonMouseArea
-            anchors.fill: parent
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-
-            onClicked: {
-                if (actions.item) {
-                    actions.openRequested(actions.item.id);
-                }
-            }
-        }
-
-        Text {
-            anchors.centerIn: parent
-            text: Icons.popOpen
-            font.family: Icons.font
-            font.pixelSize: 20
-            color: metadataOpenButtonMouseArea.containsMouse ? Styling.srItem("overprimary") : Colors.overBackground
-            textFormat: Text.RichText
-
-            Behavior on color {
-                enabled: Config.animDuration > 0
-                ColorAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.morph.easing
-                }
-            }
+        onClicked: {
+            if (actions.item)
+                actions.openRequested(actions.item.id);
         }
     }
 
-    StyledRect {
+    IconButton {
         id: dragButton
-        width: height
-        height: 36
-        variant: metadataDragArea.containsMouse ? "focus" : "common"
-        color: metadataDragArea.containsMouse ? Colors.surfaceBright : Colors.surface
-        radius: Styling.radius(0)
-
-        Behavior on color {
-            enabled: Config.animDuration > 0
-            ColorAnimation {
-                duration: Config.animDuration / 2
-                easing.type: Motion.morph.easing
-            }
-        }
+        objectName: "metadataDrag"
+        size: "s"
+        icon: Icons.handGrab
+        highlighted: dragArea.containsMouse
 
         // Invisible drag source
         Item {
             id: dragTarget
 
-            Drag.active: metadataDragArea.drag.active
+            Drag.active: dragArea.drag.active
             Drag.dragType: Drag.Automatic
             Drag.supportedActions: Qt.CopyAction
             Drag.mimeData: {
@@ -96,25 +50,9 @@ Column {
             }
         }
 
-        Text {
-            anchors.centerIn: parent
-            text: Icons.handGrab
-            font.family: Icons.font
-            font.pixelSize: 20
-            color: metadataDragArea.containsMouse ? Styling.srItem("overprimary") : Colors.overBackground
-            textFormat: Text.RichText
-
-            Behavior on color {
-                enabled: Config.animDuration > 0
-                ColorAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.morph.easing
-                }
-            }
-        }
-
+        // Over the button: a drag, not a click
         MouseArea {
-            id: metadataDragArea
+            id: dragArea
             anchors.fill: parent
             hoverEnabled: true
             cursorShape: Qt.OpenHandCursor

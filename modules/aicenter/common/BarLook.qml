@@ -1,10 +1,12 @@
 pragma Singleton
 import QtQuick
-import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 
 // Look and behaviour knobs of the AI bar (ai.appearance.*, ai.behavior.*)
-// resolved in one place for every part of the bar.
+// resolved in one place for every part of the bar. Sizes are the kit's
+// tokens: the density picks a step of the Space scale, text sizes are the
+// Type roles scaled by ai.appearance.fontScale (AiText applies them).
 QtObject {
     id: root
 
@@ -22,16 +24,20 @@ QtObject {
     readonly property bool autoScroll: behavior.autoScroll !== false
     readonly property bool showThinking: Config.ai.showThinking !== false
 
-    // Spacing scale: one step between rows of a group, two between groups.
-    readonly property int gap: compactDensity ? 6 : 10
-    readonly property int groupGap: compactDensity ? 12 : 20
-    readonly property int pad: compactDensity ? 10 : 14
+    // Density on the Space scale: `gap` between the rows of a group,
+    // `groupGap` between groups, `pad` inside a card / bubble.
+    readonly property int gap: compactDensity ? Space.xs : Space.s
+    readonly property int groupGap: compactDensity ? Space.m : Space.l
+    readonly property int pad: compactDensity ? Space.s : Space.m
 
-    function font(offset) {
-        return Math.round(Styling.fontSize(offset) * fontScale);
+    // A Type role's pixel size at the AI text scale (mono: the mono face,
+    // which the theme sizes apart from the body face).
+    function size(role: string): int {
+        return Math.max(8, Math.round(Type.size(role) * root.fontScale));
     }
-    function mono(offset) {
-        return Math.round(Styling.monoFontSize(offset) * fontScale);
+    function monoSize(role: string): int {
+        const base = Math.max(1, Config.theme.fontSize);
+        return Math.max(8, Math.round(Type.size(role) * Config.theme.monoFontSize / base * root.fontScale));
     }
     function time(ms) {
         return ms ? Qt.formatTime(new Date(ms), "hh:mm") : "";

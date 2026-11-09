@@ -12,6 +12,7 @@ import qs.modules.desktop.widgets
 import qs.modules.settings.editors.desktopwidgets
 import "../../desktop/widgets/WidgetRegistry.js" as Registry
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Desktop widgets: add one of each registered type, arrange them on the
 // desktop (edit desktop mode), see where they sit per screen, tune each
@@ -59,7 +60,7 @@ ColumnLayout {
         commit(DesktopWidgets.withAdded(DesktopWidgets.copy(), type, name, size.w, size.h, null));
     }
 
-    spacing: 12
+    spacing: Space.m
 
     onListChanged: ids.sync(list.map(w => w.id))
     Component.onCompleted: ids.sync(list.map(w => w.id))
@@ -71,7 +72,7 @@ ColumnLayout {
     // Add + arrange
     Flow {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Space.s
 
         PillButton {
             objectName: "widgetsEditMode"
@@ -97,7 +98,7 @@ ColumnLayout {
     // Where they are, per screen.
     Flow {
         Layout.fillWidth: true
-        spacing: 12
+        spacing: Space.m
         visible: root.list.length > 0
 
         Repeater {
@@ -115,14 +116,12 @@ ColumnLayout {
         }
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         Layout.fillWidth: true
         visible: root.list.length === 0
         text: I18n.t("desktop.widgets.empty")
         wrapMode: Text.WordWrap
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
-        color: Colors.overSurfaceVariant
     }
 
     Repeater {

@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Single-choice chips over string values: options [{value, label}]. The lit
 // chip is the one equal to `value`.
@@ -15,7 +16,7 @@ Flow {
     property string value: ""
     signal selected(string value)
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: root.options
@@ -47,12 +48,11 @@ Flow {
                     }
                 }
             }
-            Text {
+            KitText {
                 id: label
+                role: "secondary"
                 anchors.centerIn: parent
                 text: chip.modelData.label
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: chip.on ? Font.DemiBold : Font.Normal
                 color: chip.on ? Colors.overBackground : Colors.overSurfaceVariant
             }

@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "PromptsEdit.js" as PromptsEdit
 
 // Selection actions (popup near the cursor) and the prompt library.
@@ -14,7 +15,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 10
+    spacing: Space.m
 
     // ref: {id, index} of the item (null = append)
     function edit(listName, ref, fields) {
@@ -42,16 +43,14 @@ ColumnLayout {
             required property var modelData
             readonly property var entries: group.modelData.list === "actions" ? (Config.ai.selection.actions || []) : (Config.ai.prompts || [])
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Space.s
 
-            Text {
-                Layout.topMargin: 6
+            KitText {
+                role: "caption"
+                Layout.topMargin: Space.s
                 text: group.modelData.title
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
-                color: Colors.outline
             }
 
             Repeater {
@@ -67,7 +66,7 @@ ColumnLayout {
                         })
                     Layout.fillWidth: true
                     variant: "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                     implicitHeight: itemCol.implicitHeight + 12
 
                     ColumnLayout {
@@ -75,33 +74,30 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 6
-                        spacing: 6
+                        anchors.margins: Space.s
+                        spacing: Space.s
                         RowLayout {
                             Layout.fillWidth: true
                             IconButton {
-                                glyph: item.open ? Icons.caretUp : Icons.caretDown
-                                size: 24
+                                icon: item.open ? Icons.caretUp : Icons.caretDown
+                                size: "xs"
                                 onClicked: item.open = !item.open
                             }
-                            Text {
+                            KitText {
+                                role: "secondary"
                                 Layout.fillWidth: true
                                 text: item.modelData.label || item.modelData.name || I18n.t("ai.action_" + item.modelData.id)
                                 elide: Text.ElideRight
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-1)
                                 color: Colors.overSurface
                             }
-                            Text {
+                            KitText {
+                                role: "caption"
                                 text: I18n.t("ai.output_" + (item.modelData.output || "default"))
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-3)
-                                color: Colors.outline
                             }
                             IconButton {
-                                glyph: Icons.trash
+                                icon: Icons.trash
                                 danger: true
-                                size: 24
+                                size: "xs"
                                 onClicked: root.edit(group.modelData.list, item.ref, null)
                             }
                         }
@@ -141,8 +137,8 @@ ColumnLayout {
             }
 
             Chip {
-                glyph: Icons.plus
-                label: group.modelData.list === "actions" ? I18n.t("ai.add_action") : I18n.t("ai.add_prompt")
+                icon: Icons.plus
+                text: group.modelData.list === "actions" ? I18n.t("ai.add_action") : I18n.t("ai.add_prompt")
                 onClicked: root.edit(group.modelData.list, null, group.modelData.list === "actions" ? {
                     id: "custom-" + Date.now(),
                     label: I18n.t("ai.new_action"),

@@ -2,7 +2,7 @@
 """Render the island (notch) offscreen (private Xvfb, never the live desktop).
 
     tools/render/island_render.py [--out DIR] [--mode dark|light]
-                                  [--styles attached,island,pill] [--languages ink,glass,tiles]
+                                  [--styles attached,island,pill] [--languages ink,glass,tiles,classic,device]
                                   [--no-left] [STATE ...]
 
 Uses tests/lib/island_env.py (real Notch, DefaultView, panels and notch
@@ -30,7 +30,7 @@ from island_env import IslandEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 USER_CONFIG = Path.home() / ".config" / "yozakura" / "config"
-LANGUAGES = ["ink", "glass", "tiles"]
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 STYLES = ["attached", "island", "pill"]
 # name -> (JS on the window, panel to open through the controller)
 STATES = {

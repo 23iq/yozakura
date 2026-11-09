@@ -1,19 +1,13 @@
 import QtQuick
 import qs.modules.globals
 import qs.modules.services
-import qs.config
-import qs.modules.components
 import qs.modules.theme
+import qs.modules.bar.look
 
-ToggleButton {
-    buttonIcon: Icons.magicWand
+// Bar module: opens / closes the presets gallery (accent while it is open).
+BarModuleButton {
+    glyph: Icons.magicWand
     tooltipText: I18n.t("bar.tooltip.presets")
-
-    onToggle: function () {
-        if (GlobalStates.presetsOpen) {
-            Visibilities.setActiveModule("");
-        } else {
-            Visibilities.setActiveModule("presets");
-        }
-    }
+    active: GlobalStates.presetsOpen
+    onClicked: Visibilities.setActiveModule(GlobalStates.presetsOpen ? "" : "presets")
 }

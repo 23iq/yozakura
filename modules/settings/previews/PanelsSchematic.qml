@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.theme
 import "../PanelSketch.js" as PanelSketch
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Whole-screen schematic of a panel set: wallpaper backdrop, frame, the
 // notch, every panel drawn by its style (PanelSketch.js) with its module
@@ -71,7 +72,7 @@ Item {
             y: ay
             width: modelData[2] * aw - (index > 0 ? root.unit * 0.2 : 0)
             height: ah
-            radius: Math.min(Styling.radius(-4), 8)
+            radius: Look.radius("control")
             color: Ui.alpha(Colors.surfaceContainer, 0.82)
             border.width: 1
             border.color: Ui.alpha(index === 0 ? Colors.primary : Colors.outlineVariant, 0.8)

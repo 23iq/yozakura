@@ -2,9 +2,8 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
-import qs.config
+import qs.modules.components.kit
 import "ExtrasModel.js" as ExtrasModel
-import "ExtrasUi.js" as Ui
 
 // Bottom line of a catalog card, one look per card state:
 //   installed   - success pill + where it came from
@@ -33,31 +32,28 @@ Item {
     readonly property string distro: ["arch", "fedora", "nixos"].includes(ExtrasService.platform.distro) ? ExtrasService.platform.distro : "other"
     readonly property var phase: ExtrasModel.phaseText(root.progress ? root.progress.phase : "")
 
-    implicitHeight: root.cardState === "installing" ? 28 : 26
+    implicitHeight: Space.chip - Space.xs
 
-    component LinkButton: Text {
+    component LinkButton: KitText {
         id: link
         signal clicked
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
-        font.weight: Font.DemiBold
-        color: linkArea.containsMouse ? Colors.primary : Ui.mix(Colors.primary, Colors.overBackground, 0.25)
+        role: "caption"
+        font.weight: Look.activeLabelWeight
+        color: linkArea.containsMouse ? Type.text : Type.secondary
         font.underline: linkArea.containsMouse
         MouseArea {
             id: linkArea
             anchors.fill: parent
-            anchors.margins: -4
+            anchors.margins: -Space.xs
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: link.clicked()
         }
     }
 
-    component Muted: Text {
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
-        color: Colors.overSurfaceVariant
-        elide: Text.ElideRight
+    component Muted: KitText {
+        role: "caption"
+        color: Type.secondary
     }
 
     // installed
@@ -65,7 +61,7 @@ Item {
         visible: root.cardState === "installed"
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        spacing: 8
+        spacing: Space.s
         StatusPill {
             id: installedPill
             objectName: "installedPill"
@@ -75,7 +71,7 @@ Item {
         }
         Muted {
             anchors.verticalCenter: parent.verticalCenter
-            width: parent.width - installedPill.width - 8
+            width: parent.width - installedPill.width - Space.s
             text: root.status && root.status.source ? I18n.t("extras.ui.source." + root.status.source) : ""
         }
     }
@@ -87,17 +83,16 @@ Item {
 
         Row {
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 10
+            spacing: Space.s
             Row {
                 visible: !!root.entry.size
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
-                Text {
+                spacing: Space.xs
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Icons.downloadSimple
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
+                    icon: Icons.downloadSimple
+                    role: "caption"
+                    tone: "secondary"
                 }
                 Muted {
                     objectName: "sizeText"
@@ -108,7 +103,7 @@ Item {
                 visible: !!root.entry.recommended
                 icon: "sparkle"
                 text: I18n.t("extras.ui.recommended")
-                accent: Colors.tertiary
+                accent: Type.secondary
             }
         }
         CheckToggle {
@@ -130,7 +125,7 @@ Item {
             objectName: "phaseText"
             anchors.left: parent.left
             anchors.right: pct.left
-            anchors.rightMargin: 8
+            anchors.rightMargin: Space.s
             text: {
                 const p = root.progress;
                 if (!p)
@@ -142,18 +137,18 @@ Item {
                 return root.phase.detail ? I18n.t(root.phase.key + ".detail", root.phase.detail) : I18n.t(root.phase.key);
             }
         }
-        Text {
+        KitText {
             id: pct
             anchors.right: stop.left
-            anchors.rightMargin: 6
+            anchors.rightMargin: Space.xs
             visible: !!root.progress && root.progress.percent >= 0 && root.progress.state === "running"
+            role: "caption"
+            tabular: true
             text: root.progress ? root.progress.percent + "%" : ""
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            font.weight: Font.DemiBold
-            color: root.accent
+            font.weight: Look.activeLabelWeight
+            color: Type.progress
         }
-        Text {
+        Icon {
             id: stop
             objectName: "cancelButton"
             anchors.right: parent.right
@@ -161,14 +156,12 @@ Item {
             visible: !!root.progress
             enabled: root.canCancel
             opacity: enabled ? (stopArea.containsMouse ? 1 : 0.7) : 0.3
-            text: Icons.xCircle
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(0)
-            color: stopArea.containsMouse ? Colors.error : Colors.overSurfaceVariant
+            icon: Icons.xCircle
+            color: stopArea.containsMouse ? Type.danger : Type.secondary
             MouseArea {
                 id: stopArea
                 anchors.fill: parent
-                anchors.margins: -4
+                anchors.margins: -Space.xs
                 hoverEnabled: true
                 cursorShape: root.canCancel ? Qt.PointingHandCursor : Qt.ArrowCursor
                 onClicked: if (root.canCancel)
@@ -184,7 +177,6 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            accent: root.accent
             // queued: an empty track; running without a percentage: sliding
             percent: !root.progress ? -1 : (root.progress.state !== "running" ? 0 : root.progress.percent)
         }
@@ -195,19 +187,19 @@ Item {
         visible: root.cardState === "failed"
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width
-        spacing: 12
+        spacing: Space.m
         StatusPill {
             id: failedPill
             objectName: "failedPill"
             icon: "warning"
             text: I18n.t("extras.ui.failed")
-            accent: Colors.error
+            accent: Type.danger
         }
         LinkButton {
             id: retryLink
             objectName: "retryButton"
             anchors.verticalCenter: parent.verticalCenter
-            width: Math.min(implicitWidth, parent.width - failedPill.width - 12 - (logLink.visible ? logLink.implicitWidth + 12 : 0))
+            width: Math.min(implicitWidth, parent.width - failedPill.width - Space.m - (logLink.visible ? logLink.implicitWidth + Space.m : 0))
             elide: Text.ElideRight
             text: root.needsSync ? I18n.t("extras.ui.update_retry") : I18n.t("extras.ui.retry")
             onClicked: root.needsSync ? root.upgradeRetry() : root.retry()

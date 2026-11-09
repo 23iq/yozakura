@@ -5,6 +5,7 @@ import qs.modules.globals
 import qs.config
 import "../widgets/dashboard/wallpapers/WallpaperFolders.js" as WallpaperFolders
 import "../widgets/dashboard/wallpapers/WallpaperDefaults.js" as WallpaperDefaults
+import "../widgets/dashboard/wallpapers/WallpaperRefs.js" as WallpaperRefs
 
 // The wallpaper manager of the dry-run wizard (onboarding-dryrun.qml, no
 // wallpaper layer): lists the library like the real one (folder from
@@ -84,7 +85,7 @@ QtObject {
                 data = {};
             }
             root.wallpaperDir = WallpaperFolders.normalize(root.expandTilde(data.wallPath || "")) || root.fallbackDir;
-            root.currentWallpaper = data.currentWall || "";
+            root.currentWallpaper = WallpaperRefs.fromStored(data.currentWall || "", root.fallbackDir);
             root.currentMatugenScheme = data.matugenScheme || WallpaperDefaults.MATUGEN_SCHEME;
             root.activeColorPreset = data.activeColorPreset || "";
             root.rescan();

@@ -5,6 +5,7 @@ import QtQuick.Controls
 import Quickshell
 import Quickshell.Widgets
 import qs.modules.theme
+import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.settings
@@ -12,6 +13,7 @@ import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
 import "../../globals/Urls.js" as Urls
+import qs.modules.components.kit
 
 // Gallery card: live thumbnail, name, author, tags, active / built-in
 // badges; Apply and Try on hover, everything else in the ⋯ menu. A click
@@ -31,16 +33,17 @@ Item {
     signal opened
     signal action(string id)
 
-    implicitHeight: thumbFrame.height + info.implicitHeight + 22
+    implicitHeight: thumbFrame.y + thumbFrame.height + Space.m + info.implicitHeight + Space.m
     objectName: "presetCard:" + preset.name
 
     Rectangle {
         id: bg
         anchors.fill: parent
-        radius: Math.min(Styling.radius(4), 22)
-        color: hover.hovered ? Colors.surfaceContainerHigh : Colors.surfaceContainer
-        border.width: card.active ? 2 : 1
-        border.color: card.active ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.6)
+        radius: Look.radius("box")
+        color: Look.raisedFill(hover.hovered)
+        // The accent ring marks the active preset only.
+        border.width: card.active ? Space.stroke - 1 : Space.hairline
+        border.color: card.active ? Type.accent : Look.groupOutline
         Behavior on color {
             enabled: Config.animDuration > 0
             ColorAnimation {
@@ -61,11 +64,11 @@ Item {
 
     ClippingRectangle {
         id: thumbFrame
-        x: 8
-        y: 8
-        width: parent.width - 16
+        x: Space.s
+        y: Space.s
+        width: parent.width - Space.s * 2
         height: Math.round(width * 9 / 16)
-        radius: Math.max(4, bg.radius - 6)
+        radius: Math.max(Space.xs, bg.radius - Space.s)
         color: Colors.surfaceContainerHigh
 
         PresetThumb {
@@ -87,7 +90,7 @@ Item {
             }
             Row {
                 anchors.centerIn: parent
-                spacing: 8
+                spacing: Space.s
                 PillButton {
                     visible: card.shadowed
                     kind: "filled"
@@ -115,9 +118,9 @@ Item {
         }
 
         Row {
-            x: 8
-            y: 8
-            spacing: 6
+            x: Space.s
+            y: Space.s
+            spacing: Space.s
             PresetChip {
                 visible: card.active
                 tone: "primary"
@@ -141,7 +144,7 @@ Item {
         PresetChip {
             anchors.right: parent.right
             anchors.top: parent.top
-            anchors.margins: 8
+            anchors.margins: Space.s
             visible: card.official
             solid: true
             icon: "lock"
@@ -152,10 +155,10 @@ Item {
     Column {
         id: info
         anchors.top: thumbFrame.bottom
-        anchors.topMargin: 10
-        x: 14
-        width: parent.width - 28
-        spacing: 6
+        anchors.topMargin: Space.m
+        x: Space.m
+        width: parent.width - Space.m * 2
+        spacing: Space.s
 
         Item {
             width: parent.width
@@ -164,65 +167,44 @@ Item {
                 id: nameCol
                 anchors.left: parent.left
                 anchors.right: more.left
-                anchors.rightMargin: 6
-                spacing: 1
-                Text {
+                anchors.rightMargin: Space.s
+                spacing: Space.hairline
+                KitText {
                     width: parent.width
                     text: card.preset.name
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
                     font.weight: Font.Bold
-                    color: Colors.overBackground
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     width: parent.width
                     text: I18n.t("prefs.presets.by", card.preset.author && card.preset.author !== "Unknown" ? card.preset.author : I18n.t("presets.unknown_author"))
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
                 }
             }
-            Rectangle {
+            IconButton {
                 id: more
                 objectName: "presetMenuButton"
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                width: 30
-                height: 30
-                radius: 15
-                color: moreArea.containsMouse || menu.visible ? Ui.alpha(Colors.overBackground, 0.1) : "transparent"
-                Text {
-                    anchors.centerIn: parent
-                    text: Icons.dotsThree
-                    font.family: Icons.font
-                    font.pixelSize: 18
-                    color: Colors.overSurfaceVariant
-                }
-                MouseArea {
-                    id: moreArea
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: menu.open()
-                }
+                size: "xs"
+                icon: Icons.dotsThree
+                highlighted: menu.visible
+                onClicked: menu.open()
 
                 Popup {
                     id: menu
                     x: more.width - width
-                    y: more.height + 4
-                    width: 230
-                    padding: 6
+                    y: more.height + Space.xs
+                    width: Metrics.menuW
+                    padding: Space.s
                     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                    background: Rectangle {
-                        radius: Math.min(Styling.radius(2), 16)
-                        color: Colors.surfaceContainerHighest
-                        border.width: 1
-                        border.color: Ui.alpha(Colors.outline, 0.4)
+                    background: StyledRect {
+                        variant: "popup"
+                        radius: Look.radius("surface")
                     }
                     contentItem: Column {
-                        spacing: 2
+                        spacing: Space.xs / 2
                         Repeater {
                             model: [
                                 {
@@ -268,46 +250,27 @@ Item {
                                     "show": !card.official
                                 }
                             ].filter(m => m.show)
-                            delegate: Rectangle {
-                                id: item
+                            delegate: ListRow {
+                                id: menuRow
                                 required property var modelData
-                                width: 218
-                                height: 34
-                                radius: Math.min(Styling.radius(0), 10)
-                                color: itemArea.containsMouse ? Ui.alpha(modelData.id === "delete" ? Colors.error : Colors.primary, 0.14) : "transparent"
-                                Row {
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: 10
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    spacing: 10
-                                    Text {
-                                        text: Icons[item.modelData.icon] ?? ""
-                                        font.family: Icons.font
-                                        font.pixelSize: 14
-                                        color: item.modelData.id === "delete" ? Colors.error : Colors.overSurfaceVariant
-                                    }
-                                    Text {
-                                        text: I18n.t(item.modelData.label)
-                                        font.family: Config.theme.font
-                                        font.pixelSize: Styling.fontSize(-1)
-                                        color: item.modelData.id === "delete" ? Colors.error : Colors.overBackground
+                                readonly property bool danger: modelData.id === "delete"
+                                width: menu.availableWidth
+                                title: I18n.t(modelData.label)
+                                leading: Component {
+                                    Icon {
+                                        icon: Icons[menuRow.modelData.icon] ?? ""
+                                        color: menuRow.danger ? Type.danger : Type.secondary
                                     }
                                 }
-                                MouseArea {
-                                    id: itemArea
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        menu.close();
-                                        if (item.modelData.id === "author") {
-                                            if (Urls.isWeb(card.preset.authorUrl))
-                                                Qt.openUrlExternally(card.preset.authorUrl);
-                                        } else if (item.modelData.id === "open")
-                                            card.opened();
-                                        else
-                                            card.action(item.modelData.id);
-                                    }
+                                onClicked: {
+                                    menu.close();
+                                    if (menuRow.modelData.id === "author") {
+                                        if (Urls.isWeb(card.preset.authorUrl))
+                                            Qt.openUrlExternally(card.preset.authorUrl);
+                                    } else if (menuRow.modelData.id === "open")
+                                        card.opened();
+                                    else
+                                        card.action(menuRow.modelData.id);
                                 }
                             }
                         }
@@ -318,7 +281,7 @@ Item {
 
         Flow {
             width: parent.width
-            spacing: 5
+            spacing: Space.xs
             Repeater {
                 model: card.preset.tags || []
                 PresetChip {

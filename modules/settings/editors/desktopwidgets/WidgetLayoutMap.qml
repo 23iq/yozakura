@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.desktop.widgets
 import "../../../desktop/widgets/WidgetRegistry.js" as Registry
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Miniature of one screen: where its widgets sit and the depth clock's
 // area (widgets over it hide the clock).
@@ -34,7 +35,7 @@ Item {
 
         Image {
             anchors.fill: parent
-            anchors.margins: 1
+            anchors.margins: Space.hairline
             source: root.wallpaper
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
@@ -69,24 +70,22 @@ Item {
                 border.width: 1
                 border.color: Colors.primary
 
-                Text {
+                Icon {
                     anchors.centerIn: parent
-                    text: Icons[box.type?.icon ?? ""] ?? ""
-                    font.family: Icons.font
-                    font.pixelSize: Math.max(8, Math.min(16, box.height * 0.5))
-                    color: Colors.overBackground
+                    icon: Icons[box.type?.icon ?? ""] ?? ""
+                    tone: "text"
+                    size: Math.max(Type.size("label") - Space.xs, Math.min(Type.iconSize("caption"), box.height * 0.5))
                 }
             }
         }
     }
 
-    Text {
+    KitText {
+        role: "caption"
         anchors.left: screen.left
         anchors.top: screen.bottom
-        anchors.topMargin: 4
+        anchors.topMargin: Space.xs
         text: root.screenName
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-3)
         color: Colors.overSurfaceVariant
     }
 }

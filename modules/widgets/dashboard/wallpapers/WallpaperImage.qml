@@ -132,6 +132,10 @@ Item {
     }
 
     function loadSlot(slot, file, matte, startPositionMs) {
+        // Same file, same variant: keep the item. Recreating a video
+        // player for nothing churns GStreamer pipelines (settings bursts).
+        if (file && slot.sourceFile === file && matteKey(slot.matte) === matteKey(file ? matte : null))
+            return;
         // Unload first: the variant is fixed for an item's lifetime.
         slot.sourceFile = "";
         slot.matte = file ? matte : null;

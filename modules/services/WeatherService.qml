@@ -4,6 +4,8 @@ import Quickshell
 import qs.config
 import qs.modules.globals
 import qs.modules.theme
+import qs.modules.services
+import "Backoff.js" as Backoff
 
 Singleton {
     id: root
@@ -41,9 +43,13 @@ Singleton {
     // Each updateWeather() bumps requestToken; a stale response is ignored.
     property int requestToken: 0
 
-    // Retry logic
+    // Retry logic: exponential backoff (Backoff.js) from retryBase up to
+    // retryCap, forever while it fails; hasFailed after maxRetries. A
+    // network change (NetworkService) starts over at once.
     property int retryCount: 0
     readonly property int maxRetries: 3
+    readonly property int retryBase: 5000
+    readonly property int retryCap: 600000
 
     property var suspendConnections: Connections {
         target: SuspendManager
@@ -80,9 +86,38 @@ Singleton {
     }
 
     property Timer retryTimer: Timer {
-        interval: 3000
+        interval: root.retryBase
         repeat: false
         onTriggered: root.updateWeather()
+    }
+
+    // Connected, disconnected, another network: a failing lookup retries
+    // now (after the link settles) instead of waiting out the backoff.
+    property Connections networkWatcher: Connections {
+        target: NetworkService
+        function onWifiStatusChanged() {
+            root.networkChanged();
+        }
+        function onEthernetChanged() {
+            root.networkChanged();
+        }
+        function onNetworkNameChanged() {
+            root.networkChanged();
+        }
+    }
+
+    property Timer networkSettleTimer: Timer {
+        interval: 2000
+        repeat: false
+        onTriggered: root.updateWeather()
+    }
+
+    function networkChanged() {
+        if (!root._initialized || (root.retryCount === 0 && !root.hasFailed))
+            return;
+        root.retryCount = 0;
+        retryTimer.stop();
+        networkSettleTimer.restart();
     }
 
     // Convert "HH:MM" to decimal hours
@@ -387,14 +422,13 @@ Singleton {
     }
 
     function handleError() {
-        if (retryCount < maxRetries) {
-            retryCount++;
-            retryTimer.start();
-        } else {
+        retryCount++;
+        if (retryCount >= maxRetries) {
             root.isLoading = false;
             root.hasFailed = true;
-            retryCount = 0;
         }
+        retryTimer.interval = Backoff.delay(retryCount, root.retryBase, root.retryCap, 0.2);
+        retryTimer.restart();
     }
 
     // Processes the daemon response for weather.get.
@@ -487,6 +521,7 @@ Singleton {
                 root.isLoading = false;
                 root.hasFailed = false;
                 root.retryCount = 0;
+                retryTimer.stop();
             } else {
                 console.warn("WeatherService: Invalid response structure");
                 root.dataAvailable = false;
@@ -508,6 +543,9 @@ Singleton {
     onConfigLocationChanged: {
         if (!_initialized) return;
         console.log("WeatherService: Location changed to '" + configLocation + "'");
+        // A new location starts a fresh backoff
+        retryCount = 0;
+        retryTimer.stop();
         Qt.callLater(() => { updateWeather(); });
     }
     onConfigUnitChanged: {
@@ -526,8 +564,12 @@ Singleton {
             return;
         }
 
-        root.isLoading = true;
-        root.hasFailed = false;
+        // Retries keep showing the failure until one succeeds
+        if (root.retryCount === 0)
+            root.hasFailed = false;
+        // A backoff retry while failed stays quiet: no spinner flicker.
+        if (!root.hasFailed)
+            root.isLoading = true;
 
         var locationStr = Config.weather.location || "";
         var location = locationStr.trim();

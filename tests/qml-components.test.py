@@ -69,10 +69,6 @@ QtObject { property bool available: true; property var values: [0.5, 1, 0.25]; p
  module('qs.modules.components',{
  'StyledRect':'''import QtQuick
 Item { property string variant; property string glassSurface; property real radius; property bool enableBorder; property real backgroundOpacity; property bool animateRadius; property bool cornerStyled: true; property bool enableShadow; property real topLeftRadius; property real topRightRadius; property real bottomLeftRadius; property real bottomRightRadius; property color item: "white" }''',
- 'StyledSlider':'''import QtQuick
-Item { property bool resizeParent; property bool wavy; property bool playing; property real wavyAmplitude; property real wavyFrequency; property real heightMultiplier; property color progressColor; property color backgroundColor; property bool smoothDrag; property bool scroll; property bool tooltip; property bool updateOnRelease; property bool isDragging: false; property real value: 0 }''',
- 'Separator':'''import QtQuick
-Item { property bool vert; width: 1; height: 10 }''',
  'StyledToolTip':'''import QtQuick
 Item { property string tooltipText; property bool show }''',
  'BarPopup':'''import QtQuick

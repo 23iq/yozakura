@@ -68,6 +68,10 @@ TAB_STATES = {
     "tab-clipboard": ("clipboard", "", ""),
     "tab-clipboard-options": ("clipboard", "", "selectedIndex = 1; expandedItemIndex = 1; selectedOptionIndex = 1"),
     "tab-clipboard-delete": ("clipboard", "", "selectedIndex = 2; enterDeleteMode(allItems[2].id)"),
+    "tab-clipboard-link": ("clipboard", "", "selectedIndex = 1; linkPreviewData = ({ title: 'quickshell-mirror/quickshell', "
+                           "description: 'Flexible toolkit for making desktop shells with QtQuick, for Wayland and X11', "
+                           "site_name: 'GitHub', type: 'object' })"),
+    "tab-clipboard-file": ("clipboard", "", "selectedIndex = 3"),
     "tab-emoji": ("emoji", "", "selectedIndex = 0; selectedRecentIndex = 1"),
     "tab-emoji-search": ("emoji", "cat", ""),
     "tab-emoji-clear": ("emoji", "", "clearButtonConfirmState = true"),
@@ -95,6 +99,8 @@ def fixture_files(home: str, wall: str) -> None:
         "- Keep keyboard UX identical\n\nNext: tabs (clipboard, emoji, tmux, notes)\n")
     (root / "notes.txt").write_text("buy milk\ncall Mira at 18:00\n")
     if wall and Path(wall).exists():
+        # A read-only source (a store path) leaves a read-only copy: replace it.
+        (root / "Pictures/notes-whiteboard.png").unlink(missing_ok=True)
         shutil.copy(wall, root / "Pictures/notes-whiteboard.png")
 
 

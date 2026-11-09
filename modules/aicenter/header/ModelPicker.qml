@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "PickerModel.js" as PickerModel
 import "AgentPickerRows.js" as AgentRows
 import "../../services/ai/Providers.js" as Providers
@@ -162,7 +163,7 @@ Popup {
     // Kept inside the bar at any size (the panel centres it, `y` below the header).
     width: Math.min(parent ? parent.width - 24 : 460, 460)
     height: Math.min(520, parent ? parent.height - y - 12 : 520, list.contentHeight + top.implicitHeight + footer.implicitHeight + 40)
-    padding: 8
+    padding: Space.s
     modal: true
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
@@ -190,17 +191,17 @@ Popup {
 
     background: StyledRect {
         variant: "popup"
-        radius: Styling.radius(0)
+        radius: Look.radius("surface")
         enableShadow: true
     }
 
     contentItem: ColumnLayout {
-        spacing: 6
+        spacing: Space.s
 
         RowLayout {
             id: top
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Space.s
             TextField {
                 id: search
                 objectName: "pickerSearch"
@@ -209,18 +210,17 @@ Popup {
                 placeholderTextColor: Colors.outline
                 color: Colors.overBackground
                 font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
-                leftPadding: 32
+                font.pixelSize: Type.size("body")
+                leftPadding: Space.xxl
                 background: StyledRect {
                     variant: "common"
-                    radius: Styling.radius(-4)
-                    Text {
+                    radius: Look.radius("control")
+                    Icon {
+                        role: "label"
+                        tone: "muted"
                         x: 10
                         anchors.verticalCenter: parent.verticalCenter
-                        text: Icons.magnifyingGlass
-                        font.family: Icons.font
-                        font.pixelSize: 13
-                        color: Colors.outline
+                        icon: Icons.magnifyingGlass
                     }
                 }
                 onTextChanged: root.selectedIndex = Math.max(0, PickerModel.initialIndex(root.rows, ""))
@@ -241,13 +241,14 @@ Popup {
             }
             Spinner {
                 running: Ai.catalog !== null && Ai.catalog.fetching
-                Layout.preferredWidth: 30
+                Layout.preferredWidth: Space.controlXS
                 horizontalAlignment: Text.AlignHCenter
             }
             IconButton {
+                size: "xs"
                 objectName: "pickerRefresh"
                 visible: !(Ai.catalog !== null && Ai.catalog.fetching)
-                glyph: Icons.arrowsClockwise
+                icon: Icons.arrowsClockwise
                 tooltip: I18n.t("ai.refresh_models")
                 onClicked: root.refresh()
             }
@@ -261,7 +262,7 @@ Popup {
             Layout.minimumHeight: 60
             clip: true
             model: root.rows
-            spacing: 2
+            spacing: Space.xs / 2
             boundsBehavior: Flickable.StopAtBounds
             delegate: Loader {
                 id: rowLoader
@@ -278,17 +279,15 @@ Popup {
 
                 Component {
                     id: headerC
-                    Text {
+                    KitText {
+                        role: "caption"
                         text: root.groupLabel(rowLoader.modelData.group)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-4)
                         font.weight: Font.DemiBold
                         font.capitalization: Font.AllUppercase
                         font.letterSpacing: 0.6
-                        color: Colors.outline
                         topPadding: rowLoader.index === 0 ? 2 : 10
-                        bottomPadding: 2
-                        leftPadding: 8
+                        bottomPadding: Space.xs / 2
+                        leftPadding: Space.s
                     }
                 }
                 Component {
@@ -346,17 +345,15 @@ Popup {
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             visible: !root.rows.some(r => r.type === "model")
             Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: 6
+            Layout.bottomMargin: Space.s
             text: Ai.catalog && Ai.catalog.fetching ? I18n.t("ai.loading_models") : I18n.t("ai.no_models")
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
             Layout.maximumWidth: root.width - 30
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.outline
         }
 
         RowLayout {
@@ -365,8 +362,8 @@ Popup {
             visible: root.filterKind !== "agent"
             Chip {
                 objectName: "pickerConnect"
-                glyph: Icons.plus
-                label: I18n.t("ai.connect_provider")
+                icon: Icons.plus
+                text: I18n.t("ai.connect_provider")
                 onClicked: {
                     root.connectRequested("");
                     root.close();
@@ -375,12 +372,10 @@ Popup {
             Item {
                 Layout.fillWidth: true
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: root.width >= 400
                 text: I18n.t("ai.picker_hint")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-5)
-                color: Colors.outline
             }
         }
     }

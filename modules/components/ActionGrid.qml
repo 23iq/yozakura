@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 
 FocusScope {
@@ -327,9 +328,11 @@ FocusScope {
                     Item {
                         anchors.fill: parent
                         visible: delegateWrapper.isSeparator
-                        Separator {
+                        Divider {
                             anchors.centerIn: parent
-                            vert: root.layout === "row"
+                            vertical: root.layout === "row"
+                            implicitWidth: vertical ? Space.hairline : root.buttonSize * 0.6
+                            implicitHeight: vertical ? root.buttonSize * 0.6 : Space.hairline
                         }
                     }
                 }

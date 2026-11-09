@@ -2,7 +2,7 @@
 """Render the corner notification toasts offscreen (private Xvfb, never the live desktop).
 
     tools/render/toasts_render.py [--out DIR] [--mode dark|light]
-                                  [--languages ink,glass,tiles] [VARIANT ...]
+                                  [--languages ink,glass,tiles,classic,device] [VARIANT ...]
 
 Draws modules/notifications/CornerToast.qml with fixture notifications, once
 per visual language, over your wallpaper with your real config and palette

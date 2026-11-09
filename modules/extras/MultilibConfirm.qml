@@ -30,7 +30,7 @@ ExtrasNotice {
     ExtrasButton {
         objectName: "confirmAccept"
         kind: "filled"
-        icon: "check"
+        iconName: "check"
         text: I18n.t("extras.ui.multilib.accept")
         onClicked: root.accepted()
     }

@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 	"yozakura/backend/pkg/brand"
+	procutil "yozakura/backend/pkg/proc"
 )
 
 // proc is a line-oriented child process (JSON lines on stdin/stdout).
@@ -31,7 +32,7 @@ func startProc(bin string, args []string, cwd string, env []string, onLine func(
 	cmd.Dir = cwd
 	cmd.Env = append(cleanEnv(os.Environ()), env...)
 	// Own group (stop() signals it) and SIGTERM when the daemon dies.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} // StartTied adds Pdeathsig
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, err
@@ -42,7 +43,7 @@ func startProc(bin string, args []string, cwd string, env []string, onLine func(
 	}
 	p := &proc{cmd: cmd, stdin: stdin, stderr: &tailBuffer{max: 8 << 10}, done: make(chan struct{})}
 	cmd.Stderr = p.stderr
-	if err := cmd.Start(); err != nil {
+	if err := procutil.StartTied(cmd); err != nil {
 		return nil, err
 	}
 	go func() {

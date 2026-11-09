@@ -40,12 +40,15 @@ Singleton {
 
     // Writes are coalesced: a preset load or a slider drag changes many
     // compositor keys in a burst, and each write spawns the yozakura CLI and
-    // makes yozd regenerate + reload the compositor config. A write that
+    // makes yozd regenerate the compositor config. A write that
     // arrives while one is in flight is queued instead of dropped (Process
     // ignores `running = true` while running, which lost the newest payload).
+    // The values are already applied live (CompositorConfig, CompositorMotion),
+    // so the persisted write waits until a drag settles; yozd then applies
+    // appearance-only changes live and reloads only for binds/rules/monitors.
     property bool _writeQueued: false
     property Timer writeDebounce: Timer {
-        interval: 120
+        interval: 700
         onTriggered: root._flushWrite()
     }
 
@@ -215,6 +218,8 @@ Singleton {
             // (keyboard.managed): the compositor's own settings stay.
             keyboard: KeyboardService.compositorInput(),
             windowRules: root.specialsOn() ? Specials.windowRules(Config.specials.workspaces) : [],
+            // The stock terminal bind execs it directly (works with the shell down).
+            terminal: Config.generalReady ? (Config.general.terminal || "") : "",
         };
     }
 
@@ -511,6 +516,11 @@ Singleton {
         function onRepeatRateChanged() { root.callWrite(); }
         function onRepeatDelayChanged() { root.callWrite(); }
         function onManagedChanged() { root.callWrite(); }
+    }
+
+    property Connections terminalConnections: Connections {
+        target: Config.generalReady ? Config.general : null
+        function onTerminalChanged() { root.callWrite(); }
     }
 
     property Connections qtThemingConnections: Connections {

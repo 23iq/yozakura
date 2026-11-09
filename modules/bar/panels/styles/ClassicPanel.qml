@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.bar as Bar
 import qs.modules.bar.panels
+import qs.modules.components.kit
 
 // "classic": one continuous strip (BarBg) with pill modules; start and end
 // groups at the ends, an optional center group (absolutely centered) and the
@@ -46,7 +47,7 @@ PanelStyleBase {
             anchors.fill: parent
             sourceComponent: RowLayout {
                 id: classicRow
-                spacing: 4
+                spacing: Space.xs
 
                 Binding {
                     target: classic
@@ -61,7 +62,7 @@ PanelStyleBase {
 
                 RowLayout {
                     id: startGroupRow
-                    spacing: 4
+                    spacing: Space.xs
                     Layout.fillHeight: true
 
                     Bar.BarModuleGroup {
@@ -135,7 +136,7 @@ PanelStyleBase {
                     }
 
                     RowLayout {
-                        spacing: 4
+                        spacing: Space.xs
                         Layout.fillHeight: true
 
                         Bar.BarModuleGroup {
@@ -156,7 +157,7 @@ PanelStyleBase {
             active: classic.b !== null && classic.vertical
             anchors.fill: parent
             sourceComponent: ColumnLayout {
-                spacing: 4
+                spacing: Space.xs
 
                 Bar.BarModuleGroup {
                     barRoot: classic.b
@@ -191,7 +192,7 @@ PanelStyleBase {
 
                         height: Math.min(parent.height, implicitHeight)
                         width: parent.width
-                        spacing: 4
+                        spacing: Space.xs
 
                         Bar.BarModuleGroup {
                             barRoot: classic.b
@@ -238,7 +239,7 @@ PanelStyleBase {
                     }
 
                     ColumnLayout {
-                        spacing: 4
+                        spacing: Space.xs
                         Layout.fillWidth: true
 
                         Bar.BarModuleGroup {

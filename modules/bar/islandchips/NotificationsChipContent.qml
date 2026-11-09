@@ -34,25 +34,22 @@ Item {
         horizontalItemAlignment: Grid.AlignHCenter
         verticalItemAlignment: Grid.AlignVCenter
 
-        Text {
+        Icon {
             objectName: "bellGlyph"
-            text: root.silent ? Icons.bellZ : (root.unread ? Icons.bellRinging : Icons.bell)
-            font.family: Icons.font
-            font.pixelSize: root.glyphSize
+            icon: root.silent ? Icons.bellZ : (root.unread ? Icons.bellRinging : Icons.bell)
+            size: root.glyphSize
             color: root.ink
             opacity: root.silent ? 0.6 : 1
         }
-        Text {
+        // The host's text size and font (island / bar module).
+        KitText {
             objectName: "bellCount"
             visible: root.unread
+            tabular: true
             text: root.countText
-            textFormat: Text.PlainText
             font.family: root.textFont
             font.pixelSize: root.vertical ? Type.size("caption") : root.textSize
-            font.weight: Font.Bold
-            font.features: ({
-                    "tnum": 1
-                })
+            font.weight: Look.activeLabelWeight
             color: root.ink
         }
     }

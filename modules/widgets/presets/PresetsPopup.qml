@@ -23,14 +23,26 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("presets")
-    WlrLayershell.keyboardFocus: presetsOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: latch.keyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // Get this screen's visibility state
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
     readonly property bool presetsOpen: screenVisibilities ? screenVisibilities.presets : false
+    // The surface is mapped: shell.qml keeps the window loaded while true.
+    readonly property bool mapped: latch.shown
 
-    visible: presetsOpen
+    // Latched (SurfaceLatch): on close the gallery's search field lets go
+    // of the input method, then keyboard focus drops, and the surface
+    // unmaps at least a frame later (never in the same tick).
+    visible: latch.shown
     exclusionMode: ExclusionMode.Ignore
+
+    SurfaceLatch {
+        id: latch
+        active: presetsPopup.presetsOpen
+        holdMs: Motion.enter.duration
+        focusHost: presetsPopup.contentItem
+    }
 
     // Mask to capture input on the entire window when open
     mask: Region {

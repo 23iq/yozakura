@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.config
 import "../BarModules.js" as BarModules
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Faithful schematic of the bar for a layout: classic (one continuous bar)
 // or islands (floating groups beside the notch), drawn with the live bar
@@ -62,20 +63,20 @@ Item {
         }
     }
 
-    Group {
+    BarGroup {
         anchors.left: parent.left
         anchors.verticalCenter: parent.verticalCenter
         ids: root.leftIds
     }
 
-    Group {
+    BarGroup {
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
         ids: root.rightIds
         drawerCount: root.drawerIds.length
     }
 
-    component Group: Item {
+    component BarGroup: Item {
         id: group
         property var ids: []
         property int drawerCount: 0
@@ -95,7 +96,7 @@ Item {
         Row {
             id: row
             anchors.centerIn: parent
-            spacing: 3
+            spacing: Space.xs
 
             Item {
                 visible: group.drawerCount > 0
@@ -103,17 +104,16 @@ Item {
                 height: root.unit
                 Rectangle {
                     anchors.fill: parent
-                    radius: Math.min(Styling.radius(-4), height / 2)
+                    radius: Look.radius("control", height)
                     color: root.highlightDrawer ? Ui.alpha(Colors.primary, 0.25) : "transparent"
                     border.width: 1
                     border.color: Ui.alpha(Colors.outline, 0.7)
                 }
-                Text {
+                Icon {
                     anchors.centerIn: parent
-                    text: Icons.caretLeft
-                    font.family: Icons.font
-                    font.pixelSize: root.unit * 0.5
-                    color: Colors.overSurfaceVariant
+                    icon: Icons.caretLeft
+                    size: Math.max(1, root.unit * 0.5)
+                    tone: "secondary"
                 }
             }
 
@@ -136,7 +136,7 @@ Item {
         StyledRect {
             anchors.fill: parent
             variant: "common"
-            radius: Math.min(Styling.radius(-4), height / 2)
+            radius: Look.radius("control", height)
             enableShadow: false
         }
 
@@ -156,24 +156,23 @@ Item {
             }
         }
 
-        Text {
+        KitText {
             id: clockText
             visible: glyph.moduleId === "clock"
             anchors.centerIn: parent
             text: "21:47"
-            font.family: Styling.defaultFont
-            font.pixelSize: root.unit * 0.5
+            tabular: true
+            font.pixelSize: Math.max(1, root.unit * 0.5)
             font.weight: Font.Bold
             color: Colors.overBackground
         }
 
-        Text {
+        Icon {
             visible: glyph.moduleId !== "workspaces" && glyph.moduleId !== "clock"
             anchors.centerIn: parent
-            text: Icons[BarModules.info(glyph.moduleId).icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: root.unit * 0.55
-            color: glyph.moduleId === "launcher" ? Colors.primary : Colors.overBackground
+            icon: Icons[BarModules.info(glyph.moduleId).icon] ?? ""
+            size: Math.max(1, root.unit * 0.55)
+            tone: glyph.moduleId === "launcher" ? "accent" : "text"
         }
     }
 }

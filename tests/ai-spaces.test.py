@@ -115,7 +115,7 @@ pump()
 assert ev(top, "space()") == "assistant"
 assert visible("welcomeView"), "empty assistant chat shows the welcome view"
 chips = find("suggestionChips")
-labels = ev(chips, "JSON.stringify(items.filter(c => c.label !== undefined).map(c => c.label))")
+labels = ev(chips, "JSON.stringify(items.filter(c => c.closable !== undefined).map(c => c.text))")
 labels = json.loads(labels)
 assert any("error" in t.lower() for t in labels), labels
 assert any("Clair de lune" in t for t in labels), labels
@@ -176,7 +176,7 @@ pump()
 assert undoable[0].property("canUndo"), "a failed undo can be retried"
 assert find("actionUndoError", undoable[0]).property("visible")
 assert "timer already finished" in find("actionUndoError", undoable[0]).property("text")
-assert undo_chip.property("label") == "Retry undo", undo_chip.property("label")
+assert undo_chip.property("text") == "Retry undo", undo_chip.property("text")
 assert not find("actionTitle", undoable[0]).property("text").startswith("Undone")
 ev(top, "setUndoFails('')")
 ev(undoable[0], "undoRequested(undoInfo)")

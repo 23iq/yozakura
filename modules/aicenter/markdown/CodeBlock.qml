@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.config
 import "../lib/Highlight.js" as Highlight
@@ -16,9 +17,9 @@ StyledRect {
     readonly property string lang: Highlight.language(language)
 
     variant: "common"
-    radius: Styling.radius(-6)
+    radius: Look.radius("small")
     border.width: 1
-    border.color: Qt.rgba(Colors.outlineVariant.r, Colors.outlineVariant.g, Colors.outlineVariant.b, 0.5)
+    border.color: Look.alpha("outlineVariant", 0.5)
     implicitHeight: col.implicitHeight
     clip: true
 
@@ -29,16 +30,15 @@ StyledRect {
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 4
-            Layout.topMargin: 2
-            spacing: 6
+            Layout.leftMargin: Space.m
+            Layout.rightMargin: Space.xs
+            Layout.topMargin: Space.xs / 2
+            spacing: Space.s
 
-            Text {
+            KitText {
+                role: "caption"
                 text: root.language || "text"
-                font.family: Config.theme.monoFont
-                font.pixelSize: Styling.monoFontSize(-3)
-                color: Colors.outline
+                font.family: Type.monoFont
                 Layout.fillWidth: true
             }
 
@@ -51,15 +51,15 @@ StyledRect {
         TextEdit {
             id: body
             Layout.fillWidth: true
-            Layout.leftMargin: 12
-            Layout.rightMargin: 12
-            Layout.bottomMargin: 10
+            Layout.leftMargin: Space.m
+            Layout.rightMargin: Space.m
+            Layout.bottomMargin: Space.s
             readOnly: true
             selectByMouse: true
             textFormat: TextEdit.RichText
             wrapMode: TextEdit.WrapAnywhere
             font.family: Config.theme.monoFont
-            font.pixelSize: Styling.monoFontSize(-2)
+            font.pixelSize: Type.size("caption")
             color: Colors.overSurface
             selectionColor: Colors.primary
             selectedTextColor: Colors.overPrimary

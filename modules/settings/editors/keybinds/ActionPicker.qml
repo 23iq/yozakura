@@ -9,6 +9,7 @@ import qs.modules.keybinds
 import qs.config
 import "../../Ui.js" as Ui
 import "../../../keybinds/BindModel.js" as BindModel
+import qs.modules.components.kit
 
 // Action field: shows the current action ("Choose an action" while there is
 // none); opens an inline, searchable list of every catalog action
@@ -42,7 +43,7 @@ Column {
         return BindModel.pickerOptions(KeybindsStore.actionOptions(root.withHidden), apps, q, KeybindsStore.tr);
     }
 
-    spacing: 6
+    spacing: Space.s
 
     function choose(o) {
         root.picked(o.id, o.app !== undefined ? {
@@ -81,37 +82,34 @@ Column {
             border.width: root.open || parent.activeFocus ? 2 : 1
             border.color: root.open || parent.activeFocus ? Colors.primary : Ui.alpha(Colors.outline, 0.35)
         }
-        Text {
+        Icon {
             id: groupIcon
+            role: "secondary"
+            tone: "accent"
             anchors.left: parent.left
-            anchors.leftMargin: 14
+            anchors.leftMargin: Space.l
             anchors.verticalCenter: parent.verticalCenter
-            text: root.actionId === "" ? Icons.magnifyingGlass : (Icons[BindModel.group(KeybindsStore.actionGroup(root.actionId)).icon] ?? "")
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.primary
+            icon: root.actionId === "" ? Icons.magnifyingGlass : (Icons[BindModel.group(KeybindsStore.actionGroup(root.actionId)).icon] ?? "")
         }
-        Text {
+        KitText {
+            role: "secondary"
             anchors.left: groupIcon.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Space.m
             anchors.right: caret.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
             text: root.actionId === "" ? I18n.t("binds.choose_action") : BindModel.actionLabel(root.actionId, KeybindsStore.tr)
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             color: root.actionId === "" ? Colors.outline : Colors.overBackground
         }
-        Text {
+        Icon {
             id: caret
+            role: "caption"
+            tone: "secondary"
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Space.l
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons.caretDown
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
+            icon: Icons.caretDown
             rotation: root.open ? 180 : 0
         }
         MouseArea {
@@ -128,7 +126,7 @@ Column {
         height: root.open ? 300 : 0
         visible: height > 0
         clip: true
-        radius: Styling.radius(-2)
+        radius: Look.radius("control")
         color: Ui.alpha(Colors.surfaceContainerHigh, 0.9)
         border.width: 1
         border.color: Ui.alpha(Colors.outlineVariant, 0.6)
@@ -174,8 +172,9 @@ Column {
             }
         }
 
-        Text {
+        KitText {
             objectName: "actionNone"
+            role: "caption"
             anchors.horizontalCenter: parent.horizontalCenter
             y: filter.y + filter.height + 24
             width: parent.width - 28
@@ -183,17 +182,15 @@ Column {
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             text: I18n.t("binds.action_none", root.query.trim())
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
 
         ListView {
             id: list
             anchors.top: filter.bottom
-            anchors.topMargin: 6
+            anchors.topMargin: Space.s
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 6
+            anchors.bottomMargin: Space.s
             width: parent.width
             clip: true
             model: root.options
@@ -203,14 +200,13 @@ Column {
                 policy: ScrollBar.AsNeeded
             }
             section.property: "group"
-            section.delegate: Text {
+            section.delegate: KitText {
+                role: "caption"
                 required property string section
-                leftPadding: 14
-                topPadding: 8
-                bottomPadding: 2
+                leftPadding: Space.l
+                topPadding: Space.s
+                bottomPadding: Space.xs / 2
                 text: (section === "_apps" ? I18n.t("binds.apps_section") : I18n.t(BindModel.group(section).title)).toUpperCase()
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-4)
                 font.weight: Font.Bold
                 font.letterSpacing: 1
                 color: Colors.overSurfaceVariant
@@ -225,9 +221,9 @@ Column {
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    radius: Styling.radius(-6)
+                    anchors.leftMargin: Space.s
+                    anchors.rightMargin: Space.s
+                    radius: Look.radius("small")
                     color: option.modelData.id === root.actionId && option.modelData.app === undefined ? Ui.alpha(Colors.primary, 0.18) : Ui.alpha(Colors.overBackground, optionArea.containsMouse || list.currentIndex === option.index ? 0.08 : 0)
                 }
                 IconImage {
@@ -239,16 +235,15 @@ Column {
                     source: visible ? Quickshell.iconPath(option.modelData.icon || "", "application-x-executable") : ""
                     asynchronous: true
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     anchors.left: optionIcon.right
                     anchors.leftMargin: optionIcon.visible ? 8 : 0
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Space.l
                     anchors.verticalCenter: parent.verticalCenter
                     text: option.modelData.text
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     color: Colors.overBackground
                 }
                 MouseArea {

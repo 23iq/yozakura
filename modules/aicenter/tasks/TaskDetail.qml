@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import qs.modules.aicenter.transcript
 import "../../services/tasks/TaskModel.js" as TaskModel
 
@@ -69,7 +70,7 @@ StyledRect {
     }
 
     variant: "pane"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
 
     ColumnLayout {
         anchors.fill: parent
@@ -101,30 +102,33 @@ StyledRect {
             objectName: "waitingBanner"
             Layout.fillWidth: true
             visible: root.permissionWaiting
-            implicitHeight: bannerRow.implicitHeight + 12
-            radius: Styling.radius(-4)
+            implicitHeight: bannerRow.implicitHeight + 2 * Space.s
+            radius: Look.radius("control")
             variant: "common"
             border.width: 1
             border.color: Colors.warning
             RowLayout {
                 id: bannerRow
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 6
-                spacing: 8
-                Glyph {
-                    text: Icons.hand
-                    role: "warning"
+                anchors.leftMargin: Space.s
+                anchors.rightMargin: Space.s
+                spacing: Space.s
+                Icon {
+                    role: "secondary"
+                    size: BarLook.size("secondary")
+                    color: Colors.warning
+                    icon: Icons.hand
                 }
-                UiText {
+                AiText {
+                    role: "caption"
+                    font.weight: Font.DemiBold
+                    color: Type.text
                     Layout.fillWidth: true
                     text: I18n.t("ai.tasks.activity_waiting").replace("%1", root.current ? TaskModel.agentLabel(root.current.agent, Ai.agents ? Ai.agents.agents : []) : "")
-                    size: -2
-                    strong: true
                 }
                 Chip {
                     visible: root.tab !== "transcript"
-                    label: I18n.t("ai.tasks.show_request")
+                    text: I18n.t("ai.tasks.show_request")
                     onClicked: root.tab = "transcript"
                 }
             }
@@ -142,7 +146,7 @@ StyledRect {
             RowLayout {
                 id: tabsRow
                 width: Math.max(tabsView.width, implicitWidth)
-                spacing: 4
+                spacing: Space.xs
                 Repeater {
                     model: (root.task ? root.task.runs || [] : []).length > 1 ? root.task.runs : []
                     delegate: Chip {
@@ -151,7 +155,7 @@ StyledRect {
                         required property int index
                         readonly property int runIndex: runChip.modelData.index !== undefined ? runChip.modelData.index : runChip.index
                         objectName: "runChip_" + runIndex
-                        label: (runIndex + 1) + " · " + TaskModel.agentLabel(runChip.modelData.agent, Ai.agents ? Ai.agents.agents : [])
+                        text: (runIndex + 1) + " · " + TaskModel.agentLabel(runChip.modelData.agent, Ai.agents ? Ai.agents.agents : [])
                         active: root.run === runIndex
                         onClicked: TasksService.selectedRun = runIndex
                     }
@@ -165,8 +169,8 @@ StyledRect {
                         id: tabChip
                         required property string modelData
                         objectName: "tab_" + modelData
-                        label: I18n.t("ai.tasks.tab." + tabChip.modelData)
-                        variant: root.tab === tabChip.modelData ? "primary" : "transparent"
+                        text: I18n.t("ai.tasks.tab." + tabChip.modelData)
+                        quiet: true
                         onClicked: root.tab = tabChip.modelData
                     }
                 }
@@ -196,11 +200,12 @@ StyledRect {
                     persistKey: root.current ? "task:" + root.task.id + ":" + root.run : ""
                     agentLabel: root.current ? TaskModel.agentLabel(root.current.agent, Ai.agents ? Ai.agents.agents : []) : ""
                 }
-                UiText {
+                AiText {
+                    role: "secondary"
+                    color: Type.muted
                     anchors.centerIn: parent
                     visible: !root.current || !root.current.sessionId
                     text: I18n.t(root.task && root.task.status === "queued" ? "ai.tasks.queued_hint" : "ai.tasks.no_session")
-                    muted: true
                 }
             }
             TaskChanges {

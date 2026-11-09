@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.config
 import "../controls"
+import qs.modules.components.kit
 
 // Label + segmented choice (options: [{value, label: i18n key}]).
 ColumnLayout {
@@ -14,15 +15,13 @@ ColumnLayout {
     signal selected(var value)
 
     Layout.fillWidth: true
-    spacing: 4
+    spacing: Space.xs
 
-    Text {
+    KitText {
+        role: "secondary"
         visible: root.label.length > 0
         text: root.label
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         font.weight: Font.Medium
-        color: Colors.overSurfaceVariant
     }
     SelectorControl {
         Layout.fillWidth: true

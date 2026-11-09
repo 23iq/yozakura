@@ -79,13 +79,12 @@ Item {
             Row {
                 spacing: Space.s
 
-                Text {
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !!row.modelData.pinned
-                    text: Icons.pin
-                    font.family: Icons.font
-                    font.pixelSize: Type.iconSize("caption")
-                    color: Type.muted
+                    icon: Icons.pin
+                    role: "caption"
+                    tone: "muted"
                 }
 
                 KeyHint {

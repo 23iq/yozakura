@@ -4,6 +4,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 
 // Weather preview controls of the clock panel, shown while
@@ -11,7 +12,7 @@ import qs.modules.services
 // slider and a weather type picker.
 ColumnLayout {
     id: root
-    spacing: 4
+    spacing: Space.xs
 
     // Time slider pane
     StyledRect {
@@ -19,18 +20,28 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.preferredHeight: 36
 
-        StyledSlider {
+        LineSlider {
             id: sliderContent
             anchors.fill: parent
-            anchors.margins: 12
+            anchors.margins: Space.m
             icon: Icons.clock
-            value: WeatherService.debugHour / 24
-            tooltipText: {
-                var hour = Math.floor(WeatherService.debugHour);
-                var minutes = Math.round((WeatherService.debugHour - hour) * 60);
+            from: 0
+            to: 24
+            step: 0.25
+            showValue: true
+            valueText: {
+                const hour = Math.floor(sliderContent.value);
+                const minutes = Math.round((sliderContent.value - hour) * 60);
                 return hour.toString().padStart(2, '0') + ":" + minutes.toString().padStart(2, '0');
             }
-            onValueChanged: WeatherService.debugHour = value * 24
+            onMoved: v => WeatherService.debugHour = v
+
+            Binding {
+                target: sliderContent
+                property: "value"
+                value: WeatherService.debugHour
+                when: !sliderContent.pressed
+            }
         }
     }
 
@@ -151,10 +162,10 @@ ColumnLayout {
                     bottomLeftRadius: isSelected ? (isFirstCol && isLastRow ? defaultRadius : selectedRadius) : defaultRadius
                     bottomRightRadius: isSelected ? (isLastCol && isLastRow ? defaultRadius : selectedRadius) : defaultRadius
 
-                    Text {
+                    KitText {
                         anchors.centerIn: parent
+                        role: "secondary"
                         text: weatherBtn.modelData.icon
-                        font.pixelSize: 14
                     }
 
                     MouseArea {

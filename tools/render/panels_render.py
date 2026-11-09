@@ -8,7 +8,7 @@ tiled windows in the work area the panels reserve.
     tools/render/panels_render.py --bar-matrix [--bar-surface] [--only TEXT] --out DIR
 
 --bar-matrix renders the bar matrix of bar_matrix.py (every bar style on the
-top and left edges x ink/glass/tiles, cropped to the strip, and every bar
+top and left edges x every visual language, cropped to the strip, and every bar
 popup opened), 1600x900 dark, no windows; --bar-surface gives the strip a
 visible background (srBarBg) so the groups show the language's group box.
 

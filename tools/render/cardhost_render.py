@@ -2,7 +2,7 @@
 """Render the card host (modules/shell/hosts/CardHost.qml) offscreen
 (private Xvfb, never the live desktop).
 
-    tools/render/cardhost_render.py [--out DIR] [--languages ink,glass,tiles]
+    tools/render/cardhost_render.py [--out DIR] [--languages ink,glass,tiles,classic,device]
                                     [--edges top,left] [--views timerHub,voice,aiquick]
                                     [--palettes user,green]
 
@@ -32,13 +32,14 @@ import panels_stubs  # noqa: E402
 from barchips_render import GREEN  # noqa: E402
 from island_env import TIMERS, IslandEnv  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 from PySide6.QtCore import QRect  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 W, H = 1600, 900
 VIEWS = ["timerHub", "voice", "aiquick"]
 
-# QuickAskCard's AI pieces (aicenter.common, with its Chip and Spinner, is real):
+# QuickAskCard's AI pieces (aicenter.common with its Spinner and the kit Chip are real):
 # the empty card shows only its input row
 AI_STUBS = {
     "qs.modules.aicenter.markdown": {
@@ -162,7 +163,7 @@ def render(name: str, pal: dict, art: str, wall: str, edge: str, view: str, lang
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render" / "cardhost"))
-    ap.add_argument("--languages", default="ink,glass,tiles")
+    ap.add_argument("--languages", default=",".join(LANGUAGES))
     ap.add_argument("--edges", default="top,left")
     ap.add_argument("--views", default=",".join(VIEWS))
     ap.add_argument("--palettes", default="user,green")

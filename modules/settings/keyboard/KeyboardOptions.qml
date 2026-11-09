@@ -3,12 +3,11 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
-import qs.config
 import qs.modules.settings
 import qs.modules.settings.controls
 import qs.modules.settings.displays
-import "../Ui.js" as Ui
 import "../../services/KeyboardModel.js" as KeyboardModel
+import qs.modules.components.kit
 
 // How layouts switch and the common XKB options. "All options" folds out the
 // whole catalog by group. `options` is the user list (without the switch bind).
@@ -71,7 +70,7 @@ KeyboardCard {
         delegate: DisplayRow {
             id: quickRow
             required property var modelData
-            width: root.width
+            width: parent.width
             label: I18n.t("prefs.keyboard.opt." + quickRow.modelData.key)
             hint: I18n.t("prefs.keyboard.opt." + quickRow.modelData.key + ".desc")
             ToggleControl {
@@ -86,17 +85,15 @@ KeyboardCard {
     // All options expander
     Item {
         width: parent.width
-        height: 68
-        Rectangle {
-            x: 20
-            width: parent.width - 40
-            height: 1
-            color: Ui.alpha(Colors.outlineVariant, 0.45)
+        height: Space.controlL
+        Divider {
+            x: Look.rowInset
+            width: parent.width - Look.rowInset * 2
         }
         PillButton {
             objectName: "allOptionsButton"
-            x: 20
-            y: 17
+            x: Look.rowInset
+            anchors.verticalCenter: parent.verticalCenter
             kind: "ghost"
             icon: root.showAll ? "caretUp" : "caretDown"
             text: I18n.t("prefs.keyboard.all_options")
@@ -114,14 +111,12 @@ KeyboardCard {
         width: parent.width
         visible: root.showAll
 
-        Text {
-            x: 20
+        KitText {
+            role: "secondary"
+            x: Look.rowInset
             visible: root.groups.length === 0
             text: I18n.t("prefs.keyboard.loading")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
-            bottomPadding: 20
+            bottomPadding: Space.xl
         }
 
         Repeater {
@@ -133,100 +128,60 @@ KeyboardCard {
                 readonly property int on: root.enabledIn(group.modelData)
                 width: allList.width
 
-                Item {
-                    width: parent.width
-                    height: 46
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.leftMargin: 12
-                        anchors.rightMargin: 12
-                        radius: Styling.radius(1)
-                        color: headArea.containsMouse ? Ui.alpha(Colors.overBackground, 0.06) : "transparent"
-                    }
-                    Text {
-                        x: 24
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: parent.width - 150
-                        text: group.modelData.description
-                        elide: Text.ElideRight
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        font.weight: Font.DemiBold
-                        color: Colors.overBackground
-                    }
-                    Rectangle {
-                        visible: group.on > 0
-                        anchors.right: caret.left
-                        anchors.rightMargin: 10
-                        anchors.verticalCenter: parent.verticalCenter
-                        width: countLabel.implicitWidth + 14
-                        height: 20
-                        radius: 10
-                        color: Ui.alpha(Colors.primary, 0.22)
-                        Text {
-                            id: countLabel
-                            anchors.centerIn: parent
-                            text: I18n.tn("prefs.keyboard.n_on", group.on)
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-3)
-                            font.weight: Font.DemiBold
-                            color: Colors.primary
+                // Group header: name, how many of its options are on, caret.
+                ListRow {
+                    id: head
+                    x: Look.rowInset
+                    width: parent.width - Look.rowInset * 2
+                    title: group.modelData.description
+                    highlighted: group.open
+                    trailing: Component {
+                        Row {
+                            spacing: Space.m
+                            KitText {
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: group.on > 0
+                                role: "caption"
+                                text: I18n.tn("prefs.keyboard.n_on", group.on)
+                                font.weight: Font.DemiBold
+                                color: Type.accent
+                            }
+                            Icon {
+                                anchors.verticalCenter: parent.verticalCenter
+                                tone: "secondary"
+                                icon: group.open ? Icons.caretUp : Icons.caretDown
+                            }
                         }
                     }
-                    Text {
-                        id: caret
-                        anchors.right: parent.right
-                        anchors.rightMargin: 24
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: group.open ? Icons.caretUp : Icons.caretDown
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(0)
-                        color: Colors.overSurfaceVariant
-                    }
-                    MouseArea {
-                        id: headArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.openGroup = group.open ? "" : group.modelData.name
-                    }
+                    onClicked: root.openGroup = group.open ? "" : group.modelData.name
                 }
 
                 Repeater {
                     model: group.open ? group.modelData.options : []
-                    delegate: Item {
+                    delegate: ListRow {
                         id: opt
                         required property var modelData
-                        width: group.width
-                        height: 44
-                        Text {
-                            x: 40
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width - 130
-                            text: opt.modelData.description
-                            elide: Text.ElideRight
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            color: Colors.overBackground
-                        }
-                        Text {
-                            anchors.right: optToggle.left
-                            anchors.rightMargin: 12
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: opt.modelData.name
-                            visible: parent.width > 600
-                            font.family: "monospace"
-                            font.pixelSize: Styling.fontSize(-3)
-                            color: Ui.alpha(Colors.overSurfaceVariant, 0.7)
-                        }
-                        ToggleControl {
-                            id: optToggle
-                            objectName: "opt:" + opt.modelData.name
-                            anchors.right: parent.right
-                            anchors.rightMargin: 24
-                            anchors.verticalCenter: parent.verticalCenter
-                            checked: KeyboardModel.hasOption(root.options, opt.modelData.name)
-                            onToggled: v => root.optionToggled(opt.modelData.name, v)
+                        x: Look.rowInset + Space.l
+                        width: group.width - x - Look.rowInset
+                        title: opt.modelData.description
+                        trailing: Component {
+                            Row {
+                                spacing: Space.m
+                                KitText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: opt.width > 600
+                                    role: "caption"
+                                    text: opt.modelData.name
+                                    font.family: Type.monoFont
+                                    color: Type.muted
+                                }
+                                ToggleControl {
+                                    objectName: "opt:" + opt.modelData.name
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    checked: KeyboardModel.hasOption(root.options, opt.modelData.name)
+                                    onToggled: v => root.optionToggled(opt.modelData.name, v)
+                                }
+                            }
                         }
                     }
                 }
@@ -235,7 +190,7 @@ KeyboardCard {
 
         Item {
             width: 1
-            height: 12
+            height: Space.m
         }
     }
 }

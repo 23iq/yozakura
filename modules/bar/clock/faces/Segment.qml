@@ -37,12 +37,13 @@ Item {
             }
         }
 
-        Text {
+        // AM / PM in the caption role next to the digits.
+        KitText {
             visible: root.clock.parts.suffix !== ""
+            role: "caption"
             text: root.clock.parts.suffix
             color: root.clock.textColor
             font.family: root.clock.fontFamily
-            font.pixelSize: Math.round(root.clock.fontSize * 0.6)
             font.weight: root.clock.fontWeight
         }
     }

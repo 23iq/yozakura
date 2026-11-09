@@ -33,8 +33,12 @@ QtObject {
     property int groupRadius: 0; property int groupPadding: 0; property int groupGap: 16; property int surfacePadding: 16
     property bool boxedControls: false; property bool solidActive: false; property bool squareControls: false
     property int labelWeight: Font.Normal; property int activeLabelWeight: Font.Medium
-    function controlFill(h) { return "transparent" }
+    property int rowInset: 8; property int contentInset: 24; property int ruleGap: 8
+    property int screenGap: 24; property int boxPadding: 12; property int boxRadius: 12
+    property bool barSurfacePill: false; property int barLabelWeight: Font.Medium
+    function controlFill(h) { return "transparent" } function raisedFill(h) { return "transparent" }
     function buttonRadius(h) { return h / 2 } function chipRadius(h) { return Math.min(12, h / 2) }
+    function radius(role, h) { return role === "round" ? h / 2 : Math.min(12, (h > 0 ? h : 1e6) / 2) }
 }"""
 
 TYPES = {
@@ -45,12 +49,17 @@ TYPES = {
                "font.family: Type.family(role); font.pixelSize: Type.size(role); elide: Text.ElideRight }",
     "SectionLabel": "Item { property string text; property string action; signal triggered; implicitHeight: 14 }",
     "Divider": "Item { property bool vertical: false; implicitHeight: 1 }",
+    "Icon": "Text { property string icon; property string role: 'body'; property string tone; property int size: 0; "
+            "text: icon; font.pixelSize: size > 0 ? size : Type.iconSize(role) }",
     "Group": "Column { property string label; property string actionText; property bool divider: false; "
              "property int padding: 0; signal actionTriggered; spacing: 12 }",
     "IconButton": "Item { property string icon; property string size: 'm'; property bool active: false; "
-                  "property bool primary: false; property bool highlighted: false; signal clicked; "
+                  "property bool primary: false; property bool highlighted: false; property bool danger: false; "
+                  "property string tooltip; signal clicked; "
                   "implicitWidth: size === 's' ? 36 : 40; implicitHeight: implicitWidth }",
     "Chip": "Item { property string icon; property string text; property bool active: false; property bool primary: false; property bool showLabel: true; readonly property real fullWidth: width; readonly property real compactWidth: width; "
+            "property url image; property string trailingIcon; property bool closable; property bool mono; property real maxLabelWidth; "
+            "property bool quiet; property bool danger; property bool dense; signal closeClicked; "
             "property bool highlighted: false; signal clicked; implicitWidth: 60; implicitHeight: 32 }",
     "ListRow": "Item { id: r; property string title; property string subtitle; property bool selected; "
                "property bool highlighted; property bool tabular; property Component leading: null; "
@@ -66,6 +75,8 @@ TYPES = {
     "Avatar": "Item { property url source; property string icon; property string name; property real radius; "
               "implicitWidth: 40; implicitHeight: 40 }",
     "LineSlider": "Item { property real from: 0; property real to: 1; property real value: 0; property string icon; "
+                  "property real step: 0.05; property bool showValue; property string valueText; property bool pressed: false; "
+                  "property color fillColor: \"pink\"; property bool wavy; property bool playing; property bool wheelEnabled: true; "
                   "signal moved(real value) }",
     "Surface": "Item { property int padding: 16; property bool floating: false }",
 }

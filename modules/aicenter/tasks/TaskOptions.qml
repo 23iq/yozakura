@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/tasks/TaskModel.js" as TaskModel
 import "../../services/ai/EffortPrefs.js" as Prefs
 
@@ -111,41 +112,41 @@ RowLayout {
         Ai.agents.refreshModels(root.single, root.project)
     Component.onCompleted: root.resetAgents()
 
-    spacing: 4
+    spacing: Space.xs
 
     // Wraps onto a second line in the compact bar.
     Flow {
         objectName: "taskOptionChips"
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
-        spacing: 4
+        spacing: Space.xs
         Repeater {
             model: root.chat ? [] : root.available
             delegate: Chip {
                 id: agentChip
                 required property var modelData
                 objectName: "taskAgent_" + modelData.id
-                label: agentChip.modelData.label
+                text: agentChip.modelData.label
                 active: root.agents.indexOf(agentChip.modelData.id) >= 0
                 onClicked: root.toggleAgent(agentChip.modelData.id)
             }
         }
-        UiText {
+        AiText {
+            role: "caption"
             visible: !root.chat && root.agents.length > 1
             text: I18n.t("ai.tasks.best_of").replace("%1", root.agents.length)
-            muted: true
-            size: -3
         }
         Chip {
             objectName: "taskModel"
             visible: !root.chat && root.single.length > 0 && ((root.catalog.models || []).length > 0 || root.catalog.loading === true)
-            label: root.modelLabel
+            text: root.modelLabel
+            maxLabelWidth: 220
             trailingIcon: Icons.caretDown
-            variant: "transparent"
+            quiet: true
             onClicked: modelMenu.open()
             OptionMenu {
                 id: modelMenu
-                y: -implicitHeight - 6
+                y: -implicitHeight - Space.s
                 current: root.model
                 options: [
                     {
@@ -166,14 +167,14 @@ RowLayout {
         Chip {
             objectName: "taskEffort"
             visible: !root.chat && root.single.length > 0 && root.efforts.length > 0
-            glyph: Icons.brain
-            label: root.effortLabel
+            icon: Icons.brain
+            text: root.effortLabel
             trailingIcon: Icons.caretDown
-            variant: "transparent"
+            quiet: true
             onClicked: effortMenu.open()
             OptionMenu {
                 id: effortMenu
-                y: -implicitHeight - 6
+                y: -implicitHeight - Space.s
                 width: 180
                 current: root.effort
                 options: [
@@ -191,38 +192,39 @@ RowLayout {
         Chip {
             objectName: "taskPlanFirst"
             visible: !root.chat
-            glyph: Icons.listChecks
-            label: I18n.t("ai.tasks.plan_first")
+            icon: Icons.listChecks
+            text: I18n.t("ai.tasks.plan_first")
             active: root.planFirst
             onClicked: root.planFirst = !root.planFirst
         }
         Chip {
             objectName: "taskInPlace"
             visible: !root.chat
-            glyph: Icons.gitBranch
-            label: I18n.t("ai.tasks.in_place")
+            icon: Icons.gitBranch
+            text: I18n.t("ai.tasks.in_place")
             active: root.inPlace
             enabled: root.agents.length <= 1
             opacity: enabled ? 1 : 0.5
             onClicked: root.inPlace = !root.inPlace
         }
     }
-    UiText {
+    AiText {
+        role: "caption"
         Layout.maximumWidth: 260
         visible: root.error.length > 0
         text: root.error
         color: Colors.error
-        size: -3
     }
     IconButton {
+        size: "xs"
         objectName: "taskTemplates"
         visible: !root.chat && root.templates.length > 0
-        glyph: Icons.lightningBolt
+        icon: Icons.lightningBolt
         tooltip: I18n.t("ai.tasks.templates") + " (/)"
         onClicked: templateMenu.open()
         OptionMenu {
             id: templateMenu
-            y: -implicitHeight - 6
+            y: -implicitHeight - Space.s
             x: -width + parent.width
             options: root.templates.map(t => ({
                         "value": t.id,
@@ -234,8 +236,9 @@ RowLayout {
         }
     }
     IconButton {
+        size: "xs"
         objectName: "taskChatToggle"
-        glyph: root.chat ? Icons.kanban : Icons.chatDots
+        icon: root.chat ? Icons.kanban : Icons.chatDots
         tooltip: I18n.t(root.chat ? "ai.tasks.to_tasks" : "ai.tasks.to_chat")
         onClicked: root.chatToggled(!root.chat)
     }

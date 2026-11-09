@@ -145,13 +145,11 @@ LockStyle {
                     x: pw.shakeOffset
                 }
 
-                Text {
+                Icon {
                     id: lead
                     anchors.left: parent.left
                     anchors.verticalCenter: input.verticalCenter
-                    text: pw.capsLock ? Icons.capsLock : Icons.lock
-                    font.family: Icons.font
-                    font.pixelSize: Type.iconSize("body")
+                    icon: pw.capsLock ? Icons.capsLock : Icons.lock
                     color: pw.capsLock ? skin.neon : skin.inkSoft
                 }
                 TextField {

@@ -6,7 +6,7 @@ import qs.modules.components.kit
 // URLs (cached preview favicon, then Google's PNG service, then
 // /favicon.ico). Delete / alias modes show the trash / edit glyph.
 Item {
-    id: icon
+    id: itemIcon
 
     required property ClipboardTabBase tab
     required property var entry
@@ -14,21 +14,21 @@ Item {
     property bool isInAliasMode: false
 
     readonly property string iconType: {
-        if (icon.isInDeleteMode)
+        if (itemIcon.isInDeleteMode)
             return "trash";
-        if (icon.isInAliasMode)
+        if (itemIcon.isInAliasMode)
             return "edit";
-        return icon.tab.getIconForItem(icon.entry);
+        return itemIcon.tab.getIconForItem(itemIcon.entry);
     }
     readonly property string faviconUrl: {
         // Rebind when new previews are fetched
-        var _rev = icon.tab.linkPreviewCacheRevision;
-        if (icon.iconType !== "link")
+        var _rev = itemIcon.tab.linkPreviewCacheRevision;
+        if (itemIcon.iconType !== "link")
             return "";
-        var url = icon.tab.getFaviconUrl(icon.entry);
+        var url = itemIcon.tab.getFaviconUrl(itemIcon.entry);
         return (url && url !== "") ? url : "";
     }
-    readonly property string faviconFallbackUrl: icon.iconType === "link" ? icon.tab.getFaviconFallbackUrl(icon.entry) : ""
+    readonly property string faviconFallbackUrl: itemIcon.iconType === "link" ? itemIcon.tab.getFaviconFallbackUrl(itemIcon.entry) : ""
     property bool faviconLoaded: false
     property bool triedFallback: false
 
@@ -43,19 +43,18 @@ Item {
         }
     }
 
-    Text {
+    Icon {
         anchors.centerIn: parent
         visible: !faviconImage.visible
-        text: ({
+        role: "body"
+        icon: ({
                 "trash": Icons.trash,
                 "edit": Icons.edit,
                 "image": Icons.image,
                 "file": Icons.file,
                 "link": Icons.globe // URL without (working) favicon
-            })[icon.iconType] || Icons.clip
-        color: icon.isInDeleteMode ? Colors.error : Type.secondary
-        font.family: Icons.font
-        font.pixelSize: Type.iconSize("body")
+            })[itemIcon.iconType] || Icons.clip
+        color: itemIcon.isInDeleteMode ? Type.danger : Type.secondary
     }
 
     Image {
@@ -66,34 +65,34 @@ Item {
         mipmap: true
         sourceSize.width: 32
         sourceSize.height: 32
-        visible: icon.iconType === "link" && icon.faviconLoaded && status === Image.Ready
+        visible: itemIcon.iconType === "link" && itemIcon.faviconLoaded && status === Image.Ready
         fillMode: Image.PreserveAspectFit
         asynchronous: true
         cache: true
         onStatusChanged: {
             if (status === Image.Ready) {
-                icon.faviconLoaded = true;
+                itemIcon.faviconLoaded = true;
             } else if (status === Image.Error) {
                 // Try the fallback URL once
-                if (!icon.triedFallback && icon.faviconFallbackUrl !== "") {
-                    icon.triedFallback = true;
-                    faviconImage.source = icon.faviconFallbackUrl;
+                if (!itemIcon.triedFallback && itemIcon.faviconFallbackUrl !== "") {
+                    itemIcon.triedFallback = true;
+                    faviconImage.source = itemIcon.faviconFallbackUrl;
                 } else {
-                    icon.faviconLoaded = false;
+                    itemIcon.faviconLoaded = false;
                 }
             } else if (status === Image.Null || status === Image.Loading) {
-                icon.faviconLoaded = false;
+                itemIcon.faviconLoaded = false;
             }
         }
     }
 
     Timer {
         interval: 1
-        running: icon.iconType === "link" && icon.faviconUrl !== "" && faviconImage.source === ""
+        running: itemIcon.iconType === "link" && itemIcon.faviconUrl !== "" && faviconImage.source === ""
         onTriggered: {
-            if (icon.faviconUrl !== "") {
-                icon.triedFallback = false;
-                faviconImage.source = icon.faviconUrl;
+            if (itemIcon.faviconUrl !== "") {
+                itemIcon.triedFallback = false;
+                faviconImage.source = itemIcon.faviconUrl;
             }
         }
     }

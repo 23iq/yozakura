@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -33,13 +34,10 @@ Button {
         hovered: pinButton.hovered || pinButton.pressed
     }
 
-    contentItem: Text {
-        text: Icons.pin
-        font.family: Icons.font
-        font.pixelSize: BarLook.iconSize(pinButton.moduleSize)
+    contentItem: Icon {
+        icon: Icons.pin
+        size: BarLook.iconSize(pinButton.moduleSize)
         color: pinButtonBg.ink
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
 
         rotation: (pinButton.barRoot ? pinButton.barRoot.pinned : false) ? 0 : 45
         Behavior on rotation {

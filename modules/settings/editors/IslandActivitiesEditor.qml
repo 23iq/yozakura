@@ -9,6 +9,7 @@ import qs.config
 import qs.modules.settings.controls
 import "../Ui.js" as Ui
 import "../../widgets/defaultview/activities/ActivityRegistry.js" as Registry
+import qs.modules.components.kit
 
 // notch.activities: the island's activities in display order. Drag a row
 // by its handle to reorder, pick its side (leading / trailing) and switch
@@ -65,14 +66,13 @@ Item {
             }
 
             // Drag handle: the grip, moving the row freely along y
-            Text {
+            Icon {
                 id: grip
+                role: "title"
                 x: Metrics.spacing
                 anchors.verticalCenter: parent.verticalCenter
                 anchors.verticalCenterOffset: -Metrics.spacing / 2
-                text: Icons.dotsNine
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(2)
+                icon: Icons.dotsNine
                 color: Ui.alpha(Colors.overBackground, 0.6)
 
                 MouseArea {
@@ -93,15 +93,12 @@ Item {
                 }
             }
 
-            Text {
+            KitText {
                 anchors.left: grip.right
                 anchors.leftMargin: Metrics.spacing
                 anchors.right: controls.left
                 anchors.verticalCenter: grip.verticalCenter
                 text: row.item ? I18n.t("prefs.notch.activity." + row.item.id) : ""
-                font.family: Config.theme.font
-                font.pixelSize: Config.theme.fontSize
-                color: Colors.overBackground
                 elide: Text.ElideRight
             }
 

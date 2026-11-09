@@ -83,7 +83,7 @@ Item {
                 Column {
                     Layout.fillWidth: true
                     Layout.alignment: Qt.AlignVCenter
-                    spacing: 1
+                    spacing: Space.hairline
 
                     // Hovered: summary · app, the time on the right
                     Item {

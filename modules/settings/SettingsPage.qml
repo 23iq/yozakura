@@ -112,46 +112,46 @@ Flickable {
         width: Math.min(page.width - Space.xxl * 2, 820)
         x: (page.width - width) / 2
         y: Space.xxl
-        spacing: Look.groupGap
+        // Header -> first group: the screen heading gap of the kit.
+        spacing: Space.xl
 
         PageHeader {
             width: parent.width
             category: page.category
         }
 
-        // Header -> first group: a step more than between groups.
-        Item {
-            width: 1
-            height: Space.xl - Look.groupGap
-        }
+        Column {
+            width: parent.width
+            spacing: Look.groupGap
 
-        Repeater {
-            id: sections
-            model: page.category.sections
+            Repeater {
+                id: sections
+                model: page.category.sections
 
-            delegate: SettingsSection {
-                required property var modelData
-                required property int index
-                width: column.width
-                section: modelData
-                divider: index > 0
-                pending: index >= page.builtSections
+                delegate: SettingsSection {
+                    required property var modelData
+                    required property int index
+                    width: column.width
+                    section: modelData
+                    divider: index > 0
+                    pending: index >= page.builtSections
+                }
             }
-        }
 
-        SimpleFooter {
-            width: parent.width
-            hidden: page.simpleHidden
-        }
+            SimpleFooter {
+                width: parent.width
+                hidden: page.simpleHidden
+            }
 
-        KitText {
-            objectName: "compositorOnlyNote"
-            width: parent.width
-            visible: page.gated.count > 0
-            role: "caption"
-            color: Type.muted
-            wrapMode: Text.WordWrap
-            text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
+            KitText {
+                objectName: "compositorOnlyNote"
+                width: parent.width
+                visible: page.gated.count > 0
+                role: "caption"
+                color: Type.muted
+                wrapMode: Text.WordWrap
+                text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
+            }
         }
     }
 }

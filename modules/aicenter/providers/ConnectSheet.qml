@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/ProviderPresets.js" as Presets
 
 // "Connect a provider": step 1 picks a provider (ProviderGrid), step 2
@@ -51,7 +52,7 @@ StyledRect {
     }
 
     variant: embedded ? "transparent" : "bg"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
     visible: opened || opacity > 0
     opacity: opened ? 1 : 0
     enabled: opened
@@ -91,40 +92,37 @@ StyledRect {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
             IconButton {
+                size: "xs"
                 objectName: "connectBack"
                 visible: root.provider !== ""
-                glyph: Icons.arrowLeft
+                icon: Icons.arrowLeft
                 tooltip: I18n.t("ai.connect.back")
                 onClicked: root.back()
             }
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
-                Text {
+                spacing: Space.xs / 2
+                AiText {
                     Layout.fillWidth: true
+                    role: "title"
                     text: root.provider ? I18n.t("ai.connect.title_provider").arg(root.preset ? root.preset.label : root.provider) : I18n.t("ai.connect.title")
-                    elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(root.embedded ? 1 : 2)
-                    font.weight: Font.Bold
-                    color: Colors.overBackground
+                    font.pixelSize: root.embedded ? BarLook.size("body") : BarLook.size("title")
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     visible: root.provider === ""
                     text: I18n.t("ai.connect.subtitle")
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.outline
                 }
             }
             IconButton {
+                size: "xs"
                 objectName: "connectClose"
                 visible: !root.embedded
-                glyph: Icons.cancel
+                icon: Icons.cancel
                 tooltip: I18n.t("ai.close")
                 onClicked: root.close()
             }

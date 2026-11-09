@@ -5,9 +5,14 @@ import Quickshell
 import qs.modules.shell.hosts
 import qs.modules.widgets.launcher
 import qs.modules.widgets.dashboard
+import qs.modules.components
+import qs.modules.services
+import "WarmUp.js" as WarmUp
 
 // Keep an already-open module routed when its host changes in Config.layout.
 // The visibility flags describe the module, so routing must also observe Config.
+// Views load asynchronously (WarmLoader) and are pushed once ready; a notch
+// launcher is pre-created hidden `warmDelay` ms after startup (WarmUp.js).
 Item {
     id: root
 
@@ -47,26 +52,45 @@ Item {
             notchHost.close();
         currentModule = routedModule;
         const loader = currentModule === "launcher" ? launcher : currentModule === "dashboard" ? dashboard : null;
-        if (loader) {
-            loader.active = true;
-            notchHost.open(loader.item, screen);
-        }
+        if (!loader)
+            return;
+        const want = currentModule;
+        loader.request(view => {
+            // Closed or rerouted while the view was loading
+            if (root.currentModule !== want || root.routedModule !== want || notchHost.isOpen)
+                return;
+            notchHost.open(view, root.screen);
+        });
+    }
+
+    property int warmDelay: 3000
+
+    function warmLauncher() {
+        const names = [];
+        for (let i = 0; i < Quickshell.screens.length; i++)
+            names.push(Quickshell.screens[i].name);
+        if (WarmUp.shouldWarm("notch", HostRouter.hostFor("launcher"), root.screen ? root.screen.name : "", names, Visibilities.lastFocusedScreen))
+            launcher.warm();
+    }
+
+    Timer {
+        interval: root.warmDelay
+        running: true
+        onTriggered: root.warmLauncher()
     }
 
     NotchHost {
         id: notchHost
         container: root.container
     }
-    Loader {
+    WarmLoader {
         id: launcher
-        active: false
         sourceComponent: LauncherView {
             visible: false
         }
     }
-    Loader {
+    WarmLoader {
         id: dashboard
-        active: false
         sourceComponent: DashboardView {
             visible: false
             screenName: root.screen.name

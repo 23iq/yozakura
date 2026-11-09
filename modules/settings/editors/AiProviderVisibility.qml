@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.aicenter.providers
 import "../../services/ai/ProviderPresets.js" as Presets
+import qs.modules.components.kit
 
 // ai.providers.hidden: one switch per provider ("show in the model
 // picker"). A hidden provider is neither listed nor probed.
@@ -16,7 +17,7 @@ ColumnLayout {
 
     readonly property var hidden: Config.ai.providers ? (Config.ai.providers.hidden || []) : []
 
-    spacing: 6
+    spacing: Space.s
 
     Repeater {
         model: Presets.sorted()
@@ -24,7 +25,7 @@ ColumnLayout {
             id: row
             required property var modelData
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
             ProviderIcon {
                 icon: row.modelData.icon || ""
                 size: 18

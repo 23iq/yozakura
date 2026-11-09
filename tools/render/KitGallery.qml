@@ -139,6 +139,65 @@ Window {
                         text: "Open the launcher, move, run, close"
                     }
                 }
+                // Icon: role-sized glyphs in ink tones
+                Group {
+                    width: parent.width
+                    divider: true
+                    label: "Icon"
+                    Row {
+                        spacing: Space.m
+                        Repeater {
+                            model: [["title", "text"], ["body", "text"], ["secondary", "secondary"], ["caption", "muted"], ["body", "accent"], ["body", "progress"]]
+                            Icon {
+                                required property var modelData
+                                anchors.verticalCenter: parent.verticalCenter
+                                icon: Icons.gear
+                                role: modelData[0]
+                                tone: modelData[1]
+                            }
+                        }
+                    }
+                    KitText {
+                        width: parent.width
+                        role: "caption"
+                        wrapMode: Text.WordWrap
+                        elide: Text.ElideNone
+                        text: "title · body · secondary · caption/muted · accent · progress"
+                    }
+                }
+                // Look.radius(role): the one radius API
+                Group {
+                    width: parent.width
+                    divider: true
+                    label: "Radius"
+                    Flow {
+                        width: parent.width
+                        spacing: Space.s
+                        Repeater {
+                            model: ["surface", "group", "box", "big", "control", "chip", "button", "small", "round"]
+                            Column {
+                                id: swatch
+                                required property string modelData
+                                spacing: Space.xs
+                                Rectangle {
+                                    width: Space.controlS
+                                    height: Space.controlS
+                                    radius: Look.radius(swatch.modelData, height)
+                                    color: Look.raisedFill(false)
+                                    border.width: Space.hairline
+                                    border.color: Type.track
+                                }
+                                KitText {
+                                    width: Space.controlS
+                                    role: "caption"
+                                    font.pixelSize: Type.size("label")
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: swatch.modelData
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
 

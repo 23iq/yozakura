@@ -8,6 +8,7 @@ import qs.modules.components.kit as Kit
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 
 // One saved conversation or agent session in the history list.
 StyledRect {
@@ -34,7 +35,7 @@ StyledRect {
     }
 
     implicitHeight: 52
-    radius: Styling.radius(-4)
+    radius: Look.radius("control")
     variant: selected ? "focus" : (hov.hovered || highlighted ? "common" : "transparent")
 
     function ago(ms) {
@@ -60,93 +61,84 @@ StyledRect {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 10
-        anchors.rightMargin: 6
-        spacing: 10
+        anchors.leftMargin: Space.s
+        anchors.rightMargin: Space.s
+        spacing: Space.s
 
-        Text {
-            text: root.entry.kind === "agent" ? Icons.terminalWindow : Icons.chatTeardrop
-            font.family: Icons.font
-            font.pixelSize: 15
-            color: root.entry.kind === "agent" ? Colors.tertiary : Colors.primary
+        Icon {
+            role: "secondary"
+            icon: root.entry.kind === "agent" ? Icons.terminalWindow : Icons.chatTeardrop
+            tone: "secondary"
         }
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            spacing: Space.hairline
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Loader {
                     Layout.fillWidth: true
                     active: root.renaming
                     visible: active
                     sourceComponent: renameEditor
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     Layout.fillWidth: true
                     visible: !root.renaming
                     text: root.entry.title || I18n.t("ai.untitled")
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     font.weight: Font.Medium
-                    color: Colors.overSurface
+                    color: Type.text
                 }
-                Text {
+                Icon {
+                    role: "caption"
                     visible: (root.entry.pending || 0) > 0
-                    text: Icons.shieldCheck + " " + root.entry.pending
+                    icon: Icons.shieldCheck + " " + root.entry.pending
                     color: Colors.warning
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(-2)
                 }
                 StatusDot {
                     visible: root.entry.status && root.entry.status !== "exited" && root.entry.status !== "idle"
                     status: root.entry.status || "idle"
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     visible: !root.renaming
                     text: root.ago(root.entry.updated)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-4)
-                    color: Colors.outline
                 }
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.entry.subtitle || ""
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.outline
             }
         }
         IconButton {
-            glyph: Icons.stop
-            size: 24
+            icon: Icons.stop
+            size: "xs"
             visible: hov.hovered && !root.renaming && ["running", "starting", "waiting"].indexOf(root.entry.status) >= 0
             tooltip: I18n.t("ai.stop")
             onClicked: root.stopped()
         }
         IconButton {
-            glyph: Icons.notePencil
-            size: 24
+            icon: Icons.notePencil
+            size: "xs"
             visible: hov.hovered && !root.renaming
             tooltip: I18n.t("ai.rename")
             onClicked: root.renaming = true
         }
         IconButton {
-            glyph: Icons.pin
-            size: 24
-            iconSize: 12
+            icon: Icons.pin
+            size: "xs"
             active: !!root.entry.pinned
             visible: !root.renaming && (hov.hovered || root.entry.pinned)
             tooltip: root.entry.pinned ? I18n.t("ai.unpin") : I18n.t("ai.pin")
             onClicked: root.pinToggled()
         }
         IconButton {
-            glyph: Icons.trash
-            size: 24
-            iconSize: 12
+            icon: Icons.trash
+            size: "xs"
             danger: true
             visible: hov.hovered && !root.renaming
             tooltip: I18n.t("ai.delete")

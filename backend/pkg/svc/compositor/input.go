@@ -45,6 +45,9 @@ type Input struct {
 	QtTheme bool `json:"qtTheme,omitempty"`
 	// Env are session environment variables, rendered as [env].
 	Env map[string]string `json:"env,omitempty"`
+	// Terminal is general.terminal: the stock terminal bind runs it
+	// directly (terminalbind.go). Empty keeps `<app> run terminal`.
+	Terminal string `json:"terminal,omitempty"`
 }
 
 // WindowRule sends windows matching Match ("class:^(x)$") to Workspace

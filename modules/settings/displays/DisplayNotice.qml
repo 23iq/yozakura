@@ -4,6 +4,7 @@ import qs.modules.services
 import qs.modules.components
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Inline banner of the Displays page: tinted icon, title, message and
 // (as children) its action buttons. `tone`: "info", "warning" or "error".
@@ -19,7 +20,7 @@ StyledRect {
     readonly property color accent: tone === "error" ? Colors.error : (tone === "warning" ? Colors.tertiary : Colors.primary)
 
     variant: "pane"
-    radius: Styling.radius(4)
+    radius: Look.radius("box")
     enableShadow: false
     implicitHeight: Math.max(textCol.implicitHeight, actionRow.implicitHeight) + 32
 
@@ -40,11 +41,10 @@ StyledRect {
         height: 36
         radius: width / 2
         color: Ui.alpha(root.accent, 0.2)
-        Text {
+        Icon {
+            role: "title"
             anchors.centerIn: parent
-            text: Icons[root.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(3)
+            icon: Icons[root.icon] ?? ""
             color: root.accent
         }
     }
@@ -52,28 +52,23 @@ StyledRect {
     Column {
         id: textCol
         anchors.left: badge.right
-        anchors.leftMargin: 14
+        anchors.leftMargin: Space.l
         anchors.right: actionRow.left
-        anchors.rightMargin: 14
+        anchors.rightMargin: Space.l
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 3
+        spacing: Space.xs
 
-        Text {
+        KitText {
             width: parent.width
             text: root.title
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.weight: Font.DemiBold
-            color: Colors.overBackground
             wrapMode: Text.WordWrap
         }
-        Text {
+        KitText {
+            role: "secondary"
             width: parent.width
             visible: text !== ""
             text: root.message
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
             wrapMode: Text.WordWrap
         }
     }
@@ -81,8 +76,8 @@ StyledRect {
     Row {
         id: actionRow
         anchors.right: parent.right
-        anchors.rightMargin: 18
+        anchors.rightMargin: Space.l
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 8
+        spacing: Space.s
     }
 }

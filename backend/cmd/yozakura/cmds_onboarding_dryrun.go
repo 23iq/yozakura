@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"yozakura/backend/pkg/brand"
+	procutil "yozakura/backend/pkg/proc"
 )
 
 // `<app> onboarding --dry-run [--keep]`: the setup wizard in a separate
@@ -137,8 +138,8 @@ func runOnboardingDryRun(args []string, env dryRunEnv, out, errOut io.Writer) in
 	cmd.Env = withEnv(env.environ, vars)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
-	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGTERM}
-	if err := cmd.Start(); err != nil {
+	// StartTied sets Pdeathsig on a spawner thread that outlives the call.
+	if err := procutil.StartTied(cmd); err != nil {
 		fmt.Fprintf(errOut, "Error: start %s: %v\n", env.qs, err)
 		return 1
 	}

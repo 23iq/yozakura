@@ -88,7 +88,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 | **Styling** | `modules/theme/Styling.qml` | `radius()`, `fontSize()`, `getStyledRectConfig()` |
 | **UI kit** | `modules/components/kit/` | Type, Space, Group, ListRow, SearchField, IconButton...; `Look` = `theme.language` (see UI KIT) |
 | **Presets** | `assets/presets/sets/<Name>/` | `set.json` names a layout, style and palette (`assets/presets/{layouts,styles,palettes}`), deep-merged in that order, then the set's own files |
-| **UI Primitives** | `modules/components/` | `StyledRect`, `BarPopup`, `SearchInput`, shaders |
+| **UI Primitives** | `modules/components/` | `StyledRect`, `BarPopup`, `PositionSlider`, shaders (screens use the kit) |
 | **Dashboard** | `modules/widgets/dashboard/` | Tabbed hub with LRU lazy-loading |
 | **Launcher** | `modules/widgets/launcher/` | Provider search (apps, calculator/units/currency, commands, files, wallpapers, ask AI) + prefix tabs; see its AGENTS.md |
 | **Bar Layout** | `modules/bar/BarContent.qml` | Auto-hide, horizontal/vertical, widget groups |
@@ -113,8 +113,13 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ## UI KIT
 Screens are built only from `modules/components/kit/` (`import qs.modules.components.kit`):
 `Type`/`KitText` roles, `Space` tokens, `Group`, `SectionLabel`, `Divider`, `ListRow`,
-`SearchField`, `IconButton`, `ActionButton`, `Chip`, `Switch`, `LineSlider`, `ProgressLine`,
-`Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`, `InlineLink` (a link in running text); big controls `Tile`, `LevelSlider`, `Segmented`,
+`SearchField` (`boxed` toolbar variant, `handleHomeEnd` for a list under it), `IconButton` (`xs`..`xl`, `danger`, `tooltip`), `ActionButton`,
+`Chip` (`image`, `trailingIcon`, `closable`, `quiet`, `danger`, `dense`), `Switch`, `LineSlider` (`wavy`
+media timelines with `alwaysShowKnob`, `fillColor`), `ProgressLine`, `Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`, `InlineLink` (a
+link in running text), `Icon` (an icon-font glyph sized by a Type role, `Type.iconSize(role)`, in an ink
+`tone`: text / secondary / muted / accent / progress / accentInk), `Mark` (a solid graphic shape, not a box:
+indicator dots, grooves, ticks, swatches; round by default), `Scrim` (the dimming layer behind a modal
+surface: `shown`, `strength`, `clicked()`); big controls `Tile`, `LevelSlider`, `Segmented`,
 `Sparkline` (raised via `Look.raisedFill`, radius `Look.bigRadius`, load colours `Type.load`;
 sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; level fills are tonal,
 `Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
@@ -124,10 +129,20 @@ add/remove/displaced transitions. Motion: `Motion.micro` (fills, hover, focus, <
 (stagger step). No raw font sizes, paddings, hex colours or
 hand-made rows/buttons; a missing piece becomes a small generic kit component. The accent
 marks only active, progress, selected/today and one primary action per surface.
-`theme.language` (`ink` hairlines | `glass` frosted cards | `tiles` solid tiles | `classic`)
-is decided in `modules/theme/VisualLanguage.js` and read through `Look`; components never
-branch on the language name. Visual checks are offscreen only: `tools/render/*_render.py`
-(private Xvfb, `kit_render.py` = the whole kit per language); never the live display.
+`theme.language` (`ink` hairlines | `glass` frosted cards | `tiles` solid tiles | `classic`
+the sr* variants as configured | `device` a hardware instrument: matte boxes with a 1 px edge,
+knobs, segment readouts, LEDs) is decided in `modules/theme/VisualLanguage.js` (`kit()`) and read
+through `Look`; components never branch on the language name.
+Tokens from `Look`: `surfacePadding` + `groupPadding` + `rowInset` = `contentInset` (Surface edge to
+row text: 24 px in the unboxed family (ink), 28 px in every boxed one), `groupGap` (between groups),
+`ruleGap` (under a Group divider), `screenGap` (between the blocks / columns of a screen),
+`boxPadding` / `boxRadius` (a box drawn even where groups have none), `barSurfacePill` /
+`barLabelWeight` (BarLook). Radii: one API, `Look.radius(role, h)` with role `surface` | `group` |
+`box` | `big` | `control` | `small` | `button` | `chip` | `round`. `SectionLabel` text sits at
+`Look.rowInset`, on the line of the rows under it. Visual checks are offscreen only: `tools/render/*_render.py`
+(private Xvfb, `kit_render.py` = the whole kit per language, `make render-sweep` = kit, settings,
+dashboard (+ its tool tabs, `dashtabs_render.py`), bar matrix and OSD in every language into `.cache/render/sweep/`); never the live display.
+Every render tool iterates `tests/lib/languages.py` (the list of `VisualLanguage.js`).
 
 ## CODE MAP
 
@@ -218,6 +233,8 @@ A change is done only when all of these hold:
 | `make schema` | Regenerate the settings catalog `assets/schema/*.schema.json` (JSON Schema 2020-12). |
 | `make baseline` | Re-record lint/format baselines (rarely; justify it). |
 | `make layers-baseline` | Re-record `tools/lint/baselines/layers.json` after *fixing* layer violations (never to hide new ones). |
+| `make kit-literals-baseline` | Re-record `tools/lint/baselines/kit-literals.json` after *replacing* literals with kit tokens (never to hide new ones). |
+| `make render-sweep` | Offscreen renders of the kit, settings, dashboard (and its tool tabs), bar matrix and OSDs in every visual language (`ARGS="ink --only kit"`). |
 | `make ipc-methods` | Regenerate `assets/schema/ipc-methods.json` (part of `make schema`). |
 
 Architecture guards (in `make audit`): `layers` orders the modules foundation
@@ -233,6 +250,12 @@ stale). Dynamic names are warnings unless the file is in `ipcMethods.dynamicAllo
 wrappers go in `ipcMethods.wrappers`. The daemon answers `ipc.hello` (`ipc.ProtocolVersion`)
 and `ipc.methods`; bump the version on a breaking wire change and update
 `BackendService.expectedProtocol` (the shell warns and sets `protocolMismatch` otherwise).
+`kit-literals` (also in `make audit`) counts, per `modules/` directory, what bypasses the UI
+kit: numeric spacing / margins / padding, literal `font.pixelSize`, raw `Rectangle` / `Text` and
+`Styling.radius(n)` offsets (`modules/components/kit` and `modules/theme` are exempt). The counts are
+a ratchet in `tools/lint/baselines/kit-literals.json`: a directory may only go down (new code uses
+`Space` / `Type` / `Look`, `KitText`, `Icon`, kit boxes); lower counts ask for
+`make kit-literals-baseline`.
 `.claude/` (agent worktrees, full repo copies) is excluded from every audit/lint file list.
 
 Diff-based checks use `BASE` (default `origin/main`): `make check BASE=upstream/main`.
@@ -275,7 +298,7 @@ make install    # sudo install of ./yozakura to /usr/local/bin
 ## NOTES
 - Config keys are declared once, in `config/defaults/<domain>.js`; `config/adapters/` is generated
   (`make schema`, `tools/config/gen_adapters.cjs`). Use `pauseAutoSave` for bulk edits.
-- Large files (>800 lines, `make audit` lists them): `PresetsTab`, `MetricsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
+- Large files (>800 lines, `make audit` lists them): `PresetsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `MetricsTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
 - The `qs.` import prefix is a Quickshell VFS construct, not a physical directory.
 - `screenshotToolMode` in `GlobalStates.qml` is **DEPRECATED**.
 - **No QML disk cache for the shell.** Quickshell serves `import qs.*` files from its VFS
@@ -287,7 +310,11 @@ make install    # sudo install of ./yozakura to /usr/local/bin
   only holds the few files loaded by plain path. Bytecode compile of the whole tree
   (367 files, ~96k lines, `qmlcachegen --only-bytecode`) costs ~1.7 s single-threaded; the
   biggest are lazy dashboard tabs (ClipboardTab 85 ms, NotesTab 64 ms), compiled on first
-  open. Keep startup-critical files small and push rarely used views behind `Loader`s. Do not
+  open. Keep startup-critical files small and push rarely used views behind `Loader`s
+  (heavy kept views: `WarmLoader` = async + request/callback, the launcher is warmed ~3 s after
+  start; big windows: `KeepAliveLoader` = async + kept hidden, Settings for
+  `performance.settingsKeepAliveMinutes`; its content sees `visible: false` while hidden, so
+  timers and polls gated on `visible` stop). Do not
   switch to relative `import "../x"` imports to get caching: they create separate singleton
   instances from the `qs.*` ones.
 - Gemini AI provider doesn't support the `system` role; handled in `services/ai/strategies/`.

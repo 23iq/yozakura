@@ -10,6 +10,7 @@ import qs.modules.keybinds
 import qs.config
 import "../../Ui.js" as Ui
 import "../../../keybinds/BindModel.js" as BindModel
+import qs.modules.components.kit
 
 // One bind in the editor, one compact line: the app icon (app binds) or
 // the action's group glyph, what it does, its keycaps and markers for a
@@ -42,7 +43,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         color: root.expanded ? Ui.alpha(Colors.overBackground, 0.05) : (root.conflicted ? Ui.alpha(Colors.error, 0.06) : Ui.alpha(Colors.overBackground, headerArea.containsMouse ? 0.04 : 0))
         border.width: root.expanded ? 1 : 0
         border.color: root.conflicted ? Ui.alpha(Colors.error, 0.5) : Ui.alpha(Colors.outlineVariant, 0.6)
@@ -51,7 +52,7 @@ Item {
     Rectangle {
         objectName: "keybindHighlight"
         anchors.fill: parent
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         color: Colors.primary
         opacity: root.highlighted ? 0.16 : 0
         Behavior on opacity {
@@ -90,9 +91,9 @@ Item {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
-                anchors.leftMargin: 12
-                anchors.rightMargin: 10
-                spacing: 10
+                anchors.leftMargin: Space.m
+                anchors.rightMargin: Space.m
+                spacing: Space.m
 
                 // Apps group: the app's icon (or a terminal for commands).
                 Item {
@@ -108,13 +109,12 @@ Item {
                         source: root.app ? Quickshell.iconPath(root.app.icon || root.app.id, "application-x-executable") : ""
                         asynchronous: true
                     }
-                    Text {
+                    Icon {
+                        role: "secondary"
+                        tone: "secondary"
                         anchors.centerIn: parent
                         visible: !root.app || root.app.id === ""
-                        text: Icons[BindModel.group(root.bind.group).icon] ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.overSurfaceVariant
+                        icon: Icons[BindModel.group(root.bind.group).icon] ?? ""
                     }
                 }
 
@@ -124,27 +124,25 @@ Item {
                     Layout.fillWidth: true
                     implicitHeight: title.implicitHeight
 
-                    Text {
+                    KitText {
                         id: title
+                        role: "secondary"
                         width: Math.min(implicitWidth, parent.width)
                         text: KeybindsStore.title(root.bind)
                         elide: Text.ElideRight
                         opacity: root.bind.enabled ? 1 : 0.5
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
                         font.weight: Font.Medium
                         color: Colors.overBackground
                     }
-                    Text {
+                    KitText {
                         objectName: "conflictNote"
+                        role: "caption"
                         x: title.width + 10
                         width: Math.max(0, parent.width - x)
                         anchors.baseline: title.baseline
                         visible: root.conflicted && width > 40
                         text: I18n.t("binds.conflict_with", KeybindsStore.conflictText(root.bind.uid).split("\n").join(", "))
                         elide: Text.ElideRight
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
                         color: Colors.error
                     }
                 }
@@ -155,11 +153,10 @@ Item {
                     visible: root.skipNote !== ""
                     Layout.preferredWidth: skipLabel.implicitWidth
                     Layout.preferredHeight: skipLabel.implicitHeight
-                    Text {
+                    KitText {
                         id: skipLabel
+                        role: "caption"
                         text: I18n.t("binds.skipped_badge")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
                         font.weight: Font.DemiBold
                         color: Colors.overSurfaceVariant
                     }
@@ -174,18 +171,16 @@ Item {
                     }
                 }
 
-                Text {
+                KitText {
+                    role: "caption"
                     visible: !root.bind.enabled
                     text: I18n.t("binds.off")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     font.weight: Font.DemiBold
-                    color: Colors.outline
                 }
 
                 Column {
                     Layout.alignment: Qt.AlignVCenter
-                    spacing: 4
+                    spacing: Space.xs
                     opacity: root.bind.enabled ? 1 : 0.45
 
                     Repeater {
@@ -201,11 +196,9 @@ Item {
                     }
                 }
 
-                Text {
+                Icon {
                     visible: root.conflicted
-                    text: Icons.warning
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
+                    icon: Icons.warning
                     color: Colors.error
                 }
 
@@ -220,12 +213,11 @@ Item {
                         radius: width / 2
                         color: resetArea.containsMouse ? Ui.alpha(Colors.primary, 0.16) : "transparent"
                     }
-                    Text {
+                    Icon {
+                        role: "caption"
+                        tone: "accent"
                         anchors.centerIn: parent
-                        text: Icons.arrowCounterClockwise
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        color: Colors.primary
+                        icon: Icons.arrowCounterClockwise
                     }
                     MouseArea {
                         id: resetArea

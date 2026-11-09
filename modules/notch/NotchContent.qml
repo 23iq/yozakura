@@ -9,6 +9,7 @@ import qs.modules.theme
 import qs.modules.widgets.defaultview
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.bar.workspaces
 import qs.config
 import qs.modules.shell
@@ -46,15 +47,21 @@ Item {
     readonly property int edgeGap: (Config.notchTheme === "island" ? 4 : 0) + (vertical ? 0 : frameOffset)
     readonly property int popupGap: 4
     // {x, y} of a `w` x `h` child of `box` against the notch edge (`gap`
-    // from it), centered along it
+    // from it), centered along it, on whole pixels: the attached notch's
+    // body and concave corners are separate antialiased pieces, and a
+    // half-pixel origin turns their shared edge into a visible seam
     function edgePlace(box, w, h, gap) {
-        return NotchShape.viewPos(root.notchPosition, {
+        const p = NotchShape.viewPos(root.notchPosition, {
             w: box.width,
             h: box.height
         }, {
             w: w,
             h: h
         }, gap);
+        return {
+            x: Math.round(p.x),
+            y: Math.round(p.y)
+        };
     }
     // Notch region on its edge (align, bar/dock/frame insets, hover strip)
     readonly property NotchPlacement placement: NotchPlacement {
@@ -310,16 +317,14 @@ Item {
 
             // Opacity animation
             opacity: root.reveal ? 1 : 0
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.enter.easing
-                }
+            RenderFade on opacity {
+                duration: root.fadeDuration
+                easingType: root.fadeEasing
             }
 
             // Slide behind the edge when hidden
             transform: Translate {
+                id: notchSlide
                 x: root.reveal ? 0 : root.hideOffset.x
                 y: root.reveal ? 0 : root.hideOffset.y
                 Behavior on x {
@@ -386,29 +391,27 @@ Item {
                 w: width,
                 h: height
             }, 0)
-            x: at.x
-            y: at.y
+            x: Math.round(at.x)
+            y: Math.round(at.y)
 
             // Target width (animated below); 0 while hidden
             readonly property real targetWidth: shouldShowNotificationPopup ? Math.round(popupHovered ? 420 + 48 : 320 + 48) : 0
             width: Math.round(popupHovered ? 420 + 48 : 320 + 48)
-            height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + 32 : notificationPopup.implicitHeight + 32) : 0
+            height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + Space.l * 2 : notificationPopup.implicitHeight + Space.l * 2) : 0
             clip: false
             visible: height > 0
             z: 999
-            radius: Styling.radius(20)
+            radius: Look.radius("surface", height)
 
             // Apply same reveal animation as notch
             opacity: root.reveal ? 1 : 0
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Config.animDuration / 2
-                    easing.type: Motion.enter.easing
-                }
+            RenderFade on opacity {
+                duration: root.fadeDuration
+                easingType: root.fadeEasing
             }
 
             transform: Translate {
+                id: popupSlide
                 x: root.reveal ? 0 : root.hideOffset.x
                 y: root.reveal ? 0 : root.hideOffset.y
                 Behavior on x {
@@ -475,7 +478,7 @@ Item {
             NotchNotificationView {
                 id: notificationPopup
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: Space.l
                 visible: notificationPopupContainer.shouldShowNotificationPopup
                 opacity: visible ? 1 : 0
                 notchHovered: notificationPopupContainer.popupHovered
@@ -502,6 +505,21 @@ Item {
         if (root.screenVisibilities)
             root.screenVisibilities.notchRaised = false;
     }
-    // Notch + notification popup: where this item draws (shadow capture)
+    // Notch + notification popup: where this item draws
     readonly property Item visualRegion: notchRegionContainer
+    // The notch's silhouette in this item's coordinates (it fills the
+    // panel), with the reveal slide: its analytic shadow follows it every
+    // frame without capturing anything (PanelShadows)
+    readonly property Item silhouette: notchContainer.silhouette
+    readonly property rect silhouetteRect: Qt.rect(notchRegionContainer.x + notchAnimationContainer.x + notchSlide.x + notchContainer.x + silhouette.x, notchRegionContainer.y + notchAnimationContainer.y + notchSlide.y + notchContainer.y + silhouette.y, silhouette.width, silhouette.height)
+    // The notification popup under the open notch, likewise (its own
+    // reveal slide included); empty while it is hidden
+    readonly property rect notificationPopupRect: notificationPopupContainer.visible ? Qt.rect(notchRegionContainer.x + notificationPopupContainer.x + popupSlide.x, notchRegionContainer.y + notificationPopupContainer.y + popupSlide.y, notificationPopupContainer.width, notificationPopupContainer.height) : Qt.rect(0, 0, 0, 0)
+    readonly property real notificationPopupRadius: notificationPopupContainer.radius
+    // Alpha of its surface (fill colour x variant opacity)
+    readonly property real notificationPopupAlpha: notificationPopupContainer.rectOpacity * (notificationPopupContainer.hasSolidColor ? notificationPopupContainer.solidColor.a : 1)
+    // Reveal fade (render thread): the shadow fades in step with its own
+    // RenderFade of the same duration and easing
+    readonly property int fadeDuration: Config.animDuration > 0 ? Config.animDuration / 2 : 0
+    readonly property int fadeEasing: Motion.enter.easing
 }

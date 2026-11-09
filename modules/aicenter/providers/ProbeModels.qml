@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -17,15 +18,13 @@ ColumnLayout {
     property var models: []
     property int limit: 8
 
-    spacing: 4
+    spacing: Space.xs
     visible: models.length > 0
 
-    Text {
+    AiText {
+        role: "caption"
         text: I18n.t("ai.connect.local_models")
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-2)
         font.weight: Font.Medium
-        color: Colors.outline
     }
     Repeater {
         model: root.models.slice(0, root.limit)
@@ -34,28 +33,26 @@ ColumnLayout {
             required property var modelData
             objectName: "probeModel_" + modelData.id
             Layout.fillWidth: true
-            implicitHeight: 34
-            radius: Styling.radius(-6)
+            implicitHeight: Space.controlS
+            radius: Look.radius("small")
             variant: "internalbg"
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 8
-                spacing: 8
-                Text {
+                anchors.leftMargin: Space.s
+                anchors.rightMargin: Space.s
+                spacing: Space.s
+                AiText {
+                    mono: true
+                    role: "caption"
                     Layout.fillWidth: true
                     text: row.modelData.name || row.modelData.id
                     elide: Text.ElideRight
-                    font.family: Config.theme.monoFont
-                    font.pixelSize: BarLook.mono(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     visible: !!(row.modelData.probe && row.modelData.probe.sizeLabel)
                     text: row.modelData.probe ? row.modelData.probe.sizeLabel || "" : ""
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
-                    color: Colors.outline
                 }
                 CapabilityBadges {
                     info: row.modelData.probe ? ModelInfo.fromOllama(row.modelData.probe) : null
@@ -63,11 +60,9 @@ ColumnLayout {
             }
         }
     }
-    Text {
+    AiText {
+        role: "caption"
         visible: root.models.length > root.limit
         text: I18n.t("ai.connect.more_models").arg(root.models.length - root.limit)
-        font.family: Config.theme.font
-        font.pixelSize: BarLook.font(-3)
-        color: Colors.outline
     }
 }

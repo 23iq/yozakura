@@ -6,7 +6,7 @@
 // next to the face, "overlay" along the button edge, "none" for `island`,
 // which leaves it to the notch timers activity (TimerActivity.qml).
 var styles = [
-    { id: "ring", url: "indicators/Ring.qml", slot: "inline", labelKey: "prefs.bar.pomodoro_style.ring" },
+    { id: "ring", url: "indicators/PhaseRing.qml", slot: "inline", labelKey: "prefs.bar.pomodoro_style.ring" },
     { id: "underline", url: "indicators/Underline.qml", slot: "overlay", labelKey: "prefs.bar.pomodoro_style.underline" },
     { id: "countdown", url: "indicators/Countdown.qml", slot: "inline", labelKey: "prefs.bar.pomodoro_style.countdown" },
     { id: "island", url: "", slot: "none", labelKey: "prefs.bar.pomodoro_style.island" }

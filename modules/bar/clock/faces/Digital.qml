@@ -1,4 +1,5 @@
 import QtQuick
+import qs.modules.components.kit
 
 // "21:05" / "9:05 PM" on one line, tabular digits so the width never jitters.
 // The face reserves the width of the widest reading ("00:00", + suffix) so a
@@ -17,17 +18,17 @@ Item {
         text: "00:00" + (root.clock.parts.suffix !== "" ? " " + root.clock.parts.suffix : "")
     }
 
-    Text {
+    // The clock's face font (ClockFaces / BarLook), tabular digits.
+    KitText {
         id: label
         objectName: "faceDigital"
         anchors.centerIn: parent
+        tabular: true
+        elide: Text.ElideNone
         text: root.clock.parts.hours + ":" + root.clock.parts.minutes + (root.clock.parts.suffix !== "" ? " " + root.clock.parts.suffix : "")
         color: root.clock.textColor
         font.family: root.clock.fontFamily
         font.pixelSize: root.clock.fontSize
         font.weight: root.clock.fontWeight
-        font.features: {
-            "tnum": 1
-        }
     }
 }

@@ -177,6 +177,25 @@ check("size in KB", "1.5 KB" in t)
 check("full date and short checksum", any(re.fullmatch(r"calendar\.month\.\w+ \d+, \d{4} \d+:\d\d:\d\d [AP]M", x) for x in t)
       and "N/A" in t, [x for x in t if "calendar" in x])
 
+
+def named(name):
+    return next((o for o in walk() if o.objectName() == name), None)
+
+
+embed = named("linkEmbed")
+check("embed card holds its text layout", embed is not None and embed.property("visible") and embed.property("height") > 0)
+# A URL without embed data: the plain URL card (ClipboardCard) opens the item.
+ev(f"""{svc_expr}.linkPreviewCache = {{ "https://example.invalid/page": {{}} }};
+    {svc_expr}.linkPreviewFetched("https://example.invalid/page", {{}}, "2")""")
+pump()
+card = named("urlCard")
+check("url card without embed data", card is not None and card.property("visible") and "clipboard.link" in texts()
+      and not named("linkEmbed").property("visible"))
+url_opened = []
+tab.requestOpenItem.connect(lambda *a: url_opened.append(a[0]))
+h.eval(card, "clicked()")
+check("clicking the url card opens the item", url_opened == ["2"], url_opened)
+
 # Options menu (expanded row).
 ev("expandedItemIndex = selectedIndex")
 pump(1500)
@@ -189,7 +208,7 @@ check("expanded row grows by the options list", len(expanded) == 1 and expanded[
 ev("selectedIndex = 0")
 check("changing selection collapses the menu", ev("expandedItemIndex") == -1)
 
-# Search field keys (SearchInput signals).
+# Search field keys (kit SearchField signals).
 search = next(o for o in walk() if o.metaObject().indexOfSignal("shiftAccepted()") >= 0)
 reset_calls()
 ev("selectedIndex = 1")

@@ -7,6 +7,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.aicenter.common
+import qs.modules.components.kit
 import "../../services/ai/ProviderConnect.js" as Connect
 import "../../services/ai/ProviderPresets.js" as Presets
 
@@ -127,11 +128,11 @@ Flickable {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Space.m
             StyledRect {
                 implicitWidth: 52
                 implicitHeight: 52
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
                 variant: "primary"
                 ProviderIcon {
                     anchors.centerIn: parent
@@ -142,23 +143,19 @@ Flickable {
             }
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 4
-                Text {
+                spacing: Space.xs
+                AiText {
                     Layout.fillWidth: true
                     text: root.preset.label || root.provider
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(3)
                     font.weight: Font.Bold
-                    color: Colors.overSurface
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: root.description
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurfaceVariant
+                    color: Type.secondary
                 }
             }
         }
@@ -181,8 +178,8 @@ Flickable {
             Chip {
                 objectName: "connectGetKey"
                 visible: !!root.preset.keyUrl
-                glyph: Icons.arrowSquareOut
-                label: I18n.t("ai.connect.get_key")
+                icon: Icons.arrowSquareOut
+                text: I18n.t("ai.connect.get_key")
                 onClicked: Qt.openUrlExternally(root.preset.keyUrl)
             }
             FormField {
@@ -198,8 +195,8 @@ Flickable {
             }
             Chip {
                 visible: root.custom
-                glyph: root.advanced ? Icons.caretDown : Icons.caretRight
-                label: I18n.t("ai.connect.advanced")
+                icon: root.advanced ? Icons.caretDown : Icons.caretRight
+                text: I18n.t("ai.connect.advanced")
                 onClicked: root.advanced = !root.advanced
             }
             FormField {
@@ -234,9 +231,9 @@ Flickable {
             Chip {
                 objectName: "connectDisconnect"
                 visible: root.local ? root.status.state !== "hidden" : root.status.connected === true
-                glyph: root.local ? Icons.eye : Icons.trash
-                label: root.local ? I18n.t("ai.connect.hide_local") : I18n.t("ai.connect.disconnect")
-                variant: root.local ? "common" : "error"
+                icon: root.local ? Icons.eye : Icons.trash
+                text: root.local ? I18n.t("ai.connect.hide_local") : I18n.t("ai.connect.disconnect")
+                danger: !root.local
                 onClicked: {
                     Ai.providers.disconnect(root.provider);
                     root.disconnected();
@@ -247,18 +244,16 @@ Flickable {
             }
             Chip {
                 objectName: "connectTest"
-                implicitHeight: 34
-                glyph: Icons.lightning
-                label: I18n.t("ai.connect.test")
+                icon: Icons.lightning
+                text: I18n.t("ai.connect.test")
                 enabled: !root.testing
                 onClicked: root.test()
             }
             Chip {
                 objectName: "connectSave"
-                implicitHeight: 34
                 active: true
-                glyph: Icons.checkCircle
-                label: root.local ? I18n.t("ai.connect.use") : I18n.t("ai.connect.save")
+                icon: Icons.checkCircle
+                text: root.local ? I18n.t("ai.connect.use") : I18n.t("ai.connect.save")
                 onClicked: root.save()
             }
         }

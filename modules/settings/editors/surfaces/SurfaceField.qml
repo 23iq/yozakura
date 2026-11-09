@@ -6,6 +6,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
+import qs.modules.components.kit
 
 // One field of a surface variant (SurfaceRoles.js FIELDS entry `def`):
 // label (+ description) and its control. Toggles, sliders and selectors sit
@@ -25,32 +26,30 @@ ColumnLayout {
     objectName: "surfaceField:" + (def.field || "")
     enabled: !locked
     opacity: locked ? 0.38 : 1
-    spacing: 6
+    spacing: Space.s
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 12
+        spacing: Space.m
 
         ColumnLayout {
             Layout.fillWidth: !root.inline || root.def.kind === "toggle"
             Layout.preferredWidth: root.inline && root.def.kind !== "toggle" ? 150 : -1
-            spacing: 2
+            spacing: Space.xs / 2
 
-            Text {
+            KitText {
+                role: "secondary"
                 Layout.fillWidth: true
                 text: root.def.label ? I18n.t(root.def.label) : ""
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: !!root.def.description
                 text: root.def.description ? I18n.t(root.def.description) : ""
                 wrapMode: Text.WordWrap
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 color: Colors.overSurfaceVariant
             }
         }

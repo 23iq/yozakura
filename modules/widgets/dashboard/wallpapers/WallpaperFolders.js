@@ -97,6 +97,25 @@ function countIn(paths, folder) {
     return n;
 }
 
+// Folders whose thumbnails go under thumbnails/_extra: the extra folders,
+// plus the bundled folder while one of its wallpapers is listed without
+// being in any scanned folder (a saved bundled wallpaper kept selected
+// while wallPath is another folder, WallpaperRefs.choose).
+function thumbFolders(paths, scanDirs, extras, bundledDir) {
+    var out = (extras || []).slice();
+    var b = normalize(bundledDir);
+    if (!b || out.indexOf(b) >= 0)
+        return out;
+    var list = paths || [];
+    for (var i = 0; i < list.length; i++) {
+        if (isInside(list[i], b) && !rootOf(list[i], scanDirs || [])) {
+            out.push(b);
+            break;
+        }
+    }
+    return out;
+}
+
 // Thumbnail of `file` (backend `yozakura thumbs` writes the same paths):
 //   primary folder: <cache>/thumbnails/<relative path>.jpg (historical)
 //   extra folder R: <cache>/thumbnails/_extra/<md5(R)[0:12]>/<relative>.jpg

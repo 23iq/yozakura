@@ -1,0 +1,217 @@
+{
+ "modules/aicenter/common": {
+  "rectangle": 1
+ },
+ "modules/aicenter/markdown": {
+  "rectangle": 1
+ },
+ "modules/bar": {
+  "rectangle": 5,
+  "radius": 1
+ },
+ "modules/bar/activities": {
+  "rectangle": 3
+ },
+ "modules/bar/clock/faces": {
+  "rectangle": 1
+ },
+ "modules/bar/clock/indicators": {
+  "rectangle": 1
+ },
+ "modules/bar/look": {
+  "rectangle": 3
+ },
+ "modules/bar/modules": {
+  "rectangle": 5
+ },
+ "modules/bar/panels/styles": {
+  "rectangle": 3
+ },
+ "modules/bar/systray": {
+  "rectangle": 3
+ },
+ "modules/bar/workspaces": {
+  "rectangle": 2,
+  "text": 1
+ },
+ "modules/components": {
+  "spacing": 8,
+  "font-size": 3,
+  "rectangle": 17,
+  "text": 10,
+  "radius": 5
+ },
+ "modules/components/weatherfx": {
+  "rectangle": 10
+ },
+ "modules/corners": {
+  "radius": 1
+ },
+ "modules/desktop": {
+  "rectangle": 3
+ },
+ "modules/desktop/clockstyles": {
+  "rectangle": 2,
+  "text": 3
+ },
+ "modules/desktop/panorama": {
+  "rectangle": 1
+ },
+ "modules/desktop/widgets": {
+  "rectangle": 5
+ },
+ "modules/desktop/widgets/types": {
+  "rectangle": 2
+ },
+ "modules/extras": {
+  "rectangle": 8
+ },
+ "modules/frame": {
+  "rectangle": 3,
+  "radius": 3
+ },
+ "modules/keybinds": {
+  "rectangle": 2,
+  "text": 2
+ },
+ "modules/lockscreen": {
+  "rectangle": 6,
+  "text": 6,
+  "radius": 4
+ },
+ "modules/lockscreen/styles": {
+  "rectangle": 24,
+  "text": 11
+ },
+ "modules/notch": {
+  "rectangle": 1
+ },
+ "modules/notifications/strips": {
+  "rectangle": 4
+ },
+ "modules/onboarding": {
+  "spacing": 2,
+  "rectangle": 17,
+  "text": 10
+ },
+ "modules/settings": {
+  "spacing": 3,
+  "rectangle": 4,
+  "text": 4
+ },
+ "modules/settings/controls": {
+  "spacing": 5,
+  "font-size": 1,
+  "rectangle": 6,
+  "text": 8
+ },
+ "modules/settings/displays": {
+  "rectangle": 8
+ },
+ "modules/settings/editors": {
+  "font-size": 3,
+  "rectangle": 33,
+  "text": 5
+ },
+ "modules/settings/editors/desktopwidgets": {
+  "rectangle": 5
+ },
+ "modules/settings/editors/keybinds": {
+  "rectangle": 15,
+  "text": 3
+ },
+ "modules/settings/editors/specials": {
+  "rectangle": 7
+ },
+ "modules/settings/keyboard": {
+  "rectangle": 7,
+  "text": 1
+ },
+ "modules/settings/layout": {
+  "rectangle": 8
+ },
+ "modules/settings/mods": {
+  "rectangle": 3
+ },
+ "modules/settings/presets": {
+  "rectangle": 44,
+  "text": 1
+ },
+ "modules/settings/previews": {
+  "rectangle": 50,
+  "text": 1
+ },
+ "modules/settings/system": {
+  "text": 1
+ },
+ "modules/settings/thumbs": {
+  "rectangle": 16,
+  "text": 1,
+  "radius": 2
+ },
+ "modules/shell": {
+  "spacing": 6,
+  "rectangle": 3,
+  "text": 10,
+  "radius": 3
+ },
+ "modules/shell/hosts": {
+  "rectangle": 1,
+  "radius": 1
+ },
+ "modules/shell/rehome": {
+  "text": 1
+ },
+ "modules/widgets/dashboard/emoji": {
+  "text": 4
+ },
+ "modules/widgets/dashboard/home": {
+  "rectangle": 2,
+  "text": 2
+ },
+ "modules/widgets/dashboard/notes": {
+  "spacing": 17,
+  "text": 4
+ },
+ "modules/widgets/dashboard/stage": {
+  "rectangle": 11,
+  "text": 5
+ },
+ "modules/widgets/dashboard/tmux": {
+  "spacing": 1,
+  "rectangle": 1,
+  "text": 4
+ },
+ "modules/widgets/dashboard/wallpapers": {
+  "rectangle": 3
+ },
+ "modules/widgets/dashboard/widgets": {
+  "spacing": 3,
+  "rectangle": 1,
+  "text": 12,
+  "radius": 3
+ },
+ "modules/widgets/dashboard/widgets/time": {
+  "text": 1
+ },
+ "modules/widgets/defaultview": {
+  "spacing": 18,
+  "font-size": 7,
+  "rectangle": 1,
+  "text": 16,
+  "radius": 8
+ },
+ "modules/widgets/defaultview/panels": {
+  "spacing": 2,
+  "rectangle": 1,
+  "text": 5
+ },
+ "modules/widgets/launcher": {
+  "text": 2
+ },
+ "modules/widgets/presets": {
+  "rectangle": 1,
+  "text": 1,
+  "radius": 1
+ }
+}

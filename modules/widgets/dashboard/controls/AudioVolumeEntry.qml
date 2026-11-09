@@ -1,167 +1,124 @@
 pragma ComponentBehavior: Bound
-
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell.Services.Pipewire
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
-import qs.config
+import qs.modules.components.kit
 
-Item {
+// One volume of the mixer (the device, or an app stream): a mute icon
+// button and the level slider, over a caption line with the name, the
+// volume protection shield (main device, while it holds the level back)
+// and the percentage.
+ColumnLayout {
     id: root
 
     required property PwNode node
     property string icon: ""
     property bool isMainDevice: false
 
-    implicitHeight: 56
-    implicitWidth: parent?.width ?? 300
+    readonly property bool isMuted: root.node?.audio?.muted ?? false
+    readonly property real volume: root.node?.audio?.volume ?? 0
+    readonly property bool protecting: Audio.protectionTriggered && root.isMainDevice
+
+    spacing: Space.xs
 
     PwObjectTracker {
         objects: [root.node]
     }
 
-    readonly property bool isMuted: root.node?.audio?.muted ?? false
-    readonly property real volume: root.node?.audio?.volume ?? 0
-    property real lastSetVolume: volume
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Space.s
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 4
-
-        // First row: Icon + Slider
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: 8
-
-            // Mute button with icon
-            Button {
-                id: muteButton
-                flat: true
-                implicitWidth: 32
-                implicitHeight: 32
-                Layout.preferredWidth: 32
-                Layout.maximumWidth: 32
-                Layout.fillWidth: false
-
-                background: StyledRect {
-                    variant: muteButton.hovered ? "focus" : "common"
-                    radius: Styling.radius(4)
-                }
-
-                contentItem: Item {
-                    Text {
-                        anchors.centerIn: parent
-                        text: {
-                            if (root.isMuted)
-                                return Icons.speakerSlash;
-                            if (root.icon)
-                                return root.icon;
-                            return Icons.speakerHigh;
-                        }
-                        font.family: Icons.font
-                        font.pixelSize: 16
-                        color: root.isMuted ? Colors.error : Colors.overBackground
-
-                        Behavior on color {
-                            enabled: Config.animDuration > 0
-                            ColorAnimation {
-                                duration: Config.animDuration / 2
-                            }
-                        }
-                    }
-                }
-
-                onClicked: {
-                    if (root.node?.audio) {
-                        root.node.audio.muted = !root.node.audio.muted;
-                    }
-                }
-
-                StyledToolTip {
-                    visible: muteButton.hovered
-                    tooltipText: root.isMuted ? "Unmute" : "Mute"
-                }
-            }
-
-            // Volume slider
-            StyledSlider {
-                id: volumeSlider
-                Layout.fillWidth: true
-                Layout.preferredHeight: 20
-                value: root.volume
-                scroll: false
-                progressColor: {
-                    if (root.isMuted)
-                        return Colors.outline;
-                    if (Audio.protectionTriggered && root.isMainDevice)
-                        return Colors.warning;
-                    return Styling.srItem("overprimary");
-                }
-
-                onValueChanged: {
-                    if (root.node?.audio && Math.abs(value - root.volume) > 0.001) {
-                        Audio.setNodeVolume(root.node, value);
-                    }
-                }
-
-                Behavior on progressColor {
-                    enabled: Config.animDuration > 0
-                    ColorAnimation {
-                        duration: Config.animDuration / 2
-                    }
-                }
+        IconButton {
+            objectName: "muteButton"
+            size: "s"
+            icon: root.isMuted ? Icons.speakerSlash : (root.icon || Icons.speakerHigh)
+            active: root.isMuted
+            danger: root.isMuted
+            tooltip: root.isMuted ? I18n.t("mixer.unmute") : I18n.t("mixer.mute")
+            onClicked: {
+                if (root.node?.audio)
+                    root.node.audio.muted = !root.node.audio.muted;
             }
         }
 
-        // Second row: Name + Separator + Percentage
-        RowLayout {
+        LineSlider {
+            id: volumeSlider
+            objectName: "volumeSlider"
             Layout.fillWidth: true
-            spacing: 8
+            Layout.preferredHeight: Space.l
+            wheelEnabled: false
+            fillColor: root.isMuted ? Type.muted : (root.protecting ? Colors.warning : Type.progress)
 
-            // Source name
-            Text {
-                text: root.isMainDevice ? Audio.friendlyDeviceName(root.node) : Audio.appNodeDisplayName(root.node)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overSurfaceVariant
+            onMoved: v => {
+                if (root.node?.audio && Math.abs(v - root.volume) > 0.001)
+                    Audio.setNodeVolume(root.node, v);
             }
 
-            // Separator line
-            Separator {
-                Layout.fillWidth: true
+            Binding {
+                target: volumeSlider
+                property: "value"
+                value: root.volume
+                when: !volumeSlider.pressed
             }
 
-            // Protection indicator
-            Text {
-                visible: Audio.protectionTriggered && root.isMainDevice
-                text: Icons.shieldCheck
-                font.family: Icons.font
-                font.pixelSize: 12
-                color: Colors.warning
-
-                StyledToolTip {
-                    visible: parent.visible && protectionIndicatorMa.containsMouse
-                    tooltipText: I18n.t("controls.volume_protection")
-                }
-
-                MouseArea {
-                    id: protectionIndicatorMa
-                    anchors.fill: parent
-                    hoverEnabled: true
+            Behavior on fillColor {
+                enabled: Motion.micro.duration > 0
+                ColorAnimation {
+                    duration: Motion.micro.duration
                 }
             }
+        }
+    }
 
-            // Percentage
-            Text {
-                text: `${Math.round(root.volume * 100)}%`
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overSurfaceVariant
-                horizontalAlignment: Text.AlignRight
+    RowLayout {
+        Layout.fillWidth: true
+        spacing: Space.s
+
+        KitText {
+            Layout.maximumWidth: root.width * 0.7
+            role: "caption"
+            color: Type.secondary
+            text: root.isMainDevice ? Audio.friendlyDeviceName(root.node) : Audio.appNodeDisplayName(root.node)
+        }
+
+        // A hairline leader to the value (just room where dividers are off)
+        Item {
+            Layout.fillWidth: true
+            implicitHeight: Space.hairline
+
+            Divider {
+                anchors.verticalCenter: parent.verticalCenter
+                width: parent.width
             }
+        }
+
+        Icon {
+            visible: root.protecting
+            icon: Icons.shieldCheck
+            role: "caption"
+            color: Colors.warning
+
+            StyledToolTip {
+                visible: parent.visible && protectionMouse.containsMouse
+                tooltipText: I18n.t("controls.volume_protection")
+            }
+
+            MouseArea {
+                id: protectionMouse
+                anchors.fill: parent
+                hoverEnabled: true
+            }
+        }
+
+        KitText {
+            role: "caption"
+            tabular: true
+            color: Type.secondary
+            text: `${Math.round(root.volume * 100)}%`
         }
     }
 }

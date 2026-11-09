@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 	"yozakura/backend/pkg/brand"
@@ -98,6 +99,12 @@ type Daemon struct {
 
 	qsCmd  *exec.Cmd
 	qsDone <-chan error
+	// supervision of the shell: pid of the running one (0: none), restart
+	// policy, freeze watchdog and their side effects (qssupervise.go)
+	qsPid atomic.Int64
+	guard crashGuard
+	wd    watchdog
+	hooks qsHooks
 
 	// sweep kills stray helpers left after shutdown (nil in tests).
 	sweep func()
@@ -198,7 +205,7 @@ func New() (*Daemon, error) {
 	nlSvc.Register(d.srv)
 	d.nightlight = nlSvc
 
-	wallpaperSvc := wallpaper.NewService()
+	wallpaperSvc := wallpaper.NewService(context.Background(), d.paths.CacheDir)
 	wallpaperSvc.Register(d.srv)
 
 	presetSvc := preset.NewService(d.paths)
@@ -323,7 +330,13 @@ func New() (*Daemon, error) {
 				d.TriggerShutdown()
 				return "ok", nil
 			},
+			// the shell's GUI thread is alive (freeze watchdog)
+			"heartbeat": d.heartbeat,
 		},
+		// The heartbeat shares the shell's request socket with slow
+		// ordered calls (a compositor dispatch may take its 30 s timeout):
+		// it must answer at once or the watchdog kills a healthy shell.
+		Async: map[string]bool{"heartbeat": true},
 	})
 
 	d.ui = uiSvc
@@ -357,9 +370,11 @@ func (d *Daemon) TriggerShutdown() {
 	d.shutdownOnce.Do(func() { close(d.shutdownCh) })
 }
 
-// Run blocks until the Quickshell child exits, an IPC shutdown is
-// requested, or a terminating signal is received. On exit it tears down
-// every child it owns in the right order:
+// Run blocks until an IPC shutdown is requested or a terminating signal
+// is received. A Quickshell child that exits on its own (or freezes) is
+// restarted with backoff until it crash loops (qssupervise.go), when the
+// daemon exits with ErrShellCrashLoop. On exit it tears down every child it owns in the
+// right order:
 //
 //  1. close the IPC listener (refuse new connections)
 //  2. SIGTERM → Quickshell; SIGKILL its process group if it ignores
@@ -416,7 +431,11 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 		d.tasks.Start()
 	}()
 
-	if err := d.spawnQS(qsBin, shellQML); err != nil {
+	d.hooks = d.defaultQSHooks(qsBin)
+	watchTick := time.NewTicker(WatchdogCheck)
+	defer watchTick.Stop()
+	d.hooks.tick = watchTick.C
+	if err := d.startQS(shellQML); err != nil {
 		return fmt.Errorf("spawn qs: %w", err)
 	}
 
@@ -426,7 +445,6 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer signal.Stop(sigCh)
 
-	d.qsDone = waitForProcess(d.qsCmd)
 	var healthTimer *time.Timer
 	var healthCh <-chan time.Time
 	if d.mods != nil && d.mods.HasPendingActivation() {
@@ -439,46 +457,7 @@ func (d *Daemon) Run(qsBin, shellQML string) error {
 		}
 	}()
 
-	for {
-		select {
-		case s := <-sigCh:
-			log.Printf("[yozakura] received %v, shutting down", s)
-			d.shutdown()
-			return nil
-		case <-d.shutdownCh:
-			log.Printf("[yozakura] shutdown requested via IPC")
-			d.shutdown()
-			return nil
-		case <-healthCh:
-			if err := d.mods.MarkHealthy(); err != nil {
-				log.Printf("[yozakura] mod activation health check: %v", err)
-			}
-			healthCh = nil
-		case err := <-d.qsDone:
-			log.Printf("[yozakura] qs exited: %v", err)
-			d.qsCmd = nil
-			d.qsDone = nil
-			if healthCh != nil {
-				recovered, recoverErr := d.mods.RecoverFailedActivation()
-				if recoverErr != nil {
-					log.Printf("[yozakura] mod activation rollback: %v", recoverErr)
-				}
-				healthCh = nil
-				if recovered {
-					fallback := filepath.Join(paths.FindShellSource(), "shell.qml")
-					log.Printf("[yozakura] retrying with previous shell generation")
-					if spawnErr := d.spawnQS(qsBin, fallback); spawnErr != nil {
-						d.shutdown()
-						return fmt.Errorf("spawn rollback shell: %w", spawnErr)
-					}
-					d.qsDone = waitForProcess(d.qsCmd)
-					continue
-				}
-			}
-			d.shutdown()
-			return nil
-		}
-	}
+	return d.supervise(sigCh, shellQML, healthCh)
 }
 
 func waitForProcess(cmd *exec.Cmd) <-chan error {
@@ -499,8 +478,8 @@ func (d *Daemon) spawnQS(qsBin, shellQML string) error {
 	if os.Getenv("MALLOC_CONF") == "" {
 		env = append(env, "MALLOC_CONF=dirty_decay_ms:1000,muzzy_decay_ms:1000")
 	}
-	if os.Getenv("QT_MEDIA_BACKEND") == "" {
-		env = append(env, "QT_MEDIA_BACKEND=gstreamer")
+	if backend := mediaBackend(os.Getenv, pathExists); backend != "" {
+		env = append(env, "QT_MEDIA_BACKEND="+backend)
 	}
 	cmd.Env = env
 	if err := cmd.Start(); err != nil {

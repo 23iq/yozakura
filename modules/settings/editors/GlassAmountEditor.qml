@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Master glass slider (theme.glass.amount). While the amount follows the
 // preset (-1) the slider shows the preset's own amount; moving it pins a
@@ -18,7 +19,7 @@ ColumnLayout {
     readonly property bool followsPreset: !(raw >= 0)
     readonly property real effective: followsPreset ? Glass.reference : raw
 
-    spacing: 8
+    spacing: Space.s
 
     SliderControl {
         objectName: "glassAmountSlider"
@@ -33,12 +34,11 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Space.s
 
-        Text {
+        KitText {
+            role: "caption"
             text: I18n.t("prefs.glass.level." + Glass.describe(root.effective))
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             font.weight: Font.DemiBold
             color: Colors.primary
         }
@@ -57,12 +57,11 @@ ColumnLayout {
             border.width: 1
             border.color: Ui.alpha(root.followsPreset ? Colors.primary : Colors.outlineVariant, 0.6)
 
-            Text {
+            KitText {
                 id: chipLabel
+                role: "caption"
                 anchors.centerIn: parent
                 text: I18n.t(root.followsPreset ? "prefs.glass.follows_preset" : "prefs.glass.use_preset").replace("%1", Math.round(Glass.reference * 100) + "%")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 color: root.followsPreset ? Colors.primary : Colors.overSurfaceVariant
             }
 

@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.settings
 import qs.modules.settings.controls
 import "ModsModel.js" as ModsModel
+import qs.modules.components.kit
 
 // One field a mod declares in its manifest: boolean (switch), enum
 // (choices), string / integer / number (text + Save). Values are written
@@ -43,24 +44,22 @@ ColumnLayout {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            spacing: Space.hairline
 
-            Text {
+            KitText {
+                role: "secondary"
                 Layout.fillWidth: true
                 text: field.spec.label ?? field.spec.key
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.Medium
                 color: Colors.overBackground
                 wrapMode: Text.Wrap
             }
 
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: (field.spec.description ?? "") !== ""
                 text: field.spec.description ?? ""
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
                 wrapMode: Text.Wrap
             }
@@ -77,11 +76,10 @@ ColumnLayout {
 
     // Enum: every option as a chip; a value outside the options shows as
     // its raw text (or "Select") above them.
-    Text {
+    KitText {
+        role: "caption"
         visible: field.spec.type === "enum" && ModsModel.enumLabel(field.spec.options, field.value) === null
         text: field.value === undefined || field.value === null ? I18n.t("mods.select") : String(field.value)
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overSurfaceVariant
     }
 

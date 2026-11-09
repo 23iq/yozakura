@@ -61,7 +61,7 @@ Item {
 
             StyledRect {
                 anchors.fill: parent
-                visible: BarLook.classic
+                visible: BarLook.surfacePill
                 variant: "focus"
                 radius: root.radius
                 opacity: Config.theme.srFocus.opacity
@@ -69,7 +69,7 @@ Item {
 
             Rectangle {
                 anchors.fill: parent
-                visible: !BarLook.classic
+                visible: !BarLook.surfacePill
                 radius: BarLook.groupRadius(root.radius)
                 color: Look.controlFill(true)
             }
