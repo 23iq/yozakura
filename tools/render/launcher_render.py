@@ -95,6 +95,8 @@ def fixture_files(home: str, wall: str) -> None:
         "- Keep keyboard UX identical\n\nNext: tabs (clipboard, emoji, tmux, notes)\n")
     (root / "notes.txt").write_text("buy milk\ncall Mira at 18:00\n")
     if wall and Path(wall).exists():
+        # A read-only source (a store path) leaves a read-only copy: replace it.
+        (root / "Pictures/notes-whiteboard.png").unlink(missing_ok=True)
         shutil.copy(wall, root / "Pictures/notes-whiteboard.png")
 
 
