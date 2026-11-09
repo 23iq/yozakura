@@ -1,58 +1,33 @@
 import QtQuick
-import QtQuick.Layouts
 import Quickshell.Services.Mpris
-import qs.modules.theme
-import qs.modules.components
 import qs.config
+import qs.modules.components.kit
 
-Item {
+// The seek bar of a media player: the kit LineSlider with the shell's wavy
+// fill while playing (performance.wavyLine). It follows the player's
+// position except while dragged; the seek happens on release, the wheel
+// is left to the surface under it.
+LineSlider {
     id: root
 
-    Layout.fillHeight: true
-
     required property var player
+    readonly property bool isPlaying: root.player?.playbackState === MprisPlaybackState.Playing
+    readonly property real length: root.player?.length ?? 0
 
-    onPlayerChanged: {
-        if (!player) {
-            value = 0;
-        }
+    implicitHeight: Space.l
+    wavy: Config.performance ? Config.performance.wavyLine !== false : true
+    playing: root.isPlaying
+    wheelEnabled: false
+
+    onPressedChanged: {
+        if (!root.pressed && root.player && root.player.canSeek && root.length > 0)
+            root.player.position = root.value * root.length;
     }
 
-    property bool isPlaying: player?.playbackState === MprisPlaybackState.Playing
-    property real position: player?.position ?? 0.0
-    property real length: player?.length ?? 1.0
-    property bool hasArtwork: (player?.trackArtUrl ?? "") !== ""
-    // property var playerColors: hasArtwork ? PlayerColors.getColorsForPlayer(player) : null
-
-    property alias value: slider.value
-    property alias isDragging: slider.isDragging
-
-    // Propiedades opcionales para sobrescribir colores
-    property color customProgressColor: Styling.srItem("overprimary")
-    property color customBackgroundColor: Colors.shadow
-    property bool useCustomColors: false
-
-    StyledSlider {
-        id: slider
-        anchors.fill: parent
-
-        value: root.length > 0 ? Math.min(1.0, root.position / root.length) : 0
-        progressColor: root.useCustomColors ? root.customProgressColor : Styling.srItem("overprimary")
-        backgroundColor: root.useCustomColors ? root.customBackgroundColor : Colors.shadow
-        wavy: Config.performance ? Config.performance.wavyLine !== false : true // performance.wavyLine
-        playing: root.isPlaying // Control animation state via playing property
-        wavyAmplitude: root.isPlaying ? 1 : 0.0
-        wavyFrequency: root.isPlaying ? 8 : 0
-        heightMultiplier: root.player ? 8 : 4
-        smoothDrag: true
-        scroll: false
-        tooltip: false
-        updateOnRelease: true
-
-        onValueChanged: {
-            if (isDragging && root.player && root.player.canSeek) {
-                root.player.position = value * root.length;
-            }
-        }
+    Binding {
+        target: root
+        property: "value"
+        value: root.length > 0 ? Math.min(1, (root.player?.position ?? 0) / root.length) : 0
+        when: !root.pressed
     }
 }

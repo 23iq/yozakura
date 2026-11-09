@@ -152,9 +152,6 @@ Item {
             width: parent.width
             height: Space.l
             player: root.player
-            useCustomColors: true
-            customProgressColor: Type.progress
-            customBackgroundColor: Type.track
         }
 
         // Elapsed | previous, play, next | length.

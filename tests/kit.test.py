@@ -47,6 +47,7 @@ Window {
         LineSlider { objectName: "slider"; width: 240; icon: Icons.speakerHigh; showValue: true; value: 0.25
                      onMoved: parent.Window.window.moved++ }
         LineSlider { objectName: "vslider"; vertical: true }
+        LineSlider { objectName: "waveSlider"; width: 240; value: 0.5; wavy: true; playing: true; fillColor: "#ff0000"; wheelEnabled: false }
         LineSlider { objectName: "muteSlider"; width: 240; icon: Icons.speakerHigh; iconClickable: true
                      onIconClicked: parent.Window.window.iconClicks++ }
         ProgressLine { objectName: "progress"; width: 200; value: 0.5 }
@@ -194,6 +195,13 @@ for lang, density in CASES:
     mute = get("muteSlider")
     h.eval(mute, "iconClicked()")
     assert win.property("iconClicks") == 1 and slider.property("iconClickable") is False, tag
+    # Media timelines: the wave replaces the flat fill, in the fill colour
+    wave = get("waveSlider")
+    assert h.find(wave, "sliderWave").property("active") is True, tag
+    assert h.find(wave, "sliderFill").property("visible") is False, tag
+    assert h.find(slider, "sliderWave").property("active") is False, tag
+    assert h.find(slider, "sliderFill").property("visible") is True, tag
+    assert h.eval(wave, "fillColor.toString()") == "#ff0000", tag
     vs = get("vslider")
     assert vs.property("implicitHeight") > vs.property("implicitWidth"), tag
     assert get("progress").property("height") == space("stroke"), tag

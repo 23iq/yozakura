@@ -72,6 +72,8 @@ TYPES = {
     "Avatar": "Item { property url source; property string icon; property string name; property real radius; "
               "implicitWidth: 40; implicitHeight: 40 }",
     "LineSlider": "Item { property real from: 0; property real to: 1; property real value: 0; property string icon; "
+                  "property real step: 0.05; property bool showValue; property string valueText; property bool pressed: false; "
+                  "property color fillColor: \"pink\"; property bool wavy; property bool playing; property bool wheelEnabled: true; "
                   "signal moved(real value) }",
     "Surface": "Item { property int padding: 16; property bool floating: false }",
 }

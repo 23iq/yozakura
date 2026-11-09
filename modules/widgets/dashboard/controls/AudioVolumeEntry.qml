@@ -88,30 +88,35 @@ Item {
             }
 
             // Volume slider
-            StyledSlider {
+            LineSlider {
                 id: volumeSlider
                 Layout.fillWidth: true
-                Layout.preferredHeight: 20
-                value: root.volume
-                scroll: false
-                progressColor: {
+                Layout.preferredHeight: Space.l
+                wheelEnabled: false
+                fillColor: {
                     if (root.isMuted)
-                        return Colors.outline;
+                        return Type.muted;
                     if (Audio.protectionTriggered && root.isMainDevice)
                         return Colors.warning;
-                    return Styling.srItem("overprimary");
+                    return Type.progress;
                 }
 
-                onValueChanged: {
-                    if (root.node?.audio && Math.abs(value - root.volume) > 0.001) {
-                        Audio.setNodeVolume(root.node, value);
-                    }
+                onMoved: v => {
+                    if (root.node?.audio && Math.abs(v - root.volume) > 0.001)
+                        Audio.setNodeVolume(root.node, v);
                 }
 
-                Behavior on progressColor {
-                    enabled: Config.animDuration > 0
+                Binding {
+                    target: volumeSlider
+                    property: "value"
+                    value: root.volume
+                    when: !volumeSlider.pressed
+                }
+
+                Behavior on fillColor {
+                    enabled: Motion.micro.duration > 0
                     ColorAnimation {
-                        duration: Config.animDuration / 2
+                        duration: Motion.micro.duration
                     }
                 }
             }
