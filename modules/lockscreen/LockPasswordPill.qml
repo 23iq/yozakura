@@ -56,14 +56,12 @@ LockPasswordBase {
         }
 
         // Leading lock glyph
-        Text {
+        Icon {
             id: leadIcon
             anchors.left: parent.left
             anchors.leftMargin: Space.l
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons.lock
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("body")
+            icon: Icons.lock
             color: root.showError ? root.errorColor : root.textColor
             opacity: root.showError ? 1 : 0.7
 
@@ -101,16 +99,14 @@ LockPasswordBase {
         }
 
         // Caps lock indicator
-        Text {
+        Icon {
             id: capsIcon
             anchors.right: submitButton.left
             anchors.rightMargin: Space.s
             anchors.verticalCenter: parent.verticalCenter
             visible: opacity > 0
             opacity: root.capsLock ? 1 : 0
-            text: Icons.capsLock
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("body")
+            icon: Icons.capsLock
             color: root.accent
 
             Behavior on opacity {

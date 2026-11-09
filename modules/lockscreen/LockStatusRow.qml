@@ -75,11 +75,10 @@ Item {
                 spacing: Space.xs
                 anchors.verticalCenter: parent.verticalCenter
 
-                Text {
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: info.networkIcon
-                    font.family: Icons.font
-                    font.pixelSize: Type.iconSize("caption")
+                    icon: info.networkIcon
+                    role: "caption"
                     color: root.textColor
                 }
                 KitText {
@@ -98,11 +97,10 @@ Item {
                 visible: info.batteryAvailable
                 anchors.verticalCenter: parent.verticalCenter
 
-                Text {
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: info.batteryIcon
-                    font.family: Icons.font
-                    font.pixelSize: Type.iconSize("caption")
+                    icon: info.batteryIcon
+                    role: "caption"
                     color: info.batteryLow ? root.errorColor : root.textColor
                 }
                 KitText {
