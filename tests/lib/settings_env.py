@@ -871,11 +871,10 @@ class SettingsEnv:
         """Wait until the settings page has built all its sections (schema
         pages add them a few per frame, see SettingsPage)."""
         from PySide6.QtCore import QObject
-        from PySide6.QtTest import QTest
+        from waits import wait_until
 
-        for _ in range(ms // 25):
+        def built():
             page = win.findChild(QObject, "settingsPage")
-            if page is not None and self.h.eval(page, "!!item && item.complete !== false"):
-                return True
-            QTest.qWait(25)
-        return False
+            return page is not None and self.h.eval(page, "!!item && item.complete !== false")
+
+        return wait_until(built, timeout_ms=ms)

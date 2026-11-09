@@ -18,6 +18,7 @@ from terminal_env import TerminalEnv, sample_previews  # noqa: E402
 from PySide6.QtCore import QPointF, Qt  # noqa: E402
 from PySide6.QtQuick import QQuickItem  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import pump, settle, wait_stable, wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -83,6 +84,7 @@ def visible(it) -> bool:
 
 
 def click(it) -> None:
+    wait_stable(lambda: it.mapToScene(QPointF(it.width() / 2, it.height() / 2)), stable_ms=40)  # not mid-layout
     p = it.mapToScene(QPointF(it.width() / 2, it.height() / 2)).toPoint()
     QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, p)
     QTest.qWait(40)
@@ -136,7 +138,7 @@ check(ev("height", find("cursor")) <= 3, "underline cursor is a thin bar")
 # approximate preview (oh-my-posh missing): install action
 ev("BackendService.previews = %s" % json.dumps(sample_previews(exact=False, engine="ohmyposh")))
 ev("Config.terminal.engine = 'ohmyposh'")
-QTest.qWait(60)
+pump(60)  # nothing may follow
 check(calls("extras.install") == [], "a config change from elsewhere never installs anything")
 check(visible(find("approxNotice")), "an approximate preview shows the notice")
 btn = find("installEngineButton")
@@ -160,28 +162,28 @@ check(len(calls("extras.install")) == n + 2, "switching to a missing engine in s
 ev("BackendService.emit('extras.progress', %s)" % json.dumps(
     {"job": "system-9", "kind": "system", "entries": ["oh-my-posh"], "state": "running", "percent": 40,
      "phase": "Downloading oh-my-posh"}))
-QTest.qWait(40)
+wait_until(lambda: visible(find("engineNotice")))
 check(visible(find("engineNotice")), "an engine install in progress shows the cue")
 check("this prompt" in ev("title", find("engineNotice")), "the cue says what is installed: %r" % ev("title", find("engineNotice")))
 check(ev("message", find("engineNotice")) == "Downloading oh-my-posh", "the cue shows the install phase")
 check(not visible(find("approxNotice")), "the approximate notice steps aside while installing")
 ev("BackendService.emit('extras.progress', %s)" % json.dumps(
     {"job": "system-9", "kind": "system", "entries": ["oh-my-posh"], "state": "failed", "percent": -1}))
-QTest.qWait(40)
+wait_until(lambda: not visible(find("engineNotice")))
 check(not visible(find("engineNotice")), "the cue goes away when the install ends")
 check(len(js("promptLines", find("terminalPreview"))) == 2, "two-line preset: two prompt lines")
 
 # no Nerd Font on the system: notice with install and "Use Plain"
 ev("TerminalLookService._families = ['Noto Sans', 'JetBrainsMono Nerd Font']")  # not the host's fonts
-QTest.qWait(20)
+wait_until(lambda: not visible(find("nerdNotice")))
 check(not visible(find("nerdNotice")), "a Nerd Font is installed: no font notice")
 ev("TerminalLookService._families = ['Noto Sans', 'DejaVu Sans Mono']")
-QTest.qWait(20)
+wait_until(lambda: visible(find("nerdNotice")))
 check(visible(find("nerdNotice")), "no Nerd Font + a Nerd Font preset: the font notice shows")
 click(find("installNerdButton"))
 check(calls("extras.install")[-1]["params"]["ids"] == ["nerd-font"], "Install Nerd Font queues the nerd-font entry")
 ev("BackendService.emit('extras.status', {'nerd-font': {'id': 'nerd-font', 'state': 'unavailable', 'reason': 'no_method'}})")
-QTest.qWait(40)
+wait_until(lambda: not visible(find("installNerdButton")))
 check(not visible(find("installNerdButton")), "no install method here: no Install Nerd Font button")
 check("package manager" in ev("message", find("nerdNotice")), "no install method: the notice says how to get one")
 check(visible(find("usePlainButton")), "Use Plain stays")
@@ -190,13 +192,13 @@ check(ev("Config.terminal.prompt") == "plain", "Use Plain picks the plain prompt
 check(not visible(find("nerdNotice")), "plain needs no Nerd Font: notice hidden")
 click(find("promptCard:two-line-box"))
 ev("TerminalLookService._families = ['Symbols Nerd Font Mono']")
-QTest.qWait(20)
+wait_until(lambda: not visible(find("nerdNotice")))
 check(not visible(find("nerdNotice")), "a symbols-only Nerd Font is enough")
 
 # palette change: previews fetched again
 before = len(calls("term.preview"))
 ev("Colors.primary = '#00ff00'")
-QTest.qWait(800)
+wait_until(lambda: len(calls("term.preview")) > before)
 check(len(calls("term.preview")) > before, "a palette change re-renders the previews")
 
 # fish not the login shell -> chsh
@@ -204,7 +206,8 @@ ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.st
    % json.dumps({**js("TerminalLookService.status"), "fishIsLoginShell": False, "foreignPromptInit": True,
                  "foreignFile": "/home/user/.config/fish/config.fish"}))
 ev("TerminalLookService.refreshStatus()")
-QTest.qWait(40)
+wait_until(lambda: visible(find("fishNotice")) and visible(find("foreignNotice")) and visible(find("makeFishButton")))
+settle()
 check(visible(find("fishNotice")), "fish not the login shell: notice shows")
 check(visible(find("foreignNotice")), "another prompt init in config.fish: warning shows")
 check("~/.config/fish/config.fish" in ev("title", find("foreignNotice")), "the warning names the file")
@@ -223,7 +226,7 @@ check(len(calls("extras.setLoginShell")) == shells, "no chsh before fish is inst
 ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': %s})"
    % json.dumps({**js("TerminalLookService.status"), "fishInstalled": True}))
 ev("BackendService.emit('extras.status', {'fish': {'id': 'fish', 'state': 'installed'}})")
-QTest.qWait(1000)
+wait_until(lambda: len(calls("extras.setLoginShell")) == shells + 1)
 check(len(calls("extras.setLoginShell")) == shells + 1, "fish installed: chsh follows")
 
 if failures:

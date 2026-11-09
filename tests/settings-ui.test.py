@@ -20,6 +20,7 @@ from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
+from waits import settle, wait_stable, wait_until  # noqa: E402
 
 env = SettingsEnv("settings-ui", wallpaper={
     "dir": "/walls", "scanDirs": ["/walls"], "paths": ["/walls/a.jpg", "/walls/b.png"], "current": "/walls/a.jpg"})
@@ -70,8 +71,8 @@ def ev(expr: str, obj=None):
     return h.eval(obj or shell, expr)
 
 
-def settle(ms: int = 150) -> None:
-    QTest.qWait(ms)
+def until(pred, what: str) -> None:
+    check(wait_until(pred), what)
 
 
 def select(cat: str) -> None:
@@ -97,7 +98,6 @@ order = ["appearance", "wallpapers", "bar", "notch", "dock", "overview", "deskto
          "lockscreen", "notifications", "windows", "input", "terminal", "system", "voice", "updates", "about"]
 for cat in order:
     select(cat)
-    settle(250)
     check(ev("currentCategory") == cat, f"select {cat}")
     page = h.find(win, "settingsPage").property("item")
     check(page is not None, f"{cat}: page loaded")
@@ -106,7 +106,6 @@ check(not own_errors, "QML errors while loading pages:\n  " + "\n  ".join(own_er
 
 # Toggle: writes Config, stages the shell domain, shows modified, resets.
 select("bar")
-settle(300)
 r = row("bar.compact")
 check(h.eval(r, "modified") is False, "compact starts at default")
 ev("SettingsStore.set('bar.compact', true)")
@@ -120,44 +119,40 @@ check(ev("Config.bar.compact") is False and h.eval(r, "modified") is False, "res
 # visibleWhen (bar.frameThickness is advanced: the All view)
 ev("SettingsStore.setShowAll(true)")
 ev("SettingsStore.set('bar.frameEnabled', false)")
-settle(50)
+settle()
 check(h.eval(row("bar.frameThickness"), "shown") is False, "frame thickness hidden without frame")
 ev("SettingsStore.set('bar.frameEnabled', true)")
-settle(50)
+settle()
 check(h.eval(row("bar.frameThickness"), "shown") is True, "frame thickness shown with frame")
 ev("SettingsStore.setShowAll(false)")
 
 # Host/style pickers note where they show while the notch is off
 select("menus")
-settle(250)
 pm = row("layout.powermenu.style")
 check(h.eval(pm, "shownAs") == "", "no note while the notch is on")
 ev("SettingsStore.set('notch.enabled', false)")
-settle(50)
+settle()
 shown_as = h.eval(pm, "shownAs")
 check(shown_as != "" and shown_as != "fullscreen", f"auto power menu notes its fallback label ({shown_as!r})")
 ev("SettingsStore.set('layout.powermenu.style', 'radial')")
-settle(50)
+settle()
 check(h.eval(pm, "shownAs") == "", "an explicit off-notch style has no note")
 ev("SettingsStore.reset({key: 'layout.powermenu.style'})")
 ev("SettingsStore.reset({key: 'notch.enabled'})")
-settle(50)
+settle()
 check(h.eval(pm, "shownAs") == "", "note gone with the notch back on")
 
 # Compositor gate note: silent on Hyprland, counts gated entries on niri
 select("windows")
-settle(250)
 note = ev('w.findItem("compositorOnlyNote")')
 check(note is not None and h.eval(note, "visible") is False, "no compositor note on Hyprland")
 h.eval(note, "YozdService.compositorName = 'niri'")
-settle(250)
+until(lambda: h.eval(ev('w.findItem("compositorOnlyNote")'), "visible") is True, "compositor note shows on niri")
 note = ev('w.findItem("compositorOnlyNote")')
-check(note is not None and h.eval(note, "visible") is True, "compositor note shows on niri")
 check("Hyprland" in h.eval(note, "text"), "compositor note names the supporting compositors")
 h.eval(note, "YozdService.compositorName = 'hyprland'")
-settle(100)
+settle()
 select("bar")
-settle(250)
 
 # Nested key keeps the rest of the object
 ev("SettingsStore.set('bar.layout.style', 'islands')")
@@ -195,7 +190,7 @@ ev("""(function() {
 page = ev('w.findItem("settingsPage").item')
 ev("w.findItem('settingsPage').item.contentY = 0")
 ev("w.findItem('settingsPage').item.reveal('layout', '')")
-settle(600)
+check(wait_stable(lambda: ev("w.findItem('settingsPage').item.contentY")), "reveal scroll finished")
 moving = ev("w.layoutEditor.zoneItems()[0].chipItems()[1].moduleId")
 start = ev("(function(){ var c = w.layoutEditor.zoneItems()[0].chipItems()[1]; return c.mapToItem(null, c.width / 2, c.height / 2); })()")
 end = ev("(function(){ var z = w.layoutEditor.zoneItems()[2]; return z.mapToItem(null, z.width - 20, z.height - 16); })()")
@@ -205,18 +200,17 @@ p1 = QPoint(int(end.x()), int(end.y()))
 QTest.mousePress(win, Qt.LeftButton, Qt.NoModifier, p0)
 for i in range(1, 11):
     QTest.mouseMove(win, QPoint(p0.x() + (p1.x() - p0.x()) * i // 10, p0.y() + (p1.y() - p0.y()) * i // 10))
-    settle(20)
+    settle(1)
 check(ev("w.layoutEditor.dragging") is True, "drag started")
 check(ev("w.layoutEditor.dropGroup") == "drawer", "hovering the drawer zone")
 QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, p1)
-settle(100)
+until(lambda: not ev("w.layoutEditor.dragging"), "drop finished")
 drawer = json.loads(ev("JSON.stringify(Config.bar.layout.drawer)"))
 check(drawer and drawer[-1] == moving, f"{moving} dropped at the end of the drawer: {drawer}")
 check(moving not in json.loads(ev("JSON.stringify(Config.bar.layout.left)")), "dragged module left its group")
 
 # Theme keys stage the theme snapshot
 select("appearance")
-settle(300)
 ev("SettingsStore.set('theme.roundness', 4)")
 check(ev("GlobalStates.themeHasChanges") is True, "theme edit stages the theme snapshot")
 check(ev("Styling.radius(0)") == 4, "roundness applies live")
@@ -232,7 +226,6 @@ check(ev("GlobalStates.applied") >= 2, "apply called for each domain")
 
 # Wallpaper folders: extras staged, primary immediate
 select("wallpapers")
-settle(300)
 folders = row("desktop.wallpaperFolders")
 h.eval(folders, """(function() {
     function find(item) {
@@ -252,10 +245,9 @@ check(json.loads(ev("JSON.stringify(Config.desktop.wallpaperFolders)")) == ["/wa
 # Lock screen gallery: a live preview (the real LockView) per registry style;
 # picking a card writes lockscreen.style and stages the shell snapshot.
 select("lockscreen")
-settle(800)
 lock_styles = ["glass", "paper", "terminal", "aurora", "neon", "poster"]
 for sid in lock_styles:
-    check(ev(f'w.findItem("lockPreview:{sid}") !== null'), f"gallery preview for {sid}")
+    until(lambda: ev(f'w.findItem("lockPreview:{sid}") !== null'), f"gallery preview for {sid}")  # noqa: B023
 check(ev('w.findItem("lockPreview:glass").children[0].preview === true'), "previews never grab focus or cava")
 ev('w.findItem("lockPreview:paper").parent.parent.clicked()')
 check(ev("Config.lockscreen.style") == "paper", "card click selects the style")
@@ -268,24 +260,20 @@ check(h.eval(row("lockscreen.showVisualizer"), "shown") is True, "visualizer tog
 # Search navigates to the entry and highlights it
 search = h.find(win, "settingsSearch")
 search.setProperty("text", "numerals")
-settle(100)
 results = h.find(win, "settingsSearchResults")
-check(results.property("count") > 0, "search has results")
+until(lambda: results.property("count") > 0, "search has results")
 check(h.eval(results, "model[0].entryId") == "workspaces.numeralStyle", "best result is the numerals entry")
 search.setProperty("text", "")
 ev("navigate('bar', 'workspaces', 'workspaces.numeralStyle')")
-settle(400)
-check(ev("currentCategory") == "bar", "navigate switches category")
-check(ev("SettingsStore.highlightedEntry") == "workspaces.numeralStyle", "entry highlighted")
+until(lambda: ev("currentCategory") == "bar", "navigate switches category")
+until(lambda: ev("SettingsStore.highlightedEntry") == "workspaces.numeralStyle", "entry highlighted")
 
 # Another part of the shell asks for a page (microphone activity -> Sound)
 ev("GlobalStates.settingsCategory = 'sound'")
-settle(100)
-check(ev("currentCategory") == "sound", "settingsCategory opens the page")
+until(lambda: ev("currentCategory") == "sound", "settingsCategory opens the page")
 
 # System: list editor (idle listeners), string list of paths (disks)
 select("system")
-settle(300)
 n0 = ev("Config.system.idle.listeners.length")
 lst = row("system.idle.listeners")
 h.eval(lst, """(function() {
@@ -303,13 +291,13 @@ check(h.eval(lst, "modified") is True, "list row modified")
 ev("SettingsStore.reset({key: 'system.idle.listeners'})")
 check(ev("Config.system.idle.listeners.length") == n0, "list reset")
 ev("SettingsStore.set('system.disks', ['/', '/home'])")
-settle(50)
+settle()
 check(h.eval(row("system.disks"), "modified") is True, "disks list modified")
 ev("SettingsStore.set('prefix.emoji', 'em')")
 check(ev("Config.prefix.emoji") == "em" and "prefix" in json.loads(ev("JSON.stringify(Config.saved)")),
       "unstaged domain saved while staged changes pause auto-save")
 ev("SettingsStore.apply()")
-settle(50)
+settle()
 ev("Config.saved = []")
 ev("SettingsStore.set('prefix.emoji', 'em2')")
 check(ev("Config.prefix.emoji") == "em2" and ev("Config.saved.length") == 0,
@@ -317,7 +305,6 @@ check(ev("Config.prefix.emoji") == "em2" and ev("Config.saved.length") == 0,
 
 # Notifications: screens multi-select, multiselect days, list rules, pattern
 select("notifications")
-settle(300)
 scr = row("notifications.screens")
 chips = h.eval(scr, """(function() {
     var out = [];
@@ -335,10 +322,10 @@ check(chips == 2, f"screens control lists the connected monitors ({chips})")
 check(json.loads(ev("JSON.stringify(Config.notifications.screens)")) == ["HDMI-A-1"], "screen selected")
 check("notifications" not in json.loads(ev("JSON.stringify(Config.saved)")), "notifications domain is left to its own auto-save (one writer)")
 ev("SettingsStore.set('notifications.presentation', 'notch')")
-settle(50)
+settle()
 check(h.eval(row("notifications.position"), "shown") is False, "corner position hidden for notch toasts")
 ev("SettingsStore.set('notifications.presentation', 'corner')")
-settle(50)
+settle()
 check(h.eval(row("notifications.position"), "shown") is True, "corner position shown for corner toasts")
 # A long option set (7 corners) is an inline kit Dropdown; short ones stay chips
 pos = row("notifications.position")
@@ -353,7 +340,7 @@ picked = h.eval(pos, """(function() {
 }).call(this)""")
 check(picked is True, "…drawn as a Dropdown")
 ev("SettingsStore.set('notifications.dnd.schedule.enabled', true)")
-settle(50)
+settle()
 days = row("notifications.dnd.schedule.days")
 check(h.eval(days, "shown") is True, "schedule days shown")
 ev("SettingsStore.set('notifications.dnd.schedule.days', [1, 2, 3, 4, 5])")
@@ -375,20 +362,17 @@ check(h.eval(row("notifications.status"), "Notifications.sent.length") == 1, "te
 
 # Terminal & Apps: per-app theming toggles + glass link
 select("terminal")
-settle(300)
 tog = ev('w.findItem("appTheme:discord")')
 check(tog is not None, "app theming row for discord")
 h.eval(tog, "toggled(false)")
 check(ev("Config.apps.theming.discord") is False, "app theming toggle writes apps.theming.discord")
 check(h.eval(row("apps.theming"), "modified") is True, "app theming entry modified")
 h.eval(ev('w.findItem("glassLink")'), "clicked()")
-settle(400)
-check(ev("currentCategory") == "appearance", "glass link opens Appearance")
+until(lambda: ev("currentCategory") == "appearance", "glass link opens Appearance")
 
 # Windows page: color-role control, nested pulse key, preview (expert rows: All view)
 ev("SettingsStore.setShowAll(true)")
 select("windows")
-settle(400)
 FIND = """(function(name) {
     function find(item) {
         if (item[name] !== undefined) return item;
@@ -408,33 +392,32 @@ shadow = row("compositor.shadowColor")
 h.eval(shadow, f"{FIND}.call(this, 'maxStops').commit(['primary@0.8'])")
 check(ev("Config.compositor.shadowColor") == "primary@0.8", "single color-role writes a string")
 ev("SettingsStore.set('compositor.borderPulse.enabled', true)")
-settle(50)
+settle()
 check(h.eval(row("compositor.borderPulse.intensity"), "shown") is True, "pulse intensity shown when enabled")
 check(ev("Config.compositor.borderPulse.source") == "cava", "nested pulse write keeps siblings")
 ev("SettingsStore.set('compositor.gapsIn', 7)")
-settle(50)
+settle()
 readout = ev('w.findItem("windowsReadout")')
 check(readout is not None and "7" in readout.property("text"), "preview readout follows the gaps")
 check(ev('w.findItem("motionCard:springs")') is None, "motion lives on Look, not Windows")
 
 # Look > Motion: the one motion section (profile + speed)
 select("appearance")
-settle(400)
 card = ev('w.findItem("motionCard:springs")')
 check(card is not None, "motion profile cards rendered")
 h.eval(card, "clicked()")
 check(ev("Config.compositor.motionProfile") == "springs", "motion card selects the profile")
 ev("SettingsStore.set('compositor.motionProfile', 'off')")
-settle(50)
+settle()
 check(h.eval(row("compositor.motionDurationScale"), "shown") is False, "speed hidden for the off profile")
 # Leave the page before the engine is torn down: PySide destroys the Config/
 # Colors singletons first and the live preview bindings would read them dead.
 select("about")
-settle(300)
 legal = ev('w.findItem("aboutLegalNotice")')
 check(legal is not None, "about page shows the legal row")
 h.eval(legal, "expanded = true")
-settle(300)
+until(lambda: ev('w.findItem("aboutNoticeText") !== null'), "NOTICE viewer created")
+settle()
 notice = ev('w.findItem("aboutNoticeText")')
 check(notice is not None and h.eval(notice, "visible") and h.eval(legal, "noticePath").endswith("/NOTICE"),
       "legal row expands to the NOTICE viewer")
@@ -442,34 +425,33 @@ check(notice is not None and h.eval(notice, "visible") and h.eval(legal, "notice
 # Island activities editor: every registry entry, reorder / side / enable
 # write notch.activities as [{id, side, enabled}]
 select("notch")
-settle(250)
 editor = ev('w.findItem("islandActivitiesEditor")')
 check(editor is not None, "island activities editor rendered")
 ids = json.loads(h.eval(editor, "JSON.stringify(list.map(e => e.id))"))
 check(len(ids) == 8 and ids[0] == "media", f"island activities in registry order ({ids})")
 h.eval(editor, "write(Registry.move(list, 0, 2))")
-settle(50)
+settle()
 stored = json.loads(ev("JSON.stringify(Config.notch.activities)"))
 check([e["id"] for e in stored][:3] == [ids[1], ids[2], "media"], f"drag reorder stored ({stored[:3]})")
 h.eval(editor, "write(Registry.setField(list, 'battery', 'enabled', false))")
 h.eval(editor, "write(Registry.setField(list, 'osd', 'side', 'leading'))")
-settle(50)
+settle()
 stored = {e["id"]: e for e in json.loads(ev("JSON.stringify(Config.notch.activities)"))}
 check(stored["battery"]["enabled"] is False and stored["osd"]["side"] == "leading", "enable and side stored")
 
 # Closing with staged changes asks first: Keep editing keeps them, Apply applies.
 ev("GlobalStates.markShellChanged(); GlobalStates.settingsCloseConfirm = true")
-settle(80)
+settle()
 keep = ev('w.findItem("confirm:keep")')
 check(keep is not None and h.eval(keep, "visible") is True, "close confirm offers Keep editing")
 h.eval(keep, "clicked()")
-settle(50)
+settle()
 check(ev("GlobalStates.settingsCloseConfirm") is False and ev("GlobalStates.shellHasChanges") is True,
       "Keep editing leaves the staged changes")
 ev("GlobalStates.settingsCloseConfirm = true")
-settle(80)
+settle()
 h.eval(ev('w.findItem("confirm:apply")'), "clicked()")
-settle(50)
+settle()
 check(ev("GlobalStates.shellHasChanges") is False and ev("GlobalStates.settingsWindowVisible") is False,
       "Apply from the close confirm applies and closes")
 ev("GlobalStates.settingsWindowVisible = true")

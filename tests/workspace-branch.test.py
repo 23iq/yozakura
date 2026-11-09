@@ -14,6 +14,7 @@ headless.ensure(gl=True)
 from panels_env import PanelsEnv  # noqa: E402
 import qmlharness  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -78,23 +79,23 @@ for edge in ["top", "left"]:
     # A window closes on workspace 4: its petal falls
     lv("(function(){ var m = Object.assign({}, CompositorData.workspaceWindowsMap); m['4'] = m['4'].slice(1);"
        " CompositorData.workspaceWindowsMap = m; return true; })()")
-    QTest.qWait(60)
+    wait_until(lambda: lv("nodes(item)[3].state_.petals") == 2)
     check(lv("nodes(item)[3].state_.petals") == 2, f"{edge}: workspace 4 has two petals left")
     check(lv("nodes(item)[3].children[nodes(item)[3].children.length - 1].opacity") > 0, f"{edge}: a petal falls")
     # Urgent workspace 5: its bud trembles... and not at all with motion off
     lv("(function(){ CompositorData.workspaceUrgentMap = ({ 5: true }); return true; })()")
-    QTest.qWait(60)
+    wait_until(lambda: lv("nodes(item)[4].state_.urgent"))
     check(lv("nodes(item)[4].state_.urgent"), f"{edge}: workspace 5 is urgent")
     lv("(function(){ Config.animDuration = 0; var m = Object.assign({}, CompositorData.workspaceWindowsMap);"
        " m['1'] = []; CompositorData.workspaceWindowsMap = m; return true; })()")
-    QTest.qWait(60)
+    wait_until(lambda: lv("nodes(item)[0].state_.kind") == "bud")
     check(lv("nodes(item)[0].state_.kind") == "bud", f"{edge}: workspace 1 back to a bud")
     check(lv("nodes(item)[0].children[nodes(item)[0].children.length - 1].opacity") == 0,
           f"{edge}: no falling petal with motion off")
 
     # Back to the pill: the strip unloads, the box returns
     ev('Config.workspaces.indicatorStyle = "pill"')
-    QTest.qWait(200)
+    wait_until(lambda: not lv("active"))
     check(not lv("active"), f"{edge}: strip unloads with a box style")
     check(ev('findItem("activeIndicator", contentItem).visible'), f"{edge}: active box back")
     errors = [e for e in h.type_errors if "branch" in e or "Workspaces.qml" in e or "WorkspaceButton" in e]

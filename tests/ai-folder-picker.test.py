@@ -16,11 +16,12 @@ os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401
 from lib import aiscene  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer, Qt, QUrl, qInstallMessageHandler  # noqa: E402
+from PySide6.QtCore import Qt, QUrl, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlEngine, QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import settle, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 app = QGuiApplication([])
@@ -59,11 +60,6 @@ view.show()
 top = view.rootObject()
 
 
-def pump(ms=120):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
 
 
 def ev(target, expr):
@@ -97,7 +93,7 @@ def click(name):
     obj = find(name)
     assert obj is not None and shown(name), name
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, obj.mapToScene(obj.boundingRect().center()).toPoint())
-    pump()
+    settle()
 
 
 def calls(method):
@@ -106,12 +102,13 @@ def calls(method):
 
 ev(top, "setup()")
 # Assistant empty state names the model a first message will use.
-pump(200)
+wait_until(lambda: shown("usingModel") and find("usingModelText") is not None
+           and "Claude Sonnet 4.5" in ev(find("usingModelText"), "text"))
 assert shown("usingModel") and "Claude Sonnet 4.5" in ev(find("usingModelText"), "text"), ev(find("usingModelText"), "text")
 
 ev(top, "Ai.setSpace('code')")
 ev(top, "Ai.agents.activeId = ''")
-pump(200)
+settle()
 # Task options show the concrete default model / effort before the first task.
 assert ev(find("taskModel"), "text") == "Opus 5.5"
 assert ev(find("taskEffort"), "text") == "high"
@@ -119,7 +116,7 @@ assert ev(find("taskEffort"), "text") == "high"
 # Project ▾ -> Open folder… opens the in-bar picker (no zenity).
 click("projectButton")
 click("projectOpenFolder")
-pump(200)
+wait_until(lambda: shown("folderPicker"))
 assert shown("folderPicker"), "picker sheet visible"
 assert ev(find("panel"), "overlay") == "folder"
 assert calls("fs.repos"), "repositories requested"
@@ -129,13 +126,13 @@ assert [r.get("label") or r["name"] for r in rows] == ["recent", "yozakura", "no
 # Search filters recent folders and repositories.
 field = find("folderField")
 field.setProperty("text", "qui")
-pump()
+wait_until(lambda: [r["name"] for r in json.loads(ev(picker, "JSON.stringify(rows)")) if r["type"] != "header"] == ["quickshell"])
 assert [r["name"] for r in json.loads(ev(picker, "JSON.stringify(rows)")) if r["type"] != "header"] == ["quickshell"]
 assert ev(picker, "target") == "/home/user/src/quickshell", "a typed name selects its best match"
 # A path browses the folder; git repositories are marked, dot folders hidden.
 QTest.mouseMove(view, find("folderField").mapToScene(find("folderField").boundingRect().center()).toPoint())
 field.setProperty("text", "~/")
-pump()
+wait_until(lambda: calls("fs.list")[-1] == {"dir": "/home/user"})
 assert calls("fs.list")[-1] == {"dir": "/home/user"}
 rows = [r for r in json.loads(ev(picker, "JSON.stringify(rows)")) if r["type"] == "dir"]
 assert [(r["name"], r["git"]) for r in rows] == [("src", False), ("yozakura", True)], rows
@@ -149,9 +146,9 @@ assert json.loads(ev(top, "JSON.stringify(Ai.chosenProjects)")) == []
 # Keyboard: type, Enter chooses the best match.
 field.forceActiveFocus()
 field.setProperty("text", "~/yo")
-pump()
+settle()
 QTest.keyClick(view, Qt.Key_Return)
-pump(200)
+wait_until(lambda: json.loads(ev(top, "JSON.stringify(Ai.chosenProjects)")) == ["/home/user/yozakura"])
 assert json.loads(ev(top, "JSON.stringify(Ai.chosenProjects)")) == ["/home/user/yozakura"]
 assert not shown("folderPicker") and ev(find("panel"), "overlay") == ""
 assert ev(find("projectBar"), "project") == "/home/user/yozakura", "project bar shows the choice"
@@ -160,21 +157,21 @@ assert ev(find("taskWorkspace"), "project") == "/home/user/yozakura", "the board
 
 # Tab browses into the selection; Esc closes without choosing.
 ev(find("panel"), "openFolderPicker()")
-pump()
+settle()
 field.forceActiveFocus()
 field.setProperty("text", "~/s")
-pump()
+settle()
 QTest.keyClick(view, Qt.Key_Tab)
-pump()
+wait_until(lambda: ev(field, "text") == "~/src/")
 assert ev(field, "text") == "~/src/"
 QTest.keyClick(view, Qt.Key_Escape)
-pump()
+wait_until(lambda: not shown("folderPicker"))
 assert not shown("folderPicker")
 assert len(json.loads(ev(top, "JSON.stringify(Ai.chosenProjects)"))) == 1
 
 # Session settings: Browse opens the same picker.
 ev(find("panel"), "setOverlay('settings')")
-pump()
+settle()
 click("settingsBrowse")
 assert shown("folderPicker")
 

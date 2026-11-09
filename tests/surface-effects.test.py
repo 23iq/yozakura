@@ -14,8 +14,8 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
-from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 # Classic visual language: the variants drawn exactly as configured.
 env = SettingsEnv("surface-effects", overrides={"theme": {"language": "classic"}}, wallpaper={"dir": "/walls", "paths": [], "current": ""})
@@ -84,10 +84,6 @@ def ev(expr):
     return h.eval(win, expr)
 
 
-def settle(ms=200):
-    QTest.qWait(ms)
-
-
 def row_profile(name: str) -> list[int]:
     """Red channel down the middle column of a rect in the grabbed window."""
     img = win.grabWindow()
@@ -98,7 +94,7 @@ def row_profile(name: str) -> list[int]:
 
 
 # none: nothing is created, highlight rects keep their own fill
-settle()
+wait_until(lambda: ev("SurfaceFx.effectId") == "none")
 check(ev("SurfaceFx.effectId") == "none", "default effect is none")
 for name in ["barRoot", "modulePill", "selection", "focusRow"]:
     check(not ev(f'loaded("{name}")'), f"none creates no loader item ({name})")
@@ -108,7 +104,7 @@ check(max(flat) - min(flat) <= 3, f"no texture with none: {min(flat)}..{max(flat
 
 # crt: overlay on surface roots and bar module pills, never elsewhere
 ev('setEffect("crt", { intensity: 0.8 })')
-settle(500)
+wait_until(lambda: ev('effect("barRoot") !== null && loaded("barRoot")'))
 check(ev('effect("barRoot") !== null && loaded("barRoot")'), "crt loads on a bar surface root")
 check(ev('effect("modulePill") !== null'), "crt loads on a bar module pill (effectSurface)")
 check(not ev('loaded("popupInner")'), "crt skips plain (non-surface) rects")
@@ -127,7 +123,7 @@ check(len(phases) == 1, f"crt scanlines repeat every 3 rows: {scan}")
 # ink: grain on surfaces + brush-stroke highlights
 ev('setEffect("ink", { intensity: 1, grain: 1, brushHighlights: true })')
 ev("Config.theme.lightMode = true")
-settle(500)
+wait_until(lambda: ev('effect("barRoot") !== null'))
 check(ev('effect("barRoot") !== null'), "ink loads on surfaces")
 for name in ["selection", "focusRow"]:
     check(ev(f'highlight("{name}") !== null && loaded("{name}")'), f"ink paints {name} as a brush stroke")
@@ -139,26 +135,26 @@ check(not ev('loaded("paneRow")'), "non-highlight variants keep their fill")
 grain = row_profile("barRoot")
 check(max(grain) - min(grain) >= 3, f"ink draws paper grain: {grain}")
 ev('setEffect("ink", { brushHighlights: false })')
-settle()
+wait_until(lambda: not ev('loaded("selection")') and ev('w.findItem("selection").color.a > 0.5'))
 check(not ev('loaded("selection")') and ev('w.findItem("selection").color.a > 0.5'), "brushHighlights off restores fills")
 
 # back to none: everything is torn down
 ev('setEffect("none")')
 ev("Config.theme.lightMode = false")
-settle()
+wait_until(lambda: not ev('loaded("barRoot")') and not ev('loaded("modulePill")'))
 check(not ev('loaded("barRoot")') and not ev('loaded("modulePill")'), "switching to none unloads overlays")
 
 # settings: effect cards and indicator chips cover the registries
 h.eval(shell, 'select("appearance")')
-settle(600)
+pump(600)
 for eid in ["none", "crt", "ink"]:
     check(ev(f'w.findItem("effectPanel:{eid}") !== null'), f"effect card for {eid}")
 h.eval(shell, 'select("bar")')
-settle(600)
+pump(600)
 for sid in ["pill", "underline", "dot", "brush", "bracket"]:
     check(ev(f'w.findItem("indicatorChip:{sid}") !== null'), f"indicator chip for {sid}")
 ev('w.findItem("indicatorChip:bracket").children[w.findItem("indicatorChip:bracket").children.length - 1].clicked(null)')
-settle()
+wait_until(lambda: ev("Config.workspaces.indicatorStyle") == "bracket")
 check(ev("Config.workspaces.indicatorStyle") == "bracket", "clicking a chip sets workspaces.indicatorStyle")
 
 errors = [e for e in h.type_errors if "surfaceeffects" in e or "indicators" in e or "StyledRect" in e]

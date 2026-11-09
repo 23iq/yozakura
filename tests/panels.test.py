@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from panels_env import PanelsEnv  # noqa: E402
 import qmlharness  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 STYLES = {
     "classic": ["top", "bottom", "left", "right"], "islands": ["top", "left"], "menubar": ["top", "bottom"],
@@ -22,8 +22,8 @@ def scene(bar, **kw):
     env = PanelsEnv("panels-test", bar=bar, **kw)
     ENVS.append(env)
     win = env.scene(1600, 900, windows=False)
-    QTest.qWait(150)
     host = env.h.find(win, "host")
+    settle(3)
     return env, win, host
 
 
@@ -43,7 +43,7 @@ assert ev(env, host, "hitRegions.length") == 1
 assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).top") == top
 # Content/style changes must update the measured placement depth too.
 ev(env, host, "Config.bar.panels = [{id: 'rail', edge: 'right', thickness: 80, margin: 12}]")
-QTest.qWait(150)
+wait_until(lambda: ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).right") == 92)
 assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).right") == 92
 assert ev(env, host, "EdgeService.insets(screen, {dock: false, notch: false}).top") == 0
 win.close()
@@ -93,7 +93,7 @@ for style, edges in STYLES.items():
 # One keybind press flips the shared pin once, whatever the number of panels
 env, win, host = scene({"pinnedOnStartup": True, "panels": [{"id": "a", "edge": "top"}, {"id": "b", "edge": "bottom"}]})
 ev(env, host, "GlobalStates.barPinToggled()")
-QTest.qWait(50)
+settle()
 assert ev(env, host, "Config.bar.pinnedOnStartup") is False
 assert ev(env, host, "bars[0].pinned") is False and ev(env, host, "bars[1].pinned") is False
 assert ev(env, host, "zones.top") == 0
@@ -124,7 +124,8 @@ style_item = ev(env, host, "primary.styleItem")
 gaps = env.h.find(style_item, "gapSlots")
 for enabled in (False, True, False, True):
     ev(env, host, f"Config.notch.enabled = {str(enabled).lower()}")
-    QTest.qWait(100)
+    wait_until(lambda: ev(env, host, 'Visibilities.hasNotch("DP-1")') is enabled)  # noqa: B023
+    settle()
     assert ev(env, host, 'Visibilities.hasNotch("DP-1")') is enabled, enabled
     assert ev(env, host, 'Visibilities.notchRect("DP-1").width > 0') is enabled, enabled
     assert ev(env, gaps, "notchHere") is enabled, enabled

@@ -9,14 +9,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from panels_env import PanelsEnv  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 LAYOUT = {"style": "classic", "left": ["launcher", "workspaces", "layoutSelector", "appMenu", "tools", "power"],
           "right": ["downloads", "systray", "controls", "battery", "clock"], "drawer": []}
 ENV = PanelsEnv("bar-look", bar={"position": "top", "frameEnabled": False, "containBar": False, "layout": LAYOUT})
 WIN = ENV.scene(1600, 900, windows=False)
 H = ENV.h
-QTest.qWait(400)
+settle(3)
 
 # Kit components by their API (QML types are not visible from Python)
 COUNT = """(function(root, test) {
@@ -35,7 +35,7 @@ def theme(language, bar_opacity):
     host = H.find(WIN, "host")
     H.eval(host, f"Config.theme.language = '{language}'")
     H.eval(host, f"Config.theme.srBarBg = Object.assign({{}}, Config.theme.srBarBg, {{ opacity: {bar_opacity} }})")
-    QTest.qWait(150)
+    settle()
 
 
 def find(item, name):
@@ -73,14 +73,15 @@ for language, solid in [("ink", False), ("tiles", True)]:
     theme(language, 0.9)
     popup = find(find(WIN.contentItem(), "batteryModule"), "batteryPopup")
     H.eval(popup, "open()")
-    QTest.qWait(300)
     active = box("batteryModule", "moduleActive")
+    wait_until(lambda: H.eval(active, "visible") and (H.eval(active, "backgroundOpacity") > 0.5) is solid  # noqa: B023
+               and count(popup, IS_CHIP) == 3 and count(popup, IS_PROGRESS) == 1)  # noqa: B023
     assert H.eval(active, "visible") is True, language
     assert (H.eval(active, "backgroundOpacity") > 0.5) is solid, language
     assert count(popup, IS_CHIP) == 3, "one chip per power profile"
     assert count(popup, IS_PROGRESS) == 1, "the charge line"
     H.eval(popup, "close()")
-    QTest.qWait(300)
+    wait_until(lambda: not H.eval(popup, "isOpen") and not H.eval(active, "visible"))  # noqa: B023
 
 # One-button modules (BarModuleButton): a kit glyph in the module box, the
 # accent state while their panel is open
@@ -92,15 +93,15 @@ for name, module in [("powerButton", "powermenu"), ("toolsButton", "tools")]:
     assert find(button, "moduleGlyph").isVisible(), name
     assert H.eval(find(button, "moduleActive"), "visible") is False, name
     H.eval(host, f"Visibilities.setActiveModule('{module}')")
-    QTest.qWait(100)
+    wait_until(lambda: H.eval(button, "active") is True and H.eval(find(button, "moduleActive"), "visible") is True)  # noqa: B023
     assert H.eval(button, "active") is True and H.eval(find(button, "moduleActive"), "visible") is True, name
     H.eval(button, "clicked()")
-    QTest.qWait(100)
+    settle()
     assert H.eval(host, "Visibilities.currentActiveModule") == "", name
 launcher = find(WIN.contentItem(), "launcherButton")
 assert H.eval(launcher, "active") is False
 H.eval(host, "GlobalStates.launcherOpen = true")
-QTest.qWait(100)
+wait_until(lambda: H.eval(launcher, "active") is True)
 assert H.eval(launcher, "active") is True
 H.eval(host, "GlobalStates.launcherOpen = false")
 
@@ -132,8 +133,9 @@ EMPTY = Path(tempfile.mkdtemp(prefix="bar-look-downloads-"))
 EMPTY.mkdir(parents=True, exist_ok=True)
 H.eval(find(WIN.contentItem(), "host"), "Config.bar.moduleOptions = Object.assign({}, Config.bar.moduleOptions, "
        f"{{ downloads: {{ folder: '{EMPTY}' }} }})")
-QTest.qWait(400)
 downloads = find(WIN.contentItem(), "downloads")
+wait_until(lambda: H.eval(downloads, "files.length") == 0 and find(downloads, "downloadsEmptyGlyph").isVisible())
+settle()
 assert H.eval(downloads, "files.length") == 0
 assert find(downloads, "downloadsEmptyGlyph").isVisible()
 assert H.eval(downloads, INK) >= 1
@@ -146,11 +148,12 @@ theme("ink", 0)
 for module, name, test, expected in POPUPS:
     popup = find(find(WIN.contentItem(), module), name)
     H.eval(popup, "open()")
-    QTest.qWait(300)
+    wait_until(lambda: (count(popup, test) >= 1 if expected < 0 else count(popup, test) == expected))  # noqa: B023
     n = count(popup, test)
     assert (n >= 1 if expected < 0 else n == expected), (name, n)
     H.eval(popup, "close()")
-    QTest.qWait(300)
+    wait_until(lambda: not H.eval(popup, "isOpen"))  # noqa: B023
+    settle()
 
 print("bar look: module boxes per language, accent states and kit popups passed", flush=True)
 # Type check + temp cleanup, then leave without Qt's destructor pass

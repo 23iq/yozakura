@@ -72,6 +72,20 @@ Quickshell-only resolution problems (directories its scanner never reaches)
 are caught by the `qs-scanner` audit check.
 
 
+## Waiting: `tests/lib/waits.py`
+
+Wait for a state, not for a clock: `wait_until(lambda: h.eval(o, "ready"))`
+returns as soon as the predicate holds (an exception counts as "not yet"),
+with a timeout generous enough for a loaded CI machine (scaled by
+`YOZAKURA_TEST_WAIT_SCALE`), and prints where it timed out. `wait_stable(fn)`
+waits until a value (a position, a scroll) stops changing, e.g. before a
+click on an item that may still be sliding in. `settle()` flushes
+`Qt.callLater`, 0 ms timers and a couple of frames (enough with
+`animDuration: 0`). Keep `pump(ms)` for waits that deliberately let time pass
+(a debounce, "nothing may happen"), and shorten the interval in the test when
+it is exposed (`writeDebounce.interval`, a `replace=` on `h.copy`) rather than
+waiting the real duration. Do not define a local `pump`.
+
 ## Bar panels: `tests/lib/panels_env.py`
 
 `PanelsEnv(bar=..., theme=..., palette=...)` mirrors the real bar, panel

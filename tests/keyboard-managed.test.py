@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from keyboard_env import KeyboardEnv  # noqa: E402
 
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import pump, settle, wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -59,7 +59,10 @@ def calls(method):
     return js("BackendService.calls.filter(c => c.method === '%s')" % method)
 
 
-QTest.qWait(900)  # past the apply debounce
+# Read, shown, then past the apply debounce (400 ms): nothing may follow.
+APPLY_DEBOUNCE = 450
+wait_until(lambda: len(calls("keyboard.current")) >= 1 and ev("value", h.find(win, "rateSlider")) == 111)
+pump(APPLY_DEBOUNCE)
 
 # Startup: read only
 check(len(calls("keyboard.current")) >= 1, "the compositor's settings are read")
@@ -80,7 +83,7 @@ check([l["layout"] for l in js("Array.from(Config.keyboard.layouts)")] == ["us"]
 ev("indicatorToggled(false)", h.find(win, "layoutList"))
 check(ev("Config.keyboard.showIndicator") is False and ev("Config.keyboard.managed") is False, "showIndicator alone stays unmanaged")
 ev("indicatorToggled(true)", h.find(win, "layoutList"))
-QTest.qWait(600)
+pump(APPLY_DEBOUNCE)
 check(calls("keyboard.apply") == [], "the indicator toggle applies nothing")
 
 # The first change: the slider is saved after its 350 ms debounce, the
@@ -93,7 +96,8 @@ h.find(win, "rateSlider").moved.emit(119)
 h.find(win, "rateSlider").moved.emit(120)
 check(ev("value", h.find(win, "rateSlider")) == 120, "the slider shows the value being dragged")
 check(len(js("Config.saved")) == saves, "slider moves are not saved before the debounce")
-QTest.qWait(450)
+wait_until(lambda: len(calls("keyboard.current")) > reads and len(js("KeyboardService._queue")) == 1)
+settle()
 check(len(calls("keyboard.current")) > reads, "the takeover re-reads the compositor's settings")
 check(ev("Config.keyboard.managed") is False and len(js("Config.saved")) == saves, "a failed read takes nothing over")
 check(len(js("KeyboardService._queue")) == 1, "the edit waits in the queue")
@@ -101,12 +105,13 @@ ev("KeyboardService._retries = 10")
 ev("KeyboardService.refreshCurrent()")
 check(ev("KeyboardService._retries") <= 1, "a new refresh starts a fresh round of retries")
 ev("BackendService.replies = Object.assign({}, BackendService.replies, {'keyboard.current': %s})" % json.dumps(CURRENT))
-QTest.qWait(1200)  # retry
+wait_until(lambda: ev("Config.keyboard.managed") is True and len(js("Config.saved")) == saves + 1)  # retry (1 s)
 check(ev("Config.keyboard.managed") is True, "the first change sets keyboard.managed")
 check([l["layout"] for l in js("Array.from(Config.keyboard.layouts)")] == ["us", "ru"], "us,ru is copied in, never lost")
 check(ev("Config.keyboard.repeatDelay") == 175 and ev("Config.keyboard.repeatRate") == 120, "the change lands on the compositor's values")
 check(len(js("Config.saved")) == saves + 1, "two slider moves give one save")
-QTest.qWait(900)
+wait_until(lambda: calls("keyboard.apply") != [])
+pump(APPLY_DEBOUNCE)  # and no second apply
 applied = calls("keyboard.apply")
 check(len(applied) == 1, f"applied exactly once, got {len(applied)}")
 if applied:
@@ -122,13 +127,14 @@ check(h.find(win, "unmanagedNote").property("visible") is False, "the note goes 
 ev("Config.keyboard.managed = false")
 ev("BackendService.replies = Object.assign({}, BackendService.replies, {'keyboard.current': {available: false, layouts: [], switchBind: 'none', options: []}})")
 ev("KeyboardService.refreshCurrent()")
-QTest.qWait(50)
+wait_until(lambda: ev("KeyboardService.unreadable") is True)
+settle()
 check(ev("KeyboardService.unreadable") is True, "unreadable compositor settings are flagged")
 check(ev("unreadable", h.find(win, "unmanagedNote")) is True and h.find(win, "takeOverButton").property("visible") is True,
       "the note warns and offers the takeover")
 check(ev("enabled", h.find(win, "typingCard")) is False, "controls wait for the takeover")
 ev("KeyboardService.edit({repeatRate: 77})")
-QTest.qWait(50)
+settle()
 check(ev("Config.keyboard.managed") is False and ev("Config.keyboard.repeatRate") != 77, "an edit never replaces unreadable settings implicitly")
 h.eval(h.find(win, "takeOverButton"), "clicked()")
 check(ev("Config.keyboard.managed") is True, "the explicit takeover sets managed")

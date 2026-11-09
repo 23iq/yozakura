@@ -19,6 +19,7 @@ from settings_env import SettingsEnv  # noqa: E402
 
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 from qmlharness import REPO  # noqa: E402
 
@@ -86,6 +87,12 @@ qs = env.root / "qs"
 notes_dir = qs / "modules/widgets/dashboard/notes"
 shutil.copytree(REPO / "modules/widgets/dashboard/notes", notes_dir, dirs_exist_ok=True)
 env._qmldir(notes_dir, "qs.modules.widgets.dashboard.notes")
+# Auto-save waits 500 ms after the last keystroke; that the save happens is
+# under test, not its delay: 80 ms here.
+_tab = (notes_dir / "NotesTab.qml").read_text()
+assert "id: saveDebounceTimer\n        interval: 500\n" in _tab
+(notes_dir / "NotesTab.qml").write_text(_tab.replace("id: saveDebounceTimer\n        interval: 500\n",
+                                                     "id: saveDebounceTimer\n        interval: 80\n"))
 h.module("FakeFs", {"Fs": FAKE_FS})
 h.module("Quickshell.Io", {"Process": FAKE_PROCESS, "SplitParser": "QtObject { signal read(string data) }"})
 h.module("qs.modules.services", {
@@ -125,8 +132,9 @@ def fs():
     return js("Fs.files")
 
 
-def settle(ms=60):
-    QTest.qWait(ms)
+def saved(path, text):
+    """Wait for the debounced auto-save to write `text` to `path`."""
+    wait_until(lambda: fs().get(path) == text and not ev("editorDirty"))
 
 
 def index():
@@ -145,7 +153,7 @@ def keys(*seq, mod=Qt.NoModifier):
     settle()
 
 
-settle(150)
+wait_until(lambda: ev("indexPath") in fs() and js("filteredNotes.map(n => n.id)") == ["__create__"])
 
 notes_path = ev("notesPath")
 check(ev("indexPath") in fs(), "index.json created on start")
@@ -153,7 +161,8 @@ check(js("filteredNotes.map(n => n.id)") == ["__create__"], "empty index: only t
 
 # Create a rich text note: file + index entry, selected and loaded.
 ev('createNewNote("Alpha", false)')
-settle(200)
+wait_until(lambda: len(js("allNotes")) == 1 and ev("currentNoteId") != "" and not ev("loadingNote")
+           and "Alpha" in ev("currentNoteContent"))
 alpha = js("allNotes")[0]["id"]
 check(fs().get(f"{notes_path}/{alpha}.html") == "<h1>Alpha</h1><p></p>", "rich text note file written")
 check(index()["notes"][alpha]["title"] == "Alpha" and index()["order"] == [alpha], "index has the note")
@@ -163,7 +172,7 @@ check(not ev("loadingNote"), "loading finished")
 
 # Create a markdown note (goes first).
 ev('createNewNote("Beta", true)')
-settle(200)
+wait_until(lambda: len(js("allNotes")) == 2 and ev("currentNoteIsMarkdown") and not ev("loadingNote"))
 beta = js("allNotes")[0]["id"]
 check(fs().get(f"{notes_path}/{beta}.md") == "# Beta\n\n", "markdown note file written")
 check(index()["order"] == [beta, alpha], "markdown note first in order")
@@ -171,19 +180,21 @@ check(ev("currentNoteId") == beta and ev("currentNoteIsMarkdown"), "markdown not
 check(js("filteredNotes.map(n => n.id)") == ["__create__", beta, alpha], "list: create row + 2 notes")
 
 # The new note's editor has focus; typing auto-saves after the debounce.
+# (the editor takes focus a moment after the note loads)
+wait_until(lambda: ev("Window.activeFocusItem !== null && Window.activeFocusItem.cursorPosition !== undefined"))
 type_text("hello")
-settle(700)
+saved(f"{notes_path}/{beta}.md", "hello# Beta\n")
 check(fs()[f"{notes_path}/{beta}.md"] == "hello# Beta\n", f"markdown typing saved: {fs()[f'{notes_path}/{beta}.md']!r}")
 check(not ev("editorDirty"), "editor clean after save")
 check(index()["notes"][beta]["modified"] != "", "modified timestamp updated")
 
 # Markdown shortcut: Ctrl+B inserts bold markers at the cursor.
 QTest.keyClick(win, Qt.Key_B, Qt.ControlModifier)
-settle(700)
+saved(f"{notes_path}/{beta}.md", "hello****# Beta\n")
 check(fs()[f"{notes_path}/{beta}.md"] == "hello****# Beta\n", f"ctrl+b markdown: {fs()[f'{notes_path}/{beta}.md']!r}")
 
 QTest.keyClick(win, Qt.Key_Up, Qt.AltModifier)
-settle(700)
+saved(f"{notes_path}/{beta}.md", "# hello****# Beta\n")
 check(fs()[f"{notes_path}/{beta}.md"] == "# hello****# Beta\n", "alt+up makes the line a heading")
 QTest.keyClick(win, Qt.Key_Escape)
 settle()
@@ -205,19 +216,19 @@ keys(Qt.Key_Down)
 check(ev("selectedIndex") == 0, "Down selects the first row")
 keys(Qt.Key_Down, Qt.Key_Down)
 check(ev("selectedIndex") == 2 and ev("currentNoteId") == alpha, "Down x2 selects + loads Alpha")
-settle(100)
+wait_until(lambda: "Alpha" in ev("currentNoteContent") and not ev("loadingNote"))
 check("Alpha" in ev("currentNoteContent") and not ev("currentNoteIsMarkdown"), "Alpha content loaded")
 
 # Rich text editing: Tab focuses the editor, typing auto-saves.
 keys(Qt.Key_Tab)
 type_text("zz")
-settle(700)
+wait_until(lambda: "zz" in fs()[f"{notes_path}/{alpha}.html"] and not ev("editorDirty"))
 check("zz" in fs()[f"{notes_path}/{alpha}.html"], "rich text typing saved")
 
 # Rich text pre-format: Ctrl+B with no selection makes the next characters bold.
 QTest.keyClick(win, Qt.Key_B, Qt.ControlModifier)
 type_text("bb")
-settle(700)
+wait_until(lambda: "bb" in fs()[f"{notes_path}/{alpha}.html"] and not ev("editorDirty"))
 saved = fs()[f"{notes_path}/{alpha}.html"]
 check("font-weight" in saved and "bb" in saved, "ctrl+b pre-format bolds typed text")
 QTest.keyClick(win, Qt.Key_Escape)
@@ -230,7 +241,7 @@ keys(Qt.Key_Up, mod=Qt.ControlModifier)
 check(index()["order"] == [alpha, beta], f"ctrl+up moves Alpha first: {index()['order']}")
 check(js("filteredNotes.map(n => n.id)") == ["__create__", alpha, beta], "list follows the new order")
 ev("selectedIndex = 1")
-settle(100)
+settle()
 
 # Shift+Enter expands the options of the selected note; Down/Enter picks Rename.
 keys(Qt.Key_Return, mod=Qt.ShiftModifier)
@@ -242,7 +253,7 @@ check(ev("renameMode") and ev("noteToRename") == alpha, "Rename option enters re
 check(ev("newNoteName") == "Alpha", "rename field prefilled")
 ev('newNoteName = "Gamma"')
 ev("confirmRenameNote()")
-settle(200)
+wait_until(lambda: index()["notes"][alpha]["title"] == "Gamma" and not ev("renameMode"))
 check(index()["notes"][alpha]["title"] == "Gamma", "rename saved to index")
 check(not ev("renameMode"), "rename mode left")
 check(js("filteredNotes.map(n => n.title)")[1] == "Gamma", "renamed note listed")
@@ -254,7 +265,7 @@ check(ev("deleteMode") and ev("noteToDelete") == beta, "delete mode entered")
 keys(Qt.Key_Right)
 check(ev("deleteButtonIndex") == 1, "Right highlights confirm")
 keys(Qt.Key_Return)
-settle(200)
+wait_until(lambda: f"{notes_path}/{beta}.md" not in fs() and beta not in index()["notes"] and not ev("deleteMode"))
 check(f"{notes_path}/{beta}.md" not in fs(), "note file removed")
 check(index()["order"] == [alpha] and beta not in index()["notes"], "note removed from index")
 check(not ev("deleteMode"), "delete mode left")

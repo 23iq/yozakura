@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib.qmlharness import Harness  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer  # noqa: E402
+from lib.qmlharness import REPO, Harness  # noqa: E402
+from lib.waits import wait_until  # noqa: E402
 
 h = Harness("wallpaper-manager")
 h.module("Quickshell", {"Scope": "import QtQuick\nQtObject { default property list<QtObject> data }"})
@@ -58,8 +58,13 @@ QtObject {
     }
 }""",
 })
+# Thumbnails regenerate 2 s after a scan (debounced); that they do is under
+# test, not the delay: 200 ms here.
+DEBOUNCE = "id: thumbnailDelay\n        interval: 2000"
+assert DEBOUNCE in (REPO / "modules/widgets/dashboard/wallpapers/WallpaperCacheJobs.qml").read_text()
 for f in ["WallpaperScanner", "WallpaperColorPresets", "MatugenRunner", "WallpaperCacheJobs"]:
-    h.copy(f"modules/widgets/dashboard/wallpapers/{f}.qml", siblings=False)
+    h.copy(f"modules/widgets/dashboard/wallpapers/{f}.qml", siblings=False,
+           replace={DEBOUNCE: DEBOUNCE.replace("2000", "200")})
 
 root = h.load("""import QtQuick
 import qs.modules.globals
@@ -109,13 +114,6 @@ def js(expr):
     return json.loads(ev("JSON.stringify(" + expr + ")"))
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-
-
 # --- scanner: main folder, saved selection, thumbnails --------------------
 ev('scanner.scan(["/w"])')
 check("scan runs find over the folder", ev('ProcLog.find("/w") !== null'))
@@ -123,7 +121,8 @@ ev('ProcLog.find("/w").finish("/w/c.jpg\\n/w/b.jpg\\n/w/a.png\\n", 0)')
 check("paths are sorted", js("manager.wallpaperPaths") == ["/w/a.png", "/w/b.jpg", "/w/c.jpg"])
 check("saved wallpaper is selected", ev("manager.currentIndex") == 1)
 check("initial load completes", ev("manager.initialLoadCompleted") is True)
-pump(2300)
+check("no thumbnail run before the debounce", ev('ProcLog.find("thumbs") === null'))
+wait_until(lambda: ev('ProcLog.find("thumbs") !== null'))
 check("thumbnails are regenerated (debounced)", ev('ProcLog.find("thumbs") !== null'),
       str(js("ProcLog.procs.map(p => p.command)")))
 check("thumbnail command carries the fallback folder", js('ProcLog.find("thumbs").command')[:5]

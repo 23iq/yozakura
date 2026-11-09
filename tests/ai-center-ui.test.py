@@ -18,12 +18,14 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402
 
 headless.ensure(gl=True)
-from PySide6.QtCore import QObject, QUrl, QCoreApplication, QElapsedTimer, qInstallMessageHandler  # noqa: E402
+from PySide6.QtCore import QObject, QUrl, qInstallMessageHandler  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
 
 from lib import aiscene  # noqa: E402
+from lib import waits  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 OUT = os.environ.get("AI_CENTER_RENDER")
@@ -279,11 +281,10 @@ Item {
 """
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
+# The closed views are never really deleted (as with the bare processEvents()
+# loop this test grew up with): deleting a settled scene can crash in
+# QQuickItemView's destructor (Qt 6.12).
+waits.keep_deferred_deletes()
 
 
 def evaluate(view, expr):
@@ -294,6 +295,20 @@ def evaluate(view, expr):
     if e.hasError():
         raise AssertionError(f"{expr}: {e.error().toString()}")
     return value
+
+
+def ready(view, kind):
+    """The scene shows what the checks below read (animations are off: animDuration 0)."""
+    if kind == "agent":
+        st = json.loads(evaluate(view, "state()"))
+        return st["pending"] == 1 and st["diffs"] == 1
+    if kind == "chat":
+        return json.loads(evaluate(view, "state()"))["chatRows"] == len(CHAT)
+    if kind in ("selection", "selection-result"):
+        menu = view.rootObject().findChild(QObject, "selectionMenu")
+        return menu is not None and menu.property("visible") and menu.property("width") > 0 \
+            and menu.property("opacity") == 1
+    return True
 
 
 failures = []
@@ -320,7 +335,11 @@ for preset, mode, kinds, language in RUNS:
             evaluate(view, "agentWide()")
         evaluate(view, f"kind = '{kind}'")
         view.show()
-        pump(700)
+        if OUT:
+            pump(700)  # renders: let images and lazy content land
+        else:
+            wait_until(lambda: ready(view, kind))  # noqa: B023
+            pump(60)  # a few frames: late warnings (Loader, layer.effect) still land in `messages`
         if kind == "agent":
             # Permission card for the pending Bash call is live and answers the agents service.
             st = json.loads(evaluate(view, "state()"))

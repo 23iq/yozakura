@@ -12,6 +12,7 @@ import panels_stubs as stubs  # noqa: E402
 from panels_env import PanelsEnv  # noqa: E402
 from qmlharness import brand_qml  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 W, H, BAR = 1600, 900, 40
 CW, CH = 300, 200
@@ -119,17 +120,17 @@ env2.h.eval(win2, 'w.edge = "left"; w.along = 0.5')
 env2.h.eval(popup2, "open()")
 motion2 = env2.h.find(win2, "popupMotion")
 check(env2.h.eval(motion2, "running") is True, "motion: the entry animates")
-QTest.qWait(600)
+wait_until(lambda: env2.h.eval(motion2, "progress") == 1)
 check(env2.h.eval(motion2, "progress") == 1, "motion: settles at rest")
 env2.h.eval(popup2, "close()")
 check(env2.h.eval(popup2, "visible") is True, "motion: still visible during the exit")
-QTest.qWait(600)
+wait_until(lambda: env2.h.eval(popup2, "visible") is False)
 check(env2.h.eval(popup2, "visible") is False, "motion: hidden after the exit")
 # reopen while closing goes straight back in
 env2.h.eval(popup2, "open()")
 env2.h.eval(popup2, "close()")
 env2.h.eval(popup2, "open()")
-QTest.qWait(600)
+wait_until(lambda: env2.h.eval(popup2, "visible") is True and env2.h.eval(motion2, "progress") == 1)
 check(env2.h.eval(popup2, "visible") is True and env2.h.eval(motion2, "progress") == 1, "motion: reopen while closing")
 
 # Cursor context menu (ContextMenu + OptionsMenu): below the cursor, flipped

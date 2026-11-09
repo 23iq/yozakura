@@ -8,14 +8,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from panels_env import PanelsEnv  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle  # noqa: E402
 
 W, H, FRAME = 1600, 900, 6
 EDGES = ["top", "bottom", "left", "right"]
 STYLES = ["classic", "floating", "islands", "pills", "dock-like", "none"]
 LAYOUT = {"left": ["launcher", "workspaces"], "right": ["battery", "clock", "power"], "drawer": ["systray"]}
 ENV = PanelsEnv("bar-styles", bar={"position": "top", "frameEnabled": True, "frameThickness": FRAME,
-                                   "layout": {"style": "classic", **LAYOUT}})
+                                   "layout": {"style": "classic", **LAYOUT}},
+                 theme={"animDuration": 0})  # geometry is checked, not the morph
 WIN = ENV.scene(W, H, windows=False)
 HOST = ENV.h.find(WIN, "host")
 
@@ -31,7 +32,7 @@ def scene(style, edge):
     """Switch the live bar (one engine for every case, like a user would)."""
     ENV.h.eval(HOST, "Config.bar.position = '%s'" % edge)
     ENV.h.eval(HOST, "Config.bar.layout = Object.assign({}, Config.bar.layout, {style: '%s'})" % style)
-    QTest.qWait(150)
+    settle(3)
     return ENV, WIN, HOST
 
 
@@ -87,7 +88,7 @@ for style in STYLES:
 env, win, host = scene("classic", "top")
 before = env.h.eval(host, "zones.top")
 env.h.eval(host, "Config.bar.layout = Object.assign({}, Config.bar.layout, {style: 'floating'})")
-QTest.qWait(150)
+settle(3)
 assert env.h.eval(host, "bars.length") == 1
 assert env.h.eval(host, "primary.panelStyle") == "floating"
 assert env.h.eval(host, "zones.top") > before

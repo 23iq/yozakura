@@ -12,7 +12,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
 
-from PySide6.QtCore import QCoreApplication, QElapsedTimer  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 h = Harness("display-overlays-settle")
 h.module("Quickshell", {
@@ -54,13 +54,6 @@ Item {
 }""", auto_stub=False)
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-
-
 def ev(expr):
     return h.eval(root, expr)
 
@@ -71,10 +64,10 @@ assert o is not None
 # Created in the middle of output churn: nothing until the outputs settle.
 ev('DisplaysService.identified = ["B"]')
 assert ev("loaded(1)") is False, "identify window created before the outputs settled"
-pump(500)
+wait_until(lambda: ev("loaded(1)") is True)  # the 400 ms settle period
 assert ev("loaded(1)") is True, "identify window not created after settling"
 ev("DisplaysService.identified = []")
-pump(800)
+wait_until(lambda: ev("loaded(1)") is False)
 assert ev("loaded(1)") is False
 
 # The prompt waits for the apply moment to settle too, even with stable outputs.
@@ -86,7 +79,7 @@ pump(200)
 ev("b.width = 2560")
 pump(300)
 assert ev("loaded(0)") is False, "prompt created while the output geometry changed"
-pump(300)
+wait_until(lambda: ev("loaded(0)") is True)
 assert ev("loaded(0)") is True, "prompt never came up"
 # Kept/reverted: gone at once.
 ev('DisplaysService.session = {state: "kept", live: true}')

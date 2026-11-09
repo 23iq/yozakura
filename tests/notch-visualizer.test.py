@@ -9,12 +9,12 @@ counts rendered frames. It also checks the bars still ease toward a new
 level (smooth look) and settle on it.
 """
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer  # noqa: E402
+from PySide6.QtCore import QElapsedTimer  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 h = Harness('notch-visualizer')
 h.singleton('qs.config', 'Config', '''QtObject {
@@ -55,14 +55,6 @@ Window {
 }''', auto_stub=False)
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-        time.sleep(0.0005)
-
-
 ok_all = True
 
 
@@ -72,13 +64,13 @@ def check(name, ok, detail=''):
     print(('PASS ' if ok else 'FAIL ') + name + (' ' + detail if detail else ''))
 
 
-pump(300)
+wait_until(lambda: root.property('swaps') > 0)  # shown and rendering
 root.setProperty('feeding', True)
-pump(300)
+pump(200)  # warm up: the measured window starts with frames flowing
 s0, f0 = root.property('swaps'), h.eval(root, 'CavaService.frames')
 t = QElapsedTimer()
 t.start()
-pump(2000)
+pump(1200)  # ~36 cava frames: 60 Hz animation-driven redraws would stand out
 secs = t.elapsed() / 1000
 root.setProperty('feeding', False)
 fps = (root.property('swaps') - s0) / secs

@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from launcher_env import LauncherEnv  # noqa: E402
 
-from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_until  # noqa: E402
 
 env = LauncherEnv("launcher-styles")
 h = env.h
@@ -39,13 +39,9 @@ def check(cond, msg):
         print("FAIL:", msg, file=sys.stderr)
 
 
-def settle(ms=700):
-    QTest.qWait(ms)
-
-
 def type_text(t):
     h.eval(view, f"GlobalStates.launcherSearchText = {json.dumps(t)}")
-    settle(80)
+    settle()
 
 
 def type_fast(t):
@@ -54,14 +50,14 @@ def type_fast(t):
 
 def layout(**kw):
     h.eval(view, f"Config.layout.launcher = Object.assign({{}}, Config.layout.launcher, {json.dumps(kw)})")
-    settle(80)
+    settle()
 
 
 def sv(expr):
     return h.eval(search, "(function(v){ return " + expr + " })(this)")
 
 
-settle(300)
+settle(3)
 
 # list: today's look
 type_text("")
@@ -103,19 +99,21 @@ layout(resultStyle="list")
 # preview: opens for a calculator result, loads lazily, can be turned off
 type_text("")
 layout(preview=True)
-settle(300)
+settle()
 type_fast("12*7")
 check(sv("v.previewOpen"), "preview open for the calculator result")
 check(h.eval(preview, "shown") is None or h.eval(preview, "shown") == {}, "preview content waits for the pause")
-settle()
+wait_until(lambda: h.eval(preview, "shown.title") == "= 84"
+           and h.eval(view, "implicitWidth") == h.eval(view, "Metrics.launcherWideW"))
 check(h.eval(preview, "shown.title") == "= 84", "preview shows the settled result")
 check(h.eval(view, "implicitWidth") == h.eval(view, "Metrics.launcherWideW"), "view widens for the preview")
 type_fast("5 kg in lb")
 check(h.eval(preview, "shown.title") == "= 84", "preview lags behind fast typing (never blocks)")
-settle(300)
+wait_until(lambda: h.eval(preview, "shown.title").startswith("= 11.02"))
 check(h.eval(preview, "shown.title").startswith("= 11.02"), "preview follows once typing pauses")
 type_text("fire")
-settle(300)
+wait_until(lambda: sv("v.previewOpen") and h.eval(preview, "shown.title") == "Firefox"
+           and h.eval(view, "implicitHeight") == h.eval(view, "Metrics.launcherWideH"))
 check(sv("v.previewOpen"), "apps get the detail pane")
 check(h.eval(view, "implicitHeight") == h.eval(view, "Metrics.launcherWideH"), "view grows for the detail pane")
 check(h.eval(preview, "shown.title") == "Firefox", "detail shows the selected app")
@@ -132,7 +130,7 @@ layout(preview=True)
 
 # file preview kinds
 h.eval(preview, "selection = {provider: 'files', title: 'a.md', subtitle: '~', data: {path: '/tmp/a.md'}}")
-settle(300)
+wait_until(lambda: h.eval(preview, "shown.title") == "a.md")
 check(h.eval(preview, "available"), "files have a preview")
 check(h.eval(preview, "shown.title") == "a.md", "file preview settled")
 
@@ -148,18 +146,18 @@ check(h.eval(results, "rowY(0)") == h.eval(results, "labelHeight"), "rows sit be
 # compactWhenEmpty: only the search field until the first keystroke
 layout(compactWhenEmpty=True)
 type_text("")
-settle()
+wait_until(lambda: h.eval(view, "height") == h.eval(view, "Metrics.rowHeight"))
 check(h.eval(view, "bare") and h.eval(view, "implicitHeight") == h.eval(view, "Metrics.rowHeight"), "empty search shrinks to the field")
 check(h.eval(view, "height") == h.eval(view, "Metrics.rowHeight"), "view follows (morphed) to the field height")
 type_text("fire")
-settle()
+wait_until(lambda: h.eval(view, "height") == h.eval(view, "Metrics.launcherCompactH"))
 check(not h.eval(view, "bare") and h.eval(view, "height") == h.eval(view, "Metrics.launcherCompactH"), "first keystroke opens the launcher")
 layout(compactWhenEmpty=False, preview=True)
 
 # icons: false turns the list into a text-only command line (no icon, no gap)
 layout(resultStyle="list", preview=False, icons=False)
 type_text("fire")
-settle()
+settle(3)
 
 
 def visual(name, expr="1"):
@@ -175,7 +173,7 @@ rows = visual("resultRow", "[this.showIcon, this.leading === null, this.textInse
 check(rows and all(r == [False, True, 0] for r in rows), f"icons=false: no leading slot, title at the row edge: {rows}")
 check(not visual("resultIcon"), "icons=false: no result icons in the list")
 layout(icons=True)
-settle()
+settle(3)
 rows = visual("resultRow", "[this.showIcon, this.textInset > this.iconSize]")
 check(rows and all(r == [True, True] for r in rows), f"icons=true: the title follows the icon: {rows}")
 check(len(visual("resultIcon")) > 0, "icons=true: rows show their icons")

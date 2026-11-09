@@ -19,11 +19,12 @@ os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401
 from lib import aiscene  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer, Qt, QUrl, qInstallMessageHandler  # noqa: E402
+from PySide6.QtCore import Qt, QUrl, qInstallMessageHandler  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlEngine, QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
+from lib.waits import settle, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 app = QGuiApplication([])
@@ -97,11 +98,6 @@ view.show()
 top = view.rootObject()
 
 
-def pump(ms=150):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
 
 
 def ev(expr, target=None):
@@ -137,35 +133,35 @@ def shown(name):
 def click(obj):
     point = obj.mapToScene(obj.boundingRect().center())
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
-    pump()
+    settle()
 
 
 def slot_text(name):
     return find("usageSlotText", find(name)).property("text")
 
 
-pump()
+settle()
 # ── settings pushed on connect ───────────────────────────────────────────
 assert json.loads(ev("calls('usage.claudeLimits.enable')")) == [{"enabled": True}]
 assert json.loads(ev("calls('usage.alerts.set')")) == [{"thresholds": [80, 90]}]
 ev("Config.ai.usage.notify = false")
-pump()
+wait_until(lambda: json.loads(ev("calls('usage.alerts.set')"))[-1] == {"thresholds": []})
 assert json.loads(ev("calls('usage.alerts.set')"))[-1] == {"thresholds": []}, "notifications off -> no thresholds"
 ev("Config.ai.usage.notify = true")
 ev("Config.ai.usage.claudeLimits = false")
-pump()
+wait_until(lambda: json.loads(ev("calls('usage.claudeLimits.enable')"))[-1] == {"enabled": False})
 assert json.loads(ev("calls('usage.claudeLimits.enable')"))[-1] == {"enabled": False}
 ev("Config.ai.usage.claudeLimits = true")
 
 # ── strip: HTTP chat cost, no subscription ───────────────────────────────
 ev("addChat()")
-pump()
+wait_until(lambda: shown("composerCost"))
 assert shown("composerCost"), "the session cost shows"
 assert slot_text("composerCost") == "12k · ≈ $0.12", slot_text("composerCost")
 assert json.loads(ev("calls('usage.session')"))[0]["sessionId"] == ev("Ai.chat.chatId")
 assert not shown("composerLimit"), "API models have no subscription window"
 ev("Config.ai.usage.stripTokens = false")
-pump()
+wait_until(lambda: slot_text("composerCost") == "≈ $0.12")
 assert slot_text("composerCost") == "≈ $0.12"
 ev("Config.ai.usage.stripTokens = true")
 
@@ -185,34 +181,34 @@ assert len(json.loads(ev("calls('usage.record')"))) == n
 ev("Ai.mode = 'agent'")
 ev("""BackendService.emit('usage.limits', {provider: 'claude', limits: [{provider: 'claude', source: 'agent',
     windows: [{id: '5h', usedPercent: 85, resetsAt: new Date(Date.now() + 2 * 3600000 + 10 * 60000).toISOString()}, {id: 'week', usedPercent: 40}]}]})""")
-pump()
+wait_until(lambda: shown("composerLimit"))
 assert shown("composerLimit"), "Claude Code shows its subscription window"
 assert slot_text("composerLimit") == "5h 85%", slot_text("composerLimit")
 assert find("composerLimit").property("level") == "warn"
 assert "Resets in 2h 1" in find("composerLimit").property("detail"), find("composerLimit").property("detail")
 ev("Config.ai.usage.limitWindow = 'week'")
-pump()
+wait_until(lambda: slot_text("composerLimit") == "wk 40%")
 assert slot_text("composerLimit") == "wk 40%"
 assert find("composerLimit").property("level") == "ok"
 ev("Config.ai.usage.limitWindow = 'auto'")
 # usage.updated carries the new session totals
 ev("BackendService.emit('usage.updated', {record: {sessionId: Ai.activeAgent.id}, session: {requests: 3, inputTokens: 50000, outputTokens: 1000, costUSD: 1.5}})")
-pump()
+wait_until(lambda: slot_text("composerCost") == "51k · $1.50")
 assert slot_text("composerCost") == "51k · $1.50", slot_text("composerCost")
 # a backend restart re-sends the snapshot without provider -> settings again
 before = len(json.loads(ev("calls('usage.claudeLimits.enable')")))
 ev("BackendService.emit('usage.limits', {limits: []})")
-pump()
+wait_until(lambda: len(json.loads(ev("calls('usage.claudeLimits.enable')"))) == before + 1)
 assert len(json.loads(ev("calls('usage.claudeLimits.enable')"))) == before + 1
 assert not shown("composerLimit")
 ev("""BackendService.emit('usage.limits', {provider: 'claude', limits: [{provider: 'claude', windows: [{id: '5h', usedPercent: 95}]}]})""")
-pump()
+wait_until(lambda: find("composerLimit").property("level") == "critical")
 assert find("composerLimit").property("level") == "critical"
 
 # ── Usage screen ─────────────────────────────────────────────────────────
 assert not shown("usageScreen")
 click(find("composerLimit"))
-pump(300)
+wait_until(lambda: shown("usageScreen"))
 assert shown("usageScreen"), "the strip opens the Usage screen"
 assert find("headerUsage").property("active")
 assert shown("usageProvider_anthropic") and shown("usageProvider_ollama")
@@ -226,7 +222,7 @@ if os.environ.get("AI_CENTER_RENDER"):
     view.grabWindow().save(str(Path(os.environ["AI_CENTER_RENDER"]) / "usage.png"))
 # expand a provider: its models
 click(find("usageProvider_anthropic"))
-pump()
+settle()
 texts = []
 
 
@@ -241,11 +237,11 @@ collect(find("usageScreen"))
 assert "claude-sonnet-4-5" in texts and "qwen3" not in texts, "expanding lists the provider's models"
 # hide a provider
 ev("Config.ai.usage.hiddenProviders = ['ollama']")
-pump()
+wait_until(lambda: not shown("usageProvider_ollama"))
 assert not shown("usageProvider_ollama"), "hidden providers are left out"
 # range switch: week fetches per-day rows for sparklines
 click(find("usageRange_week"))
-pump(300)
+settle()
 summary_calls = json.loads(ev("calls('usage.summary')"))
 assert {"range": "week", "groupBy": "provider_day"} in summary_calls, summary_calls
 # every day of the range is on screen: the kit Sparkline keeps its first
@@ -259,40 +255,40 @@ assert max(vals) == 1, f"scaled to the busiest day: {vals}"
 # new records refresh the screen
 n = len(summary_calls)
 ev("BackendService.emit('usage.updated', {record: {provider: 'openai'}})")
-pump(300)
+wait_until(lambda: len(json.loads(ev("calls('usage.summary')"))) > n)
 assert len(json.loads(ev("calls('usage.summary')"))) > n
 # close; the header button toggles it
 click(find("usageClose"))
 assert not shown("usageScreen")
 click(find("headerUsage"))
-pump(200)
+wait_until(lambda: shown("usageScreen"))
 assert shown("usageScreen")
 click(find("headerUsage"))
 assert not shown("usageScreen")
 # ── one overlay at a time: Connect replaces Usage and sits on top ───────
 click(find("headerUsage"))
-pump(200)
+wait_until(lambda: shown("usageScreen") and ev("panel.overlay") == "usage")
 assert shown("usageScreen") and ev("panel.overlay") == "usage"
 ev("Ai.connectProviderRequested('')")
-pump(200)
+wait_until(lambda: ev("panel.overlay") == "connect")
 assert ev("panel.overlay") == "connect", ev("panel.overlay")
 assert not shown("usageScreen"), "opening Connect closes the Usage screen"
 assert find("connectSheet").property("opened") and shown("connectSheet")
 assert find("connectSheet").property("z") > find("usageScreen").property("z")
 ev("panel.toggleOverlay('usage')")  # the sheet covers the header
-pump(200)
+wait_until(lambda: ev("panel.overlay") == "usage" and shown("usageScreen"))
 assert ev("panel.overlay") == "usage" and shown("usageScreen")
 assert not find("connectSheet").property("opened"), "another overlay closes the Connect sheet"
 ev("panel.toggleHistory()")
-pump(200)
+wait_until(lambda: ev("panel.overlay") == "history" and not shown("usageScreen"))
 assert ev("panel.overlay") == "history" and not shown("usageScreen")
 ev("panel.closeOverlay('history')")
-pump(200)
+wait_until(lambda: ev("panel.overlay") == "")
 assert ev("panel.overlay") == ""
 ev("Config.ai.usage.headerButton = false")
-pump()
+wait_until(lambda: not shown("headerUsage"))
 assert not shown("headerUsage")
 
-pump(200)
+wait_until(lambda: not errors)
 assert not errors, "\n".join(errors)
 print("ai-usage-ui: ok")

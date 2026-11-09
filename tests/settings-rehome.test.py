@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
 
-from PySide6.QtCore import QElapsedTimer  # noqa: E402
+from lib.waits import pump, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 h = Harness("settings-rehome")
@@ -65,19 +65,12 @@ Window {
 }""", auto_stub=False)
 
 
-def pump(ms):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        h.app.processEvents()
-
-
 def ev(expr):
     return h.eval(root, expr)
 
 
 ev("GlobalStates.settingsWindowVisible = true; make()")
-pump(450)
+wait_until(lambda: ev("win.visible") is True and ev("win.screen.name") == "A")
 assert ev("win.visible") is True and ev("win.screen.name") == "A"
 
 # Its output goes away while it is shown.
@@ -94,13 +87,13 @@ assert log == "hide:A,move:B:hidden,show:B", f"moved while mapped: {log}"
 ev("GlobalStates.settingsWindowVisible = false")
 pump(10)
 ev('log = []; Quickshell.screens = [a, b]; GlobalStates.settingsTargetScreenName = "A"')
-pump(20)
+wait_until(lambda: ev("win.screen.name") == "A" and ev("win.visible") is False)
 assert ev("win.screen.name") == "A" and ev("win.visible") is False, ev("log.join()")
 assert ev("log.join()") == "move:A:hidden", ev("log.join()")
 
 # The user closing it (not a move) still closes it.
 ev("GlobalStates.settingsWindowVisible = true")
-pump(10)
+wait_until(lambda: ev("win.visible") is True)
 assert ev("win.visible") is True
 assert not re.search("move", ev("log.join()").split("move:A:hidden", 1)[1])
 

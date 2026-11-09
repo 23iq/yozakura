@@ -13,8 +13,8 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from PySide6.QtCore import qInstallMessageHandler  # noqa: E402
-from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 env = SettingsEnv("ai-providers-settings")
 h = env.h
@@ -65,7 +65,7 @@ def check(cond: bool, what: str) -> None:
 
 
 ev('select("ai-providers")')
-QTest.qWait(600)
+wait_until(lambda: ev('w.findItem("settingsConnectSheet") !== null'))
 check(ev('w.findItem("settingsConnectSheet") !== null'), "the Connect sheet is embedded in the page")
 for pid in ("openai", "openrouter", "deepseek", "lmstudio", "ollama", "custom"):
     check(ev(f'w.findItem("tile_{pid}") !== null'), f"tile {pid}")
@@ -73,11 +73,12 @@ check(ev('w.findItem("tileState_ollama").text') == "Running", "state from Ai.pro
 check(ev('w.findItem("connectClose") === null || !w.findItem("connectClose").visible'), "no close button when embedded")
 
 ev('w.findItem("settingsConnectSheet").provider = "deepseek"')
-QTest.qWait(200)
+wait_until(lambda: ev('w.findItem("connectKeyInput") !== null'))
 check(ev('w.findItem("connectKeyInput") !== null'), "the form replaces the grid")
 ev('w.findItem("connectKeyInput").text = "ds-key"')
 ev('w.findItem("connectSave").clicked()')
-QTest.qWait(200)
+wait_until(lambda: ev("JSON.stringify(Ai.providers.saved)") == '["deepseek"]' and ev('w.findItem("tile_openai") !== null')
+           and ev('w.findItem("showProvider_minimax") !== null'))
 check(ev("JSON.stringify(Ai.providers.saved)") == '["deepseek"]', "Save goes through Ai.providers.save()")
 check(ev('w.findItem("tile_openai") !== null'), "after saving the embedded sheet returns to the grid")
 

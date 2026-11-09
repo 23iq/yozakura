@@ -17,6 +17,7 @@ from extras_env import ExtrasEnv  # noqa: E402
 from PySide6.QtCore import QPointF, Qt  # noqa: E402
 from PySide6.QtQuick import QQuickItem  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import pump, settle, wait_until  # noqa: E402
 
 failures: list[str] = []
 
@@ -42,7 +43,6 @@ Window {
     ExtrasPage { id: page; objectName: "page"; anchors.fill: parent
         category: ({"id": "extras", "icon": "packageBox", "title": "prefs.cat.extras", "description": "prefs.cat.extras.desc"}) }
 }""")
-QTest.qWait(80)
 
 
 def ev(expr, obj=None):
@@ -79,14 +79,16 @@ def visible(it) -> bool:
 def click(it) -> None:
     p = it.mapToScene(QPointF(it.width() / 2, it.height() / 2)).toPoint()
     QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, p)
-    QTest.qWait(30)
+    pump(30)
 
 
 def emit(service, data):
     ev("BackendService.emit('%s', %s)" % (service, json.dumps(data)))
-    QTest.qWait(30)
+    pump(30)
 
 
+wait_until(lambda: calls("extras.catalog") != [] and card("firefox") is not None)
+settle()
 check(len(calls("extras.catalog")) == 1, "the page loads the catalog once")
 check(len(calls("extras.status")) >= 1, "the page loads the status")
 check(card("nodejs") is None, "hidden entries are never shown")
@@ -140,10 +142,10 @@ check(ev("enabled", item(card("chromium"), "cancelButton")) is False, "running s
 # multilib consent, asked while the grid is scrolled to the bottom: the
 # confirm floats in the sticky stack above the install bar
 win.setHeight(560)
-QTest.qWait(50)
+settle()
 flick = h.find(win, "catalogFlick")
 ev("contentY = Math.max(0, contentHeight - height)", flick)
-QTest.qWait(30)
+settle(1)
 check(ev("contentY", flick) > 0, "the catalog scrolls in a short window")
 ev("toggle('steam')", h.find(win, "catalogGrid"))
 click(h.find(win, "installButton"))
@@ -159,7 +161,7 @@ check(inst[-1]["params"] == {"ids": ["steam"], "confirmMultilib": True}, "accept
 check(ev("visible", confirm) is False, "confirm card closes after the accepted request")
 ev("contentY = 0", flick)
 win.setHeight(1300)
-QTest.qWait(50)
+settle()
 
 # failure with needs_sync -> update system and retry; log popup
 emit("extras.progress", {"job": "system-2", "kind": "system", "entries": ["chromium"], "state": "failed",
@@ -176,7 +178,8 @@ popup = h.find(win, "logPopup")
 check(ev("opened", popup) is True, "Log opens the log popup")
 check("failed retrieving" in ev("text", popup), "the popup shows the job log")
 ev("close()", popup)
-QTest.qWait(80)
+wait_until(lambda: ev("opened", popup) is False and ev("visible", popup) is False)
+settle()
 check(ev("opened", popup) is False, "the log popup closes")
 
 # refused install (no AUR helper)
@@ -208,13 +211,13 @@ check(len(calls("extras.install")) == n, "install is refused while offline")
 ev("ExtrasService.offline = false")
 emit("extras.progress", {"job": "flatpak-6", "kind": "flatpak", "entries": ["chromium"], "state": "done"})
 check(ev("cardState", card("chromium")) == "installed", "a finished job shows installed right away")
-QTest.qWait(1700)
+wait_until(lambda: ev("cardState", card("chromium")) == "selectable")  # re-detection after 1.5 s
 check(ev("cardState", card("chromium")) == "selectable", "the forced re-detection (still missing) drops the finished job")
 
 # a cancelled job re-detects too
 n = len(calls("extras.status"))
 emit("extras.progress", {"job": "flatpak-7", "kind": "flatpak", "entries": ["chromium"], "state": "cancelled"})
-QTest.qWait(1700)
+wait_until(lambda: len(calls("extras.status")) > n)
 check(len(calls("extras.status")) > n, "a cancelled job triggers a re-detection")
 
 # offline probe fails open: a missing binary (running drops, no exit code)
@@ -223,14 +226,14 @@ ev("ExtrasService.offline = true")
 ev("ExtrasService.refresh()")
 check(ev("ExtrasService.checking") is True, "Check again starts the probe")
 ev("ExtrasService.probeRunning = false")
-QTest.qWait(50)
+wait_until(lambda: ev("ExtrasService.checking") is False)
 check(ev("ExtrasService.checking") is False and ev("ExtrasService.offline") is False,
       "a probe that stops without an exit code clears checking and offline")
 # ... and one that never reports back hits the watchdog
 ev("ExtrasService.probeTimeout = 150")
 ev("ExtrasService.offline = true")
 ev("ExtrasService.refresh()")
-QTest.qWait(400)
+wait_until(lambda: ev("ExtrasService.checking") is False and ev("ExtrasService.offline") is False)
 check(ev("ExtrasService.checking") is False and ev("ExtrasService.offline") is False,
       "the probe watchdog clears checking and offline")
 
@@ -244,8 +247,8 @@ Window {
     width: 900; height: 700; visible: true
     CatalogHost { objectName: "onboardingHost"; anchors.fill: parent; mode: "onboarding" }
 }""")
-QTest.qWait(80)
 host = h.find(win2, "onboardingHost")
+wait_until(lambda: js("selected", host) == {"claude-code": True})
 check(js("selected", host) == {"claude-code": True}, "onboarding preselects recommended missing entries: %s" % js("selected", host))
 check(ev("autoPreselect", host) is True, "onboarding mode preselects by default")
 

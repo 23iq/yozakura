@@ -23,7 +23,8 @@ from lib import headless  # noqa: E402
 
 headless.ensure(gl=True)
 from lib import aiscene  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer, Qt, QUrl, qInstallMessageHandler  # noqa: E402
+from lib.waits import pump, settle, wait_until  # noqa: E402
+from PySide6.QtCore import Qt, QUrl, qInstallMessageHandler  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlEngine, QQmlExpression  # noqa: E402
@@ -68,13 +69,6 @@ view.show()
 top = view.rootObject()
 
 
-def pump(ms=150):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
-
-
 def ev(expr, target=None):
     target = target or top
     e = QQmlExpression(QQmlEngine.contextForObject(target) or view.engine().rootContext(), target, expr)
@@ -109,14 +103,14 @@ def click(obj):
     assert obj is not None
     point = obj.mapToScene(obj.boundingRect().center())
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
-    pump()
+    settle()
 
 
 def type_into(name, text):
     field = find(name + "Input")
     assert field is not None, name
     field.setProperty("text", text)
-    pump(50)
+    settle(1)
 
 
 def status_text():
@@ -127,21 +121,21 @@ def sheet_open():
     return bool(find("connectSheet").property("opened"))
 
 
-pump()
+wait_until(lambda: not sheet_open())
 assert not sheet_open(), "closed at start"
 
 # ── the legacy Ollama opt-in key is migrated away ───────────────────────
 ev("KeyStore.keyCache = ({ollama: {api_key: 'enabled', endpoint: 'http://old-gpu:11434', custom_curl: ''}}); KeyStore.keysChanged()")
-pump()
+wait_until(lambda: ev("Config.ai.ollama.endpoint") == "http://old-gpu:11434")
 assert ev("Config.ai.ollama.endpoint") == "http://old-gpu:11434", "its endpoint moves to ai.ollama.endpoint"
 assert ev("KeyStore.keyCache.ollama === undefined"), "the fake key is deleted"
 ev("Config.ai.ollama.endpoint = ''")
 
 # ── open from the picker footer: step 1 grid ────────────────────────────
 ev("openPicker()")
-pump()
+wait_until(lambda: find("pickerConnect") is not None)
 click(find("pickerConnect"))
-pump(200)
+wait_until(sheet_open)
 assert sheet_open(), "picker footer opens the sheet in the bar"
 for pid in ("openai", "anthropic", "gemini", "mistral", "groq", "minimax", "openrouter", "deepseek", "lmstudio", "ollama", "custom"):
     assert find("tile_" + pid) is not None, pid
@@ -153,7 +147,7 @@ if os.environ.get("AI_CENTER_RENDER"):
 
 # ── step 2: OpenAI key, validation, test, save ──────────────────────────
 click(find("tile_openai"))
-pump(200)
+wait_until(lambda: shown("connectKey") and shown("connectGetKey") and not shown("connectUrl"))
 assert shown("connectKey") and shown("connectGetKey") and not shown("connectUrl")
 assert not shown("connectDisconnect"), "nothing to disconnect yet"
 click(find("connectTest"))
@@ -173,35 +167,35 @@ if os.environ.get("AI_CENTER_RENDER"):
     pump(300)
     view.grabWindow().save(str(Path(os.environ["AI_CENTER_RENDER"]) / "connect-form.png"))
 click(find("connectSave"))
-pump(300)
+wait_until(lambda: ev("KeyStore.getKey('openai')") == "sk-good")
 assert ev("KeyStore.getKey('openai')") == "sk-good", "saved to the keystore"
 assert not sheet_open(), "saving closes the sheet"
 
 # ── MiniMax cannot be verified for free ─────────────────────────────────
 ev("Ai.openProviderSettings('minimax')")
-pump(200)
+wait_until(lambda: sheet_open() and shown("connectKey"))
 assert sheet_open() and shown("connectKey")
 ev("respond('providers.test', {ok: true, verified: false, error: '', models: []})")
 type_into("connectKey", "mm-key")
 click(find("connectTest"))
 assert "first message" in status_text(), status_text()
 click(find("connectBack"))
-pump(200)
+wait_until(lambda: find("tile_openai") is not None and not shown("connectKey"))
 assert find("tile_openai") is not None and not shown("connectKey"), "back returns to the grid"
 assert find("tileState_openai").property("text") == "Connected"
 
 # ── Disconnect ──────────────────────────────────────────────────────────
 click(find("tile_openai"))
-pump(200)
+wait_until(lambda: shown("connectDisconnect"))
 assert shown("connectDisconnect")
 click(find("connectDisconnect"))
-pump(200)
+wait_until(lambda: ev("KeyStore.keyCache.openai === undefined"))
 assert ev("KeyStore.keyCache.openai === undefined"), "disconnect deletes the key"
 assert find("tile_openai") is not None, "and returns to the grid"
 
 # ── Custom: endpoint + optional key + curl template ─────────────────────
 click(find("tile_custom"))
-pump(200)
+wait_until(lambda: shown("connectUrl") and shown("connectKey"))
 assert shown("connectUrl") and shown("connectKey")
 click(find("connectSave"))
 assert "base URL" in status_text(), "custom needs a URL"
@@ -223,11 +217,11 @@ form = find("connectCurl").parentItem()
 while form is not None and form.property("advanced") is None:
     form = form.parentItem()
 form.setProperty("advanced", True)
-pump()
+wait_until(lambda: shown("connectCurl"))
 assert shown("connectCurl")
 type_into("connectCurl", 'curl -sS "$AI_ENDPOINT" --data-binary @"$AI_BODY_PATH"')
 click(find("connectSave"))
-pump(300)
+wait_until(lambda: ev("KeyStore.keyCache.custom !== undefined"))
 custom = json.loads(ev("JSON.stringify(KeyStore.keyCache.custom)"))
 assert custom == {"api_key": "", "endpoint": "http://box:8000/v1", "custom_curl": 'curl -sS "$AI_ENDPOINT" --data-binary @"$AI_BODY_PATH"'}, custom
 
@@ -239,7 +233,7 @@ PROBE = {"endpoint": "http://gpu:11434", "reachable": True, "version": "0.35.0",
 ev(f"respond('providers.ollama.probe', {json.dumps(PROBE)})")
 probes = ev("callCount('providers.ollama.probe')")
 ev("Ai.openProviderSettings('ollama')")
-pump(300)
+wait_until(lambda: sheet_open() and not shown("connectKey"))
 assert sheet_open() and not shown("connectKey"), "no key for Ollama"
 assert ev("callCount('providers.ollama.probe')") == probes + 1, "probed once when the form opens"
 assert status_text().startswith("It works · 2 models"), status_text()
@@ -251,44 +245,45 @@ if os.environ.get("AI_CENTER_RENDER"):
     view.grabWindow().save(str(Path(os.environ["AI_CENTER_RENDER"]) / "connect-ollama.png"))
 type_into("connectUrl", "http://gpu:11434")
 click(find("connectSave"))
-pump(300)
+wait_until(lambda: ev("Config.ai.ollama.endpoint") == "http://gpu:11434")
 assert ev("Config.ai.ollama.endpoint") == "http://gpu:11434"
 assert not sheet_open()
 ev("Ai.openProviderSettings('ollama')")
-pump(300)
+wait_until(sheet_open)
+settle()
 ev("respond('providers.ollama.probe', {reachable: false, endpoint: 'http://gpu:11434', error: 'connection refused', models: []})")
 click(find("connectTest"))
 assert "connection refused" in status_text()
 click(find("connectClose"))
-pump(200)
+wait_until(lambda: not sheet_open())
 
 # ── hidden providers ────────────────────────────────────────────────────
 ev("Config.ai.providers.hidden = ['minimax']")
-pump()
+wait_until(lambda: "minimax" not in json.loads(ev("JSON.stringify(Ai.providers.unconnected.map(p => p.id))")))
 assert "minimax" not in json.loads(ev("JSON.stringify(Ai.providers.unconnected.map(p => p.id))"))
 ev("Ai.openProviderSettings('')")
-pump(200)
+wait_until(lambda: find("tileState_minimax").property("text") == "Hidden")
 assert find("tileState_minimax").property("text") == "Hidden"
 click(find("tile_minimax"))
-pump(200)
+wait_until(lambda: shown("connectKey"))
 type_into("connectKey", "mm-key")
 click(find("connectSave"))
-pump(200)
+wait_until(lambda: ev("JSON.stringify(Config.ai.providers.hidden)") == "[]")
 assert ev("JSON.stringify(Config.ai.providers.hidden)") == "[]", "connecting a hidden provider shows it again"
 assert ev("KeyStore.getKey('minimax')") == "mm-key"
 
 # ── a not-connected picker row opens its form ───────────────────────────
 ev("openPicker()")
-pump()
+wait_until(lambda: find("connect_groq") is not None)
 click(find("connect_groq"))
-pump(200)
+wait_until(lambda: sheet_open() and shown("connectKey"))
 assert sheet_open() and shown("connectKey")
 assert ev("Ai.connectProvider") == "groq"
 QTest.keyClick(view, Qt.Key_Escape)
-pump(200)
+wait_until(lambda: sheet_open() and find("tile_openai") is not None)
 assert sheet_open() and find("tile_openai") is not None, "Esc goes back to the grid first"
 QTest.keyClick(view, Qt.Key_Escape)
-pump(200)
+wait_until(lambda: not sheet_open())
 assert not sheet_open(), "then closes the sheet"
 
 bad = [m for m in errors if "assets/aiproviders" not in m]

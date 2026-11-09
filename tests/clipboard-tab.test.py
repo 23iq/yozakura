@@ -13,10 +13,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from tabs_env import TabsEnv  # noqa: E402
-from PySide6.QtCore import QCoreApplication  # noqa: E402
 from PySide6.QtQml import QQmlExpression  # noqa: E402
 from PySide6.QtNetwork import QNetworkProxy  # noqa: E402
 from PySide6.QtQuick import QQuickItem  # noqa: E402
+from waits import pump, wait_until  # noqa: E402
 
 env = TabsEnv("clipboard-tab", tabs=["clipboard"], clip_items=[])
 h = env.h
@@ -45,13 +45,6 @@ def check(name, cond, detail=""):
     global ok
     ok &= bool(cond)
     print(("PASS " if cond else "FAIL ") + name + (" " + str(detail) if detail != "" else ""))
-
-
-def pump(ms=60):
-    end = time.time() + ms / 1000
-    while time.time() < end:
-        QCoreApplication.processEvents()
-        time.sleep(0.005)
 
 
 inner = tab.children()[0]  # created in ClipboardTab.qml: its context sees the services
@@ -103,7 +96,7 @@ def delegates():
             if all(o.metaObject().indexOfProperty(p) >= 0 for p in ("isInDeleteMode", "displayText", "isDraggingForReorder"))]
 
 
-pump()
+pump(60)
 ev(f"{svc_expr}.autoComplete = false")
 check("history requested on load", ["list", None, None] in calls())
 now_ms = int(time.time() * 1000)
@@ -115,7 +108,7 @@ items = [
     {"id": "3", "preview": "[[ image ]]", "mime": "image/png", "isImage": True, "size": 3 * 1024 * 1024},
 ]
 ev(f"{svc_expr}.items = {json.dumps(items)}; {svc_expr}.listCompleted()")
-pump()
+wait_until(lambda: ev("allItems.length") == 3)
 check("all items listed", ev("allItems.length") == 3)
 check("nothing selected initially", ev("selectedIndex") == -1)
 ds = delegates()
@@ -129,24 +122,24 @@ check("empty-state placeholder hidden", "clipboard.no_history" not in t)
 
 # Search matches content and alias, selects the first hit.
 ev("searchText = 'LINK'")
-pump()
+wait_until(lambda: ev("allItems.length") == 1 and ev("allItems[0].id") == "2")
 check("search matches the alias", ev("allItems.length") == 1 and ev("allItems[0].id") == "2")
 check("first hit selected while searching", ev("selectedIndex") == 0)
 ev("searchText = 'zzz'")
-pump()
+wait_until(lambda: ev("allItems.length") == 0)
 check("no hits", ev("allItems.length") == 0)
 ev("clearSearch()")
-pump()
+wait_until(lambda: ev("allItems.length") == 3 and ev("selectedIndex") == -1)
 check("clear search restores the list", ev("allItems.length") == 3 and ev("selectedIndex") == -1)
 
 # Keyboard navigation through the public handlers.
 reset_calls()
 ev("onDownPressed()")
-pump()
+wait_until(lambda: ev("selectedIndex") == 0)
 check("down selects the first row", ev("selectedIndex") == 0)
 check("selecting text loads its full content", ["getFullContent", "1", None] in calls(), calls())
 ev("onDownPressed(); onDownPressed()")
-pump()
+wait_until(lambda: ev("selectedIndex") == 2)
 check("down moves to the last row", ev("selectedIndex") == 2)
 check("selecting an undecoded image decodes it", ["decodeToDataUrl", "3", "image/png"] in calls())
 check("metadata shows MIME and size", "image/png" in texts() and "3.0 MB" in texts(), [x for x in texts() if "MB" in x])
@@ -159,17 +152,17 @@ check("up from the first row returns to search", ev("selectedIndex") == -1 and n
 
 # Preview of a URL item: full content -> link preview request -> embed.
 ev("onDownPressed(); onDownPressed()")
-pump()
+pump(60)
 reset_calls()
 ev(f"{svc_expr}.fullContentRetrieved('2', 'https://example.invalid/page')")
-pump()
+pump(60)
 check("full content of a URL fetches a link preview",
       ["fetchLinkPreview", "https://example.invalid/page", "2"] in calls(), calls())
 check("loading indicator while fetching", ev("loadingLinkPreview") and "clipboard.loading_preview" in texts())
 ev(f"""{svc_expr}.linkPreviewCache = {{ "https://example.invalid/page": {{ title: "Example title",
     description: "Example description", site_name: "Example" }} }};
     {svc_expr}.linkPreviewFetched("https://example.invalid/page", {{}}, "2")""")
-pump()
+pump(60)
 t = texts()
 check("embed shows title/description/site", all(x in t for x in ("Example title", "Example description", "Example")), "")
 check("loading indicator gone", not ev("loadingLinkPreview") and "clipboard.loading_preview" not in t)
@@ -187,7 +180,7 @@ check("embed card holds its text layout", embed is not None and embed.property("
 # A URL without embed data: the plain URL card (ClipboardCard) opens the item.
 ev(f"""{svc_expr}.linkPreviewCache = {{ "https://example.invalid/page": {{}} }};
     {svc_expr}.linkPreviewFetched("https://example.invalid/page", {{}}, "2")""")
-pump()
+pump(60)
 card = named("urlCard")
 check("url card without embed data", card is not None and card.property("visible") and "clipboard.link" in texts()
       and not named("linkEmbed").property("visible"))
@@ -236,19 +229,19 @@ ev("Visibilities.active = null")
 # Delete mode.
 reset_calls()
 ev("enterDeleteMode('1')")
-pump()
+pump(60)
 d1 = [d for d in delegates() if d.property("isInDeleteMode")]
 check("delete mode marks the row", len(d1) == 1 and d1[0].property("displayText") == 'Delete "hello world"?',
       [d.property("displayText") for d in d1])
 ev("confirmDeleteItem()")
-pump()
+wait_until(lambda: ["deleteItem", "1", None] in calls() and ["list", None, None] in calls())
 check("confirm deletes and refreshes", ["deleteItem", "1", None] in calls() and ["list", None, None] in calls())
 check("delete mode left", not ev("deleteMode") and ev("selectedIndex") == -1)
 
 # Alias mode.
 reset_calls()
 ev("selectedIndex = 1; enterAliasMode('2')")
-pump()
+wait_until(lambda: ev("newAlias") == "my link")
 check("alias mode prefills the current alias", ev("newAlias") == "my link")
 ev("newAlias = 'renamed'; confirmAliasItem()")
 check("alias saved", ["setAlias", "2", "renamed"] in calls())
@@ -264,7 +257,7 @@ tab.requestOpenItem.connect(lambda *a: opened.append(a[0]))
 ev("openItem('2')")
 check("openItem emits requestOpenItem", opened == ["2"])
 ev(f"{svc_expr}.items = []; {svc_expr}.listCompleted()")
-pump()
+wait_until(lambda: "clipboard.no_history" in texts())
 check("empty history shows the placeholder", "clipboard.no_history" in texts())
 
 h.exit(0 if ok else 1)

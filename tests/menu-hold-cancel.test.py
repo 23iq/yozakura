@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from lib.menus_env import MenusEnv  # noqa: E402
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import settle, wait_until  # noqa: E402
 
 env = MenusEnv("menu-hold-cancel", overrides={"theme": {"animDuration": 0}})
 h = env.h
@@ -35,27 +36,26 @@ Window {
         shown: page === "full" && showing; focus: page === "full" }
 }""")
 root.requestActivate()
-QTest.qWait(50)
+settle()
 
 for page, name in [("notch", "powerStrip"), ("radial", "radial"), ("full", "full")]:
     root.setProperty("page", page)
     root.setProperty("showing", True)
-    QTest.qWait(50)
+    settle()
     host = h.find(root, name)
     if page == "radial":
         host = h.eval(host, "children.find(c => typeof c.itemAt === 'function')")
     for cancel in ["navigate", "selection", "focus", "hide", "dismiss"] + ([] if page == "notch" else ["shown"]):
         root.setProperty("showing", True)
         h.eval(host, "forceActiveFocus()")
-        QTest.qWait(30)
+        settle(1)
         if page == "full":
             h.eval(host, "focusAt(5)")
         else:
             h.eval(host, "forceActiveFocus(); currentIndex = 5")
-        QTest.qWait(30)
+        settle(1)
         QTest.keyPress(root, Qt.Key_Return)
-        QTest.qWait(80)
-        assert h.eval(root, "holding(contentItem)") == 1, (page, cancel, "hold did not start")
+        assert wait_until(lambda: h.eval(root, "holding(contentItem)") == 1), (page, cancel, "hold did not start")
         if cancel == "navigate":
             QTest.keyClick(root, Qt.Key_Left)
         elif cancel == "selection":
@@ -69,7 +69,10 @@ for page, name in [("notch", "powerStrip"), ("radial", "radial"), ("full", "full
         else:
             QTest.keyClick(root, Qt.Key_Escape)
         QTest.keyRelease(root, Qt.Key_Return)
-        QTest.qWait(650)
+        # A cancelled hold stops at once; one that was not cancelled keeps
+        # filling until it confirms (holdMs, <= 600 ms) and runs its command.
+        assert wait_until(lambda: h.eval(root, "holding(contentItem)") == 0), (page, cancel, "hold never ended")
+        settle()
         assert json.loads(h.eval(root, "ran()")) == [], (page, cancel, h.eval(root, "ran()"))
 
 print("menu-hold-cancel: ok")

@@ -11,6 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from tabs_env import TabsEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import wait_until  # noqa: E402
 
 env = TabsEnv("emoji-tab")
 h = env.h
@@ -69,7 +70,7 @@ first = js("model.get(0).emojiData")
 check(first["name"] == "waving hand" and not ev("hasRecentRow"), "search lists matches without the strip", first)
 check(ev("selectedIndex") == 0, "first match selected")
 ev("toggleOptions(selectedIndex, true)")
-QTest.qWait(50)
+wait_until(lambda: ev("expandedItemIndex") == 0)
 check(ev("expandedItemIndex") == 0, "Shift+Enter opens tone options")
 ev("onDownPressed(); onDownPressed()")
 check(ev("selectedOptionIndex") == 2, "Down moves in tone options")
@@ -80,15 +81,15 @@ check(copied and copied[-1][1] == "👋🏽", "Enter copies the toned emoji", co
 check(js("recentEmojis[0]")["name"] == "waving hand (medium)", "copied emoji goes to recents")
 
 ev('searchText = ""')
-QTest.qWait(50)
+wait_until(lambda: ev("hasRecentRow"))
 check(ev("hasRecentRow"), "clearing the search brings the strip back")
 ev("clearButtonConfirmState = true; clearRecentEmojis()")
-QTest.qWait(50)
+wait_until(lambda: ev("recentEmojis.length") == 0 and not ev("hasRecentRow"))
 check(ev("recentEmojis.length") == 0 and not ev("hasRecentRow"), "clear recent empties the strip")
 ev('searchText = "cat"')
 QTest.qWait(50)
 ev("collapseOptions(); activate()")
-QTest.qWait(50)
+wait_until(lambda: calls()[-1][0] == "copyAndTypeEmoji" and h.eval(win, "vis.module") == "")
 check(calls()[-1][0] == "copyAndTypeEmoji" and h.eval(win, "vis.module") == "", "Enter on a row copies and closes")
 
 print("\n" + ("OK" if not fails else f"{len(fails)} FAILED"))

@@ -25,6 +25,7 @@ from PySide6.QtCore import QPoint, Qt, qInstallMessageHandler  # noqa: E402
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
+from waits import pump, settle, wait_until  # noqa: E402
 
 errors: list[str] = []
 
@@ -83,10 +84,6 @@ def ev(expr: str, obj=None):
     return h.eval(obj or canvas, expr)
 
 
-def settle(ms: int = 120) -> None:
-    QTest.qWait(ms)
-
-
 def check(cond: bool, what: str) -> None:
     if not cond:
         print("FAIL:", what, file=sys.stderr)
@@ -112,12 +109,13 @@ def drag(p0: QPoint, p1: QPoint) -> None:
     QTest.mousePress(win, Qt.LeftButton, Qt.NoModifier, p0)
     for i in range(1, 9):
         QTest.mouseMove(win, QPoint(p0.x() + (p1.x() - p0.x()) * i // 8, p0.y() + (p1.y() - p0.y()) * i // 8))
-        settle(10)
+        pump(10)
     QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, p1)
-    settle(60)
+    pump(60)
 
 
-settle(300)
+wait_until(lambda: all(frame(w["id"]) is not None and h.eval(frame(w["id"]), "body !== null") for w in WIDGETS))
+settle()
 
 # Calendar and weather are the shared bento widgets (one implementation),
 # drawn on the desktop surface: no pane of their own, no debug button.
@@ -139,7 +137,7 @@ check(ev("SystemResources.consumers[w.findItem('widgetFrame:s1').body.consumerKe
 
 # Edit mode: backdrop + toolbar, content does not take input.
 ev("DesktopWidgets.editMode = true")
-settle(100)
+wait_until(lambda: h.eval(frame("n1"), "body.editing") is True and ev("w.findItem('removeWidget') !== null"))
 check(h.eval(frame("n1"), "body.editing") is True, "edit mode reaches the widget")
 check(ev("w.findItem('removeWidget') !== null"), "remove buttons shown")
 
@@ -171,14 +169,15 @@ check(tiny["w"] * W >= h.eval(frame("s1"), "minPx.w") - 1, "resize stops at the 
 
 # Depth clock area: overlapping widgets warn in edit mode.
 ev("DesktopWidgets.setClockArea('', {x: 900, y: 40, w: 300, h: 600})")
-settle(50)
+settle()
 check(h.eval(frame("w1"), "overlapsClock") is True, "weather overlaps the clock area")
 check(h.eval(frame("n1"), "overlapsClock") is False, "note does not")
 
 # Add: placed in a free spot clear of the clock and other widgets.
 before = len(widgets())
 ev("addWidget('note')")
-settle(100)
+wait_until(lambda: len(widgets()) == before + 1 and frame(widgets()[-1]["id"]) is not None)
+settle()
 after = widgets()
 check(len(after) == before + 1, "added a widget")
 new = after[-1]
@@ -189,13 +188,13 @@ check(h.eval(nf, "overlapsClock") is False, "new widget avoids the clock")
 
 # Remove.
 QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, center(ev(f"w.findItem('removeWidget', w.findItem('widgetFrame:{new['id']}'))")))
-settle(100)
+wait_until(lambda: all(w["id"] != new["id"] for w in widgets()))
 check(all(w["id"] != new["id"] for w in widgets()), "removed")
 
 # Leave edit mode: Escape.
 ev("forceActiveFocus()")
 QTest.keyClick(win, Qt.Key_Escape)
-settle(50)
+settle()
 check(ev("DesktopWidgets.editMode") is False, "Escape leaves edit mode")
 check(h.eval(frame("w1"), "overlapsClock") is False, "no warning outside edit mode")
 
@@ -203,17 +202,17 @@ check(h.eval(frame("w1"), "overlapsClock") is False, "no warning outside edit mo
 mon = "{id: 0, x: 0, y: 0, width: %d, height: %d, scale: 1, transform: 0, activeWorkspace: {id: 1}}" % (W, H)
 ev(f"monitor = {mon}")
 ev("windows = [{monitor: 0, workspace: {id: 1}, hidden: false, at: [0, 0], size: [640, 720]}]")
-settle(50)
+settle()
 check(h.eval(frame("m1"), "visible") is False and h.eval(frame("m1"), "active") is False, "covered media widget hidden")
 check(h.eval(frame("s1"), "visible") is True, "uncovered widget stays")
 check(ev("SystemResources.consumers[w.findItem('widgetFrame:s1').body.consumerKey]") is True, "still consuming")
 ev("obscured = true")
-settle(50)
+settle()
 check(h.eval(frame("s1"), "active") is False, "fullscreen stops every widget")
 check(ev("SystemResources.consumers[w.findItem('widgetFrame:s1').body.consumerKey]") is False,
       "system widget unregistered while hidden")
 ev("obscured = false; windows = []")
-settle(50)
+settle()
 check(h.eval(frame("m1"), "visible") is True, "uncovered again")
 
 # Note: typing saves the text into the widget's options after a pause.
@@ -224,7 +223,7 @@ editor = h.eval(note, "(function(it){ function f(i){ if (i.cursorRectangle !== u
 h.eval(editor, "forceActiveFocus(); cursorPosition = length")
 for key in (Qt.Key_Space, Qt.Key_W, Qt.Key_O, Qt.Key_R, Qt.Key_L, Qt.Key_D):
     QTest.keyClick(win, key, Qt.NoModifier)
-settle(1200)
+wait_until(lambda: next(w for w in widgets() if w["id"] == "n1")["options"]["text"] == "hello world")  # saved after a pause
 check(next(w for w in widgets() if w["id"] == "n1")["options"]["text"] == "hello world", "note text saved")
 
 check(not errors, "QML errors on the desktop:\n  " + "\n  ".join(errors))
@@ -264,14 +263,14 @@ def sfind(name: str):
 
 
 sev('select("desktop")')
-settle(400)
+wait_until(lambda: sfind("addWidget:calendar") is not None)
 sev("SettingsStore.set('desktop.depthClock', true)")
-settle(300)
+settle()
 count = len(widgets())
 add = sfind("addWidget:calendar")
 check(add is not None, "add calendar button")
 h.eval(add, "clicked()")
-settle(200)
+wait_until(lambda: len(widgets()) == count + 1 and sfind(f"widgetCard:{widgets()[-1]['id']}") is not None)
 check(len(widgets()) == count + 1 and widgets()[-1]["type"] == "calendar", "settings adds a widget")
 check(sev("GlobalStates.shellHasChanges") is True, "widget edits are staged with the shell settings")
 cal_id = widgets()[-1]["id"]
@@ -282,7 +281,7 @@ sev(f"""(function() {{
 }})()""")
 check(next(w for w in widgets() if w["id"] == cal_id)["options"]["showEvents"] is False, "option written")
 sev(f'w.findItem("widgetCard:{cal_id}").removeRequested()')
-settle(100)
+wait_until(lambda: all(w["id"] != cal_id for w in widgets()))
 check(all(w["id"] != cal_id for w in widgets()), "card removes its widget")
 
 edit = sfind("widgetsEditMode")

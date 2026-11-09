@@ -26,6 +26,7 @@ from lib.dashboard_env import DashboardEnv  # noqa: E402
 from PySide6.QtGui import QColor, QImage  # noqa: E402
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from waits import settle, wait_stable, wait_until  # noqa: E402
 
 SCENE = """
 import QtQuick
@@ -59,8 +60,10 @@ def art_file() -> str:
 def scene(name: str, **kw):
     env = DashboardEnv(name, **kw)
     win = env.load(SCENE)
-    QTest.qWait(150)
-    return env, env.h, env.h.find(win, "dashboard")
+    dash = env.h.find(win, "dashboard")
+    wait_until(lambda: env.h.eval(dash, "widgetsItem") is not None)
+    settle()
+    return env, env.h, dash
 
 
 def item(h, root, name: str):
@@ -69,6 +72,16 @@ def item(h, root, name: str):
                          "for (let i = 0; i < it.children.length; i++) { const r = f(it.children[i]); if (r) return r; } "
                          "return null; })({ objectName: '', children: children })" % name)
     check(found is not None, "item " + name)
+    return found
+
+
+def find_item(h, root, name: str):
+    """item() for waits: raises while the item is not there (never a failure)."""
+    found = h.eval(root, "(function f(it) { if (it.objectName === %r) return it; "
+                         "for (let i = 0; i < it.children.length; i++) { const r = f(it.children[i]); if (r) return r; } "
+                         "return null; })({ objectName: '', children: children })" % name)
+    if found is None:
+        raise LookupError(name)
     return found
 
 
@@ -97,10 +110,7 @@ hero = h.find(stage, "hero")
 check(ev(item(h, hero, "heroPlayer"), "visible") and not ev(item(h, hero, "heroIdle"), "visible"), "hero plays")
 check(ev(item(h, hero, "title"), "text") == "Midnight City", "hero title")
 check(ev(item(h, hero, "playButton"), "primary"), "play is the one primary action")
-for _ in range(30):
-    if ev(hero, "alpha") > 0:
-        break
-    QTest.qWait(50)
+wait_until(lambda: ev(hero, "alpha") > 0, timeout_ms=3000)
 check(ev(hero, "tinted") and ev(hero, "alpha") > 0, "the art tints the hero")
 tone = ev(hero, "toneRgb ? toneRgb.b - toneRgb.r : 0")
 check(tone > 0.3, "the tone follows the (blue) art")
@@ -108,7 +118,8 @@ check(tone > 0.3, "the tone follows the (blue) art")
 cal = h.find(stage, "calendarEvents")
 ev(cal, "available = true")
 ev(cal, "this.events = " + events)
-QTest.qWait(50)
+wait_until(lambda: ev(h.find(stage, "next"), "rows.length") >= 2)
+settle()
 nxt = h.find(stage, "next")
 check(ev(nxt, "rows[0].kind") == "pomodoro", "the Pomodoro leads NEXT")
 check(ev(nxt, "rows[1].title") == "Sync with Mira", "then the soonest event")
@@ -120,13 +131,15 @@ week = h.find(stage, "week")
 check(count(h, week, "weekToday") == 1, "the week marks today")
 check(count(h, week, "eventDot") >= 1, "days with events are dotted")
 ev(week, "openMonth()")
-QTest.qWait(400)
+wait_until(lambda: ev(stage, "detail") == "month" and ev(find_item(h, stage, "month"), "visible") and not ev(nxt, "visible"))
+wait_stable(lambda: ev(h.find(stage, "right"), "t"))
 check(ev(stage, "detail") == "month" and ev(item(h, stage, "month"), "visible"), "the week opens the month")
 check(not ev(nxt, "visible"), "the month takes the right column")
 left = h.find(stage, "controls")
 left_x = ev(left, "mapToItem(null, 0, 0).x")
 ev(h.find(stage, "detail"), "done()")
-QTest.qWait(400)
+wait_until(lambda: ev(stage, "detail") == "" and ev(nxt, "visible"))
+wait_stable(lambda: ev(left, "mapToItem(null, 0, 0).x"))
 check(ev(stage, "detail") == "" and ev(nxt, "visible"), "done closes the month")
 check(abs(ev(left, "mapToItem(null, 0, 0).x") - left_x) < 0.5, "the detail never moves the left column")
 
@@ -136,7 +149,7 @@ ev(notes, "actionTriggered()")
 check(ev(dash, "Notifications.cleared") == 1, "clear-all clears")
 
 ev(h.find(stage, "bluetoothToggle"), "more()")
-QTest.qWait(50)
+wait_until(lambda: ev(stage, "detail") == "bluetooth")
 check(ev(stage, "detail") == "bluetooth", "a toggle opens its detail")
 ev(stage, "detail = ''")
 
@@ -147,29 +160,31 @@ check(ev(dash, "GlobalStates.dashboardCurrentTab") == 2, "the strip opens the me
 check(ev(item(h, dash, "dashTab_metrics"), "active"), "metrics chip active")
 check(ev(item(h, dash, "clock"), "visible"), "the header shows the time on other tabs")
 ev(dash, "GlobalStates.dashboardCurrentTab = 0")
-QTest.qWait(400)
+wait_until(lambda: ev(dash, "widgetsItem") is not None and ev(metrics, "visible"))
+settle()
 
 ev(dash, "Config.layout.dashboard = Object.assign({}, Config.layout.dashboard, { showMetrics: false, heroTint: false })")
-QTest.qWait(800)
+wait_until(lambda: not ev(metrics, "visible") and not ev(hero, "tinted") and not ev(find_item(h, hero, "heroTint"), "visible"))
 check(not ev(metrics, "visible"), "showMetrics off hides the strip")
 check(not ev(hero, "tinted") and not ev(item(h, hero, "heroTint"), "visible"), "heroTint off drops the tint")
 check(not ev(h.find(dash, "bentoEditToggle"), "visible"), "no edit toggle on the stage")
 ev(dash, "Config.layout.dashboard = Object.assign({}, Config.layout.dashboard, { home: 'bento' })")
-QTest.qWait(100)
+wait_until(lambda: ev(h.find(dash, "bentoEditToggle"), "visible"))
 check(ev(h.find(dash, "bentoEditToggle"), "visible"), "bento mode offers the edit toggle in the header")
 
 # --- Size, keyboard and motion state (fresh scene) ---------------------------
 env3, h3, dash3 = scene("dashboard-stage-keys", art=art_file(), timers=[{"name": "", "leftMs": 600000, "pomodoro": True}])
 ev3 = h3.eval
-QTest.qWait(500)
 stage3 = ev3(dash3, "widgetsItem")
+wait_until(lambda: ev3(stage3, "reveal") == 1)
 check(ev3(stage3, "reveal") == 1, "the open reveal settles")
 check(ev3(dash3, "implicitWidth") <= 900 and ev3(dash3, "implicitHeight") <= 600,
       "natural size within 900 x 600 (%d x %d)" % (ev3(dash3, "implicitWidth"), ev3(dash3, "implicitHeight")))
 check(not ev3(stage3, "compact"), "natural size: not compact")
 win3 = ev3(dash3, "Window.window")
 win3.requestActivate()
-QTest.qWait(100)
+wait_until(win3.isActive)
+settle()
 ev3(stage3, "focusSearchInput()")
 play = h3.find(stage3, "playButton")
 check(ev3(play, "activeFocus"), "the first focus is play")
@@ -183,7 +198,7 @@ check(focused.endswith("Toggle"), "Down from the transport reaches the tiles (%s
 ev3(h3.find(stage3, "wifiToggle"), "forceActiveFocus()")
 wifi_on = ev3(dash3, "NetworkService.wifiEnabled")
 QTest.keyClick(win3, Qt.Key_Return)
-QTest.qWait(50)
+wait_until(lambda: ev3(dash3, "NetworkService.wifiEnabled") != wifi_on)
 check(ev3(dash3, "NetworkService.wifiEnabled") != wifi_on, "Enter toggles the focused tile")
 QTest.keyClick(win3, Qt.Key_Down)
 check(ev3(dash3, "Window.window.activeFocusItem.objectName") == "volumeSlider", "Down from the tiles reaches volume")
@@ -192,7 +207,7 @@ before = ev3(vol, "value")
 QTest.keyClick(win3, Qt.Key_Right)
 check(ev3(vol, "value") > before, "Right on a slider raises it")
 ev3(stage3, "openDetail('wifi')")
-QTest.qWait(400)
+wait_until(lambda: ev3(h3.find(stage3, "right"), "t") == 1)
 check(ev3(h3.find(stage3, "right"), "t") == 1, "the detail slid in")
 QTest.keyClick(win3, Qt.Key_Escape)
 check(ev3(stage3, "detail") == "", "Esc closes the detail first")
@@ -201,7 +216,8 @@ notif_list = h3.find(stage3, "notifList")
 n0 = ev3(notif_list, "count")
 first = ev3(notif_list, "itemAtIndex(1)")
 ev3(dash3, "Notifications.list = Notifications.list.filter(x => x.appName !== Notifications.appNameList[0])")
-QTest.qWait(500)
+wait_until(lambda: ev3(notif_list, "count") == n0 - 1)
+settle(3)  # the list's remove transition
 check(ev3(notif_list, "count") == n0 - 1, "a dismissed app leaves the list")
 check(ev3(notif_list, "itemAtIndex(0)") == first, "the neighbours are kept, not rebuilt")
 
@@ -212,7 +228,8 @@ hero2 = h2.find(stage2, "hero")
 check(h2.eval(item(h2, hero2, "heroIdle"), "visible") and not h2.eval(item(h2, hero2, "heroPlayer"), "visible"), "idle hero")
 check(h2.eval(item(h2, hero2, "greeting"), "text").startswith("Good"), "idle hero greets")
 check(h2.eval(item(h2, hero2, "heroClock"), "text") != "", "idle hero shows the clock")
-QTest.qWait(400)
+wait_until(lambda: not h2.eval(find_item(h2, dash2, "clock"), "visible"))
+wait_stable(lambda: h2.eval(hero2, "alpha"))
 check(not h2.eval(item(h2, dash2, "clock"), "visible"), "the header leaves the time to the idle hero")
 check(h2.eval(hero2, "tinted") and h2.eval(hero2, "toneRgb") is None, "idle: a quiet accent wash, no art tone")
 check(h2.eval(hero2, "alpha") < 0.25, "idle: the wash stays muted")

@@ -17,11 +17,12 @@ os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import headless  # noqa: E402,F401
 from lib import aiscene  # noqa: E402
-from PySide6.QtCore import QCoreApplication, QElapsedTimer, Qt, QUrl  # noqa: E402
+from PySide6.QtCore import Qt, QUrl  # noqa: E402
 from PySide6.QtGui import QGuiApplication  # noqa: E402
 from PySide6.QtQml import QQmlEngine, QQmlExpression  # noqa: E402
 from PySide6.QtQuick import QQuickView  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
+from lib.waits import settle, wait_stable, wait_until  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
 PROJECT = "/home/user/src/yozakura"
@@ -89,11 +90,6 @@ view.show()
 top = view.rootObject()
 
 
-def pump(ms=120):
-    t = QElapsedTimer()
-    t.start()
-    while t.elapsed() < ms:
-        QCoreApplication.processEvents()
 
 
 def ev(target, expr):
@@ -147,14 +143,15 @@ def click(name):
     hits = [o for o in find_all(name) if visible_chain(o)]
     assert hits, name
     obj = hits[0]
+    wait_stable(lambda: obj.mapToScene(obj.boundingRect().center()), stable_ms=40)  # not mid-layout
     point = obj.mapToScene(obj.boundingRect().center())
     QTest.mouseClick(view, Qt.LeftButton, Qt.NoModifier, point.toPoint())
-    pump()
+    settle()
 
 
 def key(k, target=None):
     QTest.keyClick(view, k)
-    pump()
+    settle()
 
 
 def calls(method):
@@ -163,7 +160,7 @@ def calls(method):
 
 def emit(kind, data):
     ev(top, f"emit('{kind}', {json.dumps(json.dumps(data))})")
-    pump()
+    settle()
 
 
 def respond(method, data):
@@ -184,7 +181,7 @@ ev(svc, "refreshAll('%s')" % PROJECT)
 # Code space without an agent session: the task workspace.
 ev(top, "Ai.setSpace('code')")
 ev(top, "Ai.agents.activeId = ''")
-pump(200)
+settle()
 emit("tasks.list", TASKS)
 assert ev(svc, "ready") and ev(svc, "tasks.length") == len(TASKS)
 assert calls("tasks.configure"), "settings are pushed after the first list"
@@ -192,7 +189,7 @@ assert shown("taskWorkspace") and shown("taskOptions") and not shown("composerSt
 
 # Project bar: git summary from tasks.git, missing AGENTS.md offers an agent task.
 ev(panel, "true")
-pump()
+wait_until(lambda: find("gitBranch") is not None and ev(find("gitBranch"), "text") == "main")
 assert ev(find("gitBranch"), "text") == "main"
 assert "3" in ev(find("gitChanged"), "text")
 assert shown("projectSettings")
@@ -209,7 +206,7 @@ assert shown("taskCard_wait1") and not shown("taskCard_done1") and find("taskCar
 
 # Wide: columns.
 ev(top, "GlobalStates.assistantWide = true")
-pump(200)
+wait_until(lambda: shown("boardColumns") and not shown("boardList"))
 assert shown("boardColumns") and not shown("boardList")
 
 # Keyboard: J moves the cursor, Enter opens; Esc goes back.
@@ -234,12 +231,13 @@ assert run == {"id": "plan1", "steps": ["Run tests", "Read the module", "Change 
 
 # Review: best-of-N side by side, accept asks first, message is sent.
 ev(svc, "select('rev1', -1)")
-pump(200)
+wait_until(lambda: shown("reviewView") and shown("runChoice"))
 assert shown("reviewView") and shown("runChoice")
 assert ev(find("commitMessage"), "text") == "Add hello"
 click("runCard_1")
+wait_until(lambda: ev(svc, "selectedRun") == 1)
 assert ev(svc, "selectedRun") == 1
-pump()
+wait_until(lambda: find("commitMessage") is not None and ev(find("commitMessage"), "text") == "hello")
 assert ev(find("commitMessage"), "text") == "hello"
 ev(find("commitMessage"), "text = 'feat: hello'")
 respond("tasks.accept", task("rev1", "accepted"))
@@ -250,10 +248,10 @@ accept = calls("tasks.accept")[-1]
 assert accept == {"id": "rev1", "run": 1, "message": "feat: hello"}, accept
 emit("tasks.updated", TASKS[3])  # back to review for the refusal case
 ev(svc, "select('rev1', 0)")
-pump()
+settle()
 ev(top, "fail('tasks.accept', 'the project has uncommitted changes in files this task changes: hello.txt (commit or stash them first)')")
 ev(find("reviewView"), "doAccept()")
-pump()
+wait_until(lambda: shown("reviewError"))
 assert shown("reviewError")
 assert "uncommitted" in ev(find("reviewView"), "error")
 
@@ -265,27 +263,27 @@ assert calls("tasks.followup")[-1] == {"id": "rev1", "run": 0, "text": "Also add
 # D discards after a confirmation.
 ev(ws, "forceActiveFocus()")
 key(Qt.Key_D)
-pump()
+wait_until(lambda: shown("detailConfirmDiscard") and not calls("tasks.discard"))
 assert shown("detailConfirmDiscard") and not calls("tasks.discard")
 click("confirmOk")
 assert calls("tasks.discard")[-1] == {"id": "rev1"}
 
 # Waiting task: banner and live transcript of its session.
 ev(svc, "select('wait1', -1)")
-pump(200)
+wait_until(lambda: shown("waitingBanner"))
 assert shown("waitingBanner")
 
 # Create: best-of-N with plan first.
 ev(svc, "select('', -1)")
 ev(top, "GlobalStates.assistantWide = false")
-pump(200)
+settle()
 respond("tasks.create", task("new1", "queued"))
 click("taskAgent_codex")
 click("taskPlanFirst")
 composer = find("workspaceComposer")
 ev(composer, "text = 'Add a hello file'")
 ev(composer, "submit()")
-pump()
+settle()
 create = calls("tasks.create")[-1]
 assert create == {"dir": PROJECT, "prompt": "Add a hello file", "agents": ["claude", "codex"], "mode": "plan"}, create
 assert ev(composer, "text") == "", "the composer clears after a task is created"
@@ -295,11 +293,11 @@ ev(svc, "select('', -1)")
 click("taskAgent_codex")
 click("taskPlanFirst")
 ev(composer, "text = '/re'")
-pump()
+wait_until(lambda: any(m["cmd"] == "/review" for m in json.loads(ev(composer, "JSON.stringify(slashMatches)"))))
 assert any(m["cmd"] == "/review" for m in json.loads(ev(composer, "JSON.stringify(slashMatches)")))
 ev(composer, "text = '/review the auth module'")
 ev(composer, "submit()")
-pump()
+settle()
 create = calls("tasks.create")[-1]
 assert create["template"] == "review" and create["prompt"] == "the auth module" and create["agent"] == "claude", create
 # Empty input is refused and keeps the composer as is.
@@ -311,10 +309,10 @@ assert len(calls("tasks.create")) == before
 # Esc in an empty composer moves to the board (keyboard navigation), Esc there closes the bar.
 ev(composer, "text = ''")
 ev(svc, "select('', -1)")
-pump()
+settle()
 ev(composer, "focusInput()")
 ev(composer, "escapePressed()")
-pump()
+wait_until(lambda: find("taskWorkspace") is not None and ev(find("taskWorkspace"), "activeFocus"))
 assert ev(find("taskWorkspace"), "activeFocus"), "Esc hands the keyboard to the board"
 key(Qt.Key_Escape)
 assert not ev(top, "GlobalStates.assistantVisible")
@@ -322,9 +320,9 @@ ev(top, "GlobalStates.assistantVisible = true")
 
 # Missing AGENTS.md: "Create with agent" starts an instructions task.
 ev(find("projectInstructions"), "clicked()")
-pump()
+settle()
 ev(find("projectBar"), "createInstructions()")
-pump()
+wait_until(lambda: calls("tasks.create")[-1]["template"] == "instructions")
 assert calls("tasks.create")[-1]["template"] == "instructions"
 
 # Notch activity: "Codex is waiting", click focuses the task.
@@ -335,7 +333,7 @@ assert len(act) == 1 and act[0]["label"] == "Codex is waiting" and act[0]["indic
 ev(svc, "select('', -1)")
 ev(top, "GlobalStates.assistantVisible = false")
 ev(top, "clickActivity()")
-pump()
+wait_until(lambda: ev(svc, "selectedId") == "wait1" and ev(top, "GlobalStates.assistantVisible"))
 assert ev(svc, "selectedId") == "wait1" and ev(top, "GlobalStates.assistantVisible")
 emit("tasks.activity", {"headline": "running", "running": 3, "items": []})
 act = json.loads(ev(top, "activity()"))
