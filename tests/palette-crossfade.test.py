@@ -27,6 +27,7 @@ h.module('Quickshell.Io', {
     property QtObject adapter
     property var pending: null
     signal fileChanged()
+    function text() { return "{}"; }
     function reload() { if (pending) { for (var k in pending) adapter[k] = pending[k]; pending = null; } }
 }''',
     'JsonAdapter': 'QtObject {}',
@@ -39,13 +40,20 @@ h.singleton('qs.config', 'Config', '''QtObject {
     property QtObject terminal: QtObject { property bool enabled: false; property int padding: 12; property string cursorShape: "beam"; property bool cursorBlink: true }
 }''')
 
-h.module('qs.modules.globals', {})  # real Brand singleton (cache dir)
+h.module('qs.modules.globals', {  # + the real Brand singleton (cache dir)
+    'GlobalStates': 'pragma Singleton\nQtObject { property var wallpaperManager: null }',
+})
 
 # Colors.qml + its relative JS imports; generators are replaced by recorders.
-colors_qml = h.copy('modules/theme/Colors.qml', strip_singleton=True, siblings=False)
+# Glass (a sibling singleton) comes from a stub module imported into the copy.
+h.module('qs.modules.theme', {'Glass': 'pragma Singleton\nQtObject { property real terminalOpacity: 0.9 }'})
+colors_qml = h.copy('modules/theme/Colors.qml', strip_singleton=True, siblings=False,
+                    replace={'import qs.config\n': 'import qs.config\nimport qs.modules.theme\n'})
 for g in sorted(set(re.findall(r'\b(\w+Generator)\s*\{', colors_qml.read_text()))):
     h.stub(g, 'QtObject { property var calls: []; function generate(c) { calls = calls.concat([{ t: Date.now(), '
               'primary: c.primary.toString(), crossfading: c._crossfading }]); } }')
+# Every generator runs (the input fingerprint cache is GenCache.js, gen-cache.test.cjs)
+h.stub('GeneratorCache', 'QtObject { function take(names, inputs, force) { return names; } }')
 colors = h.load(colors_qml, auto_stub=False)
 engine = h.engine
 
