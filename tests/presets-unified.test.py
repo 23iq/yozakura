@@ -69,17 +69,13 @@ h.singleton("qs.modules.settings.store", "PresetStudio", """QtObject {
 }""" % json.dumps(PARTS))
 h.module("qs.modules.components", {
     "StyledRect": "Item { property string variant; property real radius; property bool enableShadow }",
-    "SearchInput": """FocusScope {
-    property string text; property string placeholderText; property string iconText
-    property bool clearOnEscape
-    signal accepted; signal escapePressed; signal leftPressed; signal rightPressed; signal upPressed; signal downPressed
-    function focusInput() { forceActiveFocus(); }
-}""",
 })
 kit_stubs.install(h)
 h.module("qs.modules.components.kit", {
     "SearchField": "FocusScope { property string text; property string glyph; property bool clearOnEscape; "
-                   "signal accepted; signal escapePressed; function focusInput() { forceActiveFocus(); } }",
+                   "property string placeholderText; property bool rule; property bool boxed; "
+                   "signal accepted; signal escapePressed; signal leftPressed; signal rightPressed; "
+                   "signal upPressed; signal downPressed; function focusInput() { forceActiveFocus(); } }",
 })
 for f in ("PresetParts", "PresetNewLook"):
     h.copy(f"modules/widgets/presets/store/{f}.qml", "qs/modules/widgets/presets/store")

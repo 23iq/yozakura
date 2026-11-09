@@ -5,6 +5,7 @@ import QtQuick.Controls
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 import "../Ui.js" as Ui
 import "../../services/KeyboardModel.js" as KeyboardModel
@@ -26,21 +27,13 @@ Item {
         search.focusInput();
     }
 
-    SearchInput {
+    SearchField {
         id: search
         objectName: "pickerSearch"
-        x: 20
-        width: parent.width - 40
-        iconText: Icons.magnifyingGlass
+        x: Space.l
+        width: parent.width - Space.l * 2
+        boxed: true
         placeholderText: I18n.t("prefs.keyboard.search")
-    }
-
-    Rectangle {
-        anchors.fill: search
-        radius: search.radius
-        color: "transparent"
-        border.width: 1
-        border.color: Ui.alpha(Colors.outlineVariant, 0.6)
     }
 
     Text {

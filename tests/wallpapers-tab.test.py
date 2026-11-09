@@ -30,10 +30,12 @@ h.module("qs.modules.theme", {
 })
 h.module("qs.modules.components", {
     "StyledRect": "import QtQuick\nRectangle { property string variant }",
-    "SearchInput": """import QtQuick
+})
+h.module("qs.modules.components.kit", {
+    "SearchField": """import QtQuick
 Item {
-    property string text; property string placeholderText; property string iconText; property bool clearOnEscape
-    property bool handleTabNavigation; property bool disableCursorNavigation; property real radius
+    property string text; property string placeholderText; property bool boxed; property bool clearOnEscape
+    property bool handleTabNavigation; property bool disableCursorNavigation
     property int focusCalls: 0
     signal searchTextChanged(string text)
     signal escapePressed(); signal tabPressed(); signal shiftTabPressed()

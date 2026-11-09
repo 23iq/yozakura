@@ -4,6 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.config
 import "ExtrasModel.js" as ExtrasModel
 import "ExtrasUi.js" as Ui
@@ -156,22 +157,14 @@ Column {
             }
         }
 
-        SearchInput {
+        SearchField {
             id: search
             objectName: "catalogSearch"
             visible: root.showSearch
             anchors.right: parent.right
             width: Math.min(260, parent.width * 0.4)
-            iconText: Icons.magnifyingGlass
+            boxed: true
             placeholderText: I18n.t("extras.ui.search")
-        }
-        Rectangle {
-            visible: root.showSearch
-            anchors.fill: search
-            radius: search.radius
-            color: "transparent"
-            border.width: 1
-            border.color: Ui.alpha(Colors.outlineVariant, 0.6)
         }
     }
 
