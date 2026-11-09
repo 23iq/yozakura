@@ -40,25 +40,24 @@ IconButton {
 
     Popup {
         id: popup
-        y: parent.height + 4
+        y: parent.height + Space.xs
         x: Math.min(0, (root.parent ? root.parent.width : 0) - root.x - width)
         // Never wider than the project bar (the compact AI bar).
         width: Math.min(400, root.parent ? root.parent.width : 400)
-        padding: 12
+        padding: Space.m
         background: StyledRect {
             variant: "popup"
-            radius: Styling.radius(-2)
+            radius: Look.radius("control")
             enableShadow: true
         }
         contentItem: ColumnLayout {
-            spacing: 10
+            spacing: Space.s
 
-            Text {
+            AiText {
+                role: "caption"
                 text: I18n.t("ai.tasks.check_command")
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
                 font.weight: Font.DemiBold
-                color: Colors.overSurface
+                color: Type.text
             }
             TextField {
                 id: check
@@ -69,10 +68,10 @@ IconButton {
                 placeholderTextColor: Colors.outline
                 color: Colors.overSurface
                 font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-2)
+                font.pixelSize: BarLook.monoSize("caption")
                 background: StyledRect {
                     variant: "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                 }
                 onEditingFinished: if (root.info && text !== (root.info.checkCommand || ""))
                     root.set(text.trim() ? {
@@ -83,7 +82,7 @@ IconButton {
             }
             Flow {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Chip {
                     visible: !!root.info && !!root.info.suggestedCheck
                     icon: Icons.sparkle
@@ -103,26 +102,23 @@ IconButton {
                     })
                 }
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.info ? I18n.t("ai.tasks.check_effective").replace("%1", root.info.effectiveCheck || I18n.t("ai.tasks.no_check")) : ""
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
-                color: Colors.outline
             }
 
             GridLayout {
                 Layout.fillWidth: true
                 columns: 2
-                columnSpacing: 10
-                rowSpacing: 8
-                Text {
+                columnSpacing: Space.s
+                rowSpacing: Space.s
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("ai.tasks.max_attempts")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
                 SpinBox {
                     objectName: "maxAttempts"
@@ -133,12 +129,11 @@ IconButton {
                         "maxAttempts": value
                     })
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("ai.tasks.check_timeout")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
                 SpinBox {
                     from: 30
@@ -149,15 +144,14 @@ IconButton {
                         "checkTimeout": value
                     })
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("prefs.ai.tasks.merge_mode")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
                 Row {
-                    spacing: 4
+                    spacing: Space.xs
                     Repeater {
                         model: ["squash", "merge"]
                         delegate: Chip {
@@ -171,12 +165,11 @@ IconButton {
                         }
                     }
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("prefs.ai.tasks.max_parallel")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
                 SpinBox {
                     from: 1
@@ -184,15 +177,14 @@ IconButton {
                     value: Config.ai.tasks.maxParallel
                     onValueModified: SettingsStore.set("ai.tasks.maxParallel", value)
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("prefs.ai.tasks.fallback")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurface
+                    color: Type.text
                 }
                 Row {
-                    spacing: 4
+                    spacing: Space.xs
                     Repeater {
                         model: ["", "claude", "codex", "opencode"]
                         delegate: Chip {
@@ -205,14 +197,13 @@ IconButton {
                     }
                 }
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: root.error.length > 0
                 text: root.error
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
-                color: Colors.error
+                color: Type.danger
             }
         }
     }

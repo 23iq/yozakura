@@ -109,7 +109,7 @@ StyledRect {
     }
 
     variant: "bg"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
     visible: opened || opacity > 0
     opacity: opened ? 1 : 0
     enabled: opened
@@ -135,30 +135,25 @@ StyledRect {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.margins: BarLook.pad
         width: Math.min(parent.width - 2 * BarLook.pad, 640)
-        spacing: 10
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
-                Text {
+                spacing: Space.xs / 2
+                AiText {
                     Layout.fillWidth: true
                     text: I18n.t("ai.folder.title")
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(2)
                     font.weight: Font.Bold
-                    color: Colors.overBackground
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("ai.folder.current").arg(FolderPath.tilde(root.current, root.home))
                     elide: Text.ElideMiddle
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
-                    color: Colors.outline
                 }
             }
             IconButton {
@@ -172,18 +167,18 @@ StyledRect {
         StyledRect {
             Layout.fillWidth: true
             implicitHeight: 40
-            radius: Styling.radius(-4)
+            radius: Look.radius("control")
             variant: field.activeFocus ? "focus" : "common"
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: 10
-                anchors.rightMargin: 4
-                spacing: 4
-                Text {
-                    text: root.browsing ? Icons.folderOpen : Icons.magnifyingGlass
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(-1)
-                    color: Colors.outline
+                anchors.leftMargin: Space.s
+                anchors.rightMargin: Space.xs
+                spacing: Space.xs
+                Icon {
+                    role: "secondary"
+                    tone: "muted"
+                    icon: root.browsing ? Icons.folderOpen : Icons.magnifyingGlass
+                    size: BarLook.size("secondary")
                 }
                 TextField {
                     id: field
@@ -193,7 +188,7 @@ StyledRect {
                     placeholderTextColor: Colors.outline
                     color: Colors.overSurface
                     font.family: root.browsing ? Config.theme.monoFont : Config.theme.font
-                    font.pixelSize: root.browsing ? BarLook.mono(-2) : BarLook.font(-1)
+                    font.pixelSize: root.browsing ? BarLook.monoSize("caption") : BarLook.size("secondary")
                     selectByMouse: true
                     background: null
                     Keys.onUpPressed: root.move(-1)
@@ -254,26 +249,26 @@ StyledRect {
             onContentWidthChanged: contentX = Math.max(0, contentWidth - width)
             Row {
                 id: crumbsRow
-                spacing: 2
+                spacing: Space.xs / 2
                 Repeater {
                     model: FolderPath.crumbs(root.split.dir, root.home)
                     delegate: Row {
                         id: crumb
                         required property var modelData
                         required property int index
-                        spacing: 2
-                        Text {
+                        spacing: Space.xs / 2
+                        Icon {
+                            role: "caption"
+                            tone: "muted"
                             visible: crumb.index > 0
                             anchors.verticalCenter: parent.verticalCenter
-                            text: Icons.caretRight
-                            font.family: Icons.font
-                            font.pixelSize: BarLook.font(-6)
-                            color: Colors.outline
+                            icon: Icons.caretRight
+                            size: BarLook.size("caption")
                         }
                         StyledRect {
-                            implicitWidth: crumbText.implicitWidth + 12
+                            implicitWidth: crumbText.implicitWidth + 2 * Space.s
                             implicitHeight: 24
-                            radius: Styling.radius(-6)
+                            radius: Look.radius("small")
                             variant: crumbHover.hovered ? "common" : "transparent"
                             HoverHandler {
                                 id: crumbHover
@@ -282,14 +277,13 @@ StyledRect {
                             TapHandler {
                                 onTapped: root.browse(crumb.modelData.path)
                             }
-                            Text {
+                            AiText {
                                 id: crumbText
+                                role: "caption"
                                 anchors.centerIn: parent
                                 text: crumb.modelData.label
-                                font.family: Config.theme.font
-                                font.pixelSize: BarLook.font(-3)
                                 font.weight: crumb.index === FolderPath.crumbs(root.split.dir, root.home).length - 1 ? Font.DemiBold : Font.Normal
-                                color: Colors.overSurfaceVariant
+                                color: Type.secondary
                             }
                         }
                     }
@@ -297,24 +291,21 @@ StyledRect {
             }
         }
 
-        Text {
+        AiText {
             id: errorText
             objectName: "folderError"
+            role: "caption"
             Layout.fillWidth: true
             visible: text.length > 0
             wrapMode: Text.Wrap
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-3)
-            color: Colors.error
+            color: Type.danger
         }
-        Text {
+        AiText {
+            role: "caption"
             Layout.fillWidth: true
             visible: browser.error.length > 0
             text: I18n.t("ai.folder.backend_missing")
             wrapMode: Text.Wrap
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-3)
-            color: Colors.outline
         }
 
         ListView {
@@ -323,7 +314,7 @@ StyledRect {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 1
+            spacing: Space.hairline
             boundsBehavior: Flickable.StopAtBounds
             model: root.rows
             delegate: FolderRow {
@@ -339,22 +330,20 @@ StyledRect {
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
             }
-            Text {
+            AiText {
+                role: "caption"
                 anchors.centerIn: parent
                 width: parent.width - 32
                 visible: list.count === 0
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 text: root.browsing ? (browser.loading ? I18n.t("ai.folder.loading") : (root.listing && root.listing.error ? root.listing.error : I18n.t("ai.folder.empty"))) : (browser.reposLoading ? I18n.t("ai.folder.scanning") : I18n.t("ai.folder.no_match"))
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
-                color: Colors.outline
             }
         }
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
             Chip {
                 objectName: "folderSystemDialog"
                 icon: Icons.appWindow

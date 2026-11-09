@@ -11,7 +11,7 @@ Row {
     property string range: "today"
     signal picked(string range)
 
-    spacing: 4
+    spacing: Space.xs
 
     Repeater {
         model: ["today", "week", "month"]

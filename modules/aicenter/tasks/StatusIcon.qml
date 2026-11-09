@@ -1,15 +1,17 @@
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.aicenter.common
 import "../../services/tasks/TaskModel.js" as TaskModel
 
 // Status glyph of a task or run: a spinner while it works, a pulsing hand
-// while it waits for the user, the status icon otherwise.
+// while it waits for the user, the status icon otherwise; `role` is the
+// Type role of the text it sits next to.
 Item {
     id: root
 
     property string status: ""
-    property int size: 0
+    property string role: "body"
     readonly property var info: TaskModel.statusInfo(status)
 
     implicitWidth: glyph.implicitWidth
@@ -18,15 +20,16 @@ Item {
     Spinner {
         anchors.centerIn: parent
         running: root.info.busy
-        font.pixelSize: BarLook.font(root.size)
+        font.pixelSize: BarLook.size(root.role)
     }
-    Glyph {
+    Icon {
         id: glyph
         anchors.centerIn: parent
         visible: !root.info.busy
-        size: root.size
-        role: root.info.color
-        text: Icons[root.info.icon] || Icons.circle
+        role: root.role
+        size: BarLook.size(root.role)
+        color: Colors[root.info.color] ?? Type.text
+        icon: Icons[root.info.icon] || Icons.circle
         SequentialAnimation on opacity {
             running: root.info.section === "waiting"
             loops: Animation.Infinite

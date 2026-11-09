@@ -128,11 +128,11 @@ Flickable {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 14
+            spacing: Space.m
             StyledRect {
                 implicitWidth: 52
                 implicitHeight: 52
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
                 variant: "primary"
                 ProviderIcon {
                     anchors.centerIn: parent
@@ -143,23 +143,19 @@ Flickable {
             }
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 4
-                Text {
+                spacing: Space.xs
+                AiText {
                     Layout.fillWidth: true
                     text: root.preset.label || root.provider
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(3)
                     font.weight: Font.Bold
-                    color: Colors.overSurface
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: root.description
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.overSurfaceVariant
+                    color: Type.secondary
                 }
             }
         }

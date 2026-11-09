@@ -1,18 +1,21 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 
-// Session status: running (pulsing primary), waiting (warning), idle, exited.
-Rectangle {
+// Session status: running (pulsing accent), waiting (warning), idle, exited.
+// A kit Ring stroked to a full disc in the status colour.
+Ring {
     id: root
 
     property string status: "idle"
 
-    implicitWidth: 8
-    implicitHeight: 8
-    radius: 4
-    color: status === "running" || status === "starting" ? Colors.primary : (status === "waiting" ? Colors.warning : (status === "exited" ? Colors.outline : Colors.success))
+    implicitWidth: Space.s
+    implicitHeight: Space.s
+    value: 1
+    thickness: Math.min(width, height) / 2
+    color: status === "running" || status === "starting" ? Type.accent : (status === "waiting" ? Colors.warning : (status === "exited" ? Type.muted : Colors.success))
+    trackColor: root.color
 
     SequentialAnimation on opacity {
         running: root.status === "running" || root.status === "starting" || root.status === "waiting"

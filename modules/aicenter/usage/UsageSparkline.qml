@@ -1,37 +1,20 @@
-pragma ComponentBehavior: Bound
 import QtQuick
-import qs.modules.theme
+import qs.modules.components.kit
 
-// Tiny per-day bar chart (tokens per day); the last bar is today.
-Row {
+// Per-day usage (tokens per day, oldest first, today last) as the kit
+// Sparkline, scaled to the busiest day.
+Sparkline {
     id: root
 
-    property var values: []
-    property int barWidth: 4
-    property int chartHeight: 18
+    // Raw per-day values; the chart draws them relative to the peak.
+    property var series: []
+    readonly property real peak: Math.max.apply(null, [1].concat(root.series || []))
+    readonly property var levels: (root.series || []).map(v => (v || 0) / root.peak)
 
-    readonly property real peak: Math.max.apply(null, [1].concat(values || []))
-
-    spacing: 2
-    height: chartHeight
-
-    Repeater {
-        model: root.values || []
-        delegate: Item {
-            id: bar
-            required property var modelData
-            required property int index
-            width: root.barWidth
-            height: root.chartHeight
-            // One day's bar.
-            Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: Math.max(2, parent.height * (bar.modelData || 0) / root.peak)
-                radius: width / 2
-                color: bar.modelData > 0 ? Colors.primary : Colors.outlineVariant
-                opacity: bar.index === (root.values || []).length - 1 ? 1 : 0.6
-            }
-        }
-    }
+    // The kit Sparkline is a sliding window that keeps its first sample off
+    // the left edge; a copy of the oldest day fills that slot so every day
+    // of the range stays on screen.
+    values: root.levels.length > 1 ? [root.levels[0]].concat(root.levels) : root.levels
+    implicitWidth: Space.controlL
+    implicitHeight: Space.l
 }

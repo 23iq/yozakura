@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.config
 import qs.modules.aicenter.common
@@ -21,11 +22,11 @@ StyledRect {
 
     signal clicked
 
-    readonly property color tone: level === "critical" ? Colors.error : (level === "warn" ? Colors.warning : Colors.outline)
+    readonly property color tone: level === "critical" ? Type.danger : (level === "warn" ? Colors.warning : Type.muted)
 
-    implicitWidth: row.implicitWidth + 12
-    implicitHeight: row.implicitHeight + 6
-    radius: Styling.radius(-4)
+    implicitWidth: row.implicitWidth + 2 * Space.s
+    implicitHeight: row.implicitHeight + 2 * Space.xs
+    radius: Look.radius("control")
     variant: hover.hovered ? "common" : "transparent"
     enableBorder: false
 
@@ -40,42 +41,26 @@ StyledRect {
     RowLayout {
         id: row
         anchors.centerIn: parent
-        spacing: 5
-        Text {
+        spacing: Space.xs
+        Icon {
+            role: "caption"
             visible: root.glyph.length > 0
-            text: root.glyph
-            font.family: Icons.font
-            font.pixelSize: BarLook.font(-5)
+            icon: root.glyph
+            size: BarLook.size("caption")
             color: root.tone
         }
-        StyledRect {
+        LevelMeter {
             visible: root.fraction >= 0
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 4
+            Layout.preferredWidth: Space.xxl - Space.xs
+            Layout.preferredHeight: Space.xs
             Layout.alignment: Qt.AlignVCenter
-            variant: "internalbg"
-            radius: 2
-            enableBorder: false
-            // Fill of the bar.
-            Rectangle {
-                width: parent.width * Math.max(0, Math.min(1, root.fraction))
-                height: parent.height
-                radius: parent.radius
-                color: root.level === "ok" ? Colors.primary : root.tone
-                Behavior on width {
-                    enabled: BarLook.animDuration > 0
-                    NumberAnimation {
-                        duration: BarLook.animDuration / 2
-                        easing.type: Motion.morph.easing
-                    }
-                }
-            }
+            level: root.fraction
+            tone: root.level === "ok" ? Type.progress : root.tone
         }
-        Text {
+        AiText {
             objectName: "usageSlotText"
+            role: "caption"
             text: root.text
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-4)
             font.features: {
                 "tnum": 1
             }

@@ -4,7 +4,9 @@ diff), notch quick ask and the selection popup, in a dark and a light preset.
 Real components + real ChatSession/AgentTimeline; services stubbed by
 tests/lib/aiscene.py. Fails on QML errors/warnings from the AI center and
 checks a few behaviours (permission card -> agents.respond, wide layout,
-streaming text). Set AI_CENTER_RENDER=<dir> to save PNGs of every scene.
+streaming text). Set AI_CENTER_RENDER=<dir> to save PNGs of every scene;
+AI_CENTER_LANGUAGES=ink,glass,... renders every scene of the dark preset once
+per visual language instead (tools/render/aicenter_render.py).
 """
 import json
 import os
@@ -28,6 +30,11 @@ OUT = os.environ.get("AI_CENTER_RENDER")
 PRESETS = [("Yozakura Night", "dark", ["chat", "agent", "quick", "selection", "selection-result", "history", "settings"]),
            ("Sumi-e", "light", ["chat", "agent", "quick", "selection", "selection-result"]),
            ("Kaze", "dark", ["chat", "agent"])]
+ALL_KINDS = PRESETS[0][2]
+LANGS = [lang for lang in os.environ.get("AI_CENTER_LANGUAGES", "").split(",") if lang]
+# (preset, mode, kinds, language): the presets, or one dark run per language.
+RUNS = [(p, m, k, "") for p, m, k in PRESETS] if not LANGS else [
+    (PRESETS[0][0], os.environ.get("AI_CENTER_MODE", "dark"), ALL_KINDS, lang) for lang in LANGS]
 W, H = 1440, 860
 
 app = QGuiApplication([])
@@ -289,8 +296,8 @@ def evaluate(view, expr):
 
 
 failures = []
-for preset, mode, kinds in PRESETS:
-    root = aiscene.build(preset, mode, (REPO / "tests/fixtures/aicenter-ai-stub.qml.in").read_text())
+for preset, mode, kinds, language in RUNS:
+    root = aiscene.build(preset, mode, (REPO / "tests/fixtures/aicenter-ai-stub.qml.in").read_text(), language)
     app_dir = root / "app"
     app_dir.mkdir()
     (app_dir / "Scene.qml").write_text(SCENE % {"W": W, "H": H, "SEL": SELECTION_TEXT})
@@ -329,7 +336,7 @@ for preset, mode, kinds in PRESETS:
             assert menu.property("visible") and menu.property("width") > 0 and menu.property("opacity") == 1, "selection preview must be visible"
         if OUT:
             Path(OUT).mkdir(parents=True, exist_ok=True)
-            name = f"{kind}-{preset.lower().replace(' ', '-')}.png"
+            name = f"{kind}-{language or preset.lower().replace(' ', '-')}.png"
             view.grabWindow().save(str(Path(OUT) / name))
         bad = [m for m in messages if "Binding loop" not in m]
         if bad:

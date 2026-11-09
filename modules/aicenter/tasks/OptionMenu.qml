@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.aicenter.common
 
@@ -15,15 +16,15 @@ Popup {
     property string current: ""
     signal picked(string value)
 
-    padding: 6
+    padding: Space.s
     width: 260
     background: StyledRect {
         variant: "popup"
-        radius: Styling.radius(-2)
+        radius: Look.radius("control")
         enableShadow: true
     }
     contentItem: ColumnLayout {
-        spacing: 2
+        spacing: Space.xs / 2
         Repeater {
             model: root.options
             delegate: StyledRect {
@@ -31,8 +32,8 @@ Popup {
                 required property var modelData
                 objectName: "option_" + item.modelData.value
                 Layout.fillWidth: true
-                implicitHeight: itemCol.implicitHeight + 10
-                radius: Styling.radius(-6)
+                implicitHeight: itemCol.implicitHeight + 2 * Space.xs
+                radius: Look.radius("small")
                 variant: hover.hovered ? "common" : (root.current === item.modelData.value ? "focus" : "transparent")
                 HoverHandler {
                     id: hover
@@ -49,21 +50,21 @@ Popup {
                     anchors.left: parent.left
                     anchors.right: parent.right
                     anchors.verticalCenter: parent.verticalCenter
-                    anchors.leftMargin: 8
-                    anchors.rightMargin: 8
+                    anchors.leftMargin: Space.s
+                    anchors.rightMargin: Space.s
                     spacing: 0
-                    UiText {
+                    AiText {
+                        role: "caption"
+                        color: Type.text
                         Layout.fillWidth: true
                         text: item.modelData.label
-                        size: -2
                         mono: item.modelData.mono === true
                     }
-                    UiText {
+                    AiText {
+                        role: "caption"
                         Layout.fillWidth: true
                         visible: text.length > 0
                         text: item.modelData.detail || ""
-                        muted: true
-                        size: -4
                     }
                 }
             }

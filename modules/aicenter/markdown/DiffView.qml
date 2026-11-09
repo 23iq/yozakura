@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -29,7 +30,7 @@ StyledRect {
     readonly property int gutter: Math.max(2, String(allRows.reduce((m, r) => Math.max(m, r.oldNo, r.newNo), 1)).length)
 
     variant: "internalbg"
-    radius: Styling.radius(-6)
+    radius: Look.radius("small")
     implicitHeight: col.implicitHeight
     clip: true
 
@@ -47,37 +48,36 @@ StyledRect {
         RowLayout {
             visible: root.showHeader
             Layout.fillWidth: true
-            Layout.leftMargin: 10
-            Layout.rightMargin: 4
-            Layout.topMargin: 4
-            Layout.bottomMargin: 2
-            spacing: 8
+            Layout.leftMargin: Space.s
+            Layout.rightMargin: Space.xs
+            Layout.topMargin: Space.xs
+            Layout.bottomMargin: Space.xs / 2
+            spacing: Space.s
 
-            Text {
-                text: Icons.gitDiff
-                font.family: Icons.font
-                font.pixelSize: 13
-                color: Colors.outline
+            Icon {
+                role: "label"
+                tone: "muted"
+                icon: Icons.gitDiff
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: root.files.length === 1 ? (root.files[0].path || root.path) : I18n.t("ai.files_changed").replace("%1", root.files.length)
-                font.family: Config.theme.monoFont
-                font.pixelSize: Styling.monoFontSize(-3)
-                color: Colors.overSurface
+                font.family: Type.monoFont
+                color: Type.text
                 elide: Text.ElideMiddle
                 Layout.fillWidth: true
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: "+" + root.stats.added
-                font.family: Config.theme.monoFont
-                font.pixelSize: Styling.monoFontSize(-3)
+                font.family: Type.monoFont
                 color: Colors.success
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: "−" + root.stats.removed
-                font.family: Config.theme.monoFont
-                font.pixelSize: Styling.monoFontSize(-3)
-                color: Colors.error
+                font.family: Type.monoFont
+                color: Type.danger
             }
             CopyButton {
                 copyText: root.diff
@@ -86,7 +86,7 @@ StyledRect {
 
         Column {
             Layout.fillWidth: true
-            Layout.bottomMargin: 6
+            Layout.bottomMargin: Space.s
 
             Repeater {
                 model: root.rows
@@ -96,41 +96,40 @@ StyledRect {
                     required property var modelData
                     width: col.width
                     height: lineText.implicitHeight + 2
-                    color: entry.modelData.kind === "add" ? Qt.rgba(Colors.success.r, Colors.success.g, Colors.success.b, 0.14) : (entry.modelData.kind === "del" ? Qt.rgba(Colors.error.r, Colors.error.g, Colors.error.b, 0.14) : "transparent")
+                    color: entry.modelData.kind === "add" ? Look.alpha("success", 0.14) : (entry.modelData.kind === "del" ? Look.alpha("error", 0.14) : "transparent")
 
-                    Text {
+                    KitText {
                         id: nums
+                        role: "caption"
                         x: 6
                         width: (root.gutter * 2 + 2) * font.pixelSize * 0.6
                         y: 1
                         text: entry.modelData.kind === "hunk" ? "" : ((entry.modelData.oldNo || "") + "").padStart(root.gutter) + " " + ((entry.modelData.newNo || "") + "").padStart(root.gutter)
-                        font.family: Config.theme.monoFont
-                        font.pixelSize: Styling.monoFontSize(-3)
-                        color: Colors.outline
+                        font.family: Type.monoFont
                         opacity: 0.7
                     }
-                    Text {
+                    KitText {
                         id: sign
+                        role: "caption"
                         anchors.left: nums.right
-                        anchors.leftMargin: 4
+                        anchors.leftMargin: Space.xs
                         y: 1
                         width: 10
                         text: entry.modelData.kind === "add" ? "+" : (entry.modelData.kind === "del" ? "−" : "")
-                        font.family: Config.theme.monoFont
-                        font.pixelSize: Styling.monoFontSize(-2)
+                        font.family: Type.monoFont
                         color: entry.modelData.kind === "add" ? Colors.success : Colors.error
                     }
-                    Text {
+                    KitText {
                         id: lineText
+                        role: "caption"
                         anchors.left: sign.right
                         anchors.right: parent.right
-                        anchors.rightMargin: 8
+                        anchors.rightMargin: Space.s
                         y: 1
                         text: root._line(entry.modelData)
                         textFormat: Text.RichText
                         wrapMode: Text.WrapAnywhere
-                        font.family: Config.theme.monoFont
-                        font.pixelSize: Styling.monoFontSize(-2)
+                        font.family: Type.monoFont
                         font.italic: entry.modelData.kind === "note"
                         color: entry.modelData.kind === "hunk" || entry.modelData.kind === "note" ? Colors.outline : Colors.overSurface
                     }
@@ -138,14 +137,13 @@ StyledRect {
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             visible: !root.expanded && root.allRows.length > root.rows.length
-            Layout.leftMargin: 12
-            Layout.bottomMargin: 8
+            Layout.leftMargin: Space.m
+            Layout.bottomMargin: Space.s
             text: I18n.t("ai.show_more_lines").replace("%1", root.allRows.length - root.rows.length)
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.primary
+            color: Type.accent
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor

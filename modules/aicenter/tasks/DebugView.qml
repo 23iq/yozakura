@@ -57,12 +57,12 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 6
-        UiText {
+        spacing: Space.s
+        AiText {
+            role: "caption"
             Layout.fillWidth: true
             text: root.error || (root.loading ? I18n.t("ai.tasks.loading") : I18n.t("ai.tasks.debug_hint"))
             color: root.error ? Colors.error : Colors.outline
-            size: -2
             wrapMode: Text.Wrap
         }
         IconButton {
@@ -87,11 +87,11 @@ ColumnLayout {
     StyledRect {
         Layout.fillWidth: true
         Layout.fillHeight: true
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         variant: "internalbg"
         ScrollView {
             anchors.fill: parent
-            anchors.margins: 8
+            anchors.margins: Space.s
             TextArea {
                 id: log
                 objectName: "debugLog"
@@ -100,7 +100,7 @@ ColumnLayout {
                 wrapMode: TextArea.WrapAnywhere
                 text: root.text
                 font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-4)
+                font.pixelSize: BarLook.monoSize("caption")
                 color: Colors.overSurface
                 background: null
             }

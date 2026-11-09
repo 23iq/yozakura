@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Effects
 import qs.modules.theme
+import qs.modules.components.kit
 
 // A provider's logo (assets/aiproviders/<icon>, monochrome SVGs tinted
 // with `color`) or a plug glyph for presets without one (Custom).
@@ -32,12 +33,11 @@ Item {
         colorization: 1.0
         colorizationColor: root.color
     }
-    Text {
+    Icon {
         anchors.centerIn: parent
         visible: root.icon.length === 0
-        text: Icons.plug
-        font.family: Icons.font
-        font.pixelSize: Math.round(root.size * 0.85)
+        icon: Icons.plug
+        size: Math.round(root.size * 0.85)
         color: root.color
     }
 }

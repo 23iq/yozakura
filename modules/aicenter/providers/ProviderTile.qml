@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -29,8 +30,8 @@ StyledRect {
     }
 
     objectName: "tile_" + (preset.id || "")
-    implicitHeight: 64
-    radius: Styling.radius(-2)
+    implicitHeight: Space.controlL
+    radius: Look.radius("control")
     variant: hover.hovered ? "focus" : "pane"
     enableBorder: true
 
@@ -51,55 +52,52 @@ StyledRect {
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
-        spacing: 12
+        anchors.leftMargin: Space.m
+        anchors.rightMargin: Space.m
+        spacing: Space.m
         ProviderIcon {
             icon: root.preset.icon || ""
             size: 26
-            color: root.connected ? Colors.primary : Colors.overSurface
+            color: root.connected ? Type.accent : Type.text
         }
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
-            Text {
+            spacing: Space.xs / 2
+            AiText {
+                role: "secondary"
                 Layout.fillWidth: true
                 text: root.preset.label || root.preset.id || ""
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-1)
                 font.weight: Font.Medium
-                color: Colors.overSurface
+                color: Type.text
             }
             RowLayout {
-                spacing: 5
+                spacing: Space.xs
                 StatusDot {
                     visible: root.connected
-                    implicitWidth: 6
-                    implicitHeight: 6
+                    implicitWidth: Space.xs + Space.hairline * 2
+                    implicitHeight: Space.xs + Space.hairline * 2
                 }
-                Text {
+                AiText {
                     objectName: "tileState_" + (root.preset.id || "")
+                    role: "caption"
                     text: root.stateText
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
                     color: root.connected ? Colors.success : Colors.outline
                 }
             }
         }
         StyledRect {
             visible: root.preset.local === true
-            implicitWidth: localLabel.implicitWidth + 12
-            implicitHeight: localLabel.implicitHeight + 4
-            radius: height / 2
+            implicitWidth: localLabel.implicitWidth + 2 * Space.s
+            implicitHeight: localLabel.implicitHeight + Space.xs
+            radius: Look.radius("round", height)
             variant: "common"
-            Text {
+            AiText {
                 id: localLabel
+                role: "caption"
                 anchors.centerIn: parent
                 text: I18n.t("ai.connect.local")
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
-                color: Colors.overSurfaceVariant
+                color: Type.secondary
             }
         }
     }

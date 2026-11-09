@@ -1,93 +1,9 @@
 {
- "modules/aicenter": {
-  "spacing": 14,
-  "text": 1
- },
- "modules/aicenter/agent": {
-  "spacing": 14,
-  "font-size": 3,
-  "text": 19,
-  "radius": 11
- },
- "modules/aicenter/assistant": {
-  "spacing": 7,
-  "text": 8,
-  "radius": 1
- },
- "modules/aicenter/chat": {
-  "spacing": 2,
-  "radius": 1
- },
- "modules/aicenter/code": {
-  "spacing": 40,
-  "text": 40,
-  "radius": 13
- },
  "modules/aicenter/common": {
-  "spacing": 1,
-  "font-size": 1,
-  "rectangle": 1,
-  "text": 3,
-  "radius": 1
- },
- "modules/aicenter/composer": {
-  "spacing": 35,
-  "font-size": 1,
-  "rectangle": 2,
-  "text": 25,
-  "radius": 11
- },
- "modules/aicenter/header": {
-  "spacing": 27,
-  "font-size": 6,
-  "text": 19,
-  "radius": 7
+  "rectangle": 1
  },
  "modules/aicenter/markdown": {
-  "spacing": 21,
-  "font-size": 4,
-  "rectangle": 1,
-  "text": 13,
-  "radius": 2
- },
- "modules/aicenter/providers": {
-  "spacing": 20,
-  "text": 17,
-  "radius": 6
- },
- "modules/aicenter/quickask": {
-  "spacing": 5,
-  "font-size": 1,
-  "text": 3
- },
- "modules/aicenter/selection": {
-  "spacing": 11,
-  "font-size": 3,
-  "text": 11,
-  "radius": 5
- },
- "modules/aicenter/sessions": {
-  "spacing": 12,
-  "font-size": 2,
-  "text": 9,
-  "radius": 3
- },
- "modules/aicenter/tasks": {
-  "spacing": 48,
-  "text": 2,
-  "radius": 18
- },
- "modules/aicenter/transcript": {
-  "spacing": 35,
-  "font-size": 2,
-  "text": 30,
-  "radius": 9
- },
- "modules/aicenter/usage": {
-  "spacing": 23,
-  "rectangle": 2,
-  "text": 19,
-  "radius": 2
+  "rectangle": 1
  },
  "modules/bar": {
   "rectangle": 5,

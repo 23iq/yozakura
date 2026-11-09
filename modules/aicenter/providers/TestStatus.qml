@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -33,8 +34,8 @@ StyledRect {
     }
 
     visible: testing || result !== null
-    implicitHeight: row.implicitHeight + 16
-    radius: Styling.radius(-4)
+    implicitHeight: row.implicitHeight + 2 * Space.s
+    radius: Look.radius("control")
     variant: testing ? "internalbg" : (ok ? "common" : "error")
     opacity: visible ? 1 : 0
 
@@ -48,27 +49,26 @@ StyledRect {
     RowLayout {
         id: row
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
-        spacing: 10
+        anchors.leftMargin: Space.m
+        anchors.rightMargin: Space.m
+        spacing: Space.s
         Spinner {
             visible: root.testing
             running: root.testing
         }
-        Text {
+        Icon {
+            role: "body"
             visible: !root.testing
-            text: root.ok ? Icons.checkCircle : Icons.warning
-            font.family: Icons.font
-            font.pixelSize: BarLook.font(1)
+            icon: root.ok ? Icons.checkCircle : Icons.warning
+            size: BarLook.size("body")
             color: root.ok ? Colors.success : Styling.srItem("error")
         }
-        Text {
+        AiText {
             objectName: "connectStatusText"
+            role: "caption"
             Layout.fillWidth: true
             text: root.message
             wrapMode: Text.Wrap
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-2)
             color: root.testing ? Colors.overSurfaceVariant : (root.ok ? Colors.overSurface : Styling.srItem("error"))
         }
     }

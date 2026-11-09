@@ -50,7 +50,7 @@ StyledRect {
     readonly property bool hasDetails: summary.length > 0 || output.length > 0 || diff.length > 0
 
     variant: detailed || expanded ? (hover.hovered ? "focus" : "common") : (hover.hovered ? "common" : "transparent")
-    radius: Styling.radius(-4)
+    radius: Look.radius("control")
     implicitHeight: col.implicitHeight + (detailed || expanded ? 12 : 6)
     clip: true
 
@@ -83,13 +83,13 @@ StyledRect {
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.topMargin: root.detailed || root.expanded ? 6 : 3
-        anchors.leftMargin: 8
-        anchors.rightMargin: 6
-        spacing: 6
+        anchors.leftMargin: Space.s
+        anchors.rightMargin: Space.s
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
 
             Item {
                 implicitWidth: 16
@@ -97,47 +97,45 @@ StyledRect {
                 Spinner {
                     anchors.centerIn: parent
                     running: root.status === "running" || root.status === "pending"
-                    font.pixelSize: BarLook.font(-3)
+                    font.pixelSize: BarLook.size("caption")
                 }
-                Text {
+                Icon {
+                    role: "secondary"
                     anchors.centerIn: parent
                     visible: !(root.status === "running" || root.status === "pending")
-                    text: root.failed ? (root.status === "denied" ? Icons.shieldWarning : Icons.xCircle) : Icons.checkCircle
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(-1)
+                    icon: root.failed ? (root.status === "denied" ? Icons.shieldWarning : Icons.xCircle) : Icons.checkCircle
+                    size: BarLook.size("secondary")
                     color: root.failed ? Colors.error : Colors.success
                 }
             }
-            Text {
-                text: root._icon(root.category)
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-2)
-                color: Colors.outline
+            Icon {
+                role: "caption"
+                tone: "muted"
+                icon: root._icon(root.category)
+                size: BarLook.size("caption")
             }
-            Text {
+            AiText {
                 objectName: "actionTitle"
+                role: "secondary"
                 Layout.fillWidth: true
                 text: root.undone ? I18n.t("ai.action_undone").arg(root.title || root.tool) : (root.title || root.tool)
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-1)
                 font.strikeout: root.undone
                 color: root.failed ? Colors.error : Colors.overSurface
                 elide: Text.ElideRight
                 maximumLineCount: 1
             }
-            Text {
+            AiText {
+                mono: true
+                role: "caption"
                 visible: root.diffStats !== null
                 text: root.diffStats ? "+" + root.diffStats.added + " −" + root.diffStats.removed : ""
-                font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-3)
-                color: Colors.outline
             }
-            Text {
+            Icon {
+                role: "caption"
+                tone: "muted"
                 visible: root.decision === "allow_session" || root.decision === "allow"
-                text: Icons.shieldCheck
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(-3)
-                color: Colors.outline
+                icon: Icons.shieldCheck
+                size: BarLook.size("caption")
                 HoverHandler {
                     id: badgeHover
                 }
@@ -164,39 +162,38 @@ StyledRect {
             }
         }
 
-        Text {
+        AiText {
             objectName: "actionUndoError"
+            role: "caption"
             visible: root.undoError.length > 0
             Layout.fillWidth: true
-            Layout.leftMargin: 24
+            Layout.leftMargin: Space.xl
             text: I18n.t("ai.undo_failed") + " " + root.undoError
             textFormat: Text.PlainText
             wrapMode: Text.Wrap
             maximumLineCount: 3
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-3)
-            color: Colors.error
+            color: Type.danger
         }
 
-        Text {
+        AiText {
+            mono: true
+            role: "caption"
             visible: root.expanded && root.summary.length > 0 && root.diff.length === 0
             Layout.fillWidth: true
-            Layout.leftMargin: 24
+            Layout.leftMargin: Space.xl
             text: root.summary
             textFormat: Text.PlainText
             wrapMode: Text.WrapAnywhere
             maximumLineCount: 12
             elide: Text.ElideRight
-            font.family: Config.theme.monoFont
-            font.pixelSize: BarLook.mono(-3)
-            color: Colors.overSurfaceVariant
+            color: Type.secondary
         }
 
         DiffView {
             visible: root.expanded && root.diff.length > 0
             Layout.fillWidth: true
-            Layout.bottomMargin: 2
+            Layout.bottomMargin: Space.xs / 2
             diff: root.diff
             path: root.path
             maxRows: root.detailed ? 400 : 40
@@ -205,25 +202,25 @@ StyledRect {
         StyledRect {
             visible: root.expanded && root.output.length > 0
             Layout.fillWidth: true
-            Layout.leftMargin: 24
-            Layout.bottomMargin: 2
+            Layout.leftMargin: Space.xl
+            Layout.bottomMargin: Space.xs / 2
             variant: "internalbg"
-            radius: Styling.radius(-6)
-            implicitHeight: outText.implicitHeight + 12
-            Text {
+            radius: Look.radius("small")
+            implicitHeight: outText.implicitHeight + 2 * Space.s
+            AiText {
                 id: outText
+                mono: true
+                role: "caption"
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 6
-                anchors.leftMargin: 8
+                anchors.margins: Space.s
+                anchors.leftMargin: Space.s
                 text: root.output.length > 6000 ? root.output.substring(0, 6000) + "\n…" : root.output
                 textFormat: Text.PlainText
                 wrapMode: Text.WrapAnywhere
                 maximumLineCount: 40
                 elide: Text.ElideRight
-                font.family: Config.theme.monoFont
-                font.pixelSize: BarLook.mono(-3)
                 color: root.isError ? Colors.error : Colors.overSurface
             }
         }

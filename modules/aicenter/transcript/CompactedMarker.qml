@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -17,20 +18,22 @@ ColumnLayout {
     property string summary: ""
     property bool expanded: false
 
-    spacing: 6
+    spacing: Space.s
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 10
-        StyledRect {
+        spacing: Space.s
+        // Hairlines either side of the pill; where the language has no
+        // dividers they still hold the pill centred.
+        Divider {
             Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            variant: "internalbg"
+            visible: true
+            opacity: Look.dividers ? 1 : 0
         }
         StyledRect {
-            implicitWidth: label.implicitWidth + 20
-            implicitHeight: label.implicitHeight + 8
-            radius: height / 2
+            implicitWidth: label.implicitWidth + 2 * Space.s
+            implicitHeight: label.implicitHeight + 2 * Space.xs
+            radius: Look.radius("round", height)
             variant: hover.hovered ? "focus" : "common"
             HoverHandler {
                 id: hover
@@ -42,31 +45,32 @@ ColumnLayout {
             RowLayout {
                 id: label
                 anchors.centerIn: parent
-                spacing: 6
-                Text {
-                    text: Icons.arrowsInSimple
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(-4)
-                    color: Colors.outline
+                spacing: Space.s
+                Icon {
+                    role: "caption"
+                    tone: "muted"
+                    icon: Icons.arrowsInSimple
+                    size: BarLook.size("caption")
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     text: I18n.t("ai.history_compacted")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-3)
-                    color: Colors.overSurfaceVariant
+                    color: Type.secondary
                 }
-                Text {
-                    text: root.expanded ? Icons.caretUp : Icons.caretDown
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(-5)
-                    color: Colors.outline
+                Icon {
+                    role: "caption"
+                    tone: "muted"
+                    icon: root.expanded ? Icons.caretUp : Icons.caretDown
+                    size: BarLook.size("caption")
                 }
             }
         }
-        StyledRect {
+        // Hairlines either side of the pill; where the language has no
+        // dividers they still hold the pill centred.
+        Divider {
             Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            variant: "internalbg"
+            visible: true
+            opacity: Look.dividers ? 1 : 0
         }
     }
 
@@ -74,7 +78,7 @@ ColumnLayout {
         Layout.fillWidth: true
         visible: root.expanded
         variant: "internalbg"
-        radius: Styling.radius(-4)
+        radius: Look.radius("control")
         implicitHeight: body.implicitHeight + 2 * BarLook.pad
         ColumnLayout {
             id: body
@@ -82,23 +86,20 @@ ColumnLayout {
             anchors.right: parent.right
             anchors.top: parent.top
             anchors.margins: BarLook.pad
-            spacing: 6
-            Text {
+            spacing: Space.s
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: I18n.t("ai.history_compacted_desc")
                 wrapMode: Text.Wrap
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-4)
-                color: Colors.outline
             }
-            Text {
+            AiText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.summary
                 wrapMode: Text.Wrap
                 textFormat: Text.MarkdownText
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-2)
-                color: Colors.overSurfaceVariant
+                color: Type.secondary
             }
         }
     }

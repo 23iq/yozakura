@@ -62,34 +62,28 @@ StyledRect {
     readonly property var current: files.find(f => f.path === selected) || (files.length > 0 ? files[files.length - 1] : null)
 
     variant: "pane"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 10
-        spacing: 8
+        anchors.margins: Space.s
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            Text {
-                text: Icons.gitDiff
-                font.family: Icons.font
-                font.pixelSize: 14
-                color: Colors.primary
+            Icon {
+                role: "caption"
+                tone: "secondary"
+                icon: Icons.gitDiff
             }
-            Text {
+            KitText {
                 text: I18n.t("ai.changes")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
                 font.weight: Font.DemiBold
-                color: Colors.overSurface
                 Layout.fillWidth: true
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: root.files.length > 0 ? I18n.t("ai.files_changed").replace("%1", root.files.length) : ""
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.outline
             }
             IconButton {
                 size: "xs"
@@ -102,7 +96,7 @@ StyledRect {
 
         Column {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: Space.xs / 2
             Repeater {
                 model: root.files
                 delegate: StyledRect {
@@ -110,7 +104,7 @@ StyledRect {
                     required property var modelData
                     width: parent.width
                     height: 28
-                    radius: Styling.radius(-6)
+                    radius: Look.radius("small")
                     variant: root.current && root.current.path === entry.modelData.path ? "focus" : (rowHover.hovered ? "common" : "transparent")
                     HoverHandler {
                         id: rowHover
@@ -120,34 +114,33 @@ StyledRect {
                     }
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        spacing: 6
-                        Text {
-                            text: Icons.fileCode
-                            font.family: Icons.font
-                            font.pixelSize: 12
-                            color: Colors.outline
+                        anchors.leftMargin: Space.s
+                        anchors.rightMargin: Space.s
+                        spacing: Space.s
+                        Icon {
+                            role: "label"
+                            tone: "muted"
+                            icon: Icons.fileCode
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             Layout.fillWidth: true
                             text: entry.modelData.path
                             elide: Text.ElideLeft
-                            font.family: Config.theme.monoFont
-                            font.pixelSize: Styling.monoFontSize(-3)
-                            color: Colors.overSurface
+                            font.family: Type.monoFont
+                            color: Type.text
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             text: "+" + entry.modelData.added
-                            font.family: Config.theme.monoFont
-                            font.pixelSize: Styling.monoFontSize(-4)
+                            font.family: Type.monoFont
                             color: Colors.success
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             text: "−" + entry.modelData.removed
-                            font.family: Config.theme.monoFont
-                            font.pixelSize: Styling.monoFontSize(-4)
-                            color: Colors.error
+                            font.family: Type.monoFont
+                            color: Type.danger
                         }
                     }
                 }
@@ -171,14 +164,13 @@ StyledRect {
             }
         }
 
-        Text {
+        KitText {
+            role: "secondary"
             visible: root.files.length === 0
             Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: 40
+            Layout.bottomMargin: Space.xxl
             text: I18n.t("ai.no_changes")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.outline
+            color: Type.muted
         }
     }
 }

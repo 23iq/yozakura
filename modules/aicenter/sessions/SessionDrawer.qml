@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Quickshell
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -21,7 +22,7 @@ StyledRect {
 
     property bool docked: false          // persistent column (wide sizes)
     variant: docked ? "transparent" : "popup"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
 
     property string space: "assistant"
     property int selectedIndex: 0
@@ -65,8 +66,8 @@ StyledRect {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 8
-        spacing: 6
+        anchors.margins: Space.s
+        spacing: Space.s
 
         TextField {
             id: search
@@ -75,18 +76,17 @@ StyledRect {
             placeholderTextColor: Colors.outline
             color: Colors.overBackground
             font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            leftPadding: 30
+            font.pixelSize: Type.size("secondary")
+            leftPadding: Space.xxl
             background: StyledRect {
                 variant: "common"
-                radius: Styling.radius(-4)
-                Text {
+                radius: Look.radius("control")
+                Icon {
+                    role: "label"
+                    tone: "muted"
                     x: 10
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Icons.magnifyingGlass
-                    font.family: Icons.font
-                    font.pixelSize: 13
-                    color: Colors.outline
+                    icon: Icons.magnifyingGlass
                 }
             }
             onTextChanged: root.selectedIndex = root.space === "code" ? 1 : 0
@@ -113,7 +113,7 @@ StyledRect {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 2
+            spacing: Space.xs / 2
             model: root.rows
             boundsBehavior: Flickable.StopAtBounds
             ScrollBar.vertical: ScrollBar {}
@@ -126,24 +126,22 @@ StyledRect {
                 Component {
                     id: headerC
                     RowLayout {
-                        spacing: 6
-                        Text {
-                            Layout.leftMargin: 8
+                        spacing: Space.s
+                        Icon {
+                            role: "caption"
+                            tone: "muted"
+                            Layout.leftMargin: Space.s
                             Layout.topMargin: entry.index > 0 ? 10 : 2
-                            text: Icons.folder
-                            font.family: Icons.font
-                            font.pixelSize: BarLook.font(-3)
-                            color: Colors.outline
+                            icon: Icons.folder
+                            size: BarLook.size("caption")
                         }
-                        Text {
+                        AiText {
+                            role: "caption"
                             Layout.topMargin: entry.index > 0 ? 10 : 2
                             Layout.fillWidth: true
                             text: entry.modelData.name
                             elide: Text.ElideRight
-                            font.family: Config.theme.font
-                            font.pixelSize: BarLook.font(-3)
                             font.weight: Font.DemiBold
-                            color: Colors.outline
                         }
                     }
                 }
@@ -163,14 +161,12 @@ StyledRect {
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             visible: root.entries.length === 0
             Layout.alignment: Qt.AlignHCenter
-            Layout.bottomMargin: 20
+            Layout.bottomMargin: Space.l
             text: search.text ? I18n.t("ai.no_matches") : I18n.t("ai.no_sessions")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.outline
         }
     }
 }

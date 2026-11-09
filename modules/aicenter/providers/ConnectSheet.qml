@@ -52,7 +52,7 @@ StyledRect {
     }
 
     variant: embedded ? "transparent" : "bg"
-    radius: Styling.radius(-2)
+    radius: Look.radius("control")
     visible: opened || opacity > 0
     opacity: opened ? 1 : 0
     enabled: opened
@@ -92,7 +92,7 @@ StyledRect {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
             IconButton {
                 size: "xs"
                 objectName: "connectBack"
@@ -103,24 +103,19 @@ StyledRect {
             }
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
-                Text {
+                spacing: Space.xs / 2
+                AiText {
                     Layout.fillWidth: true
+                    role: "title"
                     text: root.provider ? I18n.t("ai.connect.title_provider").arg(root.preset ? root.preset.label : root.provider) : I18n.t("ai.connect.title")
-                    elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(root.embedded ? 1 : 2)
-                    font.weight: Font.Bold
-                    color: Colors.overBackground
+                    font.pixelSize: root.embedded ? BarLook.size("body") : BarLook.size("title")
                 }
-                Text {
+                AiText {
+                    role: "caption"
                     Layout.fillWidth: true
                     visible: root.provider === ""
                     text: I18n.t("ai.connect.subtitle")
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(-2)
-                    color: Colors.outline
                 }
             }
             IconButton {

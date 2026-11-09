@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.modules.aicenter.common
@@ -42,12 +43,12 @@ ColumnLayout {
         })
 
     objectName: "boardSection_" + section.id
-    spacing: 6
+    spacing: Space.s
 
     StyledRect {
         Layout.fillWidth: true
-        implicitHeight: header.implicitHeight + 10
-        radius: Styling.radius(-4)
+        implicitHeight: header.implicitHeight + 2 * Space.xs
+        radius: Look.radius("control")
         variant: headerHover.hovered ? "common" : "transparent"
         HoverHandler {
             id: headerHover
@@ -59,39 +60,42 @@ ColumnLayout {
         RowLayout {
             id: header
             anchors.fill: parent
-            anchors.leftMargin: 6
-            anchors.rightMargin: 6
-            spacing: 6
-            Glyph {
-                text: root.icons[root.section.id] || Icons.circle
-                role: root.roles[root.section.id] || "outline"
-                size: -2
+            anchors.leftMargin: Space.s
+            anchors.rightMargin: Space.s
+            spacing: Space.s
+            Icon {
+                role: "caption"
+                size: BarLook.size("caption")
+                color: Colors[root.roles[root.section.id] || "outline"] ?? Type.text
+                icon: root.icons[root.section.id] || Icons.circle
             }
-            UiText {
+            AiText {
+                role: "caption"
+                font.weight: Font.DemiBold
+                color: Type.text
                 text: I18n.t("ai.tasks.section." + root.section.id)
-                strong: true
-                size: -2
             }
             StyledRect {
-                implicitWidth: countText.implicitWidth + 10
-                implicitHeight: countText.implicitHeight + 2
-                radius: height / 2
+                implicitWidth: countText.implicitWidth + 2 * Space.xs
+                implicitHeight: countText.implicitHeight + 2 * Space.hairline
+                radius: Look.radius("round", height)
                 variant: root.section.id === "waiting" && root.section.count > 0 ? "primary" : "internalbg"
-                UiText {
+                AiText {
                     id: countText
+                    role: "caption"
                     anchors.centerIn: parent
                     text: root.section.count
-                    size: -4
                     color: Styling.srItem(parent.variant)
                 }
             }
             Item {
                 Layout.fillWidth: true
             }
-            Glyph {
-                text: root.section.collapsed ? Icons.caretRight : Icons.caretDown
-                role: "outline"
-                size: -4
+            Icon {
+                role: "caption"
+                size: BarLook.size("caption")
+                tone: "muted"
+                icon: root.section.collapsed ? Icons.caretRight : Icons.caretDown
             }
         }
     }
@@ -117,7 +121,7 @@ ColumnLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         clip: true
-        spacing: 6
+        spacing: Space.s
         boundsBehavior: Flickable.StopAtBounds
         model: root.column && !root.section.collapsed ? root.section.tasks : []
         delegate: TaskCard {

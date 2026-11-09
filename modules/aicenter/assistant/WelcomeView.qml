@@ -57,31 +57,28 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             spacing: BarLook.gap
-            Text {
+            Icon {
+                role: "title"
+                tone: "secondary"
                 Layout.alignment: Qt.AlignHCenter
-                text: Icons.sparkle
-                font.family: Icons.font
-                font.pixelSize: BarLook.font(18)
-                color: Colors.primary
+                icon: Icons.sparkle
+                size: BarLook.size("title")
             }
-            Text {
+            AiText {
+                role: "title"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 text: root.greeting + (root.userName ? ", " + root.userName : "")
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(8)
                 font.weight: Font.Bold
-                color: Colors.overBackground
             }
-            Text {
+            AiText {
+                role: "secondary"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 text: root.noModels ? I18n.t("ai.connect_hint") : I18n.t("ai.assistant_hint")
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-1)
-                color: Colors.outline
+                color: Type.muted
             }
             UsingModel {
                 Layout.alignment: Qt.AlignHCenter
@@ -91,39 +88,14 @@ Item {
         }
 
         // The one primary action when nothing can answer yet.
-        StyledRect {
+        Chip {
             objectName: "connectModel"
             visible: root.noModels
             Layout.alignment: Qt.AlignHCenter
-            implicitWidth: connectRow.implicitWidth + 36
-            implicitHeight: connectRow.implicitHeight + 20
-            variant: connectHover.hovered ? "primaryfocus" : "primary"
-            radius: Styling.radius(0)
-            HoverHandler {
-                id: connectHover
-                cursorShape: Qt.PointingHandCursor
-            }
-            TapHandler {
-                onTapped: root.connectRequested()
-            }
-            RowLayout {
-                id: connectRow
-                anchors.centerIn: parent
-                spacing: 10
-                Text {
-                    text: Icons.plug
-                    font.family: Icons.font
-                    font.pixelSize: BarLook.font(2)
-                    color: Styling.srItem("primary")
-                }
-                Text {
-                    text: I18n.t("ai.connect_model")
-                    font.family: Config.theme.font
-                    font.pixelSize: BarLook.font(1)
-                    font.weight: Font.DemiBold
-                    color: Styling.srItem("primary")
-                }
-            }
+            primary: true
+            icon: Icons.plug
+            text: I18n.t("ai.connect_model")
+            onClicked: root.connectRequested()
         }
 
         CenteredFlow {
@@ -131,7 +103,7 @@ Item {
             visible: !root.noModels && root.suggestions.length > 0
             Layout.fillWidth: true
             Layout.preferredHeight: implicitHeight
-            spacing: 8
+            spacing: Space.s
             Repeater {
                 model: root.noModels ? [] : root.suggestions
                 delegate: Chip {
@@ -148,14 +120,12 @@ Item {
         ColumnLayout {
             visible: !root.noModels && root.recent.length > 0
             Layout.fillWidth: true
-            spacing: 2
-            Text {
-                Layout.leftMargin: 4
+            spacing: Space.xs / 2
+            AiText {
+                role: "caption"
+                Layout.leftMargin: Space.xs
                 text: I18n.t("ai.recent_chats")
-                font.family: Config.theme.font
-                font.pixelSize: BarLook.font(-3)
                 font.weight: Font.DemiBold
-                color: Colors.outline
             }
             Repeater {
                 model: root.recent
@@ -163,8 +133,8 @@ Item {
                     id: recentRow
                     required property var modelData
                     Layout.fillWidth: true
-                    implicitHeight: 34
-                    radius: Styling.radius(-4)
+                    implicitHeight: Space.controlS
+                    radius: Look.radius("control")
                     variant: recentHover.hovered ? "common" : "transparent"
                     HoverHandler {
                         id: recentHover
@@ -175,22 +145,21 @@ Item {
                     }
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 8
-                        anchors.rightMargin: 8
-                        spacing: 8
-                        Text {
-                            text: recentRow.modelData.kind === "agent" ? Icons.terminalWindow : Icons.chatTeardrop
-                            font.family: Icons.font
-                            font.pixelSize: BarLook.font(-2)
-                            color: Colors.outline
+                        anchors.leftMargin: Space.s
+                        anchors.rightMargin: Space.s
+                        spacing: Space.s
+                        Icon {
+                            role: "caption"
+                            tone: "muted"
+                            icon: recentRow.modelData.kind === "agent" ? Icons.terminalWindow : Icons.chatTeardrop
+                            size: BarLook.size("caption")
                         }
-                        Text {
+                        AiText {
+                            role: "secondary"
                             Layout.fillWidth: true
                             text: recentRow.modelData.title || recentRow.modelData.lastText || I18n.t("ai.untitled")
                             elide: Text.ElideRight
-                            font.family: Config.theme.font
-                            font.pixelSize: BarLook.font(-1)
-                            color: Colors.overSurface
+                            color: Type.text
                         }
                     }
                 }

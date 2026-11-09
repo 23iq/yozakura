@@ -1,18 +1,18 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.config
 
-// Small rotating activity indicator (icon font based, palette colored).
-Text {
+// Small rotating activity indicator: a kit Icon in the progress ink.
+Icon {
     id: root
+    role: "caption"
+    tone: "progress"
 
     property bool running: true
 
-    text: Icons.circleNotch
-    font.family: Icons.font
-    font.pixelSize: 14
-    color: Colors.primary
+    icon: Icons.circleNotch
     visible: running
 
     RotationAnimator on rotation {

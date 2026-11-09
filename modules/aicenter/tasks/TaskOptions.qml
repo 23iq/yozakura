@@ -112,14 +112,14 @@ RowLayout {
         Ai.agents.refreshModels(root.single, root.project)
     Component.onCompleted: root.resetAgents()
 
-    spacing: 4
+    spacing: Space.xs
 
     // Wraps onto a second line in the compact bar.
     Flow {
         objectName: "taskOptionChips"
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
-        spacing: 4
+        spacing: Space.xs
         Repeater {
             model: root.chat ? [] : root.available
             delegate: Chip {
@@ -131,11 +131,10 @@ RowLayout {
                 onClicked: root.toggleAgent(agentChip.modelData.id)
             }
         }
-        UiText {
+        AiText {
+            role: "caption"
             visible: !root.chat && root.agents.length > 1
             text: I18n.t("ai.tasks.best_of").replace("%1", root.agents.length)
-            muted: true
-            size: -3
         }
         Chip {
             objectName: "taskModel"
@@ -147,7 +146,7 @@ RowLayout {
             onClicked: modelMenu.open()
             OptionMenu {
                 id: modelMenu
-                y: -implicitHeight - 6
+                y: -implicitHeight - Space.s
                 current: root.model
                 options: [
                     {
@@ -175,7 +174,7 @@ RowLayout {
             onClicked: effortMenu.open()
             OptionMenu {
                 id: effortMenu
-                y: -implicitHeight - 6
+                y: -implicitHeight - Space.s
                 width: 180
                 current: root.effort
                 options: [
@@ -209,12 +208,12 @@ RowLayout {
             onClicked: root.inPlace = !root.inPlace
         }
     }
-    UiText {
+    AiText {
+        role: "caption"
         Layout.maximumWidth: 260
         visible: root.error.length > 0
         text: root.error
         color: Colors.error
-        size: -3
     }
     IconButton {
         size: "xs"
@@ -225,7 +224,7 @@ RowLayout {
         onClicked: templateMenu.open()
         OptionMenu {
             id: templateMenu
-            y: -implicitHeight - 6
+            y: -implicitHeight - Space.s
             x: -width + parent.width
             options: root.templates.map(t => ({
                         "value": t.id,

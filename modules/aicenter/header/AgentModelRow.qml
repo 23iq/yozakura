@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.components
 import qs.modules.services
 import qs.config
@@ -22,8 +23,8 @@ StyledRect {
     readonly property var efforts: model.efforts || []
     readonly property string detail: [model.isDefault ? I18n.t("ai.picker_agent_default") + (model.resolved ? " · " + model.resolved : "") : "", efforts.length > 0 ? I18n.t("ai.picker_efforts").arg(efforts.join(" · ")) : ""].filter(x => x.length > 0).join(" — ")
 
-    implicitHeight: Math.max(36, content.implicitHeight + 10)
-    radius: Styling.radius(-6)
+    implicitHeight: Math.max(36, content.implicitHeight + 2 * Space.xs)
+    radius: Look.radius("small")
     variant: selected ? "focus" : (hover.hovered ? "common" : "transparent")
 
     HoverHandler {
@@ -37,38 +38,35 @@ StyledRect {
     RowLayout {
         id: content
         anchors.fill: parent
-        anchors.leftMargin: 38
-        anchors.rightMargin: 10
-        spacing: 8
+        // in line with the names of ModelPickerRow (past its 18 px provider icon)
+        anchors.leftMargin: Space.s * 2 + 18
+        anchors.rightMargin: Space.s
+        spacing: Space.s
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
-            Text {
+            spacing: Space.hairline
+            KitText {
                 objectName: "agentModelName"
+                role: "caption"
                 Layout.fillWidth: true
                 text: root.model.name || root.model.id || ""
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: root.current ? Font.DemiBold : Font.Normal
-                color: Colors.overSurface
+                color: Type.text
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: text.length > 0
                 text: root.detail
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-4)
-                color: Colors.outline
             }
         }
-        Text {
+        Icon {
+            role: "label"
+            tone: "accent"
             visible: root.current
-            text: Icons.accept
-            font.family: Icons.font
-            font.pixelSize: 13
-            color: Colors.primary
+            icon: Icons.accept
         }
     }
 }

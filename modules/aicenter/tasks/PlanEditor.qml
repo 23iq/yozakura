@@ -65,12 +65,11 @@ ColumnLayout {
 
     spacing: BarLook.gap
 
-    UiText {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         wrapMode: Text.Wrap
         text: root.editable ? I18n.t("ai.tasks.plan_hint") : (root.task && root.task.status === "planning" ? I18n.t("ai.tasks.planning") : I18n.t("ai.tasks.plan_used"))
-        muted: true
-        size: -2
     }
 
     Flickable {
@@ -83,7 +82,7 @@ ColumnLayout {
         ColumnLayout {
             id: stepCol
             width: parent.width
-            spacing: 4
+            spacing: Space.xs
             Repeater {
                 model: root.steps.length
                 delegate: StyledRect {
@@ -91,21 +90,20 @@ ColumnLayout {
                     required property int index
                     objectName: "planStep_" + index
                     Layout.fillWidth: true
-                    implicitHeight: Math.max(36, field.implicitHeight + 8)
-                    radius: Styling.radius(-4)
+                    implicitHeight: Math.max(36, field.implicitHeight + 2 * Space.xs)
+                    radius: Look.radius("control")
                     variant: field.activeFocus ? "focus" : "pane"
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: 10
-                        anchors.rightMargin: 4
-                        spacing: 6
-                        UiText {
+                        anchors.leftMargin: Space.s
+                        anchors.rightMargin: Space.xs
+                        spacing: Space.s
+                        AiText {
+                            role: "caption"
                             Layout.alignment: Qt.AlignTop
-                            Layout.topMargin: 8
+                            Layout.topMargin: Space.s
                             text: (stepRow.index + 1) + "."
                             mono: true
-                            muted: true
-                            size: -2
                         }
                         TextArea {
                             id: field
@@ -114,7 +112,7 @@ ColumnLayout {
                             wrapMode: TextArea.Wrap
                             text: root.steps[stepRow.index] || ""
                             font.family: Config.theme.font
-                            font.pixelSize: BarLook.font(-1)
+                            font.pixelSize: BarLook.size("secondary")
                             color: Colors.overSurface
                             selectionColor: Colors.primary
                             selectedTextColor: Colors.overPrimary
@@ -165,19 +163,19 @@ ColumnLayout {
         }
     }
 
-    UiText {
+    AiText {
+        role: "caption"
         Layout.fillWidth: true
         visible: root.error.length > 0
         text: root.error
         color: Colors.error
         wrapMode: Text.Wrap
-        size: -2
     }
 
     RowLayout {
         Layout.fillWidth: true
         visible: root.editable
-        spacing: 6
+        spacing: Space.s
         TextField {
             id: reviseField
             objectName: "planRevise"
@@ -186,10 +184,10 @@ ColumnLayout {
             placeholderTextColor: Colors.outline
             color: Colors.overSurface
             font.family: Config.theme.font
-            font.pixelSize: BarLook.font(-1)
+            font.pixelSize: BarLook.size("secondary")
             background: StyledRect {
                 variant: "common"
-                radius: Styling.radius(-4)
+                radius: Look.radius("control")
             }
             onAccepted: root.revise()
         }
