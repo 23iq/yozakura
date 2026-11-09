@@ -32,7 +32,7 @@ h.module("qs.modules.theme", {
               "property QtObject morph: QtObject { property int duration: 0; property int easing: 0 } }",
 })
 h.module("qs.modules.components", {
-    "StyledRect": "import QtQuick\nRectangle { property string variant; property bool enableBorder }",
+    "StyledRect": "import QtQuick\nRectangle { property string variant; property bool enableBorder; property real backgroundOpacity }",
 })
 h.module("qs.modules.components.kit", {
     "SearchField": """import QtQuick
