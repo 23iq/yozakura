@@ -8,5 +8,6 @@ var data = {
     "pauseWallpaperWhenCovered": true,
     "dashboardPersistTabs": false,
     "dashboardMaxPersistentTabs": 2,
-    "unloadIdleViews": true
+    "unloadIdleViews": true,
+    "settingsKeepAliveMinutes": 5
 }

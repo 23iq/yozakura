@@ -7,12 +7,18 @@ import qs.modules.widgets.dashboard
 import qs.modules.widgets.launcher
 import qs.modules.keybinds
 import qs.modules.aicenter.quickask
+import qs.modules.components
 import qs.modules.components.kit
+import "WarmUp.js" as WarmUp
 
 // Per-screen owner of the spotlight, sheet and card hosts (launcher,
 // dashboard, keybind cheatsheet, AI quick ask). Watches this screen's Visibilities flags through
 // HostRouter and opens/closes the host that shows the module; hosts and views are created on first use and kept, like the
 // notch's persistent views. A host's requestClose clears the flags.
+// Views load asynchronously (WarmLoader): the host opens once its view is
+// ready, so a first open never freezes the shell, and the launcher view is
+// pre-created hidden `warmDelay` ms after startup on the screen it will
+// most likely open on (WarmUp.js).
 Scope {
     id: root
 
@@ -26,6 +32,7 @@ Scope {
     readonly property var spotlight: spotlightLoader.item
     readonly property var sheet: sheetLoader.item
     readonly property var card: cardLoader.item
+    readonly property bool launcherReady: launcherLoader.ready
 
     onSpotlightModuleChanged: root.route(spotlightLoader, root.spotlightModule)
     onSheetModuleChanged: root.route(sheetLoader, root.sheetModule)
@@ -36,10 +43,14 @@ Scope {
         root.route(cardLoader, root.cardModule);
     }
 
-    function viewFor(module: string): var {
-        const loader = module === "dashboard" ? dashboardLoader : module === "cheatsheet" ? cheatsheetLoader : module === "aiquick" ? quickAskLoader : launcherLoader;
-        loader.active = true;
-        return loader.item;
+    property int warmDelay: 3000
+
+    function viewLoader(module: string): var {
+        return module === "dashboard" ? dashboardLoader : module === "cheatsheet" ? cheatsheetLoader : module === "aiquick" ? quickAskLoader : launcherLoader;
+    }
+
+    function moduleOf(loader): string {
+        return loader === spotlightLoader ? root.spotlightModule : loader === sheetLoader ? root.sheetModule : root.cardModule;
     }
 
     function route(loader, module: string) {
@@ -49,18 +60,35 @@ Scope {
             return;
         }
         loader.active = true;
-        const view = root.viewFor(module);
-        if (loader.item && view)
-            loader.item.open(view, root.screen);
+        root.viewLoader(module).request(view => {
+            // Closed or rerouted while the view was loading
+            if (root.moduleOf(loader) !== module)
+                return;
+            if (loader.item && view)
+                loader.item.open(view, root.screen);
+        });
+    }
+
+    function warmLauncher() {
+        const names = [];
+        for (let i = 0; i < Quickshell.screens.length; i++)
+            names.push(Quickshell.screens[i].name);
+        if (WarmUp.shouldWarm("hosts", HostRouter.hostFor("launcher"), root.screen ? root.screen.name : "", names, Visibilities.lastFocusedScreen))
+            launcherLoader.warm();
+    }
+
+    Timer {
+        interval: root.warmDelay
+        running: true
+        onTriggered: root.warmLauncher()
     }
 
     function dismiss() {
         Visibilities.setActiveModule("");
     }
 
-    Loader {
+    WarmLoader {
         id: launcherLoader
-        active: false
         sourceComponent: Component {
             LauncherView {
                 visible: false
@@ -68,9 +96,8 @@ Scope {
         }
     }
 
-    Loader {
+    WarmLoader {
         id: dashboardLoader
-        active: false
         sourceComponent: Component {
             DashboardView {
                 visible: false
@@ -79,9 +106,8 @@ Scope {
         }
     }
 
-    Loader {
+    WarmLoader {
         id: cheatsheetLoader
-        active: false
         sourceComponent: Component {
             CheatsheetView {
                 visible: false
@@ -91,9 +117,8 @@ Scope {
     }
 
     // AI quick ask off the notch (layout.aiquick.host: card | spotlight)
-    Loader {
+    WarmLoader {
         id: quickAskLoader
-        active: false
         sourceComponent: Component {
             QuickAskCard {
                 visible: false

@@ -95,11 +95,20 @@ FloatingWindow {
         }
     }
 
+    // Kept alive hidden between opens (KeepAliveLoader in shell.qml): a
+    // preset trial or edit may have started meanwhile, bring back its pill.
+    property bool shownBefore: false
+
     // Close on visibility change from outside
     onVisibleChanged: {
         if (visible) {
             preparePlacement();
-        } else if (GlobalStates.settingsWindowVisible) {
+            if (shownBefore)
+                PresetStudio.refreshSessions();
+            return;
+        }
+        shownBefore = true;
+        if (GlobalStates.settingsWindowVisible) {
             GlobalStates.settingsWindowVisible = false;
         }
     }

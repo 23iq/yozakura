@@ -123,6 +123,14 @@
         },
         "advanced": true
       }
+    },
+    "settingsKeepAliveMinutes": {
+      "title": "Settings keep alive minutes",
+      "type": "number",
+      "default": 5,
+      "description": "Minutes the closed Settings window stays loaded (hidden) so it reopens instantly; 0 releases it on close.",
+      "minimum": 0,
+      "maximum": 120
     }
   },
   "additionalProperties": false
