@@ -9,6 +9,7 @@ import qs.config
 import qs.modules.settings
 import qs.modules.settings.controls
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // One app of a special: window class (match), launch command, what to do
 // when it already runs elsewhere, the "always open here" window rule and
@@ -21,7 +22,7 @@ Rectangle {
     signal removeRequested
 
     implicitHeight: column.implicitHeight + 20
-    radius: Math.min(Styling.radius(-1), 14)
+    radius: Look.radius("control")
     color: Ui.alpha(Colors.overBackground, 0.04)
     border.width: 1
     border.color: Ui.alpha(Colors.outlineVariant, 0.6)
@@ -31,23 +32,20 @@ Rectangle {
         x: 10
         y: 10
         width: parent.width - 20
-        spacing: 8
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
             IconImage {
                 implicitSize: 24
                 source: Quickshell.iconPath(root.app.icon || root.app.id || "", "application-x-executable")
                 asynchronous: true
             }
-            Text {
+            KitText {
                 Layout.fillWidth: true
                 text: root.app.name || root.app.match || ""
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
                 font.weight: Font.DemiBold
-                color: Colors.overBackground
                 elide: Text.ElideRight
             }
             PillButton {
@@ -89,11 +87,10 @@ Rectangle {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
-            Text {
+            spacing: Space.m
+            KitText {
+                role: "caption"
                 text: I18n.t("specials.if_running")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
             }
             SelectorControl {
@@ -116,10 +113,9 @@ Rectangle {
             Item {
                 Layout.fillWidth: true
             }
-            Text {
+            KitText {
+                role: "caption"
                 text: I18n.t("specials.app_rule")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
             }
             ToggleControl {
@@ -137,12 +133,11 @@ Rectangle {
         id: fieldRow
         property string label: ""
         Layout.fillWidth: true
-        spacing: 10
-        Text {
+        spacing: Space.m
+        KitText {
+            role: "caption"
             Layout.preferredWidth: 130
             text: fieldRow.label
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
             elide: Text.ElideRight
         }

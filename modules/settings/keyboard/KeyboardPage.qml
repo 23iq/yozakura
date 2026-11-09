@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings
 import "../../services/KeyboardModel.js" as KeyboardModel
+import qs.modules.components.kit
 
 // Settings > Keyboard: layouts (order, variants), how to switch, XKB options
 // and key repeat. Until the user changes something here the compositor's own
@@ -78,7 +79,7 @@ Flickable {
         width: Math.min(page.width - 64, 820)
         x: (page.width - width) / 2
         y: 36
-        spacing: 22
+        spacing: Space.xl
 
         PageHeader {
             width: parent.width

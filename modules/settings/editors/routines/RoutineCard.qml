@@ -58,7 +58,7 @@ StyledRect {
 
     objectName: "routineCard:" + (routine.id || "new")
     variant: expanded ? "pane" : "common"
-    radius: Styling.radius(-1)
+    radius: Look.radius("control")
     implicitHeight: col.implicitHeight + 20
 
     function patch(fields) {
@@ -70,43 +70,38 @@ StyledRect {
         x: 10
         y: 10
         width: parent.width - 20
-        spacing: 10
+        spacing: Space.m
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
 
             StyledRect {
                 Layout.preferredWidth: 36
                 Layout.preferredHeight: 36
-                radius: Styling.radius(-2)
+                radius: Look.radius("control")
                 variant: "primary"
-                Text {
+                Icon {
                     anchors.centerIn: parent
-                    text: Icons[root.routine.icon] || Icons.lightning
-                    font.family: Icons.font
-                    font.pixelSize: 18
+                    icon: Icons[root.routine.icon] || Icons.lightning
                     color: parent.item
                 }
             }
             ColumnLayout {
                 Layout.fillWidth: true
                 spacing: 0
-                Text {
+                KitText {
                     Layout.fillWidth: true
                     text: root.routine.name || I18n.t("routines.untitled")
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
                     font.weight: Font.DemiBold
                     color: Colors.overSurface
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("routines.launcher.steps", (root.routine.steps || []).length) + (root.dirty ? " · " + I18n.t("routines.unsaved") : "")
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     color: root.dirty ? Colors.primary : Colors.outline
                 }
             }
@@ -133,7 +128,7 @@ StyledRect {
         ColumnLayout {
             visible: root.expanded
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
 
             AiTextRow {
                 objectName: "routineName"
@@ -146,7 +141,7 @@ StyledRect {
             }
             Flow {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Repeater {
                     model: RoutineModel.ICONS
                     delegate: IconButton {
@@ -195,7 +190,7 @@ StyledRect {
 
             Flow {
                 Layout.fillWidth: true
-                spacing: 6
+                spacing: Space.s
                 Repeater {
                     model: [["action", "keyboard"], ["tool", "wrench"], ["delay", "hourglass"]]
                     delegate: Chip {
@@ -213,19 +208,18 @@ StyledRect {
                 report: root.report
                 steps: root.routine.steps || []
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: root.error !== ""
                 text: root.error
                 wrapMode: Text.WordWrap
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.error
             }
 
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 8
+                spacing: Space.s
                 Chip {
                     objectName: "saveRoutine"
                     active: root.dirty && root.problems.length === 0
@@ -252,11 +246,10 @@ StyledRect {
                 Item {
                     Layout.fillWidth: true
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     visible: root.armed
                     text: I18n.t("routines.delete_confirm")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.error
                 }
                 IconButton {

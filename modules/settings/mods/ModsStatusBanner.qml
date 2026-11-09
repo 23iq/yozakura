@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
+import qs.modules.components.kit
 
 // The most urgent ModsService state: an error, a stale generation (Rebuild),
 // a pending restart (Restart now) or the last status message.
@@ -50,20 +51,18 @@ StyledRect {
         anchors.rightMargin: Metrics.spacing + 1
         spacing: Metrics.spacing + 2
 
-        Text {
+        Icon {
+            role: "title"
             Layout.alignment: Qt.AlignVCenter
-            text: banner.alarming ? Icons.alert : (ModsService.restartRequired ? Icons.arrowCounterClockwise : Icons.accept)
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(2)
+            icon: banner.alarming ? Icons.alert : (ModsService.restartRequired ? Icons.arrowCounterClockwise : Icons.accept)
             color: banner.alarming ? Colors.error : Colors.overBackground
         }
 
-        Text {
+        KitText {
+            role: "secondary"
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignVCenter
             text: banner.message
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             color: banner.alarming ? Colors.error : Colors.overBackground
             wrapMode: Text.Wrap
         }

@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../../lockscreen/styles/LockStyleRegistry.js" as LockStyles
+import qs.modules.components.kit
 
 // Lock screen style gallery: every style of the registry rendered live by
 // the real lock screen view (LockView in preview mode: no focus, no cava),
@@ -36,7 +37,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: LockStyles.styles

@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
 import "SurfaceRoles.js" as Roles
+import qs.modules.components.kit
 
 // Chips of every surface variant, in two groups (surfaces, accents); one
 // is current across both. `picked(prop)` fires with the sr* name.
@@ -16,7 +17,7 @@ ColumnLayout {
     property string current: "srBg"
     signal picked(string prop)
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: Roles.GROUPS
@@ -25,12 +26,11 @@ ColumnLayout {
             id: group
             required property var modelData
             Layout.fillWidth: true
-            spacing: 4
+            spacing: Space.xs
 
-            Text {
+            KitText {
+                role: "caption"
                 text: I18n.t(group.modelData.label)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
             }
             SelectorControl {

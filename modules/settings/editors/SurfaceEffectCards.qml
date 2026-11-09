@@ -10,6 +10,7 @@ import qs.modules.settings.previews
 import qs.modules.settings.store
 import qs.modules.components.surfaceeffects
 import "../../components/surfaceeffects/SurfaceEffects.js" as SurfaceEffects
+import qs.modules.components.kit
 
 // Surface effect picker (theme.surfaceEffect): every registered effect
 // (SurfaceEffects.js) previewed live on a mini bar + panel, with the real
@@ -28,7 +29,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: root.effects

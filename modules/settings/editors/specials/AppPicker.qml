@@ -8,6 +8,7 @@ import qs.config
 import qs.modules.settings.controls
 import "../../Ui.js" as Ui
 import "../../../specials/Specials.js" as Specials
+import qs.modules.components.kit
 
 // Installed apps (the launcher's index, AppSearch) to add to a special:
 // type to search, click to add. The window class comes from the desktop
@@ -21,7 +22,7 @@ Column {
     property string query: ""
     readonly property var results: root.query.trim().length > 0 ? AppSearch.fuzzyQuery(root.query.trim()).slice(0, 6) : []
 
-    spacing: 6
+    spacing: Space.s
 
     function entryOf(r) {
         const e = DesktopEntries.byId ? DesktopEntries.byId(r.id) : null;
@@ -56,7 +57,7 @@ Column {
             objectName: "appResult:" + modelData.id
             width: root.width
             height: 40
-            radius: Math.min(Styling.radius(-2), 12)
+            radius: Look.radius("control")
             color: area.containsMouse ? Ui.alpha(Colors.primary, 0.12) : Ui.alpha(Colors.overBackground, 0.04)
 
             IconImage {
@@ -67,27 +68,25 @@ Column {
                 source: Quickshell.iconPath(row.modelData.icon || "", "application-x-executable")
                 asynchronous: true
             }
-            Text {
+            KitText {
+                role: "secondary"
                 anchors.left: icon.right
-                anchors.leftMargin: 10
+                anchors.leftMargin: Space.m
                 anchors.right: addGlyph.left
-                anchors.rightMargin: 8
+                anchors.rightMargin: Space.s
                 anchors.verticalCenter: parent.verticalCenter
                 text: row.modelData.name
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
                 elide: Text.ElideRight
             }
-            Text {
+            Icon {
                 id: addGlyph
+                role: "secondary"
+                tone: "accent"
                 anchors.right: parent.right
-                anchors.rightMargin: 12
+                anchors.rightMargin: Space.m
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons.plus
-                font.family: Icons.font
-                font.pixelSize: 15
-                color: Colors.primary
+                icon: Icons.plus
             }
             MouseArea {
                 id: area

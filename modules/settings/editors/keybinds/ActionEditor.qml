@@ -9,6 +9,7 @@ import qs.modules.settings.controls
 import qs.config
 import "../../../../config/KeybindActions.js" as KeybindActions
 import "../../../keybinds/BindModel.js" as BindModel
+import qs.modules.components.kit
 
 // One action of a bind: the searchable picker, the action's arguments
 // (workspace, direction, command, the app to open...) and, in the
@@ -31,7 +32,7 @@ ColumnLayout {
 
     readonly property var fields: KeybindActions.getActionFields(action.id)
 
-    spacing: 8
+    spacing: Space.s
 
     function emit(patch) {
         edited(Object.assign({
@@ -56,7 +57,7 @@ ColumnLayout {
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 8
+        spacing: Space.s
 
         ActionPicker {
             id: picker
@@ -90,15 +91,14 @@ ColumnLayout {
             readonly property bool isBool: modelData.kind === "bool"
             readonly property bool plain: !isApp && !isRoutine && !isPath && !isBool
             Layout.fillWidth: true
-            spacing: 12
+            spacing: Space.m
 
-            Text {
+            KitText {
+                role: "caption"
                 // The app picker speaks for itself.
                 visible: !fieldRow.isApp
                 Layout.preferredWidth: 110
                 text: I18n.t(KeybindActions.fieldLabelKey(fieldRow.modelData.key))
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
             }
             AppPickerField {
@@ -144,15 +144,14 @@ ColumnLayout {
     Flow {
         Layout.fillWidth: true
         visible: root.showLayouts
-        spacing: 6
+        spacing: Space.s
 
-        Text {
+        KitText {
+            role: "caption"
             height: 30
             verticalAlignment: Text.AlignVCenter
-            rightPadding: 6
+            rightPadding: Space.s
             text: I18n.t("binds.layouts_only")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
         Repeater {

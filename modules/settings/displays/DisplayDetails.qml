@@ -8,11 +8,12 @@ import qs.modules.settings.controls
 import "../Ui.js" as Ui
 import "../../services/DisplayModel.js" as DisplayModel
 import "DisplayFormat.js" as DisplayFormat
+import qs.modules.components.kit
 
 // Settings of the selected monitor: enable, resolution, refresh rate, scale,
 // rotation, VRR, plus Identify / Discard / Apply. It edits nothing itself:
 // every change is a `patch` the page merges into the draft layout.
-StyledRect {
+Group {
     id: root
 
     property var config: null
@@ -33,20 +34,6 @@ StyledRect {
     readonly property real bestHz: draftOutput ? DisplayModel.bestRefresh(draftOutput) : 0
     readonly property bool active: !!config && config.enabled !== false
 
-    variant: "pane"
-    radius: Styling.radius(4)
-    enableShadow: false
-    implicitHeight: column.implicitHeight
-
-    Rectangle {
-        anchors.fill: parent
-        radius: root.radius
-        color: "transparent"
-        border.width: 1
-        border.color: Ui.alpha(Colors.outlineVariant, 0.55)
-        z: 10
-    }
-
     Column {
         id: column
         width: parent.width
@@ -54,54 +41,51 @@ StyledRect {
         // Header: icon, name, enable switch
         Item {
             width: parent.width
-            height: 76
+            height: Space.controlL + Space.m
 
-            Rectangle {
+            // Neutral icon tile: the accent stays for active state
+            StyledRect {
                 id: icon
-                x: 20
+                x: Look.rowInset
                 anchors.verticalCenter: parent.verticalCenter
-                width: 40
-                height: 40
-                radius: Math.min(Styling.radius(2), 14)
-                color: Ui.alpha(Colors.primary, 0.16)
-                Text {
+                width: Space.controlM
+                height: Space.controlM
+                variant: "common"
+                enableShadow: false
+                radius: Look.radius("control", height)
+                Icon {
+                    role: "title"
+                    tone: "secondary"
                     anchors.centerIn: parent
-                    text: Icons.monitor
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(4)
-                    color: Colors.primary
+                    icon: Icons.monitor
                 }
             }
             Column {
                 anchors.left: icon.right
-                anchors.leftMargin: 14
+                anchors.leftMargin: Space.l
                 anchors.right: toggle.left
-                anchors.rightMargin: 14
+                anchors.rightMargin: Space.l
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-                Text {
+                spacing: Space.xs / 2
+                KitText {
+                    role: "title"
                     width: parent.width
                     text: root.config ? DisplayFormat.title(root.output, root.config) : ""
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(2)
                     font.weight: Font.Bold
-                    color: Colors.overBackground
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     width: parent.width
                     text: root.config ? root.config.name + (root.output ? "  ·  " + DisplayFormat.formatResolution(root.output.width, root.output.height) + "  ·  " + DisplayFormat.formatHz(root.output.refresh) : "") : ""
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurfaceVariant
                 }
             }
             ToggleControl {
                 id: toggle
                 objectName: "enabledToggle"
                 anchors.right: parent.right
-                anchors.rightMargin: 20
+                anchors.rightMargin: Look.rowInset
                 anchors.verticalCenter: parent.verticalCenter
                 checked: root.active
                 onToggled: value => root.patch({
@@ -134,7 +118,7 @@ StyledRect {
             hint: I18n.t("prefs.displays.refresh.desc")
             Column {
                 width: parent.width
-                spacing: 10
+                spacing: Space.m
                 DisplayChips {
                     objectName: "refreshChips"
                     width: parent.width
@@ -159,19 +143,16 @@ StyledRect {
                     Row {
                         id: hintRow
                         anchors.centerIn: parent
-                        spacing: 6
-                        Text {
+                        spacing: Space.s
+                        Icon {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: Icons.lightning
-                            font.family: Icons.font
-                            font.pixelSize: Styling.fontSize(0)
+                            icon: Icons.lightning
                             color: Colors.tertiary
                         }
-                        Text {
+                        KitText {
+                            role: "secondary"
                             anchors.verticalCenter: parent.verticalCenter
                             text: I18n.t("prefs.displays.refresh_upgrade", DisplayFormat.formatHz(root.bestHz))
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
                             color: Colors.overBackground
                         }
                     }
@@ -195,7 +176,7 @@ StyledRect {
             hint: I18n.t("prefs.displays.scale.desc")
             Column {
                 width: parent.width
-                spacing: 10
+                spacing: Space.m
                 DisplayChips {
                     objectName: "scaleChips"
                     width: parent.width
@@ -256,15 +237,13 @@ StyledRect {
             width: parent.width
             height: 68
 
-            Rectangle {
-                x: 20
-                width: parent.width - 40
-                height: 1
-                color: Ui.alpha(Colors.outlineVariant, 0.45)
+            Divider {
+                x: Look.rowInset
+                width: parent.width - Look.rowInset * 2
             }
             PillButton {
                 objectName: "identifyButton"
-                x: 20
+                x: Look.rowInset
                 anchors.verticalCenter: parent.verticalCenter
                 icon: "eye"
                 kind: "ghost"
@@ -273,9 +252,9 @@ StyledRect {
             }
             Row {
                 anchors.right: parent.right
-                anchors.rightMargin: 20
+                anchors.rightMargin: Look.rowInset
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 10
+                spacing: Space.m
                 PillButton {
                     objectName: "discardButton"
                     visible: root.dirty

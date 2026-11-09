@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
 import qs.config
+import qs.modules.components.kit
 
 // One label/value line of the package details. The label column has a
 // fixed width so a stack of these reads as a table; children (link
@@ -21,23 +22,22 @@ RowLayout {
     Layout.fillWidth: true
     spacing: Metrics.spacing + 2
 
-    Text {
+    KitText {
+        role: "caption"
         Layout.preferredWidth: meta.labelWidth
         Layout.alignment: Qt.AlignTop
         text: meta.label
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overSurfaceVariant
         wrapMode: Text.Wrap
     }
 
-    Text {
+    KitText {
+        role: "caption"
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignVCenter
         visible: meta.value !== ""
         text: meta.value
         font.family: meta.mono ? Config.theme.monoFont : Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overBackground
         wrapMode: Text.WrapAnywhere
     }

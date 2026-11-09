@@ -35,7 +35,7 @@ ColumnLayout {
         return root.saved.find(r => r.id === key) || null;
     }
 
-    spacing: 10
+    spacing: Space.m
 
     function setMap(name, key, value) {
         const next = Object.assign({}, root[name]);
@@ -109,18 +109,17 @@ ColumnLayout {
 
     Component.onCompleted: RoutinesService.refresh()
 
-    Text {
+    KitText {
+        role: "caption"
         Layout.fillWidth: true
         text: I18n.t("routines.hint")
         wrapMode: Text.WordWrap
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overSurfaceVariant
     }
 
     Flow {
         Layout.fillWidth: true
-        spacing: 6
+        spacing: Space.s
         Chip {
             objectName: "newRoutine"
             icon: Icons.plus
@@ -140,16 +139,15 @@ ColumnLayout {
         }
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         Layout.fillWidth: true
         visible: root.cards.length === 0
-        topPadding: 8
-        bottomPadding: 8
+        topPadding: Space.s
+        bottomPadding: Space.s
         text: I18n.t("routines.empty")
         wrapMode: Text.WordWrap
         horizontalAlignment: Text.AlignHCenter
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         color: Colors.outline
     }
 

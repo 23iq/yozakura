@@ -235,80 +235,40 @@
   "text": 8
  },
  "modules/settings/displays": {
-  "spacing": 22,
-  "rectangle": 12,
-  "text": 19,
-  "radius": 5
+  "rectangle": 8
  },
  "modules/settings/editors": {
-  "spacing": 122,
-  "font-size": 16,
-  "rectangle": 37,
-  "text": 92,
-  "radius": 15
+  "font-size": 3,
+  "rectangle": 33,
+  "text": 5
  },
  "modules/settings/editors/desktopwidgets": {
-  "spacing": 10,
-  "font-size": 1,
-  "rectangle": 5,
-  "text": 7,
-  "radius": 2
+  "rectangle": 5
  },
  "modules/settings/editors/keybinds": {
-  "spacing": 63,
-  "rectangle": 17,
-  "text": 38,
-  "radius": 8
- },
- "modules/settings/editors/routines": {
-  "spacing": 11,
-  "font-size": 1,
-  "text": 12,
-  "radius": 4
+  "rectangle": 15,
+  "text": 3
  },
  "modules/settings/editors/specials": {
-  "spacing": 20,
-  "font-size": 3,
-  "rectangle": 7,
-  "text": 14,
-  "radius": 4
- },
- "modules/settings/editors/surfaces": {
-  "spacing": 11,
-  "text": 9,
-  "radius": 2
+  "rectangle": 7
  },
  "modules/settings/keyboard": {
-  "spacing": 28,
-  "rectangle": 16,
-  "text": 23,
-  "radius": 6
+  "rectangle": 7,
+  "text": 1
  },
  "modules/settings/layout": {
-  "spacing": 4,
-  "rectangle": 8,
-  "text": 14,
-  "radius": 4
+  "rectangle": 8
  },
  "modules/settings/mods": {
-  "spacing": 11,
-  "rectangle": 9,
-  "text": 33,
-  "radius": 3
+  "rectangle": 3
  },
  "modules/settings/presets": {
-  "spacing": 60,
-  "font-size": 10,
-  "rectangle": 47,
-  "text": 48,
-  "radius": 12
+  "rectangle": 44,
+  "text": 1
  },
  "modules/settings/previews": {
-  "spacing": 22,
-  "font-size": 1,
   "rectangle": 50,
-  "text": 19,
-  "radius": 15
+  "text": 1
  },
  "modules/settings/system": {
   "text": 1
@@ -410,7 +370,7 @@
  },
  "modules/widgets/presets": {
   "rectangle": 1,
-  "text": 3,
-  "radius": 2
+  "text": 1,
+  "radius": 1
  }
 }

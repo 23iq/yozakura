@@ -72,22 +72,19 @@ ModsCard {
         visible: ModsService.loaded && list.mods.length === 0
         spacing: Metrics.spacing + 2
 
-        Text {
+        Icon {
+            role: "title"
+            tone: "muted"
             Layout.alignment: Qt.AlignHCenter
             Layout.topMargin: Metrics.spacing
-            text: Icons.puzzlePiece
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(12)
-            color: Colors.outline
+            icon: Icons.puzzlePiece
         }
 
-        Text {
+        KitText {
+            role: "secondary"
             Layout.fillWidth: true
             Layout.bottomMargin: Metrics.spacing
             text: list.allMods.length === 0 ? I18n.t("mods.empty") : I18n.t("mods.no_matches")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
         }
@@ -102,7 +99,7 @@ ModsCard {
         Column {
             id: rows
             width: parent.width
-            spacing: 4
+            spacing: Space.xs
 
             Repeater {
                 model: list.mods
@@ -144,13 +141,12 @@ ModsCard {
                     list.dropIndex = ModsModel.dropSlot(y, height + rows.spacing, list.mods.length);
             }
 
-            Text {
+            KitText {
+                role: "secondary"
                 anchors.fill: parent
                 anchors.leftMargin: Metrics.padding
                 anchors.rightMargin: Metrics.padding
                 text: dragPreview.label
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.DemiBold
                 color: dragPreview.item
                 verticalAlignment: Text.AlignVCenter

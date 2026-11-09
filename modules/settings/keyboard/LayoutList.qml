@@ -9,6 +9,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.displays
 import "../Ui.js" as Ui
 import "../../services/KeyboardModel.js" as KeyboardModel
+import qs.modules.components.kit
 
 // The ordered layout list: variants, drag to reorder, remove, and the
 // searchable picker that adds one. `layouts` is edited by the page.
@@ -69,15 +70,13 @@ KeyboardCard {
         width: parent.width
         height: root.picking ? picker.implicitHeight + 76 : 68
 
-        Rectangle {
-            x: 20
-            width: parent.width - 40
-            height: 1
-            color: Ui.alpha(Colors.outlineVariant, 0.45)
+        Divider {
+            x: Look.rowInset
+            width: parent.width - Look.rowInset * 2
         }
         PillButton {
             objectName: "addLayoutButton"
-            x: 20
+            x: Look.rowInset
             y: 17
             kind: root.picking ? "ghost" : "tonal"
             icon: root.picking ? "caretUp" : "plus"

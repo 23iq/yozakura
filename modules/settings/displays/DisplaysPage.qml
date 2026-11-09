@@ -7,6 +7,7 @@ import qs.modules.settings
 import "../../services/DisplayModel.js" as DisplayModel
 import "DisplayFormat.js" as DisplayFormat
 import "../../../config/JsonUtil.js" as JsonUtil
+import qs.modules.components.kit
 
 // Settings > Displays: arrange the monitors on a canvas, tune the selected
 // one, apply live. The layout runs for 15 s on every screen with a "keep
@@ -109,7 +110,7 @@ Flickable {
         width: Math.min(page.width - 64, 820)
         x: (page.width - width) / 2
         y: 36
-        spacing: 22
+        spacing: Space.xl
 
         PageHeader {
             width: parent.width

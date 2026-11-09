@@ -6,6 +6,7 @@ import qs.modules.theme
 import qs.modules.globals
 import qs.config
 import qs.modules.settings.controls
+import qs.modules.components.kit
 
 // Loops the real wallpaper transition shader between two of your
 // wallpapers with the selected style and duration.
@@ -84,8 +85,8 @@ PreviewStage {
     ClippingRectangle {
         id: stage
         anchors.fill: parent
-        anchors.margins: 1
-        radius: Math.max(0, Math.min(Styling.radius(2), 18) - 1)
+        anchors.margins: Space.hairline
+        radius: Math.max(0, Look.radius("box") - 1)
         color: "transparent"
 
         Image {
@@ -135,12 +136,12 @@ PreviewStage {
         }
     }
 
-    Text {
+    // Placeholder art while no wallpaper is set
+    Icon {
         anchors.centerIn: parent
         visible: root.sources[0] === ""
-        text: Icons.image
-        font.family: Icons.font
-        font.pixelSize: 36
-        color: Colors.overSurfaceVariant
+        icon: Icons.image
+        size: Space.controlS
+        tone: "secondary"
     }
 }

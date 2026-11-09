@@ -10,6 +10,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Bar edge picker: four screens with the bar (and frame, when enabled)
 // drawn where it would sit.
@@ -26,7 +27,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 12
+        spacing: Space.m
 
         Repeater {
             model: [
@@ -100,7 +101,7 @@ Item {
             Grid {
                 anchors.centerIn: parent
                 columns: screen.vertical ? 1 : 5
-                spacing: 3
+                spacing: Space.xs
                 Repeater {
                     model: 5
                     Rectangle {
@@ -121,7 +122,7 @@ Item {
             y: screen.edge === "top" ? inset : 8 + screen.frame
             width: parent.width - (screen.vertical ? inset : 8 + screen.frame) - 8 - screen.frame
             height: parent.height - (screen.vertical ? 8 + screen.frame : inset) - 8 - screen.frame
-            radius: Math.min(Styling.radius(-4), 8)
+            radius: Look.radius("control")
             color: Ui.alpha(Colors.surfaceContainerHigh, 0.85)
             border.width: 1
             border.color: Ui.alpha(Colors.outlineVariant, 0.8)

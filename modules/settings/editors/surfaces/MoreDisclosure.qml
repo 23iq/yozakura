@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.config
+import qs.modules.components.kit
 
 // Collapsed-by-default block inside an editor: a header (caret, title,
 // hint) that folds its content. Children go into the body.
@@ -16,7 +17,7 @@ StyledRect {
     default property alias content: body.data
 
     variant: "common"
-    radius: Styling.radius(-1)
+    radius: Look.radius("control")
     implicitHeight: col.implicitHeight + 20
 
     ColumnLayout {
@@ -24,7 +25,7 @@ StyledRect {
         x: 10
         y: 10
         width: parent.width - 20
-        spacing: 12
+        spacing: Space.m
 
         Item {
             objectName: "surfacesMore"
@@ -39,28 +40,24 @@ StyledRect {
             RowLayout {
                 id: header
                 width: parent.width
-                spacing: 8
+                spacing: Space.s
 
-                Text {
-                    text: root.expanded ? Icons.caretDown : Icons.caretRight
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
+                Icon {
+                    icon: root.expanded ? Icons.caretDown : Icons.caretRight
                     color: root.item
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     text: root.title
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     font.bold: true
                     color: root.item
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: root.hint
                     elide: Text.ElideRight
                     horizontalAlignment: Text.AlignRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     color: Colors.overSurfaceVariant
                 }
             }
@@ -76,7 +73,7 @@ StyledRect {
             id: body
             Layout.fillWidth: true
             visible: root.expanded
-            spacing: 12
+            spacing: Space.m
         }
     }
 }

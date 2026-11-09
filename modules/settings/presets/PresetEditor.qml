@@ -10,6 +10,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.store
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // One preset in detail: thumbnail, info, actions and, aspect by aspect,
 // what it sets differently from the defaults (or another preset), which
@@ -32,7 +33,7 @@ Column {
     signal back
     signal action(string id)
 
-    spacing: 22
+    spacing: Space.xl
 
     function reload() {
         loading = true;
@@ -71,13 +72,14 @@ Column {
 
     // Header: thumbnail + info + actions
     Flow {
+        id: header
         width: parent.width
-        spacing: 22
+        spacing: Space.xl
 
         ClippingRectangle {
             width: Math.min(root.width, Math.max(300, root.width * 0.44))
             height: Math.round(width * 9 / 16)
-            radius: Math.min(Styling.radius(4), 20)
+            radius: Look.radius("box")
             color: Colors.surfaceContainerHigh
             border.width: root.preset && root.preset.active ? 2 : 1
             border.color: root.preset && root.preset.active ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.6)
@@ -88,17 +90,15 @@ Column {
         }
 
         Column {
-            width: Math.max(260, root.width - Math.min(root.width, Math.max(300, root.width * 0.44)) - 22)
-            spacing: 10
+            width: Math.max(260, root.width - Math.min(root.width, Math.max(300, root.width * 0.44)) - header.spacing - 1)
+            spacing: Space.m
 
             Row {
-                spacing: 8
-                Text {
+                spacing: Space.s
+                KitText {
+                    role: "title"
                     text: root.name
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(8)
                     font.weight: Font.Bold
-                    color: Colors.overBackground
                 }
                 PresetChip {
                     anchors.verticalCenter: parent.verticalCenter
@@ -114,18 +114,15 @@ Column {
                     text: I18n.t("prefs.presets.badge.builtin")
                 }
             }
-            Text {
+            KitText {
+                role: "secondary"
                 text: I18n.t("prefs.presets.by", root.preset && root.preset.author && root.preset.author !== "Unknown" ? root.preset.author : I18n.t("presets.unknown_author"))
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.overSurfaceVariant
             }
-            Text {
+            KitText {
+                role: "secondary"
                 visible: root.official
                 width: parent.width
                 text: root.preset ? (root.preset.description || "") : ""
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
                 wrapMode: Text.WordWrap
             }
@@ -139,7 +136,7 @@ Column {
             }
             Flow {
                 width: parent.width
-                spacing: 5
+                spacing: Space.xs
                 Repeater {
                     model: root.preset ? root.preset.tags : []
                     PresetChip {
@@ -150,7 +147,7 @@ Column {
             }
             Flow {
                 width: parent.width
-                spacing: 8
+                spacing: Space.s
                 PillButton {
                     objectName: "editorApply"
                     kind: "filled"
@@ -211,7 +208,7 @@ Column {
         visible: root.official
         width: parent.width
         height: roRow.implicitHeight + 24
-        radius: Math.min(Styling.radius(3), 18)
+        radius: Look.radius("box")
         color: Ui.alpha(Colors.tertiary, 0.1)
         border.width: 1
         border.color: Ui.alpha(Colors.tertiary, 0.35)
@@ -220,20 +217,17 @@ Column {
             x: 16
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - 32
-            spacing: 12
-            Text {
+            spacing: Space.m
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons.lock
-                font.family: Icons.font
-                font.pixelSize: 18
+                icon: Icons.lock
                 color: Colors.tertiary
             }
-            Text {
+            KitText {
+                role: "secondary"
                 anchors.verticalCenter: parent.verticalCenter
                 width: parent.width - 40
                 text: I18n.t("prefs.presets.readonly")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
                 wrapMode: Text.WordWrap
             }
@@ -242,14 +236,11 @@ Column {
 
     // Comparison
     Row {
-        spacing: 12
-        Text {
+        spacing: Space.m
+        KitText {
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.t("prefs.presets.compare_with")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.weight: Font.DemiBold
-            color: Colors.overBackground
         }
         PresetPicker {
             objectName: "editorAgainst"
@@ -263,30 +254,27 @@ Column {
             ]
             onPicked: v => root.against = v
         }
-        Text {
+        KitText {
+            role: "secondary"
             anchors.verticalCenter: parent.verticalCenter
             visible: root.inspection !== null
             text: root.inspection ? I18n.t("prefs.presets.total_changes", root.inspection.total) : ""
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
         }
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         visible: root.error !== ""
         width: parent.width
         text: root.error
         color: Colors.error
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         wrapMode: Text.WordWrap
     }
 
     // Aspects
     Column {
         width: parent.width
-        spacing: 12
+        spacing: Space.m
         opacity: root.loading ? 0.6 : 1
 
         Repeater {

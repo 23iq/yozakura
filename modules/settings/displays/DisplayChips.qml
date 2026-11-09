@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import "../Ui.js" as Ui
 import "DisplayFormat.js" as DisplayFormat
+import qs.modules.components.kit
 
 // Single-choice chips: options [{value, label, max}]. The option flagged
 // `max` carries an accent glyph (`accentIcon`): the highest refresh rate, the
@@ -18,7 +19,7 @@ Flow {
     property string accentIcon: "lightning"
     signal selected(var value)
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: root.options
@@ -54,22 +55,19 @@ Flow {
             Row {
                 id: chipRow
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: Space.s
 
-                Text {
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !!chip.modelData.max
-                    text: Icons[root.accentIcon] ?? ""
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
+                    icon: Icons[root.accentIcon] ?? ""
                     color: Colors.tertiary
                 }
-                Text {
+                KitText {
                     id: label
+                    role: "secondary"
                     anchors.verticalCenter: parent.verticalCenter
                     text: chip.modelData.label
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     font.weight: chip.on ? Font.DemiBold : Font.Normal
                     color: chip.on ? Colors.overBackground : Colors.overSurfaceVariant
                 }

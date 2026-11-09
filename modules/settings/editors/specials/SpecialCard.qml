@@ -8,6 +8,7 @@ import qs.modules.settings
 import qs.modules.settings.controls
 import qs.modules.settings.editors.keybinds
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // One special workspace in settings (and in the onboarding step): name
 // (the Hyprland name follows, safely), icon, accent, its toggle and
@@ -35,7 +36,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Math.min(Styling.radius(4), 22)
+        radius: Look.radius("box")
         color: Ui.alpha(Colors.overBackground, 0.035)
         border.width: 1
         border.color: root.expanded ? Ui.alpha(root.tint, 0.55) : Ui.alpha(Colors.outlineVariant, 0.8)
@@ -46,29 +47,28 @@ Item {
         x: 12
         y: 12
         width: parent.width - 24
-        spacing: 12
+        spacing: Space.m
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 12
+            spacing: Space.m
 
             Rectangle {
                 Layout.preferredWidth: 40
                 Layout.preferredHeight: 40
                 radius: Math.min(Styling.radius(0), 14)
                 color: Ui.alpha(root.tint, 0.2)
-                Text {
+                Icon {
+                    role: "title"
                     anchors.centerIn: parent
-                    text: Icons[root.item.icon] || Icons.stack
-                    font.family: Icons.font
-                    font.pixelSize: 20
+                    icon: Icons[root.item.icon] || Icons.stack
                     color: root.tint
                 }
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
+                spacing: Space.xs / 2
                 TextControl {
                     objectName: "specialName"
                     Layout.fillWidth: true
@@ -79,11 +79,10 @@ Item {
                             "name": t.trim()
                         })
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: root.problem !== "" ? root.problem : I18n.t("specials.summary", "special:" + root.hyprName, root.windows, (root.item.apps || []).length)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     color: root.problem !== "" ? Colors.error : Colors.overSurfaceVariant
                     elide: Text.ElideRight
                 }
@@ -119,7 +118,7 @@ Item {
         ColumnLayout {
             Layout.fillWidth: true
             visible: root.expanded
-            spacing: 12
+            spacing: Space.m
 
             Labeled {
                 label: I18n.t("specials.icon")
@@ -145,18 +144,16 @@ Item {
                 Layout.fillWidth: true
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 1
-                    Text {
+                    spacing: Space.hairline
+                    KitText {
+                        role: "secondary"
                         text: I18n.t("specials.preload")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
                         color: Colors.overBackground
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         Layout.fillWidth: true
                         text: I18n.t("specials.preload.desc")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
                         color: Colors.overSurfaceVariant
                         wrapMode: Text.WordWrap
                     }
@@ -176,13 +173,12 @@ Item {
                 Column {
                     id: appsColumn
                     width: parent.width
-                    spacing: 8
-                    Text {
+                    spacing: Space.s
+                    KitText {
+                        role: "caption"
                         visible: (root.item.apps || []).length === 0
                         width: parent.width
                         text: I18n.t("specials.apps_empty")
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
                         color: Colors.overSurfaceVariant
                         wrapMode: Text.WordWrap
                     }
@@ -217,14 +213,13 @@ Item {
                 "key": ""
             })
         Layout.fillWidth: true
-        spacing: 12
-        Text {
+        spacing: Space.m
+        KitText {
+            role: "caption"
             Layout.preferredWidth: 150
             Layout.alignment: Qt.AlignTop
-            topPadding: 8
+            topPadding: Space.s
             text: bindRow.label
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
             wrapMode: Text.WordWrap
         }
@@ -253,11 +248,10 @@ Item {
     component Labeled: Column {
         property string label: ""
         Layout.fillWidth: true
-        spacing: 4
-        Text {
+        spacing: Space.xs
+        KitText {
+            role: "caption"
             text: parent.label
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             font.weight: Font.Bold
             font.letterSpacing: 1
             font.capitalization: Font.AllUppercase

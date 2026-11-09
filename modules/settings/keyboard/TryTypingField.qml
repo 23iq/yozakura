@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.config
 import "../Ui.js" as Ui
 import "../../services/KeyboardModel.js" as KeyboardModel
+import qs.modules.components.kit
 
 // Scratch field to feel the key repeat and the layout switch. Shows the
 // layout in use as a badge on the right.
@@ -15,7 +16,7 @@ StyledRect {
     property alias text: input.text
 
     variant: "internalbg"
-    radius: Styling.radius(3)
+    radius: Look.radius("box")
     enableShadow: false
     implicitHeight: 54
 
@@ -32,9 +33,9 @@ StyledRect {
         id: input
         objectName: "tryInput"
         anchors.left: parent.left
-        anchors.leftMargin: 18
+        anchors.leftMargin: Space.l
         anchors.right: badge.left
-        anchors.rightMargin: 12
+        anchors.rightMargin: Space.m
         anchors.verticalCenter: parent.verticalCenter
         clip: true
         selectByMouse: true
@@ -55,19 +56,18 @@ StyledRect {
     Rectangle {
         id: badge
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: Space.m
         anchors.verticalCenter: parent.verticalCenter
         width: Math.max(34, code.implicitWidth + 16)
         height: 28
         radius: 8
         color: Ui.alpha(Colors.primary, 0.2)
-        Text {
+        KitText {
             id: code
             objectName: "tryBadge"
+            role: "secondary"
             anchors.centerIn: parent
             text: KeyboardService.shortLabel
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.Bold
             color: Colors.primary
         }

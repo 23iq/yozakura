@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Small rounded label: preset tags, "Active", "Built-in", "Same as ...".
 // `tone`: "neutral" (default), "primary" (filled accent), "soft" (tinted).
@@ -23,20 +24,18 @@ Rectangle {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 4
-        Text {
+        spacing: Space.xs
+        Icon {
+            role: "label"
             visible: root.icon !== ""
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons[root.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: 11
+            icon: Icons[root.icon] ?? ""
             color: root.solid && root.tone === "soft" ? Colors.overPrimary : root.fg
         }
-        Text {
+        KitText {
+            role: "caption"
             anchors.verticalCenter: parent.verticalCenter
             text: root.text
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             font.weight: Font.DemiBold
             color: root.solid && root.tone === "soft" ? Colors.overPrimary : root.fg
         }

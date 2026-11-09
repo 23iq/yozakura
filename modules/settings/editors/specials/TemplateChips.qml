@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings
 import "../../../specials/Specials.js" as Specials
+import qs.modules.components.kit
 
 // Quick templates (Chat, Music, Dev, Notes, Custom): one button each,
 // `chosen(templateId)` creates a special from it.
@@ -13,7 +14,7 @@ Flow {
 
     signal chosen(string templateId)
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: Specials.TEMPLATES

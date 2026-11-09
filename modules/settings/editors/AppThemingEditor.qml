@@ -11,6 +11,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.store
 import "../../theme/AppThemes.js" as AppThemes
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // External app theming: one row per AppThemes.js entry with its toggle
 // (apps.theming.<id>), whether the app is installed and when its theme was
@@ -97,11 +98,11 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 8
+        spacing: Space.s
 
         Row {
             width: parent.width
-            spacing: 10
+            spacing: Space.m
             PillButton {
                 objectName: "regenerateApps"
                 kind: "filled"
@@ -109,12 +110,11 @@ Item {
                 text: I18n.t("prefs.term.theming.regenerate")
                 onClicked: root.regenerate()
             }
-            Text {
+            KitText {
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
                 visible: root.lastRegenerated > 0
                 text: I18n.t("prefs.term.theming.regenerated")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.primary
             }
         }
@@ -133,7 +133,7 @@ Item {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Math.min(Styling.radius(2), 16)
+                    radius: Look.radius("box")
                     color: Ui.alpha(Colors.overBackground, appRow.on ? 0.05 : 0.025)
                     border.width: 1
                     border.color: Ui.alpha(Colors.outlineVariant, 0.5)
@@ -146,38 +146,35 @@ Item {
                     height: 34
                     radius: 11
                     color: appRow.on && appRow.installed ? Ui.alpha(Colors.primary, 0.16) : Ui.alpha(Colors.overBackground, 0.08)
-                    Text {
+                    Icon {
+                        role: "secondary"
                         anchors.centerIn: parent
-                        text: Icons[appRow.modelData.icon] ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: 16
+                        icon: Icons[appRow.modelData.icon] ?? ""
                         color: appRow.on && appRow.installed ? Colors.primary : Colors.overSurfaceVariant
                     }
                 }
                 Column {
                     anchors.left: appIcon.right
-                    anchors.leftMargin: 12
+                    anchors.leftMargin: Space.m
                     anchors.right: hookPill.visible ? hookPill.left : toggle.left
-                    anchors.rightMargin: 10
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 2
+                    spacing: Space.xs / 2
                     opacity: appRow.installed ? 1 : 0.6
-                    Text {
+                    KitText {
+                        role: "secondary"
                         width: parent.width
                         text: appRow.modelData.label
                         elide: Text.ElideRight
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
                         font.weight: Font.DemiBold
                         color: Colors.overBackground
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         width: parent.width
                         visible: text !== ""
                         text: root.detail(appRow.modelData.id)
                         elide: Text.ElideRight
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-3)
                         color: appRow.st && appRow.st.installed && appRow.st.written ? Colors.primary : Colors.overSurfaceVariant
                     }
                 }
@@ -185,7 +182,7 @@ Item {
                     id: hookPill
                     objectName: "appHook:" + appRow.modelData.id
                     anchors.right: toggle.left
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
                     readonly property var hook: AppHooksService.status[appRow.modelData.id]
                     appLabel: appRow.modelData.label
@@ -204,7 +201,7 @@ Item {
                     id: toggle
                     objectName: "appTheme:" + appRow.modelData.id
                     anchors.right: parent.right
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
                     checked: appRow.on
                     onToggled: v => SettingsStore.set("apps.theming." + appRow.modelData.id, v)

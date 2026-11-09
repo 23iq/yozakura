@@ -7,6 +7,7 @@ import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Details of the selected mod: name, id/version and state, description,
 // package problems, metadata, its own settings and the actions (enable or
@@ -36,23 +37,21 @@ ModsCard {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: Space.xs / 2
 
-            Text {
+            KitText {
+                role: "title"
                 Layout.fillWidth: true
                 text: details.mod?.name ?? ""
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(2)
                 font.weight: Font.DemiBold
-                color: Colors.overBackground
                 elide: Text.ElideRight
             }
 
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: (details.mod?.id ?? "") + " · " + (details.mod?.version ?? "")
                 font.family: Config.theme.monoFont
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overSurfaceVariant
                 elide: Text.ElideRight
             }
@@ -66,62 +65,55 @@ ModsCard {
             radius: height / 2
             enableShadow: false
 
-            Text {
+            KitText {
                 id: stateChip
+                role: "caption"
                 anchors.centerIn: parent
                 text: I18n.t(ModsModel.stateKey(details.mod))
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.Medium
                 color: Colors[ModsModel.stateTone(details.mod)]
             }
         }
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         width: parent.width
         visible: (details.mod?.description ?? "") !== ""
         text: details.mod?.description ?? ""
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         color: Colors.overBackground
         wrapMode: Text.Wrap
     }
 
-    Text {
+    KitText {
+        role: "caption"
         width: parent.width
         visible: details.problem !== ""
         text: I18n.t("mods.package_status") + ": " + (details.problem || I18n.t("mods.unknown_error"))
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.error
         wrapMode: Text.WrapAnywhere
     }
 
-    Text {
+    KitText {
+        role: "caption"
         width: parent.width
         visible: (details.mod?.untestedMessage ?? "") !== ""
         text: I18n.t("mods.untested_base", details.mod?.untestedMessage ?? "")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.warning
         wrapMode: Text.Wrap
     }
 
-    Text {
+    KitText {
+        role: "caption"
         width: parent.width
         visible: (details.mod?.unknownFields ?? []).length > 0
         text: I18n.t("mods.unknown_fields", ModsModel.joinList(details.mod?.unknownFields))
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.warning
         wrapMode: Text.Wrap
     }
 
-    Rectangle {
+    Divider {
         width: parent.width
-        height: 1
-        color: Ui.alpha(Colors.outlineVariant, 0.45)
     }
 
     ModsPackageMeta {
@@ -129,11 +121,9 @@ ModsCard {
         mod: details.mod
     }
 
-    Rectangle {
-        visible: settingsForm.visible
+    Divider {
+        visible: Look.dividers && (settingsForm.visible)
         width: parent.width
-        height: 1
-        color: Ui.alpha(Colors.outlineVariant, 0.45)
     }
 
     ModsSettingsForm {
@@ -142,10 +132,8 @@ ModsCard {
         modId: details.mod?.id ?? ""
     }
 
-    Rectangle {
+    Divider {
         width: parent.width
-        height: 1
-        color: Ui.alpha(Colors.outlineVariant, 0.45)
     }
 
     RowLayout {

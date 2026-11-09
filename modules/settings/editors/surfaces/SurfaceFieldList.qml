@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.modules.settings.store
 import "SurfaceRoles.js" as Roles
+import qs.modules.components.kit
 
 // The fields of one group ("main" | "more") of the surface variant `prop`
 // (Config.theme.<prop>). Every edit goes through SettingsStore with a
@@ -20,7 +21,7 @@ ColumnLayout {
     readonly property var role: Config.theme ? Config.theme[prop] : null
     readonly property var model: Roles.fields(role, group)
 
-    spacing: 14
+    spacing: Space.l
 
     function commit(field, value) {
         const ws = Roles.writes(root.role, field, value);

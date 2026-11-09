@@ -4,6 +4,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Depth clock status under the video toggle: progress of the matte video
 // being built for the current video wallpaper, or how to enable depth
@@ -22,15 +23,13 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 6
+        spacing: Space.s
 
-        Text {
+        KitText {
+            role: "secondary"
             width: parent.width
             text: root.building ? I18n.t("shell.desktop.depth_clock_video_progress", Math.round(DepthMaskService.matteProgress * 100)) : I18n.t("shell.desktop.depth_clock_setup_hint")
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
         }
 
         Rectangle {

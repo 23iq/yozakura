@@ -9,6 +9,7 @@ import qs.modules.settings.store
 import qs.modules.widgets.presets
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Gallery: the one-time new look card, the current layout / style /
 // palette with "Save as…", the tabs of the popup switcher (Sets | Layout |
@@ -27,7 +28,7 @@ Column {
     signal cardAction(string name, string id)
     signal saveRequested
 
-    spacing: 16
+    spacing: Space.l
 
     TryNewLookCard {
         width: parent.width
@@ -45,7 +46,7 @@ Column {
 
     Row {
         width: parent.width
-        spacing: 10
+        spacing: Space.m
 
         TextControl {
             id: search
@@ -64,7 +65,7 @@ Column {
             id: filters
             visible: root.tab === "sets"
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 6
+            spacing: Space.s
             Repeater {
                 model: PresetModel.FILTERS
                 Rectangle {
@@ -77,12 +78,11 @@ Column {
                     color: on ? Ui.alpha(Colors.primary, 0.18) : (chipArea.containsMouse ? Ui.alpha(Colors.overBackground, 0.08) : "transparent")
                     border.width: 1
                     border.color: on ? Ui.alpha(Colors.primary, 0.6) : Ui.alpha(Colors.outline, 0.3)
-                    Text {
+                    KitText {
                         id: chipText
+                        role: "caption"
                         anchors.centerIn: parent
                         text: I18n.t("prefs.presets.filter." + chip.modelData)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
                         font.weight: chip.on ? Font.Bold : Font.Normal
                         color: chip.on ? Colors.primary : Colors.overSurfaceVariant
                     }
@@ -109,7 +109,7 @@ Column {
         id: grid
         visible: root.tab === "sets"
         width: parent.width
-        spacing: 14
+        spacing: Space.l
 
         Repeater {
             model: root.shown
@@ -128,22 +128,20 @@ Column {
             Rectangle {
                 width: Math.floor((grid.width - grid.spacing * (root.columns - 1)) / root.columns)
                 height: width * 9 / 16 + 80
-                radius: Math.min(Styling.radius(4), 22)
+                radius: Look.radius("box")
                 color: Colors.surfaceContainer
                 opacity: 0.6
             }
         }
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         visible: root.tab === "sets" && PresetStudio.loaded && root.shown.length === 0
         width: parent.width
         horizontalAlignment: Text.AlignHCenter
-        topPadding: 30
+        topPadding: Space.xxl
         text: root.query ? I18n.t("prefs.presets.no_match", root.query) : I18n.t("prefs.presets.empty")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
-        color: Colors.overSurfaceVariant
         wrapMode: Text.WordWrap
     }
 }

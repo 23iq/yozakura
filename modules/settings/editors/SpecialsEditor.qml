@@ -10,6 +10,7 @@ import qs.modules.settings.store
 import qs.modules.settings.editors.specials
 import "../Ui.js" as Ui
 import "../../specials/Specials.js" as Specials
+import qs.modules.components.kit
 
 // Special workspaces (config specials.workspaces): quick templates, then
 // one card per special. Every edit writes the whole list through
@@ -34,7 +35,7 @@ Column {
     }
     readonly property bool supported: SpecialsService.supported || YozdService.compositorName === ""
 
-    spacing: 12
+    spacing: Space.m
 
     function setOpen(id, value) {
         if (!!root.open[id] === value)
@@ -69,29 +70,27 @@ Column {
         visible: !root.supported
         width: parent.width
         height: notice.implicitHeight + 24
-        radius: Math.min(Styling.radius(2), 16)
+        radius: Look.radius("box")
         color: Ui.alpha(Colors.error, 0.1)
         border.width: 1
         border.color: Ui.alpha(Colors.error, 0.4)
-        Text {
+        KitText {
             id: notice
+            role: "secondary"
             x: 12
             y: 12
             width: parent.width - 24
             text: I18n.t("specials.unsupported", YozdService.compositorName)
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             color: Colors.overBackground
             wrapMode: Text.WordWrap
         }
     }
 
-    Text {
+    KitText {
+        role: "caption"
         visible: !root.compact
         width: parent.width
         text: I18n.t("specials.templates_hint")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overSurfaceVariant
         wrapMode: Text.WordWrap
     }
@@ -101,15 +100,13 @@ Column {
         onChosen: id => root.addFromTemplate(id)
     }
 
-    Text {
+    KitText {
+        role: "secondary"
         visible: root.items.length === 0
         width: parent.width
-        topPadding: 6
-        bottomPadding: 6
+        topPadding: Space.s
+        bottomPadding: Space.s
         text: I18n.t("specials.empty")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
-        color: Colors.overSurfaceVariant
         wrapMode: Text.WordWrap
         horizontalAlignment: Text.AlignHCenter
     }

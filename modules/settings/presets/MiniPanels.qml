@@ -15,8 +15,8 @@ Item {
     property var panels: []
     // Module size in miniature pixels
     property real unit: 12
-    property color chrome: "black"
-    property color ink: "white"
+    property color chrome: Colors.background
+    property color ink: Colors.overBackground
     property color line: "gray"
 
     readonly property var shown: panels.filter(p => p && p.autohide !== "always")

@@ -8,6 +8,7 @@ import qs.modules.settings
 import "PresetModel.js" as PresetModel
 import "../Ui.js" as Ui
 import "../schema/Categories.js" as Categories
+import qs.modules.components.kit
 
 // One aspect of a preset in the editor (`preset show` report): status
 // against the reference, presets sharing it, the changed keys (4, then
@@ -26,7 +27,7 @@ Rectangle {
     readonly property var visibleChanges: open ? modelData.changes : modelData.changes.slice(0, 4)
     objectName: "editorAspect:" + modelData.id
     height: body.implicitHeight + 28
-    radius: Math.min(Styling.radius(3), 18)
+    radius: Look.radius("box")
     color: Colors.surfaceContainer
     border.width: 1
     border.color: Ui.alpha(Colors.outlineVariant, 0.5)
@@ -36,7 +37,7 @@ Rectangle {
         x: 16
         y: 14
         width: parent.width - 32
-        spacing: 10
+        spacing: Space.m
 
         Item {
             width: parent.width
@@ -46,42 +47,36 @@ Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 40
                 height: 40
-                radius: Math.min(Styling.radius(2), 14)
+                radius: Look.radius("box")
                 color: Ui.alpha(Colors.primary, aspect.count > 0 ? 0.16 : 0.07)
-                Text {
+                Icon {
                     anchors.centerIn: parent
-                    text: Icons[PresetModel.aspectIcon(aspect.modelData.id)] ?? ""
-                    font.family: Icons.font
-                    font.pixelSize: 19
+                    icon: Icons[PresetModel.aspectIcon(aspect.modelData.id)] ?? ""
                     color: aspect.count > 0 ? Colors.primary : Colors.overSurfaceVariant
                 }
             }
             Column {
                 id: head
                 anchors.left: tile.right
-                anchors.leftMargin: 12
+                anchors.leftMargin: Space.m
                 anchors.right: jump.left
-                anchors.rightMargin: 10
+                anchors.rightMargin: Space.m
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 4
-                Text {
+                spacing: Space.xs
+                KitText {
                     text: I18n.t("prefs.presets.aspect." + aspect.modelData.id)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
                     font.weight: Font.DemiBold
-                    color: Colors.overBackground
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     width: parent.width
                     text: !aspect.modelData.carried ? I18n.t("prefs.presets.aspect_not_set") : (aspect.count === 0 ? I18n.t(aspect.against === "defaults" ? "prefs.presets.aspect_default" : "prefs.presets.aspect_same", aspect.against) : I18n.t("prefs.presets.aspect_changes", aspect.count))
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overSurfaceVariant
                     wrapMode: Text.WordWrap
                 }
                 Flow {
                     width: parent.width
-                    spacing: 5
+                    spacing: Space.xs
                     visible: (aspect.modelData.sameAs || []).length > 0
                     PresetChip {
                         tone: "soft"
@@ -122,56 +117,53 @@ Rectangle {
                 height: 36
                 radius: Math.min(Styling.radius(0), 10)
                 color: changeArea.containsMouse && !aspect.official ? Ui.alpha(Colors.primary, 0.08) : Ui.alpha(Colors.overBackground, 0.03)
-                Text {
+                KitText {
                     id: keyText
+                    role: "secondary"
                     x: 12
                     anchors.verticalCenter: parent.verticalCenter
                     width: parent.width * 0.42
                     text: change.modelData.title || change.modelData.key
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     color: Colors.overBackground
                 }
                 Row {
                     anchors.left: keyText.right
-                    anchors.leftMargin: 8
+                    anchors.leftMargin: Space.s
                     anchors.right: go.left
-                    anchors.rightMargin: 8
+                    anchors.rightMargin: Space.s
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 6
+                    spacing: Space.s
                     clip: true
-                    Text {
+                    KitText {
+                        role: "caption"
                         text: PresetModel.formatValue(change.modelData.from)
                         font.family: Config.theme.monoFont
-                        font.pixelSize: Styling.fontSize(-2)
                         color: Colors.overSurfaceVariant
                         font.strikeout: true
                     }
-                    Text {
-                        text: Icons.arrowRight
-                        font.family: Icons.font
-                        font.pixelSize: 11
-                        color: Colors.overSurfaceVariant
+                    Icon {
+                        role: "label"
+                        tone: "secondary"
+                        icon: Icons.arrowRight
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         text: PresetModel.formatValue(change.modelData.to)
                         font.family: Config.theme.monoFont
-                        font.pixelSize: Styling.fontSize(-2)
                         font.weight: Font.Bold
                         color: Colors.primary
                     }
                 }
-                Text {
+                Icon {
                     id: go
+                    role: "caption"
+                    tone: "secondary"
                     anchors.right: parent.right
-                    anchors.rightMargin: 12
+                    anchors.rightMargin: Space.m
                     anchors.verticalCenter: parent.verticalCenter
                     visible: !aspect.official
-                    text: Icons.caretRight
-                    font.family: Icons.font
-                    font.pixelSize: 13
-                    color: Colors.overSurfaceVariant
+                    icon: Icons.caretRight
                 }
                 MouseArea {
                     id: changeArea

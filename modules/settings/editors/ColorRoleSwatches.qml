@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Palette role picker: one swatch per entry option ({value: role | "auto",
 // label}), drawn in the live palette so a choice works with every preset
@@ -22,7 +23,7 @@ Item {
     Flow {
         id: flow
         width: parent.width
-        spacing: 10
+        spacing: Space.m
 
         Repeater {
             model: root.options
@@ -72,25 +73,23 @@ Item {
                         }
                     }
 
-                    Text {
+                    Icon {
+                        role: "caption"
                         visible: swatch.selected
                         anchors.centerIn: parent
-                        text: Icons.accept
-                        font.family: Icons.font
-                        font.pixelSize: 13
+                        icon: Icons.accept
                         color: swatch.fill.hslLightness > 0.55 ? Colors.shadow : Colors.white
                     }
                 }
 
-                Text {
+                KitText {
+                    role: "caption"
                     anchors.top: ring.bottom
-                    anchors.topMargin: 6
+                    anchors.topMargin: Space.s
                     width: parent.width
                     horizontalAlignment: Text.AlignHCenter
                     elide: Text.ElideRight
                     text: I18n.t(swatch.modelData.label)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     font.weight: swatch.selected ? Font.DemiBold : Font.Normal
                     color: swatch.selected ? Colors.overBackground : Colors.overSurfaceVariant
                 }

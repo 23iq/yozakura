@@ -9,6 +9,7 @@ import qs.config
 import "../controls"
 import "../Ui.js" as Ui
 import "../../widgets/launcher/Providers.js" as Providers
+import qs.modules.components.kit
 
 // Launcher providers (modules/widgets/launcher/Providers.js): the result
 // providers in search order (move up/down, on/off, prefix) and the prefix
@@ -19,7 +20,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 8
+    spacing: Space.s
 
     readonly property var order: SettingsStore.get("prefix.launcher.order") || []
     readonly property var disabled: SettingsStore.get("prefix.launcher.disabled") || []
@@ -57,16 +58,16 @@ ColumnLayout {
         Layout.fillWidth: true
         implicitHeight: 58 + (prefixError !== "" ? errorText.implicitHeight + 8 : 0)
         variant: "common"
-        radius: Styling.radius(-2)
+        radius: Look.radius("control")
 
         RowLayout {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
             height: 58
-            anchors.leftMargin: 10
-            anchors.rightMargin: 12
-            spacing: 10
+            anchors.leftMargin: Space.m
+            anchors.rightMargin: Space.m
+            spacing: Space.m
 
             // Order arrows (result providers only)
             Column {
@@ -83,13 +84,12 @@ ColumnLayout {
                             "delta": 1
                         }
                     ]
-                    delegate: Text {
+                    delegate: Icon {
                         id: arrow
+                        role: "secondary"
                         required property var modelData
                         readonly property bool usable: arrow.modelData.delta < 0 ? card.position > 0 : card.position < card.count - 1
-                        text: arrow.modelData.glyph
-                        font.family: Icons.font
-                        font.pixelSize: 15
+                        icon: arrow.modelData.glyph
                         color: arrowArea.containsMouse && arrow.usable ? Colors.primary : Colors.outline
                         opacity: arrow.usable ? 1 : 0.3
                         Accessible.role: Accessible.Button
@@ -97,7 +97,7 @@ ColumnLayout {
                         MouseArea {
                             id: arrowArea
                             anchors.fill: parent
-                            anchors.margins: -3
+                            anchors.margins: -Space.xs
                             hoverEnabled: true
                             enabled: arrow.usable
                             cursorShape: Qt.PointingHandCursor
@@ -111,34 +111,28 @@ ColumnLayout {
                 Layout.preferredWidth: 34
                 Layout.preferredHeight: 34
                 variant: card.on ? "primary" : "internalbg"
-                radius: Styling.radius(-4)
-                Text {
+                radius: Look.radius("control")
+                Icon {
                     anchors.centerIn: parent
-                    text: card.meta ? (Icons[card.meta.icon] || "") : ""
-                    font.family: Icons.font
-                    font.pixelSize: 17
+                    icon: card.meta ? (Icons[card.meta.icon] || "") : ""
                     color: card.on ? Styling.srItem("primary") : Colors.outline
                 }
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 1
-                Text {
+                spacing: Space.hairline
+                KitText {
                     Layout.fillWidth: true
                     text: I18n.t("launcher.provider." + card.pid)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
                     font.weight: Font.DemiBold
                     color: card.on ? Colors.overSurface : Colors.outline
                     elide: Text.ElideRight
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("launcher.provider." + card.pid + ".desc")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.outline
                     elide: Text.ElideRight
                 }
             }
@@ -171,19 +165,18 @@ ColumnLayout {
             }
         }
 
-        Text {
+        KitText {
             id: errorText
+            role: "caption"
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.leftMargin: 10
-            anchors.rightMargin: 12
-            anchors.bottomMargin: 6
+            anchors.leftMargin: Space.m
+            anchors.rightMargin: Space.m
+            anchors.bottomMargin: Space.s
             visible: card.prefixError !== ""
             text: card.prefixError
             wrapMode: Text.Wrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             color: Colors.error
         }
     }
@@ -199,15 +192,13 @@ ColumnLayout {
         }
     }
 
-    Text {
-        Layout.topMargin: 8
+    KitText {
+        role: "caption"
+        Layout.topMargin: Space.s
         Layout.fillWidth: true
         text: I18n.t("prefs.launcher.tabs")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         font.weight: Font.DemiBold
         font.letterSpacing: 0.6
-        color: Colors.outline
     }
 
     Repeater {
@@ -218,12 +209,11 @@ ColumnLayout {
         }
     }
 
-    Text {
+    KitText {
+        role: "caption"
         Layout.fillWidth: true
         text: I18n.t("prefs.launcher.prefix_note")
         wrapMode: Text.Wrap
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-3)
         color: Ui.alpha(Colors.outline, 0.9)
     }
 }

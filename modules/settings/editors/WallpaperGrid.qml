@@ -4,12 +4,14 @@ import QtQuick
 import Quickshell
 import Quickshell.Widgets
 import qs.modules.theme
+import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
 import qs.config
 import qs.modules.settings
 import "../../widgets/dashboard/wallpapers/WallpaperFolders.js" as WallFolders
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Current wallpaper + thumbnails of every folder; click to apply.
 Item {
@@ -57,18 +59,18 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 16
+        spacing: Space.l
 
         // Current wallpaper
         Row {
             width: parent.width
-            spacing: 18
+            spacing: Space.l
 
             ClippingRectangle {
                 id: hero
                 width: Math.min(parent.width * 0.46, 340)
                 height: Math.round(width * 9 / 16)
-                radius: Math.min(Styling.radius(2), 18)
+                radius: Look.radius("box")
                 color: Colors.surfaceContainerHigh
 
                 Image {
@@ -82,33 +84,32 @@ Item {
                     onStatusChanged: if (status === Image.Error && root.current)
                         source = root.thumb(root.current, false)
                 }
-                Rectangle {
+                // Video / GIF badge over the artwork
+                StyledRect {
                     visible: root.typeOf(root.current) !== "image" && root.current !== ""
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
-                    anchors.margins: 10
-                    width: badgeRow.implicitWidth + 18
-                    height: 22
-                    radius: 11
-                    color: Ui.alpha(Colors.surfaceContainerLowest, 0.8)
+                    anchors.margins: Space.m
+                    variant: "popup"
+                    enableShadow: false
+                    width: badgeRow.implicitWidth + Space.m * 2
+                    height: badgeRow.implicitHeight + Space.xs * 2
+                    radius: Look.radius("round", height)
                     Row {
                         id: badgeRow
                         anchors.centerIn: parent
-                        spacing: 5
-                        Text {
+                        spacing: Space.xs
+                        Icon {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: Icons.play
-                            font.family: Icons.font
-                            font.pixelSize: 10
-                            color: Colors.primary
+                            icon: Icons.play
+                            role: "caption"
+                            tone: "text"
                         }
-                        Text {
+                        KitText {
+                            role: "label"
                             anchors.verticalCenter: parent.verticalCenter
-                            text: root.typeOf(root.current).toUpperCase()
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-4)
-                            font.weight: Font.Bold
-                            color: Colors.overBackground
+                            text: root.typeOf(root.current)
+                            color: Type.text
                         }
                     }
                 }
@@ -117,47 +118,39 @@ Item {
             Column {
                 width: parent.width - hero.width - parent.spacing
                 anchors.verticalCenter: hero.verticalCenter
-                spacing: 6
+                spacing: Space.s
 
-                Text {
+                KitText {
+                    role: "label"
                     width: parent.width
-                    text: I18n.t("prefs.wall.now_showing").toUpperCase()
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-4)
-                    font.weight: Font.Bold
-                    font.letterSpacing: 1.2
-                    color: Colors.primary
+                    text: I18n.t("prefs.wall.now_showing")
                 }
-                Text {
+                KitText {
+                    role: "title"
                     width: parent.width
                     text: root.fileName(root.current) || I18n.t("prefs.wall.none")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(2)
                     font.weight: Font.Bold
-                    color: Colors.overBackground
                     elide: Text.ElideMiddle
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     width: parent.width
                     text: root.current ? root.current.substring(0, root.current.lastIndexOf("/")) : ""
-                    font.family: Config.theme.monoFont
-                    font.pixelSize: Styling.monoFontSize(-3)
-                    color: Colors.overSurfaceVariant
+                    font.family: Type.monoFont
+                    color: Type.secondary
                     elide: Text.ElideMiddle
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     width: parent.width
                     text: root.folders.length > 1 ? I18n.t("prefs.wall.count", root.allPaths.length, root.folders.length) : I18n.t("prefs.wall.count_one", root.allPaths.length)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
                 }
                 Item {
                     width: 1
-                    height: 4
+                    height: Space.xs
                 }
                 Row {
-                    spacing: 8
+                    spacing: Space.s
                     PillButton {
                         icon: "caretLeft"
                         kind: "ghost"
@@ -183,35 +176,18 @@ Item {
         // Folder filter
         Flow {
             width: parent.width
-            spacing: 6
+            spacing: Space.s
             visible: root.folders.length > 1
 
             Repeater {
                 model: [""].concat(root.folders)
-                delegate: Rectangle {
+                delegate: Chip {
                     id: chip
                     required property string modelData
-                    readonly property bool active: root.folderFilter === modelData
-                    width: chipLabel.implicitWidth + 26
-                    height: 30
-                    radius: 15
-                    color: active ? Colors.primary : (chipArea.containsMouse ? Ui.alpha(Colors.overBackground, 0.1) : Ui.alpha(Colors.overBackground, 0.06))
-                    Text {
-                        id: chipLabel
-                        anchors.centerIn: parent
-                        text: chip.modelData === "" ? I18n.t("prefs.wall.all") : chip.modelData.substring(chip.modelData.lastIndexOf("/") + 1)
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        font.weight: Font.Medium
-                        color: chip.active ? Colors.overPrimary : Colors.overBackground
-                    }
-                    MouseArea {
-                        id: chipArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.folderFilter = chip.modelData
-                    }
+                    dense: true
+                    active: root.folderFilter === modelData
+                    text: modelData === "" ? I18n.t("prefs.wall.all") : modelData.substring(modelData.lastIndexOf("/") + 1)
+                    onClicked: root.folderFilter = chip.modelData
                 }
             }
         }
@@ -238,8 +214,8 @@ Item {
 
                 ClippingRectangle {
                     anchors.fill: parent
-                    anchors.margins: 4
-                    radius: Math.min(Styling.radius(0), 14)
+                    anchors.margins: Space.xs
+                    radius: Look.radius("control")
                     color: Colors.surfaceContainerHigh
 
                     Image {
@@ -257,25 +233,24 @@ Item {
                             }
                         }
                     }
-                    Text {
+                    Icon {
                         visible: root.typeOf(tile.modelData) === "video"
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.margins: 6
-                        text: Icons.play
-                        font.family: Icons.font
-                        font.pixelSize: 13
-                        color: "white"
+                        anchors.margins: Space.s
+                        icon: Icons.play
+                        role: "secondary"
+                        tone: "text"
                         style: Text.Raised
-                        styleColor: Qt.rgba(0, 0, 0, 0.6)
+                        styleColor: Ui.alpha(Colors.shadow, 0.6)
                     }
                 }
                 Rectangle {
                     anchors.fill: parent
-                    anchors.margins: 2
-                    radius: Math.min(Styling.radius(0), 14) + 2
+                    anchors.margins: Space.xs / 2
+                    radius: Look.radius("control") + Space.xs / 2
                     color: "transparent"
-                    border.width: tile.selected ? 3 : 0
+                    border.width: tile.selected ? Space.stroke : 0
                     border.color: Colors.primary
                 }
                 MouseArea {
@@ -288,14 +263,12 @@ Item {
             }
         }
 
-        Text {
+        KitText {
+            role: "secondary"
             visible: root.paths.length === 0
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             text: I18n.t("prefs.wall.empty")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
         }
     }
 }

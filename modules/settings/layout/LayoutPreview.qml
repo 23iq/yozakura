@@ -96,7 +96,7 @@ PreviewStage {
         anchors.verticalCenterOffset: 8 - root.bottomReserve / 2
         width: root.env.screen.w * k
         height: root.env.screen.h * k
-        radius: Math.min(Styling.radius(-4), 8)
+        radius: Look.radius("control")
         color: Colors.surface
         border.width: 1
         border.color: Ui.alpha(Colors.outlineVariant, 0.7)
@@ -118,13 +118,13 @@ PreviewStage {
                 border.color: root.stroke(modelData.id)
                 opacity: root.itemOpacity
 
-                Text {
+                KitText {
+                    role: "caption"
                     anchors.centerIn: parent
                     visible: !!root.labels[parent.modelData.id] && parent.width > implicitWidth + 4
                     text: root.labels[parent.modelData.id] || ""
                     color: Colors.overSurfaceVariant
                     font.family: Styling.defaultFont
-                    font.pixelSize: Styling.fontSize(-4)
                 }
             }
         }

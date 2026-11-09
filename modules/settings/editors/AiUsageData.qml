@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.services
 import qs.modules.settings
+import qs.modules.components.kit
 
 // AI > Usage: where the usage history lives, the price override file and
 // "clear history" (two-step: the button asks before deleting the ledger).
@@ -22,7 +23,7 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 10
+        spacing: Space.m
 
         StatusLine {
             width: parent.width
@@ -43,7 +44,7 @@ Item {
         }
 
         Row {
-            spacing: 8
+            spacing: Space.s
 
             PillButton {
                 visible: !root.confirming

@@ -5,10 +5,9 @@ import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
 import qs.modules.keybinds
-import qs.config
 import qs.modules.settings
-import "../Ui.js" as Ui
 import "keybinds"
+import qs.modules.components.kit
 
 // Keybinds toolbar: search across all groups (names, actions, apps, keys
 // like "super e": BindModel.filterRows), add a bind (KeybindAddDialog:
@@ -22,76 +21,25 @@ ColumnLayout {
 
     readonly property var cheatsheet: KeybindsStore.row("core:system.keybinds")
 
-    spacing: 12
+    spacing: Space.m
 
     RowLayout {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: Space.m
 
-        Item {
+        SearchField {
+            id: search
+            objectName: "keybindsSearch"
             Layout.fillWidth: true
-            implicitHeight: 38
-
-            Rectangle {
-                anchors.fill: parent
-                radius: height / 2
-                color: Ui.alpha(Colors.overBackground, search.activeFocus ? 0.1 : 0.06)
-                border.width: search.activeFocus ? 2 : 0
-                border.color: Colors.primary
-            }
-            Text {
-                id: searchIcon
-                anchors.left: parent.left
-                anchors.leftMargin: 14
-                anchors.verticalCenter: parent.verticalCenter
-                text: Icons.search
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(0)
-                color: Colors.overSurfaceVariant
-            }
-            TextInput {
-                id: search
-                objectName: "keybindsSearch"
-                anchors.left: searchIcon.right
-                anchors.leftMargin: 10
-                anchors.right: parent.right
-                anchors.rightMargin: 36
-                anchors.verticalCenter: parent.verticalCenter
-                text: KeybindsStore.editorQuery
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.overBackground
-                selectionColor: Ui.alpha(Colors.primary, 0.4)
-                clip: true
-                onTextEdited: KeybindsStore.editorQuery = text
-                Keys.onEscapePressed: KeybindsStore.editorQuery = ""
-
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: parent.text === ""
-                    text: I18n.t("binds.search_placeholder")
-                    font: parent.font
-                    color: Colors.outline
-                }
-            }
-
-            // Clear the search
-            Text {
-                anchors.right: parent.right
-                anchors.rightMargin: 12
-                anchors.verticalCenter: parent.verticalCenter
-                visible: search.text !== ""
-                text: Icons.cancel
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.overSurfaceVariant
-                MouseArea {
-                    anchors.fill: parent
-                    anchors.margins: -6
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: KeybindsStore.editorQuery = ""
-                }
-            }
+            boxed: true
+            text: KeybindsStore.editorQuery
+            placeholderText: I18n.t("binds.search_placeholder")
+            trailing: clearComponent
+            // Escape clears through the store: the field's own clear()
+            // would assign the text and break the binding above.
+            clearOnEscape: false
+            onSearchTextChanged: t => KeybindsStore.editorQuery = t
+            onEscapePressed: KeybindsStore.editorQuery = ""
 
             // Modal: lives in the window's overlay, not in this layout.
             KeybindAddDialog {
@@ -108,38 +56,39 @@ ColumnLayout {
             onClicked: addDialog.open()
         }
 
-        PillButton {
-            id: reloadButton
-            icon: "arrowsClockwise"
-            kind: "ghost"
-            text: ""
-            implicitWidth: implicitHeight
+        IconButton {
+            icon: Icons.arrowsClockwise
+            size: "s"
+            focusable: true
+            tooltip: I18n.t("binds.reload_binds")
             onClicked: KeybindsStore.reload()
             Accessible.name: I18n.t("binds.reload_binds")
-            HoverHandler {
-                id: reloadHover
-            }
-            StyledToolTip {
-                show: reloadHover.hovered
-                tooltipText: I18n.t("binds.reload_binds")
-            }
+        }
+    }
+
+    // Clears the search (inside the field, while it has text).
+    Component {
+        id: clearComponent
+        IconButton {
+            visible: search.text !== ""
+            icon: Icons.cancel
+            size: "xs"
+            onClicked: KeybindsStore.editorQuery = ""
         }
     }
 
     // Cheatsheet shortcut + conflicts
     Flow {
         Layout.fillWidth: true
-        spacing: 10
+        spacing: Space.m
 
         Row {
-            spacing: 8
+            spacing: Space.s
             visible: !!root.cheatsheet && root.cheatsheet.enabled
-            Text {
+            KitText {
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
                 text: I18n.t("binds.cheatsheet.open_with")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
-                color: Colors.overSurfaceVariant
             }
             KeyCombo {
                 anchors.verticalCenter: parent.verticalCenter
@@ -149,94 +98,58 @@ ColumnLayout {
         }
 
         // Conflicts: click to list only them (and back).
-        Rectangle {
+        Chip {
             objectName: "keybindsConflicts"
             visible: KeybindsStore.conflictCount > 0 || KeybindsStore.conflictFilter
-            height: conflictRow.implicitHeight + 10
-            width: conflictRow.implicitWidth + 20
-            radius: height / 2
-            color: Ui.alpha(Colors.error, KeybindsStore.conflictFilter ? 0.26 : (conflictArea.containsMouse ? 0.2 : 0.14))
-            border.width: KeybindsStore.conflictFilter ? 1 : 0
-            border.color: Colors.error
-
-            Row {
-                id: conflictRow
-                anchors.centerIn: parent
-                spacing: 6
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: KeybindsStore.conflictFilter ? Icons.xCircle : Icons.warning
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.error
-                }
-                Text {
-                    anchors.verticalCenter: parent.verticalCenter
-                    text: KeybindsStore.conflictFilter ? I18n.t("binds.conflicts_show_all") : I18n.t("binds.conflicts_count", KeybindsStore.conflictCount)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    font.weight: Font.DemiBold
-                    color: Colors.error
-                }
-            }
-            MouseArea {
-                id: conflictArea
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: KeybindsStore.conflictFilter = !KeybindsStore.conflictFilter
-            }
+            danger: true
+            dense: true
+            active: KeybindsStore.conflictFilter
+            icon: KeybindsStore.conflictFilter ? Icons.xCircle : Icons.warning
+            text: KeybindsStore.conflictFilter ? I18n.t("binds.conflicts_show_all") : I18n.t("binds.conflicts_count", KeybindsStore.conflictCount)
+            onClicked: KeybindsStore.conflictFilter = !KeybindsStore.conflictFilter
         }
     }
 
     // Search results: how many, or nothing found.
-    Text {
+    KitText {
         objectName: "keybindsMatchCount"
+        role: "caption"
         Layout.fillWidth: true
         visible: KeybindsStore.filtering && KeybindsStore.visibleAll.length > 0
         text: I18n.t("binds.match_count", KeybindsStore.visibleAll.length)
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
-        color: Colors.overSurfaceVariant
     }
 
     ColumnLayout {
         objectName: "keybindsEmpty"
         Layout.fillWidth: true
-        Layout.topMargin: 8
-        Layout.bottomMargin: 8
+        Layout.topMargin: Space.s
+        Layout.bottomMargin: Space.s
         visible: KeybindsStore.filtering && KeybindsStore.visibleAll.length === 0
-        spacing: 6
+        spacing: Space.s
 
-        Text {
+        Icon {
+            role: "title"
+            tone: "muted"
             Layout.alignment: Qt.AlignHCenter
-            text: Icons.magnifyingGlass
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(8)
-            color: Colors.outline
+            icon: Icons.magnifyingGlass
         }
-        Text {
+        KitText {
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             text: KeybindsStore.editorQuery.trim() !== "" ? I18n.t("binds.no_matches_for", KeybindsStore.editorQuery.trim()) : I18n.t("binds.no_matches")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.weight: Font.DemiBold
-            color: Colors.overBackground
         }
-        Text {
+        KitText {
+            role: "caption"
             Layout.fillWidth: true
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             text: I18n.t("binds.no_matches_hint")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
         }
         PillButton {
             Layout.alignment: Qt.AlignHCenter
-            Layout.topMargin: 4
+            Layout.topMargin: Space.xs
             icon: "plus"
             text: I18n.t("binds.add_keybind")
             onClicked: addDialog.open()
