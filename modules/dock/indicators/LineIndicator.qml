@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import qs.modules.components.kit
 import qs.config
 import qs.modules.theme
 
@@ -8,14 +9,13 @@ IndicatorBase {
     id: root
 
     size: 2
-    spacing: 2
+    spacing: Space.xs / 2
 
     readonly property real segment: Math.max(2, (cell * 0.6 - spacing * (info.n - 1)) / Math.max(1, info.n))
 
-    mark: Rectangle {
+    mark: Mark {
         width: root.vertical ? root.across : root.segment
         height: root.vertical ? root.segment : root.across
-        radius: Math.min(width, height) / 2
         color: root.tint
 
         Behavior on color {
