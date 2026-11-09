@@ -18,6 +18,14 @@ type fakeHypr struct {
 	lua     bool
 	reloads int
 	batches []string
+	// suppressed counts live writes guarded against Hyprland's own
+	// autoreload; released counts the matching releases.
+	suppressed, released int
+}
+
+func (f *fakeHypr) SuppressAutoreload() func() {
+	f.suppressed++
+	return func() { f.released++ }
 }
 
 func (f *fakeHypr) ReloadConfig() error       { f.reloads++; return nil }
@@ -79,6 +87,41 @@ func TestHyprlandSliderDragAppliesLiveWithoutReload(t *testing.T) {
 	if !strings.Contains(string(data), "gaps_in = 12") {
 		t.Fatalf("file not persisted: %s", data)
 	}
+	// Each live write is guarded against Hyprland's autoreload; the
+	// first apply (a real reload) is not.
+	if f.suppressed != 7 || f.released != 7 {
+		t.Fatalf("autoreload guard: suppressed=%d released=%d, want 7/7", f.suppressed, f.released)
+	}
+}
+
+// Shell binds come in maps; a regeneration with the same binds must be
+// byte-identical (no write, no reload) and a slider step must stay live.
+func TestHyprlandShellBindMapsAreStable(t *testing.T) {
+	h, f, _ := hyprHandler(t, false)
+	withShellBinds := func(gapsIn int) ipc.ConfigUniversal {
+		p := hyprPayload(gapsIn)
+		system := map[string]ipc.Keybind{}
+		binds := map[string]ipc.Keybind{}
+		for i, k := range []string{"A", "B", "C", "D", "E", "F", "G", "H"} {
+			kb := ipc.Keybind{Modifiers: []string{"SUPER"}, Key: k, Dispatcher: "exec", Argument: "x", Enabled: true}
+			system["sys"+k] = kb
+			kb.Key = string(rune('1' + i))
+			binds["app"+k] = kb
+		}
+		p.Keybinds.Shell = &ipc.ShellKeybinds{System: system, Binds: binds}
+		return p
+	}
+	_ = h.ApplyConfig(withShellBinds(5))
+	for i := 0; i < 10; i++ {
+		_ = h.ApplyConfig(withShellBinds(5))
+	}
+	if f.reloads != 1 || len(f.batches) != 0 {
+		t.Fatalf("identical shell binds: reloads=%d batches=%q", f.reloads, f.batches)
+	}
+	_ = h.ApplyConfig(withShellBinds(6))
+	if f.reloads != 1 || len(f.batches) != 1 {
+		t.Fatalf("slider step with shell binds: reloads=%d batches=%q", f.reloads, f.batches)
+	}
 }
 
 func TestHyprlandLuaModeUsesEval(t *testing.T) {
@@ -122,6 +165,9 @@ func TestHyprlandBindOrMonitorChangeReloads(t *testing.T) {
 	_ = h.ApplyConfig(p)
 	if f.reloads != 3 || len(f.batches) != 0 {
 		t.Fatalf("monitor change: reloads=%d batches=%q", f.reloads, f.batches)
+	}
+	if f.suppressed != 0 {
+		t.Fatalf("a reload must not suppress autoreload, suppressed=%d", f.suppressed)
 	}
 }
 

@@ -23,6 +23,7 @@ type Hyprland struct {
 	versionMu      sync.Mutex
 	versionKnown   bool
 	useLuaDispatch bool
+	autoreload     autoreloadGuard
 }
 
 func New() (*Hyprland, error) {

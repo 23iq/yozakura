@@ -16,6 +16,12 @@ type luaConfigurer interface {
 	UsesLuaConfig() bool
 }
 
+// autoreloadSuppressor is implemented by the Hyprland client: it keeps
+// Hyprland's own config autoreload from reloading on a live-path write.
+type autoreloadSuppressor interface {
+	SuppressAutoreload() (release func())
+}
+
 // appliedConfig is what the handler last wrote for one generated path.
 type appliedConfig struct {
 	conf, lua string
@@ -90,6 +96,13 @@ func (h *ConfigHandler) applyHyprland(payload ipc.ConfigUniversal, confPath, con
 	diskSame := string(diskConf) == conf && (luaPath == "" || string(diskLua) == lua)
 	plan := planApply(prev, next, diskSame)
 
+	if plan.Write && !plan.Reload {
+		// The generated file is sourced by the user's config: with
+		// Hyprland's autoreload on, the write alone would reload.
+		if s, ok := h.compositor.(autoreloadSuppressor); ok {
+			defer s.SuppressAutoreload()()
+		}
+	}
 	if plan.Write {
 		if err := writeGenerated(confPath, conf); err != nil {
 			return err

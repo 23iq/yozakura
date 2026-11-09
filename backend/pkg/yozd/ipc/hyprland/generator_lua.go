@@ -227,13 +227,13 @@ func (g *LuaGenerator) GenerateKeybindsLua(config ipc.ConfigKeybinds) string {
 
 	if config.Shell != nil {
 		if config.Shell.System != nil {
-			for name, kb := range config.Shell.System {
-				addBind(kb, fmt.Sprintf("%s System: %s", brand.DisplayName, name))
+			for _, name := range ipc.SortedKeybindNames(config.Shell.System) {
+				addBind(config.Shell.System[name], fmt.Sprintf("%s System: %s", brand.DisplayName, name))
 			}
 		}
 		if config.Shell.Binds != nil {
-			for name, kb := range config.Shell.Binds {
-				addBind(kb, fmt.Sprintf("%s: %s", brand.DisplayName, name))
+			for _, name := range ipc.SortedKeybindNames(config.Shell.Binds) {
+				addBind(config.Shell.Binds[name], fmt.Sprintf("%s: %s", brand.DisplayName, name))
 			}
 		}
 	}
