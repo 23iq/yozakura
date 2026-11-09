@@ -8,10 +8,17 @@ size, a stale answer never replaces a newer source, and `original`, errors,
 a silent backend or the option turned off all play the original.
 """
 import json
+import os
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+
+# A FFmpeg worker thread that logs goes through the harness's Python
+# message handler (needs the GIL) while the GUI thread, holding the GIL
+# inside h.eval, waits in player.stop() for that worker: a deadlock (seen on
+# Qt 6.11.2). The test checks which file is chosen, so mute those logs.
+os.environ["QT_LOGGING_RULES"] = ";".join(filter(None, [os.environ.get("QT_LOGGING_RULES", ""), "qt.multimedia*=false"]))
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import REPO, Harness  # noqa: E402
