@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Io
 import qs.modules.globals
 import "WallpaperFolders.js" as WallpaperFolders
+import "WallpaperRefs.js" as WallpaperRefs
 
 // Finds the wallpaper files of the primary Wallpaper manager: scans the
 // wallpaper folder (+ extra folders, or the bundled examples as fallback),
@@ -19,8 +20,21 @@ Scope {
     required property var adapter
     required property WallpaperCacheJobs jobs
 
+    // Files of the bundled example folder, found by every scan: a saved
+    // bundled wallpaper stays selectable while the wallpaper folder is
+    // another one, and is matched by name after a release renamed it.
+    property var bundledPaths: []
+    // Folders of the last scan (the bundled folder is scanned with them).
+    property var _dirs: []
+
+    function scanCommand(dirs) {
+        scanner._dirs = dirs || [];
+        const all = WallpaperFolders.effective(scanner._dirs[0] || "", scanner._dirs.slice(1).concat([scanner.manager.fallbackDir]));
+        return WallpaperFolders.findCommand(all);
+    }
+
     function scan(dirs) {
-        scanWallpapers.command = WallpaperFolders.findCommand(dirs);
+        scanWallpapers.command = scanner.scanCommand(dirs);
         scanWallpapers.running = true;
     }
 
@@ -45,31 +59,43 @@ Scope {
         scanner.jobs.scheduleThumbnails();
     }
 
-    // Selects the saved wallpaper (or the first) after the list changed.
-    function selectSaved(verbose) {
+    // Saved wallpaper (resolved) -> {paths, index, found} for `files`.
+    function pick(files) {
+        const saved = WallpaperRefs.resolveSaved(scanner.adapter.currentWall, scanner.manager.fallbackDir, scanner.bundledPaths);
+        return WallpaperRefs.choose(files, saved, scanner.bundledPaths);
+    }
+
+    // Applies a pick() after the list changed: selects the saved wallpaper,
+    // or a still image when it is gone (videos only when nothing else).
+    function selectSaved(choice, verbose) {
         const m = scanner.manager;
-        if (scanner.adapter.currentWall) {
-            var savedIndex = m.wallpaperPaths.indexOf(scanner.adapter.currentWall);
-            if (savedIndex !== -1) {
-                m.currentIndex = savedIndex;
-                if (verbose)
-                    console.log("Loaded saved wallpaper at index:", savedIndex);
-            } else {
-                m.currentIndex = 0;
-                if (verbose)
-                    console.log("Saved wallpaper not found, using first");
-            }
-        } else {
-            m.currentIndex = 0;
-        }
+        const a = scanner.adapter;
+        if (JSON.stringify(choice.paths) !== JSON.stringify(m.wallpaperPaths))
+            m.wallpaperPaths = choice.paths;
+        m.currentIndex = Math.max(0, choice.index);
+        const chosen = choice.paths[m.currentIndex] || "";
+        if (verbose)
+            console.log(choice.found ? "Loaded saved wallpaper at index: " + choice.index : (a.currentWall ? "Saved wallpaper not found, using " : "No saved wallpaper, using ") + chosen);
+        // A bundled wallpaper found under another name: save the new id.
+        const stored = WallpaperRefs.toStored(chosen, m.fallbackDir);
+        if (choice.found && stored !== a.currentWall)
+            a.currentWall = stored;
 
         if (!m.initialLoadCompleted) {
-            if (!scanner.adapter.currentWall) {
-                scanner.adapter.currentWall = m.wallpaperPaths[0];
-            }
+            if (!a.currentWall)
+                a.currentWall = stored;
             m.initialLoadCompleted = true;
             // runMatugenForCurrentWallpaper() will be called by onCurrentWallChanged
         }
+    }
+
+    // The bundled examples stand in for an empty or unreadable folder.
+    function useFallback(files) {
+        const m = scanner.manager;
+        console.log("Using fallback wallpapers. Found", files.length, "images");
+        // Only use fallback if we don't already have main wallpapers loaded
+        if (m.usingFallback && files.length > 0)
+            scanner.selectSaved(scanner.pick(files), false);
     }
 
     Process {
@@ -169,7 +195,7 @@ Scope {
     Process {
         id: scanWallpapers
         running: false
-        command: scanner.manager.wallpaperDir ? WallpaperFolders.findCommand(scanner.manager.scanDirs) : []
+        command: scanner.manager.wallpaperDir ? scanner.scanCommand(scanner.manager.scanDirs) : []
 
         onRunningChanged: {
             if (running && scanner.manager.wallpaperDir === "") {
@@ -181,29 +207,28 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 const m = scanner.manager;
-                var scan = WallpaperFolders.splitScan(text.trim().split("\n"));
+                const parts = WallpaperRefs.partition(text.trim().split("\n"), scanner._dirs.length > 0 ? scanner._dirs : m.scanDirs, m.fallbackDir);
+                scanner.bundledPaths = WallpaperFolders.splitScan(parts.bundled).wallpapers;
+                var scan = WallpaperFolders.splitScan(parts.wallpapers);
                 var files = scan.wallpapers;
                 if (JSON.stringify(scan.depthMaps) !== JSON.stringify(m.depthMaps))
                     m.depthMaps = scan.depthMaps;
                 if (files.length === 0) {
                     console.log("No wallpapers found in main directory, using fallback");
                     m.usingFallback = true;
-                    scanFallback.running = true;
+                    if (scanner.bundledPaths.length > 0)
+                        scanner.useFallback(scanner.bundledPaths);
+                    else
+                        scanFallback.running = true;
                 } else {
                     m.usingFallback = false;
                     // Only update if the list has actually changed
-                    var newFiles = files;
-                    var listChanged = JSON.stringify(newFiles) !== JSON.stringify(m.wallpaperPaths);
-                    if (listChanged) {
-                        console.log("Wallpaper directory updated. Found", newFiles.length, "images");
-                        m.wallpaperPaths = newFiles;
-
-                        // Always try to load the saved wallpaper when list changes
-                        if (m.wallpaperPaths.length > 0) {
-                            // Trigger thumbnail generation if list changed
-                            scanner.jobs.scheduleThumbnails();
-                            scanner.selectSaved(true);
-                        }
+                    const choice = scanner.pick(files);
+                    if (JSON.stringify(choice.paths) !== JSON.stringify(m.wallpaperPaths)) {
+                        console.log("Wallpaper directory updated. Found", files.length, "images");
+                        // Trigger thumbnail generation if list changed
+                        scanner.jobs.scheduleThumbnails();
+                        scanner.selectSaved(choice, true);
                     }
                 }
             }
@@ -234,16 +259,8 @@ Scope {
             onStreamFinished: {
                 const m = scanner.manager;
                 var files = WallpaperFolders.splitScan(text.trim().split("\n")).wallpapers;
-                console.log("Using fallback wallpapers. Found", files.length, "images");
-
-                // Only use fallback if we don't already have main wallpapers loaded
-                if (m.usingFallback) {
-                    m.wallpaperPaths = files;
-
-                    // Initialize fallback wallpaper selection
-                    if (m.wallpaperPaths.length > 0)
-                        scanner.selectSaved(false);
-                }
+                scanner.bundledPaths = files;
+                scanner.useFallback(files);
             }
         }
     }

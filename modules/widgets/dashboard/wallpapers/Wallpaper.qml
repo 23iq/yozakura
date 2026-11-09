@@ -11,6 +11,8 @@ import qs.config
 import qs.modules.desktop
 import "WallpaperFolders.js" as WallpaperFolders
 import "WallpaperDefaults.js" as WallpaperDefaults
+import "WallpaperRefs.js" as WallpaperRefs
+import "WallpaperPause.js" as WallpaperPause
 
 PanelWindow {
     id: wallpaper
@@ -44,7 +46,8 @@ PanelWindow {
     property bool usingFallback: false
     property bool _wallpaperDirInitialized: false
     property string currentMatugenScheme: wallpaperConfig.adapter.matugenScheme
-    property var perScreenWallpapers: wallpaperConfig.adapter.perScreenWallpapers || {}
+    // Absolute paths; wallpapers.json keeps bundled ones as ids (WallpaperRefs).
+    property var perScreenWallpapers: WallpaperRefs.mapScreens(wallpaperConfig.adapter.perScreenWallpapers, fallbackDir, WallpaperRefs.fromStored)
     property string effectiveWallpaper: perScreenWallpapers[currentScreenName] || currentWallpaper
     property string currentScreenName: wallpaper.screen ? wallpaper.screen.name : ""
     property alias tintEnabled: wallpaperAdapter.tintEnabled
@@ -58,12 +61,20 @@ PanelWindow {
     readonly property bool overviewBlurPossible: YozdService.compositorName === "niri"
     readonly property bool overviewBlurActive: Config.desktop.blurWallpaperOnOverview && overviewBlurPossible && YozdService.overviewOpen
 
-    // Video playback is held while nobody can see it: a fullscreen window
-    // on this monitor (same per-monitor check the bar/notch/frame use), or
-    // the session lock, which draws its own wallpaper copy on top.
+    // Video playback is held while nobody can see it or nobody is there:
+    // a fullscreen window on this monitor (same per-monitor check the
+    // bar/notch/frame use), the session lock (it draws its own wallpaper
+    // copy on top), an idle session (no input for pauseWallpaperIdleDelay
+    // seconds and no idle inhibitor), or running on battery (opt-in).
     readonly property var compositorMonitor: YozdService.monitorFor(wallpaper.screen)
     readonly property bool fullscreenActive: CompositorData.monitorHasFullscreen(compositorMonitor)
-    readonly property bool videoPaused: GlobalStates.lockscreenVisible || ((Config.performance.pauseWallpaperOnFullscreen ?? true) && fullscreenActive) || coverage.covered
+    readonly property bool videoPaused: WallpaperPause.shouldPause({
+        "locked": GlobalStates.lockscreenVisible,
+        "fullscreen": fullscreenActive,
+        "covered": coverage.covered,
+        "idleSeconds": IdleService.elapsedIdleTime,
+        "onBattery": Battery.available && !Battery.isPluggedIn
+    }, Config.performance)
     // ...or windows hiding every wallpaper pixel (tiled with gaps 0, monocle)
     readonly property WallpaperCoverage coverage: WallpaperCoverage {
         screenName: wallpaper.currentScreenName
@@ -173,6 +184,11 @@ PanelWindow {
     function getThumbnailPath(filePath) {
         // QUICKSHELL-GIT: Quickshell.cacheDir instead of ~/.cache/yozakura
         return WallpaperFolders.thumbnailPath(filePath, wallpaperDir, extraDirs, Brand.cacheDir, Qt.md5);
+    }
+
+    // Value saved in wallpapers.json for a wallpaper path.
+    function storedRef(path) {
+        return WallpaperRefs.toStored(path, fallbackDir);
     }
 
     // Primary wallpaper folder (wallPath in wallpapers.json).
@@ -325,7 +341,7 @@ PanelWindow {
             if (targetScreen) {
                 // If targeting a specific screen, save to perScreenWallpapers instead of currentWall
                 let perScreen = Object.assign({}, wallpaperConfig.adapter.perScreenWallpapers || {});
-                perScreen[targetScreen] = path;
+                perScreen[targetScreen] = storedRef(path);
                 wallpaperConfig.adapter.perScreenWallpapers = perScreen;
 
                 // If this targetScreen is the primary screen, it must update currentWall
@@ -337,14 +353,14 @@ PanelWindow {
 
                 if (isPrimary || !wallpaperConfig.adapter.currentWall) {
                     currentIndex = pathIndex;
-                    wallpaperConfig.adapter.currentWall = path;
+                    wallpaperConfig.adapter.currentWall = storedRef(path);
                     currentWallpaper = path;
                     runMatugenForCurrentWallpaper();
                 }
             } else {
                 // Global fallback target
                 currentIndex = pathIndex;
-                wallpaperConfig.adapter.currentWall = path;
+                wallpaperConfig.adapter.currentWall = storedRef(path);
                 currentWallpaper = path;
                 runMatugenForCurrentWallpaper();
             }
@@ -388,7 +404,7 @@ PanelWindow {
         initialLoadCompleted = true;
         currentIndex = (currentIndex + 1) % wallpaperPaths.length;
         currentWallpaper = wallpaperPaths[currentIndex];
-        wallpaperConfig.adapter.currentWall = wallpaperPaths[currentIndex];
+        wallpaperConfig.adapter.currentWall = storedRef(wallpaperPaths[currentIndex]);
         runMatugenForCurrentWallpaper();
         generateLockscreenFrame(wallpaperPaths[currentIndex]);
     }
@@ -404,7 +420,7 @@ PanelWindow {
         initialLoadCompleted = true;
         currentIndex = currentIndex === 0 ? wallpaperPaths.length - 1 : currentIndex - 1;
         currentWallpaper = wallpaperPaths[currentIndex];
-        wallpaperConfig.adapter.currentWall = wallpaperPaths[currentIndex];
+        wallpaperConfig.adapter.currentWall = storedRef(wallpaperPaths[currentIndex]);
         runMatugenForCurrentWallpaper();
         generateLockscreenFrame(wallpaperPaths[currentIndex]);
     }
@@ -419,7 +435,7 @@ PanelWindow {
             initialLoadCompleted = true;
             currentIndex = index;
             currentWallpaper = wallpaperPaths[currentIndex];
-            wallpaperConfig.adapter.currentWall = wallpaperPaths[currentIndex];
+            wallpaperConfig.adapter.currentWall = storedRef(wallpaperPaths[currentIndex]);
             runMatugenForCurrentWallpaper();
             generateLockscreenFrame(wallpaperPaths[currentIndex]);
         }
@@ -435,6 +451,29 @@ PanelWindow {
             if (!wallpaper._schemeSetHere && wallpaper.initialLoadCompleted)
                 Qt.callLater(wallpaper.runMatugenForCurrentWallpaper);
         }
+        // Saved wallpaper changed (here or by another writer of the file).
+        function onCurrentWallChanged() {
+            wallpaper.showSavedWallpaper();
+        }
+    }
+
+    function showSavedWallpaper() {
+        // Skip during initial load - scanWallpapers handles this
+        if (!_wallpaperDirInitialized)
+            return;
+        const saved = wallpaperConfig.adapter.currentWall;
+        const wall = WallpaperRefs.fromStored(saved, fallbackDir);
+        // If paths are not loaded yet, wait for scanWallpapers to finish
+        if (!wall || wall === currentWallpaper || wallpaperPaths.length === 0)
+            return;
+        const pathIndex = wallpaperPaths.indexOf(wall);
+        if (pathIndex === -1) {
+            console.warn("Saved wallpaper not found in current list:", saved);
+            return;
+        }
+        currentIndex = pathIndex;
+        initialLoadCompleted = true;
+        runMatugenForCurrentWallpaper();
     }
 
     // Función para re-ejecutar Matugen con el wallpaper actual
@@ -541,23 +580,20 @@ PanelWindow {
                 console.log("Loaded config but wallPath is empty, using fallback");
                 a.wallPath = bundled;
             }
-            // Saved paths into an older copy of the bundled wallpapers (a
-            // previous Nix store path or mods generation) follow the shell.
+            // A folder path into an older copy of the bundled wallpapers (a
+            // previous Nix store path or mods generation) follows the shell.
             const wall = WallpaperFolders.rebaseBundled(a.wallPath, bundled);
             if (wall !== a.wallPath)
                 a.wallPath = wall;
-            const cur = WallpaperFolders.rebaseBundled(a.currentWall, bundled);
+            // Saved wallpapers: absolute paths into any copy of the bundled
+            // folder become store-independent ids (WallpaperRefs).
+            const cur = WallpaperRefs.toStored(a.currentWall, bundled);
             if (cur !== a.currentWall)
                 a.currentWall = cur;
             const screens = a.perScreenWallpapers || {};
-            let moved = false;
-            const rebased = {};
-            for (const name in screens) {
-                rebased[name] = WallpaperFolders.rebaseBundled(screens[name], bundled);
-                moved = moved || rebased[name] !== screens[name];
-            }
-            if (moved)
-                a.perScreenWallpapers = rebased;
+            const stored = WallpaperRefs.mapScreens(screens, bundled, WallpaperRefs.toStored);
+            if (JSON.stringify(stored) !== JSON.stringify(screens))
+                a.perScreenWallpapers = stored;
         }
 
         onFileChanged: reload()
@@ -585,31 +621,6 @@ PanelWindow {
             onActiveColorPresetChanged: {
                 if (wallpaperConfig.adapter.activeColorPreset !== wallpaper.activeColorPreset) {
                     wallpaper.activeColorPreset = wallpaperConfig.adapter.activeColorPreset || "";
-                }
-            }
-
-            onCurrentWallChanged: {
-                // Skip during initial load - scanWallpapers handles this
-                if (!wallpaper._wallpaperDirInitialized)
-                    return;
-
-                // Siempre actualizar si es diferente al actual
-                if (currentWall && currentWall !== wallpaper.currentWallpaper) {
-                    // If paths are not loaded yet, wait for scanWallpapers to finish
-                    if (wallpaper.wallpaperPaths.length === 0) {
-                        return;
-                    }
-
-                    var pathIndex = wallpaper.wallpaperPaths.indexOf(currentWall);
-                    if (pathIndex !== -1) {
-                        wallpaper.currentIndex = pathIndex;
-                        if (!wallpaper.initialLoadCompleted) {
-                            wallpaper.initialLoadCompleted = true;
-                        }
-                        wallpaper.runMatugenForCurrentWallpaper();
-                    } else {
-                        console.warn("Saved wallpaper not found in current list:", currentWall);
-                    }
                 }
             }
 
