@@ -1,6 +1,7 @@
 import QtQuick
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 
 // Inside of an activity island: leading indicator + label, or "+N".
 Row {
@@ -10,7 +11,7 @@ Row {
     property var activity: null
     property int overflowCount: 0
     property real indicatorSize: 16
-    property real fontSize: Styling.fontSize(-1)
+    property real fontSize: Type.size("secondary")
 
     readonly property bool isOverflow: activity === null
     readonly property color accent: {
@@ -33,19 +34,14 @@ Row {
         size: content.indicatorSize
     }
 
-    Text {
+    // Tabular figures keep ticking timers from wobbling; the host's size.
+    KitText {
         anchors.verticalCenter: parent.verticalCenter
         text: content.isOverflow ? "+" + content.overflowCount : (content.activity ? content.activity.label : "")
         visible: text !== ""
-        color: Colors.overBackground
-        font.family: Config.theme.font
+        tabular: true
         font.pixelSize: content.fontSize
-        font.weight: Font.DemiBold
-        // Tabular figures keep ticking timers from wobbling
-        font.features: ({
-                "tnum": 1
-            })
-        elide: Text.ElideRight
+        font.weight: Look.activeLabelWeight
         width: Math.min(implicitWidth, content.indicatorSize * 9)
     }
 }

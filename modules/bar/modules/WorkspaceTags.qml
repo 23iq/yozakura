@@ -4,6 +4,8 @@ import QtQuick
 import qs.config
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
+import qs.modules.bar.look
 import qs.modules.bar.workspaces
 import "../workspaces/WorkspaceNumerals.js" as Numerals
 
@@ -33,7 +35,7 @@ BarModuleBase {
         return out;
     }
 
-    contentLength: vertical ? column.implicitHeight + 12 : row.implicitWidth + (flat ? 8 : 20)
+    contentLength: vertical ? column.implicitHeight + Space.m : row.implicitWidth + (flat ? Space.s : Space.l + Space.xs)
 
     BarModuleSurface {
         module: root
@@ -54,7 +56,7 @@ BarModuleBase {
         id: column
         visible: root.vertical
         anchors.centerIn: parent
-        spacing: 2
+        spacing: Space.hairline * 2
         Repeater {
             model: root.ids
             delegate: Tag {}
@@ -66,21 +68,22 @@ BarModuleBase {
         required property int modelData
         readonly property bool active: modelData === root.activeId
 
-        implicitWidth: label.implicitWidth + (root.brackets ? 6 : 12)
+        implicitWidth: label.implicitWidth + (root.brackets ? Space.xs : Space.m)
         implicitHeight: Math.round(root.moduleSize * 0.74)
-        radius: root.brackets ? 2 : height / 2
-        color: active ? Colors.primary : "transparent"
+        radius: root.brackets ? Look.radius("small", Space.xs) : Look.radius("chip", height)
+        color: active ? Type.accent : "transparent"
 
-        Text {
+        KitText {
             id: label
             objectName: "workspaceTagLabel"
             readonly property string numeral: Numerals.format(root.numeralStyle, tag.modelData)
             anchors.centerIn: parent
+            role: BarLook.textRole(root.moduleSize)
+            tabular: true
             text: root.brackets ? "[" + numeral + "]" : numeral
-            font.family: root.numeralStyle === "arabic" ? Config.theme.font : NumeralFonts.family(numeral)
-            font.pixelSize: root.textSize
-            font.weight: tag.active ? Font.Bold : Font.Normal
-            color: tag.active ? Colors.overPrimary : Colors.overBackground
+            font.family: root.numeralStyle === "arabic" ? Type.bodyFont : NumeralFonts.family(numeral)
+            font.weight: tag.active ? Look.activeLabelWeight : root.textWeight
+            color: tag.active ? Type.accentInk : Type.text
             opacity: tag.active || root.occupied[tag.modelData] ? 1 : 0.5
         }
 

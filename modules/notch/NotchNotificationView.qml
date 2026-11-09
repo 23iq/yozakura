@@ -8,6 +8,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.notifications
 import qs.config
 import "../notifications/notification_utils.js" as NotificationUtils
@@ -187,7 +188,7 @@ Item {
             width: parent.width
             implicitHeight: notificationStack.implicitHeight
             height: implicitHeight
-            spacing: 8
+            spacing: Space.s
 
             // Área principal de notificaciones (StackView)
             Item {
@@ -443,7 +444,7 @@ Item {
                 Column {
                     id: dotsColumn
                     width: parent.width
-                    spacing: 4
+                    spacing: Space.xs
 
                     // Posición Y animada para el efecto de scroll
                     y: {

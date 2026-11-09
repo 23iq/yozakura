@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.bar as Bar
+import qs.modules.components.kit
 
 // The `center` group of a strip style, laid out along the panel and sized to
 // its content (the style centers it).
@@ -19,8 +20,8 @@ GridLayout {
 
     visible: active && ids.length > 0
     flow: vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-    rowSpacing: 4
-    columnSpacing: 4
+    rowSpacing: Space.xs
+    columnSpacing: Space.xs
     width: vertical ? (parent ? parent.width : 0) : implicitWidth
     height: vertical ? implicitHeight : (parent ? parent.height : 0)
 

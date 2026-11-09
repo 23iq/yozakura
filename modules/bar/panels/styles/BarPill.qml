@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.bar.look
+import qs.modules.components.kit
 
 // One floating pill of the "pills" style: the bar surface sized to the
 // modules it holds (children go into its row/column). The theme shadow is
@@ -38,7 +39,7 @@ StyledRect {
         id: layout
         anchors.centerIn: parent
         flow: pill.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-        rowSpacing: 4
-        columnSpacing: 4
+        rowSpacing: Space.xs
+        columnSpacing: Space.xs
     }
 }

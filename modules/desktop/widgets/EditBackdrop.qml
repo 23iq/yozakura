@@ -1,7 +1,7 @@
 import QtQuick
 import qs.modules.services
 import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 
 // Edit desktop mode backdrop: a scrim, the snap grid as dots and the depth
 // clock's area (widgets placed over it hide the clock).
@@ -64,20 +64,30 @@ Item {
         y: root.clockArea?.y ?? 0
         width: root.clockArea?.w ?? 0
         height: root.clockArea?.h ?? 0
-        radius: Styling.radius(4)
-        color: Qt.rgba(Colors.tertiary.r, Colors.tertiary.g, Colors.tertiary.b, 0.1)
-        border.width: 2
-        border.color: Qt.rgba(Colors.tertiary.r, Colors.tertiary.g, Colors.tertiary.b, 0.7)
+        radius: Look.radius("surface")
+        color: Look.alpha("tertiary", 0.1)
+        border.width: Space.stroke - 1
+        border.color: Look.alpha("tertiary", 0.7)
 
-        Text {
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 12
-            text: Icons.clock + "  " + I18n.t("desktop.widgets.clock_area")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
-            font.weight: Font.DemiBold
-            color: Colors.tertiary
+            anchors.bottomMargin: Space.m
+            spacing: Space.s
+
+            Icon {
+                anchors.verticalCenter: parent.verticalCenter
+                icon: Icons.clock
+                role: "caption"
+                color: Colors.tertiary
+            }
+            KitText {
+                anchors.verticalCenter: parent.verticalCenter
+                role: "caption"
+                text: I18n.t("desktop.widgets.clock_area")
+                font.weight: Look.activeLabelWeight
+                color: Colors.tertiary
+            }
         }
     }
 }

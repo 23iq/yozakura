@@ -7,6 +7,7 @@ import qs.modules.theme
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.bar.workspaces
 
 // Miniature workspaces (dock): the wallpaper with each window drawn at its
@@ -59,7 +60,7 @@ BarModuleBase {
 
                 ClippingRectangle {
                     anchors.fill: parent
-                    radius: Math.min(Styling.radius(-6), 6)
+                    radius: Look.radius("small", height)
                     color: Colors.surfaceContainerHigh
 
                     Image {
@@ -104,22 +105,24 @@ BarModuleBase {
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.margins: -2
-                    radius: Math.min(Styling.radius(-6), 6) + 2
+                    anchors.margins: -Space.hairline * 2
+                    radius: Look.radius("small", height) + 2
                     color: "transparent"
                     border.width: 2
-                    border.color: Colors.primary
+                    border.color: Type.accent
                     visible: thumb.active
                 }
 
-                Text {
+                // Workspace number over the wallpaper, sized to the thumbnail.
+                KitText {
                     anchors.left: parent.left
                     anchors.bottom: parent.bottom
-                    anchors.margins: 3
+                    anchors.margins: Space.xs
+                    role: "label"
+                    tabular: true
                     text: thumb.ws
-                    font.family: Config.theme.font
                     font.pixelSize: Math.max(8, Math.round(thumb.height * 0.26))
-                    font.weight: Font.Bold
+                    font.letterSpacing: 0
                     color: "white"
                     style: Text.Outline
                     styleColor: Qt.rgba(0, 0, 0, 0.45)

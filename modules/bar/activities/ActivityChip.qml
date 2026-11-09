@@ -66,12 +66,11 @@ Item {
                 visible: chip.ring && status === Image.Ready
                 asynchronous: true
             }
-            Text {
+            Icon {
                 anchors.centerIn: parent
                 visible: chip.ring && !art.visible
-                text: chip.activity ? (chip.activity.icon || "") : ""
-                font.family: Icons.font
-                font.pixelSize: Math.round(chip.ringSize * 0.52)
+                icon: chip.activity ? (chip.activity.icon || "") : ""
+                size: Math.round(chip.ringSize * 0.52)
                 color: chip.accent
             }
             ActivityIndicator {

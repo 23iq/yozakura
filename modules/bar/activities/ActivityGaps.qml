@@ -4,6 +4,7 @@ import QtQuick
 import qs.config
 import qs.modules.theme
 import qs.modules.services.activities
+import qs.modules.components.kit
 import "ActivityLayout.js" as Layout
 
 // Places live activity islands in the free spans left and right of the notch
@@ -30,7 +31,7 @@ Item {
     property real gap: 6
     property real spacing: 6
     property real indicatorSize: 16
-    property real fontSize: Styling.fontSize(-1)
+    property real fontSize: Type.size("secondary")
     property int maxVisible: ActivityService.maxVisible
 
     readonly property real hPadding: Math.round(thickness * 0.34)

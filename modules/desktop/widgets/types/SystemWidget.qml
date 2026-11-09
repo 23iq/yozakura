@@ -107,28 +107,29 @@ DesktopWidget {
                 width: list.width
                 height: Math.max(Math.round(22 * root.k), (list.height - (root.rows.length - 1) * list.spacing) / Math.max(1, root.rows.length))
 
-                Text {
+                // Kit roles at the widget's scale (root.px) in the surface's ink.
+                Icon {
                     id: glyph
                     anchors.verticalCenter: parent.verticalCenter
-                    text: Icons[row.modelData.icon] ?? ""
-                    font.family: Icons.font
-                    font.pixelSize: root.px(1)
+                    icon: Icons[row.modelData.icon] ?? ""
+                    size: root.px(1)
                     color: row.modelData.color
                 }
-                Text {
+                KitText {
                     id: label
+                    role: "caption"
                     anchors.left: glyph.right
                     anchors.leftMargin: Math.round(8 * root.k)
                     anchors.verticalCenter: parent.verticalCenter
                     width: row.modelData.value === "" ? parent.width * 0.62 - glyph.width : Math.round(parent.width * 0.22)
                     text: row.modelData.label
-                    elide: Text.ElideRight
                     font.family: root.font
                     font.pixelSize: root.px(-2)
                     color: root.inkSoft
                 }
-                Text {
+                KitText {
                     id: value
+                    tabular: true
                     anchors.left: label.right
                     anchors.verticalCenter: parent.verticalCenter
                     visible: row.modelData.value !== ""
@@ -136,10 +137,7 @@ DesktopWidget {
                     text: row.modelData.value
                     font.family: root.font
                     font.pixelSize: root.px(0)
-                    font.weight: Font.DemiBold
-                    font.features: {
-                        "tnum": 1
-                    }
+                    font.weight: Look.activeLabelWeight
                     color: root.ink
                 }
                 Sparkline {

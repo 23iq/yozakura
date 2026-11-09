@@ -3,6 +3,8 @@ import Quickshell
 import qs.config
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
+import qs.modules.bar.look
 import "AppNames.js" as AppNames
 
 // Focused window: app icon, app name (bold) and title. moduleOptions:
@@ -22,7 +24,7 @@ BarModuleBase {
     readonly property real maxTitle: options.maxWidth !== undefined ? options.maxWidth : 420
     readonly property string iconName: entry && entry.icon ? entry.icon : AppSearch.guessIcon(appId)
 
-    contentLength: vertical ? moduleSize : row.implicitWidth + (flat ? 12 : 24)
+    contentLength: vertical ? moduleSize : row.implicitWidth + (flat ? Space.m : Space.xl)
 
     BarModuleSurface {
         id: surface
@@ -38,7 +40,7 @@ BarModuleBase {
         id: row
         visible: !root.vertical
         anchors.centerIn: parent
-        spacing: 8
+        spacing: Space.s
 
         Image {
             visible: root.showIcon
@@ -51,24 +53,22 @@ BarModuleBase {
             mipmap: true
         }
 
-        Text {
+        KitText {
             visible: root.show !== "title"
             anchors.verticalCenter: parent.verticalCenter
+            role: BarLook.textRole(root.moduleSize)
             text: root.appName
-            font.family: Config.theme.font
-            font.pixelSize: root.textSize
-            font.weight: Font.Bold
+            font.weight: Look.activeLabelWeight
             color: surface.foreground
         }
 
-        Text {
+        KitText {
             visible: root.show !== "app" && root.title !== "" && root.title !== root.appName
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(implicitWidth, root.maxTitle)
+            role: BarLook.textRole(root.moduleSize)
             text: root.title
-            elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: root.textSize
+            font.weight: root.textWeight
             color: surface.foreground
             opacity: root.show === "both" ? 0.7 : 1
         }

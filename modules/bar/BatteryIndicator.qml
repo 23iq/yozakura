@@ -67,11 +67,10 @@ Item {
             color: box.look === "primary" ? Type.accentInk : root.levelColor
         }
 
-        Text {
+        Icon {
             anchors.centerIn: parent
-            text: root.glyph
-            font.family: Icons.font
-            font.pixelSize: Battery.available ? Math.round(BarLook.iconSize(root.moduleSize) * 0.72) : BarLook.iconSize(root.moduleSize)
+            icon: root.glyph
+            size: Battery.available ? Math.round(BarLook.iconSize(root.moduleSize) * 0.72) : BarLook.iconSize(root.moduleSize)
             color: box.ink
         }
 

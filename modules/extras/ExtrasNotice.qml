@@ -2,7 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
-import qs.config
+import qs.modules.components.kit
 import "ExtrasUi.js" as Ui
 
 // Banner of the catalog (offline, refused installs, errors and the
@@ -18,76 +18,67 @@ StyledRect {
     property string message: ""
     default property alias actions: actionRow.data
 
-    readonly property color accent: root.tone === "error" ? Colors.error : (root.tone === "warning" ? Colors.tertiary : Colors.primary)
+    readonly property color accent: root.tone === "error" ? Type.danger : (root.tone === "warning" ? Colors.warning : Type.secondary)
     readonly property bool stacked: root.width < 560
+    readonly property int pad: Look.surfacePadding
 
     variant: "pane"
     // floats over the scrolled grid (CatalogHost): opaque, lifted
     backgroundOpacity: 1
-    radius: Styling.radius(4)
+    radius: Look.radius("box")
     enableShadow: true
-    implicitHeight: (root.stacked ? textCol.implicitHeight + actionRow.implicitHeight + 14 : Math.max(textCol.implicitHeight, actionRow.implicitHeight)) + 34
+    implicitHeight: (root.stacked ? textCol.implicitHeight + actionRow.implicitHeight + Space.m : Math.max(textCol.implicitHeight, actionRow.implicitHeight)) + root.pad * 2
 
+    // Tone outline and tint over the opaque pane.
     Rectangle {
         anchors.fill: parent
         radius: root.radius
         color: Ui.alpha(root.accent, 0.1)
-        border.width: 1
+        border.width: Space.hairline
         border.color: Ui.alpha(root.accent, 0.45)
         z: 10
     }
 
-    Rectangle {
+    Icon {
         id: badge
-        x: 18
-        y: 17
-        width: 38
-        height: 38
-        radius: width / 2
-        color: Ui.alpha(root.accent, 0.2)
-        Text {
-            anchors.centerIn: parent
-            text: Icons[root.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(3)
-            color: root.accent
-        }
+        x: root.pad
+        y: root.pad
+        width: Space.controlS
+        height: Space.controlS
+        icon: Icons[root.icon] ?? ""
+        role: "title"
+        color: root.accent
     }
 
     Column {
         id: textCol
         anchors.left: badge.right
-        anchors.leftMargin: 14
+        anchors.leftMargin: Space.s
         anchors.right: root.stacked ? parent.right : actionRow.left
-        anchors.rightMargin: 18
-        y: 17 + Math.max(0, (38 - implicitHeight) / 2)
-        spacing: 3
+        anchors.rightMargin: root.pad
+        y: root.pad + Math.max(0, (badge.height - implicitHeight) / 2)
+        spacing: Space.xs
 
-        Text {
+        KitText {
             width: parent.width
+            role: "body"
             text: root.title
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
-            font.weight: Font.DemiBold
-            color: Colors.overBackground
+            font.weight: Look.activeLabelWeight
             wrapMode: Text.WordWrap
         }
-        Text {
+        KitText {
             width: parent.width
             visible: text !== ""
+            role: "secondary"
             text: root.message
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
-            color: Colors.overSurfaceVariant
             wrapMode: Text.WordWrap
-            textFormat: Text.PlainText
         }
     }
 
     Row {
         id: actionRow
-        x: root.stacked ? textCol.x : root.width - width - 18
-        y: root.stacked ? textCol.y + textCol.implicitHeight + 14 : (root.height - height) / 2
-        spacing: 8
+        x: root.stacked ? textCol.x : root.width - width - root.pad
+        y: root.stacked ? textCol.y + textCol.implicitHeight + Space.m : (root.height - height) / 2
+        spacing: Space.s
     }
 }

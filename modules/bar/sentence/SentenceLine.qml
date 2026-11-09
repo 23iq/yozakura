@@ -98,9 +98,10 @@ Item {
                 Component.onCompleted: root.report(piece.index, piece.linkWidth)
 
                 // The separator before every kept fragment but the lead
-                Text {
+                KitText {
                     visible: !piece.isLead
                     anchors.verticalCenter: parent.verticalCenter
+                    elide: Text.ElideNone
                     leftPadding: root.sepBefore
                     rightPadding: root.sepAfter
                     text: root.glyph
@@ -129,7 +130,7 @@ Item {
                         Repeater {
                             model: piece.modelData.segments
 
-                            delegate: Text {
+                            delegate: KitText {
                                 required property var modelData
                                 required property int index
                                 readonly property string raw: modelData.text
@@ -137,13 +138,11 @@ Item {
                                 leftPadding: /^\s/.test(raw) ? root.space : 0
                                 rightPadding: /\s$/.test(raw) ? root.space : 0
                                 text: shown
-                                textFormat: Text.PlainText
+                                elide: Text.ElideNone
+                                tabular: true
                                 font.family: root.textFont
                                 font.pixelSize: root.textSize
                                 font.weight: root.textWeight
-                                font.features: ({
-                                        "tnum": 1
-                                    })
                                 color: modelData.value ? root.ink : root.softInk
                             }
                         }

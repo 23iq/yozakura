@@ -66,13 +66,12 @@ Item {
             implicitHeight: implicitWidth
 
             // Check / radio: an accent mark when on, a quiet outline when off
-            Text {
+            Icon {
                 anchors.centerIn: parent
                 visible: root.buttonType > 0
-                text: root.checked ? (root.buttonType === 2 ? Icons.circle : (root.checkState === Qt.PartiallyChecked ? Icons.minus : Icons.check)) : ""
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("secondary")
-                color: Type.accent
+                icon: root.checked ? (root.buttonType === 2 ? Icons.circle : (root.checkState === Qt.PartiallyChecked ? Icons.minus : Icons.check)) : ""
+                role: "secondary"
+                tone: "accent"
             }
 
             Rectangle {
@@ -86,13 +85,11 @@ Item {
                 border.color: Type.muted
             }
 
-            Text {
+            Icon {
                 anchors.centerIn: parent
                 visible: root.buttonType === 0 && !root.isImageIcon && root.iconSource !== ""
-                text: visible ? root.iconSource : ""
-                font.family: Icons.font
-                font.pixelSize: Type.iconSize("body")
-                color: Type.secondary
+                icon: visible ? root.iconSource : ""
+                tone: "secondary"
             }
 
             Image {
@@ -109,11 +106,10 @@ Item {
     Component {
         id: caretComponent
 
-        Text {
-            text: root.expanded ? Icons.caretDown : Icons.caretRight
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("caption")
-            color: Type.muted
+        Icon {
+            icon: root.expanded ? Icons.caretDown : Icons.caretRight
+            role: "caption"
+            tone: "muted"
         }
     }
 }

@@ -12,7 +12,7 @@ import qs.modules.services
 // slider and a weather type picker.
 ColumnLayout {
     id: root
-    spacing: 4
+    spacing: Space.xs
 
     // Time slider pane
     StyledRect {
@@ -162,10 +162,10 @@ ColumnLayout {
                     bottomLeftRadius: isSelected ? (isFirstCol && isLastRow ? defaultRadius : selectedRadius) : defaultRadius
                     bottomRightRadius: isSelected ? (isLastCol && isLastRow ? defaultRadius : selectedRadius) : defaultRadius
 
-                    Text {
+                    KitText {
                         anchors.centerIn: parent
+                        role: "secondary"
                         text: weatherBtn.modelData.icon
-                        font.pixelSize: 14
                     }
 
                     MouseArea {

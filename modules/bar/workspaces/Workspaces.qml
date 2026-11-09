@@ -12,6 +12,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import qs.modules.bar.look
+import qs.modules.components.kit
 import "../../specials/Specials.js" as Specials
 import "indicators/IndicatorStyles.js" as IndicatorStyles
 
@@ -369,7 +370,7 @@ Item {
         visible: opacity > 0
         opacity: workspacesWidget.specialBlur
         scale: 0.8 + 0.2 * workspacesWidget.specialBlur
-        readonly property real labelWidth: specialWorkspaceText.implicitWidth + (specialWorkspaceGlyph.visible ? specialWorkspaceGlyph.implicitWidth + 6 : 0)
+        readonly property real labelWidth: specialWorkspaceText.implicitWidth + (specialWorkspaceGlyph.visible ? specialWorkspaceGlyph.implicitWidth + Space.xs : 0)
         width: orientation === "vertical" ? workspaceButtonWidth : Math.min(workspacesWidget.width - widgetPadding * 2, labelWidth + workspaceButtonWidth)
         height: orientation === "vertical" ? Math.min(workspacesWidget.height - widgetPadding * 2, labelWidth + workspaceButtonWidth) : workspaceButtonWidth
         radius: Math.min(width, height) / 2
@@ -379,29 +380,25 @@ Item {
         Row {
             anchors.centerIn: parent
             rotation: orientation === "vertical" ? -90 : 0
-            spacing: 6
+            spacing: Space.xs
 
-            Text {
+            Icon {
                 id: specialWorkspaceGlyph
                 anchors.verticalCenter: parent.verticalCenter
                 visible: text !== ""
-                text: workspacesWidget.specialGlyph
-                font.family: Icons.font
-                font.pixelSize: Config.theme.fontSize
+                icon: workspacesWidget.specialGlyph
+                size: Type.size("body")
                 color: Styling.srItem("primary")
             }
 
-            Text {
+            KitText {
                 id: specialWorkspaceText
                 anchors.verticalCenter: parent.verticalCenter
-                width: Math.min(implicitWidth, (orientation === "vertical" ? specialWorkspaceBadge.height : specialWorkspaceBadge.width) - widgetPadding * 2 - (specialWorkspaceGlyph.visible ? specialWorkspaceGlyph.implicitWidth + 6 : 0))
+                width: Math.min(implicitWidth, (orientation === "vertical" ? specialWorkspaceBadge.height : specialWorkspaceBadge.width) - widgetPadding * 2 - (specialWorkspaceGlyph.visible ? specialWorkspaceGlyph.implicitWidth + Space.xs : 0))
                 text: workspacesWidget.specialLabel
                 color: Styling.srItem("primary")
-                font.family: Config.workspaces.specialWorkspaceFont || Qt.application.font.family
-                font.weight: Qt.application.font.weight
-                font.pixelSize: Config.theme.fontSize
+                font.family: Config.workspaces.specialWorkspaceFont || Type.bodyFont
                 horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
             }
         }
     }
