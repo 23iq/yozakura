@@ -56,12 +56,11 @@ Item {
     }
 
     // Placeholder while the image is not ready
-    Rectangle {
+    Art {
         anchors.centerIn: parent
         width: Space.controlXL
         height: Space.controlXL
-        color: Type.placeholder
-        radius: Space.controlRadius
+        icon: Icons.image
         visible: {
             if (!preview.item)
                 return false;
@@ -73,15 +72,6 @@ Item {
                 return previewGif.status !== AnimatedImage.Ready;
             }
             return false;
-        }
-
-        Text {
-            anchors.centerIn: parent
-            text: Icons.image
-            textFormat: Text.RichText
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("display")
-            color: Type.muted
         }
     }
 }

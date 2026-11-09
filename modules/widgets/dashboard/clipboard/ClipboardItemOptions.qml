@@ -87,13 +87,11 @@ Column {
             }
 
             leading: Component {
-                Text {
+                Icon {
                     width: Metrics.iconSize
-                    horizontalAlignment: Text.AlignHCenter
-                    text: option.modelData.icon
-                    font.family: Icons.font
-                    font.pixelSize: Type.iconSize("caption")
-                    color: option.modelData.danger ? Colors.error : Type.secondary
+                    icon: option.modelData.icon
+                    role: "caption"
+                    color: option.modelData.danger ? Type.danger : Type.secondary
                 }
             }
         }

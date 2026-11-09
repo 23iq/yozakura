@@ -1,6 +1,5 @@
 import QtQuick
-import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 import "clipboard_utils.js" as ClipboardUtils
 
 // Favicon + site name line of a link embed. The favicon of the preview
@@ -12,13 +11,14 @@ Row {
     property string url: ""
 
     width: parent.width
-    spacing: 8
+    spacing: Space.s
     visible: badge.preview && badge.preview.site_name
 
     Item {
         id: favicon
-        width: 16
-        height: 16
+        width: Type.iconSize("caption")
+        height: Type.iconSize("caption")
+        anchors.verticalCenter: parent.verticalCenter
         visible: primary.status === Image.Ready || fallback.status === Image.Ready
 
         property bool triedFallback: false
@@ -56,13 +56,10 @@ Row {
         }
     }
 
-    Text {
+    KitText {
+        anchors.verticalCenter: parent.verticalCenter
+        width: parent.width - favicon.width - parent.spacing
+        role: "caption"
         text: badge.preview ? badge.preview.site_name : ""
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
-        font.weight: Font.Medium
-        color: Colors.outline
-        elide: Text.ElideRight
-        width: parent.width - 24
     }
 }

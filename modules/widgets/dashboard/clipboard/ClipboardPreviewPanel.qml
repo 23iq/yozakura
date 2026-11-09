@@ -26,7 +26,7 @@ Item {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: separator.top
-            anchors.bottomMargin: 8
+            anchors.bottomMargin: Space.s
 
             ClipboardImagePreview {
                 anchors.fill: parent
@@ -77,18 +77,13 @@ Item {
     }
 
     // Nothing selected
-    Column {
+    Icon {
+        objectName: "previewEmpty"
         anchors.centerIn: parent
-        spacing: 16
         visible: !previewPanel.currentItem
-
-        Text {
-            text: Icons.cactus
-            font.family: Icons.font
-            font.pixelSize: 48
-            color: Colors.surfaceBright
-            anchors.horizontalCenter: parent.horizontalCenter
-            textFormat: Text.RichText
-        }
+        icon: Icons.cactus
+        size: Space.xxl + Space.l
+        tone: "muted"
+        opacity: 0.5
     }
 }

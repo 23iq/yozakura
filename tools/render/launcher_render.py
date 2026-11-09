@@ -68,6 +68,10 @@ TAB_STATES = {
     "tab-clipboard": ("clipboard", "", ""),
     "tab-clipboard-options": ("clipboard", "", "selectedIndex = 1; expandedItemIndex = 1; selectedOptionIndex = 1"),
     "tab-clipboard-delete": ("clipboard", "", "selectedIndex = 2; enterDeleteMode(allItems[2].id)"),
+    "tab-clipboard-link": ("clipboard", "", "selectedIndex = 1; linkPreviewData = ({ title: 'quickshell-mirror/quickshell', "
+                           "description: 'Flexible toolkit for making desktop shells with QtQuick, for Wayland and X11', "
+                           "site_name: 'GitHub', type: 'object' })"),
+    "tab-clipboard-file": ("clipboard", "", "selectedIndex = 3"),
     "tab-emoji": ("emoji", "", "selectedIndex = 0; selectedRecentIndex = 1"),
     "tab-emoji-search": ("emoji", "cat", ""),
     "tab-emoji-clear": ("emoji", "", "clearButtonConfirmState = true"),
