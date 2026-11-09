@@ -7,6 +7,7 @@ import Quickshell.Wayland
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.services
 import qs.config
 
@@ -26,8 +27,8 @@ PanelWindow {
     }
 
     // Width/Height handled by content + margins
-    implicitWidth: mainRow.width + 20
-    implicitHeight: mainRow.height + 20
+    implicitWidth: mainRow.width + Space.l
+    implicitHeight: mainRow.height + Space.l
 
     color: "transparent"
     visible: imagePath !== ""
@@ -39,7 +40,8 @@ PanelWindow {
         id: copyOverlayProcess
         command: ["sh", "-c", 'wl-copy --type image/png < "$1"', "overlay-copy", root.imagePath]
         onExited: exitCode => {
-            if (exitCode !== 0) console.warn("Overlay Copy Failed (Exit code: " + exitCode + ")")
+            if (exitCode !== 0)
+                console.warn("Overlay Copy Failed (Exit code: " + exitCode + ")");
         }
     }
 
@@ -67,8 +69,8 @@ PanelWindow {
         id: mainRow
         anchors.bottom: parent.bottom
         anchors.left: parent.left
-        anchors.margins: 20
-        spacing: 8
+        anchors.margins: Space.l
+        spacing: Space.s
 
         // Preview Image with Drag Support
         ClippingRectangle {
@@ -96,14 +98,14 @@ PanelWindow {
                 return maxHeight;
             }
 
-            radius: Styling.radius(4)
+            radius: Look.radius("box")
             color: "transparent"
-            border.width: 2
-            border.color: Colors.primaryFixed
+            border.width: Space.hairline
+            border.color: Look.groupOutline
 
             Image {
-                mipmap: true
                 id: img
+                mipmap: true
                 anchors.fill: parent
                 source: root.imagePath !== "" ? "file://" + root.imagePath : ""
                 fillMode: Image.PreserveAspectCrop
@@ -147,11 +149,10 @@ PanelWindow {
                 }
 
                 // Icon overlay on hover (optional, but requested "Icons.handGrab" context)
-                Rectangle {
+                Mark {
                     anchors.centerIn: parent
-                    width: 32
-                    height: 32
-                    radius: 16
+                    width: Space.controlXS
+                    height: width
                     color: Colors.background
                     opacity: dragArea.containsMouse ? 0.8 : 0
                     visible: opacity > 0
@@ -161,117 +162,66 @@ PanelWindow {
                         }
                     }
 
-                    Text {
+                    Icon {
                         anchors.centerIn: parent
-                        text: Icons.handGrab // Assuming this exists per user request
-                        font.family: Icons.font
-                        color: Colors.overBackground
+                        icon: Icons.handGrab
                     }
                 }
             }
         }
 
-        // Action Buttons
-        Column {
-            spacing: 4
+        // Action buttons on a floating box (the overlay sits over any content)
+        Surface {
             anchors.verticalCenter: parent.verticalCenter
+            floating: true
+            padding: Space.xs
 
-            // Copy
-            ActionButton {
-                icon: Icons.copy
-                onTriggered: {
-                    copyOverlayProcess.running = true
+            Column {
+                spacing: Space.xs
+
+                // Copy
+                IconButton {
+                    size: "s"
+                    icon: Icons.copy
+                    tooltip: I18n.t("common.copy")
+                    onClicked: copyOverlayProcess.running = true
                 }
 
-                StyledToolTip {
-                    show: parent.containsMouse
-                    tooltipText: I18n.t("common.copy")
+                IconButton {
+                    size: "s"
+                    icon: Icons.disk
+                    tooltip: I18n.t("common.save_close")
+                    onClicked: root.imagePath = "" // Hide overlay
                 }
-            }
 
-            ActionButton {
-                icon: Icons.disk
-                onTriggered: {
-                    root.imagePath = ""; // Hide overlay
+                // Edit
+                IconButton {
+                    size: "s"
+                    icon: Icons.edit
+                    tooltip: I18n.t("wallpapers.edit_gradia")
+                    onClicked: {
+                        // Open with Gradia (native or Flatpak for Fedora) detached
+                        var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
+                        proc.command = ["sh", "-c", 'if command -v gradia >/dev/null; then gradia "$1"; else flatpak run be.alexandervanhee.gradia "$1"; fi > /dev/null 2>&1 &', "gradia", root.imagePath];
+                        proc.running = true;
+                        root.imagePath = "";
+                    }
                 }
-                StyledToolTip {
-                    show: parent.containsMouse
-                    tooltipText: I18n.t("common.save_close")
-                }
-            }
 
-            // Edit
-            ActionButton {
-                icon: Icons.edit
-                onTriggered: {
-                    // Open with Gradia (native or Flatpak for Fedora) detached
-                    var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
-                    proc.command = ["sh", "-c", 'if command -v gradia >/dev/null; then gradia "$1"; else flatpak run be.alexandervanhee.gradia "$1"; fi > /dev/null 2>&1 &', "gradia", root.imagePath];
-                    proc.running = true;
-                    root.imagePath = "";
-                }
-                StyledToolTip {
-                    show: parent.containsMouse
-                    tooltipText: I18n.t("wallpapers.edit_gradia")
-                }
-            }
-
-            // Trash
-            ActionButton {
-                icon: Icons.trash
-                hoverVariant: "error"
-                clickVariant: "overerror"
-                isTrash: true
-
-                onTriggered: {
-                    var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
-                    proc.command = ["rm", "--", root.imagePath];
-                    proc.running = true;
-                    root.imagePath = "";
-                }
-                StyledToolTip {
-                    show: parent.containsMouse
-                    tooltipText: I18n.t("common.delete")
+                // Trash
+                IconButton {
+                    size: "s"
+                    icon: Icons.trash
+                    danger: true
+                    tooltip: I18n.t("common.delete")
+                    onClicked: {
+                        var proc = Qt.createQmlObject('import Quickshell; import Quickshell.Io; Process { }', root);
+                        proc.command = ["rm", "--", root.imagePath];
+                        proc.running = true;
+                        root.imagePath = "";
+                    }
                 }
             }
         }
-    }
-
-    // Helper Component for Buttons
-    component ActionButton: MouseArea {
-        id: btn
-        width: 36
-        height: 36
-        hoverEnabled: true
-
-        property string icon
-        property string variant: "common"
-        property string hoverVariant: "focus"
-        property string clickVariant: "primary"
-        property bool isTrash: false
-
-        signal triggered
-
-        StyledRect {
-            anchors.fill: parent
-            radius: Styling.radius(0)
-            variant: {
-                if (btn.pressed)
-                    return btn.clickVariant;
-                if (btn.containsMouse)
-                    return btn.hoverVariant;
-                return btn.variant;
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: btn.icon
-                font.family: Icons.font
-                font.pixelSize: 16
-                color: Styling.srItem(parent.variant) || Colors.overBackground
-            }
-        }
-
-        onClicked: triggered()
     }
 }
