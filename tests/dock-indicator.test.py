@@ -22,6 +22,7 @@ h.module("qs.modules.components.kit", {
     "Mark": (ROOT / "modules/components/kit/Mark.qml").read_text().replace("import qs.modules.components.kit", "")
     .replace("Type.text", '"white"'),
     "Space": "pragma Singleton\nQtObject { property int xs: 4 }",
+    "Type": 'pragma Singleton\nQtObject { property color accent: "#ff0000"; property color text: "#ffffff" }',
 })
 h.copy("modules/dock/DockIndicator.qml")
 for f in sorted((ROOT / "modules/dock/indicators").glob("*.qml")):

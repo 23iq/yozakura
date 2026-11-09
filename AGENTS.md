@@ -117,7 +117,9 @@ Screens are built only from `modules/components/kit/` (`import qs.modules.compon
 `Chip` (`image`, `trailingIcon`, `closable`, `quiet`, `danger`, `dense`), `Switch`, `LineSlider` (`wavy`
 media timelines, `fillColor`), `ProgressLine`, `Ring`, `KeyHint`, `Art`, `Avatar`, `Surface`, `InlineLink` (a
 link in running text), `Icon` (an icon-font glyph sized by a Type role, `Type.iconSize(role)`, in an ink
-`tone`: text / secondary / muted / accent / progress / accentInk); big controls `Tile`, `LevelSlider`, `Segmented`,
+`tone`: text / secondary / muted / accent / progress / accentInk), `Mark` (a solid graphic shape, not a box:
+indicator dots, grooves, ticks, swatches; round by default), `Scrim` (the dimming layer behind a modal
+surface: `shown`, `strength`, `clicked()`); big controls `Tile`, `LevelSlider`, `Segmented`,
 `Sparkline` (raised via `Look.raisedFill`, radius `Look.bigRadius`, load colours `Type.load`;
 sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; level fills are tonal,
 `Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.

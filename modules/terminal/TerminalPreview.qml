@@ -147,6 +147,8 @@ Item {
     // monospace cell is about 0.6 em wide.
     readonly property int minColumns: 90
     readonly property real margin: Math.round(Math.min(32, root.width * 0.05))
+    // The kitty window's corners (the compositor rounding), a kit box radius
+    readonly property real windowRadius: Look.radius("box")
     readonly property real fit: Math.min(1, (root.width - 2 * root.margin) / Math.max(1, root.minColumns * root.pixelSize * 0.6 + 2 * root.padding))
     readonly property real shownPixelSize: Math.max(9, Math.floor(root.pixelSize * root.fit))
 
@@ -194,7 +196,7 @@ Item {
             y: windowFrame.y
             width: windowFrame.width
             height: windowFrame.height
-            radius: 12
+            radius: root.windowRadius
             blur: 28
             offset.y: 8
             color: Qt.rgba(0, 0, 0, 0.35)
@@ -206,7 +208,7 @@ Item {
             y: windowFrame.y
             width: windowFrame.width
             height: windowFrame.height
-            radius: 12
+            radius: root.windowRadius
             color: "transparent"
             visible: wall.status === Image.Ready
 
@@ -233,7 +235,7 @@ Item {
 
         ClippingRectangle {
             anchors.fill: parent
-            radius: 12
+            radius: root.windowRadius
             color: "transparent"
             border.width: Space.hairline
             border.color: Qt.alpha(Colors.outlineVariant, 0.7)

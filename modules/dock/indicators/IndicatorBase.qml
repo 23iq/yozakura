@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.config
 import "IndicatorRegistry.js" as Registry
 
@@ -24,7 +25,7 @@ Item {
     readonly property real along: info.wide ? size * 2.5 : size
     readonly property real across: size
     readonly property real cell: vertical ? height : width
-    readonly property color tint: active ? Styling.srItem("overprimary") : Qt.rgba(Colors.overBackground.r, Colors.overBackground.g, Colors.overBackground.b, 0.4)
+    readonly property color tint: active ? Type.accent : Qt.alpha(Type.text, 0.4)
 
     anchors.fill: parent
 

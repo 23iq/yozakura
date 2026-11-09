@@ -48,6 +48,7 @@ Item {
 
         ScreencopyView {
             id: preview
+            objectName: "facePreview"
             anchors.fill: parent
             captureSource: root.previewOn && GlobalStates.overviewOpen ? root.toplevel : null
             live: GlobalStates.overviewOpen
@@ -57,6 +58,7 @@ Item {
 
     // The plain box without a preview
     Mark {
+        objectName: "faceBox"
         anchors.fill: parent
         radius: root.boxRadius
         color: root.pressed ? Colors.surfaceBright : root.hovered ? Colors.surface : Colors.background
@@ -93,6 +95,7 @@ Item {
 
     // Outline and press wash over the live preview
     Mark {
+        objectName: "faceOverlay"
         anchors.fill: parent
         radius: root.boxRadius
         color: root.pressed ? Qt.alpha(Colors.surfaceContainerHighest, 0.5) : root.hovered ? Qt.alpha(Colors.surfaceContainer, 0.2) : "transparent"
@@ -111,6 +114,7 @@ Item {
 
     // Soft ring around the selected search match
     Mark {
+        objectName: "faceGlow"
         visible: root.glow
         anchors.fill: parent
         anchors.margins: -Space.xs
@@ -141,6 +145,7 @@ Item {
 
     // XWayland indicator
     Mark {
+        objectName: "faceXwayland"
         visible: !!(root.windowData && root.windowData.xwayland)
         anchors.top: parent.top
         anchors.right: parent.right
@@ -152,6 +157,7 @@ Item {
     }
 
     StyledRect {
+        objectName: "faceTooltip"
         visible: root.tooltipShown && !!root.windowData
         anchors.bottom: parent.top
         anchors.bottomMargin: Space.s
@@ -164,6 +170,7 @@ Item {
 
         KitText {
             id: tooltipText
+            objectName: "faceTooltipText"
             anchors.centerIn: parent
             role: "caption"
             color: Type.text

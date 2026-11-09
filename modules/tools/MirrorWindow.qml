@@ -52,7 +52,7 @@ PanelWindow {
         y: yPos
         width: currentWidth
         height: currentHeight
-        color: camera.cameraStatus === Camera.ActiveStatus ? "transparent" : "black"
+        color: camera.active ? "transparent" : Colors.scrim
         radius: Look.radius("surface", height)
 
         CaptureSession {
@@ -110,7 +110,7 @@ PanelWindow {
                 padding: Space.xs
 
                 // Show only on hover or when buttons are pressed
-                opacity: (dragArea.containsMouse || controlHover.containsMouse) ? 1.0 : 0.0
+                opacity: (dragArea.containsMouse || controlHover.hovered) ? 1.0 : 0.0
                 Behavior on opacity {
                     NumberAnimation {
                         duration: Motion.enter.duration

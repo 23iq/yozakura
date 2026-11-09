@@ -156,6 +156,22 @@ Canvas {
             root.requestPaint();
         }
     }
+    // The body's corners follow the theme radius (Look.radius "surface")
+    Connections {
+        target: root.shape
+        function onTopLeftRadiusChanged() {
+            root.requestPaint();
+        }
+        function onTopRightRadiusChanged() {
+            root.requestPaint();
+        }
+        function onBottomLeftRadiusChanged() {
+            root.requestPaint();
+        }
+        function onBottomRightRadiusChanged() {
+            root.requestPaint();
+        }
+    }
     Connections {
         target: Config.theme.srBg
         function onBorderChanged() {
