@@ -33,7 +33,7 @@ PanelWindow {
     anchors.right: true
 
     color: "transparent"
-    visible: (GlobalStates.osdVisible && root.route.window) || holder.opacity > 0
+    visible: root.shown || motion.moving
     mask: Region {
         item: holder
     }
@@ -65,71 +65,73 @@ PanelWindow {
         hideTimer.restart();
     }
 
+    readonly property bool shown: GlobalStates.osdVisible && root.route.window
+
+    // Where the OSD sits (also its input region); `motion` fades and slides
+    // it in from its edge on the render thread
     Item {
         id: holder
-        x: root.place.x + root.slide.x * 14 * (1 - opacity)
-        y: root.place.y + root.slide.y * 14 * (1 - opacity)
+        x: root.place.x
+        y: root.place.y
         width: root.size.w
         height: root.size.h
-        opacity: GlobalStates.osdVisible && root.route.window ? 1 : 0
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: GlobalStates.osdVisible ? OsdMotion.enterMs : OsdMotion.exitMs
-                easing.type: GlobalStates.osdVisible ? OsdMotion.enterEasing : OsdMotion.exitEasing
-            }
-        }
+        OsdSlide {
+            id: motion
+            shown: root.shown
+            slide: root.slide
 
-        Loader {
-            id: styleLoader
-            anchors.fill: parent
-            source: root.route.window ? OsdStyles.fileFor(root.styleName) : ""
-            onLoaded: item.shown = Qt.binding(() => GlobalStates.osdVisible)
+            Loader {
+                id: styleLoader
+                anchors.fill: parent
+                source: root.route.window ? OsdStyles.fileFor(root.styleName) : ""
+                onLoaded: item.shown = Qt.binding(() => GlobalStates.osdVisible)
 
-            Binding {
-                target: styleLoader.item
-                property: "kind"
-                value: root.kind
+                Binding {
+                    target: styleLoader.item
+                    property: "kind"
+                    value: root.kind
+                }
+                Binding {
+                    target: styleLoader.item
+                    property: "value"
+                    value: root.osdValue
+                }
+                Binding {
+                    target: styleLoader.item
+                    property: "muted"
+                    value: root.osdMuted
+                }
+                Binding {
+                    target: styleLoader.item
+                    property: "device"
+                    value: root.device
+                }
+                Binding {
+                    target: styleLoader.item
+                    property: "currentDevice"
+                    value: OsdService.currentDevice(root.kind)
+                }
+                Binding {
+                    target: styleLoader.item
+                    property: "vertical"
+                    value: root.vertical
+                }
             }
-            Binding {
-                target: styleLoader.item
-                property: "value"
-                value: root.osdValue
-            }
-            Binding {
-                target: styleLoader.item
-                property: "muted"
-                value: root.osdMuted
-            }
-            Binding {
-                target: styleLoader.item
-                property: "device"
-                value: root.device
-            }
-            Binding {
-                target: styleLoader.item
-                property: "currentDevice"
-                value: OsdService.currentDevice(root.kind)
-            }
-            Binding {
-                target: styleLoader.item
-                property: "vertical"
-                value: root.vertical
-            }
-        }
 
-        MouseArea {
-            id: input
-            anchors.fill: parent
-            hoverEnabled: true
-            onContainsMouseChanged: containsMouse ? hideTimer.stop() : hideTimer.restart()
-            onWheel: wheel => {
-                OsdService.adjust(root.kind, OsdStyles.wheelStep(wheel.angleDelta.y), root.targetScreen);
-                hideTimer.restart();
-            }
-            onClicked: {
-                GlobalStates.osdVisible = false;
-                OsdService.openControls(root.targetScreen ? root.targetScreen.name : "");
+            MouseArea {
+                id: input
+                anchors.fill: parent
+                hoverEnabled: true
+                onContainsMouseChanged: containsMouse ? hideTimer.stop() : hideTimer.restart()
+                onWheel: wheel => {
+                    OsdService.adjust(root.kind, OsdStyles.wheelStep(wheel.angleDelta.y), root.targetScreen);
+                    hideTimer.restart();
+                }
+                onClicked: {
+                    GlobalStates.osdVisible = false;
+                    OsdService.openControls(root.targetScreen ? root.targetScreen.name : "");
+                }
             }
         }
     }
