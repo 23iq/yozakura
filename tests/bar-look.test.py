@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from panels_env import PanelsEnv  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
-LAYOUT = {"style": "classic", "left": ["launcher", "workspaces", "layoutSelector", "appMenu"],
+LAYOUT = {"style": "classic", "left": ["launcher", "workspaces", "layoutSelector", "appMenu", "tools", "power"],
           "right": ["downloads", "systray", "controls", "battery", "clock"], "drawer": []}
 ENV = PanelsEnv("bar-look", bar={"position": "top", "frameEnabled": False, "containBar": False, "layout": LAYOUT})
 WIN = ENV.scene(1600, 900, windows=False)
@@ -81,6 +81,28 @@ for language, solid in [("ink", False), ("tiles", True)]:
     assert count(popup, IS_PROGRESS) == 1, "the charge line"
     H.eval(popup, "close()")
     QTest.qWait(300)
+
+# One-button modules (BarModuleButton): a kit glyph in the module box, the
+# accent state while their panel is open
+theme("ink", 0.9)
+host = H.find(WIN, "host")
+for name, module in [("powerButton", "powermenu"), ("toolsButton", "tools")]:
+    button = find(WIN.contentItem(), name)
+    assert button is not None, name
+    assert find(button, "moduleGlyph").isVisible(), name
+    assert H.eval(find(button, "moduleActive"), "visible") is False, name
+    H.eval(host, f"Visibilities.setActiveModule('{module}')")
+    QTest.qWait(100)
+    assert H.eval(button, "active") is True and H.eval(find(button, "moduleActive"), "visible") is True, name
+    H.eval(button, "clicked()")
+    QTest.qWait(100)
+    assert H.eval(host, "Visibilities.currentActiveModule") == "", name
+launcher = find(WIN.contentItem(), "launcherButton")
+assert H.eval(launcher, "active") is False
+H.eval(host, "GlobalStates.launcherOpen = true")
+QTest.qWait(100)
+assert H.eval(launcher, "active") is True
+H.eval(host, "GlobalStates.launcherOpen = false")
 
 # Active workspace: the pill indicator is the accent state
 theme("ink", 0.9)

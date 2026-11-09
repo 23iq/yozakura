@@ -608,7 +608,6 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
 
                     sourceComponent: Divider {
-                        vertical: false
                         implicitWidth: (Config.dock?.iconSize ?? 40) * 0.6
                     }
                 }
@@ -630,7 +629,6 @@ Item {
                     Layout.alignment: Qt.AlignHCenter
 
                     sourceComponent: Divider {
-                        vertical: false
                         implicitWidth: (Config.dock?.iconSize ?? 40) * 0.6
                     }
                 }

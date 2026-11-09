@@ -1,8 +1,7 @@
 {
  "upward": {
   "bar -> shell": 2,
-  "components -> bar": 1,
-  "components -> services": 4,
+  "components -> services": 3,
   "components -> shell": 2,
   "config -> services": 1,
   "dock -> shell": 1,
@@ -23,10 +22,6 @@
   [
    "aicenter",
    "settings"
-  ],
-  [
-   "bar",
-   "components"
   ],
   [
    "bar",
