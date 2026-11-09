@@ -7,7 +7,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.qmlharness import Harness  # noqa: E402
-from PySide6.QtCore import QElapsedTimer, QPointF, Qt  # noqa: E402
+from PySide6.QtCore import QElapsedTimer, QPointF, Qt, QTimer  # noqa: E402
+from PySide6.QtQml import QQmlIncubationController  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[1]
@@ -51,6 +52,7 @@ for f in ("Motion", "Metrics", "BarMetrics"):
     p = h.root / "qs/modules/theme" / f"{f}.qml"
     p.write_text("import qs.config\n" + p.read_text())
 h.copy("modules/components/SurfaceLatch.qml", "qs/modules/components", siblings=False)
+h.copy("modules/components/WarmLoader.qml", "qs/modules/components")
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }", "Shadow": "Item {}"})
 # The card host (HostedSurfaces: AI quick ask; tests/card-host.test.py)
 h.module("qs.modules.components.kit", {
@@ -68,6 +70,7 @@ h.singleton("qs.modules.services", "Visibilities", """QtObject {
     id: vroot
     property Component flags: Component { QtObject { property bool launcher; property bool dashboard; property bool powermenu; property bool tools; property bool aiquick; property bool keybinds } }
     property string focused: "A"
+    property string lastFocusedScreen: focused
     property var screens: ({})
     function getForScreen(n) {
         if (!screens[n])
@@ -140,6 +143,21 @@ Window {
     NotchHostedSurfaces { objectName: "nhB"; screen: b; vis: Visibilities.getForScreen("B"); container: otherContainer }
 }""", auto_stub=False)
 root.requestActivate()
+
+
+# Without a controller the engine incubates synchronously; quickshell has one
+# (frame-driven). This one advances pending incubations on a timer.
+class Incubator(QQmlIncubationController):
+    def __init__(self):
+        super().__init__()
+        self.timer = QTimer()
+        self.timer.setInterval(5)
+        self.timer.timeout.connect(lambda: self.incubateFor(2))
+        self.timer.start()
+
+
+incubator = Incubator()
+h.engine.setIncubationController(incubator)
 vis = h.eval(root, "Visibilities")
 hsA, hsB = h.find(root, "hsA"), h.find(root, "hsB")
 
@@ -169,6 +187,25 @@ def overlaps(a, b):
     return a["x"] < b["x"] + b["w"] and b["x"] < a["x"] + a["w"] and a["y"] < b["y"] + b["h"] and b["y"] < a["y"] + a["h"]
 
 
+# Views load asynchronously (WarmLoader). The warm-up pre-creates the
+# launcher on the focused screen only, hidden, without opening a host.
+assert not ev(hsA, "launcherReady") and not ev(hsB, "launcherReady")
+h.eval(hsA, "warmLauncher()")
+h.eval(hsB, "warmLauncher()")
+pump(50)
+assert ev(hsA, "launcherReady") and not ev(hsB, "launcherReady"), "warm-up on the wrong screen"
+assert ev(hsA, "spotlight") is None, "warm-up created a host"
+# A first open on B waits for its view; closing before it is ready never opens.
+h.eval(root, 'Visibilities.focused = "B"; Visibilities.setActiveModule("launcher")')
+spotB = ev(hsB, "spotlight")
+assert spotB is not None and not ev(spotB, "isOpen"), "opened before the view was ready"
+h.eval(root, 'Visibilities.setActiveModule("")')
+pump(50)
+assert ev(hsB, "launcherReady") and not ev(spotB, "isOpen"), "a cancelled open showed up"
+h.eval(root, 'Visibilities.setActiveModule("launcher")')
+assert ev(spotB, "isOpen"), "a ready view must open at once"
+h.eval(root, 'Visibilities.setActiveModule(""); Visibilities.focused = "A"')
+
 BAR = {"top": {"x": 0, "y": 0, "w": 1920, "h": 40}, "bottom": {"x": 0, "y": 1040, "w": 1920, "h": 40},
        "left": {"x": 0, "y": 0, "w": 40, "h": 1080}, "right": {"x": 1880, "y": 0, "w": 40, "h": 1080}}
 
@@ -177,6 +214,7 @@ for edge in ("top", "bottom", "left", "right"):
     for module, host_prop, frame in (("launcher", "spotlight", "spotlightFrame"), ("dashboard", "sheet", "sheetFrame")):
         tag = f"{edge}/{module}"
         h.eval(root, f'Visibilities.setActiveModule("{module}")')
+        pump(30)  # first dashboard open: its view loads asynchronously
         host = ev(hsA, host_prop)
         assert host is not None, tag
         # animDuration 0: open at once, nothing stuck half-way
@@ -230,6 +268,7 @@ assert ev(spot, "progress") == 0 and not ev(spot, "visible")
 
 # The keybind cheatsheet routes through layout.cheatsheet.host ("keybinds" flag).
 h.eval(root, 'Config.animDuration = 0; Visibilities.setActiveModule("keybinds")')
+pump(30)
 sheet = ev(hsA, "sheet")
 assert ev(sheet, "isOpen") and ev(sheet, "view.objectName") == "cheatsheet", "cheatsheet in the sheet"
 h.eval(root, 'Visibilities.setActiveModule("")')

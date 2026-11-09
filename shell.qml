@@ -302,12 +302,17 @@ ShellRoot {
         source: "modules/tools/MirrorWindow.qml"
     }
 
-    // Settings
-    // Its output is an initial property resolved once per open: a `screen`
-    // binding would move the mapped window on every output change.
-    Loader {
+    // Settings: created asynchronously on the first open (a large tree with
+    // no QML disk cache), then kept hidden for
+    // performance.settingsKeepAliveMinutes after closing so it reopens at once.
+    // Its output is an initial property resolved once per creation (a
+    // `screen` binding would move the mapped window on every output change);
+    // a kept window moves itself while hidden (SettingsWindow.retarget()).
+    KeepAliveLoader {
         id: settingsWindowLoader
-        active: SuspendManager.wakeReady && GlobalStates.settingsWindowVisible
+        allowed: SuspendManager.wakeReady
+        wanted: GlobalStates.settingsWindowVisible
+        keepFor: Math.max(0, Config.performance.settingsKeepAliveMinutes) * 60000
         function load() {
             if (active)
                 setSource("modules/settings/SettingsWindow.qml", {
@@ -364,14 +369,6 @@ ShellRoot {
         }
     }
 
-    // Init clipboard service
-    Connections {
-        target: ClipboardService
-        function onListCompleted() {
-        // Service initialized and ready
-        }
-    }
-
     // Force service init at startup but defer it slightly so it doesn't block the UI
     QtObject {
         id: serviceInitializer
@@ -384,11 +381,6 @@ ShellRoot {
                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
                 _ = WallpaperCommandService; // Force init (IPC wallpaper.set subscriber)
                 _ = PresetCommandService;    // Force init (IPC preset.load subscriber)
-                // PresetsService.initialize() is normally triggered lazily
-                // when the user opens the Presets tab; the CLI preset
-                // command needs the list available at boot, so kick it off
-                // here too.
-                PresetsService.initialize();
             });
         }
     }
@@ -407,6 +399,12 @@ ShellRoot {
             _ = SpecialsService.active; // special workspaces: launch-on-open, renames, preload
             _ = TimersService.ready; // timers: notch activity, alarm sound, hub
             _ = FocusMode.active; // focus mode: ends with its timer, restores DND
+            // Clipboard history list: the copies themselves are recorded by
+            // the backend's wl-paste watcher, this only binds the refresh.
+            _ = ClipboardService.items;
+            // The preset list (normally scanned when the Presets tab opens)
+            // for the "new look" offer; `preset.load` does not need it.
+            PresetsService.initialize();
         }
     }
 }

@@ -138,6 +138,11 @@ var performance = {
         },
         "unloadIdleViews": {
             "description": "Release kept-loaded dashboard tabs a minute after the dashboard closes."
+        },
+        "settingsKeepAliveMinutes": {
+            "min": 0,
+            "max": 120,
+            "description": "Minutes the closed Settings window stays loaded (hidden) so it reopens instantly; 0 releases it on close."
         }
     }
 };

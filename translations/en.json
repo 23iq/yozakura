@@ -2107,6 +2107,8 @@
   "prefs.sys.dashboard_max_tabs.desc": "Most dashboard tabs kept in memory at once.",
   "prefs.sys.unload_idle_views": "Release idle tabs",
   "prefs.sys.unload_idle_views.desc": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
+  "prefs.sys.settings_keep_alive": "Keep Settings loaded",
+  "prefs.sys.settings_keep_alive.desc": "Minutes the closed Settings window stays loaded so it reopens at once; 0 releases it on close.",
   "prefs.sys.lock_cmd.desc": "Runs when the session locks (loginctl lock-session, idle listeners).",
   "prefs.sys.idle_listeners.desc": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
   "prefs.sys.idle_listeners.empty": "No idle listeners: the screen never dims, locks or sleeps by itself.",

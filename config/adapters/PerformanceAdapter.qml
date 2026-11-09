@@ -15,4 +15,5 @@ JsonAdapter {
     property bool dashboardPersistTabs: false
     property int dashboardMaxPersistentTabs: 2
     property bool unloadIdleViews: true
+    property int settingsKeepAliveMinutes: 5
 }

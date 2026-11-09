@@ -52,14 +52,34 @@ FloatingWindow {
     }
 
     function rehome() {
+        if (!settingsWindow.visible && settingsWindow.retarget())
+            return;
         if (!settingsWindow.homed)
             return;
         const target = SettingsScreen.rehomeTarget(outputs.output, settingsWindow.targetScreen);
         if (!target)
             return;
+        settingsWindow.moveTo(target);
+    }
+
+    function moveTo(target) {
         settingsWindow.rehoming = true;
         settingsWindow.targetScreen = target;
+        settingsWindow._homed = true;
         Qt.callLater(() => settingsWindow.rehoming = false);
+    }
+
+    // Kept alive hidden (KeepAliveLoader in shell.qml): the next open names
+    // its output before it shows the window, so move only while hidden,
+    // never a mapped window. True when it moved.
+    function retarget() {
+        if (settingsWindow.visible)
+            return false;
+        const target = SettingsScreen.byName(Quickshell.screens, GlobalStates.settingsTargetScreenName);
+        if (!target || target === settingsWindow.targetScreen)
+            return false;
+        settingsWindow.moveTo(target);
+        return true;
     }
 
     function preparePlacement() {
@@ -102,12 +122,18 @@ FloatingWindow {
 
     SettingsShell {
         anchors.fill: parent
+        // While kept alive hidden (KeepAliveLoader), the pages see
+        // visible=false: previews, polls and timers gated on it stop.
+        visible: settingsWindow.visible
     }
 
     // Unsaved staged changes are never dropped silently: a close request
     // (close button, keybind, window manager) keeps the window and asks.
     Connections {
         target: GlobalStates
+        function onSettingsTargetScreenNameChanged() {
+            settingsWindow.retarget();
+        }
         function onSettingsWindowVisibleChanged() {
             if (!GlobalStates.settingsWindowVisible && SettingsStore.hasChanges) {
                 GlobalStates.settingsCloseConfirm = true;
@@ -116,11 +142,20 @@ FloatingWindow {
         }
     }
 
+    // Kept alive hidden between opens (KeepAliveLoader in shell.qml): a
+    // preset trial or edit may have started meanwhile, bring back its pill.
+    property bool shownBefore: false
+
     // Close on visibility change from outside
     onVisibleChanged: {
         if (visible) {
             preparePlacement();
-        } else if (GlobalStates.settingsWindowVisible && !rehoming && !outputGone) {
+            if (shownBefore)
+                PresetStudio.refreshSessions();
+            return;
+        }
+        shownBefore = true;
+        if (GlobalStates.settingsWindowVisible && !rehoming && !outputGone) {
             GlobalStates.settingsWindowVisible = false;
         }
     }

@@ -57,6 +57,7 @@ h.module("qs.modules.theme", {
     "Styling": "pragma Singleton\nQtObject { function radius(o) { return 16 + o; } }",
 })
 h.copy("modules/components/SurfaceLatch.qml", "qs/modules/components", siblings=False)
+h.copy("modules/components/WarmLoader.qml", "qs/modules/components")
 h.module("qs.modules.components", {"StyledRect": "Item { property string variant; property real radius; property bool enableShadow }"})
 h.module("qs.modules.components.kit", {
     "Space": "pragma Singleton\nQtObject { property int s: 8; property int m: 12; property int l: 16 }",

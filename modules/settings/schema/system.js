@@ -120,7 +120,18 @@ var category = {
                     }
                 },
                 toggle("performance.pauseWallpaperOnBattery", "system.performance.pause_wallpaper_battery", "system.performance.pause_wallpaper_battery_desc", "video wallpaper battery power laptop unplugged pause"),
-                toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k")
+                toggle("performance.videoWallpaperDownscale", "system.performance.video_downscale", "system.performance.video_downscale_desc", "video wallpaper downscale resolution transcode ffmpeg cpu fps 4k"),
+                {
+                    "key": "performance.settingsKeepAliveMinutes",
+                    "type": "number",
+                    "advanced": true,
+                    "min": 0,
+                    "max": 120,
+                    "unit": "min",
+                    "label": "prefs.sys.settings_keep_alive",
+                    "description": "prefs.sys.settings_keep_alive.desc",
+                    "keywords": "settings window keep loaded memory reopen instant release"
+                }
             ]
         },
         {
