@@ -61,7 +61,7 @@ def _theme_defaults() -> dict:
     return json.loads(out)
 
 
-def _theme_config(preset: str) -> str:
+def _theme_config(preset: str, language: str = "") -> str:
     theme = presetsets.read(preset, "theme")
     # Like the shell's validator: surface variants the preset leaves out (or
     # only partly sets) come from config/defaults/theme.js.
@@ -83,6 +83,7 @@ def _theme_config(preset: str) -> str:
         property string monoFont: {json.dumps(mono)}
         property int monoFontSize: {int(theme.get("monoFontSize", 14))}
         property bool lightMode: {str(bool(theme.get("lightMode", False))).lower()}
+        property string language: {json.dumps(language or theme.get("language", ""))}
 {chr(10).join(props)}
     }}
     property int roundness: {int(theme.get("roundness", 16))}
@@ -159,8 +160,9 @@ AI_CONFIG = """
 """
 
 
-def build(preset: str, mode: str, ai_stub: str) -> Path:
-    """Returns the import root; caller loads scenes with addImportPath(root)."""
+def build(preset: str, mode: str, ai_stub: str, language: str = "") -> Path:
+    """Returns the import root; caller loads scenes with addImportPath(root).
+    `language` overrides the preset's theme.language (visual language renders)."""
     tmp = Path(tempfile.mkdtemp(prefix="aiscene-"))
     if not os.environ.get("AISCENE_KEEP"):
         atexit.register(shutil.rmtree, tmp, True)
@@ -182,7 +184,7 @@ def build(preset: str, mode: str, ai_stub: str) -> Path:
     shutil.copy(REPO / "config/motion/MotionBudget.js", qs / "config/motion/MotionBudget.js")
     _module(tmp, "qs.config", {"Config": "pragma Singleton\nimport QtQuick\nimport qs.modules.theme\nQtObject {\n"
                                "    property int animDuration: 0\n    property bool motionDrivesShell: false\n    property var motionProfile: null\n    property string defaultFont: theme.font\n"
-                               + _theme_config(preset) + AI_CONFIG +
+                               + _theme_config(preset, language) + AI_CONFIG +
                                "    function resolveColor(v) { if (!v) return 'transparent'; if (String(v).startsWith('#')) return v; return Colors[v] || 'transparent'; }\n}\n"})
     en = json.loads((REPO / "translations/en.json").read_text())
     services = qs / "modules/services"
