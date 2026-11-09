@@ -24,5 +24,11 @@ Transition {
             duration: root.entering ? Config.animDuration * 3 / 4 : Config.animDuration / 4
             easing.type: Motion.emphasis.easing
         }
+        // The end value on the GUI thread too (an Animator of duration 0,
+        // animations off, never writes it back)
+        PropertyAction {
+            property: "opacity"
+            value: root.entering ? 1 : 0
+        }
     }
 }

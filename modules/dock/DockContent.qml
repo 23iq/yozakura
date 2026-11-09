@@ -126,11 +126,13 @@ Item {
     readonly property Item dockHitbox: dockMouseArea
 
     // The dock's surface in this item's coordinates (it fills the panel),
-    // with the reveal slide and fade: its analytic shadow follows it every
-    // frame without capturing anything (PanelShadows)
+    // with the reveal slide: its analytic shadow follows it every frame
+    // without capturing anything, and fades with the same RenderFade
+    // (PanelShadows)
     readonly property Item surface: dockSurface
     readonly property rect surfaceRect: Qt.rect(dockMouseArea.x + dockContainer.x + dockSlide.x, dockMouseArea.y + dockContainer.y + dockSlide.y, dockContainer.width, dockContainer.height)
-    readonly property real surfaceOpacity: dockContainer.opacity
+    readonly property int fadeDuration: Config.animDuration > 0 ? Motion.exit.duration : 0
+    readonly property int fadeEasing: Motion.enter.easing
 
     // Content sizing helper
     Item {
@@ -244,14 +246,11 @@ Item {
                 }
             }
 
-            // Animation for dock reveal
+            // Reveal fade, on the render thread (its shadow fades in step)
             opacity: root.reveal ? 1 : 0
-            Behavior on opacity {
-                enabled: Config.animDuration > 0
-                NumberAnimation {
-                    duration: Motion.exit.duration
-                    easing.type: Motion.enter.easing
-                }
+            RenderFade on opacity {
+                duration: root.fadeDuration
+                easingType: root.fadeEasing
             }
 
             // Slide animation

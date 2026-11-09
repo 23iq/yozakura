@@ -107,8 +107,8 @@ Item {
             sourceRect: root.barRect(caster.modelData)
         }
     }
-    // Dock: its body and (default theme) two concave corners, sliding and
-    // fading with the reveal
+    // Dock: its body and (default theme) two concave corners, sliding with
+    // the reveal and fading in step with it (same RenderFade)
     ShapeShadow {
         readonly property var surface: root.dock ? root.dock.surface : null
         active: root.dockEnabled && !!surface && root.dock.visible
@@ -117,14 +117,18 @@ Item {
         fillet: surface && surface.isDefault ? surface.cornerSize : 0
         edge: surface ? surface.position : "bottom"
         strength: surface ? surface.fillAlpha : 1
-        opacity: root.dock ? root.dock.surfaceOpacity : 0
+        opacity: root.dock && root.dock.reveal ? 1 : 0
+        RenderFade on opacity {
+            duration: root.dock ? root.dock.fadeDuration : 0
+            easingType: root.dock ? root.dock.fadeEasing : Easing.Linear
+        }
     }
     ShadowCaster {
         source: root.activities
         sourceRect: root.activityRect
     }
     // Notch: its silhouette as it morphs (radii, concave corners of the
-    // attached style), sliding and fading with the reveal
+    // attached style), sliding with the reveal and fading in step with it
     ShapeShadow {
         readonly property var silhouette: root.notch ? root.notch.silhouette : null
         active: !!silhouette && root.notch.visible
@@ -133,6 +137,10 @@ Item {
         fillet: silhouette && silhouette.attached ? silhouette.cornerSize : 0
         edge: silhouette ? silhouette.position : "top"
         strength: silhouette ? silhouette.surfaceAlpha : 1
-        opacity: root.notch ? root.notch.silhouetteOpacity : 0
+        opacity: root.notch && root.notch.reveal ? 1 : 0
+        RenderFade on opacity {
+            duration: root.notch ? root.notch.fadeDuration : 0
+            easingType: root.notch ? root.notch.fadeEasing : Easing.Linear
+        }
     }
 }
