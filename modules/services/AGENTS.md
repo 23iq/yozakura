@@ -17,7 +17,7 @@ Backend singletons bridging Wayland protocols, CLI tools (nmcli, upower, wpctl, 
 | **Media** | `MprisController.qml` | MPRIS D-Bus player control |
 | **Notifications** | `Notifications.qml` | D-Bus notification server with persistence |
 | **System Monitor** | `SystemResources.qml` | CPU, RAM, GPU, temps via Python script |
-| **Compositor** | `YozdService.qml` | Compositor abstraction. State arrives via `BackendService` subscription to the Go-owned `compositor` service; `dispatch()` is an IPC call to the backend that runs `yozd` one-shots |
+| **Compositor** | `YozdService.qml` + `YozdClients.js` | Compositor abstraction. State arrives via `BackendService` subscription to the Go-owned `compositor` service (coalesced to one push per ~16 ms in Go); clients are diffed by address so unchanged ones keep their object identity; `dispatch()` is an IPC call to the backend that runs `yozd` one-shots |
 | **Compositor appearance** | `CompositorConfig.qml`, `CompositorAppearance.js`, `CompositorTomlWriter.qml` | One hl.config() table applied live (eval) and persisted (backend renders hyprland.{lua,conf}); smart gaps = a `w[tv1]` workspace rule |
 | **Motion profile** | `CompositorMotion.qml` + `config/motion/` | Resolves `compositor.motionProfile` + overrides into curves/animations; applied live, persisted via the TOML payload (`motion`) |
 | **Music-reactive border** | `BorderPulse.qml` + `BorderPulse.js` | Owned by `CompositorConfig`. Idle unless enabled + a player is playing; cava (shared `CavaService` consumer) → quantized level → one `eval` on Hyprland's request socket per level change (≤30 Hz) |
