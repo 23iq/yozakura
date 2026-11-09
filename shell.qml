@@ -52,8 +52,17 @@ ShellRoot {
         Component.onCompleted: Visibilities.setContextMenu(contextMenu)
     }
 
+    // Screens for the always-present per-screen windows (wallpaper, desktop,
+    // corners, panel, OSD): the outputs at startup pass at once, a hotplugged
+    // one only after the output list held still, so no window is created on
+    // an output in the tick it appears (a QtWayland crash).
+    SettledScreens {
+        id: settledScreens
+        source: Quickshell.screens
+    }
+
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Loader {
             id: wallpaperLoader
@@ -66,7 +75,7 @@ ShellRoot {
     }
 
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Loader {
             id: desktopLoader
@@ -88,7 +97,7 @@ ShellRoot {
 
     // Visual panel & reservations
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Item {
             id: screenShellContainer
@@ -155,9 +164,13 @@ ShellRoot {
             return screens.filter(screen => list.indexOf(screen.name) !== -1);
         }
 
-        Loader {
+        // Kept loaded while the closed window is still mapped: its
+        // SurfaceLatch drops keyboard focus first and unmaps a frame later,
+        // so the window is never destroyed in the focus tick.
+        LatchedLoader {
             id: overviewLoader
-            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false)
+            allowed: SuspendManager.wakeReady
+            wanted: Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).overview : false
             required property ShellScreen modelData
             sourceComponent: OverviewPopup {
                 screen: overviewLoader.modelData
@@ -175,9 +188,13 @@ ShellRoot {
             return screens.filter(screen => list.indexOf(screen.name) !== -1);
         }
 
-        Loader {
+        // Kept loaded while the closed window is still mapped: its
+        // SurfaceLatch drops keyboard focus first and unmaps a frame later,
+        // so the window is never destroyed in the focus tick.
+        LatchedLoader {
             id: presetsLoader
-            active: SuspendManager.wakeReady && (Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false)
+            allowed: SuspendManager.wakeReady
+            wanted: Visibilities.getForScreen(modelData.name) ? Visibilities.getForScreen(modelData.name).presets : false
             required property ShellScreen modelData
             sourceComponent: PresetsPopup {
                 screen: presetsLoader.modelData
@@ -343,9 +360,11 @@ ShellRoot {
         DisplayOverlays {}
     }
 
-    // AI selection actions popup (only exists while open)
-    Loader {
-        active: Ai.selection !== null && Ai.selection.visible
+    // AI selection actions popup (only exists while open, and while its
+    // latch keeps it mapped after closing: keyboard focus drops first, the
+    // window goes a frame later, never in the same tick)
+    LatchedLoader {
+        wanted: Ai.selection !== null && Ai.selection.visible
         sourceComponent: SelectionMenuWindow {
             actions: Ai.selection
         }
@@ -357,7 +376,7 @@ ShellRoot {
     // the OSD is the only thing that sets osdVisible true, but it has
     // to be loaded before its signal handlers can run.
     Variants {
-        model: Quickshell.screens
+        model: settledScreens.screens
 
         Loader {
             id: osdLoader

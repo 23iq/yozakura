@@ -564,10 +564,12 @@ Singleton {
             return;
         }
 
-        root.isLoading = true;
         // Retries keep showing the failure until one succeeds
         if (root.retryCount === 0)
             root.hasFailed = false;
+        // A backoff retry while failed stays quiet: no spinner flicker.
+        if (!root.hasFailed)
+            root.isLoading = true;
 
         var locationStr = Config.weather.location || "";
         var location = locationStr.trim();

@@ -32,7 +32,21 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.appId + "-ai-selection"
-    WlrLayershell.keyboardFocus: actions.working ? WlrKeyboardFocus.None : WlrKeyboardFocus.Exclusive
+    WlrLayershell.keyboardFocus: latch.keyboard && !actions.working ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+
+    // Latched (SurfaceLatch): on close the ask field lets go of the input
+    // method, then keyboard focus drops, and the surface unmaps at least a
+    // frame later; shell.qml keeps the window loaded while `mapped`, so it
+    // is never destroyed in the tick its keyboard focus goes away.
+    visible: latch.shown
+    readonly property bool mapped: latch.shown
+
+    SurfaceLatch {
+        id: latch
+        active: win.actions.visible
+        holdMs: Motion.exit.duration
+        focusHost: menu
+    }
 
     property int selectedIndex: 0
 
@@ -72,6 +86,14 @@ PanelWindow {
         }
         Connections {
             target: win.actions
+            // Fades out while latched closed; reopened before the unmap,
+            // it comes back with the ask field focused.
+            function onVisibleChanged() {
+                menu.scale = win.actions.visible ? 1 : 0.96;
+                menu.opacity = win.actions.visible ? 1 : 0;
+                if (win.actions.visible)
+                    ask.focusInput();
+            }
             function onHasResultChanged() {
                 if (win.actions.hasResult)
                     resultText.forceActiveFocus();

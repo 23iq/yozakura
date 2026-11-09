@@ -28,6 +28,15 @@ Loader {
         }
     }
 
+    // Unloaded (e.g. suspend): nothing is kept, so on resume the window is
+    // not rebuilt hidden just to be kept.
+    onAllowedChanged: {
+        if (!root.allowed) {
+            releaseTimer.stop();
+            root._kept = false;
+        }
+    }
+
     onKeepForChanged: {
         if (root.keepFor <= 0) {
             releaseTimer.stop();

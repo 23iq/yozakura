@@ -17,7 +17,9 @@ FloatingWindow {
     // Below this the page has no room for its cards and rows.
     minimumSize: Qt.size(640, 480)
     title: "Yozakura Settings"
-    visible: GlobalStates.settingsWindowVisible
+    // Hidden for a moment while it moves to another output (moveTo()).
+    visible: GlobalStates.settingsWindowVisible && !_parked
+    property bool _parked: false
 
     color: "transparent"
 
@@ -62,11 +64,47 @@ FloatingWindow {
         settingsWindow.moveTo(target);
     }
 
+    // A hidden window moves at once. A mapped one is never moved while
+    // mapped: hidden first, moved once the hide went through, then shown
+    // again; `rehoming` covers the whole sequence, so the (asynchronous)
+    // hide is not taken for the user closing it.
     function moveTo(target) {
         settingsWindow.rehoming = true;
-        settingsWindow.targetScreen = target;
-        settingsWindow._homed = true;
-        Qt.callLater(() => settingsWindow.rehoming = false);
+        if (!settingsWindow.visible && !settingsWindow._parked) {
+            settingsWindow.targetScreen = target;
+            settingsWindow._homed = true;
+            Qt.callLater(() => settingsWindow.rehoming = false);
+            return;
+        }
+        rehomeSteps.target = target;
+        settingsWindow._parked = true;
+        rehomeSteps.step = 0;
+        rehomeSteps.restart();
+    }
+
+    // hide -> (a few frames) move -> (a few frames) show -> clear the guard
+    Timer {
+        id: rehomeSteps
+        property var target: null
+        property int step: 0
+        interval: 50
+        onTriggered: {
+            if (step === 0) {
+                if (target) {
+                    settingsWindow.targetScreen = target;
+                    settingsWindow._homed = true;
+                }
+                target = null;
+                step = 1;
+                restart();
+            } else if (step === 1) {
+                settingsWindow._parked = false;
+                step = 2;
+                restart();
+            } else {
+                settingsWindow.rehoming = false;
+            }
+        }
     }
 
     // Kept alive hidden (KeepAliveLoader in shell.qml): the next open names
@@ -149,7 +187,9 @@ FloatingWindow {
     // Close on visibility change from outside
     onVisibleChanged: {
         if (visible) {
-            preparePlacement();
+            // Back from a move to another output: stays where it went.
+            if (!rehoming)
+                preparePlacement();
             if (shownBefore)
                 PresetStudio.refreshSessions();
             return;

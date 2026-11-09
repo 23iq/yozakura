@@ -41,14 +41,26 @@ PanelWindow {
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("overview")
-    WlrLayershell.keyboardFocus: overviewOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: latch.keyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
 
     // Get this screen's visibility state
     readonly property var screenVisibilities: Visibilities.getForScreen(screen.name)
     readonly property bool overviewOpen: screenVisibilities ? screenVisibilities.overview : false
+    // The surface is mapped: shell.qml keeps the window loaded while true.
+    readonly property bool mapped: latch.shown
 
-    visible: overviewOpen
+    // Latched (SurfaceLatch): on close the search field lets go of the
+    // input method, then keyboard focus drops, and the surface unmaps at
+    // least a frame later (never in the same tick, also with 0 ms motion).
+    visible: latch.shown
     exclusionMode: ExclusionMode.Ignore
+
+    SurfaceLatch {
+        id: latch
+        active: overviewPopup.overviewOpen
+        holdMs: Config.animDuration > 0 ? Motion.enter.duration : 0
+        focusHost: overviewPopup.contentItem
+    }
 
     // Mask to capture input on the entire window when open
     mask: Region {
@@ -272,7 +284,7 @@ PanelWindow {
             Loader {
                 id: overviewLoader
                 anchors.centerIn: parent
-                active: overviewOpen
+                active: latch.shown
 
                 sourceComponent: OverviewView {
                     currentScreen: overviewPopup.screen
