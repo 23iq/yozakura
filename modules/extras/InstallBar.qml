@@ -3,6 +3,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.config
+import qs.modules.components.kit
 import "ExtrasModel.js" as ExtrasModel
 import "ExtrasUi.js" as Ui
 
@@ -43,9 +44,9 @@ StyledRect {
     variant: "popup"
     // opaque: cards scroll underneath
     backgroundOpacity: 1
-    radius: Styling.radius(8)
+    radius: Look.radius("surface")
     enableShadow: true
-    implicitHeight: 64
+    implicitHeight: Space.controlL
     visible: opacity > 0
     opacity: root.shown ? 1 : 0
     Behavior on opacity {
@@ -55,7 +56,7 @@ StyledRect {
         }
     }
     transform: Translate {
-        y: root.shown ? 0 : 24
+        y: root.shown ? 0 : Space.xl
         Behavior on y {
             enabled: Config.animDuration > 0
             NumberAnimation {
@@ -78,7 +79,7 @@ StyledRect {
         anchors.fill: parent
         radius: root.radius
         color: "transparent"
-        border.width: 1
+        border.width: Space.hairline
         border.color: Ui.alpha(Colors.outlineVariant, 0.6)
         z: 10
     }
@@ -86,24 +87,26 @@ StyledRect {
     // Running job summary
     Item {
         id: summary
-        x: 22
-        width: parent.width - 22 - 18 - (actions.visible ? actions.width + 14 : 0)
+        x: Space.xl
+        width: parent.width - Space.xl - Space.l - (actions.visible ? actions.width + Space.m : 0)
         anchors.verticalCenter: parent.verticalCenter
-        height: 34
+        height: Space.chip
 
         Column {
             visible: !!root.current
             width: parent.width
-            spacing: 6
+            spacing: Space.s
 
             Row {
                 width: parent.width
-                spacing: 8
-                Text {
+                spacing: Space.s
+                KitText {
                     id: jobLabel
                     objectName: "jobLabel"
-                    width: Math.min(implicitWidth, parent.width - (more.visible ? more.implicitWidth + 8 : 0))
-                    elide: Text.ElideRight
+                    width: Math.min(implicitWidth, parent.width - (more.visible ? more.implicitWidth + Space.s : 0))
+                    role: "secondary"
+                    color: Type.text
+                    font.weight: Look.activeLabelWeight
                     text: {
                         const p = root.current;
                         if (!p)
@@ -111,18 +114,12 @@ StyledRect {
                         const pct = p.state === "running" && p.percent >= 0 ? " · " + p.percent + "%" : "";
                         return I18n.t(p.state === "running" ? "extras.ui.jobs.running" : "extras.ui.jobs.waiting", root.jobName(p)) + pct;
                     }
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    font.weight: Font.DemiBold
-                    color: Colors.overBackground
                 }
-                Text {
+                KitText {
                     id: more
                     visible: root.jobs.length > 1
+                    role: "secondary"
                     text: I18n.tn("extras.ui.jobs.more", root.jobs.length - 1)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
-                    color: Colors.overSurfaceVariant
                 }
             }
             ProgressTrack {
@@ -134,20 +131,17 @@ StyledRect {
         Row {
             visible: !root.current
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
-            Text {
+            spacing: Space.s
+            Icon {
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons.packageBox
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(2)
-                color: Colors.primary
+                icon: Icons.packageBox
+                role: "title"
+                tone: "secondary"
             }
-            Text {
+            KitText {
                 anchors.verticalCenter: parent.verticalCenter
+                role: "secondary"
                 text: I18n.tn("extras.ui.selected_n", root.ids.length)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
-                color: Colors.overSurfaceVariant
             }
         }
     }
@@ -155,9 +149,9 @@ StyledRect {
     Row {
         id: actions
         anchors.right: parent.right
-        anchors.rightMargin: 14
+        anchors.rightMargin: Space.m
         anchors.verticalCenter: parent.verticalCenter
-        spacing: 8
+        spacing: Space.s
         visible: root.ids.length > 0
 
         ExtrasButton {
@@ -169,9 +163,8 @@ StyledRect {
         ExtrasButton {
             objectName: "installButton"
             kind: "filled"
-            icon: "downloadSimple"
+            iconName: "downloadSimple"
             enabled: !ExtrasService.offline
-            implicitHeight: 38
             text: I18n.tn("extras.ui.install_n", root.ids.length) + (root.size !== "" ? "  ·  " + root.size : "")
             onClicked: root.install()
         }

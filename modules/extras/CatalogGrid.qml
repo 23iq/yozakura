@@ -5,9 +5,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
-import qs.config
 import "ExtrasModel.js" as ExtrasModel
-import "ExtrasUi.js" as Ui
 
 // The Apps & Extras catalog: category chips + search, then cards in a grid
 // that fits as many >= minCardWidth columns as the width allows. Settings
@@ -26,7 +24,7 @@ Column {
     property bool showSearch: root.mode === "settings"
     property bool showChips: true
     property int minCardWidth: 260
-    property int gap: 14
+    property int gap: Space.m
     // Chip filter ("" = every offered category)
     property string category: ""
     // Own headed sections instead of one per category (onboarding AI step):
@@ -67,7 +65,7 @@ Column {
         root.selected = ExtrasModel.toggled(root.selected, id);
     }
 
-    spacing: 22
+    spacing: Space.xl
     Component.onCompleted: ExtrasService.load()
 
     Connections {
@@ -88,8 +86,8 @@ Column {
         Flow {
             id: chips
             visible: root.showChips
-            width: parent.width - (root.showSearch ? search.width + 16 : 0)
-            spacing: 8
+            width: parent.width - (root.showSearch ? search.width + Space.l : 0)
+            spacing: Space.s
 
             Repeater {
                 model: [
@@ -100,58 +98,22 @@ Column {
                     }
                 ].concat(root.chipCategories)
 
-                delegate: Item {
+                delegate: Chip {
                     id: chip
                     required property var modelData
-                    readonly property bool on: root.category === chip.modelData.id
 
-                    width: chipRow.implicitWidth + 26
-                    height: 34
+                    icon: Icons[chip.modelData.icon] ?? ""
+                    text: I18n.t(chip.modelData.name)
+                    active: root.category === chip.modelData.id
                     activeFocusOnTab: true
                     Keys.onReturnPressed: root.category = chip.modelData.id
                     Keys.onSpacePressed: root.category = chip.modelData.id
                     Accessible.role: Accessible.RadioButton
-                    Accessible.checked: chip.on
+                    onClicked: root.category = chip.modelData.id
 
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: height / 2
-                        color: chip.on ? Ui.alpha(Colors.primary, chipArea.containsMouse ? 0.34 : 0.26) : Ui.alpha(Colors.overBackground, chipArea.containsMouse ? 0.1 : 0.05)
-                        border.width: chip.activeFocus ? 2 : 1
-                        border.color: chip.on ? Colors.primary : Ui.alpha(Colors.outline, 0.35)
-                        Behavior on color {
-                            enabled: Config.animDuration > 0
-                            ColorAnimation {
-                                duration: Motion.exit.duration
-                            }
-                        }
-                    }
-                    Row {
-                        id: chipRow
-                        anchors.centerIn: parent
-                        spacing: 6
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: Icons[chip.modelData.icon] ?? ""
-                            font.family: Icons.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            color: chip.on ? Colors.primary : Colors.overSurfaceVariant
-                        }
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: I18n.t(chip.modelData.name)
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-1)
-                            font.weight: chip.on ? Font.DemiBold : Font.Normal
-                            color: chip.on ? Colors.overBackground : Colors.overSurfaceVariant
-                        }
-                    }
-                    MouseArea {
-                        id: chipArea
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.category = chip.modelData.id
+                    FocusRing {
+                        shown: chip.activeFocus
+                        radius: chip.radius + Space.stroke
                     }
                 }
             }
@@ -178,65 +140,52 @@ Column {
             readonly property var sec: group.modelData.section ?? null
 
             width: root.width
-            spacing: 12
+            spacing: Space.m
 
             Row {
                 visible: !!group.cat
-                spacing: 8
-                Text {
+                spacing: Space.s
+                Icon {
                     anchors.verticalCenter: parent.verticalCenter
-                    text: group.cat ? (Icons[group.cat.icon] ?? "") : ""
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
-                    color: group.cat ? root.accentOf(group.cat.id) : Colors.primary
+                    icon: group.cat ? (Icons[group.cat.icon] ?? "") : ""
+                    color: group.cat ? root.accentOf(group.cat.id) : Type.muted
                 }
-                Text {
+                KitText {
                     anchors.verticalCenter: parent.verticalCenter
+                    role: "title"
                     text: group.cat ? I18n.t(group.cat.name) : ""
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(0)
-                    font.weight: Font.Bold
-                    color: Colors.overBackground
                 }
-                Text {
+                KitText {
                     anchors.verticalCenter: parent.verticalCenter
+                    role: "caption"
                     text: group.modelData.entries.length
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
                 }
             }
 
             Column {
                 visible: !!group.sec
                 width: parent.width
-                spacing: 3
+                spacing: Space.xs
                 Row {
-                    spacing: 8
-                    Text {
+                    spacing: Space.s
+                    Icon {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: group.sec ? (Icons[group.sec.icon] ?? "") : ""
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(1)
-                        color: Colors.primary
+                        icon: group.sec ? (Icons[group.sec.icon] ?? "") : ""
+                        role: "title"
+                        tone: "secondary"
                     }
-                    Text {
+                    KitText {
                         anchors.verticalCenter: parent.verticalCenter
+                        role: "title"
                         text: group.sec ? group.sec.title : ""
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(1)
-                        font.weight: Font.DemiBold
-                        color: Colors.overBackground
                     }
                 }
-                Text {
+                KitText {
                     visible: text !== ""
                     width: parent.width
+                    role: "secondary"
                     text: group.sec ? (group.sec.hint ?? "") : ""
                     wrapMode: Text.WordWrap
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
-                    color: Colors.overSurfaceVariant
                 }
             }
 
@@ -277,14 +226,12 @@ Column {
         }
     }
 
-    Text {
+    KitText {
         width: parent.width
         visible: root.entries.length === 0
-        topPadding: 30
+        topPadding: Space.xxl
         horizontalAlignment: Text.AlignHCenter
+        role: "secondary"
         text: !root.catalog ? I18n.t("extras.ui.loading") : I18n.t("extras.ui.empty", root.query)
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(0)
-        color: Colors.overSurfaceVariant
     }
 }

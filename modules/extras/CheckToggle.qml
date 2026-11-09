@@ -1,10 +1,9 @@
 import QtQuick
 import qs.modules.theme
-import qs.config
-import "ExtrasUi.js" as Ui
+import qs.modules.components.kit
 
 // Round selection check of a catalog card: an outlined ring that pops into
-// a filled accent disc with a check mark.
+// a filled accent disc (selected) with a check mark.
 Item {
     id: root
 
@@ -12,8 +11,8 @@ Item {
     property bool hovered: false
     signal toggled
 
-    implicitWidth: 26
-    implicitHeight: 26
+    implicitWidth: Space.chip - Space.xs
+    implicitHeight: Space.chip - Space.xs
     activeFocusOnTab: true
     Accessible.role: Accessible.CheckBox
     Accessible.checked: root.checked
@@ -22,47 +21,50 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
-        color: root.checked ? Colors.primary : (root.hovered ? Ui.alpha(Colors.primary, 0.12) : "transparent")
-        border.width: root.checked ? 0 : (root.activeFocus ? 2 : 1.5)
-        border.color: root.activeFocus ? Colors.primary : Ui.alpha(Colors.outline, root.hovered ? 0.9 : 0.6)
+        radius: Look.radius("round", height)
+        color: root.checked ? Type.accent : (root.hovered ? Look.alpha("primary", 0.12) : "transparent")
+        border.width: root.checked ? 0 : Space.stroke - 1
+        border.color: root.hovered ? Type.secondary : Type.muted
         scale: root.checked ? 1 : 0.92
 
         Behavior on color {
-            enabled: Config.animDuration > 0
+            enabled: Motion.micro.duration > 0
             ColorAnimation {
-                duration: Motion.exit.duration
+                duration: Motion.micro.duration
             }
         }
         Behavior on scale {
-            enabled: Config.animDuration > 0
+            enabled: Motion.spring.duration > 0
             NumberAnimation {
-                duration: Motion.morph.duration
-                easing.type: Motion.morph.easing
+                duration: Motion.spring.duration
+                easing.type: Motion.spring.easing
                 easing.overshoot: 3
             }
         }
 
-        Text {
+        Icon {
             anchors.centerIn: parent
-            text: Icons.check
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(0)
-            color: Colors.overPrimary
+            icon: Icons.check
+            tone: "accentInk"
             scale: root.checked ? 1 : 0
             Behavior on scale {
-                enabled: Config.animDuration > 0
+                enabled: Motion.spring.duration > 0
                 NumberAnimation {
-                    duration: Motion.morph.duration
-                    easing.type: Motion.morph.easing
+                    duration: Motion.spring.duration
+                    easing.type: Motion.spring.easing
                 }
             }
         }
     }
 
+    FocusRing {
+        shown: root.activeFocus
+        radius: Look.radius("round", root.height + Space.stroke * 2)
+    }
+
     MouseArea {
         anchors.fill: parent
-        anchors.margins: -6
+        anchors.margins: -Space.s
         cursorShape: Qt.PointingHandCursor
         onClicked: root.toggled()
     }
