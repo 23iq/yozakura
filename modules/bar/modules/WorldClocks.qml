@@ -4,6 +4,8 @@ import QtQuick
 import Quickshell.Io
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
+import qs.modules.bar.look
 import "WorldClock.js" as WorldClock
 
 // Clocks for other time zones (moduleOptions.worldClocks.zones:
@@ -19,7 +21,7 @@ BarModuleBase {
     property var offsets: ({})
     property real now: Date.now()
 
-    contentLength: vertical ? column.implicitHeight + 12 : row.implicitWidth + (flat ? 12 : 24)
+    contentLength: vertical ? column.implicitHeight + Space.m : row.implicitWidth + (flat ? Space.m : Space.xl)
     visible: zones.length > 0
 
     function timeFor(zone) {
@@ -78,31 +80,27 @@ BarModuleBase {
         id: row
         visible: !root.vertical
         anchors.centerIn: parent
-        spacing: 16
+        spacing: Space.l
         Repeater {
             model: root.zones
             delegate: Row {
                 id: entry
                 required property var modelData
-                spacing: 6
+                spacing: Space.xs
                 anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-                Text {
+                KitText {
                     anchors.baseline: time.baseline
+                    role: "caption"
                     text: entry.modelData.label
-                    font.family: Config.theme.font
-                    font.pixelSize: root.smallTextSize
                     color: surface.foreground
                     opacity: 0.65
                 }
-                Text {
+                KitText {
                     id: time
+                    role: BarLook.textRole(root.moduleSize)
+                    tabular: true
                     text: root.timeFor(entry.modelData.zone)
-                    font.family: Config.theme.font
-                    font.pixelSize: root.textSize
-                    font.weight: Font.Bold
-                    font.features: {
-                        "tnum": 1
-                    }
+                    font.weight: Look.activeLabelWeight
                     color: surface.foreground
                 }
             }
@@ -113,26 +111,25 @@ BarModuleBase {
         id: column
         visible: root.vertical
         anchors.centerIn: parent
-        spacing: 6
+        spacing: Space.xs
         Repeater {
             model: root.zones
             delegate: Column {
                 id: vEntry
                 required property var modelData
-                Text {
+                KitText {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: vEntry.modelData.label.slice(0, 3).toUpperCase()
-                    font.family: Config.theme.font
-                    font.pixelSize: root.smallTextSize - 1
+                    role: "label"
+                    text: vEntry.modelData.label.slice(0, 3)
                     color: surface.foreground
                     opacity: 0.65
                 }
-                Text {
+                KitText {
                     anchors.horizontalCenter: parent.horizontalCenter
+                    role: "caption"
+                    tabular: true
                     text: root.timeFor(vEntry.modelData.zone)
-                    font.family: Config.theme.font
-                    font.pixelSize: root.smallTextSize
-                    font.weight: Font.Bold
+                    font.weight: Look.activeLabelWeight
                     color: surface.foreground
                 }
             }

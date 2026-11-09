@@ -2,6 +2,8 @@ import QtQuick
 import qs.config
 import qs.modules.theme
 import qs.modules.services
+import qs.modules.components.kit
+import qs.modules.bar.look
 
 // Active keyboard layout (EN, RU...). Click switches to the next layout, the
 // wheel cycles. Hidden unless more than one layout is configured and
@@ -14,7 +16,7 @@ BarModuleBase {
     readonly property bool shown: KeyboardService.indicatorVisible
 
     visible: shown
-    contentLength: shown ? (vertical ? label.implicitHeight + 12 : row.implicitWidth + (flat ? 12 : 22)) : 0
+    contentLength: shown ? (vertical ? label.implicitHeight + Space.m : row.implicitWidth + (flat ? Space.m : Space.xl)) : 0
 
     BarModuleSurface {
         id: surface
@@ -48,35 +50,31 @@ BarModuleBase {
         id: row
         visible: !root.vertical
         anchors.centerIn: parent
-        spacing: 6
-        Text {
+        spacing: Space.xs
+        Icon {
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons.keyboard
-            font.family: Icons.font
-            font.pixelSize: root.iconSize
+            icon: Icons.keyboard
+            size: root.iconSize
             color: surface.foreground
             opacity: 0.8
         }
-        Text {
+        KitText {
             id: label
             objectName: "layoutLabel"
             anchors.verticalCenter: parent.verticalCenter
+            role: BarLook.textRole(root.moduleSize)
             text: KeyboardService.shortLabel
-            font.family: Config.theme.font
-            font.pixelSize: root.textSize
-            font.weight: Font.Bold
-            font.letterSpacing: 0.5
+            font.weight: Look.activeLabelWeight
             color: surface.foreground
         }
     }
 
-    Text {
+    KitText {
         visible: root.vertical
         anchors.centerIn: parent
+        role: "caption"
         text: KeyboardService.shortLabel
-        font.family: Config.theme.font
-        font.pixelSize: root.smallTextSize
-        font.weight: Font.Bold
+        font.weight: Look.activeLabelWeight
         color: surface.foreground
     }
 }
