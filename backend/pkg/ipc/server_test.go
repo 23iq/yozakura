@@ -65,3 +65,39 @@ func TestCloseKeepsSuccessorSocket(t *testing.T) {
 		t.Fatalf("owner Close must remove its socket, err=%v", err)
 	}
 }
+
+// A subscriber whose client went away (a crashed shell) stops at once,
+// not on the first event written to the dead stream (that event was lost).
+func TestSubscriberStopsWhenClientCloses(t *testing.T) {
+	sock := filepath.Join(t.TempDir(), "s.sock")
+	srv := NewServer(sock)
+	subs := make(chan *Subscriber, 1)
+	srv.Register(&Service{Name: "t", Subscribe: func(sub *Subscriber) {
+		subs <- sub
+		<-sub.StopCh()
+	}})
+	assert.NoError(t, srv.Listen())
+	defer srv.Close()
+	go srv.Serve()
+
+	conn, err := net.Dial("unix", sock)
+	assert.NoError(t, err)
+	_, _ = conn.Write([]byte(`{"id":1,"method":"subscribe","params":{"services":["t"]}}` + "\n"))
+	var sub *Subscriber
+	select {
+	case sub = <-subs:
+	case <-time.After(3 * time.Second):
+		t.Fatal("not subscribed")
+	}
+	select {
+	case <-sub.StopCh():
+		t.Fatal("stopped while the client is connected")
+	case <-time.After(50 * time.Millisecond):
+	}
+	_ = conn.Close()
+	select {
+	case <-sub.StopCh():
+	case <-time.After(3 * time.Second):
+		t.Fatal("subscriber still registered after its client closed")
+	}
+}

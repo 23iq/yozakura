@@ -3,6 +3,7 @@ package daemon
 import (
 	"encoding/json"
 	"errors"
+	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -27,6 +28,7 @@ type fakeShell struct {
 	kills    chan int
 	alerts   chan string
 	tick     chan time.Time
+	gone     bool // the compositor exited
 }
 
 func newFakeShell(t *testing.T) (*Daemon, *fakeShell) {
@@ -67,6 +69,11 @@ func newFakeShell(t *testing.T) (*Daemon, *fakeShell) {
 		pgid:          func(pid int) (int, error) { return pid, nil },
 		alert:         func(title, _ string) { f.alerts <- title },
 		fallbackShell: func() string { return "fallback.qml" },
+		sessionGone: func(bool) bool {
+			f.mu.Lock()
+			defer f.mu.Unlock()
+			return f.gone
+		},
 	}
 	return d, f
 }
@@ -246,5 +253,80 @@ func TestHeartbeatWithoutShellIsRefused(t *testing.T) {
 	out, err := d.heartbeat(json.RawMessage(`{"pid":5}`))
 	if err != nil || out.(map[string]any)["ok"] != false {
 		t.Fatalf("%v %v", out, err)
+	}
+}
+
+// At logout the shell exits with the compositor: the daemon must not
+// restart it (or linger holding the instance lock the next login's daemon
+// needs); it shuts down cleanly instead.
+func TestSuperviseStopsWhenSessionEnds(t *testing.T) {
+	d, f := newFakeShell(t)
+	if err := d.startQS("shell.qml"); err != nil {
+		t.Fatal(err)
+	}
+	_, res := runSupervise(d)
+	f.mu.Lock()
+	f.gone = true
+	f.mu.Unlock()
+	f.running() <- errors.New("wayland connection lost")
+	if err := waitResult(t, res); err != nil {
+		t.Fatalf("session end: %v", err)
+	}
+	select {
+	case <-f.delays:
+		t.Fatal("restarted a shell after the session ended")
+	default:
+	}
+}
+
+// A shell given up on (crash loop) leaves nothing to exit at logout; the
+// watchdog tick notices the compositor is gone.
+func TestSuperviseStopsAfterGiveUpWhenSessionEnds(t *testing.T) {
+	d, f := newFakeShell(t)
+	if err := d.startQS("shell.qml"); err != nil {
+		t.Fatal(err)
+	}
+	_, res := runSupervise(d)
+	for i := 0; i < CrashLoopMax; i++ {
+		f.running() <- errors.New("segfault")
+		_, fire := f.nextDelay()
+		fire <- f.now
+	}
+	f.running() <- errors.New("segfault")
+	<-f.alerts
+	f.mu.Lock()
+	f.gone = true
+	f.mu.Unlock()
+	f.tick <- f.now
+	if err := waitResult(t, res); err != nil {
+		t.Fatalf("session end: %v", err)
+	}
+}
+
+func TestWaylandGone(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("XDG_RUNTIME_DIR", dir)
+	t.Setenv("WAYLAND_DISPLAY", "")
+	if waylandGone(true) {
+		t.Fatal("no WAYLAND_DISPLAY: unknown, not gone")
+	}
+	t.Setenv("WAYLAND_DISPLAY", "wayland-9")
+	if !waylandGone(false) {
+		t.Fatal("missing socket file must mean gone")
+	}
+	ln, err := net.Listen("unix", filepath.Join(dir, "wayland-9"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if waylandGone(true) {
+		t.Fatal("a listening compositor is not gone")
+	}
+	ln.(*net.UnixListener).SetUnlinkOnClose(false)
+	_ = ln.Close()
+	if waylandGone(false) {
+		t.Fatal("without probing a stale socket file counts as alive")
+	}
+	if !waylandGone(true) {
+		t.Fatal("a stale socket (crashed compositor) must mean gone")
 	}
 }

@@ -142,3 +142,22 @@ func TestRunTerminalWithoutShellOpensItDirectly(t *testing.T) {
 		}
 	}
 }
+
+// A command only queued (no shell yet) succeeds but says so: a `lock`
+// that nothing received has not locked the screen.
+func TestRunUIReportsQueuedCommand(t *testing.T) {
+	f := &fakeUI{alive: true, answering: true, result: "queued"}
+	var errOut bytes.Buffer
+	if code := runUI("ui.run", "lockscreen", f.env(), &errOut); code != 0 {
+		t.Fatalf("exit %d", code)
+	}
+	if !bytes.Contains(errOut.Bytes(), []byte("queued")) {
+		t.Fatalf("no note for a queued command: %q", errOut.String())
+	}
+	errOut.Reset()
+	f = &fakeUI{alive: true, answering: true}
+	runUI("ui.run", "lockscreen", f.env(), &errOut)
+	if errOut.Len() != 0 {
+		t.Fatalf("delivered command printed %q", errOut.String())
+	}
+}

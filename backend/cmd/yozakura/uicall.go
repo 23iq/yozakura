@@ -71,7 +71,8 @@ func runUI(method, command string, env uiEnv, errOut io.Writer) int {
 	}
 	params := map[string]any{"command": command}
 	if env.alive() {
-		if _, err := env.call(method, params); err == nil {
+		if res, err := env.call(method, params); err == nil {
+			noteQueued(res, command, errOut)
 			return 0
 		}
 	}
@@ -81,8 +82,9 @@ func runUI(method, command string, env uiEnv, errOut io.Writer) int {
 	}
 	deadline := env.now().Add(uiStartWait)
 	for {
-		_, err := env.call(method, params)
+		res, err := env.call(method, params)
 		if err == nil {
+			noteQueued(res, command, errOut)
 			return 0
 		}
 		if !env.now().Before(deadline) {
@@ -129,4 +131,15 @@ func ensureDaemon(env uiEnv) error {
 		env.sleep(uiPoll)
 	}
 	return nil
+}
+
+// noteQueued tells the caller that no shell received the command yet (it
+// is restarting, or gave up after a crash loop): a `lock` that only got
+// queued has not locked anything.
+func noteQueued(res json.RawMessage, command string, errOut io.Writer) {
+	var status string
+	if json.Unmarshal(res, &status) == nil && status == svc.UIQueued {
+		fmt.Fprintf(errOut, "Note: the shell is not running; %q is queued for %v (run `%s reload` if it does not come back)\n",
+			command, svc.UIPendingTTL, brand.AppID)
+	}
 }

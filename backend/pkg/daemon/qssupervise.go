@@ -3,8 +3,10 @@ package daemon
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -31,6 +33,10 @@ type qsHooks struct {
 	alert func(title, body string)
 	// fallbackShell is the previous mod generation's shell.qml.
 	fallbackShell func() string
+	// sessionGone reports that the compositor is gone (the user logged
+	// out); probe also dials its socket, otherwise only the file is
+	// checked. nil: the session is assumed alive.
+	sessionGone func(probe bool) bool
 }
 
 // defaultQSHooks wires the real process handling for qsBin.
@@ -51,7 +57,49 @@ func (d *Daemon) defaultQSHooks(qsBin string) qsHooks {
 		pgid:          syscall.Getpgid,
 		alert:         alertUser,
 		fallbackShell: func() string { return filepath.Join(paths.FindShellSource(), "shell.qml") },
+		sessionGone:   waylandGone,
 	}
+}
+
+// waylandGone reports whether the Wayland compositor this daemon was
+// started for has exited: its socket file is gone or (probe) refuses a
+// connection. Without WAYLAND_DISPLAY nothing is known and it says no.
+func waylandGone(probe bool) bool {
+	sock := os.Getenv("WAYLAND_DISPLAY")
+	if sock == "" {
+		return false
+	}
+	if !filepath.IsAbs(sock) {
+		rt := os.Getenv("XDG_RUNTIME_DIR")
+		if rt == "" {
+			return false
+		}
+		sock = filepath.Join(rt, sock)
+	}
+	if _, err := os.Stat(sock); err != nil {
+		return os.IsNotExist(err)
+	}
+	if !probe {
+		return false
+	}
+	c, err := net.DialTimeout("unix", sock, time.Second)
+	if err != nil {
+		return errors.Is(err, syscall.ECONNREFUSED) || errors.Is(err, syscall.ENOENT)
+	}
+	_ = c.Close()
+	return false
+}
+
+// sessionEnded is true once the compositor is gone: the shell exits with
+// it and must not be restarted, and the daemon must not outlive the
+// session (the next login's daemon would find it holding the lock).
+func (d *Daemon) sessionEnded(probe bool) bool {
+	if d.hooks.sessionGone == nil || !d.hooks.sessionGone(probe) {
+		return false
+	}
+	log.Printf("[yozakura] the Wayland session ended; shutting down")
+	d.shutdown()
+	return true
 }
 
 // startQS starts the shell and arms supervision for it.
@@ -119,7 +167,9 @@ func (d *Daemon) scheduleRestart(cause error) <-chan time.Time {
 // supervise runs the shell until a shutdown request: it restarts a shell
 // that exits on its own (backoff, crash-loop guard), kills a frozen one,
 // and keeps the mod-activation rollback. It returns nil for a requested
-// shutdown and an error when the daemon has to exit because of the shell.
+// shutdown or the end of the Wayland session (the shell exits with the
+// compositor at logout) and an error when the daemon has to exit because
+// of the shell.
 func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-chan time.Time) error {
 	var restartCh <-chan time.Time
 	for {
@@ -138,6 +188,9 @@ func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-c
 			}
 			healthCh = nil
 		case <-d.hooks.tick:
+			if d.qsPid.Load() == 0 && d.sessionEnded(false) {
+				return nil
+			}
 			if pid := int(d.qsPid.Load()); pid > 0 && d.wd.expired(d.hooks.now()) {
 				log.Printf("[yozakura] qs sent no heartbeat for %v; killing the frozen shell", WatchdogTimeout)
 				d.wd.disarm()
@@ -145,11 +198,17 @@ func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-c
 			}
 		case <-restartCh:
 			restartCh = nil
+			if d.sessionEnded(true) {
+				return nil
+			}
 			if err := d.startQS(shellQML); err != nil {
 				restartCh = d.scheduleRestart(fmt.Errorf("spawn: %w", err))
 			}
 		case err := <-d.qsDone:
 			d.qsExited()
+			if d.sessionEnded(true) {
+				return nil
+			}
 			if healthCh != nil {
 				healthCh = nil
 				recovered, recoverErr := d.mods.RecoverFailedActivation()
