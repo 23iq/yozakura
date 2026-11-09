@@ -5,9 +5,9 @@ import QtQuick.Effects
 import Quickshell.Widgets
 import qs.modules.theme
 import qs.modules.globals
+import qs.modules.components.kit
 import qs.modules.settings.previews
 import "TermModel.js" as TermModel
-import "../settings/Ui.js" as Ui
 
 // A fake kitty window over your wallpaper: the terminal background at the
 // kitty opacity over the blurred wallpaper, your padding, font and cursor,
@@ -166,7 +166,7 @@ Item {
     ClippingRectangle {
         id: stage
         anchors.fill: parent
-        radius: Math.min(Styling.radius(2), 18)
+        radius: Look.radius("box")
         color: Colors.surfaceContainerLowest
 
         ScreenBackdrop {
@@ -183,9 +183,10 @@ Item {
             sourceSize.width: 1200
             visible: status === Image.Ready
         }
-        Rectangle {
+        Mark {
             anchors.fill: parent
-            color: Ui.alpha(Colors.background, 0.18)
+            radius: 0
+            color: Qt.alpha(Colors.background, 0.18)
         }
 
         RectangularShadow {
@@ -234,11 +235,12 @@ Item {
             anchors.fill: parent
             radius: 12
             color: "transparent"
-            border.width: 1
-            border.color: Ui.alpha(Colors.outlineVariant, 0.7)
+            border.width: Space.hairline
+            border.color: Qt.alpha(Colors.outlineVariant, 0.7)
 
-            Rectangle {
+            Mark {
                 anchors.fill: parent
+                radius: 0
                 color: Colors.background
                 opacity: root.backgroundOpacity
             }
@@ -248,31 +250,32 @@ Item {
                 width: parent.width
                 height: 30
 
-                Rectangle {
+                Mark {
                     anchors.fill: parent
-                    color: Ui.alpha(Colors.surfaceContainerHigh, 0.55)
+                    radius: 0
+                    color: Qt.alpha(Colors.surfaceContainerHigh, 0.55)
                 }
+                // kitty's window buttons
                 Row {
-                    x: 14
+                    x: Space.m
                     anchors.verticalCenter: parent.verticalCenter
-                    spacing: 7
+                    spacing: Space.s
                     Repeater {
                         model: [Colors.error, Colors.tertiary, Colors.green]
-                        delegate: Rectangle {
+                        delegate: Mark {
                             required property color modelData
-                            width: 11
-                            height: 11
-                            radius: 5.5
-                            color: Ui.alpha(modelData, 0.85)
+                            width: Space.m
+                            height: width
+                            color: Qt.alpha(modelData, 0.85)
                         }
                     }
                 }
-                Text {
+                KitText {
                     anchors.centerIn: parent
                     text: "fish  ~/" + Brand.appId
                     font.family: root.fontFamily
                     font.pixelSize: Math.max(10, root.shownPixelSize - 3)
-                    color: Ui.alpha(Colors.overSurfaceVariant, 0.9)
+                    color: Qt.alpha(Colors.overSurfaceVariant, 0.9)
                 }
             }
 
@@ -351,8 +354,9 @@ Item {
                                     lineHeight: root.lineHeight
                                     foreground: root.fg
                                 }
-                                Rectangle {
+                                Mark {
                                     id: cursor
+                                    radius: 0
                                     objectName: step.last ? "cursor" : ""
                                     visible: step.last
                                     x: inputLine.contentWidth
