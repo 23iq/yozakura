@@ -9,6 +9,7 @@ import qs.modules.components
 import qs.modules.bar as Bar
 import qs.modules.bar.panels
 import "DockSplit.js" as DockSplit
+import qs.modules.components.kit
 
 // "dock": a floating container detached from the edge, sized to its
 // content (align: center/start/end), groups packed in one row with a
@@ -92,7 +93,7 @@ PanelStyleBase {
     startReach: parted ? geo.startReach : 0
     endReach: parted ? geo.endReach : 0
 
-    readonly property real radius: Math.min(Styling.radius(10), dock.implicitThickness / 2)
+    readonly property real radius: Look.radius("round", dock.implicitThickness)
 
     // Start-side surface (the whole capsule while resting)
     StyledRect {

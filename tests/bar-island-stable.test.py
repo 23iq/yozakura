@@ -16,6 +16,7 @@ h.stub("IslandShape", "Item { property string edge; property real bodyLength; pr
        " property real fillet; property real bodyRadius; property bool startFlush; property bool endFlush;"
        " property real localHeight: 0; property real bodyOffset: 0 }")
 h.copy("modules/bar/clock/faces/Digital.qml", siblings=False)
+h.module("qs.modules.components.kit", {"KitText": "Text { property string role; property bool tabular }"})
 
 root = h.load("""
 import QtQuick

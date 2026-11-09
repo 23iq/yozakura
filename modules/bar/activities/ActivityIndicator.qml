@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Widgets
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 
 // Leading visual of an activity island, `size` x `size`:
 //   "dot"   pulsing accent dot (recording)
@@ -92,12 +93,11 @@ Item {
         asynchronous: true
     }
 
-    Text {
+    Icon {
         anchors.centerIn: parent
         visible: indicator.kind !== "dot" && !indicator.hasImage
-        text: indicator.icon
-        font.family: Icons.font
-        font.pixelSize: indicator.kind === "ring" ? Math.round(indicator.box * 0.52) : indicator.size
+        icon: indicator.icon
+        size: indicator.kind === "ring" ? Math.round(indicator.box * 0.52) : indicator.size
         color: indicator.accent
     }
 }

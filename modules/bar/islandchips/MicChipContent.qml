@@ -31,21 +31,20 @@ Item {
         anchors.centerIn: parent
         spacing: Space.xs
 
-        Text {
+        Icon {
             objectName: "micGlyph"
             anchors.verticalCenter: parent.verticalCenter
-            text: root.muted ? Icons.micSlash : Icons.mic
-            font.family: Icons.font
-            font.pixelSize: root.glyphSize
+            icon: root.muted ? Icons.micSlash : Icons.mic
+            size: root.glyphSize
             // Muted is a warning state: the palette's error role
-            color: root.muted ? Colors.error : root.ink
+            color: root.muted ? Type.danger : root.ink
         }
-        Text {
+        // The host's text size and font (island / bar module).
+        KitText {
             objectName: "micLabel"
             anchors.verticalCenter: parent.verticalCenter
             visible: root.labelShown
             text: I18n.t(root.muted ? "bar.mic.muted" : "bar.mic.live")
-            textFormat: Text.PlainText
             font.family: root.textFont
             font.pixelSize: root.textSize
             font.weight: root.textWeight

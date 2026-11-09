@@ -30,6 +30,11 @@ h.module("qs.modules.components", {
     "StyledToolTip": "Item { property string tooltipText; property bool show }",
 })
 h.module("Quickshell.Widgets", {"IconImage": "Image { property real implicitSize }"})
+h.module("qs.modules.components.kit", {
+    "KitText": "Text { property string role; property bool tabular }",
+    "Icon": "Text { property string icon; property string role; property string tone; property int size; text: icon }",
+    "Look": "pragma Singleton\nQtObject { property int activeLabelWeight: Font.Medium }",
+})
 h.singleton("qs.modules.services.activities", "ActivityService", """QtObject {
     property var activities: []
     property int maxVisible: 4

@@ -1,10 +1,12 @@
+import qs.modules.components.kit
+
 // "ribbon": an information band (weather, world clocks, system stats) with
 // hairline dividers between modules and along its inner edge.
 
 PanelStrip {
     crossPadding: 3
     endPadding: 14
-    spacing: 8
+    spacing: Space.s
     separator: "line"
     hairline: true
 }

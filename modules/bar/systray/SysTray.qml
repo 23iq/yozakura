@@ -207,11 +207,10 @@ Item {
             }
         }
 
-        Text {
+        Icon {
             anchors.centerIn: parent
-            text: chevron.tray.chevronIcon
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("caption")
+            icon: chevron.tray.chevronIcon
+            role: "caption"
             color: chevron.hot ? Type.accent : Type.secondary
             rotation: overflowPopup.isOpen ? 180 : 0
 

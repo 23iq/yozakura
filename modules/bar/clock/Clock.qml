@@ -79,8 +79,10 @@ Item {
             rowSpacing: Metrics.spacing / 2
             columnSpacing: Metrics.spacing
 
-            Text {
+            // The weekday, or the weather glyph (icon font) / emoji.
+            KitText {
                 id: lead
+                elide: Text.ElideNone
                 visible: root.vertical || root.weatherAvailable || !root.showDate
                 Layout.alignment: Qt.AlignCenter
                 // The weather as an icon-font glyph in the module ink: a colour
@@ -125,17 +127,14 @@ Item {
                 text: "· " + root.dayAbbrev + " 00"
             }
 
-            Text {
+            KitText {
                 visible: root.showDate && !root.vertical
                 Layout.alignment: Qt.AlignCenter
+                role: BarLook.textRole(root.moduleSize)
+                tabular: true
                 text: "· " + root.dayAbbrev + " " + root.now.getDate()
                 color: root.fg
-                font.pixelSize: root.textSize
-                font.family: BarLook.textFont
                 font.weight: BarLook.textWeight
-                font.features: {
-                    "tnum": 1
-                }
                 // Reserve two-digit day width so 9 -> 10 does not resize the island.
                 Layout.minimumWidth: Math.ceil(dateMetrics.advanceWidth)
             }

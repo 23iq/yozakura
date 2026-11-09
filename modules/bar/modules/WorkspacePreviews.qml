@@ -105,7 +105,7 @@ BarModuleBase {
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.margins: -2
+                    anchors.margins: -Space.hairline * 2
                     radius: Look.radius("small", height) + 2
                     color: "transparent"
                     border.width: 2

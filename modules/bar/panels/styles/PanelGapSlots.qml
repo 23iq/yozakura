@@ -5,6 +5,7 @@ import QtQuick.Layouts
 import qs.config
 import qs.modules.services
 import qs.modules.bar as Bar
+import qs.modules.components.kit
 
 // Gap slots: `gapStart` / `gapEnd` modules floating flat (no background) in
 // the free spans between the end groups and the middle (center group or the
@@ -60,8 +61,8 @@ Item {
 
             visible: ids.length > 0 && span >= natural
             flow: gaps.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-            rowSpacing: 6
-            columnSpacing: 6
+            rowSpacing: Space.s
+            columnSpacing: Space.s
             x: gaps.vertical ? Math.round((gaps.width - implicitWidth) / 2) : Math.round(modelData.from + (span - implicitWidth) / 2)
             y: gaps.vertical ? Math.round(modelData.from + (span - implicitHeight) / 2) : Math.round((gaps.height - implicitHeight) / 2)
 

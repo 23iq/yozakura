@@ -85,11 +85,10 @@ Item {
             hovered: root.isHovered
         }
 
-        Text {
+        Icon {
             anchors.centerIn: parent
-            text: root.getLayoutIcon(GlobalStates.compositorLayout)
-            font.family: Icons.font
-            font.pixelSize: BarLook.iconSize(root.moduleSize)
+            icon: root.getLayoutIcon(GlobalStates.compositorLayout)
+            size: BarLook.iconSize(root.moduleSize)
             color: box.ink
         }
 
@@ -132,10 +131,8 @@ Item {
                     implicitHeight: Space.controlM
                     title: root.getLayoutDisplayName(layoutRow.modelData)
                     selected: GlobalStates.compositorLayout === layoutRow.modelData
-                    leading: Text {
-                        text: root.getLayoutIcon(layoutRow.modelData)
-                        font.family: Icons.font
-                        font.pixelSize: Type.iconSize("body")
+                    leading: Icon {
+                        icon: root.getLayoutIcon(layoutRow.modelData)
                         color: layoutRow.selected ? Type.accent : Type.secondary
                     }
                     onClicked: GlobalStates.setCompositorLayout(layoutRow.modelData)

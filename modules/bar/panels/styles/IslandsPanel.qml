@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import qs.modules.bar as Bar
 import qs.modules.bar.panels
+import qs.modules.components.kit
 
 // "islands": each group is its own notch-like tab hanging from the frame;
 // no continuous strip behind them. Start and end tabs merge with the side
@@ -40,8 +41,8 @@ PanelStyleBase {
             width: islands.vertical ? parent.width : implicitWidth
             height: islands.vertical ? implicitHeight : parent.height
             flow: islands.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-            rowSpacing: 4
-            columnSpacing: 4
+            rowSpacing: Space.xs
+            columnSpacing: Space.xs
 
             Bar.BarModuleGroup {
                 barRoot: islands.b
@@ -70,8 +71,8 @@ PanelStyleBase {
             width: islands.vertical ? parent.width : implicitWidth
             height: islands.vertical ? implicitHeight : parent.height
             flow: islands.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-            rowSpacing: 4
-            columnSpacing: 4
+            rowSpacing: Space.xs
+            columnSpacing: Space.xs
 
             Bar.BarModuleGroup {
                 barRoot: islands.b
@@ -119,8 +120,8 @@ PanelStyleBase {
 
             GridLayout {
                 flow: islands.vertical ? GridLayout.TopToBottom : GridLayout.LeftToRight
-                rowSpacing: 4
-                columnSpacing: 4
+                rowSpacing: Space.xs
+                columnSpacing: Space.xs
                 Layout.fillWidth: islands.vertical
                 Layout.fillHeight: !islands.vertical
 

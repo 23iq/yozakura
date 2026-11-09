@@ -62,11 +62,10 @@ Item {
             hovered: root.isHovered
         }
 
-        Text {
+        Icon {
             anchors.centerIn: parent
-            text: Icons.faders
-            font.family: Icons.font
-            font.pixelSize: BarLook.iconSize(root.moduleSize)
+            icon: Icons.faders
+            size: BarLook.iconSize(root.moduleSize)
             color: box.ink
             opacity: 1 - inlineOsd.opacity
         }

@@ -43,7 +43,7 @@ Button {
     background: Item {
         Rectangle {
             anchors.fill: parent
-            radius: Styling.radius(-3)
+            radius: Look.radius("control", height)
             color: root.appIsActive ? Styling.srItem("overprimary") : (root.hovered || root.pressed) ? Qt.rgba(Styling.srItem("overprimary").r, Styling.srItem("overprimary").g, Styling.srItem("overprimary").b, 0.15) : "transparent"
             opacity: root.pressed ? 1 : (root.appIsActive ? 0.3 : 0.7)
 
