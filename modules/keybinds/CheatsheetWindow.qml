@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.globals
 import qs.config
 import qs.modules.keybinds
+import qs.modules.components
 import qs.modules.components.kit
 
 // Full-screen keybind cheatsheet on one screen (layout.cheatsheet.host
@@ -30,7 +31,18 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: Brand.namespace("keybinds")
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    // Latched (SurfaceLatch): on close the search field lets go of the input
+    // method before keyboard focus drops, and the surface unmaps at least a
+    // frame later (Cheatsheet keeps the window for the closing animation).
+    WlrLayershell.keyboardFocus: latch.keyboard ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    visible: latch.shown
+
+    SurfaceLatch {
+        id: latch
+        active: root.open
+        holdMs: Config.animDuration
+        focusHost: root.contentItem
+    }
     mask: Region {
         item: root.open ? scrim : emptyMask
     }

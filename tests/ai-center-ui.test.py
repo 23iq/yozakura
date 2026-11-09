@@ -253,6 +253,7 @@ Item {
             property string text: "%(SEL)s"
             property string screenName: ""
             property point cursor: Qt.point(560, 238)
+            property bool visible: true
             property bool working: false
             property string workingLabel: ""
             property string error: ""

@@ -40,4 +40,9 @@ test('WeatherService retries through the backoff and resets on network changes',
     const onLocation = qml.slice(qml.indexOf('onConfigLocationChanged'), qml.indexOf('onConfigUnitChanged'));
     assert.match(onLocation, /retryCount = 0;\s*retryTimer\.stop\(\);/, 'a new location keeps the old backoff');
     assert.doesNotMatch(qml, /interval: 3000\n\s*repeat: false\n\s*onTriggered: root\.updateWeather\(\)/, 'fixed 3 s retry is back');
+    // Backoff retries while failed keep the failure shown: no spinner flicker.
+    const update = qml.slice(qml.indexOf('function updateWeather()'));
+    const body = update.slice(0, update.indexOf('\n    }\n'));
+    assert.match(body, /if \(root\.retryCount === 0\)\s*root\.hasFailed = false;[\s\S]*if \(!root\.hasFailed\)\s*root\.isLoading = true;/, 'a failed retry sets isLoading');
+    assert.doesNotMatch(body.replace(/if \(!root\.hasFailed\)\s*root\.isLoading = true;/, ''), /isLoading = true/, 'isLoading set unguarded');
 });

@@ -113,6 +113,15 @@ h.eval(keep, "keepFor = 1000; allowed = false; wanted = true")
 assert not ev(keep, "active")
 h.eval(keep, "allowed = true")
 assert ev(keep, "active")
+# Suspended while kept alive hidden: nothing is kept, so resuming does not
+# rebuild the window hidden just to keep it.
+pump(200)
+h.eval(keep, "wanted = false")
+assert ev(keep, "kept") and ev(keep, "active")
+h.eval(keep, "allowed = false")
+assert not ev(keep, "active") and not ev(keep, "kept")
+h.eval(keep, "allowed = true")
+assert not ev(keep, "active"), "resume rebuilt a window nobody wants"
 
 print("lazy loaders: ok")
 h.exit(0)
