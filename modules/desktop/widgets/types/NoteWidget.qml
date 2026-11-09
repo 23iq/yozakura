@@ -1,6 +1,7 @@
 import QtQuick
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.desktop.widgets
 
 // Sticky note: free text kept in the widget's options (desktop.json, so it
@@ -76,11 +77,12 @@ DesktopWidget {
                     flick.contentY = cursorRectangle.y;
             }
 
-            Text {
+            KitText {
                 visible: editor.text === ""
                 width: parent.width
                 text: I18n.t("desktop.widgets.note.placeholder")
                 wrapMode: Text.WordWrap
+                elide: Text.ElideNone
                 font: editor.font
                 color: root.inkSoft
             }

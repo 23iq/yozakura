@@ -1,8 +1,11 @@
 import QtQuick
 import qs.modules.theme
-import qs.config
+import qs.modules.components.kit
 
-// Round icon button used inside desktop widgets and their edit chrome.
+// Icon button of the desktop widget types: like the kit IconButton, but
+// sized by the widget's scale (`size` in pixels) and drawn in the widget's
+// ink (the surface's item colour); round, or the control radius in square
+// languages.
 Item {
     id: root
 
@@ -27,29 +30,28 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: width / 2
+        radius: Look.buttonRadius(height)
         color: area.containsMouse || root.activeFocus ? root.hoverFill : root.fill
         scale: area.pressed ? 0.92 : 1
         Behavior on color {
-            enabled: Config.animDuration > 0
+            enabled: Motion.micro.duration > 0
             ColorAnimation {
-                duration: Motion.exit.duration
+                duration: Motion.micro.duration
             }
         }
         Behavior on scale {
-            enabled: Config.animDuration > 0
+            enabled: Motion.spring.duration > 0
             NumberAnimation {
-                duration: Motion.exit.duration
-                easing.type: Motion.morph.easing
+                duration: Motion.spring.duration
+                easing.type: Motion.spring.easing
             }
         }
     }
 
-    Text {
+    Icon {
         anchors.centerIn: parent
-        text: Icons[root.icon] ?? root.icon
-        font.family: Icons.font
-        font.pixelSize: Math.round(root.size * root.iconScale)
+        icon: Icons[root.icon] ?? root.icon
+        size: Math.round(root.size * root.iconScale)
         color: root.ink
     }
 

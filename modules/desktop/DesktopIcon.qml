@@ -8,6 +8,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import qs.modules.globals
+import qs.modules.components.kit
 
 Item {
     id: root
@@ -52,20 +53,22 @@ Item {
     signal contextMenuRequested
 
     width: Config.desktop.iconSize * 1.5
+    // Desktop.qml / DepthClock.qml lay the grid out with the same + 40.
     height: Config.desktop.iconSize + 40
 
+    // Hover box: the language's raised control fill (a soft ink wash where
+    // controls are ghosts).
     Rectangle {
         id: background
         anchors.fill: root
-        color: Styling.srItem("overprimary")
-        radius: Styling.radius(0)
-        opacity: hoverHandler.hovered ? 0.25 : 0.0
+        color: Look.raisedFill(true)
+        radius: Look.radius("control")
+        opacity: hoverHandler.hovered ? 1 : 0
 
-        Behavior on color {
-            enabled: Config.animDuration > 0
-            ColorAnimation {
-                duration: Motion.exit.duration
-                easing.type: Motion.morph.easing
+        Behavior on opacity {
+            enabled: Motion.micro.duration > 0
+            NumberAnimation {
+                duration: Motion.micro.duration
             }
         }
     }
@@ -102,8 +105,8 @@ Item {
     ColumnLayout {
         id: contentLayout
         anchors.fill: root
-        anchors.margins: 8
-        spacing: 4
+        anchors.margins: Space.s
+        spacing: Space.xs
         layer.enabled: true
         layer.effect: Shadow {}
 
@@ -113,25 +116,32 @@ Item {
             Layout.preferredHeight: Config.desktop.iconSize
 
             Loader {
+                id: iconLoader
                 anchors.centerIn: parent
                 width: Config.desktop.iconSize
                 height: Config.desktop.iconSize
                 sourceComponent: Config.tintIcons && !root.hasThumbnail ? tintedIconComponent : normalIconComponent
             }
+
+            // Fallback glyph when the (untinted) icon image fails to load.
+            Icon {
+                anchors.centerIn: parent
+                visible: (iconLoader.item as Image)?.status === Image.Error
+                icon: root.itemType === 'folder' ? Icons.folder : Icons.file
+                size: Config.desktop.iconSize / 2
+                tone: "secondary"
+            }
         }
 
-        Text {
+        KitText {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             text: root.itemName
             color: Config.resolveColor(Config.desktop.textColor)
-            font.family: Config.defaultFont
-            font.pixelSize: Styling.fontSize(0)
-            font.weight: Font.Bold
+            font.weight: Look.activeLabelWeight
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             maximumLineCount: 2
-            elide: Text.ElideRight
         }
     }
 
@@ -158,21 +168,6 @@ Item {
                 } else if (status === Image.Error && root.hasThumbnail) {
                     thumbnailExists = false;
                     source = "image://icon/" + root.itemIcon;
-                }
-            }
-
-            Rectangle {
-                anchors.fill: parent
-                color: "transparent"
-                border.color: Colors.outline
-                border.width: parent.status === Image.Error ? 1 : 0
-                radius: 4
-
-                Text {
-                    anchors.centerIn: parent
-                    text: root.itemType === 'folder' ? "📁" : "📄"
-                    visible: parent.parent.status === Image.Error
-                    font.pixelSize: Config.desktop.iconSize / 2
                 }
             }
         }

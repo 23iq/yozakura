@@ -2,6 +2,7 @@ import QtQuick
 import Quickshell.Widgets
 import qs.modules.services
 import qs.modules.theme
+import qs.modules.components.kit
 import qs.modules.desktop.widgets
 import qs.modules.widgets.defaultview
 
@@ -23,7 +24,7 @@ DesktopWidget {
         y: root.pad
         width: root.artSize
         height: root.artSize
-        radius: Math.min(Styling.radius(0), width / 4)
+        radius: Math.min(Look.radius("control"), width / 4)
         color: root.inkFaint
 
         Image {
@@ -45,19 +46,19 @@ DesktopWidget {
         y: root.pad
         spacing: Math.round(2 * root.k)
 
-        Text {
+        // Kit roles at the widget's scale (root.px) in the surface's ink.
+        KitText {
             width: parent.width
+            role: "title"
             text: root.hasPlayer ? (root.player.trackTitle || I18n.t("player.unknown_player")) : I18n.t("player.nothing_playing")
-            elide: Text.ElideRight
             font.family: root.font
             font.pixelSize: root.px(2)
-            font.weight: Font.DemiBold
             color: root.ink
         }
-        Text {
+        KitText {
             width: parent.width
+            role: "secondary"
             text: root.hasPlayer ? (root.player.trackArtist ?? "") : I18n.t("desktop.widgets.media.idle")
-            elide: Text.ElideRight
             font.family: root.font
             font.pixelSize: root.px(-1)
             color: root.inkSoft
