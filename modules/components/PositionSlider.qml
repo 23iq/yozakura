@@ -19,9 +19,17 @@ LineSlider {
     playing: root.isPlaying
     wheelEnabled: false
 
+    // The dragged fraction, kept apart from `value` (the Binding below puts
+    // the player position back into it on release).
+    property real dragged: -1
+
+    onMoved: v => root.dragged = v
     onPressedChanged: {
-        if (!root.pressed && root.player && root.player.canSeek && root.length > 0)
-            root.player.position = root.value * root.length;
+        if (root.pressed)
+            return;
+        if (root.dragged >= 0 && root.player && root.player.canSeek && root.length > 0)
+            root.player.position = root.dragged * root.length;
+        root.dragged = -1;
     }
 
     Binding {

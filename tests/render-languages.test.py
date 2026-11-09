@@ -1,5 +1,6 @@
 """Render tools cover every visual language: the shared list comes from
 VisualLanguage.js and the sweep renders each sheet in each language."""
+import re
 import sys
 from pathlib import Path
 
@@ -23,7 +24,14 @@ for name, argv in plan.items():
         assert all(lang in joined for lang in langs), (name, argv)
 
 # Tools with their own default list read it from languages.py, not a literal
-for tool in ("island_render.py", "branch_render.py", "activitychip_render.py", "barchips_render.py"):
+for tool in ("island_render.py", "branch_render.py", "activitychip_render.py", "barchips_render.py",
+             "strips_render.py", "sentence_render.py", "presetstatus_render.py", "weatherfx_render.py",
+             "cardhost_render.py", "lighting_render.py"):
     src = (REPO / "tools" / "render" / tool).read_text()
     assert "from languages import LANGUAGES" in src and 'default="ink,glass,tiles"' not in src, tool
+# ... and no render tool keeps a literal list of languages as its default.
+LITERAL = re.compile(r"""(default=|or |choices=)\[?["']ink(["'], |,)""")
+for tool in sorted((REPO / "tools" / "render").glob("*.py")):
+    for n, line in enumerate(tool.read_text().splitlines(), 1):
+        assert not LITERAL.search(line), f"{tool.name}:{n}: a literal language list ({line.strip()})"
 print("render languages: every tool and the sweep cover all five languages")

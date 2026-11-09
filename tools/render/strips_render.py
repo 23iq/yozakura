@@ -2,7 +2,7 @@
 """Render the "strips" notification presentation offscreen (private Xvfb, never the live desktop).
 
     tools/render/strips_render.py [--out DIR] [--palette default|green ...]
-                                  [--language ink|glass|tiles|classic ...]
+                                  [--language ink|glass|tiles|classic|device ...]
                                   [--scene NAME ...] [--no-sway]
 
 Draws modules/notifications/strips/StripsView.qml (real strips, kit and
@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import lighting_render as lit  # noqa: E402  (enters the private Xvfb)
 
 from kit_env import KitEnv  # noqa: E402
+from languages import LANGUAGES  # noqa: E402  (every visual language, VisualLanguage.js)
 from PySide6.QtTest import QTest  # noqa: E402
 
 REPO = lit.REPO
@@ -219,14 +220,14 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--out", default=str(REPO / ".cache" / "render"))
     ap.add_argument("--palette", action="append", choices=["default", "green"])
-    ap.add_argument("--language", action="append", choices=["ink", "glass", "tiles", "classic"])
+    ap.add_argument("--language", action="append", choices=LANGUAGES)
     ap.add_argument("--scene", action="append", choices=list(SCENES))
     ap.add_argument("--no-sway", action="store_true")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     for pal in args.palette or ["default", "green"]:
-        grid = [render(out, pal, lang, args.scene or list(SCENES)) for lang in args.language or ["ink", "glass", "tiles"]]
+        grid = [render(out, pal, lang, args.scene or list(SCENES)) for lang in args.language or LANGUAGES]
         contact(out, pal, grid)
         if not args.no_sway:
             sway(out, pal, (args.language or ["ink"])[0])

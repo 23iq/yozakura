@@ -141,6 +141,7 @@ RowLayout {
             objectName: "taskModel"
             visible: !root.chat && root.single.length > 0 && ((root.catalog.models || []).length > 0 || root.catalog.loading === true)
             text: root.modelLabel
+            maxLabelWidth: 220
             trailingIcon: Icons.caretDown
             quiet: true
             onClicked: modelMenu.open()

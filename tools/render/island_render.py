@@ -2,7 +2,7 @@
 """Render the island (notch) offscreen (private Xvfb, never the live desktop).
 
     tools/render/island_render.py [--out DIR] [--mode dark|light]
-                                  [--styles attached,island,pill] [--languages ink,glass,tiles]
+                                  [--styles attached,island,pill] [--languages ink,glass,tiles,classic,device]
                                   [--no-left] [STATE ...]
 
 Uses tests/lib/island_env.py (real Notch, DefaultView, panels and notch

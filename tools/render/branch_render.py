@@ -5,7 +5,7 @@ live desktop) in the real bar.
     tools/render/branch_render.py [--out DIR] [--only TEXT] [--mode dark|light|both]
                                   [--blossom sakura|plum|round|leaf] [--role primary|...]
 
-One sheet per bar edge (top, left) x language (ink, glass, tiles) x palette
+One sheet per bar edge (top, left) x language (every one of VisualLanguage.js) x palette
 (default, green from matugen): <out>/branch-<edge>-<language>-<palette>[-light].png,
 each with the workspace states side by side: 1, 3 and 7 workspaces (mixed
 window counts, the active one open), an urgent workspace and a petal
