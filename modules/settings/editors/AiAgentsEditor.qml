@@ -8,6 +8,7 @@ import qs.config
 import qs.modules.aicenter.common
 import qs.modules.settings.store
 import "../../services/ai/EffortPrefs.js" as EffortPrefs
+import qs.modules.components.kit
 
 // CLI agents (own login, no API keys): availability, binary, model, YOLO,
 // and the shared "safe auto, ask the rest" policy.
@@ -16,7 +17,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 10
+    spacing: Space.m
 
     readonly property var ids: ["claude", "codex", "opencode"]
     readonly property var labels: ({
@@ -55,7 +56,7 @@ ColumnLayout {
                 Ai.agents.refreshModels(modelData, "")
             Layout.fillWidth: true
             variant: "common"
-            radius: Styling.radius(-2)
+            radius: Look.radius("control")
             implicitHeight: agentCol.implicitHeight + 20
 
             ColumnLayout {
@@ -63,29 +64,27 @@ ColumnLayout {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 10
-                spacing: 8
+                anchors.margins: Space.m
+                spacing: Space.s
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: Space.s
                     StatusDot {
                         status: card.meta && card.meta.available ? "idle" : "exited"
                     }
-                    Text {
+                    KitText {
                         text: root.labels[card.modelData]
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(0)
                         font.weight: Font.DemiBold
                         color: Colors.overSurface
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         Layout.fillWidth: true
                         text: card.meta ? (card.meta.available ? (card.meta.version || card.meta.binary) : I18n.t("ai.not_installed")) : "…"
                         elide: Text.ElideRight
                         font.family: Config.theme.monoFont
                         font.pixelSize: Styling.monoFontSize(-3)
-                        color: Colors.outline
                     }
                 }
                 AiToggleRow {
@@ -135,13 +134,11 @@ ColumnLayout {
                     mono: true
                     onEdited: t => root.setAgent(card.modelData, "effort", t.trim())
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("ai.perm_note_" + card.modelData)
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
-                    color: Colors.outline
                 }
             }
         }

@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import qs.modules.theme
 import qs.config
 import "../controls"
+import qs.modules.components.kit
 
 // Label + switch for the AI editors (settings v2 controls).
 RowLayout {
@@ -13,15 +14,14 @@ RowLayout {
     signal toggled(bool value)
 
     Layout.fillWidth: true
-    spacing: 8
+    spacing: Space.s
 
-    Text {
+    KitText {
+        role: "secondary"
         visible: root.label.length > 0
         Layout.fillWidth: true
         text: root.label
         wrapMode: Text.Wrap
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-1)
         color: Colors.overBackground
     }
     ToggleControl {

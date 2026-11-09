@@ -36,7 +36,7 @@ StyledRect {
 
     objectName: "routineStep:" + stepIndex
     variant: "internalbg"
-    radius: Styling.radius(-3)
+    radius: Look.radius("control")
     implicitHeight: body.implicitHeight + 20
 
     ColumnLayout {
@@ -44,33 +44,32 @@ StyledRect {
         x: 10
         y: 10
         width: parent.width - 20
-        spacing: 8
+        spacing: Space.s
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: Space.s
 
             StyledRect {
                 Layout.preferredWidth: 24
                 Layout.preferredHeight: 24
                 radius: 12
                 variant: root.status === "failed" || root.problem !== "" ? "error" : (root.status === "ok" ? "primary" : "common")
-                Text {
+                KitText {
+                    role: "caption"
                     anchors.centerIn: parent
                     text: root.status === "ok" ? Icons.accept : (root.status === "failed" ? Icons.cancel : String(root.stepIndex + 1))
                     font.family: root.status === "ok" || root.status === "failed" ? Icons.font : Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     font.weight: Font.DemiBold
                     color: parent.item
                 }
             }
-            Text {
+            KitText {
                 objectName: "stepSummary"
+                role: "secondary"
                 Layout.fillWidth: true
                 text: root.summary !== "" ? root.summary : I18n.t("routines.kind." + root.kind)
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.DemiBold
                 color: Colors.overSurface
                 MouseArea {
@@ -79,13 +78,12 @@ StyledRect {
                     onClicked: root.folded = !root.folded
                 }
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 visible: root.problem !== ""
                 text: root.problem !== "" ? I18n.t(root.problem) : ""
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 color: Colors.error
             }
             IconButton {
@@ -138,7 +136,7 @@ StyledRect {
         RowLayout {
             visible: root.kind === "delay" && !root.folded
             Layout.fillWidth: true
-            spacing: 10
+            spacing: Space.m
             NumberControl {
                 objectName: "delaySeconds"
                 value: (root.step.ms || 0) / 1000
@@ -150,13 +148,11 @@ StyledRect {
                         "ms": Math.round(v * 1000)
                     })
             }
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: I18n.t("routines.delay_hint")
                 wrapMode: Text.WordWrap
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
-                color: Colors.outline
             }
         }
     }

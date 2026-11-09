@@ -5,6 +5,7 @@ import qs.modules.components
 import qs.config
 import qs.modules.settings
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Connection status of one app to the generated theme (AppHooksService):
 // "Connected" chip, "Connect" button, "Restart X to apply" notice, "Managed
@@ -81,20 +82,18 @@ Item {
         Row {
             id: chipRow
             anchors.centerIn: parent
-            spacing: 6
-            Text {
+            spacing: Space.s
+            Icon {
+                role: "secondary"
                 anchors.verticalCenter: parent.verticalCenter
-                text: Icons[root.chipIcon] ?? ""
-                font.family: Icons.font
-                font.pixelSize: Styling.fontSize(-1)
+                icon: Icons[root.chipIcon] ?? ""
                 color: root.accent
             }
-            Text {
+            KitText {
                 objectName: "hookChipText"
+                role: "caption"
                 anchors.verticalCenter: parent.verticalCenter
                 text: root.chipText
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.DemiBold
                 color: root.accent
             }

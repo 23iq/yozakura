@@ -8,6 +8,7 @@ import qs.modules.globals
 import qs.modules.settings.controls
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Live glass over a slice of the real wallpaper: a popup and a notch pill
 // drawn with the real StyledRect (glass opacity, tint, highlight) over the
@@ -59,21 +60,18 @@ PreviewStage {
             height: 30
             x: (scene.width - width) / 2
             y: 0
-            radius: Styling.radius(4)
+            radius: Look.radius("box")
 
             Row {
                 anchors.centerIn: parent
-                spacing: 8
-                Text {
-                    text: Icons.clock
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
+                spacing: Space.s
+                Icon {
+                    icon: Icons.clock
                     color: Styling.srItem("bg")
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     text: "21:30"
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     font.weight: Font.DemiBold
                     color: Styling.srItem("bg")
                 }
@@ -94,37 +92,34 @@ PreviewStage {
                 x: 16
                 y: 14
                 width: parent.width - 32
-                spacing: 8
+                spacing: Space.s
 
-                Text {
+                KitText {
+                    role: "title"
                     text: I18n.t("prefs.glass.preview.title")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(2)
                     font.weight: Font.Bold
                     color: Styling.srItem("popup")
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     width: parent.width
                     text: I18n.t("prefs.glass.preview.body")
                     wrapMode: Text.WordWrap
                     maximumLineCount: 2
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     color: Styling.srItem("popup")
                 }
                 Row {
-                    spacing: 8
+                    spacing: Space.s
                     StyledRect {
                         variant: "pane"
                         width: 92
                         height: 28
                         radius: Styling.radius(0)
-                        Text {
+                        KitText {
+                            role: "caption"
                             anchors.centerIn: parent
                             text: Icons.wifiHigh + "  Wi-Fi"
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-2)
                             color: Styling.srItem("pane")
                         }
                     }
@@ -133,11 +128,10 @@ PreviewStage {
                         width: 64
                         height: 28
                         radius: Styling.radius(0)
-                        Text {
+                        KitText {
+                            role: "caption"
                             anchors.centerIn: parent
                             text: "OK"
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-2)
                             font.weight: Font.Bold
                             color: Styling.srItem("primary")
                         }
@@ -150,7 +144,7 @@ PreviewStage {
         Rectangle {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            anchors.margins: 12
+            anchors.margins: Space.m
             width: readout.implicitWidth + 20
             height: readout.implicitHeight + 12
             radius: Math.min(Styling.radius(0), 12)
@@ -159,19 +153,17 @@ PreviewStage {
             Column {
                 id: readout
                 anchors.centerIn: parent
-                spacing: 2
-                Text {
+                spacing: Space.xs / 2
+                KitText {
+                    role: "caption"
                     text: Math.round(Glass.amount * 100) + "% · " + I18n.t("prefs.glass.level." + Glass.describe(Glass.amount))
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-2)
                     font.weight: Font.Bold
                     color: Colors.overBackground
                 }
-                Text {
+                KitText {
                     objectName: "glassContrast"
+                    role: "caption"
                     text: I18n.t("prefs.glass.preview.contrast").replace("%1", root.contrast.toFixed(1))
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     color: root.contrast >= 4.5 ? Colors.overSurfaceVariant : Colors.error
                 }
             }
@@ -183,7 +175,7 @@ PreviewStage {
         id: panel
         property string variant: "popup"
         property string surface: "popups"
-        property real radius: Styling.radius(4)
+        property real radius: Look.radius("box")
         property Item backdrop
         property var blurCfg: ({})
         property real blurAmount: 0

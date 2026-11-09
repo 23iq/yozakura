@@ -3,6 +3,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components
 import qs.modules.services
 import qs.modules.keybinds
 import qs.modules.settings
@@ -10,6 +11,7 @@ import qs.config
 import "../../Ui.js" as Ui
 import "../../../keybinds/BindModel.js" as BindModel
 import "../../../../config/KeybindActions.js" as KeybindActions
+import qs.modules.components.kit
 
 // "Add shortcut": a modal over the settings window. Step 1 records the keys
 // (KeyRecorder, starts right away), step 2 picks what they do: one search
@@ -94,9 +96,9 @@ Item {
 
         parent: Overlay.overlay
         anchors.centerIn: parent
-        width: Math.min((parent ? parent.width : 640) - 48, 600)
-        height: Math.min((parent ? parent.height : 800) - 48, body.implicitHeight + topPadding + bottomPadding)
-        padding: 22
+        width: Math.min((parent ? parent.width : 640) - Space.xxl * 2, 600)
+        height: Math.min((parent ? parent.height : 800) - Space.xxl * 2, body.implicitHeight + topPadding + bottomPadding)
+        padding: Space.xl
         modal: true
         focus: true
         // Esc is handled below: it first stops a recording or closes a list.
@@ -135,11 +137,9 @@ Item {
             }
         }
 
-        background: Rectangle {
-            radius: Math.min(Styling.radius(6), 26)
-            color: Colors.surfaceContainerHigh
-            border.width: 1
-            border.color: Ui.alpha(Colors.outline, 0.35)
+        background: StyledRect {
+            variant: "popup"
+            radius: Look.radius("surface")
         }
 
         contentItem: Flickable {
@@ -156,19 +156,17 @@ Item {
                 id: body
                 objectName: "keybindAddBody"
                 width: parent.width
-                spacing: 16
+                spacing: Space.l
 
                 Keys.onEscapePressed: root.cancel()
                 Keys.onReturnPressed: root.save()
                 Keys.onEnterPressed: root.save()
 
-                Text {
+                KitText {
+                    role: "title"
                     Layout.fillWidth: true
                     text: I18n.t("binds.add_keybind")
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(3)
                     font.weight: Font.Bold
-                    color: Colors.overBackground
                 }
 
                 // 1. Keys
@@ -180,7 +178,7 @@ Item {
                 KeyRecorder {
                     id: recorder
                     Layout.fillWidth: true
-                    Layout.leftMargin: 34
+                    Layout.leftMargin: Space.xxl
                     combo: root.keys[0]
                     exceptUid: ""
                     onCommitted: k => root.setKey(k)
@@ -195,39 +193,34 @@ Item {
                 ActionEditor {
                     id: actionEditor
                     Layout.fillWidth: true
-                    Layout.leftMargin: 34
+                    Layout.leftMargin: Space.xxl
                     action: root.action
                     onEdited: a => root.setAction(a)
                 }
 
-                Rectangle {
+                Divider {
                     Layout.fillWidth: true
-                    Layout.topMargin: 2
-                    implicitHeight: 1
-                    color: Ui.alpha(Colors.outlineVariant, 0.5)
+                    Layout.topMargin: Space.xs / 2
                 }
 
                 // Where it will be listed (or what is still missing), then
                 // Cancel / Save.
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 10
+                    spacing: Space.m
 
-                    Text {
+                    Icon {
+                        role: "secondary"
+                        tone: "accent"
                         visible: root.missing === ""
-                        text: Icons[BindModel.group(root.groupId).icon] ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.primary
+                        icon: Icons[BindModel.group(root.groupId).icon] ?? ""
                     }
-                    Text {
+                    KitText {
                         objectName: "keybindAddStatus"
+                        role: "caption"
                         Layout.fillWidth: true
                         text: root.missing === "" ? I18n.t("binds.add_lands_in", I18n.t(BindModel.group(root.groupId).title)) : root.missingText()
                         wrapMode: Text.Wrap
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
-                        color: Colors.overSurfaceVariant
                     }
                     PillButton {
                         kind: "ghost"
@@ -244,13 +237,11 @@ Item {
                     }
                 }
 
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("binds.add_more_hint")
                     wrapMode: Text.Wrap
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
-                    color: Colors.outline
                 }
             }
         }
@@ -264,29 +255,34 @@ Item {
         property bool done: false
 
         Layout.fillWidth: true
-        spacing: 10
+        spacing: Space.m
 
+        // Progress marker: a filled accent dot once the step is done.
         Rectangle {
-            implicitWidth: 24
-            implicitHeight: 24
-            radius: 12
-            color: step.done ? Colors.primary : Ui.alpha(Colors.primary, 0.16)
-            Text {
+            implicitWidth: Space.xl
+            implicitHeight: Space.xl
+            radius: Look.radius("round", height)
+            color: step.done ? Type.progress : Qt.alpha(Type.progress, Look.activeTint)
+            Icon {
                 anchors.centerIn: parent
-                text: step.done ? Icons.accept : String(step.number)
-                font.family: step.done ? Icons.font : Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
+                visible: step.done
+                icon: Icons.accept
+                role: "caption"
+                tone: "accentInk"
+            }
+            KitText {
+                anchors.centerIn: parent
+                visible: !step.done
+                role: "caption"
+                text: String(step.number)
                 font.weight: Font.Bold
-                color: step.done ? Colors.overPrimary : Colors.primary
+                color: Type.progress
             }
         }
-        Text {
+        KitText {
             Layout.fillWidth: true
             text: step.title
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.weight: Font.DemiBold
-            color: Colors.overBackground
         }
     }
 }

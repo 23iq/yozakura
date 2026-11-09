@@ -7,6 +7,7 @@ import qs.modules.settings.controls
 import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../BarModules.js" as BarModules
+import qs.modules.components.kit
 
 // Drag & drop editor for the legacy single bar (bar.layout: left / right /
 // drawer) with a live mini bar. The editing itself is ModuleGroupsEditor.
@@ -30,7 +31,7 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: 14
+        spacing: Space.l
 
         PreviewStage {
             width: parent.width

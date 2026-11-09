@@ -3,6 +3,7 @@ import Quickshell
 import qs.modules.globals
 import qs.modules.services
 import qs.modules.settings
+import qs.modules.components.kit
 
 // Installed version, the newest release seen by the update checker, when it
 // last looked, and actions: check now, changelog.
@@ -21,7 +22,7 @@ Item {
         id: column
 
         width: parent.width
-        spacing: 10
+        spacing: Space.m
 
         StatusLine {
             width: parent.width
@@ -40,7 +41,7 @@ Item {
         }
 
         Row {
-            spacing: 8
+            spacing: Space.s
 
             PillButton {
                 kind: "ghost"

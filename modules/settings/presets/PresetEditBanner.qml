@@ -5,6 +5,7 @@ import qs.config
 import qs.modules.settings
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Shown on every settings page while a user preset is being edited: the
 // preset is applied, so every page edits it live; Save writes the live
@@ -44,35 +45,31 @@ Rectangle {
         width: parent.width - 40
         implicitHeight: Math.max(textCol.implicitHeight, buttons.implicitHeight)
 
-        Text {
+        Icon {
             id: icon
+            tone: "accent"
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons.pencil
-            font.family: Icons.font
-            font.pixelSize: 18
-            color: Colors.primary
+            icon: Icons.pencil
         }
         Column {
             id: textCol
             anchors.left: icon.right
-            anchors.leftMargin: 12
+            anchors.leftMargin: Space.m
             anchors.right: buttons.left
-            anchors.rightMargin: 12
+            anchors.rightMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
-            Text {
+            KitText {
+                role: "secondary"
                 width: parent.width
                 text: I18n.t("prefs.presets.editing", banner.preset)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.Bold
                 color: Colors.overBackground
                 elide: Text.ElideRight
             }
-            Text {
+            KitText {
+                role: "caption"
                 width: parent.width
                 text: I18n.t("prefs.presets.editing.desc")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-3)
                 color: Colors.overSurfaceVariant
                 wrapMode: Text.WordWrap
             }
@@ -81,7 +78,7 @@ Rectangle {
             id: buttons
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-            spacing: 8
+            spacing: Space.s
             PillButton {
                 objectName: "editDiscard"
                 kind: "ghost"

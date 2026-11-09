@@ -8,6 +8,7 @@ import qs.modules.settings
 import qs.modules.settings.controls
 import "../../../desktop/widgets/WidgetRegistry.js" as Registry
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // One placed widget in settings: live preview, its options (generic, from
 // the registry), the monitor it lives on and remove.
@@ -31,7 +32,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Math.min(Styling.radius(4), 22)
+        radius: Look.radius("box")
         color: Ui.alpha(Colors.overBackground, 0.035)
         border.width: 1
         border.color: Ui.alpha(Colors.outlineVariant, 0.8)
@@ -43,13 +44,13 @@ Item {
         y: 12
         width: Math.min(240, root.width * 0.4)
         height: 140
-        radius: Math.min(Styling.radius(2), 16)
+        radius: Look.radius("box")
         color: Ui.alpha(Colors.surfaceContainerLowest, 0.75)
         clip: true
 
         WidgetPreview {
             anchors.fill: parent
-            anchors.margins: 10
+            anchors.margins: Space.m
             widget: root.widget
             screenW: root.screenW
             screenH: root.screenH
@@ -59,37 +60,32 @@ Item {
     ColumnLayout {
         id: details
         anchors.left: previewBox.right
-        anchors.leftMargin: 16
+        anchors.leftMargin: Space.l
         anchors.right: removeButton.left
-        anchors.rightMargin: 8
+        anchors.rightMargin: Space.s
         y: 12
-        spacing: 8
+        spacing: Space.s
 
         RowLayout {
-            spacing: 8
-            Text {
-                text: Icons[root.type?.icon ?? ""] ?? ""
-                font.family: Icons.font
-                font.pixelSize: 15
-                color: Colors.primary
+            spacing: Space.s
+            Icon {
+                role: "secondary"
+                tone: "accent"
+                icon: Icons[root.type?.icon ?? ""] ?? ""
             }
-            Text {
+            KitText {
                 Layout.fillWidth: true
                 text: root.type ? I18n.t(root.type.labelKey) : ""
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(0)
                 font.weight: Font.DemiBold
-                color: Colors.overBackground
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             Layout.fillWidth: true
             text: root.type ? I18n.t(root.type.descKey) : ""
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
         }
 
@@ -100,17 +96,16 @@ Item {
                 id: opt
                 required property var modelData
                 Layout.fillWidth: true
-                spacing: 10
+                spacing: Space.m
 
                 ToggleControl {
                     visible: opt.modelData.type === "toggle"
                     checked: !!root.opts[opt.modelData.key]
                     onToggled: v => root.optionSet(opt.modelData.key, v)
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     text: I18n.t(opt.modelData.labelKey)
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     color: Colors.overBackground
                 }
                 SelectorControl {
@@ -129,11 +124,10 @@ Item {
         RowLayout {
             visible: root.screenNames.length > 1
             Layout.fillWidth: true
-            spacing: 10
-            Text {
+            spacing: Space.m
+            KitText {
+                role: "secondary"
                 text: I18n.t("desktop.widgets.monitor")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
             }
             SelectorControl {
@@ -151,7 +145,7 @@ Item {
     PillButton {
         id: removeButton
         anchors.right: parent.right
-        anchors.rightMargin: 12
+        anchors.rightMargin: Space.m
         y: 12
         kind: "ghost"
         icon: "trash"

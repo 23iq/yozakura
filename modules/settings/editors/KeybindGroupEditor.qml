@@ -6,6 +6,7 @@ import qs.modules.keybinds
 import qs.config
 import "keybinds"
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // The binds of one group (`entry.group`, a BindModel.GROUPS id): one
 // compact KeybindRow each, filtered by the toolbar (search, conflicts).
@@ -22,7 +23,7 @@ ColumnLayout {
         return KeybindsStore.visibleRows(root.groupId);
     }
 
-    spacing: 2
+    spacing: Space.xs / 2
 
     onRowsChanged: rowModel.sync(rows.map(r => r.uid))
 

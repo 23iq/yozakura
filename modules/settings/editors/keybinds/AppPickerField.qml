@@ -8,6 +8,7 @@ import qs.modules.services
 import qs.modules.keybinds
 import qs.config
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // The app of an "Open app" bind: shows the chosen app (icon + name) and
 // opens a searchable list of the installed apps, the launcher's own index
@@ -29,7 +30,7 @@ Column {
         return AppSearch.getAllApps ? AppSearch.getAllApps() : [];
     }
 
-    spacing: 6
+    spacing: Space.s
 
     // A new "Open app" bind shows the list right away (without taking the
     // focus from the key recorder).
@@ -67,33 +68,31 @@ Column {
         IconImage {
             id: appIcon
             anchors.left: parent.left
-            anchors.leftMargin: 12
+            anchors.leftMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
             implicitSize: 20
             source: Quickshell.iconPath(root.info ? (root.info.icon || root.appId) : "", "application-x-executable")
             asynchronous: true
         }
-        Text {
+        KitText {
+            role: "secondary"
             anchors.left: appIcon.right
-            anchors.leftMargin: 10
+            anchors.leftMargin: Space.m
             anchors.right: caret.left
-            anchors.rightMargin: 10
+            anchors.rightMargin: Space.m
             anchors.verticalCenter: parent.verticalCenter
             text: root.info ? root.info.name : (root.appId !== "" ? I18n.t("binds.app_missing", root.appId) : I18n.t("binds.app_choose"))
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             color: root.info ? Colors.overBackground : (root.appId !== "" ? Colors.error : Colors.outline)
         }
-        Text {
+        Icon {
             id: caret
+            role: "caption"
+            tone: "secondary"
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Space.l
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons.caretDown
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
+            icon: Icons.caretDown
             rotation: root.open ? 180 : 0
         }
         MouseArea {
@@ -110,7 +109,7 @@ Column {
         height: root.open ? 260 : 0
         visible: height > 0
         clip: true
-        radius: Styling.radius(-2)
+        radius: Look.radius("control")
         color: Ui.alpha(Colors.surfaceContainerHigh, 0.9)
         border.width: 1
         border.color: Ui.alpha(Colors.outlineVariant, 0.6)
@@ -123,24 +122,23 @@ Column {
             }
         }
 
-        Text {
+        Icon {
             id: searchGlyph
+            role: "caption"
+            tone: "secondary"
             x: 14
             y: 10
             height: 26
             verticalAlignment: Text.AlignVCenter
-            text: Icons.search
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.overSurfaceVariant
+            icon: Icons.search
         }
         TextInput {
             id: filter
             objectName: "appFilter"
             anchors.left: searchGlyph.right
-            anchors.leftMargin: 8
+            anchors.leftMargin: Space.s
             anchors.right: parent.right
-            anchors.rightMargin: 14
+            anchors.rightMargin: Space.l
             y: 10
             height: 26
             verticalAlignment: TextInput.AlignVCenter
@@ -172,9 +170,9 @@ Column {
         ListView {
             id: list
             anchors.top: filter.bottom
-            anchors.topMargin: 6
+            anchors.topMargin: Space.s
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 6
+            anchors.bottomMargin: Space.s
             width: parent.width
             clip: true
             model: root.apps
@@ -193,9 +191,9 @@ Column {
 
                 Rectangle {
                     anchors.fill: parent
-                    anchors.leftMargin: 6
-                    anchors.rightMargin: 6
-                    radius: Styling.radius(-6)
+                    anchors.leftMargin: Space.s
+                    anchors.rightMargin: Space.s
+                    radius: Look.radius("small")
                     color: option.modelData.id === root.appId ? Ui.alpha(Colors.primary, 0.18) : Ui.alpha(Colors.overBackground, optionArea.containsMouse || list.currentIndex === option.index ? 0.08 : 0)
                 }
                 IconImage {
@@ -206,16 +204,15 @@ Column {
                     source: Quickshell.iconPath(option.modelData.icon || "", "application-x-executable")
                     asynchronous: true
                 }
-                Text {
+                KitText {
+                    role: "secondary"
                     anchors.left: optionIcon.right
-                    anchors.leftMargin: 10
+                    anchors.leftMargin: Space.m
                     anchors.right: parent.right
-                    anchors.rightMargin: 14
+                    anchors.rightMargin: Space.l
                     anchors.verticalCenter: parent.verticalCenter
                     text: option.modelData.name
                     elide: Text.ElideRight
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-1)
                     color: Colors.overBackground
                 }
                 MouseArea {

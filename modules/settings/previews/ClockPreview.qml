@@ -3,6 +3,7 @@ import qs.modules.theme
 import qs.modules.components
 import qs.config
 import qs.modules.settings.controls
+import qs.modules.components.kit
 
 // The bar clock as it renders with the current clock options
 // (same formats as modules/bar/clock/Clock.qml).
@@ -40,14 +41,11 @@ PreviewStage {
             }
         }
 
-        Text {
+        KitText {
             id: label
             anchors.centerIn: parent
             text: Config.bar.clockShowDate ? root.time + "  ·  " + root.date : root.time
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(1)
             font.weight: Font.Bold
-            color: Colors.overBackground
         }
     }
 }

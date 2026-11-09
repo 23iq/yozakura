@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings
 import qs.modules.settings.controls
+import qs.modules.components.kit
 
 // Package source field + Install. Installing never runs directly: it asks
 // for the trust confirmation first (`installRequested(source)`). The field
@@ -65,19 +66,17 @@ ColumnLayout {
         Layout.fillWidth: true
         spacing: Metrics.spacing
 
-        Text {
+        Icon {
+            role: "secondary"
             Layout.alignment: Qt.AlignTop
-            text: Icons.shieldWarning
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-1)
+            icon: Icons.shieldWarning
             color: Colors.warning
         }
 
-        Text {
+        KitText {
+            role: "caption"
             Layout.fillWidth: true
             text: I18n.t("mods.trust_warning")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
             wrapMode: Text.Wrap
         }

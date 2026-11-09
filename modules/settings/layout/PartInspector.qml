@@ -6,6 +6,7 @@ import qs.modules.services
 import qs.modules.settings.controls
 import "../Ui.js" as Ui
 import "PartMeta.js" as PartMeta
+import qs.modules.components.kit
 
 // Controls of the layout builder's selected part: show/hide, style, edge
 // and alignment, plus where its content went while it is hidden.
@@ -47,14 +48,13 @@ Item {
                 id: tile
                 width: 40
                 height: 40
-                radius: Math.min(Styling.radius(-2), 14)
+                radius: Look.radius("control")
                 anchors.verticalCenter: parent.verticalCenter
                 color: Ui.alpha(Colors.primary, root.partState.enabled ? 0.18 : 0.08)
-                Text {
+                Icon {
+                    role: "title"
                     anchors.centerIn: parent
-                    text: Icons[root.meta.icon] || ""
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(3)
+                    icon: Icons[root.meta.icon] || ""
                     color: root.partState.enabled ? Colors.primary : Colors.overSurfaceVariant
                 }
             }
@@ -65,20 +65,18 @@ Item {
                 anchors.right: toggle.left
                 anchors.rightMargin: Metrics.spacing * 3
                 anchors.verticalCenter: parent.verticalCenter
-                spacing: 2
-                Text {
+                spacing: Space.xs / 2
+                KitText {
                     text: I18n.t(root.meta.label)
                     font.family: Styling.defaultFont
-                    font.pixelSize: Styling.fontSize(1)
                     font.weight: Font.DemiBold
-                    color: Colors.overBackground
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     width: parent.width
                     text: I18n.t(root.meta.desc)
                     wrapMode: Text.WordWrap
                     font.family: Styling.defaultFont
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overSurfaceVariant
                 }
             }
@@ -100,21 +98,20 @@ Item {
                 required property string modelData
                 width: col.width
                 height: noteText.implicitHeight + Metrics.spacing * 3
-                radius: Math.min(Styling.radius(-2), 12)
+                radius: Look.radius("control")
                 color: Ui.alpha(Colors.primary, 0.1)
                 border.width: 1
                 border.color: Ui.alpha(Colors.primary, 0.3)
-                Text {
+                Icon {
                     id: noteIcon
+                    tone: "accent"
                     anchors.verticalCenter: parent.verticalCenter
                     x: Metrics.spacing * 3
-                    text: Icons.info
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(0)
-                    color: Colors.primary
+                    icon: Icons.info
                 }
-                Text {
+                KitText {
                     id: noteText
+                    role: "caption"
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: noteIcon.right
                     anchors.leftMargin: Metrics.spacing * 2
@@ -123,7 +120,6 @@ Item {
                     text: I18n.t(note.modelData)
                     wrapMode: Text.WordWrap
                     font.family: Styling.defaultFont
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overBackground
                 }
             }
@@ -162,15 +158,14 @@ Item {
         opacity: root.partState.enabled ? 1 : 0.5
         enabled: root.partState.enabled
 
-        Text {
+        KitText {
             id: name
+            role: "secondary"
             width: 96
             anchors.verticalCenter: parent.verticalCenter
             text: I18n.t(fieldRow.label)
             font.family: Styling.defaultFont
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.Medium
-            color: Colors.overSurfaceVariant
         }
         SelectorControl {
             id: selector

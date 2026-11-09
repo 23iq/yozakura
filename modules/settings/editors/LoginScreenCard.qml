@@ -7,6 +7,7 @@ import qs.modules.theme
 import qs.config
 import qs.modules.settings
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // SDDM login theme: whether it is installed, when it was last synced (the
 // shell re-syncs it on wallpaper, palette and lock screen changes), a
@@ -63,7 +64,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        radius: Math.min(Styling.radius(2), 18)
+        radius: Look.radius("box")
         color: Ui.alpha(Colors.overBackground, 0.06)
         border.width: 1
         border.color: Ui.alpha(Colors.outlineVariant, 0.6)
@@ -74,10 +75,10 @@ Item {
         x: 14
         y: 14
         width: parent.width - 28
-        spacing: 10
+        spacing: Space.m
 
         Row {
-            spacing: 10
+            spacing: Space.m
             Rectangle {
                 anchors.verticalCenter: parent.verticalCenter
                 width: 8
@@ -85,28 +86,27 @@ Item {
                 radius: 4
                 color: root.installed ? Colors.success : Colors.outline
             }
-            Text {
+            KitText {
+                role: "secondary"
                 anchors.verticalCenter: parent.verticalCenter
                 text: !root.installed ? I18n.t(root.nixos ? "prefs.lockscreen.sddm.not_installed_nixos" : "prefs.lockscreen.sddm.not_installed") : root.syncedAt ? I18n.t("prefs.lockscreen.sddm.installed", root.syncedAt) : I18n.t("prefs.lockscreen.sddm.installed_unsynced")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.Medium
                 color: Colors.overBackground
             }
         }
 
-        Text {
+        KitText {
+            role: "caption"
             width: parent.width
             visible: !root.installed
             text: root.installCommand
             font.family: Config.theme.monoFont
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
             wrapMode: Text.WrapAnywhere
         }
 
         Row {
-            spacing: 8
+            spacing: Space.s
             PillButton {
                 visible: root.installed
                 enabled: !sync.running

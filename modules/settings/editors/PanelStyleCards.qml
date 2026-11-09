@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.modules.settings.controls
 import qs.modules.settings.previews
 import "../../bar/panels/PanelStyles.js" as PanelStyles
+import qs.modules.components.kit
 
 // One card per panel style (PanelStyles.js registry), each previewing the
 // selected panel's modules drawn in that style on its natural edge.
@@ -33,7 +34,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 10
+        spacing: Space.m
 
         Repeater {
             model: PanelStyles.STYLES.filter(s => !s.hidden)

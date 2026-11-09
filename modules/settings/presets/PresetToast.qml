@@ -4,6 +4,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings
 import qs.modules.settings.store
+import qs.modules.components.kit
 
 // Short notice from the preset studio (saved, exported, an error) with
 // Undo after a delete. Hides itself after a few seconds.
@@ -55,44 +56,41 @@ Item {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 14
-        Text {
+        spacing: Space.l
+        KitText {
+            role: "secondary"
             anchors.verticalCenter: parent.verticalCenter
             width: Math.min(implicitWidth, toast.parent ? toast.parent.width - 200 : 420)
             text: toast.notice ? toast.notice.text : ""
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             color: Colors.inverseOnSurface
         }
-        Text {
+        KitText {
+            role: "secondary"
             anchors.verticalCenter: parent.verticalCenter
             objectName: "toastUndo"
             visible: toast.notice !== null && toast.notice.undo !== ""
             text: I18n.t("prefs.presets.undo")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.Bold
             color: Colors.inversePrimary
             MouseArea {
                 anchors.fill: parent
-                anchors.margins: -8
+                anchors.margins: -Space.s
                 cursorShape: Qt.PointingHandCursor
                 onClicked: toast.undo()
             }
         }
-        Text {
+        KitText {
+            role: "secondary"
             anchors.verticalCenter: parent.verticalCenter
             objectName: "toastDetails"
             visible: toast.notice !== null && !!toast.notice.details
             text: I18n.t("presets.status.details")
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-1)
             font.weight: Font.Bold
             color: Colors.inversePrimary
             MouseArea {
                 anchors.fill: parent
-                anchors.margins: -8
+                anchors.margins: -Space.s
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     PresetStudio.toast = null;

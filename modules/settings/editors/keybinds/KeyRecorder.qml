@@ -10,6 +10,7 @@ import qs.config
 import "../../Ui.js" as Ui
 import "../../../keybinds/KeyNames.js" as KeyNames
 import "../../../keybinds/BindModel.js" as BindModel
+import qs.modules.components.kit
 
 // One key combo of a bind with a "record" mode: a focused capture pad takes
 // the next key press (held modifiers count, a lone Super press records
@@ -62,7 +63,7 @@ ColumnLayout {
         return rows.map(r => KeybindsStore.title(r)).concat(native.map(n => I18n.t("binds.conflict_native", n.text))).join(", ");
     }
 
-    spacing: 6
+    spacing: Space.s
 
     function start() {
         chipMods = [];
@@ -124,7 +125,7 @@ ColumnLayout {
     RowLayout {
         Layout.fillWidth: true
         visible: !root.recording
-        spacing: 10
+        spacing: Space.m
 
         KeyCombo {
             modifiers: root.combo.modifiers
@@ -153,15 +154,14 @@ ColumnLayout {
         }
     }
 
-    Text {
+    KitText {
         objectName: "clashNote"
+        role: "caption"
         Layout.fillWidth: true
         readonly property string list: root.recording ? root.draftClashText : root.clashText
         visible: list !== ""
         wrapMode: Text.Wrap
         text: I18n.t("binds.also_used_by", list) + ". " + I18n.t(KeybindsStore.compositor === "niri" ? "binds.conflict_first_wins" : "binds.conflict_kept")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-3)
         color: Colors.error
     }
 
@@ -205,7 +205,7 @@ ColumnLayout {
 
         Rectangle {
             anchors.fill: parent
-            radius: Styling.radius(-2)
+            radius: Look.radius("control")
             color: Ui.alpha(Colors.primary, 0.08)
             border.width: 2
             border.color: Colors.primary
@@ -242,7 +242,7 @@ ColumnLayout {
 
         Column {
             anchors.centerIn: parent
-            spacing: 6
+            spacing: Space.s
 
             KeyCombo {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -252,11 +252,10 @@ ColumnLayout {
                 sizeOffset: 0
                 tone: "accent"
             }
-            Text {
+            KitText {
+                role: "caption"
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.draftMods.length > 0 ? I18n.t("binds.record_hint_key") : I18n.t("binds.record_hint")
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: Colors.overBackground
             }
         }
@@ -266,7 +265,7 @@ ColumnLayout {
     Flow {
         Layout.fillWidth: true
         visible: root.recording
-        spacing: 6
+        spacing: Space.s
 
         Repeater {
             model: KeyNames.MOD_ORDER
@@ -295,8 +294,8 @@ ColumnLayout {
                 id: keyName
                 objectName: "keyName"
                 anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
+                anchors.leftMargin: Space.m
+                anchors.rightMargin: Space.m
                 verticalAlignment: TextInput.AlignVCenter
                 clip: true
                 font.family: Config.theme.monoFont
@@ -325,24 +324,22 @@ ColumnLayout {
         }
     }
 
-    Text {
+    KitText {
         objectName: "keyError"
+        role: "caption"
         Layout.fillWidth: true
         visible: root.recording && root.keyError !== ""
         wrapMode: Text.Wrap
         text: root.keyError
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-3)
         color: Colors.error
     }
 
-    Text {
+    KitText {
+        role: "caption"
         Layout.fillWidth: true
         visible: root.recording
         wrapMode: Text.Wrap
         text: root.manualOnly ? I18n.t("binds.record_manual_note") : I18n.t("binds.record_super_note")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-3)
         color: Colors.overSurfaceVariant
     }
 }

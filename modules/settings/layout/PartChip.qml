@@ -3,6 +3,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // One part (bar, notch, dock) of the layout builder's screen mock: a chip
 // at `rect` that can be selected and dragged. While dragging it follows the
@@ -97,27 +98,26 @@ Item {
             spacing: Metrics.spacing
             readonly property bool roomy: chip.vertical ? chip.height > 90 : chip.width > 110
 
-            Text {
-                text: Icons[chip.icon] || ""
-                font.family: Icons.font
-                font.pixelSize: Math.min(Styling.fontSize(0), (chip.vertical ? chip.width : chip.height) - 6)
-                color: Colors.overBackground
+            Icon {
+                icon: Icons[chip.icon] || ""
+                tone: "text"
+                // Shrinks with a thin chip
+                size: Math.max(1, Math.min(Type.iconSize("caption"), (chip.vertical ? chip.width : chip.height) - Space.s))
             }
-            Text {
+            KitText {
+                role: "caption"
                 visible: face.roomy && !chip.vertical
                 text: chip.label
                 font.family: Styling.defaultFont
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.DemiBold
                 color: Colors.overBackground
             }
             Repeater {
                 model: face.roomy ? chip.badges : []
-                Text {
+                Icon {
+                    role: "caption"
                     required property string modelData
-                    text: Icons[modelData] || ""
-                    font.family: Icons.font
-                    font.pixelSize: Styling.fontSize(-3)
+                    icon: Icons[modelData] || ""
                     color: Ui.alpha(Colors.overBackground, 0.7)
                 }
             }

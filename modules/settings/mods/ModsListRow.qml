@@ -6,6 +6,7 @@ import qs.modules.components
 import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
+import qs.modules.components.kit
 
 // One installed mod: drag handle (load-order view), state dot, name,
 // version and state, Enable/Disable. Selecting shows its details.
@@ -65,11 +66,10 @@ StyledRect {
         anchors.rightMargin: Metrics.spacing
         spacing: Metrics.spacing + 2
 
-        Text {
+        Icon {
+            role: "title"
             visible: row.reorderable
-            text: Icons.dotsNine
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(3)
+            icon: Icons.dotsNine
             color: row.item
             opacity: reorderDrag.active ? 1 : 0.6
             Accessible.role: Accessible.Button
@@ -95,23 +95,21 @@ StyledRect {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 1
+            spacing: Space.hairline
 
-            Text {
+            KitText {
+                role: "secondary"
                 Layout.fillWidth: true
                 text: row.mod.name ?? row.mod.id
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: Font.DemiBold
                 color: row.item
                 elide: Text.ElideRight
             }
 
-            Text {
+            KitText {
+                role: "caption"
                 Layout.fillWidth: true
                 text: (row.mod.version || I18n.t("mods.unknown_version")) + " · " + row.stateText
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 color: row.item
                 opacity: 0.7
                 elide: Text.ElideRight

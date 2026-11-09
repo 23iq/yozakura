@@ -4,6 +4,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // A pill sliding and a popup opening at the live animation duration.
 PreviewStage {
@@ -26,9 +27,9 @@ PreviewStage {
     Item {
         id: lane
         anchors.left: parent.left
-        anchors.leftMargin: 28
+        anchors.leftMargin: Space.xxl
         anchors.right: popupBox.left
-        anchors.rightMargin: 28
+        anchors.rightMargin: Space.xxl
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 8
         height: 34
@@ -61,7 +62,7 @@ PreviewStage {
     Item {
         id: popupBox
         anchors.right: parent.right
-        anchors.rightMargin: 34
+        anchors.rightMargin: Space.xxl
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: 8
         width: 96
@@ -90,7 +91,7 @@ PreviewStage {
             }
             Column {
                 anchors.centerIn: parent
-                spacing: 6
+                spacing: Space.s
                 Repeater {
                     model: [52, 36]
                     Rectangle {
@@ -105,13 +106,12 @@ PreviewStage {
         }
     }
 
-    Text {
+    KitText {
+        role: "caption"
         anchors.centerIn: parent
         anchors.verticalCenterOffset: 8
         visible: root.duration === 0
         text: I18n.t("prefs.appearance.anim.off_hint")
-        font.family: Config.theme.font
-        font.pixelSize: Styling.fontSize(-2)
         color: Colors.overSurfaceVariant
     }
 }

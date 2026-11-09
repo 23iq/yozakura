@@ -2,6 +2,7 @@ import QtQuick
 import qs.modules.theme
 import qs.config
 import "../../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Small "+ text" action link (add a key, an action, a bind).
 Item {
@@ -28,19 +29,17 @@ Item {
     Row {
         id: row
         anchors.centerIn: parent
-        spacing: 6
-        Text {
+        spacing: Space.s
+        Icon {
+            role: "caption"
+            tone: "accent"
             anchors.verticalCenter: parent.verticalCenter
-            text: Icons[root.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: Styling.fontSize(-2)
-            color: Colors.primary
+            icon: Icons[root.icon] ?? ""
         }
-        Text {
+        KitText {
+            role: "caption"
             anchors.verticalCenter: parent.verticalCenter
             text: root.text
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             font.weight: Font.DemiBold
             color: Colors.primary
         }

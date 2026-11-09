@@ -4,6 +4,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
+import qs.modules.components.kit
 
 // Label + description + switch. `toggled(value)` on user interaction.
 RowLayout {
@@ -19,24 +20,20 @@ RowLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        spacing: 2
+        spacing: Space.xs / 2
 
-        Text {
+        KitText {
             Layout.fillWidth: true
             text: row.title
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.weight: Font.Medium
-            color: Colors.overBackground
             wrapMode: Text.Wrap
         }
 
-        Text {
+        KitText {
+            role: "caption"
             Layout.fillWidth: true
             visible: row.description !== ""
             text: row.description
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-2)
             color: Colors.overSurfaceVariant
             wrapMode: Text.Wrap
         }

@@ -23,16 +23,15 @@ Item {
         radius: Look.chipRadius(Space.chip)
     }
 
-    Text {
+    Icon {
         id: badge
+        role: "title"
 
         x: root.inset
         anchors.verticalCenter: parent.verticalCenter
         width: Type.iconSize("title")
         horizontalAlignment: Text.AlignHCenter
-        text: Icons[root.icon] ?? ""
-        font.family: Icons.font
-        font.pixelSize: Type.iconSize("title")
+        icon: Icons[root.icon] ?? ""
         color: root.accent
     }
 

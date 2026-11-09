@@ -24,7 +24,7 @@ Item {
         id: bg
         anchors.fill: parent
         radius: Math.min(Styling.radius(0), 14)
-        color: root.oled ? "#000000" : root.c("background")
+        color: root.oled ? root.c("shadow") : root.c("background")
         clip: true
 
         // Wallpaper glow
@@ -58,7 +58,7 @@ Item {
             width: parent.width - 12 * root.s
             height: 11 * root.s
             radius: height / 2
-            color: root.oled ? "#000000" : root.c("surfaceContainer")
+            color: root.oled ? root.c("shadow") : root.c("surfaceContainer")
             border.width: root.oled ? 1 : 0
             border.color: root.c("outlineVariant")
 
@@ -96,7 +96,7 @@ Item {
             width: parent.width * 0.62
             height: parent.height - 32 * root.s
             radius: Math.min(Styling.radius(0) * 0.6, 10) * Math.max(root.s, 0.6)
-            color: root.oled ? "#0b0b0b" : root.c("surfaceContainerHigh")
+            color: root.oled ? Ui.mix(root.c("shadow"), root.c("surfaceContainerHigh"), 0.12) : root.c("surfaceContainerHigh")
             border.width: 1
             border.color: Ui.alpha(root.c("outlineVariant"), 0.8)
 

@@ -5,6 +5,7 @@ import qs.modules.services
 import qs.config
 import "../../Ui.js" as Ui
 import "../../../specials/Specials.js" as Specials
+import qs.modules.components.kit
 
 // Icon choice for a special workspace: one chip per Specials.ICONS glyph,
 // drawn in the special's accent (a palette role).
@@ -17,7 +18,7 @@ Flow {
 
     readonly property color tint: Colors[root.accent] ?? Colors.primary
 
-    spacing: 6
+    spacing: Space.s
 
     Repeater {
         model: Specials.ICONS
@@ -28,7 +29,7 @@ Flow {
             objectName: "glyph:" + modelData
             width: 34
             height: 34
-            radius: Math.min(Styling.radius(-2), 12)
+            radius: Look.radius("control")
             color: selected ? Ui.alpha(root.tint, 0.22) : (area.containsMouse ? Ui.alpha(Colors.overBackground, 0.08) : "transparent")
             border.width: selected ? 1 : 0
             border.color: root.tint
@@ -36,11 +37,9 @@ Flow {
             Accessible.name: modelData
             Accessible.checked: selected
 
-            Text {
+            Icon {
                 anchors.centerIn: parent
-                text: Icons[chip.modelData] || ""
-                font.family: Icons.font
-                font.pixelSize: 17
+                icon: Icons[chip.modelData] || ""
                 color: chip.selected ? root.tint : Colors.overSurfaceVariant
             }
             MouseArea {

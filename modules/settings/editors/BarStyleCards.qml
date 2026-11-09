@@ -8,6 +8,7 @@ import qs.modules.settings.previews
 import qs.modules.settings.store
 import "../../bar/panels/PanelStyles.js" as PanelStyles
 import "../../bar/panels/PanelLayout.js" as PanelLayout
+import qs.modules.components.kit
 
 // The bar's look (bar.layout.style): full, floating, islands, pills,
 // dock-like or none, each previewed with your modules on your bar's edge.
@@ -32,7 +33,7 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: 10
+        spacing: Space.m
 
         Repeater {
             model: PanelStyles.barStyles()

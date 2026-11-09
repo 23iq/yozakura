@@ -5,6 +5,7 @@ import qs.modules.components
 import qs.modules.services
 import qs.config
 import "SurfaceRoles.js" as Roles
+import qs.modules.components.kit
 
 // Live swatch of the current surface variant: drawn by StyledRect with that
 // variant, so fill, gradient, halftone, border, opacity and item color show
@@ -15,7 +16,7 @@ RowLayout {
     property string prop: "srBg"
     property string label: ""
 
-    spacing: 12
+    spacing: Space.m
 
     StyledRect {
         id: preview
@@ -23,14 +24,13 @@ RowLayout {
         variant: Roles.variantId(root.prop)
         Layout.preferredWidth: 120
         Layout.preferredHeight: 56
-        radius: Styling.radius(-1)
+        radius: Look.radius("control")
         enableShadow: true
 
-        Text {
+        KitText {
+            role: "title"
             anchors.centerIn: parent
             text: "Aa"
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(2)
             font.bold: true
             color: preview.item
         }
@@ -38,23 +38,19 @@ RowLayout {
 
     ColumnLayout {
         Layout.fillWidth: true
-        spacing: 2
+        spacing: Space.xs / 2
 
-        Text {
+        KitText {
             Layout.fillWidth: true
             text: root.label
             elide: Text.ElideRight
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(0)
             font.bold: true
-            color: Colors.overBackground
         }
-        Text {
+        KitText {
+            role: "caption"
             Layout.fillWidth: true
             text: I18n.t("prefs.surfaces.preview_hint")
             wrapMode: Text.WordWrap
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             color: Colors.overSurfaceVariant
         }
     }

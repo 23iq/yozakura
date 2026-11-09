@@ -11,6 +11,7 @@ import qs.config
 import "../Ui.js" as Ui
 import "WindowsPreviewModel.js" as Model
 import "../../services/CompositorAppearance.js" as Appearance
+import qs.modules.components.kit
 
 // Two tiled windows over a 1:1 slice of the real wallpaper, drawn from the
 // exact hl.config() table the shell applies (CompositorAppearance): gaps,
@@ -94,19 +95,18 @@ PreviewStage {
     Rectangle {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: 10
+        anchors.margins: Space.m
         width: readout.implicitWidth + 18
         height: readout.implicitHeight + 10
         radius: Math.min(Styling.radius(0), 12)
         color: Ui.alpha(Colors.surfaceContainerLowest, 0.82)
-        Text {
+        KitText {
             id: readout
             objectName: "windowsReadout"
+            role: "caption"
             anchors.centerIn: parent
             readonly property string template: I18n.t("prefs.windows.preview.readout")
             text: template.replace("%1", root.hl.general.gaps_in).replace("%2", root.hl.general.gaps_out).replace("%3", root.borderSize).replace("%4", root.rounding)
-            font.family: Config.theme.font
-            font.pixelSize: Styling.fontSize(-3)
             color: Colors.overSurfaceVariant
         }
     }
@@ -195,11 +195,11 @@ PreviewStage {
                     x: 14
                     y: 12
                     width: parent.width - 28
-                    spacing: 7
+                    spacing: Space.s
                     clip: true
 
                     Row {
-                        spacing: 6
+                        spacing: Space.s
                         Repeater {
                             model: 3
                             delegate: Rectangle {
@@ -212,12 +212,12 @@ PreviewStage {
                             }
                         }
                     }
-                    Text {
+                    KitText {
+                        role: "caption"
                         width: parent.width
                         elide: Text.ElideRight
                         text: win.focused ? "~ ❯ hyprctl activewindow" : I18n.t("prefs.windows.preview.inactive")
                         font.family: win.focused ? Config.theme.monoFont : Config.theme.font
-                        font.pixelSize: Styling.fontSize(-2)
                         color: win.focused ? Colors.primary : Colors.overSurfaceVariant
                     }
                     Repeater {
@@ -238,7 +238,7 @@ PreviewStage {
                 anchors.fill: parent
                 radius: root.rounding
                 visible: !win.focused && root.deco.dim_inactive
-                color: Qt.rgba(0, 0, 0, root.deco.dim_strength)
+                color: Qt.alpha(Colors.shadow, root.deco.dim_strength)
             }
         }
 

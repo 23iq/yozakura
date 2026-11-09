@@ -15,7 +15,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 10
+    spacing: Space.m
 
     property string expanded: ""
     property var tools: []
@@ -43,7 +43,7 @@ ColumnLayout {
             readonly property bool on: Ai.mcp.isEnabled(row.modelData.name)
             Layout.fillWidth: true
             variant: "common"
-            radius: Styling.radius(-4)
+            radius: Look.radius("control")
             implicitHeight: srvCol.implicitHeight + 16
 
             ColumnLayout {
@@ -51,34 +51,34 @@ ColumnLayout {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.top: parent.top
-                anchors.margins: 8
-                spacing: 6
+                anchors.margins: Space.s
+                spacing: Space.s
 
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
-                    Text {
-                        text: row.modelData.transport === "stdio" ? Icons.terminal : Icons.globe
-                        font.family: Icons.font
-                        font.pixelSize: 13
+                    spacing: Space.s
+                    Icon {
+                        role: "caption"
+                        icon: row.modelData.transport === "stdio" ? Icons.terminal : Icons.globe
                         color: row.on ? Colors.primary : Colors.outline
                     }
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 0
-                        Text {
+                        KitText {
+                            role: "secondary"
                             text: row.modelData.name
                             font.family: Config.theme.monoFont
                             font.pixelSize: Styling.monoFontSize(-1)
                             color: Colors.overSurface
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             Layout.fillWidth: true
                             text: row.modelData.source + " · " + (row.modelData.url || ((row.modelData.command || "") + " " + (row.modelData.args || []).join(" ")))
                             elide: Text.ElideMiddle
                             font.family: Config.theme.monoFont
                             font.pixelSize: Styling.monoFontSize(-4)
-                            color: Colors.outline
                         }
                     }
                     Chip {
@@ -100,38 +100,35 @@ ColumnLayout {
                         id: entry1
                         required property var modelData
                         Layout.fillWidth: true
-                        Layout.leftMargin: 22
-                        spacing: 8
-                        Text {
-                            text: entry1.modelData.annotations && entry1.modelData.annotations.readOnlyHint ? Icons.eye : Icons.pencil
-                            font.family: Icons.font
-                            font.pixelSize: 11
-                            color: Colors.outline
+                        Layout.leftMargin: Space.xl
+                        spacing: Space.s
+                        Icon {
+                            role: "label"
+                            tone: "muted"
+                            icon: entry1.modelData.annotations && entry1.modelData.annotations.readOnlyHint ? Icons.eye : Icons.pencil
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             text: entry1.modelData.name
                             font.family: Config.theme.monoFont
                             font.pixelSize: Styling.monoFontSize(-3)
                             color: Colors.overSurface
                         }
-                        Text {
+                        KitText {
+                            role: "caption"
                             Layout.fillWidth: true
                             text: (entry1.modelData.description || "").split("\n")[0]
                             elide: Text.ElideRight
-                            font.family: Config.theme.font
-                            font.pixelSize: Styling.fontSize(-3)
-                            color: Colors.outline
                         }
                     }
                 }
-                Text {
+                KitText {
+                    role: "caption"
                     visible: root.expanded === row.modelData.name && (root.toolsError.length > 0 || root.tools.length === 0)
-                    Layout.leftMargin: 22
+                    Layout.leftMargin: Space.xl
                     text: root.toolsError || I18n.t("ai.loading")
                     wrapMode: Text.Wrap
                     Layout.fillWidth: true
-                    font.family: Config.theme.font
-                    font.pixelSize: Styling.fontSize(-3)
                     color: root.toolsError ? Colors.error : Colors.outline
                 }
             }

@@ -15,7 +15,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 10
+    spacing: Space.m
 
     // ref: {id, index} of the item (null = append)
     function edit(listName, ref, fields) {
@@ -43,16 +43,14 @@ ColumnLayout {
             required property var modelData
             readonly property var entries: group.modelData.list === "actions" ? (Config.ai.selection.actions || []) : (Config.ai.prompts || [])
             Layout.fillWidth: true
-            spacing: 6
+            spacing: Space.s
 
-            Text {
-                Layout.topMargin: 6
+            KitText {
+                role: "caption"
+                Layout.topMargin: Space.s
                 text: group.modelData.title
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-2)
                 font.weight: Font.DemiBold
                 font.capitalization: Font.AllUppercase
-                color: Colors.outline
             }
 
             Repeater {
@@ -68,7 +66,7 @@ ColumnLayout {
                         })
                     Layout.fillWidth: true
                     variant: "common"
-                    radius: Styling.radius(-4)
+                    radius: Look.radius("control")
                     implicitHeight: itemCol.implicitHeight + 12
 
                     ColumnLayout {
@@ -76,8 +74,8 @@ ColumnLayout {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.top: parent.top
-                        anchors.margins: 6
-                        spacing: 6
+                        anchors.margins: Space.s
+                        spacing: Space.s
                         RowLayout {
                             Layout.fillWidth: true
                             IconButton {
@@ -85,19 +83,16 @@ ColumnLayout {
                                 size: "xs"
                                 onClicked: item.open = !item.open
                             }
-                            Text {
+                            KitText {
+                                role: "secondary"
                                 Layout.fillWidth: true
                                 text: item.modelData.label || item.modelData.name || I18n.t("ai.action_" + item.modelData.id)
                                 elide: Text.ElideRight
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-1)
                                 color: Colors.overSurface
                             }
-                            Text {
+                            KitText {
+                                role: "caption"
                                 text: I18n.t("ai.output_" + (item.modelData.output || "default"))
-                                font.family: Config.theme.font
-                                font.pixelSize: Styling.fontSize(-3)
-                                color: Colors.outline
                             }
                             IconButton {
                                 icon: Icons.trash

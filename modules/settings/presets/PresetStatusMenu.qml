@@ -66,10 +66,8 @@ Popup {
                     root.chosen(row.modelData.id);
                 }
                 leading: Component {
-                    Text {
-                        text: Icons[row.modelData.icon] ?? ""
-                        font.family: Icons.font
-                        font.pixelSize: Type.iconSize("body")
+                    Icon {
+                        icon: Icons[row.modelData.icon] ?? ""
                         color: Type.secondary
                     }
                 }

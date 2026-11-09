@@ -1,5 +1,4 @@
 import QtQuick
-import qs.config
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.components.kit
@@ -22,7 +21,7 @@ StyledRect {
     signal deleteRequested
 
     variant: selected ? "focus" : "common"
-    radius: Styling.radius(4)
+    radius: Look.radius("box")
     scale: selected ? 1 : 0.97
 
     Behavior on scale {
@@ -38,35 +37,31 @@ StyledRect {
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.margins: Metrics.spacing
+        anchors.margins: Space.s
         height: Math.round(width * 10 / 16)
         look: root.card ? root.card.look : null
     }
 
     Row {
         anchors.top: thumb.bottom
-        anchors.topMargin: Metrics.spacing
+        anchors.topMargin: Space.s
         anchors.left: thumb.left
         anchors.right: thumb.right
-        spacing: Metrics.spacing / 2
+        spacing: Space.xs
 
-        Text {
+        KitText {
             width: parent.width - (badge.visible ? badge.width + parent.spacing : 0)
             text: root.card ? root.card.title : ""
             elide: Text.ElideRight
-            color: Colors.overBackground
-            font.family: Config.defaultFont
-            font.pixelSize: Styling.fontSize(0)
             font.weight: root.selected ? Font.DemiBold : Font.Normal
         }
 
-        Text {
+        KitText {
             id: badge
+            role: "caption"
             visible: !!(root.card && root.card.active)
             text: I18n.t("presets.active")
-            color: Colors.primary
-            font.family: Config.defaultFont
-            font.pixelSize: Styling.fontSize(-2)
+            color: Type.accent
             font.weight: Font.Bold
             anchors.verticalCenter: parent.verticalCenter
         }

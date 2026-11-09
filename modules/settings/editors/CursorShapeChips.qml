@@ -6,6 +6,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.settings.store
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Kitty cursor shape (terminal.cursorShape): one chip per shape, each
 // drawing that cursor after a letter in the terminal font.
@@ -16,7 +17,7 @@ Row {
     readonly property string value: SettingsStore.get("terminal.cursorShape") ?? "beam"
     readonly property var shapes: ["block", "beam", "underline"]
 
-    spacing: 8
+    spacing: Space.s
 
     Repeater {
         model: root.shapes
@@ -37,7 +38,7 @@ Row {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Math.min(Styling.radius(2), 20)
+                radius: Look.radius("box")
                 color: chip.selected ? Ui.alpha(Colors.primary, 0.14) : (area.containsMouse ? Ui.alpha(Colors.overBackground, 0.08) : Ui.alpha(Colors.overBackground, 0.04))
                 border.width: chip.selected || chip.activeFocus ? 2 : 1
                 border.color: chip.selected || chip.activeFocus ? Colors.primary : Ui.alpha(Colors.outlineVariant, 0.8)
@@ -71,14 +72,13 @@ Row {
                 }
             }
 
-            Text {
+            KitText {
                 id: label
+                role: "secondary"
                 anchors.left: cell.right
-                anchors.leftMargin: 9
+                anchors.leftMargin: Space.s
                 anchors.verticalCenter: parent.verticalCenter
                 text: I18n.t("prefs.term.look.cursor." + chip.modelData)
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 font.weight: chip.selected ? Font.DemiBold : Font.Normal
                 color: chip.selected ? Colors.primary : Colors.overBackground
             }

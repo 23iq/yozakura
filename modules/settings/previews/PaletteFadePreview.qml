@@ -5,6 +5,7 @@ import qs.modules.theme
 import qs.config
 import qs.modules.settings.controls
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Swatches crossfading between two palettes at the live palette
 // transition duration (what a wallpaper change looks like).
@@ -29,7 +30,7 @@ PreviewStage {
     Row {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: 8
-        spacing: 10
+        spacing: Space.m
 
         Repeater {
             model: 5
@@ -38,7 +39,7 @@ PreviewStage {
                 required property int index
                 width: 64
                 height: 44
-                radius: Math.min(Styling.radius(-2), 14)
+                radius: Look.radius("control")
                 color: root.flip ? root.b[index] : root.a[index]
                 Behavior on color {
                     enabled: root.duration > 0

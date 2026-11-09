@@ -7,6 +7,7 @@ import qs.config
 import qs.modules.settings
 import "ModsModel.js" as ModsModel
 import "../Ui.js" as Ui
+import qs.modules.components.kit
 
 // Settings > Mods: the mods master switch and version-check bypass, install
 // from a package source, the installed list (search, sort, drag to reorder),
@@ -102,7 +103,7 @@ Item {
             width: Math.min(flick.width - 64, 820)
             x: (flick.width - width) / 2
             y: 36
-            spacing: 30
+            spacing: Space.xxl
 
             PageHeader {
                 width: parent.width
@@ -117,12 +118,10 @@ Item {
                     width: parent.width
                     spacing: Metrics.spacing
 
-                    Text {
+                    KitText {
+                        role: "secondary"
                         Layout.fillWidth: true
                         text: ModsService.busy ? I18n.t("mods.working") : ""
-                        font.family: Config.theme.font
-                        font.pixelSize: Styling.fontSize(-1)
-                        color: Colors.overSurfaceVariant
                         elide: Text.ElideRight
                     }
 
@@ -158,10 +157,8 @@ Item {
                     onToggled: value => ModsService.setModsEnabled(value)
                 }
 
-                Rectangle {
+                Divider {
                     width: parent.width
-                    height: 1
-                    color: Ui.alpha(Colors.outlineVariant, 0.45)
                 }
 
                 ModsSwitchRow {
@@ -203,11 +200,11 @@ Item {
                 width: parent.width
                 spacing: Metrics.spacing
 
-                Text {
+                KitText {
+                    role: "caption"
                     Layout.fillWidth: true
                     text: I18n.t("mods.base") + " " + (ModsService.baseVersion || I18n.t("mods.unknown")) + (ModsService.baseRevision ? " · " + ModsModel.shortRevision(ModsService.baseRevision) : "") + " · " + I18n.t("mods.active") + " " + (ModsService.activeGeneration || "base")
                     font.family: Config.theme.monoFont
-                    font.pixelSize: Styling.fontSize(-2)
                     color: Colors.overSurfaceVariant
                     elide: Text.ElideMiddle
                 }

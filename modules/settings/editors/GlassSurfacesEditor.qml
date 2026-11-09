@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.config
 import qs.modules.settings.controls
 import qs.modules.settings.store
+import qs.modules.components.kit
 
 // Per-surface glass overrides (theme.glass.surfaces.<surface>.amount).
 // Off = the surface inherits the master amount (-1); on = its own amount.
@@ -15,7 +16,7 @@ ColumnLayout {
 
     property var entry
 
-    spacing: 4
+    spacing: Space.xs
 
     Repeater {
         model: Glass.surfaces
@@ -29,19 +30,18 @@ ColumnLayout {
 
             objectName: "glassSurface:" + modelData
             Layout.fillWidth: true
-            spacing: 12
+            spacing: Space.m
 
             ToggleControl {
                 checked: surfaceRow.custom
                 onToggled: v => SettingsStore.set(surfaceRow.key, v ? Math.round(Glass.amount * 100) / 100 : -1)
             }
 
-            Text {
+            KitText {
+                role: "secondary"
                 Layout.preferredWidth: 150
                 text: I18n.t("prefs.glass.surface." + surfaceRow.modelData)
                 elide: Text.ElideRight
-                font.family: Config.theme.font
-                font.pixelSize: Styling.fontSize(-1)
                 color: Colors.overBackground
             }
 

@@ -256,7 +256,7 @@ QTest.qWait(100)
 check(find("keybindRow:core:system.tools") is not None and find("keybindRow:core:launcher") is None,
       "conflict filter shows only conflicts")
 chip = find("keybindsConflicts")
-h.eval(chip, "children[1].clicked(null)")
+h.eval(chip, "clicked()")
 check(ev("KeybindsStore.conflictFilter") is False, "clicking the chip shows everything again")
 ev('KeybindsStore.hyprBinds = [{modmask: 64, key: "1", has_description: true, description: "Discord", submap: ""}]')
 check(ev("KeybindsStore.conflictText('custom:1')") == "Compositor: Discord", "native compositor bind conflict")
