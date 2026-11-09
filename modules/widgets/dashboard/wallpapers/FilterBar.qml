@@ -1,8 +1,9 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import qs.modules.theme
-import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.globals
 import qs.modules.services
 import qs.config
@@ -41,7 +42,7 @@ FocusScope {
     }
 
     // Configuración del Flickable
-    height: 32 + (scrollBar.visible ? 4 + scrollBar.implicitHeight : 0)
+    height: Space.chip + (scrollBar.visible ? Space.xs + scrollBar.implicitHeight : 0)
     implicitWidth: filterRow.width
 
     onActiveFocusChanged: {
@@ -144,7 +145,7 @@ FocusScope {
     Flickable {
         id: flickable
         width: parent.width
-        height: 32
+        height: Space.chip
         contentWidth: filterRow.width
         flickableDirection: Flickable.HorizontalFlick
         clip: true
@@ -217,123 +218,41 @@ FocusScope {
 
         Row {
             id: filterRow
-            spacing: 4
+            spacing: Space.s
 
             Repeater {
                 id: filterRepeater
                 model: filterModel
-                delegate: StyledRect {
+                delegate: Chip {
                     id: filterTag
                     required property string label
                     required property string type
                     required property int index
 
-                    property bool isActive: root.activeFilters.includes(type)
-                    property bool hasFocus: root.keyboardNavigationActive && root.focusedFilterIndex === index
-                    property bool isHovered: false
+                    objectName: "filter_" + filterTag.type
+                    active: root.activeFilters.includes(filterTag.type)
+                    highlighted: root.keyboardNavigationActive && root.focusedFilterIndex === filterTag.index
+                    icon: filterTag.active ? Icons.accept : ""
+                    text: filterTag.type === "image" ? I18n.t("wallpapers.filter_images") : filterTag.type === "video" ? I18n.t("wallpapers.filter_videos") : filterTag.label
 
-                    // Variante dinámica según estado
-                    variant: {
-                        if (isActive && (hasFocus || isHovered))
-                            return "primaryfocus";
-                        if (isActive)
-                            return "primary";
-                        if (hasFocus || isHovered)
-                            return "focus";
-                        return "common";
-                    }
+                    onClicked: {
+                        root.keyboardNavigationActive = false;
+                        root.focusedFilterIndex = -1;
 
-                    // Ancho dinámico: incluye icono solo cuando está activo
-                    width: filterText.width + 24 + (isActive ? filterIcon.width + 4 : 0)
-                    height: 32
-                    radius: isActive ? Styling.radius(0) / 2 : Styling.radius(0)
-
-                    Item {
-                        anchors.fill: parent
-                        anchors.margins: 8
-
-                        Row {
-                            anchors.centerIn: parent
-                            spacing: isActive ? 4 : 0
-
-                            // Icono con animación de revelación
-                            Item {
-                                width: filterIcon.visible ? filterIcon.width : 0
-                                height: filterIcon.height
-                                clip: true
-
-                                Text {
-                                    id: filterIcon
-                                    text: Icons.accept
-                                    font.family: Icons.font
-                                    font.pixelSize: 16
-                                    color: filterTag.item
-                                    visible: isActive
-                                    opacity: isActive ? 1 : 0
-
-                                    Behavior on opacity {
-                                        enabled: Config.animDuration > 0
-                                        NumberAnimation {
-                                            duration: Config.animDuration / 3
-                                            easing.type: Motion.enter.easing
-                                        }
-                                    }
-                                }
-
-                                Behavior on width {
-                                    enabled: Config.animDuration > 0
-                                    NumberAnimation {
-                                        duration: Config.animDuration / 3
-                                        easing.type: Motion.morph.easing
-                                    }
-                                }
-                            }
-
-                            Text {
-                                id: filterText
-                                text: type === "image" ? I18n.t("wallpapers.filter_images") : type === "video" ? I18n.t("wallpapers.filter_videos") : label
-                                font.family: Config.theme.font
-                                font.pixelSize: Config.theme.fontSize
-                                color: filterTag.item
-
-                                Behavior on color {
-                                    enabled: Config.animDuration > 0
-                                    ColorAnimation {
-                                        duration: Config.animDuration / 3
-                                        easing.type: Motion.morph.easing
-                                    }
-                                }
-                            }
+                        const index = root.activeFilters.indexOf(filterTag.type);
+                        if (index > -1) {
+                            root.activeFilters.splice(index, 1);
+                        } else {
+                            root.activeFilters.push(filterTag.type);
                         }
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-
-                        onEntered: filterTag.isHovered = true
-                        onExited: filterTag.isHovered = false
-
-                        onClicked: {
-                            root.keyboardNavigationActive = false;
-                            root.focusedFilterIndex = -1;
-
-                            const index = root.activeFilters.indexOf(type);
-                            if (index > -1) {
-                                root.activeFilters.splice(index, 1);
-                            } else {
-                                root.activeFilters.push(type);
-                            }
-                            root.activeFilters = root.activeFilters.slice();  // Trigger update
-                            root.filterToggled(type);
-                        }
+                        root.activeFilters = root.activeFilters.slice();  // Trigger update
+                        root.filterToggled(filterTag.type);
                     }
 
                     Behavior on width {
-                        enabled: Config.animDuration > 0
+                        enabled: Motion.micro.duration > 0
                         NumberAnimation {
-                            duration: Config.animDuration / 3
+                            duration: Motion.micro.duration
                             easing.type: Motion.morph.easing
                         }
                     }
@@ -345,8 +264,7 @@ FocusScope {
     ScrollBar {
         id: scrollBar
         anchors.top: flickable.bottom
-        anchors.topMargin: 4
-        Layout.preferredHeight: 4
+        anchors.topMargin: Space.xs
         width: flickable.width
         height: implicitHeight
         orientation: Qt.Horizontal
@@ -354,20 +272,6 @@ FocusScope {
 
         position: flickable.contentX / flickable.contentWidth
         size: flickable.width / flickable.contentWidth
-
-        background: Rectangle {
-            implicitWidth: 4
-            implicitHeight: 4
-            color: Colors.surface
-            radius: Styling.radius(0)
-        }
-
-        contentItem: Rectangle {
-            implicitWidth: 4
-            implicitHeight: 4
-            color: Styling.srItem("overprimary")
-            radius: Styling.radius(0)
-        }
 
         onPressedChanged: {
             scrollBarPressed = pressed;

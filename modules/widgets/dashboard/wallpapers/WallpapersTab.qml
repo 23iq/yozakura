@@ -67,7 +67,7 @@ FocusScope {
     // Configuración interna del grid
     // Reflows with the tab's width (cells about three quarters of a bento cell).
     readonly property int gridColumns: WallpaperGrid.columnsFor(wallpaperGridContainer.width, Metrics.bentoCell * 0.75)
-    readonly property int wallpaperMargin: 4
+    readonly property int wallpaperMargin: Space.xs
 
     // Array de elementos focusables para navegación cíclica
     property var focusableElements: [
@@ -246,13 +246,13 @@ FocusScope {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: 8
+        spacing: Space.s
 
         // Barra superior con OLED mode, búsqueda y scheme selector
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 48
-            spacing: 8
+            Layout.preferredHeight: Space.controlM
+            spacing: Space.s
             z: 1000 // Asegurar que el menú desplegable se dibuje por encima del resto del contenido
 
             // Barra de búsqueda centrada
@@ -350,7 +350,6 @@ FocusScope {
             // Per-Screen Monitor toggle
             WallpaperToggle {
                 id: perScreenToggle
-                Layout.preferredWidth: 120 // un poco mas ancho para que quepa el nombre monitor si es largo
                 label: wallpapersTabRoot.currentScreenName // Get the monitor name!
                 centerLabel: true
                 checked: wallpapersTabRoot.isPerScreen
@@ -450,7 +449,7 @@ FocusScope {
             Layout.fillWidth: true
             Layout.fillHeight: true
             color: "transparent"
-            radius: Styling.radius(4)
+            radius: Look.radius("box")
             clip: true
 
             // Calcular tamaño de celda basado en columnas y proporción 1:1

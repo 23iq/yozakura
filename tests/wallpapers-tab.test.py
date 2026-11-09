@@ -27,9 +27,12 @@ h.module("qs.modules.theme", {
     "Styling": "pragma Singleton\nimport QtQuick\nQtObject { function radius(x) { return x; } function srItem(x) { return 'red'; } }",
     "Metrics": "pragma Singleton\nimport QtQuick\nQtObject { property int bentoCell: 132 }",
     "Icons": "pragma Singleton\nimport QtQuick\nQtObject { property string accept: 'v'; property string circleNotch: 'o'; property string font: 'Sans' }",
+    "Motion": "pragma Singleton\nimport QtQuick\nQtObject { property QtObject micro: QtObject { property int duration: 0 } "
+              "property QtObject glide: QtObject { property int duration: 0 } "
+              "property QtObject morph: QtObject { property int duration: 0; property int easing: 0 } }",
 })
 h.module("qs.modules.components", {
-    "StyledRect": "import QtQuick\nRectangle { property string variant }",
+    "StyledRect": "import QtQuick\nRectangle { property string variant; property bool enableBorder }",
 })
 h.module("qs.modules.components.kit", {
     "SearchField": """import QtQuick
@@ -41,6 +44,23 @@ Item {
     signal escapePressed(); signal tabPressed(); signal shiftTabPressed()
     signal downPressed(); signal upPressed(); signal leftPressed(); signal rightPressed(); signal accepted()
     function focusInput() { focusCalls++; }
+}""",
+    # The rest of the kit the tab uses, as plain stand-ins (the real kit is
+    # rendered by tools/render/dashtabs_render.py).
+    "Space": "pragma Singleton\nimport QtQuick\nQtObject { property int xs: 4; property int s: 8; property int m: 12; "
+             "property int controlM: 40; property int controlXL: 96; property int stroke: 3 }",
+    "Look": "pragma Singleton\nimport QtQuick\nQtObject { function radius(r, h) { return 8; } }",
+    "Type": "pragma Singleton\nimport QtQuick\nQtObject { property color accent: 'red'; property color text: 'white'; "
+            "property color placeholder: 'gray' }",
+    "KitText": "import QtQuick\nText { property string role }",
+    "Icon": "import QtQuick\nText { property string icon; property string role; property string tone; text: icon }",
+    "Chip": """import QtQuick
+Item {
+    id: chip
+    property string text; property bool active; property bool highlighted; property real maxLabelWidth
+    signal clicked()
+    implicitWidth: 100; implicitHeight: 32
+    MouseArea { anchors.fill: parent; onClicked: chip.clicked() }
 }""",
 })
 h.module("qs.modules.globals", {"GlobalStates": """pragma Singleton
