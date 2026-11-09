@@ -178,15 +178,15 @@ FocusScope {
         function updateFilters() {
             console.log("Updating filters in FilterBar");
             // Limpiar filtros de subcarpetas existentes
-            for (var i = filterModel.count - 1; i >= 3; i--) {
+            for (let i = filterModel.count - 1; i >= 3; i--) {
                 filterModel.remove(i);
             }
 
             // Agregar filtros de subcarpetas
             if (GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.subfolderFilters) {
-                var subfolders = GlobalStates.wallpaperManager.subfolderFilters;
+                const subfolders = GlobalStates.wallpaperManager.subfolderFilters;
                 console.log("Adding subfolder filters:", subfolders);
-                for (var j = 0; j < subfolders.length; j++) {
+                for (let j = 0; j < subfolders.length; j++) {
                     filterModel.append({
                         label: subfolders[j],
                         type: "subfolder_" + subfolders[j]

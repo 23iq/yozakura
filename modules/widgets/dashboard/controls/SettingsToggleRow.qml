@@ -14,10 +14,11 @@ RowLayout {
 
     Layout.fillWidth: true
     spacing: Space.s
-    opacity: root.enabled ? 1 : 0.45
 
+    // The Switch dims itself while disabled; only the label dims here.
     KitText {
         Layout.fillWidth: true
+        opacity: root.enabled ? 1 : 0.45
         role: "body"
         text: root.label
     }

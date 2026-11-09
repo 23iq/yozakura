@@ -8,7 +8,7 @@ import "clipboard_utils.js" as ClipboardUtils
 // Scrollable preview of a text item: link embed / loading state / plain URL
 // card for links, then the full text.
 Flickable {
-    id: preview
+    id: textPreview
 
     // Selected item (or null), its full content, the link preview metadata
     // and whether it is still being fetched.
@@ -30,8 +30,8 @@ Flickable {
         spacing: Space.m
 
         ClipboardLinkEmbed {
-            preview: preview.linkPreview
-            url: preview.content
+            preview: textPreview.linkPreview
+            url: textPreview.content
         }
 
         // Loading indicator for the link preview
@@ -41,7 +41,7 @@ Flickable {
             width: parent.width
             height: loadingRow.implicitHeight + Look.boxPadding * 2
             interactive: false
-            visible: preview.loadingLinkPreview && preview.item && ClipboardUtils.isUrl(preview.content)
+            visible: !!(textPreview.loadingLinkPreview && textPreview.item && ClipboardUtils.isUrl(textPreview.content))
 
             Row {
                 id: loadingRow
@@ -75,10 +75,10 @@ Flickable {
         ClipboardUrlCard {
             id: urlCard
             width: parent.width
-            visible: preview.item && ClipboardUtils.isUrl(preview.content) && !preview.loadingLinkPreview && (!preview.linkPreview || (!preview.linkPreview.title && !preview.linkPreview.description && !preview.linkPreview.image))
-            clipItem: preview.item
-            url: preview.content
-            onOpenRequested: itemId => preview.openRequested(itemId)
+            visible: !!(textPreview.item && ClipboardUtils.isUrl(textPreview.content) && !textPreview.loadingLinkPreview && (!textPreview.linkPreview || (!textPreview.linkPreview.title && !textPreview.linkPreview.description && !textPreview.linkPreview.image)))
+            clipItem: textPreview.item
+            url: textPreview.content
+            onOpenRequested: itemId => textPreview.openRequested(itemId)
         }
 
         KitText {
@@ -86,7 +86,7 @@ Flickable {
             objectName: "previewText"
             width: parent.width
             role: "body"
-            text: preview.content
+            text: textPreview.content
             wrapMode: Text.Wrap
             elide: Text.ElideNone
         }

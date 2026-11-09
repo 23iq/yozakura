@@ -55,7 +55,9 @@ ClipboardCard {
     objectName: "linkEmbed"
     width: parent.width
     height: (embed.isVideo ? videoContent.height : linkContent.height) + Look.boxPadding * 2
-    visible: embed.preview && !embed.preview.error && (embed.preview.title || embed.preview.description || embed.preview.image)
+    // !! : a preview without any of them must hide the card, not leave the
+    // last value (undefined is not assignable to a bool).
+    visible: !!(embed.preview && !embed.preview.error && (embed.preview.title || embed.preview.description || embed.preview.image))
     onClicked: embed.open()
 
     // Video layout (YouTube, etc.)

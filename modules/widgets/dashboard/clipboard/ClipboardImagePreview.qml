@@ -19,10 +19,10 @@ Item {
     function sourceFor(wantGif) {
         if (preview.item && preview.isGifImage === wantGif) {
             if (preview.item.isImage) {
-                ClipboardService.revision;
+                const _rev = ClipboardService.revision; // rebind when the images change
                 return ClipboardService.getImageData(preview.item.id);
             } else if (preview.isImageFile) {
-                var filePath = ClipboardView.filePathFromUri(preview.content);
+                const filePath = ClipboardView.filePathFromUri(preview.content);
                 return filePath ? "file://" + filePath : "";
             }
         }

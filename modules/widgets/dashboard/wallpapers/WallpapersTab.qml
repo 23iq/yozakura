@@ -228,8 +228,8 @@ FocusScope {
                 const subfolder = GlobalStates.wallpaperManager.getSubfolderFromPath(path);
 
                 // Verificar si coincide con algún filtro activo
-                for (var i = 0; i < activeFilters.length; i++) {
-                    var filter = activeFilters[i];
+                for (let i = 0; i < activeFilters.length; i++) {
+                    const filter = activeFilters[i];
                     if (filter === fileType) {
                         return true;
                     }
@@ -376,7 +376,6 @@ FocusScope {
             WallpaperToggle {
                 id: tintToggle
                 label: I18n.t("wallpapers.tint")
-                animateLabelColor: false
                 checked: GlobalStates.wallpaperManager ? GlobalStates.wallpaperManager.tintEnabled : false
                 onToggled: {
                     if (GlobalStates.wallpaperManager) {

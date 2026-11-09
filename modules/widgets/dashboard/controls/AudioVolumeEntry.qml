@@ -38,7 +38,7 @@ ColumnLayout {
             icon: root.isMuted ? Icons.speakerSlash : (root.icon || Icons.speakerHigh)
             active: root.isMuted
             danger: root.isMuted
-            tooltip: root.isMuted ? "Unmute" : "Mute"
+            tooltip: root.isMuted ? I18n.t("mixer.unmute") : I18n.t("mixer.mute")
             onClicked: {
                 if (root.node?.audio)
                     root.node.audio.muted = !root.node.audio.muted;

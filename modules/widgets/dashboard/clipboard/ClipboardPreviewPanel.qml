@@ -36,7 +36,7 @@ Item {
 
             ClipboardTextPreview {
                 anchors.fill: parent
-                visible: previewPanel.currentItem && !previewPanel.currentItem.isImage && !previewPanel.currentItem.isFile
+                visible: !!(previewPanel.currentItem && !previewPanel.currentItem.isImage && !previewPanel.currentItem.isFile)
                 item: previewPanel.currentItem
                 content: previewPanel.content
                 linkPreview: previewPanel.tab.linkPreviewData
@@ -48,7 +48,7 @@ Item {
             ClipboardFilePreview {
                 id: filePreview
                 anchors.fill: parent
-                visible: previewPanel.currentItem && previewPanel.currentItem.isFile && !filePreview.isImage
+                visible: !!(previewPanel.currentItem && previewPanel.currentItem.isFile && !filePreview.isImage)
                 item: previewPanel.currentItem
                 content: previewPanel.content
                 onOpenRequested: itemId => previewPanel.open(itemId)

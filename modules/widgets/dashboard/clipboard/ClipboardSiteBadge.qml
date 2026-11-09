@@ -12,7 +12,7 @@ Row {
 
     width: parent.width
     spacing: Space.s
-    visible: badge.preview && badge.preview.site_name
+    visible: !!(badge.preview && badge.preview.site_name)
 
     Item {
         id: favicon
@@ -60,6 +60,6 @@ Row {
         anchors.verticalCenter: parent.verticalCenter
         width: parent.width - favicon.width - parent.spacing
         role: "caption"
-        text: badge.preview ? badge.preview.site_name : ""
+        text: badge.preview?.site_name ?? ""
     }
 }

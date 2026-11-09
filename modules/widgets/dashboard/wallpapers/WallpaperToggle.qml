@@ -14,8 +14,6 @@ Item {
     property bool toggleEnabled: true
     // Label layout: elided in the middle (monitor name) or whole.
     property bool centerLabel: false
-    // Kept for callers; the chip animates its own ink.
-    property bool animateLabelColor: true
     // Dims the whole control while it cannot be toggled.
     property bool dimWhenDisabled: false
     property bool keyboardNavigationActive: false
