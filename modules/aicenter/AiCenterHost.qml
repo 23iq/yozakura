@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import qs.modules.theme
+import qs.modules.components
 import qs.modules.services
 import qs.modules.globals
 import qs.config
@@ -20,6 +21,11 @@ Item {
 
     readonly property bool active: Config.ai.enabled !== false && GlobalStates.assistantVisible && targetScreen && targetScreen.name === GlobalStates.assistantScreenName
     property alias hitbox: container
+    // Window mapping and keyboard, latched (SurfaceLatch): on close the
+    // composer lets go of the keyboard first, then keyboard focus drops,
+    // and the surface unmaps only after the slide-out.
+    readonly property bool shown: latch.shown
+    readonly property bool keyboardWanted: latch.keyboard
     property bool keepLoaded: false
     // Set by the window: it owns the keyboard right now
     property bool hasKeyboard: false
@@ -52,6 +58,14 @@ Item {
         } else {
             unloadTimer.restart();
         }
+    }
+
+    SurfaceLatch {
+        id: latch
+        active: root.active
+        holdMs: Math.max(Motion.morph.duration, Motion.enter.duration)
+        // The composer (or whatever field has focus) lets go first.
+        focusHost: root
     }
 
     Timer {
@@ -126,7 +140,7 @@ Item {
         anchors.left: root.onLeft ? parent.left : undefined
         anchors.rightMargin: root.onLeft ? 0 : (root.active ? 0 : -width)
         anchors.leftMargin: root.onLeft ? (root.active ? 0 : -width) : 0
-        visible: root.active || slideR.running || slideL.running
+        visible: root.shown
         opacity: root.active ? 1 : 0.6
 
         // Size changes (compact / wide / fullscreen) glide.
@@ -139,14 +153,12 @@ Item {
         }
         Behavior on anchors.rightMargin {
             NumberAnimation {
-                id: slideR
                 duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
         }
         Behavior on anchors.leftMargin {
             NumberAnimation {
-                id: slideL
                 duration: Motion.morph.duration
                 easing.type: Motion.morph.easing
             }
