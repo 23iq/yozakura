@@ -109,9 +109,11 @@ Item {
         onTriggered: videoWallpaper.requestVideoSync()
     }
 
+    // No AudioOutput: the wallpaper is silent, and constructing one
+    // (QGstreamerAudioOutput) per wallpaper swap crashed Quickshell.
+    // Without an output the audio track is simply not decoded.
     MediaPlayer {
         id: player
-        audioOutput: mutedAudio
         videoOutput: videoOut
         loops: MediaPlayer.Infinite
 
@@ -132,12 +134,6 @@ Item {
         function onVideoFrameChanged() {
             videoWallpaper.contentReady = true;
         }
-    }
-
-    AudioOutput {
-        id: mutedAudio
-        muted: true
-        volume: 0
     }
 
     Item {

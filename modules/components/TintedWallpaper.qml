@@ -69,20 +69,14 @@ Item {
 
             property alias player: videoPlayer
 
+            // Silent: no AudioOutput (its GStreamer ctor crashed Quickshell).
             MediaPlayer {
                 id: videoPlayer
                 loops: MediaPlayer.Infinite
-                audioOutput: mutedAudio
                 videoOutput: videoLoader.status === Loader.Ready ? videoLoader.item : null
                 source: root.source
 
                 onMediaStatusChanged: applyPendingSeek()
-            }
-
-            AudioOutput {
-                id: mutedAudio
-                muted: true
-                volume: 0
             }
         }
     }
