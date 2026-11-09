@@ -2,6 +2,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import "YozdClients.js" as YozdClients
 
 Singleton {
     id: root
@@ -128,31 +129,15 @@ Singleton {
         }
 
         if (state.windows) {
-            const existingClients = root.clients.values || [];
-            const mappedClients = state.windows.map(win => {
-                const existing = existingClients.find(c => c.address === win.id);
-                const prevFocus = existing && existing.focusHistoryID !== undefined ? existing.focusHistoryID : 999999;
-                const newFocus = win.is_focused ? (existing && existing.is_focused ? prevFocus : --root.focusHistoryCounter) : prevFocus;
-                return {
-                    address: win.id,
-                    class: win.app_id,
-                    title: win.title,
-                    workspace: { id: parseInt(win.workspace_id) || 0, name: win.workspace_id },
-                    monitor: parseInt(win.metadata ? win.metadata.monitor_id : 0) || 0,
-                    floating: win.is_floating,
-                    fullscreen: win.is_fullscreen,
-                    hidden: win.is_hidden,
-                    mapped: true,
-                    at: [win.metadata ? (win.metadata.x || 0) : 0, win.metadata ? (win.metadata.y || 0) : 0],
-                    size: [win.metadata ? (win.metadata.width || 0) : 0, win.metadata ? (win.metadata.height || 0) : 0],
-                    xwayland: (win.metadata ? win.metadata.xwayland : false) || false,
-                    is_focused: win.is_focused || false,
-                    urgent: !!(win.metadata && win.metadata.is_urgent),
-                    focusHistoryID: newFocus
-                };
-            });
-            root.clients.values = mappedClients;
-            const focused = mappedClients.find(w => w.address === (root.focusedClient ? root.focusedClient.address : undefined)) || mappedClients.find(w => w.is_focused) || null;
+            // Unchanged clients keep their object (YozdClients.js), so an
+            // event that touches one window does not re-run bindings on the
+            // others, and an event that touches none publishes nothing.
+            const merged = YozdClients.merge(root.clients.values, state.windows, root.focusHistoryCounter);
+            root.focusHistoryCounter = merged.counter;
+            if (merged.changed) {
+                root.clients.values = merged.values;
+            }
+            const focused = YozdClients.pickFocused(merged.values, root.focusedClient);
             if (focused !== root.focusedClient) {
                 root.focusedClient = focused;
             }

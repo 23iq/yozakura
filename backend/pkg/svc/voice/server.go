@@ -19,6 +19,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	procutil "yozakura/backend/pkg/proc"
 )
 
 // ServerSpec identifies one whisper-server configuration. A change of any
@@ -307,7 +308,7 @@ func startWhisperServer(spec ServerSpec, port int, logPath string) (*exec.Cmd, e
 		return nil, fmt.Errorf("model not found: %s", spec.Model)
 	}
 	cmd := exec.CommandContext(context.Background(), spec.Bin, ServerArgs(spec, port)...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} // StartTied adds Pdeathsig
 	var logFile *os.File
 	if logPath != "" {
 		_ = os.MkdirAll(filepath.Dir(logPath), 0o755)
@@ -316,7 +317,7 @@ func startWhisperServer(spec ServerSpec, port int, logPath string) (*exec.Cmd, e
 			cmd.Stdout, cmd.Stderr = f, f
 		}
 	}
-	err := cmd.Start()
+	err := procutil.StartTied(cmd)
 	if logFile != nil {
 		_ = logFile.Close() // the child keeps its own descriptor
 	}

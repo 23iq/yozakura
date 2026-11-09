@@ -126,14 +126,7 @@ func (s *Service) state(_ json.RawMessage) (any, error) {
 	if s.mgr == nil {
 		return nil, fmt.Errorf("compositor: process manager not initialized")
 	}
-	st := s.mgr.State()
-	return map[string]any{
-		"windows":         st.Windows,
-		"workspaces":      st.Workspaces,
-		"monitors":        st.Monitors,
-		"overview_open":   st.OverviewOpen,
-		"keyboard_layout": st.KeyboardLayout,
-	}, nil
+	return statePayload(s.mgr.State()), nil
 }
 
 func (s *Service) dispatch(params json.RawMessage) (any, error) {
@@ -183,24 +176,22 @@ func (s *Service) subscribe(sub *ipc.Subscriber) {
 	ch, cancel := s.mgr.Subscribe()
 	go func() {
 		defer cancel()
-		for {
-			select {
-			case st, ok := <-ch:
-				if !ok {
-					return
-				}
-				sub.Send("compositor.state", map[string]any{
-					"windows":         st.Windows,
-					"workspaces":      st.Workspaces,
-					"monitors":        st.Monitors,
-					"overview_open":   st.OverviewOpen,
-					"keyboard_layout": st.KeyboardLayout,
-				})
-			case <-sub.StopCh():
-				return
-			}
-		}
+		coalesce(ch, sub.StopCh(), pushInterval, func(st State) {
+			sub.Send("compositor.state", statePayload(st))
+		})
 	}()
+}
+
+// statePayload is the compositor.state wire shape (every key present, null
+// when unknown), shared by the push and the compositor.state call.
+func statePayload(st State) map[string]any {
+	return map[string]any{
+		"windows":         st.Windows,
+		"workspaces":      st.Workspaces,
+		"monitors":        st.Monitors,
+		"overview_open":   st.OverviewOpen,
+		"keyboard_layout": st.KeyboardLayout,
+	}
 }
 
 func defaultTomlPath() string {

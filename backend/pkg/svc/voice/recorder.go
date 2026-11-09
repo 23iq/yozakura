@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 	"yozakura/backend/pkg/brand"
+	procutil "yozakura/backend/pkg/proc"
 )
 
 // Capture is a live microphone stream of raw s16le 16 kHz mono PCM.
@@ -77,12 +78,12 @@ var errStart = errors.New("capture: start failed")
 // startCapture runs argv with stdout piped to the returned Capture.
 func startCapture(argv []string) (*procCapture, error) {
 	cmd := exec.CommandContext(context.Background(), argv[0], argv[1:]...)
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pdeathsig: syscall.SIGTERM}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true} // StartTied adds Pdeathsig
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
-	if err := cmd.Start(); err != nil {
+	if err := procutil.StartTied(cmd); err != nil {
 		return nil, errors.Join(errStart, err)
 	}
 	pc := &procCapture{cmd: cmd, out: out, done: make(chan struct{}), stop: make(chan struct{})}
