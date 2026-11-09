@@ -4,14 +4,15 @@
     tools/render/desktop_widgets_render.py [--out DIR] [--mode dark|light|both]
                                            [--size 2560x1440] [--wallpaper PATH]
                                            [--no-depth] [--settings] [--clock STYLE]
-                                           [--seed HEX]
+                                           [--seed HEX] [--languages ink,glass,...]
 
 Draws the wallpaper (a video shows the frame its depth mask was made from),
 the real depth clock (with the subject cutout when the depth venv is set up:
 scripts/depth_mask.py, cached results are reused) and the real desktop
 widgets canvas with a sample layout of every widget type and demo data, in
 normal and edit desktop mode. Uses your config, palette (light mode via
-matugen) and current wallpaper, like tools/render/settings_render.py.
+matugen) and current wallpaper, like tools/render/settings_render.py, once per
+visual language (`--languages`, every one by default).
 Writes <out>/desktop-{normal,edit}-<mode>.png; --settings also renders the
 Desktop & Clock settings page (<out>/settings-desktop[-sN]-<mode>.png).
 """
@@ -34,6 +35,7 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import QUICKSHELL, SettingsEnv  # noqa: E402
 from settings_render import palette, wallpaper_state  # noqa: E402
+from languages import LANGUAGES  # noqa: E402
 
 DATA = Path.home() / ".local" / "share" / "yozakura"
 CACHE = Path.home() / ".cache" / "yozakura"
@@ -99,6 +101,7 @@ def main() -> int:
     ap.add_argument("--settings", action="store_true", help="also render the Desktop & Clock settings page")
     ap.add_argument("--clock", default="", help="show the depth clock in this style (e.g. segment)")
     ap.add_argument("--seed", default="", help="palette from this seed colour (matugen), e.g. '#4c8f5a'")
+    ap.add_argument("--languages", default=",".join(LANGUAGES), help="theme.language values, one render set each")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
@@ -111,12 +114,12 @@ def main() -> int:
         frame = CACHE / "depth" / f"{depth['key']}.frame.jpg" if depth else None
         backdrop = str(frame) if frame and frame.exists() else state.get("thumbs", {}).get(wall, "")
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
-    for mode in modes:
+    for lang, mode in [(lang, mode) for lang in args.languages.split(",") if lang for mode in modes]:
         desktop = {"widgets": LAYOUT, "widgetsEnabled": True}
         if args.clock:
             desktop.update({"depthClock": True, "depthClockStyle": args.clock})
-        env = SettingsEnv(f"desktop-render-{mode}", palette=palette(mode, state, args.seed), user_config=True,
-                          overrides={"theme": {"lightMode": mode == "light"}, "desktop": desktop},
+        env = SettingsEnv(f"desktop-render-{lang}-{mode}", palette=palette(mode, state, args.seed), user_config=True,
+                          overrides={"theme": {"lightMode": mode == "light", "language": lang}, "desktop": desktop},
                           wallpaper=state)
         env.h.module("qs.modules.services", demo_services(depth, "file://" + backdrop if backdrop else ""))
         env.h.module("Quickshell", {**QUICKSHELL, "Quickshell": QUICKSHELL["Quickshell"].replace(
@@ -154,17 +157,17 @@ Window {{
 }}""")
         canvas = env.h.find(win, "canvas")
         QTest.qWait(2500)
-        path = out / f"desktop-normal-{mode}.png"
+        path = out / f"desktop-normal-{lang}-{mode}.png"
         win.grabWindow().save(str(path))
         print(path)
         env.h.eval(canvas, "DesktopWidgets.editMode = true")
         QTest.qWait(1200)
-        path = out / f"desktop-edit-{mode}.png"
+        path = out / f"desktop-edit-{lang}-{mode}.png"
         win.grabWindow().save(str(path))
         print(path)
         env.h.eval(canvas, "DesktopWidgets.editMode = false")
         if args.settings:
-            render_settings(env, out, mode)
+            render_settings(env, out, f"{lang}-{mode}")
     return 0
 
 
