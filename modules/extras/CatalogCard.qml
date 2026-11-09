@@ -110,7 +110,8 @@ StyledRect {
         anchors.right: parent.right
         anchors.rightMargin: Space.l
         anchors.verticalCenter: badge.verticalCenter
-        role: "title"
+        role: "body"
+        font.weight: Look.activeLabelWeight
         text: root.entry.name || ""
         wrapMode: Text.WordWrap
         maximumLineCount: 2

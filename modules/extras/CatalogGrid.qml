@@ -152,7 +152,8 @@ Column {
                 }
                 KitText {
                     anchors.verticalCenter: parent.verticalCenter
-                    role: "title"
+                    role: "body"
+                    font.weight: Look.activeLabelWeight
                     text: group.cat ? I18n.t(group.cat.name) : ""
                 }
                 KitText {
@@ -171,12 +172,13 @@ Column {
                     Icon {
                         anchors.verticalCenter: parent.verticalCenter
                         icon: group.sec ? (Icons[group.sec.icon] ?? "") : ""
-                        role: "title"
+                        role: "body"
                         tone: "secondary"
                     }
                     KitText {
                         anchors.verticalCenter: parent.verticalCenter
-                        role: "title"
+                        role: "body"
+                        font.weight: Look.activeLabelWeight
                         text: group.sec ? group.sec.title : ""
                     }
                 }
