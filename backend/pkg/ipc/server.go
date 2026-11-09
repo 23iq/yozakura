@@ -52,6 +52,12 @@ type Subscriber struct {
 	once   sync.Once
 }
 
+// NewSubscriber returns a subscriber with an event buffer of size buf, as
+// the server creates for a stream (services' tests use it to drive Stop).
+func NewSubscriber(buf int) *Subscriber {
+	return &Subscriber{Events: make(chan ServiceEvent, buf), stop: make(chan struct{})}
+}
+
 func (s *Subscriber) Push(event ServiceEvent) {
 	select {
 	case s.Events <- event:

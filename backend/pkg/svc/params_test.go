@@ -53,7 +53,7 @@ func TestUIRunUsesParams(t *testing.T) {
 	if _, err := u.toggle(nil); err == nil {
 		t.Fatal("missing command must error")
 	}
-	if r, err := u.run(json.RawMessage(`{"command":"x"}`)); err != nil || r != "ok" {
+	if r, err := u.run(json.RawMessage(`{"command":"x"}`)); err != nil || r != UIQueued {
 		t.Fatalf("%v %v", r, err)
 	}
 }

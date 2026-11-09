@@ -58,6 +58,20 @@ func (s *Server) streamSubscribe(conn net.Conn, w *bufio.Writer, req *Request) {
 		}
 	}()
 
+	// A client that goes away (a crashed shell) never reads again; without
+	// this the subscription stayed registered until an event write failed,
+	// so the first event after the crash went nowhere. Anything a client
+	// sends after the subscribe request is ignored; EOF ends the stream.
+	go func() {
+		buf := make([]byte, 256)
+		for {
+			if _, err := conn.Read(buf); err != nil {
+				sub.Stop()
+				return
+			}
+		}
+	}()
+
 	// Register this stream with every matching service.
 	var wg sync.WaitGroup
 	s.mu.RLock()
