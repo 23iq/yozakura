@@ -9,6 +9,7 @@ import qs.modules.theme
 import qs.modules.widgets.defaultview
 import qs.modules.services
 import qs.modules.components
+import qs.modules.components.kit
 import qs.modules.bar.workspaces
 import qs.config
 import qs.modules.shell
@@ -392,11 +393,11 @@ Item {
             // Target width (animated below); 0 while hidden
             readonly property real targetWidth: shouldShowNotificationPopup ? Math.round(popupHovered ? 420 + 48 : 320 + 48) : 0
             width: Math.round(popupHovered ? 420 + 48 : 320 + 48)
-            height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + 32 : notificationPopup.implicitHeight + 32) : 0
+            height: shouldShowNotificationPopup ? (popupHovered ? notificationPopup.implicitHeight + Space.l * 2 : notificationPopup.implicitHeight + Space.l * 2) : 0
             clip: false
             visible: height > 0
             z: 999
-            radius: Styling.radius(20)
+            radius: Look.radius("surface", height)
 
             // Apply same reveal animation as notch
             opacity: root.reveal ? 1 : 0
@@ -475,7 +476,7 @@ Item {
             NotchNotificationView {
                 id: notificationPopup
                 anchors.fill: parent
-                anchors.margins: 16
+                anchors.margins: Space.l
                 visible: notificationPopupContainer.shouldShowNotificationPopup
                 opacity: visible ? 1 : 0
                 notchHovered: notificationPopupContainer.popupHovered

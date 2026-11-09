@@ -60,7 +60,7 @@ Item {
             Column {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
-                spacing: 1
+                spacing: Space.hairline
 
                 // Collapsed: everything on one elided line
                 KitText {
