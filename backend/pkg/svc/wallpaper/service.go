@@ -2,20 +2,26 @@
 // The CLI (`yozakura wallpaper <file> ...`) calls the Set method, which
 // pushes a one-shot ServiceEvent out to every QML subscriber. Subscribers
 // (WallpaperCommandService.qml) translate that into the existing setWallpaper
-// flow on the Wallpaper component. No filesystem or process state is held
-// here — wallpaper state remains owned by the Quickshell side.
+// flow on the Wallpaper component. Wallpaper state remains owned by the
+// Quickshell side; the service only makes screen-sized copies of video
+// wallpapers (videoProxy, package videoproxy) and announces finished ones
+// with a `wallpaper.videoProxy` event.
 package wallpaper
 
 import (
+	"context"
 	"encoding/json"
+	"path/filepath"
 	"sync"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/videoproxy"
 )
 
 type Service struct {
-	mu   sync.Mutex
-	subs []*ipc.Subscriber
+	mu    sync.Mutex
+	subs  []*ipc.Subscriber
+	proxy *videoproxy.Manager
 }
 
 // SetParams mirrors what the CLI sends. Only fields the caller set are
@@ -28,16 +34,48 @@ type SetParams struct {
 	Monitor string `json:"monitor"`
 }
 
-func NewService() *Service { return &Service{} }
+// ProxyDir is where video wallpaper proxies are cached under the cache dir.
+const ProxyDir = "video-wallpapers"
+
+// NewService returns the service; video proxies go to <cacheDir>/ProxyDir.
+func NewService(ctx context.Context, cacheDir string) *Service {
+	s := &Service{proxy: videoproxy.New(ctx, filepath.Join(cacheDir, ProxyDir))}
+	s.proxy.Notify = func(r videoproxy.Result) { s.broadcast("wallpaper.videoProxy", r) }
+	return s
+}
 
 func (s *Service) Register(srv *ipc.Server) {
 	srv.Register(&ipc.Service{
 		Name: "wallpaper",
 		Methods: map[string]ipc.HandlerFunc{
-			"set": s.set,
+			"set":        s.set,
+			"videoProxy": s.videoProxy,
 		},
 		Subscribe: s.subscribe,
+		// ffprobe runs on the first request for a file.
+		Async: map[string]bool{"videoProxy": true},
 	})
+}
+
+// videoProxy: {path, width, height} (physical pixels) -> videoproxy.Result.
+// A "pending" answer is followed by a `wallpaper.videoProxy` event.
+func (s *Service) videoProxy(params json.RawMessage) (any, error) {
+	var r videoproxy.Request
+	if len(params) > 0 {
+		if err := json.Unmarshal(params, &r); err != nil {
+			return nil, err
+		}
+	}
+	return s.proxy.Request(r), nil
+}
+
+func (s *Service) broadcast(event string, payload any) {
+	s.mu.Lock()
+	subs := append([]*ipc.Subscriber(nil), s.subs...)
+	s.mu.Unlock()
+	for _, sub := range subs {
+		sub.Send(event, payload)
+	}
 }
 
 func (s *Service) subscribe(sub *ipc.Subscriber) {
@@ -81,12 +119,6 @@ func (s *Service) set(params json.RawMessage) (any, error) {
 		payload["tint"] = *p.Tint
 	}
 
-	s.mu.Lock()
-	subs := append([]*ipc.Subscriber(nil), s.subs...)
-	s.mu.Unlock()
-	for _, sub := range subs {
-		sub.Send("wallpaper.set", payload)
-	}
-
+	s.broadcast("wallpaper.set", payload)
 	return map[string]any{"ok": true}, nil
 }

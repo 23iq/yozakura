@@ -40,6 +40,7 @@ module('qs.config', {'Config': '''pragma Singleton
 import QtQuick
 QtObject {
     property int animDuration: 300
+    property QtObject performance: QtObject { property bool videoWallpaperDownscale: false }
     property QtObject desktop: QtObject { property string wallpaperTransition: "grow"; property int wallpaperTransitionDuration: 800; property bool depthClock: false; property bool depthClockVideo: true }
 }'''})
 module('qs.modules.globals', {'GlobalStates': '''pragma Singleton
@@ -50,7 +51,7 @@ module('qs.modules.desktop', {'DepthClock': 'import QtQuick\nItem { property str
 # Panorama mode is off here (wallpaperMode unset): stubs only satisfy the import.
 module('qs.modules.desktop.panorama', {'PanoramaView': 'import QtQuick\nItem { property string sourceFile; property bool tint; property real sourceWidth; property real sourceHeight; property int slotIndex; property int slotCount; property bool parallax; property var depthMaps; property bool contentReady: true }',
                                         'PanoramaSlot': 'import QtQuick\nQtObject { property var screen; property bool enabled: true; property int index: 0; property int count: 1 }'})
-module('qs.modules.services', {'DepthMaskService': '''pragma Singleton
+module('qs.modules.services', {'VideoProxyService': 'pragma Singleton\nimport QtQuick\nQtObject { function request(f, w, h, cb) { cb(f); } }', 'DepthMaskService': '''pragma Singleton
 import QtQuick
 QtObject { property bool available: false; property int revision: 0; function result(p, w, h) { return null; } function request(p, w, h) {} function setMatteWanted(o, p) {} }'''})
 module('qs.modules.theme', {'Colors': 'pragma Singleton\nimport QtQuick\nQtObject {\n' + '\n'.join(f'    property color {n}: "#808080"' for n in palette) + '\n}'})

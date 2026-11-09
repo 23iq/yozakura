@@ -442,7 +442,8 @@
   {
    "name": "wallpaper",
    "methods": [
-    "set"
+    "set",
+    "videoProxy"
    ],
    "subscribe": true
   },
