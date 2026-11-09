@@ -1,93 +1,9 @@
 {
- "modules/aicenter": {
-  "spacing": 14,
-  "text": 1
- },
- "modules/aicenter/agent": {
-  "spacing": 14,
-  "font-size": 3,
-  "text": 19,
-  "radius": 11
- },
- "modules/aicenter/assistant": {
-  "spacing": 7,
-  "text": 8,
-  "radius": 1
- },
- "modules/aicenter/chat": {
-  "spacing": 2,
-  "radius": 1
- },
- "modules/aicenter/code": {
-  "spacing": 40,
-  "text": 40,
-  "radius": 13
- },
  "modules/aicenter/common": {
-  "spacing": 1,
-  "font-size": 1,
-  "rectangle": 1,
-  "text": 3,
-  "radius": 1
- },
- "modules/aicenter/composer": {
-  "spacing": 35,
-  "font-size": 1,
-  "rectangle": 2,
-  "text": 25,
-  "radius": 11
- },
- "modules/aicenter/header": {
-  "spacing": 27,
-  "font-size": 6,
-  "text": 19,
-  "radius": 7
+  "rectangle": 1
  },
  "modules/aicenter/markdown": {
-  "spacing": 21,
-  "font-size": 4,
-  "rectangle": 1,
-  "text": 13,
-  "radius": 2
- },
- "modules/aicenter/providers": {
-  "spacing": 20,
-  "text": 17,
-  "radius": 6
- },
- "modules/aicenter/quickask": {
-  "spacing": 5,
-  "font-size": 1,
-  "text": 3
- },
- "modules/aicenter/selection": {
-  "spacing": 11,
-  "font-size": 3,
-  "text": 11,
-  "radius": 5
- },
- "modules/aicenter/sessions": {
-  "spacing": 12,
-  "font-size": 2,
-  "text": 9,
-  "radius": 3
- },
- "modules/aicenter/tasks": {
-  "spacing": 48,
-  "text": 2,
-  "radius": 18
- },
- "modules/aicenter/transcript": {
-  "spacing": 35,
-  "font-size": 2,
-  "text": 30,
-  "radius": 9
- },
- "modules/aicenter/usage": {
-  "spacing": 23,
-  "rectangle": 2,
-  "text": 19,
-  "radius": 2
+  "rectangle": 1
  },
  "modules/bar": {
   "rectangle": 5,
@@ -147,16 +63,6 @@
  "modules/desktop/widgets/types": {
   "rectangle": 2
  },
- "modules/dock": {
-  "font-size": 4,
-  "rectangle": 1,
-  "text": 4,
-  "radius": 7
- },
- "modules/dock/indicators": {
-  "spacing": 1,
-  "rectangle": 5
- },
  "modules/extras": {
   "rectangle": 8
  },
@@ -178,7 +84,7 @@
   "text": 11
  },
  "modules/notch": {
-  "rectangle": 2
+  "rectangle": 1
  },
  "modules/notifications/strips": {
   "rectangle": 4
@@ -200,80 +106,40 @@
   "text": 8
  },
  "modules/settings/displays": {
-  "spacing": 22,
-  "rectangle": 12,
-  "text": 19,
-  "radius": 5
+  "rectangle": 8
  },
  "modules/settings/editors": {
-  "spacing": 122,
-  "font-size": 16,
-  "rectangle": 37,
-  "text": 92,
-  "radius": 15
+  "font-size": 3,
+  "rectangle": 33,
+  "text": 5
  },
  "modules/settings/editors/desktopwidgets": {
-  "spacing": 10,
-  "font-size": 1,
-  "rectangle": 5,
-  "text": 7,
-  "radius": 2
+  "rectangle": 5
  },
  "modules/settings/editors/keybinds": {
-  "spacing": 63,
-  "rectangle": 17,
-  "text": 38,
-  "radius": 8
- },
- "modules/settings/editors/routines": {
-  "spacing": 11,
-  "font-size": 1,
-  "text": 12,
-  "radius": 4
+  "rectangle": 15,
+  "text": 3
  },
  "modules/settings/editors/specials": {
-  "spacing": 20,
-  "font-size": 3,
-  "rectangle": 7,
-  "text": 14,
-  "radius": 4
- },
- "modules/settings/editors/surfaces": {
-  "spacing": 11,
-  "text": 9,
-  "radius": 2
+  "rectangle": 7
  },
  "modules/settings/keyboard": {
-  "spacing": 28,
-  "rectangle": 16,
-  "text": 23,
-  "radius": 6
+  "rectangle": 7,
+  "text": 1
  },
  "modules/settings/layout": {
-  "spacing": 4,
-  "rectangle": 8,
-  "text": 14,
-  "radius": 4
+  "rectangle": 8
  },
  "modules/settings/mods": {
-  "spacing": 11,
-  "rectangle": 9,
-  "text": 33,
-  "radius": 3
+  "rectangle": 3
  },
  "modules/settings/presets": {
-  "spacing": 60,
-  "font-size": 10,
-  "rectangle": 47,
-  "text": 48,
-  "radius": 12
+  "rectangle": 44,
+  "text": 1
  },
  "modules/settings/previews": {
-  "spacing": 22,
-  "font-size": 1,
   "rectangle": 50,
-  "text": 19,
-  "radius": 15
+  "text": 1
  },
  "modules/settings/system": {
   "text": 1
@@ -293,42 +159,8 @@
   "rectangle": 1,
   "radius": 1
  },
- "modules/shell/osd": {
-  "rectangle": 2,
-  "text": 1
- },
- "modules/shell/osd/styles": {
-  "rectangle": 3
- },
  "modules/shell/rehome": {
   "text": 1
- },
- "modules/terminal": {
-  "spacing": 11,
-  "rectangle": 12,
-  "text": 6,
-  "radius": 2
- },
- "modules/tools": {
-  "spacing": 9,
-  "font-size": 5,
-  "rectangle": 15,
-  "text": 6,
-  "radius": 3
- },
- "modules/widgets/dashboard/clipboard": {
-  "spacing": 22,
-  "font-size": 14,
-  "rectangle": 12,
-  "text": 27,
-  "radius": 6
- },
- "modules/widgets/dashboard/controls": {
-  "spacing": 44,
-  "font-size": 10,
-  "rectangle": 4,
-  "text": 40,
-  "radius": 11
  },
  "modules/widgets/dashboard/emoji": {
   "text": 4
@@ -336,13 +168,6 @@
  "modules/widgets/dashboard/home": {
   "rectangle": 2,
   "text": 2
- },
- "modules/widgets/dashboard/metrics": {
-  "spacing": 33,
-  "font-size": 9,
-  "rectangle": 8,
-  "text": 27,
-  "radius": 5
  },
  "modules/widgets/dashboard/notes": {
   "spacing": 17,
@@ -358,11 +183,7 @@
   "text": 4
  },
  "modules/widgets/dashboard/wallpapers": {
-  "spacing": 10,
-  "font-size": 3,
-  "rectangle": 12,
-  "text": 6,
-  "radius": 4
+  "rectangle": 3
  },
  "modules/widgets/dashboard/widgets": {
   "spacing": 3,
@@ -388,19 +209,9 @@
  "modules/widgets/launcher": {
   "text": 2
  },
- "modules/widgets/overview": {
-  "spacing": 13,
-  "font-size": 4,
-  "rectangle": 19,
-  "text": 5,
-  "radius": 15
- },
- "modules/widgets/powermenu/styles": {
-  "rectangle": 1
- },
  "modules/widgets/presets": {
   "rectangle": 1,
-  "text": 3,
-  "radius": 2
+  "text": 1,
+  "radius": 1
  }
 }
