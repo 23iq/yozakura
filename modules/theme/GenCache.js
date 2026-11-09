@@ -81,6 +81,21 @@ function plan(stored, names, fp, force, now) {
     return out;
 }
 
+// The record with only `names` kept: a generator that is no longer enabled
+// (its app switched off) is forgotten, so switching it back on runs it.
+function retain(stored, names) {
+    const gens = stored && stored.generators ? stored.generators : {};
+    const keep = {};
+    (names || []).forEach(name => {
+        if (Object.prototype.hasOwnProperty.call(gens, name))
+            keep[name] = gens[name];
+    });
+    return {
+        "version": VERSION,
+        "generators": keep
+    };
+}
+
 // The record after `names` ran with `fp` at `now`.
 function record(stored, names, fp, now) {
     const gens = Object.assign({}, stored && stored.generators ? stored.generators : {});

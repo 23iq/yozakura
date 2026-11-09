@@ -81,6 +81,9 @@ FloatingWindow {
 
     SettingsShell {
         anchors.fill: parent
+        // While kept alive hidden (KeepAliveLoader), the pages see
+        // visible=false: previews, polls and timers gated on it stop.
+        visible: settingsWindow.visible
     }
 
     // Unsaved staged changes are never dropped silently: a close request

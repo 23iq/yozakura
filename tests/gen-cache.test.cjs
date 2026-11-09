@@ -54,6 +54,21 @@ test('record keeps other generators and parse drops foreign or broken files', ()
     assert.deepEqual(plain(G.parse('null').generators), {});
 });
 
+test('retain forgets switched-off generators so switching one back on runs it', () => {
+    const fp = G.fingerprint(inputs);
+    const rec = G.record(G.parse(''), ['pywalGenerator', 'kittyGenerator'], fp, NOW);
+    const off = G.retain(rec, ['pywalGenerator']);
+    assert.deepEqual(Object.keys(off.generators), ['pywalGenerator']);
+    assert.ok(rec.generators.kittyGenerator, 'retain does not mutate its input');
+    assert.deepEqual(plain(G.plan(off, ['pywalGenerator', 'kittyGenerator'], fp, false, NOW + 1)), { run: ['kittyGenerator'], skip: ['pywalGenerator'] });
+});
+
+test('the kitty timer waits for a palette crossfade before recording', () => {
+    const qml = fs.readFileSync(path.join(__dirname, '../modules/theme/Colors.qml'), 'utf8');
+    const kitty = qml.slice(qml.indexOf('property Timer kittyTimer'), qml.indexOf('generatorCache.take('));
+    assert.match(kitty, /if \(colors\._crossfading\) \{\s*restart\(\);/);
+});
+
 test('Colors.qml routes both generator timers through the cache', () => {
     const qml = fs.readFileSync(path.join(__dirname, '../modules/theme/Colors.qml'), 'utf8');
     assert.equal((qml.match(/generatorCache\.take\(/g) || []).length, 2);

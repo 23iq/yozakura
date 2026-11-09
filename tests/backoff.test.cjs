@@ -37,5 +37,7 @@ test('WeatherService retries through the backoff and resets on network changes',
     assert.match(qml, /import "Backoff\.js" as Backoff/);
     assert.match(qml, /Backoff\.delay\(/);
     assert.match(qml, /target: NetworkService/);
+    const onLocation = qml.slice(qml.indexOf('onConfigLocationChanged'), qml.indexOf('onConfigUnitChanged'));
+    assert.match(onLocation, /retryCount = 0;\s*retryTimer\.stop\(\);/, 'a new location keeps the old backoff');
     assert.doesNotMatch(qml, /interval: 3000\n\s*repeat: false\n\s*onTriggered: root\.updateWeather\(\)/, 'fixed 3 s retry is back');
 });

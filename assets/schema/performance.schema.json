@@ -125,10 +125,21 @@
       }
     },
     "settingsKeepAliveMinutes": {
-      "title": "Settings keep alive minutes",
+      "title": "Keep Settings loaded",
       "type": "number",
       "default": 5,
-      "description": "Minutes the closed Settings window stays loaded (hidden) so it reopens instantly; 0 releases it on close.",
+      "description": "Minutes the closed Settings window stays loaded so it reopens at once; 0 releases it on close.",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "prefs.sys.settings_keep_alive",
+        "control": "number",
+        "unit": "min",
+        "keywords": "settings window keep loaded memory reopen instant release",
+        "advanced": true,
+        "min": 0,
+        "max": 120
+      },
       "minimum": 0,
       "maximum": 120
     }

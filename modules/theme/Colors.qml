@@ -149,6 +149,12 @@ FileView {
         interval: 100
         repeat: false
         onTriggered: {
+            // Wait for a palette crossfade to land: the record below marks
+            // the new palette as written, so mid-fade colors would stick.
+            if (colors._crossfading) {
+                restart();
+                return;
+            }
             // Dry run: the terminal configs (and their live reload) stay as
             // they are (not journaled: a follow-up of the journaled change).
             if (DryRun.active)
@@ -294,7 +300,9 @@ FileView {
             const names = AppThemes.generatorsFor(Config.apps ? Config.apps.theming : null).filter(n => !!colors[n]);
             const force = colors._forceGeneration;
             colors._forceGeneration = false;
-            for (const name of colors.generatorCache.take(names, colors.generatorInputs(), force))
+            // prune: an app switched off loses its record, so switching it
+            // back on rewrites its theme.
+            for (const name of colors.generatorCache.take(names, colors.generatorInputs(), force, true))
                 colors[name].generate(colors);
             colors.appThemesRegenerated();
         }

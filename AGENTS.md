@@ -290,7 +290,8 @@ make install    # sudo install of ./yozakura to /usr/local/bin
   open. Keep startup-critical files small and push rarely used views behind `Loader`s
   (heavy kept views: `WarmLoader` = async + request/callback, the launcher is warmed ~3 s after
   start; big windows: `KeepAliveLoader` = async + kept hidden, Settings for
-  `performance.settingsKeepAliveMinutes`). Do not
+  `performance.settingsKeepAliveMinutes`; its content sees `visible: false` while hidden, so
+  timers and polls gated on `visible` stop). Do not
   switch to relative `import "../x"` imports to get caching: they create separate singleton
   instances from the `qs.*` ones.
 - Gemini AI provider doesn't support the `system` role; handled in `services/ai/strategies/`.

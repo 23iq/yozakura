@@ -102,7 +102,18 @@ var category = {
                 toggle("performance.windowPreview", "performance.window_preview", "system.performance.window_preview_desc", "window preview thumbnails overview dock"),
                 toggle("performance.wavyLine", "performance.wavy_line", "system.performance.wavy_line_desc", "wavy line progress media animation"),
                 toggle("performance.pauseWallpaperOnFullscreen", "system.performance.pause_wallpaper_fullscreen", "system.performance.pause_wallpaper_fullscreen_desc", "video wallpaper fullscreen game pause"),
-                toggle("performance.pauseWallpaperWhenCovered", "system.performance.pause_wallpaper_covered", "system.performance.pause_wallpaper_covered_desc", "video wallpaper covered tiled windows gaps monocle pause")
+                toggle("performance.pauseWallpaperWhenCovered", "system.performance.pause_wallpaper_covered", "system.performance.pause_wallpaper_covered_desc", "video wallpaper covered tiled windows gaps monocle pause"),
+                {
+                    "key": "performance.settingsKeepAliveMinutes",
+                    "type": "number",
+                    "advanced": true,
+                    "min": 0,
+                    "max": 120,
+                    "unit": "min",
+                    "label": "prefs.sys.settings_keep_alive",
+                    "description": "prefs.sys.settings_keep_alive.desc",
+                    "keywords": "settings window keep loaded memory reopen instant release"
+                }
             ]
         },
         {

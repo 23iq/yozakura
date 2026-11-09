@@ -4,6 +4,7 @@ import Quickshell
 import qs.config
 import qs.modules.globals
 import qs.modules.theme
+import qs.modules.services
 import "Backoff.js" as Backoff
 
 Singleton {
@@ -542,6 +543,9 @@ Singleton {
     onConfigLocationChanged: {
         if (!_initialized) return;
         console.log("WeatherService: Location changed to '" + configLocation + "'");
+        // A new location starts a fresh backoff
+        retryCount = 0;
+        retryTimer.stop();
         Qt.callLater(() => { updateWeather(); });
     }
     onConfigUnitChanged: {
