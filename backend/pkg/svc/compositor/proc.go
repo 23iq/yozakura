@@ -283,21 +283,16 @@ func (m *Manager) readSubscribe(r io.Reader) {
 		if len(line) == 0 {
 			continue
 		}
+		// One decode per line: the state is unmarshalled straight into State
+		// (it used to go through a json.RawMessage and a second Unmarshal).
 		var payload struct {
-			State json.RawMessage `json:"state"`
+			State *State `json:"state"`
 		}
-		if err := json.Unmarshal(line, &payload); err != nil {
+		if err := json.Unmarshal(line, &payload); err != nil || payload.State == nil {
 			continue
 		}
-		if len(payload.State) == 0 {
-			continue
-		}
-		var st State
-		if err := json.Unmarshal(payload.State, &st); err != nil {
-			continue
-		}
-		m.setState(st)
-		m.broadcast(st)
+		m.setState(*payload.State)
+		m.broadcast(*payload.State)
 	}
 }
 
@@ -316,14 +311,25 @@ func (m *Manager) State() State {
 
 func (m *Manager) broadcast(st State) {
 	m.subsMu.Lock()
-	subs := make([]chan State, 0, len(m.subscribers))
+	defer m.subsMu.Unlock()
 	for c := range m.subscribers {
-		subs = append(subs, c)
+		sendLatest(c, st)
 	}
-	m.subsMu.Unlock()
-	for _, c := range subs {
+}
+
+// sendLatest queues st on c without blocking. A full channel drops its
+// oldest queued snapshot, so a slow subscriber always ends on the newest
+// state rather than on a stale one. Callers hold subsMu so a concurrent
+// cancel cannot close c under the send.
+func sendLatest(c chan State, st State) {
+	for {
 		select {
 		case c <- st:
+			return
+		default:
+		}
+		select {
+		case <-c:
 		default:
 		}
 	}
