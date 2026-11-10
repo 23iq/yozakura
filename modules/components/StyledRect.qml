@@ -275,10 +275,14 @@ ClippingRectangle {
     // child change re-renders and re-blurs the whole layer, so the overlay
     // lives as a sibling just above the surface instead: the shadow depends
     // on the shape only. Without a layer it stays inside, under the content.
+    // Never hoisted while off, nor into a positioner / layout (Row, Column,
+    // Grid, Flow, *Layout: they have a spacing): there the sibling would be
+    // laid out as one more cell, and a hover shadow (layer on) would add a
+    // row to a grid of cards and make the page under it jump.
     Loader {
         id: weatherHost
         objectName: "weatherFx"
-        readonly property bool hoisted: root.layer.enabled && root.parent !== null
+        readonly property bool hoisted: weatherHost.active && root.layer.enabled && root.parent !== null && !("spacing" in root.parent) && !("columnSpacing" in root.parent)
         parent: weatherHost.hoisted ? root.parent : root
         x: weatherHost.hoisted ? root.x : 0
         y: weatherHost.hoisted ? root.y : 0
