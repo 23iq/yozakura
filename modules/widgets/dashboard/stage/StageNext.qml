@@ -148,13 +148,14 @@ Group {
                     duration: Motion.micro.duration
                 }
             }
-            displaced: Transition {
-                enabled: Motion.glide.duration > 0
-                NumberAnimation {
-                    properties: "x,y"
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
+            // Also finish a row still fading in (it would stay faded)
+            displaced: SettleTransition {
+                duration: Motion.glide.duration
+                easingType: Motion.glide.easing
+            }
+            move: SettleTransition {
+                duration: Motion.glide.duration
+                easingType: Motion.glide.easing
             }
         }
 

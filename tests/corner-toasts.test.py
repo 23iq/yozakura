@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib.qmlharness import Harness  # noqa: E402
+from lib.qmlharness import REPO, Harness  # noqa: E402
 
 h = Harness("corner-toasts")
 h.singleton("qs.config", "Config", """QtObject {
@@ -37,7 +37,10 @@ QtObject {
     property QtObject exit: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
     property QtObject morph: QtObject { property int duration: 0; property int easing: Easing.OutCubic; property real overshoot: 1 }
 }"""})
-h.singleton("qs.modules.components.kit", "Space", "QtObject { property int xs: 4; property int s: 8; property int m: 12; property int xxl: 32 }")
+h.module("qs.modules.components.kit", {
+    "Space": "pragma Singleton\nQtObject { property int xs: 4; property int s: 8; property int m: 12; property int xxl: 32 }",
+    "SettleTransition": (REPO / "modules/components/kit/SettleTransition.qml").read_text(),
+})
 h.copy("modules/notifications/CornerToasts.qml", siblings=False)
 h.stub("CornerToast", "Item { property var group; property bool stackUp }")
 

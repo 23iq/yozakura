@@ -98,19 +98,17 @@ Group {
                 }
             }
         }
-        // The gap closes once the leaving card is mostly out.
-        displaced: Transition {
-            enabled: Motion.glide.duration > 0
-            SequentialAnimation {
-                PauseAnimation {
-                    duration: Motion.micro.duration
-                }
-                NumberAnimation {
-                    properties: "x,y"
-                    duration: Motion.glide.duration
-                    easing.type: Motion.glide.easing
-                }
-            }
+        // The gap closes once the leaving card is mostly out; a card still
+        // sliding in is finished too (it would stay faded otherwise), also
+        // when a newer notification moves it to the top.
+        displaced: SettleTransition {
+            duration: Motion.glide.duration
+            easingType: Motion.glide.easing
+            delay: Motion.micro.duration
+        }
+        move: SettleTransition {
+            duration: Motion.glide.duration
+            easingType: Motion.glide.easing
         }
     }
 

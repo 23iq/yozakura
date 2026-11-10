@@ -129,8 +129,9 @@ Item {
         }
 
         // NumberAnimation, not Opacity/X/Y/ScaleAnimator: in a ListView
-        // view transition the Animators' end values never sync back, so a
-        // new toast stayed at opacity 0 (invisible) after ed3399e2
+        // view transition the Animators' end values never reach the item
+        // (after ed3399e2 every toast ended at scale 0, invisible).
+        // tests/corner-toasts-motion.test.py
         add: Transition {
             id: addTrans
             enabled: Motion.enter.duration > 0
@@ -191,13 +192,16 @@ Item {
                 }
             }
         }
-        displaced: Transition {
-            enabled: Motion.morph.duration > 0
-            NumberAnimation {
-                properties: "x,y"
-                duration: Motion.morph.duration
-                easing.type: Motion.morph.easing
-            }
+        // The rest glide aside (a new toast) or to the top (a newer
+        // notification of a shown app moves its toast); both also finish an
+        // enter the toast was still in, or it stays faded and shrunk.
+        displaced: SettleTransition {
+            duration: Motion.morph.duration
+            easingType: Motion.morph.easing
+        }
+        move: SettleTransition {
+            duration: Motion.morph.duration
+            easingType: Motion.morph.easing
         }
     }
 }
