@@ -25,6 +25,12 @@ Flickable {
     readonly property int sectionCount: (page.category.sections || []).length
     property int builtSections: 1
     readonly property bool complete: builtSections >= sectionCount
+    // The sections built so far fill the viewport (as laid out for the
+    // last frame): the page can be shown, the rest comes below the fold.
+    // SettingsPageHost keeps the page hidden until `enterReady`, so no
+    // section pops in on screen while the page enters.
+    property bool filled: false
+    readonly property bool enterReady: complete || filled
 
     function buildAll() {
         builtSections = sectionCount;
@@ -33,6 +39,8 @@ Flickable {
     FrameAnimation {
         running: !page.complete
         onTriggered: {
+            if (!page.filled && page.height > 0 && column.y + column.height >= page.height)
+                page.filled = true;
             const start = Date.now();
             do {
                 page.builtSections++;
