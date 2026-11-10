@@ -124,7 +124,8 @@ surface: `shown`, `strength`, `clicked()`); big controls `Tile`, `LevelSlider`, 
 sheet: `kit_render.py --sheet KitGalleryBold`, tests `tests/kit-bold.test.py`; level fills are tonal,
 `Look.tonal`). Keyboard: `FocusRing` (fades in while `FocusState.keyboard`), `IconButton.focusable`.
 Animated lists: `KeyedListModel` (keys -> insert/remove/move, `KeyedSync.js`) under a ListView's
-add/remove/displaced transitions. Motion: `Motion.micro` (fills, hover, focus, <= 120 ms),
+add/remove/displaced transitions; `displaced` and `move` are a `SettleTransition` (finishes an
+interrupted enter's opacity/scale) and view transitions use NumberAnimation, never Animators. Motion: `Motion.micro` (fills, hover, focus, <= 120 ms),
 `Motion.glide` (slides, lists, panels, <= 220 ms), `Motion.spring` (press), `Motion.delay`
 (stagger step). No raw font sizes, paddings, hex colours or
 hand-made rows/buttons; a missing piece becomes a small generic kit component. The accent
