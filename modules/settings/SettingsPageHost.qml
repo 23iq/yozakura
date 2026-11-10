@@ -12,6 +12,7 @@ import qs.modules.settings.mods
 import qs.modules.settings.layout
 import qs.modules.settings.system
 import qs.modules.settings.changes
+import "Ui.js" as Ui
 
 // The page of the settings window. `load()` always starts a fresh instance
 // (scroll reset, enter motion). Schema categories render through
@@ -28,10 +29,18 @@ Loader {
     property real slide: 0
 
     function load(cat) {
+        enterAnim.stop();
+        host.slide = 1;
         host.active = false;
         host.category = cat;
         host.active = cat !== null;
     }
+
+    // A page that fills in over a few frames (SettingsPage) says when what
+    // is on screen is built (`enterReady`); it stays hidden until then and
+    // enters complete, never with sections popping in. Other pages enter
+    // at once.
+    readonly property bool pageReady: !!item && Ui.prop(item, "enterReady") !== false
 
     active: false
     sourceComponent: !category ? null : (host.pages[category.page] ?? (category.sections ? schemaPage : placeholderPage))
@@ -41,7 +50,10 @@ Loader {
         y: host.slide * 18
     }
 
-    onLoaded: enterAnim.restart()
+    onPageReadyChanged: {
+        if (host.pageReady)
+            enterAnim.restart();
+    }
 
     NumberAnimation {
         id: enterAnim

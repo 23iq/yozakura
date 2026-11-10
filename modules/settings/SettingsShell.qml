@@ -25,6 +25,19 @@ Item {
     property bool searchOpen: false
     readonly property bool railed: compact && !searchOpen
     readonly property real railWidth: 76
+    readonly property real sidebarWidth: 264
+    // 0..1: how far the compact search sidebar is slid out. Only this
+    // animates; the rail <-> full sidebar switch that follows the window
+    // width (first layout at width 0, a resize, a tiling configure) is
+    // immediate, never a sidebar growing over the page while it opens.
+    property real searchSlide: searchOpen ? 1 : 0
+    Behavior on searchSlide {
+        enabled: Config.animDuration > 0
+        NumberAnimation {
+            duration: Motion.morph.duration
+            easing.type: Motion.morph.easing
+        }
+    }
     function openSearch() {
         if (compact)
             searchOpen = true;
@@ -165,8 +178,9 @@ Item {
 
     SettingsSidebar {
         id: sidebar
+        objectName: "settingsSidebar"
         z: shell.searchOpen ? 6 : 0
-        width: shell.railed ? shell.railWidth : 264
+        width: shell.compact ? shell.railWidth + (shell.sidebarWidth - shell.railWidth) * shell.searchSlide : shell.sidebarWidth
         height: parent.height
         compact: shell.railed
         currentCategory: shell.currentCategory
@@ -176,14 +190,6 @@ Item {
             shell.navigate(r.categoryId, r.sectionId, r.entryId);
         }
         onPresetAction: id => shell.presetAction(id)
-
-        Behavior on width {
-            enabled: Config.animDuration > 0
-            NumberAnimation {
-                duration: Motion.morph.duration
-                easing.type: Motion.morph.easing
-            }
-        }
     }
 
     // The rail's search button (the field itself needs the wide sidebar).

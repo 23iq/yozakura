@@ -151,6 +151,7 @@
  "sddm-theme.test.py": 6.7,
  "settings-advanced.test.py": 2.0,
  "settings-layout-loops.test.py": 12.6,
+ "settings-load-stable.test.py": 6.0,
  "settings-regressions.test.py": 3.3,
  "settings-rehome.test.py": 0.7,
  "settings-sidebar-hover.test.py": 1.0,
