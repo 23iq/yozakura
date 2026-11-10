@@ -40,6 +40,8 @@ Item {
         tick: card.timestampUpdateCounter
         showActions: card.hovered
         primaryAction: true
+        // The StackView clips: keep the dismiss button inside the card
+        dismissOutset: 0
         bodyLines: card.hovered ? 4 : 2
         onDismissRequested: {
             if (card.notification)

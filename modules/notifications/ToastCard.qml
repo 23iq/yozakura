@@ -28,6 +28,9 @@ Item {
     property bool showActions: true
     property bool primaryAction: false
     property int bodyLines: 3
+    // How far the dismiss button reaches into the padding around the card
+    // (corner toast); 0 where the card fills a clipping view (the notch)
+    property real dismissOutset: Space.s
     // Bumped by the host to refresh the relative time ("2m")
     property int tick: 0
     readonly property bool critical: root.notification ? ToastModel.isCritical(root.notification.urgency) : false
@@ -110,8 +113,8 @@ Item {
         IconButton {
             objectName: "notificationDismiss"
             Layout.alignment: Qt.AlignTop
-            Layout.topMargin: -Space.s
-            Layout.rightMargin: -Space.s
+            Layout.topMargin: -root.dismissOutset
+            Layout.rightMargin: -root.dismissOutset
             size: "s"
             icon: Icons.cancel
             opacity: root.hovered ? 1 : 0

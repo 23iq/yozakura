@@ -11,6 +11,8 @@ import QtQuick
 // NumberAnimation, never Opacity/X/Y/ScaleAnimator: in a view transition the
 // Animators' end values do not reach the item (a toast stayed invisible).
 // Off while `duration` is 0, like the list's other transitions.
+// It sets opacity and scale of the delegate root to 1: keep those at 1 on
+// the root and put any dimming / press scale on an inner item.
 Transition {
     id: root
 

@@ -145,7 +145,6 @@ Item {
                 id: dismiss
                 objectName: "notificationDismiss"
                 anchors.right: parent.right
-                anchors.rightMargin: -Space.xs
                 anchors.verticalCenter: parent.verticalCenter
                 size: "xs"
                 icon: Icons.cancel

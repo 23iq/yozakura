@@ -146,7 +146,9 @@ Item {
     // Width of the panel on screen (kept while it closes, so it is clipped
     // rather than squeezed beside an upright header)
     readonly property real shownPanelWidth: root.shownPanel !== "" ? controller.widthFor(root.shownPanel, Config.notch.expandedMediaWidth) : 0
-    readonly property real notificationWidth: hasActiveNotifications ? (expandedState ? 452 : 352) : 0
+    // One width at rest and on hover: hovering a notification must not
+    // widen the island and reflow its text
+    readonly property real notificationWidth: hasActiveNotifications ? 452 : 0
     readonly property real bodyHeight: (controller.expanded ? root.openPanelHeight : 0) + notificationSlot.height
 
     implicitWidth: root.vertical ? header.contentWidth + Math.max(root.panelWidth, root.notificationWidth) : root.peek ? root.notificationWidth : Math.max(header.contentWidth, root.panelWidth, root.notificationWidth)

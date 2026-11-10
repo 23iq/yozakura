@@ -152,15 +152,18 @@ check("toast displaced mid-enter: ends opaque at full scale", ok, str(s))
 ok, px = drawn(3)
 check("toasts displaced mid-enter: all drawn", ok, str(px))
 
-# A newer notification of a shown app moves its toast to the top while it
-# is still entering
-ev('notify("d")')
-pump(60)
-ev('notify("c")')
+# A newer notification of a shown app moves its toast to the top while
+# that toast is still entering: "e" enters, "f" displaces it, then "e"
+# again moves it back to the top mid-enter (the `move` transition)
+ev('notify("e")')
+pump(40)
+ev('notify("f")')
+pump(30)
+ev('notify("e")')
 pump(700)
-ok, s = settled(4)
+ok, s = settled(5)
 check("toast moved mid-enter: ends opaque at full scale", ok, str(s))
-ok, px = drawn(4)
+ok, px = drawn(5)
 check("toasts moved mid-enter: all drawn", ok, str(px))
 
 # SettleTransition with a delay (the stage notifications: the gap closes

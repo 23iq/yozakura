@@ -26,6 +26,7 @@ Flickable {
     // a page picked while the window is hidden) places the rows at once.
     property bool gliding: false
     property string _shownCategory: ""
+    Component.onCompleted: nav._shownCategory = nav.currentCategory
     onCurrentCategoryChanged: {
         nav.gliding = nav._shownCategory !== "" && nav.visible && Motion.glide.duration > 0;
         nav._shownCategory = nav.currentCategory;
