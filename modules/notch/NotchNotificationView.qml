@@ -1,33 +1,17 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Widgets
-import Quickshell.Services.Notifications
 import qs.modules.theme
 import qs.modules.services
-import qs.modules.globals
-import qs.modules.components
 import qs.modules.components.kit
-import qs.modules.notifications
 import qs.config
-import "../notifications/notification_utils.js" as NotificationUtils
 import "NotchNotificationStyles.js" as NotchNotificationStyles
+import "NotificationBody.js" as NotificationBody
 
 Item {
     id: root
 
-    implicitWidth: hovered ? 420 : 320
     implicitHeight: mainColumn.implicitHeight
-
-    Behavior on implicitWidth {
-        enabled: Config.animDuration > 0
-        NumberAnimation {
-            duration: Config.animDuration
-            easing.type: Motion.morph.easing
-            easing.overshoot: 1.2
-        }
-    }
 
     // Popups shown here: the notch presentation's list (Notifications.qml)
     property var popups: Notifications.notchPopupList
@@ -390,6 +374,8 @@ Item {
                         // Fed by the view's Bindings on the current item
                         property bool hovered: false
                         property int timestampUpdateCounter: 0
+                        // Place among the popups ("2/3")
+                        readonly property string position: NotificationBody.position(root.popups.indexOf(slot.notification), root.popups.length)
 
                         // notifications.notchStyle (NotchNotificationStyles.js)
                         Loader {
@@ -412,6 +398,11 @@ Item {
                             property: "timestampUpdateCounter"
                             value: slot.timestampUpdateCounter
                         }
+                        Binding {
+                            target: styleLoader.item
+                            property: "position"
+                            value: slot.position
+                        }
                         Component {
                             id: cardStyle
                             NotchNotificationCard {}
@@ -419,95 +410,6 @@ Item {
                         Component {
                             id: compactStyle
                             CompactNotification {}
-                        }
-                    }
-                }
-            }
-
-            // Indicadores de navegación (solo visible con múltiples notificaciones)
-            Item {
-                id: pageIndicators
-                Layout.preferredWidth: (root.popups.length > 1) ? 8 : 0
-                Layout.preferredHeight: 32
-                Layout.alignment: Qt.AlignVCenter
-                visible: root.popups.length > 1
-                clip: true
-
-                Behavior on Layout.preferredWidth {
-                    enabled: Config.animDuration > 0
-                    NumberAnimation {
-                        duration: Config.animDuration
-                        easing.type: Motion.morph.easing
-                    }
-                }
-
-                Column {
-                    id: dotsColumn
-                    width: parent.width
-                    spacing: Space.xs
-
-                    // Posición Y animada para el efecto de scroll
-                    y: {
-                        if (root.popups.length <= 3)
-                            return 0;
-
-                        const totalNotifications = root.popups.length;
-                        const dotHeight = 8 + 4; // altura del punto + spacing
-                        const maxY = -(totalNotifications - 3) * dotHeight;
-                        const currentIndex = root.currentIndex;
-
-                        // Calcular posición basada en el índice actual
-                        let targetY = 0;
-                        if (currentIndex >= 1 && currentIndex < totalNotifications - 1) {
-                            // Centrar en el punto actual (mantener en posición media)
-                            targetY = -(currentIndex - 1) * dotHeight;
-                        } else if (currentIndex >= totalNotifications - 1) {
-                            // Al final, mostrar los últimos 3
-                            targetY = maxY;
-                        }
-
-                        return Math.max(maxY, Math.min(0, targetY));
-                    }
-
-                    Behavior on y {
-                        enabled: Config.animDuration > 0
-                        NumberAnimation {
-                            duration: Config.animDuration
-                            easing.type: Motion.morph.easing
-                        }
-                    }
-
-                    Repeater {
-                        // One dot per popup: is it critical?
-                        model: root.popups.map(n => !!n && n.urgency == NotificationUrgency.Critical)
-
-                        Rectangle {
-                            required property int index
-                            required property bool modelData
-                            width: 8
-                            height: 8
-                            radius: 4
-                            property bool isCritical: modelData
-                            color: isCritical ? Colors.criticalRed : (index === root.currentIndex ? Styling.srItem("overprimary") : Colors.surfaceBright)
-
-                            Behavior on color {
-                                enabled: Config.animDuration > 0
-                                ColorAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Motion.morph.easing
-                                }
-                            }
-
-                            // Animación de escala para el punto activo
-                            scale: index === root.currentIndex ? 1.0 : 0.5
-
-                            Behavior on scale {
-                                enabled: Config.animDuration > 0
-                                NumberAnimation {
-                                    duration: Config.animDuration
-                                    easing.type: Motion.morph.easing
-                                }
-                            }
                         }
                     }
                 }

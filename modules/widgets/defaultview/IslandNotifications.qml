@@ -2,18 +2,23 @@ import QtQuick
 import qs.modules.notch
 import qs.config
 import qs.modules.theme
+import qs.modules.components.kit
 
 // Notification toasts inside the resting notch (notifications.presentation
 // "notch"). The notch silhouette itself grows to hold them; the content is
 // "born" from the notch edge: it unfolds from the header side (scale +
-// slide + fade) while the shape expands around it.
+// slide + fade) while the shape expands around it. It sits like a notch
+// panel (panels/NotchPanel.qml): a kit Group (the language's box) at the
+// surface padding on the sides and bottom and Space.s under the header, so
+// it lines up with the media row and the other panels.
 Item {
     id: root
     property bool hovered: false
     readonly property bool navigating: notificationView.isNavigating
-    readonly property int bottomPadding: Config.notchTheme === "island" ? 20 : 16
+    readonly property int padding: Look.surfacePadding
+    readonly property int topPadding: Space.s
     readonly property bool fromBottom: Config.notchPosition === "bottom"
-    implicitHeight: notificationView.implicitHeight + 8 + bottomPadding
+    implicitHeight: root.topPadding + group.implicitHeight + root.padding
 
     // 0 = still inside the notch edge, 1 = fully born
     property real birth: 1
@@ -39,25 +44,29 @@ Item {
         easing.overshoot: 1.05
     }
 
-    NotchNotificationView {
-        id: notificationView
-        anchors.fill: parent
-        anchors.topMargin: 8
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        anchors.bottomMargin: root.bottomPadding
-        notchHovered: root.hovered
+    Group {
+        id: group
+        objectName: "islandNotificationGroup"
+        x: root.padding
+        y: root.topPadding
+        width: parent.width - root.padding * 2
         opacity: Math.min(1, Math.max(0, root.birth * 1.4 - 0.2))
         transform: [
             Scale {
-                origin.x: notificationView.width / 2
-                origin.y: root.fromBottom ? notificationView.height : 0
+                origin.x: group.width / 2
+                origin.y: root.fromBottom ? group.height : 0
                 xScale: 0.9 + 0.1 * root.birth
                 yScale: 0.75 + 0.25 * root.birth
             },
             Translate {
-                y: (1 - root.birth) * (root.fromBottom ? 14 : -14)
+                y: (1 - root.birth) * (root.fromBottom ? Space.l : -Space.l)
             }
         ]
+
+        NotchNotificationView {
+            id: notificationView
+            width: parent.width
+            notchHovered: root.hovered
+        }
     }
 }

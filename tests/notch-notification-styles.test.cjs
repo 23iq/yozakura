@@ -29,3 +29,10 @@ test('compact text is one line: summary · body, tags and whitespace folded', ()
     assert.equal(B.oneLine('', 'Only body', ''), 'Only body');
     assert.equal(B.oneLine('', '', ''), '');
 });
+test('position among the popups: "i/n" from two on, "" otherwise', () => {
+    assert.equal(B.position(0, 3), '1/3');
+    assert.equal(B.position(2, 3), '3/3');
+    assert.equal(B.position(0, 1), '');
+    assert.equal(B.position(-1, 3), '');
+    assert.equal(B.position(3, 3), '');
+});

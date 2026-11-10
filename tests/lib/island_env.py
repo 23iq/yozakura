@@ -129,14 +129,37 @@ TIMERS = """[
     { id: "2", name: "Tea", state: "paused", leftMs: 184000, totalMs: 300000, progress: 0.61 }
 ]"""
 
-NOTIFICATION = """({ id: 7, appName: "Telegram", appIcon: TG_ICON, cachedAppIcon: "", image: TG_ICON, cachedImage: "",
+NOTIFICATION = """({ id: 7, appName: "Telegram", appIcon: TG_ICON, cachedAppIcon: "", image: "", cachedImage: "",
     summary: "Mira Tanaka", body: "Sent the deck, take a look before the review at 22:30", time: Date.now() - 120000,
     urgency: 1, actions: [{ identifier: "reply", text: "Reply" }, { identifier: "open", text: "Open" }], isCached: false })"""
+
+# Extra notch notification cases (win.notifyKind(name)): a list of popups each
+NOTIFICATION_KINDS = """({
+    image: [{ id: 8, appName: "Telegram", appIcon: TG_ICON, image: ART, summary: "Mira Tanaka",
+        body: "Sent the deck, take a look before the review at 22:30", time: Date.now() - 60000, urgency: 1,
+        actions: [{ identifier: "reply", text: "Reply" }], isCached: false }],
+    plain: [{ id: 9, appName: "Backup", appIcon: "", image: "", summary: "Backup finished",
+        body: "", time: Date.now() - 5000, urgency: 1, actions: [], isCached: false }],
+    long: [{ id: 10, appName: "Thunderbird", appIcon: "", image: "", summary: "Re: Quarterly planning, budget review and the offsite agenda for next week",
+        body: "Hi all, attached is the updated agenda. Please review the budget section before Thursday and add your comments inline; we will go through the open questions in the first hour and then split into the three working groups that we agreed on last time.",
+        time: Date.now() - 3600000 * 3, urgency: 1, isCached: false,
+        actions: [{ identifier: "reply", text: "Reply" }, { identifier: "archive", text: "Archive" }, { identifier: "read", text: "Mark as read" }] }],
+    critical: [{ id: 11, appName: "Battery", appIcon: "", image: "", summary: "Battery low",
+        body: "8% left. Plug in the charger soon.", time: Date.now() - 60000, urgency: 2, actions: [], isCached: false }],
+    multi: [{ id: 12, appName: "Discord", appIcon: DC_ICON, image: "", summary: "#general",
+        body: "Kai: anyone up for a game tonight?", time: Date.now() - 600000, urgency: 1, actions: [], isCached: false },
+        { id: 13, appName: "Telegram", appIcon: TG_ICON, image: "", summary: "Mira Tanaka",
+        body: "Sent the deck", time: Date.now() - 240000, urgency: 1, actions: [], isCached: false },
+        { id: 14, appName: "Telegram", appIcon: TG_ICON, image: "", summary: "Mira Tanaka",
+        body: "Also, the review moved to 22:30", time: Date.now() - 120000, urgency: 1,
+        actions: [{ identifier: "reply", text: "Reply" }], isCached: false }]
+})"""
 
 
 class IslandEnv(PanelsEnv):
     def __init__(self, name: str = "island", *, art: str = "", **kw):
         super().__init__(name, **kw)
+        self.art = art
         qs = self.root / "qs"
         for rel in MIRROR:
             shutil.copytree(REPO / rel, qs / rel, dirs_exist_ok=True)
@@ -155,6 +178,9 @@ class IslandEnv(PanelsEnv):
 
     def scene(self, width: int = 1100, height: int = 560, *, wallpaper: str = "") -> object:
         tg = ("file://" + icon_path("telegram")) if icon_path("telegram") else ""
+        dc = ("file://" + icon_path("discord")) if icon_path("discord") else ""
+        kinds = (NOTIFICATION_KINDS.replace("TG_ICON", json.dumps(tg)).replace("DC_ICON", json.dumps(dc))
+                 .replace("ART", json.dumps(self.art)))
         wall = (f'Image {{ anchors.fill: parent; source: "file://{wallpaper}"; fillMode: Image.PreserveAspectCrop }}'
                 if wallpaper else "Rectangle { anchors.fill: parent; color: Colors.background }")
         return self.load(f"""
@@ -194,4 +220,6 @@ Window {{
         notify(false);
     }}
     function notify(on) {{ Notifications.notchPopupList = on ? [{NOTIFICATION.replace("TG_ICON", json.dumps(tg))}] : [] }}
+    // One of NOTIFICATION_KINDS (image, plain, long, critical, multi)
+    function notifyKind(kind) {{ Notifications.notchPopupList = {kinds}[kind] }}
 }}""")

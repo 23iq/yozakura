@@ -14,13 +14,22 @@ import "notification_utils.js" as NotificationUtils
 // body (secondary, two lines), a caption with the app, the group count and
 // the time, a ProgressLine for a progress hint and the actions as quiet
 // Chips. The dismiss button shows while hovered. No box: CornerToast puts
-// it on a Surface.
+// it on a Surface; the notch (NotchNotificationCard) shows it in the island
+// with the actions only while hovered (`showActions`), the first one as the
+// primary action (`primaryAction`) and `bodyLines` of body.
 Item {
     id: root
 
     property var notification: null
     property int extra: 0
+    // Appended to the caption ("2/3": the notch's place in its popups)
+    property string position: ""
     property bool hovered: false
+    property bool showActions: true
+    property bool primaryAction: false
+    property int bodyLines: 3
+    // Bumped by the host to refresh the relative time ("2m")
+    property int tick: 0
     readonly property bool critical: root.notification ? ToastModel.isCritical(root.notification.urgency) : false
     readonly property var art: ToastModel.artOf(root.notification, name => Quickshell.iconPath(name, true))
     readonly property real progress: ToastModel.progressOf(root.notification)
@@ -69,7 +78,7 @@ Item {
                 role: "secondary"
                 text: root.body
                 wrapMode: Text.Wrap
-                maximumLineCount: 3
+                maximumLineCount: root.bodyLines
                 elide: Text.ElideRight
             }
 
@@ -84,28 +93,22 @@ Item {
                 Layout.fillWidth: true
                 role: "caption"
                 color: root.critical ? Colors.error : Type.muted
-                text: root.notification ? ToastModel.caption(root.notification.appName, NotificationUtils.getFriendlyNotifTimeString(root.notification.time, I18n.t), root.extra) : ""
+                text: root.notification && root.tick >= 0 ? ToastModel.caption(root.notification.appName, NotificationUtils.getFriendlyNotifTimeString(root.notification.time, I18n.t), root.extra, root.position) : ""
             }
 
-            Flow {
+            ToastActions {
+                objectName: "toastActions"
                 Layout.fillWidth: true
                 Layout.topMargin: Space.xs
-                visible: root.actions.length > 0
-                spacing: Space.s
-
-                Repeater {
-                    model: root.actions
-
-                    Chip {
-                        required property var modelData
-                        text: modelData.text
-                        onClicked: root.actionInvoked(modelData.identifier)
-                    }
-                }
+                visible: root.showActions && root.actions.length > 0
+                actions: root.actions
+                primaryFirst: root.primaryAction
+                onInvoked: identifier => root.actionInvoked(identifier)
             }
         }
 
         IconButton {
+            objectName: "notificationDismiss"
             Layout.alignment: Qt.AlignTop
             Layout.topMargin: -Space.s
             Layout.rightMargin: -Space.s

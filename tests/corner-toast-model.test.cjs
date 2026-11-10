@@ -36,6 +36,11 @@ test('caption joins app, group count and time', () => {
     assert.equal(M.caption('', 'Now', 0), 'Now');
     assert.equal(M.caption('Mail', '', 1), 'Mail +1');
 });
+test('caption puts the notch position last', () => {
+    assert.equal(M.caption('Discord', '10m', 0, '1/3'), 'Discord · 10m · 1/3');
+    assert.equal(M.caption('', '10m', 0, '2/2'), '10m · 2/2');
+    assert.equal(M.caption('Mail', '2m', 0, ''), 'Mail · 2m');
+});
 test('actions: none for cached notifications, empty labels dropped', () => {
     const n = { actions: [{ identifier: 'open', text: 'Open' }, { identifier: 'x', text: '' }] };
     assert.deepEqual([...M.actionsOf(n).map(a => a.identifier)], ['open']);
