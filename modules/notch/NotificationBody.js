@@ -24,6 +24,14 @@ function clean(body, appName) {
     return String(body);
 }
 
+// Place of a notification among the notch's popups ("2/3"; scroll moves
+// between them), "" when it is the only one or not in the list.
+function position(index, count) {
+    if (count < 2 || index < 0 || index >= count)
+        return "";
+    return (index + 1) + "/" + count;
+}
+
 // One-line text of a compact row: "Summary · body" with whitespace folded.
 function oneLine(summary, body, appName) {
     var s = String(summary || "").replace(/\s+/g, " ").trim();

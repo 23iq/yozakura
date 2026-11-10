@@ -6,7 +6,8 @@
                                   [--no-left] [STATE ...]
 
 Uses tests/lib/island_env.py (real Notch, DefaultView, panels and notch
-notifications; fixture player, timers, downloads, privacy, voice) with your
+notifications; fixture player, timers, downloads, privacy, voice; notif-*
+states: card / compact, rest / hover, one per notification kind) with your
 real config, palette and wallpaper (see settings_render.py). Every state is
 rendered on the top edge per style x language, plus collapsed and media on
 the left edge (island style). Writes <out>/island-<state>-<style>-<language>.png
@@ -52,6 +53,13 @@ STATES = {
     "notif-card-hover": ("Config.notifications.notchStyle = 'card'; win.notify(true)", "hover"),
     "notif-compact-hover": ("Config.notifications.notchStyle = 'compact'; win.notify(true)", "hover"),
 }
+# More notch notification cases (tests/lib/island_env.py NOTIFICATION_KINDS):
+# notif-<style>-<kind>[-hover]
+for _kind in ("image", "plain", "long", "critical", "multi"):
+    for _style in ("card", "compact"):
+        _js = f"Config.notifications.notchStyle = '{_style}'; win.notifyKind('{_kind}')"
+        STATES[f"notif-{_style}-{_kind}"] = (_js, "")
+        STATES[f"notif-{_style}-{_kind}-hover"] = (_js, "hover")
 LEFT_STATES = ["collapsed", "media-row", "timers"]
 
 

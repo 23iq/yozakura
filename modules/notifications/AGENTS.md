@@ -48,7 +48,7 @@ modules/notifications/
 ## CONVENTIONS
 
 - **Urgency levels**: Use `NotificationUrgency.Normal` / `NotificationUrgency.Critical` from `Quickshell.Services.Notifications`
-- **Critical styling**: `Colors.criticalRed`, `Colors.criticalText`, `DiagonalStripePattern` component
+- **Critical styling**: the alert glyph as the art placeholder and the caption in `Colors.error` (ToastCard, the notch's CompactNotification)
 - **StyledRect variants**: `"primary"`, `"error"`, `"focus"`, `"common"` for button backgrounds
 - **Animation duration**: Read `Config.animDuration` (not hardcoded)
 - **Icons singleton**: `Icons.cancel`, `Icons.bell`, `Icons.alert`, `Icons.timer`

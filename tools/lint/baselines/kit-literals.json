@@ -35,9 +35,9 @@
   "text": 1
  },
  "modules/components": {
-  "spacing": 8,
+  "spacing": 2,
   "font-size": 3,
-  "rectangle": 17,
+  "rectangle": 13,
   "text": 10,
   "radius": 5
  },
@@ -82,9 +82,6 @@
  "modules/lockscreen/styles": {
   "rectangle": 24,
   "text": 11
- },
- "modules/notch": {
-  "rectangle": 1
  },
  "modules/notifications/strips": {
   "rectangle": 4
@@ -195,7 +192,7 @@
   "text": 1
  },
  "modules/widgets/defaultview": {
-  "spacing": 18,
+  "spacing": 15,
   "font-size": 7,
   "rectangle": 1,
   "text": 16,

@@ -95,7 +95,7 @@ OVERRIDES = {
     "modules/bar/workspaces/CompositorData.qml": stubs.COMPOSITOR_DATA,
 }
 
-ICON_DIRS = [Path("/usr/share/icons/Papirus/64x64/apps"), Path("/usr/share/icons/Papirus/64x64/mimetypes"),
+ICON_DIRS = [Path("/usr/share/icons/Papirus/64x64/apps"), Path("/run/current-system/sw/share/icons/Papirus/64x64/apps"), Path("/usr/share/icons/Papirus/64x64/mimetypes"),
              Path("/usr/share/icons/hicolor/scalable/apps"),
              Path("/usr/share/icons/hicolor/48x48/apps")]
 

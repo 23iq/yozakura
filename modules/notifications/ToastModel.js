@@ -48,8 +48,9 @@ function progressOf(n) {
     return v === null ? -1 : v / 100;
 }
 
-// "Firefox · 2m", with "+2" for the rest of a group: "Firefox +2 · 2m".
-function caption(appName, timeText, extra) {
+// "Firefox · 2m", with "+2" for the rest of a group: "Firefox +2 · 2m";
+// `position` ("2/3", the notch's place in its popups) goes last.
+function caption(appName, timeText, extra, position) {
     var head = String(appName || "");
     if (extra > 0)
         head = head ? head + " +" + extra : "+" + extra;
@@ -58,6 +59,8 @@ function caption(appName, timeText, extra) {
         parts.push(head);
     if (timeText)
         parts.push(timeText);
+    if (position)
+        parts.push(position);
     return parts.join(" · ");
 }
 
