@@ -608,13 +608,14 @@ func (s *Server) handleConnection(conn net.Conn) {
 			}
 		case "Workspace.Switch":
 			var p struct {
-				ID string `json:"id"`
+				ID         string `json:"id"`
+				KeepCursor bool   `json:"keep_cursor"`
 			}
 			if err := json.Unmarshal(req.Params, &p); err != nil {
 				resp.Error = fmt.Sprintf("invalid params: %v", err)
 				break
 			}
-			err = s.compositor.SwitchWorkspace(p.ID)
+			err = switchWorkspace(s.compositor, p.ID, p.KeepCursor)
 		case "Workspace.MoveTo":
 			var p struct {
 				WindowID    string `json:"window_id"`

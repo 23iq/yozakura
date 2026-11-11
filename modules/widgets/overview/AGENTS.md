@@ -32,6 +32,7 @@ Mission Control-style workspace overview. Two layout modes: grid (default) and s
 ## CONVENTIONS
 
 - Uses `YozdService.dispatch()` for Hyprland commands (workspace switch, window move/focus)
+- A workspace switch made with the mouse (a click on a workspace) goes through `YozdService.switchWorkspaceKeepCursor()`: Hyprland warps the pointer to the middle of the target monitor when the workspace lives on another output, yozd (`workspace switch <id> keep-cursor`) puts it back. Keyboard switches (Enter) keep the compositor's warp
 - Uses `CompositorData.windowList` and `CompositorData.monitors` for window data
 - Uses `ToplevelManager.toplevels` + `ScreencopyView` for live window previews
 - Built from the UI kit: `Type.accent` for the active / selected outline (`WorkspaceRing`), `Scrim` backdrop, `Look.radius` roles (workspaces "box", windows "small")

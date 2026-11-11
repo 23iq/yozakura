@@ -95,6 +95,16 @@ Singleton {
         });
     }
 
+    // Workspace switch made with the mouse (overview): the pointer stays
+    // where it is. Hyprland otherwise warps it to the middle of the target
+    // monitor when the workspace lives on another output.
+    function switchWorkspaceKeepCursor(workspace) {
+        if (workspace === undefined || workspace === null || workspace === "") return;
+        BackendService.notify("compositor.dispatch", {
+            args: ["workspace", "switch", String(workspace), "keep-cursor"]
+        });
+    }
+
     function moveToWorkspaceSilent(address, workspace) {
         if (!address || !workspace) return;
         BackendService.notify("compositor.dispatch", {

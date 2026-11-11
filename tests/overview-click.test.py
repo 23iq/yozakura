@@ -51,6 +51,7 @@ QtObject {
     property var log: []
     function monitorFor(screen) { return focusedMonitor }
     function dispatch(command) { log = log.concat([command]) }
+    function switchWorkspaceKeepCursor(w) { log = log.concat(["workspace " + w + " keep-cursor"]) }
 }""",
     "Visibilities": """pragma Singleton
 QtObject {

@@ -97,8 +97,13 @@ Item {
         return true;
     }
 
-    function commit() {
-        YozdService.dispatch(`workspace ${selected}`);
+    // keepCursor: the switch was made with the mouse (see
+    // YozdService.switchWorkspaceKeepCursor); Enter keeps the compositor's warp.
+    function commit(keepCursor) {
+        if (keepCursor)
+            YozdService.switchWorkspaceKeepCursor(selected);
+        else
+            YozdService.dispatch(`workspace ${selected}`);
         Visibilities.setActiveModule("");
     }
 
@@ -237,13 +242,13 @@ Item {
                 onPicked: {
                     if (overviewRoot.draggingTargetWorkspace === -1) {
                         overviewRoot.selected = workspaceId;
-                        YozdService.dispatch(`workspace ${workspaceId}`);
+                        YozdService.switchWorkspaceKeepCursor(workspaceId);
                     }
                 }
                 onOpened: {
                     if (overviewRoot.draggingTargetWorkspace === -1) {
                         overviewRoot.selected = workspaceId;
-                        overviewRoot.commit();
+                        overviewRoot.commit(true);
                     }
                 }
                 onDragEntered: overviewRoot.draggingTargetWorkspace = workspaceId

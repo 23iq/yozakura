@@ -254,14 +254,14 @@ Item {
                                 onClicked: {
                                     if (overviewRoot.draggingTargetWorkspace === -1) {
                                         // Only switch workspace, don't close overview
-                                        YozdService.dispatch(`workspace ${workspaceValue}`);
+                                        YozdService.switchWorkspaceKeepCursor(workspaceValue);
                                     }
                                 }
                                 onDoubleClicked: {
                                     if (overviewRoot.draggingTargetWorkspace === -1) {
                                         // Double click closes overview and switches workspace
                                         Visibilities.setActiveModule("");
-                                        YozdService.dispatch(`workspace ${workspaceValue}`);
+                                        YozdService.switchWorkspaceKeepCursor(workspaceValue);
                                     }
                                 }
                             }

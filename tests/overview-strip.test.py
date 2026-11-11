@@ -27,6 +27,7 @@ h.singleton('qs.modules.services', 'YozdService', '''QtObject {
     property var focusedMonitor: ({ id: 0, name: "M", width: 1920, height: 1080, activeWorkspace: { id: 3 } })
     function monitorFor(s) { return focusedMonitor; }
     function dispatch(c) { log.push(c); }
+    function switchWorkspaceKeepCursor(w) { log.push("workspace " + w + " keep-cursor"); }
 }''')
 h.singleton('qs.modules.bar.workspaces', 'CompositorData', '''QtObject {
     property var monitors: [{ id: 0, x: 0, y: 0, scale: 1, transform: 0 }]
@@ -97,7 +98,13 @@ assert abs(cx - ev('width') / 2) < 0.5, cx
 ev('selected = 6')
 ev('navigateToSelectedWindow()')
 assert 'workspace 6' in h.eval(root, 'dispatched()')
+assert 'keep-cursor' not in h.eval(root, 'dispatched()')  # Enter keeps the compositor's warp
 assert h.eval(root, 'closedCount()') == 1
+
+# a switch made with the mouse keeps the pointer where it is
+ev('commit(true)')
+assert h.eval(root, 'dispatched()').endswith('workspace 6 keep-cursor'), h.eval(root, 'dispatched()')
+assert h.eval(root, 'closedCount()') == 2
 
 # search follows the best match and Enter focuses it
 ev('searchQuery = "fire"')
