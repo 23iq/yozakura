@@ -261,7 +261,7 @@ Item {
                                     if (overviewRoot.draggingTargetWorkspace === -1) {
                                         // Double click closes overview and switches workspace
                                         Visibilities.setActiveModule("");
-                                        YozdService.switchWorkspaceKeepCursor(workspaceValue);
+                                        YozdService.dispatch(`workspace ${workspaceValue}`);
                                     }
                                 }
                             }

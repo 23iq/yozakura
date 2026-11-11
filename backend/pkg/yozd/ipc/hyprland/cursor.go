@@ -1,12 +1,31 @@
 package hyprland
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
-// WarpCursor moves the pointer to layout coordinates (ipc.CursorWarper).
-func (h *Hyprland) WarpCursor(x, y int) error {
-	_, err := h.dispatchVersioned(
-		fmt.Sprintf("movecursor %d %d", x, y),
-		fmt.Sprintf("hl.dsp.cursor.move({ x = %d, y = %d })", x, y),
-	)
-	return err
+// SwitchWorkspaceKeepCursor switches to workspace id and puts the pointer
+// at x,y in one [[BATCH]] request (ipc.CursorKeepingSwitcher): Hyprland
+// warps the pointer to the middle of the target monitor when the workspace
+// lives on another output, and two separate requests would let it sit
+// there for a frame.
+func (h *Hyprland) SwitchWorkspaceKeepCursor(id string, x, y int) error {
+	var cmds []string
+	if h.supportsLuaDispatchers() {
+		cmds = []string{
+			fmt.Sprintf("dispatch hl.dsp.focus({ workspace = %q })", id),
+			fmt.Sprintf("dispatch hl.dsp.cursor.move({ x = %d, y = %d })", x, y),
+		}
+	} else {
+		cmds = []string{
+			fmt.Sprintf("dispatch workspace %s", id),
+			fmt.Sprintf("dispatch movecursor %d %d", x, y),
+		}
+	}
+	resp, err := h.dispatch("[[BATCH]]" + strings.Join(cmds, ";"))
+	if err != nil {
+		return err
+	}
+	return checkBatchReply(cmds, resp)
 }

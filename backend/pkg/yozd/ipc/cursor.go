@@ -1,9 +1,10 @@
 package ipc
 
-// CursorWarper is implemented by compositors that can move the pointer to
-// layout (global logical) coordinates (Hyprland: movecursor /
-// hl.dsp.cursor.move). Used to put the pointer back where it was after an
-// action the compositor follows with a warp of its own.
-type CursorWarper interface {
-	WarpCursor(x, y int) error
+// CursorKeepingSwitcher is implemented by compositors that can switch
+// workspace and put the pointer at layout (global logical) coordinates in
+// one atomic request (Hyprland: one [[BATCH]] of the workspace switch and
+// movecursor / hl.dsp.cursor.move). Atomic, so the pointer never shows up
+// at the compositor's warp target in between (hover, enter, focus there).
+type CursorKeepingSwitcher interface {
+	SwitchWorkspaceKeepCursor(id string, x, y int) error
 }

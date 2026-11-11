@@ -113,7 +113,7 @@ func usage() {
 	fmt.Println("    list                    List all workspaces")
 	fmt.Println("    active                  Get active workspace")
 	fmt.Println("    switch <id>             Switch workspace")
-	fmt.Println("    switch <id> keep-cursor  Switch, then put the pointer back (Hyprland)")
+	fmt.Println("    switch <id> keep-cursor  Switch, the pointer stays where it is (Hyprland)")
 	fmt.Println("    move-to <ws_id> [win_id] Move window to workspace")
 	fmt.Println("    toggle-special [name]   Toggle special workspace")
 	fmt.Println("\n  overview <action>")

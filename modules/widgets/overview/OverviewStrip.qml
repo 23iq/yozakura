@@ -97,13 +97,8 @@ Item {
         return true;
     }
 
-    // keepCursor: the switch was made with the mouse (see
-    // YozdService.switchWorkspaceKeepCursor); Enter keeps the compositor's warp.
-    function commit(keepCursor) {
-        if (keepCursor)
-            YozdService.switchWorkspaceKeepCursor(selected);
-        else
-            YozdService.dispatch(`workspace ${selected}`);
+    function commit() {
+        YozdService.dispatch(`workspace ${selected}`);
         Visibilities.setActiveModule("");
     }
 
@@ -248,7 +243,7 @@ Item {
                 onOpened: {
                     if (overviewRoot.draggingTargetWorkspace === -1) {
                         overviewRoot.selected = workspaceId;
-                        overviewRoot.commit(true);
+                        overviewRoot.commit();
                     }
                 }
                 onDragEntered: overviewRoot.draggingTargetWorkspace = workspaceId

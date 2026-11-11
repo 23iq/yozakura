@@ -115,6 +115,21 @@ Window {
         const p = preview(win.contentItem, address);
         return p ? p.mapToItem(null, p.width / 2, p.height / 2) : null;
     }
+    // The outermost item of workspace n (grid cell, strip cell or scrolling row).
+    function workspaceItem(item, n) {
+        if (item.workspaceValue === n || (item.workspaceId === n && item.windowData === undefined))
+            return item;
+        for (let i = 0; i < item.children.length; i++) {
+            const found = workspaceItem(item.children[i], n);
+            if (found)
+                return found;
+        }
+        return null;
+    }
+    function workspaceCentre(n) {
+        const w = workspaceItem(win.contentItem, n);
+        return w ? w.mapToItem(null, w.width / 2, w.height / 2) : null;
+    }
     // The open overview's layer surface, as OverviewPopup reports it.
     function mapSurface(mapped) {
         OverviewActivation.setMapped(surface, mapped);
@@ -190,6 +205,26 @@ def exercise(name, view):
     ev("mapSurface(false)")
     settle()
     check(log() == [FOCUS_A, FOCUS_A, FOCUS_A], tag(f"a double click is confirmed once: {log()}"))
+
+    # A workspace picked with one click (grid, strip; the overview stays open)
+    # keeps the pointer where it is; a double click goes there with a plain
+    # switch, so the keyboard focus follows (follow_mouse).
+    def ws_centre(n):
+        p = ev(f"workspaceCentre({n})")
+        assert p is not None, f"{name}: no workspace {n}"
+        return QPoint(round(p.x()), round(p.y()))
+
+    if name in ("grid", "strip"):
+        fresh()
+        QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, ws_centre(2))
+        settle()
+        check(log() == ["workspace 2 keep-cursor"], tag(f"one click on a workspace keeps the cursor: {log()}"))
+    fresh()
+    QTest.mouseDClick(win, Qt.LeftButton, Qt.NoModifier, ws_centre(2))
+    settle()
+    check("workspace 2" in log(), tag(f"a double click on a workspace switches to it: {log()}"))
+    check(log()[-1] == "workspace 2", tag(f"the double click's switch is plain: {log()}"))
+    check(["", 1] in closes(), tag(f"a double click on a workspace closes the overview: {closes()}"))
 
     # Middle click closes the window; the overview stays.
     fresh()

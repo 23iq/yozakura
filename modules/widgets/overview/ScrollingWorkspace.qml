@@ -265,7 +265,7 @@ Item {
             TapHandler {
                 acceptedButtons: Qt.LeftButton
                 onDoubleTapped: {
-                    YozdService.switchWorkspaceKeepCursor(root.workspaceId);
+                    YozdService.dispatch(`workspace ${root.workspaceId}`);
                     Visibilities.setActiveModule("");
                 }
             }

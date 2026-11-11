@@ -101,11 +101,6 @@ assert 'workspace 6' in h.eval(root, 'dispatched()')
 assert 'keep-cursor' not in h.eval(root, 'dispatched()')  # Enter keeps the compositor's warp
 assert h.eval(root, 'closedCount()') == 1
 
-# a switch made with the mouse keeps the pointer where it is
-ev('commit(true)')
-assert h.eval(root, 'dispatched()').endswith('workspace 6 keep-cursor'), h.eval(root, 'dispatched()')
-assert h.eval(root, 'closedCount()') == 2
-
 # search follows the best match and Enter focuses it
 ev('searchQuery = "fire"')
 assert ev('matchingWindows.length') == 1
