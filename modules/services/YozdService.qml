@@ -95,6 +95,18 @@ Singleton {
         });
     }
 
+    // A workspace picked with a single click in the overview (the overview
+    // stays open): the pointer stays where it is. Hyprland otherwise warps
+    // it to the middle of the target monitor when the workspace lives on
+    // another output. Switches that go there (double click, Enter) keep the
+    // warp: with follow_mouse the keyboard focus follows the pointer.
+    function switchWorkspaceKeepCursor(workspace) {
+        if (workspace === undefined || workspace === null || workspace === "") return;
+        BackendService.notify("compositor.dispatch", {
+            args: ["workspace", "switch", String(workspace), "keep-cursor"]
+        });
+    }
+
     function moveToWorkspaceSilent(address, workspace) {
         if (!address || !workspace) return;
         BackendService.notify("compositor.dispatch", {

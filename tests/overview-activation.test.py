@@ -42,6 +42,7 @@ h.singleton("qs.modules.services", "Visibilities", """QtObject {
 h.singleton("qs.modules.services", "YozdService", """QtObject {
     property var log: []
     function dispatch(command) { log = log.concat([command]) }
+    function switchWorkspaceKeepCursor(w) { log = log.concat(["workspace " + w + " keep-cursor"]) }
 }""")
 h.singleton("qs.modules.bar.workspaces", "CompositorData", """QtObject {
     property var windowByAddress: ({ "0xa": { address: "0xa" }, "0xb": { address: "0xb" } })

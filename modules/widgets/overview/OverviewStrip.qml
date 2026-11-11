@@ -237,7 +237,7 @@ Item {
                 onPicked: {
                     if (overviewRoot.draggingTargetWorkspace === -1) {
                         overviewRoot.selected = workspaceId;
-                        YozdService.dispatch(`workspace ${workspaceId}`);
+                        YozdService.switchWorkspaceKeepCursor(workspaceId);
                     }
                 }
                 onOpened: {
