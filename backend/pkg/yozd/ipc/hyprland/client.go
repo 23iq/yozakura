@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -18,12 +17,12 @@ import (
 )
 
 type Hyprland struct {
-	signature      string
-	mu             sync.Mutex
-	versionMu      sync.Mutex
-	versionKnown   bool
-	useLuaDispatch bool
-	autoreload     autoreloadGuard
+	signature    string
+	mu           sync.Mutex
+	versionMu    sync.Mutex
+	versionKnown bool
+	version      string
+	autoreload   autoreloadGuard
 }
 
 func New() (*Hyprland, error) {
@@ -65,115 +64,11 @@ func (h *Hyprland) dispatch(cmd string) (string, error) {
 	return resp, nil
 }
 
-func (h *Hyprland) supportsLuaDispatchers() bool {
-	h.versionMu.Lock()
-	if h.versionKnown {
-		useLuaDispatch := h.useLuaDispatch
-		h.versionMu.Unlock()
-		return useLuaDispatch
-	}
-	h.versionMu.Unlock()
-
-	resp, err := h.dispatch("j/version")
-	if err != nil {
-		return false
-	}
-
-	version, err := parseHyprlandVersion(resp)
-	if err != nil {
-		return false
-	}
-
-	useLuaDispatch := isHyprlandVersionAtLeast(version, 0, 55)
-	h.versionMu.Lock()
-	h.useLuaDispatch = useLuaDispatch
-	h.versionKnown = true
-	h.versionMu.Unlock()
-	return useLuaDispatch
-}
-
-// UsesLuaConfig reports whether the running Hyprland reads the Lua config
-// (0.55+): runtime option changes then go through `eval hl.config(...)`
-// instead of `keyword`.
-func (h *Hyprland) UsesLuaConfig() bool { return h.supportsLuaDispatchers() }
-
 func (h *Hyprland) dispatchVersioned(legacy, lua string) (string, error) {
 	if h.supportsLuaDispatchers() {
 		return h.dispatch("dispatch " + lua)
 	}
 	return h.dispatch("dispatch " + legacy)
-}
-
-func parseHyprlandVersion(resp string) (string, error) {
-	trimmed := strings.TrimSpace(resp)
-	if strings.HasPrefix(trimmed, "{") {
-		var data struct {
-			Version string `json:"version"`
-			Tag     string `json:"tag"`
-		}
-		if err := json.Unmarshal([]byte(trimmed), &data); err != nil {
-			return "", err
-		}
-		if data.Version != "" {
-			return data.Version, nil
-		}
-		if data.Tag != "" {
-			return data.Tag, nil
-		}
-		return "", fmt.Errorf("hyprland version response did not include version")
-	}
-
-	fields := strings.Fields(trimmed)
-	for _, field := range fields {
-		field = strings.TrimPrefix(field, "v")
-		if _, err := parseVersionNumber(field); err == nil {
-			return field, nil
-		}
-	}
-	return "", fmt.Errorf("could not parse hyprland version from %q", trimmed)
-}
-
-func isHyprlandVersionAtLeast(version string, major, minor int) bool {
-	parsed, err := parseVersionNumber(version)
-	if err != nil {
-		return false
-	}
-	if parsed.major != major {
-		return parsed.major > major
-	}
-	return parsed.minor >= minor
-}
-
-type versionNumber struct {
-	major int
-	minor int
-}
-
-func parseVersionNumber(version string) (versionNumber, error) {
-	clean := strings.TrimPrefix(strings.TrimSpace(version), "v")
-	parts := strings.Split(clean, ".")
-	if len(parts) < 2 {
-		return versionNumber{}, fmt.Errorf("invalid version %q", version)
-	}
-
-	major, err := strconv.Atoi(versionDigits(parts[0]))
-	if err != nil {
-		return versionNumber{}, err
-	}
-	minor, err := strconv.Atoi(versionDigits(parts[1]))
-	if err != nil {
-		return versionNumber{}, err
-	}
-	return versionNumber{major: major, minor: minor}, nil
-}
-
-func versionDigits(value string) string {
-	for i, r := range value {
-		if r < '0' || r > '9' {
-			return value[:i]
-		}
-	}
-	return value
 }
 
 func hyprTarget(id string) string {
@@ -516,8 +411,10 @@ func (h *Hyprland) ListMonitors() ([]ipc.Monitor, error) {
 		return nil, err
 	}
 
+	screencopyLogical := h.screencopyIsLogical()
 	res := make([]ipc.Monitor, len(monitors))
 	for i, m := range monitors {
+		logicalW, logicalH := logicalMonitorSize(m.Width, m.Height, m.Scale, m.Transform)
 		res[i] = ipc.Monitor{
 			ID:          fmt.Sprintf("%d", m.ID),
 			Name:        m.Name,
@@ -532,6 +429,11 @@ func (h *Hyprland) ListMonitors() ([]ipc.Monitor, error) {
 				"x":                m.X,
 				"y":                m.Y,
 				"transform":        m.Transform,
+				// Width/Height are hyprctl's mode pixels (unrotated,
+				// unscaled); the logical size is what layout coords use.
+				"logical_width":      logicalW,
+				"logical_height":     logicalH,
+				"screencopy_logical": screencopyLogical,
 			},
 		}
 	}

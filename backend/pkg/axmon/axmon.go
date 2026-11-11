@@ -41,6 +41,26 @@ func (m Monitor) Transform() int {
 	return 0
 }
 
+// LogicalSize is the monitor's size in layout (logical) coordinates.
+// Width/Height mean different things per compositor (raw mode pixels on
+// Hyprland, logical on niri), so the daemon sends logical_width/height;
+// without them (an older daemon) Width/Height are used as is.
+func (m Monitor) LogicalSize() (int, int) {
+	w, wok := m.Metadata["logical_width"].(float64)
+	h, hok := m.Metadata["logical_height"].(float64)
+	if wok && hok && w > 0 && h > 0 {
+		return int(w), int(h)
+	}
+	return m.Width, m.Height
+}
+
+// ScreencopyLogical reports whether the compositor sends this monitor's
+// screencopy frames already in logical orientation (Hyprland >= 0.57).
+func (m Monitor) ScreencopyLogical() bool {
+	v, _ := m.Metadata["screencopy_logical"].(bool)
+	return v
+}
+
 func (m Monitor) EffectiveScale() float64 {
 	if m.Scale > 0 {
 		return m.Scale
@@ -97,7 +117,8 @@ func Containing(monitors []Monitor, x, y int) (*Monitor, bool) {
 	for i := range monitors {
 		m := &monitors[i]
 		mx, my := m.X(), m.Y()
-		if x >= mx && x < mx+m.Width && y >= my && y < my+m.Height {
+		w, h := m.LogicalSize()
+		if x >= mx && x < mx+w && y >= my && y < my+h {
 			return m, true
 		}
 	}

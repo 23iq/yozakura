@@ -440,6 +440,10 @@ func (m *Mango) ListMonitors() ([]ipc.Monitor, error) {
 				"y":      mm.Y,
 				"index":  mm.Index,
 				"active": mm.Active != 0,
+				// width/height are the wlr_output_layout box, which is
+				// already rotated and scaled.
+				"logical_width":  mm.Width,
+				"logical_height": mm.Height,
 			},
 		})
 	}
