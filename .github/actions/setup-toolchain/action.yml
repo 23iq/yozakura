@@ -51,6 +51,22 @@ runs:
           libxcb-randr0 libxcb-render0 libxcb-render-util0 libxcb-shape0
           libxcb-shm0 libxcb-sync1 libxcb-util1 libxcb-xfixes0 libxcb-xkb1
 
+    # A cache hit above unpacks the package files without running their
+    # postinst, so the update-alternatives links of BLAS / LAPACK (ffmpeg
+    # links them) are missing and ffmpeg dies with "libblas.so.3: cannot open
+    # shared object file". Put the links back and prove ffmpeg starts.
+    - name: BLAS / LAPACK links for ffmpeg
+      shell: bash
+      run: |
+        libdir=/usr/lib/x86_64-linux-gnu
+        for lib in blas lapack; do
+          if [ ! -e "${libdir}/lib${lib}.so.3" ] && [ -e "${libdir}/${lib}/lib${lib}.so.3" ]; then
+            sudo ln -s "${libdir}/${lib}/lib${lib}.so.3" "${libdir}/lib${lib}.so.3"
+          fi
+        done
+        sudo ldconfig
+        ffmpeg -hide_banner -version > /dev/null
+
     # PySide6 wheels ship qmllint/qmlformat built from the same Qt release.
     - name: PySide6
       if: inputs.pyside6 == 'true'

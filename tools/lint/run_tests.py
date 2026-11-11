@@ -252,7 +252,10 @@ def run_go() -> int:
         return 0
     r = subprocess.run([go, "test", "./..."], cwd=REPO / "backend", capture_output=True, text=True)
     if r.returncode:
-        print(_tail("\n".join(ln for ln in (r.stdout + r.stderr).splitlines() if "no test files" not in ln), 60))
+        # Passing packages are dropped: with ~80 of them the tail would hide
+        # the failing one.
+        lines = (r.stdout + r.stderr).splitlines()
+        print(_tail("\n".join(ln for ln in lines if "no test files" not in ln and not ln.startswith("ok ")), 60))
         fail("test-go: go test failed")
         return 1
     n = sum(1 for ln in r.stdout.splitlines() if ln.startswith("ok"))
