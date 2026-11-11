@@ -98,11 +98,23 @@ Item {
         color: root.selected ? Type.accent : Type.secondary
     }
 
+    // `picked` waits out the double-click interval, so a double click is one
+    // `opened` and never a pick first (a second `workspace N` on the now
+    // focused N would toggle back with workspace_back_and_forth).
+    Timer {
+        id: pickTimer
+        interval: Qt.styleHints.mouseDoubleClickInterval
+        onTriggered: root.picked()
+    }
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton
-        onClicked: root.picked()
-        onDoubleClicked: root.opened()
+        onClicked: pickTimer.restart()
+        onDoubleClicked: {
+            pickTimer.stop();
+            root.opened();
+        }
     }
 
     DropArea {

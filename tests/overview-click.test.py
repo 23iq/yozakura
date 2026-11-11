@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 from lib.kit_env import KitEnv  # noqa: E402
 from lib.settings_env import global_states_qml  # noqa: E402
-from lib.waits import settle  # noqa: E402
+from lib.waits import pump, settle, wait_until  # noqa: E402
 
 from PySide6.QtCore import QPoint, Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
@@ -214,16 +214,21 @@ def exercise(name, view):
         assert p is not None, f"{name}: no workspace {n}"
         return QPoint(round(p.x()), round(p.y()))
 
+    # The single click waits out the double-click interval, so a double click
+    # is one plain switch (a second `workspace N` would toggle back with
+    # workspace_back_and_forth).
+    dclick_ms = ev("Qt.styleHints.mouseDoubleClickInterval")
     if name in ("grid", "strip"):
         fresh()
         QTest.mouseClick(win, Qt.LeftButton, Qt.NoModifier, ws_centre(2))
         settle()
-        check(log() == ["workspace 2 keep-cursor"], tag(f"one click on a workspace keeps the cursor: {log()}"))
+        check(wait_until(lambda: log() == ["workspace 2 keep-cursor"]),
+              tag(f"one click on a workspace keeps the cursor: {log()}"))
     fresh()
     QTest.mouseDClick(win, Qt.LeftButton, Qt.NoModifier, ws_centre(2))
     settle()
-    check("workspace 2" in log(), tag(f"a double click on a workspace switches to it: {log()}"))
-    check(log()[-1] == "workspace 2", tag(f"the double click's switch is plain: {log()}"))
+    pump(dclick_ms + 100)
+    check(log() == ["workspace 2"], tag(f"a double click on a workspace is one plain switch: {log()}"))
     check(["", 1] in closes(), tag(f"a double click on a workspace closes the overview: {closes()}"))
 
     # Middle click closes the window; the overview stays.

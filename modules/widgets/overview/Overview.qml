@@ -248,16 +248,25 @@ Item {
                                 source: lockscreenFramePath ? "file://" + lockscreenFramePath : ""
                             }
 
+                            // A single click (pick, the overview stays open) waits out the
+                            // double-click interval: a double click fires onClicked first, and
+                            // a second `workspace N` on the now focused N would toggle back
+                            // (workspace_back_and_forth / niri's auto back-and-forth).
+                            Timer {
+                                id: pickTimer
+                                interval: Qt.styleHints.mouseDoubleClickInterval
+                                onTriggered: {
+                                    if (overviewRoot.draggingTargetWorkspace === -1)
+                                        YozdService.switchWorkspaceKeepCursor(workspace.workspaceValue);
+                                }
+                            }
+
                             MouseArea {
                                 anchors.fill: parent
                                 acceptedButtons: Qt.LeftButton
-                                onClicked: {
-                                    if (overviewRoot.draggingTargetWorkspace === -1) {
-                                        // Only switch workspace, don't close overview
-                                        YozdService.switchWorkspaceKeepCursor(workspaceValue);
-                                    }
-                                }
+                                onClicked: pickTimer.restart()
                                 onDoubleClicked: {
+                                    pickTimer.stop();
                                     if (overviewRoot.draggingTargetWorkspace === -1) {
                                         // Double click closes overview and switches workspace
                                         Visibilities.setActiveModule("");
