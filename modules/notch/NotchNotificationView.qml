@@ -160,6 +160,13 @@ Item {
         property: "timestampUpdateCounter"
         value: root.timestampUpdateCounter
     }
+    // Not restored: a notification on its way out keeps its place ("2/3")
+    Binding {
+        target: notificationStack.currentItem
+        property: "popups"
+        value: root.popups
+        restoreMode: Binding.RestoreNone
+    }
 
     Column {
         id: mainColumn
@@ -374,8 +381,9 @@ Item {
                         // Fed by the view's Bindings on the current item
                         property bool hovered: false
                         property int timestampUpdateCounter: 0
+                        property var popups: []
                         // Place among the popups ("2/3")
-                        readonly property string position: NotificationBody.position(root.popups.indexOf(slot.notification), root.popups.length)
+                        readonly property string position: NotificationBody.position(slot.popups.indexOf(slot.notification), slot.popups.length)
 
                         // notifications.notchStyle (NotchNotificationStyles.js)
                         Loader {

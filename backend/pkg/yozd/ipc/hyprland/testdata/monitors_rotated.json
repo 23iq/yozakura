@@ -1,0 +1,8 @@
+[
+  {"id": 0, "name": "DP-1", "width": 2560, "height": 1440, "refreshRate": 143.99, "x": 0, "y": 0,
+   "scale": 1.5, "transform": 1, "focused": true, "activeWorkspace": {"id": 1, "name": "1"}},
+  {"id": 1, "name": "HDMI-A-1", "width": 1920, "height": 1080, "refreshRate": 60.0, "x": 960, "y": 0,
+   "scale": 2.0, "transform": 0, "focused": false, "activeWorkspace": {"id": 2, "name": "2"}},
+  {"id": 2, "name": "DP-2", "width": 1920, "height": 1200, "refreshRate": 60.0, "x": 1920, "y": 0,
+   "scale": 1.25, "transform": 7, "focused": false, "activeWorkspace": {"id": 3, "name": "3"}}
+]

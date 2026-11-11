@@ -299,7 +299,8 @@ func (e *Engine) CaptureOutputFrame(outputName string) (*CaptureResult, error) {
 }
 
 // Upright flips and re-orients a raw capture so rows read left-to-right,
-// top-to-bottom in logical orientation. Closes the source buffer if a new
+// top-to-bottom in logical orientation; a frame the compositor already
+// sent in logical orientation is only flipped. Closes the source buffer if a new
 // one was allocated.
 func Upright(result *CaptureResult) (*CaptureResult, error) {
 	if result.YInverted {
@@ -308,6 +309,13 @@ func Upright(result *CaptureResult) (*CaptureResult, error) {
 	}
 
 	if result.Transform == TransformNormal {
+		return result, nil
+	}
+
+	if FrameInLogicalOrientation(result.Transform, result.Region.Width, result.Region.Height,
+		result.Buffer.Width, result.Buffer.Height) {
+		result.Region.Width = int32(result.Buffer.Width)
+		result.Region.Height = int32(result.Buffer.Height)
 		return result, nil
 	}
 

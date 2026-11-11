@@ -611,6 +611,8 @@ func (n *Niri) ListMonitors() ([]ipc.Monitor, error) {
 			m.Metadata["x"] = o.Logical.X
 			m.Metadata["y"] = o.Logical.Y
 			m.Metadata["transform"] = niriTransformToInt(o.Logical.Transform)
+			m.Metadata["logical_width"] = int(o.Logical.Width)
+			m.Metadata["logical_height"] = int(o.Logical.Height)
 		}
 		if o.CurrentMode != nil && int(*o.CurrentMode) < len(o.Modes) {
 			mode := o.Modes[*o.CurrentMode]

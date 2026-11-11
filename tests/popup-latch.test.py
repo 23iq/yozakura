@@ -9,6 +9,10 @@ window stays mapped and loaded, unmaps at least a frame later, and only then
 does the Loader destroy it. Reopening in between keeps the same window. The
 selection menu's Loader in shell.qml is checked the same way (its window
 content is covered by tests/ai-selection-preview.test.py).
+
+A window clicked in the overview (OverviewActivation) is asked for at once
+and again only after the popup has unmapped: Hyprland refuses keyboard focus
+to a window while the overview layer holds it.
 """
 import re
 import sys
@@ -41,12 +45,18 @@ h.singleton("qs.modules.services", "Visibilities", """QtObject {
             screens[n] = flags.createObject(v);
         return screens[n];
     }
-    function setActiveModule(m) {}
+    property string currentActiveModule: ""
+    function setActiveModule(m) {
+        currentActiveModule = m;
+        for (const n in screens)
+            screens[n].overview = screens[n].presets = false;
+    }
 }""")
 h.module("qs.modules.services", {
     "FocusGrab": "QtObject { property var windows; property bool active; signal cleared }",
     "I18n": "pragma Singleton\nQtObject { function t(k) { return k } }",
-    "YozdService": "pragma Singleton\nQtObject { property var focusedWorkspace: null; function dispatch(c) {} }",
+    "YozdService": "pragma Singleton\nQtObject { property var focusedWorkspace: null; property var log: []; "
+                   "function dispatch(c) { log = log.concat([c]) } }",
     "SuspendManager": "pragma Singleton\nQtObject { property bool wakeReady: true }",
 })
 # A focusable text field: the latch must take focus off it before the drop.
@@ -93,6 +103,9 @@ def as_item(rel: str) -> str:
 for rel, dest in (("modules/widgets/overview/OverviewPopup.qml", "qs/modules/widgets/overview"),
                   ("modules/widgets/presets/PresetsPopup.qml", "qs/modules/widgets/presets")):
     h.copy(rel, dest, replace={(REPO / rel).read_text(): as_item(rel)}, siblings=False)
+h.copy("modules/widgets/overview/OverviewActivation.qml", "qs/modules/widgets/overview", siblings=False)
+h.singleton("qs.modules.bar.workspaces", "CompositorData", "QtObject { property var windowByAddress: ({'0xa': {}}) }")
+h.module("Quickshell", {"Singleton": "QtObject { default property list<QtObject> data }"})
 h.module("qs.modules.widgets.overview", {})
 h.module("qs.modules.widgets.presets", {})
 
@@ -192,6 +205,25 @@ for name, flag in (("overview", "overview"), ("presets", "presets")):
     ev(root, f'Visibilities.getForScreen("A").{flag} = false')
     pump(80)
     assert ev(loader, "item") is None, f"{name}: never released after closing"
+
+# A window clicked in the overview: asked for with the click, and again only
+# once the popup has unmapped (never while it is still on screen).
+ov = h.find(root, "overview")
+ev(root, 'Visibilities.currentActiveModule = "overview"; Visibilities.getForScreen("A").overview = true')
+win = ev(ov, "item")
+pump(30)
+ev(root, "YozdService.log = []")
+ev(win, 'OverviewActivation.activate("0xa")')
+FOCUS = "focuswindow address:0xa"
+assert ev(root, "YozdService.log.join('|')") == FOCUS, "the click is not sent at once"
+assert ev(win, "keyboardFocus") == 0 and ev(win, "visible") is True, "the overview did not start closing"
+while ev(ov, "item") is not None and ev(win, "visible") is True:
+    assert ev(root, "YozdService.log.join('|')") == FOCUS, "focus asked for again while the overview is mapped"
+    pump(1)
+pump(30)
+assert ev(ov, "item") is None, "the overview never unmapped"
+assert ev(root, "YozdService.log.join('|')") == FOCUS + "|" + FOCUS, \
+    "focus not asked for again after the unmap: " + ev(root, "YozdService.log.join('|')")
 
 # Suspend while open: unloaded at once, nothing held over to the resume.
 ov = h.find(root, "overview")

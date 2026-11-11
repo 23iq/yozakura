@@ -11,6 +11,8 @@ import qs.modules.components
 import qs.modules.components.kit
 import qs.config
 import "."
+// After ".": OverviewActivation must be the module's singleton instance.
+import qs.modules.widgets.overview
 
 PanelWindow {
     id: overviewPopup
@@ -54,6 +56,12 @@ PanelWindow {
     // least a frame later (never in the same tick, also with 0 ms motion).
     visible: latch.shown
     exclusionMode: ExclusionMode.Ignore
+
+    // A clicked window is asked for again once no overview surface is
+    // mapped (OverviewActivation): report this one.
+    onMappedChanged: OverviewActivation.setMapped(overviewPopup, mapped)
+    Component.onCompleted: OverviewActivation.setMapped(overviewPopup, mapped)
+    Component.onDestruction: OverviewActivation.setMapped(overviewPopup, false)
 
     SurfaceLatch {
         id: latch

@@ -69,5 +69,11 @@ pkg/yozd/
   Generators must be deterministic: range over
   `ipc.SortedKeybindNames`, never over a map, or no regeneration is ever
   byte-identical.
+- `Monitor.Width/Height` differ per compositor (Hyprland: raw mode pixels,
+  unrotated and unscaled, the shell rotates/scales them itself; niri and
+  MangoWC: layout size). Every backend also sends `metadata.logical_width`
+  / `logical_height` (layout coordinates); hit-testing uses those
+  (`axmon.Containing`). Hyprland adds `metadata.screencopy_logical`
+  (>= 0.57 sends screencopy frames already rotated; `pkg/capture`).
 - Tests: `go test ./pkg/yozd/... ./cmd/yozd` (mock compositor, no live
   session needed).
