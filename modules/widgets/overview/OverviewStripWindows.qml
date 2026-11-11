@@ -3,6 +3,7 @@ import Quickshell.Wayland
 import qs.modules.theme
 import qs.modules.services
 import qs.modules.globals
+import qs.modules.widgets.overview
 import qs.config
 import "StripMath.js" as StripMath
 
@@ -35,15 +36,20 @@ Item {
     }
 
     Repeater {
-        model: windowSpace.windowData
+        model: OverviewWindowRows {
+            items: windowSpace.windowData
+            keyOf: entry => entry.windowData.address
+        }
 
         delegate: OverviewWindow {
             id: window
-            required property var modelData
+            required property string key
+            required property OverviewWindowRows rows
+            readonly property var entry: rows.byKey[key]
             readonly property int wsId: windowData?.workspace?.id ?? 1
 
-            windowData: modelData.windowData
-            toplevel: modelData.toplevel
+            windowData: entry.windowData
+            toplevel: entry.toplevel
             scale: windowSpace.strip.previewScale
             availableWorkspaceWidth: windowSpace.strip.workspaceImplicitWidth
             availableWorkspaceHeight: windowSpace.strip.workspaceImplicitHeight
@@ -72,10 +78,7 @@ Item {
                 if (targetWorkspace !== -1 && targetWorkspace !== wsId)
                     YozdService.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${windowData?.address}`);
             }
-            onWindowClicked: {
-                Visibilities.setActiveModule("", true);
-                Qt.callLater(() => YozdService.dispatch(`focuswindow address:${windowData.address}`));
-            }
+            onWindowClicked: OverviewActivation.activate(windowData.address)
             onWindowClosed: YozdService.dispatch(`closewindow address:${windowData.address}`)
         }
     }

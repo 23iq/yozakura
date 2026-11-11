@@ -10,6 +10,7 @@ import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.bar.workspaces
 import qs.modules.services
+import qs.modules.widgets.overview
 import qs.config
 import qs.modules.bar.panels
 
@@ -140,11 +141,7 @@ Item {
         if (!win)
             return;
 
-        // Close overview and focus the matched window
-        Visibilities.setActiveModule("", true);
-        Qt.callLater(() => {
-            YozdService.dispatch(`focuswindow address:${win.address}`);
-        });
+        OverviewActivation.activate(win.address);
     }
 
     function selectNextMatch() {
@@ -325,13 +322,18 @@ Item {
             }
 
             Repeater {
-                model: windowSpace.filteredWindowData
+                model: OverviewWindowRows {
+                    items: windowSpace.filteredWindowData
+                    keyOf: entry => entry.windowData.address
+                }
 
                 delegate: OverviewWindow {
                     id: window
-                    required property var modelData
-                    windowData: modelData.windowData
-                    toplevel: modelData.toplevel
+                    required property string key
+                    required property OverviewWindowRows rows
+                    readonly property var entry: rows.byKey[key]
+                    windowData: entry.windowData
+                    toplevel: entry.toplevel
                     scale: overviewRoot.scale
                     availableWorkspaceWidth: overviewRoot.workspaceImplicitWidth
                     availableWorkspaceHeight: overviewRoot.workspaceImplicitHeight
@@ -356,14 +358,7 @@ Item {
                             YozdService.dispatch(`movetoworkspacesilent ${targetWorkspace}, address:${windowData?.address}`);
                         }
                     }
-                    onWindowClicked: {
-                        // Close overview and focus the specific clicked window
-                        // Skip generic focus restoration since we're handling it specifically
-                        Visibilities.setActiveModule("", true);
-                        Qt.callLater(() => {
-                            YozdService.dispatch(`focuswindow address:${windowData.address}`);
-                        });
-                    }
+                    onWindowClicked: OverviewActivation.activate(windowData.address)
                     onWindowClosed: {
                         YozdService.dispatch(`closewindow address:${windowData.address}`);
                     }

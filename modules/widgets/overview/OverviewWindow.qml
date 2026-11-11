@@ -8,6 +8,7 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
+import qs.modules.bar.workspaces
 import qs.config
 
 Item {
@@ -260,22 +261,12 @@ Item {
             if (!root.windowData)
                 return;
 
-            if (mouse.button === Qt.LeftButton) {
-                // Single click just focuses the window without closing overview
-                YozdService.dispatch(`focuswindow address:${windowData.address}`);
-            } else if (mouse.button === Qt.MiddleButton) {
-                root.windowClosed();
-            }
-        }
-
-        onDoubleClicked: mouse => {
-            if (!root.windowData)
-                return;
-
-            if (mouse.button === Qt.LeftButton) {
-                // Double click closes overview and focuses window
+            // A click (never the end of a drag) closes the overview and
+            // activates the window; the middle button closes the window.
+            if (mouse.button === Qt.LeftButton)
                 root.windowClicked();
-            }
+            else if (mouse.button === Qt.MiddleButton)
+                root.windowClosed();
         }
     }
 }

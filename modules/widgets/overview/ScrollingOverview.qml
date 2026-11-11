@@ -9,6 +9,7 @@ import qs.modules.bar.workspaces
 import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
+import qs.modules.widgets.overview
 import qs.config
 import qs.modules.bar.panels
 
@@ -123,10 +124,7 @@ Item {
         const win = matchingWindows[selectedMatchIndex];
         if (!win)
             return;
-        Visibilities.setActiveModule("", true);
-        Qt.callLater(() => {
-            YozdService.dispatch(`focuswindow address:${win.address}`);
-        });
+        OverviewActivation.activate(win.address);
     }
 
     function selectNextMatch() {

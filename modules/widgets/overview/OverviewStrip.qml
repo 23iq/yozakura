@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.bar.workspaces
 import qs.modules.bar.panels
+import qs.modules.widgets.overview
 import qs.config
 import "StripMath.js" as StripMath
 import "OverviewSearch.js" as OverviewSearch
@@ -138,8 +139,7 @@ Item {
                 commit();
             return;
         }
-        Visibilities.setActiveModule("", true);
-        Qt.callLater(() => YozdService.dispatch(`focuswindow address:${win.address}`));
+        OverviewActivation.activate(win.address);
     }
 
     function isWindowMatched(address) {

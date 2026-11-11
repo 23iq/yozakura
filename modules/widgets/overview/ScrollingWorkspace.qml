@@ -12,6 +12,8 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components
 import qs.modules.components.kit
+import qs.modules.bar.workspaces
+import qs.modules.widgets.overview
 import qs.config
 
 Item {
@@ -264,18 +266,21 @@ Item {
                 acceptedButtons: Qt.LeftButton
                 onDoubleTapped: {
                     YozdService.dispatch(`workspace ${root.workspaceId}`);
-                    Visibilities.setActiveModule("", true);
+                    Visibilities.setActiveModule("");
                 }
             }
 
             Repeater {
-                model: root.workspaceWindows
+                model: OverviewWindowRows {
+                    items: root.workspaceWindows
+                }
 
                 delegate: Item {
                     id: windowDelegate
-                    required property var modelData
+                    required property string key
+                    required property OverviewWindowRows rows
 
-                    readonly property var windowData: modelData
+                    readonly property var windowData: rows.byKey[key]
                     readonly property var toplevel: {
                         const toplevels = ToplevelManager.toplevels.values;
                         const cls = windowData.class || "";
@@ -607,20 +612,9 @@ Item {
                             if (!windowDelegate.windowData)
                                 return;
                             if (mouse.button === Qt.LeftButton && !windowDelegate.dragging) {
-                                YozdService.dispatch(`focuswindow address:${windowDelegate.windowData.address}`);
+                                OverviewActivation.activate(windowDelegate.windowData.address);
                             } else if (mouse.button === Qt.MiddleButton) {
                                 YozdService.dispatch(`closewindow address:${windowDelegate.windowData.address}`);
-                            }
-                        }
-
-                        onDoubleClicked: mouse => {
-                            if (!windowDelegate.windowData)
-                                return;
-                            if (mouse.button === Qt.LeftButton) {
-                                Visibilities.setActiveModule("", true);
-                                Qt.callLater(() => {
-                                    YozdService.dispatch(`focuswindow address:${windowDelegate.windowData.address}`);
-                                });
                             }
                         }
                     }
