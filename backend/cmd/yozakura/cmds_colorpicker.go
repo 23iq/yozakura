@@ -14,6 +14,9 @@ import (
 
 	"yozakura/backend/internal/colorpicker"
 	"yozakura/backend/internal/screenshot"
+	// Sets screenshot.LogicalFramesHint, which the picker's own screencopy
+	// consults on 180°/square rotated outputs (Hyprland >= 0.57).
+	_ "yozakura/backend/pkg/capture"
 	"yozakura/backend/pkg/svc/notify"
 )
 

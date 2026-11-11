@@ -529,9 +529,8 @@ func (p *Picker) captureForSurface(ls *LayerSurface) {
 		ls.state.OnScreencopyReady()
 
 		screenBuf := ls.state.ScreenBuffer()
-		if screenBuf != nil && ls.output.transform != TransformNormal {
-			invTransform := InverseTransform(ls.output.transform)
-			transformed, err := screenBuf.ApplyTransform(invTransform)
+		if screenBuf != nil {
+			transformed, err := ls.output.upright(screenBuf)
 			if err != nil {
 				log.Error("apply transform failed", "err", err)
 			} else if transformed != screenBuf {
