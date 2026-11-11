@@ -103,7 +103,7 @@ Item {
     // focused N would toggle back with workspace_back_and_forth).
     Timer {
         id: pickTimer
-        interval: Qt.styleHints.mouseDoubleClickInterval
+        interval: Application.styleHints.mouseDoubleClickInterval
         onTriggered: root.picked()
     }
 

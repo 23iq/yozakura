@@ -254,7 +254,7 @@ Item {
                             // (workspace_back_and_forth / niri's auto back-and-forth).
                             Timer {
                                 id: pickTimer
-                                interval: Qt.styleHints.mouseDoubleClickInterval
+                                interval: Application.styleHints.mouseDoubleClickInterval
                                 onTriggered: {
                                     if (overviewRoot.draggingTargetWorkspace === -1)
                                         YozdService.switchWorkspaceKeepCursor(workspace.workspaceValue);
