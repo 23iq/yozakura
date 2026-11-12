@@ -4657,5 +4657,10 @@
   "prefs.updates.stage.beta": "What comes next",
   "prefs.updates.stage.git": "Every commit",
   "prefs.undo.channel_changed": "Update channel changed",
-  "prefs.updates.section.ocr": "Text recognition"
+  "prefs.updates.section.ocr": "Text recognition",
+  "prefs.about.card.version": "Version",
+  "prefs.about.card.places": "Places",
+  "prefs.about.card.legal": "Legal",
+  "prefs.about.updates": "Updates",
+  "prefs.about.free": "Free software: use it, change it, share it."
 }
