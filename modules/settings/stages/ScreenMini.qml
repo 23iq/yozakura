@@ -276,7 +276,7 @@ Item {
                         Mark {
                             anchors.fill: parent
                             anchors.margins: -Space.xs
-                            visible: screen.selectable && screen.selectedPanel === panel.index && screen.panels.length > 1
+                            visible: screen.selectable && screen.selectedPanel === panel.index
                             radius: shape.radius + Space.xs
                             color: "transparent"
                             border.width: Space.stroke - 1

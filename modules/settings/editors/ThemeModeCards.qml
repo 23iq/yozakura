@@ -29,7 +29,40 @@ Item {
     readonly property real stripWidth: root.stripCount * Space.px(96) + Space.m * (root.stripCount + 1) <= root.width ? (root.width - Space.m * (root.stripCount + 1)) / Math.max(1, root.stripCount) : (root.width - Space.m * 2) / (Math.max(1, Math.floor((root.width - Space.m * 2) / Space.px(110))) + 0.4) - Space.m
     readonly property int columns: root.strip ? root.stripCount : width < 520 ? 1 : 3
 
-    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
+    // beside the stage (a narrow place): a compact icon segmented
+    readonly property bool compact: !root.strip && root.width > 0 && root.width < Space.px(300)
+    readonly property var modes: [
+        {
+            "id": "dark",
+            "icon": "moon",
+            "title": "prefs.appearance.mode.dark"
+        },
+        {
+            "id": "oled",
+            "icon": "circleHalf",
+            "title": "prefs.appearance.mode.oled"
+        },
+        {
+            "id": "light",
+            "icon": "sun",
+            "title": "prefs.appearance.mode.light"
+        }
+    ]
+    implicitHeight: root.strip ? root.fillHeight : (root.compact ? modeSegmented.implicitHeight : grid.implicitHeight)
+
+    Segmented {
+        id: modeSegmented
+        objectName: "themeModeSegmented"
+        visible: root.compact
+        focusable: true
+        model: root.modes.map(m => ({
+                    "name": "mode:" + m.id,
+                    "icon": m.icon,
+                    "text": I18n.t(m.title)
+                }))
+        currentIndex: root.modes.findIndex(m => m.id === root.mode)
+        onActivated: i => root.choose(root.modes[i].id)
+    }
 
     Component.onCompleted: SchemePreviews.refresh()
 
@@ -87,23 +120,7 @@ Item {
             spacing: Space.l
 
             Repeater {
-                model: [
-                    {
-                        "id": "dark",
-                        "icon": "moon",
-                        "title": "prefs.appearance.mode.dark"
-                    },
-                    {
-                        "id": "oled",
-                        "icon": "circleHalf",
-                        "title": "prefs.appearance.mode.oled"
-                    },
-                    {
-                        "id": "light",
-                        "icon": "sun",
-                        "title": "prefs.appearance.mode.light"
-                    }
-                ]
+                model: root.compact ? [] : root.modes
 
                 delegate: ChoiceCard {
                     id: card

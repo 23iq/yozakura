@@ -253,6 +253,9 @@ Window {{
         if args.search:
             env.h.find(win, "settingsSearch").setProperty("text", args.search)
         QTest.qWait(900)
+        if cat == "lockscreen":
+            # the style gallery pictures one style at a time
+            QTest.qWait(9000)
         # the pointer rests on the brand, not on a row (a hovered row
         # lights its stage part)
         QTest.mouseMove(win, QPoint(w - 2, 2))

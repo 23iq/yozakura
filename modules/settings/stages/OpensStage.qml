@@ -264,7 +264,15 @@ Stage {
                 width: place.modelData.rect[2]
                 height: place.modelData.rect[3]
                 z: 6
-                opacity: stage.picked !== "" && place.modelData.ids.indexOf(stage.picked) < 0 ? 0.3 : 1
+                // picked: the others fade back; those under the ghost hide
+                readonly property bool underGhost: {
+                    if (stage.picked === "" || place.modelData.ids.indexOf(stage.picked) >= 0)
+                        return false;
+                    const a = stage.activeRect, r = place.modelData.rect;
+                    const cx = r[0] + place.modelData.iconX, cy = r[1] + place.modelData.iconY;
+                    return cx >= a[0] && cx <= a[0] + a[2] && cy >= a[1] && cy <= a[1] + a[3];
+                }
+                opacity: place.underGhost ? 0 : (stage.picked !== "" && place.modelData.ids.indexOf(stage.picked) < 0 ? 0.3 : 1)
                 Behavior on opacity {
                     NumberAnimation {
                         duration: Motion.micro.duration
@@ -333,6 +341,8 @@ Stage {
             width: stage.activeRect[2]
             height: stage.activeRect[3]
             variant: "popup"
+            // a translucent ghost of the surface, not a block
+            opacity: 0.6
             enableShadow: true
             radius: Look.radius("small", height)
 

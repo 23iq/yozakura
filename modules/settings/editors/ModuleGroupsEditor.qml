@@ -344,7 +344,8 @@ Item {
         readonly property bool target: root.dragging && root.dropGroup === group
 
         width: root.wide && group !== "available" ? (zones.width - zones.spacing * (root.columns - 1)) / root.columns : parent.width
-        readonly property real naturalHeight: Math.max(group === "available" || !root.wide ? 70 : 110, flow.implicitHeight + 50)
+        // compact: no box and no header (the segmented above names the group)
+        readonly property real naturalHeight: root.compact ? flow.implicitHeight + 4 : Math.max(group === "available" || !root.wide ? 70 : 110, flow.implicitHeight + 50)
         height: root.wide && group !== "available" ? root.rowHeight : naturalHeight
 
         function chipItems() {
@@ -359,6 +360,7 @@ Item {
 
         Rectangle {
             anchors.fill: parent
+            visible: !root.compact || zone.target
             radius: Look.radius("box")
             color: zone.target ? Ui.alpha(Colors.primary, 0.1) : Ui.alpha(Colors.overBackground, zone.group === "available" ? 0.03 : 0.05)
             border.width: zone.target ? 2 : 1
@@ -373,6 +375,7 @@ Item {
 
         Row {
             id: zoneHeader
+            visible: !root.compact
             x: 12
             y: 10
             spacing: Space.s
@@ -400,9 +403,9 @@ Item {
 
         Flow {
             id: flow
-            x: 10
-            y: 34
-            width: parent.width - 20
+            x: root.compact ? 2 : 10
+            y: root.compact ? 2 : 34
+            width: parent.width - (root.compact ? 4 : 20)
             spacing: Space.s
             move: Transition {
                 enabled: Config.animDuration > 0
