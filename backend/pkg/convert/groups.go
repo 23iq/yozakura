@@ -12,8 +12,9 @@ import (
 // Every step runs in its own process group. The backend only gets a death
 // signal into the direct child, so helpers it forks (soffice.bin under the
 // soffice script) could outlive a killed daemon. Each running group is
-// recorded as a file <dir>/<pgid> holding the program name; the next start
-// kills groups still recorded whose processes still carry that name.
+// recorded as a file <dir>/<owner pid>-<pgid> holding the program name; a
+// later start kills the groups of owners that are gone whose processes
+// still carry that name (the daemon and a `convert` CLI share the dir).
 
 var (
 	groupMu  sync.Mutex
@@ -38,25 +39,43 @@ func trackGroup(pgid int, prog string) func() {
 	if dir == "" {
 		return func() {}
 	}
-	f := filepath.Join(dir, strconv.Itoa(pgid))
+	f := filepath.Join(dir, strconv.Itoa(os.Getpid())+"-"+strconv.Itoa(pgid))
 	_ = os.WriteFile(f, []byte(prog), 0o600)
 	return func() { _ = os.Remove(f) }
 }
 
-// KillStaleGroups kills the groups recorded in dir by an earlier run whose
-// members still run a program of that name, and forgets every record.
+// KillStaleGroups kills the groups recorded in dir by processes that are
+// gone, when their members still run a program of the recorded name, and
+// forgets those records.
 func KillStaleGroups(dir string) int {
+	return killStaleGroups(dir, ownerAlive)
+}
+
+func ownerAlive(pid int) bool {
+	if pid == os.Getpid() {
+		return true
+	}
+	err := syscall.Kill(pid, 0)
+	return err == nil || err == syscall.EPERM
+}
+
+func killStaleGroups(dir string, alive func(int) bool) int {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return 0
 	}
 	killed := 0
 	for _, e := range entries {
-		pgid, err := strconv.Atoi(e.Name())
+		ownerStr, pgidStr, ok := strings.Cut(e.Name(), "-")
+		owner, err1 := strconv.Atoi(ownerStr)
+		pgid, err2 := strconv.Atoi(pgidStr)
 		path := filepath.Join(dir, e.Name())
+		if ok && err1 == nil && alive(owner) {
+			continue
+		}
 		prog, _ := os.ReadFile(path)
 		_ = os.Remove(path)
-		if err != nil || pgid <= 1 || pgid == syscall.Getpgrp() {
+		if !ok || err1 != nil || err2 != nil || pgid <= 1 || pgid == syscall.Getpgrp() {
 			continue
 		}
 		if groupRuns(pgid, strings.TrimSpace(string(prog))) {

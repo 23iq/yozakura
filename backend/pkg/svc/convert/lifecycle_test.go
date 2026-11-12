@@ -217,4 +217,3 @@ func waitDoneFor(t *testing.T, s *Service, d time.Duration) []Job {
 	t.Fatal("timeout")
 	return nil
 }
-

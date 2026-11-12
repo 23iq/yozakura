@@ -143,8 +143,12 @@ func TestKillStaleGroups(t *testing.T) {
 	_ = release // the "daemon" dies without releasing
 	TrackGroupsIn("")
 	// a record whose group runs something else is left alone
-	_ = os.WriteFile(filepath.Join(dir, "1"), []byte("sleep"), 0o600)
-	if n := KillStaleGroups(dir); n != 1 {
+	_ = os.WriteFile(filepath.Join(dir, "999999-1"), []byte("sleep"), 0o600)
+	// a live owner's groups are left alone
+	if n := KillStaleGroups(dir); n != 0 {
+		t.Fatalf("killed a live owner's group")
+	}
+	if n := killStaleGroups(dir, func(int) bool { return false }); n != 1 {
 		t.Fatalf("killed %d groups", n)
 	}
 	done := make(chan error, 1)
