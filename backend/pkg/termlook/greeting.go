@@ -145,6 +145,12 @@ type fetchCmd struct{ cfg, kitty string }
 // terminal (the tty is remembered in the environment, so a shell started
 // inside it stays quiet while a new window greets), never in tmux or
 // screen panes, and costs nothing when fastfetch is missing.
+//
+// fastfetch runs in the foreground with no time limit: a hung fastfetch
+// delays the prompt until it is interrupted (Ctrl-C). timeout(1) is not
+// used: it puts fastfetch in a process group of its own, outside the
+// terminal's foreground group, which breaks its terminal queries and
+// Ctrl-C. The same holds for the fish file.
 func greetingScript(c fetchCmd) (string, error) {
 	q, k := shQuote(c.cfg), shQuote(c.kitty)
 	if (c.cfg != "" && q == "") || (c.kitty != "" && k == "") {
