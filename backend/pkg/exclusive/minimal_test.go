@@ -12,7 +12,7 @@ import (
 // name a restore command that exists and load user.* from the real dir.
 func TestMinimalEntry(t *testing.T) {
 	for _, lua := range []bool{true, false} {
-		got := minimalEntry(lua, "/b/1", "/x/hypr", "/usr/lib/polkit-kde-authentication-agent-1")
+		got := minimalEntry(lua, "/b/1", "/x/hypr", "/usr/lib/polkit-kde-authentication-agent-1", "/home/u", "/home/u/.local/share/yozakura")
 		if !strings.Contains(got, brand.Command("install", "--restore")) {
 			t.Errorf("lua=%v: no working restore command:\n%s", lua, got)
 		}
@@ -30,7 +30,7 @@ func TestMinimalEntry(t *testing.T) {
 			t.Errorf("lua=%v: no polkit agent start (%s):\n%s", lua, want, got)
 		}
 	}
-	if got := minimalEntry(false, "/b", "/x/hypr", ""); strings.Contains(got, "exec-once") {
+	if got := minimalEntry(false, "/b", "/x/hypr", "", "/home/u", "/home/u/.local/share/yozakura"); strings.Contains(got, "exec-once") {
 		t.Errorf("no agent found: nothing started:\n%s", got)
 	}
 }

@@ -104,18 +104,20 @@ func readManifest(dir string) (manifest, error) {
 
 // latestBackup is the newest valid backup (dir names sort by time).
 func latestBackup(o Options) (string, manifest, error) {
-	entries, _ := os.ReadDir(o.backupRoot())
-	names := []string{}
-	for _, e := range entries {
-		if e.IsDir() {
-			names = append(names, e.Name())
+	for _, root := range o.backupRoots() {
+		entries, _ := os.ReadDir(root)
+		names := []string{}
+		for _, e := range entries {
+			if e.IsDir() {
+				names = append(names, e.Name())
+			}
 		}
-	}
-	sort.Sort(sort.Reverse(sort.StringSlice(names)))
-	for _, n := range names {
-		dir := filepath.Join(o.backupRoot(), n)
-		if m, err := readManifest(dir); err == nil {
-			return dir, m, nil
+		sort.Sort(sort.Reverse(sort.StringSlice(names)))
+		for _, n := range names {
+			dir := filepath.Join(root, n)
+			if m, err := readManifest(dir); err == nil {
+				return dir, m, nil
+			}
 		}
 	}
 	return "", manifest{}, ErrNoBackup
