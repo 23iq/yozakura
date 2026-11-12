@@ -68,14 +68,14 @@ test('installed is the version file or a newer tag the checkout contains', () =>
 });
 
 test('tagUpdate: only a newer target of the channel is an update', () => {
-    const tags = [{ name: 'v0.2.0' }, { name: '0.3.1' }, { name: '0.3.2-beta.1' }];
-    assert.equal(V.tagUpdate(tags, 'stable', '0.3.1'), '');
-    assert.equal(V.tagUpdate(tags, 'beta', '0.3.1'), '0.3.2-beta.1');
-    assert.equal(V.tagUpdate(tags, 'stable', '0.2.0'), '0.3.1');
+    const tags = [{ name: 'v0.3.0' }, { name: '0.4.1' }, { name: '0.4.2-beta.1' }];
+    assert.equal(V.tagUpdate(tags, 'stable', '0.4.1'), '');
+    assert.equal(V.tagUpdate(tags, 'beta', '0.4.1'), '0.4.2-beta.1');
+    assert.equal(V.tagUpdate(tags, 'stable', '0.4.0'), '0.4.1');
     // a beta install on stable is never pushed back to the older release
-    assert.equal(V.tagUpdate(tags, 'stable', '0.3.2-beta.1'), '');
-    assert.equal(V.tagUpdate(tags, 'beta', '0.3.2-beta.1'), '');
-    assert.equal(V.tagUpdate([...tags, { name: '0.3.2' }], 'beta', '0.3.2-beta.1'), '0.3.2');
+    assert.equal(V.tagUpdate(tags, 'stable', '0.4.2-beta.1'), '');
+    assert.equal(V.tagUpdate(tags, 'beta', '0.4.2-beta.1'), '');
+    assert.equal(V.tagUpdate([...tags, { name: '0.4.2' }], 'beta', '0.4.2-beta.1'), '0.4.2');
     assert.equal(V.tagUpdate(tags, 'git', '0.0.1'), '');
 });
 
@@ -87,4 +87,28 @@ test('gitCompare / gitLabel', () => {
     assert.equal(V.gitCompare(tip, ''), 'unknown');
     assert.equal(V.gitCompare('{"message":"Not Found"}', tip), 'unknown');
     assert.equal(V.gitLabel(tip), 'main @ 0123456');
+});
+
+test('the version floor follows the shared fixture', () => {
+    assert.equal(V.LAST_WITHOUT_CHANNELS, F.lastReleaseWithoutChannels);
+    for (const c of F.hasChannels)
+        assert.equal(V.hasChannels(V.parse(c.tag)), c.want, c.tag);
+    assert.equal(V.hasChannels(null), false);
+});
+
+test('tagUpdate: no notice while every release predates update channels', () => {
+    const today = ['0.1.1', 'v0.1.2', '0.2.0', '0.3.0', '0.3.1'].map(name => ({ name }));
+    for (const ch of ['stable', 'beta']) {
+        assert.equal(V.tagUpdate(today, ch, '0.2.0'), '', `${ch} from 0.2.0`);
+        assert.equal(V.tagUpdate(today, ch, ''), '', `${ch} without a version`);
+    }
+    assert.equal(V.tagUpdate([...today, { name: '0.3.2-beta.1' }], 'beta', '0.3.1'), '0.3.2-beta.1');
+});
+
+test('gitFollowsMain: the git notice is for checkouts that follow main', () => {
+    assert.equal(V.gitFollowsMain('main\n'), true);
+    assert.equal(V.gitFollowsMain('HEAD'), true, 'detached: an update returns to main');
+    assert.equal(V.gitFollowsMain(''), true);
+    assert.equal(V.gitFollowsMain('dev'), false);
+    assert.equal(V.gitFollowsMain('feature/x'), false);
 });

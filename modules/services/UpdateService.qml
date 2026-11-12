@@ -132,7 +132,27 @@ Singleton {
         root._describing = false;
         describeFallback.stop();
         root.described = Versions.describe(text);
-        root.fetchTarget(root.channel);
+        // git answered describe, so it answers rev-parse too
+        if (root.channel === "git" && root.described.commit !== "")
+            branchProc.running = true;
+        else
+            root.fetchTarget(root.channel);
+    }
+
+    // git channel: the notice compares with main, so only a checkout that
+    // follows main asks for it; another branch is up to date as far as the
+    // notice goes.
+    Process {
+        id: branchProc
+        command: ["git", "-C", Quickshell.shellDir, "rev-parse", "--abbrev-ref", "HEAD"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (Versions.gitFollowsMain(text))
+                    root.fetchTarget("git");
+                else
+                    root.finishCheck("git", "");
+            }
+        }
     }
 
     Process {

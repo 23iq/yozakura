@@ -9,14 +9,23 @@
 
 var CHANNELS = ["stable", "beta", "git"];
 
+// The last release without update channels: only newer releases are a tag
+// channel's target (backend LastWithoutChannels, install.sh
+// LAST_RELEASE_WITHOUT_CHANNELS).
+var LAST_WITHOUT_CHANNELS = "0.3.1";
+
+// Each number: 0 or up to nine digits without a leading zero.
+var VERSION_RE = /^v?(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(?:-beta\.(0|[1-9][0-9]{0,8}))?$/;
+
 function channel(name) {
     return CHANNELS.indexOf(name) >= 0 ? name : "stable";
 }
 
 // "v0.3.2-beta.1" -> {major: 0, minor: 3, patch: 2, beta: 1}; beta is -1 for
-// a release. null for anything else (rc tags, two-part versions, metadata).
+// a release. null for anything else (rc tags, two-part versions, metadata,
+// leading zeros, numbers of ten digits or more).
 function parse(text) {
-    var m = /^v?(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$/.exec(String(text === undefined || text === null ? "" : text).trim());
+    var m = VERSION_RE.exec(String(text === undefined || text === null ? "" : text).trim());
     if (!m)
         return null;
     return {
@@ -53,6 +62,11 @@ function compare(a, b) {
     return compareParsed(x, y);
 }
 
+// Whether a parsed version is newer than LAST_WITHOUT_CHANNELS.
+function hasChannels(v) {
+    return !!v && compareParsed(v, parse(LAST_WITHOUT_CHANNELS)) > 0;
+}
+
 function isNewer(latest, current) {
     return compare(latest, current) > 0;
 }
@@ -65,8 +79,8 @@ function tagName(t) {
 
 // The tag a channel moves to among GitHub tags ([{name}] or names, any
 // order): the highest release for stable, the highest release or beta for
-// beta, "" for git or when none matches. Of two spellings of one version
-// the one without "v" wins.
+// beta, "" for git or when none matches. Releases up to LAST_WITHOUT_CHANNELS
+// never match. Of two spellings of one version the one without "v" wins.
 function select(tags, channelName) {
     if (channelName !== "stable" && channelName !== "beta")
         return "";
@@ -74,7 +88,7 @@ function select(tags, channelName) {
     (Array.isArray(tags) ? tags : []).forEach(function (t) {
         var name = tagName(t);
         var v = parse(name);
-        if (!v || (v.beta >= 0 && channelName !== "beta"))
+        if (!v || (v.beta >= 0 && channelName !== "beta") || !hasChannels(v))
             return;
         if (best === null) {
             best = v;
@@ -142,6 +156,16 @@ function gitCompare(remoteTip, localCommit) {
     if (!/^[0-9a-f]{40}$/.test(tip) || local === "")
         return "unknown";
     return tip.indexOf(local) === 0 ? "same" : "check";
+}
+
+// Whether the git channel's notice applies to a checkout on this branch
+// (`git rev-parse --abbrev-ref HEAD`): it compares with the tip of main, so
+// a checkout on main or detached (a release, which an update returns to
+// main) gets it, one following another branch (install.sh --branch, a
+// branch of the user's) does not.
+function gitFollowsMain(branch) {
+    var b = String(branch || "").trim();
+    return b === "" || b === "HEAD" || b === "main";
 }
 
 // "main @ 1a2b3c4": how the git channel names its target.
