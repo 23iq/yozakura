@@ -35,9 +35,16 @@ LOGGER = 'l="${0##*/}"; for a in "$@"; do l+=$\'\\t\'"$a"; done; printf "%s\\n" 
 STUBS = {
     # STUB_SUDO_DENY: no cached credentials and no password accepted.
     # STUB_SUDO_FAIL: a command line (e.g. "systemctl enable sddm") that fails.
+    # Like systemd, a plain enable of a login manager fails while
+    # display-manager.service (under YOZAKURA_SYSROOT) links to another unit,
+    # even a removed one; --force replaces the link.
     "sudo": (
         '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\n'
-        '[[ -n "${STUB_SUDO_FAIL:-}" && "$*" == "$STUB_SUDO_FAIL" ]] && exit 1\nexit 0\n'
+        '[[ -n "${STUB_SUDO_FAIL:-}" && "$*" == "$STUB_SUDO_FAIL" ]] && exit 1\n'
+        'dml="${YOZAKURA_SYSROOT:-/nonexistent}/etc/systemd/system/display-manager.service"\n'
+        'if [[ "$1 $2" == "systemctl enable" && "$3" =~ ^(sddm|gdm|lightdm|lxdm|greetd) && -L "$dml" ]]; then\n'
+        '  t="$(readlink "$dml")"; [[ "${t##*/}" == "${3%.service}.service" ]] || exit 1\n'
+        'fi\nexit 0\n'
     ),
     "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n',
     "git": 'case "$*" in *--abbrev-ref*) echo main ;; *--short*) echo abc1234 ;; esac\n',
@@ -782,10 +789,13 @@ def test_dangling_display_manager_link():
         (sb.root / "sysroot/usr/lib/systemd/system/gdm.service").unlink()
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 0 and re.search(r"Login\s+none: SDDM", err), "dangling link counted as an enabled gdm", err)
-        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not set up behind a dangling link", sb.log.read_text())
+        # systemd refuses a plain enable over the stale link: --force.
+        check(["systemctl", "enable", "--force", "sddm"] in sb.calls("sudo"), "SDDM not enabled over the dangling link", sb.log.read_text())
+        check("sddm: failed" not in err, "enabling SDDM over the dangling link failed", err)
         installed_unit(sb, "sddm.service")
         rc, err, _ = sb.run("-y", "--compositor", "niri")
         check(rc == 0 and "sddm is installed but not enabled" in err, "installed sddm behind a dangling link not reported", err)
+        check(["systemctl", "enable", "--force", "sddm"] in sb.calls("sudo"), "installed sddm not enabled over the dangling link", sb.log.read_text())
     finally:
         sb.cleanup()
 
