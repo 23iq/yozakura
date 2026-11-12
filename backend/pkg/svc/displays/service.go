@@ -175,6 +175,9 @@ func (s *Service) apply(params json.RawMessage) (any, error) {
 	if len(cand) == 0 {
 		return map[string]any{"session": "", "unchanged": true, "applied": []string{}, "skipped": skipped}, nil
 	}
+	if leavesNoOutput(current, cand) {
+		return nil, fmt.Errorf("displays.apply: %w", ErrLastOutput)
+	}
 	sess, err := s.mgr.Start(s.now(), snapshotFor(current, cand), cand)
 	if sess != nil {
 		s.sessMu.Lock()
