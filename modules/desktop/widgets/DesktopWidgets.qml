@@ -3,6 +3,8 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import qs.config
+import qs.modules.globals
+import qs.modules.services
 import "WidgetRegistry.js" as Registry
 import "WidgetGeometry.js" as Geometry
 
@@ -27,7 +29,56 @@ Singleton {
     readonly property var screenNames: (Quickshell.screens || []).map(s => s.name)
 
     function toggleEditMode() {
+        // A separate Settings window (ProcessRole): edit mode is the main
+        // shell's desktop; it is asked, and tells the state back.
+        if (ProcessRole.secondary) {
+            BackendService.call("windows.relay", {
+                "to": "shell",
+                "topic": "desktop.editMode",
+                "data": {
+                    "on": !editMode
+                }
+            });
+            return;
+        }
         editMode = !editMode;
+    }
+
+    // performance.separateWindows: the main shell keeps a separate Settings
+    // window told about edit mode and the depth clock areas (its layout
+    // map), and takes edit-mode requests from it (SeparateWindows.relayed).
+    function _tellSettings() {
+        if (ProcessRole.primary && SeparateWindows.settingsRunning)
+            BackendService.call("windows.relay", {
+                "to": "settings",
+                "topic": "desktop.state",
+                "data": {
+                    "editMode": root.editMode,
+                    "clockAreas": root.clockAreas
+                }
+            });
+    }
+    onEditModeChanged: root._tellSettings()
+    onClockAreasChanged: root._tellSettings()
+    property Connections _windows: Connections {
+        target: ProcessRole.primary ? SeparateWindows : null
+        function onRelayed(topic, data) {
+            if (topic === "desktop.editMode")
+                root.editMode = data.on === true;
+        }
+        function onSettingsStateChanged() {
+            if (SeparateWindows.settingsState === "open")
+                root._tellSettings();
+        }
+    }
+    Component.onCompleted: {
+        if (ProcessRole.settings)
+            BackendService.addSubscription(["windows"], (service, data) => {
+                if (service === "windows.relay" && data && data.to === ProcessRole.role && data.topic === "desktop.state") {
+                    root.editMode = data.data.editMode === true;
+                    root.clockAreas = data.data.clockAreas || {};
+                }
+            });
     }
 
     function setClockArea(key, area) {

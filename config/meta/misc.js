@@ -151,6 +151,9 @@ var performance = {
             "max": 120,
             "description": "Minutes the closed Settings window stays loaded (hidden) so it reopens instantly; 0 releases it on close."
         },
+        "separateWindows": {
+            "description": "Run Settings and the setup wizard as separate processes started when opened: no memory used until then and all of it released on close, at the cost of a slower open (the window loads from scratch each time). Staged changes still preview on the desktop."
+        },
         "visualizerFps": {
             "min": 15,
             "max": 60,

@@ -198,12 +198,30 @@
         "control": "number",
         "unit": "min",
         "keywords": "settings window keep loaded memory reopen instant release",
+        "enabledWhen": {
+          "key": "performance.separateWindows",
+          "equals": false
+        },
         "advanced": true,
         "min": 0,
         "max": 120
       },
       "minimum": 0,
       "maximum": 120
+    },
+    "separateWindows": {
+      "title": "Settings in its own process",
+      "type": "boolean",
+      "default": false,
+      "description": "Settings and the setup wizard run as separate programs that start when you open them and give all their memory back when closed. Each open takes a moment longer (they load from scratch); unsaved changes still preview on the desktop",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.separate_windows",
+        "control": "toggle",
+        "keywords": "separate process settings window setup wizard onboarding memory ram release open slower",
+        "advanced": true
+      }
     },
     "visualizerFps": {
       "title": "Visualizer Frame Rate",

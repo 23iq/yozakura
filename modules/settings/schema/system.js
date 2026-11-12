@@ -175,7 +175,19 @@ var category = {
                     "unit": "min",
                     "label": "prefs.sys.settings_keep_alive",
                     "description": "prefs.sys.settings_keep_alive.desc",
-                    "keywords": "settings window keep loaded memory reopen instant release"
+                    "keywords": "settings window keep loaded memory reopen instant release",
+                    "enabledWhen": {
+                        "key": "performance.separateWindows",
+                        "equals": false
+                    }
+                },
+                {
+                    "key": "performance.separateWindows",
+                    "type": "toggle",
+                    "advanced": true,
+                    "label": "system.performance.separate_windows",
+                    "description": "system.performance.separate_windows_desc",
+                    "keywords": "separate process settings window setup wizard onboarding memory ram release open slower"
                 }
             ]
         },

@@ -4,7 +4,7 @@ import QtQuick
 import qs.modules.theme
 import qs.modules.components
 import qs.modules.services
-import qs.modules.globals
+import qs.modules.settings.store
 import qs.config
 import qs.modules.settings.controls
 import "../Ui.js" as Ui
@@ -30,8 +30,7 @@ Item {
     implicitHeight: root.list.length * root.rowHeight
 
     function write(next) {
-        GlobalStates.markShellChanged();
-        Config.notch.activities = Registry.toConfig(next);
+        SettingsStore.set("notch.activities", Registry.toConfig(next));
     }
 
     Repeater {

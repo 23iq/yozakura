@@ -14,6 +14,7 @@ var data = {
     "dashboardMaxPersistentTabs": 2,
     "unloadIdleViews": true,
     "settingsKeepAliveMinutes": 5,
+    "separateWindows": false,
     "visualizerFps": 30,
     "batterySaver": false,
     "warmViews": true,

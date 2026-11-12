@@ -6,6 +6,7 @@ import qs.config
 import qs.modules.globals
 import qs.modules.services
 import "../SchemaUtil.js" as SchemaUtil
+import "../ConfigWrite.js" as ConfigWrite
 import "../SettingsDefaults.js" as SettingsDefaults
 import "../CompositorGate.js" as CompositorGate
 import "../ResetModel.js" as ResetModel
@@ -144,29 +145,22 @@ Singleton {
                 m.setWallpaperDir(value);
             return;
         }
-        const domain = Config[k.domain];
-        if (!domain) {
+        // Nested JsonObject children (e.g. ai.quickAsk.enabled) are assigned
+        // in place; a `property var` object on the way is replaced by an
+        // updated copy (e.g. bar.layout.style). The snapshot of a staged
+        // domain is taken before its first change (stage).
+        if (ConfigWrite.assign(Config, key, value, root.stage) === "") {
             console.warn("SettingsStore: unknown config domain for", key);
             return;
         }
-        // Descend through nested JsonObject children (e.g. ai.quickAsk.enabled):
-        // their properties are assigned in place; a `property var` object on
-        // the way is replaced by an updated copy (e.g. bar.layout.style).
-        let target = domain;
-        let i = 0;
-        while (i < k.path.length - 1) {
-            const child = target[k.path[i]];
-            if (!child || typeof child !== "object" || Array.isArray(child) || child.objectName === undefined)
-                break;
-            target = child;
-            i++;
-        }
-        // Snapshot before the first change of a staged domain.
-        stage(k.domain);
-        if (i === k.path.length - 1)
-            target[k.path[i]] = SchemaUtil.plain(value);
-        else
-            target[k.path[i]] = SchemaUtil.withPath(target[k.path[i]], k.path.slice(i + 1), value);
+        // A separate Settings window (ProcessRole): the main shell previews
+        // a staged value live (daemon `preview` relay, PreviewSink.qml);
+        // other values reach it through the file it reloads.
+        if (ProcessRole.secondary && isStaged(k.domain))
+            BackendService.call("preview.set", root._owned({
+                "key": key,
+                "value": SchemaUtil.plain(value)
+            }));
         // One writer: the domain's own auto-save persists the edit (debounced
         // by ConfigFile). Only while auto-save is paused for staged changes
         // is the write explicit, so a non-staged setting is never held back.
@@ -291,14 +285,27 @@ Singleton {
     }
 
     function apply() {
+        const had = root.hasChanges;
         GlobalStates.applyThemeChanges();
         GlobalStates.applyShellChanges();
         GlobalStates.applyCompositorChanges();
+        // written here; the main shell keeps its preview (the files say the same)
+        if (had && ProcessRole.secondary)
+            BackendService.call("preview.commit", root._owned({}));
     }
 
     function discard() {
+        const had = root.hasChanges;
         GlobalStates.discardThemeChanges();
         GlobalStates.discardShellChanges();
         GlobalStates.discardCompositorChanges();
+        if (had && ProcessRole.secondary)
+            BackendService.call("preview.discard", root._owned({}));
+    }
+
+    // preview.* params of a separate window: who staged them.
+    function _owned(params) {
+        params.owner = ProcessRole.role;
+        return params;
     }
 }
