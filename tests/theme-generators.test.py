@@ -208,6 +208,24 @@ kconf = str(kconf)
 check("kitty: no look keys while the terminal look is off", not any(k in kconf for k in (
     "cursor_shape", "window_padding_width", "cursor_blink_interval")), kconf[:300])
 check("kitty: cursor_text_color kept", "cursor_text_color " in kconf)
+# A window closed maximized must not make every later kitty open maximized
+# (kitty replays the remembered state only with remember_window_size on).
+check("kitty: remembered window state off", "\nremember_window_size no\n" in kconf)
+# The written file drops it when the user's own kitty.conf sets it.
+kcmd = as_list(h.eval(kitty, "root.writerProcess.command"))
+kout = home / ".cache/yozakura/kitty.conf"
+user_kitty = home / ".config/kitty/kitty.conf"
+user_kitty.parent.mkdir(parents=True, exist_ok=True)
+for user_conf, want in (("", True), ("# remember_window_size yes\n", True), ("  remember_window_size yes\n", False),
+                        ("font_size 12\nremember_window_size\tno\n", False)):
+    user_kitty.write_text(user_conf)
+    r = subprocess.run(kcmd, env=env, capture_output=True, text=True, timeout=60)
+    written = text(kout) if kout.is_file() else ""
+    check(f"kitty: user conf {user_conf!r}: ours {'kept' if want else 'dropped'}",
+          r.returncode == 0 and ("\nremember_window_size no\n" in written) == want and "color15 " in written,
+          r.stderr[-300:] + written[:200])
+user_kitty.unlink()
+check("kitty: no size or start state forced", not any(k in kconf for k in ("initial_window_", "startup_session", "start_as")))
 h.eval(kitty, "Config.terminal.enabled = true")
 h.eval(kitty, "root.generate(fakeColors)")
 kconf = str(h.eval(kitty, "root.writer.text"))

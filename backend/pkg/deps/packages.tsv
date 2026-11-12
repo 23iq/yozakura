@@ -24,6 +24,7 @@ go	build	go	go	golang	go	golang-go	building the backend
 make	build	make	make	make	make	make	building the backend
 curl	build	curl	curl	curl	curl	curl	downloads (installer, fonts, models)
 unzip	build	unzip	unzip	unzip	unzip	unzip	unpacking the icon font
+diffutils	build	cmp	diffutils	diffutils	diffutils	diffutils	comparing files (the build, the login theme sync)
 hyprland	hyprland	Hyprland|hyprland	hyprland	hyprland	hyprland	hyprland	the compositor (and its display-manager session entry)
 yozd	required	yozd	-	-	-	-	the compositor daemon (binds, rules, config), built from this repository
 quickshell	required	qs|quickshell	quickshell	quickshell	src:quickshell	src:quickshell	the QML runtime the whole UI runs in
@@ -67,6 +68,7 @@ sqlite	standard	sqlite3	sqlite	sqlite	sqlite3	sqlite3	key store
 hostname	standard	hostname	inetutils	hostname	hostname	hostname	system info
 xdg-utils	standard	xdg-open	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	xdg-utils xdg-user-dirs	opening files and links
 tesseract	standard	tesseract	tesseract tesseract-data-eng tesseract-data-spa tesseract-data-jpn tesseract-data-chi_sim tesseract-data-chi_tra tesseract-data-kor tesseract-data-lat	tesseract tesseract-langpack-eng tesseract-langpack-spa tesseract-langpack-jpn tesseract-langpack-chi_sim tesseract-langpack-chi_tra tesseract-langpack-kor tesseract-langpack-lat	tesseract-ocr tesseract-ocr-traineddata-eng tesseract-ocr-traineddata-spa tesseract-ocr-traineddata-jpn tesseract-ocr-traineddata-chi_sim tesseract-ocr-traineddata-chi_tra tesseract-ocr-traineddata-kor tesseract-ocr-traineddata-lat	tesseract-ocr tesseract-ocr-eng tesseract-ocr-spa tesseract-ocr-jpn tesseract-ocr-chi-sim tesseract-ocr-chi-tra tesseract-ocr-kor tesseract-ocr-lat	OCR (text from screen)
+which	standard	which	which	which	which	debianutils	finding programs (the audio effects toggle)
 kitty	standard	kitty	kitty	kitty	kitty	kitty	default terminal
 tmux	standard	tmux	tmux	tmux	tmux	tmux	tmux panel
 khal	standard	khal	khal	khal	-	khal	calendar events on the dashboard

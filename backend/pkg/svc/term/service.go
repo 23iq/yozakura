@@ -11,9 +11,9 @@
 //	                                    when terminal.enabled, else removes the hook)
 //	status {}                        -> Status
 //
-// Status is {enabled, engine, fishInstalled, fishIsLoginShell, engineInstalled:
-// {starship, ohmyposh}, foreignPromptInit, foreignFile, hookSkipped, hookPath,
-// hookPresent}. hookSkipped: the prompt is on but not installed because
+// Status is {enabled, engine, fishInstalled, fishIsLoginShell, loginShell,
+// terminalShell, loginFiles, engineInstalled: {starship, ohmyposh}, foreignPromptInit, foreignFile,
+// hookSkipped, hookPath, hookPresent}. hookSkipped: the prompt is on but not installed because
 // foreignFile starts starship / oh-my-posh itself.
 // Installing an engine or fish is not done here: the UI calls extras.install
 // (ids starship, oh-my-posh, fish) and extras.setLoginShell.
@@ -40,6 +40,7 @@ import (
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/termlook"
+	"yozakura/backend/pkg/termrun"
 )
 
 var presetID = regexp.MustCompile(`^[a-z0-9-]+$`)
@@ -52,13 +53,22 @@ type Options struct {
 	Env        termlook.Env
 	Passwd     func() ([]byte, error) // /etc/passwd
 	User       func() string          // current user name
-	Debounce   time.Duration
+	// Executable checks a shell before terminals are pointed at it
+	// (nil: termrun.IsExecutable).
+	Executable func(string) bool
+	// Skel is the distribution's skeleton of new home directories
+	// ("": /etc/skel), what the bash login files are compared with.
+	Skel     string
+	Debounce time.Duration
 }
 
 // Service is the term IPC service.
 type Service struct {
 	o  Options
 	mu sync.Mutex // one write at a time
+	// startShell is the passwd login shell when the daemon started; a
+	// different one later means a chsh during this session.
+	startShell string
 
 	stop chan struct{}
 	done chan struct{}
@@ -94,7 +104,12 @@ func New(o Options) *Service {
 	if o.Debounce == 0 {
 		o.Debounce = 300 * time.Millisecond
 	}
-	return &Service{o: o}
+	if o.Executable == nil {
+		o.Executable = termrun.IsExecutable
+	}
+	s := &Service{o: o}
+	s.startShell = s.loginShell()
+	return s
 }
 
 func xdgDir(env, home, def string) string {
