@@ -36,7 +36,6 @@ from languages import LANGUAGES  # noqa: E402
 from qmlharness import Harness  # noqa: E402
 from waits import pump, settle, wait_until  # noqa: E402
 
-import numpy as np  # noqa: E402
 from PySide6.QtCore import QRect  # noqa: E402
 from PySide6.QtGui import QColor, QImage, QPainter  # noqa: E402
 
@@ -291,11 +290,22 @@ def composite(below, above):
     return out
 
 
-def pixels(img):
-    """An ARGB32 QImage as an (h, w, 4) uint8 array."""
+def rows(img):
+    """The rows of an image as ARGB32 bytes (4 per pixel, no padding)."""
     img = img.convertToFormat(QImage.Format.Format_ARGB32)
-    arr = np.frombuffer(img.constBits(), np.uint8, img.sizeInBytes())
-    return arr.reshape(img.height(), img.bytesPerLine() // 4, 4)[:, :img.width(), :].copy()
+    width, bpl = img.width() * 4, img.bytesPerLine()
+    data = bytes(img.constBits())
+    return [data[y * bpl:y * bpl + width] for y in range(img.height())]
+
+
+def differing(ra, rb):
+    """(x, y) of every pixel whose four bytes differ between two images."""
+    out = set()
+    for y, (la, lb) in enumerate(zip(ra, rb, strict=True)):
+        if la == lb:
+            continue
+        out.update((x, y) for x in range(len(la) // 4) if la[x * 4:x * 4 + 4] != lb[x * 4:x * 4 + 4])
+    return out
 
 
 def diff(a, b, again, band, tol=2):
@@ -305,18 +315,24 @@ def diff(a, b, again, band, tol=2):
     {"band"|"rest": [count, worst channel difference, bounding box]}.
     Pixels that changed between two grabs of the same unified scene
     (`again`: a ticking clock) are left out and counted under "moving"."""
-    pa, pb, pc = pixels(a), pixels(b), pixels(again)
-    moving = (pa != pc).any(axis=2)
-    delta = np.abs(pa[:, :, :3].astype(int) - pb[:, :, :3].astype(int)).max(axis=2)
-    bad = (delta > tol) & ~moving
-    inband = np.zeros(bad.shape, bool)
-    if not band.isEmpty():
-        inband[band.y():band.y() + band.height(), band.x():band.x() + band.width()] = True
-    out = {"moving": int(moving.sum())}
-    for key, mask in (("band", bad & inband), ("rest", bad & ~inband)):
-        ys, xs = np.nonzero(mask)
-        box = QRect(int(xs.min()), int(ys.min()), int(xs.max() - xs.min() + 1), int(ys.max() - ys.min() + 1)) if len(xs) else None
-        out[key] = [int(mask.sum()), int(delta[mask].max()) if len(xs) else 0, box]
+    pa, pb = rows(a), rows(b)
+    moving = differing(pa, rows(again))
+    hits = {"band": [], "rest": []}
+    worst = {"band": 0, "rest": 0}
+    for x, y in differing(pa, pb) - moving:
+        delta = max(abs(pa[y][x * 4 + c] - pb[y][x * 4 + c]) for c in range(3))
+        if delta <= tol:
+            continue
+        key = "band" if band.contains(x, y) else "rest"
+        hits[key].append((x, y))
+        worst[key] = max(worst[key], delta)
+    out = {"moving": len(moving)}
+    for key, points in hits.items():
+        box = None
+        if points:
+            xs, ys = [q[0] for q in points], [q[1] for q in points]
+            box = QRect(min(xs), min(ys), max(xs) - min(xs) + 1, max(ys) - min(ys) + 1)
+        out[key] = [len(points), worst[key], box]
     return out
 
 
@@ -370,11 +386,10 @@ for lang in LANGUAGES:
             Path(SHOTS).mkdir(parents=True, exist_ok=True)
             unified.save(f"{SHOTS}/{lang}-{name}-unified.png")
             split.save(f"{SHOTS}/{lang}-{name}-split.png")
-            mask = (pixels(unified) != pixels(split)).any(axis=2)
             img = QImage(W, H, QImage.Format.Format_RGB32)
             img.fill(QColor("black"))
-            for y, x in zip(*np.nonzero(mask), strict=True):
-                img.setPixelColor(int(x), int(y), QColor("white"))
+            for x, y in differing(rows(unified), rows(split)):
+                img.setPixelColor(x, y, QColor("white"))
             img.save(f"{SHOTS}/{lang}-{name}-diff.png")
         win.close()
 
