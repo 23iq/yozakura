@@ -387,6 +387,24 @@ h.eval(m, 'request("Password: ", false)')
 settle()
 check(h.eval(notice, "text") == "Sorry, that did not work.", "a real failure after the pick is shown")
 
+# several identities: the user's own account answers, not polkit's first
+d.setProperty("ownLogin", "admin")
+m = ev("scene.makeFlow({ identities: scene.idents(2) })")
+h.eval(m, 'request("Password: ", false)')
+d.setProperty("flow", m)
+settle()
+check(h.eval(m, "selectedIdentity.string") == "admin" and h.eval(picker, "value") == 1,
+      f"the user's own identity is preselected, got {h.eval(m, 'selectedIdentity.string')!r}")
+check(h.eval(m, "failed") is True and h.eval(notice, "visible") is False,
+      f"preselecting it shows no failure, got {h.eval(notice, 'text')!r}")
+check(h.eval(field, "enabled") is True, "the preselected identity is asked")
+d.setProperty("ownLogin", "nobody")
+m = ev("scene.makeFlow({ identities: scene.idents(2) })")
+d.setProperty("flow", m)
+settle()
+check(h.eval(m, "selectedIdentity.string") == "user", "not among them: Quickshell's choice stays")
+d.setProperty("ownLogin", "")
+
 # ---- secrets: never logged ------------------------------------------------
 check(not any("hunter2" in x or "second" in x or "third" in x or "fourth" in x for x in logs), "the typed passwords never reach the log")
 

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
+import Quickshell
 import Quickshell.Services.Polkit
 import qs.modules.theme
 import qs.modules.services
@@ -18,6 +19,8 @@ FocusScope {
     property AuthFlow flow
     property bool shown: true
     readonly property var identities: root.identityList()
+    // The login name of the user running the shell (preferOwnIdentity)
+    property string ownLogin: String(Quickshell.env("USER") || "")
     readonly property bool canAnswer: root.flow !== null && root.flow.isResponseRequired && !root.flow.isCompleted
     // An answer was submitted and its result is not in: AuthFlow keeps
     // `failed` and polkit's last message from the previous attempt, so
@@ -92,6 +95,30 @@ FocusScope {
         return full === "" || full === login ? login : full + " (" + login + ")";
     }
 
+    // Another identity answers: Quickshell restarts the session, which ends
+    // the old one as failed (`failed` stays set), so nothing is shown as
+    // failed until the next submit.
+    function pick(identity: var) {
+        if (!root.flow || !identity || identity === root.flow.selectedIdentity)
+            return;
+        root._staleMessage = root.flow.supplementaryMessage;
+        root._picked = true;
+        root.flow.selectedIdentity = identity;
+    }
+
+    // polkit offers every account that may authorise (an admin rule: each
+    // member of wheel) and Quickshell selects the first. The user's own
+    // account answers instead when it is one of them, unless another one
+    // was picked already (a dialog created again for the same request).
+    function preferOwnIdentity() {
+        const list = root.identityList();
+        if (!root.flow || list.length < 2 || root.ownLogin === "" || root.flow.selectedIdentity !== list[0])
+            return;
+        const own = list.find(i => i && !i.isGroup && String(i.string) === root.ownLogin);
+        if (own)
+            root.pick(own);
+    }
+
     function focusField() {
         field.focusInput();
     }
@@ -117,9 +144,13 @@ FocusScope {
         field.clear();
         root._checking = false;
         root._picked = false;
+        root.preferOwnIdentity();
         Qt.callLater(root.focusField);
     }
-    Component.onCompleted: Qt.callLater(root.focusField)
+    Component.onCompleted: {
+        root.preferOwnIdentity();
+        Qt.callLater(root.focusField);
+    }
 
     Connections {
         target: root.flow
@@ -220,11 +251,7 @@ FocusScope {
                             }))
                     value: root.flow ? root.identities.indexOf(root.flow.selectedIdentity) : -1
                     onSelected: v => {
-                        if (root.flow && root.identities[v] && root.identities[v] !== root.flow.selectedIdentity) {
-                            root._staleMessage = root.flow.supplementaryMessage;
-                            root._picked = true;
-                            root.flow.selectedIdentity = root.identities[v];
-                        }
+                        root.pick(root.identities[v]);
                         root.focusField();
                     }
                 }
