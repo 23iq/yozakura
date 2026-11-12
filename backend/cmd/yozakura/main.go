@@ -23,6 +23,7 @@ import (
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/proc"
+	"yozakura/backend/pkg/procscan"
 	"yozakura/backend/pkg/svc/compositor"
 )
 
@@ -438,7 +439,7 @@ func runShell() {
 		repairHyprlandEntry(home, paths.Launcher(currentExecutable()))
 	}
 
-	runDetached("pkill -f 'dunst|mako|swaync'")
+	stopNotificationDaemons(procscan.Default())
 	runDetached("pkill -f 'easyeffects.*gapplication-service' ; nohup easyeffects --gapplication-service >/dev/null 2>&1 &")
 
 	if iconTheme, err := proc.Run(context.Background(), "gsettings", "get", "org.gnome.desktop.interface", "icon-theme"); err == nil {
@@ -681,17 +682,6 @@ func quitShell() {
 	}
 	cleanupOrphans()
 	fmt.Println(brand.DisplayName + " stopped.")
-}
-
-func cleanupOrphans() {
-	proc.Do(context.Background(), "pkill", "-f", `tail -f .*`+brand.AppID+`_ipc\.pipe`)
-	proc.Do(context.Background(), "pkill", "-f", brand.Daemon+".*daemon")
-	proc.Do(context.Background(), "pkill", "-f", brand.Daemon+" subscribe")
-	migrate.StopLegacyDaemon()
-	proc.Do(context.Background(), "pkill", "-f", "qs.*shell.qml")
-	proc.Do(context.Background(), "pkill", "-f", "wl-paste --watch")
-	_ = os.Remove(ipcPipePath())
-	_ = os.Remove("/tmp/" + brand.AppID + "_ipc.pipe")
 }
 
 // ipcPipePath resolves the per-user FIFO the Quickshell keybind listener
