@@ -73,6 +73,8 @@ type Manager struct {
 	subsMu      sync.Mutex
 	subscribers map[chan State]struct{}
 
+	idle *idleHub // idle monitor flips (idle.go)
+
 	stopCh chan struct{}
 	// stopCtx is cancelled by Close; it aborts a blocked socket read.
 	stopCtx    context.Context
@@ -86,6 +88,7 @@ func NewManager(p PathResolver) *Manager {
 	m := &Manager{
 		stopCh:      make(chan struct{}),
 		subscribers: make(map[chan State]struct{}),
+		idle:        newIdleHub(),
 	}
 	m.stopCtx, m.stopCancel = context.WithCancel(context.Background())
 	if p == nil {
@@ -249,6 +252,7 @@ func (m *Manager) subscribeLoop() {
 		}
 
 		_ = client.Subscribe(m.stopCtx, path, maxSubscribeLine, m.handleLine)
+		m.idle.streamDown()
 
 		select {
 		case <-m.stopCh:
@@ -265,14 +269,27 @@ func (m *Manager) readSubscribe(r io.Reader) {
 }
 
 // handleLine applies one line of the subscribe stream; lines without a
-// state (the subscribe reply, garbage) are ignored.
+// state (the subscribe reply, garbage) are ignored. The State.Dump opening
+// a stream and idle monitor flips also go to the idle hub (idle.go).
 func (m *Manager) handleLine(line []byte) {
 	// One decode per line: the state is unmarshalled straight into State
 	// (it used to go through a json.RawMessage and a second Unmarshal).
 	var payload struct {
-		State *State `json:"state"`
+		Method   string          `json:"method"`
+		Params   json.RawMessage `json:"params"`
+		Features []string        `json:"features"`
+		State    *State          `json:"state"`
 	}
-	if err := json.Unmarshal(line, &payload); err != nil || payload.State == nil {
+	if err := json.Unmarshal(line, &payload); err != nil {
+		return
+	}
+	switch payload.Method {
+	case client.StateDumpMethod:
+		m.idle.streamUp(payload.Features)
+	case client.IdleMonitorChangedEvent:
+		m.idle.change(payload.Params)
+	}
+	if payload.State == nil {
 		return
 	}
 	m.setState(*payload.State)
@@ -407,6 +424,7 @@ func (m *Manager) Close() {
 		delete(m.subscribers, c)
 	}
 	m.subsMu.Unlock()
+	m.idle.closeAll()
 }
 
 // killGroup SIGKILLs the child's process group; the goroutine that started

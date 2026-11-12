@@ -65,6 +65,9 @@ func (s *Service) Register(srv *ipc.Server) {
 		Methods:   methods,
 		Subscribe: s.subscribe,
 	})
+	if s.mgr != nil {
+		srv.Register(&ipc.Service{Name: "idlemon", Methods: map[string]ipc.HandlerFunc{}, Subscribe: s.subscribeIdle})
+	}
 }
 
 // SetGameModeFn wires the GameMode state provider. Safe to leave unset;

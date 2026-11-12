@@ -146,6 +146,11 @@
    "subscribe": true
   },
   {
+   "name": "idlemon",
+   "methods": [],
+   "subscribe": true
+  },
+  {
    "name": "ipc",
    "methods": [
     "hello",
