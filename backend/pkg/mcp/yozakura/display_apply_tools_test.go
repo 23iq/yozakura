@@ -13,7 +13,7 @@ import (
 const mcpOutputs = `[{"id":"LG|27GP|1","name":"DP-1","enabled":true,"width":2560,"height":1440,"refresh":144,"scale":1,
  "modes":[{"width":2560,"height":1440,"refresh":144},{"width":2560,"height":1440,"refresh":165},{"width":1920,"height":1080,"refresh":60}]}]`
 
-func TestDisplaysApplyNeverKeepsWithoutKeep(t *testing.T) {
+func TestDisplaysApplyNeverKeepsItsOwnChange(t *testing.T) {
 	d, _, ipc := newDeps(t)
 	ipc.result["displays.list"] = mcpOutputs
 	ipc.result["displays.apply"] = `{"session":"s1","revertIn":15,"live":true}`
@@ -28,10 +28,19 @@ func TestDisplaysApplyNeverKeepsWithoutKeep(t *testing.T) {
 		assert.NotEqual(t, "displays.keep", c.Method, "no keep without keep:true")
 	}
 
-	// keep: the daemon saves the layout (MCP writes nothing itself)
+	// keep:true from an older client: the change still waits for the
+	// user, the call never keeps (and so never saves) its own change
 	m = structured(t, callTool(t, d, "displays_apply", `{"keep":true,"outputs":[{"name":"DP-1","mode":"1920x1080","scale":1.25}]}`))
+	assert.Equal(t, "pending", m["state"])
+	assert.Equal(t, true, m["keepIgnored"])
+	assert.Nil(t, m["saved"])
+	for _, c := range ipc.calls {
+		assert.NotEqual(t, "displays.keep", c.Method, "displays_apply must not keep its own change")
+	}
+
+	// displays_confirm keeps: the daemon saves the layout (MCP writes nothing itself)
+	m = structured(t, callTool(t, d, "displays_confirm", `{"session":"s1","keep":true}`))
 	assert.Equal(t, "kept", m["state"])
-	assert.Equal(t, true, m["saved"])
 	assert.Equal(t, "displays.keep", ipc.calls[len(ipc.calls)-1].Method)
 	_, err := os.Stat(d.ConfigFile("displays"))
 	assert.True(t, os.IsNotExist(err), "the daemon saves, not the MCP server")
