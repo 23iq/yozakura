@@ -124,6 +124,19 @@ calls = json.loads(ev("JSON.stringify(RoutinesService.calls)"))
 check(any(c[0] == "run" for c in calls), "routines: play runs the routine now")
 check(ev('w.findItem("routineStrip") !== null'), "routines: the when -> then strip")
 
+# ---- System: the temperature on the stage switches the unit ------------------
+select("system")
+n = steps()
+check(click("systemUnitFlip"), "system: the temperature is clickable")
+check(ev("Config.weather.unit") == "F", "system: a click switches to Fahrenheit")
+check(steps() == n + 1, "system: one undo step")
+ev("SettingsStore.undo()")
+check(ev("Config.weather.unit") == "C", "system: undo switches back")
+cards = ev('w.findItem("languageCards")')
+check(cards is not None, "system: the language as picture cards")
+check(ev('w.findItem("settingRow:system.exclusive") === null || !w.findItem("settingRow:system.exclusive").visible'),
+      "system: the only-shell card waits in More")
+
 if failures:
     print(f"settings-system-pages: {len(failures)} failure(s)")
     h.exit(1)

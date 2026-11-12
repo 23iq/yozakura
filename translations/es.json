@@ -583,7 +583,6 @@
   "settings.system.language": "Idioma",
   "settings.system.lock_command": "Comando de bloqueo",
   "settings.system.performance": "Rendimiento",
-  "settings.system.temperature_unit": "Unidad de temperatura",
   "settings.system.weather": "Clima",
   "settings.theme.animation_duration": "Duración de animación",
   "settings.theme.background_variant": "Variante de fondo",
@@ -4617,5 +4616,12 @@
   "prefs.ai.tasks.stage.current": "rama actual",
   "prefs.ai.tasks.stage.ready": "Modo oscuro en la documentación está listo para revisar",
   "prefs.undo.board_layout": "Diseño del tablero cambiado",
-  "prefs.ai.tasks.agents": "Agentes"
+  "prefs.ai.tasks.agents": "Agentes",
+  "prefs.sys.hero_hint": "Haz clic en la temperatura para cambiar entre °C y °F",
+  "prefs.sys.unit": "Unidad",
+  "prefs.sys.stage.here": "Donde estés",
+  "prefs.undo.unit_changed": "Unidad de temperatura cambiada",
+  "prefs.sys.lang.en": "English",
+  "prefs.sys.lang.es": "Español",
+  "prefs.sys.lang.ru": "Русский"
 }

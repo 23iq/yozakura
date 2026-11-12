@@ -1,8 +1,11 @@
 .pragma library
 
-// System: language, weather, performance, authentication, monitored disks
-// and clipboard storage (idle, sleep and the battery saver live on Power,
-// power.js). Performance and storage are plumbing: out of the window.
+// System: the stage is your desktop speaking your language (SystemStage:
+// the date as it writes it, the weather in your unit, the shell's
+// identity); the row: the language as picture cards and the weather. The
+// "only shell" card (Hyprland) opens in More. Idle, sleep and the battery
+// saver live on Power (power.js); performance, authentication and storage
+// are plumbing: out of the window.
 // Entry format: see modules/settings/AGENTS.md.
 
 function toggle(key, label, description, keywords) {
@@ -21,6 +24,17 @@ var category = {
     "title": "prefs.cat.system",
     "description": "prefs.cat.system.desc",
     "keywords": "system idle power sleep suspend lock performance language weather prefixes disks clipboard polkit password",
+    "stage": "SystemStage",
+    "hero": {
+        "hint": "prefs.sys.hero_hint"
+    },
+    "row": [
+        {
+            "id": "language",
+            "weight": 1.4
+        },
+        "weather"
+    ],
     "sections": [
         {
             "id": "language",
@@ -29,7 +43,27 @@ var category = {
                 {
                     "key": "system.language",
                     "type": "custom",
-                    "component": "LanguagePicker",
+                    "component": "LanguageCards",
+                    // the shipped translations (the cards list them from
+                    // translations/languages.json); names the value
+                    "options": [
+                        {
+                            "value": "auto",
+                            "label": "prefs.voice.lang.auto"
+                        },
+                        {
+                            "value": "en",
+                            "label": "prefs.sys.lang.en"
+                        },
+                        {
+                            "value": "es",
+                            "label": "prefs.sys.lang.es"
+                        },
+                        {
+                            "value": "ru",
+                            "label": "prefs.sys.lang.ru"
+                        }
+                    ],
                     "label": "prefs.label.interface_language",
                     "description": "prefs.sys.language.desc",
                     "keywords": "language locale translation i18n english spanish russian auto"
@@ -77,7 +111,7 @@ var category = {
                             "label": "weather.fahrenheit"
                         }
                     ],
-                    "label": "settings.system.temperature_unit",
+                    "label": "prefs.sys.unit",
                     "description": "prefs.sys.weather_unit.desc",
                     "keywords": "temperature unit celsius fahrenheit"
                 }
