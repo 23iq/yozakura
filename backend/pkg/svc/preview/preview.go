@@ -96,6 +96,10 @@ func (s *Service) Register(srv *ipc.Server) {
 		// the window sent before it on its connection (an async commit
 		// could overtake one and lose it); only its wait for the main
 		// shell's preview.written runs off the connection (ipc.Deferred).
+		// written is async: the main shell's request socket also carries
+		// slow ordered calls (compositor), and its answer must not wait
+		// behind them past AckWait.
+		Async: map[string]bool{"written": true},
 	})
 }
 

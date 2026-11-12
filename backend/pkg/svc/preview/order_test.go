@@ -91,6 +91,61 @@ func TestCommitNeverOvertakesAnEarlierSet(t *testing.T) {
 	}
 }
 
+// The main shell's request socket also carries slow ordered calls: its
+// preview.written behind one still reaches the waiting commit in time.
+func TestWrittenIsNotQueuedBehindSlowCalls(t *testing.T) {
+	old := AckWait
+	AckWait = 500 * time.Millisecond
+	t.Cleanup(func() { AckWait = old })
+	s := NewService()
+	sock := filepath.Join(t.TempDir(), "s.sock")
+	srv := ipc.NewServer(sock)
+	s.Register(srv)
+	release := make(chan struct{})
+	srv.Register(&ipc.Service{Name: "slow", Methods: map[string]ipc.HandlerFunc{
+		"op": func(json.RawMessage) (any, error) { <-release; return true, nil },
+	}})
+	if err := srv.Listen(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(srv.Close)
+	t.Cleanup(func() { close(release) })
+	go srv.Serve()
+
+	sub := ipc.NewSubscriber(8)
+	sub.ClientID = ShellClient
+	go s.subscribe(sub)
+	t.Cleanup(sub.Stop)
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		s.mu.Lock()
+		n := len(s.subs)
+		s.mu.Unlock()
+		if n > 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("not subscribed")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	done := make(chan bool, 1)
+	go func() { _, w := s.CommitAndWait("settings"); done <- w }()
+	var d Done
+	select {
+	case e := <-sub.Events:
+		b, _ := json.Marshal(e.Data)
+		_ = json.Unmarshal(b, &d)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no commit event")
+	}
+	shell := dial(t, sock)
+	fmt.Fprintf(shell, `{"id":1,"method":"slow.op"}`+"\n"+`{"id":2,"method":"preview.written","params":{"id":%d}}`+"\n", d.ID)
+	if !<-done {
+		t.Fatal("the main shell's answer waited behind its slow call: not written")
+	}
+}
+
 func dial(t *testing.T, sock string) net.Conn {
 	t.Helper()
 	c, err := net.Dial("unix", sock)
