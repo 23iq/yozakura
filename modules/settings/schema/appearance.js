@@ -15,6 +15,10 @@ var category = {
     "title": "prefs.cat.appearance",
     "description": "prefs.cat.appearance.desc",
     "stage": "LookStage",
+    "hero": {
+        "right": ["theme.tintIcons", "theme.signatures.brushHighlight", "theme.signatures.petals"]
+    },
+    "row": ["mode", "tune", "palette"],
     "keywords": "theme look style colors fonts dark light",
     "sections": [
         {

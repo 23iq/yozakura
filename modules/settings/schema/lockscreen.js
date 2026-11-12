@@ -10,6 +10,12 @@ var category = {
     "title": "prefs.cat.lockscreen",
     "description": "prefs.cat.lockscreen.desc",
     "keywords": "lock screen login password greeter sddm style",
+    "stage": "LockStage",
+    "hero": {
+        "right": ["lockscreen.showStatus", "lockscreen.showMedia", "lockscreen.showVisualizer"],
+        "hint": "prefs.lockscreen.hero_hint"
+    },
+    "row": ["style", "layout"],
     "sections": [
         {
             "id": "style",

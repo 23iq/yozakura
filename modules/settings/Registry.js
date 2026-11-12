@@ -102,7 +102,8 @@ var STAGES = {
     "OpensStage": "stages/OpensStage.qml",
     "LookStage": "stages/LookStage.qml",
     "TypeStage": "stages/TypeStage.qml",
-    "NotifStage": "stages/NotifStage.qml"
+    "NotifStage": "stages/NotifStage.qml",
+    "LockStage": "stages/LockStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

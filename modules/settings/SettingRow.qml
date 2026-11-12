@@ -60,7 +60,7 @@ FocusScope {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < Space.px(560)
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || (narrow && (type === "slider" || type === "macro" || type === "selector" || type === "text")))
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || (narrow && (type === "slider" || type === "macro" || type === "text" || (type === "selector" && (entry.options || []).length <= 4))))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
@@ -183,7 +183,7 @@ FocusScope {
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
                         // wraps in a narrow place (beside the stage)
-                        Layout.maximumWidth: Math.max(Space.px(60), body.width - Space.l * 2 - inlineControl.implicitWidth)
+                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - inlineControl.implicitWidth)
                         role: "body"
                         wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)

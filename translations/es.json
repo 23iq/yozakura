@@ -4537,5 +4537,8 @@
   "prefs.notch.hero_hint": "Haz clic en el borde superior o inferior para mover la isla · clic en la barra o el dock para editarlos",
   "prefs.dock.hero_hint": "Haz clic en un borde para mover el dock · clic en la isla para editarla",
   "prefs.layout.hero_hint": "Elige una ficha en la pantalla y haz clic donde debe abrirse",
-  "prefs.undo.surface_moved": "Movido"
+  "prefs.undo.surface_moved": "Movido",
+  "prefs.lockscreen.hero_hint": "Haz clic en la mitad superior o inferior para mover el campo de contraseña",
+  "prefs.notif.hero_hint": "Con avisos en esquina, haz clic en una esquina para moverlos",
+  "prefs.undo.field_moved": "Campo de contraseña movido"
 }

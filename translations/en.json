@@ -4537,5 +4537,8 @@
   "prefs.notch.hero_hint": "Click the top or bottom edge to move the island · click the bar or the dock to edit them",
   "prefs.dock.hero_hint": "Click an edge to move the dock · click the island to edit it",
   "prefs.layout.hero_hint": "Pick a chip on the screen, then click where it should open",
-  "prefs.undo.surface_moved": "Moved"
+  "prefs.undo.surface_moved": "Moved",
+  "prefs.lockscreen.hero_hint": "Click the top or bottom half to move the password field",
+  "prefs.notif.hero_hint": "With corner toasts, click a corner to move them there",
+  "prefs.undo.field_moved": "Password field moved"
 }
