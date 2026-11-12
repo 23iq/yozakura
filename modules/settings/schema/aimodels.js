@@ -23,6 +23,7 @@ var sections = [
             },
             {
                 "key": "ai.picker.showCapabilities",
+                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_capabilities",
                 "description": "prefs.ai.picker_capabilities.desc",
@@ -30,6 +31,7 @@ var sections = [
             },
             {
                 "key": "ai.picker.groupByProvider",
+                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_group",
                 "description": "prefs.ai.picker_group.desc",
@@ -37,6 +39,7 @@ var sections = [
             },
             {
                 "key": "ai.picker.showRecent",
+                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_recent",
                 "description": "prefs.ai.picker_recent.desc",
@@ -44,6 +47,7 @@ var sections = [
             },
             {
                 "key": "ai.picker.showUnconnected",
+                "advanced": true,
                 "type": "toggle",
                 "label": "prefs.ai.picker_unconnected",
                 "description": "prefs.ai.picker_unconnected.desc",
@@ -111,6 +115,7 @@ var sections = [
             },
             {
                 "key": "ai.context.compactModel",
+                "advanced": true,
                 "type": "text",
                 "label": "prefs.ai.compact_model",
                 "description": "prefs.ai.compact_model.desc",
