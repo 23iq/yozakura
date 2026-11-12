@@ -117,6 +117,16 @@ PanelWindow {
     readonly property bool keepBarBorder: Config.bar.keepBarBorder ?? false
     readonly property bool containBar: barContent ? barContent.contained : false
 
+    // Who draws the frame (performance.splitFrame): this panel, or its own
+    // window (FrameWindow, created next to this panel in shell.qml)
+    readonly property FrameSplit frameSplit: frameSplitState
+    FrameSplit {
+        id: frameSplitState
+        enabled: Config.performance?.splitFrame ?? false
+        frameEnabled: Config.bar?.frameEnabled ?? false
+        fullscreen: unifiedPanel.hasFullscreenWindow
+    }
+
     Component.onCompleted: {
         Visibilities.registerBarPanel(screen.name, unifiedPanel);
         Visibilities.registerNotchPanel(screen.name, unifiedPanel);
@@ -224,6 +234,7 @@ PanelWindow {
             anchors.fill: parent
             z: 0
             frame: frameContent
+            frameElsewhere: !frameSplitState.panelDraws
             bars: panelHost.bars
             notch: unifiedPanel.notchContent
             dock: dockContent
@@ -232,11 +243,14 @@ PanelWindow {
             dockEnabled: unifiedPanel.dockEnabled
         }
 
+        // Also computes the hole PanelShadows clips to while the frame is
+        // drawn by its own window (FrameWindow)
         ScreenFrameContent {
             id: frameContent
             anchors.fill: parent
             targetScreen: unifiedPanel.targetScreen
             hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
+            visible: frameSplitState.panelDraws
             z: 1
         }
 

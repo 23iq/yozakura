@@ -10,6 +10,11 @@
 // a shape whose rows are single intervals is integrated exactly along each
 // row (erf) and numerically across rows (ROWS slices, each weighted by its
 // exact Gaussian mass), so rounded corners and fillets stay accurate.
+//
+// clipFlag: the result is cut to a rounded box (clipBox, clipRadius): the
+// screen frame's hole when the frame is drawn by a window below this one
+// (performance.splitFrame), so a shadow stops where the frame would have
+// covered it.
 // Compile: qsb --qt6 -o shape_shadow.frag.qsb shape_shadow.frag
 layout(location = 0) in vec2 qt_TexCoord0;
 layout(location = 0) out vec4 fragColor;
@@ -26,6 +31,9 @@ layout(std140, binding = 0) uniform buf {
     float edgeIndex;    // edge the fillets sit on: 0 top, 1 bottom, 2 left, 3 right
     float invertedFlag; // 1 = shadow of everything outside the box
     vec4 color;         // premultiplied shadow colour
+    vec4 clipBox;       // clip box in item px: x, y, w, h
+    float clipRadius;   // its corner radius
+    float clipFlag;     // 1 = cut the shadow to the clip box
 } ubuf;
 
 const int ROWS = 8;
@@ -179,5 +187,10 @@ void main() {
 
     if (ubuf.invertedFlag > 0.5)
         cover = 1.0 - cover;
+    if (ubuf.clipFlag > 0.5) {
+        vec2 ch = ubuf.clipBox.zw * 0.5;
+        float c = roundBox(p, ubuf.clipBox.xy + ch, ch, vec4(ubuf.clipRadius));
+        cover *= clamp(0.5 - c, 0.0, 1.0);
+    }
     fragColor = ubuf.color * clamp(cover, 0.0, 1.0) * ubuf.qt_Opacity;
 }

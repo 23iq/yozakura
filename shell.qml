@@ -103,6 +103,14 @@ ShellRoot {
             id: screenShellContainer
             required property ShellScreen modelData
 
+            // The frame in its own Top-layer window (performance.splitFrame);
+            // the panel decides when (FrameSplit)
+            FrameWindowLoader {
+                targetScreen: screenShellContainer.modelData
+                split: unifiedPanel.frameSplit
+                hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
+            }
+
             // Panel components (Bar, Notch, Dock, Frame, Corners)
             UnifiedShellPanel {
                 id: unifiedPanel
