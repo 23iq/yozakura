@@ -365,6 +365,8 @@
    "name": "term",
    "methods": [
     "apply",
+    "fetch.presets",
+    "fetch.preview",
     "presets",
     "preview",
     "status"

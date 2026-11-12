@@ -28,6 +28,9 @@ type Status struct {
 	HookSkipped       bool            `json:"hookSkipped"`
 	HookPath          string          `json:"hookPath"`
 	HookPresent       bool            `json:"hookPresent"`
+	// Greeting is the fastfetch greeting: on, fastfetch installed, the
+	// user's own fastfetch config, per-shell state, custom logo problems.
+	Greeting termlook.GreetingStatus `json:"greeting"`
 }
 
 func (s *Service) status(json.RawMessage) (any, error) { return s.currentStatus(), nil }
@@ -52,6 +55,7 @@ func (s *Service) currentStatus() Status {
 	st.ForeignFile = s.foreignFile()
 	st.ForeignPromptInit = st.ForeignFile != ""
 	st.HookSkipped = cfg.Enabled && st.ForeignPromptInit
+	st.Greeting = termlook.GreetingState(s.greeting(), env)
 	return st
 }
 
