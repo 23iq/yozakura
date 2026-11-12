@@ -157,12 +157,13 @@ edge-click]` writes animated WebP + GIF at real speed.
 ## NAVIGATION
 `schema/Categories.js`: `groups` are the destinations, each `{id, icon,
 title: prefs.dest.<id>, categories: [tab ids]}`. `HOME` lists the bento
-tiles in reading order with a size (`big` / `wide` / `small`): Desktop
-layout (Bar, Island, Dock, Where things open; big), Look, Wallpaper (wide),
-Presets, Notifications (+ On-screen display, Menus), Lock screen,
-Assistant, Launcher, Dashboard, Desktop, Keys (Keyboard, Shortcuts),
-Displays, Windows; `PILLS` the plain system ones under it: Network, Sound,
-Power, Apps, System. `home()` / `pills()` are the models. A category is one
+tiles in reading order with a size (`w` columns x `h` half-row units of a
+12-column grid, `hero`): Desktop layout (Bar, Island, Dock, Where things
+open; the hero), Look, Wallpaper, Notifications (+ On-screen display,
+Menus), Lock screen, Presets, Launcher, Dashboard, Assistant, Keys
+(Keyboard, Shortcuts), Displays, Windows; `PILLS` the wide status tiles
+under it: Network, Sound, Power, Widgets (desktop widgets, overview), Apps,
+System. `home()` / `pills()` are the models. A category is one
 tab: its `title` is the tab label (one to three words). One tab = no tab
 strip. `resolve(id)` accepts a category id, a `MOVED` id (merged pages,
 former sidebar groups such as `popups`, `island`) or a destination id (its
@@ -241,9 +242,10 @@ costs nothing until opened and gives all its memory back when closed.
 ## PERFORMANCE
 - Opening the window at home builds no page: the tiles read config only.
   What the first frame does not need waits for it (`SettingsHome.warm`, set
-  on the window's first `frameSwapped`): the picture tiles (`HomeTileArt`,
-  by URL, asynchronous: Stage and ScreenMini compile only then), the tile
-  status lines and the preset footer (PresetStatusService). The search
+  on the window's first `frameSwapped`): the tile scenes (home/*.qml, by
+  URL, asynchronous, one more per frame: Stage and ScreenMini compile only
+  then), the tile status lines, the status tiles' services (network, audio,
+  power profile, updates) and the preset footer (PresetStatusService). The search
   index is built on the first query (or when the changes sheet opens).
 - Pages and stages are created by URL (`Registry.PAGES`, `Registry.STAGES`);
   the host imports the page directories only so Quickshell's scanner
