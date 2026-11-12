@@ -124,7 +124,6 @@
         "section": "transition",
         "label": "prefs.wall.transition",
         "control": "selector",
-        "preview": "TransitionPreview",
         "keywords": "transition animation grow wipe dissolve fade random shader effect",
         "enabledWhen": {
           "all": [
@@ -241,7 +240,6 @@
         "section": "panorama",
         "label": "prefs.wall.mode",
         "control": "selector",
-        "preview": "PanoramaPreview",
         "keywords": "panorama emaki scroll wide pan workspace fill crop parallax"
       },
       "enum": [

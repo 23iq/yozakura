@@ -19,7 +19,9 @@ var EDITORS = {
     "IndicatorCards": "editors/IndicatorCards.qml",
     "BranchBlossomChips": "editors/BranchBlossomChips.qml",
     "SurfaceEffectCards": "editors/SurfaceEffectCards.qml",
-    "WallpaperGrid": "editors/WallpaperGrid.qml",
+    "WallpaperStrip": "editors/WallpaperStrip.qml",
+    "WallpaperColours": "editors/WallpaperColours.qml",
+    "WallpaperScreens": "editors/WallpaperScreens.qml",
     "FolderList": "editors/FolderList.qml",
     "SpecialsEditor": "editors/SpecialsEditor.qml",
     "ComingSoonRow": "editors/ComingSoonRow.qml",
@@ -70,8 +72,6 @@ var PREVIEWS = {
     "LightingPreview": "previews/LightingPreview.qml",
     "WeatherFxPreview": "previews/WeatherFxPreview.qml",
     "SentencePreview": "previews/SentencePreview.qml",
-    "TransitionPreview": "previews/TransitionPreview.qml",
-    "PanoramaPreview": "previews/PanoramaPreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
     "WindowsPreview": "previews/WindowsPreview.qml",
@@ -92,7 +92,9 @@ var THUMBS = {
     "ClockPanelThumb": "thumbs/ClockPanelThumb.qml",
     "IndicatorThumb": "thumbs/IndicatorThumb.qml",
     "NumeralThumb": "thumbs/NumeralThumb.qml",
-    "WeightThumb": "thumbs/WeightThumb.qml"
+    "WeightThumb": "thumbs/WeightThumb.qml",
+    "WallFitThumb": "thumbs/WallFitThumb.qml",
+    "WallTransitionThumb": "thumbs/WallTransitionThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -105,7 +107,8 @@ var STAGES = {
     "LookStage": "stages/LookStage.qml",
     "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
-    "LockStage": "stages/LockStage.qml"
+    "LockStage": "stages/LockStage.qml",
+    "WallpaperStage": "stages/WallpaperStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

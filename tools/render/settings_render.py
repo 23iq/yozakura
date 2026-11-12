@@ -204,7 +204,10 @@ def main() -> int:
     state = wallpaper_state()
     if args.wallpaper:
         wp = str(Path(args.wallpaper).resolve())
-        state = {"dir": str(Path(wp).parent), "scanDirs": [str(Path(wp).parent)], "paths": [wp],
+        # the library: every picture of the wallpaper's folder
+        library = sorted(str(p) for p in Path(wp).parent.iterdir()
+                         if p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")) or [wp]
+        state = {"dir": str(Path(wp).parent), "scanDirs": [str(Path(wp).parent)], "paths": library,
                  "current": wp, "thumbs": {}, "presets": []}
     schemes = scheme_palettes(state)
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
