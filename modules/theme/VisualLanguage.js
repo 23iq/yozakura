@@ -244,7 +244,7 @@ var INSTRUMENT = {
 // tonal boxes over the opaque window.
 function kit(lang, glassOn) {
     var spec = KIT[normalize(lang)];
-    if (glassOn !== false || (!spec.window && !(spec.float && spec.float.fillOpacity < 1) && !(spec.card && spec.card.fillOpacity < 0.92)))
+    if (glassOn !== false || (!spec.window && !(spec.float && spec.float.fillOpacity < 1)))
         return spec;
     var out = {};
     for (var k in spec)
