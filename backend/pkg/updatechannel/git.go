@@ -2,14 +2,15 @@ package updatechannel
 
 import (
 	"context"
-	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"yozakura/backend/pkg/proc"
 )
 
-// remoteTimeout bounds one ls-remote / fetch: a slow network gives "unknown"
+// remoteTimeout bounds one ls-remote: a slow network gives "unknown"
 // instead of a hung command.
 const remoteTimeout = 30 * time.Second
 
@@ -18,6 +19,16 @@ const remoteTimeout = 30 * time.Second
 type GitRepo struct {
 	Dir    string
 	Remote string // default "origin"
+	// ReadTimeout bounds one ls-remote (default 30 s); the read-only
+	// reports use a shorter one so an offline check answers quickly.
+	ReadTimeout time.Duration
+}
+
+func (g GitRepo) readTimeout() time.Duration {
+	if g.ReadTimeout > 0 {
+		return g.ReadTimeout
+	}
+	return remoteTimeout
 }
 
 func (g GitRepo) remote() string {
@@ -49,7 +60,7 @@ func (g GitRepo) Branch() string {
 
 // RemoteTags implements Repo: annotated tags resolve to their commit.
 func (g GitRepo) RemoteTags() (map[string]string, error) {
-	out, err := g.git(remoteTimeout, "ls-remote", "--tags", g.remote())
+	out, err := g.git(g.readTimeout(), "ls-remote", "--tags", g.remote())
 	if err != nil {
 		return nil, err
 	}
@@ -76,13 +87,13 @@ func parseLsRemoteTags(out string) map[string]string {
 
 // RemoteBranch implements Repo.
 func (g GitRepo) RemoteBranch(name string) (string, error) {
-	out, err := g.git(remoteTimeout, "ls-remote", "--heads", g.remote(), "refs/heads/"+name)
+	out, err := g.git(g.readTimeout(), "ls-remote", "--heads", g.remote(), "refs/heads/"+name)
 	if err != nil {
 		return "", err
 	}
 	sha, _, _ := strings.Cut(out, "\t")
 	if sha == "" {
-		return "", errors.New("no branch " + name + " on " + g.remote())
+		return "", fmt.Errorf("no branch %s on %s: %w", name, g.remote(), ErrNoBranch)
 	}
 	return sha, nil
 }
@@ -96,10 +107,29 @@ func (g GitRepo) IsAncestor(a, b string) bool {
 	return err == nil
 }
 
+// LocalCommits implements Repo; 0 when git cannot tell.
+func (g GitRepo) LocalCommits(exclude []string) int {
+	args := []string{"rev-list", "--count", "HEAD", "--not", "--remotes"}
+	for _, c := range exclude {
+		// rev-list fails on a commit this checkout does not have
+		if g.IsAncestor(c, c) {
+			args = append(args, c)
+		}
+	}
+	out, err := g.git(0, args...)
+	if err != nil {
+		return 0
+	}
+	n, _ := strconv.Atoi(out)
+	return n
+}
+
 // Fetch brings the remote's tags and branch tips into the checkout (refs
-// only; the working tree is not touched).
+// only; the working tree is not touched). Tags are forced: a release tag
+// moved or re-created on the remote replaces the local one instead of
+// failing every later fetch ("would clobber existing tag").
 func (g GitRepo) Fetch() error {
-	_, err := g.git(-1, "fetch", "--quiet", "--tags", g.remote())
+	_, err := g.git(-1, "fetch", "--quiet", "--tags", "--force", g.remote())
 	return err
 }
 

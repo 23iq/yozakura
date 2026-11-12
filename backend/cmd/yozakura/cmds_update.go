@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"yozakura/backend/pkg/brand"
 	"yozakura/backend/pkg/catalog"
@@ -26,9 +27,13 @@ Channels (setting system.updateChannel, default stable):
     beta      X.Y.Z-beta.N pre-releases, and any newer stable release
     git       every commit on main (the least stable)
 
-A checkout already at or past the channel's newest release is up to date
-(installs that followed main stay where they are until a newer release is
-tagged). Local changes are kept and built as they are.
+Only releases newer than {floor} (the last one without update channels)
+are a channel's target; until one is tagged, stable and beta keep the
+install where it is. A checkout already at or past the channel's newest
+release is up to date (installs that followed main stay where they are
+until a newer release is tagged). Local changes are kept and built as they
+are; a checkout with commits that are on no branch of the remote is not
+moved to a release without them.
 
 Options:
     --channel NAME       use this channel for this run only; to keep it:
@@ -36,8 +41,10 @@ Options:
                          system.updateChannel NAME)
     --check              print the installed version, the channel and its
                          target; changes nothing
-    --allow-downgrade    move back to an older release (the target of a tag
-                         channel when the checkout is ahead of it on another line)
+    --allow-downgrade    move to the target of a tag channel even when the
+                         checkout is ahead of it on another line, or has
+                         commits of its own the release lacks (they stay
+                         on their branch, they are just no longer built)
 
 Commands:
     channel              the channel in effect, where it comes from, the
@@ -50,6 +57,15 @@ Nix installs update through their flake; channels do not apply there.
 `
 
 const channelKey = "system.updateChannel"
+
+// reportTimeout bounds the remote reads of --check and `update channel`:
+// they only report, so offline they answer "unknown" quickly.
+const reportTimeout = 8 * time.Second
+
+// reportRepo is the checkout as the read-only reports read it.
+func reportRepo(src string) uc.GitRepo {
+	return uc.GitRepo{Dir: src, ReadTimeout: reportTimeout}
+}
 
 // updateEnv holds what `update` reads and runs; tests replace the parts
 // that leave the sandbox (the installer, the Nix check).
@@ -97,7 +113,7 @@ func defaultUpdateEnv() *updateEnv {
 // runUpdate implements `yozakura update ...`.
 func runUpdate(args []string, e *updateEnv) int {
 	if len(args) > 0 && (args[0] == "help" || args[0] == "-h" || args[0] == "--help") {
-		fmt.Fprint(e.out, branded(updateUsage))
+		fmt.Fprint(e.out, strings.ReplaceAll(branded(updateUsage), "{floor}", uc.LastWithoutChannels))
 		return 0
 	}
 	if len(args) > 0 && args[0] == "channel" {
@@ -125,12 +141,12 @@ func runUpdate(args []string, e *updateEnv) int {
 		fmt.Fprintf(e.errOut, "Error: no git checkout of %s found. Install it with:\n  curl -fsSL %s | bash\n", brand.DisplayName, installerURL())
 		return 1
 	}
-	repo := uc.GitRepo{Dir: e.src}
 	if a.has("check") {
-		st := uc.Resolve(repo, channel, e.installedVersion())
+		st := uc.Resolve(reportRepo(e.src), channel, e.installedVersion())
 		e.printStatus(st, source)
 		return 0
 	}
+	repo := uc.GitRepo{Dir: e.src}
 	fmt.Fprintf(e.out, "Checking the %s channel for %s in %s...\n", channel, brand.DisplayName, e.src)
 	if err := repo.Fetch(); err != nil {
 		fmt.Fprintf(e.errOut, "Error: cannot fetch updates: %v\n", err)
@@ -147,8 +163,18 @@ func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade bool) int 
 		fmt.Fprintf(e.errOut, "Error: %s\n", st.Note)
 		return 1
 	case uc.NoTarget:
-		fmt.Fprintf(e.out, "No %s release is published yet; nothing to update.\n", st.Channel)
+		fmt.Fprintf(e.out, "No release with update channels on the %s channel yet (%s and older predate them); staying on %s.\n",
+			st.Channel, uc.LastWithoutChannels, e.installedLabel(st))
 		return 0
+	case uc.LocalCommits:
+		if !allowDowngrade {
+			fmt.Fprintf(e.out, "%s %s has %s that %s on no branch of the remote; %s, the newest %s release, does not contain %s, so the install stays as it is.\n",
+				brand.DisplayName, e.installedLabel(st), commitsWord(st.Local), isAre(st.Local), st.Target, st.Channel, itThem(st.Local))
+			fmt.Fprintf(e.out, "To build %s instead (your commits stay on their branch): %s update --channel %s --allow-downgrade\n", st.Target, brand.AppID, st.Channel)
+			return 0
+		}
+	case uc.LocalBranch:
+		fmt.Fprintf(e.out, "Branch %s is not on the remote; rebuilding the checkout as it is.\n", st.Target)
 	case uc.UpToDate:
 		if st.Channel != uc.Git {
 			fmt.Fprintf(e.out, "%s %s is up to date on the %s channel (newest release: %s).\n", brand.DisplayName, e.installedLabel(st), st.Channel, st.Target)
@@ -170,14 +196,20 @@ func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade bool) int 
 		args = append(args, "--channel", st.Channel)
 		if st.Channel != uc.Git {
 			args = append(args, "--ref", st.Target)
+			if allowDowngrade && installerKnows(args[0], "--allow-downgrade)") {
+				args = append(args, "--allow-downgrade")
+			}
 		}
 	} else if st.Channel != uc.Git {
 		fmt.Fprintf(e.errOut, "Error: the installer in %s predates update channels; run '%s update --channel git' once, then use the %s channel.\n", e.src, brand.AppID, st.Channel)
 		return 1
 	}
-	if st.Channel == uc.Git {
+	switch {
+	case st.State == uc.LocalBranch:
+		// announced above
+	case st.Channel == uc.Git:
 		fmt.Fprintf(e.out, "Updating %s to the tip of %s...\n", brand.DisplayName, st.Target)
-	} else {
+	default:
 		fmt.Fprintf(e.out, "Updating %s %s to %s (%s channel)...\n", brand.DisplayName, e.installedLabel(st), st.Target, st.Channel)
 	}
 	if err := e.runInstaller(args); err != nil {
@@ -193,8 +225,35 @@ func (e *updateEnv) apply(st uc.Status, source string, allowDowngrade bool) int 
 // installerHasChannels: the checkout's install.sh knows --channel/--ref
 // (a checkout older than update channels does not).
 func installerHasChannels(script string) bool {
+	return installerKnows(script, "--ref)")
+}
+
+// installerKnows: the checkout's install.sh parses this option (its case
+// label), so passing it does not stop an older installer.
+func installerKnows(script, label string) bool {
 	data, err := os.ReadFile(script)
-	return err == nil && strings.Contains(string(data), "--ref)")
+	return err == nil && strings.Contains(string(data), label)
+}
+
+func commitsWord(n int) string {
+	if n == 1 {
+		return "1 commit"
+	}
+	return fmt.Sprintf("%d commits", n)
+}
+
+func isAre(n int) string {
+	if n == 1 {
+		return "is"
+	}
+	return "are"
+}
+
+func itThem(n int) string {
+	if n == 1 {
+		return "it"
+	}
+	return "them"
 }
 
 // channelCmd implements `update channel [NAME]`.
@@ -237,7 +296,7 @@ func (e *updateEnv) channelCmd(args []string) int {
 		fmt.Fprintln(e.out, "Target     unknown (no git checkout)")
 		return 0
 	}
-	st := uc.Resolve(uc.GitRepo{Dir: e.src}, channel, e.installedVersion())
+	st := uc.Resolve(reportRepo(e.src), channel, e.installedVersion())
 	e.printStatus(st, source)
 	if len(args) == 1 && (st.State == uc.Available || st.State == uc.Downgrade) {
 		fmt.Fprintf(e.out, "Nothing was updated; run '%s update' to move to it.\n", brand.AppID)
@@ -312,7 +371,8 @@ func (e *updateEnv) printStatus(st uc.Status, source string) {
 		fmt.Fprintf(e.out, "Target     unknown: %s\n", st.Note)
 		return
 	case uc.NoTarget:
-		fmt.Fprintf(e.out, "Target     none: no %s release is published yet\n", st.Channel)
+		fmt.Fprintf(e.out, "Target     none: no release with update channels yet (%s and older predate them); staying on %s\n",
+			uc.LastWithoutChannels, e.installedLabel(st))
 		return
 	}
 	fmt.Fprintf(e.out, "Target     %s (%s)\n", st.Target, uc.Short(st.TargetCommit))
@@ -327,6 +387,10 @@ func (e *updateEnv) printStatus(st uc.Status, source string) {
 		}
 	case uc.Downgrade:
 		status = "the install is ahead of this release; it stays unless you pass --allow-downgrade"
+	case uc.LocalCommits:
+		status = fmt.Sprintf("newer release, but the checkout has %s on no branch of the remote; it stays unless you pass --allow-downgrade", commitsWord(st.Local))
+	case uc.LocalBranch:
+		status = "local branch: " + brand.AppID + " update rebuilds it as it is"
 	}
 	fmt.Fprintf(e.out, "Status     %s\n", status)
 	if st.Note != "" {

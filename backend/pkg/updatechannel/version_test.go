@@ -12,13 +12,18 @@ import (
 // fixture is tests/fixtures/update-channels.json: the cases the Go, JS and
 // install.sh implementations share.
 type fixture struct {
-	Parse []struct {
+	LastReleaseWithoutChannels string `json:"lastReleaseWithoutChannels"`
+	Parse                      []struct {
 		Tag     string  `json:"tag"`
 		Version *string `json:"version"`
 		Beta    bool    `json:"beta"`
 	} `json:"parse"`
-	Compare [][3]any `json:"compare"`
-	Select  []struct {
+	Compare     [][3]any `json:"compare"`
+	HasChannels []struct {
+		Tag  string `json:"tag"`
+		Want bool   `json:"want"`
+	} `json:"hasChannels"`
+	Select []struct {
 		Channel string   `json:"channel"`
 		Tags    []string `json:"tags"`
 		Want    string   `json:"want"`
@@ -31,7 +36,7 @@ func loadFixture(t *testing.T) fixture {
 	mustOK(t, err)
 	var f fixture
 	mustOK(t, json.Unmarshal(data, &f))
-	if len(f.Parse) == 0 || len(f.Compare) == 0 || len(f.Select) == 0 {
+	if len(f.Parse) == 0 || len(f.Compare) == 0 || len(f.Select) == 0 || len(f.HasChannels) == 0 {
 		t.Fatal("empty fixture section")
 	}
 	return f
@@ -79,6 +84,17 @@ func TestSelectFixture(t *testing.T) {
 			rev[len(c.Tags)-1-i] = tag
 		}
 		assert.Equal(t, c.Want, Select(rev, c.Channel), "%s %v (reversed)", c.Channel, rev)
+	}
+}
+
+func TestFloorFixture(t *testing.T) {
+	f := loadFixture(t)
+	assert.Equal(t, f.LastReleaseWithoutChannels, LastWithoutChannels)
+	for _, c := range f.HasChannels {
+		v, ok := Parse(c.Tag)
+		if assert.True(t, ok, c.Tag) {
+			assert.Equal(t, c.Want, HasChannels(v), c.Tag)
+		}
 	}
 }
 

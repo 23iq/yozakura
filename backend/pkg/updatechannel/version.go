@@ -2,7 +2,8 @@
 //
 // Three channels exist: "stable" follows the X.Y.Z release tags, "beta"
 // follows X.Y.Z-beta.N pre-release tags plus any newer stable release, and
-// "git" follows the tip of the branch (main). The version rules here are the
+// "git" follows the tip of the branch (main). Only releases newer than
+// LastWithoutChannels are targets of a tag channel. The version rules here are the
 // reference; modules/services/UpdateVersions.js (the shell's update notice)
 // and install.sh (pick_tag) implement the same rules and are tested against
 // the same cases, tests/fixtures/update-channels.json.
@@ -44,11 +45,33 @@ type Version struct {
 	Beta                int
 }
 
-var versionRe = regexp.MustCompile(`^v?(\d+)\.(\d+)\.(\d+)(?:-beta\.(\d+))?$`)
+// LastWithoutChannels is the last release without update channels. Its
+// install.sh and binary know nothing about channels or a detached checkout:
+// an install moved to it (or to anything older) would rebuild it forever.
+// Only newer releases are targets of a tag channel (HasChannels).
+const LastWithoutChannels = "0.3.1"
+
+// Each number is 0 or up to nine digits without a leading zero, so every
+// implementation reads it the same way (no overflow, no two spellings).
+const num = `(0|[1-9][0-9]{0,8})`
+
+var versionRe = regexp.MustCompile(`^v?` + num + `\.` + num + `\.` + num + `(?:-beta\.` + num + `)?$`)
+
+var floor = func() Version {
+	v, ok := Parse(LastWithoutChannels)
+	if !ok {
+		panic("updatechannel: bad LastWithoutChannels")
+	}
+	return v
+}()
+
+// HasChannels reports whether v is newer than LastWithoutChannels, i.e. a
+// release whose installer and binary follow update channels.
+func HasChannels(v Version) bool { return v.Compare(floor) > 0 }
 
 // Parse reads a tag: X.Y.Z or X.Y.Z-beta.N with an optional leading "v".
-// Anything else (rc tags, two-part versions, build metadata) is not a
-// version of any channel.
+// Anything else (rc tags, two-part versions, build metadata, leading
+// zeros, numbers of ten digits or more) is not a version of any channel.
 func Parse(tag string) (Version, bool) {
 	m := versionRe.FindStringSubmatch(strings.TrimSpace(tag))
 	if m == nil {
@@ -120,7 +143,8 @@ func Compare(a, b string) (int, bool) {
 // Select returns the tag a channel moves to: the highest stable tag for
 // stable, the highest stable or beta tag for beta (so a newer stable
 // release always wins over older betas), "" for git, an unknown channel or
-// no matching tag. Of two spellings of one version the one without "v" wins.
+// no matching tag. Tags at or below LastWithoutChannels never match. Of two
+// spellings of one version the one without "v" wins, whatever the order.
 func Select(tags []string, channel string) string {
 	if channel != Stable && channel != Beta {
 		return ""
@@ -128,7 +152,7 @@ func Select(tags []string, channel string) string {
 	best, bestTag := Version{}, ""
 	for _, t := range tags {
 		v, ok := Parse(t)
-		if !ok || (v.IsBeta() && channel != Beta) {
+		if !ok || (v.IsBeta() && channel != Beta) || !HasChannels(v) {
 			continue
 		}
 		if bestTag == "" {

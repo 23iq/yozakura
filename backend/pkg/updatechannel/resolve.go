@@ -1,7 +1,9 @@
 package updatechannel
 
 import (
+	"errors"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -14,8 +16,13 @@ type Repo interface {
 	Branch() string
 	// RemoteTags maps the remote's tag names to the commits they point at.
 	RemoteTags() (map[string]string, error)
-	// RemoteBranch is the commit at the tip of a remote branch.
+	// RemoteBranch is the commit at the tip of a remote branch; an error
+	// wrapping ErrNoBranch when the remote has no such branch.
 	RemoteBranch(name string) (string, error)
+	// LocalCommits counts the commits of HEAD that are on no remote branch
+	// and behind none of the given commits (the remote's tags): work that
+	// exists only in this checkout.
+	LocalCommits(exclude []string) int
 	// IsAncestor reports whether commit a is an ancestor of (or equal to)
 	// commit b; false when either is unknown locally.
 	IsAncestor(a, b string) bool
@@ -33,7 +40,14 @@ const (
 	// Downgrade: the target is older than the checkout; moving needs an
 	// explicit request.
 	Downgrade State = "downgrade"
-	// NoTarget: the channel has no release yet.
+	// LocalCommits: the target is newer, but HEAD has commits made in this
+	// checkout that the target lacks; moving would stop building them, so
+	// it needs the same explicit request as a downgrade.
+	LocalCommits State = "local-commits"
+	// LocalBranch: the git channel on a branch the remote does not have;
+	// the checkout is built as it is.
+	LocalBranch State = "local-branch"
+	// NoTarget: the channel has no release newer than LastWithoutChannels.
 	NoTarget State = "no-target"
 	// Unknown: the remote could not be read (offline).
 	Unknown State = "unknown"
@@ -41,6 +55,9 @@ const (
 
 // MainBranch is the branch the git channel follows from a detached HEAD.
 const MainBranch = "main"
+
+// ErrNoBranch: the remote has no branch of that name.
+var ErrNoBranch = errors.New("no such branch on the remote")
 
 // Status describes a checkout against a channel.
 type Status struct {
@@ -52,6 +69,8 @@ type Status struct {
 	Target       string
 	TargetCommit string
 	State        State
+	// Local is the number of commits only this checkout has (LocalCommits).
+	Local int
 	// Note explains the state in a few words (the reason of Unknown, the
 	// branch switch of git from a detached HEAD).
 	Note string
@@ -85,9 +104,13 @@ func Resolve(r Repo, channel, installed string) Status {
 		return st
 	}
 	names := make([]string, 0, len(tags))
-	for name := range tags {
+	commits := make([]string, 0, len(tags))
+	for name, commit := range tags {
 		names = append(names, name)
+		commits = append(commits, commit)
 	}
+	sort.Strings(names)
+	sort.Strings(commits)
 	st.Target = Select(names, channel)
 	if st.Target == "" {
 		st.State = NoTarget
@@ -97,19 +120,31 @@ func Resolve(r Repo, channel, installed string) Status {
 	switch {
 	case st.TargetCommit == head || r.IsAncestor(st.TargetCommit, head):
 		st.State = UpToDate
+		return st
 	case r.IsAncestor(head, st.TargetCommit):
 		st.State = Available
-	default:
-		// Diverged (or the target is not fetched yet): a newer release is an
-		// update, anything else would take commits away.
-		// With no readable installed version, a tag whose commit is not
-		// fetched yet (IsAncestor of itself fails) counts as newer.
-		d, ok := Compare(st.Target, installed)
-		known := r.IsAncestor(st.TargetCommit, st.TargetCommit)
-		if (ok && d > 0) || (!ok && !known) {
+		return st
+	}
+	// Diverged, or the target is not fetched yet (IsAncestor of itself
+	// fails): a newer release is an update, an older one would take commits
+	// away. An unfetched commit cannot show the checkout is ahead of it.
+	d, ok := Compare(st.Target, installed)
+	if r.IsAncestor(st.TargetCommit, st.TargetCommit) {
+		if ok && d > 0 {
 			st.State = Available
 		} else {
 			st.State = Downgrade
+		}
+	} else if !ok || d >= 0 {
+		st.State = Available
+	} else {
+		st.State, st.Note = Unknown, "release "+st.Target+" is not fetched yet; an update fetches it first"
+		return st
+	}
+	if st.State == Available {
+		// HEAD is not behind the target: commits made here would be left out.
+		if n := r.LocalCommits(commits); n > 0 {
+			st.State, st.Local = LocalCommits, n
 		}
 	}
 	return st
@@ -122,6 +157,12 @@ func resolveGit(r Repo, st Status) Status {
 	}
 	st.Target = branch
 	tip, err := r.RemoteBranch(branch)
+	if err != nil && st.Branch != "" && errors.Is(err, ErrNoBranch) {
+		// A branch made in this checkout: built as it is, as before channels.
+		st.TargetCommit = st.Head
+		st.State, st.Note = LocalBranch, "no branch "+branch+" on the remote; the checkout is built as it is"
+		return st
+	}
 	if err != nil {
 		st.State, st.Note = Unknown, offlineNote(err)
 		return st
