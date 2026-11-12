@@ -312,9 +312,13 @@ make install    # sudo install of ./yozakura to /usr/local/bin
   only holds the few files loaded by plain path. Bytecode compile of the whole tree
   (367 files, ~96k lines, `qmlcachegen --only-bytecode`) costs ~1.7 s single-threaded; the
   biggest are lazy dashboard tabs (ClipboardTab 85 ms, NotesTab 64 ms), compiled on first
-  open. Keep startup-critical files small and push rarely used views behind `Loader`s
-  (heavy kept views: `WarmLoader` = async + request/callback, the launcher is warmed ~3 s after
-  start; big windows: `KeepAliveLoader` = async + kept hidden, Settings for
+  open. Types a file names statically are compiled when that file loads, transitively, even
+  inside an inactive `Loader`'s inline component; only components loaded by URL at runtime
+  (`setSource`, `Qt.createComponent`, `Loader.source`) compile lazily, on first use. Keep
+  startup-critical files small and push rarely used views behind `Loader`s (a `Loader` defers
+  creation; only loading by URL also defers compilation)
+  (heavy kept views: `WarmLoader` = async + request/callback, the launcher is created ~3 s after
+  start unless `performance.warmViews` is off; big windows: `KeepAliveLoader` = async + kept hidden, Settings for
   `performance.settingsKeepAliveMinutes`; its content sees `visible: false` while hidden, so
   timers and polls gated on `visible` stop). Do not
   switch to relative `import "../x"` imports to get caching: they create separate singleton

@@ -31,6 +31,7 @@ Item {
     property string currentModule: ""
     // The notch host, for callers that need its open state.
     readonly property NotchHost host: notchHost
+    readonly property bool launcherReady: launcher.ready
 
     onRoutedModuleChanged: Qt.callLater(sync)
     Component.onCompleted: Qt.callLater(sync)

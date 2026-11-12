@@ -14,9 +14,9 @@ function targetScreen(screenNames, focused) {
     return names.length > 0 ? names[0] : "";
 }
 
-// performance.warmViews (default true): false turns every warm-up off, the
-// launcher pre-creation (the one that holds real memory) and the compile
-// queue (CompileWarmUp). `perf` is Config.performance.
+// performance.warmViews (default true): false turns the launcher
+// pre-creation off, so the launcher view is only created (and holds memory)
+// once it is first opened. `perf` is Config.performance.
 function enabled(perf) {
     return !perf || perf.warmViews === undefined || perf.warmViews === null ? true : perf.warmViews !== false;
 }

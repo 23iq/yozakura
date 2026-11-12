@@ -111,7 +111,7 @@ item = "\n".join(ln for ln in item.split("\n") if not re.match(r'\s*(color: "tra
 h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
 for f in ("HostBackdrop", "HostFrame", "CardHost", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "PanelSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS)
-h.module("qs.modules.shell.hosts", {"CompileWarmUp": "pragma Singleton\nQtObject { function start() {} }"})
+h.module("qs.modules.shell.hosts", {})
 # After the copies (NotchPanels.js pulls in the real panels)
 # The notch panels: NotchPanel's API, sized like the real ones
 PANEL = ("import qs.modules.services\nNotchPanel {{ objectName: '{name}'; implicitHeight: {h}; property int dismissals: 0\n"

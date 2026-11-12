@@ -157,7 +157,7 @@ var performance = {
             "description": "While on battery: stop the audio visualizer, draw the media progress line straight and pause video wallpapers."
         },
         "warmViews": {
-            "description": "Prepare the launcher and compile the dashboard, overview, settings and presets in the background after startup so their first open is faster (uses some memory)."
+            "description": "Create the launcher a few seconds after startup, hidden, so its first open is instant. Turn off to save the memory it holds until the launcher is first opened."
         }
     }
 };

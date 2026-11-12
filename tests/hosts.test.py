@@ -99,7 +99,7 @@ HOSTS = "qs/modules/shell/hosts"
 h.copy("modules/shell/hosts/SurfaceHost.qml", HOSTS, replace={src: item})
 for f in ("HostFrame", "CardHost", "SpotlightHost", "SheetHost", "HostRouter", "HostedSurfaces", "NotchHost", "NotchHostedSurfaces"):
     h.copy(f"modules/shell/hosts/{f}.qml", HOSTS, replace={"layer.enabled: true": "layer.enabled: false"})
-h.module("qs.modules.shell.hosts", {"CompileWarmUp": "pragma Singleton\nQtObject { property int starts: 0; function start() { starts++ } }"})
+h.module("qs.modules.shell.hosts", {})
 h.module("qs.modules.widgets.powermenu", {"PowerMenuView": "Item {}"})
 h.module("qs.modules.widgets.tools", {"ToolsMenuView": "Item {}"})
 h.module("qs.modules.aicenter.quickask", {"QuickAskCard": "Item {}"})
@@ -191,13 +191,22 @@ def overlaps(a, b):
 # Views load asynchronously (WarmLoader). The warm-up pre-creates the
 # launcher on the focused screen only, hidden, without opening a host.
 assert not ev(hsA, "launcherReady") and not ev(hsB, "launcherReady")
-assert ev(root, "CompileWarmUp.starts") == 2, "every screen asks the (once per shell) compile warm-up to start"
 # performance.warmViews = false: no launcher pre-creation.
 h.eval(root, "Config.performance.warmViews = false")
 h.eval(hsA, "warmLauncher()")
 pump(50)
 assert not ev(hsA, "launcherReady"), "warmViews off still pre-created the launcher"
+# The same gate for a launcher that lives in the notch.
+nhA = h.find(root, "nhA")
+h.eval(root, 'Config.layout.launcher.host = "notch"')
+h.eval(nhA, "warmLauncher()")
+pump(50)
+assert not ev(nhA, "launcherReady"), "warmViews off still pre-created the notch launcher"
 h.eval(root, "Config.performance.warmViews = true")
+h.eval(nhA, "warmLauncher()")
+pump(50)
+assert ev(nhA, "launcherReady"), "warmViews on did not pre-create the notch launcher"
+h.eval(root, 'Config.layout.launcher.host = "spotlight"')
 h.eval(hsA, "warmLauncher()")
 h.eval(hsB, "warmLauncher()")
 pump(50)

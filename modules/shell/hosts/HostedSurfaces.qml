@@ -19,9 +19,7 @@ import "WarmUp.js" as WarmUp
 // Views load asynchronously (WarmLoader): the host opens once its view is
 // ready, so a first open never freezes the shell, and the launcher view is
 // pre-created hidden `warmDelay` ms after startup on the screen it will
-// most likely open on (WarmUp.js). Later, CompileWarmUp compiles the heavy
-// rarely opened views without creating them. performance.warmViews = false
-// turns both off.
+// most likely open on (WarmUp.js), unless performance.warmViews is off.
 Scope {
     id: root
 
@@ -44,8 +42,6 @@ Scope {
         root.route(spotlightLoader, root.spotlightModule);
         root.route(sheetLoader, root.sheetModule);
         root.route(cardLoader, root.cardModule);
-        // Once per shell: later screens' calls are no-ops.
-        CompileWarmUp.start();
     }
 
     property int warmDelay: 3000

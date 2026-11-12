@@ -140,7 +140,7 @@ var category = {
                     "advanced": true,
                     "label": "system.performance.warm_views",
                     "description": "system.performance.warm_views_desc",
-                    "keywords": "warm preload prepare compile startup launcher dashboard overview settings memory"
+                    "keywords": "warm preload prepare startup launcher memory"
                 },
                 {
                     "key": "performance.settingsKeepAliveMinutes",

@@ -239,16 +239,16 @@
       }
     },
     "warmViews": {
-      "title": "Prepare Views in Background",
+      "title": "Prepare Launcher in Background",
       "type": "boolean",
       "default": true,
-      "description": "After startup, prepare the launcher and the dashboard, overview, settings and presets so they open faster the first time (uses some memory)",
+      "description": "Create the launcher a few seconds after startup so it opens instantly the first time. Turn off to save the memory it holds until you first open it",
       "x-settings": {
         "category": "system",
         "section": "performance",
         "label": "system.performance.warm_views",
         "control": "toggle",
-        "keywords": "warm preload prepare compile startup launcher dashboard overview settings memory",
+        "keywords": "warm preload prepare startup launcher memory",
         "advanced": true
       }
     }
