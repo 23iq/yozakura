@@ -18,6 +18,7 @@ onboarding/
 ├── FinishModel.js         pure helpers of the summary: install split/counts, display/keyboard lines
 ├── Step*.qml              one file per step (get `wizard`, the OnboardingState)
 ├── MonitorUpgradeCard / KeyboardSetupCard   parts of StepDisplays
+├── TerminalShellChoice    StepTerminal: "use this prompt" + "fish as login shell" (TerminalChoice.js)
 ├── LookPresetGrid / LookWallpaperStrip / OnboardingTabs   parts of StepLook
 ├── OllamaPullRow          StepAi: "pull a model" chips under Ollama (ExtrasService.ollamaPull)
 ├── SummaryCard / ExclusiveChoice   parts of StepFinish
@@ -52,6 +53,12 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   running after the wizard closes; queued ids are remembered (`installs`)
   for the summary. Apps preselects the recommended missing apps on the
   first visit only (`apps` remembers the selection).
+- Terminal step: on a first run (`general.onboardingDone` false) the prompt
+  and fish as the login shell are preselected unless the user has a prompt
+  (foreignPromptInit) or a login shell other than bash/sh of their own
+  (`TerminalChoice.defaults`); the ticks are applied by Continue (the step's
+  `leaveGuard`), never on skip / close; a failed or cancelled chsh is said on
+  the step and the summary.
 - Exclusive mode (Hyprland, `ExclusiveService`): the summary toggle only
   remembers `exclusive`; `finish()` on the last step enables it.
 - Display changes go through `DisplaysService.apply` (live, 15 s keep/revert prompt);
@@ -74,6 +81,6 @@ and journals instead (see PresetsService, CompositorTomlWriter, Colors
 generators, GlobalShortcuts). `DryRunBadge` marks the card and the pill.
 
 ## VERIFY
-`tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-apps-ui.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs`
+`tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-terminal.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-terminal-ui.test.py`, `tests/onboarding-apps-ui.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs`
 (`tests/lib/onboarding_env.py`), renders:
 `tools/render/onboarding_render.py [--mode dark|light|both] [--lang ru] --out DIR`.

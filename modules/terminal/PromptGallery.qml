@@ -20,7 +20,9 @@ Item {
     // that looks picked is never clicked). Settings marks it either way and
     // says the prompt is off.
     property bool markOnlyWhenOn: false
-    readonly property bool marking: !root.markOnlyWhenOn || !!(Config.terminal && Config.terminal.enabled)
+    // Onboarding: the prompt is ticked to be switched on (marks it too).
+    property bool chosen: false
+    readonly property bool marking: !root.markOnlyWhenOn || root.chosen || !!(Config.terminal && Config.terminal.enabled)
     readonly property string engine: TerminalLookService.engine
     readonly property int columns: width < 520 ? 1 : (width < 860 ? 2 : 3)
 

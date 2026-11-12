@@ -7,6 +7,7 @@ import qs.modules.globals
 import qs.modules.components.kit
 import qs.config
 import "FinishModel.js" as Finish
+import "TerminalChoice.js" as Choice
 
 // Done: a summary of the setup (one card per area, live install progress),
 // on Hyprland the "only shell" choice, links to Settings and the big
@@ -45,7 +46,11 @@ Item {
             return [];
         const term = String(w.get("general.terminal") || "");
         const preset = TerminalLookService.presets.find(p => p.id === Config.terminal.prompt);
-        const prompt = Config.terminal.enabled && preset ? preset.name : "";
+        // never "prompt on" for a login shell that will not load it
+        const loginJobs = Object.values(ExtrasService.jobs || {}).filter(j => j && j.kind === "login");
+        const login = Choice.loginState(TerminalLookService.status, w.choices.fishDefault === true, ExtrasService.cardState("fish"), loginJobs);
+        const outcome = Choice.promptOutcome(Config.terminal.enabled && !!preset, login);
+        const prompt = outcome === "on" ? preset.name : (outcome === "pending" ? I18n.t("onboarding.finish.terminal.pending", preset.name) : (outcome === "failed" ? I18n.t("onboarding.finish.terminal.failed", preset.name) : (outcome === "fish_only" ? I18n.t("onboarding.finish.terminal.fish_only", preset.name) : "")));
         const aiNames = Finish.installedAi(ExtrasService.catalog, ExtrasService.status);
         return [
             {
