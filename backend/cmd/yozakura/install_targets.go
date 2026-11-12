@@ -104,9 +104,18 @@ func installHyprland() {
 	upgradeLegacyBlock(luaPath)
 	upgradeLegacyBlock(confPath)
 	repairHyprlandEntry(home, paths.Launcher(currentExecutable()))
+	dataDir := brand.DataDirIn(brand.UserHome())
 	if fileExists(luaPath) || !fileExists(confPath) {
+		if err := brand.HyprLuaDataDirError(dataDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: not adding the %s block to %s: %v\n", brand.DisplayName, luaPath, err)
+			return
+		}
 		appendBlock(luaPath, blockMarker("--"), hyprLuaBlock())
 	} else {
+		if err := brand.HyprConfDataDirError(dataDir); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: not adding the %s block to %s: %v\n", brand.DisplayName, confPath, err)
+			return
+		}
 		appendBlock(confPath, blockMarker("#"), hyprConfBlock())
 	}
 }

@@ -46,16 +46,19 @@ func staleEntryLines(home, dataDir string) (lua, conf []lineFix) {
 // dataRefs are the spellings of <data dir>/name an entry may load: the
 // historical ~/.local/share/<app> one and the one for dataDir.
 func dataRefs(home, dataDir, name string) []string {
-	refs := []string{dataRel() + name}
+	ref := filepath.Join(dataDir, name)
 	if rel, ok := brand.DataRelTo(home, dataDir); ok {
-		return append(refs, rel+name)
+		ref = rel + name
 	}
-	return append(refs, filepath.Join(dataDir, name))
+	// the Lua entry spells it as a string literal (escaped quotes, backslashes)
+	return []string{dataRel() + name, ref, brand.LuaQuote(ref)}
 }
 
 // fixEntry applies fixes to the entry at path (when it exists) and reports
-// whether it loads one of refs afterwards.
-func fixEntry(path string, fixes []lineFix, refs []string) bool {
+// whether it loads one of refs afterwards. When unsafe is set (the data dir
+// cannot be spelled in the entry's language) the entry is left untouched
+// and the reason is logged if a fix would have applied.
+func fixEntry(path string, fixes []lineFix, refs []string, unsafe error) bool {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return false
@@ -65,6 +68,10 @@ func fixEntry(path string, fixes []lineFix, refs []string) bool {
 		if f.from != f.to && strings.Contains(text, f.from) {
 			text = strings.ReplaceAll(text, f.from, f.to)
 		}
+	}
+	if text != string(data) && unsafe != nil {
+		fmt.Fprintf(os.Stderr, "Warning: not updating %s: %v\n", path, unsafe)
+		text = string(data)
 	}
 	if text != string(data) {
 		if err := fsutil.WriteFile(path, []byte(text), 0o644); err != nil {
@@ -96,8 +103,8 @@ func repairHyprlandEntry(home, bin string) {
 
 	dataDir := brand.DataDirIn(home)
 	luaFixes, confFixes := staleEntryLines(home, dataDir)
-	loadsLua := fixEntry(luaPath, luaFixes, dataRefs(home, dataDir, "hyprland.lua"))
-	loadsConf := fixEntry(confPath, confFixes, dataRefs(home, dataDir, "hyprland.conf"))
+	loadsLua := fixEntry(luaPath, luaFixes, dataRefs(home, dataDir, "hyprland.lua"), brand.HyprLuaDataDirError(dataDir))
+	loadsConf := fixEntry(confPath, confFixes, dataRefs(home, dataDir, "hyprland.conf"), brand.HyprConfDataDirError(dataDir))
 	if !loadsLua && !loadsConf {
 		return
 	}

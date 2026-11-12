@@ -113,6 +113,13 @@ func userNote(lua bool) string {
 // through) and creates an empty user file unless one exists.
 func writeMinimal(o Options, hypr, entry, backup string) error {
 	lua := entry == luaEntry
+	check := brand.HyprConfDataDirError
+	if lua {
+		check = brand.HyprLuaDataDirError
+	}
+	if err := check(o.dataDir()); err != nil {
+		return fmt.Errorf("cannot write the %s entry: %w", entry, err)
+	}
 	if err := os.MkdirAll(hypr, 0o755); err != nil {
 		return err
 	}
