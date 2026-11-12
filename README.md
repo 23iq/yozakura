@@ -217,11 +217,22 @@ Re-running the one-liner also updates. Local changes in the checkout are kept
 **Update channels** (`system.updateChannel`, also in Settings > Updates and
 at the end of the setup wizard): `stable` (default) follows the `X.Y.Z`
 releases, `beta` the `X.Y.Z-beta.N` pre-releases and any newer stable
-release, `git` every commit on `main`. A checkout already at or past the
-channel's newest release is left as it is (nothing is ever rewound unless you
-pass `--allow-downgrade`); `yozakura update --channel git` updates on another
-channel once, and `install.sh --channel beta` installs on that channel. Nix
-installs update through their flake; channels do not apply there.
+release, `git` every commit on `main`. Only releases newer than 0.3.1 (the
+last one without update channels) count: until one is tagged, `stable` and
+`beta` leave the install where it is ("no release with update channels
+yet"). A checkout already at or past the channel's newest release is left as
+it is, and so is one with commits of its own that are on no branch of the
+remote (nothing is rewound or left out unless you pass `--allow-downgrade`);
+`yozakura update --channel git` updates on another channel once, and
+`install.sh --channel beta` installs on that channel. The one-liner without
+`--channel` builds `main` and is then on the default `stable` channel:
+updates keep it where it is until a newer release is tagged, then move it to
+that release. To keep following `main`, run `yozakura update channel git`
+(or install with `--channel git`). Release tags are `X.Y.Z` /
+`X.Y.Z-beta.N` without a leading `v`: only those get release binaries (a
+`v` tag is still followed and built from source; where the installer cannot
+build, it takes the latest release's binaries instead). Nix installs update through their flake;
+channels do not apply there.
 
 `yozakura install hyprland` adds one block to `~/.config/hypr/hyprland.lua`:
 
