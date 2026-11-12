@@ -22,6 +22,10 @@ type Service struct {
 	// is normalized through it so a user edit during GameMode persists
 	// the user's values without leaking them into the live compositor.
 	gameModeFn func() bool
+
+	// polkit is the shell's own polkit agent as the shell last reported
+	// it; `<app> polkit-fallback` reads it (polkitState).
+	polkit polkitState
 }
 
 // PathResolver is the minimal surface the service needs from *paths.Paths.
@@ -52,8 +56,10 @@ func (s *Service) Manager() *Manager { return s.mgr }
 
 func (s *Service) Register(srv *ipc.Server) {
 	methods := map[string]ipc.HandlerFunc{
-		"render": s.render,
-		"write":  s.write,
+		"render":         s.render,
+		"write":          s.write,
+		"polkitState":    s.polkit.get,
+		"setPolkitState": s.polkit.set,
 	}
 	if s.mgr != nil {
 		methods["state"] = s.state
@@ -96,9 +102,7 @@ func (s *Service) write(params json.RawMessage) (any, error) {
 	if err := json.Unmarshal(params, &in); err != nil {
 		return nil, fmt.Errorf("compositor.write: %w", err)
 	}
-	if in.PolkitCmd == "" {
-		in.PolkitCmd = PolkitCommand()
-	}
+	in.PolkitCmd = startupPolkit(in, PolkitCommand)
 	if in.Env == nil {
 		in.Env = QtEnv(in.QtTheme)
 	}

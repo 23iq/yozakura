@@ -387,6 +387,23 @@ ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"
 check(h.eval(vprobe, "vis") is False, "wizard window is unmapped while an install waits for the password")
 ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running"})')
 check(h.eval(vprobe, "vis") is True, "wizard window comes back once the password was given")
+# The shell's own agent is registered: its dialog comes up above the
+# wizard, which stays mapped and only hands it the keyboard while open.
+ev("PolkitService.registered = true")
+ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running", auth: true})')
+check(h.eval(vprobe, "vis") is True, "with the in-shell polkit agent the wizard stays mapped during the password prompt")
+kbd = re.search(r"^\s*WlrLayershell\.keyboardFocus: (.+)$", winsrc, re.M).group(1)
+kprobe = h.load("import QtQuick\nimport qs.modules.services\nQtObject {\n"
+                "    readonly property int none: 0\n    readonly property int exclusive: 1\n"
+                "    property int focus: " + kbd.replace("WlrKeyboardFocus.None", "none").replace("WlrKeyboardFocus.Exclusive", "exclusive")
+                + "\n}", auto_stub=False)
+check(h.eval(kprobe, "focus") == 1, "wizard keeps the exclusive keyboard focus until the dialog opens")
+ev("PolkitService.dialogOpen = true")
+check(h.eval(kprobe, "focus") == 0, "the wizard gives the keyboard to the open password dialog")
+ev("PolkitService.dialogOpen = false")
+check(h.eval(kprobe, "focus") == 1, "and takes it back when the dialog closes")
+ev("PolkitService.registered = false")
+check(h.eval(vprobe, "vis") is False, "an external agent (ours not registered): the wizard steps aside as before")
 ev('ExtrasService.jobs = ({})')
 ev('ExtrasService.progress = ({})')
 check("mask: Region" in (Path(__file__).resolve().parents[1] / "modules/onboarding/OnboardingPeekPill.qml").read_text(), "pill window masks input to the pill")

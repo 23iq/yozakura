@@ -188,6 +188,11 @@ Singleton {
     }
 
     function setActiveModule(moduleName) {
+        // The polkit dialog keeps the keyboard (PolkitService.allowsCommand)
+        if (moduleName && PolkitService.dialogOpen) {
+            console.info("Visibilities:", moduleName, "not opened while the password dialog is up");
+            return;
+        }
         const focusedMonitor = YozdService.focusedMonitor;
         if (!focusedMonitor)
             return;
@@ -254,6 +259,17 @@ Singleton {
         const screenProps = getForScreen(screenName);
         if (moduleNames.indexOf(currentActiveModule) !== -1) {
             screenProps[currentActiveModule] = true;
+        }
+    }
+
+    // The polkit dialog opened: the open module lets go of the keyboard.
+    Connections {
+        target: PolkitService
+        function onDialogOpenChanged() {
+            if (PolkitService.dialogOpen && root.currentActiveModule !== "") {
+                root.clearAll();
+                root.currentActiveModule = "";
+            }
         }
     }
 

@@ -37,6 +37,10 @@ type qsHooks struct {
 	// out); probe also dials its socket, otherwise only the file is
 	// checked. nil: the session is assumed alive.
 	sessionGone func(probe bool) bool
+	// shellLost runs once the daemon stops restarting the shell for good
+	// (it then exits): what the shell did for the session is handed on
+	// (shellLostPolkit). nil: nothing.
+	shellLost func()
 }
 
 // defaultQSHooks wires the real process handling for qsBin.
@@ -58,6 +62,15 @@ func (d *Daemon) defaultQSHooks(qsBin string) qsHooks {
 		alert:         alertUser,
 		fallbackShell: func() string { return filepath.Join(paths.FindShellSource(), "shell.qml") },
 		sessionGone:   waylandGone,
+		shellLost:     d.shellLostPolkit,
+	}
+}
+
+// giveUpShell runs shellLost: the shell will not be started again by this
+// daemon.
+func (d *Daemon) giveUpShell() {
+	if d.hooks.shellLost != nil {
+		d.hooks.shellLost()
 	}
 }
 
@@ -163,6 +176,7 @@ func (d *Daemon) scheduleRestart(cause error) <-chan time.Time {
 	delay, giveUp := d.guard.record(d.hooks.now())
 	if giveUp {
 		log.Printf("[yozakura] qs crashed more than %d times in %v (last: %v); not restarting it, exiting", CrashLoopMax, CrashWindow, cause)
+		d.giveUpShell()
 		d.hooks.alert(brand.DisplayName+" shell keeps crashing",
 			fmt.Sprintf("Stopped it. Run `%s reload` (or press a shell keybind) to try again; logs: `%s doctor`.", brand.AppID, brand.AppID))
 		return nil
@@ -232,6 +246,7 @@ func (d *Daemon) supervise(sigCh <-chan os.Signal, shellQML string, healthCh <-c
 					shellQML = d.hooks.fallbackShell()
 					log.Printf("[yozakura] retrying with previous shell generation")
 					if spawnErr := d.startQS(shellQML); spawnErr != nil {
+						d.giveUpShell()
 						d.shutdown()
 						return fmt.Errorf("spawn rollback shell: %w", spawnErr)
 					}

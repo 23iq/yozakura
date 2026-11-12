@@ -455,11 +455,11 @@ func writeWindowRules(b *strings.Builder, in Input) {
 }
 
 // execWord quotes cmd for the shell that runs exec-once on Hyprland and
-// Mango (niri runs a quoted command through sh -c) when it holds spaces or
-// shell syntax; a plain path or name is left as it is.
+// Mango (niri runs a quoted command through sh -c): one sh word, the same
+// rule the polkit lines use (ShellWord). An empty command stays empty.
 func execWord(cmd string) string {
-	if cmd == "" || !strings.ContainsAny(cmd, " \t'\"$`\\;|&<>*?()") {
+	if cmd == "" {
 		return cmd
 	}
-	return "'" + strings.ReplaceAll(cmd, "'", `'\''`) + "'"
+	return ShellWord(cmd)
 }

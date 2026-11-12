@@ -44,6 +44,7 @@ h.module("qs.modules.services", {
     "YozdService": "pragma Singleton\nQtObject { property var focusedMonitor: null; function monitorFor(s) { return null } }",
 })
 h.copy("modules/services/Visibilities.qml", "qs/modules/services")
+h.copy("modules/services/PolkitService.qml", "qs/modules/services")
 h.module("qs.modules.services", {})
 h.singleton("qs.modules.bar.workspaces", "CompositorData", "QtObject { function monitorHasFullscreen(m) { return false } }")
 h.singleton("qs.modules.bar.panels", "Panels", 'QtObject { property string primaryEdge: "top" }')

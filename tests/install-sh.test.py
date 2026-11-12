@@ -400,6 +400,78 @@ def test_yes_install_optional_failure_does_not_abort():
         sb.cleanup()
 
 
+# The polkit line of the user's Hyprland entry: the text is the one
+# backend/cmd/yozakura/hypr_polkit.go writes and goodbye removes
+# (hypr_polkit_test.go checks both against the same literals).
+OLD_POLKIT = {
+    "hyprland.conf": "exec-once = systemctl --user start hyprpolkitagent # yozakura: polkit",
+    "hyprland.lua": 'hl.on("hyprland.start", function() hl.exec_cmd("systemctl --user start hyprpolkitagent") end) -- yozakura: polkit',
+}
+
+
+def new_polkit(name, bin_path):
+    cmd = f"{bin_path} polkit-fallback"
+    if name.endswith(".lua"):
+        return f'hl.on("hyprland.start", function() hl.exec_cmd("{cmd}") end) -- yozakura: polkit'
+    return f"exec-once = {cmd} # yozakura: polkit"
+
+
+def test_hyprland_polkit_fallback_line():
+    for name in ("hyprland.conf", "hyprland.lua"):
+        # A fresh install: the line runs the installed binary's fallback verb.
+        sb = Sandbox("arch")
+        try:
+            hypr = sb.home / ".config/hypr"
+            hypr.mkdir(parents=True)
+            entry = hypr / name
+            if name.endswith(".conf"):
+                entry.write_text("monitor = , preferred, auto, 1\n")
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            check(rc == 0, f"{name}: hyprland install exit {rc}", err)
+            check(["install", "hyprland"] in sb.calls("yozakura"), f"{name}: 'install hyprland' not run", sb.log.read_text())
+            want = new_polkit(name, sb.home / ".local/bin/yozakura")
+            text = entry.read_text() if entry.exists() else ""
+            check(text.splitlines().count(want) == 1, f"{name}: fresh install lacks {want!r}", text)
+            check("hyprpolkitagent" not in text, f"{name}: still starts hyprpolkitagent directly", text)
+            # A re-run adds nothing.
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            again = entry.read_text() if entry.exists() else ""
+            check(again == text, f"{name}: re-run changed the entry", again)
+
+            # An install that has our old line: left to the binary's repair
+            # ('install hyprland', Go tests), never a second agent line.
+            entry.write_text("misc {\n}\n\n" + OLD_POLKIT[name] + "\n")
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            check(rc == 0, f"{name}: re-install exit {rc}", err)
+            check(["install", "hyprland"] in sb.calls("yozakura"), f"{name}: repair not run", sb.log.read_text())
+            check(entry.read_text().count("polkit") == 2, f"{name}: second polkit line added", entry.read_text())
+
+            # The user's own agent line stays the only one.
+            own = "exec-once = /usr/lib/polkit-kde-authentication-agent-1\n"
+            entry.write_text(own)
+            rc, err, _ = sb.run("--compositor", "hyprland", "-y", "--no-sddm")
+            check(entry.read_text() == own, f"{name}: the user's polkit line was touched", entry.read_text())
+        finally:
+            sb.cleanup()
+
+    # Dry run: names the fallback verb, writes nothing.
+    sb = Sandbox("arch", strict=True)
+    try:
+        before = sb.snapshot()
+        rc, err, _ = sb.run("--dry-run", "-y", "--compositor", "hyprland", "--no-sddm")
+        check(rc == 0, f"polkit dry run exit {rc}", err)
+        check_untouched(sb, before, err)
+        check(
+            re.search(r"would run: append '~/\.local/bin/yozakura polkit-fallback' to ~/\.config/hypr/hyprland\.lua", err),
+            "dry run does not show the polkit-fallback line",
+            err,
+        )
+        check("polkit-fallback': the fallback polkit agent" in err, "plan does not name the fallback line", err)
+        check("hyprpolkitagent autostart" not in err, "dry run still describes the old line", err)
+    finally:
+        sb.cleanup()
+
+
 def test_attended_install_menu_and_reboot():
     sb = Sandbox("arch")
     try:
@@ -1054,6 +1126,7 @@ def main():
         test_fedora_mango_falls_back_and_niri_hint,
         test_yes_install_optional_failure_does_not_abort,
         test_attended_install_menu_and_reboot,
+        test_hyprland_polkit_fallback_line,
     ):
         before = len(FAILURES)
         test()

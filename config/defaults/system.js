@@ -4,6 +4,7 @@ var data = {
     "disks": ["/"],
     "language": "auto",
     "updateServiceEnabled": true,
+    "polkitAgent": true,
     "idle": {
         "general": {
             "lock_cmd": "yozakura lock",

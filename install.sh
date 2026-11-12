@@ -23,6 +23,9 @@ APP_ID="yozakura"
 DISPLAY_NAME="Yozakura"
 LEGACY_ID="ambxst"
 DAEMON_ID="yozd"
+# The binary's verb that starts the external polkit agent only while the
+# shell's own agent is off or unavailable (polkit_autostart).
+POLKIT_FALLBACK="polkit-fallback"
 REPO_URL="${YOZAKURA_REPO_URL:-https://github.com/23iq/yozakura.git}"
 BRANCH="${YOZAKURA_BRANCH:-}"
 RAW_BASE="${YOZAKURA_RAW_BASE:-https://raw.githubusercontent.com/23iq/yozakura/${BRANCH:-main}}"
@@ -470,7 +473,7 @@ dry_line() {
   add_input_group) what="sudo usermod -aG input $(id -un) (after sudo groupadd --system input, if it is missing)" ;;
   phosphor_user_font) what="curl the Phosphor v$PHOSPHOR_VERSION zip, copy its fonts into $(tilde "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/phosphor"), fc-cache" ;;
   download_release) what="curl the latest release binaries and SHA256SUMS into $(tilde "$SRC_DIR"), verify them, chmod 755" ;;
-  polkit_autostart) what="append the hyprpolkitagent autostart line to $(tilde "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)") (if no polkit agent is configured)" ;;
+  polkit_autostart) what="append '$(tilde "$BIN_DIR/$APP_ID") $POLKIT_FALLBACK' to $(tilde "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)") (if no polkit agent is configured there): it starts hyprpolkitagent only when $DISPLAY_NAME's own polkit agent is off or unavailable" ;;
   *)
     local a q="'" plain='^[][A-Za-z0-9_./=:,@%+~{}-]+$'
     what=""
@@ -1551,7 +1554,7 @@ show_plan() {
     if [[ "$COMPOSITOR" == hyprland ]] && legacy_hypr_block; then
       ui_box_kv "Config" "your ${LEGACY_ID^} block in ~/.config/hypr is switched over on the first start"
     else
-      ui_box_kv "Config" "add the $DISPLAY_NAME block to $(tilde "$(comp_config "$COMPOSITOR")")$([[ "$COMPOSITOR" == hyprland ]] && echo " (+ polkit agent autostart)")"
+      ui_box_kv "Config" "add the $DISPLAY_NAME block to $(tilde "$(comp_config "$COMPOSITOR")")$([[ "$COMPOSITOR" == hyprland ]] && echo " (+ '$APP_ID $POLKIT_FALLBACK': the fallback polkit agent)")"
     fi
   fi
   if [[ "$EXCLUSIVE" == 1 ]]; then
@@ -2049,7 +2052,7 @@ compositor_setup() {
   logged "$BIN_DIR/$APP_ID" install "$COMPOSITOR" || die "'$APP_ID install $COMPOSITOR' failed." "See $LOG_FILE"
   if [[ "$COMPOSITOR" == hyprland ]]; then
     hyprland_bootstrap
-    run_optional "polkit autostart" "Polkit agent autostart" "Start a polkit agent from your Hyprland config yourself." polkit_autostart
+    run_optional "polkit fallback" "Fallback polkit agent line" "Add 'exec-once = $BIN_DIR/$APP_ID $POLKIT_FALLBACK' to your Hyprland config yourself." polkit_autostart
   fi
   done_or_would "$name config: $(tilde "$(comp_config "$COMPOSITOR")")" "add the $DISPLAY_NAME block to the $name config: $(tilde "$(comp_config "$COMPOSITOR")")"
 }
@@ -2102,20 +2105,41 @@ hyprland_bootstrap() {
   return 0
 }
 
-# hyprpolkitagent ships a user unit but plain Hyprland sessions never reach
-# graphical-session.target, so it is started from the user's config (once,
-# only when no polkit agent is configured there yet).
-# The line ends in "<comment> $APP_ID: polkit" so '$APP_ID goodbye' removes
-# exactly that line.
+# The shell registers its own polkit agent; whichever agent starts first
+# wins, so the user's config starts the external one (hyprpolkitagent, the
+# fallback: plain Hyprland sessions never reach graphical-session.target)
+# through '$APP_ID polkit-fallback', which starts it only while the shell's
+# agent is off or unavailable. Absolute path, like the bootstrap: a fresh
+# session's PATH may lack $BIN_DIR. Added once, only when no polkit agent is
+# configured there yet; an older line of ours (systemctl --user start
+# hyprpolkitagent) is rewritten by the binary ('$APP_ID install hyprland',
+# run just before, and every start of the shell). The line ends in "<comment> $APP_ID: polkit" so
+# '$APP_ID goodbye' removes exactly that line (backend/cmd/yozakura: the
+# same text as polkitEntryLine).
+# Written whether or not an external agent is installed: the verb looks for
+# one at every login (compositor.PolkitCommand: more places than this
+# script could check, the polkit-agent package may be skipped now and
+# installed later) and, finding none, only logs a line and exits; it never
+# starts anything next to the shell's registered agent.
 polkit_autostart() {
-  local entry marker="$APP_ID: polkit"
+  local entry cmd bin="$BIN_DIR/$APP_ID" q="'\\''" marker="$APP_ID: polkit"
   entry="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)"
-  [[ -e /usr/lib/systemd/user/hyprpolkitagent.service ]] || return 0
   grep -qsi polkit "$entry" && return 0
-  if [[ "$entry" == *.lua ]]; then
-    printf '\nhl.on("hyprland.start", function() hl.exec_cmd("systemctl --user start hyprpolkitagent") end) -- %s\n' "$marker" >>"$entry"
+  # One sh word for the launcher path, quoted only when sh would split or
+  # expand it (the binary's compositor.ShellWord writes the same text).
+  if [[ "$bin" =~ ^[A-Za-z0-9_@%+=:,./-]+$ ]]; then
+    cmd="$bin $POLKIT_FALLBACK"
   else
-    printf '\nexec-once = systemctl --user start hyprpolkitagent # %s\n' "$marker" >>"$entry"
+    cmd="'${bin//\'/$q}' $POLKIT_FALLBACK"
+  fi
+  if [[ "$entry" == *.lua ]]; then
+    # a Lua string: \ and " escaped
+    cmd="${cmd//\\/\\\\}"
+    cmd="${cmd//\"/\\\"}"
+    printf '\nhl.on("hyprland.start", function() hl.exec_cmd("%s") end) -- %s\n' "$cmd" "$marker" >>"$entry"
+  else
+    # hyprlang: # starts a comment unless doubled
+    printf '\nexec-once = %s # %s\n' "${cmd//#/##}" "$marker" >>"$entry"
   fi
 }
 

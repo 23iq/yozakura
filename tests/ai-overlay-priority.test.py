@@ -51,6 +51,7 @@ h.singleton("qs.modules.services", "YozdService", """QtObject {
     function monitorFor(s) { return null; }
 }""")
 h.copy("modules/services/Visibilities.qml", "qs/modules/services")
+h.copy("modules/services/PolkitService.qml", "qs/modules/services")
 h.module("qs.modules.services", {})
 h.singleton("qs.modules.theme", "Motion", """QtObject {
     property var morph: ({duration: 0, easing: Easing.Linear})

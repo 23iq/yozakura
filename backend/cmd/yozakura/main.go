@@ -111,6 +111,8 @@ func main() {
 			os.Exit(runTask(args[1:], os.Stdout, os.Stderr))
 		case "sys":
 			os.Exit(runSys(args[1:], defaultSysEnv(os.Stdout), os.Stdout, os.Stderr))
+		case compositor.FallbackVerb:
+			os.Exit(runPolkitFallback(args[1:], defaultPolkitEnv(), os.Stderr))
 		case "onboarding":
 			if msg := onboardingArgsError(args[1:]); msg != "" {
 				fmt.Fprintln(os.Stderr, msg)
@@ -811,9 +813,4 @@ Commands:
 // branded fills the {name} / {bin} placeholders of user-facing text.
 func branded(s string) string {
 	return strings.NewReplacer("{name}", brand.DisplayName, "{bin}", brand.AppID).Replace(s)
-}
-
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
 }

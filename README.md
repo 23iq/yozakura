@@ -202,7 +202,7 @@ installer installs from it and `yozakura doctor` checks it.
 | Compositor and UI | `hyprland` (≥ 0.56), `quickshell`, Qt 6 (`qt6-base`, `qt6-wayland`, `qt6-declarative`, `qt6-svg`, `qt6-multimedia`, `qt6-imageformats`), `yozd` (built from this repo) | everything |
 | Build | `go` (≥ 1.26), `make`, `git` | the binaries |
 | Theming | `matugen`, `adw-gtk-theme`, Phosphor icons, Noto (CJK, emoji), bundled fonts in `assets/fonts` | colors, icons, text |
-| Desktop integration | `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `hyprpolkitagent`, `xdg-utils` | screen sharing, file pickers, password prompts |
+| Desktop integration | `xdg-desktop-portal-hyprland`, `xdg-desktop-portal-gtk`, `hyprpolkitagent`, `xdg-utils` | screen sharing, file pickers, password prompts (`hyprpolkitagent` is the fallback when the shell's own polkit agent is off) |
 | Audio and media | `pipewire`, `pipewire-pulse`, `wireplumber`, `playerctl`, `cava`, `ffmpeg`, GStreamer plugins, `gpu-screen-recorder` | media, visualizer, video wallpapers, recording |
 | System panels | `networkmanager`, `bluez`, `brightnessctl`, `ddcutil`, `upower`, `power-profiles-daemon` | network, bluetooth, brightness, battery, power |
 | Tools | `wl-clipboard`, `wtype`, `grim`, `slurp`, `jq`, `python`, `glib2`, `libnotify`, `tesseract`, `fd`, `plocate`, `zenity`, `imagemagick`, `kitty`, `tmux` | clipboard, typing, screenshots, OCR, search, dialogs |

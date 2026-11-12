@@ -64,7 +64,9 @@
    "methods": [
     "dispatch",
     "eval",
+    "polkitState",
     "render",
+    "setPolkitState",
     "state",
     "write"
    ],

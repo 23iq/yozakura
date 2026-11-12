@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"yozakura/backend/pkg/brand"
+	"yozakura/backend/pkg/exclusive"
 	"yozakura/backend/pkg/fsutil"
+	"yozakura/backend/pkg/svc/compositor"
 )
 
 // legacyLuaLoadLine is the include line older installs wrote into
@@ -25,7 +27,10 @@ func luaLoadLine() string { return brand.HyprLuaLoadLine() }
 // repairHyprlandEntry keeps an existing Hyprland integration loadable: it
 // guards the legacy include line in ~/.config/hypr/hyprland.lua and, when a
 // Hyprland config loads the data dir, recreates missing bootstrap files that
-// start the shell (bin, absolute). Generated files are never overwritten.
+// start the shell (bin, absolute). The installer's old polkit line, and the
+// one exclusive mode's minimal entry wrote, become `<bin> polkit-fallback`
+// (migratePolkitLine, exclusive.UpdatePolkit). Generated files are never
+// overwritten.
 // Runs on every shell start, since `update` leaves compositor configs alone.
 func repairHyprlandEntry(home, bin string) {
 	hypr := filepath.Join(home, ".config/hypr")
@@ -33,6 +38,15 @@ func repairHyprlandEntry(home, bin string) {
 	confPath := filepath.Join(hypr, "hyprland.conf")
 	if isHomeManagerManaged(luaPath) || isHomeManagerManaged(confPath) {
 		return
+	}
+	for _, p := range []string{luaPath, confPath} {
+		if _, err := migratePolkitLine(p, bin); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: could not update the polkit line in %s: %v\n", p, err)
+		}
+	}
+	// Exclusive mode's minimal entry started the external agent itself.
+	if _, err := exclusive.UpdatePolkit(hypr, compositor.ExternalPolkitCommands(), compositor.FallbackShellCommand(bin)); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not update the polkit line of the exclusive mode entry: %v\n", err)
 	}
 
 	loads := false

@@ -49,6 +49,10 @@ QtObject {
         // the wizard only needs commandRan for its keybind tour.
         if (DryRun.active)
             return;
+        if (!PolkitService.allowsCommand(command)) {
+            console.info("IPC run command ignored while the password dialog is up:", command);
+            return;
+        }
         switch (command) {
             // Launcher (Standalone Notch Module)
             case "launcher": toggleLauncher(); break;

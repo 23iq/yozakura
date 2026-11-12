@@ -31,6 +31,15 @@ var polkitUnits = []string{
 	"/etc/systemd/user/hyprpolkitagent.service",
 }
 
+// ExternalPolkitCommands are every command PolkitCommand can return (the
+// agent binaries, then the user unit): what older startup lines ran.
+func ExternalPolkitCommands() []string {
+	return append(append([]string{}, polkitAgents...), polkitUnitCommand)
+}
+
+// polkitUnitCommand starts hyprpolkitagent's user unit.
+const polkitUnitCommand = "systemctl --user start hyprpolkitagent"
+
 // PolkitCommand returns the command that starts a polkit agent, or "" when
 // none is installed. A hyprpolkitagent user unit is the fallback.
 func PolkitCommand() string { return polkitCommand("/") }
@@ -42,7 +51,7 @@ const nixosPolkitUnit = "/etc/systemd/user/hyprpolkitagent.service"
 
 func polkitCommand(root string) string {
 	if _, err := os.Stat(filepath.Join(root, nixosPolkitUnit)); err == nil {
-		return "systemctl --user start hyprpolkitagent"
+		return polkitUnitCommand
 	}
 	for _, bin := range polkitAgents {
 		if st, err := os.Stat(filepath.Join(root, bin)); err == nil && !st.IsDir() {
@@ -51,7 +60,7 @@ func polkitCommand(root string) string {
 	}
 	for _, unit := range polkitUnits {
 		if _, err := os.Stat(filepath.Join(root, unit)); err == nil {
-			return "systemctl --user start hyprpolkitagent"
+			return polkitUnitCommand
 		}
 	}
 	return ""

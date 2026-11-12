@@ -49,6 +49,9 @@ func TestDoctorRejectsUnknownFlags(t *testing.T) {
 }
 
 func TestDoctorDepsScopedToCompositor(t *testing.T) {
+	old := doctorShellPolkit
+	doctorShellPolkit = func() shellPolkit { return shellPolkit{} }
+	t.Cleanup(func() { doctorShellPolkit = old })
 	c := &deps.Checker{Distro: "arch", LookPath: func(string) (string, error) { return "", os.ErrNotExist }, Glob: func(string) ([]string, error) { return nil, nil }, Fonts: func() string { return "" }}
 	names := func(comp string) map[string]string {
 		m := map[string]string{}
@@ -85,5 +88,39 @@ func TestReadCompositor(t *testing.T) {
 	}
 	if got := readCompositor(dir); got != "niri" {
 		t.Errorf("got %s", got)
+	}
+}
+
+// With the shell's own polkit agent registered, a missing external agent is
+// no gap; without a running shell the row says what is configured.
+func TestDoctorPolkitAgentInShell(t *testing.T) {
+	c := &deps.Checker{Distro: "arch", LookPath: func(string) (string, error) { return "", os.ErrNotExist }, Glob: func(string) ([]string, error) { return nil, nil }, Fonts: func() string { return "" }}
+	old := doctorShellPolkit
+	t.Cleanup(func() { doctorShellPolkit = old })
+	find := func(sp shellPolkit) doctorItem {
+		doctorShellPolkit = func() shellPolkit { return sp }
+		for _, it := range doctorDeps(c, map[string]bool{}, "niri") {
+			if it.name == polkitDep {
+				return it
+			}
+		}
+		t.Fatal("no polkit-agent row")
+		return doctorItem{}
+	}
+	for _, k := range []struct {
+		sp     shellPolkit
+		ok     bool
+		phrase string
+	}{
+		{shellPolkit{live: true, state: "registered", enabled: true}, true, "own agent takes the password prompts"},
+		{shellPolkit{live: true, state: "pending", enabled: true}, false, "is not registered"},
+		{shellPolkit{live: true, state: "unavailable", enabled: true}, false, "no Polkit module"},
+		{shellPolkit{live: true, state: "off"}, false, "own agent is off"},
+		{shellPolkit{enabled: true}, true, "is configured to take the password prompts"},
+		{shellPolkit{}, false, "own agent is off"},
+	} {
+		if it := find(k.sp); it.ok != k.ok || !strings.Contains(it.purpose, k.phrase) {
+			t.Errorf("%+v: %+v", k.sp, it)
+		}
 	}
 }
