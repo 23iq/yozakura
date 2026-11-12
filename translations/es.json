@@ -4394,6 +4394,7 @@
   "prefs.weatherfx.cond.petals": "Primavera",
   "prefs.weatherfx.cond.leaves": "Otoño",
   "prefs.macro.section": "Sensación",
+  "prefs.macro.section_surface": "Profundidad y cristal",
   "prefs.macro.custom": "Personalizado",
   "prefs.macro.motion": "Movimiento",
   "prefs.macro.motion.desc": "Cuánto se animan el shell y las ventanas.",

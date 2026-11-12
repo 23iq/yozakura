@@ -194,7 +194,7 @@ FocusScope {
                         objectName: "rowLabel"
                         Layout.alignment: Qt.AlignVCenter
                         // wraps in a narrow place (beside the stage)
-                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - inlineControl.implicitWidth)
+                        Layout.maximumWidth: row.stacked ? body.width : Math.max(Space.px(60), body.width - Space.l * 2 - (row.dense && row.type === "macro" ? inlineControl.Layout.preferredWidth : inlineControl.implicitWidth))
                         role: "body"
                         wrapMode: Text.WordWrap
                         text: I18n.t(row.entry.label)
@@ -242,7 +242,7 @@ FocusScope {
             Loader {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? Math.min(Space.px(380), row.width * 0.5) : (row.type === "font" ? Math.min(Space.px(340), row.width * 0.48) : -1))
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? (row.dense ? body.width * 0.56 : Math.min(Space.px(380), row.width * 0.5)) : (row.type === "font" ? Math.min(Space.px(340), row.width * 0.48) : -1))
                 focus: !row.stacked
                 active: row.built && !row.stacked
                 sourceComponent: row.fixable ? fixComponent : row.controlComponent()
@@ -448,6 +448,7 @@ FocusScope {
         id: macroComponent
         MacroSlider {
             entry: row.entry
+            compact: row.dense
         }
     }
 

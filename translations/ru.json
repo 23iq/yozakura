@@ -4422,6 +4422,7 @@
   "prefs.weatherfx.cond.petals": "Весна",
   "prefs.weatherfx.cond.leaves": "Осень",
   "prefs.macro.section": "Ощущение",
+  "prefs.macro.section_surface": "Глубина и стекло",
   "prefs.macro.custom": "Своё",
   "prefs.macro.motion": "Движение",
   "prefs.macro.motion.desc": "Насколько оживлены оболочка и окна.",

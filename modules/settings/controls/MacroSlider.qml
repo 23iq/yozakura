@@ -16,6 +16,9 @@ ColumnLayout {
     id: root
 
     property var entry
+    // a card of the page row: one line, no end names (the level name says
+    // where it sits)
+    property bool compact: false
     readonly property var macro: Macros.byId(entry ? entry.macro : "")
     // The live config the level is read from. A glass amount that follows
     // the preset (-1) reads as the preset's own amount.
@@ -59,6 +62,7 @@ ColumnLayout {
     }
 
     RowLayout {
+        visible: !root.compact
         Layout.fillWidth: true
         Layout.rightMargin: Math.ceil(widest.advanceWidth) + Space.xs + Space.m
         KitText {
