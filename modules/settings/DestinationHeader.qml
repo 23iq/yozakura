@@ -1,3 +1,5 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import qs.modules.theme
 import qs.modules.services
@@ -16,7 +18,6 @@ Item {
     readonly property var destination: header.category ? Categories.groupOf(header.category.id) : null
     readonly property var tabs: header.category ? Categories.tabsOf(header.category.id) : []
     readonly property int modifiedCount: header.category && header.category.sections ? SettingsStore.modifiedCount(header.category) : 0
-    readonly property Item tabStrip: tabsLoader.item
 
     signal tabSelected(string id)
 

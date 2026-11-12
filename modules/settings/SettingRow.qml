@@ -109,12 +109,14 @@ FocusScope {
     readonly property bool pointed: row.shown && (row.hovered || row.activeFocus)
     onPointedChanged: {
         if (row.pointed)
-            SettingsStore.focusKeys = row.keys;
-        else if (SettingsStore.focusKeys === row.keys)
-            SettingsStore.focusKeys = [];
+            SettingsStore.point(row, row.keys);
+        else
+            SettingsStore.unpoint(row);
     }
-    Component.onDestruction: if (SettingsStore.focusKeys === row.keys)
-        SettingsStore.focusKeys = []
+    // a hidden page (kept alive) points at nothing
+    onVisibleChanged: if (!visible)
+        SettingsStore.unpoint(row)
+    Component.onDestruction: SettingsStore.unpoint(row)
 
     HoverHandler {
         id: hover

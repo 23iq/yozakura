@@ -45,16 +45,17 @@ MiniScreen {
             Repeater {
                 model: 3
                 delegate: Item {
+                    id: cell
                     required property int index
-                    width: root.vertical ? parent.width : (bar.width - root.thick * 0.6) / 3
-                    height: root.vertical ? (bar.height - root.thick * 0.6) / 3 : parent.height
+                    width: root.vertical ? bar.width - root.thick * 0.6 : (bar.width - root.thick * 0.6) / 3
+                    height: root.vertical ? (bar.height - root.thick * 0.6) / 3 : bar.height - root.thick * 0.6
                     Mark {
-                        readonly property real len: root.thick * (index === 2 ? 1.6 : 0.9)
+                        readonly property real len: root.thick * (cell.index === 2 ? 1.6 : 0.9)
                         width: root.vertical ? root.thick * 0.4 : len
                         height: root.vertical ? len : root.thick * 0.4
-                        x: root.vertical ? (parent.width - width) / 2 : (index === 0 ? 0 : (index === 2 ? parent.width - width : (parent.width - width) / 2))
-                        y: root.vertical ? (index === 0 ? 0 : (index === 2 ? parent.height - height : (parent.height - height) / 2)) : (parent.height - height) / 2
-                        color: index === 0 ? Colors.primary : Qt.alpha(Colors.overBackground, 0.7)
+                        x: root.vertical ? (cell.width - width) / 2 : (cell.index === 0 ? 0 : (cell.index === 2 ? cell.width - width : (cell.width - width) / 2))
+                        y: root.vertical ? (cell.index === 0 ? 0 : (cell.index === 2 ? cell.height - height : (cell.height - height) / 2)) : (cell.height - height) / 2
+                        color: cell.index === 0 ? Colors.primary : Qt.alpha(Colors.overBackground, 0.7)
                     }
                 }
             }

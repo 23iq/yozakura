@@ -137,7 +137,6 @@
                 "all": [
                   {
                     "key": "compositor.motionProfile",
-                    "advanced": true,
                     "equals": "off"
                   },
                   {
@@ -195,7 +194,6 @@
                 "all": [
                   {
                     "key": "compositor.motionProfile",
-                    "advanced": true,
                     "equals": "off"
                   },
                   {

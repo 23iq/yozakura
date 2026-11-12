@@ -44,6 +44,20 @@ Singleton {
     // The row under the pointer or keyboard focus: its keys light up the
     // part of the page's stage they change (StageSpot). [] = none.
     property var focusKeys: []
+    property var _focusOwner: null
+
+    // A row is pointed at (hovered / focused) or no longer: the last one
+    // pointed at owns focusKeys; leaving clears them only if it still does.
+    function point(owner, keys) {
+        root._focusOwner = owner;
+        root.focusKeys = keys || [];
+    }
+    function unpoint(owner) {
+        if (root._focusOwner !== owner)
+            return;
+        root._focusOwner = null;
+        root.focusKeys = [];
+    }
 
     signal navigateRequested(string categoryId, string sectionId, string entryId)
     // A settings control (or reset / undo) changed `key`: lets an editor

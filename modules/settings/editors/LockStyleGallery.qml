@@ -111,7 +111,7 @@ Item {
                                 root.building++;
                                 return;
                             }
-                            liveView.item.grabToImage(result => {
+                            (liveView.item as Item).grabToImage(result => {
                                 shot.grabbed = result;
                                 if (shot.live)
                                     root.building++;
