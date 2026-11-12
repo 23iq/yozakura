@@ -30,6 +30,7 @@ import (
 	"yozakura/backend/pkg/svc/clipboard"
 	"yozakura/backend/pkg/svc/compositor"
 	configsvc "yozakura/backend/pkg/svc/config"
+	convertsvc "yozakura/backend/pkg/svc/convert"
 	"yozakura/backend/pkg/svc/displays"
 	"yozakura/backend/pkg/svc/exclusive"
 	"yozakura/backend/pkg/svc/extras"
@@ -234,6 +235,9 @@ func New() (*Daemon, error) {
 
 	ocrSvc := ocrsvc.NewService()
 	ocrSvc.Register(d.srv)
+
+	// File converter: probe, bounded conversion queue, clipboard paste/copy.
+	convertsvc.NewService(d.paths.CacheDir).Register(d.srv)
 
 	// notify — exposes notify.send so CLIs (colorpicker, screen, …) can
 	// route their notifications through the running shell instead of
