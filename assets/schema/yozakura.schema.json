@@ -17333,14 +17333,14 @@
       "x-file": "config/voice.json",
       "properties": {
         "enabled": {
-          "title": "Enable voice input",
+          "title": "Voice input",
           "type": "boolean",
           "default": true,
           "description": "Push-to-talk to the AI and dictation into any window, recognized on this computer.",
           "x-settings": {
             "category": "voice",
-            "section": "voice",
-            "label": "voice.settings.enabled",
+            "section": "talk",
+            "label": "prefs.voice.enabled",
             "control": "toggle",
             "keywords": "voice enable disable microphone"
           }
@@ -17352,7 +17352,7 @@
           "description": "q5 is lighter and faster, q8 slightly more accurate.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "speech",
             "label": "voice.settings.model",
             "control": "selector",
             "keywords": "whisper model large turbo quantization q5 q8 accuracy",
@@ -17371,14 +17371,14 @@
           }
         },
         "language": {
-          "title": "Speech language",
+          "title": "Language",
           "type": "string",
           "default": "auto",
           "description": "Language you speak. Auto detects it every time.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
-            "label": "prefs.label.speech_language",
+            "section": "speech",
+            "label": "prefs.voice.language",
             "control": "selector",
             "keywords": "speech recognition language auto detect english russian japanese",
             "enabledWhen": {
@@ -17418,10 +17418,10 @@
           "description": "Hold the key while you talk, or tap once to start and once to stop.",
           "x-settings": {
             "category": "voice",
-            "section": "voice",
+            "section": "talk",
             "label": "voice.settings.activation",
             "control": "selector",
-            "keywords": "push to talk hold toggle hands free activation",
+            "keywords": "push to talk hold toggle tap hands free activation",
             "enabledWhen": {
               "key": "voice.enabled",
               "equals": true
@@ -17433,7 +17433,7 @@
           ],
           "x-enumLabels": {
             "push-to-talk": "Hold to talk",
-            "toggle": "Toggle"
+            "toggle": "Tap on, tap off"
           }
         },
         "useGpu": {
@@ -17443,7 +17443,7 @@
           "description": "Much faster when a supported GPU is available.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.use_gpu",
             "control": "toggle",
             "keywords": "gpu cuda vulkan rocm acceleration",
@@ -17509,14 +17509,14 @@
           "x-unit": "s"
         },
         "vadAutoStop": {
-          "title": "Stop when I stop talking",
+          "title": "Stop on a pause",
           "type": "boolean",
           "default": true,
           "description": "In toggle mode, stop listening by itself after a pause.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
-            "label": "voice.settings.vad_auto_stop",
+            "section": "speech",
+            "label": "prefs.voice.auto_stop",
             "control": "toggle",
             "keywords": "vad silence pause auto stop",
             "enabledWhen": {
@@ -17532,7 +17532,7 @@
           "description": "How long a pause ends the recording.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.vad_silence",
             "control": "slider",
             "step": 100,
@@ -17565,7 +17565,7 @@
           "description": "Higher picks up quieter speech, lower ignores more background noise.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.vad_sensitivity",
             "control": "selector",
             "keywords": "vad sensitivity speech detection noise",
@@ -17625,7 +17625,7 @@
           "description": "Cut silence before recognition for faster, cleaner results.",
           "x-settings": {
             "category": "voice",
-            "section": "recognition",
+            "section": "engine",
             "label": "voice.settings.server_vad",
             "control": "toggle",
             "keywords": "vad trim silence server",
@@ -17642,7 +17642,7 @@
           "description": "How dictated text reaches the focused window.",
           "x-settings": {
             "category": "voice",
-            "section": "dictation",
+            "section": "engine",
             "label": "voice.settings.typing_method",
             "control": "selector",
             "keywords": "dictation wtype ydotool clipboard type paste",
@@ -17665,14 +17665,14 @@
           }
         },
         "punctuation": {
-          "title": "Keep punctuation and capitals",
+          "title": "Punctuation",
           "type": "boolean",
           "default": true,
           "description": "Keep the punctuation and capitals whisper adds.",
           "x-settings": {
             "category": "voice",
             "section": "dictation",
-            "label": "voice.settings.punctuation",
+            "label": "prefs.voice.punctuation",
             "control": "toggle",
             "keywords": "dictation punctuation capital letters",
             "enabledWhen": {
@@ -17682,14 +17682,14 @@
           }
         },
         "trailingSpace": {
-          "title": "Add a space after dictation",
+          "title": "Space after",
           "type": "boolean",
           "default": true,
           "description": "Add a space after each dictated phrase so the next one does not stick to it.",
           "x-settings": {
             "category": "voice",
             "section": "dictation",
-            "label": "voice.settings.trailing_space",
+            "label": "prefs.voice.trailing_space",
             "control": "toggle",
             "keywords": "dictation trailing space",
             "enabledWhen": {
@@ -17699,14 +17699,14 @@
           }
         },
         "aiAutoSend": {
-          "title": "Send to the AI immediately",
+          "title": "Send at once",
           "type": "boolean",
           "default": false,
           "description": "Send voice questions to the AI without reviewing them first.",
           "x-settings": {
             "category": "voice",
             "section": "dictation",
-            "label": "voice.settings.ai_auto_send",
+            "label": "prefs.voice.auto_send",
             "control": "toggle",
             "keywords": "assistant ai voice send immediately",
             "enabledWhen": {
@@ -17722,7 +17722,7 @@
           "description": "How long the transcript stays on screen after dictation.",
           "x-settings": {
             "category": "voice",
-            "section": "dictation",
+            "section": "engine",
             "label": "voice.settings.preview",
             "control": "slider",
             "step": 100,

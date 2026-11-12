@@ -92,7 +92,8 @@ var THUMBS = {
     "ClockPanelThumb": "thumbs/ClockPanelThumb.qml",
     "IndicatorThumb": "thumbs/IndicatorThumb.qml",
     "NumeralThumb": "thumbs/NumeralThumb.qml",
-    "WeightThumb": "thumbs/WeightThumb.qml"
+    "WeightThumb": "thumbs/WeightThumb.qml",
+    "ActivationThumb": "thumbs/ActivationThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -105,7 +106,8 @@ var STAGES = {
     "LookStage": "stages/LookStage.qml",
     "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
-    "LockStage": "stages/LockStage.qml"
+    "LockStage": "stages/LockStage.qml",
+    "VoiceStage": "stages/VoiceStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

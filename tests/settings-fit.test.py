@@ -10,7 +10,7 @@ columns end above the row, and a picture card's strip is one row.
 Destinations still exempt (no `row` yet, they keep the scrolling bento):
 wallpapers, presets, changes, ai, ai-providers, ai-code, launcher,
 dashboard, desktop, overview, keyboard, input, displays, windows, specials,
-system, updates, voice, timers, routines, about, network, bluetooth, sound,
+system, updates, timers, routines, about, network, bluetooth, sound,
 effects, power, terminal, extras, mods. A test below fails when
 a category gains a `row` and is not in CONVERTED, so the list stays true.
 """
@@ -27,7 +27,8 @@ from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import SettingsEnv  # noqa: E402
 
-CONVERTED = ["bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen"]
+CONVERTED = ["bar", "notch", "dock", "layout", "appearance", "icons-type", "notifications", "osd", "menus", "lockscreen",
+             "voice"]
 MULTI = ('[{"id": "top", "edge": "top", "style": "classic", "groups": {"start": ["launcher"], "end": ["clock"]}},'
          ' {"id": "rail", "edge": "left", "style": "rail", "groups": {"start": ["launcher"], "end": ["power"]}}]')
 
