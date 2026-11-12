@@ -2,7 +2,10 @@ package convert
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -61,7 +64,13 @@ type Tools struct {
 	magickFormats map[string]string
 	// ffprobe for media durations ("" = progress is indeterminate)
 	ffprobe string
+	// pandoc is installed but older than 2.15 (no --sandbox): not used
+	pandocOld bool
+	// what a real ImageMagick run showed for PDF (policy, Ghostscript)
+	magickPDF *pdfAbility
 }
+
+type pdfAbility struct{ read, write bool }
 
 // LookFunc resolves a program name like exec.LookPath.
 type LookFunc func(string) (string, error)
@@ -91,8 +100,56 @@ func DetectTools(look LookFunc) *Tools {
 		if err == nil {
 			t.magickFormats = parseMagickFormats(string(out))
 		}
+		t.magickPDF = probeMagickPDF(m)
+	}
+	if p := t.progs[EnginePandoc]; p != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		out, err := proc.Run(ctx, p, "--version")
+		cancel()
+		if err != nil || !PandocHasSandbox(string(out)) {
+			delete(t.progs, EnginePandoc)
+			t.pandocOld = true
+		}
 	}
 	return t
+}
+
+// PandocHasSandbox reads `pandoc --version`: --sandbox exists from 2.15 on.
+func PandocHasSandbox(version string) bool {
+	f := strings.Fields(version)
+	if len(f) < 2 {
+		return false
+	}
+	var major, minor int
+	if _, err := fmt.Sscanf(f[1], "%d.%d", &major, &minor); err != nil {
+		return false
+	}
+	return major > 2 || (major == 2 && minor >= 15)
+}
+
+// probeMagickPDF writes and reads back a one-pixel PDF: a security policy
+// or a missing Ghostscript makes ImageMagick list PDF yet fail on it.
+func probeMagickPDF(prog string) *pdfAbility {
+	dir, err := os.MkdirTemp("", "convert-probe-")
+	if err != nil {
+		return nil
+	}
+	defer os.RemoveAll(dir)
+	pdf, png := filepath.Join(dir, "p.pdf"), filepath.Join(dir, "p.png")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	a := &pdfAbility{}
+	if _, err := proc.Run(ctx, prog, "-size", "1x1", "xc:white", pdf); err == nil {
+		if st, err := os.Stat(pdf); err == nil && st.Size() > 0 {
+			a.write = true
+			if _, err := proc.Run(ctx, prog, pdf+"[0]", png); err == nil {
+				if st, err := os.Stat(png); err == nil && st.Size() > 0 {
+					a.read = true
+				}
+			}
+		}
+	}
+	return a
 }
 
 // NewTools builds a Tools from a fixed engine -> program map (tests, and
@@ -127,6 +184,9 @@ func (t *Tools) Has(e Engine) bool {
 // missing names what an unavailable engine still needs: for the two-step
 // markup to PDF only the tool that is not installed.
 func (t *Tools) missing(e Engine) string {
+	if t != nil && t.pandocOld && (e == EnginePandoc || (e == EngineDocPDF && !t.Has(EnginePandoc))) {
+		return "pandoc 2.15 or newer"
+	}
 	if e == EngineDocPDF {
 		switch {
 		case t.Has(EnginePandoc) && !t.Has(EngineSoffice):
@@ -184,17 +244,25 @@ func parseMagickFormats(out string) map[string]string {
 	m := map[string]string{}
 	for _, line := range strings.Split(out, "\n") {
 		f := strings.Fields(line)
-		if len(f) < 3 {
+		if len(f) < 2 {
 			continue
 		}
+		// "WEBP* WEBP rw+ ...", and in ImageMagick 6 "HEIC  r-- ..." with
+		// an empty module column: the mode is the first field shaped like one
 		name := strings.TrimRight(f[0], "*")
-		mode := f[2]
-		if len(mode) != 3 || !strings.ContainsAny(mode[:1], "r-") || !strings.ContainsAny(mode[1:2], "w-") {
-			continue
+		for _, mode := range f[1:3] {
+			if isMode(mode) {
+				m[strings.ToUpper(name)] = mode
+				break
+			}
 		}
-		m[strings.ToUpper(name)] = mode
 	}
 	return m
+}
+
+func isMode(s string) bool {
+	return len(s) == 3 && strings.ContainsRune("r-", rune(s[0])) && strings.ContainsRune("w-", rune(s[1])) &&
+		strings.ContainsRune("+-", rune(s[2]))
 }
 
 // engineReads / engineWrites: the formats an image engine handles beyond
@@ -220,6 +288,9 @@ func set(ids ...string) map[string]bool {
 func (t *Tools) supports(e Engine, from, to string) bool {
 	switch e {
 	case EngineMagick:
+		if t.magickPDF != nil && ((from == "pdf" && !t.magickPDF.read) || (to == "pdf" && !t.magickPDF.write)) {
+			return false
+		}
 		return t.magickCan(from, false) && (to == "pdf" || t.magickCan(to, true))
 	case EngineNative:
 		if byID[from].Kind == KindData {
