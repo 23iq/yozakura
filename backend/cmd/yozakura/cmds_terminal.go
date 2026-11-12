@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -24,10 +25,9 @@ type terminalEnv struct {
 	config func() termrun.Config
 	home   func() string
 	start  func(argv []string) error
-	// The passwd login shell and the session's $SHELL: a terminal starts
-	// the login shell once it differs (nil: argv as it is).
-	loginShell func() string
-	shell      func() string
+	// The $SHELL a new terminal gets after a chsh during this session,
+	// as the daemon reports it ("" or nil: argv as it is).
+	sessionShell func() string
 }
 
 func defaultTerminalEnv() terminalEnv {
@@ -36,8 +36,7 @@ func defaultTerminalEnv() terminalEnv {
 		home:   func() string { h, _ := os.UserHomeDir(); return h },
 		start:  startDetached,
 
-		loginShell: termrun.LoginShell,
-		shell:      func() string { return os.Getenv("SHELL") },
+		sessionShell: daemonTerminalShell,
 	}
 }
 
@@ -97,7 +96,7 @@ func runTerminal(args []string, env terminalEnv, errOut io.Writer) int {
 		fmt.Fprintf(errOut, "terminal: %v\n", err)
 		return 1
 	}
-	argv = withSessionLoginShell(argv, env.loginShell, env.shell)
+	argv = withSessionShell(argv, env.sessionShell)
 	if err := env.start(argv); err != nil {
 		fmt.Fprintf(errOut, "terminal: %v\n", err)
 		return 1
@@ -105,11 +104,31 @@ func runTerminal(args []string, env terminalEnv, errOut io.Writer) int {
 	return 0
 }
 
-// withSessionLoginShell is termrun.WithLoginShell with the lookups of an
-// env (either nil: argv as it is).
-func withSessionLoginShell(argv []string, login, shell func() string) []string {
-	if login == nil || shell == nil {
+// withSessionShell is termrun.WithShell with the lookup of an env (nil:
+// argv as it is).
+func withSessionShell(argv []string, shell func() string) []string {
+	if shell == nil {
 		return argv
 	}
-	return termrun.WithLoginShell(argv, login(), shell())
+	return termrun.WithShell(argv, shell())
+}
+
+// daemonTerminalShell asks the running daemon for term.status
+// terminalShell: only it knows the passwd shell the session started with
+// ("" when it is not running or no chsh happened).
+func daemonTerminalShell() string {
+	if !isAlive() {
+		return ""
+	}
+	raw, err := newClient().Call("term.status", nil)
+	if err != nil {
+		return ""
+	}
+	var st struct {
+		TerminalShell string `json:"terminalShell"`
+	}
+	if json.Unmarshal(raw, &st) != nil {
+		return ""
+	}
+	return st.TerminalShell
 }

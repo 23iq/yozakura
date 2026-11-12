@@ -81,8 +81,7 @@ func TestLaunchTerminalStartsTheLoginShell(t *testing.T) {
 		t.Fatal(err)
 	}
 	env.readFile = os.ReadFile
-	env.loginShell = func() string { return "/usr/bin/fish" }
-	env.shell = func() string { return "/bin/bash" }
+	env.sessionShell = func() string { return "/usr/bin/fish" }
 	for _, id := range []string{"kitty", "firefox"} {
 		if code := runLaunch([]string{id}, env, &bytes.Buffer{}); code != 0 {
 			t.Fatalf("%s: exit %d", id, code)
@@ -95,9 +94,9 @@ func TestLaunchTerminalStartsTheLoginShell(t *testing.T) {
 	if !reflect.DeepEqual(*started, want) {
 		t.Fatalf("started %q", *started)
 	}
-	// The session already runs the login shell: argv as it is.
+	// No chsh this session (the daemon reports no shell): argv as it is.
 	*started = nil
-	env.shell = func() string { return "/usr/bin/fish" }
+	env.sessionShell = func() string { return "" }
 	runLaunch([]string{"kitty"}, env, &bytes.Buffer{})
 	if (*started)[0][0] != "gio" {
 		t.Fatalf("unchanged shell still wrapped: %q", *started)

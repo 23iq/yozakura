@@ -179,6 +179,15 @@ check(applied() == ([], 0), "foreign prompt: Continue changes nothing")
 fresh_wizard({**FRESH, "loginShell": "/usr/bin/zsh"})
 check(prop("promptOn", "checked") is False and prop("fishDefault", "checked") is False, "zsh user: nothing preselected")
 
+# bash login files of the user's own: fish is not preselected, and the step says why.
+fresh_wizard({**FRESH, "loginFiles": ["~/.bash_profile"]})
+check(prop("promptOn", "checked") is True and prop("fishDefault", "checked") is False, "login files: only the prompt is preselected")
+check(prop("loginFiles", "visible") is True and "~/.bash_profile" in str(prop("loginFiles", "message")), "login files: the step says why")
+h.eval(vfind("fishDefault"), "toggled(true)")
+check(prop("loginFiles", "visible") is False, "the note goes once fish is ticked")
+fresh_wizard(FRESH)
+check(prop("loginFiles", "visible") is False, "no login files: no note")
+
 # ---- skipping the wizard applies nothing -----------------------------------
 fresh_wizard(FRESH)
 check(prop("fishDefault", "checked") is True, "preselected before the skip")

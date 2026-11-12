@@ -115,7 +115,9 @@ QtObject {
         // compositor honours that request: one window closed maximized made
         // every later one open maximized. Off, kitty starts at its initial
         // size (initial_window_width/height, the user's own when set); a
-        // tiling layout sizes the window either way.
+        // tiling layout sizes the window either way. A remember_window_size
+        // line in the user's own kitty.conf wins: the writer below drops
+        // ours then (our include comes last and would override it).
         conf += `remember_window_size no\n`;
         conf += `selection_foreground ${selectionForeground}\n`;
         conf += `selection_background ${selectionBackground}\n`;
@@ -163,8 +165,9 @@ QtObject {
         const kittyConfPath = Brand.cacheDir + "/kitty.conf";
 
         // Ensure directory exists and write file; the contents travel as a
-        // positional argument (the font name is user text).
-        const cmd = 'mkdir -p "$(dirname "$1")" && printf \'%s\\n\' "$2" > "$1" && pkill -SIGUSR1 kitty';
+        // positional argument (the font name is user text). Without our
+        // remember_window_size line when the user's kitty.conf sets it.
+        const cmd = 'mkdir -p "$(dirname "$1")" && conf="$2" && user="${XDG_CONFIG_HOME:-$HOME/.config}/kitty/kitty.conf" && if grep -Eqs \'^[[:space:]]*remember_window_size([[:space:]]|$)\' "$user"; then conf="$(printf \'%s\\n\' "$conf" | grep -v \'^remember_window_size \')"; fi && printf \'%s\\n\' "$conf" > "$1" && pkill -SIGUSR1 kitty';
 
         writerProcess.command = ["sh", "-c", cmd, Brand.appId + "-kitty", kittyConfPath, conf];
         writerProcess.running = true;

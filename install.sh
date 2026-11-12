@@ -48,7 +48,9 @@ COMPOSITORS=(hyprland niri mango)
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
-# DM: the login manager found; DM_STATE: enabled, disabled or unknown;
+# DOCTOR_FAILED: the closing doctor reported a missing required component.
+DOCTOR_FAILED=0
+# DM: the login manager found; DM_STATE: enabled, disabled, managed or unknown;
 # DM_ENABLE: its unit when this run enables it (choose_login).
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
@@ -240,12 +242,17 @@ ui_box_bottom() {
   printf '  %s%s%s%s%s\n' "$C_LINE" "$B_BL" "$UI_OUT" "$B_BR" "$C_OFF" >&2
 }
 
+# ui_box_row TEXT [HANG]: a folded row's next lines are indented by HANG.
 ui_box_row() {
-  local text="$1" w vis
+  local text="$1" hang="${2:-0}" w vis pad="" first=1
   ui_box_width && w=$((UI_OUT - 4))
   ui_strip "$text" && vis="$UI_OUT"
   if ((${#vis} > w)); then
-    while IFS= read -r text; do ui_box_row "$text"; done < <(fold -s -w "$w" <<<"$vis")
+    ((hang > 0)) && printf -v pad '%*s' "$hang" ""
+    while IFS= read -r text; do
+      if [[ "$first" == 1 ]]; then ui_box_row "$text"; else ui_box_row "$pad$text"; fi
+      first=0
+    done < <(fold -s -w $((w - hang)) <<<"$vis")
     return
   fi
   printf '  %s%s%s %s%*s %s%s%s\n' "$C_LINE" "$B_V" "$C_OFF" "$1" $((w - ${#vis})) "" "$C_LINE" "$B_V" "$C_OFF" >&2
@@ -640,8 +647,12 @@ Compositor:
 Optional features (or later, from the setup wizard):
   --with-voice      local speech-to-text (builds whisper.cpp, ~1 GB)
   --with-depth      depth clock behind the wallpaper subject (uv venv, ~0.7 GB)
-  --with-sddm       SDDM login screen + the $DISPLAY_NAME theme (default when
-                    no display manager is installed)
+  --with-sddm       SDDM login screen + the $DISPLAY_NAME theme. Default when
+                    there is no login manager, or SDDM is installed but not
+                    enabled. Another login manager installed but not enabled
+                    gets a menu (enable it, SDDM instead, leave it); with
+                    --with-sddm SDDM takes its place, and --yes never
+                    enables it. One already enabled is left alone.
   --no-voice, --no-depth, --no-sddm
 
 Install:
@@ -670,6 +681,10 @@ the package list is fetched from), YOZAKURA_FLAKE (NixOS), YOZAKURA_GPU
 (NVIDIA, AMD or Intel: overrides the graphics detection), YOZAKURA_OS_RELEASE
 (an os-release file to read instead of /etc/os-release), YOZAKURA_SYS_BIN
 (where the binaries are linked when needed, default /usr/local/bin).
+
+Exit status: 0 installed (an optional feature that failed is listed under
+NEEDS ATTENTION), 1 the install stopped, 2 installed but needs attention (a
+required component is missing, or the login screen could not be set up).
 Log: $LOG_FILE
 EOF
 }
@@ -746,7 +761,8 @@ ask() {
 # distribution a user with sudo rights, for a system where only root exists
 # yet or sudo is missing. Arch: a full upgrade with it (no partial upgrades).
 sudo_setup_lines() {
-  local who="${1:-yourname}" wheel="echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel"
+  local who="${1:-yourname}" wheel
+  wheel="$(wheel_line)"
   case "$DISTRO" in
   arch) printf '%s
 ' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
@@ -761,12 +777,20 @@ sudo_setup_lines() {
   esac
 }
 
+# wheel_line: the command that lets the wheel group use sudo: a new
+# sudoers.d file, mode 0440 like the rest, never replacing one already there.
+wheel_line() {
+  printf '%s' "[ -e /etc/sudoers.d/10-wheel ] || echo '%wheel ALL=(ALL:ALL) ALL' | install -m 0440 /dev/stdin /etc/sudoers.d/10-wheel"
+}
+
+# admin_group: the group whose members may use sudo here.
+admin_group() { if [[ "$DISTRO" == debian ]]; then echo sudo; else echo wheel; fi; }
+
 # sudo_grant_lines USER: the commands (as root) that let USER use sudo.
 sudo_grant_lines() {
   case "$DISTRO" in
-  debian) printf '%s\n' "usermod -aG sudo $1" ;;
-  fedora) printf '%s\n' "usermod -aG wheel $1" ;;
-  *) printf '%s\n' "usermod -aG wheel $1" "echo '%wheel ALL=(ALL:ALL) ALL' > /etc/sudoers.d/10-wheel" ;;
+  debian | fedora) printf '%s\n' "usermod -aG $(admin_group) $1" ;;
+  *) printf '%s\n' "usermod -aG wheel $1" "$(wheel_line)" ;;
   esac
 }
 
@@ -796,9 +820,15 @@ need_sudo() {
   [[ -n "$TTY" ]] || sudo -n true 2>/dev/null || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
   SUDO_FAILED=0
   if ! try_sudo; then
-    local lines=() l
-    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_grant_lines "$(id -un)")
-    die "sudo authentication failed." "A wrong password, or $(id -un) may not use sudo yet. To allow it, as root:" \
+    local lines=() l me group
+    me="$(id -un)" group="$(admin_group)"
+    # Debian and Fedora let the admin group use sudo out of the box: a
+    # member was refused for the password.
+    if [[ "$DISTRO" == debian || "$DISTRO" == fedora ]] && [[ " $(id -nG "$me" 2>/dev/null) " == *" $group "* ]]; then
+      die "sudo authentication failed: the password was not accepted." "$me is in the $group group; run the installer again and retype it."
+    fi
+    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_grant_lines "$me")
+    die "sudo authentication failed." "If the password was right, $me may not use sudo yet. To allow it, as root:" \
       "${lines[@]}" "Then log in again and re-run the installer."
   fi
 }
@@ -913,20 +943,30 @@ dm_unit() {
 }
 
 # detect_login: DM = the login manager found, DM_STATE = enabled (it starts
-# at boot), disabled (installed, nothing starts it) or unknown (no systemd:
-# whether an init script starts it is not guessed). systemd starts every one
-# of them through the display-manager.service link but ly, whose ly@ttyN
-# (or ly.service) is wanted by a target directly.
+# at boot), disabled (installed, nothing starts it), managed (the
+# distribution's own display-manager.service unit picks it) or unknown (no
+# systemd: whether an init script starts it is not guessed). systemd starts
+# every one of them through the display-manager.service link but ly, whose
+# ly@ttyN (or ly.service) is wanted by a target directly.
 detect_login() {
-  local link="$SYSROOT/etc/systemd/system/display-manager.service" v w
+  local link="$SYSROOT/etc/systemd/system/display-manager.service" v w u
   DM="" DM_STATE=""
   if has_systemd; then
-    if [[ -L "$link" ]]; then
+    # A dangling link (its login manager removed) enables nothing.
+    if [[ -L "$link" && -e "$link" ]]; then
       DM="$(basename "$(readlink -f "$link")" .service)" DM_STATE=enabled
       return 0
     fi
+    # openSUSE: display-manager.service is a unit file of its own that
+    # starts the login manager update-alternatives selects; left to it.
+    for u in "$SYSROOT"/{usr/lib,lib,etc}/systemd/system/display-manager.service; do
+      if [[ -f "$u" && ! -L "$u" ]]; then
+        DM="$(dm_alternative)" DM_STATE=managed
+        return 0
+      fi
+    done
     for w in "$SYSROOT"/etc/systemd/system/*.wants/ly.service "$SYSROOT"/etc/systemd/system/*.wants/ly@*.service; do
-      [[ -e "$w" || -L "$w" ]] && DM=ly DM_STATE=enabled && return 0
+      [[ -e "$w" ]] && DM=ly DM_STATE=enabled && return 0
     done
     for v in "${LOGIN_MANAGERS[@]}"; do
       dm_installed "$v" && DM="$v" DM_STATE=disabled && return 0
@@ -937,6 +977,13 @@ detect_login() {
     has_cmd "$v" && DM="$v" DM_STATE=unknown && return 0
   done
   return 0
+}
+
+# dm_alternative: the login manager update-alternatives selects
+# (default-displaymanager), else "display-manager".
+dm_alternative() {
+  local alt="$SYSROOT/etc/alternatives/default-displaymanager"
+  if [[ -e "$alt" ]]; then basename "$(readlink -f "$alt")"; else echo display-manager; fi
 }
 
 # login_ready: a login screen comes up at boot after this install.
@@ -1071,6 +1118,12 @@ choose_login() {
   WITH_SDDM="${WITH_SDDM:-0}"
   if [[ "$DM_STATE" == unknown ]]; then
     info "Login manager: $DM found; without systemd whether it starts at boot is not checked."
+    return 0
+  fi
+  if [[ "$DM_STATE" == managed ]]; then
+    info "Login manager: $DM, managed by ${DISTRO_NAME:-the distribution} (display-manager.service); left as it is."
+    [[ "$WITH_SDDM" == 1 ]] && warn "--with-sddm skipped: the distribution manages the login manager."
+    WITH_SDDM=0
     return 0
   fi
   [[ "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
@@ -1404,6 +1457,7 @@ login_plan() {
   case "$DM_STATE" in
   enabled) echo "$DM" ;;
   unknown) echo "$DM found (no systemd: whether it starts at boot is not checked)" ;;
+  managed) echo "$DM (display-manager.service of the distribution: left as it is)" ;;
   disabled)
     unit="$(dm_unit "$DM")"
     if [[ " ${SERVICES[*]} " == *" ${DM_ENABLE:-none} "* || ("$DM" == sddm && " ${SERVICES[*]} " == *" sddm "*) ]]; then
@@ -2126,14 +2180,36 @@ run_doctor() {
     dry_line "$BIN_DIR/$APP_ID" doctor "${args[@]}"
     return 0
   fi
-  "$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1 | sed 's/^/  /' >&2 || true
+  local out
+  out="$("$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1)" || DOCTOR_FAILED=1
+  [[ -z "$out" ]] || printf '%s\n' "$out" | sed 's/^/  /' >&2
 }
 
-# done_header: the blossom beside "Yozakura <version> is installed".
+# login_failed: the login screen this run set up (SDDM, or the one chosen
+# in the menu) could not be enabled.
+login_failed() {
+  local s
+  for s in sddm ${DM_ENABLE:+"$DM_ENABLE"}; do
+    [[ " ${SERVICES[*]} " == *" $s "* ]] && failed "$s" && return 0
+  done
+  return 1
+}
+
+# needs_attention: a required component is missing or the login screen
+# could not be set up; the install exits with status 2.
+needs_attention() { [[ "$DOCTOR_FAILED" == 1 ]] || login_failed; }
+
+# done_header: the blossom beside "Yozakura <version> is installed", or
+# what is wrong when something failed (NEEDS ATTENTION lists it).
 done_header() {
-  local ver i rows flower right=() name line art=("${ART_FLOWER[@]}")
+  local ver i rows flower right=() name line art=("${ART_FLOWER[@]}") tag="the blossoms are out"
   ver="$(head -n1 "$SRC_DIR/version" 2>/dev/null || true)"
   line="$DISPLAY_NAME ${ver:+$ver }is installed"
+  if needs_attention; then
+    line="$line, but needs attention" tag="see NEEDS ATTENTION below"
+  elif [[ ${#FAILED[@]} -gt 0 ]]; then
+    line="$line; an optional part failed" tag="see NEEDS ATTENTION below"
+  fi
   [[ "$DRY_RUN" == 1 ]] && line="$DISPLAY_NAME ${ver:+$ver }would be installed"
   echo >&2
   if [[ "$UI_UTF8" == 0 ]]; then
@@ -2144,8 +2220,8 @@ done_header() {
   rows=${#art[@]}
   ui_paint "$DISPLAY_NAME" 0 0 "${#DISPLAY_NAME}" 1 && name="$C_BOLD$UI_OUT"
   right[rows / 2 - 2]="$name ${C_BOLD}${line#"$DISPLAY_NAME "}$C_OFF"
-  art_brush "${#line}" && right[rows / 2 - 1]="$UI_OUT"
-  ui_paint "$ART_KANJI" 0 0 4 1 && right[rows / 2 + 1]="$C_BOLD$UI_OUT  ${C_DIM}the blossoms are out$C_OFF"
+  art_brush "${#line}" "$((UI_COLS - ${#art[0]} - 5 - ${#line}))" && right[rows / 2 - 1]="$UI_OUT"
+  ui_paint "$ART_KANJI" 0 0 4 1 && right[rows / 2 + 1]="$C_BOLD$UI_OUT  $C_DIM$tag$C_OFF"
   for ((i = 0; i < rows; i++)); do
     ui_paint "${art[i]}" 0 "$i" "${#art[0]}" "$rows" && flower="$UI_OUT"
     printf '  %s   %s\n' "$flower" "${right[i]:-}" >&2
@@ -2161,7 +2237,7 @@ failed() {
 }
 
 # numbered N TEXT: one line of the next steps.
-numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")"; }
+numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")" $((${#1} + 2)); }
 command_row() { ui_box_row "$(printf '%s%-18s%s %s%s%s' "$C_PINK" "$1" "$C_OFF" "$C_DIM" "$2" "$C_OFF")"; }
 
 # in_session: whether this terminal runs inside the chosen compositor.
@@ -2200,7 +2276,7 @@ next_steps() {
   elif [[ "$DM_STATE" == enabled ]]; then
     numbered 1 "Log out (or reboot) and pick $name on the login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
-  elif [[ "$DM_STATE" == unknown ]]; then
+  elif [[ "$DM_STATE" == unknown || "$DM_STATE" == managed ]]; then
     numbered 1 "Reboot; if $DM shows a login screen, pick $name there."
     numbered 2 "Otherwise log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
     numbered 3 "The setup wizard greets you there. Super opens the launcher."
@@ -2211,8 +2287,9 @@ next_steps() {
     [[ -n "$DM" ]] && numbered "$G_INFO" "$DM is installed but not enabled; for a login screen: sudo systemctl enable $(dm_unit "$DM")"
   fi
   [[ "$ADD_INPUT_GROUP" == 1 ]] && numbered "$G_INFO" "Log in again for the input group (Super-alone binds)."
-  if [[ ${#FAILED[@]} -gt 0 ]]; then
+  if [[ ${#FAILED[@]} -gt 0 || "$DOCTOR_FAILED" == 1 ]]; then
     ui_box_head "NEEDS ATTENTION"
+    [[ "$DOCTOR_FAILED" == 1 ]] && ui_box_row "$C_YELLOW$G_WARN$C_OFF required components are missing (the check above; $APP_ID doctor)"
     for f in "${FAILED[@]}"; do
       ui_box_row "$C_YELLOW$G_WARN$C_OFF $f: failed (see log)"
     done
@@ -2238,7 +2315,7 @@ offer_reboot() {
   if [[ "$REBOOT" != 1 ]]; then
     [[ "$PREV_INSTALL" == 1 || "$ASSUME_YES" == 1 ]] && return 0
     in_session && return 0
-    [[ "$DM_STATE" != enabled ]] && login_ready && default=y
+    [[ "$DM_STATE" != enabled ]] && login_ready && ! needs_attention && default=y
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
   [[ "$DRY_RUN" == 1 ]] || info "Rebooting..."
@@ -2372,6 +2449,9 @@ main() {
     optional_features
   fi
   finish
+  # Exit status 2: installed, but a required component is missing or the
+  # login screen could not be set up (needs_attention).
+  if needs_attention; then exit 2; fi
 }
 
 main "$@"

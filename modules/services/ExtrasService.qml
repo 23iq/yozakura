@@ -296,6 +296,24 @@ Singleton {
             detectAfterDone.restart();
     }
 
+    // The install queue lives in the daemon: a lost connection (a daemon
+    // restart) must not leave a running job, or its password wait
+    // (awaitingAuth), behind. Reconnecting resubscribes, and the
+    // subscription's snapshot brings back the jobs still there.
+    function _connectionLost() {
+        root.jobs = ExtrasModel.withoutActive(root.jobs);
+        root.progress = ExtrasModel.withoutActive(root.progress);
+    }
+
+    property Connections backendWatch: Connections {
+        target: BackendService
+        ignoreUnknownSignals: true
+        function onSocketAvailableChanged() {
+            if (!BackendService.socketAvailable)
+                root._connectionLost();
+        }
+    }
+
     function _subscribe() {
         if (root._subscribed)
             return;

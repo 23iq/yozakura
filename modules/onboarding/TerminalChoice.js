@@ -10,10 +10,13 @@
 // Nothing is preselected when the user has a prompt of their own (a fish
 // file starts starship / oh-my-posh), a login shell of their own (other
 // than the distribution's bash / sh), on a re-run of the wizard, or before
-// the terminal status is known. "Show system info when a terminal opens"
-// (the fastfetch greeting) is preselected on a first run unless it is on
-// already, a shell of the user's runs a fetch tool itself, or fastfetch
-// can neither be found nor installed. The ticks are applied only by
+// the terminal status is known. fish as the login shell is not preselected
+// either when bash login files hold content of the user's own (term.status
+// loginFiles: a console login may start the compositor or export variables
+// there, and fish reads none of them). "Show system info when a terminal
+// opens" (the fastfetch greeting) is preselected on a first run unless it
+// is on already, a shell of the user's runs a fetch tool itself, or
+// fastfetch can neither be found nor installed. The ticks are applied only by
 // Continue.
 
 var PLAIN_SHELLS = ["bash", "sh"];
@@ -49,15 +52,17 @@ function fetchLook(status) {
 
 // ctx: {firstRun, status (term.status), promptOn, fishCard (ExtrasService
 // cardState of "fish"), greetingOn, fetchCard (cardState of "fastfetch")}
-// -> {prompt, fish, fetch, known}. known: the status is there (defaults
-// are decided once, then remembered).
+// -> {prompt, fish, fetch, known, loginFiles}. known: the status is there
+// (defaults are decided once, then remembered); loginFiles: fish was held
+// back for the user's bash login files alone.
 function defaults(ctx) {
     var st = ctx ? ctx.status : null;
     var out = {
         "prompt": false,
         "fish": false,
         "fetch": false,
-        "known": !!st
+        "known": !!st,
+        "loginFiles": false
     };
     if (!st || !ctx.firstRun)
         return out;
@@ -67,9 +72,18 @@ function defaults(ctx) {
     var fishLogin = !!st.fishIsLoginShell;
     var plain = PLAIN_SHELLS.indexOf(_base(st.loginShell)) >= 0;
     var reachable = fishReachable(st, ctx.fishCard);
-    out.fish = !fishLogin && plain && reachable;
+    var own = heldLoginFiles(st).length > 0;
+    out.fish = !fishLogin && plain && reachable && !own;
+    out.loginFiles = !fishLogin && plain && reachable && own;
     out.prompt = !ctx.promptOn && reachable && (fishLogin || plain);
     return out;
+}
+
+// The bash login files with content of the user's own (term.status
+// loginFiles), [] when unknown.
+function heldLoginFiles(status) {
+    var files = status ? status.loginFiles : null;
+    return Array.isArray(files) ? files : [];
 }
 
 // What Continue applies: a subset of ["prompt", "fish", "fetch"]. choice:

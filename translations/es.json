@@ -1561,6 +1561,8 @@
   "onboarding.terminal.plan.fish": "fish pasa a ser tu shell de inicio; se te pedirá la contraseña. Las terminales nuevas abren fish enseguida, todo lo demás tras tu próximo inicio de sesión.",
   "onboarding.terminal.plan.fish_install": "Se instala fish y pasa a ser tu shell de inicio; se te pedirá la contraseña. Las terminales nuevas abren fish enseguida, todo lo demás tras tu próximo inicio de sesión.",
   "onboarding.terminal.plan.prompt_only": "fish no cambia, así que el prompt solo aparece cuando inicias fish tú mismo; tus terminales mantienen tu shell actual.",
+  "onboarding.terminal.login_files.title": "Tus archivos de inicio de sesión siguen al mando",
+  "onboarding.terminal.login_files.desc": "%1 contiene ajustes propios (por ejemplo, iniciar el escritorio o exportar variables). fish no lee estos archivos al iniciar sesión, así que no está preseleccionado; actívalo si ya los has pasado a fish.",
   "onboarding.terminal.login_failed.title": "Tu shell de inicio no se cambió",
   "onboarding.terminal.login_failed.desc": "Se canceló la contraseña o el cambio falló. Las terminales mantienen tu shell actual, así que el prompt solo aparece cuando inicias fish tú mismo. Vuelve a activar la opción para reintentarlo al continuar.",
   "onboarding.terminal.engine_manual.title": "%1 no se puede instalar desde aquí",

@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -9,13 +11,53 @@ import (
 )
 
 // ConfigWatcher watches config files for changes and triggers reloads.
+//
+// It watches the directories of the config and its includes, not the files:
+// a file that does not exist yet (yozd starts before the shell writes the
+// TOML on a first run) or is replaced by a rename is still seen.
 type ConfigWatcher struct {
 	watcher    *fsnotify.Watcher
 	configPath string
 	callback   func(*TOMLConfig)
-	watched    map[string]bool
+	watched    map[string]bool // config files (clean paths)
+	dirs       map[string]bool // their directories, the fsnotify watches
 	mu         sync.Mutex
 	done       chan struct{}
+}
+
+// LoadAndWatch applies the config at path when it exists and watches it:
+// apply runs again on every change, and once the file is created when it
+// does not exist yet. The watch starts first, so a file written while the
+// initial load runs is not missed; apply calls never overlap. The watcher
+// is nil when fsnotify is unavailable (the initial load still runs).
+func LoadAndWatch(path string, apply func(*TOMLConfig)) *ConfigWatcher {
+	var mu sync.Mutex
+	serial := func(cfg *TOMLConfig) {
+		mu.Lock()
+		defer mu.Unlock()
+		apply(cfg)
+	}
+	w, err := NewConfigWatcher()
+	if err != nil {
+		fmt.Printf("%s Warning: could not start watcher: %v\n", logPrefix, err)
+		w = nil
+	} else {
+		w.Start(path, func(cfg *TOMLConfig) {
+			fmt.Println(logPrefix, "Config changed, reloading...")
+			serial(cfg)
+		})
+	}
+	if _, err := os.Stat(path); err != nil {
+		fmt.Printf("%s No config file at %s yet, waiting for it\n", logPrefix, path)
+		return w
+	}
+	if cfg, err := LoadConfig(path); err != nil {
+		fmt.Printf("%s Error loading config: %v\n", logPrefix, err)
+	} else {
+		fmt.Printf("%s Loaded config from %s\n", logPrefix, path)
+		serial(cfg)
+	}
+	return w
 }
 
 // NewConfigWatcher creates a new config file watcher.
@@ -27,6 +69,7 @@ func NewConfigWatcher() (*ConfigWatcher, error) {
 	return &ConfigWatcher{
 		watcher: w,
 		watched: make(map[string]bool),
+		dirs:    make(map[string]bool),
 		done:    make(chan struct{}),
 	}, nil
 }
@@ -62,6 +105,10 @@ func (cw *ConfigWatcher) loop() {
 		case event, ok := <-cw.watcher.Events:
 			if !ok {
 				return
+			}
+			// The directory watches see every file next to the config.
+			if !cw.isWatched(event.Name) {
+				continue
 			}
 
 			// fsnotify delivers IN_IGNORED implicitly when a watch
@@ -127,31 +174,43 @@ func (cw *ConfigWatcher) reload() {
 	}
 }
 
+func (cw *ConfigWatcher) isWatched(name string) bool {
+	cw.mu.Lock()
+	defer cw.mu.Unlock()
+	return cw.watched[filepath.Clean(name)]
+}
+
 func (cw *ConfigWatcher) updateWatchedFiles() {
 	cw.mu.Lock()
 	defer cw.mu.Unlock()
 
-	paths := ResolveIncludePaths(cw.configPath)
 	newWatched := make(map[string]bool)
-
-	for _, p := range paths {
+	newDirs := make(map[string]bool)
+	for _, p := range ResolveIncludePaths(cw.configPath) {
+		if abs, err := filepath.Abs(p); err == nil {
+			p = abs
+		}
+		p = filepath.Clean(p)
 		newWatched[p] = true
-		// Always (re)add the watch. fsnotify.Add is cheap on an
-		// already-watched path and idempotent on a fresh inode, which
-		// means this also self-heals if the loop missed a Remove or
-		// Rename event (some filesystems and edge cases skip them).
-		if err := cw.watcher.Add(p); err != nil {
-			// File might not exist yet — not an error
-			fmt.Printf("%s Warning: cannot watch %s: %v\n", logPrefix, p, err)
+		dir := filepath.Dir(p)
+		if newDirs[dir] {
+			continue
+		}
+		newDirs[dir] = true
+		// Always (re)add the watch: fsnotify.Add is cheap on an
+		// already-watched path, so this also self-heals after a missed
+		// event or a directory created since.
+		if err := cw.watcher.Add(dir); err != nil {
+			fmt.Printf("%s Warning: cannot watch %s: %v\n", logPrefix, dir, err)
 		}
 	}
 
-	// Remove watches for files no longer included
-	for p := range cw.watched {
-		if !newWatched[p] {
-			cw.watcher.Remove(p)
+	// Remove watches of directories no longer holding a config file
+	for d := range cw.dirs {
+		if !newDirs[d] {
+			cw.watcher.Remove(d)
 		}
 	}
 
-	cw.watched = newWatched
+	cw.watched, cw.dirs = newWatched, newDirs
 }
