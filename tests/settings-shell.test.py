@@ -260,6 +260,7 @@ select("appearance")
 modes = ev('w.findItem("themeModeCards", w.findItem("settingsPage").item)')
 check(modes is not None, "the Mode editor is on the Look page")
 h.eval(modes, 'choose("light")')
+QTest.qWait(1700)  # past the merge window: two steps
 h.eval(modes, 'choose("oled")')
 check(ev("Config.theme.lightMode") is False and ev("Config.theme.oledMode") is True, "OLED picked")
 ev("SettingsStore.undo()")

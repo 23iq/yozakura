@@ -190,7 +190,13 @@ Ctrl+Shift+Z undo / redo; Ctrl+Tab steps through tabs.
   same setting changed again within 1.5 s merges into one step, a step that
   ends where it began disappears. `undo()` / `redo()` (Ctrl+Z, Ctrl+Shift+Z /
   Ctrl+Y, the pill) replay the values without recording. `lastStep` feeds
-  the pill. A key with no entry of its own is named by its parent entry.
+  the pill, and the pill undoes the step it names, by its id (never a
+  newer one). A key with no entry of its own is named by its parent entry.
+  A step whose keys no longer hold its "after" value (something outside
+  the window changed them) is dropped, never replayed over the newer value.
+  The history clears on preset apply / try / keep / revert, on a preset
+  edit's save or cancel, on an external reload that changed a value the
+  history expects, and when the window closes.
 - `SettingsStore.transaction(label, fn)`: every change `fn` makes is ONE step
   (Reset page, a reset of a multi-key entry, a macro slider, an editor that
   rewrites a whole object). Use it in any editor that writes several keys.
@@ -520,13 +526,18 @@ names its destination (and tab, section) and shows the row's current value;
 Up / Down pick, Enter opens the highlighted one, Esc clears. It lands on the
 row (scroll, accent wash, keyboard focus). `Synonyms.js` (en + ru) maps
 words people type to the words the schema uses. The Changes tab (Presets)
-lists window rows that differ from their defaults or the preset.
+lists every shown setting that differs from its default or the preset:
+window rows with a jump to their row, out-of-window ones (advanced) without
+a jump; "Reset page" keeps the window filter (ResetModel.changedItems).
 
 ## VERIFY
 - `make check`: the `settings-schema` audit (keys / defaults, translations,
   options / ranges, conditions, registry), node tests
   `tests/settings-{window,undo,tree,home,schema,pages,changes,core,synonyms,macros}.test.cjs`,
-  `tests/write-throttle.test.cjs`, QML tests `tests/settings-shell.test.py`
+  `tests/write-throttle.test.cjs`, `tests/settings-undo-steps.test.cjs`,
+  `tests/settings-save-path.test.cjs`, `tests/settings-changes-all.test.cjs`,
+  `tests/settings-undo-store.test.py`, `tests/config-file-restore.test.py`,
+  `tests/preset-studio-restore.test.py`, QML tests `tests/settings-shell.test.py`
   (undo, tabs, home / back, keep-alive, stage spots, edge / island / corner
   clicks, dead ends, search), `tests/settings-ui.test.py` (typed rows on
   every page), `tests/settings-load-stable.test.py` (home first frame, deep
