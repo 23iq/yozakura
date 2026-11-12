@@ -132,7 +132,14 @@ FileView {
             file.store.registerFile(file.name, file);
     }
     // A pending coalesced write must not be lost when the shell quits.
-    Component.onDestruction: {
+    Component.onDestruction: file.flushPending()
+
+    // Writes the coalesced edit still waiting for its timer now (a preset
+    // command is about to read the file, or to replace it: a cancelled
+    // preset edit, a reverted trial). Written before the replacement lands,
+    // the edit is simply replaced; left waiting, it would be merged into
+    // the new contents (onFileChanged) and outlive the cancel.
+    function flushPending() {
         if (saveTimer.running) {
             saveTimer.stop();
             file.autoSave();

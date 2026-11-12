@@ -96,21 +96,37 @@ Singleton {
         return root._files[name] || null;
     }
     // Writes every domain's coalesced edit still waiting for its timer (a
-    // preset command is about to read the files).
+    // preset command is about to read or replace the files).
     function flushWrites() {
         for (const name in root._files) {
             const f = root._files[name];
-            if (f && f.saveTimer.running) {
-                f.saveTimer.stop();
-                f.autoSave();
-            }
+            if (f)
+                f.flushPending();
         }
     }
 
+    // Writes one domain's file now, even while its auto-save is paused (a
+    // live settings change in a domain the setup wizard is staging), and
+    // drops its coalesced write. Every domain has one (its ConfigFile;
+    // tests/settings-save-path.test.cjs). false: not loaded, broken or no
+    // such domain.
+    function saveDomain(name) {
+        const f = root._files[name];
+        if (!f || !f.ready || f.broken)
+            return false;
+        f.saveTimer.stop();
+        f.writeSynced();
+        return true;
+    }
+
     // A domain file was reloaded (external change): the staged settings
-    // snapshot of that domain follows it, so Discard never undoes it.
+    // snapshot of that domain follows it, so Discard never undoes it, and
+    // the settings window's history checks it still matches
+    // (SettingsStore, domainReloaded).
+    signal domainReloaded(string name)
     function configReloaded(name) {
         GlobalStates.refreshSnapshotDomain(name);
+        root.domainReloaded(name);
     }
 
     // ConfigFile found <name>.json malformed: tell the user where the copy
@@ -553,7 +569,11 @@ Singleton {
     // General configuration
     property GeneralAdapter general: generalLoader.adapter
 
-    // Module save functions
+    // Module save functions (one per domain, theme included:
+    // tests/settings-save-path.test.cjs)
+    function saveTheme() {
+        themeLoader.writeAdapter();
+    }
     function saveBar() {
         barLoader.writeAdapter();
     }
