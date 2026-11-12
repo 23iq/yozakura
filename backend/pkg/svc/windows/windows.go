@@ -7,10 +7,10 @@
 // workspace); the first open starts `qs -p <shell dir>/<entry file>` with
 // <PREFIX>ROLE=<kind> (modules/globals/ProcessRole.qml) and the target in
 // <PREFIX>WINDOW_*, a later one asks the running process to raise itself
-// and show the page (windows.command). One process per kind. A command
+// and show the page (windows.command). One process per kind. A raise
 // asked while the window is still starting (not listening yet) is kept,
 // the last one per kind, and handed over in the answer to its
-// windows.ready. A closed window reports windows.hiding until its process
+// windows.ready; a close then stops the process (it has shown nothing). A closed window reports windows.hiding until its process
 // quits; an open meanwhile raises it again. The window quits when it
 // closes; the service reaps it, tells every subscriber (windows.state) and
 // calls OnExit (the preview relay discards the staging once no window is
@@ -82,7 +82,8 @@ const (
 	EnvWorkspace = "WINDOW_WORKSPACE"
 )
 
-// StopWait is how long Close waits after SIGTERM before SIGKILL.
+// StopWait is how long Close (and a close of a window still starting)
+// waits after SIGTERM before SIGKILL.
 var StopWait = 1500 * time.Millisecond
 
 // Process is a started window process.
@@ -153,6 +154,8 @@ type instance struct {
 	// The last command asked while the window was starting (not listening
 	// yet); windows.ready hands it over.
 	pending *Command
+	// Closed while it was still starting: being stopped (never shown).
+	stopping bool
 }
 
 // Service is the "windows" IPC service.
@@ -276,10 +279,15 @@ func (s *Service) Open(req Request) (string, error) {
 		s.mu.Unlock()
 		return "", errors.New("windows: shutting down")
 	}
-	if _, ok := s.running[req.Kind]; ok {
-		s.mu.Unlock()
-		s.command(Command{Kind: req.Kind, Action: "raise", Page: req.Page, Screen: req.Screen, Workspace: req.Workspace})
-		return "raised", nil
+	if inst, ok := s.running[req.Kind]; ok {
+		if !inst.stopping {
+			s.mu.Unlock()
+			s.command(Command{Kind: req.Kind, Action: "raise", Page: req.Page, Screen: req.Screen, Workspace: req.Workspace})
+			return "raised", nil
+		}
+		// closed while starting and being stopped: the open wins, a new
+		// process replaces it (its exit is not reported as this kind's)
+		delete(s.running, req.Kind)
 	}
 	qml, err := s.EntryPath(req.Kind)
 	if err != nil {
@@ -304,7 +312,8 @@ func (s *Service) Open(req Request) (string, error) {
 func (s *Service) reap(kind string, inst *instance) {
 	err := inst.proc.Wait()
 	s.mu.Lock()
-	if s.running[kind] == inst {
+	current := s.running[kind] == inst
+	if current {
 		delete(s.running, kind)
 	}
 	s.mu.Unlock()
@@ -314,28 +323,61 @@ func (s *Service) reap(kind string, inst *instance) {
 		st.Error = err.Error()
 		log.Printf("[windows] %s exited: %v", kind, err)
 	}
-	s.broadcast("windows.state", st)
+	// replaced by a new process (opened again while being stopped): that
+	// one's state is the kind's
+	if current {
+		s.broadcast("windows.state", st)
+	}
 	if s.opts.OnExit != nil {
 		s.opts.OnExit(kind)
 	}
 }
 
 // RequestClose asks the running window of kind to close (it may keep
-// itself open to ask about unsaved changes). "closing" or "closed".
+// itself open to ask about unsaved changes). A window still starting has
+// shown nothing and staged nothing: it is stopped instead (SIGTERM, then
+// SIGKILL after StopWait), so it never maps only to close itself at
+// windows.ready (e.g. over the in-process window the main shell fell back
+// to). "closing" or "closed".
 func (s *Service) RequestClose(kind string) (string, error) {
 	if err := validKind(kind); err != nil {
 		return "", err
 	}
+	s.mu.Lock()
+	if inst, ok := s.running[kind]; ok && inst.state == StateStarting {
+		if !inst.stopping {
+			inst.stopping = true
+			inst.pending = nil
+			log.Printf("[windows] %s closed while starting: stopping pid %d", kind, inst.proc.Pid())
+			go stop(inst, StopWait)
+		}
+		s.mu.Unlock()
+		return "closing", nil
+	}
+	s.mu.Unlock()
 	if !s.command(Command{Kind: kind, Action: "close"}) {
 		return StateClosed, nil
 	}
 	return "closing", nil
 }
 
+// stop ends a window process: SIGTERM, then SIGKILL of its group if it is
+// still there after wait.
+func stop(inst *instance, wait time.Duration) {
+	_ = inst.proc.Signal(syscall.SIGTERM)
+	t := time.NewTimer(wait)
+	defer t.Stop()
+	select {
+	case <-inst.done:
+	case <-t.C:
+		_ = inst.proc.Signal(syscall.SIGKILL)
+	}
+}
+
 // command sends cmd to the running window of its kind; a window still
-// starting does not listen yet, so the command waits for its
-// windows.ready (the last one wins: a close during the start is not lost,
-// a later raise undoes it). False when no window of that kind runs.
+// starting does not listen yet, so the command (a raise: a close stops
+// it, RequestClose) waits for its windows.ready, the last one wins. False
+// when no window of that kind runs.
 func (s *Service) command(cmd Command) bool {
 	s.mu.Lock()
 	inst, ok := s.running[cmd.Kind]
@@ -358,6 +400,12 @@ func (s *Service) Ready(kind string) (bool, *Command) {
 	s.mu.Lock()
 	inst, ok := s.running[kind]
 	var cmd *Command
+	if ok && inst.stopping {
+		// shown just as it was being stopped: it closes itself if the
+		// signal has not ended it yet; nothing to report
+		s.mu.Unlock()
+		return true, &Command{Kind: kind, Action: "close"}
+	}
 	if ok {
 		inst.state = StateOpen
 		cmd, inst.pending = inst.pending, nil

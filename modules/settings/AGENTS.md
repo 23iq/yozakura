@@ -209,8 +209,9 @@ window reopens at once). Off, everything is as before.
   source as fallback) with `<PREFIX>ROLE=settings` and `<PREFIX>WINDOW_*`,
   one per kind: a later open sends `windows.command` raise (new page,
   placement again), a toggle sends close (the window asks about unsaved
-  changes); a command asked while the window still starts is kept (the
-  last one) and handed over in the answer to its `windows.ready`. Closed,
+  changes); a raise asked while the window still starts is kept (the
+  last one) and handed over in the answer to its `windows.ready`, a close
+  then stops the process (it never maps; an open after it starts a new one). Closed,
   the window reports `windows.hiding` and quits (1 s grace for the last
   writes); an open meanwhile raises it again (a new process if it quit
   first),

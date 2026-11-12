@@ -274,6 +274,12 @@ closes = calls("windows.close")
 ev("BackendService.answerHeld()")
 settle()
 check(calls("windows.close") == closes + 1, "...and the window started late is closed again")
+# the daemon stops that still-starting process (it never maps): the
+# in-process window stays as it is
+emit("windows.state", {"kind": "settings", "state": "starting", "pid": 19})
+emit("windows.state", {"kind": "settings", "state": "closed", "error": "signal: terminated"})
+check(ev("SeparateWindows.settingsSeparate") is False and ev("GlobalStates.settingsWindowVisible") is True
+      and ev("SeparateWindows.settingsRunning") is False, "...its stopped process leaves the in-process window alone")
 ev("BackendService.answerOpen = true")
 ev("GlobalStates.settingsWindowVisible = false")
 settle()

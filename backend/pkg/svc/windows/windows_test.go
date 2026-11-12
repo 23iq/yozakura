@@ -284,40 +284,93 @@ func TestCloseStopsEveryWindowAndRefusesNewOnes(t *testing.T) {
 }
 
 // A window that is still starting does not listen to windows.command yet:
-// the last command asked meanwhile waits for its windows.ready (a toggle
-// closing it during the start is not lost, a later open undoes it).
-func TestCommandDuringStartIsHandedOverAtReady(t *testing.T) {
+// the last raise asked meanwhile waits for its windows.ready.
+func TestRaiseDuringStartIsHandedOverAtReady(t *testing.T) {
 	r := newRig(t, shellTree(t, "settings-window.qml"), "")
 	_, err := r.svc.Open(Request{Kind: KindSettings})
 	must(t, assert.NoError(t, err))
 	r.events(t, 1)
 
-	res, err := r.svc.RequestClose(KindSettings)
+	res, err := r.svc.Open(Request{Kind: KindSettings, Page: "network"})
 	must(t, assert.NoError(t, err))
-	assert.Equal(t, "closing", res)
+	assert.Equal(t, "raised", res)
+	_, err = r.svc.Open(Request{Kind: KindSettings, Page: "sound"})
+	must(t, assert.NoError(t, err))
 	r.quiet(t)
 	ok, cmd := r.svc.Ready(KindSettings)
 	must(t, assert.True(t, ok))
-	assert.Equal(t, &Command{Kind: KindSettings, Action: "close"}, cmd)
+	assert.Equal(t, &Command{Kind: KindSettings, Action: "raise", Page: "sound"}, cmd, "the last one")
 	r.events(t, 1) // open
 	_, cmd = r.svc.Ready(KindSettings)
 	assert.Nil(t, cmd, "handed over once")
-	r.events(t, 1)
+}
 
-	// close then open again while starting: the open wins
-	r.st.procs[0].exit(nil)
-	r.events(t, 1)
-	<-r.exited
-	_, err = r.svc.Open(Request{Kind: KindSettings})
+// A close of a window still starting stops its process (it has shown and
+// staged nothing): it never maps only to close itself at windows.ready,
+// e.g. over the in-process window the main shell fell back to when the
+// start answer came late. One ignoring SIGTERM is killed after StopWait.
+func TestCloseDuringStartStopsTheProcess(t *testing.T) {
+	old := StopWait
+	StopWait = 50 * time.Millisecond
+	t.Cleanup(func() { StopWait = old })
+
+	for _, hung := range []bool{false, true} {
+		r := newRig(t, shellTree(t, "settings-window.qml"), "")
+		r.st.ignore = hung
+		_, err := r.svc.Open(Request{Kind: KindSettings})
+		must(t, assert.NoError(t, err))
+		r.events(t, 1)
+
+		res, err := r.svc.RequestClose(KindSettings)
+		must(t, assert.NoError(t, err))
+		assert.Equal(t, "closing", res)
+		ev := r.events(t, 1)[0]
+		assert.Equal(t, StateClosed, ev.Data.(Status).State)
+		want := []syscall.Signal{syscall.SIGTERM}
+		if hung {
+			want = append(want, syscall.SIGKILL)
+		}
+		assert.Equal(t, want, r.st.procs[0].sigs(), "hung=%v", hung)
+		assert.Equal(t, KindSettings, <-r.exited)
+		assert.False(t, r.svc.AnyRunning())
+	}
+}
+
+// Closed while starting, then opened again before it is gone: the open
+// wins, a new process starts and the old one's exit is not reported as the
+// kind's state. Shown just as it was being stopped: it is told to close.
+func TestOpenAfterCloseDuringStartStartsAgain(t *testing.T) {
+	r := newRig(t, shellTree(t, "settings-window.qml"), "")
+	r.st.ignore = true // the first one takes its time to die
+	old := StopWait
+	StopWait = time.Hour
+	t.Cleanup(func() { StopWait = old })
+	_, err := r.svc.Open(Request{Kind: KindSettings})
 	must(t, assert.NoError(t, err))
 	r.events(t, 1)
 	_, err = r.svc.RequestClose(KindSettings)
 	must(t, assert.NoError(t, err))
-	_, err = r.svc.Open(Request{Kind: KindSettings, Page: "sound"})
+	ok, cmd := r.svc.Ready(KindSettings)
+	assert.True(t, ok)
+	assert.Equal(t, &Command{Kind: KindSettings, Action: "close"}, cmd)
+	r.quiet(t) // no "open" for a window being stopped
+
+	r.st.ignore = false
+	res, err := r.svc.Open(Request{Kind: KindSettings, Page: "sound"})
 	must(t, assert.NoError(t, err))
+	assert.Equal(t, "started", res)
+	assert.Equal(t, 2, r.st.count())
+	assert.Equal(t, Status{Kind: KindSettings, State: StateStarting, Pid: 1001}, r.events(t, 1)[0].Data)
+
+	r.st.procs[0].exit(errors.New("signal: killed"))
+	assert.Equal(t, KindSettings, <-r.exited)
 	r.quiet(t)
-	_, cmd = r.svc.Ready(KindSettings)
-	assert.Equal(t, &Command{Kind: KindSettings, Action: "raise", Page: "sound"}, cmd)
+	assert.Equal(t, StateStarting, r.svc.Statuses()[0].State, "the new process is the kind's")
+	assert.True(t, r.svc.AnyRunning())
+	ok, cmd = r.svc.Ready(KindSettings)
+	assert.True(t, ok)
+	assert.Nil(t, cmd)
+	assert.Equal(t, Status{Kind: KindSettings, State: StateOpen, Pid: 1001}, r.events(t, 1)[0].Data)
 }
 
 // A closed window reports hiding until its process is gone; an open in
