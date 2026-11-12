@@ -4,6 +4,7 @@ import Quickshell
 import Quickshell.Io
 import "CavaVisualizer.js" as Cava
 import qs.modules.globals
+import qs.config
 
 // Shared cava spectrum for the notch visualizer and the music-reactive window
 // border (BorderPulse). cava only runs while at least one consumer registered
@@ -16,9 +17,10 @@ Singleton {
     readonly property int barCount: 24
     // Frames per second cava delivers. Each frame redraws the screen-sized
     // panel window that hosts the notch visualizer, so this is kept at 30
-    // (the bars ease between frames, see NotchVisualizer.easing). A future
-    // visualizer-rate setting binds here.
-    property int framerate: 30
+    // (the bars ease between frames, see NotchVisualizer.easing); the user
+    // can change it (performance.visualizerFps, clamped to 15..60). A running
+    // cava is restarted once with the new rate (rateTimer).
+    readonly property int framerate: Cava.clampRate(Config.performance ? Config.performance.visualizerFps : undefined)
     // Identical frames (silence, a held note) are dropped, after this many
     // repeats so eased consumers can settle on the last level first.
     readonly property int settleFrames: Math.ceil(framerate * 0.4)
@@ -29,6 +31,9 @@ Singleton {
 
     property int _failures: 0
     property int _repeats: 0
+    // Set while cava is stopped only to pick up a new framerate: its exit is
+    // then not a failure and it starts again at once.
+    property bool _rateRestart: false
     property var _consumers: ({})
     property int consumerCount: 0
     readonly property bool wanted: available && consumerCount > 0
@@ -62,6 +67,22 @@ Singleton {
         } else {
             restartTimer.stop();
             stopTimer.restart();
+        }
+    }
+
+    // The command (and its config) is read when cava starts, so a new rate
+    // needs a restart. Debounced: a slider dragged across several values
+    // restarts cava once.
+    onFramerateChanged: rateTimer.restart()
+
+    Timer {
+        id: rateTimer
+        interval: 500
+        onTriggered: {
+            if (!cavaProcess.running || root._rateRestart)
+                return;
+            root._rateRestart = true;
+            cavaProcess.running = false;
         }
     }
 
@@ -110,6 +131,15 @@ Singleton {
             }
         }
         onExited: (exitCode, exitStatus) => {
+            if (root._rateRestart) {
+                root._rateRestart = false;
+                // Next tick: the Process finishes its own exit handling first.
+                Qt.callLater(() => {
+                    if (root.wanted && !cavaProcess.running)
+                        cavaProcess.running = true;
+                });
+                return;
+            }
             root.values = Cava.silence(root.barCount);
             if (exitCode === 127) {
                 root.available = false;

@@ -4,6 +4,21 @@
 
 var MAX_RANGE = 1000;
 
+// performance.visualizerFps: frames per second cava delivers. Every frame
+// redraws the panel window hosting a visualizer, so the rate is kept in a
+// range where the bars still look smooth (they ease between frames) and the
+// cost stays bounded. Missing or broken values use the default.
+var DEFAULT_RATE = 30;
+var MIN_RATE = 15;
+var MAX_RATE = 60;
+
+function clampRate(value) {
+    var n = Number(value);
+    if (value === null || value === undefined || value === "" || !isFinite(n) || n <= 0)
+        return DEFAULT_RATE;
+    return Math.max(MIN_RATE, Math.min(MAX_RATE, Math.round(n)));
+}
+
 // cava config emitting one line of `;`-separated integers (0..MAX_RANGE) per
 // frame on stdout. Mono keeps bars ordered low -> high frequency instead of
 // cava's mirrored stereo layout.

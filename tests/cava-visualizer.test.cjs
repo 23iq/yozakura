@@ -46,3 +46,13 @@ test('parseFrame keeps the old parseInt results for cava output', () => {
     assert.deepEqual(Array.from(cava.parseFrame('+7;-0;', 2)), [0.007, 0]);
     assert.equal(cava.parseFrame('1;2;3;4;', 3), null);
 });
+test('the visualizer rate (performance.visualizerFps) is clamped to 15..60, default 30', () => {
+    assert.equal(cava.clampRate(30), 30);
+    assert.equal(cava.clampRate(20), 20);
+    assert.equal(cava.clampRate(5), 15);
+    assert.equal(cava.clampRate(240), 60);
+    assert.equal(cava.clampRate(24.6), 25);
+    assert.equal(cava.clampRate('45'), 45);
+    for (const broken of [undefined, null, '', 'x', 0, -10, NaN, Infinity])
+        assert.equal(cava.clampRate(broken), 30, String(broken));
+});
