@@ -78,10 +78,18 @@ FocusScope {
         return out;
     }
 
+    // The full name (first GECOS field) with the login name, so a full name
+    // set to look like another account still shows which one it is: "John
+    // Doe (john)"; only the login name when they are the same or no full
+    // name is set.
     function identityName(identity: var): string {
         if (!identity)
             return "";
-        return identity.displayName || identity.string || String(identity.id);
+        const login = String(identity.string || "").replace(/^unix-(user|group):/, "");
+        const full = String(identity.displayName || "").split(",")[0].trim();
+        if (login === "")
+            return full !== "" ? full : String(identity.id);
+        return full === "" || full === login ? login : full + " (" + login + ")";
     }
 
     function focusField() {

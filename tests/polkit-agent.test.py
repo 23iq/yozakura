@@ -356,7 +356,13 @@ h.eval(m, 'request("Password: ", false)')
 settle()
 picker = h.find(dlg, "polkitIdentityPicker")
 check(h.eval(picker, "parent.visible") is True and h.eval(h.find(dlg, "polkitIdentity"), "visible") is False, "two identities: the picker")
-check(h.eval(picker, "options.map(o => o.text).join(',')") == "user,Admin", "identities by display name")
+check(h.eval(picker, "options.map(o => o.text).join(',')") == "user,Admin (admin)", "identities by full name and login name")
+for ident, want in [("({ id: 1002, string: 'unix-user:john', displayName: 'John Doe,,,' })", "John Doe (john)"),
+                    ("({ id: 1003, string: 'john', displayName: 'john' })", "john"),
+                    ("({ id: 1004, string: 'john', displayName: '' })", "john"),
+                    ("({ id: 0, string: 'unix-user:root', displayName: 'root,,,' })", "root"),
+                    ("({ id: 1005, string: '', displayName: 'Only Name' })", "Only Name")]:
+    check(h.eval(d, f"identityName({ident})") == want, f"identity {ident} reads {want!r}, got {h.eval(d, f'identityName({ident})')!r}")
 check(h.eval(notice, "visible") is False, "no notice before anything happened")
 h.eval(picker, "selected(1)")
 settle()
