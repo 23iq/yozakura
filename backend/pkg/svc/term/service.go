@@ -12,7 +12,7 @@
 //	status {}                        -> Status
 //
 // Status is {enabled, engine, fishInstalled, fishIsLoginShell, loginShell,
-// terminalShell, engineInstalled: {starship, ohmyposh}, foreignPromptInit, foreignFile,
+// terminalShell, loginFiles, engineInstalled: {starship, ohmyposh}, foreignPromptInit, foreignFile,
 // hookSkipped, hookPath, hookPresent}. hookSkipped: the prompt is on but not installed because
 // foreignFile starts starship / oh-my-posh itself.
 // Installing an engine or fish is not done here: the UI calls extras.install
@@ -56,7 +56,10 @@ type Options struct {
 	// Executable checks a shell before terminals are pointed at it
 	// (nil: termrun.IsExecutable).
 	Executable func(string) bool
-	Debounce   time.Duration
+	// Skel is the distribution's skeleton of new home directories
+	// ("": /etc/skel), what the bash login files are compared with.
+	Skel     string
+	Debounce time.Duration
 }
 
 // Service is the term IPC service.

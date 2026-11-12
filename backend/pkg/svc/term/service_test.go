@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -198,6 +199,29 @@ func TestTerminalShellOnlyAfterAChsh(t *testing.T) {
 	passwd = "alice:x:1000:1000::/home/alice:/gone/zsh\n"
 	if st := f.s.currentStatus(); st.TerminalShell != "" {
 		t.Errorf("missing shell: %+v", st)
+	}
+}
+
+func TestLoginFilesBeyondTheSkeleton(t *testing.T) {
+	f := newFixture(t, "")
+	skel := t.TempDir()
+	f.s.o.Skel = skel
+	f.write(filepath.Join(skel, ".bash_profile"), "#\n# ~/.bash_profile\n#\n\n[[ -f ~/.bashrc ]] && . ~/.bashrc\n")
+	if st := f.s.currentStatus(); st.LoginFiles != nil {
+		t.Errorf("no login files: %v", st.LoginFiles)
+	}
+	// The skeleton copy (comments and spacing aside) and comment-only files.
+	f.write(filepath.Join(f.home, ".bash_profile"), "# ~/.bash_profile\n\n  [[ -f ~/.bashrc ]] && . ~/.bashrc  \n")
+	f.write(filepath.Join(f.home, ".profile"), "# nothing here\n\n")
+	if st := f.s.currentStatus(); st.LoginFiles != nil {
+		t.Errorf("skeleton content counted as the user's: %v", st.LoginFiles)
+	}
+	// A user line: starting the compositor from the console, an export.
+	f.write(filepath.Join(f.home, ".bash_profile"), "[[ -f ~/.bashrc ]] && . ~/.bashrc\n[ \"$(tty)\" = /dev/tty1 ] && exec niri-session\n")
+	f.write(filepath.Join(f.home, ".profile"), "export EDITOR=nvim\n")
+	st := f.s.currentStatus()
+	if !reflect.DeepEqual(st.LoginFiles, []string{"~/.bash_profile", "~/.profile"}) {
+		t.Errorf("user content: %v", st.LoginFiles)
 	}
 }
 

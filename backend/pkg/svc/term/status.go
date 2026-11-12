@@ -23,7 +23,12 @@ type Status struct {
 	// TerminalShell is the $SHELL new terminals get ("" = the session's
 	// own): the passwd shell after a chsh during this session, which the
 	// session's $SHELL does not follow (termrun.ChangedShell).
-	TerminalShell     string          `json:"terminalShell,omitempty"`
+	TerminalShell string `json:"terminalShell,omitempty"`
+	// LoginFiles are the bash login files in $HOME (~/.bash_profile,
+	// ~/.bash_login, ~/.profile) with content of the user's own beyond the
+	// distribution skeleton: a login shell of fish reads none of them, so
+	// the setup wizard does not preselect it then.
+	LoginFiles        []string        `json:"loginFiles,omitempty"`
 	EngineInstalled   map[string]bool `json:"engineInstalled"`
 	ForeignPromptInit bool            `json:"foreignPromptInit"`
 	ForeignFile       string          `json:"foreignFile,omitempty"`
@@ -52,6 +57,7 @@ func (s *Service) currentStatus() Status {
 	st.LoginShell = s.loginShell()
 	st.FishIsLoginShell = filepath.Base(st.LoginShell) == "fish"
 	st.TerminalShell = termrun.ChangedShell(s.startShell, st.LoginShell, s.o.Executable)
+	st.LoginFiles = customLoginFiles(env.Home, s.skel())
 	st.ForeignFile = s.foreignFile()
 	st.ForeignPromptInit = st.ForeignFile != ""
 	st.HookSkipped = cfg.Enabled && st.ForeignPromptInit
@@ -123,4 +129,51 @@ func foreignPromptFile(fishDir, hook string) string {
 		}
 	}
 	return ""
+}
+
+func (s *Service) skel() string {
+	if s.o.Skel != "" {
+		return s.o.Skel
+	}
+	return "/etc/skel"
+}
+
+// bashLoginFiles are the files a bash login shell reads (fish reads none).
+var bashLoginFiles = []string{".bash_profile", ".bash_login", ".profile"}
+
+// customLoginFiles returns the bash login files in home whose content
+// (comments and blank lines aside) differs from the copy in skel, or that
+// hold any when skel has none.
+func customLoginFiles(home, skel string) []string {
+	if home == "" {
+		return nil
+	}
+	var out []string
+	for _, name := range bashLoginFiles {
+		data, err := os.ReadFile(filepath.Join(home, name))
+		if err != nil {
+			continue
+		}
+		mine := shellContent(string(data))
+		if mine == "" {
+			continue
+		}
+		if base, err := os.ReadFile(filepath.Join(skel, name)); err == nil && shellContent(string(base)) == mine {
+			continue
+		}
+		out = append(out, "~/"+name)
+	}
+	return out
+}
+
+// shellContent is a shell file without comment lines, blank lines and
+// surrounding whitespace.
+func shellContent(text string) string {
+	var lines []string
+	for _, line := range strings.Split(text, "\n") {
+		if t := strings.TrimSpace(line); t != "" && !strings.HasPrefix(t, "#") {
+			lines = append(lines, t)
+		}
+	}
+	return strings.Join(lines, "\n")
 }
