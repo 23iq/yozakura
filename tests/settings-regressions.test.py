@@ -96,3 +96,5 @@ for cat in ("keyboard", "displays", "mods", "terminal", "extras", "system", "abo
     QTest.qWait(200)
 check(not errors, "QML errors:\n  " + "\n  ".join(errors))
 print("settings-regressions: ok")
+# no interpreter teardown: kept-alive pages would outlive the singletons
+env.h.exit(0)

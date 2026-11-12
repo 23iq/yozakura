@@ -5,7 +5,7 @@ window content is created asynchronously (as KeepAliveLoader does) and while
 pages switch, and checks what the user sees:
 
 * The sidebar has its final width from the first frame: it used to start as
-  the 76 px rail (the shell is 0 wide when it completes) and grow to 264 px
+  the 76 px rail (the shell is 0 wide when it completes) and grow to 256 px
   over the page through a width Behavior, sliding the whole page sideways.
 * The sidebar rows do not move while the window opens.
 * A page stays hidden until the sections on screen are built (SettingsPage
@@ -135,7 +135,7 @@ h.eval(win, 'GlobalStates.settingsCategory = "appearance"')
 frames = record(lambda: h.eval(win, "ld.active = true"), 1200)
 check(len(frames) > 5, "open: frames were rendered")
 widths = sorted({f["sidebar"] for f in frames if f["sidebar"] >= 0})
-check(widths == [264], f"open: the sidebar is 264 px from the first frame (saw {widths})")
+check(widths == [256], f"open: the sidebar is 256 px from the first frame (saw {widths})")
 navs = [f["nav"] for f in frames if f["nav"]]
 check(all(n == navs[0] for n in navs), "open: the sidebar rows do not move")
 rows_stable("open appearance", frames)
@@ -153,8 +153,8 @@ check(h.eval(win, 'findItem("settingsSidebar").width') == 76, "narrow window: th
 h.eval(shell, "openSearch()")
 pump(40)
 mid = h.eval(win, 'findItem("settingsSidebar").width')
-check(wait_until(lambda: h.eval(win, 'findItem("settingsSidebar").width') == 264), "compact search: full sidebar")
-check(76 <= mid <= 264, f"compact search: the sidebar slides out ({mid})")
+check(wait_until(lambda: h.eval(win, 'findItem("settingsSidebar").width') == 256), "compact search: full sidebar")
+check(76 <= mid <= 256, f"compact search: the sidebar slides out ({mid})")
 h.eval(shell, "searchOpen = false")
 check(wait_until(lambda: h.eval(win, 'findItem("settingsSidebar").width') == 76), "compact search closed: rail")
 

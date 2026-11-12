@@ -11,9 +11,8 @@ var EDITORS = {
     "BarStyleCards": "editors/BarStyleCards.qml",
     "BarLayoutEditor": "editors/BarLayoutEditor.qml",
     "PanelsEditor": "editors/PanelsEditor.qml",
-    "BarPositionPicker": "editors/BarPositionPicker.qml",
     "NumeralCards": "editors/NumeralCards.qml",
-    "IndicatorStyleChips": "editors/IndicatorStyleChips.qml",
+    "IndicatorCards": "editors/IndicatorCards.qml",
     "BranchBlossomChips": "editors/BranchBlossomChips.qml",
     "SurfaceEffectCards": "editors/SurfaceEffectCards.qml",
     "WallpaperGrid": "editors/WallpaperGrid.qml",
@@ -66,7 +65,6 @@ var PREVIEWS = {
     "PaletteFadePreview": "previews/PaletteFadePreview.qml",
     "LightingPreview": "previews/LightingPreview.qml",
     "WeatherFxPreview": "previews/WeatherFxPreview.qml",
-    "ClockPreview": "previews/ClockPreview.qml",
     "SentencePreview": "previews/SentencePreview.qml",
     "TransitionPreview": "previews/TransitionPreview.qml",
     "PanoramaPreview": "previews/PanoramaPreview.qml",
@@ -84,8 +82,49 @@ var THUMBS = {
     "LanguageThumb": "thumbs/LanguageThumb.qml",
     "CornerThumb": "thumbs/CornerThumb.qml",
     "EdgeThumb": "thumbs/EdgeThumb.qml",
-    "PresentationThumb": "thumbs/PresentationThumb.qml"
+    "PresentationThumb": "thumbs/PresentationThumb.qml",
+    "BarEdgeThumb": "thumbs/BarEdgeThumb.qml",
+    "ClockFaceThumb": "thumbs/ClockFaceThumb.qml",
+    "ClockPanelThumb": "thumbs/ClockPanelThumb.qml",
+    "IndicatorThumb": "thumbs/IndicatorThumb.qml",
+    "NumeralThumb": "thumbs/NumeralThumb.qml",
+    "HostThumb": "thumbs/HostThumb.qml",
+    "WeightThumb": "thumbs/WeightThumb.qml"
 };
+
+// The live miniature at the top of a schema page (category `stage`): a
+// stages/<Name>.qml whose root is a Stage (see stages/Stage.qml).
+var STAGES = {
+    "BarStage": "stages/BarStage.qml",
+    "OpensStage": "stages/OpensStage.qml",
+    "LookStage": "stages/LookStage.qml",
+    "TypeStage": "stages/TypeStage.qml"
+};
+
+// Hand-written pages (category `page`), loaded by URL by SettingsPageHost
+// so none of them is compiled before it is opened. `props`: extra
+// properties set on creation (besides `category`).
+var PAGES = {
+    "AboutPage": { "file": "AboutPage.qml" },
+    "Bluetooth": { "file": "connect/ConnectPage.qml", "props": { "panel": "BluetoothPanel.qml" } },
+    "Changes": { "file": "changes/ChangesPage.qml" },
+    "Displays": { "file": "displays/DisplaysPage.qml" },
+    "Effects": { "file": "connect/ConnectPage.qml", "props": { "panel": "EasyEffectsPanel.qml" } },
+    "Extras": { "file": "extras/ExtrasPage.qml" },
+    "Keyboard": { "file": "keyboard/KeyboardPage.qml" },
+    "Mods": { "file": "mods/ModsEditor.qml" },
+    "Network": { "file": "connect/ConnectPage.qml", "props": { "panel": "WifiPanel.qml" } },
+    "PresetStudio": { "file": "presets/PresetStudioPage.qml" },
+    "Sound": { "file": "connect/ConnectPage.qml", "props": { "panel": "AudioMixerPanel.qml" } }
+};
+
+function stage(name) {
+    return STAGES[name] || "";
+}
+
+function page(name) {
+    return PAGES[name] || null;
+}
 
 function editor(name) {
     return EDITORS[name] || "";

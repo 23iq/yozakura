@@ -10,7 +10,11 @@ palette (~/.cache/yozakura/colors.json; light mode is generated with matugen
 from the current wallpaper) and wallpapers. Scheme previews come from
 `yozakura schemes` (the backend in this checkout is built on the fly).
 `--set theme.surfaceEffect='"crt"'` overrides a config key for the render
-(value parsed as JSON, plain strings allowed). `--languages` renders each visual
+(value parsed as JSON, plain strings allowed). `--wallpaper PATH` uses that
+image as the wallpaper (e.g. assets/wallpapers_example/wallpaper-03.png on a
+machine without one). `--hover ENTRY` puts the pointer on a row (its stage
+part lights up), `--undo` changes nothing but shows the undo pill as after
+a change, `--tab ID` opens that tab (any category id works as before). `--languages` renders each visual
 language (theme.language) over the current wallpaper. Writes
 <out>/<category>-<mode>.png, or <out>/settings-<category>-<language>[-light].png
 with --languages.
@@ -30,6 +34,7 @@ import headless  # noqa: E402
 headless.ensure(gl=True)
 
 from PySide6.QtQuick import QQuickWindow  # noqa: E402,F401  (wraps the Window as QQuickWindow)
+from PySide6.QtCore import QPoint  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from settings_env import DEFAULT_PALETTE, SettingsEnv  # noqa: E402
 
@@ -153,11 +158,18 @@ def main() -> int:
                     help="evaluate EXPR on the named item after the page loads (e.g. open a popup)")
     ap.add_argument("--set", action="append", default=[], metavar="KEY=JSON",
                     help="override a config key (domain.key[.sub]=value), repeatable")
+    ap.add_argument("--wallpaper", default="", help="image used as the wallpaper")
+    ap.add_argument("--hover", default="", metavar="ENTRY", help="hover the row of this entry id")
+    ap.add_argument("--undo", action="store_true", help="show the undo pill (as after a change)")
     args = ap.parse_args()
     w, h = (int(x) for x in args.size.split("x"))
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     state = wallpaper_state()
+    if args.wallpaper:
+        wp = str(Path(args.wallpaper).resolve())
+        state = {"dir": str(Path(wp).parent), "scanDirs": [str(Path(wp).parent)], "paths": [wp],
+                 "current": wp, "thumbs": {}, "presets": []}
     schemes = scheme_palettes(state)
     modes = ["dark", "light"] if args.mode == "both" else [args.mode]
     langs = [x for x in args.languages.split(",") if x] or [""]
@@ -188,6 +200,8 @@ Window {{
     SettingsShell {{ objectName: "shell"; anchors.fill: parent }}
 }}""")
     shell = env.h.find(win, "shell")
+    # the pointer rests on the brand, not on a row (a hovered row lights its stage part)
+    QTest.mouseMove(win, QPoint(4, 4))
     env.h.eval(shell, f"SchemePreviews.palettes = {json.dumps(schemes)}")
     env.h.eval(shell, "SchemePreviews.loadedSource = SchemePreviews.source")
     for cat in args.categories:
@@ -203,11 +217,18 @@ Window {{
             page = env.h.find(win, "settingsPage").property("item")
             page.setProperty("contentY", args.scroll)
             QTest.qWait(300)
+        if args.hover:
+            env.h.eval(shell, f"SettingsStore.focusKeys = {json.dumps(args.hover.split(','))}")
+            QTest.qWait(300)
+        if args.undo:
+            env.h.eval(shell, 'SettingsStore._announce(SettingsStore.labelIndex["theme.roundness"] || "", "changed")')
+            QTest.qWait(700)
         if args.eval:
             name, _, expr = args.eval.partition(":")
             env.h.eval(find_visual(win.contentItem(), name), expr)
             QTest.qWait(700)
-        suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "")
+        suffix = (f"-s{args.scroll}" if args.scroll else "") + ("-search" if args.search else "") \
+            + ("-hover" if args.hover else "") + ("-undo" if args.undo else "")
         if lang:
             path = out / f"settings-{cat}{suffix}-{lang}{'' if mode == 'dark' else '-light'}.png"
         else:

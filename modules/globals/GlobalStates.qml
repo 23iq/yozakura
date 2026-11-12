@@ -285,8 +285,6 @@ Singleton {
 
     // Settings Window state
     property bool settingsWindowVisible: false
-    // Closing the settings window with unsaved changes: ask Apply / Discard / Keep.
-    property bool settingsCloseConfirm: false
     property int settingsTargetWorkspaceId: 0
     property string settingsTargetScreenName: ""
 

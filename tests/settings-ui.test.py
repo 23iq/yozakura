@@ -3,9 +3,11 @@
 Loads the real SettingsShell (schema renderer, typed controls, editors) in a
 private Xvfb with generated Config/Colors/I18n/GlobalStates (see
 tests/lib/settings_env.py) and checks: every category page loads without
-QML errors, typed rows write through SettingsStore and stage the matching
-GlobalStates domain, modified/reset, visibleWhen, nested keys, the bar
-layout editor, wallpaper folders, search navigation and page requests from the shell (settingsCategory).
+QML errors, typed rows write through SettingsStore live (nothing staged,
+nothing to apply), modified/reset, visibleWhen, nested keys, the bar
+layout editor, wallpaper folders, search navigation and page requests from
+the shell (settingsCategory). The new window behaviour (undo, tabs, stages,
+keep-alive) is in tests/settings-shell.test.py.
 """
 import json
 import sys
@@ -104,27 +106,26 @@ for cat in order:
 own_errors = [e for e in errors if "/widgets/" not in e]
 check(not own_errors, "QML errors while loading pages:\n  " + "\n  ".join(own_errors))
 
-# Toggle: writes Config, stages the shell domain, shows modified, resets.
+# Toggle: writes Config live (no staging), shows modified, resets.
 select("bar")
 r = row("bar.compact")
 check(h.eval(r, "modified") is False, "compact starts at default")
 ev("SettingsStore.set('bar.compact', true)")
 check(ev("Config.bar.compact") is True, "toggle writes Config.bar.compact")
-check(ev("GlobalStates.shellHasChanges") is True, "bar edit stages the shell snapshot")
+check(ev("GlobalStates.shellHasChanges") is False and ev("SettingsStore.hasChanges") is False,
+      "a window edit is live: nothing staged")
 check(h.eval(r, "modified") is True, "row shows modified")
-check(ev("SettingsStore.hasChanges") is True, "changes bar visible")
-ev("SettingsStore.reset({key: 'bar.compact'})")
+ev("SettingsStore.reset({key: 'bar.compact', label: 'prefs.bar.compact'})")
 check(ev("Config.bar.compact") is False and h.eval(r, "modified") is False, "reset restores default")
 
-# visibleWhen (bar.frameThickness is advanced: the All view)
-ev("SettingsStore.setShowAll(true)")
+# visibleWhen
 ev("SettingsStore.set('bar.frameEnabled', false)")
 settle()
-check(h.eval(row("bar.frameThickness"), "shown") is False, "frame thickness hidden without frame")
+check(h.eval(row("bar.containBar"), "shown") is False, "inside-the-frame hidden without frame")
 ev("SettingsStore.set('bar.frameEnabled', true)")
 settle()
-check(h.eval(row("bar.frameThickness"), "shown") is True, "frame thickness shown with frame")
-ev("SettingsStore.setShowAll(false)")
+check(h.eval(row("bar.containBar"), "shown") is True, "inside-the-frame shown with frame")
+check(ev('w.findItem("settingRow:bar.frameThickness")') is None, "an out-of-window entry has no row")
 
 # Host/style pickers note where they show while the notch is off
 select("menus")
@@ -144,11 +145,11 @@ check(h.eval(pm, "shownAs") == "", "note gone with the notch back on")
 
 # Compositor gate note: silent on Hyprland, counts gated entries on niri
 select("windows")
-note = ev('w.findItem("compositorOnlyNote")')
+note = ev('w.findItem("compositorOnlyNote", w.findItem("settingsPage").item)')
 check(note is not None and h.eval(note, "visible") is False, "no compositor note on Hyprland")
 h.eval(note, "YozdService.compositorName = 'niri'")
-until(lambda: h.eval(ev('w.findItem("compositorOnlyNote")'), "visible") is True, "compositor note shows on niri")
-note = ev('w.findItem("compositorOnlyNote")')
+until(lambda: h.eval(ev('w.findItem("compositorOnlyNote", w.findItem("settingsPage").item)'), "visible") is True, "compositor note shows on niri")
+note = ev('w.findItem("compositorOnlyNote", w.findItem("settingsPage").item)')
 check("Hyprland" in h.eval(note, "text"), "compositor note names the supporting compositors")
 h.eval(note, "YozdService.compositorName = 'hyprland'")
 settle()
@@ -209,20 +210,15 @@ drawer = json.loads(ev("JSON.stringify(Config.bar.layout.drawer)"))
 check(drawer and drawer[-1] == moving, f"{moving} dropped at the end of the drawer: {drawer}")
 check(moving not in json.loads(ev("JSON.stringify(Config.bar.layout.left)")), "dragged module left its group")
 
-# Theme keys stage the theme snapshot
+# Theme keys apply live
 select("appearance")
 ev("SettingsStore.set('theme.roundness', 4)")
-check(ev("GlobalStates.themeHasChanges") is True, "theme edit stages the theme snapshot")
+check(ev("GlobalStates.themeHasChanges") is False and ev("Config.theme.roundness") == 4, "theme edit applies live")
 check(ev("Styling.radius(0)") == 4, "roundness applies live")
 ev("SettingsStore.set('theme.lightMode', true)")
 check(h.eval(row("theme.mode"), "modified") is True, "composite entry modified")
 ev("SettingsStore.set('wallpaper.matugenScheme', 'scheme-rainbow')")
 check(ev("GlobalStates.wallpaperManager.currentMatugenScheme") == "scheme-rainbow", "scheme goes to wallpapers.json")
-
-# Apply / discard reach GlobalStates
-ev("SettingsStore.apply()")
-check(ev("GlobalStates.themeHasChanges") is False and ev("GlobalStates.shellHasChanges") is False, "apply")
-check(ev("GlobalStates.applied") >= 2, "apply called for each domain")
 
 # Wallpaper folders: extras staged, primary immediate
 select("wallpapers")
@@ -242,16 +238,17 @@ check(ev("GlobalStates.wallpaperManager.wallpaperDir") == "/extra/walls", "prima
 check(json.loads(ev("JSON.stringify(Config.desktop.wallpaperFolders)")) == ["/walls"],
       "old primary kept as extra, no duplicates")
 
-# Lock screen gallery: a live preview (the real LockView) per registry style;
-# picking a card writes lockscreen.style and stages the shell snapshot.
+# Lock screen gallery: a picture (the real LockView, captured) per registry
+# style; picking a card writes lockscreen.style live.
 select("lockscreen")
 lock_styles = ["glass", "paper", "terminal", "aurora", "neon", "poster"]
 for sid in lock_styles:
     until(lambda: ev(f'w.findItem("lockPreview:{sid}") !== null'), f"gallery preview for {sid}")  # noqa: B023
-check(ev('w.findItem("lockPreview:glass").children[0].preview === true'), "previews never grab focus or cava")
-ev('w.findItem("lockPreview:paper").parent.parent.clicked()')
+until(lambda: ev('w.findItem("lockPreview:glass").grabbed !== null'), "every style is pictured, one after the other")
+check(ev('w.findItem("lockPreview:glass").children[1].children[0].active') is False, "no live lock view stays after its picture")
+ev('w.findItem("lockPreview:paper").parent.parent.parent.clicked()')
 check(ev("Config.lockscreen.style") == "paper", "card click selects the style")
-check(ev("GlobalStates.shellHasChanges") is True, "style change stages the shell snapshot")
+check(ev("GlobalStates.shellHasChanges") is False, "style change applies live")
 check(h.eval(row("lockscreen.style"), "modified") is True, "style row shows modified")
 ev("SettingsStore.reset({key: 'lockscreen.style'})")
 check(ev("Config.lockscreen.style") == "glass", "reset restores glass")
@@ -272,8 +269,8 @@ until(lambda: ev("SettingsStore.highlightedEntry") == "workspaces.numeralStyle",
 ev("GlobalStates.settingsCategory = 'sound'")
 until(lambda: ev("currentCategory") == "sound", "settingsCategory opens the page")
 
-# System: list editor (idle listeners), string list of paths (disks)
-select("system")
+# Power / System: list editor (idle listeners), string list of paths (disks)
+select("power")
 n0 = ev("Config.system.idle.listeners.length")
 lst = row("system.idle.listeners")
 h.eval(lst, """(function() {
@@ -286,22 +283,18 @@ h.eval(lst, """(function() {
 }).call(this)""")
 check(ev("Config.system.idle.listeners.length") == n0 + 1, "list editor adds an item")
 check(ev(f"Config.system.idle.listeners[{n0}].timeout") == 60, "new listener uses newItem")
-check(ev("GlobalStates.shellHasChanges") is True, "system list edit stages the shell snapshot")
+check(ev("GlobalStates.shellHasChanges") is False, "system list edit applies live")
 check(h.eval(lst, "modified") is True, "list row modified")
 ev("SettingsStore.reset({key: 'system.idle.listeners'})")
 check(ev("Config.system.idle.listeners.length") == n0, "list reset")
+select("system")
 ev("SettingsStore.set('system.disks', ['/', '/home'])")
 settle()
 check(h.eval(row("system.disks"), "modified") is True, "disks list modified")
-ev("SettingsStore.set('prefix.emoji', 'em')")
-check(ev("Config.prefix.emoji") == "em" and "prefix" in json.loads(ev("JSON.stringify(Config.saved)")),
-      "unstaged domain saved while staged changes pause auto-save")
-ev("SettingsStore.apply()")
-settle()
 ev("Config.saved = []")
 ev("SettingsStore.set('prefix.emoji', 'em2')")
 check(ev("Config.prefix.emoji") == "em2" and ev("Config.saved.length") == 0,
-      "unstaged domain edit is left to the domain's own auto-save (one writer)")
+      "a live edit is left to the domain's own auto-save (one writer)")
 
 # Notifications: screens multi-select, multiselect days, list rules, pattern
 select("notifications")
@@ -327,13 +320,13 @@ check(h.eval(row("notifications.position"), "shown") is False, "corner position 
 ev("SettingsStore.set('notifications.presentation', 'corner')")
 settle()
 check(h.eval(row("notifications.position"), "shown") is True, "corner position shown for corner toasts")
-# A long option set (7 corners) is an inline kit Dropdown; short ones stay chips
+# A long option set (7 corners) is an inline kit Dropdown; up to four are a Segmented
 pos = row("notifications.position")
 check(h.eval(pos, "stacked") is False, "a long selector stays inline")
 picked = h.eval(pos, """(function() {
     var found = null;
     (function walk(item) {
-        if (!found && item.chipLimit !== undefined) found = item;
+        if (!found && item.segmentLimit !== undefined) found = item;
         for (var i = 0; i < item.children.length; i++) walk(item.children[i]);
     })(this);
     return found.dropdown;
@@ -370,8 +363,7 @@ check(h.eval(row("apps.theming"), "modified") is True, "app theming entry modifi
 h.eval(ev('w.findItem("glassLink")'), "clicked()")
 until(lambda: ev("currentCategory") == "appearance", "glass link opens Appearance")
 
-# Windows page: color-role control, nested pulse key, preview (expert rows: All view)
-ev("SettingsStore.setShowAll(true)")
+# Windows page: color-role control, nested pulse key, preview
 select("windows")
 FIND = """(function(name) {
     function find(item) {
@@ -382,18 +374,14 @@ FIND = """(function(name) {
     }
     return find(this);
 })"""
-active = row("compositor.activeBorderColor")
+active = row("compositor.inactiveBorderColor")
 h.eval(active, f"{FIND}.call(this, 'maxStops').commit(['primary', 'tertiary@0.5'])")
-check(json.loads(ev("JSON.stringify(Config.compositor.activeBorderColor)")) == ["primary", "tertiary@0.5"],
+check(json.loads(ev("JSON.stringify(Config.compositor.inactiveBorderColor)")) == ["primary", "tertiary@0.5"],
       "color-role writes a gradient list")
-check(ev("GlobalStates.compositorHasChanges") is True, "border edit stages the compositor snapshot")
+check(ev("GlobalStates.compositorHasChanges") is False, "border edit applies live")
 check(h.eval(active, "modified") is True, "color-role row shows modified")
-shadow = row("compositor.shadowColor")
-h.eval(shadow, f"{FIND}.call(this, 'maxStops').commit(['primary@0.8'])")
-check(ev("Config.compositor.shadowColor") == "primary@0.8", "single color-role writes a string")
 ev("SettingsStore.set('compositor.borderPulse.enabled', true)")
 settle()
-check(h.eval(row("compositor.borderPulse.intensity"), "shown") is True, "pulse intensity shown when enabled")
 check(ev("Config.compositor.borderPulse.source") == "cava", "nested pulse write keeps siblings")
 ev("SettingsStore.set('compositor.gapsIn', 7)")
 settle()
@@ -401,15 +389,10 @@ readout = ev('w.findItem("windowsReadout")')
 check(readout is not None and "7" in readout.property("text"), "preview readout follows the gaps")
 check(ev('w.findItem("motionCard:springs")') is None, "motion lives on Look, not Windows")
 
-# Look > Motion: the one motion section (profile + speed)
+# Look: motion is the one Motion macro (the profile cards are not a row)
 select("appearance")
-card = ev('w.findItem("motionCard:springs")')
-check(card is not None, "motion profile cards rendered")
-h.eval(card, "clicked()")
-check(ev("Config.compositor.motionProfile") == "springs", "motion card selects the profile")
-ev("SettingsStore.set('compositor.motionProfile', 'off')")
-settle()
-check(h.eval(row("compositor.motionDurationScale"), "shown") is False, "speed hidden for the off profile")
+check(ev('w.findItem("macro:motion")') is not None, "the Motion macro is on Look")
+check(ev('w.findItem("motionCard:springs")') is None, "no second motion control")
 # Leave the page before the engine is torn down: PySide destroys the Config/
 # Colors singletons first and the live preview bindings would read them dead.
 select("about")
@@ -439,23 +422,14 @@ settle()
 stored = {e["id"]: e for e in json.loads(ev("JSON.stringify(Config.notch.activities)"))}
 check(stored["battery"]["enabled"] is False and stored["osd"]["side"] == "leading", "enable and side stored")
 
-# Closing with staged changes asks first: Keep editing keeps them, Apply applies.
-ev("GlobalStates.markShellChanged(); GlobalStates.settingsCloseConfirm = true")
+# Closing never asks: every change is already applied and saved.
+ev("GlobalStates.settingsWindowVisible = false")
 settle()
-keep = ev('w.findItem("confirm:keep")')
-check(keep is not None and h.eval(keep, "visible") is True, "close confirm offers Keep editing")
-h.eval(keep, "clicked()")
-settle()
-check(ev("GlobalStates.settingsCloseConfirm") is False and ev("GlobalStates.shellHasChanges") is True,
-      "Keep editing leaves the staged changes")
-ev("GlobalStates.settingsCloseConfirm = true")
-settle()
-h.eval(ev('w.findItem("confirm:apply")'), "clicked()")
-settle()
-check(ev("GlobalStates.shellHasChanges") is False and ev("GlobalStates.settingsWindowVisible") is False,
-      "Apply from the close confirm applies and closes")
+check(ev("GlobalStates.settingsWindowVisible") is False, "a close closes at once")
 ev("GlobalStates.settingsWindowVisible = true")
 
 late = [e for e in errors if "/widgets/" not in e]
 check(not late, "QML errors during interaction:\n  " + "\n  ".join(late))
 print("settings-ui: ok")
+# no interpreter teardown: kept-alive pages would outlive the singletons
+h.exit(0)

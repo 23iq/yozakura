@@ -197,7 +197,7 @@ Column {
         SelectorControl {
             objectName: "fetchPresetChips"
             width: root.width
-            chipLimit: 8
+            segmentLimit: 8
             translate: false
             options: TerminalLookService.fetchPresets.map(p => ({
                         "value": p.id,

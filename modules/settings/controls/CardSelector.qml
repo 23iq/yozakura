@@ -19,9 +19,9 @@ Item {
     property var value
     signal selected(var value)
 
-    readonly property int columns: Math.max(2, Math.min(root.options.length, Math.floor(width / Space.px(150))))
+    readonly property int columns: Math.max(2, Math.min(root.options.length, Math.floor((width + grid.columnSpacing) / (Space.px(150) + grid.columnSpacing))))
     // A few options do not stretch into huge cards.
-    readonly property real cardWidth: Math.min((width - grid.spacing * (columns - 1)) / columns, Space.px(220))
+    readonly property real cardWidth: Math.min((width - grid.columnSpacing * (columns - 1)) / columns, Space.px(240))
     readonly property string thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""
 
     implicitHeight: grid.implicitHeight
@@ -30,7 +30,8 @@ Item {
         id: grid
         width: parent.width
         columns: root.columns
-        spacing: Space.m
+        rowSpacing: Space.l
+        columnSpacing: Space.l
 
         Repeater {
             model: root.options
@@ -40,7 +41,7 @@ Item {
                 required property var modelData
                 objectName: "card:" + card.modelData.value
                 width: root.cardWidth
-                previewHeight: Math.round(width * 0.5)
+                previewHeight: Math.round(width * 0.56)
                 selected: root.value === card.modelData.value
                 title: I18n.t(card.modelData.label)
                 subtitle: card.modelData.description ? I18n.t(card.modelData.description) : ""

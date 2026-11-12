@@ -188,8 +188,9 @@ QtObject {
     }
 
     // ---- settings --------------------------------------------------------
+    // Staged (SettingsStore.stageSet): written by finish(), never earlier.
     function set(key, value) {
-        SettingsStore.set(key, value);
+        SettingsStore.stageSet(key, value);
     }
     function get(key) {
         return SettingsStore.get(key);

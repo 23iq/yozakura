@@ -7,18 +7,18 @@ import qs.modules.settings.store
 import qs.modules.services
 import qs.modules.theme
 import "CompositorGate.js" as CompositorGate
-import "schema/Advanced.js" as Advanced
+import "Registry.js" as Registry
 
-// Renders a schema-driven category: header + one SettingsSection per
-// schema section. Nothing here is category specific.
+// Renders a schema-driven category: its stage (the live miniature of what
+// the page controls, `stage` in the schema) and one SettingsSection per
+// section that has a row in the window. Nothing here is category specific.
 Flickable {
     id: page
 
     required property var category
     // Entries of this page the compositor gate hides on the running compositor
     readonly property var gated: CompositorGate.hiddenBy(page.category.sections, YozdService.compositorName)
-    // Rows the Simple view hides here (the footer offers All).
-    readonly property int simpleHidden: Advanced.hiddenCount(page.category, SettingsStore.showAll, SettingsStore.revealed, (e, sec) => CompositorGate.allows(e.compositor || sec.compositor, YozdService.compositorName) && SettingsStore.visible(e) && !SettingsStore.isModified(e))
+    readonly property string stageUrl: page.category.stage ? Qt.resolvedUrl(Registry.stage(page.category.stage)) : ""
 
     // Sections fill in a few per frame (as many as fit a frame budget): a
     // long page shows its top at once and never freezes the window.
@@ -49,7 +49,7 @@ Flickable {
     }
 
     contentWidth: width
-    contentHeight: column.implicitHeight + 120
+    contentHeight: column.implicitHeight + Space.xxl * 3
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
@@ -65,11 +65,8 @@ Flickable {
         easing.type: Motion.morph.easing
     }
 
-    // Scroll to an entry (or a section) and flash it.
+    // Scroll to an entry (or a section), flash it and give it focus.
     function reveal(sectionId, entryId) {
-        // An advanced entry shows in Simple once searched for.
-        if (entryId)
-            SettingsStore.revealEntry(entryId);
         buildAll();
         let target = null;
         for (let i = 0; i < sections.count; i++) {
@@ -89,12 +86,13 @@ Flickable {
         }
         if (!target)
             return;
-        const y = target.mapToItem(column, 0, 0).y;
-        scroller.to = Math.max(0, Math.min(y - 96, contentHeight - height));
+        const y = target.mapToItem(column, 0, 0).y + column.y;
+        scroller.to = Math.max(0, Math.min(y - (page.height - target.height) / 3, contentHeight - height));
         scroller.restart();
         if (entryId) {
             SettingsStore.highlightedEntry = entryId;
             unflash.restart();
+            target.forceActiveFocus();
         }
     }
 
@@ -104,28 +102,33 @@ Flickable {
         if (!item)
             return;
         const y = item.mapToItem(column, 0, 0).y + column.y;
-        const top = item.height > height / 2 ? y - 96 : y - (height - item.height) / 2;
+        const top = item.height > height / 2 ? y - Space.xxl * 3 : y - (height - item.height) / 2;
         scroller.to = Math.max(0, Math.min(top, contentHeight - height));
         scroller.restart();
     }
 
     Timer {
         id: unflash
-        interval: 1400
+        interval: 1600
         onTriggered: SettingsStore.highlightedEntry = ""
     }
 
     Column {
         id: column
-        width: Math.min(page.width - Space.xxl * 2, 820)
+        width: Math.min(page.width - Space.xxl * 2, Space.px(860))
         x: (page.width - width) / 2
-        y: Space.xxl
-        // Header -> first group: the screen heading gap of the kit.
-        spacing: Space.xl
+        y: Space.l
+        spacing: Look.screenGap + Space.s
 
-        PageHeader {
+        // The stage: built with the page, by URL (only this page's stage
+        // is compiled).
+        Loader {
+            id: stageLoader
+            objectName: "pageStage"
             width: parent.width
-            category: page.category
+            active: page.stageUrl !== ""
+            visible: active
+            source: page.stageUrl
         }
 
         Column {
@@ -141,19 +144,14 @@ Flickable {
                     required property int index
                     width: column.width
                     section: modelData
-                    divider: index > 0
                     pending: index >= page.builtSections
                 }
-            }
-
-            SimpleFooter {
-                width: parent.width
-                hidden: page.simpleHidden
             }
 
             KitText {
                 objectName: "compositorOnlyNote"
                 width: parent.width
+                leftPadding: Look.rowInset
                 visible: page.gated.count > 0
                 role: "caption"
                 color: Type.muted

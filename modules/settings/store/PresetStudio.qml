@@ -160,13 +160,16 @@ Singleton {
         return PresetModel.byName(presets, name);
     }
 
-    // Staged settings edits are written first, so a trial's backup, a
-    // saved look and a preset edit hold exactly what the user sees; the
-    // command runs once the config files are on disk. In a separate window
-    // Apply is answered later (the main shell writes, or this window once
-    // no answer came): the command waits for that answer, then the delay.
+    // Settings edits are written first, so a trial's backup, a saved look
+    // and a preset edit hold exactly what the user sees: a live change still
+    // waiting for its coalesced write is written at once (flush); the
+    // wizard's staged choices are applied and the command runs once the
+    // files are on disk. In a separate wizard window Apply is answered later
+    // (the main shell writes, or the window once no answer came): the
+    // command waits for that answer, then the delay.
     function afterFlush(fn) {
         if (!SettingsStore.hasChanges) {
+            SettingsStore.flush();
             fn();
             return;
         }

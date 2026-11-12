@@ -95,6 +95,17 @@ Singleton {
     function configFile(name) {
         return root._files[name] || null;
     }
+    // Writes every domain's coalesced edit still waiting for its timer (a
+    // preset command is about to read the files).
+    function flushWrites() {
+        for (const name in root._files) {
+            const f = root._files[name];
+            if (f && f.saveTimer.running) {
+                f.saveTimer.stop();
+                f.autoSave();
+            }
+        }
+    }
 
     // A domain file was reloaded (external change): the staged settings
     // snapshot of that domain follows it, so Discard never undoes it.

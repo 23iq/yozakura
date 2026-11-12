@@ -259,6 +259,9 @@ MIRROR = [
     "modules/bar/panels/PanelLayout.js",
     "modules/bar/panels/PanelEdit.js",
     "modules/bar/workspaces/WorkspaceNumerals.js",
+    "modules/bar/clock/ClockFace.qml",  # the bar stage draws the real clock faces
+    "modules/bar/clock/ClockFaces.js",
+    "modules/bar/clock/faces",
     "modules/bar/workspaces/indicators",
     "modules/bar/look",
     "modules/widgets/dashboard/wallpapers/WallpaperFolders.js",
@@ -480,7 +483,6 @@ QtObject {{
     property string compositorLayout: "dwindle"
     property string settingsCategory: "appearance"
     property bool settingsWindowVisible: true
-    property bool settingsCloseConfirm: false
     readonly property var _shellSections: {sections}
     function markThemeChanged() {{ themeHasChanges = true }}
     function markShellChanged() {{ shellHasChanges = true }}
@@ -834,7 +836,7 @@ class SettingsEnv:
         self.h.module("Quickshell.Widgets", QUICKSHELL_WIDGETS)
         # Legacy panel components reused by editors (heavy service deps).
         self.h.module("qs.modules.widgets.dashboard.controls", {
-            "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120 }"})
+            "BarActivitiesSettings": "import QtQuick.Layouts\nColumnLayout { implicitHeight: 120; property var write: null }"})
         self._qmldir(qs / "modules/widgets/defaultview", "qs.modules.widgets.defaultview", only=["NotchVisualizer"])
         self._qmldir(qs / "modules/widgets/dashboard/widgets", "qs.modules.widgets.dashboard.widgets", only=["HostWidget"])
         self._qmldir(qs / "modules/widgets/presets", "qs.modules.widgets.presets",
@@ -858,7 +860,7 @@ class SettingsEnv:
                   "modules/settings/layout", "modules/components/kit",
                   "modules/extras", "modules/settings/extras", "modules/terminal",
                   "modules/settings/connect", "modules/settings/mods", "modules/settings/editors/surfaces",
-                  "modules/settings/changes", "modules/settings/thumbs",
+                  "modules/settings/changes", "modules/settings/thumbs", "modules/settings/stages",
                   "modules/shell/osd", "modules/shell/osd/styles"]:
             self._qmldir(qs / d, "qs." + d.replace("/", "."))
 

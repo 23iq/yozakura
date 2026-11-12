@@ -75,15 +75,6 @@ test('reset only touches visible entries of the running compositor', () => {
     assert.deepEqual(plain(ids('', { 'dock.enabled': true })), ['bar.compact', 'dock.height']);
 });
 
-test('unstagedKeys lists modified keys of domains without a snapshot', () => {
-    const items = SchemaUtil.flatten([{ sections: [{ id: 's', entries: [
-        { key: 'bar.compact' }, { key: 'general.x' }, { key: 'wallpaper.matugenScheme' }, { key: 'weather.unit' },
-    ] }] }]);
-    const staged = d => d === 'bar';
-    const modified = e => e.key !== 'weather.unit';
-    assert.deepEqual(plain(ResetModel.unstagedKeys(items, modified, staged)), ['general.x']);
-});
-
 test('search skips hidden and other-compositor entries and tells duplicates apart', () => {
     const cats = [{
         id: 'c', title: 't', icon: 'x', sections: [

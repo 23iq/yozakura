@@ -7,16 +7,15 @@
   "x-file": "config/bar.json",
   "properties": {
     "position": {
-      "title": "Bar edge",
+      "title": "Edge",
       "type": "string",
       "default": "top",
       "description": "The screen edge the bar sits on.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.label.bar_edge",
-        "control": "custom",
-        "component": "BarPositionPicker",
+        "control": "selector",
         "keywords": "position edge top bottom left right vertical horizontal",
         "visibleWhen": {
           "key": "bar.panels",
@@ -28,7 +27,13 @@
         "bottom",
         "left",
         "right"
-      ]
+      ],
+      "x-enumLabels": {
+        "top": "Top",
+        "bottom": "Bottom",
+        "left": "Left",
+        "right": "Right"
+      }
     },
     "launcherIcon": {
       "title": "Launcher icon",
@@ -108,7 +113,8 @@
         "section": "screens",
         "label": "prefs.bar.firefox_player",
         "control": "toggle",
-        "keywords": "firefox browser media player mpris music video youtube"
+        "keywords": "firefox browser media player mpris music video youtube",
+        "advanced": true
       }
     },
     "frameEnabled": {
@@ -118,7 +124,7 @@
       "description": "A border around the whole screen, joined to the bar.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.bar.frame",
         "control": "toggle",
         "keywords": "frame border screen edge outline"
@@ -131,7 +137,7 @@
       "description": "Width of the frame on the other edges.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.bar.frame_thickness",
         "control": "slider",
         "step": 1,
@@ -150,7 +156,7 @@
       "x-unit": "px"
     },
     "pinnedOnStartup": {
-      "title": "Visible at startup",
+      "title": "Shown at start",
       "type": "boolean",
       "default": true,
       "description": "Start with the bar pinned instead of hidden. Panels set to always hide or never hide ignore it.",
@@ -237,7 +243,7 @@
       }
     },
     "availableOnFullscreen": {
-      "title": "Over fullscreen apps",
+      "title": "Over full-screen apps",
       "type": "boolean",
       "default": false,
       "description": "Keep the bar reachable when a window is fullscreen.",
@@ -263,13 +269,13 @@
       }
     },
     "containBar": {
-      "title": "Bar inside the frame",
+      "title": "Inside the frame",
       "type": "boolean",
       "default": false,
       "description": "Draw the bar inside the frame instead of over it. Applies to the classic, menubar, statusline, ribbon and rail styles.",
       "x-settings": {
         "category": "bar",
-        "section": "placement",
+        "section": "style",
         "label": "prefs.bar.contain_bar",
         "control": "toggle",
         "keywords": "frame contain inside bar",
@@ -341,7 +347,6 @@
         "section": "clock",
         "label": "prefs.bar.clock_date",
         "control": "toggle",
-        "preview": "ClockPreview",
         "keywords": "clock date day month time"
       }
     },
@@ -364,7 +369,7 @@
       "description": "Bar layout: style and the ordered module ids of each group.",
       "properties": {
         "style": {
-          "title": "Bar style",
+          "title": "Shape",
           "type": "string",
           "default": "classic",
           "description": "One continuous bar, or floating islands around the notch.",
@@ -439,7 +444,7 @@
             "section": "layout",
             "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Bar modules",
+            "entryTitle": "Arrange",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules at the start (left/top), in order.",
@@ -493,7 +498,7 @@
             "section": "layout",
             "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Bar modules",
+            "entryTitle": "Arrange",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules at the end (right/bottom), in order.",
@@ -508,7 +513,7 @@
             "section": "layout",
             "label": "prefs.label.bar_modules",
             "entry": "bar.layout.modules",
-            "entryTitle": "Bar modules",
+            "entryTitle": "Arrange",
             "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
           },
           "description": "Modules tucked into the overflow drawer.",
@@ -556,7 +561,7 @@
         "section": "panels",
         "label": "prefs.bar.panels",
         "entry": "bar.panels.editor",
-        "entryTitle": "Panel layout",
+        "entryTitle": "Bars",
         "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
       },
       "description": "Bar panels (empty = the single bar from position/layout/screenList). Each item: {id, edge: top|bottom|left|right, style: classic|islands|menubar|statusline|ribbon|rail|corners|dock|floating|pills|dock-like|none, groups: {start, center, end, drawer, gapStart, gapEnd: [module ids]}, align: fill|center|start|end, size (module px, 0 = style), thickness (px, 0 = auto), margin (px, -1 = style), flat (bool), autohide: auto|always|never, reserve (bool), screens ([] = all; names, primary, secondary), enabled, options: {surface: bg|bar|none}}. See modules/bar/panels/PanelLayout.js.",
@@ -710,7 +715,7 @@
           "type": "object",
           "properties": {
             "showWeather": {
-              "title": "Weather on the clock",
+              "title": "Weather symbol",
               "type": "boolean",
               "default": true,
               "description": "Lead the clock with the weather symbol instead of the day name.",

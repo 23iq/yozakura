@@ -43,7 +43,7 @@ test('catalog builds without errors and describes every key', () => {
     }
     assert.ok(leaves > 500, `${leaves} keys`);
     const bar = combined.$defs.bar.properties;
-    assert.deepStrictEqual(bar.position.enum, ['top', 'bottom', 'left', 'right']);
+    assert.deepStrictEqual([...bar.position.enum], ['top', 'bottom', 'left', 'right']);
     assert.strictEqual(bar.frameThickness['x-settings'].visibleWhen.key, 'bar.frameEnabled');
     assert.strictEqual(bar.layout.properties.style['x-settings'].component, 'BarStyleCards');
 });

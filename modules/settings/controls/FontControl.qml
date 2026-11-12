@@ -15,6 +15,10 @@ Item {
     // Shown when no family is set (e.g. "keep the app's own font")
     property string placeholder: ""
     property string sizeUnit: "px"
+    // The size stepper (a family-only key has none) and the live sample
+    // (a page whose stage shows the fonts needs none).
+    property bool showSize: true
+    property bool showSample: true
     signal familyPicked(string family)
     signal sizeEdited(int size)
 
@@ -33,7 +37,7 @@ Item {
             Item {
                 id: pickButton
                 objectName: "fontPickButton"
-                width: parent.width - sizeStepper.width - parent.spacing
+                width: parent.width - (sizeStepper.visible ? sizeStepper.width + parent.spacing : 0)
                 height: Space.controlS
                 activeFocusOnTab: true
                 Keys.onReturnPressed: picker.open()
@@ -77,6 +81,7 @@ Item {
 
             NumberControl {
                 id: sizeStepper
+                visible: root.showSize
                 anchors.verticalCenter: parent.verticalCenter
                 value: root.size
                 from: 8
@@ -88,6 +93,7 @@ Item {
 
         // Live sample, in the language's control box.
         Item {
+            visible: root.showSample
             width: parent.width
             height: sample.implicitHeight + Space.l * 2
             clip: true

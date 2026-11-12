@@ -272,7 +272,7 @@ check(add is not None, "add calendar button")
 h.eval(add, "clicked()")
 wait_until(lambda: len(widgets()) == count + 1 and sfind(f"widgetCard:{widgets()[-1]['id']}") is not None)
 check(len(widgets()) == count + 1 and widgets()[-1]["type"] == "calendar", "settings adds a widget")
-check(sev("GlobalStates.shellHasChanges") is True, "widget edits are staged with the shell settings")
+check(sev("GlobalStates.shellHasChanges") is False, "widget edits apply live (nothing staged)")
 cal_id = widgets()[-1]["id"]
 check(sfind(f"widgetCard:{cal_id}") is not None, "card for the new widget")
 sev(f"""(function() {{

@@ -12,7 +12,7 @@
       "description": "Launcher placement and look.",
       "properties": {
         "host": {
-          "title": "Launcher opens in",
+          "title": "Launcher",
           "type": "string",
           "default": "auto",
           "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
@@ -21,7 +21,6 @@
             "section": "hosts",
             "label": "prefs.layout.launcher_host",
             "control": "selector",
-            "preview": "LayoutPreview",
             "keywords": "launcher host spotlight sheet notch centered search"
           },
           "enum": [
@@ -32,7 +31,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "spotlight": "Spotlight",
             "sheet": "Sheet"
           }
@@ -108,7 +107,7 @@
       "description": "Dashboard placement, tabs and widget grid.",
       "properties": {
         "host": {
-          "title": "Dashboard opens in",
+          "title": "Dashboard",
           "type": "string",
           "default": "auto",
           "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
@@ -127,7 +126,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "spotlight": "Spotlight",
             "sheet": "Sheet"
           }
@@ -352,7 +351,7 @@
       "additionalProperties": false
     },
     "backdrop": {
-      "title": "Dim the screen behind",
+      "title": "Dim behind",
       "type": "boolean",
       "default": false,
       "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
@@ -489,7 +488,7 @@
       "description": "AI quick ask placement.",
       "properties": {
         "host": {
-          "title": "AI quick ask opens in",
+          "title": "Quick ask",
           "type": "string",
           "default": "auto",
           "description": "Notch: inside the island. Card: a small floating card beside the bar. Spotlight: centered over the screen.",
@@ -508,7 +507,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "card": "Card",
             "spotlight": "Spotlight"
           }
@@ -522,7 +521,7 @@
       "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
       "properties": {
         "host": {
-          "title": "Voice, timers and alarm open in",
+          "title": "Voice and timers",
           "type": "string",
           "default": "auto",
           "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
@@ -540,7 +539,7 @@
           ],
           "x-enumLabels": {
             "auto": "Auto",
-            "notch": "Notch",
+            "notch": "Island",
             "card": "Card"
           }
         }
@@ -553,7 +552,7 @@
       "description": "Keybind cheatsheet placement.",
       "properties": {
         "host": {
-          "title": "Keybind cheatsheet",
+          "title": "Shortcut sheet",
           "type": "string",
           "default": "fullscreen",
           "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",

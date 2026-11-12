@@ -13,23 +13,28 @@ import "schema/Categories.js" as Categories
 import "presets/PresetModel.js" as PresetModel
 import "Ui.js" as Ui
 
-// Settings window content: sidebar (groups, search) + the current page
-// (SettingsPageHost: a fresh, asynchronously built page per category).
+// Settings window content: the sidebar (destinations, search) and the
+// current destination: its header (title, tabs, Reset page), the page
+// (SettingsPageHost: kept alive, built on first visit) and the undo pill.
+// Every change applies at once; Ctrl+Z / Ctrl+Shift+Z undo / redo it.
 Item {
     id: shell
 
     property string currentCategory: ""
+    readonly property string currentDestination: {
+        const g = Categories.groupOf(shell.currentCategory);
+        return g ? g.id : "";
+    }
     readonly property bool compact: width < 860
     // Compact: the icon rail has no search field. Ctrl+F or the rail's search
     // button slides the full sidebar over the page until a pick or Escape.
     property bool searchOpen: false
     readonly property bool railed: compact && !searchOpen
-    readonly property real railWidth: 76
-    readonly property real sidebarWidth: 264
+    readonly property real railWidth: Space.px(76)
+    readonly property real sidebarWidth: Space.px(256)
     // 0..1: how far the compact search sidebar is slid out. Only this
     // animates; the rail <-> full sidebar switch that follows the window
-    // width (first layout at width 0, a resize, a tiling configure) is
-    // immediate, never a sidebar growing over the page while it opens.
+    // width is immediate.
     property real searchSlide: searchOpen ? 1 : 0
     Behavior on searchSlide {
         enabled: Config.animDuration > 0
@@ -45,23 +50,23 @@ Item {
     }
     property var pendingReveal: null
 
-    // Accepts a category id or a sidebar group id (Categories.resolve).
-    // The page is rebuilt here, after the category is known: a handler on
-    // currentCategory would run before the bindings that follow it and
-    // build the old page once more.
+    // Accepts a category id, a moved id or a destination id
+    // (Categories.resolve). A tab of the same destination slides in from
+    // its side.
     function select(id) {
         const c = Categories.resolve(id);
         if (!c)
             return;
-        const changed = c.id !== currentCategory || !page.category;
+        const changed = c.id !== currentCategory || !page.item;
+        const tabs = Categories.tabsOf(c.id);
+        const from = tabs.findIndex(t => t.id === currentCategory);
+        const to = tabs.findIndex(t => t.id === c.id);
+        page.direction = from >= 0 && to >= 0 && from !== to ? (to > from ? 1 : -1) : 0;
         currentCategory = c.id;
         searchOpen = false;
         GlobalStates.settingsCategory = c.id;
-        if (changed) {
-            // Rows a search revealed in the Simple view fold back away.
-            SettingsStore.clearRevealed();
+        if (changed)
             page.load(c);
-        }
     }
 
     function navigate(categoryId, sectionId, entryId) {
@@ -70,14 +75,13 @@ Item {
             "entry": entryId || ""
         };
         const c = Categories.resolve(categoryId);
-        if (c && c.id === currentCategory && page.status === Loader.Ready)
+        if (c && c.id === currentCategory && page.item)
             revealTimer.restart();
         else
             select(categoryId);
     }
 
     // The active preset's actions (sidebar footer, changes sheet, toast).
-    // Staged edits are written first, so the preset gets what the user sees.
     function presetAction(id) {
         const toast = (ok, message, undo) => PresetStudio.notify(message, undo ? "save:" + undo : "");
         if (id === "save")
@@ -110,7 +114,7 @@ Item {
     Component.onCompleted: {
         // A preset trial or edit outlives the window: bring back its pill/banner.
         PresetStudio.refreshSessions();
-        select(Categories.resolve(GlobalStates.settingsCategory) ? GlobalStates.settingsCategory : "appearance");
+        select(Categories.resolve(GlobalStates.settingsCategory) ? GlobalStates.settingsCategory : "look");
     }
 
     Connections {
@@ -130,9 +134,12 @@ Item {
         onActivated: shell.searchOpen = false
     }
     Shortcut {
-        sequences: [StandardKey.Save]
-        enabled: SettingsStore.hasChanges
-        onActivated: SettingsStore.apply()
+        sequences: ["Ctrl+Z"]
+        onActivated: SettingsStore.undo()
+    }
+    Shortcut {
+        sequences: ["Ctrl+Shift+Z", "Ctrl+Y"]
+        onActivated: SettingsStore.redo()
     }
     Shortcut {
         sequences: ["Ctrl+PgDown", "Ctrl+Tab"]
@@ -183,8 +190,8 @@ Item {
         width: shell.compact ? shell.railWidth + (shell.sidebarWidth - shell.railWidth) * shell.searchSlide : shell.sidebarWidth
         height: parent.height
         compact: shell.railed
-        currentCategory: shell.currentCategory
-        onCategorySelected: id => shell.select(id)
+        currentDestination: shell.currentDestination
+        onDestinationSelected: id => shell.select(id)
         onResultActivated: r => {
             shell.searchOpen = false;
             shell.navigate(r.categoryId, r.sectionId, r.entryId);
@@ -226,35 +233,47 @@ Item {
             z: 2
         }
 
+        // Title, tabs and Reset page, on the page's column.
+        DestinationHeader {
+            id: header
+            objectName: "destinationHeader"
+            y: editBanner.height + Space.xxl
+            x: (parent.width - width) / 2
+            width: Math.min(parent.width - Space.xxl * 2, Space.px(860))
+            category: page.category
+            onTabSelected: id => shell.select(id)
+        }
+
         SettingsPageHost {
             id: page
             objectName: "settingsPage"
-            y: editBanner.height
+            y: header.y + header.height + Space.l
             width: parent.width
-            height: parent.height - editBanner.height
+            height: parent.height - y
             onLoaded: {
                 if (shell.pendingReveal)
                     revealTimer.restart();
             }
         }
 
-        ChangesBar {
+        UndoPill {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 22
+            anchors.bottomMargin: Space.xl
+            z: 3
         }
 
         PresetTrialPill {
             anchors.horizontalCenter: parent.horizontalCenter
-            y: editBanner.height + 16
+            y: editBanner.height + Space.l
             z: 3
         }
 
         PresetToast {
             anchors.left: parent.left
-            anchors.leftMargin: 22
+            anchors.leftMargin: Space.xl
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 22
+            anchors.bottomMargin: Space.xl
             z: 3
             onDetailsRequested: shell.presetAction("changes")
         }
@@ -272,67 +291,6 @@ Item {
 
     PresetNameDialog {
         id: saveAsDialog
-    }
-
-    // Closing the window with unsaved staged changes asks first
-    // (SettingsWindow keeps the window and raises settingsCloseConfirm).
-    ConfirmSheet {
-        id: closeConfirm
-        anchors.fill: parent
-        open: GlobalStates.settingsCloseConfirm && SettingsStore.hasChanges
-        title: I18n.t("prefs.close.title")
-        body: I18n.t("prefs.close.body")
-        actions: [
-            {
-                "id": "keep",
-                "text": I18n.t("prefs.close.keep"),
-                "kind": "ghost"
-            },
-            {
-                "id": "discard",
-                "text": I18n.t("prefs.changes.discard"),
-                "kind": "tonal"
-            },
-            {
-                "id": "apply",
-                "text": I18n.t("prefs.changes.apply"),
-                "kind": "filled"
-            }
-        ]
-        onDismissed: GlobalStates.settingsCloseConfirm = false
-        onChosen: id => {
-            GlobalStates.settingsCloseConfirm = false;
-            if (id === "keep")
-                return;
-            if (id === "apply")
-                SettingsStore.apply();
-            else
-                SettingsStore.discard();
-            GlobalStates.settingsWindowVisible = false;
-        }
-    }
-
-    // Reset page / section over settings that save at once (no Apply /
-    // Discard covers them): ask before applying the defaults.
-    ConfirmSheet {
-        anchors.fill: parent
-        open: SettingsStore.pendingReset !== null
-        title: I18n.t("prefs.reset.title")
-        body: I18n.t("prefs.reset.body", SettingsStore.pendingResetCount)
-        actions: [
-            {
-                "id": "cancel",
-                "text": I18n.t("common.cancel"),
-                "kind": "ghost"
-            },
-            {
-                "id": "reset",
-                "text": I18n.t("prefs.common.reset"),
-                "kind": "filled"
-            }
-        ]
-        onDismissed: SettingsStore.cancelReset()
-        onChosen: id => id === "reset" ? SettingsStore.confirmReset() : SettingsStore.cancelReset()
     }
 
     // Reveal after the page laid out.

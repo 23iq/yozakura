@@ -29,14 +29,15 @@ test('nothing changed: no groups', () => {
 });
 
 test('changed settings are grouped by page with now / default values', () => {
-    const { ctx, isModified } = ctxOf({ 'theme.roundness': 4, 'dock.position': 'left', 'bar.position': 'bottom' });
+    const { ctx, isModified } = ctxOf({ 'workspaces.shown': 4, 'dock.position': 'left', 'bar.position': 'bottom', 'theme.roundness': 4 });
     const groups = Changes.fromDefaults(pages, ctx, isModified, Defaults.get, tr);
     const ids = groups.map(g => g.categoryId);
-    assert.ok(ids.indexOf('bar') < ids.indexOf('dock') && ids.indexOf('dock') < ids.indexOf('appearance'), ids.join());
-    const round = groups.find(g => g.categoryId === 'appearance').rows.find(r => r.entryId === 'theme.roundness');
-    assert.equal(round.now, '4 px');
-    assert.equal(round.was, '16 px');
-    assert.equal(round.label, tr('settings.theme.roundness'));
+    assert.ok(ids.indexOf('bar') < ids.indexOf('dock'), ids.join());
+    const shown = groups.find(g => g.categoryId === 'bar').rows.find(r => r.entryId === 'workspaces.shown');
+    assert.equal(shown.now, '4');
+    assert.equal(shown.label, tr('prefs.bar.ws_shown'));
+    // theme.roundness is not a window row (the Roundness macro is): not listed
+    assert.ok(!groups.some(g => g.rows.some(r => r.entryId === 'theme.roundness')));
     const dock = groups.find(g => g.categoryId === 'dock').rows[0];
     assert.equal(dock.now, tr('common.left'));
     assert.equal(Changes.count(groups), 3);
@@ -52,17 +53,17 @@ test('since the preset: rows by page, unknown keys under Other, raw target kept'
     const t = k => en[k] || k;
     const index = SchemaUtil.buildSearchIndex(Categories.categories, t);
     const groups = Changes.fromPreset([
-        { key: 'theme.roundness', a: 4, b: 12 },
+        { key: 'workspaces.shown', a: 4, b: 10 },
         { key: 'theme.someUnknownThing', a: true, b: false },
         { key: 'dock.position', a: 'left', b: 'bottom' },
     ], index, pages, t);
-    assert.deepEqual(plain(groups.map(g => g.categoryId)), ['dock', 'appearance', '']);
-    const r = groups[1].rows[0];
-    assert.equal(r.target, 12);
-    assert.equal(r.now, '4 px');
+    assert.deepEqual(plain(groups.map(g => g.categoryId)), ['bar', 'dock', '']);
+    const r = groups[0].rows[0];
+    assert.equal(r.target, 10);
+    assert.equal(r.now, '4');
     assert.equal(groups[2].title, en['prefs.changes.other']);
     assert.equal(groups[2].rows[0].label, 'Theme · Some unknown thing');
-    assert.equal(groups[0].rows[0].was, en['common.bottom']);
+    assert.equal(groups[1].rows[0].was, en['common.bottom']);
 });
 
 test('values of a custom editor (no options) read as words, not ids', () => {

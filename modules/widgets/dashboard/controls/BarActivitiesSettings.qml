@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.services
-import qs.modules.globals
 import qs.modules.components.kit
 import qs.config
 
@@ -19,6 +18,11 @@ ColumnLayout {
     readonly property var current: Config.notch.liveActivities ? Config.notch.liveActivities : ({})
     readonly property bool masterEnabled: group.current.enabled ?? true
 
+    // Writes the whole notch.liveActivities object (the settings window
+    // passes its live SettingsStore.set, so the change is saved and undoable);
+    // null: assigned to Config, the domain's auto-save writes it.
+    property var write: null
+
     // "activities" is one JSON object: copy, change one field, reassign.
     // `section` names a nested object ("sources", "downloads").
     function setField(field, value, section) {
@@ -27,8 +31,10 @@ ColumnLayout {
         if (target[field] === value)
             return;
         target[field] = value;
-        GlobalStates.markShellChanged();
-        Config.notch.liveActivities = next;
+        if (group.write)
+            group.write(next);
+        else
+            Config.notch.liveActivities = next;
     }
 
     readonly property var downloads: group.current.downloads || ({})

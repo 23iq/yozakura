@@ -28,97 +28,50 @@
 .import "overview.js" as Overview
 .import "sidebar.js" as Sidebar
 .import "presets.js" as Presets
+.import "power.js" as Power
 
-// Settings information architecture: the sidebar tree and its pages.
+// Settings information architecture: the window's destinations and their
+// tabs (modules/settings/AGENTS.md, NAVIGATION).
 //
-// The sidebar shows the 12 top-level `groups` (one per shell element:
-// Layout, Bar, Island, ...); a group opens its first category and, when it
-// has several, lists them under itself. A category is one of:
-//   * schema-driven: has `sections` (see appearance.js) - rendered by
+// The sidebar is one flat list of `groups` (destinations: Bar, Island, ...,
+// each with an icon) in labelled blocks (SIDEBAR_SECTIONS). A destination
+// holds one or more categories, shown as tabs at its top (`categories`,
+// first = default tab). A category is one of:
+//   * schema-driven: has `sections` (see bar.js) - rendered by
 //     SettingsPage.qml, searchable entry by entry; entries flagged
-//     `advanced: true` show only in the All view (Advanced.js);
-//   * a page: has `page` - a hand-written page mapped by name in
-//     SettingsPageHost.pages (Connect pages host the live device controls).
-// Every category is listed in exactly one group. `resolve(id)` accepts a
-// category id, a moved id (MOVED) or a group id, so old deep links and the
-// new tree both work.
+//     `advanced: true` are not in the window (SchemaUtil.inWindow);
+//     `stage` (Registry.STAGES name) is the live miniature at its top;
+//   * a page: has `page` - a hand-written page loaded by URL
+//     (Registry.PAGES).
+// Every category is listed in exactly one destination. `resolve(id)`
+// accepts a category id, a moved id (MOVED) or a destination id, so old
+// deep links (`<app> run settings <id>`, GlobalStates.settingsCategory)
+// and the new tree both work.
 
 var groups = [
-    {
-        "id": "layout",
-        "icon": "frameCorners",
-        "title": "prefs.group.layout",
-        "categories": ["layout"]
-    },
-    {
-        "id": "bar",
-        "icon": "squaresFour",
-        "title": "prefs.group.bar",
-        "categories": ["bar"]
-    },
-    {
-        "id": "island",
-        "icon": "dotsThree",
-        "title": "prefs.group.island",
-        "categories": ["notch"]
-    },
-    {
-        "id": "dock",
-        "icon": "dock",
-        "title": "prefs.group.dock",
-        "categories": ["dock"]
-    },
-    {
-        "id": "launcher",
-        "icon": "magnifyingGlass",
-        "title": "prefs.group.launcher",
-        "categories": ["launcher"]
-    },
-    {
-        "id": "dashboard",
-        "icon": "robot",
-        "title": "prefs.group.dashboard",
-        "categories": ["dashboard", "ai", "ai-providers", "ai-code"]
-    },
-    {
-        "id": "popups",
-        "icon": "bell",
-        "title": "prefs.group.popups",
-        "categories": ["notifications", "osd", "menus"]
-    },
-    {
-        "id": "lockscreen",
-        "icon": "lock",
-        "title": "prefs.group.lockscreen",
-        "categories": ["lockscreen"]
-    },
-    {
-        "id": "desktop",
-        "icon": "monitor",
-        "title": "prefs.group.desktop",
-        "categories": ["desktop", "overview"]
-    },
-    {
-        "id": "look",
-        "icon": "paintBrush",
-        "title": "prefs.group.look",
-        "categories": ["appearance", "icons-type", "wallpapers"]
-    },
-    {
-        "id": "presets",
-        "icon": "magicWand",
-        "title": "prefs.group.presets",
-        "categories": ["presets", "changes"]
-    },
-    {
-        "id": "system",
-        "icon": "gear",
-        "title": "prefs.group.system",
-        "categories": ["system", "displays", "keyboard", "windows", "specials", "terminal", "input", "voice", "timers", "routines", "network", "bluetooth", "sound", "effects", "extras", "mods", "updates", "about"]
-    }
+    { "id": "bar", "icon": "squaresFour", "title": "prefs.dest.bar", "categories": ["bar", "layout"] },
+    { "id": "island", "icon": "dotsThree", "title": "prefs.dest.island", "categories": ["notch"] },
+    { "id": "dock", "icon": "dock", "title": "prefs.dest.dock", "categories": ["dock"] },
+    { "id": "launcher", "icon": "magnifyingGlass", "title": "prefs.dest.launcher", "categories": ["launcher"] },
+    { "id": "dashboard", "icon": "widgets", "title": "prefs.dest.dashboard", "categories": ["dashboard"] },
+    { "id": "notifications", "icon": "bell", "title": "prefs.dest.notifications", "categories": ["notifications", "osd", "menus"] },
+    { "id": "lockscreen", "icon": "lock", "title": "prefs.dest.lockscreen", "categories": ["lockscreen"] },
+    { "id": "desktop", "icon": "monitor", "title": "prefs.dest.desktop", "categories": ["desktop", "overview"] },
+    { "id": "look", "icon": "paintBrush", "title": "prefs.dest.look", "categories": ["appearance", "icons-type"] },
+    { "id": "wallpaper", "icon": "image", "title": "prefs.dest.wallpaper", "categories": ["wallpapers"] },
+    { "id": "presets", "icon": "magicWand", "title": "prefs.dest.presets", "categories": ["presets", "changes"] },
+    { "id": "assistant", "icon": "sparkle", "title": "prefs.dest.assistant", "categories": ["ai", "ai-providers", "ai-code"] },
+    { "id": "displays", "icon": "frameCorners", "title": "prefs.dest.displays", "categories": ["displays"] },
+    { "id": "input", "icon": "keyboard", "title": "prefs.dest.input", "categories": ["keyboard", "input"] },
+    { "id": "windows", "icon": "appWindow", "title": "prefs.dest.windows", "categories": ["windows", "specials"] },
+    { "id": "network", "icon": "wifiHigh", "title": "prefs.dest.network", "categories": ["network", "bluetooth"] },
+    { "id": "sound", "icon": "speakerHigh", "title": "prefs.dest.sound", "categories": ["sound", "effects"] },
+    { "id": "power", "icon": "batteryHigh", "title": "prefs.dest.power", "categories": ["power"] },
+    { "id": "apps", "icon": "packageBox", "title": "prefs.dest.apps", "categories": ["terminal", "extras", "mods"] },
+    { "id": "system", "icon": "gear", "title": "prefs.dest.system", "categories": ["system", "updates", "voice", "timers", "routines", "about"] }
 ];
 
-// A hand-written page (SettingsPageHost.pages[name]).
+// A hand-written page (Registry.PAGES[name]).
 function page(id, icon, name, keywords) {
     return {
         "id": id,
@@ -130,11 +83,13 @@ function page(id, icon, name, keywords) {
     };
 }
 
-// Categories that moved into another page: old deep links land there.
+// Categories (and former sidebar groups) that moved: old deep links land
+// there.
 var MOVED = {
     "surfaces": "appearance",
     "bar-classic": "bar",
-    "sidebar": "ai"
+    "sidebar": "ai",
+    "popups": "notifications"
 };
 
 // A copy of `cat` with `extra` sections appended.
@@ -171,6 +126,7 @@ var categories = [
     Timers.category,
     Routines.category,
     Updates.category,
+    Power.category,
     page("network", "wifiHigh", "Network", "network wifi internet ethernet connection"),
     page("bluetooth", "bluetooth", "Bluetooth", "bluetooth devices pairing headphones"),
     page("sound", "speakerHigh", "Sound", "sound audio volume mixer output input microphone speaker"),
@@ -239,7 +195,7 @@ function groupById(id) {
     return null;
 }
 
-// The group (top-level sidebar entry) a category belongs to.
+// The destination (sidebar entry) a category belongs to.
 function groupOf(categoryId) {
     for (var i = 0; i < groups.length; i++) {
         if (groups[i].categories.indexOf(categoryId) !== -1)
@@ -248,7 +204,8 @@ function groupOf(categoryId) {
     return null;
 }
 
-// A category id (old deep links) or a group id (opens its first page).
+// A category id (old deep links), a moved id or a destination id (opens
+// its first tab).
 function resolve(id) {
     var cat = byId(MOVED[id] || id);
     if (cat)
@@ -271,24 +228,38 @@ function sidebar() {
     });
 }
 
-// The sidebar's labelled blocks (SectionLabels) over the element pages:
-// the shell's parts, its style, then the computer itself. Every group sits
-// in exactly one block, in `groups` order (tests/settings-tree.test.cjs).
+// The tabs of the destination holding `categoryId`: [category...] (one tab
+// = no tab strip).
+function tabsOf(categoryId) {
+    var g = groupOf(categoryId);
+    return g ? g.categories.map(byId).filter(function (c) {
+        return c !== null;
+    }) : [];
+}
+
+// The sidebar's labelled blocks (SectionLabels): the shell's parts, its
+// style, the assistant, then the computer itself. Every destination sits in
+// exactly one block, in `groups` order (tests/settings-tree.test.cjs).
 var SIDEBAR_SECTIONS = [
     {
         "id": "shell",
         "title": "prefs.sidebar.shell",
-        "groups": ["layout", "bar", "island", "dock", "launcher", "dashboard", "popups", "lockscreen", "desktop"]
+        "groups": ["bar", "island", "dock", "launcher", "dashboard", "notifications", "lockscreen", "desktop"]
     },
     {
         "id": "style",
         "title": "prefs.sidebar.style",
-        "groups": ["look", "presets"]
+        "groups": ["look", "wallpaper", "presets"]
+    },
+    {
+        "id": "assistant",
+        "title": "prefs.sidebar.assistant",
+        "groups": ["assistant"]
     },
     {
         "id": "computer",
         "title": "prefs.sidebar.computer",
-        "groups": ["system"]
+        "groups": ["displays", "input", "windows", "network", "sound", "power", "apps", "system"]
     }
 ];
 

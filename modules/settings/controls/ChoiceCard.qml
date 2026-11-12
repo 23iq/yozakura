@@ -1,14 +1,17 @@
 import QtQuick
+import QtQuick.Effects
 import qs.modules.theme
-import qs.modules.components
 import qs.modules.components.kit
 
-// Selectable card: a preview area (default children) above a caption.
-// Used by every "pick one of these looks" editor. At rest / hovered it is
-// the language's control box (Look); `selected` is the kit's accent tint
-// with an accent check (KitStates "active"). Keyboard focus shows the
-// hover look.
-StyledRect {
+// A picture card: one look to pick, shown as a picture (default children,
+// clipped to the card's rounded corners) over a short title. Used by every
+// "pick one of these looks" row. At rest the picture has a hairline edge;
+// hovered it lifts a little and the edge firms up; `selected` rings it in
+// the accent and the title takes the active weight and a check. Keyboard:
+// Tab focus with the kit FocusRing, Space / Enter pick. The same in every
+// visual language (the picture is the box). `subtitle` is a second caption
+// line for the rare card whose picture cannot say it.
+Item {
     id: card
 
     property bool selected: false
@@ -17,55 +20,92 @@ StyledRect {
     property string icon: ""
     property real previewHeight: 96
     default property alias preview: previewArea.data
-    readonly property bool hovered: area.containsMouse || card.activeFocus
+    readonly property bool hovered: area.containsMouse
+    readonly property real radius: Look.radius("control", Space.controlL)
     signal clicked
 
-    implicitWidth: 180
-    implicitHeight: previewHeight + caption.implicitHeight + Space.s * 2 + Space.s
+    implicitWidth: Space.px(180)
+    implicitHeight: card.previewHeight + Space.s + caption.implicitHeight
     activeFocusOnTab: true
     Keys.onSpacePressed: clicked()
     Keys.onReturnPressed: clicked()
-
-    variant: card.selected ? "primary" : (card.hovered ? "focus" : "common")
-    backgroundOpacity: card.selected ? (card.hovered ? Look.activeTint * 1.5 : Look.activeTint) : (Look.boxedControls ? 0 : -1)
-    enableBorder: !card.selected && !Look.boxedControls
-    radius: Look.chipRadius(height)
 
     Accessible.role: Accessible.RadioButton
     Accessible.name: title
     Accessible.checked: selected
 
-    ControlBox {
-        shown: !card.selected
-        radius: card.radius
-        hovered: card.hovered
-    }
-
     Item {
-        id: previewArea
-        x: Space.s
-        y: Space.s
-        width: parent.width - Space.s * 2
+        id: frame
+        width: parent.width
         height: card.previewHeight
-        clip: true
+        y: card.hovered && !card.selected ? -Space.hairline * 2 : 0
+        Behavior on y {
+            enabled: Motion.micro.duration > 0
+            NumberAnimation {
+                duration: Motion.micro.duration
+                easing.type: Motion.micro.easing
+            }
+        }
+
+        Item {
+            id: previewArea
+            anchors.fill: parent
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                maskEnabled: true
+                maskSource: mask
+                maskThresholdMin: 0.5
+                maskSpreadAtMin: 1.0
+            }
+        }
+        Mark {
+            id: mask
+            anchors.fill: parent
+            radius: card.radius
+            visible: false
+            layer.enabled: true
+            layer.smooth: true
+        }
+
+        // The edge: a hairline at rest, the accent ring when selected.
+        Mark {
+            anchors.fill: parent
+            anchors.margins: card.selected ? -Space.xs : 0
+            radius: card.radius + (card.selected ? Space.xs : 0)
+            color: "transparent"
+            border.width: card.selected ? Space.stroke - 1 : Space.hairline
+            border.color: card.selected ? Type.accent : (card.hovered ? Type.track : Type.hairline)
+            Behavior on anchors.margins {
+                enabled: Motion.micro.duration > 0
+                NumberAnimation {
+                    duration: Motion.micro.duration
+                    easing.type: Motion.micro.easing
+                }
+            }
+        }
+
+        FocusRing {
+            shown: card.activeFocus
+            anchors.margins: -Space.stroke * 2
+            radius: card.radius + Space.stroke * 2
+        }
     }
 
     Row {
         id: caption
-        x: Space.m
-        anchors.top: previewArea.bottom
+        anchors.top: frame.bottom
         anchors.topMargin: Space.s
-        width: parent.width - Space.m * 2
+        x: Space.xs
+        width: parent.width - Space.xs * 2
         spacing: Space.s
 
-        Text {
+        Icon {
             id: lead
             visible: card.icon !== ""
             anchors.verticalCenter: titleCol.verticalCenter
-            text: Icons[card.icon] ?? ""
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("secondary")
-            color: card.selected ? Type.accent : Type.secondary
+            icon: Icons[card.icon] ?? ""
+            role: "secondary"
+            tone: card.selected ? "accent" : "secondary"
         }
         Column {
             id: titleCol
@@ -73,21 +113,13 @@ StyledRect {
             KitText {
                 width: parent.width
                 role: "secondary"
-                color: Type.text
+                color: card.selected ? Type.text : Type.secondary
                 font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
                 text: card.title
-            }
-            // Up to two lines (a card's description is a sentence, not a
-            // word); the height is reserved so cards in a row stay equal.
-            KitText {
-                id: twoLines
-                visible: false
-                role: "caption"
-                text: "M\nM"
+                elide: Text.ElideRight
             }
             KitText {
                 width: parent.width
-                height: card.subtitle !== "" ? twoLines.implicitHeight : 0
                 visible: card.subtitle !== ""
                 role: "caption"
                 text: card.subtitle
@@ -96,14 +128,13 @@ StyledRect {
                 elide: Text.ElideRight
             }
         }
-        Text {
+        Icon {
             id: check
             visible: card.selected
             anchors.verticalCenter: titleCol.verticalCenter
-            text: Icons.accept
-            font.family: Icons.font
-            font.pixelSize: Type.iconSize("secondary")
-            color: Type.accent
+            icon: Icons.accept
+            role: "secondary"
+            tone: "accent"
         }
     }
 

@@ -10,6 +10,7 @@ const qmljs = require('./lib/qmljs.cjs');
 const repo = path.join(__dirname, '..');
 const Categories = qmljs.loadLibrary(path.join(repo, 'modules/settings/schema/Categories.js'));
 const shell = fs.readFileSync(path.join(repo, 'modules/settings/SettingsPageHost.qml'), 'utf8');
+const Registry = qmljs.loadLibrary(path.join(repo, 'modules/settings/Registry.js'));
 
 // key -> [category ids] of every entry that reads/writes it.
 function owners() {
@@ -37,8 +38,11 @@ test('every sidebar entry resolves to a page', () => {
         for (const id of g.categories) {
             const c = Categories.resolve(id);
             assert.ok(c && c.id === id, id);
-            if (c.page)
-                assert.match(shell, new RegExp(`"${c.page}":`), `${id}: page ${c.page} is not mapped in SettingsPageHost`);
+            if (c.page) {
+                const p = Registry.page(c.page);
+                assert.ok(p, `${id}: page ${c.page} is not in Registry.PAGES`);
+                assert.ok(fs.existsSync(path.join(repo, 'modules/settings', p.file)), p.file);
+            }
             else
                 assert.ok(c.sections && c.sections.length > 0, `${id} has no sections`);
         }
@@ -58,6 +62,7 @@ test('ids of merged pages open the page that took them over', () => {
     assert.equal(Categories.resolve('surfaces').id, 'appearance');
     assert.equal(Categories.resolve('bar-classic').id, 'bar');
     assert.equal(Categories.resolve('sidebar').id, 'ai');
+    assert.equal(Categories.resolve('popups').id, 'notifications');
 });
 
 test('a setting is declared on one page only', () => {

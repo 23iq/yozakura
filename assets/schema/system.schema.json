@@ -104,7 +104,7 @@
               "default": "yozakura lock",
               "description": "Runs when the session locks (loginctl lock-session, idle listeners).",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "idle",
                 "label": "settings.system.lock_command",
                 "control": "text",
@@ -118,7 +118,7 @@
               "default": "loginctl lock-session",
               "description": "Runs right before the computer suspends, usually to lock the screen.",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "power",
                 "label": "settings.system.before_sleep",
                 "control": "text",
@@ -132,7 +132,7 @@
               "default": "yozakura screen on",
               "description": "Runs when the computer wakes up, e.g. to turn the screens back on.",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "power",
                 "label": "settings.system.after_sleep",
                 "control": "text",
@@ -171,7 +171,7 @@
           },
           "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
           "x-settings": {
-            "category": "system",
+            "category": "power",
             "section": "idle",
             "label": "idle.listeners",
             "control": "list",

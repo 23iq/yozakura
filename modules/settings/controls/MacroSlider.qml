@@ -10,8 +10,8 @@ import "../Macros.js" as Macros
 
 // A macro slider (Macros.js): one step per point, the level name (or
 // "Custom" while a key sits off every point) at the end, the two ends named
-// below. Moving it writes the point's keys through SettingsStore, staged
-// like any other edit (Discard undoes it).
+// below. Moving it writes the point's keys through SettingsStore as one
+// undo step.
 ColumnLayout {
     id: root
 
@@ -34,7 +34,8 @@ ColumnLayout {
     function moveTo(index) {
         if (!root.macro)
             return;
-        Macros.writes(root.macro, index, root.ctx).forEach(w => SettingsStore.set(w.key, w.value));
+        const writes = Macros.writes(root.macro, index, root.ctx);
+        SettingsStore.transaction(root.entry.label, () => writes.forEach(w => SettingsStore.set(w.key, w.value)));
     }
 
     // The longest level name of every macro: all rows keep one track width.

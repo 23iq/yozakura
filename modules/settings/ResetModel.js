@@ -2,10 +2,9 @@
 .import "SchemaUtil.js" as SchemaUtil
 .import "CompositorGate.js" as CompositorGate
 
-// Which entries "Reset page" / "Reset section" and the modified counters may
-// touch. Pure (node-tested): the store passes the live context.
+// Which entries "Reset page" and the modified counters may touch. Pure (node-tested): the store passes the live context.
 //
-// Rules: an entry that is hidden (visibleWhen false) or tied to another
+// Rules: an entry that is not in the window (SchemaUtil.inWindow), hidden (visibleWhen false) or tied to another
 // compositor than the running one is skipped, and so is every entry that
 // only holds `compositor.*` keys (the Hyprland appearance domain) unless
 // Hyprland is the running compositor: schema defaults are never applied to a
@@ -24,6 +23,8 @@ function keysAreHyprlandOnly(entry) {
 
 // ctx = {compositor: string, get: function(key)}
 function entryActive(entry, section, ctx) {
+    if (!SchemaUtil.inWindow(entry, section))
+        return false;
     var comp = entry.compositor || (section && section.compositor) || "";
     if (comp && !CompositorGate.allows(comp, ctx.compositor))
         return false;
@@ -37,20 +38,4 @@ function activeItems(category, ctx) {
     return SchemaUtil.flatten([category]).filter(function (it) {
         return entryActive(it.entry, it.section, ctx);
     });
-}
-
-// Does resetting `items` touch values that no Apply / Discard covers?
-// `isStaged(domain)` tells the staged domains.
-function unstagedKeys(items, isModified, isStaged) {
-    var out = [];
-    items.forEach(function (it) {
-        if (!isModified(it.entry))
-            return;
-        SchemaUtil.entryKeys(it.entry).forEach(function (k) {
-            var d = SchemaUtil.splitKey(k).domain;
-            if (d !== "wallpaper" && !isStaged(d) && out.indexOf(k) === -1)
-                out.push(k);
-        });
-    });
-    return out;
 }

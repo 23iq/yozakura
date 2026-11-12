@@ -2603,16 +2603,15 @@
       "x-file": "config/bar.json",
       "properties": {
         "position": {
-          "title": "Bar edge",
+          "title": "Edge",
           "type": "string",
           "default": "top",
           "description": "The screen edge the bar sits on.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.label.bar_edge",
-            "control": "custom",
-            "component": "BarPositionPicker",
+            "control": "selector",
             "keywords": "position edge top bottom left right vertical horizontal",
             "visibleWhen": {
               "key": "bar.panels",
@@ -2624,7 +2623,13 @@
             "bottom",
             "left",
             "right"
-          ]
+          ],
+          "x-enumLabels": {
+            "top": "Top",
+            "bottom": "Bottom",
+            "left": "Left",
+            "right": "Right"
+          }
         },
         "launcherIcon": {
           "title": "Launcher icon",
@@ -2704,7 +2709,8 @@
             "section": "screens",
             "label": "prefs.bar.firefox_player",
             "control": "toggle",
-            "keywords": "firefox browser media player mpris music video youtube"
+            "keywords": "firefox browser media player mpris music video youtube",
+            "advanced": true
           }
         },
         "frameEnabled": {
@@ -2714,7 +2720,7 @@
           "description": "A border around the whole screen, joined to the bar.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.bar.frame",
             "control": "toggle",
             "keywords": "frame border screen edge outline"
@@ -2727,7 +2733,7 @@
           "description": "Width of the frame on the other edges.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.bar.frame_thickness",
             "control": "slider",
             "step": 1,
@@ -2746,7 +2752,7 @@
           "x-unit": "px"
         },
         "pinnedOnStartup": {
-          "title": "Visible at startup",
+          "title": "Shown at start",
           "type": "boolean",
           "default": true,
           "description": "Start with the bar pinned instead of hidden. Panels set to always hide or never hide ignore it.",
@@ -2833,7 +2839,7 @@
           }
         },
         "availableOnFullscreen": {
-          "title": "Over fullscreen apps",
+          "title": "Over full-screen apps",
           "type": "boolean",
           "default": false,
           "description": "Keep the bar reachable when a window is fullscreen.",
@@ -2859,13 +2865,13 @@
           }
         },
         "containBar": {
-          "title": "Bar inside the frame",
+          "title": "Inside the frame",
           "type": "boolean",
           "default": false,
           "description": "Draw the bar inside the frame instead of over it. Applies to the classic, menubar, statusline, ribbon and rail styles.",
           "x-settings": {
             "category": "bar",
-            "section": "placement",
+            "section": "style",
             "label": "prefs.bar.contain_bar",
             "control": "toggle",
             "keywords": "frame contain inside bar",
@@ -2937,7 +2943,6 @@
             "section": "clock",
             "label": "prefs.bar.clock_date",
             "control": "toggle",
-            "preview": "ClockPreview",
             "keywords": "clock date day month time"
           }
         },
@@ -2960,7 +2965,7 @@
           "description": "Bar layout: style and the ordered module ids of each group.",
           "properties": {
             "style": {
-              "title": "Bar style",
+              "title": "Shape",
               "type": "string",
               "default": "classic",
               "description": "One continuous bar, or floating islands around the notch.",
@@ -3035,7 +3040,7 @@
                 "section": "layout",
                 "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Bar modules",
+                "entryTitle": "Arrange",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules at the start (left/top), in order.",
@@ -3089,7 +3094,7 @@
                 "section": "layout",
                 "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Bar modules",
+                "entryTitle": "Arrange",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules at the end (right/bottom), in order.",
@@ -3104,7 +3109,7 @@
                 "section": "layout",
                 "label": "prefs.label.bar_modules",
                 "entry": "bar.layout.modules",
-                "entryTitle": "Bar modules",
+                "entryTitle": "Arrange",
                 "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
               },
               "description": "Modules tucked into the overflow drawer.",
@@ -3152,7 +3157,7 @@
             "section": "panels",
             "label": "prefs.bar.panels",
             "entry": "bar.panels.editor",
-            "entryTitle": "Panel layout",
+            "entryTitle": "Bars",
             "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
           },
           "description": "Bar panels (empty = the single bar from position/layout/screenList). Each item: {id, edge: top|bottom|left|right, style: classic|islands|menubar|statusline|ribbon|rail|corners|dock|floating|pills|dock-like|none, groups: {start, center, end, drawer, gapStart, gapEnd: [module ids]}, align: fill|center|start|end, size (module px, 0 = style), thickness (px, 0 = auto), margin (px, -1 = style), flat (bool), autohide: auto|always|never, reserve (bool), screens ([] = all; names, primary, secondary), enabled, options: {surface: bg|bar|none}}. See modules/bar/panels/PanelLayout.js.",
@@ -3306,7 +3311,7 @@
               "type": "object",
               "properties": {
                 "showWeather": {
-                  "title": "Weather on the clock",
+                  "title": "Weather symbol",
                   "type": "boolean",
                   "default": true,
                   "description": "Lead the clock with the weather symbol instead of the day name.",
@@ -3830,7 +3835,7 @@
           "description": "Radius of window corners.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.windows.rounding",
             "control": "slider",
             "step": 1,
@@ -3855,7 +3860,7 @@
           "description": "Round window corners like the rest of the shell (Appearance › Shape).",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.windows.sync_rounding",
             "control": "toggle",
             "keywords": "sync rounding roundness corners shell theme",
@@ -4717,7 +4722,8 @@
             "label": "prefs.motion.profile",
             "control": "custom",
             "component": "MotionProfileCards",
-            "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed"
+            "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed",
+            "advanced": true
           },
           "enum": [
             "smooth",
@@ -4746,6 +4752,7 @@
               "key": "compositor.motionProfile",
               "notEquals": "off"
             },
+            "advanced": true,
             "min": 0.25,
             "max": 3
           },
@@ -5067,6 +5074,7 @@
                     "all": [
                       {
                         "key": "compositor.motionProfile",
+                        "advanced": true,
                         "equals": "off"
                       },
                       {
@@ -5124,6 +5132,7 @@
                     "all": [
                       {
                         "key": "compositor.motionProfile",
+                        "advanced": true,
                         "equals": "off"
                       },
                       {
@@ -6206,12 +6215,6 @@
             "control": "toggle",
             "keywords": "auto save preset automatically active current own changes"
           }
-        },
-        "settingsShowAll": {
-          "title": "Show all settings",
-          "type": "boolean",
-          "default": false,
-          "description": "Settings window view. false = Simple: each page shows its essentials; true = All: expert rows (flagged advanced) too. Search always covers everything."
         }
       },
       "additionalProperties": false
@@ -6318,7 +6321,7 @@
           "description": "Launcher placement and look.",
           "properties": {
             "host": {
-              "title": "Launcher opens in",
+              "title": "Launcher",
               "type": "string",
               "default": "auto",
               "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
@@ -6327,7 +6330,6 @@
                 "section": "hosts",
                 "label": "prefs.layout.launcher_host",
                 "control": "selector",
-                "preview": "LayoutPreview",
                 "keywords": "launcher host spotlight sheet notch centered search"
               },
               "enum": [
@@ -6338,7 +6340,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "spotlight": "Spotlight",
                 "sheet": "Sheet"
               }
@@ -6414,7 +6416,7 @@
           "description": "Dashboard placement, tabs and widget grid.",
           "properties": {
             "host": {
-              "title": "Dashboard opens in",
+              "title": "Dashboard",
               "type": "string",
               "default": "auto",
               "description": "Notch: grows out of the notch. Spotlight: centered over a dimmed screen. Sheet: a full-height panel sliding in from the side.",
@@ -6433,7 +6435,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "spotlight": "Spotlight",
                 "sheet": "Sheet"
               }
@@ -6658,7 +6660,7 @@
           "additionalProperties": false
         },
         "backdrop": {
-          "title": "Dim the screen behind",
+          "title": "Dim behind",
           "type": "boolean",
           "default": false,
           "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
@@ -6795,7 +6797,7 @@
           "description": "AI quick ask placement.",
           "properties": {
             "host": {
-              "title": "AI quick ask opens in",
+              "title": "Quick ask",
               "type": "string",
               "default": "auto",
               "description": "Notch: inside the island. Card: a small floating card beside the bar. Spotlight: centered over the screen.",
@@ -6814,7 +6816,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "card": "Card",
                 "spotlight": "Spotlight"
               }
@@ -6828,7 +6830,7 @@
           "description": "Placement of the notch's own panels (voice, timer hub, alarm).",
           "properties": {
             "host": {
-              "title": "Voice, timers and alarm open in",
+              "title": "Voice and timers",
               "type": "string",
               "default": "auto",
               "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
@@ -6846,7 +6848,7 @@
               ],
               "x-enumLabels": {
                 "auto": "Auto",
-                "notch": "Notch",
+                "notch": "Island",
                 "card": "Card"
               }
             }
@@ -6859,7 +6861,7 @@
           "description": "Keybind cheatsheet placement.",
           "properties": {
             "host": {
-              "title": "Keybind cheatsheet",
+              "title": "Shortcut sheet",
               "type": "string",
               "default": "fullscreen",
               "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
@@ -9533,7 +9535,7 @@
                   "default": "yozakura lock",
                   "description": "Runs when the session locks (loginctl lock-session, idle listeners).",
                   "x-settings": {
-                    "category": "system",
+                    "category": "power",
                     "section": "idle",
                     "label": "settings.system.lock_command",
                     "control": "text",
@@ -9547,7 +9549,7 @@
                   "default": "loginctl lock-session",
                   "description": "Runs right before the computer suspends, usually to lock the screen.",
                   "x-settings": {
-                    "category": "system",
+                    "category": "power",
                     "section": "power",
                     "label": "settings.system.before_sleep",
                     "control": "text",
@@ -9561,7 +9563,7 @@
                   "default": "yozakura screen on",
                   "description": "Runs when the computer wakes up, e.g. to turn the screens back on.",
                   "x-settings": {
-                    "category": "system",
+                    "category": "power",
                     "section": "power",
                     "label": "settings.system.after_sleep",
                     "control": "text",
@@ -9600,7 +9602,7 @@
               },
               "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
               "x-settings": {
-                "category": "system",
+                "category": "power",
                 "section": "idle",
                 "label": "idle.listeners",
                 "control": "list",
@@ -10401,13 +10403,13 @@
           "description": "Corner radius of panels, buttons and islands.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "settings.theme.roundness",
             "control": "slider",
-            "preview": "RoundnessPreview",
             "step": 1,
             "unit": "px",
             "keywords": "radius corners rounded square shape",
+            "advanced": true,
             "min": 0,
             "max": 24
           },
@@ -10416,7 +10418,7 @@
           "x-unit": "px"
         },
         "font": {
-          "title": "UI Font",
+          "title": "Interface font",
           "type": "string",
           "default": "Roboto Condensed",
           "description": "Used for all text in the shell.",
@@ -10438,7 +10440,7 @@
             "section": "typography",
             "label": "settings.theme.ui_font",
             "entry": "theme.font",
-            "entryTitle": "UI Font",
+            "entryTitle": "Interface font",
             "keywords": "font typeface family text size typography"
           },
           "description": "Base UI font size; other sizes scale from it.",
@@ -10447,7 +10449,7 @@
           "x-unit": "px"
         },
         "monoFont": {
-          "title": "Mono Font",
+          "title": "Code font",
           "type": "string",
           "default": "Iosevka Nerd Font Mono",
           "description": "Used for code, paths and the terminal theme.",
@@ -10469,7 +10471,7 @@
             "section": "typography",
             "label": "settings.theme.mono_font",
             "entry": "theme.monoFont",
-            "entryTitle": "Mono Font",
+            "entryTitle": "Code font",
             "keywords": "monospace code terminal font typeface"
           },
           "description": "Monospace font size.",
@@ -10478,7 +10480,7 @@
           "x-unit": "px"
         },
         "tintIcons": {
-          "title": "Tint Icons",
+          "title": "Tint icons",
           "type": "boolean",
           "default": false,
           "description": "Recolor app icons with the palette.",
@@ -10558,7 +10560,7 @@
                 "category": "icons-type",
                 "section": "headings",
                 "label": "prefs.icons_type.heading_font",
-                "control": "text",
+                "control": "font",
                 "keywords": "heading title font typeface family display"
               }
             },
@@ -10596,7 +10598,7 @@
                 "category": "icons-type",
                 "section": "headings",
                 "label": "prefs.icons_type.editorial_font",
-                "control": "text",
+                "control": "font",
                 "keywords": "editorial serif font typeface family sentence bar"
               }
             }
@@ -10610,10 +10612,11 @@
           "description": "Round the corners of the screen.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "settings.theme.enable_corners",
             "control": "toggle",
-            "keywords": "screen corners rounded display edges"
+            "keywords": "screen corners rounded display edges",
+            "advanced": true
           }
         },
         "animDuration": {
@@ -10694,7 +10697,7 @@
               "description": "Shape of the corners of panels, popups and buttons.",
               "x-settings": {
                 "category": "appearance",
-                "section": "shape",
+                "section": "details",
                 "label": "prefs.appearance.corner_style",
                 "control": "selector",
                 "keywords": "corner style shape squircle cut chamfer tab rounded"
@@ -10719,10 +10722,11 @@
               "description": "Corner style of popups and menus.",
               "x-settings": {
                 "category": "appearance",
-                "section": "shape",
+                "section": "details",
                 "label": "prefs.appearance.popup_corners",
                 "control": "selector",
-                "keywords": "popup menu corner style shape squircle cut tab"
+                "keywords": "popup menu corner style shape squircle cut tab",
+                "advanced": true
               },
               "enum": [
                 "",
@@ -10746,7 +10750,7 @@
               "description": "Size of the chamfer on cut corners.",
               "x-settings": {
                 "category": "appearance",
-                "section": "shape",
+                "section": "details",
                 "label": "prefs.appearance.cut_size",
                 "control": "slider",
                 "step": 1,
@@ -10854,7 +10858,7 @@
               "description": "A faint ink brush stroke under selections and the active tab or workspace, on any surface effect. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
-                "section": "signatures",
+                "section": "details",
                 "label": "prefs.appearance.sig_brush",
                 "control": "toggle",
                 "keywords": "signature brush ink stroke highlight selection sumi-e"
@@ -10867,7 +10871,7 @@
               "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
               "x-settings": {
                 "category": "appearance",
-                "section": "signatures",
+                "section": "details",
                 "label": "prefs.appearance.sig_petals",
                 "control": "toggle",
                 "keywords": "signature petals sakura falling lockscreen particles"
@@ -10880,7 +10884,7 @@
               "description": "Sakura petals or maple leaves, tinted with the palette.",
               "x-settings": {
                 "category": "appearance",
-                "section": "signatures",
+                "section": "details",
                 "label": "prefs.appearance.sig_petal_shape",
                 "control": "selector",
                 "keywords": "signature petals leaves maple autumn shape",
@@ -10914,10 +10918,9 @@
               "description": "Where the shadows of the shell's surfaces fall. Sun follows the real sun at your weather location: long, soft shadows at dawn and dusk, short at noon, faint at night.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.mode",
                 "control": "selector",
-                "preview": "LightingPreview",
                 "keywords": "lighting light sun shadow direction time of day dawn dusk noon"
               },
               "enum": [
@@ -10938,7 +10941,7 @@
               "description": "Where the light comes from, clockwise from the top of the screen.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.angle",
                 "control": "slider",
                 "step": 5,
@@ -10963,7 +10966,7 @@
               "description": "A soft light follows the pointer over the bar, notch, dock and popups.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.lantern",
                 "control": "selector",
                 "keywords": "lantern cursor pointer glow light night hover",
@@ -10987,7 +10990,7 @@
               "description": "How strongly the light shows: shadow length, the lit edge, the warm glow at dawn and dusk, the dimmer night and the lantern.",
               "x-settings": {
                 "category": "appearance",
-                "section": "lighting",
+                "section": "details",
                 "label": "prefs.lighting.strength",
                 "control": "selector",
                 "preview": "LightingPreview",
@@ -11024,10 +11027,9 @@
               "description": "The current weather drawn onto the bar, notch, dock and popups: a few raindrops, frost in the corners below 0 °C, a soft haze in fog. Never over text.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.mode",
                 "control": "selector",
-                "preview": "WeatherFxPreview",
                 "keywords": "weather on surfaces rain droplets snow frost heat fog mist petals leaves season ambient"
               },
               "enum": [
@@ -11048,14 +11050,15 @@
               "description": "Drops rest on surfaces while it rains; now and then one runs down. Denser in heavy rain than in drizzle.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.rain",
                 "control": "toggle",
                 "keywords": "rain drizzle droplets drops water glass",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "frost": {
@@ -11065,14 +11068,15 @@
               "description": "Below 0 °C frost creeps in from the corners; while it snows, flakes settle on the top edge.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.frost",
                 "control": "toggle",
                 "keywords": "frost ice snow cold winter flakes freezing",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "heat": {
@@ -11082,14 +11086,15 @@
               "description": "Above 30 °C a faint shimmer passes over the bar now and then.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.heat",
                 "control": "toggle",
                 "keywords": "heat hot shimmer summer haze",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "fog": {
@@ -11099,14 +11104,15 @@
               "description": "A soft haze over surfaces in fog and mist.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.fog",
                 "control": "toggle",
                 "keywords": "fog mist haze",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             },
             "seasonal": {
@@ -11116,14 +11122,15 @@
               "description": "In spring a petal, in autumn a leaf, occasionally lands on the bar and slides off. The season follows your weather location's hemisphere.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.weatherfx.seasonal",
                 "control": "toggle",
                 "keywords": "season petals leaves spring autumn fall sakura maple",
                 "visibleWhen": {
                   "key": "theme.weatherFx.mode",
                   "notEquals": "off"
-                }
+                },
+                "advanced": true
               }
             }
           },
@@ -11326,7 +11333,7 @@
           "description": "A signature texture on the shell's own surfaces (bar, notch, launcher, popups, settings). App windows are never touched.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.effects.effect",
             "control": "custom",
             "component": "SurfaceEffectCards",
@@ -11350,7 +11357,7 @@
               "description": "How strong the effect is. Lowered automatically when text would become hard to read.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.intensity",
                 "control": "slider",
                 "step": 0.05,
@@ -11373,7 +11380,7 @@
               "description": "A short phosphor flicker when a surface appears (off when animations are off).",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.flicker",
                 "control": "toggle",
                 "keywords": "crt flicker power on phosphor",
@@ -11391,7 +11398,7 @@
               "description": "Rice-paper texture; full on light surfaces, faint on dark ones.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.grain",
                 "control": "slider",
                 "step": 0.05,
@@ -11414,7 +11421,7 @@
               "description": "Paint selections, focus and active pills as ink brush strokes.",
               "x-settings": {
                 "category": "appearance",
-                "section": "effects",
+                "section": "details",
                 "label": "prefs.effects.brush_highlights",
                 "control": "toggle",
                 "keywords": "ink brush stroke highlight selection focus sumi-e",
@@ -11443,7 +11450,8 @@
                 "section": "glass",
                 "label": "prefs.glass.enabled",
                 "control": "toggle",
-                "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque"
+                "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque",
+                "advanced": true
               }
             },
             "amount": {
@@ -11462,7 +11470,8 @@
                 "visibleWhen": {
                   "key": "theme.glass.enabled",
                   "equals": true
-                }
+                },
+                "advanced": true
               },
               "x-specialValues": [
                 {
@@ -17794,7 +17803,7 @@
       "x-file": "config/workspaces.json",
       "properties": {
         "shown": {
-          "title": "Workspaces shown",
+          "title": "Workspace count",
           "type": "number",
           "default": 10,
           "description": "How many workspace slots the bar shows.",
@@ -17802,7 +17811,7 @@
             "category": "bar",
             "section": "workspaces",
             "label": "prefs.bar.ws_shown",
-            "control": "slider",
+            "control": "number",
             "step": 1,
             "keywords": "workspaces count number visible desktops",
             "min": 1,
@@ -17838,11 +17847,12 @@
             "visibleWhen": {
               "key": "workspaces.showNumbers",
               "equals": true
-            }
+            },
+            "advanced": true
           }
         },
         "showNumbers": {
-          "title": "Show numbers",
+          "title": "Numbers",
           "type": "boolean",
           "default": false,
           "description": "Label workspaces with their number.",
@@ -17855,7 +17865,7 @@
           }
         },
         "dynamic": {
-          "title": "Dynamic",
+          "title": "Only used ones",
           "type": "boolean",
           "default": false,
           "description": "Only show workspaces that are in use.",
@@ -17916,7 +17926,7 @@
           "format": "font-family"
         },
         "indicatorStyle": {
-          "title": "Active indicator",
+          "title": "Active mark",
           "type": "string",
           "default": "pill",
           "description": "Shape that marks the active workspace.",
@@ -17925,7 +17935,7 @@
             "section": "workspaces",
             "label": "prefs.bar.ws_indicator",
             "control": "custom",
-            "component": "IndicatorStyleChips",
+            "component": "IndicatorCards",
             "keywords": "active workspace indicator highlight pill underline dot brush bracket retro ink branch blossom"
           },
           "enum": [
@@ -18016,17 +18026,17 @@
   "x-categories": [
     {
       "id": "layout",
-      "title": "Layout",
+      "title": "Where things open",
       "description": "Where the bar, island and dock sit on the screen."
     },
     {
       "id": "appearance",
-      "title": "Appearance",
+      "title": "Theme",
       "description": "Theme mode, colors, fonts, shape and motion."
     },
     {
       "id": "icons-type",
-      "title": "Icons & Type",
+      "title": "Icons & type",
       "description": "Icon weight, fonts and heading style."
     },
     {
@@ -18036,12 +18046,12 @@
     },
     {
       "id": "bar",
-      "title": "Bar & Islands",
+      "title": "Bar",
       "description": "Style, modules, placement, clock and workspaces of the bar."
     },
     {
       "id": "notch",
-      "title": "Notch & Activities",
+      "title": "Island",
       "description": "The dynamic island and live activities."
     },
     {
@@ -18061,12 +18071,12 @@
     },
     {
       "id": "desktop",
-      "title": "Desktop & Clock",
+      "title": "Desktop",
       "description": "Depth clock, desktop widgets and icons."
     },
     {
       "id": "lockscreen",
-      "title": "Lockscreen & Login",
+      "title": "Lock screen",
       "description": "Lock screen style, layout and media, and the matching login screen."
     },
     {
@@ -18101,12 +18111,12 @@
     },
     {
       "id": "terminal",
-      "title": "Terminal & Apps",
+      "title": "Terminal",
       "description": "Which terminal opens and how apps are launched."
     },
     {
       "id": "input",
-      "title": "Input & Keybinds",
+      "title": "Shortcuts",
       "description": "Keyboard shortcuts for the shell and the compositor."
     },
     {
@@ -18131,8 +18141,13 @@
     },
     {
       "id": "updates",
-      "title": "Updates & OCR",
+      "title": "Updates",
       "description": "Update checks and text recognition languages."
+    },
+    {
+      "id": "power",
+      "title": "Power",
+      "description": "Idle, screen off and sleep."
     },
     {
       "id": "network",
@@ -18151,12 +18166,12 @@
     },
     {
       "id": "effects",
-      "title": "Audio effects",
+      "title": "Effects",
       "description": "EasyEffects presets and equalizer."
     },
     {
       "id": "ai",
-      "title": "AI Assistant",
+      "title": "Assistant",
       "description": "Chat, coding agents, desktop control, MCP servers, prompts and automations."
     },
     {
@@ -18196,7 +18211,7 @@
     },
     {
       "id": "extras",
-      "title": "Apps & Extras",
+      "title": "Extras",
       "description": "Browsers, chat, games, AI agents and tools, installed in one click."
     },
     {
@@ -18207,17 +18222,11 @@
   ],
   "x-groups": [
     {
-      "id": "layout",
-      "title": "Layout",
-      "categories": [
-        "layout"
-      ]
-    },
-    {
       "id": "bar",
       "title": "Bar",
       "categories": [
-        "bar"
+        "bar",
+        "layout"
       ]
     },
     {
@@ -18245,15 +18254,12 @@
       "id": "dashboard",
       "title": "Dashboard",
       "categories": [
-        "dashboard",
-        "ai",
-        "ai-providers",
-        "ai-code"
+        "dashboard"
       ]
     },
     {
-      "id": "popups",
-      "title": "Popups",
+      "id": "notifications",
+      "title": "Notifications",
       "categories": [
         "notifications",
         "osd",
@@ -18262,7 +18268,7 @@
     },
     {
       "id": "lockscreen",
-      "title": "Lockscreen",
+      "title": "Lock screen",
       "categories": [
         "lockscreen"
       ]
@@ -18280,7 +18286,13 @@
       "title": "Look",
       "categories": [
         "appearance",
-        "icons-type",
+        "icons-type"
+      ]
+    },
+    {
+      "id": "wallpaper",
+      "title": "Wallpaper",
+      "categories": [
         "wallpapers"
       ]
     },
@@ -18293,26 +18305,78 @@
       ]
     },
     {
+      "id": "assistant",
+      "title": "Assistant",
+      "categories": [
+        "ai",
+        "ai-providers",
+        "ai-code"
+      ]
+    },
+    {
+      "id": "displays",
+      "title": "Displays",
+      "categories": [
+        "displays"
+      ]
+    },
+    {
+      "id": "input",
+      "title": "Keyboard & input",
+      "categories": [
+        "keyboard",
+        "input"
+      ]
+    },
+    {
+      "id": "windows",
+      "title": "Windows",
+      "categories": [
+        "windows",
+        "specials"
+      ]
+    },
+    {
+      "id": "network",
+      "title": "Network",
+      "categories": [
+        "network",
+        "bluetooth"
+      ]
+    },
+    {
+      "id": "sound",
+      "title": "Sound",
+      "categories": [
+        "sound",
+        "effects"
+      ]
+    },
+    {
+      "id": "power",
+      "title": "Power",
+      "categories": [
+        "power"
+      ]
+    },
+    {
+      "id": "apps",
+      "title": "Apps",
+      "categories": [
+        "terminal",
+        "extras",
+        "mods"
+      ]
+    },
+    {
       "id": "system",
       "title": "System",
       "categories": [
         "system",
-        "displays",
-        "keyboard",
-        "windows",
-        "specials",
-        "terminal",
-        "input",
+        "updates",
         "voice",
         "timers",
         "routines",
-        "network",
-        "bluetooth",
-        "sound",
-        "effects",
-        "extras",
-        "mods",
-        "updates",
         "about"
       ]
     }

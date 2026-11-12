@@ -3,45 +3,64 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import qs.modules.theme
+import qs.modules.components
 import qs.modules.components.kit
 import qs.modules.services
 import qs.modules.settings.controls
-import qs.modules.settings.editors
-import qs.modules.settings.previews
 import qs.modules.settings.store
 import "SchemaUtil.js" as SchemaUtil
 import "Registry.js" as Registry
+import "Macros.js" as Macros
 import "Ui.js" as Ui
+import "../components/kit/KitStates.js" as KitStates
 import "../shell/hosts/HostResolve.js" as HostResolve
 
-// One schema entry: label (body) and description (caption) on the left,
-// the typed control on the right (or stacked full width for rich editors)
-// and a quiet reset while the value differs from its default, plus an
-// optional live preview below. Hidden entries (visibleWhen, or `advanced`
-// in the Simple view) collapse with an animation; a greyed one
-// (enabledWhen) says why below it (DisabledNote). A toggle with
-// `invert: true` shows on for a false value (a positive name for a
-// double-negative key such as notch.disableHoverExpansion).
-Item {
+// One schema entry: a short label on the left and its control on the right
+// (or under it, full width, for picture cards and rich editors). The
+// entry's description is not printed: it is the label's tooltip (hover or
+// keyboard focus). A one-line `hint` (i18n key) shows under the label where
+// the effect cannot be seen on the stage. While the value differs from its
+// default a reset button sits after the label (one undo step). Under the
+// pointer or focus the row lights up the part of the page's stage its keys
+// change (SettingsStore.focusKeys -> StageSpot).
+//
+// A row that cannot be used right now (enabledWhen false) is never a grey
+// dead end: when one switch decides it, the row says what it needs and
+// offers [Turn on] in place of its control; otherwise it is hidden.
+// A toggle with `invert: true` shows on for a false value (a positive name
+// for a double-negative key such as notch.disableHoverExpansion).
+FocusScope {
     id: row
 
     required property var entry
 
     readonly property string entryId: SchemaUtil.entryId(entry)
     readonly property string type: entry.type
-    readonly property bool shown: SettingsStore.visible(entry) && SettingsStore.inView(entry)
-    readonly property bool active: SettingsStore.enabled(entry)
-    // The row above in the section: a run of rows greyed by the same
-    // condition says why once, under its first shown row.
+    // The keys the row changes (a macro slider: the keys of its macro).
+    readonly property var keys: type === "macro" ? (Macros.byId(entry.macro) || {
+            "keys": []
+        }).keys.map(k => k.key) : SchemaUtil.entryKeys(entry)
+    readonly property bool usable: SettingsStore.enabled(entry)
+    readonly property var note: row.usable ? null : SettingsStore.disabledNote(entry)
+    readonly property bool fixable: !!(row.note && row.note.fix)
+    readonly property bool shown: SettingsStore.visible(entry) && (row.usable || row.fixable)
+    // The row above in the section: a run of rows waiting for the same
+    // switch names it once, on its first row.
     property var previousEntry: null
-    readonly property bool noteRepeats: !!previousEntry && JSON.stringify(previousEntry.enabledWhen) === JSON.stringify(entry.enabledWhen) && SettingsStore.visible(previousEntry) && SettingsStore.inView(previousEntry)
-    readonly property var note: row.active || row.noteRepeats ? null : SettingsStore.disabledNote(entry)
+    readonly property bool noteRepeats: {
+        if (!row.fixable || !row.previousEntry || SettingsStore.enabled(row.previousEntry) || !SettingsStore.visible(row.previousEntry))
+            return false;
+        const prev = SettingsStore.disabledNote(row.previousEntry);
+        return !!(prev && prev.fix && prev.fix.key === row.note.fix.key);
+    }
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
-    readonly property bool narrow: width < 600
-    readonly property bool stacked: type === "custom" || type === "font" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && (narrow || entry.display === "cards")) || (narrow && (type === "slider" || type === "macro"))
+    readonly property bool narrow: width < Space.px(560)
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || (narrow && (type === "slider" || type === "macro" || type === "selector")))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
+    readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
+    readonly property string description: entry.description ? I18n.t(entry.description) : ""
     // A host/style picker (entry.surface) while the notch is off: the
     // option it shows as instead of the chosen one ("" otherwise)
     readonly property string shownAs: {
@@ -53,13 +72,21 @@ Item {
         const opt = host ? (entry.options || []).find(o => o.value === host) : null;
         return opt ? I18n.t(opt.label) : host;
     }
+    // The caption under the label: what a waiting row needs, where the
+    // choice shows instead, or the entry's own short hint.
+    readonly property string caption: {
+        if (row.fixable)
+            return row.noteRepeats ? "" : row.note.text;
+        if (row.shownAs !== "")
+            return I18n.t("prefs.layout.island_off").arg(row.shownAs);
+        return entry.hint ? I18n.t(entry.hint) : "";
+    }
 
     objectName: "settingRow:" + entryId
-    // Showing / hiding (Simple <-> All, visibleWhen) folds the row open or
-    // shut; its own content changes (wrapping on a resize) apply at once, so
-    // a window resize never animates hundreds of row heights.
+    // visibleWhen folds the row open or shut; its own content changes
+    // (wrapping on a resize) apply at once.
     property real unfolded: shown ? 1 : 0
-    implicitHeight: (body.implicitHeight + (note ? disabledNote.implicitHeight + Space.s : 0)) * unfolded
+    implicitHeight: body.implicitHeight * unfolded
     height: implicitHeight
     opacity: unfolded
     visible: opacity > 0
@@ -73,29 +100,47 @@ Item {
         }
     }
 
-    // Built on first use (page switches create hundreds of rows): the
-    // control once the row is shown, the reset button while modified, the
-    // flash once the row was a search target.
+    // The control is created once the row is first shown.
     property bool built: shown
     onShownChanged: if (shown)
         built = true
-    property bool flashed: highlighted
-    onHighlightedChanged: if (highlighted)
-        flashed = true
 
-    // Search jump: a short accent wash over the row.
-    Loader {
+    // Under the pointer or keyboard focus: light up the stage part.
+    readonly property bool pointed: row.shown && (row.hovered || row.activeFocus)
+    onPointedChanged: {
+        if (row.pointed)
+            SettingsStore.focusKeys = row.keys;
+        else if (SettingsStore.focusKeys === row.keys)
+            SettingsStore.focusKeys = [];
+    }
+    Component.onDestruction: if (SettingsStore.focusKeys === row.keys)
+        SettingsStore.focusKeys = []
+
+    HoverHandler {
+        id: hover
+    }
+
+    // Hover box of a one-line row (picture cards and editors carry their
+    // own hover states), and the accent wash of a search jump.
+    StyledRect {
         anchors.fill: parent
-        active: row.flashed
-        sourceComponent: Rectangle {
-            radius: Look.chipRadius(Space.rowHeight)
-            color: Type.accent
-            opacity: row.highlighted ? Look.activeTint : 0
-            Behavior on opacity {
-                NumberAnimation {
-                    duration: Motion.enter.duration
-                    easing.type: Motion.enter.easing
-                }
+        visible: !row.stacked && (row.hovered || row.activeFocus)
+        variant: "focus"
+        backgroundOpacity: KitStates.opacity("hover", true)
+        enableBorder: false
+        enableShadow: false
+        radius: Look.chipRadius(Space.rowHeight)
+    }
+    Rectangle {
+        anchors.fill: parent
+        radius: Look.chipRadius(Space.rowHeight)
+        color: Type.accent
+        opacity: row.highlighted ? Look.activeTint * 1.5 : 0
+        visible: opacity > 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: Motion.enter.duration
+                easing.type: Motion.enter.easing
             }
         }
     }
@@ -109,76 +154,98 @@ Item {
         topPadding: Space.s
         bottomPadding: Space.s
         spacing: Space.m
-        enabled: row.active
-        opacity: row.active ? 1 : 0.38
 
         RowLayout {
             width: parent.width
             spacing: Space.l
 
-            SettingLabel {
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 Layout.minimumHeight: Space.rowHeight - body.topPadding - body.bottomPadding
-                entry: row.entry
-                shownAs: row.shownAs
-            }
+                spacing: Space.hairline
 
-            // Reset to default: a quiet button before the control, there only
-            // while modified (controls stay flush right).
-            // The slot keeps its width so the label does not reflow.
-            Loader {
-                Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: Space.controlS
-                Layout.preferredHeight: Space.controlS
-                visible: row.resettable
-                active: row.resettable && row.modified
-                sourceComponent: IconButton {
-                    objectName: "rowReset"
-                    size: "s"
-                    icon: Icons.arrowCounterClockwise
-                    onClicked: SettingsStore.reset(row.entry)
-                    Accessible.name: I18n.t("common.reset_default")
-                    NumberAnimation on opacity {
-                        from: 0
-                        to: 1
-                        duration: Motion.enter.duration
+                Item {
+                    Layout.fillHeight: true
+                }
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Space.s
+                    KitText {
+                        id: label
+                        objectName: "rowLabel"
+                        Layout.alignment: Qt.AlignVCenter
+                        role: "body"
+                        text: I18n.t(row.entry.label)
+
+                        Tooltip {
+                            objectName: "rowTooltip"
+                            text: row.description
+                            shown: row.pointed && !row.stacked || labelHover.hovered
+                        }
+                        HoverHandler {
+                            id: labelHover
+                        }
+                    }
+                    // Back to the default: there only while the value differs.
+                    Loader {
+                        Layout.alignment: Qt.AlignVCenter
+                        active: row.resettable && row.modified
+                        visible: active
+                        sourceComponent: IconButton {
+                            objectName: "rowReset"
+                            size: "xs"
+                            icon: Icons.arrowCounterClockwise
+                            tooltip: I18n.t("common.reset_default")
+                            onClicked: SettingsStore.reset(row.entry)
+                            Accessible.name: I18n.t("common.reset_default")
+                        }
+                    }
+                    Item {
+                        Layout.fillWidth: true
                     }
                 }
+                KitText {
+                    objectName: "rowCaption"
+                    Layout.fillWidth: true
+                    visible: row.caption !== ""
+                    role: "caption"
+                    text: row.caption
+                    wrapMode: Text.WordWrap
+                }
+                Item {
+                    Layout.fillHeight: true
+                }
             }
+
             Loader {
                 id: inlineControl
                 Layout.alignment: Qt.AlignVCenter
-                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? Math.min(Space.px(380), row.width * 0.5) : -1)
+                Layout.preferredWidth: row.type === "slider" ? Math.min(Space.px(320), row.width * 0.42) : (row.type === "macro" ? Math.min(Space.px(380), row.width * 0.5) : (row.type === "font" ? Math.min(Space.px(340), row.width * 0.48) : -1))
+                focus: !row.stacked
                 active: row.built && !row.stacked
-                sourceComponent: row.controlComponent()
+                sourceComponent: row.fixable ? fixComponent : row.controlComponent()
             }
         }
 
         Loader {
             id: stackedControl
             width: parent.width
+            focus: row.stacked
             active: row.built && row.stacked
             visible: active
             sourceComponent: row.controlComponent()
         }
 
+        // A page not converted yet may still show a live preview under a
+        // row (`preview`); a converted page shows its stage instead.
         Loader {
-            id: previewLoader
             width: parent.width
             active: row.built && !!row.entry.preview
             visible: active
             source: active ? Qt.resolvedUrl(Registry.preview(row.entry.preview)) : ""
             onLoaded: Ui.setIfPresent(item, "entry", row.entry)
         }
-    }
-
-    DisabledNote {
-        id: disabledNote
-        x: Look.rowInset
-        y: body.implicitHeight
-        width: parent.width - Look.rowInset * 2
-        note: row.note
     }
 
     function controlComponent() {
@@ -211,6 +278,17 @@ Item {
             return macroComponent;
         }
         return null;
+    }
+
+    // In place of the control of a waiting row: the one switch it needs.
+    Component {
+        id: fixComponent
+        Chip {
+            objectName: "disabledFix"
+            icon: Icons.power
+            text: I18n.t(row.note.fix.on ? "prefs.disabled.turn_on" : "prefs.disabled.turn_off")
+            onClicked: SettingsStore.set(row.note.fix.key, row.note.fix.value)
+        }
     }
 
     Component {
@@ -278,6 +356,8 @@ Item {
             family: row.value ?? ""
             size: Number(SettingsStore.get(row.entry.sizeKey) ?? 14)
             monospace: !!row.entry.monospace
+            showSize: !!row.entry.sizeKey
+            showSample: false
             placeholder: row.entry.placeholder ? I18n.t(row.entry.placeholder) : ""
             sizeUnit: row.entry.sizeUnit ?? "px"
             onFamilyPicked: f => SettingsStore.set(row.entry.key, f)

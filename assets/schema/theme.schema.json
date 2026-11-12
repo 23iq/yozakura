@@ -41,13 +41,13 @@
       "description": "Corner radius of panels, buttons and islands.",
       "x-settings": {
         "category": "appearance",
-        "section": "shape",
+        "section": "details",
         "label": "settings.theme.roundness",
         "control": "slider",
-        "preview": "RoundnessPreview",
         "step": 1,
         "unit": "px",
         "keywords": "radius corners rounded square shape",
+        "advanced": true,
         "min": 0,
         "max": 24
       },
@@ -56,7 +56,7 @@
       "x-unit": "px"
     },
     "font": {
-      "title": "UI Font",
+      "title": "Interface font",
       "type": "string",
       "default": "Roboto Condensed",
       "description": "Used for all text in the shell.",
@@ -78,7 +78,7 @@
         "section": "typography",
         "label": "settings.theme.ui_font",
         "entry": "theme.font",
-        "entryTitle": "UI Font",
+        "entryTitle": "Interface font",
         "keywords": "font typeface family text size typography"
       },
       "description": "Base UI font size; other sizes scale from it.",
@@ -87,7 +87,7 @@
       "x-unit": "px"
     },
     "monoFont": {
-      "title": "Mono Font",
+      "title": "Code font",
       "type": "string",
       "default": "Iosevka Nerd Font Mono",
       "description": "Used for code, paths and the terminal theme.",
@@ -109,7 +109,7 @@
         "section": "typography",
         "label": "settings.theme.mono_font",
         "entry": "theme.monoFont",
-        "entryTitle": "Mono Font",
+        "entryTitle": "Code font",
         "keywords": "monospace code terminal font typeface"
       },
       "description": "Monospace font size.",
@@ -118,7 +118,7 @@
       "x-unit": "px"
     },
     "tintIcons": {
-      "title": "Tint Icons",
+      "title": "Tint icons",
       "type": "boolean",
       "default": false,
       "description": "Recolor app icons with the palette.",
@@ -198,7 +198,7 @@
             "category": "icons-type",
             "section": "headings",
             "label": "prefs.icons_type.heading_font",
-            "control": "text",
+            "control": "font",
             "keywords": "heading title font typeface family display"
           }
         },
@@ -236,7 +236,7 @@
             "category": "icons-type",
             "section": "headings",
             "label": "prefs.icons_type.editorial_font",
-            "control": "text",
+            "control": "font",
             "keywords": "editorial serif font typeface family sentence bar"
           }
         }
@@ -250,10 +250,11 @@
       "description": "Round the corners of the screen.",
       "x-settings": {
         "category": "appearance",
-        "section": "shape",
+        "section": "details",
         "label": "settings.theme.enable_corners",
         "control": "toggle",
-        "keywords": "screen corners rounded display edges"
+        "keywords": "screen corners rounded display edges",
+        "advanced": true
       }
     },
     "animDuration": {
@@ -334,7 +335,7 @@
           "description": "Shape of the corners of panels, popups and buttons.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.appearance.corner_style",
             "control": "selector",
             "keywords": "corner style shape squircle cut chamfer tab rounded"
@@ -359,10 +360,11 @@
           "description": "Corner style of popups and menus.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.appearance.popup_corners",
             "control": "selector",
-            "keywords": "popup menu corner style shape squircle cut tab"
+            "keywords": "popup menu corner style shape squircle cut tab",
+            "advanced": true
           },
           "enum": [
             "",
@@ -386,7 +388,7 @@
           "description": "Size of the chamfer on cut corners.",
           "x-settings": {
             "category": "appearance",
-            "section": "shape",
+            "section": "details",
             "label": "prefs.appearance.cut_size",
             "control": "slider",
             "step": 1,
@@ -494,7 +496,7 @@
           "description": "A faint ink brush stroke under selections and the active tab or workspace, on any surface effect. Off in game mode and power saver.",
           "x-settings": {
             "category": "appearance",
-            "section": "signatures",
+            "section": "details",
             "label": "prefs.appearance.sig_brush",
             "control": "toggle",
             "keywords": "signature brush ink stroke highlight selection sumi-e"
@@ -507,7 +509,7 @@
           "description": "Let a few sakura petals drift down the lock screen. Off in game mode and power saver.",
           "x-settings": {
             "category": "appearance",
-            "section": "signatures",
+            "section": "details",
             "label": "prefs.appearance.sig_petals",
             "control": "toggle",
             "keywords": "signature petals sakura falling lockscreen particles"
@@ -520,7 +522,7 @@
           "description": "Sakura petals or maple leaves, tinted with the palette.",
           "x-settings": {
             "category": "appearance",
-            "section": "signatures",
+            "section": "details",
             "label": "prefs.appearance.sig_petal_shape",
             "control": "selector",
             "keywords": "signature petals leaves maple autumn shape",
@@ -554,10 +556,9 @@
           "description": "Where the shadows of the shell's surfaces fall. Sun follows the real sun at your weather location: long, soft shadows at dawn and dusk, short at noon, faint at night.",
           "x-settings": {
             "category": "appearance",
-            "section": "lighting",
+            "section": "details",
             "label": "prefs.lighting.mode",
             "control": "selector",
-            "preview": "LightingPreview",
             "keywords": "lighting light sun shadow direction time of day dawn dusk noon"
           },
           "enum": [
@@ -578,7 +579,7 @@
           "description": "Where the light comes from, clockwise from the top of the screen.",
           "x-settings": {
             "category": "appearance",
-            "section": "lighting",
+            "section": "details",
             "label": "prefs.lighting.angle",
             "control": "slider",
             "step": 5,
@@ -603,7 +604,7 @@
           "description": "A soft light follows the pointer over the bar, notch, dock and popups.",
           "x-settings": {
             "category": "appearance",
-            "section": "lighting",
+            "section": "details",
             "label": "prefs.lighting.lantern",
             "control": "selector",
             "keywords": "lantern cursor pointer glow light night hover",
@@ -627,7 +628,7 @@
           "description": "How strongly the light shows: shadow length, the lit edge, the warm glow at dawn and dusk, the dimmer night and the lantern.",
           "x-settings": {
             "category": "appearance",
-            "section": "lighting",
+            "section": "details",
             "label": "prefs.lighting.strength",
             "control": "selector",
             "preview": "LightingPreview",
@@ -664,10 +665,9 @@
           "description": "The current weather drawn onto the bar, notch, dock and popups: a few raindrops, frost in the corners below 0 °C, a soft haze in fog. Never over text.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.weatherfx.mode",
             "control": "selector",
-            "preview": "WeatherFxPreview",
             "keywords": "weather on surfaces rain droplets snow frost heat fog mist petals leaves season ambient"
           },
           "enum": [
@@ -688,14 +688,15 @@
           "description": "Drops rest on surfaces while it rains; now and then one runs down. Denser in heavy rain than in drizzle.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.weatherfx.rain",
             "control": "toggle",
             "keywords": "rain drizzle droplets drops water glass",
             "visibleWhen": {
               "key": "theme.weatherFx.mode",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           }
         },
         "frost": {
@@ -705,14 +706,15 @@
           "description": "Below 0 °C frost creeps in from the corners; while it snows, flakes settle on the top edge.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.weatherfx.frost",
             "control": "toggle",
             "keywords": "frost ice snow cold winter flakes freezing",
             "visibleWhen": {
               "key": "theme.weatherFx.mode",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           }
         },
         "heat": {
@@ -722,14 +724,15 @@
           "description": "Above 30 °C a faint shimmer passes over the bar now and then.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.weatherfx.heat",
             "control": "toggle",
             "keywords": "heat hot shimmer summer haze",
             "visibleWhen": {
               "key": "theme.weatherFx.mode",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           }
         },
         "fog": {
@@ -739,14 +742,15 @@
           "description": "A soft haze over surfaces in fog and mist.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.weatherfx.fog",
             "control": "toggle",
             "keywords": "fog mist haze",
             "visibleWhen": {
               "key": "theme.weatherFx.mode",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           }
         },
         "seasonal": {
@@ -756,14 +760,15 @@
           "description": "In spring a petal, in autumn a leaf, occasionally lands on the bar and slides off. The season follows your weather location's hemisphere.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.weatherfx.seasonal",
             "control": "toggle",
             "keywords": "season petals leaves spring autumn fall sakura maple",
             "visibleWhen": {
               "key": "theme.weatherFx.mode",
               "notEquals": "off"
-            }
+            },
+            "advanced": true
           }
         }
       },
@@ -966,7 +971,7 @@
       "description": "A signature texture on the shell's own surfaces (bar, notch, launcher, popups, settings). App windows are never touched.",
       "x-settings": {
         "category": "appearance",
-        "section": "effects",
+        "section": "details",
         "label": "prefs.effects.effect",
         "control": "custom",
         "component": "SurfaceEffectCards",
@@ -990,7 +995,7 @@
           "description": "How strong the effect is. Lowered automatically when text would become hard to read.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.effects.intensity",
             "control": "slider",
             "step": 0.05,
@@ -1013,7 +1018,7 @@
           "description": "A short phosphor flicker when a surface appears (off when animations are off).",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.effects.flicker",
             "control": "toggle",
             "keywords": "crt flicker power on phosphor",
@@ -1031,7 +1036,7 @@
           "description": "Rice-paper texture; full on light surfaces, faint on dark ones.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.effects.grain",
             "control": "slider",
             "step": 0.05,
@@ -1054,7 +1059,7 @@
           "description": "Paint selections, focus and active pills as ink brush strokes.",
           "x-settings": {
             "category": "appearance",
-            "section": "effects",
+            "section": "details",
             "label": "prefs.effects.brush_highlights",
             "control": "toggle",
             "keywords": "ink brush stroke highlight selection focus sumi-e",
@@ -1083,7 +1088,8 @@
             "section": "glass",
             "label": "prefs.glass.enabled",
             "control": "toggle",
-            "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque"
+            "keywords": "glass glassy blur transparency translucent frosted acrylic mica liquid see-through solid opaque",
+            "advanced": true
           }
         },
         "amount": {
@@ -1102,7 +1108,8 @@
             "visibleWhen": {
               "key": "theme.glass.enabled",
               "equals": true
-            }
+            },
+            "advanced": true
           },
           "x-specialValues": [
             {

@@ -121,7 +121,7 @@
       "description": "Radius of window corners.",
       "x-settings": {
         "category": "appearance",
-        "section": "shape",
+        "section": "details",
         "label": "prefs.windows.rounding",
         "control": "slider",
         "step": 1,
@@ -146,7 +146,7 @@
       "description": "Round window corners like the rest of the shell (Appearance › Shape).",
       "x-settings": {
         "category": "appearance",
-        "section": "shape",
+        "section": "details",
         "label": "prefs.windows.sync_rounding",
         "control": "toggle",
         "keywords": "sync rounding roundness corners shell theme",
@@ -1008,7 +1008,8 @@
         "label": "prefs.motion.profile",
         "control": "custom",
         "component": "MotionProfileCards",
-        "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed"
+        "keywords": "motion animations profile springs smooth gentle stepped snappy off sakura bezier curve speed",
+        "advanced": true
       },
       "enum": [
         "smooth",
@@ -1037,6 +1038,7 @@
           "key": "compositor.motionProfile",
           "notEquals": "off"
         },
+        "advanced": true,
         "min": 0.25,
         "max": 3
       },
