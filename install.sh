@@ -50,7 +50,7 @@ INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
 # DOCTOR_FAILED: the closing doctor reported a missing required component.
 DOCTOR_FAILED=0
-# DM: the login manager found; DM_STATE: enabled, disabled or unknown;
+# DM: the login manager found; DM_STATE: enabled, disabled, managed or unknown;
 # DM_ENABLE: its unit when this run enables it (choose_login).
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
@@ -919,12 +919,13 @@ dm_unit() {
 }
 
 # detect_login: DM = the login manager found, DM_STATE = enabled (it starts
-# at boot), disabled (installed, nothing starts it) or unknown (no systemd:
-# whether an init script starts it is not guessed). systemd starts every one
-# of them through the display-manager.service link but ly, whose ly@ttyN
-# (or ly.service) is wanted by a target directly.
+# at boot), disabled (installed, nothing starts it), managed (the
+# distribution's own display-manager.service unit picks it) or unknown (no
+# systemd: whether an init script starts it is not guessed). systemd starts
+# every one of them through the display-manager.service link but ly, whose
+# ly@ttyN (or ly.service) is wanted by a target directly.
 detect_login() {
-  local link="$SYSROOT/etc/systemd/system/display-manager.service" v w
+  local link="$SYSROOT/etc/systemd/system/display-manager.service" v w u
   DM="" DM_STATE=""
   if has_systemd; then
     # A dangling link (its login manager removed) enables nothing.
@@ -932,6 +933,14 @@ detect_login() {
       DM="$(basename "$(readlink -f "$link")" .service)" DM_STATE=enabled
       return 0
     fi
+    # openSUSE: display-manager.service is a unit file of its own that
+    # starts the login manager update-alternatives selects; left to it.
+    for u in "$SYSROOT"/{usr/lib,lib,etc}/systemd/system/display-manager.service; do
+      if [[ -f "$u" && ! -L "$u" ]]; then
+        DM="$(dm_alternative)" DM_STATE=managed
+        return 0
+      fi
+    done
     for w in "$SYSROOT"/etc/systemd/system/*.wants/ly.service "$SYSROOT"/etc/systemd/system/*.wants/ly@*.service; do
       [[ -e "$w" ]] && DM=ly DM_STATE=enabled && return 0
     done
@@ -944,6 +953,13 @@ detect_login() {
     has_cmd "$v" && DM="$v" DM_STATE=unknown && return 0
   done
   return 0
+}
+
+# dm_alternative: the login manager update-alternatives selects
+# (default-displaymanager), else "display-manager".
+dm_alternative() {
+  local alt="$SYSROOT/etc/alternatives/default-displaymanager"
+  if [[ -e "$alt" ]]; then basename "$(readlink -f "$alt")"; else echo display-manager; fi
 }
 
 # login_ready: a login screen comes up at boot after this install.
@@ -1078,6 +1094,12 @@ choose_login() {
   WITH_SDDM="${WITH_SDDM:-0}"
   if [[ "$DM_STATE" == unknown ]]; then
     info "Login manager: $DM found; without systemd whether it starts at boot is not checked."
+    return 0
+  fi
+  if [[ "$DM_STATE" == managed ]]; then
+    info "Login manager: $DM, managed by ${DISTRO_NAME:-the distribution} (display-manager.service); left as it is."
+    [[ "$WITH_SDDM" == 1 ]] && warn "--with-sddm skipped: the distribution manages the login manager."
+    WITH_SDDM=0
     return 0
   fi
   [[ "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
@@ -1411,6 +1433,7 @@ login_plan() {
   case "$DM_STATE" in
   enabled) echo "$DM" ;;
   unknown) echo "$DM found (no systemd: whether it starts at boot is not checked)" ;;
+  managed) echo "$DM (display-manager.service of the distribution: left as it is)" ;;
   disabled)
     unit="$(dm_unit "$DM")"
     if [[ " ${SERVICES[*]} " == *" ${DM_ENABLE:-none} "* || ("$DM" == sddm && " ${SERVICES[*]} " == *" sddm "*) ]]; then
@@ -2229,7 +2252,7 @@ next_steps() {
   elif [[ "$DM_STATE" == enabled ]]; then
     numbered 1 "Log out (or reboot) and pick $name on the login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
-  elif [[ "$DM_STATE" == unknown ]]; then
+  elif [[ "$DM_STATE" == unknown || "$DM_STATE" == managed ]]; then
     numbered 1 "Reboot; if $DM shows a login screen, pick $name there."
     numbered 2 "Otherwise log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
     numbered 3 "The setup wizard greets you there. Super opens the launcher."

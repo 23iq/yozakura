@@ -790,6 +790,36 @@ def test_dangling_display_manager_link():
         sb.cleanup()
 
 
+def test_suse_display_manager_unit_is_left_alone():
+    sb = Sandbox("suse")
+    try:
+        # Tumbleweed: display-manager.service is a real unit that starts the
+        # login manager update-alternatives selects; no /etc link.
+        systemd_root(sb)
+        installed_unit(sb, "display-manager.service")
+        installed_unit(sb, "sddm.service")
+        dms = sb.root / "sysroot/usr/lib/X11/displaymanagers"
+        dms.mkdir(parents=True)
+        (dms / "gdm").write_text("")
+        alt = sb.root / "sysroot/etc/alternatives"
+        alt.mkdir(parents=True)
+        (alt / "default-displaymanager").symlink_to(dms / "gdm")
+        for args in (("-y",), ("-y", "--with-sddm")):
+            rc, err, _ = sb.run(*args, "--compositor", "niri")
+            check(rc == 0, f"{args} exit {rc}", err)
+            check(re.search(r"Login\s+gdm \(display-manager.service of the distribution", err), f"{args}: managed login manager not reported", err)
+            enables = [c for c in sb.calls("sudo") if c[:2] == ["systemctl", "enable"]]
+            check(not any("sddm" in c or "gdm" in " ".join(c) for c in enables), f"{args}: enabled a login manager: {enables}")
+            check(not any(c[:1] == ["bash"] and c[1].endswith("install-sddm-theme.sh") for c in sb.calls("sudo")), f"{args}: SDDM theme installed")
+            check("not enabled" not in err and "Install SDDM" not in err, f"{args}: SDDM offered", err)
+        # Without the alternatives link it is reported under the unit's name.
+        (alt / "default-displaymanager").unlink()
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+display-manager \(", err), "unnamed managed login manager not reported", err)
+    finally:
+        sb.cleanup()
+
+
 def installed_unit(sb, name):
     """A login manager unit installed in the fake systemd root, not enabled."""
     unit = sb.root / "sysroot/usr/lib/systemd/system" / name
@@ -941,6 +971,7 @@ def main():
         test_other_login_manager_installed_but_disabled,
         test_ly_and_no_systemd_login_managers,
         test_dangling_display_manager_link,
+        test_suse_display_manager_unit_is_left_alone,
         test_root_and_missing_sudo_give_guidance,
         test_missing_required_component_exits_2,
         test_dry_run_without_git,
