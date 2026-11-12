@@ -229,6 +229,17 @@ ev("BackendService.emit('extras.status', {'fish': {'id': 'fish', 'state': 'insta
 wait_until(lambda: len(calls("extras.setLoginShell")) == shells + 1)
 check(len(calls("extras.setLoginShell")) == shells + 1, "fish installed: chsh follows")
 
+# fastfetch (the greeting) comes along with the terminal setup when the
+# catalog reports it missing; unknown or unavailable adds nothing.
+ev("TerminalLookService.installEngine('ohmyposh')")
+check(calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh"], "fastfetch state unknown: not added")
+ev("ExtrasService.status = Object.assign({}, ExtrasService.status, {fastfetch: {id: 'fastfetch', state: 'unavailable'}})")
+ev("TerminalLookService.installEngine('ohmyposh')")
+check(calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh"], "fastfetch unavailable: not added")
+ev("ExtrasService.status = Object.assign({}, ExtrasService.status, {fastfetch: {id: 'fastfetch', state: 'missing'}})")
+ev("TerminalLookService.installEngine('ohmyposh')")
+check(calls("extras.install")[-1]["params"]["ids"] == ["oh-my-posh", "fastfetch"], "missing fastfetch comes with the engine")
+
 if failures:
     print(f"{len(failures)} failure(s)")
     h.exit(1)
