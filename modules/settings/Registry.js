@@ -67,7 +67,10 @@ var EDITORS = {
     "LayoutBuilder": "layout/LayoutBuilder.qml",
     "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml",
     "PomodoroEditor": "editors/PomodoroEditor.qml",
-    "AiStripChips": "editors/AiStripChips.qml"
+    "AiStripChips": "editors/AiStripChips.qml",
+    "WindowBorderEditor": "editors/WindowBorderEditor.qml",
+    "WindowCornersEditor": "editors/WindowCornersEditor.qml",
+    "WindowGapsEditor": "editors/WindowGapsEditor.qml"
 };
 
 var PREVIEWS = {
@@ -79,7 +82,6 @@ var PREVIEWS = {
     "SentencePreview": "previews/SentencePreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
-    "WindowsPreview": "previews/WindowsPreview.qml",
     "OsdPreview": "previews/OsdPreview.qml",
     "StripsPreview": "previews/StripsPreview.qml",
     "LayoutPreview": "layout/LayoutPreview.qml"
@@ -106,7 +108,8 @@ var THUMBS = {
     "ActivationThumb": "thumbs/ActivationThumb.qml",
     "AiSizeThumb": "thumbs/AiSizeThumb.qml",
     "AiMessageThumb": "thumbs/AiMessageThumb.qml",
-    "LocaleThumb": "thumbs/LocaleThumb.qml"
+    "LocaleThumb": "thumbs/LocaleThumb.qml",
+    "TilingThumb": "thumbs/TilingThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -133,7 +136,8 @@ var STAGES = {
     "ProvidersBand": "stages/ProvidersBand.qml",
     "TasksStage": "stages/TasksStage.qml",
     "SystemStage": "stages/SystemStage.qml",
-    "UpdatesStage": "stages/UpdatesStage.qml"
+    "UpdatesStage": "stages/UpdatesStage.qml",
+    "WindowsStage": "stages/WindowsStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

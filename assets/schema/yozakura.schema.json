@@ -3809,7 +3809,8 @@
             "section": "borders",
             "label": "prefs.windows.inactive_border",
             "control": "color-role",
-            "keywords": "inactive unfocused border color gradient role palette alpha"
+            "keywords": "inactive unfocused border color gradient role palette alpha",
+            "advanced": true
           }
         },
         "inactiveBorderAngle": {
@@ -3962,18 +3963,19 @@
           }
         },
         "gapsIn": {
-          "title": "Gaps between windows",
+          "title": "Between windows",
           "type": "number",
           "default": 2,
           "description": "Space around each window toward its neighbours (applied on both sides).",
           "x-settings": {
             "category": "windows",
-            "section": "layout",
+            "section": "gaps",
             "label": "prefs.windows.gaps_in",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "gaps inner spacing between windows padding",
+            "advanced": true,
             "min": 0,
             "max": 50
           },
@@ -3982,18 +3984,19 @@
           "x-unit": "px"
         },
         "gapsOut": {
-          "title": "Gaps to screen edges",
+          "title": "Screen edges",
           "type": "number",
           "default": 4,
           "description": "Space between windows and the edges of the screen.",
           "x-settings": {
             "category": "windows",
-            "section": "layout",
+            "section": "gaps",
             "label": "prefs.windows.gaps_out",
             "control": "slider",
             "step": 1,
             "unit": "px",
             "keywords": "gaps outer margin screen edges padding",
+            "advanced": true,
             "min": 0,
             "max": 100
           },
@@ -4002,20 +4005,20 @@
           "x-unit": "px"
         },
         "smartGaps": {
-          "title": "Smart gaps",
+          "title": "No gaps when alone",
           "type": "boolean",
           "default": false,
           "description": "No gaps when a workspace shows a single tiled window.",
           "x-settings": {
             "category": "windows",
-            "section": "layout",
+            "section": "gaps",
             "label": "prefs.windows.smart_gaps",
             "control": "toggle",
             "keywords": "smart gaps single window no gaps lone fullscreen-like"
           }
         },
         "dimInactive": {
-          "title": "Dim unfocused windows",
+          "title": "Dim unfocused",
           "type": "boolean",
           "default": false,
           "description": "Darken every window except the focused one.",
@@ -4060,7 +4063,6 @@
             "section": "layout",
             "label": "prefs.windows.layout",
             "control": "selector",
-            "preview": "WindowsPreview",
             "keywords": "layout tiling dwindle master scrolling preview windows"
           },
           "enum": [
@@ -4075,7 +4077,7 @@
           }
         },
         "shadowEnabled": {
-          "title": "Window shadows",
+          "title": "Shadows",
           "type": "boolean",
           "default": true,
           "description": "Soft shadows under windows.",
@@ -4922,7 +4924,7 @@
               "description": "While music plays, the focused border and its glow breathe with the beat. Costs nothing when nothing plays.",
               "x-settings": {
                 "category": "windows",
-                "section": "borders",
+                "section": "pulse",
                 "label": "prefs.windows.border_pulse",
                 "control": "toggle",
                 "keywords": "music reactive border pulse beat audio cava visualizer neon glow"
@@ -4944,7 +4946,7 @@
               "description": "How much the border dims between beats.",
               "x-settings": {
                 "category": "windows",
-                "section": "borders",
+                "section": "pulse",
                 "label": "prefs.windows.border_pulse_intensity",
                 "control": "slider",
                 "step": 0.05,
