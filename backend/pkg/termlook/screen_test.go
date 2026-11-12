@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -152,5 +153,36 @@ func TestFetchPreviewFallsBackToTheSample(t *testing.T) {
 	res, _ = FetchPreview(context.Background(), GreetingConfig{Preset: FetchOwn}, loadFetch(t), pal, fetchAssets, env, ANSI16)
 	if text := screenText(res.Lines); !strings.HasPrefix(text[0], "ARGS --pipe") {
 		t.Errorf("own preview args %q", text)
+	}
+}
+
+func TestFetchArgvRunsUnderTheLoginShell(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"bash", "fish", "nu"} {
+		writeFile(t, filepath.Join(dir, name), "#!/bin/sh\n")
+		if err := os.Chmod(filepath.Join(dir, name), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	args := []string{"--config", "/a b/c'd.jsonc"}
+	got := fetchArgv("/usr/bin/fastfetch", args, filepath.Join(dir, "bash"))
+	if strings.Join(got[1:], "|") != `-c|"$0" "$@"; :|/usr/bin/fastfetch|--config|/a b/c'd.jsonc` {
+		t.Errorf("bash argv %q", got)
+	}
+	got = fetchArgv("/usr/bin/fastfetch", args, filepath.Join(dir, "fish"))
+	if got[len(got)-1] != "/a b/c'd.jsonc" || got[3] != "$argv[1] $argv[2..-1]" {
+		t.Errorf("fish argv %q", got)
+	}
+	for _, shell := range []string{"", "bash", filepath.Join(dir, "nu"), filepath.Join(dir, "missing")} {
+		if got := fetchArgv("/usr/bin/fastfetch", args, shell); got[0] != "/usr/bin/fastfetch" {
+			t.Errorf("%q: %q", shell, got)
+		}
+	}
+	if bash, err := exec.LookPath("bash"); err == nil {
+		argv := fetchArgv("printf", []string{"%s|", "a b", "$(x)"}, bash)
+		out, err := exec.Command(argv[0], argv[1:]...).Output()
+		if err != nil || string(out) != "a b|$(x)|" {
+			t.Errorf("bash ran %q: %v", out, err)
+		}
 	}
 }

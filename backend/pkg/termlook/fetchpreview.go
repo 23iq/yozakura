@@ -58,7 +58,7 @@ func FetchPreview(ctx context.Context, cfg GreetingConfig, presets []FetchPreset
 		res.ImageLogo = cmd.kitty != ""
 		args = append([]string{"--config", cmd.cfg}, args...)
 	}
-	out, err := runFetch(ctx, bin, args)
+	out, err := runFetch(ctx, bin, args, cfg.LoginShell)
 	if err != nil {
 		s, serr := sample(reasonOf(err))
 		s.ImageLogo = res.ImageLogo
@@ -71,10 +71,32 @@ func FetchPreview(ctx context.Context, cfg GreetingConfig, presets []FetchPreset
 // SakuraLogoFile is the bundled text logo in dir (assets/terminal/fastfetch).
 func SakuraLogoFile(dir string) string { return filepath.Join(dir, "logos", "sakura.txt") }
 
-func runFetch(ctx context.Context, bin string, args []string) (string, error) {
+// fetchArgv runs bin under the user's login shell, as a new terminal would,
+// so fastfetch reports that shell (not the daemon) as the shell. The
+// command and its arguments stay argv: the shell code is constant, and
+// "; :" keeps bash / zsh from replacing themselves with fastfetch.
+func fetchArgv(bin string, args []string, shell string) []string {
+	direct := append([]string{bin}, args...)
+	if !filepath.IsAbs(shell) {
+		return direct
+	}
+	if st, err := os.Stat(shell); err != nil || st.IsDir() || st.Mode()&0o111 == 0 {
+		return direct
+	}
+	switch filepath.Base(shell) {
+	case "fish":
+		return append([]string{shell, "--no-config", "-c", "$argv[1] $argv[2..-1]", "--"}, direct...)
+	case "bash", "zsh", "sh", "dash":
+		return append([]string{shell, "-c", `"$0" "$@"; :`}, direct...)
+	}
+	return direct
+}
+
+func runFetch(ctx context.Context, bin string, args []string, shell string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, fetchBudget)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, bin, args...)
+	argv := fetchArgv(bin, args, shell)
+	cmd := exec.CommandContext(ctx, argv[0], argv[1:]...)
 	// the user's own environment (their fastfetch config for "own", the
 	// detection of shell / terminal / WM), with colours on and no terminal
 	// graphics
@@ -82,12 +104,13 @@ func runFetch(ctx context.Context, bin string, args []string) (string, error) {
 	for _, kv := range os.Environ() {
 		k, _, _ := strings.Cut(kv, "=")
 		switch k {
-		case "NO_COLOR", "TERM", "COLORTERM", "COLUMNS", "KITTY_WINDOW_ID":
+		case "NO_COLOR", "TERM", "COLORTERM", "COLUMNS", "KITTY_WINDOW_ID", "TERM_PROGRAM":
 			continue
 		}
 		env = append(env, kv)
 	}
-	cmd.Env = append(env, "TERM=xterm-256color", "COLORTERM=truecolor", "COLUMNS=120")
+	// the preview is a kitty window: fastfetch names kitty as the terminal
+	cmd.Env = append(env, "TERM=xterm-256color", "COLORTERM=truecolor", "COLUMNS=120", "TERM_PROGRAM=kitty")
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
