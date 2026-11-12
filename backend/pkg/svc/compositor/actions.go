@@ -67,6 +67,7 @@ var catalog = []ActionSpec{
 	{ID: brand.Action("screenshot"), Label: "Take Screenshot", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "screenshot")},
 	{ID: brand.Action("screenrecord"), Label: "Screen Record", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "screenrecord")},
 	{ID: brand.Action("lens"), Label: "Open Lens", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "lens")},
+	{ID: brand.Action("converter"), Label: "Open File Converter", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "converter")},
 	{ID: brand.Action("reload"), Label: "Reload " + brand.DisplayName, Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("reload")},
 	{ID: brand.Action("quit"), Label: "Quit " + brand.DisplayName, Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("quit")},
 	{ID: brand.Action("keybinds"), Label: "Show Keybinds", Category: brand.DisplayName, Dispatcher: "exec", Argument: brand.Command("run", "keybinds")},

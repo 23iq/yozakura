@@ -15,6 +15,7 @@ import qs.modules.components.kit
 // `mono` labels, `maxLabelWidth` (> 0: the label elides in the middle).
 // `quiet`: no box at rest (a toolbar of chips), `danger`: a destructive or
 // failing state (error tint), `dense`: the short height of inline pills.
+// `focusable`: reachable by Tab (Enter / Space click, a fading focus ring).
 StyledRect {
     id: root
 
@@ -32,6 +33,7 @@ StyledRect {
     property bool dense: false
     property bool highlighted: false
     property bool showLabel: true
+    property bool focusable: false
     readonly property bool hasImage: root.image.toString() !== ""
     readonly property real compactWidth: lead.implicitWidth + Space.m * 2
     readonly property real fullWidth: lead.implicitWidth + (root.text !== "" ? Space.s + label.implicitWidth : 0) + Space.m * 2
@@ -42,6 +44,14 @@ StyledRect {
 
     signal clicked
     signal closeClicked
+
+    activeFocusOnTab: root.focusable && root.enabled
+    Keys.onPressed: event => {
+        if (root.focusable && (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space)) {
+            root.clicked();
+            event.accepted = true;
+        }
+    }
 
     implicitHeight: root.dense ? Space.chip - Space.s : Space.chip
     implicitWidth: row.implicitWidth + Space.m * 2
@@ -146,5 +156,10 @@ StyledRect {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onClicked: root.closeClicked()
+    }
+
+    FocusRing {
+        radius: root.radius + Space.stroke
+        shown: root.focusable && root.activeFocus
     }
 }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:yozakura:config:system",
   "title": "system",
-  "description": "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro, timers/alarms/focus mode and clipboard storage.",
+  "description": "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro, timers/alarms/focus mode, clipboard storage and the file converter.",
   "type": "object",
   "x-file": "config/system.json",
   "properties": {
@@ -692,6 +692,63 @@
             "label": "prefs.sys.clipboard_tmpfs",
             "control": "toggle",
             "keywords": "clipboard history tmp tmpfs ram memory reboot privacy"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "converter": {
+      "title": "Converter",
+      "type": "object",
+      "properties": {
+        "outputDir": {
+          "title": "Save to",
+          "type": "string",
+          "default": "",
+          "description": "Folder for converted files. Empty: next to the original. Existing files are never replaced.",
+          "x-settings": {
+            "category": "system",
+            "section": "converter",
+            "label": "prefs.sys.converter_dir",
+            "control": "path",
+            "keywords": "converter convert output folder directory save results files"
+          },
+          "format": "path"
+        },
+        "quality": {
+          "title": "Quality",
+          "type": "string",
+          "default": "balanced",
+          "description": "Starting quality for JPEG, WebP, MP3, video and other lossy formats.",
+          "x-settings": {
+            "category": "system",
+            "section": "converter",
+            "label": "prefs.sys.converter_quality",
+            "control": "selector",
+            "keywords": "converter convert quality size compression mp3 jpg video bitrate"
+          },
+          "enum": [
+            "small",
+            "balanced",
+            "best"
+          ],
+          "x-enumLabels": {
+            "small": "Small",
+            "balanced": "Balanced",
+            "best": "Best"
+          }
+        },
+        "openFolder": {
+          "title": "Show files when done",
+          "type": "boolean",
+          "default": false,
+          "description": "Open the folder with the result once every conversion has finished.",
+          "x-settings": {
+            "category": "system",
+            "section": "converter",
+            "label": "prefs.sys.converter_open",
+            "control": "toggle",
+            "keywords": "converter convert open folder show files done finished"
           }
         }
       },

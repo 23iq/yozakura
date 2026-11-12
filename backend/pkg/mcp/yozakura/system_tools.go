@@ -14,7 +14,7 @@ import (
 
 // ShellPanels are the `ui.run` commands shell_toggle accepts.
 var ShellPanels = []string{"launcher", "clipboard", "emoji", "notes", "dashboard", "wallpapers", "assistant",
-	"overview", "powermenu", "tools", "config", "screenshot", "screenrecord", "lens", "lockscreen", "keybinds", "desktop-edit", "onboarding"}
+	"overview", "powermenu", "tools", "config", "screenshot", "screenrecord", "lens", "converter", "lockscreen", "keybinds", "desktop-edit", "onboarding"}
 
 func systemTools(d Deps) []mcp.ToolDef {
 	panels, _ := json.Marshal(ShellPanels)

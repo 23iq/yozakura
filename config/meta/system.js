@@ -2,7 +2,7 @@
 
 // Catalog metadata of config/defaults/system.js (format: config/meta/Meta.js).
 
-var description = "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro, timers/alarms/focus mode and clipboard storage.";
+var description = "System integration: disks shown in metrics, UI language, update checks, idle/lock/sleep commands, OCR languages, pomodoro, timers/alarms/focus mode, clipboard storage and the file converter.";
 
 var keys = {
     "disks": {
@@ -70,5 +70,9 @@ var keys = {
     },
     "clipboard.tmpfs": {
         "description": "Keep unpinned clipboard history in RAM (wiped on reboot)."
+    },
+    "converter.outputDir": {
+        "format": "path",
+        "description": "Folder the file converter writes results to (empty: next to each source file; ~ is expanded)."
     }
 };

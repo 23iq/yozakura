@@ -236,7 +236,7 @@ var (
 	}
 	systemBindOrder = []string{
 		"overview", "powermenu", "config", "lockscreen", "tools",
-		"screenshot", "screenrecord", "lens", "reload", "quit", "bar", "keybinds",
+		"screenshot", "screenrecord", "lens", "converter", "reload", "quit", "bar", "keybinds",
 	}
 )
 

@@ -32,6 +32,7 @@ var BINDS = [
     { "section": "system", "name": "screenshot", "modifiers": ["SUPER", "SHIFT"], "key": "S", "action": "screenshot" },
     { "section": "system", "name": "screenrecord", "modifiers": ["SUPER", "SHIFT"], "key": "R", "action": "screenrecord" },
     { "section": "system", "name": "lens", "modifiers": ["SUPER", "SHIFT"], "key": "A", "action": "lens" },
+    { "section": "system", "name": "converter", "modifiers": ["SUPER", "ALT"], "key": "C", "action": "converter" },
     { "section": "system", "name": "reload", "modifiers": ["SUPER", "ALT"], "key": "B", "action": "reload" },
     { "section": "system", "name": "quit", "modifiers": ["SUPER", "CTRL", "ALT"], "key": "B", "action": "quit" },
     { "section": "system", "name": "bar", "modifiers": ["SUPER", "SHIFT"], "key": "B", "action": "bar" },

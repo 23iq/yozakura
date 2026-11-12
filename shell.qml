@@ -317,6 +317,14 @@ ShellRoot {
         source: "modules/tools/MirrorWindow.qml"
     }
 
+    // File converter (tools menu, `<app> run converter`): a floating window
+    // loaded by URL on open, so nothing of it is compiled at startup.
+    // Conversions run in the backend `convert` service.
+    Loader {
+        active: SuspendManager.wakeReady && GlobalStates.converterWindowVisible
+        source: "modules/converter/ConverterWindow.qml"
+    }
+
     // Settings: created asynchronously on the first open (a large tree with
     // no QML disk cache), then kept hidden for
     // performance.settingsKeepAliveMinutes after closing so it reopens at once.
