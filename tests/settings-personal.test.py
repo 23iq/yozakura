@@ -202,6 +202,24 @@ check(h.eval(item("terminalWindow"), "item.greeting") is True, "terminal: the st
 h.eval(item("greeting:off"), "clicked()")
 check(ev("Config.terminal.greeting") == "none", "terminal: Off turns it off")
 
+# ---- Presets ------------------------------------------------------------------
+PRESETS = ('[{name: "Hanami", official: true, active: true, tags: ["dark"], look: {"bar.position": "top"}},'
+           ' {name: "Kaze", official: true, active: false, tags: ["light"], look: {"bar.position": "bottom", "theme.lightMode": true}}]')
+select("presets")
+ev(f"PresetStudio.presets = {PRESETS}")
+QTest.qWait(100)
+check(item("pageStage") is not None and item("presetStageShell") is not None, "presets: the stage is the preset's miniature")
+check(item("presetName") is not None and h.eval(item("presetName"), "text") == "Hanami", "presets: the active preset is on the stage")
+check(h.eval(item("presetPick:Hanami"), "selected") is True, "presets: the strip rings the active preset")
+check(h.eval(item("presetApply"), "enabled") is False, "presets: the active one cannot be applied again")
+h.eval(item("presetPick:Kaze"), "clicked()")
+check(h.eval(item("presetName"), "text") == "Kaze" and h.eval(item("presetStageShell"), "edge") == "bottom",
+      "presets: a click on a preset shows it on the stage")
+check(h.eval(item("presetApply"), "enabled") is True, "presets: ...and offers to apply it")
+check(item("settingsSection:presets_saving") is not None, "presets: the studio's settings are a card of the row")
+h.eval(item("presetBrowse"), "clicked()")
+check(h.eval(ev('findItem("settingsPage").item'), "view") == "browse", "presets: Browse opens every preset and part")
+
 if failures:
     print(f"{len(failures)} failure(s)", file=sys.stderr)
 h.exit(1 if failures else 0)

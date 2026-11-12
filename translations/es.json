@@ -4572,5 +4572,11 @@
   "prefs.term.greeting_look.desc": "Apagado, o el aspecto de fastfetch con el que te saluda una terminal nueva.",
   "prefs.term.section.prompt_more": "Estado del prompt",
   "prefs.term.look.full": "Estado y galería del prompt",
-  "prefs.term.look.full.desc": "La vista previa del prompt, lo que impide que se vea y la acción que lo arregla, y cada preset descrito."
+  "prefs.term.look.full.desc": "La vista previa del prompt, lo que impide que se vea y la acción que lo arregla, y cada preset descrito.",
+  "prefs.presets.in_use": "En uso",
+  "prefs.presets.edit": "Editar",
+  "prefs.presets.gallery": "Presets",
+  "prefs.presets.custom": "Personalizado",
+  "prefs.presets.browse": "Todos los presets y partes",
+  "prefs.presets.hero_hint": "Haz clic en un preset para verlo en tu pantalla · Aplicar lo hace tuyo"
 }

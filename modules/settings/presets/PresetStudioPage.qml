@@ -9,6 +9,7 @@ import qs.config
 import qs.modules.components.kit
 import qs.modules.settings
 import qs.modules.settings.store
+import qs.modules.widgets.presets.store
 import "PresetModel.js" as PresetModel
 
 // Settings "Presets" category: the preset studio. Gallery (live
@@ -35,6 +36,10 @@ Item {
         } else {
             view = v || "gallery";
         }
+        // the parts (layouts, styles, palettes) of the full gallery follow
+        // the preset list; opened after it loaded, they load now
+        if (view === "browse")
+            PresetParts.refresh();
         flick.contentY = 0;
     }
 
@@ -84,9 +89,28 @@ Item {
         }
     }
 
+    // The gallery is one fitted screen (no page scroll); the mixer and the
+    // preset editor scroll.
+    readonly property real contentHeight: page.view === "gallery" ? page.height : flick.contentHeight
+
+    PresetShowcase {
+        id: showcase
+        objectName: "presetShowcase"
+        anchors.fill: parent
+        visible: page.view === "gallery"
+        category: page.category
+        onAction: (name, id) => page.handle(name, id)
+        onOpenPreset: name => page.show("editor:" + name)
+        onSaveRequested: page.saveCurrent()
+        onMixRequested: page.show("mixer")
+        onImportRequested: PresetStudio.pickImport()
+        onBrowseRequested: page.show("browse")
+    }
+
     Flickable {
         id: flick
         anchors.fill: parent
+        visible: page.view !== "gallery"
         contentWidth: width
         contentHeight: column.implicitHeight + 140
         clip: true
@@ -157,21 +181,13 @@ Item {
             Loader {
                 id: body
                 width: parent.width
-                sourceComponent: page.view === "mixer" ? mixer : (page.view === "editor" ? editor : gallery)
-            }
-
-            // The page's own settings (schema/presets.js): auto-save.
-            Repeater {
-                model: page.view === "gallery" ? (page.category.sections || []) : []
-                SettingsSection {
-                    required property var modelData
-                    width: column.width
-                    section: modelData
-                }
+                sourceComponent: page.view === "mixer" ? mixer : (page.view === "editor" ? editor : (page.view === "browse" ? gallery : null))
             }
         }
     }
 
+    // Every preset and part (layouts, styles, palettes) with search and
+    // filters: "Browse" from the showcase.
     Component {
         id: gallery
         PresetGallery {

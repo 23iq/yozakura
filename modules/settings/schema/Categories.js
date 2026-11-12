@@ -166,6 +166,7 @@ var categories = [
         "description": "prefs.cat.presets.desc",
         "keywords": "presets studio save load profiles themes layouts looks gallery mixer mix duplicate import export share try",
         "page": "PresetStudio",
+        "row": ["presets_saving"],
         "sections": Presets.sections
     },
     {
