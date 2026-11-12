@@ -8,6 +8,8 @@ import qs.modules.components.kit
 import qs.modules.settings.store
 import "WindowTiles.js" as Tiles
 import "../controls/ColorRoleModel.js" as ColorModel
+import "../CompositorGate.js" as CompositorGate
+import "../schema/windows.js" as WindowsSchema
 
 // Stage of the Windows page: your screen (ScreenMini, without its faux
 // windows) tiled by the compositor's layout at real pixels: the gaps
@@ -77,6 +79,11 @@ Stage {
     }
 
     stageHeight: Space.px(300)
+
+    // On a compositor that lacks some of these settings, the stage says how
+    // many rows it hides and where they work (a fitted page has no room
+    // for the scrolling page's note under its cards).
+    readonly property var gated: CompositorGate.hiddenBy(WindowsSchema.category.sections, YozdService.compositorName)
 
     ScreenMini {
         id: mini
@@ -155,6 +162,52 @@ Stage {
                 map: (dx, dy) => Tiles.roundingFromDrag(cornerGrip.start, dx, -dy)
                 keys: ["compositor.rounding", "windows.corners"]
             }
+        }
+    }
+
+    Mark {
+        objectName: "compositorOnlyNote"
+        readonly property string text: gateText.text
+        visible: stage.gated.count > 0
+        x: Space.m
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: Space.m
+        width: Math.min(parent.width - Space.m * 2, gateText.implicitWidth + Space.l * 2)
+        height: gateText.height + Space.s * 2
+        radius: Look.radius("chip", height)
+        color: Look.raisedFill(false)
+        border.width: Space.hairline
+        border.color: Type.hairline
+        KitText {
+            id: gateText
+            x: Space.l
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(implicitWidth, stage.width - Space.m * 2 - Space.l * 2)
+            role: "caption"
+            color: Type.secondary
+            elide: Text.ElideRight
+            text: stage.gated.count > 0 ? I18n.tn("prefs.compositor_only.note", stage.gated.count).replace("%2", CompositorGate.describe(stage.gated.compositors)) : ""
+        }
+    }
+
+    // the numbers the picture is drawn with
+    Mark {
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: Space.m
+        width: readout.implicitWidth + Space.l * 2
+        height: readout.implicitHeight + Space.s * 2
+        radius: Look.radius("chip", height)
+        color: Look.raisedFill(false)
+        border.width: Space.hairline
+        border.color: Type.hairline
+        KitText {
+            id: readout
+            objectName: "windowsReadout"
+            anchors.centerIn: parent
+            role: "caption"
+            color: Type.secondary
+            text: I18n.t("prefs.windows.preview.readout").replace("%1", Math.round(stage.shownGapsIn)).replace("%2", Math.round(stage.shownGapsOut)).replace("%3", Math.round(stage.border)).replace("%4", Math.round(stage.shownRounding))
         }
     }
 

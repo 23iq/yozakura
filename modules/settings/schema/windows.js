@@ -184,15 +184,7 @@ var category = {
                     "description": "prefs.windows.border_angle.desc",
                     "keywords": "gradient angle rotation border"
                 },
-                {
-                    "key": "compositor.inactiveBorderColor",
-                    "advanced": true,
-                    "type": "color-role",
-                    "gradient": true,
-                    "label": "prefs.windows.inactive_border",
-                    "description": "prefs.windows.inactive_border.desc",
-                    "keywords": "inactive unfocused border color gradient role palette alpha"
-                },
+
                 {
                     "key": "compositor.inactiveBorderAngle",
                     "advanced": true,
@@ -205,6 +197,20 @@ var category = {
                     "label": "prefs.windows.inactive_border_angle",
                     "description": "prefs.windows.inactive_border_angle.desc",
                     "keywords": "gradient angle inactive border"
+                }
+            ]
+        },
+        {
+            "id": "unfocused",
+            "title": "prefs.windows.section.more_borders",
+            "entries": [
+                {
+                    "key": "compositor.inactiveBorderColor",
+                    "type": "color-role",
+                    "gradient": true,
+                    "label": "prefs.windows.inactive_border",
+                    "description": "prefs.windows.inactive_border.desc",
+                    "keywords": "inactive unfocused border color gradient role palette alpha"
                 }
             ]
         },

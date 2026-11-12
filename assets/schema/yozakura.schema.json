@@ -3777,11 +3777,10 @@
           "description": "Palette colors of the other windows' borders.",
           "x-settings": {
             "category": "windows",
-            "section": "borders",
+            "section": "unfocused",
             "label": "prefs.windows.inactive_border",
             "control": "color-role",
-            "keywords": "inactive unfocused border color gradient role palette alpha",
-            "advanced": true
+            "keywords": "inactive unfocused border color gradient role palette alpha"
           }
         },
         "inactiveBorderAngle": {
@@ -9606,11 +9605,10 @@
               "description": "Commands run after a period without input, in order: dim, lock, screen off, suspend. On resume runs when you come back.",
               "x-settings": {
                 "category": "power",
-                "section": "idle",
+                "section": "commands",
                 "label": "idle.listeners",
                 "control": "list",
-                "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle",
-                "advanced": true
+                "keywords": "idle listener timeout screen off dim brightness lock suspend sleep hypridle"
               }
             }
           },
