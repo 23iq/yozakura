@@ -56,9 +56,13 @@ func TestRestartPolicyNoCompositorGoesSlow(t *testing.T) {
 	if firsts != 1 {
 		t.Fatalf("first reported %d times, want once per streak", firsts)
 	}
-	// another kind of exit ends the streak: back to the normal cap
-	if d, _ := p.next(0, false); d != daemonRestartMax {
-		t.Fatalf("after the streak: %v, want %v", d, daemonRestartMax)
+	// another kind of exit ends the streak (the compositor came up): the
+	// backoff starts over at the base delay, not at the slow one capped
+	if d, _ := p.next(0, false); d != daemonRestartDelay {
+		t.Fatalf("after the streak: %v, want %v", d, daemonRestartDelay)
+	}
+	if d, _ := p.next(0, false); d != 2*daemonRestartDelay {
+		t.Fatalf("second exit after the streak: %v, want %v", d, 2*daemonRestartDelay)
 	}
 	if _, first := p.next(0, true); !first {
 		t.Fatal("a new streak is reported again")
