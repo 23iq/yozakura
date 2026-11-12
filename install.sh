@@ -48,6 +48,8 @@ COMPOSITORS=(hyprland niri mango)
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
+# DOCTOR_FAILED: the closing doctor reported a missing required component.
+DOCTOR_FAILED=0
 # DM: the login manager found; DM_STATE: enabled, disabled or unknown;
 # DM_ENABLE: its unit when this run enables it (choose_login).
 TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
@@ -670,6 +672,10 @@ the package list is fetched from), YOZAKURA_FLAKE (NixOS), YOZAKURA_GPU
 (NVIDIA, AMD or Intel: overrides the graphics detection), YOZAKURA_OS_RELEASE
 (an os-release file to read instead of /etc/os-release), YOZAKURA_SYS_BIN
 (where the binaries are linked when needed, default /usr/local/bin).
+
+Exit status: 0 installed (an optional feature that failed is listed under
+NEEDS ATTENTION), 1 the install stopped, 2 installed but needs attention (a
+required component is missing, or the login screen could not be set up).
 Log: $LOG_FILE
 EOF
 }
@@ -2126,14 +2132,36 @@ run_doctor() {
     dry_line "$BIN_DIR/$APP_ID" doctor "${args[@]}"
     return 0
   fi
-  "$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1 | sed 's/^/  /' >&2 || true
+  local out
+  out="$("$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1)" || DOCTOR_FAILED=1
+  [[ -z "$out" ]] || printf '%s\n' "$out" | sed 's/^/  /' >&2
 }
 
-# done_header: the blossom beside "Yozakura <version> is installed".
+# login_failed: the login screen this run set up (SDDM, or the one chosen
+# in the menu) could not be enabled.
+login_failed() {
+  local s
+  for s in sddm ${DM_ENABLE:+"$DM_ENABLE"}; do
+    [[ " ${SERVICES[*]} " == *" $s "* ]] && failed "$s" && return 0
+  done
+  return 1
+}
+
+# needs_attention: a required component is missing or the login screen
+# could not be set up; the install exits with status 2.
+needs_attention() { [[ "$DOCTOR_FAILED" == 1 ]] || login_failed; }
+
+# done_header: the blossom beside "Yozakura <version> is installed", or
+# what is wrong when something failed (NEEDS ATTENTION lists it).
 done_header() {
-  local ver i rows flower right=() name line art=("${ART_FLOWER[@]}")
+  local ver i rows flower right=() name line art=("${ART_FLOWER[@]}") tag="the blossoms are out"
   ver="$(head -n1 "$SRC_DIR/version" 2>/dev/null || true)"
   line="$DISPLAY_NAME ${ver:+$ver }is installed"
+  if needs_attention; then
+    line="$line, but needs attention" tag="see NEEDS ATTENTION below"
+  elif [[ ${#FAILED[@]} -gt 0 ]]; then
+    line="$line; an optional part failed" tag="see NEEDS ATTENTION below"
+  fi
   [[ "$DRY_RUN" == 1 ]] && line="$DISPLAY_NAME ${ver:+$ver }would be installed"
   echo >&2
   if [[ "$UI_UTF8" == 0 ]]; then
@@ -2144,8 +2172,8 @@ done_header() {
   rows=${#art[@]}
   ui_paint "$DISPLAY_NAME" 0 0 "${#DISPLAY_NAME}" 1 && name="$C_BOLD$UI_OUT"
   right[rows / 2 - 2]="$name ${C_BOLD}${line#"$DISPLAY_NAME "}$C_OFF"
-  art_brush "${#line}" && right[rows / 2 - 1]="$UI_OUT"
-  ui_paint "$ART_KANJI" 0 0 4 1 && right[rows / 2 + 1]="$C_BOLD$UI_OUT  ${C_DIM}the blossoms are out$C_OFF"
+  art_brush "${#line}" "$((UI_COLS - ${#art[0]} - 5 - ${#line}))" && right[rows / 2 - 1]="$UI_OUT"
+  ui_paint "$ART_KANJI" 0 0 4 1 && right[rows / 2 + 1]="$C_BOLD$UI_OUT  $C_DIM$tag$C_OFF"
   for ((i = 0; i < rows; i++)); do
     ui_paint "${art[i]}" 0 "$i" "${#art[0]}" "$rows" && flower="$UI_OUT"
     printf '  %s   %s\n' "$flower" "${right[i]:-}" >&2
@@ -2211,8 +2239,9 @@ next_steps() {
     [[ -n "$DM" ]] && numbered "$G_INFO" "$DM is installed but not enabled; for a login screen: sudo systemctl enable $(dm_unit "$DM")"
   fi
   [[ "$ADD_INPUT_GROUP" == 1 ]] && numbered "$G_INFO" "Log in again for the input group (Super-alone binds)."
-  if [[ ${#FAILED[@]} -gt 0 ]]; then
+  if [[ ${#FAILED[@]} -gt 0 || "$DOCTOR_FAILED" == 1 ]]; then
     ui_box_head "NEEDS ATTENTION"
+    [[ "$DOCTOR_FAILED" == 1 ]] && ui_box_row "$C_YELLOW$G_WARN$C_OFF required components are missing (the check above; $APP_ID doctor)"
     for f in "${FAILED[@]}"; do
       ui_box_row "$C_YELLOW$G_WARN$C_OFF $f: failed (see log)"
     done
@@ -2238,7 +2267,7 @@ offer_reboot() {
   if [[ "$REBOOT" != 1 ]]; then
     [[ "$PREV_INSTALL" == 1 || "$ASSUME_YES" == 1 ]] && return 0
     in_session && return 0
-    [[ "$DM_STATE" != enabled ]] && login_ready && default=y
+    [[ "$DM_STATE" != enabled ]] && login_ready && ! needs_attention && default=y
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
   [[ "$DRY_RUN" == 1 ]] || info "Rebooting..."
@@ -2372,6 +2401,9 @@ main() {
     optional_features
   fi
   finish
+  # Exit status 2: installed, but a required component is missing or the
+  # login screen could not be set up (needs_attention).
+  if needs_attention; then exit 2; fi
 }
 
 main "$@"

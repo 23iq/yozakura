@@ -147,7 +147,11 @@ curl -fsSL https://raw.githubusercontent.com/23iq/yozakura/main/install.sh | bas
 | `--dir PATH` / `--bin-dir PATH` / `--branch NAME` | Source checkout, binary location, git branch |
 
 Piped without a terminal (CI, containers) it never waits for input: it goes
-with the plan and its defaults. `YOZAKURA_REPO_URL` points it at another git
+with the plan and its defaults. It exits with 0 when everything is in place
+(a failed optional feature is listed under NEEDS ATTENTION), 1 when the
+install stopped, and 2 when it installed but needs attention: a required
+component is missing (`yozakura doctor`) or the login screen could not be
+set up. `YOZAKURA_REPO_URL` points it at another git
 remote (a fork or a local path). Optional features can also be set up later
 with their scripts in `~/.local/src/yozakura/scripts/`.
 

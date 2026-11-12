@@ -101,7 +101,7 @@ SUSE_STUBS = {
 FAKE_BIN = (
     "#!/bin/bash\n"
     + LOGGER
-    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine" ;; esac\n'
+    + 'case "$1" in version) echo 0.0.0 ;; doctor) echo "doctor: fine"; exit "${FAKE_DOCTOR_RC:-0}" ;; esac\n'
     + '[[ "$*" == "install --help" ]] && { echo "Unknown target \'--help\'" >&2; exit 1; }\n'
     + 'if [[ "$*" == "install --exclusive --help" ]]; then\n'
     + '  [[ -n "${FAKE_EXCLUSIVE:-}" ]] && { echo "Usage: yozakura install hyprland --exclusive [-y]"; exit 0; }\n'
@@ -366,6 +366,7 @@ def test_yes_install_optional_failure_does_not_abort():
         voice = sb.calls("voice_setup.sh")
         check(voice == [["--vulkan"]], f"voice on AMD not built with --vulkan: {voice}")
         check(re.search(r"voice: failed \(see log\)", err), "summary lacks the voice failure", err)
+        check("an optional part failed" in err and "blossoms are out" not in err, "optional failure has an unqualified headline", err)
         check(any("doctor" in c for c in sb.calls("yozakura")), "doctor did not run after the failure")
         helper = [c for c in sb.calls("sudo") if c[:1] == ["install"]]
         check(
@@ -763,7 +764,8 @@ def test_sddm_installed_but_disabled_is_set_up():
         systemd_root(sb)
         sb.extra_env["STUB_SUDO_FAIL"] = "systemctl enable sddm"
         rc, err, _ = sb.run("-y", "--compositor", "niri")
-        check(rc == 0, f"failing sddm enable exit {rc}", err)
+        check(rc == 2, f"failing sddm enable exit {rc}, want 2", err)
+        check("is installed, but needs attention" in err and "blossoms are out" not in err, "failed login screen has a success headline", err)
         check(["systemctl", "enable", "--now", "bluetooth"] in sb.calls("sudo"), "bluetooth skipped after sddm failed")
         check(re.search(r"sddm: failed", err), "summary lacks the sddm failure", err)
         check("new login screen" not in err and "niri-session" in err, "next steps promise a login screen", err)
@@ -863,6 +865,22 @@ def test_ly_and_no_systemd_login_managers():
         sb.cleanup()
 
 
+def test_missing_required_component_exits_2():
+    sb = Sandbox("arch")
+    try:
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0 and "blossoms are out" in err and "NEEDS ATTENTION" not in err, f"clean install exit {rc}", err)
+        # The closing doctor reports a missing required component (exit 1).
+        sb.extra_env["FAKE_DOCTOR_RC"] = "1"
+        rc, err, _ = sb.run("-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 2, f"missing required component exit {rc}, want 2", err)
+        check("is installed, but needs attention" in err and "blossoms are out" not in err, "headline claims success", err)
+        check("NEEDS ATTENTION" in err and "required components are missing" in err, "NEEDS ATTENTION lacks the doctor result", err)
+        check("doctor: fine" in err, "doctor output not shown", err)
+    finally:
+        sb.cleanup()
+
+
 def test_root_and_missing_sudo_give_guidance():
     sb = Sandbox("arch")
     try:
@@ -901,6 +919,7 @@ def main():
         test_other_login_manager_installed_but_disabled,
         test_ly_and_no_systemd_login_managers,
         test_root_and_missing_sudo_give_guidance,
+        test_missing_required_component_exits_2,
         test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,
