@@ -11,9 +11,9 @@
 //	                                    when terminal.enabled, else removes the hook)
 //	status {}                        -> Status
 //
-// Status is {enabled, engine, fishInstalled, fishIsLoginShell, engineInstalled:
-// {starship, ohmyposh}, foreignPromptInit, foreignFile, hookSkipped, hookPath,
-// hookPresent}. hookSkipped: the prompt is on but not installed because
+// Status is {enabled, engine, fishInstalled, fishIsLoginShell, loginShell,
+// engineInstalled: {starship, ohmyposh}, foreignPromptInit, foreignFile,
+// hookSkipped, hookPath, hookPresent}. hookSkipped: the prompt is on but not installed because
 // foreignFile starts starship / oh-my-posh itself.
 // Installing an engine or fish is not done here: the UI calls extras.install
 // (ids starship, oh-my-posh, fish) and extras.setLoginShell.

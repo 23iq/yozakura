@@ -170,8 +170,16 @@ func TestStatusIgnoresCommentsAndOwnHook(t *testing.T) {
 func TestLoginShellOther(t *testing.T) {
 	f := newFixture(t, "")
 	f.s.o.User = func() string { return "root" }
-	if f.s.currentStatus().FishIsLoginShell {
-		t.Error("root uses bash")
+	if st := f.s.currentStatus(); st.FishIsLoginShell || st.LoginShell != "/bin/bash" {
+		t.Errorf("root uses bash: %+v", st)
+	}
+	f.s.o.User = func() string { return "alice" }
+	if st := f.s.currentStatus(); !st.FishIsLoginShell || st.LoginShell != "/usr/bin/fish" {
+		t.Errorf("alice uses fish: %+v", st)
+	}
+	f.s.o.User = func() string { return "nobody" }
+	if st := f.s.currentStatus(); st.FishIsLoginShell || st.LoginShell != "" {
+		t.Errorf("no passwd entry: %+v", st)
 	}
 }
 

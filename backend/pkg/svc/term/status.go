@@ -12,11 +12,15 @@ import (
 
 // Status is the state the settings page shows.
 type Status struct {
-	Enabled           bool            `json:"enabled"`
-	Engine            string          `json:"engine"`
-	FishInstalled     bool            `json:"fishInstalled"`
-	FishPath          string          `json:"fishPath"`
-	FishIsLoginShell  bool            `json:"fishIsLoginShell"`
+	Enabled          bool   `json:"enabled"`
+	Engine           string `json:"engine"`
+	FishInstalled    bool   `json:"fishInstalled"`
+	FishPath         string `json:"fishPath"`
+	FishIsLoginShell bool   `json:"fishIsLoginShell"`
+	// LoginShell is the user's shell in /etc/passwd now: after a chsh in
+	// this session it differs from the $SHELL the session started with,
+	// which terminals launched from the shell would otherwise inherit.
+	LoginShell        string          `json:"loginShell,omitempty"`
 	EngineInstalled   map[string]bool `json:"engineInstalled"`
 	ForeignPromptInit bool            `json:"foreignPromptInit"`
 	ForeignFile       string          `json:"foreignFile,omitempty"`
@@ -42,7 +46,8 @@ func (s *Service) currentStatus() Status {
 	_, st.EngineInstalled[termlook.EngineOMP] = env.LookPath("oh-my-posh")
 	_, err := os.Stat(st.HookPath)
 	st.HookPresent = err == nil
-	st.FishIsLoginShell = s.fishIsLoginShell()
+	st.LoginShell = s.loginShell()
+	st.FishIsLoginShell = filepath.Base(st.LoginShell) == "fish"
 	st.ForeignFile = s.foreignFile()
 	st.ForeignPromptInit = st.ForeignFile != ""
 	st.HookSkipped = cfg.Enabled && st.ForeignPromptInit
@@ -79,23 +84,23 @@ func (s *Service) foreignFile() string {
 	return foreignPromptFile(filepath.Join(s.o.Env.ConfigHome, "fish"), termlook.HookFile(s.o.Env))
 }
 
-// fishIsLoginShell reads the user's passwd entry.
-func (s *Service) fishIsLoginShell() bool {
+// loginShell reads the shell of the user's passwd entry ("" unknown).
+func (s *Service) loginShell() string {
 	if s.o.Passwd == nil || s.o.User == nil {
-		return false
+		return ""
 	}
 	name := s.o.User()
 	data, err := s.o.Passwd()
 	if name == "" || err != nil {
-		return false
+		return ""
 	}
 	for _, line := range strings.Split(string(data), "\n") {
 		f := strings.Split(line, ":")
 		if len(f) >= 7 && f[0] == name {
-			return filepath.Base(f[6]) == "fish"
+			return strings.TrimSpace(f[6])
 		}
 	}
-	return false
+	return ""
 }
 
 // foreignPromptFile returns the first of config.fish and conf.d/*.fish
