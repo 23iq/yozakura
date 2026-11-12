@@ -309,6 +309,11 @@ Item {
             store.touch(currentNoteId);
     }
 
+    // Put the loaded content in the editor of the open note
+    function showNoteContent() {
+        editorPane.setText(currentNoteIsMarkdown, currentNoteContent);
+    }
+
     function openNoteInEditor(noteId) {
         // Select the note and focus editor
         var isMarkdown = false;

@@ -402,6 +402,10 @@ ev("Fs.release()")
 settle()
 check(ev("currentNoteId") == "ext1" and ev("currentNoteContent") == "external",
       f"late read of the previous note ignored: {ev('currentNoteContent')[:40]!r}")
+ev("editorDirty = true")
+ev("saveCurrentNote()")
+check(fs()[f"{notes_path}/ext1.md"] == "external",
+      f"the open note keeps its own content when saved: {fs()[f'{notes_path}/ext1.md'][:40]!r}")
 
 # Escape (no mode active) closes the module.
 ev("focusSearchInput()")

@@ -55,6 +55,7 @@ QtObject {
                 return;
             tab.currentNoteContent = ok ? content : "";
             tab.currentNoteTitle = ok ? (tab.titleOf(tab.currentNoteId) ?? tab.currentNoteTitle) : "";
+            tab.showNoteContent();
             tab.editorDirty = false;
             tab.loadingNote = false;
         }

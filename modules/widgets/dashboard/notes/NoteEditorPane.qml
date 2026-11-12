@@ -22,6 +22,13 @@ Item {
         return markdown ? markdownEditor.text : richEditor.text;
     }
 
+    function setText(markdown, value) {
+        if (markdown)
+            markdownEditor.setText(value);
+        else
+            richEditor.setText(value);
+    }
+
     RichTextEditor {
         id: richEditor
         anchors.fill: parent
