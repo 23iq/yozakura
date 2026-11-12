@@ -9744,6 +9744,7 @@
                 "step": 60,
                 "unit": "s",
                 "keywords": "pomodoro work focus length",
+                "advanced": true,
                 "min": 60,
                 "max": 14400
               },
@@ -9764,6 +9765,7 @@
                 "step": 60,
                 "unit": "s",
                 "keywords": "pomodoro break rest length",
+                "advanced": true,
                 "min": 60,
                 "max": 7200
               },
@@ -9781,7 +9783,8 @@
                 "section": "pomodoro",
                 "label": "prefs.timers.pomo_auto",
                 "control": "toggle",
-                "keywords": "pomodoro auto start next phase continue"
+                "keywords": "pomodoro auto start next phase continue",
+                "advanced": true
               }
             },
             "syncSpotify": {
@@ -9791,7 +9794,7 @@
               "description": "Spotify plays while you work and pauses on breaks",
               "x-settings": {
                 "category": "timers",
-                "section": "pomodoro",
+                "section": "extras",
                 "label": "prefs.timers.pomo_spotify",
                 "control": "toggle",
                 "keywords": "pomodoro spotify music pause play"
@@ -9852,7 +9855,7 @@
               }
             },
             "alarmPanel": {
-              "title": "Open the alarm in the notch",
+              "title": "Alarm in the island",
               "type": "boolean",
               "default": true,
               "description": "The notch opens with Stop and +5 min when a timer ends (always, when the alarm repeats until stopped)",
@@ -9884,7 +9887,7 @@
               "description": "Empty: the built-in tone",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.label.alarm_sound_file",
                 "control": "path",
                 "keywords": "alarm sound file tone custom",
@@ -9902,7 +9905,7 @@
               "description": "How many times the tone plays",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.timers.repeat",
                 "control": "number",
                 "step": 1,
@@ -9931,7 +9934,7 @@
               "description": "Seconds between two tones",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.timers.interval",
                 "control": "number",
                 "step": 1,
@@ -9954,7 +9957,7 @@
               "description": "A soft chime when work turns into a break and back",
               "x-settings": {
                 "category": "timers",
-                "section": "alarm",
+                "section": "ringing",
                 "label": "prefs.timers.phase_sound",
                 "control": "toggle",
                 "keywords": "pomodoro phase break chime sound",
@@ -9965,7 +9968,7 @@
               }
             },
             "showStopwatch": {
-              "title": "Show the stopwatch",
+              "title": "Stopwatch",
               "type": "boolean",
               "default": true,
               "description": "The running stopwatch appears next to the notch",
@@ -10030,7 +10033,7 @@
               "description": "Title of the Notes note quick notes are appended to (created when missing)",
               "x-settings": {
                 "category": "timers",
-                "section": "input",
+                "section": "extras",
                 "label": "prefs.timers.note_title",
                 "control": "text",
                 "keywords": "quick note inbox notes title capture"
@@ -10095,7 +10098,7 @@
               "description": "A notification with how many notifications arrived and from which apps",
               "x-settings": {
                 "category": "timers",
-                "section": "focus",
+                "section": "extras",
                 "label": "prefs.timers.focus_summary",
                 "control": "toggle",
                 "keywords": "focus summary missed notifications end"

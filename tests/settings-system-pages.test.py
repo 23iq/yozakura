@@ -96,6 +96,22 @@ QTest.qWait(50)
 check(ev('w.findItem("voiceActivationFlip").enabled') is False, "voice: off, the key does nothing")
 ev("SettingsStore.set('voice.enabled', true)")
 
+# ---- Timers: the island's time shows / hides seconds; the Pomodoro card -------
+select("timers")
+n = steps()
+check(click("timersSecondsFlip"), "timers: the island's time is clickable")
+check(ev("Config.system.timers.showSeconds") is False, "timers: a click hides the seconds")
+check(steps() == n + 1, "timers: one undo step")
+ev("SettingsStore.undo()")
+check(ev("Config.system.timers.showSeconds") is True, "timers: undo shows them again")
+h.eval(ev('w.findItem("pomodoroWorkStep")'), "step(1)")
+check(ev("Config.system.pomodoro.workTime") == 1800, "timers: + on Focus adds five minutes (in seconds)")
+h.eval(ev('w.findItem("pomodoroRestStep")'), "step(-1)")
+check(ev("Config.system.pomodoro.restTime") == 240, "timers: - on Break takes a minute")
+h.eval(ev('w.findItem("pomodoroAutoSwitch")'), "toggled(true)")
+check(ev("Config.system.pomodoro.autoStart") is True, "timers: the switch starts the next phase on its own")
+check(ev('w.findItem("settingRow:system.pomodoro.workTime")') is None, "timers: the raw seconds are not a row")
+
 if failures:
     print(f"settings-system-pages: {len(failures)} failure(s)")
     h.exit(1)
