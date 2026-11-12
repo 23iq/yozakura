@@ -157,13 +157,15 @@ func (m *Manager) superviseDaemon(cmd *exec.Cmd) {
 	var policy restartPolicy
 	started := time.Now()
 	for {
-		err := cmd.Wait()
-
+		// Forget the daemon before reaping it: Close signals daemonCmd
+		// under daemonMu, so it only ever sees a process not yet reaped.
+		waitExited(cmd.Process.Pid)
 		m.daemonMu.Lock()
 		if m.daemonCmd == cmd {
 			m.daemonCmd = nil
 		}
 		m.daemonMu.Unlock()
+		err := cmd.Wait()
 
 		noComp := exitedNoCompositor(err)
 		delay, first := policy.next(time.Since(started), noComp)
@@ -414,15 +416,15 @@ func (m *Manager) Close() {
 		return
 	}
 
+	// superviseDaemon owns Wait() for the daemon and clears daemonCmd
+	// before it reaps it, so under daemonMu a daemon that already exited
+	// is never signalled (its pid may belong to another process by now).
 	m.daemonMu.Lock()
 	m.stopping = true
-	daemonCmd := m.daemonCmd
+	killGroup(m.daemonCmd)
 	m.daemonMu.Unlock()
 	close(m.stopCh)
 	m.stopCancel() // closes the subscribe connection
-
-	// superviseDaemon owns Wait() for the daemon.
-	killGroup(daemonCmd)
 
 	done := make(chan struct{})
 	go func() { m.wg.Wait(); close(done) }()
