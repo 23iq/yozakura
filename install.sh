@@ -2140,7 +2140,14 @@ main() {
       configure_system
     fi
   fi
-  has_cmd git || die "git is not installed." "Install git, or drop --no-deps."
+  # A dry run installed nothing: git comes with the packages step.
+  if ! has_cmd git; then
+    if [[ "$DRY_RUN" == 0 ]]; then
+      die "git is not installed." "Install git, or drop --no-deps."
+    elif [[ "$INSTALL_DEPS" == 0 ]]; then
+      warn "git is not installed; the real install stops here (install git, or drop --no-deps)."
+    fi
+  fi
 
   step "$DISPLAY_NAME"
   [[ "$LINK_BINS" == 1 ]] && need_sudo

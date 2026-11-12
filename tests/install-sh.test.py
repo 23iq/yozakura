@@ -771,6 +771,17 @@ def test_sddm_installed_but_disabled_is_set_up():
         sb.cleanup()
 
 
+def test_dry_run_without_git():
+    sb = Sandbox("arch", strict=True)
+    try:
+        (sb.bin / "git").unlink()
+        before = sb.snapshot()
+        rc, err, _ = sb.run("--dry-run", "-y", "--compositor", "niri", "--no-sddm")
+        check(rc == 0, f"dry run on a system without git exit {rc}", err)
+        check_untouched(sb, before, err)
+        check(re.search(r"would run: \S+/yozakura install niri$", err, re.M), "dry run stopped before the end", err)
+    finally:
+        sb.cleanup()
 
 
 def main():
@@ -778,6 +789,7 @@ def main():
         test_aur_failure_does_not_abort,
         test_yay_bootstrap_failure_does_not_abort,
         test_sddm_installed_but_disabled_is_set_up,
+        test_dry_run_without_git,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,
         test_arch_package_missing_from_repos,
