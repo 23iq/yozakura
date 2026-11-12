@@ -4441,10 +4441,6 @@
   "prefs.changes.since_preset": "От пресета %1",
   "prefs.changes.none": "Всё по умолчанию.",
   "prefs.changes.none_preset": "С момента применения пресета ничего не изменилось.",
-  "prefs.changes.count.one": "Отличается %1 настройка",
-  "prefs.changes.count.few": "Отличаются %1 настройки",
-  "prefs.changes.count.many": "Отличаются %1 настроек",
-  "prefs.changes.count.other": "Отличаются %1 настройки",
   "prefs.changes.vs_default": "%1 · по умолчанию %2",
   "prefs.changes.vs_preset": "%1 · в пресете %2",
   "prefs.changes.open": "Открыть настройку",
@@ -4696,5 +4692,12 @@
   "prefs.about.card.places": "Места",
   "prefs.about.card.legal": "Право",
   "prefs.about.updates": "Обновления",
-  "prefs.about.free": "Свободное ПО: используйте, меняйте, делитесь."
+  "prefs.about.free": "Свободное ПО: используйте, меняйте, делитесь.",
+  "prefs.changes.back_to_defaults": "Вернуть всё",
+  "prefs.changes.back_to_preset": "Вернуть к пресету",
+  "prefs.undo.changes_reset": "Изменения возвращены",
+  "prefs.changes.band.one": "настройка отличается",
+  "prefs.changes.band.few": "настройки отличаются",
+  "prefs.changes.band.many": "настроек отличаются",
+  "prefs.changes.band.other": "настройки отличаются"
 }

@@ -4413,10 +4413,6 @@
   "prefs.changes.since_preset": "Desde %1",
   "prefs.changes.none": "Todo está en su valor por defecto.",
   "prefs.changes.none_preset": "Nada ha cambiado desde que se aplicó el preajuste.",
-  "prefs.changes.count.one": "%1 ajuste es distinto",
-  "prefs.changes.count.few": "%1 ajustes son distintos",
-  "prefs.changes.count.many": "%1 ajustes son distintos",
-  "prefs.changes.count.other": "%1 ajustes son distintos",
   "prefs.changes.vs_default": "%1 · por defecto %2",
   "prefs.changes.vs_preset": "%1 · en el preajuste %2",
   "prefs.changes.open": "Abrir este ajuste",
@@ -4662,5 +4658,10 @@
   "prefs.about.card.places": "Lugares",
   "prefs.about.card.legal": "Legal",
   "prefs.about.updates": "Actualizaciones",
-  "prefs.about.free": "Software libre: úsalo, cámbialo, compártelo."
+  "prefs.about.free": "Software libre: úsalo, cámbialo, compártelo.",
+  "prefs.changes.back_to_defaults": "Restaurar todo",
+  "prefs.changes.back_to_preset": "Volver al preset",
+  "prefs.undo.changes_reset": "Cambios restaurados",
+  "prefs.changes.band.one": "ajuste distinto",
+  "prefs.changes.band.other": "ajustes distintos"
 }
