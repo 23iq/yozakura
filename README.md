@@ -70,6 +70,10 @@ so AI agents can drive the desktop too.
 **App theming from the wallpaper palette** (Material You via matugen)
 - GTK, Qt (qt5ct/qt6ct), kitty, Neovim (base16 palette), starship/fastfetch via
   the terminal palette, Papirus folder colours.
+- A fastfetch greeting in new terminals (fish, bash and zsh): a few looks, the
+  distribution's logo, the sakura or one of your own (text, or a picture in
+  kitty), coloured from the palette; Settings > Terminal or
+  `yozakura term greeting`.
 - Discord clients (Vesktop, Equibop, Equicord, Vencord), Spotify (spicetify),
   Telegram, Firefox (userChrome/userContent).
 
