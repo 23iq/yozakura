@@ -60,7 +60,8 @@ var EDITORS = {
     "AppThemingEditor": "editors/AppThemingEditor.qml",
     "NotificationsStatus": "editors/NotificationsStatus.qml",
     "LayoutBuilder": "layout/LayoutBuilder.qml",
-    "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml"
+    "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml",
+    "PomodoroEditor": "editors/PomodoroEditor.qml"
 };
 
 var PREVIEWS = {
@@ -107,7 +108,8 @@ var STAGES = {
     "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
     "LockStage": "stages/LockStage.qml",
-    "VoiceStage": "stages/VoiceStage.qml"
+    "VoiceStage": "stages/VoiceStage.qml",
+    "TimersStage": "stages/TimersStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
