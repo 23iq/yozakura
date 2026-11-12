@@ -10,6 +10,7 @@ import qs.modules.globals
 import qs.config
 import "../notifications/NotificationPolicy.js" as Policy
 import "../notifications/NotifyRequest.js" as NotifyRequest
+import "NotificationImage.js" as NotificationImage
 
 Singleton {
     id: root
@@ -699,26 +700,8 @@ Singleton {
         xhr.onload = function () {
             if (xhr.status === 200 && xhr.response) {
                 try {
-                    var arrayBuffer = xhr.response;
-                    var bytes = new Uint8Array(arrayBuffer);
-                    var binary = '';
-                    var len = Math.min(bytes.byteLength, 1024 * 1024);
-                    for (var i = 0; i < len; i++) {
-                        binary += String.fromCharCode(bytes[i]);
-                    }
-                    var base64 = btoa(binary);
-
-                    var mimeType = "image/png";
-                    var lowerUrl = imageUrl.toLowerCase();
-                    if (lowerUrl.includes(".jpg") || lowerUrl.includes(".jpeg")) {
-                        mimeType = "image/jpeg";
-                    } else if (lowerUrl.includes(".gif")) {
-                        mimeType = "image/gif";
-                    } else if (lowerUrl.includes(".webp")) {
-                        mimeType = "image/webp";
-                    }
-
-                    callback("data:" + mimeType + ";base64," + base64);
+                    // Over 1 MiB or empty: keep the URL, never a cut (corrupt) image
+                    callback(NotificationImage.dataUrl(new Uint8Array(xhr.response), imageUrl, btoa) || imageUrl);
                 } catch (e) {
                     callback(imageUrl);
                 }
