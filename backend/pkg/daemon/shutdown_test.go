@@ -2,14 +2,51 @@ package daemon
 
 import (
 	"net"
+	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 	"yozakura/backend/pkg/brand"
 
 	"yozakura/backend/pkg/ipc"
+	"yozakura/backend/pkg/svc/windows"
 )
+
+// A separate Settings / wizard window goes with the shell: shutdown (quit,
+// reload, the end of the session) stops it, and none starts afterwards.
+func TestShutdownStopsSeparateWindows(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, windows.EntryFile(windows.KindSettings)), []byte("ShellRoot {}\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var started []windows.Process
+	d := &Daemon{srv: ipc.NewServer(filepath.Join(t.TempDir(), "d.sock")), shutdownCh: make(chan struct{})}
+	d.windows = windows.NewService(windows.Options{
+		ShellDir: func() string { return dir },
+		Start: func(argv, env []string) (windows.Process, error) {
+			p, err := windows.StartGroup([]string{"sleep", "30"}, env)
+			if err == nil {
+				started = append(started, p)
+			}
+			return p, err
+		},
+	})
+	if _, err := d.windows.Open(windows.Request{Kind: windows.KindSettings}); err != nil {
+		t.Fatal(err)
+	}
+	d.shutdown()
+	if len(started) != 1 {
+		t.Fatalf("started %d windows", len(started))
+	}
+	if err := syscall.Kill(started[0].Pid(), 0); err == nil {
+		t.Error("the settings window is still running after shutdown")
+	}
+	if _, err := d.windows.Open(windows.Request{Kind: windows.KindSettings}); err == nil {
+		t.Error("a window started after shutdown")
+	}
+}
 
 // shutdown must stop accepting IPC before it tears services down, so no
 // request can start new work (agent processes, MCP servers) mid-shutdown.

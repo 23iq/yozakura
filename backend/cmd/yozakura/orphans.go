@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"syscall"
 
@@ -10,6 +11,7 @@ import (
 	"yozakura/backend/pkg/migrate"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/procscan"
+	"yozakura/backend/pkg/svc/windows"
 )
 
 // notificationDaemons are stopped at every shell start so the shell can own
@@ -31,9 +33,10 @@ var clipboardWatchArgv = []string{"wl-paste", "--watch", "sh", "-c", "cat >/dev/
 
 // orphanTargets describes what a previous daemon of ours may have leaked.
 type orphanTargets struct {
-	// shellQMLs are the shell.qml paths our Quickshell runs.
+	// shellQMLs are the root QML files our Quickshell runs: shell.qml and
+	// the separate windows' entry files (windows.ShellEntryFiles).
 	shellQMLs []string
-	// generations is the mods generations dir (<dir>/<id>/shell.qml).
+	// generations is the mods generations dir (<dir>/<id>/<entry file>).
 	generations string
 	// qsBin is a custom Quickshell binary ($<APP>_QS), "" for the default.
 	qsBin string
@@ -42,12 +45,17 @@ type orphanTargets struct {
 func defaultOrphanTargets() orphanTargets {
 	p := paths.New()
 	t := orphanTargets{generations: p.ModGenerationsDir(), qsBin: brand.Env("QS")}
-	t.shellQMLs = append(t.shellQMLs, filepath.Join(shellDir(), "shell.qml"))
-	if base := paths.FindBaseShellSource(); base != "" {
-		t.shellQMLs = append(t.shellQMLs, filepath.Join(base, "shell.qml"))
-	}
+	dirs := []string{shellDir(), paths.FindBaseShellSource()}
 	if home := os.Getenv("HOME"); home != "" {
-		t.shellQMLs = append(t.shellQMLs, filepath.Join(home, ".local/src", brand.AppID, "shell.qml"))
+		dirs = append(dirs, filepath.Join(home, ".local/src", brand.AppID))
+	}
+	for _, dir := range dirs {
+		if dir == "" {
+			continue
+		}
+		for _, name := range windows.ShellEntryFiles() {
+			t.shellQMLs = append(t.shellQMLs, filepath.Join(dir, name))
+		}
 	}
 	return t
 }
@@ -133,7 +141,7 @@ func (t orphanTargets) ourShellQML(path string) bool {
 		}
 	}
 	// any mods generation, also one a previous daemon ran before a switch
-	if t.generations != "" && filepath.Base(path) == "shell.qml" {
+	if t.generations != "" && slices.Contains(windows.ShellEntryFiles(), filepath.Base(path)) {
 		return filepath.Dir(filepath.Dir(path)) == filepath.Clean(t.generations)
 	}
 	return false

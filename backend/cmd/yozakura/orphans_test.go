@@ -99,6 +99,52 @@ func TestSweepOrphansOnlyOurs(t *testing.T) {
 	}
 }
 
+// A leaked separate Settings / wizard window (performance.separateWindows)
+// runs one of our entry files next to shell.qml, also inside a mods
+// generation and in a Nix store shell: it is ours. Another Quickshell
+// config's file of the same name is not.
+func TestSweepOrphansSeparateWindows(t *testing.T) {
+	root := t.TempDir()
+	store := "/nix/store/abc-yozakura-shell"
+	gens := "/home/u/.local/share/yz/mods/generations"
+	writeFakeProc(t, root, 500, "qs", "qs", "-p", store+"/settings-window.qml")
+	writeFakeProc(t, root, 501, ".quickshell-wra", "/nix/store/q/bin/qs", "--path="+store+"/onboarding-window.qml")
+	writeFakeProc(t, root, 502, "qs", "qs", "-p", gens+"/g42/settings-window.qml")
+
+	writeFakeProc(t, root, 600, "qs", "qs", "-p", "/home/u/.config/quickshell/other/settings-window.qml")
+	writeFakeProc(t, root, 601, "qs", "qs", "-p", store+"/onboarding-dryrun.qml")
+	writeFakeProc(t, root, 602, "qs", "qs", "-p", gens+"/g42/other.qml")
+	writeFakeProc(t, root, 603, "nvim", "nvim", "-p", store+"/settings-window.qml")
+
+	tg := defaultOrphanTargets()
+	tg.shellQMLs, tg.generations = nil, gens
+	for _, name := range []string{"shell.qml", "settings-window.qml", "onboarding-window.qml"} {
+		tg.shellQMLs = append(tg.shellQMLs, filepath.Join(store, name))
+	}
+	var got []int
+	sweepOrphans(recordingKiller(root, 1, &got), tg)
+	slices.Sort(got)
+	if want := []int{500, 501, 502}; !slices.Equal(got, want) {
+		t.Fatalf("signalled %v, want %v", got, want)
+	}
+}
+
+// defaultOrphanTargets lists the entry files of every shell dir it knows.
+func TestDefaultOrphanTargetsListEntryFiles(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "shell.qml"), nil, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv(brand.EnvPrefix+"SHELL", dir)
+	t.Setenv(brand.EnvPrefix+"MODS_DISABLED", "1")
+	tg := defaultOrphanTargets()
+	for _, name := range []string{"shell.qml", "settings-window.qml", "onboarding-window.qml"} {
+		if !slices.Contains(tg.shellQMLs, filepath.Join(dir, name)) {
+			t.Errorf("%s missing from %v", name, tg.shellQMLs)
+		}
+	}
+}
+
 // A stale Quickshell pid file (the daemon crashed) can name a pid another
 // process reused, here an editor on some shell.qml: it is not signalled.
 func TestSweepOrphansIgnoresStaleQsPidFile(t *testing.T) {

@@ -110,6 +110,7 @@ func (d *Daemon) startQS(shellQML string) error {
 	}
 	d.qsDone = done
 	d.qsPid.Store(int64(pid))
+	d.shellQML.Store(shellQML)
 	d.wd.disarm()
 	return nil
 }

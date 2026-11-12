@@ -272,6 +272,16 @@
    "subscribe": true
   },
   {
+   "name": "preview",
+   "methods": [
+    "commit",
+    "discard",
+    "set",
+    "state"
+   ],
+   "subscribe": true
+  },
+  {
    "name": "providers",
    "methods": [
     "list",
@@ -460,6 +470,17 @@
     "get"
    ],
    "subscribe": false
+  },
+  {
+   "name": "windows",
+   "methods": [
+    "close",
+    "open",
+    "ready",
+    "relay",
+    "status"
+   ],
+   "subscribe": true
   }
  ]
 }
