@@ -7,12 +7,17 @@ the shell's showpiece and is schema driven: settings are *declared* in
 `schema/*.js` and rendered by generic components. Every change applies at
 once and can be undone; there is no Apply step.
 
-The frame is a **showcase**: it opens on a home screen (the brand, one big
-search "What do you want to change?", a bento of live tiles, a row of pills)
-and a tile grows into its destination. A destination page has no chrome but
-a back pill, its title and centred tabs; its body is a **hero** (the stage:
-a live miniature of what the tab controls, which you can also click to
-change things) over a **bento of cards** (one per schema section). Search,
+The frame is a **showcase** over an **ambient** background (kit Ambient:
+the wallpaper blurred, darkened and vignetted, so the window carries the
+desktop's colour). It opens on a home screen (the brand, one big search
+"What do you want to change?", undo, a bento of tiles that are each a small
+live scene of what they open, a row of wide status tiles) and a tile grows
+into its destination. A destination page is one composed screen: a round
+back button, its title, centred tabs and undo; the **hero** in the middle
+(the stage: a live miniature of what the tab controls, large, with a deep
+shadow, which you click to change things) with the controls that act on
+space beside it; then **one row of equal-height cards** that fills the
+width; then any other card in a bento. Search,
 modified / reset state, the CLI / MCP catalog and the audits are all
 generated from the same declarations.
 
@@ -41,9 +46,11 @@ modules/settings/
 ├── OpeningPill.qml         main shell: "Opening Settings..." while a window process starts
 ├── SettingsShell.qml       the frame: home <-> destination (shared-element growth), shortcuts,
 │                           UndoPill, preset overlays; select / openDestination / goHome / navigate
-├── SettingsHome.qml        brand, search (window rows, value shown), tile bento, pills, preset footer
-├── HomeTile.qml            one destination tile (kit Card): icon or picture, name, live status
-├── HomeTileArt.qml         a picture tile's art (wallpaper Stage, the Desktop layout ScreenMini), by URL
+├── SettingsHome.qml        brand, search (window rows, value shown), undo, tile bento, status tiles, preset footer
+├── HomeTile.qml            one destination tile (kit Card): its scene (home/<X>Scene.qml, by URL), name, status
+├── HomeStatusTile.qml      a wide status tile (network, sound level, power profile, widgets, apps, system)
+├── home/                   tile scenes: Layout (ScreenMini), Wallpaper, Lock, Look, Notif, Presets,
+│                           Launcher, Dashboard, Assistant, Keys, Displays, Windows; NameScrim
 ├── HomeStatus.js           pure: the tile's one live status line (tests/settings-home.test.cjs)
 ├── HomeLayout.js           pure: home columns, tile packing, arrow-key neighbours (same test)
 ├── DestinationHeader.qml   back pill, title, centred tabs (kit Segmented), Reset page
@@ -63,7 +70,7 @@ modules/settings/
 ├── Registry.js             names -> files: EDITORS, PREVIEWS, THUMBS, STAGES, PAGES
 ├── stages/                 Stage.qml (frame), ScreenMini.qml (the whole screen, in layers),
 │                           StageSpot.qml (highlight), EdgePicker.qml (move a part by its edge),
-│                           <Page>Stage.qml (Bar, Island, Dock, Opens, Notif, Look, Type)
+│                           <Page>Stage.qml (Bar, Island, Dock, Opens, Notif, Lock, Look, Type)
 ├── thumbs/                 picture-card thumbs (MiniScreen.qml: the wallpaper screen they draw on)
 ├── controls/               typed controls (Toggle, Slider, Selector, Number, Text, Font, ColorRole,
 │                           List, Path, Screens, Chips, Macro) + ChoiceCard, CardSelector
@@ -84,16 +91,30 @@ zero; draw shapes of a miniature with `Mark`, surfaces with `StyledRect` and
 the theme's variants). The window must look deliberate in every visual
 language (ink, glass, tiles, classic, device) and in dark and light; nothing
 branches on the language name (`Look`).
-- Home: the brand (sakura mark tinted with the accent + "Settings"), a boxed
-  `SearchField` (620 px), the bento (`HomeLayout.js`: 6 / 4 / 2 columns by
-  width, tiles big 2x2 / wide 2x1 / small 1x1, first-fit in reading order),
-  then the pills (kit `Chip`, quiet) and the preset footer. Tiles are kit
-  `Card`s (`interactive`: lift `Space.xs` and brighten on hover, spring on
-  press, FocusRing); Desktop layout is the real `ScreenMini` on your
-  wallpaper (windows slide in on hover), Wallpaper is the wallpaper (it
-  swells and follows the pointer: `Card.pointer` -> `Stage.imageShift`),
-  Look shows palette swatches; the others an accent icon. Each tile carries
-  its name (`title`) and one live status line (`secondary`).
+- Window background: kit `Ambient` (`source` = `SettingsStore.wallpaper`,
+  decoded tiny, blurred once into a cached layer, darkened, vignetted, a new
+  wallpaper cross-fades in; `plain` on battery saver). How much shows is
+  the language's (`VisualLanguage` `card.ambient` -> `Look.ambientStrength`).
+- Surfaces: kit `Card` = `Look.cardFill` / `cardEdge` / `cardShadow`
+  (VisualLanguage `card`: translucent with a hairline in ink and glass,
+  solid in tiles / device / classic, a soft RectangularShadow); `accented`
+  rings and glows the card the screen is about.
+- Home: header (brand, a boxed `SearchField`, undo), the bento
+  (`HomeLayout.js`: a 12-column grid of half-row units, 6 columns when
+  narrow, Categories.HOME gives `w` x `h`, first-fit in reading order, the
+  rows stretched by `rowUnit` so header + bento + status tiles fill the
+  window), the status tiles (`HomeStatusTile`, Categories.PILLS) and the
+  preset footer. Each tile is a kit `Card` (`interactive`: lifts and its
+  shadow deepens on hover, springs on press, FocusRing) with a scene from
+  real state (home/*.qml, `required property Card tile`): the screen
+  miniature (the accented hero), palette + "Aa", the wallpaper (swells and
+  follows the pointer: `Card.pointer` -> `Stage.imageShift`), a toast stack
+  in the resolved corner, the lock clock, preset cards, a launcher, widgets,
+  a chat, keycaps, the monitor arrangement (DisplaysService), tiled windows
+  with the configured gap / border. Name = `title` role, status one size
+  down (`secondary`). A scene must not declare a property named like an
+  Item anchor line (`top`, `bottom`, `left`, `right`, ...): it hangs the
+  type loader.
 - Opening: a box grows from the tile to the window (Motion.glide) while
   home recedes and the page fades in; going back reverses it. A deep link
   (`<app> run settings <id>`, `GlobalStates.settingsCategory` at open)
@@ -102,12 +123,17 @@ branches on the language name (`Look`).
   the tabs centred (`Segmented`, `focusable`, Left / Right), Reset page on
   the right; a tab to the right slides the page in from the right
   (`SettingsPageHost.direction`).
-- Page body: the hero stage (at most 760 px wide, centred) that scales down
-  and fades as the cards scroll over it (`recede`), then the bento: one kit
-  `Card` per section, its title as the card label, packed by
-  `BentoLayout.js` in 1 to 3 columns (a card with picture cards, an editor,
-  a list or `"span": 2` takes two; a page whose cards are all wide uses two
-  columns, centred, instead of leaving a third empty).
+- Page body (SettingsPage): the hero = the stage as large as the window
+  allows (16:9, at most half the page height) with a deep shadow, the
+  category's `hero.left` / `hero.right` entries beside it (side columns:
+  a custom editor bare, toggles each in a small card) and `hero.hint` under
+  it; it scales down and fades as the cards scroll over it. Then the
+  category's `row` sections in one row of equal widths and heights, then the
+  other sections in a bento (`BentoLayout.js`, 1 to 3 columns; a card with
+  picture cards, an editor, a list or `"span": 2` takes two). A card
+  (SettingsSection) has a heading (`title` role) with the current value on
+  the right when it holds one setting; such a card's picture / editor row
+  drops its own label (`SettingRow.bare`).
 - Rows: label `body`, control flush right (inline) or full width under the
   label (cards, editors, lists, and sliders / selectors / text fields in a
   narrow card); hover / focus = the language's hover box; a search jump =
@@ -118,11 +144,14 @@ branches on the language name (`Look`).
 - Stage: `Stage` = wallpaper (palette backdrop without one) in a rounded,
   hair-lined frame, Look.radius("surface"); the miniature on top.
 - Undo pill: popup surface, springs in, stays 5 s (longer while hovered).
-Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-03.png
+Render: `tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-01.png --palette default
 --languages ink,glass,tiles,classic,device [--mode light] [--size 1180x2400] home|PAGE...`
 (`home` with `--search Q` shows results, `--hover ENTRY` lights a stage part,
 `--undo` shows the pill, `--eval barEdgePicker:preview='left'` a hovered
-edge). Motion: `tools/render/settings_motion.py [tile-hover tile-open
+edge, `--eval opensStage:picked='dashboard'` Where things open mid-move).
+Colours come from the wallpaper (matugen, or `tools/render/wallpaper_palette.py`
+with the `materialyoucolor` package) unless `--palette default` (the rose
+palette, which belongs with wallpaper-01). Motion: `tools/render/settings_motion.py [tile-hover tile-open
 edge-click]` writes animated WebP + GIF at real speed.
 
 ## NAVIGATION
@@ -266,11 +295,16 @@ under-row preview, unconverted pages only), `component` (custom editor),
 (font), `resettable: false`, `compositor`, `id`, `target` (PageLink),
 `invert` (a toggle shown on for false), `surface` (a host picker's surface
 id: the row notes "Island is off - shown as X"; the stage draws it).
+`part: true` (an editor of one part of a composite value that another entry
+also edits, e.g. the bars list beside the stage and the selected bar's
+fields; exempt from the one-control check).
 Section fields: `id`, `title`, `entries`, `advanced: true` (the whole section
-is out of the window), `compositor`. A section shows only while one of its
-rows does. Category fields: `id`, `icon`, `title` (the tab label),
+is out of the window), `compositor`, `span`. A section shows only while one
+of its rows does. Category fields: `id`, `icon`, `title` (the tab label),
 `description`, `keywords`, `sections`, `stage` (Registry.STAGES name) or
-`page` (Registry.PAGES name).
+`page` (Registry.PAGES name), `hero` (`{left: [key|id], right: [key|id],
+hint: i18n key}`: entries shown beside the stage instead of in their card),
+`row` (section ids: the row of cards under the stage).
 
 Control mapping (applied everywhere): on / off -> `toggle` (Switch);
 2 to 5 visual options -> `selector` + `display: "cards"` + `thumb`;
@@ -338,9 +372,14 @@ Reference pages: Desktop layout (`schema/bar.js`, `notch.js`, `dock.js`,
    `SettingsStore.transaction("prefs.undo.<thing>_moved", ...)`: a
    `prefs.undo.*` label names itself in the undo pill ("Bar moved"). Keep
    the row (cards / segmented) too: it is the keyboard path.
-6c. Cards: sections are the cards; give a section a short title (two
-   words) and keep a card to one concept. `"span": 2` on a section when its
-   content needs the width and BentoLayout.spanOf does not see it.
+6c. Composition (the page2 standard): hero in the middle, spatial controls
+   on and beside it (`hero.left`: lists such as the bars with "Add a bar";
+   `hero.right`: the two or three behaviour switches; `hero.hint`: one line
+   saying what a click on the stage does), then ONE row of equal-height
+   cards (`row`, two to four sections) that fills the width, then the rest.
+   Sections are the cards: a short title (two words), one concept each;
+   `"span": 2` when the content needs the width. Aim for no scrolling at
+   1180x780 on the main tab of a destination.
 7. Wire row highlights: give each part a `StageSpot { keys: [...] }` with
    the keys (prefixes) of the rows that change it. A spot must not sit
    inside a `StyledRect` (it clips its children): put it beside the part
