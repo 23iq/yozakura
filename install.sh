@@ -23,6 +23,9 @@ APP_ID="yozakura"
 DISPLAY_NAME="Yozakura"
 LEGACY_ID="ambxst"
 DAEMON_ID="yozd"
+# The binary's verb that starts the external polkit agent only while the
+# shell's own agent is off or unavailable (polkit_autostart).
+POLKIT_FALLBACK="polkit-fallback"
 REPO_URL="${YOZAKURA_REPO_URL:-https://github.com/23iq/yozakura.git}"
 BRANCH="${YOZAKURA_BRANCH:-}"
 RAW_BASE="${YOZAKURA_RAW_BASE:-https://raw.githubusercontent.com/23iq/yozakura/${BRANCH:-main}}"
@@ -40,12 +43,19 @@ SYS_BIN="${YOZAKURA_SYS_BIN:-/usr/local/bin}"
 # installs: user-level code cannot replace it (unlike ~/.local/bin).
 SYS_HELPER="/usr/local/lib/$APP_ID/$APP_ID-sys"
 OS_RELEASE="${YOZAKURA_OS_RELEASE:-/etc/os-release}"
+# Where the systemd state is looked up (/run/systemd/system, the
+# display-manager link); the tests point it at a fake tree.
+SYSROOT="${YOZAKURA_SYSROOT:-}"
 COMPOSITORS=(hyprland niri mango)
 
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
 INSTALL_DEPS=1 UPDATE_ONLY=0 ASSUME_YES=0 COMP_CONFIG=1 DRY_RUN=0 VERBOSE=0 USE_AUR=1 EXCLUSIVE=0 FORCE=0
 COMPOSITOR="" PREV_INSTALL=0 LEGACY_PENDING=0 FAILED=()
-TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
+# DOCTOR_FAILED: the closing doctor reported a missing required component.
+DOCTOR_FAILED=0
+# DM: the login manager found; DM_STATE: enabled, disabled, managed or unknown;
+# DM_ENABLE: its unit when this run enables it (choose_login).
+TTY="" DISTRO="" DISTRO_NAME="" GPU="" DM="" DM_STATE="" DM_ENABLE="" DM_STALE_LINK=0 SUDO_OK=0 SUDO_FAILED=0 KEEPALIVE_PID=""
 DEPS_TSV=""
 PKGS=() AUR_PKGS=() SERVICES=() LINK_BINS=0 ADD_INPUT_GROUP=0 AUR_HELPER="" REPO_ACTION=""
 # UNAVAILABLE: planned packages this distribution release does not carry;
@@ -235,12 +245,17 @@ ui_box_bottom() {
   printf '  %s%s%s%s%s\n' "$C_LINE" "$B_BL" "$UI_OUT" "$B_BR" "$C_OFF" >&2
 }
 
+# ui_box_row TEXT [HANG]: a folded row's next lines are indented by HANG.
 ui_box_row() {
-  local text="$1" w vis
+  local text="$1" hang="${2:-0}" w vis pad="" first=1
   ui_box_width && w=$((UI_OUT - 4))
   ui_strip "$text" && vis="$UI_OUT"
   if ((${#vis} > w)); then
-    while IFS= read -r text; do ui_box_row "$text"; done < <(fold -s -w "$w" <<<"$vis")
+    ((hang > 0)) && printf -v pad '%*s' "$hang" ""
+    while IFS= read -r text; do
+      if [[ "$first" == 1 ]]; then ui_box_row "$text"; else ui_box_row "$pad$text"; fi
+      first=0
+    done < <(fold -s -w $((w - hang)) <<<"$vis")
     return
   fi
   printf '  %s%s%s %s%*s %s%s%s\n' "$C_LINE" "$B_V" "$C_OFF" "$1" $((w - ${#vis})) "" "$C_LINE" "$B_V" "$C_OFF" >&2
@@ -458,7 +473,7 @@ dry_line() {
   add_input_group) what="sudo usermod -aG input $(id -un) (after sudo groupadd --system input, if it is missing)" ;;
   phosphor_user_font) what="curl the Phosphor v$PHOSPHOR_VERSION zip, copy its fonts into $(tilde "${XDG_DATA_HOME:-$HOME/.local/share}/fonts/phosphor"), fc-cache" ;;
   download_release) what="curl the latest release binaries and SHA256SUMS into $(tilde "$SRC_DIR"), verify them, chmod 755" ;;
-  polkit_autostart) what="append the hyprpolkitagent autostart line to $(tilde "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)") (if no polkit agent is configured)" ;;
+  polkit_autostart) what="append '$(tilde "$BIN_DIR/$APP_ID") $POLKIT_FALLBACK' to $(tilde "${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)") (if no polkit agent is configured there): it starts hyprpolkitagent only when $DISPLAY_NAME's own polkit agent is off or unavailable" ;;
   *)
     local a q="'" plain='^[][A-Za-z0-9_./=:,@%+~{}-]+$'
     what=""
@@ -542,6 +557,10 @@ run() {
     return 0
   fi
   log "" "### $label: $*"
+  # Where this step's output starts: a failure shows its own lines, not an
+  # earlier step's error.
+  local from
+  from=$(($(wc -l <"$LOG_FILE" 2>/dev/null || echo 0) + 1))
   if [[ "$VERBOSE" == 1 ]]; then
     printf '  %s%s%s %s\n' "$C_ROSE" "$G_STEP" "$C_OFF" "$label" >&2
     "$@" 2>&1 | tee -a "$LOG_FILE" || rc=$?
@@ -562,7 +581,8 @@ run() {
     printf '  %s%s%s %s\n' "$C_RED" "$G_FAIL" "$C_OFF" "$label" >&2
     printf '%s' "$C_DIM" >&2
     # The error lines when there are any (download progress is noise).
-    { grep -iE 'error|fail|conflict|not found|denied|cannot|unable' "$LOG_FILE" | tail -n 12 || tail -n 15 "$LOG_FILE"; } | sed "s/^/    $G_PIPE /" >&2
+    { tail -n "+$from" "$LOG_FILE" | grep -iE 'error|fail|conflict|not found|denied|cannot|unable' | tail -n 12 ||
+      tail -n "+$from" "$LOG_FILE" | tail -n 15; } | sed "s/^/    $G_PIPE /" >&2
     printf '%s' "$C_OFF" >&2
     if [[ "${RUN_SOFT:-0}" == 1 ]]; then
       warn "$label failed (exit $rc); continuing.${hint:+ $hint}"
@@ -630,8 +650,12 @@ Compositor:
 Optional features (or later, from the setup wizard):
   --with-voice      local speech-to-text (builds whisper.cpp, ~1 GB)
   --with-depth      depth clock behind the wallpaper subject (uv venv, ~0.7 GB)
-  --with-sddm       SDDM login screen + the $DISPLAY_NAME theme (default when
-                    no display manager is installed)
+  --with-sddm       SDDM login screen + the $DISPLAY_NAME theme. Default when
+                    there is no login manager, or SDDM is installed but not
+                    enabled. Another login manager installed but not enabled
+                    gets a menu (enable it, SDDM instead, leave it); with
+                    --with-sddm SDDM takes its place, and --yes never
+                    enables it. One already enabled is left alone.
   --no-voice, --no-depth, --no-sddm
 
 Install:
@@ -660,6 +684,10 @@ the package list is fetched from), YOZAKURA_FLAKE (NixOS), YOZAKURA_GPU
 (NVIDIA, AMD or Intel: overrides the graphics detection), YOZAKURA_OS_RELEASE
 (an os-release file to read instead of /etc/os-release), YOZAKURA_SYS_BIN
 (where the binaries are linked when needed, default /usr/local/bin).
+
+Exit status: 0 installed (an optional feature that failed is listed under
+NEEDS ATTENTION), 1 the install stopped, 2 installed but needs attention (a
+required component is missing, or the login screen could not be set up).
 Log: $LOG_FILE
 EOF
 }
@@ -732,16 +760,81 @@ ask() {
 }
 
 # === sudo ===
+# sudo_setup_lines [user]: the commands (shown, never run) that give this
+# distribution a user with sudo rights, for a system where only root exists
+# yet or sudo is missing. Arch: a full upgrade with it (no partial upgrades).
+sudo_setup_lines() {
+  local who="${1:-yourname}" wheel
+  wheel="$(wheel_line)"
+  case "$DISTRO" in
+  arch) printf '%s\n' "pacman -Syu sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  fedora) printf '%s\n' "dnf install sudo" "useradd -m -G wheel $who" "passwd $who" ;;
+  suse) printf '%s\n' "zypper install sudo" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  debian) printf '%s\n' "apt install sudo" "adduser $who" "usermod -aG sudo $who" ;;
+  # Users and sudo are declared in the system configuration; wheel may use
+  # sudo out of the box.
+  nixos) printf '%s\n' "# in /etc/nixos/configuration.nix:" \
+    "users.users.$who = { isNormalUser = true; extraGroups = [ \"wheel\" ]; };" \
+    "nixos-rebuild switch" "passwd $who" ;;
+  *) printf '%s\n' "install sudo with the package manager" "useradd -m -G wheel $who" "passwd $who" "$wheel" ;;
+  esac
+}
+
+# wheel_line: the command that lets the wheel group use sudo: a new
+# sudoers.d file, mode 0440 like the rest, never replacing one already there.
+wheel_line() {
+  printf '%s' "[ -e /etc/sudoers.d/10-wheel ] || echo '%wheel ALL=(ALL:ALL) ALL' | install -m 0440 /dev/stdin /etc/sudoers.d/10-wheel"
+}
+
+# admin_group: the group whose members may use sudo here.
+admin_group() { if [[ "$DISTRO" == debian ]]; then echo sudo; else echo wheel; fi; }
+
+# sudo_grant_lines USER: the commands (as root) that let USER use sudo.
+sudo_grant_lines() {
+  case "$DISTRO" in
+  debian | fedora) printf '%s\n' "usermod -aG $(admin_group) $1" ;;
+  nixos) printf '%s\n' "users.users.$1.extraGroups = [ \"wheel\" ];" "nixos-rebuild switch" ;;
+  *) printf '%s\n' "usermod -aG wheel $1" "$(wheel_line)" ;;
+  esac
+}
+
+# die_without_user TITLE: TITLE, then (as root) how to create a user with
+# sudo rights, or for the user running this how to get sudo, and run the
+# installer again.
+die_without_user() {
+  local lines=() l me
+  if [[ "$EUID" -eq 0 ]]; then
+    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_setup_lines)
+    die "$1" "The installer runs as your user and uses sudo for the system steps." \
+      "No user with sudo rights yet? As root on ${DISTRO_NAME:-this system} (replace yourname):" \
+      "${lines[@]}" "Then log in as that user (or: su - yourname) and run the installer again."
+  fi
+  me="$(id -un)"
+  while IFS= read -r l; do lines+=("  $l"); done < <(sudo_setup_lines "$me" | head -n1 && sudo_grant_lines "$me")
+  die "$1" "As root (su -) on ${DISTRO_NAME:-this system}:" "${lines[@]}" "Then log in again as $me and run the installer again."
+}
+
 need_sudo() {
   [[ "$SUDO_OK" == 1 ]] && return 0
   if [[ "$DRY_RUN" == 1 ]]; then
     try_sudo
     return 0
   fi
-  has_cmd sudo || die "sudo is not installed." "Install it as root (pacman -S sudo / dnf install sudo), or use --no-deps."
+  has_cmd sudo || die_without_user "sudo is not installed (use --no-deps to skip every step that needs it)."
   [[ -n "$TTY" ]] || sudo -n true 2>/dev/null || die "sudo needs a password but there is no terminal." "Run 'sudo -v' first, or use --no-deps."
   SUDO_FAILED=0
-  try_sudo || die "sudo authentication failed."
+  if ! try_sudo; then
+    local lines=() l me group
+    me="$(id -un)" group="$(admin_group)"
+    # Debian and Fedora let the admin group use sudo out of the box: a
+    # member was refused for the password.
+    if [[ "$DISTRO" == debian || "$DISTRO" == fedora ]] && [[ " $(id -nG "$me" 2>/dev/null) " == *" $group "* ]]; then
+      die "sudo authentication failed: the password was not accepted." "$me is in the $group group; run the installer again and retype it."
+    fi
+    while IFS= read -r l; do lines+=("  $l"); done < <(sudo_grant_lines "$me")
+    die "sudo authentication failed." "If the password was right, $me may not use sudo yet. To allow it, as root:" \
+      "${lines[@]}" "Then log in again and re-run the installer."
+  fi
 }
 
 # try_sudo: need_sudo that reports instead of ending the install; a refused
@@ -823,21 +916,96 @@ detect_system() {
   GPU="$(printf '%s\n' "${vendors[@]:-}" | sort -u | paste -sd/ -)"
   GPU="${YOZAKURA_GPU:-${GPU:-unknown}}"
 
-  DM=""
-  if [[ -L /etc/systemd/system/display-manager.service ]]; then
-    DM="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
-  else
-    for v in sddm gdm lightdm greetd ly; do
-      if has_cmd "$v"; then
-        DM="$v"
-        break
-      fi
-    done
-  fi
+  detect_login
   return 0
 }
 
-has_systemd() { [[ -d /run/systemd/system ]]; }
+has_systemd() { [[ -d "$SYSROOT/run/systemd/system" ]]; }
+
+# The login managers looked for, in this order.
+LOGIN_MANAGERS=(sddm gdm gdm3 lightdm greetd ly lxdm)
+
+# dm_unit_file NAME: NAME's systemd unit file (ly: the ly@ template of 1.1+).
+dm_unit_file() {
+  local d u
+  for d in "$SYSROOT/usr/lib/systemd/system" "$SYSROOT/lib/systemd/system" "$SYSROOT/etc/systemd/system"; do
+    for u in "$1.service" "$1@.service"; do
+      [[ -f "$d/$u" ]] && printf '%s\n' "$d/$u" && return 0
+    done
+  done
+  return 1
+}
+
+# dm_installed NAME: its unit file or its command is there (gdm may live
+# in an sbin directory outside the user's PATH).
+dm_installed() { dm_unit_file "$1" >/dev/null || has_cmd "$1"; }
+
+# dm_unit NAME: the unit `systemctl enable` takes. ly 1.1+ runs as
+# ly@ttyN on the second console; older ly has a plain ly.service.
+dm_unit() {
+  if [[ "$1" == ly && "$(dm_unit_file ly)" == *@.service ]]; then echo "ly@tty2.service"; else echo "$1.service"; fi
+}
+
+# dm_enable UNIT: the systemctl command that enables login manager UNIT.
+# Over a dangling display-manager.service link (DM_STALE_LINK) systemd
+# refuses a plain enable ("already exists and is a symlink to gdm.service");
+# --force replaces that link, which points nowhere anyway.
+dm_enable() {
+  if [[ "$DM_STALE_LINK" == 1 ]]; then echo "systemctl enable --force $1"; else echo "systemctl enable $1"; fi
+}
+
+# detect_login: DM = the login manager found, DM_STATE = enabled (it starts
+# at boot), disabled (installed, nothing starts it), managed (the
+# distribution's own display-manager.service unit picks it) or unknown (no
+# systemd: whether an init script starts it is not guessed). systemd starts
+# every one of them through the display-manager.service link but ly, whose
+# ly@ttyN (or ly.service) is wanted by a target directly.
+detect_login() {
+  local link="$SYSROOT/etc/systemd/system/display-manager.service" v w u
+  DM="" DM_STATE="" DM_STALE_LINK=0
+  if has_systemd; then
+    # A dangling link (its login manager removed) enables nothing, but
+    # systemd still refuses a plain enable of another one over it.
+    if [[ -L "$link" && -e "$link" ]]; then
+      DM="$(basename "$(readlink -f "$link")" .service)" DM_STATE=enabled
+      return 0
+    fi
+    [[ -L "$link" ]] && DM_STALE_LINK=1
+    # openSUSE: display-manager.service is a unit file of its own that
+    # starts the login manager update-alternatives selects; left to it.
+    for u in "$SYSROOT"/{usr/lib,lib,etc}/systemd/system/display-manager.service; do
+      if [[ -f "$u" && ! -L "$u" ]]; then
+        DM="$(dm_alternative)" DM_STATE=managed
+        return 0
+      fi
+    done
+    for w in "$SYSROOT"/etc/systemd/system/*.wants/ly.service "$SYSROOT"/etc/systemd/system/*.wants/ly@*.service; do
+      [[ -e "$w" ]] && DM=ly DM_STATE=enabled && return 0
+    done
+    for v in "${LOGIN_MANAGERS[@]}"; do
+      dm_installed "$v" && DM="$v" DM_STATE=disabled && return 0
+    done
+    return 0
+  fi
+  for v in "${LOGIN_MANAGERS[@]}"; do
+    has_cmd "$v" && DM="$v" DM_STATE=unknown && return 0
+  done
+  return 0
+}
+
+# dm_alternative: the login manager update-alternatives selects
+# (default-displaymanager), else "display-manager".
+dm_alternative() {
+  local alt="$SYSROOT/etc/alternatives/default-displaymanager"
+  if [[ -e "$alt" ]]; then basename "$(readlink -f "$alt")"; else echo display-manager; fi
+}
+
+# login_ready: a login screen comes up at boot after this install.
+login_ready() {
+  [[ "$DM_STATE" == enabled ]] && return 0
+  [[ -n "$DM_ENABLE" && " ${SERVICES[*]} " == *" $DM_ENABLE "* ]] && ! failed "$DM_ENABLE" && return 0
+  [[ " ${SERVICES[*]} " == *" sddm "* ]] && ! failed sddm
+}
 
 # === Compositor ===
 comp_name() {
@@ -954,12 +1122,88 @@ compositor_menu() {
   echo >&2
 }
 
-# choose_login: offer SDDM only where there is no display manager.
+# choose_login: what shows the login screen. SDDM is offered only where no
+# login manager starts at boot. One that is installed but not enabled is
+# reported: SDDM's own question, or for another one a choice between
+# enabling it, SDDM instead, or leaving it (then the console). --yes and a
+# run without a terminal never enable somebody else's login manager.
 choose_login() {
-  [[ -z "$WITH_SDDM" ]] || return 0
-  WITH_SDDM=0
-  [[ -z "$DM" && "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
-  if ask "No login screen found. Set up SDDM with the $DISPLAY_NAME theme?" y; then WITH_SDDM=1; fi
+  local explicit="$WITH_SDDM"
+  WITH_SDDM="${WITH_SDDM:-0}"
+  if [[ "$DM_STATE" == unknown ]]; then
+    info "Login manager: $DM found; without systemd whether it starts at boot is not checked."
+    return 0
+  fi
+  if [[ "$DM_STATE" == managed ]]; then
+    info "Login manager: $DM, managed by ${DISTRO_NAME:-the distribution} (display-manager.service); left as it is."
+    [[ "$WITH_SDDM" == 1 ]] && warn "--with-sddm skipped: the distribution manages the login manager."
+    WITH_SDDM=0
+    return 0
+  fi
+  [[ "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
+  [[ "$DM_STATE" == enabled ]] && return 0
+  if [[ -z "$DM" ]]; then
+    [[ -n "$explicit" ]] && return 0
+    ask "No login screen found. Set up SDDM with the $DISPLAY_NAME theme?" y && WITH_SDDM=1
+    return 0
+  fi
+  if [[ "$DM" == sddm ]]; then
+    [[ -n "$explicit" ]] && return 0
+    ask "SDDM is installed but not enabled (no login screen at boot). Enable it with the $DISPLAY_NAME theme?" y && WITH_SDDM=1
+    return 0
+  fi
+  if [[ "$explicit" == 1 ]]; then
+    info "$DM is installed but not enabled; SDDM takes its place (--with-sddm), $DM stays as it is."
+    return 0
+  fi
+  if [[ -z "$TTY" || "$ASSUME_YES" == 1 ]]; then
+    warn "$DM is installed but not enabled: no login screen comes up at boot."
+    info "Left as it is (another login manager is only enabled when you choose it). Start the session from a console, or enable it: sudo $(dm_enable "$(dm_unit "$DM")")"
+    return 0
+  fi
+  local opts=(enable) reply
+  [[ "$explicit" == 0 ]] || opts+=(sddm)
+  opts+=(leave)
+  login_menu "${opts[@]}"
+  while true; do
+    printf '  %s%s%s Login screen [1-%d, Enter = 1] ' "$C_PINK" "$G_ASK" "$C_OFF" "${#opts[@]}" >"$TTY"
+    read -r reply <"$TTY" || reply=""
+    reply="${reply:-1}"
+    [[ "$reply" =~ ^[0-9]+$ ]] && ((reply >= 1 && reply <= ${#opts[@]})) && break
+  done
+  case "${opts[reply - 1]}" in
+  enable)
+    DM_ENABLE="$(dm_unit "$DM")"
+    ok "Login screen: $DM (enabled from the next boot)"
+    ;;
+  sddm)
+    WITH_SDDM=1
+    ok "Login screen: SDDM with the $DISPLAY_NAME theme"
+    ;;
+  *) info "Login screen: none; the closing steps say how to start from a console." ;;
+  esac
+}
+
+# login_menu CHOICE...: the choices for an installed login manager that is
+# not enabled.
+login_menu() {
+  local i=0 c
+  echo >&2
+  ui_box_top "Login screen"
+  ui_box_row ""
+  ui_box_row "$DM is installed but not enabled: nothing shows a login screen at boot."
+  for c in "$@"; do
+    i=$((i + 1))
+    ui_box_row ""
+    case "$c" in
+    enable) ui_box_row "$(printf '%s%d%s  %sEnable %s%s  %s(sudo %s)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DM" "$C_OFF" "$C_DIM" "$(dm_enable "$(dm_unit "$DM")")" "$C_OFF")" ;;
+    sddm) ui_box_row "$(printf '%s%d%s  %sInstall SDDM with the %s theme instead%s  %s(%s stays installed, not enabled)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$DISPLAY_NAME" "$C_OFF" "$C_DIM" "$DM" "$C_OFF")" ;;
+    leave) ui_box_row "$(printf '%s%d%s  %sLeave it%s  %s(log in on a console and start %s there)%s' "$C_PINK$C_BOLD" "$i" "$C_OFF" "$C_BOLD" "$C_OFF" "$C_DIM" "$(comp_name "${COMPOSITOR:-hyprland}")" "$C_OFF")" ;;
+    esac
+  done
+  ui_box_row ""
+  ui_box_bottom
+  echo >&2
 }
 
 # === Package list (backend/pkg/deps/packages.tsv) ===
@@ -1198,7 +1442,8 @@ plan_services() {
   done
   [[ -z "$other" ]] && ! systemctl is-enabled --quiet NetworkManager 2>/dev/null && SERVICES+=(NetworkManager)
   systemctl is-enabled --quiet bluetooth 2>/dev/null || SERVICES+=(bluetooth)
-  [[ "$WITH_SDDM" == 1 && -z "$DM" ]] && SERVICES+=(sddm)
+  [[ "$WITH_SDDM" == 1 && "$DM_STATE" != enabled ]] && SERVICES+=(sddm)
+  [[ -n "$DM_ENABLE" ]] && SERVICES+=("$DM_ENABLE")
   return 0
 }
 
@@ -1218,6 +1463,29 @@ make_plan() {
   LINK_BINS=0
   if [[ "$BIN_DIR" != "$SYS_BIN" ]] && { ! on_path || [[ -e "$SYS_BIN/$APP_ID" ]]; }; then LINK_BINS=1; fi
   if [[ -d "$SRC_DIR/.git" || -f "$SRC_DIR/.git" ]]; then REPO_ACTION="update"; else REPO_ACTION="clone"; fi
+}
+
+# login_plan: the Login row of the plan, what is there and what happens.
+login_plan() {
+  local unit
+  case "$DM_STATE" in
+  enabled) echo "$DM" ;;
+  unknown) echo "$DM found (no systemd: whether it starts at boot is not checked)" ;;
+  managed) echo "$DM (display-manager.service of the distribution: left as it is)" ;;
+  disabled)
+    unit="$(dm_unit "$DM")"
+    if [[ " ${SERVICES[*]} " == *" ${DM_ENABLE:-none} "* || ("$DM" == sddm && " ${SERVICES[*]} " == *" sddm "*) ]]; then
+      echo "$DM is installed but not enabled: enable it (from the next boot)"
+    elif [[ " ${SERVICES[*]} " == *" sddm "* ]]; then
+      echo "$DM is installed but not enabled: SDDM with the theme instead ($DM stays as it is)"
+    else
+      echo "$DM is installed but not enabled: left as it is, start from a console (or: sudo $(dm_enable "$unit"))"
+    fi
+    ;;
+  *)
+    if [[ " ${SERVICES[*]} " == *" sddm "* ]]; then echo "none: SDDM with the theme (from the next boot)"; else echo "none (console)"; fi
+    ;;
+  esac
 }
 
 feature_box() { [[ "$1" == 1 ]] && printf '%s%s%s' "$C_PINK" "$G_ON" "$C_OFF" || printf '%s%s%s' "$C_DIM" "$G_OFF" "$C_OFF"; }
@@ -1241,7 +1509,7 @@ show_plan() {
   ui_box_head "THIS MACHINE"
   ui_box_kv "System" "$DISTRO_NAME$s$(uname -m)"
   ui_box_kv "Graphics" "$GPU"
-  ui_box_kv "Login" "${DM:-none (console)}"
+  ui_box_kv "Login" "$(login_plan)"
   ui_box_head "INSTALL"
   ui_box_kv "Compositor" "$C_BOLD$(comp_name "$COMPOSITOR")$C_OFF"
   ui_box_kv "Sources" "$REPO_ACTION $(tilde "$SRC_DIR")"
@@ -1286,7 +1554,7 @@ show_plan() {
     if [[ "$COMPOSITOR" == hyprland ]] && legacy_hypr_block; then
       ui_box_kv "Config" "your ${LEGACY_ID^} block in ~/.config/hypr is switched over on the first start"
     else
-      ui_box_kv "Config" "add the $DISPLAY_NAME block to $(tilde "$(comp_config "$COMPOSITOR")")$([[ "$COMPOSITOR" == hyprland ]] && echo " (+ polkit agent autostart)")"
+      ui_box_kv "Config" "add the $DISPLAY_NAME block to $(tilde "$(comp_config "$COMPOSITOR")")$([[ "$COMPOSITOR" == hyprland ]] && echo " (+ '$APP_ID $POLKIT_FALLBACK': the fallback polkit agent)")"
     fi
   fi
   if [[ "$EXCLUSIVE" == 1 ]]; then
@@ -1379,15 +1647,7 @@ install_packages() {
     elif [[ "$FORCE" == 1 ]]; then
       run "Upgrading the system (pacman)" "$hint" retry sudo pacman -Syu --noconfirm "${force[@]}"
     fi
-    if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
-      if [[ "$AUR_HELPER" == yay* ]] && ! has_cmd yay; then
-        run "Bootstrapping yay (AUR helper)" "Re-run with --no-aur to skip the AUR." bootstrap_yay
-      fi
-      local helper=paru
-      has_cmd paru || helper=yay
-      run "Installing from the AUR: ${AUR_PKGS[*]}" "Re-run with --no-aur to skip the AUR." \
-        retry "$helper" -S --needed --noconfirm "${AUR_PKGS[@]}"
-    fi
+    install_aur
     ;;
   fedora)
     hint="Fix the dnf error above, $CONFLICT_HINT"
@@ -1488,6 +1748,27 @@ install_flatpaks() {
     retry flatpak install --user -y --noninteractive flathub "${FLATPAKS[@]}"
 }
 
+# install_aur: the AUR part of the plan. The AUR (or the sources its
+# packages download) can be down and a build can fail: that never ends the
+# install. What the AUR would have given has fallbacks further on: the
+# Phosphor font per user (install_phosphor), Quickshell and matugen from
+# source (verify_core); the summary names what failed.
+install_aur() {
+  [[ ${#AUR_PKGS[@]} -gt 0 ]] || return 0
+  local hint="Retry later: re-run the installer (or --no-aur to leave the AUR out)."
+  if [[ "$AUR_HELPER" == yay* ]] && ! has_cmd yay && ! has_cmd paru; then
+    if ! RUN_SOFT=1 run "Bootstrapping yay (AUR helper)" "$hint" bootstrap_yay; then
+      FAILED+=("AUR helper (yay)")
+      warn "Without an AUR helper these are left out: ${AUR_PKGS[*]}"
+      return 0
+    fi
+  fi
+  local helper=paru
+  has_cmd paru || helper=yay
+  run_optional "AUR: ${AUR_PKGS[*]}" "Installing from the AUR: ${AUR_PKGS[*]}" "$hint" \
+    retry "$helper" -S --needed --noconfirm "${AUR_PKGS[@]}"
+}
+
 bootstrap_yay() {
   local dir
   dir="$(mktemp -d)"
@@ -1519,13 +1800,16 @@ phosphor_user_font() {
 }
 
 configure_system() {
-  local svc
+  local svc cmd
+  # One service that cannot start (no adapter, a unit renamed upstream)
+  # must not keep the others, the login screen among them, disabled.
   for svc in "${SERVICES[@]}"; do
-    if [[ "$svc" == sddm ]]; then
+    if [[ "$svc" == sddm || "$svc" == "$DM_ENABLE" ]]; then
       # Starting a display manager now would take over the screen mid-install.
-      run "Enabling sddm (from the next boot)" "Enable it later: sudo systemctl enable sddm" sudo systemctl enable sddm
+      read -ra cmd <<<"$(dm_enable "$svc")"
+      run_optional "$svc" "Enabling ${svc%.service} (from the next boot)" "Enable it later: sudo ${cmd[*]}" sudo "${cmd[@]}"
     else
-      run "Enabling $svc" "Enable it later: sudo systemctl enable --now $svc" sudo systemctl enable --now "$svc"
+      run_optional "$svc" "Enabling $svc" "Enable it later: sudo systemctl enable --now $svc" sudo systemctl enable --now "$svc"
     fi
   done
   if [[ "$ADD_INPUT_GROUP" == 1 ]]; then
@@ -1680,7 +1964,18 @@ install_binaries() {
 # root-owned copy, so code running as the user cannot swap what runs as root.
 # helper_stale: the helper is missing or differs from the installed binary
 # (asked before the build too, so sudo is requested up front).
-helper_stale() { [[ ! -x "$SYS_HELPER" ]] || ! cmp -s "$BIN_DIR/$APP_ID" "$SYS_HELPER"; }
+helper_stale() { [[ ! -x "$SYS_HELPER" ]] || ! same_file "$BIN_DIR/$APP_ID" "$SYS_HELPER"; }
+
+# same_file A B: equal contents (cmp is in diffutils, which a minimal system
+# may not have; sha256sum is coreutils).
+same_file() {
+  if has_cmd cmp; then
+    cmp -s "$1" "$2"
+  else
+    local a b
+    a="$(sha256sum <"$1" 2>/dev/null)" && b="$(sha256sum <"$2" 2>/dev/null)" && [[ "$a" == "$b" ]]
+  fi
+}
 
 # helper_sudo: sudo up front for the helper, with the other gates, so no
 # password prompt waits after the build. A refusal is only a warning.
@@ -1757,7 +2052,7 @@ compositor_setup() {
   logged "$BIN_DIR/$APP_ID" install "$COMPOSITOR" || die "'$APP_ID install $COMPOSITOR' failed." "See $LOG_FILE"
   if [[ "$COMPOSITOR" == hyprland ]]; then
     hyprland_bootstrap
-    run_optional "polkit autostart" "Polkit agent autostart" "Start a polkit agent from your Hyprland config yourself." polkit_autostart
+    run_optional "polkit fallback" "Fallback polkit agent line" "Add 'exec-once = $BIN_DIR/$APP_ID $POLKIT_FALLBACK' to your Hyprland config yourself." polkit_autostart
   fi
   done_or_would "$name config: $(tilde "$(comp_config "$COMPOSITOR")")" "add the $DISPLAY_NAME block to the $name config: $(tilde "$(comp_config "$COMPOSITOR")")"
 }
@@ -1810,20 +2105,41 @@ hyprland_bootstrap() {
   return 0
 }
 
-# hyprpolkitagent ships a user unit but plain Hyprland sessions never reach
-# graphical-session.target, so it is started from the user's config (once,
-# only when no polkit agent is configured there yet).
-# The line ends in "<comment> $APP_ID: polkit" so '$APP_ID goodbye' removes
-# exactly that line.
+# The shell registers its own polkit agent; whichever agent starts first
+# wins, so the user's config starts the external one (hyprpolkitagent, the
+# fallback: plain Hyprland sessions never reach graphical-session.target)
+# through '$APP_ID polkit-fallback', which starts it only while the shell's
+# agent is off or unavailable. Absolute path, like the bootstrap: a fresh
+# session's PATH may lack $BIN_DIR. Added once, only when no polkit agent is
+# configured there yet; an older line of ours (systemctl --user start
+# hyprpolkitagent) is rewritten by the binary ('$APP_ID install hyprland',
+# run just before, and every start of the shell). The line ends in "<comment> $APP_ID: polkit" so
+# '$APP_ID goodbye' removes exactly that line (backend/cmd/yozakura: the
+# same text as polkitEntryLine).
+# Written whether or not an external agent is installed: the verb looks for
+# one at every login (compositor.PolkitCommand: more places than this
+# script could check, the polkit-agent package may be skipped now and
+# installed later) and, finding none, only logs a line and exits; it never
+# starts anything next to the shell's registered agent.
 polkit_autostart() {
-  local entry marker="$APP_ID: polkit"
+  local entry cmd bin="$BIN_DIR/$APP_ID" q="'\\''" marker="$APP_ID: polkit"
   entry="${XDG_CONFIG_HOME:-$HOME/.config}/hypr/$(hypr_entry)"
-  [[ -e /usr/lib/systemd/user/hyprpolkitagent.service ]] || return 0
   grep -qsi polkit "$entry" && return 0
-  if [[ "$entry" == *.lua ]]; then
-    printf '\nhl.on("hyprland.start", function() hl.exec_cmd("systemctl --user start hyprpolkitagent") end) -- %s\n' "$marker" >>"$entry"
+  # One sh word for the launcher path, quoted only when sh would split or
+  # expand it (the binary's compositor.ShellWord writes the same text).
+  if [[ "$bin" =~ ^[A-Za-z0-9_@%+=:,./-]+$ ]]; then
+    cmd="$bin $POLKIT_FALLBACK"
   else
-    printf '\nexec-once = systemctl --user start hyprpolkitagent # %s\n' "$marker" >>"$entry"
+    cmd="'${bin//\'/$q}' $POLKIT_FALLBACK"
+  fi
+  if [[ "$entry" == *.lua ]]; then
+    # a Lua string: \ and " escaped
+    cmd="${cmd//\\/\\\\}"
+    cmd="${cmd//\"/\\\"}"
+    printf '\nhl.on("hyprland.start", function() hl.exec_cmd("%s") end) -- %s\n' "$cmd" "$marker" >>"$entry"
+  else
+    # hyprlang: # starts a comment unless doubled
+    printf '\nexec-once = %s # %s\n' "${cmd//#/##}" "$marker" >>"$entry"
   fi
 }
 
@@ -1900,14 +2216,36 @@ run_doctor() {
     dry_line "$BIN_DIR/$APP_ID" doctor "${args[@]}"
     return 0
   fi
-  "$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1 | sed 's/^/  /' >&2 || true
+  local out
+  out="$("$BIN_DIR/$APP_ID" doctor "${args[@]}" 2>&1)" || DOCTOR_FAILED=1
+  [[ -z "$out" ]] || printf '%s\n' "$out" | sed 's/^/  /' >&2
 }
 
-# done_header: the blossom beside "Yozakura <version> is installed".
+# login_failed: the login screen this run set up (SDDM, or the one chosen
+# in the menu) could not be enabled.
+login_failed() {
+  local s
+  for s in sddm ${DM_ENABLE:+"$DM_ENABLE"}; do
+    [[ " ${SERVICES[*]} " == *" $s "* ]] && failed "$s" && return 0
+  done
+  return 1
+}
+
+# needs_attention: a required component is missing or the login screen
+# could not be set up; the install exits with status 2.
+needs_attention() { [[ "$DOCTOR_FAILED" == 1 ]] || login_failed; }
+
+# done_header: the blossom beside "Yozakura <version> is installed", or
+# what is wrong when something failed (NEEDS ATTENTION lists it).
 done_header() {
-  local ver i rows flower right=() name line art=("${ART_FLOWER[@]}")
+  local ver i rows flower right=() name line art=("${ART_FLOWER[@]}") tag="the blossoms are out"
   ver="$(head -n1 "$SRC_DIR/version" 2>/dev/null || true)"
   line="$DISPLAY_NAME ${ver:+$ver }is installed"
+  if needs_attention; then
+    line="$line, but needs attention" tag="see NEEDS ATTENTION below"
+  elif [[ ${#FAILED[@]} -gt 0 ]]; then
+    line="$line; an optional part failed" tag="see NEEDS ATTENTION below"
+  fi
   [[ "$DRY_RUN" == 1 ]] && line="$DISPLAY_NAME ${ver:+$ver }would be installed"
   echo >&2
   if [[ "$UI_UTF8" == 0 ]]; then
@@ -1918,8 +2256,8 @@ done_header() {
   rows=${#art[@]}
   ui_paint "$DISPLAY_NAME" 0 0 "${#DISPLAY_NAME}" 1 && name="$C_BOLD$UI_OUT"
   right[rows / 2 - 2]="$name ${C_BOLD}${line#"$DISPLAY_NAME "}$C_OFF"
-  art_brush "${#line}" && right[rows / 2 - 1]="$UI_OUT"
-  ui_paint "$ART_KANJI" 0 0 4 1 && right[rows / 2 + 1]="$C_BOLD$UI_OUT  ${C_DIM}the blossoms are out$C_OFF"
+  art_brush "${#line}" "$((UI_COLS - ${#art[0]} - 5 - ${#line}))" && right[rows / 2 - 1]="$UI_OUT"
+  ui_paint "$ART_KANJI" 0 0 4 1 && right[rows / 2 + 1]="$C_BOLD$UI_OUT  $C_DIM$tag$C_OFF"
   for ((i = 0; i < rows; i++)); do
     ui_paint "${art[i]}" 0 "$i" "${#art[0]}" "$rows" && flower="$UI_OUT"
     printf '  %s   %s\n' "$flower" "${right[i]:-}" >&2
@@ -1927,8 +2265,15 @@ done_header() {
   echo >&2
 }
 
+# failed NAME: whether NAME is among this run's failures (FAILED).
+failed() {
+  local f
+  for f in "${FAILED[@]}"; do [[ "$f" == "$1" ]] && return 0; done
+  return 1
+}
+
 # numbered N TEXT: one line of the next steps.
-numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")"; }
+numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")" $((${#1} + 2)); }
 command_row() { ui_box_row "$(printf '%s%-18s%s %s%s%s' "$C_PINK" "$1" "$C_OFF" "$C_DIM" "$2" "$C_OFF")"; }
 
 # in_session: whether this terminal runs inside the chosen compositor.
@@ -1961,19 +2306,26 @@ next_steps() {
   if in_session; then
     numbered 1 "You are in $name already: run $C_PINK$APP_ID$C_OFF now."
     numbered 2 "From the next login on it starts with $name."
-  elif [[ " ${SERVICES[*]} " == *" sddm "* ]]; then
+  elif [[ "$DM_STATE" != enabled ]] && login_ready; then
     numbered 1 "Reboot and pick $name on the new login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
-  elif [[ -n "$DM" || "$WITH_SDDM" == 1 ]]; then
+  elif [[ "$DM_STATE" == enabled ]]; then
     numbered 1 "Log out (or reboot) and pick $name on the login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
+  elif [[ "$DM_STATE" == unknown || "$DM_STATE" == managed ]]; then
+    numbered 1 "Reboot; if $DM shows a login screen, pick $name there."
+    numbered 2 "Otherwise log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
+    numbered 3 "The setup wizard greets you there. Super opens the launcher."
   else
-    numbered 1 "Log in on a console and run ${C_PINK}$(console_cmd)${C_OFF}."
-    numbered 2 "The setup wizard greets you there. Super opens the launcher."
+    numbered 1 "Log in on a text console (after a reboot, or Ctrl+Alt+F2 now)."
+    numbered 2 "Run ${C_PINK}$(console_cmd)${C_OFF} there to start $name."
+    numbered 3 "The setup wizard greets you there. Super opens the launcher."
+    [[ -n "$DM" ]] && numbered "$G_INFO" "$DM is installed but not enabled; for a login screen: sudo $(dm_enable "$(dm_unit "$DM")")"
   fi
   [[ "$ADD_INPUT_GROUP" == 1 ]] && numbered "$G_INFO" "Log in again for the input group (Super-alone binds)."
-  if [[ ${#FAILED[@]} -gt 0 ]]; then
+  if [[ ${#FAILED[@]} -gt 0 || "$DOCTOR_FAILED" == 1 ]]; then
     ui_box_head "NEEDS ATTENTION"
+    [[ "$DOCTOR_FAILED" == 1 ]] && ui_box_row "$C_YELLOW$G_WARN$C_OFF required components are missing (the check above; $APP_ID doctor)"
     for f in "${FAILED[@]}"; do
       ui_box_row "$C_YELLOW$G_WARN$C_OFF $f: failed (see log)"
     done
@@ -1999,7 +2351,7 @@ offer_reboot() {
   if [[ "$REBOOT" != 1 ]]; then
     [[ "$PREV_INSTALL" == 1 || "$ASSUME_YES" == 1 ]] && return 0
     in_session && return 0
-    [[ " ${SERVICES[*]} " == *" sddm "* ]] && default=y
+    [[ "$DM_STATE" != enabled ]] && login_ready && ! needs_attention && default=y
     ask "Reboot now to start $DISPLAY_NAME?" "$default" || return 0
   fi
   [[ "$DRY_RUN" == 1 ]] || info "Rebooting..."
@@ -2046,7 +2398,10 @@ nixos_flow() {
 
 main() {
   parse_args "$@"
-  [[ "$EUID" -eq 0 ]] && die "Run this as your user, not root." "It uses sudo for the steps that need it."
+  if [[ "$EUID" -eq 0 ]]; then
+    detect_system
+    die_without_user "Run this as your user, not root."
+  fi
   if [[ "$DRY_RUN" == 0 ]]; then
     mkdir -p "$LOG_DIR"
     printf '# %s installer, %s\n' "$DISPLAY_NAME" "$(date)" >"$LOG_FILE"
@@ -2100,7 +2455,14 @@ main() {
       configure_system
     fi
   fi
-  has_cmd git || die "git is not installed." "Install git, or drop --no-deps."
+  # A dry run installed nothing: git comes with the packages step.
+  if ! has_cmd git; then
+    if [[ "$DRY_RUN" == 0 ]]; then
+      die "git is not installed." "Install git, or drop --no-deps."
+    elif [[ "$INSTALL_DEPS" == 0 ]]; then
+      warn "git is not installed; the real install stops here (install git, or drop --no-deps)."
+    fi
+  fi
 
   step "$DISPLAY_NAME"
   [[ "$LINK_BINS" == 1 ]] && need_sudo
@@ -2123,6 +2485,9 @@ main() {
     optional_features
   fi
   finish
+  # Exit status 2: installed, but a required component is missing or the
+  # login screen could not be set up (needs_attention).
+  if needs_attention; then exit 2; fi
 }
 
 main "$@"

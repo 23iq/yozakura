@@ -10,16 +10,28 @@
 //	apply {}                         -> Status  (writes the prompt config and the fish hook
 //	                                    when terminal.enabled, else removes the hook)
 //	status {}                        -> Status
+//	fetch.presets {}                 -> [{id, name, description, logo, own}] (greeting looks)
+//	fetch.allow {}                   -> Status  (the user switched the greeting on: it may
+//	                                    edit ~/.bashrc / ~/.zshrc from now on; without it a
+//	                                    greeting on from before stays in fish, shells "held")
+//	fetch.preview {preset?, logo?, logoPath?, ansi?} -> {lines: [[span]], exact, reason, imageLogo}
+//	                                    (fastfetch run with that look in a temp dir; the
+//	                                    config's values by default; ansi: the terminal's 16
+//	                                    colours as #rrggbb; reason fastfetch_missing | timeout | error;
+//	                                    one run at a time, a newer palette cancels an older run)
 //
-// Status is {enabled, engine, fishInstalled, fishIsLoginShell, engineInstalled:
-// {starship, ohmyposh}, foreignPromptInit, foreignFile, hookSkipped, hookPath,
-// hookPresent}. hookSkipped: the prompt is on but not installed because
+// Status is {enabled, engine, fishInstalled, fishIsLoginShell, loginShell,
+// terminalShell, loginFiles, greeting, engineInstalled: {starship, ohmyposh}, foreignPromptInit, foreignFile,
+// hookSkipped, hookPath, hookPresent}. hookSkipped: the prompt is on but not installed because
 // foreignFile starts starship / oh-my-posh itself.
 // Installing an engine or fish is not done here: the UI calls extras.install
 // (ids starship, oh-my-posh, fish) and extras.setLoginShell.
 //
-// The service also watches colors.json (and terminal.json): the prompt is
-// re-rendered when the palette changes while the prompt is enabled.
+// Apply also writes the fastfetch greeting (terminal.greeting, see
+// termlook/greeting.go), independent of the prompt; Status.greeting says
+// where it runs. The service watches colors.json (and terminal.json): the
+// prompt and the greeting are re-rendered when the palette changes while
+// they are on.
 package term
 
 import (
@@ -40,6 +52,7 @@ import (
 	"yozakura/backend/pkg/ipc"
 	"yozakura/backend/pkg/paths"
 	"yozakura/backend/pkg/termlook"
+	"yozakura/backend/pkg/termrun"
 )
 
 var presetID = regexp.MustCompile(`^[a-z0-9-]+$`)
@@ -49,16 +62,28 @@ type Options struct {
 	ConfigFile string // terminal.json
 	ColorsFile string // colors.json
 	PresetsDir string // assets/terminal/prompts; "" = the shell source
+	FetchDir   string // assets/terminal/fastfetch; "" = the shell source
 	Env        termlook.Env
 	Passwd     func() ([]byte, error) // /etc/passwd
 	User       func() string          // current user name
-	Debounce   time.Duration
+	// Executable checks a shell before terminals are pointed at it
+	// (nil: termrun.IsExecutable).
+	Executable func(string) bool
+	// Skel is the distribution's skeleton of new home directories
+	// ("": /etc/skel), what the bash login files are compared with.
+	Skel     string
+	Debounce time.Duration
 }
 
 // Service is the term IPC service.
 type Service struct {
 	o  Options
 	mu sync.Mutex // one write at a time
+	// startShell is the passwd login shell when the daemon started; a
+	// different one later means a chsh during this session.
+	startShell string
+	// fetchRuns runs the greeting previews one at a time.
+	fetchRuns *fetchRunner
 
 	stop chan struct{}
 	done chan struct{}
@@ -68,16 +93,20 @@ type Service struct {
 // NewService uses the real host.
 func NewService(p *paths.Paths) *Service {
 	home, _ := os.UserHomeDir()
+	look := func(bin string) (string, bool) {
+		path, err := exec.LookPath(bin)
+		return path, err == nil
+	}
 	return New(Options{
 		ConfigFile: p.Config("terminal"),
 		ColorsFile: p.ColorsFile(),
 		Env: termlook.Env{
 			Home: home, ConfigHome: xdgDir("XDG_CONFIG_HOME", home, ".config"),
 			CacheHome: xdgDir("XDG_CACHE_HOME", home, ".cache"), AppID: brand.AppID,
-			LookPath: func(bin string) (string, bool) {
-				path, err := exec.LookPath(bin)
-				return path, err == nil
-			},
+			DataHome: xdgDir("XDG_DATA_HOME", home, ".local/share"),
+			// the daemon has not read ~/.zshenv: zsh is asked
+			ResolveZDotDir: func() string { return termlook.ZshDotDir(home, look) },
+			LookPath:       look,
 		},
 		Passwd: func() ([]byte, error) { return os.ReadFile("/etc/passwd") },
 		User: func() string {
@@ -94,7 +123,12 @@ func New(o Options) *Service {
 	if o.Debounce == 0 {
 		o.Debounce = 300 * time.Millisecond
 	}
-	return &Service{o: o}
+	if o.Executable == nil {
+		o.Executable = termrun.IsExecutable
+	}
+	s := &Service{o: o, fetchRuns: newFetchRunner()}
+	s.startShell = s.loginShell()
+	return s
 }
 
 func xdgDir(env, home, def string) string {
@@ -110,8 +144,9 @@ func (s *Service) Register(srv *ipc.Server) {
 		Name: "term",
 		Methods: map[string]ipc.HandlerFunc{
 			"presets": s.presets, "preview": s.preview, "apply": s.apply, "status": s.status,
+			"fetch.presets": s.fetchPresets, "fetch.preview": s.fetchPreview, "fetch.allow": s.fetchAllow,
 		},
-		Async: map[string]bool{"preview": true, "apply": true, "status": true},
+		Async: map[string]bool{"preview": true, "apply": true, "status": true, "fetch.preview": true, "fetch.allow": true},
 	})
 }
 
@@ -270,10 +305,15 @@ func findPreset(ps []termlook.Preset, id string) (termlook.Preset, bool) {
 }
 
 // Apply writes the prompt files for the current config and palette (the
-// hook is removed when the prompt is disabled).
+// hook is removed when the prompt is disabled) and the greeting.
 func (s *Service) Apply() error {
+	s.resolveZDotDir()
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return errors.Join(s.applyPrompt(), s.applyGreeting())
+}
+
+func (s *Service) applyPrompt() error {
 	cfg := s.config()
 	// the user's config.fish starts a prompt itself: ours is not installed
 	// (theirs would be initialised twice); the status says why
@@ -303,6 +343,14 @@ func (s *Service) apply(json.RawMessage) (any, error) {
 
 var errStarted = errors.New("term: already started")
 
+// resolveZDotDir asks zsh for its ZDOTDIR (once per process, cached) before
+// s.mu is taken, so a slow ~/.zshenv never runs with the lock held.
+func (s *Service) resolveZDotDir() {
+	if s.o.Env.ResolveZDotDir != nil && s.o.Env.ZDotDir == "" {
+		s.o.Env.ResolveZDotDir()
+	}
+}
+
 // Start applies the prompt once when enabled and re-applies it whenever
 // colors.json or terminal.json changes, until Stop.
 func (s *Service) Start() error {
@@ -322,7 +370,7 @@ func (s *Service) Start() error {
 		return err
 	}
 	go w.run()
-	if s.config().Enabled {
+	if s.config().Enabled || s.greeting().On {
 		s.wg.Add(1)
 		go func() {
 			defer s.wg.Done()
@@ -347,9 +395,9 @@ func (s *Service) Stop() {
 }
 
 func (s *Service) onChange(file string) {
-	// A colors change matters only while the prompt is on; a terminal.json
-	// change always (turning it off removes the hook).
-	if file == s.o.ColorsFile && !s.config().Enabled {
+	// A colors change matters only while the prompt or the greeting is on;
+	// a terminal.json change always (turning one off removes its files).
+	if file == s.o.ColorsFile && !s.config().Enabled && !s.greeting().On {
 		return
 	}
 	s.reapply()

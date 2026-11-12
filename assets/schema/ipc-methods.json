@@ -64,7 +64,9 @@
    "methods": [
     "dispatch",
     "eval",
+    "polkitState",
     "render",
+    "setPolkitState",
     "state",
     "write"
    ],
@@ -370,6 +372,9 @@
    "name": "term",
    "methods": [
     "apply",
+    "fetch.allow",
+    "fetch.presets",
+    "fetch.preview",
     "presets",
     "preview",
     "status"

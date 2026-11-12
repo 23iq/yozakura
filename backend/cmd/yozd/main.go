@@ -255,45 +255,24 @@ func runDaemon(customConfigPath string) {
 
 	fmt.Printf("Starting %s daemon on %s\n", brand.Daemon, socketPath)
 
-	// Load TOML config if it exists
-	var cfgWatcher *config.ConfigWatcher
+	// Load the TOML config and follow it. On a first run it does not exist
+	// yet (the shell writes it after yozd starts): the watcher applies it
+	// once it is created.
 	configPath := customConfigPath
 	if configPath == "" {
 		configPath = config.DefaultConfigPath()
 	}
-	if _, statErr := os.Stat(configPath); statErr == nil {
-		cfg, cfgErr := config.LoadConfig(configPath)
-		if cfgErr != nil {
-			fmt.Printf("%s Error loading config: %v\n", cfgLog, cfgErr)
-		} else {
-			fmt.Printf("%s Loaded config from %s\n", cfgLog, configPath)
-			configDir := filepath.Dir(configPath)
-			if applyErr := config.ApplyConfig(cfg, comp, configDir); applyErr != nil {
-				fmt.Printf("%s Error applying config: %v\n", cfgLog, applyErr)
-			} else {
-				srv.SeedConfigState(cfg.ToIPCConfig())
-			}
-		}
-
-		// Watch for config changes
-		watcher, watchErr := config.NewConfigWatcher()
-		if watchErr != nil {
-			fmt.Printf("%s Warning: could not start watcher: %v\n", cfgLog, watchErr)
-		} else {
-			configDir := filepath.Dir(configPath)
-			watcher.Start(configPath, func(newCfg *config.TOMLConfig) {
-				fmt.Println(cfgLog, "Config changed, reloading...")
-				if applyErr := config.ApplyConfig(newCfg, comp, configDir); applyErr != nil {
-					fmt.Printf("%s Error applying config: %v\n", cfgLog, applyErr)
-				} else {
-					srv.SeedConfigState(newCfg.ToIPCConfig())
-				}
-			})
-			cfgWatcher = watcher
-		}
-	} else {
-		fmt.Printf("%s No config file at %s, skipping\n", cfgLog, configPath)
+	configDir := filepath.Dir(configPath)
+	if err := os.MkdirAll(configDir, 0o755); err != nil {
+		fmt.Printf("%s Warning: %v\n", cfgLog, err)
 	}
+	cfgWatcher := config.LoadAndWatch(configPath, func(cfg *config.TOMLConfig) {
+		if applyErr := config.ApplyConfig(cfg, comp, configDir); applyErr != nil {
+			fmt.Printf("%s Error applying config: %v\n", cfgLog, applyErr)
+		} else {
+			srv.SeedConfigState(cfg.ToIPCConfig())
+		}
+	})
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)

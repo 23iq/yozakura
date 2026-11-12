@@ -73,3 +73,32 @@ func TestLaunchRejectsUnknownAndBadArgs(t *testing.T) {
 		t.Fatalf("started %v", *started)
 	}
 }
+
+func TestLaunchTerminalStartsTheLoginShell(t *testing.T) {
+	env, started := launchTestEnv(t, map[string]bool{"gio": true})
+	kitty := filepath.Join(env.dirs[1], "kitty.desktop")
+	if err := os.WriteFile(kitty, []byte("[Desktop Entry]\nName=kitty\nCategories=System;TerminalEmulator;\nExec=kitty\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	env.readFile = os.ReadFile
+	env.sessionShell = func() string { return "/usr/bin/fish" }
+	for _, id := range []string{"kitty", "firefox"} {
+		if code := runLaunch([]string{id}, env, &bytes.Buffer{}); code != 0 {
+			t.Fatalf("%s: exit %d", id, code)
+		}
+	}
+	want := [][]string{
+		{"env", "SHELL=/usr/bin/fish", "gio", "launch", kitty},
+		{"gio", "launch", filepath.Join(env.dirs[1], "firefox.desktop")},
+	}
+	if !reflect.DeepEqual(*started, want) {
+		t.Fatalf("started %q", *started)
+	}
+	// No chsh this session (the daemon reports no shell): argv as it is.
+	*started = nil
+	env.sessionShell = func() string { return "" }
+	runLaunch([]string{"kitty"}, env, &bytes.Buffer{})
+	if (*started)[0][0] != "gio" {
+		t.Fatalf("unchanged shell still wrapped: %q", *started)
+	}
+}
