@@ -47,6 +47,7 @@ const (
 	ShellManaged = "managed" // the rc file is read-only / in the Nix store
 	ShellAbsent  = "absent"  // the shell is not installed (or no rc file)
 	ShellHeld    = "held"    // on in fish only: bash / zsh wait for the user's go (FishOnly)
+	ShellBroken  = "broken"  // our markers in the rc file were edited: left alone
 	ShellError   = "error"
 )
 
@@ -232,7 +233,7 @@ func ApplyGreeting(cfg GreetingConfig, pal Palette, presets []FetchPreset, sakur
 		return GreetingStatus{}, fmt.Errorf("termlook: env needs AppID, Home and ConfigHome")
 	}
 	if !cfg.On {
-		return GreetingState(cfg, env), RemoveGreeting(env)
+		return GreetingState(cfg, env), removeGreeting(env, ignoreManaged)
 	}
 	p, ok := FindFetchPreset(presets, cfg.Preset)
 	if !ok {
@@ -380,10 +381,11 @@ func applyRC(shell string, cfg GreetingConfig, env Env) error {
 	return ignoreManaged(err)
 }
 
-// ignoreManaged: a read-only rc file is a state (the status says to add the
-// line by hand), not a failure.
+// ignoreManaged: a read-only rc file (the status says to add the line by
+// hand) or one whose markers were edited (left for the user) is a state,
+// not a failure.
 func ignoreManaged(err error) error {
-	if errors.Is(err, apphooks.ErrManaged) {
+	if errors.Is(err, apphooks.ErrManaged) || errors.Is(err, apphooks.ErrBrokenBlock) {
 		return nil
 	}
 	return err
@@ -397,6 +399,12 @@ func shellInstalled(shell string, env Env) bool {
 // RemoveGreeting removes everything the greeting wrote (turning it off,
 // goodbye). Foreign files are left alone.
 func RemoveGreeting(env Env) error {
+	return removeGreeting(env, func(err error) error { return err })
+}
+
+// removeGreeting is RemoveGreeting; filter decides which rc file errors
+// count.
+func removeGreeting(env Env, filter func(error) error) error {
 	var errs []error
 	removeFiles(GreetingScriptFile(env), FetchConfigFile(env), fetchKittyFile(env), fetchLogoFile(env))
 	if exists, ours := hookOwned(FishGreetingFile(env)); exists && ours {
@@ -409,7 +417,7 @@ func RemoveGreeting(env Env) error {
 		if rc != bashrc {
 			id = "greeting-zsh"
 		}
-		if _, err := apphooks.RevertMarkedBlock(henv, id, rcMarker(env), rc); err != nil {
+		if _, err := apphooks.RevertMarkedBlock(henv, id, rcMarker(env), rc); filter(err) != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", rc, err))
 		}
 	}
@@ -459,6 +467,8 @@ func shellState(shell string, cfg GreetingConfig, env Env) ShellGreeting {
 	out.File = rc
 	data, err := os.ReadFile(rc)
 	switch {
+	case err == nil && !apphooks.MarkedBlockOK(string(data), rcMarker(env)):
+		out.State = ShellBroken
 	case err == nil && strings.Contains(string(data), "# >>> "+rcMarker(env)+" >>>"):
 		out.State = ShellOn
 	case !shellInstalled(shell, env) || (err != nil && filepath.Base(cfg.LoginShell) != shell):

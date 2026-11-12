@@ -257,6 +257,8 @@ func shellNote(sh termlook.ShellGreeting) string {
 		return sh.File + " is read-only: add the line of greeting.sh yourself"
 	case termlook.ShellAbsent:
 		return "not installed (or no rc file)"
+	case termlook.ShellBroken:
+		return "the greeting's marker lines in " + sh.File + " were edited: fix or remove them by hand (left alone)"
 	case termlook.ShellHeld:
 		return "off (on from before the update, fish only: `" + branded("{bin}") + " term greeting on` adds the line to " + sh.File + ")"
 	}

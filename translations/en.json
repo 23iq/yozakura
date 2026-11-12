@@ -2244,6 +2244,8 @@
   "prefs.term.fetch.foreign.desc": "Nothing is added for %1, so it does not print twice. Remove that line to use this greeting there.",
   "prefs.term.fetch.managed.title": "%1 is read-only",
   "prefs.term.fetch.managed.desc": "It is managed elsewhere (Nix, a dotfile manager): add the greeting line for %1 there yourself.",
+  "prefs.term.fetch.broken.title": "The greeting lines in %1 were edited",
+  "prefs.term.fetch.broken.desc": "One of its marker lines (# >>> … fastfetch >>>, # <<< … <<<) is missing or repeated, so the file is left as it is for %1. Remove the marked lines by hand, or restore the missing marker.",
   "prefs.term.fetch.held.title": "Only in fish, as before",
   "prefs.term.fetch.held.desc": "To run in %1 too, the greeting adds one line to their startup files (~/.bashrc, ~/.zshrc).",
   "prefs.term.fetch.held.allow": "Also in %1",

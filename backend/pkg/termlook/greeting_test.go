@@ -398,3 +398,33 @@ func TestGreetingStateWhenOff(t *testing.T) {
 		t.Errorf("fish %+v", s)
 	}
 }
+
+// The user deleted our end marker and wrote below the start marker: the
+// next apply and "off" leave the file alone and the status says so.
+func TestGreetingLeavesEditedMarkersAlone(t *testing.T) {
+	env := greetEnv(t)
+	rc := filepath.Join(env.Home, ".bashrc")
+	writeFile(t, rc, "a\n")
+	cfg := GreetingConfig{On: true, Preset: "sakura", Logo: LogoSakura, LoginShell: "/bin/bash"}
+	applyGreeting(t, cfg, env)
+	edited := "a\n\n# >>> " + rcMarker(env) + " >>>\nmy important line\n"
+	writeFile(t, rc, edited)
+	st := applyGreeting(t, cfg, env)
+	if s := stateOf(st, "bash"); s.State != ShellBroken {
+		t.Errorf("bash %+v", s)
+	}
+	cfg.On = false
+	st = applyGreeting(t, cfg, env)
+	if readFile(t, rc) != edited {
+		t.Errorf("file changed: %q", readFile(t, rc))
+	}
+	if s := stateOf(st, "bash"); s.State != ShellBroken {
+		t.Errorf("bash after off %+v", s)
+	}
+	if err := RemoveGreeting(env); err == nil {
+		t.Error("uninstall does not report the file it left")
+	}
+	if readFile(t, rc) != edited {
+		t.Errorf("uninstall changed it: %q", readFile(t, rc))
+	}
+}

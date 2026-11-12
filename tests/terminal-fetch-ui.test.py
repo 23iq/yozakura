@@ -178,6 +178,16 @@ check(not visible(find("fetchSampleNotice")), "real fastfetch output: no sample 
 foreign = find("fetchShellNotice:bash")
 check(visible(foreign) and "~/.bashrc" in ev("title", foreign), "a shell running fetch itself is named")
 check(visible(find("fetchShellNotice:zsh")), "a read-only rc file is named")
+broken = {**on, "greeting": {**on["greeting"], "shells": [{"shell": "fish", "state": "on"},
+                                                          {"shell": "bash", "state": "broken", "file": "/home/user/.bashrc"}]}}
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': %s})" % json.dumps(broken))
+ev("TerminalLookService.refreshStatus()")
+wait_until(lambda: "edited" in (ev("title", find("fetchShellNotice:bash")) or ""))
+check("~/.bashrc" in (ev("title", find("fetchShellNotice:bash")) or "") and "edited" in ev("title", find("fetchShellNotice:bash")),
+      "edited markers are named")
+ev("BackendService.replies = Object.assign({}, BackendService.replies, {'term.status': %s})" % json.dumps(on))
+ev("TerminalLookService.refreshStatus()")
+wait_until(lambda: visible(find("fetchShellNotice:zsh")))
 check("fish" in ev("subtitle", find("fetchSwitchRow")), "the switch row says where it shows")
 
 # on from before the update: fish only until the user lets it into bash / zsh

@@ -103,20 +103,24 @@ func writeBlockFile(env Env, id, path string, existed bool, out string) error {
 // Apply created it and nothing else is left in it; otherwise it is rewritten
 // without the block. It reports whether the file changed.
 func revertBlockFile(env Env, id, path string) (bool, error) {
-	return revertMarkedBlock(env, id, path, env.AppID)
+	return revertMarkedBlock(env, id, path, env.AppID, false)
 }
 
 // UpsertMarkedBlock adds the block marked `marker` (BlockMarkers) to the end
 // of path, or replaces it in place, creating the file when it is missing;
 // a file created here is remembered under id, so RevertMarkedBlock can give
 // the user back exactly what was there. It reports whether path changed and
-// refuses a file managed elsewhere (ErrManaged).
+// refuses a file managed elsewhere (ErrManaged) or whose markers were
+// edited (ErrBrokenBlock, also from RevertMarkedBlock).
 func UpsertMarkedBlock(env Env, id, marker, path, body string) (bool, error) {
 	content, existed := "", false
 	if data, err := os.ReadFile(path); err == nil {
 		content, existed = string(data), true
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return false, err
+	}
+	if !MarkedBlockOK(content, marker) {
+		return false, ErrBrokenBlock
 	}
 	out, changed := UpsertBlock(content, marker, body)
 	if !changed {
@@ -135,14 +139,19 @@ func UpsertMarkedBlock(env Env, id, marker, path, body string) (bool, error) {
 
 // RevertMarkedBlock undoes UpsertMarkedBlock (see revertBlockFile).
 func RevertMarkedBlock(env Env, id, marker, path string) (bool, error) {
-	return revertMarkedBlock(env, id, path, marker)
+	return revertMarkedBlock(env, id, path, marker, true)
 }
 
-func revertMarkedBlock(env Env, id, path, marker string) (bool, error) {
+// revertMarkedBlock: strict refuses a file with edited markers (the
+// app hooks' own blocks keep their old leniency).
+func revertMarkedBlock(env Env, id, path, marker string, strict bool) (bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		setMark(env, createdKey(id, path), false)
 		return false, nil
+	}
+	if strict && !MarkedBlockOK(string(data), marker) {
+		return false, ErrBrokenBlock
 	}
 	out, changed := RemoveBlock(string(data), marker)
 	if !changed {

@@ -47,6 +47,33 @@ func findBlock(content, marker string) (s, e int, ok bool) {
 	return 0, 0, false
 }
 
+// ErrBrokenBlock marks a file whose markers of ours are not one start line
+// followed by one end line (an end deleted, a block pasted twice): which
+// lines are ours cannot be told, so the file is left as it is.
+var ErrBrokenBlock = errors.New("the marked block was edited (unbalanced or repeated markers)")
+
+// MarkedBlockOK reports whether content holds no block of marker or exactly
+// one well-formed one.
+func MarkedBlockOK(content, marker string) bool {
+	start, end := BlockMarkers(marker)
+	starts, ends, open := 0, 0, false
+	for _, line := range strings.Split(content, "\n") {
+		switch strings.TrimRight(line, "\r \t") {
+		case start:
+			if open {
+				return false
+			}
+			starts, open = starts+1, true
+		case end:
+			if !open {
+				return false
+			}
+			ends, open = ends+1, false
+		}
+	}
+	return !open && starts == ends && starts <= 1
+}
+
 // UpsertBlock adds the block (marker is the app id) at the end of content,
 // or replaces an existing one in place. It reports whether content changed.
 // RemoveBlock undoes an add byte for byte.

@@ -111,3 +111,39 @@ func TestMarkedBlockFile(t *testing.T) {
 		}
 	}
 }
+
+// Markers the user edited (the end line deleted, the block pasted twice):
+// which lines are ours cannot be told, so the file is not touched.
+func TestMarkedBlockRefusesEditedMarkers(t *testing.T) {
+	home := t.TempDir()
+	env := Env{Home: home, ConfigHome: filepath.Join(home, ".config"), DataDir: filepath.Join(home, "data"), AppID: "app"}
+	rc := filepath.Join(home, ".bashrc")
+	for name, content := range map[string]string{
+		"end deleted":   "a\n# >>> app fetch >>>\nmy important line\n",
+		"start deleted": "a\n. /x\n# <<< app fetch <<<\nmine\n",
+		"twice":         "# >>> app fetch >>>\n. /x\n# <<< app fetch <<<\nmine\n# >>> app fetch >>>\n. /x\n# <<< app fetch <<<\n",
+		"nested":        "# >>> app fetch >>>\n# >>> app fetch >>>\n. /x\n# <<< app fetch <<<\n# <<< app fetch <<<\n",
+		"end first":     "# <<< app fetch <<<\nmine\n# >>> app fetch >>>\n",
+	} {
+		if err := os.WriteFile(rc, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		if MarkedBlockOK(content, "app fetch") {
+			t.Errorf("%s: accepted", name)
+		}
+		if _, err := UpsertMarkedBlock(env, "greet", "app fetch", rc, ". /x"); !errors.Is(err, ErrBrokenBlock) {
+			t.Errorf("%s: upsert %v", name, err)
+		}
+		if _, err := RevertMarkedBlock(env, "greet", "app fetch", rc); !errors.Is(err, ErrBrokenBlock) {
+			t.Errorf("%s: revert %v", name, err)
+		}
+		if data, _ := os.ReadFile(rc); string(data) != content {
+			t.Errorf("%s: file changed to %q", name, data)
+		}
+	}
+	for _, ok := range []string{"", "a\n", "a\n# >>> app fetch >>>\n. /x\n# <<< app fetch <<<\n", "# >>> app >>>\n# <<< app <<<\n"} {
+		if !MarkedBlockOK(ok, "app fetch") {
+			t.Errorf("well-formed %q refused", ok)
+		}
+	}
+}

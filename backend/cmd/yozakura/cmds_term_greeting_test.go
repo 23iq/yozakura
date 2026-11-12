@@ -134,3 +134,11 @@ func TestTermGreetingShowsHeldShells(t *testing.T) {
 	assert.Contains(t, out, "bash: off (on from before the update, fish only")
 	assert.Contains(t, out, "term greeting on` adds the line to /h/.bashrc")
 }
+
+func TestTermGreetingShowsEditedMarkers(t *testing.T) {
+	f := greetFake()
+	f.results["term.status"] = `{"greeting":{"on":true,"fastfetchInstalled":true,"shells":[{"shell":"bash","state":"broken","file":"/h/.bashrc"}]}}`
+	code, out, errOut := termRun(t, f, "greeting")
+	assert.Equal(t, 0, code, errOut)
+	assert.Contains(t, out, "bash: the greeting's marker lines in /h/.bashrc were edited")
+}

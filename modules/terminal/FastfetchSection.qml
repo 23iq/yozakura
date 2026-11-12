@@ -171,13 +171,15 @@ Column {
     }
 
     Repeater {
-        model: root.on ? FetchModel.shellsIn(root.greeting, "foreign").concat(FetchModel.shellsIn(root.greeting, "managed")) : []
+        // broken: our markers in the file were edited; shown while off too
+        // (the line may still be there)
+        model: (root.on ? FetchModel.shellsIn(root.greeting, "foreign").concat(FetchModel.shellsIn(root.greeting, "managed")) : []).concat(FetchModel.shellsIn(root.greeting, "broken"))
         delegate: LookNotice {
             required property var modelData
             objectName: "fetchShellNotice:" + modelData.shell
             width: root.width
-            tone: modelData.state === "managed" ? "warning" : "info"
-            icon: modelData.state === "managed" ? "lock" : "info"
+            tone: modelData.state === "foreign" ? "info" : "warning"
+            icon: modelData.state === "managed" ? "lock" : (modelData.state === "broken" ? "warning" : "info")
             title: I18n.t("prefs.term.fetch." + modelData.state + ".title", FetchModel.tilde(modelData.file, root.home))
             message: I18n.t("prefs.term.fetch." + modelData.state + ".desc", modelData.shell)
         }

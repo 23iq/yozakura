@@ -2244,6 +2244,8 @@
   "prefs.term.fetch.foreign.desc": "No se añade nada para %1, así no se imprime dos veces. Quita esa línea para usar este saludo ahí.",
   "prefs.term.fetch.managed.title": "%1 es de solo lectura",
   "prefs.term.fetch.managed.desc": "Se gestiona en otro sitio (Nix, un gestor de dotfiles): añade allí tú mismo la línea del saludo para %1.",
+  "prefs.term.fetch.broken.title": "Las líneas del saludo en %1 se han editado",
+  "prefs.term.fetch.broken.desc": "Falta o se repite una de sus líneas de marca (# >>> … fastfetch >>>, # <<< … <<<), así que el archivo se deja tal cual para %1. Quita a mano las líneas marcadas o restaura la marca que falta.",
   "prefs.term.fetch.held.title": "Solo en fish, como antes",
   "prefs.term.fetch.held.desc": "Para funcionar también en %1, el saludo añade una línea a sus archivos de inicio (~/.bashrc, ~/.zshrc).",
   "prefs.term.fetch.held.allow": "También en %1",
