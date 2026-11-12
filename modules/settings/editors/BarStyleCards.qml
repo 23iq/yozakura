@@ -52,17 +52,23 @@ Item {
                 title: I18n.t(modelData.label)
                 onClicked: SettingsStore.set("bar.layout.style", modelData.id)
 
-                MiniScreen {
-                    id: screen
+                // built off the frame: the cards show at once
+                Loader {
                     anchors.fill: parent
-                    PanelsSchematic {
-                        anchors.fill: parent
-                        backdrop: false
-                        barOpacity: screen.barOpacity
-                        panels: root.previewOf(card.modelData.id)
-                        showWindows: false
-                        selected: -1
-                        unit: Math.round(width * 0.075)
+                    asynchronous: true
+                    sourceComponent: Component {
+                        MiniScreen {
+                            id: screen
+                            PanelsSchematic {
+                                anchors.fill: parent
+                                backdrop: false
+                                barOpacity: screen.barOpacity
+                                panels: root.previewOf(card.modelData.id)
+                                showWindows: false
+                                selected: -1
+                                unit: Math.round(width * 0.075)
+                            }
+                        }
                     }
                 }
             }

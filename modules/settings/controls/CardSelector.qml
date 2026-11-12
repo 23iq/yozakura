@@ -5,7 +5,6 @@ import qs.modules.theme
 import qs.modules.services
 import qs.modules.components.kit
 import "../Registry.js" as Registry
-import "../Ui.js" as Ui
 
 // A selector shown as cards (schema `display: "cards"`): one ChoiceCard per
 // option with a small picture of it, drawn by the entry's `thumb`
@@ -47,13 +46,22 @@ Item {
                 subtitle: card.modelData.description ? I18n.t(card.modelData.description) : ""
                 onClicked: root.selected(card.modelData.value)
 
+                // Pictures are built off the frame (asynchronous): the cards
+                // show at once, each picture fades in when ready.
                 Loader {
+                    id: picture
                     anchors.fill: parent
-                    source: root.thumbUrl
-                    onLoaded: {
-                        Ui.setIfPresent(item, "entry", root.entry);
-                        Ui.setIfPresent(item, "value", card.modelData.value);
+                    asynchronous: true
+                    opacity: status === Loader.Ready ? 1 : 0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Motion.micro.duration
+                        }
                     }
+                    Component.onCompleted: setSource(root.thumbUrl, {
+                        "entry": root.entry,
+                        "value": card.modelData.value
+                    })
                 }
             }
         }
