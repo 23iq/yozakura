@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Services.Mpris
 import qs.config
+import qs.modules.globals
 import qs.modules.components.kit
 
 // The seek bar of a media player: the kit LineSlider with the shell's wavy
@@ -16,7 +17,8 @@ LineSlider {
     readonly property real length: root.player?.length ?? 0
 
     implicitHeight: Space.l
-    wavy: Config.performance ? Config.performance.wavyLine !== false : true
+    // Straight while the battery saver is active (a wave redraws every frame).
+    wavy: (Config.performance ? Config.performance.wavyLine !== false : true) && !BatterySaver.active
     playing: root.isPlaying
     alwaysShowKnob: true
     wheelEnabled: false

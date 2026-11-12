@@ -1,6 +1,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import qs.modules.globals
 import qs.modules.services
 import qs.modules.theme
 import qs.config
@@ -25,7 +26,8 @@ Item {
     // The owner's visualizer setting (the lock screen has its own).
     property bool configEnabled: Config.notch?.visualizer ?? true
 
-    readonly property bool active: configEnabled && playing && shown && visible && CavaService.available
+    // An active battery saver keeps it from registering, so cava can stop.
+    readonly property bool active: configEnabled && playing && shown && visible && CavaService.available && !BatterySaver.active
     readonly property real barWidth: Math.max(1, (width - spacing * (barCount - 1)) / barCount)
     readonly property var levels: active ? CavaService.levels(barCount) : []
     // Levels as drawn: eased once per cava frame instead of a height

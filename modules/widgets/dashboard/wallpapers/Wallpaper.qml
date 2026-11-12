@@ -75,7 +75,8 @@ PanelWindow {
         "fullscreen": fullscreenActive,
         "covered": coverage.covered,
         "idleSeconds": IdleService.elapsedIdleTime,
-        "onBattery": Battery.onBattery
+        "onBattery": Battery.onBattery,
+        "batterySaver": BatterySaver.active
     }, Config.performance)
     // ...or windows hiding every wallpaper pixel (tiled with gaps 0, monocle)
     readonly property WallpaperCoverage coverage: WallpaperCoverage {

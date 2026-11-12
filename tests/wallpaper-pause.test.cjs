@@ -42,6 +42,13 @@ test('battery pause is opt-in', () => {
     assert.equal(P.shouldPause({ onBattery: false }, { ...defaults, pauseWallpaperOnBattery: true }), false);
 });
 
+test('an active battery saver pauses as if pauseWallpaperOnBattery were set', () => {
+    assert.equal(P.shouldPause({ onBattery: true, batterySaver: true }, defaults), true);
+    assert.equal(P.shouldPause({ onBattery: true, batterySaver: false }, defaults), false);
+    // Never on AC, whatever the saver flag says.
+    assert.equal(P.shouldPause({ onBattery: false, batterySaver: true }, defaults), false);
+});
+
 test('missing config keeps the historical defaults', () => {
     assert.equal(P.shouldPause({ fullscreen: true }, undefined), true);
     assert.equal(P.shouldPause({ onBattery: true }, null), false);

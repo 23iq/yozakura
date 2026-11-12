@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import shutil
 
-from qmlharness import REPO
+from qmlharness import BATTERY_SAVER_STUB, REPO
 from settings_env import SettingsEnv
 from PySide6.QtCore import qInstallMessageHandler
 
@@ -78,6 +78,7 @@ GLOBALS = {
     "GlobalStates": """pragma Singleton
 QtObject { property bool lockscreenVisible: true; property var wallpaperManager: null; property int videoSyncTick: 0
  function wallpaperForScreen(n) { return null; } }""",
+    "BatterySaver": BATTERY_SAVER_STUB,
 }
 
 

@@ -32,6 +32,7 @@ h.singleton('qs.modules.services', 'CavaService', '''QtObject {
     function setConsumer(key, active) {}
     function push(v) { values = v; frames++; }
 }''')
+h.singleton('qs.modules.globals', 'BatterySaver', 'QtObject { property bool active: false }')
 h.copy('modules/widgets/defaultview/NotchVisualizer.qml')
 root = h.load('''import QtQuick
 import QtQuick.Window
@@ -123,6 +124,13 @@ h.eval(root, 'CavaService.push([1, 1, 1, 1, 1, 1])')
 check('inactive ignores frames', h.eval(root, 'vis.drawn.length') == 0)
 h.eval(root, 'vis.playing = true')
 check('reactivating starts at the current level', list(h.eval(root, 'vis.drawn').toVariant()) == [1] * 6)
+
+# Battery saver: no per-frame work while it is active, back when it ends.
+saver = h.engine.singletonInstance('qs.modules.globals', 'BatterySaver')
+saver.setProperty('active', True)
+check('an active battery saver turns the visualizer off', h.eval(root, 'vis.active') is False and h.eval(root, 'vis.drawn.length') == 0)
+saver.setProperty('active', False)
+check('it comes back when the saver ends', h.eval(root, 'vis.active') is True)
 
 
 def ease(expr):
