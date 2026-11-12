@@ -2226,7 +2226,7 @@
   "prefs.term.fetch.logo.blocked.own": "Your own fastfetch config decides the logo.",
   "prefs.term.fetch.logo.blocked.none": "This look has no logo.",
   "prefs.term.fetch.logo.path.placeholder": "A text file or a PNG picture",
-  "prefs.term.fetch.logo.path.hint": "Text: ASCII or Unicode art up to 64 KiB ($1 to $5 pick palette colors, ANSI escapes are kept). PNG: up to 8 MiB, drawn in kitty; other terminals show the sakura logo.",
+  "prefs.term.fetch.logo.path.hint": "Text: ASCII or Unicode art up to 64 KiB ($1 to $5 pick palette colors; of ANSI escapes only colors are kept). PNG: up to 8 MiB, drawn in kitty; other terminals show the sakura logo.",
   "prefs.term.fetch.logo_error.title": "The logo file cannot be used",
   "prefs.term.fetch.logo_error.logo_path": "Choose a file with Browse: the path must be absolute. The sakura logo is shown meanwhile.",
   "prefs.term.fetch.logo_error.logo_missing": "The file is not there or cannot be read. The sakura logo is shown meanwhile.",

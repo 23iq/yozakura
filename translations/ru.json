@@ -2230,7 +2230,7 @@
   "prefs.term.fetch.logo.blocked.own": "Логотип задаёт ваша собственная настройка fastfetch.",
   "prefs.term.fetch.logo.blocked.none": "У этого вида нет логотипа.",
   "prefs.term.fetch.logo.path.placeholder": "Текстовый файл или картинка PNG",
-  "prefs.term.fetch.logo.path.hint": "Текст: ASCII- или Unicode-рисунок до 64 КиБ ($1–$5 выбирают цвета палитры, ANSI-последовательности сохраняются). PNG: до 8 МиБ, рисуется в kitty; другие терминалы показывают логотип сакуры.",
+  "prefs.term.fetch.logo.path.hint": "Текст: ASCII- или Unicode-рисунок до 64 КиБ ($1–$5 задают цвета палитры; из ANSI-последовательностей остаются только цвета). PNG: до 8 МиБ, рисуется в kitty; другие терминалы показывают логотип сакуры.",
   "prefs.term.fetch.logo_error.title": "Файл логотипа нельзя использовать",
   "prefs.term.fetch.logo_error.logo_path": "Выберите файл кнопкой «Обзор»: путь должен быть абсолютным. Пока показывается логотип сакуры.",
   "prefs.term.fetch.logo_error.logo_missing": "Файла нет или его нельзя прочитать. Пока показывается логотип сакуры.",
