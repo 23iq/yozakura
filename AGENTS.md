@@ -46,7 +46,7 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ├── modules/
 │   ├── bar/              # Panel widgets: clock, systray, workspaces, indicators
 │   ├── components/       # Reusable UI primitives + GLSL shaders; kit/ = the UI kit every screen uses
-│   ├── corners/          # Rounded screen corners overlay
+│   ├── corners/          # Rounded screen corners (drawn by the unified panel)
 │   ├── desktop/          # Desktop background + icon grid
 │   ├── dock/             # App dock (standalone or integrated into bar)
 │   ├── frame/            # Screen border/glow effect

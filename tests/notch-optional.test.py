@@ -31,12 +31,15 @@ h.module("Quickshell.Wayland", {
     "WlrLayer": "QtObject { enum Layer { Top = 2, Overlay = 3 } }",
     "WlrKeyboardFocus": "QtObject { enum Focus { None = 0, Exclusive = 1, OnDemand = 2 } }",
 })
+h.module("qs.modules.corners", {"ScreenCornersContent": "Item { property bool hasFullscreenWindow }"})
 h.singleton("qs.config", "Config", """QtObject {
     property bool notchReady: true
     property bool barReady: true
     property bool dockReady: true
     property var dock: ({ enabled: false })
     property var bar: ({ frameEnabled: false })
+    property int roundness: 16
+    property var theme: ({ enableCorners: true })
 }""")
 h.module("qs.modules.services", {
     "ShellLayout": "pragma Singleton\nQtObject { property bool notchEnabled: true }",

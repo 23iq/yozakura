@@ -51,7 +51,6 @@ modules/components/CircularSeekBar.qml
 modules/components/Tinted.qml
 modules/components/TintedWallpaper.qml
 modules/components/WavyLine.qml
-modules/corners/ScreenCorners.qml
 modules/frame/ScreenFrameContent.qml
 modules/globals/GlobalStates.qml
 modules/notch/Notch.qml
