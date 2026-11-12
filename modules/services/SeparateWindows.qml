@@ -65,10 +65,13 @@ Singleton {
         if (!data)
             return;
         if (service === "windows.state") {
+            // stopped by the daemon's shutdown / reload, or the daemon is
+            // gone: not a failed start, never a reason to open in-process
+            const lost = data.shutdown === true || !BackendService.socketAvailable;
             if (data.kind === "settings")
-                root._settingsState(String(data.state || "closed"));
+                root._settingsState(String(data.state || "closed"), lost);
             else if (data.kind === "onboarding")
-                root._wizardState(String(data.state || "closed"));
+                root._wizardState(String(data.state || "closed"), lost);
         } else if (service === "windows.relay" && data.to === "shell") {
             root.relay(String(data.topic || ""), data.data || {});
         }
@@ -105,9 +108,10 @@ Singleton {
         root._syncing = false;
     }
 
-    // A close was asked of the running process (no fallback if it ends).
+    // A close was asked of the running process, or the daemon went away
+    // (no fallback if it ends).
     property bool _settingsCloseAsked: false
-    function _settingsState(state) {
+    function _settingsState(state, lost) {
         const prev = root.settingsState;
         root.settingsState = state;
         if (state === "starting")
@@ -119,7 +123,7 @@ Singleton {
             root._settingsAsked = false;
             if (again) {
                 root._openSettings();
-            } else if (prev === "starting" && !root._settingsInProcess && !root._settingsCloseAsked) {
+            } else if (prev === "starting" && !root._settingsInProcess && !root._settingsCloseAsked && !lost) {
                 // The process ended before its window showed (a QML error,
                 // a missing module): the in-process window instead.
                 root._settingsFallback("the window process exited before it showed");
@@ -237,7 +241,7 @@ Singleton {
     }
 
     property bool _wizardCloseAsked: false
-    function _wizardState(state) {
+    function _wizardState(state, lost) {
         const prev = root.wizardState;
         root.wizardState = state;
         if (state === "starting")
@@ -247,7 +251,7 @@ Singleton {
             root._wizardAsked = false;
             if (again) {
                 root._openWizard();
-            } else if (prev === "starting" && !root._wizardInProcess && !root._wizardCloseAsked) {
+            } else if (prev === "starting" && !root._wizardInProcess && !root._wizardCloseAsked && !lost) {
                 // Never shown: not dismissed by the user, the in-process
                 // wizard instead (a first run still gets its wizard).
                 root._wizardFallback("the wizard process exited before it showed");
@@ -325,6 +329,21 @@ Singleton {
         onTriggered: {
             if (root._wizardPending && !root.wizardRunning)
                 root._wizardFallback("no answer from the daemon");
+        }
+    }
+
+    // The daemon connection dropped (shutdown, reload, crash): a window
+    // still starting went with it; the state the daemon reports once it is
+    // back (closed) is no failed start.
+    Connections {
+        target: BackendService
+        function onSocketAvailableChanged() {
+            if (BackendService.socketAvailable)
+                return;
+            if (root.settingsState === "starting")
+                root._settingsCloseAsked = true;
+            if (root.wizardState === "starting")
+                root._wizardCloseAsked = true;
         }
     }
 

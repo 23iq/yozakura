@@ -133,11 +133,15 @@ type Command struct {
 }
 
 // Status is one kind's state (windows.state event, windows.status).
+// Shutdown marks a window stopped by the daemon's shutdown (Close): the
+// main shell must not take it for a failed start and open the window
+// in-process.
 type Status struct {
-	Kind  string `json:"kind"`
-	State string `json:"state"`
-	Pid   int    `json:"pid,omitempty"`
-	Error string `json:"error,omitempty"`
+	Kind     string `json:"kind"`
+	State    string `json:"state"`
+	Pid      int    `json:"pid,omitempty"`
+	Error    string `json:"error,omitempty"`
+	Shutdown bool   `json:"shutdown,omitempty"`
 }
 
 // Relay is a windows.relay message.
@@ -316,9 +320,10 @@ func (s *Service) reap(kind string, inst *instance) {
 	if current {
 		delete(s.running, kind)
 	}
+	shutdown := s.closed
 	s.mu.Unlock()
 	close(inst.done)
-	st := Status{Kind: kind, State: StateClosed}
+	st := Status{Kind: kind, State: StateClosed, Shutdown: shutdown}
 	if err != nil {
 		st.Error = err.Error()
 		log.Printf("[windows] %s exited: %v", kind, err)

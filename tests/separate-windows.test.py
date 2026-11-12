@@ -306,6 +306,30 @@ settle()
 emit("windows.state", {"kind": "settings", "state": "closed"})
 check(ev("SeparateWindows.settingsSeparate") is True and ev("GlobalStates.settingsWindowVisible") is False,
       "closed by the user during its start: stays closed")
+# the daemon shuts down / reloads while it starts: no in-process window unasked
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+emit("windows.state", {"kind": "settings", "state": "starting", "pid": 23})
+emit("windows.state", {"kind": "settings", "state": "closed", "error": "signal: terminated", "shutdown": True})
+check(ev("SeparateWindows.settingsSeparate") is True and ev("GlobalStates.settingsWindowVisible") is False,
+      "stopped by the daemon's shutdown during its start: no in-process fallback")
+# ...or the connection to it drops: the state it reports once back is no failed start
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+emit("windows.state", {"kind": "settings", "state": "starting", "pid": 24})
+ev("BackendService.socketAvailable = false")
+settle()
+ev("BackendService.socketAvailable = true")
+emit("windows.state", {"kind": "settings", "state": "closed"})
+check(ev("SeparateWindows.settingsSeparate") is True and ev("GlobalStates.settingsWindowVisible") is False,
+      "the daemon went away during its start: no in-process fallback")
+ev("OnboardingService.visible = true")
+settle()
+emit("windows.state", {"kind": "onboarding", "state": "starting", "pid": 25})
+emit("windows.state", {"kind": "onboarding", "state": "closed", "shutdown": True})
+check(ev("SeparateWindows.wizardSeparate") is True and ev("OnboardingService.visible") is False,
+      "the wizard stopped by the daemon's shutdown: no in-process fallback")
+ev("OnboardingService.dismissedThisSession = false")
 # the wizard on a first run: a broken window process never hides the wizard
 opened = ev("OnboardingService.opens")
 ev("OnboardingService.visible = true")

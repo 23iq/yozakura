@@ -219,8 +219,9 @@ window reopens at once). Off, everything is as before.
   SIGKILL of its group), never restarts it; the orphan sweep knows the entry
   files. A start failure falls back to the in-process window (so does no
   daemon connection, `qs -p shell.qml` alone, no answer within 3 s, or a
-  process that exits before its window showed; the wizard then does not
-  count as dismissed); a window open
+  process that exits before its window showed, unless the daemon stopped
+  it at shutdown / reload or its connection is gone; the wizard then does
+  not count as dismissed); a window open
   in-process stays so when the setting changes. `OpeningPill` shows until
   the window reports `windows.ready`; the frame maps first
   (`SettingsWindowSeparate`: background + "Loading settings...", content by URL).

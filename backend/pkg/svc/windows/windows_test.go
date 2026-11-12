@@ -277,6 +277,16 @@ func TestCloseStopsEveryWindowAndRefusesNewOnes(t *testing.T) {
 		return r.svc.Statuses()[0].State == StateClosed && r.svc.Statuses()[1].State == StateClosed
 	},
 		time.Second, 5*time.Millisecond))
+	// reported as stopped by the shutdown: the main shell does not open
+	// the in-process window for a window that was still starting
+	closed := 0
+	for _, ev := range r.events(t, 4) { // starting x2, closed x2
+		if st, ok := ev.Data.(Status); ok && st.State == StateClosed {
+			closed++
+			assert.True(t, st.Shutdown, "%+v", st)
+		}
+	}
+	assert.Equal(t, 2, closed)
 
 	_, err = r.svc.Open(Request{Kind: KindSettings})
 	assert.Error(t, err, "no window starts during shutdown")
