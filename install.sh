@@ -40,6 +40,9 @@ SYS_BIN="${YOZAKURA_SYS_BIN:-/usr/local/bin}"
 # installs: user-level code cannot replace it (unlike ~/.local/bin).
 SYS_HELPER="/usr/local/lib/$APP_ID/$APP_ID-sys"
 OS_RELEASE="${YOZAKURA_OS_RELEASE:-/etc/os-release}"
+# Where the systemd state is looked up (/run/systemd/system, the
+# display-manager link); the tests point it at a fake tree.
+SYSROOT="${YOZAKURA_SYSROOT:-}"
 COMPOSITORS=(hyprland niri mango)
 
 WITH_VOICE="" WITH_DEPTH="" WITH_SDDM="" REBOOT="" # "" = default, 1 = yes, 0 = no
@@ -829,20 +832,24 @@ detect_system() {
   GPU="${YOZAKURA_GPU:-${GPU:-unknown}}"
 
   DM=""
-  if [[ -L /etc/systemd/system/display-manager.service ]]; then
-    DM="$(basename "$(readlink -f /etc/systemd/system/display-manager.service)" .service)"
+  if [[ -L "$SYSROOT/etc/systemd/system/display-manager.service" ]]; then
+    DM="$(basename "$(readlink -f "$SYSROOT/etc/systemd/system/display-manager.service")" .service)"
   else
     for v in sddm gdm lightdm greetd ly; do
-      if has_cmd "$v"; then
-        DM="$v"
-        break
-      fi
+      has_cmd "$v" || continue
+      # systemd starts SDDM only through display-manager.service: one that
+      # is installed but not enabled (an earlier run that stopped before
+      # its services step) shows no login screen, so it counts as none and
+      # is set up again.
+      [[ "$v" == sddm ]] && has_systemd && continue
+      DM="$v"
+      break
     done
   fi
   return 0
 }
 
-has_systemd() { [[ -d /run/systemd/system ]]; }
+has_systemd() { [[ -d "$SYSROOT/run/systemd/system" ]]; }
 
 # === Compositor ===
 comp_name() {
@@ -964,7 +971,9 @@ choose_login() {
   [[ -z "$WITH_SDDM" ]] || return 0
   WITH_SDDM=0
   [[ -z "$DM" && "$INSTALL_DEPS" == 1 ]] && has_systemd || return 0
-  if ask "No login screen found. Set up SDDM with the $DISPLAY_NAME theme?" y; then WITH_SDDM=1; fi
+  local question="No login screen found. Set up SDDM with the $DISPLAY_NAME theme?"
+  has_cmd sddm && question="SDDM is installed but not enabled (no login screen at boot). Enable it with the $DISPLAY_NAME theme?"
+  if ask "$question" y; then WITH_SDDM=1; fi
 }
 
 # === Package list (backend/pkg/deps/packages.tsv) ===
@@ -1246,7 +1255,11 @@ show_plan() {
   ui_box_head "THIS MACHINE"
   ui_box_kv "System" "$DISTRO_NAME$s$(uname -m)"
   ui_box_kv "Graphics" "$GPU"
-  ui_box_kv "Login" "${DM:-none (console)}"
+  if [[ -z "$DM" ]] && has_systemd && has_cmd sddm; then
+    ui_box_kv "Login" "none (sddm is installed but not enabled)"
+  else
+    ui_box_kv "Login" "${DM:-none (console)}"
+  fi
   ui_box_head "INSTALL"
   ui_box_kv "Compositor" "$C_BOLD$(comp_name "$COMPOSITOR")$C_OFF"
   ui_box_kv "Sources" "$REPO_ACTION $(tilde "$SRC_DIR")"
@@ -1538,12 +1551,14 @@ phosphor_user_font() {
 
 configure_system() {
   local svc
+  # One service that cannot start (no adapter, a unit renamed upstream)
+  # must not keep the others, the login screen among them, disabled.
   for svc in "${SERVICES[@]}"; do
     if [[ "$svc" == sddm ]]; then
       # Starting a display manager now would take over the screen mid-install.
-      run "Enabling sddm (from the next boot)" "Enable it later: sudo systemctl enable sddm" sudo systemctl enable sddm
+      run_optional sddm "Enabling sddm (from the next boot)" "Enable it later: sudo systemctl enable sddm" sudo systemctl enable sddm
     else
-      run "Enabling $svc" "Enable it later: sudo systemctl enable --now $svc" sudo systemctl enable --now "$svc"
+      run_optional "$svc" "Enabling $svc" "Enable it later: sudo systemctl enable --now $svc" sudo systemctl enable --now "$svc"
     fi
   done
   if [[ "$ADD_INPUT_GROUP" == 1 ]]; then
@@ -1945,6 +1960,13 @@ done_header() {
   echo >&2
 }
 
+# failed NAME: whether NAME is among this run's failures (FAILED).
+failed() {
+  local f
+  for f in "${FAILED[@]}"; do [[ "$f" == "$1" ]] && return 0; done
+  return 1
+}
+
 # numbered N TEXT: one line of the next steps.
 numbered() { ui_box_row "$(printf '%s%s%s  %s' "$C_PINK$C_BOLD" "$1" "$C_OFF" "$2")"; }
 command_row() { ui_box_row "$(printf '%s%-18s%s %s%s%s' "$C_PINK" "$1" "$C_OFF" "$C_DIM" "$2" "$C_OFF")"; }
@@ -1979,10 +2001,10 @@ next_steps() {
   if in_session; then
     numbered 1 "You are in $name already: run $C_PINK$APP_ID$C_OFF now."
     numbered 2 "From the next login on it starts with $name."
-  elif [[ " ${SERVICES[*]} " == *" sddm "* ]]; then
+  elif [[ " ${SERVICES[*]} " == *" sddm "* ]] && ! failed sddm; then
     numbered 1 "Reboot and pick $name on the new login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
-  elif [[ -n "$DM" || "$WITH_SDDM" == 1 ]]; then
+  elif [[ -n "$DM" ]] || { [[ "$WITH_SDDM" == 1 ]] && ! failed sddm; }; then
     numbered 1 "Log out (or reboot) and pick $name on the login screen."
     numbered 2 "The setup wizard greets you there. Super opens the launcher."
   else

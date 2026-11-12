@@ -34,7 +34,11 @@ LOGGER = 'l="${0##*/}"; for a in "$@"; do l+=$\'\\t\'"$a"; done; printf "%s\\n" 
 
 STUBS = {
     # STUB_SUDO_DENY: no cached credentials and no password accepted.
-    "sudo": '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\nexit 0\n',
+    # STUB_SUDO_FAIL: a command line (e.g. "systemctl enable sddm") that fails.
+    "sudo": (
+        '[[ -n "${STUB_SUDO_DENY:-}" ]] && exit 1\n'
+        '[[ -n "${STUB_SUDO_FAIL:-}" && "$*" == "$STUB_SUDO_FAIL" ]] && exit 1\nexit 0\n'
+    ),
     "systemctl": 'case "$1" in is-active | is-enabled) exit 1 ;; esac\n',
     "git": 'case "$*" in *--abbrev-ref*) echo main ;; *--short*) echo abc1234 ;; esac\n',
     "make": (
@@ -718,8 +722,53 @@ def test_yay_bootstrap_failure_does_not_abort():
         sb.cleanup()
 
 
+def systemd_root(sb, dm=None):
+    """A systemd host; dm: the unit display-manager.service links to."""
+    root = sb.root / "sysroot"
+    (root / "run/systemd/system").mkdir(parents=True, exist_ok=True)
+    link = root / "etc/systemd/system/display-manager.service"
+    link.parent.mkdir(parents=True, exist_ok=True)
+    if link.is_symlink():
+        link.unlink()
+    if dm:
+        unit = root / f"usr/lib/systemd/system/{dm}.service"
+        unit.parent.mkdir(parents=True, exist_ok=True)
+        unit.write_text("")
+        link.symlink_to(unit)
+    sb.extra_env["YOZAKURA_SYSROOT"] = str(root)
 
 
+def test_sddm_installed_but_disabled_is_set_up():
+    sb = Sandbox("arch")
+    try:
+        # sddm is installed (an earlier run stopped before its services step)
+        # but nothing is linked as display-manager.service.
+        systemd_root(sb)
+        Sandbox._script(sb.bin / "sddm", "#!/bin/bash\n")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"exit {rc}", err)
+        check("sddm is installed but not enabled" in err, "plan does not say SDDM is off", err)
+        check(["systemctl", "enable", "sddm"] in sb.calls("sudo"), "SDDM not enabled", sb.log.read_text())
+        check(any(c[:1] == ["bash"] and c[1].endswith("install-sddm-theme.sh") for c in sb.calls("sudo")), "SDDM theme not installed", sb.log.read_text())
+        check("pick niri on the new login screen" in err, "next steps do not point at the login screen", err)
+
+        # An enabled login manager: SDDM is left alone.
+        systemd_root(sb, dm="gdm")
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0 and re.search(r"Login\s+gdm", err), "gdm not detected", err)
+        check(["systemctl", "enable", "sddm"] not in sb.calls("sudo"), "SDDM enabled next to gdm", sb.log.read_text())
+
+        # Enabling SDDM fails: the other services still run, and the summary
+        # does not promise a login screen.
+        systemd_root(sb)
+        sb.extra_env["STUB_SUDO_FAIL"] = "systemctl enable sddm"
+        rc, err, _ = sb.run("-y", "--compositor", "niri")
+        check(rc == 0, f"failing sddm enable exit {rc}", err)
+        check(["systemctl", "enable", "--now", "bluetooth"] in sb.calls("sudo"), "bluetooth skipped after sddm failed")
+        check(re.search(r"sddm: failed", err), "summary lacks the sddm failure", err)
+        check("new login screen" not in err and "niri-session" in err, "next steps promise a login screen", err)
+    finally:
+        sb.cleanup()
 
 
 
@@ -728,6 +777,7 @@ def main():
     for test in (
         test_aur_failure_does_not_abort,
         test_yay_bootstrap_failure_does_not_abort,
+        test_sddm_installed_but_disabled_is_set_up,
         test_debian_without_awk_builds_what_apt_lacks,
         test_arch_force_replaces_conflicts,
         test_arch_package_missing_from_repos,
