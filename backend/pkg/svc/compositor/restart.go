@@ -13,8 +13,8 @@ import (
 // Restart policy of the compositor daemon (superviseDaemon), in the spirit
 // of the shell's (daemon.crashGuard): a daemon that exits is started again
 // after daemonRestartDelay, doubling with every further exit up to
-// daemonRestartMax; one that ran for daemonHealthyRun starts over at
-// daemonRestartDelay. When it reports that no supported compositor runs
+// daemonRestartMax; one that ran for daemonHealthyRun, or the first exit
+// after a "no compositor" streak, starts over at daemonRestartDelay. When it reports that no supported compositor runs
 // (client.ExitNoCompositor, e.g. a sway or GNOME session), the first
 // noCompositorQuick tries keep the short backoff (a compositor socket that
 // is not up yet at login), then it is retried every noCompositorRetry,
@@ -44,7 +44,9 @@ type restartPolicy struct {
 // is true for the first exit of a "no compositor" streak, the only one
 // worth logging.
 func (p *restartPolicy) next(ran time.Duration, noCompositor bool) (delay time.Duration, first bool) {
-	if ran >= daemonHealthyRun {
+	// a healthy run, or a start that ended a "no compositor" streak (a
+	// compositor came up), starts over at daemonRestartDelay
+	if ran >= daemonHealthyRun || (!noCompositor && p.noComp > 0) {
 		p.delay = 0
 	}
 	if noCompositor {

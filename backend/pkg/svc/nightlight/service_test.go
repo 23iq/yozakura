@@ -29,10 +29,11 @@ func newServiceForTest(t *testing.T) *Service {
 	t.Helper()
 	s := NewService(&paths.Paths{StateDir: t.TempDir()})
 	// Override the Service's process hooks so we don't shell out.
+	oldRun := runFn
 	runFn = func(name string, args ...string) error { return nil }
+	t.Cleanup(func() { runFn = oldRun })
 	s.startFn = func(_ uint32) error { return nil }
 	s.stopFn = func() {}
-	t.Cleanup(func() {})
 	return s
 }
 

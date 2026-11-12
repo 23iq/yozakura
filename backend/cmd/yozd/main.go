@@ -219,8 +219,13 @@ func runDaemon(customConfigPath string) {
 			if err == nil {
 				fmt.Println("Detected compositor:", comp)
 			} else {
-				fmt.Println("Error: no supported compositor detected")
-				os.Exit(client.ExitNoCompositor)
+				status := detectFailureStatus()
+				if status == client.ExitNoCompositor {
+					fmt.Println("Error: no supported compositor detected")
+				} else {
+					fmt.Println("Error: compositor not reachable:", err)
+				}
+				os.Exit(status)
 			}
 		}
 	}
