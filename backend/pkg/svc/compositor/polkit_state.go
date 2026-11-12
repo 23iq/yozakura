@@ -30,10 +30,17 @@ type polkitState struct {
 }
 
 func (p *polkitState) get(json.RawMessage) (any, error) {
+	return p.report(), nil
+}
+
+func (p *polkitState) report() PolkitReport {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	return p.last, nil
+	return p.last
 }
+
+// PolkitReport is the shell's last polkit agent report (zero: none yet).
+func (s *Service) PolkitReport() PolkitReport { return s.polkit.report() }
 
 func (p *polkitState) set(params json.RawMessage) (any, error) {
 	var r PolkitReport

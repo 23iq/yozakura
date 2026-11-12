@@ -156,6 +156,9 @@ func TestPolkitStateKeepsTheShellsLastReport(t *testing.T) {
 	if got := get(); got != (PolkitReport{State: PolkitRegistered, PID: 42}) {
 		t.Fatalf("after a report: %+v", got)
 	}
+	if got := s.PolkitReport(); got != (PolkitReport{State: PolkitRegistered, PID: 42}) {
+		t.Fatalf("PolkitReport (the daemon's read): %+v", got)
+	}
 	for _, bad := range []string{`{"state":"maybe","pid":1}`, `not json`} {
 		if _, err := s.polkit.set(json.RawMessage(bad)); err == nil {
 			t.Errorf("%s accepted", bad)
