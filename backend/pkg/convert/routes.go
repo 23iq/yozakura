@@ -199,7 +199,7 @@ func Targets(from string, t *Tools) []Target {
 		tg := Target{ID: f.ID, Label: f.Label, Kind: f.Kind, Popular: pop[f.ID], Lossy: f.Lossy}
 		tg.Engine, tg.Available = pick(r.via, from, r.to, t)
 		if !tg.Available {
-			tg.Needs = ToolName(tg.Engine)
+			tg.Needs = t.missing(tg.Engine)
 		}
 		out = append(out, tg)
 	}
@@ -223,7 +223,9 @@ func pick(via []Engine, from, to string, t *Tools) (Engine, bool) {
 }
 
 // Default is the proposed target of a source: the first available of its
-// defaults, else the first one.
+// defaults; when none can run here, the first available popular target,
+// then any available one (the file stays convertible); only when nothing
+// can run, the preferred default (unavailable: it names the tool).
 func Default(from string, t *Tools) string {
 	d := defaults[from]
 	if len(d) == 0 {
@@ -234,6 +236,13 @@ func Default(from string, t *Tools) string {
 		for _, tg := range targets {
 			if tg.ID == id && tg.Available {
 				return id
+			}
+		}
+	}
+	for _, popularOnly := range []bool{true, false} {
+		for _, tg := range targets {
+			if tg.Available && (tg.Popular || !popularOnly) {
+				return tg.ID
 			}
 		}
 	}

@@ -37,6 +37,8 @@ import qs.modules.onboarding
 import qs.modules.polkit
 import qs.modules.specials
 import "modules/tools"
+// the converter window loads by URL; this import lets the scanner reach its directory
+import "modules/converter"
 import "modules/settings/SettingsScreen.js" as SettingsScreen
 
 ShellRoot {

@@ -124,6 +124,20 @@ func (t *Tools) Has(e Engine) bool {
 	return t.Prog(e) != ""
 }
 
+// missing names what an unavailable engine still needs: for the two-step
+// markup to PDF only the tool that is not installed.
+func (t *Tools) missing(e Engine) string {
+	if e == EngineDocPDF {
+		switch {
+		case t.Has(EnginePandoc) && !t.Has(EngineSoffice):
+			return ToolName(EngineSoffice)
+		case !t.Has(EnginePandoc) && t.Has(EngineSoffice):
+			return ToolName(EnginePandoc)
+		}
+	}
+	return ToolName(e)
+}
+
 // Installed lists the engines found (for `convert formats`).
 func (t *Tools) Installed() []Engine {
 	var out []Engine
