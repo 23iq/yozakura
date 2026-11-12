@@ -148,7 +148,17 @@ func privateBus(t *testing.T) (client, server *dbus.Conn) {
 type fakeManager struct {
 	sessions map[string]dbus.ObjectPath
 	pids     map[uint32]dbus.ObjectPath
-	display  dbus.ObjectPath // the user's display session ("" = no user)
+	display  dbus.ObjectPath            // the user's display session ("" = no user)
+	types    map[dbus.ObjectPath]string // session path -> Type
+}
+
+type fakeSession struct{ typ string }
+
+func (s fakeSession) Get(iface, name string) (dbus.Variant, *dbus.Error) {
+	if iface != "org.freedesktop.login1.Session" || name != "Type" {
+		return dbus.Variant{}, dbus.NewError("org.freedesktop.DBus.Error.UnknownProperty", nil)
+	}
+	return dbus.MakeVariant(s.typ), nil
 }
 
 func (m *fakeManager) GetSession(id string) (dbus.ObjectPath, *dbus.Error) {
@@ -195,6 +205,11 @@ func serveLogin1(t *testing.T, server *dbus.Conn, m *fakeManager) {
 	if err := server.Export(fakeUser{m.display}, "/org/freedesktop/login1/user/_1000", "org.freedesktop.DBus.Properties"); err != nil {
 		t.Fatal(err)
 	}
+	for p, typ := range m.types {
+		if err := server.Export(fakeSession{typ}, p, "org.freedesktop.DBus.Properties"); err != nil {
+			t.Fatal(err)
+		}
+	}
 	if _, done := login1Owned.LoadOrStore(server, true); done {
 		return
 	}
@@ -210,7 +225,11 @@ func TestOwnSessionResolution(t *testing.T) {
 		t.Fatalf("no login1: %q", got)
 	}
 	sessions := map[string]dbus.ObjectPath{"3": "/org/freedesktop/login1/session/_33"}
-	serveLogin1(t, server, &fakeManager{sessions: sessions})
+	graphical := map[dbus.ObjectPath]string{
+		"/org/freedesktop/login1/session/_33": "wayland",
+		"/org/freedesktop/login1/session/_34": "x11",
+	}
+	serveLogin1(t, server, &fakeManager{sessions: sessions, types: graphical})
 	if got := ownSession(client); got != "/org/freedesktop/login1/session/_33" {
 		t.Fatalf("XDG_SESSION_ID: %q", got)
 	}
@@ -219,7 +238,7 @@ func TestOwnSessionResolution(t *testing.T) {
 		t.Fatalf("nothing resolves: %q", got)
 	}
 	pid := uint32(os.Getpid())
-	serveLogin1(t, server, &fakeManager{sessions: sessions, pids: map[uint32]dbus.ObjectPath{pid: "/org/freedesktop/login1/session/_34"}})
+	serveLogin1(t, server, &fakeManager{sessions: sessions, pids: map[uint32]dbus.ObjectPath{pid: "/org/freedesktop/login1/session/_34"}, types: graphical})
 	if got := ownSession(client); got != "/org/freedesktop/login1/session/_34" {
 		t.Fatalf("by pid: %q", got)
 	}
@@ -233,11 +252,52 @@ func TestOwnSessionResolution(t *testing.T) {
 	}
 }
 
+// A daemon started from a TTY context ($XDG_SESSION_ID and its own pid in
+// a tty session, e.g. a tmux server first started on a TTY) still follows
+// the user's graphical display session; a non-graphical session is only
+// taken when it is the display session, and with no graphical session at
+// all nothing resolves (every session's Lock counts).
+func TestOwnSessionSkipsNonGraphical(t *testing.T) {
+	client, server := privateBus(t)
+	const (
+		tty     = dbus.ObjectPath("/org/freedesktop/login1/session/_31")
+		pidTTY  = dbus.ObjectPath("/org/freedesktop/login1/session/_32")
+		wayland = dbus.ObjectPath("/org/freedesktop/login1/session/_36")
+		seat2   = dbus.ObjectPath("/org/freedesktop/login1/session/_38")
+	)
+	types := map[dbus.ObjectPath]string{tty: "tty", pidTTY: "tty", wayland: "wayland", seat2: "x11"}
+	pids := map[uint32]dbus.ObjectPath{uint32(os.Getpid()): pidTTY}
+	t.Setenv("XDG_SESSION_ID", "1")
+
+	serveLogin1(t, server, &fakeManager{sessions: map[string]dbus.ObjectPath{"1": tty}, pids: pids, display: wayland, types: types})
+	if got := ownSession(client); got != wayland {
+		t.Fatalf("tty env and pid sessions: %q, want the display session %q", got, wayland)
+	}
+
+	serveLogin1(t, server, &fakeManager{sessions: map[string]dbus.ObjectPath{"1": tty}, pids: pids, display: "/", types: types})
+	if got := ownSession(client); got != "" {
+		t.Fatalf("nothing graphical: %q, want none", got)
+	}
+
+	serveLogin1(t, server, &fakeManager{sessions: map[string]dbus.ObjectPath{"1": tty}, display: tty, types: types})
+	if got := ownSession(client); got != tty {
+		t.Fatalf("env session is the display session: %q", got)
+	}
+
+	serveLogin1(t, server, &fakeManager{sessions: map[string]dbus.ObjectPath{"1": seat2}, pids: pids, display: wayland, types: types})
+	if got := ownSession(client); got != seat2 {
+		t.Fatalf("graphical env session: %q, want %q", got, seat2)
+	}
+}
+
 // End to end over a bus: another session's Lock signal is ignored, this
 // session's runs the lock command.
 func TestSubscribeIgnoresOtherSessionsLock(t *testing.T) {
 	client, server := privateBus(t)
-	serveLogin1(t, server, &fakeManager{sessions: map[string]dbus.ObjectPath{"7": "/org/freedesktop/login1/session/_37"}})
+	serveLogin1(t, server, &fakeManager{
+		sessions: map[string]dbus.ObjectPath{"7": "/org/freedesktop/login1/session/_37"},
+		types:    map[dbus.ObjectPath]string{"/org/freedesktop/login1/session/_37": "wayland"},
+	})
 	t.Setenv("XDG_SESSION_ID", "7")
 	r := &runs{}
 	s := newService(client)

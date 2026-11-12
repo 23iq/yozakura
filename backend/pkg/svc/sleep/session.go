@@ -21,38 +21,82 @@ const lookupTimeout = 2 * time.Second
 // ownSession resolves the login1 session this process belongs to, so a
 // Lock of another session (another seat, a TTY login, another user) does
 // not lock this one: $XDG_SESSION_ID, else the session of this process,
-// else the user's display session. "" when none resolves.
+// each only when it is graphical (Type wayland or x11) or is the user's
+// display session; else the user's display session. A daemon (re)started
+// from a TTY context (a tmux server first started on a TTY) would otherwise
+// pin the match to the TTY session and ignore the graphical one's Lock.
+// "" when none resolves (every session's Lock then counts).
 func ownSession(conn *dbus.Conn) dbus.ObjectPath {
 	if conn == nil {
 		return ""
 	}
-	mgr := conn.Object(login1Dest, login1Path)
-	call := func(method string, args ...any) dbus.ObjectPath {
-		ctx, cancel := context.WithTimeout(context.Background(), lookupTimeout)
-		defer cancel()
-		var p dbus.ObjectPath
-		if err := mgr.CallWithContext(ctx, login1Manager+"."+method, 0, args...).Store(&p); err != nil || !p.IsValid() || p == "/" {
-			return ""
+	l := login1{conn}
+	display := l.userDisplay()
+	accept := func(p dbus.ObjectPath) bool {
+		if p == "" {
+			return false
 		}
-		return p
+		if p == display {
+			return true
+		}
+		t := l.sessionType(p)
+		return t == "wayland" || t == "x11"
 	}
 	if id := os.Getenv("XDG_SESSION_ID"); id != "" {
-		if p := call("GetSession", id); p != "" {
+		if p := l.managerPath("GetSession", id); accept(p) {
 			return p
 		}
 	}
-	if p := call("GetSessionByPID", uint32(os.Getpid())); p != "" {
+	if p := l.managerPath("GetSessionByPID", uint32(os.Getpid())); accept(p) {
 		return p
 	}
-	user := call("GetUser", uint32(os.Getuid()))
-	if user == "" {
+	return display
+}
+
+type login1 struct{ conn *dbus.Conn }
+
+// managerPath calls a Manager method that returns an object path; "" on
+// any error or for "/".
+func (l login1) managerPath(method string, args ...any) dbus.ObjectPath {
+	ctx, cancel := context.WithTimeout(context.Background(), lookupTimeout)
+	defer cancel()
+	var p dbus.ObjectPath
+	if err := l.conn.Object(login1Dest, login1Path).CallWithContext(ctx, login1Manager+"."+method, 0, args...).Store(&p); err != nil || !p.IsValid() || p == "/" {
 		return ""
 	}
+	return p
+}
+
+// property reads one property of the login1 object at path.
+func (l login1) property(path dbus.ObjectPath, iface, name string) (dbus.Variant, bool) {
 	ctx, cancel := context.WithTimeout(context.Background(), lookupTimeout)
 	defer cancel()
 	var v dbus.Variant
-	if err := conn.Object(login1Dest, user).CallWithContext(ctx, "org.freedesktop.DBus.Properties.Get", 0,
-		"org.freedesktop.login1.User", "Display").Store(&v); err != nil {
+	if err := l.conn.Object(login1Dest, path).CallWithContext(ctx, "org.freedesktop.DBus.Properties.Get", 0,
+		iface, name).Store(&v); err != nil {
+		return dbus.Variant{}, false
+	}
+	return v, true
+}
+
+// sessionType is the session's Type (wayland, x11, tty, ...); "" unknown.
+func (l login1) sessionType(p dbus.ObjectPath) string {
+	v, ok := l.property(p, "org.freedesktop.login1.Session", "Type")
+	if !ok {
+		return ""
+	}
+	t, _ := v.Value().(string)
+	return t
+}
+
+// userDisplay is the user's display session (User.Display); "" for none.
+func (l login1) userDisplay() dbus.ObjectPath {
+	user := l.managerPath("GetUser", uint32(os.Getuid()))
+	if user == "" {
+		return ""
+	}
+	v, ok := l.property(user, "org.freedesktop.login1.User", "Display")
+	if !ok {
 		return ""
 	}
 	// Display is (so): the session id and its object path, "/" for none
