@@ -7,6 +7,9 @@ JsonAdapter {
     property string engine: "starship"
     property string prompt: "sakura-powerline"
     property string greeting: "none"
+    property string fastfetchPreset: "own"
+    property string fastfetchLogo: "sakura"
+    property string fastfetchLogoPath: ""
     property int padding: 12
     property string cursorShape: "beam"
     property bool cursorBlink: true

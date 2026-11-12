@@ -134,3 +134,49 @@ function fishState(status) {
         return "missing";
     return status.fishIsLoginShell ? "ok" : "notLogin";
 }
+
+// Block elements (U+2580..U+259F half and quadrant blocks, fastfetch logos)
+// are drawn as boxes like kitty draws them, not with the font's glyphs,
+// which leave seams between cells. The boxes of one character as
+// [x0, y0, x1, y1] fractions of its cell; null for any other character.
+// Quadrant bits: 1 upper left, 2 upper right, 4 lower left, 8 lower right.
+var _QUADS = {
+    "\u2580": 3,
+    "\u2584": 12,
+    "\u2588": 15,
+    "\u258c": 5,
+    "\u2590": 10,
+    "\u2596": 4,
+    "\u2597": 8,
+    "\u2598": 1,
+    "\u2599": 13,
+    "\u259a": 9,
+    "\u259b": 7,
+    "\u259c": 11,
+    "\u259d": 2,
+    "\u259e": 6,
+    "\u259f": 14
+};
+
+function blockBoxes(ch) {
+    var q = _QUADS[ch];
+    if (q === undefined)
+        return null;
+    var out = [];
+    var cells = [[0, 0, 0.5, 0.5], [0.5, 0, 1, 0.5], [0, 0.5, 0.5, 1], [0.5, 0.5, 1, 1]];
+    for (var i = 0; i < 4; i++) {
+        if (q & (1 << i))
+            out.push(cells[i]);
+    }
+    return out;
+}
+
+// The text has a block element (drawn cell by cell).
+function hasBlocks(text) {
+    var chars = Array.from(String(text || ""));
+    for (var i = 0; i < chars.length; i++) {
+        if (_QUADS[chars[i]] !== undefined)
+            return true;
+    }
+    return false;
+}

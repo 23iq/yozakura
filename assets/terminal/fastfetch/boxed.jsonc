@@ -1,0 +1,29 @@
+{
+    "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
+    "logo": {
+        "padding": {"top": 1, "left": 1, "right": 3}
+    },
+    "display": {
+        "separator": "  ",
+        "key": {"width": 14},
+        "color": {"keys": "blue", "title": "bold_magenta", "separator": "light_black", "output": "white"},
+        "duration": {"abbreviation": true, "spaceBeforeUnit": "never"},
+        "percent": {"type": 9, "color": {"green": "green", "yellow": "yellow", "red": "red"}}
+    },
+    "modules": [
+        {"type": "title", "format": "{#light_black}╭─ {user-name-colored}{#light_black}@{host-name-colored}"},
+        {"type": "custom", "format": "{#light_black}├─ {#bold_magenta}system"},
+        {"type": "os", "key": "{#light_black}│  {#blue}os", "format": "{pretty-name}"},
+        {"type": "kernel", "key": "{#light_black}│  {#blue}kernel", "format": "{release}"},
+        {"type": "packages", "key": "{#light_black}│  {#blue}packages"},
+        {"type": "shell", "key": "{#light_black}│  {#blue}shell"},
+        {"type": "custom", "format": "{#light_black}├─ {#bold_magenta}desktop"},
+        {"type": "wm", "key": "{#light_black}│  {#blue}wm", "format": "{pretty-name}"},
+        {"type": "terminal", "key": "{#light_black}│  {#blue}terminal", "format": "{pretty-name}"},
+        {"type": "custom", "format": "{#light_black}├─ {#bold_magenta}hardware"},
+        {"type": "cpu", "key": "{#light_black}│  {#blue}cpu", "format": "{name}"},
+        {"type": "memory", "key": "{#light_black}│  {#blue}memory"},
+        {"type": "uptime", "key": "{#light_black}│  {#blue}uptime"},
+        {"type": "custom", "format": "{#light_black}╰─ {#magenta}●  {#blue}●  {#cyan}●  {#green}●  {#red}●"}
+    ]
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"regexp"
@@ -18,6 +19,7 @@ const termHelp = `Usage: {bin} term list [--json]
        {bin} term preview <preset> [--engine starship|ohmyposh] [--width <cols>]
        {bin} term status [--json]
        {bin} term off
+       {bin} term greeting [on|off|preset <id>|logo <logo|file>|presets|preview] (see "{bin} term greeting help")
 
 The fish prompt (Starship or oh-my-posh) drawn with the shell palette: it
 follows theme changes on its own. list shows the presets; set picks one and
@@ -25,7 +27,7 @@ turns the prompt on (it writes the engine config and a fish conf.d file,
 never config.fish); preview draws one (exactly when the engine is
 installed); off removes the fish file again. Install the engine with
 "{bin} extras install starship" (or oh-my-posh), fish with "{bin} extras
-install fish".
+install fish". "greeting" is fastfetch when a terminal opens.
 `
 
 var termPresetID = regexp.MustCompile(`^[a-z0-9-]+$`)
@@ -34,6 +36,7 @@ var termPresetID = regexp.MustCompile(`^[a-z0-9-]+$`)
 type termEnv interface {
 	usageCaller
 	SetConfig(key string, value any) error
+	GetConfig(key string) (any, error)
 }
 
 type ipcTerm struct{ usageCaller }
@@ -47,6 +50,15 @@ func (ipcTerm) SetConfig(key string, value any) error {
 	return err
 }
 
+func (ipcTerm) GetConfig(key string) (any, error) {
+	env, err := loadConfigEnv()
+	if err != nil {
+		return nil, err
+	}
+	v, _, err := env.store.Get(key)
+	return v, err
+}
+
 type termPreset struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -57,10 +69,27 @@ type termPreset struct {
 
 // runTerm implements `yozakura term ...`.
 func runTerm(args []string, env termEnv, out, errOut io.Writer) int {
-	a := parseCLI(args, []string{"json", "help", "h"}, []string{"engine", "width"})
+	a := parseCLI(args, []string{"json", "help", "h"}, []string{"engine", "width", "logo"})
 	sub := "list"
 	if len(a.pos) > 0 {
 		sub, a.pos = a.pos[0], a.pos[1:]
+	}
+	if sub == "greeting" {
+		if a.has("help") || a.has("h") || (len(a.pos) > 0 && a.pos[0] == "help") {
+			fmt.Fprint(out, branded(termGreetingHelp))
+			return 0
+		}
+		logo, _ := a.value("logo")
+		err := runTermGreeting(env, a.pos, a.has("json"), logo, out)
+		if errors.Is(err, errUsage) {
+			fmt.Fprint(errOut, "Error: unknown arguments\n"+branded(termGreetingHelp))
+			return 2
+		}
+		if err != nil {
+			fmt.Fprintf(errOut, "Error: %v\n", err)
+			return 1
+		}
+		return 0
 	}
 	if sub == "help" || a.has("help") || a.has("h") {
 		fmt.Fprint(out, branded(termHelp))

@@ -3,8 +3,10 @@
 offscreen.
 
 A first run with no prompt or shell of the user's own preselects "use this
-prompt in fish" and "make fish my default shell", says what Continue does,
-and applies both only on Continue; unticked boxes apply nothing; a foreign
+prompt in fish" and "make fish my default shell" (never "show system info
+when a terminal opens", the fastfetch greeting: it edits the user's rc
+files, so it is opt-in), says what Continue does, and applies them only on
+Continue; unticked boxes apply nothing; a foreign
 prompt preselects nothing; skipping the wizard applies nothing; a re-run
 preselects nothing; a cancelled password (failed chsh) is said on the step
 and the summary never claims the prompt for a shell that will not load it.
@@ -84,7 +86,8 @@ def fresh_wizard(status, first_run=True):
     ev("OnboardingService.complete()")
     ev(f"Config.general.onboardingDone = {'false' if first_run else 'true'}")
     ev("Config.terminal.enabled = false; Config.terminal.prompt = 'sakura-powerline'")
-    ev("TerminalLookService.chosen = []; TerminalLookService.fishDefaults = 0")
+    ev("Config.terminal.greeting = 'none'; Config.terminal.fastfetchPreset = 'own'")
+    ev("TerminalLookService.chosen = []; TerminalLookService.fishDefaults = 0; TerminalLookService.greetings = []")
     ev("ExtrasService.jobs = ({})")
     ev(f"TerminalLookService.status = {json.dumps(status) if status else 'null'}")
     ev("OnboardingService.open()")
@@ -211,6 +214,85 @@ ev("TerminalLookService.status = Object.assign({}, TerminalLookService.status, {
 QTest.qWait(20)
 msg = str(prop("engineManual", "message"))
 check(prop("engineManual", "visible") is True and "starship package" in msg, f"manual engine install is said: {msg!r}")
+
+# ---- the fastfetch greeting --------------------------------------------------
+SHELLS = [{"shell": "fish", "state": "off"}, {"shell": "bash", "state": "off"}, {"shell": "zsh", "state": "absent"}]
+GREET = {"on": False, "fastfetchInstalled": True, "ownConfig": False, "shells": SHELLS}
+
+
+def greetings():
+    return json.loads(ev("JSON.stringify(TerminalLookService.greetings)"))
+
+
+fresh_wizard({**FRESH, "greeting": GREET})
+check(prop("fetchOn", "checked") is False, "first run: the greeting is not preselected (opt-in)")
+check("~/.bashrc" not in str(prop("shellPlan", "message") or ""), "unticked: the notice does not mention the startup files")
+h.eval(vfind("fetchOn"), "toggled(true)")
+QTest.qWait(30)
+check(prop("fetchOn", "checked") is True, "ticked: the row shows it")
+check(greetings() == [], "nothing is turned on while the step shows")
+plan = str(prop("shellPlan", "message") or "")
+check("~/.bashrc" in plan and "one line" in plan, f"the notice says the greeting edits the startup files: {plan!r}")
+ev("wizard.back()")
+ev("wizard.next()")
+check(greetings() == [], "Back applies nothing")
+ev("wizard.next()")
+check(greetings() == ["sakura:sakura"], f"Continue turns it on with the sakura look and logo: {greetings()}")
+check(ev("Config.terminal.greeting") == "fastfetch", "terminal.greeting is fastfetch")
+ev(f"wizard.go({STEPS.index('finish')})")
+QTest.qWait(50)
+check("system info greeting" in h.eval(vfind("summary:terminal"), "value"), "the summary mentions the greeting")
+
+# back on the step with the greeting on: unticking applies nothing until
+# Continue, and Skip keeps it on
+ev(f"wizard.go({STEPS.index('terminal')})")
+QTest.qWait(50)
+check(prop("fetchOn", "checked") is True, "on already: the row shows it")
+h.eval(vfind("fetchOn"), "toggled(false)")
+QTest.qWait(30)
+check(prop("fetchOn", "checked") is False, "unticked: the row shows it off")
+check(ev("Config.terminal.greeting") == "fastfetch", "unticking applies nothing before Continue")
+ev("wizard.finish()")
+check(ev("Config.terminal.greeting") == "fastfetch", "skip leaves the greeting as it was")
+fresh_wizard({**FRESH, "greeting": GREET})
+ev("Config.terminal.greeting = 'fastfetch'")
+QTest.qWait(30)
+h.eval(vfind("fetchOn"), "toggled(false)")
+check(ev("Config.terminal.greeting") == "fastfetch", "still on while the step shows")
+ev("wizard.next()")
+check(ev("Config.terminal.greeting") == "none", "unticked, then Continue: off")
+
+# a fastfetch config of the user's: their own look
+fresh_wizard({**FRESH, "greeting": {**GREET, "ownConfig": True}})
+check("your own fastfetch config" in str(prop("fetchOn", "subtitle")), "own config: the row says it is used")
+h.eval(vfind("fetchOn"), "toggled(true)")
+ev("wizard.next()")
+check(greetings() == ["own:sakura"], f"own config: Continue keeps the user's look: {greetings()}")
+
+# left unticked, ticked then unticked, skipped, re-run, a fetch tool of the
+# user's: nothing
+fresh_wizard({**FRESH, "greeting": GREET})
+ev("wizard.next()")
+check(greetings() == [] and ev("Config.terminal.greeting") == "none", "left unticked: the greeting stays off")
+fresh_wizard({**FRESH, "greeting": GREET})
+h.eval(vfind("fetchOn"), "toggled(true)")
+h.eval(vfind("fetchOn"), "toggled(false)")
+ev("wizard.next()")
+check(greetings() == [], "unticked: the greeting stays off")
+fresh_wizard({**FRESH, "greeting": GREET})
+h.eval(vfind("fetchOn"), "toggled(true)")
+ev("wizard.finish()")
+check(greetings() == [] and ev("Config.terminal.greeting") == "none", "skip applies nothing")
+fresh_wizard({**FRESH, "greeting": GREET}, first_run=False)
+check(prop("fetchOn", "checked") is False, "re-run: the greeting is not preselected")
+foreign = {**GREET, "shells": [{"shell": "bash", "state": "foreign", "file": "/home/user/.bashrc"}]}
+fresh_wizard({**FRESH, "greeting": foreign})
+check(prop("fetchOn", "checked") is False and prop("fetchOn", "enabled") is False,
+      "the user's shell runs a fetch tool: not offered")
+# fastfetch missing but installable: not preselected either
+ev("ExtrasService.status = Object.assign({}, ExtrasService.status, {fastfetch: {id: 'fastfetch', state: 'missing'}})")
+fresh_wizard({**FRESH, "greeting": {**GREET, "fastfetchInstalled": False}})
+check(prop("fetchOn", "checked") is False, "fastfetch missing: not preselected")
 
 if failures:
     print(f"{len(failures)} failure(s)")

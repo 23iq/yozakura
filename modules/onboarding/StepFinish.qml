@@ -74,7 +74,7 @@ Item {
                 "id": "terminal",
                 "icon": "terminal",
                 "label": I18n.t("onboarding.terminal.title"),
-                "value": [term, prompt].filter(s => s !== "").join(" · ")
+                "value": [term, prompt, Config.terminal.greeting === "fastfetch" ? I18n.t("onboarding.finish.terminal.fetch") : ""].filter(s => s !== "").join(" · ")
             },
             {
                 "id": "apps",

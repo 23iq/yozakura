@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/terminal/TermModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {spansToRuns, columns, alignRight, layoutRuns, pickFont, hasNerdFont, previewKey, engineExtra, approxNotice, fishState};')();
+const M = new Function(src + '; return {spansToRuns, columns, alignRight, layoutRuns, pickFont, hasNerdFont, previewKey, engineExtra, approxNotice, fishState, blockBoxes, hasBlocks};')();
 
 test('spansToRuns merges adjacent spans of the same style and drops empty ones', () => {
     const runs = M.spansToRuns([
@@ -109,4 +109,14 @@ test('hasNerdFont matches patched and symbols-only Nerd Fonts', () => {
     assert.strictEqual(M.hasNerdFont(['JetBrainsMono NERD Font']), true);
     assert.strictEqual(M.hasNerdFont(['Noto Sans', 'DejaVu Sans Mono']), false);
     assert.strictEqual(M.hasNerdFont(null), false);
+});
+
+test('block elements become boxes of their cell', () => {
+    assert.deepStrictEqual(M.blockBoxes('\u2588'), [[0, 0, 0.5, 0.5], [0.5, 0, 1, 0.5], [0, 0.5, 0.5, 1], [0.5, 0.5, 1, 1]]);
+    assert.deepStrictEqual(M.blockBoxes('\u2580'), [[0, 0, 0.5, 0.5], [0.5, 0, 1, 0.5]]);
+    assert.deepStrictEqual(M.blockBoxes('\u2597'), [[0.5, 0.5, 1, 1]]);
+    assert.deepStrictEqual(M.blockBoxes('\u259e'), [[0.5, 0, 1, 0.5], [0, 0.5, 0.5, 1]]);
+    assert.strictEqual(M.blockBoxes('a'), null);
+    assert.strictEqual(M.hasBlocks('  \u2597\u2584'), true);
+    assert.strictEqual(M.hasBlocks('user@host'), false);
 });

@@ -1,0 +1,11 @@
+{
+    "//": "Greeting looks (terminal.fastfetchPreset). Each <id>.jsonc is a plain fastfetch config; colour names in it follow the shell palette when the greeting is written (backend/pkg/termlook/fastfetch.go): magenta = primary, blue = secondary, cyan and yellow = tertiary, green = success, red = error, white = text, light_black = outline. `logo: false` presets ignore terminal.fastfetchLogo; `own` runs plain fastfetch with the user's own config.",
+    "presets": [
+        {"id": "sakura", "name": "Sakura", "description": "term.fetch.preset.sakura.desc", "logo": true},
+        {"id": "compact", "name": "Compact", "description": "term.fetch.preset.compact.desc", "logo": true},
+        {"id": "boxed", "name": "Boxed", "description": "term.fetch.preset.boxed.desc", "logo": true},
+        {"id": "full", "name": "Full", "description": "term.fetch.preset.full.desc", "logo": true},
+        {"id": "minimal", "name": "Minimal", "description": "term.fetch.preset.minimal.desc", "logo": false},
+        {"id": "own", "name": "", "description": "term.fetch.preset.own.desc", "logo": false, "own": true}
+    ]
+}

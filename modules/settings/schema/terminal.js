@@ -10,7 +10,7 @@ var category = {
     "icon": "terminal",
     "title": "prefs.cat.terminal",
     "description": "prefs.cat.terminal.desc",
-    "keywords": "terminal prompt starship oh-my-posh fish cursor padding kitty command apps launch shell theming gtk qt discord spotify telegram firefox papirus neovim sddm",
+    "keywords": "terminal prompt starship oh-my-posh fish fastfetch greeting cursor padding kitty command apps launch shell theming gtk qt discord spotify telegram firefox papirus neovim sddm",
     "sections": [
         {
             "id": "look",
@@ -54,27 +54,6 @@ var category = {
                     "label": "prefs.term.look.engine",
                     "description": "prefs.term.look.engine.desc",
                     "keywords": "prompt engine starship oh-my-posh omp"
-                },
-                {
-                    "key": "terminal.greeting",
-                    "enabledWhen": {
-                        "key": "terminal.enabled",
-                        "equals": true
-                    },
-                    "type": "selector",
-                    "options": [
-                        {
-                            "value": "none",
-                            "label": "prefs.term.look.greeting.none"
-                        },
-                        {
-                            "value": "fastfetch",
-                            "label": "prefs.term.look.greeting.fastfetch"
-                        }
-                    ],
-                    "label": "prefs.term.look.greeting",
-                    "description": "prefs.term.look.greeting.desc",
-                    "keywords": "greeting fastfetch welcome fish_greeting"
                 },
                 {
                     "key": "terminal.padding",
@@ -141,6 +120,21 @@ var category = {
                     "label": "prefs.term.look.blink",
                     "description": "prefs.term.look.blink.desc",
                     "keywords": "kitty cursor blink blinking"
+                }
+            ]
+        },
+        {
+            "id": "greeting",
+            "title": "prefs.term.section.greeting",
+            "entries": [
+                {
+                    "id": "terminal.fetch",
+                    "type": "custom",
+                    "component": "FastfetchEditor",
+                    "keys": ["terminal.greeting", "terminal.fastfetchPreset", "terminal.fastfetchLogo", "terminal.fastfetchLogoPath"],
+                    "label": "prefs.term.fetch",
+                    "description": "prefs.term.fetch.desc",
+                    "keywords": "greeting fastfetch neofetch system info welcome startup logo distro sakura picture image bash zsh fish fish_greeting bashrc zshrc"
                 }
             ]
         },

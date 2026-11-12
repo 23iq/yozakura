@@ -13,8 +13,10 @@
 // the terminal status is known. fish as the login shell is not preselected
 // either when bash login files hold content of the user's own (term.status
 // loginFiles: a console login may start the compositor or export variables
-// there, and fish reads none of them). The ticks are applied only by
-// Continue.
+// there, and fish reads none of them). "Show system info when a terminal
+// opens" (the fastfetch greeting) is never preselected: it edits the
+// user's ~/.bashrc / ~/.zshrc and adds fastfetch's run time to every new
+// terminal, so the user opts in. The ticks are applied only by Continue.
 
 var PLAIN_SHELLS = ["bash", "sh"];
 
@@ -28,19 +30,30 @@ function fishReachable(status, fishCard) {
     return !!(status && status.fishInstalled) || fishCard !== "unavailable";
 }
 
+// The look the wizard turns the greeting on with: the user's own fastfetch
+// config when there is one, else the sakura look (and logo).
+function fetchLook(status) {
+    var g = status ? status.greeting : null;
+    return g && g.ownConfig ? "own" : "sakura";
+}
+
 // ctx: {firstRun, status (term.status), promptOn, fishCard (ExtrasService
-// cardState of "fish")} -> {prompt, fish, known, loginFiles}. known: the
-// status is there (defaults are decided once, then remembered); loginFiles:
-// fish was held back for the user's bash login files alone.
+// cardState of "fish")} -> {prompt, fish, fetch, known, loginFiles} (fetch:
+// always false, the greeting is opt-in). known: the status is there
+// (defaults are decided once, then remembered); loginFiles: fish was held
+// back for the user's bash login files alone.
 function defaults(ctx) {
     var st = ctx ? ctx.status : null;
     var out = {
         "prompt": false,
         "fish": false,
+        "fetch": false,
         "known": !!st,
         "loginFiles": false
     };
-    if (!st || !ctx.firstRun || st.foreignPromptInit)
+    if (!st || !ctx.firstRun)
+        return out;
+    if (st.foreignPromptInit)
         return out;
     var fishLogin = !!st.fishIsLoginShell;
     var plain = PLAIN_SHELLS.indexOf(_base(st.loginShell)) >= 0;
@@ -59,9 +72,10 @@ function heldLoginFiles(status) {
     return Array.isArray(files) ? files : [];
 }
 
-// What Continue applies: a subset of ["prompt", "fish"]. choice: {prompt,
-// fish} as ticked; ctx: {status, promptOn, fishCard, login} (login:
-// loginState()).
+// What Continue applies: a subset of ["prompt", "fish", "fetch",
+// "fetchOff"]. choice: {prompt, fish, fetch, fetchOff} as ticked (fetchOff:
+// the greeting, on already, was unticked); ctx: {status, promptOn,
+// fishCard, login, greetingOn} (login: loginState()).
 function actions(choice, ctx) {
     var out = [];
     var st = ctx.status || {};
@@ -69,6 +83,10 @@ function actions(choice, ctx) {
         out.push("prompt");
     if (choice.fish && !st.fishIsLoginShell && ctx.login !== "pending" && fishReachable(st, ctx.fishCard))
         out.push("fish");
+    if (choice.fetch && !ctx.greetingOn)
+        out.push("fetch");
+    if (choice.fetchOff && ctx.greetingOn)
+        out.push("fetchOff");
     return out;
 }
 
@@ -118,4 +136,13 @@ function promptOutcome(promptOn, login) {
     if (login === "pending" || login === "failed")
         return login;
     return "fish_only";
+}
+
+// The notice part about the greeting ("" when Continue does not turn it
+// on): it adds a line to the shells' startup files, and installs fastfetch
+// when it is missing.
+function fetchPlanKey(pending, fastfetchInstalled) {
+    if ((pending || []).indexOf("fetch") < 0)
+        return "";
+    return fastfetchInstalled ? "onboarding.terminal.plan.fetch" : "onboarding.terminal.plan.fetch_install";
 }
