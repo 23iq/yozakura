@@ -162,7 +162,9 @@ Singleton {
 
     // Staged settings edits are written first, so a trial's backup, a
     // saved look and a preset edit hold exactly what the user sees; the
-    // command runs once the config files are on disk.
+    // command runs once the config files are on disk. In a separate window
+    // Apply is answered later (the main shell writes, or this window once
+    // no answer came): the command waits for that answer, then the delay.
     function afterFlush(fn) {
         if (!SettingsStore.hasChanges) {
             fn();
@@ -518,9 +520,19 @@ Singleton {
 
         interval: 250
         onTriggered: {
+            if (PreviewSink.applying)
+                return; // restarted when the answer comes
             const q = queue;
             queue = [];
             q.forEach(f => f());
+        }
+    }
+
+    Connections {
+        target: PreviewSink
+        function onApplyingChanged() {
+            if (!PreviewSink.applying && flushDelay.queue.length > 0)
+                flushDelay.restart();
         }
     }
 
