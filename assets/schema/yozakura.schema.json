@@ -8720,7 +8720,7 @@
           "maximum": 120
         },
         "separateWindows": {
-          "title": "Settings in its own process",
+          "title": "Settings in Its Own Process",
           "type": "boolean",
           "default": false,
           "description": "Settings and the setup wizard run as separate programs that start when you open them and give all their memory back when closed. Each open takes a moment longer (they load from scratch); unsaved changes still preview on the desktop",

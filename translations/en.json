@@ -2128,7 +2128,7 @@
   "prefs.sys.unload_idle_views.desc": "Unload kept-loaded dashboard tabs a minute after the dashboard closes.",
   "prefs.sys.settings_keep_alive": "Keep Settings loaded",
   "prefs.sys.settings_keep_alive.desc": "Minutes the closed Settings window stays loaded so it reopens at once; 0 releases it on close.",
-  "system.performance.separate_windows": "Settings in its own process",
+  "system.performance.separate_windows": "Settings in Its Own Process",
   "system.performance.separate_windows_desc": "Settings and the setup wizard run as separate programs that start when you open them and give all their memory back when closed. Each open takes a moment longer (they load from scratch); unsaved changes still preview on the desktop",
   "prefs.window.loading": "Loading settings…",
   "prefs.window.opening": "Opening Settings…",
