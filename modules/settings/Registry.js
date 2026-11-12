@@ -47,7 +47,8 @@ var EDITORS = {
     "KeybindGroupEditor": "editors/KeybindGroupEditor.qml",
     "LockStyleGallery": "editors/LockStyleGallery.qml",
     "LoginScreenCard": "editors/LoginScreenCard.qml",
-    "LauncherProvidersEditor": "editors/LauncherProvidersEditor.qml",
+    "LauncherSearchChips": "editors/LauncherSearchChips.qml",
+    "LauncherPrefixList": "editors/LauncherPrefixList.qml",
     "MotionProfileCards": "editors/MotionProfileCards.qml",
     "PageLink": "editors/PageLink.qml",
     "LanguagePicker": "editors/LanguagePicker.qml",
@@ -94,7 +95,8 @@ var THUMBS = {
     "NumeralThumb": "thumbs/NumeralThumb.qml",
     "WeightThumb": "thumbs/WeightThumb.qml",
     "WallFitThumb": "thumbs/WallFitThumb.qml",
-    "WallTransitionThumb": "thumbs/WallTransitionThumb.qml"
+    "WallTransitionThumb": "thumbs/WallTransitionThumb.qml",
+    "LauncherStyleThumb": "thumbs/LauncherStyleThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -108,7 +110,8 @@ var STAGES = {
     "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
     "LockStage": "stages/LockStage.qml",
-    "WallpaperStage": "stages/WallpaperStage.qml"
+    "WallpaperStage": "stages/WallpaperStage.qml",
+    "LauncherStage": "stages/LauncherStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost

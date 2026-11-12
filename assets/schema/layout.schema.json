@@ -92,7 +92,7 @@
           "description": "Show only the search field until you start typing.",
           "x-settings": {
             "category": "launcher",
-            "section": "appearance",
+            "section": "behavior",
             "label": "prefs.launcher.compact_when_empty",
             "control": "toggle",
             "keywords": "compact empty search field minimal small collapse"

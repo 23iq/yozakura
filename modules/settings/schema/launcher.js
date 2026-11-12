@@ -1,8 +1,9 @@
 .pragma library
 
-// Launcher: result providers (order, on/off, prefixes) and their options.
-// Providers are registered in modules/widgets/launcher/Providers.js. Entry
-// format: see modules/settings/AGENTS.md.
+// Launcher: what it searches (providers on / off, their order and
+// prefixes), how results look, and its behaviour. Providers are registered
+// in modules/widgets/launcher/Providers.js. Entry format: see
+// modules/settings/AGENTS.md.
 
 var category = {
     "id": "launcher",
@@ -10,19 +11,24 @@ var category = {
     "title": "prefs.cat.launcher",
     "description": "prefs.cat.launcher.desc",
     "keywords": "launcher search apps run calculator converter currency units files commands ai prefixes",
+    "stage": "LauncherStage",
+    "hero": {
+        "right": ["layout.launcher.preview", "layout.launcher.icons", "prefix.launcher.aiOnTab"],
+        "hint": "prefs.launcher.hero_hint"
+    },
+    "row": ["searches", "appearance", "providers"],
     "sections": [
         {
-            "id": "providers",
-            "title": "prefs.launcher.section.providers",
+            "id": "searches",
+            "title": "prefs.launcher.section.searches",
             "entries": [
                 {
-                    "id": "launcher.providers",
+                    "key": "prefix.launcher.disabled",
                     "type": "custom",
-                    "component": "LauncherProvidersEditor",
-                    "keys": ["prefix.launcher.order", "prefix.launcher.disabled", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.timers", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
-                    "label": "prefs.launcher.providers",
-                    "description": "prefs.launcher.providers.desc",
-                    "keywords": "providers order enable disable prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
+                    "component": "LauncherSearchChips",
+                    "label": "prefs.launcher.searches",
+                    "description": "prefs.launcher.searches.desc",
+                    "keywords": "providers enable disable on off search apps calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
                 }
             ]
         },
@@ -33,6 +39,8 @@ var category = {
                 {
                     "key": "layout.launcher.resultStyle",
                     "type": "selector",
+                    "display": "cards",
+                    "thumb": "LauncherStyleThumb",
                     "options": [
                         {
                             "value": "list",
@@ -64,13 +72,21 @@ var category = {
                     "label": "prefs.launcher.icons",
                     "description": "prefs.launcher.icons.desc",
                     "keywords": "icons text only command line minimal rows"
-                },
+                }
+            ]
+        },
+        {
+            "id": "providers",
+            "title": "prefs.launcher.section.providers",
+            "entries": [
                 {
-                    "key": "layout.launcher.compactWhenEmpty",
-                    "type": "toggle",
-                    "label": "prefs.launcher.compact_when_empty",
-                    "description": "prefs.launcher.compact_when_empty.desc",
-                    "keywords": "compact empty search field minimal small collapse"
+                    "id": "launcher.providers",
+                    "type": "custom",
+                    "component": "LauncherPrefixList",
+                    "keys": ["prefix.launcher.order", "prefix.calculator", "prefix.commands", "prefix.files", "prefix.ai", "prefix.routines", "prefix.timers", "prefix.wallpapers", "prefix.clipboard", "prefix.emoji", "prefix.tmux", "prefix.notes"],
+                    "label": "prefs.launcher.providers",
+                    "description": "prefs.launcher.providers.desc",
+                    "keywords": "providers order prefix calculator commands files wallpapers ai clipboard emoji tmux notes timers routines"
                 }
             ]
         },
@@ -91,6 +107,13 @@ var category = {
                     "label": "prefs.launcher.files_in_mixed",
                     "description": "prefs.launcher.files_in_mixed.desc",
                     "keywords": "files search results mixed home"
+                },
+                {
+                    "key": "layout.launcher.compactWhenEmpty",
+                    "type": "toggle",
+                    "label": "prefs.launcher.compact_when_empty",
+                    "description": "prefs.launcher.compact_when_empty.desc",
+                    "keywords": "compact empty search field minimal small collapse"
                 },
                 {
                     "key": "prefix.launcher.fileBackend",

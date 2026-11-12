@@ -98,6 +98,30 @@ check(ev("Config.desktop.wallpaperMode") == "fill", "wallpaper: undo goes back t
 h.eval(item("wallpaperSchemeLink"), "clicked()")
 check(wait_until(lambda: h.eval(shell, "currentCategory") == "appearance"), "wallpaper: the palette chip opens Look")
 
+# ---- Launcher -----------------------------------------------------------------
+select("launcher")
+mini = item("launcherMini")
+check(mini is not None, "launcher: the stage draws the launcher")
+rows = lambda: h.eval(item("launcherStage"), "results.map(r => r.id).join(',')")  # noqa: E731
+check("calculator" in rows(), "launcher: the calculator answers on the stage")
+n = steps()
+h.eval(item("launcherSearch:calculator"), "clicked()")
+check("calculator" in ev("JSON.stringify(Config.prefix.launcher.disabled)") and steps() == n + 1,
+      "launcher: a chip turns a provider off in one undo step")
+check("calculator" not in rows(), "launcher: ...and its result leaves the stage")
+ev("SettingsStore.undo()")
+check("calculator" in rows(), "launcher: undo brings it back")
+first = rows().split(",")[0]
+h.eval(item(f"launcherMove:{first}:down"), "clicked()")
+check(rows().split(",")[1] == first, "launcher: moving a provider down reorders the stage's results")
+ev("SettingsStore.undo()")
+h.eval(item("card:grid"), "clicked()")
+check(ev("Config.layout.launcher.resultStyle") == "grid" and h.eval(item("launcherStage"), "grid") is True,
+      "launcher: the Grid card draws a grid on the stage")
+ev("SettingsStore.undo()")
+h.eval(item("launcherMiniArea"), "clicked(null)")
+check(wait_until(lambda: h.eval(shell, "currentCategory") == "layout"), "launcher: a click on it opens Where things open")
+
 if failures:
     print(f"{len(failures)} failure(s)", file=sys.stderr)
 h.exit(1 if failures else 0)
