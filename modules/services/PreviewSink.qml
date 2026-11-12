@@ -122,7 +122,10 @@ Singleton {
     }
 
     // Written by the main shell, or (no answer, no main shell) here: only
-    // the domains this window changed, never its older copy of the others.
+    // the domains this window changed, never its older copy of the others,
+    // and of those only its own changes laid over the file as it is now
+    // (StagedDomains.write: ConfigFile.writeMerged), never its older copy
+    // of what the main shell changed meanwhile (desktop widget positions).
     function _answered(entry, written) {
         if (root._applying.indexOf(entry) === -1)
             return;

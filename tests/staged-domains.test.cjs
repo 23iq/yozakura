@@ -59,3 +59,19 @@ test('write: the theme through its loader, the rest through save<Domain>', () =>
     S.write(config, ['theme', 'bar', 'compositor', 'nosuch']);
     assert.deepEqual(calls, ['theme', 'bar', 'compositor']);
 });
+
+test('write: only this process\'s changes over the current file where the config can merge', () => {
+    const calls = [];
+    const file = (name, ok) => ({ writeMerged: () => { calls.push('merged ' + name); return ok; } });
+    const files = { theme: file('theme', true), bar: file('bar', true), dock: file('dock', false) };
+    const config = {
+        configFile: name => files[name] || null,
+        loader: { writeAdapter: () => calls.push('theme') },
+        saveBar: () => calls.push('bar'),
+        saveDock: () => calls.push('dock'),
+        saveCompositor: () => calls.push('compositor')
+    };
+    S.write(config, ['theme', 'bar', 'dock', 'compositor']);
+    // dock not loaded / broken (writeMerged false): its save<Domain>; no file: the whole domain
+    assert.deepEqual(calls, ['merged theme', 'merged bar', 'merged dock', 'dock', 'compositor']);
+});
