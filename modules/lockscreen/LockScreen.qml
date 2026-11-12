@@ -195,7 +195,7 @@ WlSessionLockSurface {
     // Timer to unlock after exit animation
     Timer {
         id: unlockTimer
-        // A Timer with interval 0 never fires in Qt; ensure a minimum interval
+        // Motion off: no exit animation to wait for, unlock right away (1 ms)
         interval: Config.animDuration > 0 ? Config.animDuration * 2 : 1
         onTriggered: {
             GlobalStates.lockscreenVisible = false;
