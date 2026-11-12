@@ -4,6 +4,7 @@ const path = require('node:path');
 
 const qmljs = require('./lib/qmljs.cjs');
 const P = qmljs.loadLibrary(path.join(__dirname, '../modules/widgets/dashboard/wallpapers/WallpaperPause.js'));
+const D = qmljs.loadLibrary(path.join(__dirname, '../modules/services/WallpaperIdleDelay.js'));
 const defaults = qmljs.loadLibrary(path.join(__dirname, '../config/defaults/performance.js')).data;
 
 test('plays when nothing holds it', () => {
@@ -28,11 +29,20 @@ test('idle pauses after the configured delay, unless turned off', () => {
 });
 
 test('idleDelay is the threshold IdleService wakes at (0 when off)', () => {
-    assert.equal(P.idleDelay(defaults), defaults.pauseWallpaperIdleDelay);
-    assert.equal(P.idleDelay({ ...defaults, pauseWallpaperIdleDelay: 10 }), 10);
-    assert.equal(P.idleDelay({ ...defaults, pauseWallpaperIdleDelay: 0 }), 60);
-    assert.equal(P.idleDelay({ ...defaults, pauseWallpaperOnIdle: false }), 0);
-    assert.equal(P.idleDelay(undefined), 60);
+    assert.equal(D.idleDelay(defaults), defaults.pauseWallpaperIdleDelay);
+    assert.equal(D.idleDelay({ ...defaults, pauseWallpaperIdleDelay: 10 }), 10);
+    assert.equal(D.idleDelay({ ...defaults, pauseWallpaperIdleDelay: 0 }), 60);
+    assert.equal(D.idleDelay({ ...defaults, pauseWallpaperOnIdle: false }), 0);
+    assert.equal(D.idleDelay({ pauseWallpaperOnIdle: null }), 60);
+    assert.equal(D.idleDelay(undefined), 60);
+});
+
+test('the wallpaper pauses exactly at the delay IdleService wakes at', () => {
+    for (const perf of [defaults, { ...defaults, pauseWallpaperIdleDelay: 10 }, { pauseWallpaperIdleDelay: 'x' }]) {
+        const d = D.idleDelay(perf);
+        assert.equal(P.shouldPause({ idleSeconds: d - 1 }, perf), false);
+        assert.equal(P.shouldPause({ idleSeconds: d }, perf), true);
+    }
 });
 
 test('battery pause is opt-in', () => {

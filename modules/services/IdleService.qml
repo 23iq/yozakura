@@ -7,7 +7,7 @@ import Quickshell.Io
 import qs.config
 import qs.modules.globals
 import "IdleSchedule.js" as IdleSchedule
-import "../widgets/dashboard/wallpapers/WallpaperPause.js" as WallpaperPause
+import "WallpaperIdleDelay.js" as WallpaperIdleDelay
 
 Singleton {
     id: root
@@ -59,7 +59,7 @@ Singleton {
     // with pauseWallpaperIdleDelay); idleSecondsNow() reads the live value.
     property int elapsedIdleTime: 0
     property var triggeredListeners: [] // Keeps track of indices that have fired
-    readonly property var idleThresholds: IdleSchedule.thresholds(Config.system.idle.listeners, [WallpaperPause.idleDelay(Config.performance)])
+    readonly property var idleThresholds: IdleSchedule.thresholds(Config.system.idle.listeners, [WallpaperIdleDelay.idleDelay(Config.performance)])
 
     property bool _idle: false
     // Idle time accounted up to the start of the pending wait (ms), and
