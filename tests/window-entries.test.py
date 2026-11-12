@@ -7,14 +7,17 @@ Each root file is loaded as the daemon starts it (ProcessRole from
 file replaced by a stand-in:
 - Settings: opens on the page, screen and workspace it was given, with the
   remote wallpaper manager installed; reports windows.ready once its window
-  shows; a later open raises it on the new page (placement again), a close
-  from the main shell closes it, and once closed it quits (after a grace
-  period for the last writes); a reopen during the grace keeps it alive.
+  shows and runs the command the daemon kept while it started (the answer
+  to windows.ready); a later open raises it on the new page (placement
+  again), a close from the main shell closes it, and once closed it
+  reports hiding and quits (after a grace period for the last writes); a
+  reopen to ask about unsaved changes reports nothing, a raise while hiding
+  shows it again (no quit) and it reports ready again.
 - Wizard: opens (resuming) once the config and the saved progress are read,
   on the screen it was given; reports windows.ready; takes the main shell's
   panel / bar state for the tour and the peek pill; raise brings it back
-  from a peek, close closes it; closed, it quits once no exclusive-mode
-  switch is pending.
+  from a peek, close closes it; closed, it reports hiding and quits once no
+  exclusive-mode switch is pending; a raise while hiding opens it again.
 - Started by hand (no role): both refuse and quit at once, loading nothing.
 - Compile cost: a root file names no window or page type (they are loaded
   by URL), and the separate Settings window loads its content by URL.
@@ -43,8 +46,13 @@ BACKEND = """pragma Singleton
 QtObject {
     property var calls: []
     property var cbs: []
+    // the answer to windows.ready (the command kept while it started)
+    property var readyResult: ({ "ok": true })
     function addSubscription(s, cb) { cbs = cbs.concat([{ "s": s, "cb": cb }]); return cbs.length }
-    function call(m, p, cb) { calls = calls.concat([{ "method": m, "params": p || null }]) }
+    function call(m, p, cb) {
+        calls = calls.concat([{ "method": m, "params": p || null }]);
+        if (cb && m === "windows.ready") { const r = readyResult; readyResult = { "ok": true }; Qt.callLater(() => cb(r, null)); }
+    }
     function emit(service, data) {
         const group = service.split(".")[0];
         cbs.forEach(c => { if (c.s.indexOf(group) >= 0) c.cb(service, data); });
@@ -127,10 +135,13 @@ check(ev("GlobalStates.wallpaperManager && GlobalStates.wallpaperManager.remote"
 check(ev("entry.win !== null && entry.win.targetScreen && entry.win.targetScreen.name === 'HDMI-A-1'") is True,
       "the window is loaded on the target screen")
 check(json.loads(ev("JSON.stringify(BackendService.cbs.map(c => c.s))")) == [["windows"]], "it listens to the windows stream only")
+ev("BackendService.readyResult = { ok: true, command: { kind: 'settings', action: 'raise', page: 'about' } }")
 ev("entry.win.visible = false")
 ev("entry.win.visible = true")
 settle()
 check(ev("BackendService.count('windows.ready')") == 1, "shown: windows.ready, once")
+check(ev("GlobalStates.settingsCategory") == "about" and ev("entry.win.placements") == 1,
+      "the open asked while it started is run once shown")
 ev("entry.win.visible = false")
 ev("entry.win.visible = true")
 check(ev("BackendService.count('windows.ready')") == 1, "...not again")
@@ -140,13 +151,24 @@ ev("BackendService.emit('windows.command', { kind: 'settings', action: 'raise', 
 check(ev("GlobalStates.settingsCategory") == "sound" and ev("GlobalStates.settingsTargetScreenName") == "DP-1",
       "raise: the new page and screen")
 check(ev("GlobalStates.settingsTargetWorkspaceId") == 3, "...a missing workspace keeps the last one")
-check(ev("entry.win.placements") == 1, "...and the window is placed and focused again")
+check(ev("entry.win.placements") == 2, "...and the window is placed and focused again")
+ev("GlobalStates.settingsWindowVisible = false; GlobalStates.settingsWindowVisible = true")  # unsaved changes: it asks
+settle()
+check(ev("BackendService.count('windows.hiding')") == 0, "reopened at once to ask: not hiding")
 ev("BackendService.emit('windows.command', { kind: 'settings', action: 'close' })")
 check(ev("GlobalStates.settingsWindowVisible") is False, "close from the main shell closes it")
+settle()
+check(ev("BackendService.count('windows.hiding')") == 1, "closed: it reports hiding")
 pump(80)
-ev("GlobalStates.settingsWindowVisible = true")  # it reopened to ask about unsaved changes
+ev("BackendService.emit('windows.command', { kind: 'settings', action: 'raise', page: 'keybinds' })")
+check(ev("GlobalStates.settingsWindowVisible") is True and ev("GlobalStates.settingsCategory") == "keybinds",
+      "a raise while hiding shows it again on the page")
 pump(300)
-check(quits == [], "reopened during the grace period: it keeps running")
+check(quits == [], "...and it keeps running")
+ev("entry.win.visible = false")
+ev("entry.win.visible = true")
+settle()
+check(ev("BackendService.count('windows.ready')") == 2, "...and reports ready again")
 ev("GlobalStates.settingsWindowVisible = false")
 wait_until(lambda: quits != [])
 check(quits != [], "closed: it quits")
@@ -167,7 +189,7 @@ QtObject {
     property string screenName: "DP-1"
     property int opens: 0
     property QtObject wizard: QtObject { property bool _exclusivePending: false }
-    function open() { opens++; visible = true }
+    function open() { opens++; peek = false; visible = true }
     function close() { visible = false }
 }"""
 
@@ -214,6 +236,14 @@ check(ew("OnboardingService.shellPanelOpen") is True, "a relay for another windo
 ew("OnboardingService.peek = true")
 ew("BackendService.emit('windows.command', { kind: 'onboarding', action: 'raise' })")
 check(ew("OnboardingService.peek") is False, "raise: back from the peek")
+ew("BackendService.emit('windows.command', { kind: 'onboarding', action: 'close' })")
+check(ew("OnboardingService.visible") is False and ew("BackendService.count('windows.hiding')") == 1,
+      "close: closed, reports hiding")
+pump(40)
+ew("BackendService.emit('windows.command', { kind: 'onboarding', action: 'raise' })")
+check(ew("OnboardingService.visible") is True, "a raise while hiding opens it again")
+pump(200)
+check(quits3 == [] and ew("BackendService.count('windows.ready')") == 2, "...keeps running and reports ready again")
 ew("ExclusiveService.busy = true")
 ew("BackendService.emit('windows.command', { kind: 'onboarding', action: 'close' })")
 check(ew("OnboardingService.visible") is False, "close: closed")

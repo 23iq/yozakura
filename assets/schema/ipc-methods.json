@@ -475,6 +475,7 @@
    "name": "windows",
    "methods": [
     "close",
+    "hiding",
     "open",
     "ready",
     "relay",

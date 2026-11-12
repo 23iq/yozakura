@@ -7,7 +7,11 @@
 // workspace); the first open starts `qs -p <shell dir>/<entry file>` with
 // <PREFIX>ROLE=<kind> (modules/globals/ProcessRole.qml) and the target in
 // <PREFIX>WINDOW_*, a later one asks the running process to raise itself
-// and show the page (windows.command). One process per kind. The window
+// and show the page (windows.command). One process per kind. A command
+// asked while the window is still starting (not listening yet) is kept,
+// the last one per kind, and handed over in the answer to its
+// windows.ready. A closed window reports windows.hiding until its process
+// quits; an open meanwhile raises it again. The window
 // quits when it closes; the service reaps it, tells every subscriber
 // (windows.state) and calls OnExit (the preview relay drops what that
 // window staged). A crash of a window never touches the main shell: the
@@ -67,6 +71,7 @@ const (
 	StateClosed   = "closed"
 	StateStarting = "starting" // process started, window not shown yet
 	StateOpen     = "open"     // the window reported it is shown (windows.ready)
+	StateHiding   = "hiding"   // closed by the user, the process quits soon (windows.hiding)
 )
 
 // Env names (with brand.EnvPrefix) the window process reads.
@@ -145,6 +150,9 @@ type instance struct {
 	proc  Process
 	state string
 	done  chan struct{}
+	// The last command asked while the window was starting (not listening
+	// yet); windows.ready hands it over.
+	pending *Command
 }
 
 // Service is the "windows" IPC service.
@@ -173,6 +181,7 @@ func (s *Service) Register(srv *ipc.Server) {
 			"open":   s.handleOpen,
 			"close":  s.handleClose,
 			"ready":  s.handleReady,
+			"hiding": s.handleHiding,
 			"status": func(json.RawMessage) (any, error) { return s.Statuses(), nil },
 			"relay":  s.handleRelay,
 		},
@@ -218,7 +227,20 @@ func (s *Service) handleReady(raw json.RawMessage) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{"ok": s.Ready(req.Kind)}, nil
+	ok, cmd := s.Ready(req.Kind)
+	out := map[string]any{"ok": ok}
+	if cmd != nil {
+		out["command"] = cmd
+	}
+	return out, nil
+}
+
+func (s *Service) handleHiding(raw json.RawMessage) (any, error) {
+	req, err := decode[Request](raw)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]any{"ok": s.Hiding(req.Kind)}, nil
 }
 
 func (s *Service) handleRelay(raw json.RawMessage) (any, error) {
@@ -256,7 +278,7 @@ func (s *Service) Open(req Request) (string, error) {
 	}
 	if _, ok := s.running[req.Kind]; ok {
 		s.mu.Unlock()
-		s.broadcast("windows.command", Command{Kind: req.Kind, Action: "raise", Page: req.Page, Screen: req.Screen, Workspace: req.Workspace})
+		s.command(Command{Kind: req.Kind, Action: "raise", Page: req.Page, Screen: req.Screen, Workspace: req.Workspace})
 		return "raised", nil
 	}
 	qml, err := s.EntryPath(req.Kind)
@@ -304,26 +326,60 @@ func (s *Service) RequestClose(kind string) (string, error) {
 	if err := validKind(kind); err != nil {
 		return "", err
 	}
-	s.mu.Lock()
-	_, ok := s.running[kind]
-	s.mu.Unlock()
-	if !ok {
+	if !s.command(Command{Kind: kind, Action: "close"}) {
 		return StateClosed, nil
 	}
-	s.broadcast("windows.command", Command{Kind: kind, Action: "close"})
 	return "closing", nil
 }
 
-// Ready records that the window of kind is shown.
-func (s *Service) Ready(kind string) bool {
+// command sends cmd to the running window of its kind; a window still
+// starting does not listen yet, so the command waits for its
+// windows.ready (the last one wins: a close during the start is not lost,
+// a later raise undoes it). False when no window of that kind runs.
+func (s *Service) command(cmd Command) bool {
+	s.mu.Lock()
+	inst, ok := s.running[cmd.Kind]
+	if ok && inst.state == StateStarting {
+		c := cmd
+		inst.pending = &c
+		s.mu.Unlock()
+		return true
+	}
+	s.mu.Unlock()
+	if ok {
+		s.broadcast("windows.command", cmd)
+	}
+	return ok
+}
+
+// Ready records that the window of kind is shown and hands over the
+// command asked while it started (nil when none).
+func (s *Service) Ready(kind string) (bool, *Command) {
 	s.mu.Lock()
 	inst, ok := s.running[kind]
+	var cmd *Command
 	if ok {
 		inst.state = StateOpen
+		cmd, inst.pending = inst.pending, nil
 	}
 	s.mu.Unlock()
 	if ok {
 		s.broadcast("windows.state", Status{Kind: kind, State: StateOpen, Pid: inst.proc.Pid()})
+	}
+	return ok, cmd
+}
+
+// Hiding records that the window of kind was closed and its process is
+// about to quit; a raise (windows.open) shows it again.
+func (s *Service) Hiding(kind string) bool {
+	s.mu.Lock()
+	inst, ok := s.running[kind]
+	if ok {
+		inst.state = StateHiding
+	}
+	s.mu.Unlock()
+	if ok {
+		s.broadcast("windows.state", Status{Kind: kind, State: StateHiding, Pid: inst.proc.Pid()})
 	}
 	return ok
 }

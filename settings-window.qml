@@ -55,8 +55,10 @@ ShellRoot {
     }
 
     // The window is shown: tell the daemon (the main shell drops its
-    // "Opening..." pill); closed (after the unsaved-changes question):
-    // quit, the daemon reaps us.
+    // "Opening..." pill) and run what was asked while it started (a close
+    // from the main shell's toggle, another page); closed (after the
+    // unsaved-changes question): report hiding and quit, the daemon reaps
+    // us. An open meanwhile raises it again (command).
     Connections {
         target: root.win
         ignoreUnknownSignals: true
@@ -65,6 +67,9 @@ ShellRoot {
                 root.shown = true;
                 BackendService.call("windows.ready", {
                     "kind": ProcessRole.role
+                }, (result, error) => {
+                    if (!error && result && result.command)
+                        root.command(result.command);
                 });
             }
         }
@@ -72,11 +77,22 @@ ShellRoot {
     Connections {
         target: GlobalStates
         function onSettingsWindowVisibleChanged() {
-            if (GlobalStates.settingsWindowVisible)
+            if (GlobalStates.settingsWindowVisible) {
                 quitTimer.stop();
-            else
+            } else {
                 quitTimer.restart();
+                // a close with unsaved changes reopens at once to ask
+                Qt.callLater(root.reportHiding);
+            }
         }
+    }
+    function reportHiding() {
+        if (GlobalStates.settingsWindowVisible || !root.shown)
+            return;
+        root.shown = false;
+        BackendService.call("windows.hiding", {
+            "kind": ProcessRole.role
+        });
     }
     // A moment after closing (it may reopen to ask about unsaved changes),
     // so the last config writes (Apply, an unstaged setting) reach the disk.
@@ -96,6 +112,8 @@ ShellRoot {
             return;
         if (data.action === "raise") {
             root.target(String(data.page || ""), String(data.screen || ""), Number(data.workspace) || 0);
+            // closed and about to quit: shown again (cancels the quit)
+            GlobalStates.settingsWindowVisible = true;
             if (root.win)
                 root.win.preparePlacement();
         } else if (data.action === "close") {

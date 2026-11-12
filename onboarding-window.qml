@@ -63,11 +63,19 @@ ShellRoot {
         function onVisibleChanged() {
             if (OnboardingService.visible) {
                 root.opened = true;
+                quitTimer.stop();
+                quitTimer.waited = 0;
                 BackendService.call("windows.ready", {
                     "kind": ProcessRole.role
+                }, (result, error) => {
+                    if (!error && result && result.command)
+                        root.event("windows.command", result.command);
                 });
             } else if (root.opened) {
                 quitTimer.restart();
+                BackendService.call("windows.hiding", {
+                    "kind": ProcessRole.role
+                });
             }
         }
     }
@@ -97,8 +105,9 @@ ShellRoot {
         if (!data)
             return;
         if (service === "windows.command" && data.kind === ProcessRole.role) {
+            // back from a peek, or shown again while closed and about to quit
             if (data.action === "raise")
-                OnboardingService.peek = false;
+                OnboardingService.open();
             else if (data.action === "close")
                 OnboardingService.close();
         } else if (service === "windows.relay" && data.to === ProcessRole.role && data.topic === "shell.state") {

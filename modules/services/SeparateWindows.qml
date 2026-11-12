@@ -25,7 +25,8 @@ Singleton {
 
     readonly property bool wanted: ProcessRole.primary && Config.performance.separateWindows === true
 
-    // Per kind, from the daemon: "closed" | "starting" | "open"
+    // Per kind, from the daemon: "closed" | "starting" | "open" | "hiding"
+    // (closed by the user, the process quits in a moment; an open raises it)
     property string settingsState: "closed"
     property string wizardState: "closed"
     readonly property bool settingsRunning: root.settingsState !== "closed"
@@ -107,13 +108,19 @@ Singleton {
     }
 
     function _settingsState(state) {
+        const prev = root.settingsState;
         root.settingsState = state;
         if (state === "closed") {
+            // Asked again while it was hiding, and it quit before the raise
+            // reached it: a new process.
+            const again = root._settingsAsked && prev === "hiding" && GlobalStates.settingsWindowVisible && !root._settingsInProcess;
             root._settingsAsked = false;
-            if (!root._settingsInProcess)
+            if (again)
+                root._openSettings();
+            else if (!root._settingsInProcess)
                 root._setSettingsVisible(false);
         } else if (!root._settingsInProcess) {
-            root._setSettingsVisible(true);
+            root._setSettingsVisible(state !== "hiding");
         }
     }
 
@@ -143,7 +150,7 @@ Singleton {
             if (GlobalStates.settingsWindowVisible) {
                 if (!root.settingsSeparate)
                     root._settingsInProcess = true;
-                else if (!root.settingsRunning)
+                else if (!root.settingsRunning || root.settingsState === "hiding")
                     root._openSettings();
                 return;
             }
@@ -183,13 +190,17 @@ Singleton {
     }
 
     function _wizardState(state) {
+        const prev = root.wizardState;
         root.wizardState = state;
         if (state === "closed") {
+            const again = root._wizardAsked && prev === "hiding" && OnboardingService.visible && !root._wizardInProcess;
             root._wizardAsked = false;
-            if (!root._wizardInProcess)
+            if (again)
+                root._openWizard();
+            else if (!root._wizardInProcess)
                 root._setWizardVisible(false);
         } else if (!root._wizardInProcess) {
-            root._setWizardVisible(true);
+            root._setWizardVisible(state !== "hiding");
             if (state === "open")
                 root._sendShellState();
         }
@@ -234,7 +245,7 @@ Singleton {
             if (OnboardingService.visible) {
                 if (!root.wizardSeparate)
                     root._wizardInProcess = true;
-                else if (!root.wizardRunning)
+                else if (!root.wizardRunning || root.wizardState === "hiding")
                     root._openWizard();
                 return;
             }
