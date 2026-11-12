@@ -14,10 +14,9 @@
 // either when bash login files hold content of the user's own (term.status
 // loginFiles: a console login may start the compositor or export variables
 // there, and fish reads none of them). "Show system info when a terminal
-// opens" (the fastfetch greeting) is preselected on a first run unless it
-// is on already, a shell of the user's runs a fetch tool itself, or
-// fastfetch can neither be found nor installed. The ticks are applied only by
-// Continue.
+// opens" (the fastfetch greeting) is never preselected: it edits the
+// user's ~/.bashrc / ~/.zshrc and adds fastfetch's run time to every new
+// terminal, so the user opts in. The ticks are applied only by Continue.
 
 var PLAIN_SHELLS = ["bash", "sh"];
 
@@ -31,18 +30,6 @@ function fishReachable(status, fishCard) {
     return !!(status && status.fishInstalled) || fishCard !== "unavailable";
 }
 
-// The greeting can run here: fastfetch is installed or the catalog can
-// install it, and no shell of the user's runs a fetch tool already.
-function fetchReachable(status, fetchCard) {
-    var g = status ? status.greeting : null;
-    if (!g)
-        return false;
-    var foreign = (g.shells || []).some(function (s) {
-        return s && s.state === "foreign";
-    });
-    return !foreign && (!!g.fastfetchInstalled || (!!fetchCard && fetchCard !== "unavailable"));
-}
-
 // The look the wizard turns the greeting on with: the user's own fastfetch
 // config when there is one, else the sakura look (and logo).
 function fetchLook(status) {
@@ -51,8 +38,8 @@ function fetchLook(status) {
 }
 
 // ctx: {firstRun, status (term.status), promptOn, fishCard (ExtrasService
-// cardState of "fish"), greetingOn, fetchCard (cardState of "fastfetch")}
-// -> {prompt, fish, fetch, known, loginFiles}. known: the status is there
+// cardState of "fish")} -> {prompt, fish, fetch, known, loginFiles} (fetch:
+// always false, the greeting is opt-in). known: the status is there
 // (defaults are decided once, then remembered); loginFiles: fish was held
 // back for the user's bash login files alone.
 function defaults(ctx) {
@@ -66,7 +53,6 @@ function defaults(ctx) {
     };
     if (!st || !ctx.firstRun)
         return out;
-    out.fetch = !ctx.greetingOn && fetchReachable(st, ctx.fetchCard);
     if (st.foreignPromptInit)
         return out;
     var fishLogin = !!st.fishIsLoginShell;

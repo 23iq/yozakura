@@ -9,10 +9,9 @@ import "TerminalChoice.js" as Choice
 
 // The terminal step's shell choices: "use this prompt in fish", "make
 // fish my default shell" and "show system info when a terminal opens" (the
-// fastfetch greeting). On a first run they are preselected unless the
-// user has a prompt, a shell or a fetch tool of their own
-// (TerminalChoice.defaults); the
-// ticks are applied only when the user continues past the step (apply(),
+// fastfetch greeting). On a first run the first two are preselected unless
+// the user has a prompt or a shell of their own; the greeting is opt-in
+// (TerminalChoice.defaults); the ticks are applied only when the user continues past the step (apply(),
 // the step's leave guard), never on skip or close. A plain notice says what
 // Continue does; a failed or cancelled login-shell change is said plainly.
 Column {
@@ -27,7 +26,6 @@ Column {
     readonly property bool foreign: !!(root.status && root.status.foreignPromptInit)
     readonly property bool fishInstalled: !!(root.status && root.status.fishInstalled)
     readonly property string fishCard: ExtrasService.cardState("fish")
-    readonly property string fetchCard: ExtrasService.cardState("fastfetch")
     readonly property bool greetingOn: !!(Config.terminal && Config.terminal.greeting === "fastfetch")
     readonly property bool fetchForeign: !!root.status && !!root.status.greeting && (root.status.greeting.shells || []).some(s => s.state === "foreign")
     readonly property bool tickFetch: root.choices.termFetch === true
@@ -68,9 +66,7 @@ Column {
             "firstRun": root.firstRun,
             "status": root.status,
             "promptOn": root.promptOn,
-            "fishCard": root.fishCard,
-            "greetingOn": root.greetingOn,
-            "fetchCard": root.fetchCard
+            "fishCard": root.fishCard
         });
         if (!d.known)
             return;

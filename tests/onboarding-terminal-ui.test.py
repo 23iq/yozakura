@@ -3,9 +3,10 @@
 offscreen.
 
 A first run with no prompt or shell of the user's own preselects "use this
-prompt in fish", "make fish my default shell" and "show system info when a
-terminal opens" (the fastfetch greeting), says what Continue does,
-and applies both only on Continue; unticked boxes apply nothing; a foreign
+prompt in fish" and "make fish my default shell" (never "show system info
+when a terminal opens", the fastfetch greeting: it edits the user's rc
+files, so it is opt-in), says what Continue does, and applies them only on
+Continue; unticked boxes apply nothing; a foreign
 prompt preselects nothing; skipping the wizard applies nothing; a re-run
 preselects nothing; a cancelled password (failed chsh) is said on the step
 and the summary never claims the prompt for a shell that will not load it.
@@ -224,7 +225,11 @@ def greetings():
 
 
 fresh_wizard({**FRESH, "greeting": GREET})
-check(prop("fetchOn", "checked") is True, "first run: the greeting is preselected")
+check(prop("fetchOn", "checked") is False, "first run: the greeting is not preselected (opt-in)")
+check("~/.bashrc" not in str(prop("shellPlan", "message") or ""), "unticked: the notice does not mention the startup files")
+h.eval(vfind("fetchOn"), "toggled(true)")
+QTest.qWait(30)
+check(prop("fetchOn", "checked") is True, "ticked: the row shows it")
 check(greetings() == [], "nothing is turned on while the step shows")
 plan = str(prop("shellPlan", "message") or "")
 check("~/.bashrc" in plan and "one line" in plan, f"the notice says the greeting edits the startup files: {plan!r}")
@@ -260,15 +265,22 @@ check(ev("Config.terminal.greeting") == "none", "unticked, then Continue: off")
 # a fastfetch config of the user's: their own look
 fresh_wizard({**FRESH, "greeting": {**GREET, "ownConfig": True}})
 check("your own fastfetch config" in str(prop("fetchOn", "subtitle")), "own config: the row says it is used")
+h.eval(vfind("fetchOn"), "toggled(true)")
 ev("wizard.next()")
 check(greetings() == ["own:sakura"], f"own config: Continue keeps the user's look: {greetings()}")
 
-# unticked, skipped, re-run, a fetch tool of the user's: nothing
+# left unticked, ticked then unticked, skipped, re-run, a fetch tool of the
+# user's: nothing
 fresh_wizard({**FRESH, "greeting": GREET})
+ev("wizard.next()")
+check(greetings() == [] and ev("Config.terminal.greeting") == "none", "left unticked: the greeting stays off")
+fresh_wizard({**FRESH, "greeting": GREET})
+h.eval(vfind("fetchOn"), "toggled(true)")
 h.eval(vfind("fetchOn"), "toggled(false)")
 ev("wizard.next()")
 check(greetings() == [], "unticked: the greeting stays off")
 fresh_wizard({**FRESH, "greeting": GREET})
+h.eval(vfind("fetchOn"), "toggled(true)")
 ev("wizard.finish()")
 check(greetings() == [] and ev("Config.terminal.greeting") == "none", "skip applies nothing")
 fresh_wizard({**FRESH, "greeting": GREET}, first_run=False)
@@ -277,11 +289,10 @@ foreign = {**GREET, "shells": [{"shell": "bash", "state": "foreign", "file": "/h
 fresh_wizard({**FRESH, "greeting": foreign})
 check(prop("fetchOn", "checked") is False and prop("fetchOn", "enabled") is False,
       "the user's shell runs a fetch tool: not offered")
-# fastfetch missing but installable: preselected (installed by the service on Continue)
+# fastfetch missing but installable: not preselected either
 ev("ExtrasService.status = Object.assign({}, ExtrasService.status, {fastfetch: {id: 'fastfetch', state: 'missing'}})")
 fresh_wizard({**FRESH, "greeting": {**GREET, "fastfetchInstalled": False}})
-check(prop("fetchOn", "checked") is (ev("ExtrasService.cardState('fastfetch')") != "unavailable"),
-      "fastfetch missing: preselected when the catalog can install it")
+check(prop("fetchOn", "checked") is False, "fastfetch missing: not preselected")
 
 if failures:
     print(f"{len(failures)} failure(s)")
