@@ -169,7 +169,7 @@ var performance = {
             "description": "Size the volume / brightness OSD window to the OSD instead of the whole screen, so showing it maps and redraws a small surface instead of a screen-size one. Looks and works the same; its size and place are fixed while it shows, so a layout change made while the OSD is up applies from its next showing."
         },
         "splitFrame": {
-            "description": "Draw the screen frame (bar.frameEnabled) in its own layer window on the Top layer, so the bar, notch and dock animating no longer re-render it. Under a fullscreen window the frame goes back into the panel (it shows there when the bar is revealed). Shadows of the notch, dock and bars are clipped to the frame's hole instead of passing under it: identical with an opaque frame, a translucent frame no longer shows them through it. Windows of other programs on the Top layer can now cover the frame."
+            "description": "Draw the screen frame (bar.frameEnabled) in its own layer window on the Top layer, so the bar, notch and dock animating no longer re-render it. Under a fullscreen window the frame goes back into the panel (it shows there when the bar is revealed). Shadows of the notch, dock and bars are clipped to the frame's hole instead of passing under it: identical with an opaque frame, a translucent frame no longer shows them through it. Windows of other programs on the Top layer can now cover the frame, and the frame window is one more full-screen surface (its buffers) while the frame is on."
         }
     }
 };
