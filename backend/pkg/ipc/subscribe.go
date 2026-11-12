@@ -33,8 +33,9 @@ func (s *Server) streamSubscribe(conn net.Conn, w *bufio.Writer, req *Request) {
 	}
 
 	sub := &Subscriber{
-		Events: make(chan ServiceEvent, 256),
-		stop:   make(chan struct{}),
+		ClientID: params.ClientID,
+		Events:   make(chan ServiceEvent, 256),
+		stop:     make(chan struct{}),
 	}
 
 	// Stream events in a goroutine. On dead conn it stops the sub.

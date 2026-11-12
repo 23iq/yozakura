@@ -75,6 +75,8 @@ Yozakura is a highly customizable Wayland shell built with Quickshell. It provid
 ├── backend/              # Go backend — single `yozakura` process supervises Quickshell, yozd and wl-paste (replaces cli.sh)
 ├── nix/                  # Nix flake, packages, and module definitions
 ├── shell.qml             # Entry point: ShellRoot, Variants, service init
+├── settings-window.qml   # Settings as its own process (performance.separateWindows)
+├── onboarding-window.qml # Setup wizard as its own process (same switch)
 └── cli.sh                # REMOVED — replaced by Go binary `yozakura`
 ```
 
@@ -302,6 +304,14 @@ make install    # sudo install of ./yozakura to /usr/local/bin
 ## NOTES
 - Config keys are declared once, in `config/defaults/<domain>.js`; `config/adapters/` is generated
   (`make schema`, `tools/config/gen_adapters.cjs`). Use `pauseAutoSave` for bulk edits.
+- **Separate windows** (`performance.separateWindows`, default off): Settings and the
+  setup wizard run as their own Quickshell processes (`settings-window.qml`,
+  `onboarding-window.qml`, started on demand by the daemon's `windows` service,
+  `backend/pkg/svc/windows`), so they cost nothing until opened. Only the main shell
+  claims session-wide resources: check `ProcessRole.primary` (modules/globals) in any
+  service that does (modules/services/AGENTS.md). Staged settings preview on the
+  desktop through the daemon's `preview` relay (modules/settings/AGENTS.md, SEPARATE
+  PROCESS). A root file compiles what it names: keep these two lean (load windows by URL).
 - Large files (>800 lines, `make audit` lists them): `PresetsTab`, `WeatherWidget`, `EmojiTab`. `ClipboardTab`, `NotesTab`, `TmuxTab`, `MetricsTab`, `Wallpaper`/`WallpapersTab` and `Config.qml` are split into focused components; keep them that way.
 - The `qs.` import prefix is a Quickshell VFS construct, not a physical directory.
 - `screenshotToolMode` in `GlobalStates.qml` is **DEPRECATED**.

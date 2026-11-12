@@ -83,6 +83,16 @@ Singleton {
         root.autoSaveHolds = Math.max(0, root.autoSaveHolds - 1);
     }
 
+    // Each domain's ConfigFile by name (registered by ConfigFile itself), for
+    // a merged write of one domain: Config.configFile("bar").writeMerged().
+    property var _files: ({})
+    function registerFile(name, file) {
+        root._files[name] = file;
+    }
+    function configFile(name) {
+        return root._files[name] || null;
+    }
+
     // A domain file was reloaded (external change): the staged settings
     // snapshot of that domain follows it, so Discard never undoes it.
     function configReloaded(name) {

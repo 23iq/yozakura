@@ -1,9 +1,74 @@
 # Splitting the unified panel into separately sized layer surfaces
 
-Status: design, not implemented. Companion to the `audit/smooth-animations`
-track, which made every surface's per-frame cost fixed (analytic shadows,
-no morph-sized layers, no canvas repaints, render-thread fades) but kept one
-window per screen.
+Status: phase 1 (the frame) implemented behind `performance.splitFrame`
+(default off); phases 2-5 are design only. Two related window-surface
+optimisations ship next to it, also off by default (see "Implemented"
+below). Companion to the `audit/smooth-animations` track, which made every
+surface's per-frame cost fixed (analytic shadows, no morph-sized layers, no
+canvas repaints, render-thread fades) but kept one window per screen.
+
+## Implemented
+
+| Key (all default `false`) | What | Code | Tests |
+|---|---|---|---|
+| `performance.splitFrame` | Phase 1: the frame and its shadow in `FrameWindow` (Top layer, full screen, empty input mask, no exclusive zone) | `modules/shell/FrameSplit.qml`, `FrameWindow.qml`, `FrameWindowLoader.qml`, `FrameShapeShadow.qml`, `ShadowHoleClip.qml`, `ShapeShadow` clip | `tests/frame-split.test.py` |
+| `performance.hidePanelInFullscreen` | The unified panel window unmaps under a fullscreen window while nothing in it has to show | `modules/shell/PanelPresence.js` (every reason), `PanelPresence.qml` | `tests/panel-presence.test.cjs`, `tests/panel-presence.test.py` |
+| `performance.compactOsd` | The OSD window sized to the OSD instead of the screen | `modules/shell/osd/OsdWindowBox.js`, `OSD.qml` | `tests/osd-window-box.test.cjs`, `tests/osd-compact.test.py` |
+
+Phase 1 as built (`splitFrame`):
+
+* The phase switch is its own key, `performance.splitFrame`, not the
+  `performance.splitSurfaces` of "Phases" below: each phase that lands
+  gets its own key until the unified window is gone.
+* `FrameSplit` decides who draws the frame. The window does while the
+  flag and `bar.frameEnabled` are on and no fullscreen window covers the
+  screen. Under a fullscreen window the unified panel draws it again (a
+  Top surface sits below a fullscreen client; the frame's restoration
+  around a bar revealed in fullscreen must show above it), and the
+  window unmaps once that state has held for 250 ms (a quick toggle
+  remaps nothing). Handover: the window maps first and the panel stops
+  drawing 50 ms later; back to the panel, the panel draws at once.
+* Shadows: the frame's own analytic shadow is drawn in `FrameWindow`
+  under the frame. The notch, dock and notification-popup shadows
+  (`ShapeShadow`) are cut to the frame's rounded hole by a clip uniform in
+  `shape_shadow.frag`; the captured bar and live-activity shadows
+  (`ShadowCaster`) are clipped to the hole's bounding box
+  (`ShadowHoleClip`, a scissor, no layer).
+* Visible differences, measured offscreen by `tests/frame-split.test.py`
+  (frame window + panel layer composited vs the unified scene, every
+  visual language, a contained top bar and a floating left bar, an
+  attached notch and dock): with the default (opaque) frame fill the
+  shadows are identical; captured bar shadows differ by at most 4/255 on
+  about 20 antialiased pixels where they reach the hole's rounded corners
+  (bounding-box clip). Text of a contained bar drawn straight on the frame
+  (ink, glass: no group box under it) differs on its antialiased glyph
+  edges (up to 64/255 in ink, 6/255 in glass, a few hundred pixels): it is
+  blended over a transparent window instead of over the frame. A
+  translucent frame no longer shows the shadows that passed under it (cut
+  at its edge instead). Other programs' Top-layer surfaces and the desktop
+  widget editor (Top) can now cover the frame.
+* With the flag off `PanelShadows` draws exactly what it drew before
+  (before/after `panels_render.py` renders, frame on, contained and
+  floating bars, every language: identical but for the bar's live
+  content, which also differs between two renders of the same tree).
+
+`hidePanelInFullscreen` is the precondition the "Why" above implies for
+fullscreen games and video: an Overlay surface mapped over the fullscreen
+client, even fully transparent, blocks direct scanout. The panel maps
+again in the same tick when any reason in `PanelPresence.js` holds and
+unmaps only after "no reason" has settled. While the bar or the dock is
+configured to reveal on edge hover in fullscreen
+(`bar.availableOnFullscreen`, `dock.availableOnFullscreen` with
+`dock.hoverToReveal`) it never unmaps: a thin hover-strip window that
+takes over the edge (the "Hover reveal strips" row below) is not built.
+
+`compactOsd` sizes the OSD window to a box around the OSD (its rest
+position, its 14 px slide towards the edge and a theme shadow's reach),
+anchored to the edge `EdgeService.osdPlacement` picked and the start edge
+across it. The geometry (and the OSD's place and form inside it) is taken
+only while the window is unmapped, never during a showing or its
+animation, so a layout change made while the OSD is up applies from the
+next showing.
 
 ## Why
 
@@ -124,7 +189,8 @@ fallback so a regression is one config switch away.
 
 1. **Frame.** `FrameWindow` (static most of the time) with its analytic
    shadow. Win: the frame and its shadow stop being re-rendered when
-   anything else animates. Risk: low (no input, no focus).
+   anything else animates. Risk: low (no input, no focus). Done, behind
+   `performance.splitFrame` (see "Implemented").
 2. **Dock.** `DockWindow` (fixed size per dock length bucket; the reveal is
    a translate + fade inside it). Shadow clipped to the frame hole.
 3. **Bars.** One `BarWindow` per panel; popups re-anchored; focus grab list.

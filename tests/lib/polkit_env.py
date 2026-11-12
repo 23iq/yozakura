@@ -22,7 +22,7 @@ import os
 import shutil
 from pathlib import Path
 
-from qmlharness import REPO  # first: enters the headless platform
+from qmlharness import REPO, process_role_qml  # first: enters the headless platform
 from kit_env import KitEnv
 from settings_env import QUICKSHELL, global_states_qml
 
@@ -170,7 +170,7 @@ Item {
 
 
 class PolkitEnv(KitEnv):
-    def __init__(self, name: str = "polkit", *, window_stub: bool = True, **kw):
+    def __init__(self, name: str = "polkit", *, window_stub: bool = True, role: str = "", **kw):
         super().__init__(name, **kw)
         h = self.h
         qs = self.root / "qs"
@@ -182,7 +182,9 @@ class PolkitEnv(KitEnv):
             "    id: gs\n",
             "    id: gs\n    property bool lockscreenVisible: false\n    property string focused: \"\"\n"
             "    function focusedScreenName() { return focused }\n", 1)
-        h.module("qs.modules.globals", {"GlobalStates": gs})
+        # `role`: the process (ProcessRole; "" = the main shell, "settings" /
+        # "onboarding" = a separate window process of performance.separateWindows).
+        h.module("qs.modules.globals", {"GlobalStates": gs, "ProcessRole": process_role_qml(role)})
         h.module("qs.modules.services", {"PolkitService": (REPO / "modules/services/PolkitService.qml").read_text(),
                                          "BackendService": BACKEND_SERVICE})
         cfg = qs / "config" / "Config.qml"

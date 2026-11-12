@@ -10,6 +10,8 @@ import (
 	"log"
 	"os"
 	"strings"
+
+	"yozakura/backend/pkg/brand"
 )
 
 // Vars lists the colon-separated path variables that are normalised.
@@ -19,6 +21,39 @@ var Vars = []string{
 	"PATH",
 	"QML_IMPORT_PATH",
 	"QML2_IMPORT_PATH",
+}
+
+// WindowVars are set by the daemon for a separate Settings / setup wizard
+// process only (pkg/svc/windows). Everything that process launches inherits
+// them, so they are dropped from every other environment: a main shell or
+// daemon started from a terminal opened in Settings must not come up as a
+// window.
+var WindowVars = []string{
+	brand.EnvPrefix + "ROLE",
+	brand.EnvPrefix + "WINDOW_PAGE",
+	brand.EnvPrefix + "WINDOW_SCREEN",
+	brand.EnvPrefix + "WINDOW_WORKSPACE",
+}
+
+// StripWindowVars returns env without WindowVars.
+func StripWindowVars(env []string) []string {
+	out := make([]string, 0, len(env))
+	for _, kv := range env {
+		k, _, _ := strings.Cut(kv, "=")
+		if !isWindowVar(k) {
+			out = append(out, kv)
+		}
+	}
+	return out
+}
+
+func isWindowVar(k string) bool {
+	for _, v := range WindowVars {
+		if v == k {
+			return true
+		}
+	}
+	return false
 }
 
 // Dedupe drops empty entries and duplicates from a colon-separated list,
@@ -69,12 +104,17 @@ func Clean(env []string, logf func(format string, args ...any)) []string {
 	return out
 }
 
-// CleanProcess normalises the current process environment in place so every
-// later exec inherits the clean values. It is silent: it returns one message
+// CleanProcess normalises the current process environment in place (and
+// drops WindowVars) so every later exec inherits the clean values. It is silent: it returns one message
 // per variable that changed and the caller decides whether to log them
 // (one-shot CLI subcommands must not print anything).
 func CleanProcess() []string {
 	var msgs []string
+	for _, k := range WindowVars {
+		if _, ok := os.LookupEnv(k); ok && os.Unsetenv(k) == nil {
+			msgs = append(msgs, "env: dropped "+k+" (inherited from a separate window process)")
+		}
+	}
 	for _, k := range Vars {
 		v, ok := os.LookupEnv(k)
 		if !ok {
@@ -92,9 +132,10 @@ func CleanProcess() []string {
 	return msgs
 }
 
-// ChildEnv returns the current environment, cleaned, for a supervised child.
+// ChildEnv returns the current environment, cleaned and without
+// WindowVars, for a supervised child.
 func ChildEnv() []string {
-	return Clean(os.Environ(), func(f string, a ...any) { log.Printf(f, a...) })
+	return StripWindowVars(Clean(os.Environ(), func(f string, a ...any) { log.Printf(f, a...) }))
 }
 
 func isPathVar(k string) bool {

@@ -53,10 +53,12 @@ Singleton {
         cacheFileView.setText(JSON.stringify(data));
     }
 
+    // Scheduled checks run in the main shell; a separate Settings window
+    // only checks when asked (About > Check now).
     Timer {
         id: startupDelay
         interval: 2000
-        running: true
+        running: ProcessRole.primary
         onTriggered: {
             if (Config.system.updateServiceEnabled) {
                 checkUpdates();
@@ -157,7 +159,7 @@ Singleton {
             ],
             actionHandlers: {
                 "changelog": function () {
-                    Quickshell.execDetached(["xdg-open", root.changelogUrl]);
+                    Quickshell.execDetached(ProcessRole.detached(["xdg-open", root.changelogUrl]));
                 },
                 "later": function () {
                     root.nextCheckTime = Date.now() + 8 * 3600000;

@@ -16,7 +16,11 @@ JsonAdapter {
     property int dashboardMaxPersistentTabs: 2
     property bool unloadIdleViews: true
     property int settingsKeepAliveMinutes: 5
+    property bool separateWindows: false
     property int visualizerFps: 30
     property bool batterySaver: false
     property bool warmViews: true
+    property bool hidePanelInFullscreen: false
+    property bool compactOsd: false
+    property bool splitFrame: false
 }

@@ -4,9 +4,11 @@ import Quickshell
 
 // State of the shell's own polkit authentication agent. The agent itself
 // lives in modules/polkit (PolkitHost, placed in shell.qml only): an
-// instance without a host (the dry-run wizard, a future Settings process)
-// never registers one, and everything here stays false there. Only the
-// host writes these.
+// instance without a host (the dry-run wizard, a separate Settings
+// process) never registers one, and everything here stays false there.
+// Only the host writes these, and in a separate wizard process
+// (onboarding-window.qml) the main shell's `registered` / `dialogOpen`,
+// relayed by the daemon, so the wizard steps aside for the dialog.
 Singleton {
     id: root
 

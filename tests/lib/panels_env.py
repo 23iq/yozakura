@@ -64,6 +64,8 @@ MIRROR_FILES = [
     "modules/theme/DensityMetrics.js",
     "config/motion/MotionBudget.js",
     "modules/shell/PanelShadows.qml",
+    "modules/shell/FrameShapeShadow.qml",
+    "modules/shell/ShadowHoleClip.qml",
     "modules/shell/FrameShadow.js",
     "modules/shell/EdgeService.qml",
     "modules/shell/EdgeLayout.js",

@@ -87,6 +87,31 @@ CLI call that changes the system on the wizard path checks `DryRun.active`
 and journals instead (see PresetsService, CompositorTomlWriter, Colors
 generators, GlobalShortcuts). `DryRunBadge` marks the card and the pill.
 
+## SEPARATE PROCESS
+With `performance.separateWindows` the wizard runs as its own Quickshell
+process (`onboarding-window.qml`, `<PREFIX>ROLE=onboarding`, started by the
+daemon like Settings, see modules/settings/AGENTS.md SEPARATE PROCESS).
+`OnboardingService.visible` in the main shell mirrors the process
+(`SeparateWindows`): the first-run auto-show, `<app> run onboarding` and
+Settings > About open it there; when it closes (finished, skipped, Esc or
+crashed) the main shell marks it dismissed for the session. In the window,
+`OnboardingService.open()` resumes from the saved progress, on the screen the
+main shell chose. Real changes as in-process: settings through
+`SettingsStore` (staged ones preview through the daemon's `preview` relay and
+are applied by `finish()`), `general.onboardingDone` written by `complete()`
+in the window (the main shell follows general.json), displays through the
+daemon (the wizard unmaps while a live change waits; the keep/revert prompt
+is the main shell's), installs through the daemon queue, wallpapers through
+the main shell (RemoteWallpapers). Keybind tour: `GlobalShortcuts` in the
+window listens to the daemon's `ui` stream (commandRan only, never runs a
+command, as the dry run), "Try" sends `ui.run` (`tryCommand`), and the main
+shell relays whether one of its panels is open (`shellPanelOpen`) and its
+bottom bar height (`shell.state`, for the peek pill). The summary's Settings
+links finish the wizard first and ask the main shell to open Settings
+(`settings.open`). The window quits once the wizard closed and no
+exclusive-mode switch is pending (its failure is notified through the
+daemon).
+
 ## VERIFY
 `tests/onboarding.test.cjs`, `tests/onboarding-finish.test.cjs`, `tests/onboarding-terminal.test.cjs`, `tests/onboarding-ui.test.py`, `tests/onboarding-terminal-ui.test.py`, `tests/onboarding-apps-ui.test.py`, `tests/onboarding-dryrun.test.py`, `tests/dryrun-backend.test.cjs`
 (`tests/lib/onboarding_env.py`), renders:

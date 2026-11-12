@@ -420,5 +420,29 @@ host_src = (REPO / "modules/polkit/PolkitHost.qml").read_text()
 check(not IMPORT.search(host_src) and 'source: "PolkitAgentScope.qml"' in host_src,
       "the host loads the agent by URL (a Quickshell without the module still starts)")
 
+# ---- separate window processes: never a second agent ----------------------
+for entry in ("settings-window.qml", "onboarding-window.qml"):
+    src = (REPO / entry).read_text()
+    check("PolkitHost" not in src and "PolkitAgentScope" not in src, f"{entry} registers no agent")
+check(re.search(r"property bool enabled: ProcessRole\.primary\b", host_src) is not None,
+      "the host is on only in the main shell (ProcessRole.primary)")
+for role in ("settings", "onboarding"):
+    env2 = PolkitEnv(f"polkit-agent-{role}", role=role)
+    scene2 = env2.h.load("""
+import QtQuick
+import qs.modules.services
+import qs.modules.polkit
+Item {
+    PolkitHost { objectName: "host" }
+    function sent() { return JSON.stringify(BackendService.sent.map(m => m.method)) }
+}""", auto_stub=False)
+    pump(150)
+    ev2 = lambda expr, h2=env2.h, s2=scene2: h2.eval(s2, expr)  # noqa: E731
+    check(scene2.findChild(QObject, "polkitAgent") is None, f"{role} process: the host loads no agent")
+    check(ev2("PolkitService.available") is False and ev2("PolkitService.registered") is False,
+          f"{role} process: PolkitService stays off")
+    check("compositor.setPolkitState" not in ev2("sent()"),
+          f"{role} process: nothing is reported to the daemon (the main shell's report stands), got {ev2('sent()')}")
+
 print(f"polkit-agent: {'ok' if not failures else 'FAILED'} ({len(failures)} failure(s))")
 h.exit(1 if failures else 0)

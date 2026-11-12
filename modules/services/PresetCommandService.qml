@@ -4,6 +4,7 @@ import QtQuick
 import QtQml
 import Quickshell
 import Quickshell.Io
+import qs.modules.globals
 
 // PresetCommandService subscribes to the "preset" IPC service and forwards
 // `preset.load` events into the existing PresetsService. Listing is
@@ -20,6 +21,8 @@ Singleton {
     id: root
 
     Component.onCompleted: {
+        if (!ProcessRole.primary)
+            return;
         BackendService.addSubscription(["preset"], (service, data) => {
             if (service === "preset.load" && data && typeof data.name === "string") {
                 root.load(data.name);

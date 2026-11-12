@@ -4,6 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Services.Notifications
 import Quickshell.Services.UPower
+import qs.modules.globals
 import qs.modules.theme
 
 Singleton {
@@ -45,6 +46,8 @@ Singleton {
     }
 
     function evaluateBatteryAlert() {
+        if (!ProcessRole.primary)
+            return;
         if (!available || isPluggedIn) {
             lastBatteryAlertThreshold = 0;
             return;

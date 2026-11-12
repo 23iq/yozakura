@@ -151,6 +151,9 @@ var performance = {
             "max": 120,
             "description": "Minutes the closed Settings window stays loaded (hidden) so it reopens instantly; 0 releases it on close."
         },
+        "separateWindows": {
+            "description": "Run Settings and the setup wizard as separate processes started when opened: no memory used until then and all of it released on close, at the cost of a slower open (the window loads from scratch each time). Staged changes still preview on the desktop."
+        },
         "visualizerFps": {
             "min": 15,
             "max": 60,
@@ -161,6 +164,15 @@ var performance = {
         },
         "warmViews": {
             "description": "Create the launcher a few seconds after startup, hidden, so its first open is instant. Turn off to save the memory it holds until the launcher is first opened."
+        },
+        "hidePanelInFullscreen": {
+            "description": "Unmap a screen's panel window (bar, notch, dock, frame) while a fullscreen window covers that screen and nothing in the panel has to show, so the compositor can scan the fullscreen window out directly. It maps again at once for a notification, an opened view, a focus grab or the fullscreen window leaving. No effect while the bar or dock reveals on hover in fullscreen (bar.availableOnFullscreen, dock.availableOnFullscreen with dock.hoverToReveal): their edge must stay hoverable. Experimental: each unmap and remap recreates the panel's surface."
+        },
+        "compactOsd": {
+            "description": "Size the volume / brightness OSD window to the OSD instead of the whole screen, so showing it maps and redraws a small surface instead of a screen-size one. Looks and works the same; its size and place are fixed while it shows, so a layout change made while the OSD is up applies from its next showing."
+        },
+        "splitFrame": {
+            "description": "Draw the screen frame (bar.frameEnabled) in its own layer window on the Top layer, so the bar, notch and dock animating no longer re-render it. Under a fullscreen window the frame goes back into the panel (it shows there when the bar is revealed). Shadows of the notch, dock and bars are clipped to the frame's hole instead of passing under it: identical with an opaque frame, a translucent frame no longer shows them through it. Windows of other programs on the Top layer can now cover the frame, and the frame window is one more full-screen surface (its buffers) while the frame is on."
         }
     }
 };

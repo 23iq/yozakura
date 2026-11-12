@@ -52,6 +52,9 @@ func runPanicChild(t *testing.T, which string) {
 				"boom":    func(json.RawMessage) (any, error) { panic("handler boom") },
 				"aboom":   func(json.RawMessage) (any, error) { panic(errors.New("async boom")) },
 				"marshal": func(json.RawMessage) (any, error) { return panicMarshaler{}, nil },
+				"dboom": func(json.RawMessage) (any, error) {
+					return Deferred(func() (any, error) { panic("later boom") }), nil
+				},
 			},
 			Async: map[string]bool{"aboom": true},
 		},
@@ -65,6 +68,7 @@ func runPanicChild(t *testing.T, which string) {
 		"handler":   `{"id":1,"method":"t.boom"}`,
 		"async":     `{"id":1,"method":"t.aboom"}`,
 		"result":    `{"id":1,"method":"t.marshal"}`,
+		"deferred":  `{"id":1,"method":"t.dboom"}`,
 		"subscribe": `{"id":1,"method":"subscribe","params":{"services":["bad"]}}`,
 		"event":     `{"id":1,"method":"subscribe","params":{"services":["ev"]}}`,
 	}[which]
@@ -85,6 +89,7 @@ func TestServicePanicCrashesTheDaemon(t *testing.T) {
 		"handler":   "[ipc] panic in t.boom: handler boom",
 		"async":     "[ipc] panic in t.aboom: async boom",
 		"result":    "[ipc] panic in t.marshal: marshal boom",
+		"deferred":  "[ipc] panic in t.dboom: later boom",
 		"subscribe": "[ipc] panic in bad subscribe: subscribe boom",
 		"event":     "[ipc] panic in marshalling a ev event: marshal boom",
 	}

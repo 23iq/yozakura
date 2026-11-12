@@ -1,7 +1,8 @@
 # SETTINGS KNOWLEDGE BASE
 
 ## OVERVIEW
-The settings window (`SettingsWindow.qml`, loaded by `shell.qml`) is schema
+The settings window (`SettingsWindowInProcess.qml`, loaded by `shell.qml`, or
+its own process with `performance.separateWindows`, see SEPARATE PROCESS) is schema
 driven: settings are *declared* in `schema/*.js` and rendered by generic
 components. Search, modified/reset state and the audit are all generated from
 the same declarations.
@@ -9,7 +10,12 @@ the same declarations.
 ## STRUCTURE
 ```
 modules/settings/
-├── SettingsWindow.qml      FloatingWindow wrapper (placement on the focused workspace)
+├── SettingsWindow.qml      FloatingWindow wrapper without content (placement on the focused workspace,
+│                           re-homing, unsaved-changes guard)
+├── SettingsWindowInProcess.qml  + SettingsShell, static (shell.qml KeepAliveLoader)
+├── SettingsWindowSeparate.qml   + SettingsShell by URL, async, behind SettingsLoading (settings-window.qml)
+├── OpeningPill.qml         main shell: "Opening Settings..." while a window process starts
+├── ConfigWrite.js          pure: one dotted key into Config (SettingsStore.set, the main shell's PreviewSink)
 ├── SettingsShell.qml       sidebar + current page + ChangesBar, keyboard shortcuts
 ├── SettingsPageHost.qml    the page Loader: fresh per category, page table (SettingsPage fills sections per frame)
 ├── SettingsSidebar.qml     brand, search (schema index), grouped categories (NavItem)
@@ -188,11 +194,101 @@ writes the JSON files) or discards (restores the snapshot). Domains without a
 snapshot list are saved immediately (`Config.save<Domain>()`), and
 `wallpaper.*` keys go straight to the wallpaper manager (wallpapers.json).
 
+## SEPARATE PROCESS
+`performance.separateWindows` (default off): Settings (and the setup wizard,
+see modules/onboarding/AGENTS.md) runs as its own Quickshell process that
+costs nothing until opened and gives all its memory back when closed; each
+open compiles the window again (a few seconds, where a kept-alive in-process
+window reopens at once). Off, everything is as before.
+- Launch: every open path still sets `GlobalStates.settingsWindowVisible` /
+  `settingsCategory`; the main shell's `SeparateWindows` (modules/services)
+  turns that into `windows.open {kind, page, screen, workspace}` /
+  `windows.close` and mirrors the process in the flag (true while it runs).
+  The daemon (`backend/pkg/svc/windows`) starts `qs -p <shell dir>/settings-window.qml`
+  next to the running shell.qml (mods generation or Nix store path; base
+  source as fallback) with `<PREFIX>ROLE=settings` and `<PREFIX>WINDOW_*`,
+  one per kind: a later open sends `windows.command` raise (new page,
+  placement again), a toggle sends close (the window asks about unsaved
+  changes); a raise asked while the window still starts is kept (the
+  last one) and handed over in the answer to its `windows.ready`, a close
+  then stops the process (it never maps; an open after it starts a new one). Closed,
+  the window reports `windows.hiding` and quits (1 s grace for the last
+  writes); an open meanwhile raises it again (a new process if it quit
+  first),
+  the daemon reaps it, kills it on shutdown / reload / quit (SIGTERM, then
+  SIGKILL of its group), never restarts it; the orphan sweep knows the entry
+  files. A start failure falls back to the in-process window (so does no
+  daemon connection, `qs -p shell.qml` alone, no answer within 3 s, or a
+  process that exits before its window showed, unless the daemon stopped
+  it at shutdown / reload or its connection is gone; the wizard then does
+  not count as dismissed). A process that exited before it showed is not
+  started again: that window opens in-process for the rest of the session
+  (until the setting is turned off), logged once; a window open
+  in-process stays so when the setting changes. `OpeningPill` shows until
+  the window reports `windows.ready`; the frame maps first
+  (`SettingsWindowSeparate`: background + "Loading settings...", content by URL).
+- Role: `ProcessRole` (modules/globals) keeps every session-wide service to
+  the main shell (see modules/services/AGENTS.md); a notification raised in
+  the window goes to the daemon (`notify.send`). The role variable is
+  trusted only in a window entry file (its `ShellId` pragma): `shell.qml` is
+  always the main shell. The daemon drops `<PREFIX>ROLE` / `WINDOW_*` from
+  its own environment and every other child (`envclean.WindowVars`), and a
+  window starts detached programs through `ProcessRole.detached(argv)`
+  (xdg-open, terminals), which removes them.
+- Staged changes (one staging, as in-process): the window stages in its own
+  Config exactly as in-process (`SettingsStore.set` -> GlobalStates snapshot,
+  auto-save paused) and, for a staged domain only, relays `preview.set
+  {owner, key, value}` (backend/pkg/svc/preview). Every other process (the
+  main shell, the other window) applies it in `PreviewSink` with the same
+  `ConfigWrite.assign` + snapshot (`GlobalStates.mark*Changed`), so the
+  desktop previews it, the other window shows it as unsaved, and nothing of
+  it is written. In-process Settings and the wizard share one set of
+  snapshots, so here too it is one staging: Apply or Discard by either ends
+  all of it (`preview.discard` restores every process's snapshots).
+  Apply (`PreviewSink.applyOwn`): the window drops its snapshots and sends
+  `preview.commit`; the main shell applies the staged entries the commit
+  carries (a `preview.set` the stream dropped), runs the same
+  `apply*Changes` as in-process and answers `preview.written`. Its Config holds every staged
+  value plus what the desktop changed meanwhile in a staged domain (widget
+  positions, dashboard cells, live activities), so those are written too,
+  as with one in-process Config; the windows follow the files. Only when no
+  main shell answers (2 s in the daemon, 4 s without the daemon) does the
+  window write, and only the domains it changed, each as only its own
+  changes over the current file (`StagedDomains.js`,
+  `ConfigFile.writeMerged`); it does not quit while that answer is pending. A window process gone (crash,
+  kill, closed without applying) while the other window runs leaves the
+  staging to that one; the last one gone discards it. The daemon keeps the
+  staged values, so a process (re)started meanwhile gets them again.
+  Unstaged settings are written by the window at once; the main shell
+  follows the file, and every process follows `config set`, MCP and presets
+  through its file watchers. Two processes auto-saving one domain do not
+  lose each other's edits: an edit still waiting for its write when the file
+  changes is merged into the new contents (`config/ConfigMerge.js`).
+- What the window cannot own is asked of the main shell
+  (`windows.relay {to: "shell", topic}`): wallpaper changes
+  (`RemoteWallpapers`, which reads wallpapers.json and scans the library like
+  the real manager), "Regenerate now" of app themes, desktop-widget edit mode
+  (the state and the depth clock areas come back), opening the wizard.
+- Pages: config-backed pages and search work on the window's own Config; Displays,
+  Keyboard, Extras, Mods, Presets, Routines, AI usage are daemon-backed (the
+  keep/revert prompt is drawn by the main shell from the daemon's session);
+  Network / Bluetooth / Sound talk to the system directly; the keybind editor
+  writes binds.json and the main shell's TOML writer follows the file; AI
+  providers / agents / MCP use a second `Ai` instance (reads only; automations
+  run in the main shell); About shows the last update check (scheduled checks
+  run in the main shell, "Check now" runs in the window). Not out of process:
+  the depth-clock matte progress (DepthMatteStatus) only sees jobs of its own
+  process, so it does not show the main shell's matte build.
+
 ## VERIFY
 - `make check`: `settings-schema` audit (keys/defaults, translations,
   options/ranges, conditions, registry, snapshot lists),
   `tests/settings-schema.test.cjs` (schema/search/layout helpers),
   `tests/settings-ui.test.py` (renderer behaviour, offscreen).
+- Separate process: `tests/separate-windows.test.py` (main-shell side: open/close
+  mirror, fallback, preview set/discard/commit, relays), `tests/window-entries.test.py`
+  (root files), `tests/process-role.test.py`, `tests/remote-wallpapers.test.py`,
+  `tests/config-write.test.cjs`, Go `backend/pkg/svc/{windows,preview}`.
 - `tools/render/settings_render.py [--mode dark|light|both] [--scroll N]
   [--search q] [--size WxH] CATEGORY...` renders pages to PNG in a private
   Xvfb with your real config, palette and wallpapers.

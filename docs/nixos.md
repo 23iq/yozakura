@@ -160,7 +160,10 @@ binary.
   (`YOZAKURA_LAUNCHER`) and exports the paths the backend and Quickshell
   need: `YOZAKURA_QS`, `YOZAKURA_SHELL`, `YOZAKURA_NIX_ENV`, `YOZAKURA_XKB_ROOT`,
   `YOZAKURA_WHISPER_BIN_DIR` and `YOZAKURA_DEPTH_PYTHON`. Then it runs the
-  backend.
+  backend. With `performance.separateWindows` the backend starts Settings
+  and the setup wizard through the same Quickshell wrapper, on their root
+  files next to the `shell.qml` it runs (the store path of
+  `YOZAKURA_SHELL`, or a mods generation), never relative to its own binary.
 - Quickshell runs through a second wrapper. That wrapper prepends the Qt
   plugins (multimedia, image formats), the QML modules and the GStreamer
   plugins, so video wallpapers and media work whatever the session sets.

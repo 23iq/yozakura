@@ -34,7 +34,13 @@ Item {
     }
 
     function regenerate() {
-        if (typeof Colors.regenerateApps === "function")
+        // A separate Settings process: the main shell writes the app themes.
+        if (ProcessRole.secondary)
+            BackendService.call("windows.relay", {
+                "to": "shell",
+                "topic": "colors.regenerate"
+            });
+        else if (typeof Colors.regenerateApps === "function")
             Colors.regenerateApps();
         root.lastRegenerated = Date.now();
         settleTimer.restart();

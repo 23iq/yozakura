@@ -89,12 +89,12 @@ Item {
             PillButton {
                 icon: "folder"
                 text: I18n.t("prefs.about.open_config")
-                onClicked: Quickshell.execDetached(["xdg-open", Config.configDir])
+                onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", Config.configDir]))
             }
             PillButton {
                 icon: "code"
                 text: I18n.t("prefs.about.source")
-                onClicked: Quickshell.execDetached(["xdg-open", Brand.repoUrl])
+                onClicked: Quickshell.execDetached(ProcessRole.detached(["xdg-open", Brand.repoUrl]))
             }
         }
 

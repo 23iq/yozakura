@@ -7,8 +7,12 @@ import qs.modules.services
 // The shell's own polkit authentication agent, for the instance whose root
 // holds a `PolkitHost {}` (shell.qml only). Only one agent can be
 // registered per session: any other Quickshell instance (the dry-run
-// wizard, a future Settings or wizard process) leaves it out, or sets
-// `enabled: false`, and never registers one.
+// wizard, the separate Settings / wizard processes of
+// performance.separateWindows) leaves it out, and the host itself stays
+// off outside the main shell (ProcessRole.primary): it never registers an
+// agent, reports compositor.setPolkitState or starts the fallback there.
+// A separate wizard learns the main shell's agent state from the shell
+// (SeparateWindows, windows.relay "shell.state").
 //
 // The agent (PolkitAgentScope.qml) is loaded by URL once the config says
 // system.polkitAgent is on, so a Quickshell built without
@@ -17,7 +21,7 @@ import qs.modules.services
 Scope {
     id: root
 
-    property bool enabled: true
+    property bool enabled: ProcessRole.primary
     readonly property bool wanted: root.enabled && Config.systemReady && Config.system.polkitAgent !== false
     readonly property bool loaded: agent.status === Loader.Ready
     // Our listener was registered: turned off at runtime, nothing else

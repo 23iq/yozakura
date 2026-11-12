@@ -103,6 +103,14 @@ ShellRoot {
             id: screenShellContainer
             required property ShellScreen modelData
 
+            // The frame in its own Top-layer window (performance.splitFrame);
+            // the panel decides when (FrameSplit)
+            FrameWindowLoader {
+                targetScreen: screenShellContainer.modelData
+                split: unifiedPanel.frameSplit
+                hasFullscreenWindow: unifiedPanel.hasFullscreenWindow
+            }
+
             // Panel components (Bar, Notch, Dock, Frame, Corners)
             UnifiedShellPanel {
                 id: unifiedPanel
@@ -315,14 +323,16 @@ ShellRoot {
     // Its output is an initial property resolved once per creation (a
     // `screen` binding would move the mapped window on every output change);
     // a kept window moves itself while hidden (SettingsWindow.retarget()).
+    // With performance.separateWindows the window is a process of its own
+    // (SeparateWindows, settings-window.qml) and this loader stays empty.
     KeepAliveLoader {
         id: settingsWindowLoader
         allowed: SuspendManager.wakeReady
-        wanted: GlobalStates.settingsWindowVisible
+        wanted: GlobalStates.settingsWindowVisible && !SeparateWindows.settingsSeparate
         keepFor: Math.max(0, Config.performance.settingsKeepAliveMinutes) * 60000
         function load() {
             if (active)
-                setSource("modules/settings/SettingsWindow.qml", {
+                setSource("modules/settings/SettingsWindowInProcess.qml", {
                     "targetScreen": SettingsScreen.byName(Quickshell.screens, GlobalStates.settingsTargetScreenName)
                 });
             else
@@ -334,13 +344,19 @@ ShellRoot {
 
     // First-run setup wizard (OnboardingService: auto-shown once on a fresh
     // install, `<app> run onboarding`, Settings > About)
+    // (its own process with performance.separateWindows: onboarding-window.qml)
     Loader {
-        active: SuspendManager.wakeReady && OnboardingService.visible
+        active: SuspendManager.wakeReady && OnboardingService.visible && !SeparateWindows.wizardSeparate
         source: "modules/onboarding/OnboardingWindow.qml"
     }
     Loader {
-        active: SuspendManager.wakeReady && OnboardingService.visible && OnboardingService.peek
+        active: SuspendManager.wakeReady && OnboardingService.visible && OnboardingService.peek && !SeparateWindows.wizardSeparate
         source: "modules/onboarding/OnboardingPeekPill.qml"
+    }
+    // "Opening Settings..." while a separate window process starts
+    Loader {
+        active: SeparateWindows.settingsOpening || SeparateWindows.wizardOpening
+        source: "modules/settings/OpeningPill.qml"
     }
 
     // Password prompts of system actions (pkexec, app installs): the
@@ -396,6 +412,7 @@ ShellRoot {
                 _ = GlobalShortcuts.appId; // Force init (IPC pipe listener)
                 _ = WallpaperCommandService; // Force init (IPC wallpaper.set subscriber)
                 _ = PresetCommandService;    // Force init (IPC preset.load subscriber)
+                _ = SeparateWindows.wanted;   // Settings / wizard as their own processes (when on)
             });
         }
     }

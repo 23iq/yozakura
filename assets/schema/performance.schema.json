@@ -198,12 +198,30 @@
         "control": "number",
         "unit": "min",
         "keywords": "settings window keep loaded memory reopen instant release",
+        "enabledWhen": {
+          "key": "performance.separateWindows",
+          "equals": false
+        },
         "advanced": true,
         "min": 0,
         "max": 120
       },
       "minimum": 0,
       "maximum": 120
+    },
+    "separateWindows": {
+      "title": "Settings in Its Own Process",
+      "type": "boolean",
+      "default": false,
+      "description": "Settings and the setup wizard run as separate programs that start when you open them and give all their memory back when closed. Each open takes a moment longer (they load from scratch); unsaved changes still preview on the desktop",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.separate_windows",
+        "control": "toggle",
+        "keywords": "separate process settings window setup wizard onboarding memory ram release open slower",
+        "advanced": true
+      }
     },
     "visualizerFps": {
       "title": "Visualizer Frame Rate",
@@ -249,6 +267,48 @@
         "label": "system.performance.warm_views",
         "control": "toggle",
         "keywords": "warm preload prepare startup launcher memory",
+        "advanced": true
+      }
+    },
+    "hidePanelInFullscreen": {
+      "title": "Hide the Panel Under Fullscreen Windows",
+      "type": "boolean",
+      "default": false,
+      "description": "Unmap a screen's panel while a fullscreen window covers it and nothing there has to show, so games and videos can be shown directly. It comes back at once for a notification or an opened view. No effect while the bar or dock reveals on hover in fullscreen. Experimental",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.hide_panel_fullscreen",
+        "control": "toggle",
+        "keywords": "fullscreen game video panel bar unmap scanout overlay surface",
+        "advanced": true
+      }
+    },
+    "compactOsd": {
+      "title": "Compact Volume and Brightness Window",
+      "type": "boolean",
+      "default": false,
+      "description": "Size the volume and brightness display's window to the display itself instead of the whole screen. Looks and works the same; a layout change applies from its next showing",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.compact_osd",
+        "control": "toggle",
+        "keywords": "osd volume brightness window surface size memory",
+        "advanced": true
+      }
+    },
+    "splitFrame": {
+      "title": "Screen Frame in Its Own Window",
+      "type": "boolean",
+      "default": false,
+      "description": "Draw the screen frame in a separate window so bar, notch and dock animations do not redraw it. Shadows stop at the frame's edge, which shows only on a translucent frame",
+      "x-settings": {
+        "category": "system",
+        "section": "performance",
+        "label": "system.performance.split_frame",
+        "control": "toggle",
+        "keywords": "frame border window surface redraw layer",
         "advanced": true
       }
     }

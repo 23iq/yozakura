@@ -33,9 +33,16 @@ Item {
 
     property bool barEnabled: true
     property bool dockEnabled: true
+    // The frame is drawn by its own window below this one
+    // (performance.splitFrame, FrameWindow): no frame shadow here, and the
+    // other shadows stop at the frame's hole instead of passing under it
+    property bool frameElsewhere: false
 
     readonly property bool frameEnabled: Config.bar?.frameEnabled ?? false
     readonly property int frameThickness: Config.bar?.frameThickness ?? 6
+    readonly property bool clipToHole: root.frameElsewhere && root.frameEnabled && !!root.frame && root.frame.hasHole
+    readonly property rect holeClip: root.clipToHole ? root.openHole(root.frame.holeRect, root.frame) : Qt.rect(0, 0, 0, 0)
+    readonly property real holeClipRadius: root.frame ? root.frame.innerRadius : 0
     // Room for fillets, outlines and the island gap around each surface
     readonly property real pad: (Config.roundness > 0 ? Config.roundness + 4 : 0) + 8
 
@@ -72,22 +79,8 @@ Item {
         }
     }
 
-    readonly property rect activityRect: {
-        const a = root.activities;
-        const l = a ? a.leftHitbox : null;
-        const r = a ? a.rightHitbox : null;
-        const boxes = [l, r].filter(i => i && i.width > 0 && i.height > 0);
-        if (boxes.length === 0)
-            return Qt.rect(0, 0, 0, 0);
-        const x0 = Math.min(...boxes.map(i => i.x));
-        const y0 = Math.min(...boxes.map(i => i.y));
-        const x1 = Math.max(...boxes.map(i => i.x + i.width));
-        const y1 = Math.max(...boxes.map(i => i.y + i.height));
-        return root.region(x0, y0, x1 - x0, y1 - y0);
-    }
-
     // The frame's hole grown past every screen edge whose side has no
-    // thickness (far enough that no blur or light offset reaches back)
+    // thickness (FrameShadow.openHole)
     function openHole(hole, f) {
         const b = FrameShadow.openHole({
             "x": hole.x,
@@ -103,28 +96,39 @@ Item {
         return Qt.rect(b.x, b.y, b.w, b.h);
     }
 
-    // Frame: everything outside its rounded hole (a contained panel is part
-    // of the frame's silhouette, it narrows the hole). A side of thickness 0
-    // (a fullscreen window hides it) draws nothing, so it casts nothing: the
-    // hole runs past that screen edge instead of ending on it.
-    ShapeShadow {
-        active: root.frameEnabled && !!root.frame && root.frame.hasHole
-        inverted: true
-        box: root.frame ? root.openHole(root.frame.holeRect, root.frame) : Qt.rect(0, 0, 0, 0)
-        radii: {
-            const r = root.frame ? Math.min(root.frame.innerRadius, root.frame.holeRect.width / 2, root.frame.holeRect.height / 2) : 0;
-            return Qt.vector4d(r, r, r, r);
-        }
-        strength: root.frame ? root.frame.fillAlpha : 1
+    readonly property rect activityRect: {
+        const a = root.activities;
+        const l = a ? a.leftHitbox : null;
+        const r = a ? a.rightHitbox : null;
+        const boxes = [l, r].filter(i => i && i.width > 0 && i.height > 0);
+        if (boxes.length === 0)
+            return Qt.rect(0, 0, 0, 0);
+        const x0 = Math.min(...boxes.map(i => i.x));
+        const y0 = Math.min(...boxes.map(i => i.y));
+        const x1 = Math.max(...boxes.map(i => i.x + i.width));
+        const y1 = Math.max(...boxes.map(i => i.y + i.height));
+        return root.region(x0, y0, x1 - x0, y1 - y0);
     }
-    Repeater {
-        model: root.bars
-        delegate: ShadowCaster {
-            id: caster
-            required property var modelData
-            source: caster.modelData
-            active: root.barEnabled && !caster.modelData.contained
-            sourceRect: root.barRect(caster.modelData)
+
+    // Frame: everything outside its rounded hole (FrameShapeShadow), here
+    // while the frame is drawn in this panel
+    FrameShapeShadow {
+        frame: root.frame
+        shown: !root.frameElsewhere
+    }
+    ShadowHoleClip {
+        area: root
+        clipped: root.clipToHole
+        hole: root.holeClip
+        Repeater {
+            model: root.bars
+            delegate: ShadowCaster {
+                id: caster
+                required property var modelData
+                source: caster.modelData
+                active: root.barEnabled && !caster.modelData.contained
+                sourceRect: root.barRect(caster.modelData)
+            }
         }
     }
     // Dock: its body and (default theme) two concave corners, sliding with
@@ -136,6 +140,9 @@ Item {
         radii: surface ? surface.shadowRadii : Qt.vector4d(0, 0, 0, 0)
         fillet: surface && surface.isDefault ? surface.cornerSize : 0
         edge: surface ? surface.position : "bottom"
+        holeClipped: root.clipToHole
+        holeClip: root.holeClip
+        holeClipRadius: root.holeClipRadius
         strength: surface ? surface.fillAlpha : 1
         opacity: root.dock && root.dock.reveal ? 1 : 0
         RenderFade on opacity {
@@ -143,9 +150,14 @@ Item {
             easingType: root.dock ? root.dock.fadeEasing : Easing.Linear
         }
     }
-    ShadowCaster {
-        source: root.activities
-        sourceRect: root.activityRect
+    ShadowHoleClip {
+        area: root
+        clipped: root.clipToHole
+        hole: root.holeClip
+        ShadowCaster {
+            source: root.activities
+            sourceRect: root.activityRect
+        }
     }
     // Notch: its silhouette as it morphs (radii, concave corners of the
     // attached style), sliding with the reveal and fading in step with it
@@ -156,6 +168,9 @@ Item {
         radii: silhouette ? Qt.vector4d(silhouette.tl, silhouette.tr, silhouette.br, silhouette.bl) : Qt.vector4d(0, 0, 0, 0)
         fillet: silhouette && silhouette.attached ? silhouette.cornerSize : 0
         edge: silhouette ? silhouette.position : "top"
+        holeClipped: root.clipToHole
+        holeClip: root.holeClip
+        holeClipRadius: root.holeClipRadius
         strength: silhouette ? silhouette.surfaceAlpha : 1
         opacity: root.notch && root.notch.reveal ? 1 : 0
         RenderFade on opacity {
@@ -174,6 +189,9 @@ Item {
             return Qt.vector4d(r, r, r, r);
         }
         strength: root.notch ? root.notch.notificationPopupAlpha : 1
+        holeClipped: root.clipToHole
+        holeClip: root.holeClip
+        holeClipRadius: root.holeClipRadius
         opacity: root.notch && root.notch.reveal ? 1 : 0
         RenderFade on opacity {
             duration: root.notch ? root.notch.fadeDuration : 0

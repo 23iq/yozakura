@@ -8,6 +8,11 @@ import qs.config
 import qs.modules.settings.store
 import "SettingsScreen.js" as SettingsScreen
 
+// The Settings window without its content: placement on the target
+// workspace, re-homing when its output goes, the unsaved-changes guard on
+// close. SettingsWindowInProcess.qml (in the shell, kept alive by shell.qml)
+// adds the content statically; SettingsWindowSeparate.qml (its own process,
+// performance.separateWindows) loads it asynchronously.
 FloatingWindow {
     id: settingsWindow
 
@@ -156,13 +161,6 @@ FloatingWindow {
                 stop();
             }
         }
-    }
-
-    SettingsShell {
-        anchors.fill: parent
-        // While kept alive hidden (KeepAliveLoader), the pages see
-        // visible=false: previews, polls and timers gated on it stop.
-        visible: settingsWindow.visible
     }
 
     // Unsaved staged changes are never dropped silently: a close request

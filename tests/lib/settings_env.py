@@ -163,6 +163,18 @@ QtObject {
     function notifyInternal(o) { sent = sent.concat([o]); return null }
 }"""
 
+# performance.separateWindows, main shell side (DesktopWidgets listens to it).
+# A separate window's Apply in flight (PresetStudio.afterFlush waits for it).
+PREVIEW_SINK_STUB = """pragma Singleton
+QtObject { property bool applying: false }"""
+
+SEPARATE_WINDOWS_STUB = """pragma Singleton
+QtObject {
+    property bool settingsRunning: false
+    property string settingsState: "closed"
+    signal relayed(string topic, var data)
+}"""
+
 # Keybind edits ask the compositor TOML to be rewritten.
 TOML_WRITER_STUB = """pragma Singleton
 QtObject { property int writes: 0; function callWrite() { writes++ } }"""
@@ -809,6 +821,7 @@ class SettingsEnv:
                                               "YozdService": YOZD_STUB, "StateService": STATE_STUB, "DisplaysService": DISPLAYS_STUB, "KeyboardService": KEYBOARD_STUB, "RoutinesService": ROUTINES_STUB, "AppHooksService": APPHOOKS_STUB, "ExtrasService": EXTRAS_STUB, "ExclusiveService": EXCLUSIVE_STUB,
                                               "TerminalLookService": TERMINAL_LOOK_STUB, "ModsService": MODS_STUB,
                                               "UsageService": USAGE_STUB, "OnboardingService": ONBOARDING_STUB,
+                                              "SeparateWindows": SEPARATE_WINDOWS_STUB, "PreviewSink": PREVIEW_SINK_STUB,
                                               "Audio": AUDIO_STUB, "OsdService": OSD_SERVICE_STUB,
                                               "PresetStatusService": PRESET_STATUS_STUB,
                                               **LOCK_SERVICES, **DESKTOP_STUBS})

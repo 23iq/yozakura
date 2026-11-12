@@ -471,7 +471,7 @@ Singleton {
         "voice": ["enabled", "model", "language", "activation", "useGpu", "maxSeconds", "idleTimeout", "vadAutoStop", "vadSilenceMs", "vadSensitivity", "noSpeechTimeout", "serverVad", "typingMethod", "punctuation", "trailingSpace", "aiAutoSend", "previewMs"],
         "layout": ["launcher", "dashboard", "sheet", "backdrop", "powermenu", "tools", "aiquick", "panels", "cheatsheet", "osd"],
         "notifications": ["notchStyle", "presentation", "position", "screens", "timeout", "maxVisible", "groupByApp", "strips", "historySize", "sound", "rules", "dnd"],
-        "performance": ["blurTransition", "windowPreview", "wavyLine", "pauseWallpaperOnFullscreen", "pauseWallpaperWhenCovered", "pauseWallpaperOnIdle", "pauseWallpaperIdleDelay", "pauseWallpaperOnBattery", "videoWallpaperDownscale", "dashboardPersistTabs", "dashboardMaxPersistentTabs", "unloadIdleViews", "settingsKeepAliveMinutes", "visualizerFps", "batterySaver", "warmViews"]
+        "performance": ["blurTransition", "windowPreview", "wavyLine", "pauseWallpaperOnFullscreen", "pauseWallpaperWhenCovered", "pauseWallpaperOnIdle", "pauseWallpaperIdleDelay", "pauseWallpaperOnBattery", "videoWallpaperDownscale", "dashboardPersistTabs", "dashboardMaxPersistentTabs", "unloadIdleViews", "settingsKeepAliveMinutes", "separateWindows", "visualizerFps", "batterySaver", "warmViews", "hidePanelInFullscreen", "compactOsd", "splitFrame"]
     }
 
     // Create a deep copy of the current shell config
