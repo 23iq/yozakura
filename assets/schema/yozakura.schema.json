@@ -8738,13 +8738,13 @@
           "title": "Battery Saver",
           "type": "boolean",
           "default": false,
-          "description": "On battery: stop the audio visualizer, draw the media progress line straight and pause video wallpapers",
+          "description": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
           "x-settings": {
             "category": "system",
             "section": "performance",
             "label": "system.performance.battery_saver",
             "control": "toggle",
-            "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper"
+            "keywords": "battery saver power laptop unplugged visualizer cava wavy wallpaper border pulse"
           }
         },
         "warmViews": {

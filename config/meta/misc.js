@@ -154,7 +154,7 @@ var performance = {
             "description": "Frames per second of the audio visualizer (cava); lower uses less CPU."
         },
         "batterySaver": {
-            "description": "While on battery: stop the audio visualizer, draw the media progress line straight and pause video wallpapers."
+            "description": "While on battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers."
         },
         "warmViews": {
             "description": "Create the launcher a few seconds after startup, hidden, so its first open is instant. Turn off to save the memory it holds until the launcher is first opened."

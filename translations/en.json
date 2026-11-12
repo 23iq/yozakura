@@ -707,7 +707,7 @@
   "system.performance.visualizer_fps": "Visualizer Frame Rate",
   "system.performance.visualizer_fps_desc": "Frames per second of the audio visualizer; lower uses less CPU",
   "system.performance.battery_saver": "Battery Saver",
-  "system.performance.battery_saver_desc": "On battery: stop the audio visualizer, draw the media progress line straight and pause video wallpapers",
+  "system.performance.battery_saver_desc": "On battery: stop the audio visualizer and the music-reactive window border, draw the media progress line straight and pause video wallpapers",
   "system.performance.warm_views": "Prepare Launcher in Background",
   "system.performance.warm_views_desc": "Create the launcher a few seconds after startup so it opens instantly the first time. Turn off to save the memory it holds until you first open it",
   "system.performance.wavy_line_desc": "Animated wavy line effect",

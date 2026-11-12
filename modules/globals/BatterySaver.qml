@@ -7,8 +7,8 @@ import "BatterySaverRule.js" as Rule
 
 // The one "battery saver is active right now" switch (performance.batterySaver
 // while the machine runs on battery). Decorative per-frame work reads it:
-// NotchVisualizer (does not register with cava), PositionSlider (straight
-// line) and the video wallpaper (WallpaperPause.js). Lives in globals so the
+// NotchVisualizer and BorderPulse (neither registers with cava),
+// PositionSlider (straight line) and the video wallpaper (WallpaperPause.js). Lives in globals so the
 // foundation components can read it; the battery test mirrors the services'
 // Battery.onBattery. UPower is only read once the saver is turned on.
 Singleton {
