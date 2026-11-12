@@ -5,16 +5,36 @@
 // shadows, blur. Window rounding and motion live on Look (appearance.js).
 // Entry format: see modules/settings/AGENTS.md.
 
+// Rows that need the glass look on, blur on, shadows on.
+var GLASS = {
+    "key": "theme.glass.enabled",
+    "equals": true
+};
+var BLUR = {
+    "key": "compositor.blurEnabled",
+    "equals": true
+};
+var SHADOW = {
+    "key": "compositor.shadowEnabled",
+    "equals": true
+};
+
 var category = {
     "id": "windows",
     "icon": "compositor",
     "title": "prefs.cat.windows",
     "description": "prefs.cat.windows.desc",
     "keywords": "windows compositor hyprland gaps borders rounding blur shadows dim layout tiling motion animations",
+    "stage": "WindowsStage",
+    "hero": {
+        "right": ["compositor.smartGaps", "compositor.dimInactive", "compositor.shadowEnabled"],
+        "hint": "prefs.windows.hero_hint"
+    },
+    "row": ["layout", "gaps", "borders", "corners"],
     "sections": [
         {
             "id": "layout",
-            "title": "prefs.windows.section.layout",
+            "title": "prefs.windows.section.tiling",
             "entries": [
                 {
                     "key": "compositor.layout",
@@ -37,13 +57,30 @@ var category = {
                             "icon": "scrolling"
                         }
                     ],
-                    "preview": "WindowsPreview",
+                    "display": "cards",
+                    "thumb": "TilingThumb",
                     "label": "prefs.windows.layout",
                     "description": "prefs.windows.layout.desc",
                     "keywords": "layout tiling dwindle master scrolling preview windows"
+                }
+            ]
+        },
+        {
+            "id": "gaps",
+            "title": "prefs.windows.section.gaps",
+            "entries": [
+                {
+                    "id": "windows.gaps",
+                    "type": "custom",
+                    "component": "WindowGapsEditor",
+                    "keys": ["compositor.gapsIn", "compositor.gapsOut"],
+                    "label": "prefs.windows.gaps",
+                    "description": "prefs.windows.gaps.desc",
+                    "keywords": "gaps spacing between windows padding margin screen edges outer inner"
                 },
                 {
                     "key": "compositor.gapsIn",
+                    "advanced": true,
                     "type": "slider",
                     "min": 0,
                     "max": 50,
@@ -55,6 +92,7 @@ var category = {
                 },
                 {
                     "key": "compositor.gapsOut",
+                    "advanced": true,
                     "compositor": ["hyprland", "mango"],
                     "type": "slider",
                     "min": 0,
@@ -79,6 +117,15 @@ var category = {
             "id": "borders",
             "title": "prefs.windows.section.borders",
             "entries": [
+                {
+                    "id": "windows.border",
+                    "type": "custom",
+                    "component": "WindowBorderEditor",
+                    "keys": ["compositor.borderSize", "compositor.syncBorderWidth", "compositor.activeBorderColor", "compositor.syncBorderColor"],
+                    "label": "prefs.windows.border",
+                    "description": "prefs.windows.border.desc",
+                    "keywords": "border width thickness stroke color colour focused active ring"
+                },
                 {
                     "key": "compositor.syncBorderWidth",
                     "advanced": true,
@@ -139,6 +186,7 @@ var category = {
                 },
                 {
                     "key": "compositor.inactiveBorderColor",
+                    "advanced": true,
                     "type": "color-role",
                     "gradient": true,
                     "label": "prefs.windows.inactive_border",
@@ -157,7 +205,27 @@ var category = {
                     "label": "prefs.windows.inactive_border_angle",
                     "description": "prefs.windows.inactive_border_angle.desc",
                     "keywords": "gradient angle inactive border"
-                },
+                }
+            ]
+        },
+        {
+            "id": "corners",
+            "title": "prefs.windows.section.corners",
+            "entries": [
+                {
+                    "id": "windows.corners",
+                    "type": "custom",
+                    "component": "WindowCornersEditor",
+                    "label": "prefs.windows.corners",
+                    "description": "prefs.windows.corners.desc",
+                    "keywords": "rounding radius corners round square window"
+                }
+            ]
+        },
+        {
+            "id": "pulse",
+            "title": "prefs.windows.section.pulse",
+            "entries": [
                 {
                     "key": "compositor.borderPulse.enabled",
                     "compositor": "hyprland",
@@ -235,10 +303,7 @@ var category = {
                     "max": 100,
                     "step": 1,
                     "unit": "px",
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.shadow_range",
                     "description": "prefs.windows.shadow_range.desc",
                     "keywords": "shadow size range blur radius softness"
@@ -248,10 +313,7 @@ var category = {
                     "advanced": true,
                     "compositor": "hyprland",
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.sync_shadow_color",
                     "description": "prefs.windows.sync_shadow_color.desc",
                     "keywords": "sync shadow color theme"
@@ -263,10 +325,7 @@ var category = {
                     "type": "color-role",
                     "visibleWhen": {
                         "all": [
-                            {
-                                "key": "compositor.shadowEnabled",
-                                "equals": true
-                            },
+                            SHADOW,
                             {
                                 "key": "compositor.syncShadowColor",
                                 "equals": false
@@ -282,10 +341,7 @@ var category = {
                     "advanced": true,
                     "compositor": "hyprland",
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.sync_shadow_opacity",
                     "description": "prefs.windows.sync_shadow_opacity.desc",
                     "keywords": "sync shadow opacity theme"
@@ -300,10 +356,7 @@ var category = {
                     "step": 0.05,
                     "visibleWhen": {
                         "all": [
-                            {
-                                "key": "compositor.shadowEnabled",
-                                "equals": true
-                            },
+                            SHADOW,
                             {
                                 "key": "compositor.syncShadowOpacity",
                                 "equals": false
@@ -327,10 +380,7 @@ var category = {
                     "advanced": true,
                     "compositor": "hyprland",
                     "type": "color-role",
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.shadow_color_inactive",
                     "description": "prefs.windows.shadow_color_inactive.desc",
                     "keywords": "shadow color inactive unfocused"
@@ -343,10 +393,7 @@ var category = {
                     "min": 1,
                     "max": 4,
                     "step": 1,
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.shadow_power",
                     "description": "prefs.windows.shadow_power.desc",
                     "keywords": "shadow falloff power render"
@@ -359,10 +406,7 @@ var category = {
                     "min": 0,
                     "max": 1,
                     "step": 0.05,
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.shadow_scale",
                     "description": "prefs.windows.shadow_scale.desc",
                     "keywords": "shadow scale size"
@@ -375,10 +419,7 @@ var category = {
                     "pattern": "^-?\\d+(\\.\\d+)? -?\\d+(\\.\\d+)?$",
                     "placeholder": "prefs.windows.shadow_offset.placeholder",
                     "monospace": true,
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.shadow_offset",
                     "description": "prefs.windows.shadow_offset.desc",
                     "keywords": "shadow offset position x y move"
@@ -388,10 +429,7 @@ var category = {
                     "advanced": true,
                     "compositor": "hyprland",
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.shadowEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": SHADOW,
                     "label": "prefs.windows.shadow_sharp",
                     "description": "prefs.windows.shadow_sharp.desc",
                     "keywords": "shadow sharp hard edge"
@@ -416,10 +454,7 @@ var category = {
                 {
                     "key": "compositor.blurEnabled",
                     "compositor": ["hyprland", "mango"],
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
                     "label": "prefs.windows.blur",
                     "description": "prefs.windows.blur.desc",
@@ -428,18 +463,12 @@ var category = {
                 {
                     "key": "compositor.blurSize",
                     "compositor": ["hyprland", "mango"],
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 20,
                     "step": 1,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_size",
                     "description": "prefs.windows.blur_size.desc",
                     "keywords": "blur size radius amount"
@@ -448,18 +477,12 @@ var category = {
                     "key": "compositor.blurPasses",
                     "advanced": true,
                     "compositor": ["hyprland", "mango"],
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 1,
                     "max": 10,
                     "step": 1,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_passes",
                     "description": "prefs.windows.blur_passes.desc",
                     "keywords": "blur passes quality iterations"
@@ -468,18 +491,12 @@ var category = {
                     "key": "compositor.blurVibrancy",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
                     "step": 0.05,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_vibrancy",
                     "description": "prefs.windows.blur_vibrancy.desc",
                     "keywords": "blur vibrancy saturation color"
@@ -488,15 +505,9 @@ var category = {
                     "key": "compositor.blurXray",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_xray",
                     "description": "prefs.windows.blur_xray.desc",
                     "keywords": "blur xray see through wallpaper floating"
@@ -504,15 +515,9 @@ var category = {
                 {
                     "key": "compositor.blurPopups",
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_popups",
                     "description": "prefs.windows.blur_popups.desc",
                     "keywords": "blur popups menus context"
@@ -529,18 +534,12 @@ var category = {
                     "key": "compositor.blurNoise",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 0.2,
                     "step": 0.005,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_noise",
                     "description": "prefs.windows.blur_noise.desc",
                     "keywords": "blur noise grain"
@@ -549,18 +548,12 @@ var category = {
                     "key": "compositor.blurContrast",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 2,
                     "step": 0.05,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_contrast",
                     "description": "prefs.windows.blur_contrast.desc",
                     "keywords": "blur contrast"
@@ -569,18 +562,12 @@ var category = {
                     "key": "compositor.blurBrightness",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 2,
                     "step": 0.05,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_brightness",
                     "description": "prefs.windows.blur_brightness.desc",
                     "keywords": "blur brightness light"
@@ -589,18 +576,12 @@ var category = {
                     "key": "compositor.blurVibrancyDarkness",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
                     "step": 0.05,
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_vibrancy_darkness",
                     "description": "prefs.windows.blur_vibrancy_darkness.desc",
                     "keywords": "blur vibrancy darkness dark colors"
@@ -609,15 +590,9 @@ var category = {
                     "key": "compositor.blurSpecial",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_special",
                     "description": "prefs.windows.blur_special.desc",
                     "keywords": "blur special workspace scratchpad"
@@ -626,15 +601,9 @@ var category = {
                     "key": "compositor.blurIgnoreOpacity",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_ignore_opacity",
                     "description": "prefs.windows.blur_ignore_opacity.desc",
                     "keywords": "blur ignore opacity"
@@ -643,15 +612,9 @@ var category = {
                     "key": "compositor.blurNewOptimizations",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_new_optimizations",
                     "description": "prefs.windows.blur_new_optimizations.desc",
                     "keywords": "blur optimizations performance"
@@ -660,15 +623,9 @@ var category = {
                     "key": "compositor.blurExplicitIgnoreAlpha",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_ignore_alpha",
                     "description": "prefs.windows.blur_ignore_alpha.desc",
                     "keywords": "blur ignore alpha threshold transparent pixels"
@@ -677,20 +634,14 @@ var category = {
                     "key": "compositor.blurIgnoreAlphaValue",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
                     "step": 0.05,
                     "visibleWhen": {
                         "all": [
-                            {
-                                "key": "compositor.blurEnabled",
-                                "equals": true
-                            },
+                            BLUR,
                             {
                                 "key": "compositor.blurExplicitIgnoreAlpha",
                                 "equals": true
@@ -705,20 +656,14 @@ var category = {
                     "key": "compositor.blurPopupsIgnorealpha",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
                     "step": 0.05,
                     "visibleWhen": {
                         "all": [
-                            {
-                                "key": "compositor.blurEnabled",
-                                "equals": true
-                            },
+                            BLUR,
                             {
                                 "key": "compositor.blurPopups",
                                 "equals": true
@@ -733,15 +678,9 @@ var category = {
                     "key": "compositor.blurInputMethods",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "toggle",
-                    "visibleWhen": {
-                        "key": "compositor.blurEnabled",
-                        "equals": true
-                    },
+                    "visibleWhen": BLUR,
                     "label": "prefs.windows.blur_input_methods",
                     "description": "prefs.windows.blur_input_methods.desc",
                     "keywords": "blur input method ime popup"
@@ -750,20 +689,14 @@ var category = {
                     "key": "compositor.blurInputMethodsIgnorealpha",
                     "advanced": true,
                     "compositor": "hyprland",
-                    "enabledWhen": {
-                        "key": "theme.glass.enabled",
-                        "equals": true
-                    },
+                    "enabledWhen": GLASS,
                     "type": "slider",
                     "min": 0,
                     "max": 1,
                     "step": 0.05,
                     "visibleWhen": {
                         "all": [
-                            {
-                                "key": "compositor.blurEnabled",
-                                "equals": true
-                            },
+                            BLUR,
                             {
                                 "key": "compositor.blurInputMethods",
                                 "equals": true

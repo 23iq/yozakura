@@ -60,7 +60,10 @@ var EDITORS = {
     "AppThemingEditor": "editors/AppThemingEditor.qml",
     "NotificationsStatus": "editors/NotificationsStatus.qml",
     "LayoutBuilder": "layout/LayoutBuilder.qml",
-    "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml"
+    "SurfaceRolesEditor": "editors/SurfaceRolesEditor.qml",
+    "WindowBorderEditor": "editors/WindowBorderEditor.qml",
+    "WindowCornersEditor": "editors/WindowCornersEditor.qml",
+    "WindowGapsEditor": "editors/WindowGapsEditor.qml"
 };
 
 var PREVIEWS = {
@@ -74,7 +77,6 @@ var PREVIEWS = {
     "PanoramaPreview": "previews/PanoramaPreview.qml",
     "GlassPreview": "previews/GlassPreview.qml",
     "DepthMatteStatus": "previews/DepthMatteStatus.qml",
-    "WindowsPreview": "previews/WindowsPreview.qml",
     "OsdPreview": "previews/OsdPreview.qml",
     "StripsPreview": "previews/StripsPreview.qml",
     "LayoutPreview": "layout/LayoutPreview.qml"
@@ -92,7 +94,8 @@ var THUMBS = {
     "ClockPanelThumb": "thumbs/ClockPanelThumb.qml",
     "IndicatorThumb": "thumbs/IndicatorThumb.qml",
     "NumeralThumb": "thumbs/NumeralThumb.qml",
-    "WeightThumb": "thumbs/WeightThumb.qml"
+    "WeightThumb": "thumbs/WeightThumb.qml",
+    "TilingThumb": "thumbs/TilingThumb.qml"
 };
 
 // The live miniature at the top of a schema page (category `stage`): a
@@ -105,7 +108,8 @@ var STAGES = {
     "LookStage": "stages/LookStage.qml",
     "TypeStage": "stages/TypeStage.qml",
     "NotifStage": "stages/NotifStage.qml",
-    "LockStage": "stages/LockStage.qml"
+    "LockStage": "stages/LockStage.qml",
+    "WindowsStage": "stages/WindowsStage.qml"
 };
 
 // Hand-written pages (category `page`), loaded by URL by SettingsPageHost
