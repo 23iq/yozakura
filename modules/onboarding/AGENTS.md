@@ -56,6 +56,10 @@ State/lifecycle: `modules/services/OnboardingService.qml` (`visible`,
   remembers `exclusive`; `finish()` on the last step enables it.
 - Display changes go through `DisplaysService.apply` (live, 15 s keep/revert prompt);
   OnboardingWindow unmaps while a live change is pending so the prompt is on top.
+- Password prompts of app installs: with the shell's own polkit agent
+  (`PolkitService.registered`, modules/polkit) its dialog maps above the wizard and
+  the wizard hands it the keyboard while `PolkitService.dialogOpen`; with an external
+  agent the window unmaps while `ExtrasService.awaitingAuth` (its dialog is a normal window).
 
 ## DRY RUN
 `<app> onboarding --dry-run [--keep]` (`backend/cmd/yozakura/cmds_onboarding_dryrun.go`)

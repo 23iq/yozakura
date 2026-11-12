@@ -127,7 +127,7 @@ class OnboardingEnv(KeyboardEnv):
         # the real service: it owns the wizard state under test
         services["OnboardingService"] = (REPO / "modules/services/OnboardingService.qml").read_text()
         services["AppSearch"] = APP_SEARCH_STUB
-        for real in ("ExtrasService", "ExclusiveService"):
+        for real in ("ExtrasService", "ExclusiveService", "PolkitService"):
             services[real] = (REPO / f"modules/services/{real}.qml").read_text()
         services["YozdService"] = YOZD_STUB
         services["I18n"] = i18n_qml(lang)
