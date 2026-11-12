@@ -276,6 +276,40 @@ ev("BackendService.answerOpen = true")
 ev("GlobalStates.settingsWindowVisible = false")
 settle()
 
+# the process ends before its window showed (QML error, missing module):
+# the in-process window instead, once
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+emit("windows.state", {"kind": "settings", "state": "starting", "pid": 20})
+emit("windows.state", {"kind": "settings", "state": "closed", "error": "exit status 255"})
+check(ev("SeparateWindows.settingsSeparate") is False and ev("GlobalStates.settingsWindowVisible") is True,
+      "exited before it showed: the in-process window opens")
+opens = calls("windows.open")
+ev("GlobalStates.settingsWindowVisible = false")
+settle()
+check(calls("windows.open") == opens and ev("SeparateWindows.settingsSeparate") is True,
+      "...closed: the next open tries the process again")
+# closed by the user while starting, then gone: no fallback
+ev("GlobalStates.settingsWindowVisible = true")
+settle()
+emit("windows.state", {"kind": "settings", "state": "starting", "pid": 21})
+ev("GlobalStates.settingsWindowVisible = false")
+settle()
+emit("windows.state", {"kind": "settings", "state": "closed"})
+check(ev("SeparateWindows.settingsSeparate") is True and ev("GlobalStates.settingsWindowVisible") is False,
+      "closed by the user during its start: stays closed")
+# the wizard on a first run: a broken window process never hides the wizard
+opened = ev("OnboardingService.opens")
+ev("OnboardingService.visible = true")
+settle()
+emit("windows.state", {"kind": "onboarding", "state": "starting", "pid": 22})
+emit("windows.state", {"kind": "onboarding", "state": "closed", "error": "exit status 255"})
+check(ev("SeparateWindows.wizardSeparate") is False and ev("OnboardingService.visible") is True,
+      "wizard exited before it showed: the in-process wizard opens")
+check(ev("OnboardingService.dismissedThisSession") is False, "...and it does not count as dismissed")
+ev("OnboardingService.visible = false")
+settle()
+
 # ---- staged previews ----
 pos = ev("Config.bar.position")
 rnd = ev("Config.theme.roundness")

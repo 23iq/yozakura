@@ -107,18 +107,29 @@ Singleton {
         root._syncing = false;
     }
 
+    // A close was asked of the running process (no fallback if it ends).
+    property bool _settingsCloseAsked: false
     function _settingsState(state) {
         const prev = root.settingsState;
         root.settingsState = state;
+        if (state === "starting")
+            root._settingsCloseAsked = false;
         if (state === "closed") {
             // Asked again while it was hiding, and it quit before the raise
             // reached it: a new process.
             const again = root._settingsAsked && prev === "hiding" && GlobalStates.settingsWindowVisible && !root._settingsInProcess;
             root._settingsAsked = false;
-            if (again)
+            if (again) {
                 root._openSettings();
-            else if (!root._settingsInProcess)
+            } else if (prev === "starting" && !root._settingsInProcess && !root._settingsCloseAsked) {
+                // The process ended before its window showed (a QML error,
+                // a missing module): the in-process window instead.
+                root._settingsFallback("the window process exited before it showed");
+                root._settingsInProcess = true;
+                root._setSettingsVisible(true);
+            } else if (!root._settingsInProcess) {
                 root._setSettingsVisible(false);
+            }
         } else if (!root._settingsInProcess) {
             root._setSettingsVisible(state !== "hiding");
         }
@@ -196,6 +207,7 @@ Singleton {
             } else if (root.settingsRunning) {
                 // The window decides (it asks about unsaved changes); the
                 // flag stays up until its process is gone.
+                root._settingsCloseAsked = true;
                 BackendService.call("windows.close", {
                     "kind": "settings"
                 });
@@ -226,16 +238,27 @@ Singleton {
         root._wizardSyncing = false;
     }
 
+    property bool _wizardCloseAsked: false
     function _wizardState(state) {
         const prev = root.wizardState;
         root.wizardState = state;
+        if (state === "starting")
+            root._wizardCloseAsked = false;
         if (state === "closed") {
             const again = root._wizardAsked && prev === "hiding" && OnboardingService.visible && !root._wizardInProcess;
             root._wizardAsked = false;
-            if (again)
+            if (again) {
                 root._openWizard();
-            else if (!root._wizardInProcess)
+            } else if (prev === "starting" && !root._wizardInProcess && !root._wizardCloseAsked) {
+                // Never shown: not dismissed by the user, the in-process
+                // wizard instead (a first run still gets its wizard).
+                root._wizardFallback("the wizard process exited before it showed");
+                root._wizardInProcess = true;
+                if (!OnboardingService.visible)
+                    OnboardingService.open();
+            } else if (!root._wizardInProcess) {
                 root._setWizardVisible(false);
+            }
         } else if (!root._wizardInProcess) {
             root._setWizardVisible(state !== "hiding");
             if (state === "open")
@@ -322,6 +345,7 @@ Singleton {
             if (root._wizardInProcess) {
                 root._wizardInProcess = false;
             } else if (root.wizardRunning) {
+                root._wizardCloseAsked = true;
                 BackendService.call("windows.close", {
                     "kind": "onboarding"
                 });
