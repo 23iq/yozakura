@@ -197,6 +197,17 @@ function activeJobs(jobs) {
     return out;
 }
 
+// Whether a running job waits for the user's password (Progress.auth: its
+// pkexec is at the polkit prompt).
+function awaitingAuth(jobs) {
+    for (var k in jobs || {}) {
+        var p = jobs[k];
+        if (p && p.state === "running" && p.auth === true)
+            return true;
+    }
+    return false;
+}
+
 // Whether the job can be stopped now (queued always; running only when the
 // backend can kill it without leaving the package database locked).
 function cancellable(progress) {

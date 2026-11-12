@@ -19,7 +19,7 @@ Singleton {
     property var platform: ({})
     // entry id -> {state, source, version, reason}
     property var status: ({})
-    // job id -> Progress {job, kind, entries, state, percent, phase, reason}
+    // job id -> Progress {job, kind, entries, state, percent, phase, reason, auth}
     property var jobs: ({})
     // entry id -> latest Progress of the job that installs it
     property var progress: ({})
@@ -47,6 +47,9 @@ Singleton {
 
     readonly property var activeJobs: ExtrasModel.activeJobs(root.jobs)
     readonly property bool busy: root.activeJobs.length > 0
+    // A job waits for the password: the polkit dialog is a normal window,
+    // so full-screen overlay surfaces (the setup wizard) step aside.
+    readonly property bool awaitingAuth: ExtrasModel.awaitingAuth(root.jobs)
 
     property bool _catalogRequested: false
     property bool _subscribed: false

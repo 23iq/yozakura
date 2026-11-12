@@ -8,16 +8,19 @@ import qs.modules.globals
 // Full-screen first-run wizard on the screen it opened on: a frosted scrim
 // (the layer namespace gets the compositor blur) and the wizard card.
 // Loaded by shell.qml while OnboardingService.visible; hidden (unmapped)
-// while peeking (OnboardingService.peek) and while a live display change
+// while peeking (OnboardingService.peek), while a live display change
 // waits for "Keep these display settings?" (the prompt is an Overlay layer
-// too, so the wizard steps aside instead of racing it for the top).
+// too, so the wizard steps aside instead of racing it for the top) and
+// while an app install waits for the password: the polkit agent's dialog is
+// a normal window, under this Overlay layer and without keyboard focus
+// while it holds the exclusive focus.
 PanelWindow {
     id: root
 
     property bool shown: false
 
     screen: Quickshell.screens.find(s => s.name === OnboardingService.screenName) || Quickshell.screens[0] || null
-    visible: !OnboardingService.peek && !(DisplaysService.pending && DisplaysService.session.live)
+    visible: !OnboardingService.peek && !(DisplaysService.pending && DisplaysService.session.live) && !ExtrasService.awaitingAuth
     anchors {
         top: true
         bottom: true

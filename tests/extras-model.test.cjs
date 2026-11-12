@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const src = fs.readFileSync(path.join(__dirname, '..', 'modules/extras/ExtrasModel.js'), 'utf8').replace('.pragma library', '');
-const M = new Function(src + '; return {parseSize, formatSize, selectionSize, cardState, visibleEntries, preselect, selectedIds, parseError, groupByCategory, activeJobs, cancellable, accentIndex, toggled, phaseText, unavailableKey};')();
+const M = new Function(src + '; return {parseSize, formatSize, selectionSize, cardState, visibleEntries, preselect, selectedIds, parseError, groupByCategory, activeJobs, awaitingAuth, cancellable, accentIndex, toggled, phaseText, unavailableKey};')();
 
 const catalog = {
     categories: [
@@ -125,6 +125,15 @@ test('activeJobs lists queued and running jobs, running first', () => {
     };
     assert.deepStrictEqual(M.activeJobs(jobs).map(j => j.job), ['npm-2', 'system-1']);
     assert.deepStrictEqual(M.activeJobs(null), []);
+});
+
+test('awaitingAuth: a running job at the password prompt', () => {
+    assert.strictEqual(M.awaitingAuth(null), false);
+    assert.strictEqual(M.awaitingAuth({ a: { state: 'running', kind: 'system' } }), false);
+    assert.strictEqual(M.awaitingAuth({ a: { state: 'running', kind: 'system', auth: true } }), true);
+    // a finished job never holds the prompt (a stale flag is ignored)
+    assert.strictEqual(M.awaitingAuth({ a: { state: 'failed', kind: 'system', auth: true } }), false);
+    assert.strictEqual(M.awaitingAuth({ a: { state: 'done' }, b: { state: 'running', kind: 'login', auth: true } }), true);
 });
 
 test('cancellable: queued always, running only for user-level kinds', () => {

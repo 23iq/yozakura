@@ -368,6 +368,15 @@ ev("OnboardingService.peek = true")
 check(h.eval(vprobe, "vis") is False, "wizard window is unmapped while peeking")
 h.eval(h.find(pwin, "peekBack"), "clicked()")
 check(h.eval(vprobe, "vis") is True, "wizard window is mapped again after Back to setup")
+# An install at the password prompt: the polkit dialog is a normal window
+# under the wizard's Overlay layer, so the wizard steps aside until it is
+# answered.
+ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running", auth: true})')
+check(h.eval(vprobe, "vis") is False, "wizard window is unmapped while an install waits for the password")
+ev('ExtrasService._onProgress({job: "system-9", kind: "system", entries: ["fish"], state: "running"})')
+check(h.eval(vprobe, "vis") is True, "wizard window comes back once the password was given")
+ev('ExtrasService.jobs = ({})')
+ev('ExtrasService.progress = ({})')
 check("mask: Region" in (Path(__file__).resolve().parents[1] / "modules/onboarding/OnboardingPeekPill.qml").read_text(), "pill window masks input to the pill")
 # open() while visible neither resets nor overwrites progress
 ev("wizard.go(2)")
