@@ -141,6 +141,20 @@ ev('GlobalStates.focused = "HDMI-A-1"')  # stale name of a gone output: first sc
 ev("Quickshell.screens = scene.screens")
 settle()
 
+# ---- every output gone: unplaced, and back on the first one that returns ---
+ev("Quickshell.screens = []")
+settle()
+check(windows() == [] and ev("PolkitService.dialogOpen") is False and h.eval(f1, "isCompleted") is False,
+      "no output: no window, dialogOpen false, the request still waits")
+ev('GlobalStates.focused = "DP-1"')
+ev("Quickshell.screens = [scene.screens[0]]")
+settle()
+ws = windows()
+check(len(ws) == 1 and h.eval(ws[0], "targetScreen.name") == "DP-1" and ev("PolkitService.dialogOpen") is True,
+      "an output coming back after none shows the dialog again")
+ev("Quickshell.screens = scene.screens")
+settle()
+
 # ---- the caller cancels ----------------------------------------------------
 h.eval(f1, "cancelAuthenticationRequest()")  # what Quickshell does on polkitd's CancelAuthentication
 settle()
@@ -175,6 +189,21 @@ check(windows() == [] and h.eval(f5, "isCancelled") is True, "locking while the 
 check(any("session locked" in m for m in logs), "the lock cancel is logged")
 h.eval(a, "flow = null")
 ev("GlobalStates.lockscreenVisible = false")
+
+# ---- a request while no output exists opens once one appears ---------------
+ev("Quickshell.screens = []")
+settle()
+f7 = start()
+check(windows() == [] and ev("PolkitService.dialogOpen") is False, "a request with no output waits unplaced")
+ev('GlobalStates.focused = "HDMI-A-1"')
+ev("Quickshell.screens = scene.screens")
+settle()
+ws = windows()
+check(len(ws) == 1 and h.eval(ws[0], "targetScreen.name") == "HDMI-A-1" and ev("PolkitService.dialogOpen") is True,
+      "the waiting request opens on the output that appears")
+h.eval(f7, "cancelAuthenticationRequest()")
+h.eval(a, "flow = null")
+settle()
 
 # ---- reload / unload cancels a pending request ----------------------------
 ev("PolkitLog.reset()")

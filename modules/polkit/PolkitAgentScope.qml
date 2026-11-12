@@ -20,7 +20,9 @@ import qs.modules.services
 //   dialog is never drawn while the lock screen is up.
 // - Screen hotplug: the dialog lives on its screen's delegate; when that
 //   output goes, it opens again on the focused one (the typed text is
-//   dropped with the window).
+//   dropped with the window). With no output at all it waits, unplaced,
+//   and opens on the first one that comes back (re-picked on every change
+//   of the screen list); dialogOpen is true only while a window is placed.
 // - Shell reload / quit: a pending request is cancelled before the agent
 //   goes away, so the caller gets a cancellation instead of waiting.
 // - Another agent already registered (the user's own, or hyprpolkitagent
@@ -36,6 +38,7 @@ Scope {
     // Output the dialog is on (the focused one when the request came)
     property string screenName: ""
     readonly property bool screenPresent: Quickshell.screens.some(s => s && s.name === root.screenName)
+    readonly property bool placed: root.open && root.screenName !== "" && root.screenPresent
 
     // Read from the flow itself: in a change handler the `pending` binding
     // may not have caught up yet.
@@ -77,10 +80,12 @@ Scope {
         if (root.locked)
             root.cancel("session locked");
     }
-    // Re-picked on the next tick: screenPresent depends on screenName.
-    onScreenPresentChanged: {
-        if (!root.screenPresent)
+    // Re-picked on the next tick, once the screen list has settled.
+    Connections {
+        target: Quickshell
+        function onScreensChanged() {
             Qt.callLater(root.repick);
+        }
     }
     function repick() {
         if (root.waiting(root.flow) && !root.screenPresent)
@@ -105,7 +110,7 @@ Scope {
     Binding {
         target: PolkitService
         property: "dialogOpen"
-        value: root.open
+        value: root.placed
     }
     // Registration is asynchronous; polkitd refuses a second agent for the
     // session. Said once, then this instance stays out of the way.
