@@ -41,7 +41,14 @@ written by this compositor instance (`HYPRLAND_INSTANCE_SIGNATURE`, else `NIRI_S
 another instance is removed (`LockRestore.js`). The marker is read synchronously and, if it only
 arrives later, on `loaded` (unless the user locked/unlocked meanwhile); `loadFailed` = no marker.
 No `XDG_RUNTIME_DIR`, display or instance token = no marker. Hyprland needs
-`misc:allow_session_lock_restore` (set by the generated config) to accept the new lock.
+`misc:allow_session_lock_restore` (set by the generated config, `backend/pkg/yozd/ipc/hyprland/
+generator.go` `miscConf` / `generator_lua.go` `miscLua`) to accept the new lock. Caveats: it only
+takes effect once the compositor config is regenerated (and Hyprland reloads it), so a session
+started on an older generated config still shows the "locker died" screen; and it is not ours
+alone: while the lock's owner is dead, *any* Wayland client may take the session lock over
+(Hyprland does not check who), so a client already running in the session could unlock it once
+the shell has died. The restore path was only tested offscreen (marker + `LockRestore.js`) and in the
+generator tests; it has not been verified on a real Hyprland session.
 Tests: `tests/lockscreen-marker.test.py`, `tests/lockscreen-restore.test.cjs`, `tests/lockscreen-pam.test.cjs`.
 
 ## STYLES (adding one = one file + one registry entry)
