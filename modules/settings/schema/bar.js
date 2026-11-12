@@ -83,6 +83,20 @@ var category = {
                     "label": "prefs.bar.style",
                     "description": "prefs.bar.style.desc",
                     "keywords": "classic islands floating pills style look"
+                },
+                {
+                    "id": "bar.panels.style",
+                    "type": "custom",
+                    "component": "PanelShapeCards",
+                    "keys": ["bar.panels"],
+                    "part": true,
+                    "visibleWhen": {
+                        "key": "bar.panels",
+                        "empty": false
+                    },
+                    "label": "prefs.bar.style",
+                    "description": "prefs.bar.style.desc",
+                    "keywords": "panel bar shape style"
                 }
             ]
         },
@@ -175,6 +189,20 @@ var category = {
                     "label": "prefs.label.bar_modules",
                     "description": "prefs.bar.layout.desc",
                     "keywords": "modules widgets order arrange drag drop drawer left right add remove launcher clock battery tray"
+                },
+                {
+                    "id": "bar.panels.modules",
+                    "type": "custom",
+                    "component": "PanelModulesCard",
+                    "keys": ["bar.panels"],
+                    "part": true,
+                    "visibleWhen": {
+                        "key": "bar.panels",
+                        "empty": false
+                    },
+                    "label": "prefs.label.bar_modules",
+                    "description": "prefs.bar.layout.desc",
+                    "keywords": "panel modules widgets order arrange drag drop"
                 }
             ]
         },

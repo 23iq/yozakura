@@ -103,15 +103,6 @@ var category = {
             "title": "prefs.notif.section.presentation",
             "entries": [
                 {
-                    "id": "notifications.status",
-                    "type": "custom",
-                    "component": "NotificationsStatus",
-                    "resettable": false,
-                    "label": "prefs.notif.status",
-                    "description": "prefs.notif.status.desc",
-                    "keywords": "test notification preview send now dnd active"
-                },
-                {
                     "key": "notifications.presentation",
                     "type": "selector",
                     "display": "cards",
@@ -203,6 +194,23 @@ var category = {
                     "label": "prefs.notif.strips.max",
                     "description": "prefs.notif.strips.max.desc",
                     "keywords": "strips maximum count knot overflow"
+                }
+            ]
+        },
+        {
+            // what shows now (and a test), where corner toasts show (the
+            // stage moves them too) and on which screens: in More
+            "id": "where",
+            "title": "prefs.notif.section.where",
+            "entries": [
+                {
+                    "id": "notifications.status",
+                    "type": "custom",
+                    "component": "NotificationsStatus",
+                    "resettable": false,
+                    "label": "prefs.notif.status",
+                    "description": "prefs.notif.status.desc",
+                    "keywords": "test notification preview send now dnd active"
                 },
                 {
                     "key": "notifications.position",

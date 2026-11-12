@@ -21,6 +21,10 @@ import "Registry.js" as Registry
 // then any other section as a card of a bento (BentoLayout.js: one to
 // three columns, a card with picture cards or an editor takes two). The
 // hero recedes (scales down, fades) as the cards scroll up under it.
+// A page with a `row` is FITTED: exactly the stage (+ side columns), the hint
+// and the row of cards (Look.cardRowHeight, at the bottom), no page scroll;
+// the stage takes the height left. Its other sections open in a sheet
+// ("More", MoreSheet behaviour inside this file), never under the fold.
 // Nothing here is category specific.
 Flickable {
     id: page
@@ -35,6 +39,15 @@ Flickable {
     readonly property var rowIds: page.category.row || []
     // the row is laid out only once all its cards exist (equal heights)
     readonly property int lastRowIndex: (page.category.sections || []).reduce((m, sec, i) => page.rowIds.indexOf(sec.id) >= 0 ? i : m, -1)
+    readonly property bool fitted: page.rowIds.length > 0
+    readonly property real rowH: Look.cardRowHeight
+    readonly property real pad: Space.l
+    // sections of a fitted page that are not in the row (in the sheet)
+    readonly property var moreSections: page.fitted ? (page.category.sections || []).map((s, i) => ({
+                "section": s,
+                "index": i
+            })).filter(x => page.rowIds.indexOf(x.section.id) < 0) : []
+    property bool moreOpen: false
     readonly property real margin: Space.xl
     readonly property real gap: Space.l
     // the side columns of the hero
@@ -74,7 +87,7 @@ Flickable {
             // still to come land out of sight (masonry puts a card at the
             // top of the shortest column)
             bento.relayout();
-            if (!page.filled && page.height > 0 && page.builtSections > page.lastRowIndex && body.y + bento.floor >= page.height)
+            if (!page.filled && page.height > 0 && page.builtSections > page.lastRowIndex && (page.fitted || body.y + bento.floor >= page.height))
                 page.filled = true;
             const start = Date.now();
             do {
@@ -86,7 +99,7 @@ Flickable {
     }
 
     contentWidth: width
-    contentHeight: body.y + body.height + Space.xxl * 3
+    contentHeight: page.fitted ? page.height : body.y + body.height + Space.xxl * 3
     clip: true
     boundsBehavior: Flickable.StopAtBounds
     flickableDirection: Flickable.VerticalFlick
@@ -109,6 +122,22 @@ Flickable {
         bento.relayout();
         bento.relayout();
         let target = null;
+        for (let i = 0; i < moreRepeater.count; i++) {
+            const s = moreRepeater.itemAt(i) as SettingsSection;
+            if (!s)
+                continue;
+            const hit = entryId ? s.rowFor(entryId) : (s.sectionId === sectionId ? s : null);
+            if (hit) {
+                page.moreOpen = true;
+                moreFlick.contentY = Math.max(0, Math.min(hit.mapToItem(moreColumn, 0, 0).y - Space.l, moreFlick.contentHeight - moreFlick.height));
+                if (entryId) {
+                    SettingsStore.highlightedEntry = entryId;
+                    unflash.restart();
+                    hit.forceActiveFocus();
+                }
+                return;
+            }
+        }
         for (let i = 0; i < sections.count; i++) {
             const s = sections.itemAt(i) as SettingsSection;
             if (!s)
@@ -160,7 +189,7 @@ Flickable {
         readonly property real recede: Math.max(0, Math.min(1, page.contentY / Math.max(1, height)))
         readonly property bool sides: page.heroIds.length > 0
         x: page.margin
-        y: Space.s + page.contentY * 0.35
+        y: Space.s + (page.fitted ? 0 : page.contentY * 0.35)
         width: page.width - page.margin * 2
         height: stageLoader.active ? stageLoader.height : 0
         visible: stageLoader.active
@@ -172,10 +201,16 @@ Flickable {
             id: stageLoader
             objectName: "pageStage"
             // as large as the window allows next to the side columns
-            readonly property real room: heroArea.width - (heroArea.sides ? (page.sideW + page.gap) * 2 : 0)
-            height: Math.round(Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460))))
+            readonly property int sideCount: (page.hero.left || []).length > 0 ? ((page.hero.right || []).length > 0 ? 2 : 1) : ((page.hero.right || []).length > 0 ? 1 : 0)
+            readonly property real room: heroArea.width - (page.sideW + page.gap) * sideCount
+            // fitted: the height the header, hint and row leave
+            readonly property real fitHeight: page.height - Space.s - (page.hero.hint ? Space.xl : 0) - page.gap - page.rowH - page.pad
+            height: Math.round(page.fitted ? Math.max(Space.px(160), Math.min(fitHeight, room * 9 / 16, Space.px(560))) : Math.max(Space.px(220), Math.min(page.height * 0.5, room * 9 / 16, Space.px(460))))
             width: Math.round(Math.min(room, height * 16 / 9))
-            x: (heroArea.width - width) / 2
+            // the stage and its side column(s) centred as one group
+            readonly property real groupWidth: width + (page.sideW + page.gap) * sideCount
+            readonly property real groupX: (heroArea.width - groupWidth) / 2
+            x: groupX + ((page.hero.left || []).length > 0 ? page.sideW + page.gap : 0)
             active: page.stageUrl !== ""
             source: page.stageUrl
 
@@ -192,6 +227,7 @@ Flickable {
 
         Column {
             objectName: "heroLeft"
+            x: stageLoader.x - page.gap - page.sideW
             width: page.sideW
             y: Space.l
             spacing: Space.s
@@ -208,7 +244,7 @@ Flickable {
 
         Column {
             objectName: "heroRight"
-            x: heroArea.width - width
+            x: stageLoader.x + stageLoader.width + page.gap
             width: page.sideW
             y: Space.l
             spacing: Space.s
@@ -235,7 +271,7 @@ Flickable {
         objectName: "heroHint"
         visible: heroArea.visible && !!page.hero.hint
         x: page.margin
-        y: heroArea.y + heroArea.height * heroArea.scale + Space.m
+        y: heroArea.y + heroArea.height * heroArea.scale + (page.fitted ? Space.s : Space.m)
         width: page.width - page.margin * 2
         horizontalAlignment: Text.AlignHCenter
         role: "secondary"
@@ -249,7 +285,7 @@ Flickable {
         z: 1
         width: page.width - page.margin * 2
         x: page.margin
-        y: heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + Space.xl : Space.s
+        y: page.fitted ? page.height - page.rowH - page.pad : (heroArea.visible ? heroArea.height + (heroHint.visible ? heroHint.height + Space.m : 0) + Space.xl : Space.s)
         height: bento.height + (note.visible ? note.height + Space.l : 0)
 
         Item {
@@ -278,7 +314,7 @@ Flickable {
                     const s = sections.itemAt(i) as SettingsSection;
                     if (s && page.rowIds.indexOf(s.sectionId) >= 0 && s.visible) {
                         inRow.push(i);
-                        rowH = Math.max(rowH, s.implicitHeight);
+                        rowH = page.fitted ? page.rowH : Math.max(rowH, s.implicitHeight);
                     }
                 }
                 const rowW = inRow.length > 0 ? (bento.width - bento.gap * (inRow.length - 1)) / inRow.length : 0;
@@ -288,7 +324,7 @@ Flickable {
                 const rest = [];
                 for (let i = 0; i < sections.count; i++) {
                     const s = sections.itemAt(i);
-                    if (page.rowIds.indexOf((page.category.sections[i] || {}).id) >= 0)
+                    if (page.rowIds.indexOf((page.category.sections[i] || {}).id) >= 0 || page.fitted)
                         continue;
                     rest.push(i);
                     items.push({
@@ -337,10 +373,12 @@ Flickable {
                     section: modelData
                     exclude: page.heroIds
                     pending: index >= page.builtSections
+                    fixed: page.fitted && page.rowIds.indexOf(modelData.id) >= 0
+                    suppressed: page.fitted && page.rowIds.indexOf(modelData.id) < 0
                     x: card.place.x
                     y: card.place.y
                     width: card.place.w
-                    height: card.place.h > 0 ? card.place.h : implicitHeight
+                    height: card.fixed ? page.rowH : (card.place.h > 0 ? card.place.h : implicitHeight)
                     onImplicitHeightChanged: Qt.callLater(bento.relayout)
                     onVisibleChanged: Qt.callLater(bento.relayout)
                     Component.onCompleted: Qt.callLater(bento.relayout)
@@ -353,11 +391,97 @@ Flickable {
             objectName: "compositorOnlyNote"
             y: bento.height + Space.l
             width: parent.width
-            visible: page.gated.count > 0
+            visible: page.gated.count > 0 && !page.fitted
             role: "caption"
             color: Type.muted
             wrapMode: Text.WordWrap
             text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
+        }
+    }
+
+    // Fitted page: its other sections, from "More" at the end of the hint
+    // line, in a sheet from the right (scrolls inside; Esc / a click
+    // outside closes it).
+    Chip {
+        id: moreChip
+        objectName: "pageMore"
+        visible: page.fitted && page.moreSections.length > 0
+        x: page.width - page.margin - width
+        y: heroHint.visible ? heroHint.y + (heroHint.height - height) / 2 : page.height - page.rowH - page.pad - page.gap / 2 - height
+        z: 3
+        quiet: true
+        dense: true
+        icon: Icons.faders
+        text: I18n.t("prefs.page.more").replace("%1", page.moreSections.length)
+        onClicked: page.moreOpen = true
+    }
+
+    Scrim {
+        objectName: "pageMoreScrim"
+        width: page.width
+        height: page.height
+        z: 8
+        shown: page.moreOpen
+        // hidden, it must not take the clicks of the page under it
+        visible: page.moreOpen || opacity > 0
+        onClicked: page.moreOpen = false
+    }
+
+    Card {
+        id: moreSheet
+        objectName: "pageMoreSheet"
+        z: 9
+        width: Math.min(page.width - page.margin * 2, Space.px(460))
+        height: page.height - page.pad * 2
+        x: page.moreOpen ? page.width - width - page.pad : page.width + Space.l
+        y: page.pad
+        visible: page.fitted && (page.moreOpen || x < page.width)
+        padding: Space.m
+        Keys.onEscapePressed: page.moreOpen = false
+        Behavior on x {
+            enabled: Motion.glide.duration > 0
+            NumberAnimation {
+                duration: Motion.glide.duration
+                easing.type: Motion.glide.easing
+            }
+        }
+
+        Flickable {
+            id: moreFlick
+            objectName: "pageMoreScroll"
+            width: moreSheet.contentWidth
+            height: moreSheet.height - moreSheet.padding * 2
+            contentWidth: width
+            contentHeight: moreColumn.height
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+
+            Column {
+                id: moreColumn
+                width: moreFlick.width
+                spacing: Space.m
+
+                Repeater {
+                    id: moreRepeater
+                    model: page.moreSections
+                    delegate: SettingsSection {
+                        required property var modelData
+                        width: moreColumn.width
+                        section: modelData.section
+                        exclude: page.heroIds
+                        pending: modelData.index >= page.builtSections
+                        shadow: false
+                    }
+                }
+                KitText {
+                    width: parent.width
+                    visible: page.gated.count > 0
+                    role: "caption"
+                    color: Type.muted
+                    wrapMode: Text.WordWrap
+                    text: I18n.tn("prefs.compositor_only.note", page.gated.count).replace("%2", CompositorGate.describe(page.gated.compositors))
+                }
+            }
         }
     }
 }

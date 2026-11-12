@@ -28,7 +28,13 @@ var category = {
                     "label": "prefs.lockscreen.style",
                     "description": "prefs.lockscreen.style.desc",
                     "keywords": "lock screen style look glass paper sumi-e terminal crt aurora glacier neon tokyo poster koyo"
-                },
+                }
+            ]
+        },
+        {
+            "id": "tone",
+            "title": "prefs.lockscreen.section.tone",
+            "entries": [
                 {
                     "key": "lockscreen.tone",
                     "type": "selector",

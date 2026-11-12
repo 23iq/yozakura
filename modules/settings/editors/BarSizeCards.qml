@@ -17,16 +17,18 @@ FocusScope {
         {
             "label": "S",
             "compact": true,
-            "h": 0.55
+            "h": 0.62
         },
         {
             "label": "M",
             "compact": false,
-            "h": 0.8
+            "h": 1
         }
     ]
 
-    implicitHeight: Space.controlL * 1.6
+    // the card's height (SettingRow.fillHeight): the bars grow from its foot
+    property real fillHeight: 0
+    implicitHeight: root.fillHeight > 0 ? root.fillHeight : Space.controlL * 1.6
     activeFocusOnTab: true
     Keys.onLeftPressed: SettingsStore.set("bar.compact", true)
     Keys.onRightPressed: SettingsStore.set("bar.compact", false)

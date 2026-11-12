@@ -18,52 +18,76 @@ Item {
     property var value
     signal selected(var value)
 
-    readonly property int columns: Math.max(2, Math.min(root.options.length, Math.floor((width + grid.columnSpacing) / (Space.px(150) + grid.columnSpacing))))
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures with the title inside, scrolling
+    // sideways with an edge fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: root.options.length
+    readonly property real stripWidth: Math.max(root.fillHeight * 1.6, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property int columns: root.strip ? root.stripCount : Math.max(2, Math.min(root.options.length, Math.floor((width + grid.columnSpacing) / (Space.px(150) + grid.columnSpacing))))
     // A few options do not stretch into huge cards.
     readonly property real cardWidth: Math.min((width - grid.columnSpacing * (columns - 1)) / columns, Space.px(240))
     readonly property string thumbUrl: entry && entry.thumb ? Qt.resolvedUrl("../" + Registry.thumb(entry.thumb)) : ""
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        rowSpacing: Space.l
-        columnSpacing: Space.l
+        height: grid.height
+        contentWidth: grid.width
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: root.options
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            columns: root.columns
+            rowSpacing: Space.l
+            columnSpacing: root.strip ? Space.m : Space.l
 
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                objectName: "card:" + card.modelData.value
-                width: root.cardWidth
-                previewHeight: Math.round(width * 0.56)
-                selected: root.value === card.modelData.value
-                title: I18n.t(card.modelData.label)
-                subtitle: card.modelData.description ? I18n.t(card.modelData.description) : ""
-                onClicked: root.selected(card.modelData.value)
+            Repeater {
+                model: root.options
 
-                // Pictures are built off the frame (asynchronous): the cards
-                // show at once, each picture fades in when ready.
-                Loader {
-                    id: picture
-                    anchors.fill: parent
-                    asynchronous: true
-                    opacity: status === Loader.Ready ? 1 : 0
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: Motion.micro.duration
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    objectName: "card:" + card.modelData.value
+                    width: root.strip ? root.stripWidth : root.cardWidth
+                    previewHeight: root.strip ? root.fillHeight : Math.round(width * 0.56)
+                    inset: root.strip
+                    selected: root.value === card.modelData.value
+                    title: I18n.t(card.modelData.label)
+                    subtitle: card.modelData.description ? I18n.t(card.modelData.description) : ""
+                    onClicked: root.selected(card.modelData.value)
+
+                    // Pictures are built off the frame (asynchronous): the cards
+                    // show at once, each picture fades in when ready.
+                    Loader {
+                        id: picture
+                        anchors.fill: parent
+                        asynchronous: true
+                        opacity: status === Loader.Ready ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Motion.micro.duration
+                            }
                         }
+                        Component.onCompleted: setSource(root.thumbUrl, {
+                            "entry": root.entry,
+                            "value": card.modelData.value
+                        })
                     }
-                    Component.onCompleted: setSource(root.thumbUrl, {
-                        "entry": root.entry,
-                        "value": card.modelData.value
-                    })
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

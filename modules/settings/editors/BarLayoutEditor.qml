@@ -14,6 +14,8 @@ Item {
     id: root
 
     property var entry
+    // a card of the page row: the compact editor (one group at a time)
+    property real fillHeight: 0
     readonly property var layout: BarModules.layoutOf(Config.bar.layout)
 
     implicitHeight: editor.implicitHeight
@@ -29,7 +31,9 @@ Item {
 
     ModuleGroupsEditor {
         id: editor
+        objectName: "barModulesEditor"
         width: parent.width
+        fillHeight: root.fillHeight
         layout: root.layout
         available: BarModules.unused(root.layout)
         addGroup: "right"

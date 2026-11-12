@@ -82,6 +82,8 @@ QtObject {
         "shadow": 0.3,
         "ambient": 0.5
     }
+    // The one height of the row of cards under a settings page's stage.
+    readonly property int cardRowHeight: Space.px(216)
     readonly property color cardEdge: root.alpha("overBackground", root.card.edge)
     readonly property color cardShadow: root.alpha("shadow", root.card.shadow)
     readonly property real ambientStrength: root.card.ambient

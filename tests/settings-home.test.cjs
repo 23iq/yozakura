@@ -111,7 +111,7 @@ test('every tile has a live status line in every language', () => {
     const ctx = { get: k => values[k], tr: k => en[k], wallpapers: 12, preset: '' };
     assert.equal(HomeStatus.line('layout', ctx), 'Top bar · island · dock');
     assert.equal(HomeStatus.line('wallpaper', ctx), '12 in your library');
-    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6 · border 2');
+    assert.equal(HomeStatus.line('windows', ctx), 'Gaps 6 · edge 2');
     // an "auto" corner is named as the shell resolves it
     assert.equal(HomeStatus.line('notifications', ctx), 'Top right');
     assert.equal(HomeStatus.line('displays', { ...ctx, outputs: [{ width: 2560, height: 1440, refresh: 143.9 }] }), '2560×1440 · 144 Hz');

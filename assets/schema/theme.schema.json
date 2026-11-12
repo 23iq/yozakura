@@ -137,7 +137,7 @@
       "description": "Palette color of progress lines, rings and slider fills.",
       "x-settings": {
         "category": "appearance",
-        "section": "palette",
+        "section": "accents",
         "label": "prefs.appearance.progress_role",
         "control": "selector",
         "keywords": "progress slider ring fill accent secondary tertiary color role"
@@ -303,7 +303,7 @@
       "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, the classic surface variants, or a hardware device with knobs and segment readouts",
       "x-settings": {
         "category": "appearance",
-        "section": "mode",
+        "section": "language",
         "label": "prefs.appearance.language",
         "control": "selector",
         "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit"

@@ -16,6 +16,9 @@ import qs.modules.components.kit
 // slot reflows the groups live). Keyboard: click a chip, arrows move it
 // (Up/Down change group), Delete removes it, Enter adds an available one.
 // Hosts read display(group) for a live preview of the drag.
+// Compact (a card of the page row, `fillHeight` set): one group at a time,
+// picked with a small segmented at the top, its chips below and an "Add"
+// chip that opens the modules not on the bar (they join that group).
 Item {
     id: root
 
@@ -27,10 +30,17 @@ Item {
     // Group Enter adds an available module to
     property string addGroup: groups.length > 0 ? groups[groups.length - 1].id : ""
     signal moveRequested(string moduleId, string group, int index)
+    property real fillHeight: 0
+    property bool compact: root.fillHeight > 0
+    property string shownGroup: ""
+    readonly property string activeGroup: root.shownGroup || (root.groups.length > 0 ? root.groups[0].id : "")
+    property bool adding: false
+    // where a module that is added goes
+    readonly property string targetGroup: root.compact ? root.activeGroup : root.addGroup
 
     readonly property var groupOrder: groups.map(g => g.id).concat(["available"])
     readonly property bool wide: width >= 640
-    readonly property int columns: wide ? Math.min(3, Math.max(1, groups.length)) : 1
+    readonly property int columns: wide && !compact ? Math.min(3, Math.max(1, groups.length)) : 1
     readonly property real rowHeight: {
         let h = 0;
         for (let i = 0; i < zoneRepeater.count; i++) {
@@ -86,6 +96,8 @@ Item {
         const zones = zoneItems();
         for (let i = 0; i < zones.length; i++) {
             const z = zones[i];
+            if (!z.visible)
+                continue;
             const q = z.mapFromItem(root, p.x, p.y);
             if (q.x >= 0 && q.y >= 0 && q.x <= z.width && q.y <= z.height)
                 return z;
@@ -174,7 +186,7 @@ Item {
         } else if (event.key === Qt.Key_Delete || event.key === Qt.Key_Backspace)
             moveTo(selectedId, "available", -1);
         else if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && at.group === "available")
-            moveTo(selectedId, addGroup, -1);
+            moveTo(selectedId, root.targetGroup, -1);
         else if (event.key === Qt.Key_Escape)
             selectedId = "";
         else
@@ -185,7 +197,34 @@ Item {
     Column {
         id: column
         width: parent.width
-        spacing: Space.l
+        spacing: root.compact ? Space.s : Space.l
+
+        Row {
+            visible: root.compact
+            spacing: Space.s
+            Segmented {
+                objectName: "moduleGroupPicker"
+                model: root.groups.map(g => ({
+                            "name": "group:" + g.id,
+                            "icon": "",
+                            "text": g.title
+                        }))
+                currentIndex: root.groups.findIndex(g => g.id === root.activeGroup)
+                onActivated: i => {
+                    root.shownGroup = root.groups[i].id;
+                    root.adding = false;
+                }
+            }
+            Chip {
+                objectName: "moduleAdd"
+                anchors.verticalCenter: parent.verticalCenter
+                icon: Icons.plus
+                text: I18n.t("prefs.bar.add_module")
+                active: root.adding
+                dense: true
+                onClicked: root.adding = !root.adding
+            }
+        }
 
         Grid {
             id: zones
@@ -198,6 +237,7 @@ Item {
                 model: root.groups
                 delegate: Zone {
                     required property var modelData
+                    visible: !root.compact || (modelData.id === root.activeGroup && !root.adding)
                     group: modelData.id
                     icon: modelData.icon
                     title: modelData.title
@@ -208,6 +248,7 @@ Item {
 
         Zone {
             id: availableZone
+            visible: !root.compact || root.adding
             width: parent.width
             group: "available"
             icon: "plus"
@@ -219,6 +260,7 @@ Item {
             role: "caption"
             width: parent.width
             wrapMode: Text.WordWrap
+            visible: !root.compact
             text: I18n.t("prefs.bar.layout.keys")
             color: Ui.alpha(Colors.overSurfaceVariant, 0.8)
         }
@@ -267,7 +309,7 @@ Item {
             const chip = root.chipAt(Qt.point(mouse.x, mouse.y));
             if (chip && chip.moduleId === root.pressId) {
                 if (chip.group === "available")
-                    root.moveTo(chip.moduleId, root.addGroup, -1);
+                    root.moveTo(chip.moduleId, root.targetGroup, -1);
                 else if (chip.overRemove(input.mapToItem(chip, mouse.x, mouse.y)))
                     root.moveTo(chip.moduleId, "available", -1);
                 else

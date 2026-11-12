@@ -50,6 +50,9 @@ FocusScope {
     // The card's heading names it (a card of one setting): a picture /
     // editor control without the row's own label line, edge to edge.
     property bool bare: false
+    // The height a stacked control gets (a card of the page row): picture
+    // editors become one horizontal strip of it (their `fillHeight`).
+    property real fillHeight: 0
     readonly property bool labelHidden: row.bare && row.stacked
     readonly property bool noteRepeats: {
         if (!row.fixable || !row.previousEntry || SettingsStore.enabled(row.previousEntry) || !SettingsStore.visible(row.previousEntry))
@@ -60,7 +63,7 @@ FocusScope {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < Space.px(560)
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || (narrow && (type === "slider" || type === "macro" || type === "text" || (type === "selector" && (entry.options || []).length <= 4))))
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || ((narrow && (type === "slider" || type === "macro" || type === "text")) || (width < Space.px(440) && type === "selector" && (entry.options || []).length <= 4)))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
@@ -425,6 +428,7 @@ FocusScope {
         id: cardsComponent
         CardSelector {
             entry: row.entry
+            fillHeight: row.fillHeight
             options: row.entry.options
             value: row.value
             onSelected: v => SettingsStore.set(row.entry.key, v)
@@ -444,7 +448,12 @@ FocusScope {
         id: customComponent
         Loader {
             source: Qt.resolvedUrl(Registry.editor(row.entry.component))
-            onLoaded: Ui.setIfPresent(item, "entry", row.entry)
+            height: row.fillHeight > 0 ? Math.max(row.fillHeight, implicitHeight) : implicitHeight
+            onLoaded: {
+                Ui.setIfPresent(item, "entry", row.entry);
+                if (item && "fillHeight" in item)
+                    item.fillHeight = Qt.binding(() => row.fillHeight);
+            }
         }
     }
 }

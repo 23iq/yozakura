@@ -29,6 +29,8 @@ Item {
     id: screen
 
     property bool showWindows: true
+    // the windows fade back (a stage whose subject sits over them)
+    property real windowsOpacity: 1
     property bool showDock: true
     property bool showIsland: true
     property bool selectable: false
@@ -143,7 +145,7 @@ Item {
         id: windows
         readonly property real gap: Math.round(screen.unit * 0.5)
         visible: opacity > 0
-        opacity: screen.showWindows ? 1 : 0
+        opacity: screen.showWindows ? screen.windowsOpacity : 0
         transform: Translate {
             y: screen.showWindows ? 0 : Space.m
             Behavior on y {

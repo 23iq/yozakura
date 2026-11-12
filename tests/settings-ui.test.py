@@ -177,8 +177,8 @@ check(ev("Config.bar.layout.left[0]") == "clock", "drag/keyboard move lands in l
 check("clock" not in json.loads(ev("JSON.stringify(Config.bar.layout.right)")), "module removed from its old group")
 check(h.eval(layout_row, "modified") is True, "layout row modified")
 
-# Real drag & drop with the mouse: first "left" chip onto the drawer zone.
-editor = ev('w.findItem("settingRow:bar.layout.modules")')
+# Real drag & drop with the mouse in the card's compact editor (one group at
+# a time): the second "left" chip dragged before the first reorders the group.
 ev("""(function() {
     var ed = null;
     (function find(item) {
@@ -188,13 +188,12 @@ ev("""(function() {
     })(w.findItem("settingRow:bar.layout.modules"));
     w.layoutEditor = ed;
 })()""")
-page = ev('w.findItem("settingsPage").item')
-ev("w.findItem('settingsPage').item.contentY = 0")
-ev("w.findItem('settingsPage').item.reveal('layout', '')")
-check(wait_stable(lambda: ev("w.findItem('settingsPage').item.contentY")), "reveal scroll finished")
+check(ev("w.layoutEditor.compact") is True, "the card's modules editor is compact")
+check(ev("w.layoutEditor.activeGroup") == "left", "it shows the first group")
+settle(10)
 moving = ev("w.layoutEditor.zoneItems()[0].chipItems()[1].moduleId")
 start = ev("(function(){ var c = w.layoutEditor.zoneItems()[0].chipItems()[1]; return c.mapToItem(null, c.width / 2, c.height / 2); })()")
-end = ev("(function(){ var z = w.layoutEditor.zoneItems()[2]; return z.mapToItem(null, z.width - 20, z.height - 16); })()")
+end = ev("(function(){ var c = w.layoutEditor.zoneItems()[0].chipItems()[0]; return c.mapToItem(null, 4, c.height / 2); })()")
 from PySide6.QtCore import QPoint, Qt  # noqa: E402
 p0 = QPoint(int(start.x()), int(start.y()))
 p1 = QPoint(int(end.x()), int(end.y()))
@@ -203,12 +202,19 @@ for i in range(1, 11):
     QTest.mouseMove(win, QPoint(p0.x() + (p1.x() - p0.x()) * i // 10, p0.y() + (p1.y() - p0.y()) * i // 10))
     settle(1)
 check(ev("w.layoutEditor.dragging") is True, "drag started")
-check(ev("w.layoutEditor.dropGroup") == "drawer", "hovering the drawer zone")
+check(ev("w.layoutEditor.dropGroup") == "left", "hovering the left group")
 QTest.mouseRelease(win, Qt.LeftButton, Qt.NoModifier, p1)
 until(lambda: not ev("w.layoutEditor.dragging"), "drop finished")
-drawer = json.loads(ev("JSON.stringify(Config.bar.layout.drawer)"))
-check(drawer and drawer[-1] == moving, f"{moving} dropped at the end of the drawer: {drawer}")
-check(moving not in json.loads(ev("JSON.stringify(Config.bar.layout.left)")), "dragged module left its group")
+left = json.loads(ev("JSON.stringify(Config.bar.layout.left)"))
+check(left and left[0] == moving, f"{moving} dragged to the front of the group: {left}")
+# the other groups: picked in the card's segmented; Add opens the unused modules
+ev("w.layoutEditor.shownGroup = 'right'")
+settle(5)
+check(ev("w.layoutEditor.zoneItems()[1].visible") is True and ev("w.layoutEditor.zoneItems()[0].visible") is False, "one group at a time")
+ev("w.layoutEditor.adding = true")
+settle(5)
+check(ev("w.layoutEditor.zoneItems()[3].visible") is True, "Add shows the modules not on the bar")
+ev("w.layoutEditor.adding = false; w.layoutEditor.shownGroup = ''")
 
 # Theme keys apply live
 select("appearance")

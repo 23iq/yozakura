@@ -3155,11 +3155,11 @@
           "default": [],
           "x-settings": {
             "category": "bar",
-            "section": "panels",
-            "label": "prefs.bar.panels",
-            "entry": "bar.panels.editor",
-            "entryTitle": "Bars",
-            "keywords": "panels layout bars edge style dock menubar taskbar rail corners statusline ribbon two bars multi monitor modules"
+            "section": "layout",
+            "label": "prefs.label.bar_modules",
+            "entry": "bar.panels.modules",
+            "entryTitle": "Arrange",
+            "keywords": "panel modules widgets order arrange drag drop"
           },
           "description": "Bar panels (empty = the single bar from position/layout/screenList). Each item: {id, edge: top|bottom|left|right, style: classic|islands|menubar|statusline|ribbon|rail|corners|dock|floating|pills|dock-like|none, groups: {start, center, end, drawer, gapStart, gapEnd: [module ids]}, align: fill|center|start|end, size (module px, 0 = style), thickness (px, 0 = auto), margin (px, -1 = style), flat (bool), autohide: auto|always|never, reserve (bool), screens ([] = all; names, primary, secondary), enabled, options: {surface: bg|bar|none}}. See modules/bar/panels/PanelLayout.js.",
           "items": {
@@ -6602,7 +6602,7 @@
               "description": "Auto uses the right edge, or the left one when the bar is on the right.",
               "x-settings": {
                 "category": "layout",
-                "section": "hosts",
+                "section": "hosts2",
                 "label": "prefs.layout.sheet_side",
                 "control": "selector",
                 "keywords": "sheet side left right edge vertical bar",
@@ -6665,7 +6665,7 @@
           "description": "Dim and blur the screen behind the spotlight and the side sheet. Off leaves it untouched; a click outside still closes.",
           "x-settings": {
             "category": "layout",
-            "section": "hosts",
+            "section": "hosts2",
             "label": "prefs.layout.backdrop",
             "control": "toggle",
             "keywords": "backdrop dim scrim blur background behind spotlight sheet overlay darken",
@@ -6835,7 +6835,7 @@
               "description": "Notch: the island grows to show them. Card: a small floating card beside the bar.",
               "x-settings": {
                 "category": "layout",
-                "section": "hosts",
+                "section": "hosts2",
                 "label": "prefs.layout.panels_host",
                 "control": "selector",
                 "keywords": "voice dictation timer hub alarm panels host card floating notch island"
@@ -6866,7 +6866,7 @@
               "description": "Where the keybind cheatsheet opens: over the whole screen, centered, or as a side sheet.",
               "x-settings": {
                 "category": "layout",
-                "section": "hosts",
+                "section": "hosts2",
                 "label": "prefs.layout.cheatsheet_host",
                 "control": "selector",
                 "keywords": "keybinds cheatsheet shortcuts host fullscreen spotlight sheet"
@@ -7032,7 +7032,7 @@
           "description": "Light or dark version of the style. Styles that only have one keep it.",
           "x-settings": {
             "category": "lockscreen",
-            "section": "style",
+            "section": "tone",
             "label": "prefs.lockscreen.tone",
             "control": "selector",
             "keywords": "lock screen light dark tone mode theme",
@@ -7871,7 +7871,7 @@
           "description": "Where corner toasts stack. Auto sits on the bar's side. Only used while notifications show as corner toasts; with presentation Auto they may open from the notch instead.",
           "x-settings": {
             "category": "notifications",
-            "section": "presentation",
+            "section": "where",
             "label": "prefs.notif.position",
             "control": "selector",
             "keywords": "corner position top bottom left right center",
@@ -7925,7 +7925,7 @@
           "description": "Monitors that show notifications.",
           "x-settings": {
             "category": "notifications",
-            "section": "presentation",
+            "section": "where",
             "label": "prefs.notif.screens",
             "control": "screens",
             "keywords": "monitor screen display multi-monitor where"
@@ -10498,7 +10498,7 @@
           "description": "Palette color of progress lines, rings and slider fills.",
           "x-settings": {
             "category": "appearance",
-            "section": "palette",
+            "section": "accents",
             "label": "prefs.appearance.progress_role",
             "control": "selector",
             "keywords": "progress slider ring fill accent secondary tertiary color role"
@@ -10664,7 +10664,7 @@
           "description": "How every panel draws its content: ink hairlines, frosted glass cards, solid tiles, the classic surface variants, or a hardware device with knobs and segment readouts",
           "x-settings": {
             "category": "appearance",
-            "section": "mode",
+            "section": "language",
             "label": "prefs.appearance.language",
             "control": "selector",
             "keywords": "visual language style ink glass tiles solid classic device hardware instrument knob look kit"

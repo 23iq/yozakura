@@ -9,9 +9,10 @@ import "../../notifications/NotificationPolicy.js" as Policy
 
 // Stage of the Notifications page: your whole screen (ScreenMini) with a
 // notification where it appears now (NotificationPolicy, the same rules as
-// the shell): grown from the island, or a toast in its corner. With corner
-// toasts every other place is a faint target; hovering one shows the toast
-// there, a click moves notifications there (notifications.position).
+// the shell): grown from the island, or a toast in its corner, ringed in
+// the accent. With corner toasts the windows fade back and every other
+// place is a dashed "move here" zone with an arrow; a click moves
+// notifications there (notifications.position).
 Stage {
     id: stage
 
@@ -36,6 +37,7 @@ Stage {
         cornerRadius: stage.radius
         showDock: true
         emphasis: stage.presentation === "notch" ? "island" : ""
+        windowsOpacity: stage.corners ? 0.3 : 1
 
         // Where a toast sits for a position, in the space the bars leave.
         function placeOf(pos, w, h) {
@@ -58,11 +60,36 @@ Stage {
                 objectName: "notifPlace:" + modelData
                 visible: modelData !== stage.position
                 solid: false
-                ghost: stage.hovered === modelData
+                ghost: false
+                border.width: 0
                 x: at.x
                 y: at.y
 
+                DashedFrame {
+                    anchors.fill: parent
+                    radius: target.radius
+                    fill: Qt.alpha(Type.accent, stage.hovered === target.modelData ? 0.28 : 0.08)
+                }
+                Row {
+                    anchors.centerIn: parent
+                    spacing: Space.xs
+                    Icon {
+                        anchors.verticalCenter: parent.verticalCenter
+                        icon: target.at.y > mini.height / 2 ? Icons.arrowDown : Icons.arrowUp
+                        role: "caption"
+                        tone: "accent"
+                    }
+                    KitText {
+                        anchors.verticalCenter: parent.verticalCenter
+                        visible: target.width > Space.px(90)
+                        role: "caption"
+                        color: Type.text
+                        text: I18n.t("prefs.home.move_here")
+                    }
+                }
+
                 MouseArea {
+                    objectName: "notifPlaceArea:" + target.modelData
                     anchors.fill: parent
                     anchors.margins: -Space.xs
                     hoverEnabled: true
@@ -103,6 +130,15 @@ Stage {
                     duration: Motion.glide.duration
                     easing.type: Motion.glide.easing
                 }
+            }
+            Mark {
+                anchors.fill: parent
+                anchors.margins: -Space.xs
+                visible: stage.corners
+                radius: now.radius + Space.xs
+                color: "transparent"
+                border.width: Space.stroke - 1
+                border.color: Type.accent
             }
             StageSpot {
                 keys: ["notifications.presentation", "notifications.position"]

@@ -26,7 +26,8 @@ Card {
     readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0)
     readonly property bool shown: sectionRoot.entries.length > 0 && SettingsStore.sectionShown(section)
     // one setting: its value beside the heading, no label of its own
-    readonly property var single: sectionRoot.entries.length === 1 ? sectionRoot.entries[0] : null
+    readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e))
+    readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
     readonly property string value: {
         const e = sectionRoot.single;
         if (!e || !e.key || e.type === "toggle")
@@ -36,6 +37,12 @@ Card {
     }
     // Not built yet: the page fills its sections in a few per frame.
     property bool pending: false
+    // Shown elsewhere (a fitted page puts its other sections in a sheet):
+    // this copy builds no rows.
+    property bool suppressed: false
+    // A card of the page row: its height is set from outside; a single
+    // picture / editor setting fills it, more rows scroll inside the card.
+    property bool fixed: false
 
     function rowFor(entryId) {
         for (let i = 0; i < rows.count; i++) {
@@ -47,11 +54,12 @@ Card {
     }
 
     objectName: "settingsSection:" + sectionId
-    visible: sectionRoot.shown && !sectionRoot.pending
+    visible: sectionRoot.shown && !sectionRoot.pending && !sectionRoot.suppressed
     padding: Look.boxPadding + Space.s
     spacing: Space.s
 
     Item {
+        id: headerBox
         width: sectionRoot.contentWidth
         height: Math.max(heading.implicitHeight, valueText.implicitHeight)
         visible: heading.text !== ""
@@ -75,22 +83,60 @@ Card {
         }
     }
 
-    Column {
-        id: rowsColumn
+    Item {
+        id: rowsBox
+        readonly property real room: Math.max(0, sectionRoot.height - sectionRoot.padding * 2 - (headerBox.visible ? headerBox.height + sectionRoot.spacing : 0))
         width: sectionRoot.contentWidth
-        spacing: 0
+        height: sectionRoot.fixed ? rowsBox.room : rowsColumn.height
+        clip: sectionRoot.fixed
 
-        Repeater {
-            id: rows
-            model: sectionRoot.pending || !sectionRoot.shown ? [] : sectionRoot.entries
+        Flickable {
+            id: rowsFlick
+            objectName: "cardScroll"
+            anchors.fill: parent
+            contentWidth: width
+            contentHeight: rowsColumn.height
+            interactive: sectionRoot.fixed && contentHeight > height + 1
+            boundsBehavior: Flickable.StopAtBounds
 
-            delegate: SettingRow {
-                required property var modelData
-                required property int index
-                width: rowsColumn.width
-                entry: modelData
-                bare: sectionRoot.single !== null
-                previousEntry: index > 0 ? sectionRoot.entries[index - 1] : null
+            Column {
+                id: rowsColumn
+                width: rowsBox.width
+                spacing: 0
+
+                Repeater {
+                    id: rows
+                    model: sectionRoot.pending || !sectionRoot.shown || sectionRoot.suppressed ? [] : sectionRoot.entries
+
+                    delegate: SettingRow {
+                        required property var modelData
+                        required property int index
+                        width: rowsColumn.width
+                        entry: modelData
+                        bare: sectionRoot.single !== null
+                        // a single picture / editor fills the card
+                        fillHeight: sectionRoot.fixed && sectionRoot.single !== null ? Math.max(0, rowsBox.room - Space.s * 2) : 0
+                        previousEntry: index > 0 ? sectionRoot.entries[index - 1] : null
+                    }
+                }
+            }
+        }
+        // more below: a fade at the bottom of the card
+        Mark {
+            visible: rowsFlick.interactive && rowsFlick.contentY < rowsFlick.contentHeight - rowsFlick.height - 1
+            anchors.bottom: parent.bottom
+            width: parent.width
+            height: Space.xl
+            radius: 0
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: 1
+                    color: Look.cardFill(false)
+                }
             }
         }
     }

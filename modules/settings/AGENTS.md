@@ -314,6 +314,71 @@ Control mapping (applied everywhere): on / off -> `toggle` (Switch);
 (kit Dropdown); continuous -> `slider` in human units; a small count ->
 `number` (stepper); a font -> `font` (the picker; `sizeKey` adds the size).
 
+## PAGE COMPOSITION (the template; the rules for every converted page)
+A converted page is FITTED: at the default window (1180x780) it is exactly
+the header (DestinationHeader), the stage with its side columns, one hint
+line and ONE row of cards at the bottom, inside the page padding. No page
+scroll, nothing under the fold. `tests/settings-fit.test.py` checks every
+converted tab (and Bar with several bars); add your category to its
+`CONVERTED` list when you give it a `row` (the test fails otherwise).
+
+Schema fields (category):
+- `stage`: a `Registry.STAGES` name (a `Stage` root, see STAGE COMPONENTS).
+  The stage takes the height the row leaves (16:9, up to 560 px).
+- `hero.right` / `hero.left`: entry keys / ids shown beside the stage
+  instead of in a card: right = the two or three behaviour switches (each in
+  a small card), left = a list that acts on space (the bars and "Add a
+  bar"). With one side column the stage and the column are centred as one
+  group. `hero.hint`: one line under the stage saying what a click on it
+  does (i18n key).
+- `row`: two to four section ids, the cards of the row, equal widths, one
+  fixed height (`Look.cardRowHeight`, 216 px). Sections not in `row` open in
+  the "More · N" sheet (end of the hint line), never under the fold; search
+  results inside it open the sheet and scroll to the row.
+- entry `part: true`: an editor of one part of a composite value that
+  another row also edits (exempt from the one-control check).
+
+What a row card may hold (SettingsSection `fixed`):
+- ONE picture choice: a strip. CardSelector (`display: "cards"`) and the
+  picture editors (BarStyleCards, ThemeModeCards, LockStyleGallery,
+  PanelStyleCards, SchemeGallery) become one horizontal strip of equal
+  pictures when SettingRow gives them `fillHeight`, the title inside the
+  picture on a gradient (ChoiceCard `inset`), the chosen one ringed;
+  more than fit scroll sideways with an edge fade (controls/StripFade).
+  The card shows its title + the current value on the right, no row label.
+  A new picture editor: add `property real fillHeight` and the same strip
+  (see CardSelector: Flickable around the Grid, `strip`, `stripWidth`).
+- A size: bars that grow (BarSizeCards), bottom-aligned, filling the card.
+- A modules editor: ModuleGroupsEditor `compact` (one group at a time from
+  a small segmented, "Add" chip for the unused ones).
+- Two or three compact rows (toggles, short selectors inline, sliders with
+  the track under the label). More rows scroll inside the card with a fade
+  at the bottom: allowed only for a list that is the card's substance.
+- Never: a vertical grid of pictures, a second row of cards, a card that
+  repeats its title as a row label.
+
+Making a stage: `stages/<Name>Stage.qml` with a `Stage` root
+(`stageHeight` is only the default), registered in `Registry.STAGES`.
+For anything placed on the screen use `ScreenMini` (bars, island, dock,
+frame, reserved space from the live config) and draw your part in its
+overlay with its geometry (`freeRect`, `islandRect`, `edgeDepth`, `unit`);
+`windowsOpacity` fades the faux windows back when your part sits over
+them. Direct manipulation: EdgePicker (edges), dashed zones (kit
+`DashedFrame`) with a label for places, `partsClickable` for the island /
+dock; write through `SettingsStore.transaction("prefs.undo.<x>_moved")`.
+A custom scene (Lock screen) is plain kit drawing on the `Stage`.
+
+Check one page offscreen (writes a PNG; look at it next to
+concepts/page2.png):
+`tools/render/settings_render.py --wallpaper assets/wallpapers_example/wallpaper-01.png
+--palette default --languages ink --mode dark <category>` (`--set
+key=json` for a state, `--eval opensStage:picked='dashboard'` mid-move);
+then `python3 tests/settings-fit.test.py`.
+Measure open time: time from `select()` to the host's `pageReady` and to
+`item.complete` in a `tests/lib/settings_env.py` harness (see PERFORMANCE);
+home: window load to the first `frameSwapped`, compared with an empty
+window in the same harness.
+
 ## CONVERTING A PAGE (checklist for the remaining destinations)
 Every schema page already renders in the new frame (hero + card bento);
 converting means curating it and giving it a stage worth looking at.

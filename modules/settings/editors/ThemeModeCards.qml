@@ -19,9 +19,16 @@ Item {
     readonly property bool oled: !light && !!SettingsStore.get("theme.oledMode")
     readonly property string mode: light ? "light" : (oled ? "oled" : "dark")
     readonly property string scheme: SettingsStore.get("wallpaper.matugenScheme") || "scheme-tonal-spot"
-    readonly property int columns: width < 520 ? 1 : 3
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures with the title inside, scrolling
+    // sideways with an edge fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: 3
+    readonly property real stripWidth: Math.max(root.fillHeight * 1.5, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property int columns: root.strip ? root.stripCount : width < 520 ? 1 : 3
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
     Component.onCompleted: SchemePreviews.refresh()
 
@@ -55,47 +62,64 @@ Item {
         };
     }
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        spacing: Space.l
+        height: grid.height
+        contentWidth: grid.width
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: [
-                {
-                    "id": "dark",
-                    "icon": "moon",
-                    "title": "prefs.appearance.mode.dark"
-                },
-                {
-                    "id": "oled",
-                    "icon": "circleHalf",
-                    "title": "prefs.appearance.mode.oled"
-                },
-                {
-                    "id": "light",
-                    "icon": "sun",
-                    "title": "prefs.appearance.mode.light"
-                }
-            ]
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            columns: root.columns
+            spacing: Space.l
 
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: Math.round(width * 0.55)
-                selected: root.mode === modelData.id
-                icon: modelData.icon
-                title: I18n.t(modelData.title)
-                onClicked: root.choose(modelData.id)
+            Repeater {
+                model: [
+                    {
+                        "id": "dark",
+                        "icon": "moon",
+                        "title": "prefs.appearance.mode.dark"
+                    },
+                    {
+                        "id": "oled",
+                        "icon": "circleHalf",
+                        "title": "prefs.appearance.mode.oled"
+                    },
+                    {
+                        "id": "light",
+                        "icon": "sun",
+                        "title": "prefs.appearance.mode.light"
+                    }
+                ]
 
-                MiniDesktop {
-                    anchors.fill: parent
-                    colorMap: root.paletteFor(card.modelData.id)
-                    oled: card.modelData.id === "oled"
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    width: root.strip ? root.stripWidth : (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+                    previewHeight: root.strip ? root.fillHeight : Math.round(width * 0.55)
+                    inset: root.strip
+                    selected: root.mode === modelData.id
+                    icon: modelData.icon
+                    title: I18n.t(modelData.title)
+                    onClicked: root.choose(modelData.id)
+
+                    MiniDesktop {
+                        anchors.fill: parent
+                        colorMap: root.paletteFor(card.modelData.id)
+                        oled: card.modelData.id === "oled"
+                    }
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

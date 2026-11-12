@@ -73,7 +73,7 @@
       "description": "Where corner toasts stack. Auto sits on the bar's side. Only used while notifications show as corner toasts; with presentation Auto they may open from the notch instead.",
       "x-settings": {
         "category": "notifications",
-        "section": "presentation",
+        "section": "where",
         "label": "prefs.notif.position",
         "control": "selector",
         "keywords": "corner position top bottom left right center",
@@ -127,7 +127,7 @@
       "description": "Monitors that show notifications.",
       "x-settings": {
         "category": "notifications",
-        "section": "presentation",
+        "section": "where",
         "label": "prefs.notif.screens",
         "control": "screens",
         "keywords": "monitor screen display multi-monitor where"

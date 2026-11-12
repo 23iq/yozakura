@@ -11,6 +11,7 @@ var category = {
     "title": "prefs.cat.icons_type",
     "description": "prefs.cat.icons_type.desc",
     "stage": "TypeStage",
+    "row": ["icons", "typography", "headings"],
     "keywords": "icons weight phosphor regular bold fill fonts typography heading title case uppercase typeface",
     "sections": [
         {

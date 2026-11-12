@@ -40,31 +40,6 @@ Item {
         width: parent.width
         spacing: Space.l
 
-        // ── Panel list ──
-        Flow {
-            width: parent.width
-            spacing: Space.s
-
-            Chip {
-                icon: Icons.arrowCounterClockwise
-                text: I18n.t("prefs.bar.panels.single")
-                enabled: root.panels.length > 0 && !PanelsModel.isLegacy(Config.bar)
-                onClicked: {
-                    PanelsModel.toSingleBar(root.panels, root.current).forEach(w => SettingsStore.set(w.key, w.value));
-                    SettingsStore.selectedPanel = 0;
-                }
-            }
-            Chip {
-                icon: Icons.trash
-                text: I18n.t("prefs.bar.panels.remove")
-                enabled: root.panels.length > 1
-                onClicked: {
-                    root.commit(PanelsModel.removePanel(root.panels, root.current));
-                    SettingsStore.selectedPanel = Math.max(0, root.current - 1);
-                }
-            }
-        }
-
         // ── Edge + behaviour ──
         Flow {
             width: parent.width

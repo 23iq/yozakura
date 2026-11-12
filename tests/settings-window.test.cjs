@@ -56,7 +56,8 @@ test('the window stays small: about 150 rows when every page is curated', () => 
     // Bar and Look are curated (phase 1); the rest still awaits its page
     // conversion (modules/settings/AGENTS.md, CONVERTING A PAGE).
     assert.ok(n < 342, `${n} window rows`);
-    const of = id => windowItems().filter(x => x.category.id === id).length;
+    // `part` entries edit one part of a composite value another row also edits
+    const of = id => windowItems().filter(x => x.category.id === id && !x.entry.part).length;
     // (conditional rows included: the several-bars editor, the frame and sheet options)
     assert.ok(of('bar') + of('layout') <= 30, `Bar: ${of('bar') + of('layout')} rows`);
     assert.ok(of('appearance') + of('icons-type') <= 24, `Look: ${of('appearance') + of('icons-type')} rows`);

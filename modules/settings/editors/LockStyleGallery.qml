@@ -23,7 +23,14 @@ Item {
 
     property var entry
     readonly property string current: SettingsStore.get("lockscreen.style") ?? LockStyles.DEFAULT_ID
-    readonly property int columns: width < 560 ? 1 : (width < 920 ? 2 : 3)
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures with the title inside, scrolling
+    // sideways with an edge fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: LockStyles.styles.length
+    readonly property real stripWidth: Math.max(root.fillHeight * 1.6, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property int columns: root.strip ? root.stripCount : width < 560 ? 1 : (width < 920 ? 2 : 3)
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string wallpaper: {
         const m = root.manager;
@@ -43,83 +50,100 @@ Item {
     readonly property string look: JSON.stringify([root.wallpaper, SettingsStore.get("lockscreen.tone"), SettingsStore.get("lockscreen.position"), SettingsStore.get("lockscreen.showMedia"), SettingsStore.get("lockscreen.showStatus"), SettingsStore.get("theme.lightMode")])
     onLookChanged: root.building = 0
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        spacing: Space.m
+        height: grid.height
+        contentWidth: grid.width
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: LockStyles.styles
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            columns: root.columns
+            spacing: Space.m
 
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                required property int index
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: Math.round(width * root.screen.height / root.screen.width)
-                selected: root.current === modelData.id
-                title: I18n.t(modelData.labelKey)
-                onClicked: SettingsStore.set("lockscreen.style", modelData.id)
+            Repeater {
+                model: LockStyles.styles
 
-                Item {
-                    id: shot
-                    objectName: "lockPreview:" + card.modelData.id
-                    readonly property bool live: card.index === root.building
-                    // the still picture of the last capture
-                    property var grabbed: null
-                    anchors.fill: parent
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    required property int index
+                    width: root.strip ? root.stripWidth : (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+                    previewHeight: root.strip ? root.fillHeight : Math.round(width * root.screen.height / root.screen.width)
+                    inset: root.strip
+                    selected: root.current === modelData.id
+                    title: I18n.t(modelData.labelKey)
+                    onClicked: SettingsStore.set("lockscreen.style", modelData.id)
 
-                    Image {
-                        anchors.fill: parent
-                        source: shot.grabbed ? shot.grabbed.url : ""
-                        fillMode: Image.PreserveAspectCrop
-                        smooth: true
-                    }
                     Item {
-                        id: stagePort
-                        width: root.screen.width
-                        height: root.screen.height
-                        scale: shot.width / root.screen.width
-                        transformOrigin: Item.TopLeft
-                        // Clicks go to the card, never to the preview's field.
-                        enabled: false
+                        id: shot
+                        objectName: "lockPreview:" + card.modelData.id
+                        readonly property bool live: card.index === root.building
+                        // the still picture of the last capture
+                        property var grabbed: null
+                        anchors.fill: parent
 
-                        Loader {
-                            id: liveView
+                        Image {
                             anchors.fill: parent
-                            active: shot.live
-                            sourceComponent: LockView {
-                                preview: true
-                                startAnim: true
-                                styleId: card.modelData.id
-                                username: Brand.home.split("/").pop()
-                                hostname: Brand.appId
-                                wallpaperSource: root.wallpaper
-                            }
-                            onLoaded: settle.restart()
+                            source: shot.grabbed ? shot.grabbed.url : ""
+                            fillMode: Image.PreserveAspectCrop
+                            smooth: true
                         }
-                    }
-                    // Captured once the reveal and the wallpaper settled.
-                    Timer {
-                        id: settle
-                        interval: 900
-                        onTriggered: {
-                            if (!liveView.item) {
-                                root.building++;
-                                return;
+                        Item {
+                            id: stagePort
+                            width: root.screen.width
+                            height: root.screen.height
+                            scale: shot.width / root.screen.width
+                            transformOrigin: Item.TopLeft
+                            // Clicks go to the card, never to the preview's field.
+                            enabled: false
+
+                            Loader {
+                                id: liveView
+                                anchors.fill: parent
+                                active: shot.live
+                                sourceComponent: LockView {
+                                    preview: true
+                                    startAnim: true
+                                    styleId: card.modelData.id
+                                    username: Brand.home.split("/").pop()
+                                    hostname: Brand.appId
+                                    wallpaperSource: root.wallpaper
+                                }
+                                onLoaded: settle.restart()
                             }
-                            (liveView.item as Item).grabToImage(result => {
-                                shot.grabbed = result;
-                                if (shot.live)
+                        }
+                        // Captured once the reveal and the wallpaper settled.
+                        Timer {
+                            id: settle
+                            interval: 900
+                            onTriggered: {
+                                if (!liveView.item) {
                                     root.building++;
-                            }, Qt.size(Math.max(1, shot.width * 2), Math.max(1, shot.height * 2)));
+                                    return;
+                                }
+                                (liveView.item as Item).grabToImage(result => {
+                                    shot.grabbed = result;
+                                    if (shot.live)
+                                        root.building++;
+                                }, Qt.size(Math.max(1, shot.width * 2), Math.max(1, shot.height * 2)));
+                            }
                         }
                     }
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

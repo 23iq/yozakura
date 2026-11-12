@@ -16,11 +16,14 @@ import "../../shell/hosts/HostResolve.js" as HostResolve
 // one whose row is under the pointer (or that just changed) is drawn solid,
 // named and ringed, and glides to its new place. Surfaces that share a
 // place share one ghost (their icons side by side), so no label is ever
-// drawn over another. Direct manipulation: the icon of a surface that can
-// open in several places (launcher, dashboard, quick ask, voice and
-// timers, shortcut sheet) is a chip; picking it (`picked`) shows every
-// other place it can open in as a drop zone, and a click on a zone moves
-// it there (one undo step), the surface gliding to its new place.
+// drawn over another. At rest the stage shows ONLY small labelled chips
+// (icon + name) where each surface opens. Direct manipulation: a chip of a
+// surface that can open in several places (launcher, dashboard, quick ask,
+// voice and timers, shortcut sheet) is picked (`picked`): it becomes a
+// ghost of the surface ringed in the accent, every other place it can open
+// in is a dashed drop zone with its name (zones that would overlap are
+// dashed chips at their anchor), everything else fades back; a click on a
+// zone moves it there (one undo step), the ghost gliding to its place.
 Stage {
     id: stage
     objectName: "opensStage"
@@ -108,6 +111,10 @@ Stage {
                 "rect": r
             });
         }
+        // a zone that overlaps another (or the ghost) is shown as a chip
+        const hit = (a, b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+        const ghost = stage.rectOf(id, "");
+        out.forEach(z => z.compact = hit(z.rect, ghost) || out.some(o => o !== z && hit(o.rect, z.rect)));
         return out;
     }
     function moveTo(value) {
@@ -217,21 +224,26 @@ Stage {
                     "ids": [id]
                 });
         });
-        // icons of two places never sit on each other: a later one moves
-        // right until it is clear
-        const step = Math.max(1, screen.unit) * 1.4;
+        // the chips of two places never sit on each other: a later row of
+        // chips moves down until it is clear (widths estimated from the
+        // names), and stays inside the screen
+        const u = Math.max(1, screen.unit);
+        const chipH = u * 1.3, gap = u * 0.3;
         const taken = [];
         out.forEach(p => {
-            let ax = p.rect[0];
-            const ay = p.rect[1];
-            while (taken.some(t => Math.abs(t[0] - ax) < step * t[2] && Math.abs(t[1] - ay) < step))
-                ax += step;
+            const w = p.ids.reduce((sum, id) => sum + u * 1.6 + I18n.t(stage.surfaces[id].name).length * u * 0.42 + gap, 0);
+            let ax = Math.max(0, Math.min(p.rect[0] + u * 0.3, screen.width - w - u * 0.3));
+            let ay = p.rect[1] + u * 0.3;
+            const hit = () => taken.some(t => ax < t[0] + t[2] && t[0] < ax + w && ay < t[1] + t[3] && t[1] < ay + chipH);
+            while (hit() && ay < screen.height)
+                ay += chipH + gap;
             p.iconX = ax - p.rect[0];
-            taken.push([ax, ay, p.ids.length]);
+            p.iconY = ay - p.rect[1];
+            taken.push([ax, ay, w, chipH]);
         });
         return out;
     }
-    readonly property var activeRect: stage.rectOf(stage.active, "")
+    readonly property var activeRect: stage.rectOf(stage.picked || stage.active, "")
 
     ScreenMini {
         id: screen
@@ -251,18 +263,17 @@ Stage {
                 y: place.modelData.rect[1]
                 width: place.modelData.rect[2]
                 height: place.modelData.rect[3]
-                z: 1
-
-                Mark {
-                    anchors.fill: parent
-                    radius: Look.radius("small", height)
-                    color: Qt.alpha(Colors.background, 0.16)
-                    border.width: Space.hairline
-                    border.color: Qt.alpha(Colors.overBackground, 0.5)
+                z: 6
+                opacity: stage.picked !== "" && place.modelData.ids.indexOf(stage.picked) < 0 ? 0.3 : 1
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Motion.micro.duration
+                    }
                 }
+
                 Row {
-                    x: Space.xs + place.modelData.iconX
-                    y: Space.xs
+                    x: place.modelData.iconX
+                    y: place.modelData.iconY
                     spacing: Space.xs
                     Repeater {
                         model: place.modelData.ids
@@ -272,16 +283,28 @@ Stage {
                             readonly property bool canMove: stage.movable.indexOf(modelData) >= 0
                             readonly property bool isPicked: stage.picked === modelData
                             objectName: "opensChip:" + modelData
-                            width: chipIcon.width + Space.s
-                            height: chipIcon.height + Space.xs
+                            width: chipRow.implicitWidth + Space.m
+                            height: chipRow.implicitHeight + Space.xs * 1.5
                             radius: height / 2
-                            color: chip.isPicked ? Type.accent : (chip.canMove && chipArea.containsMouse ? Qt.alpha(Type.accent, 0.3) : "transparent")
-                            Icon {
-                                id: chipIcon
+                            color: chip.isPicked ? Type.accent : Qt.alpha(Colors.surface, chip.canMove && chipArea.containsMouse ? 0.95 : 0.82)
+                            border.width: Space.hairline
+                            border.color: chip.isPicked ? Type.accent : Qt.alpha(Colors.overBackground, 0.25)
+                            Row {
+                                id: chipRow
                                 anchors.centerIn: parent
-                                icon: Icons[stage.surfaces[chip.modelData].icon] ?? ""
-                                role: "caption"
-                                tone: chip.isPicked ? "accentInk" : "text"
+                                spacing: Space.xs
+                                Icon {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    icon: Icons[stage.surfaces[chip.modelData].icon] ?? ""
+                                    role: "caption"
+                                    tone: chip.isPicked ? "accentInk" : "text"
+                                }
+                                KitText {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    role: "caption"
+                                    color: chip.isPicked ? Colors.overPrimary : Type.text
+                                    text: I18n.t(stage.surfaces[chip.modelData].name)
+                                }
                             }
                             MouseArea {
                                 id: chipArea
@@ -303,6 +326,7 @@ Stage {
         // the surface in focus: solid, named, gliding to its place
         StyledRect {
             id: focusBox
+            visible: stage.picked !== ""
             z: 3
             x: stage.activeRect[0]
             y: stage.activeRect[1]
@@ -361,20 +385,24 @@ Stage {
         // the picked surface's other places: drop zones
         Repeater {
             model: stage.zones
-            delegate: Mark {
+            delegate: Item {
                 id: zone
                 required property var modelData
+                readonly property bool compact: zone.modelData.compact === true
                 objectName: "opensZone:" + modelData.value
-                z: 5
-                x: zone.modelData.rect[0]
-                y: zone.modelData.rect[1]
-                width: zone.modelData.rect[2]
-                height: zone.modelData.rect[3]
-                radius: Look.radius("small", height)
-                color: Qt.alpha(Type.accent, zoneArea.containsMouse ? 0.32 : 0.14)
-                border.width: Space.hairline + 1
-                border.color: Type.accent
+                z: 7
+                // compact: a dashed chip at the zone's anchor (its centre)
+                x: zone.compact ? zone.modelData.rect[0] + (zone.modelData.rect[2] - width) / 2 : zone.modelData.rect[0]
+                y: zone.compact ? zone.modelData.rect[1] + (zone.modelData.rect[3] - height) / 2 : zone.modelData.rect[1]
+                width: zone.compact ? zoneLabel.implicitWidth + Space.l : zone.modelData.rect[2]
+                height: zone.compact ? zoneLabel.implicitHeight + Space.s : zone.modelData.rect[3]
+                DashedFrame {
+                    anchors.fill: parent
+                    radius: zone.compact ? height / 2 : Look.radius("small", height)
+                    fill: Qt.alpha(Type.accent, zoneArea.containsMouse ? 0.3 : (zone.compact ? 0.18 : 0.08))
+                }
                 KitText {
+                    id: zoneLabel
                     anchors.centerIn: parent
                     width: Math.min(implicitWidth, parent.width - Space.s)
                     role: "caption"
@@ -391,6 +419,17 @@ Stage {
                     onClicked: stage.moveTo(zone.modelData.value)
                 }
             }
+        }
+        // the picked surface's ghost: ringed in the accent
+        Mark {
+            anchors.fill: focusBox
+            anchors.margins: -Space.xs
+            z: 4
+            visible: focusBox.visible
+            radius: focusBox.radius + Space.xs
+            color: "transparent"
+            border.width: Space.stroke - 1
+            border.color: Type.accent
         }
         StageSpot {
             anchors.fill: focusBox

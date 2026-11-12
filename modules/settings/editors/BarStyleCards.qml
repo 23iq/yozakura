@@ -19,10 +19,17 @@ Item {
 
     property var entry
     readonly property string current: Config.bar.layout && Config.bar.layout.style ? Config.bar.layout.style : "classic"
-    readonly property int columns: width < 300 ? 2 : 3
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures with the title inside, scrolling
+    // sideways with an edge fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: PanelStyles.barStyles().length
+    readonly property real stripWidth: Math.max(root.fillHeight * 1.25, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property int columns: root.strip ? root.stripCount : width < 300 ? 2 : 3
     readonly property real cardWidth: (grid.width - grid.columnSpacing * (root.columns - 1)) / root.columns
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
     function previewOf(style) {
         const p = JSON.parse(JSON.stringify(PanelLayout.fromLegacy(Config.bar)));
@@ -32,46 +39,63 @@ Item {
         return [p];
     }
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        rowSpacing: Space.l
-        columnSpacing: Space.l
+        height: grid.height
+        contentWidth: grid.width
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: PanelStyles.barStyles()
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            columns: root.columns
+            rowSpacing: Space.l
+            columnSpacing: root.strip ? Space.m : Space.l
 
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                objectName: "card:" + modelData.id
-                width: root.cardWidth
-                previewHeight: Math.round(width * 0.4)
-                selected: root.current === modelData.id
-                title: I18n.t(modelData.label)
-                onClicked: SettingsStore.set("bar.layout.style", modelData.id)
+            Repeater {
+                model: PanelStyles.barStyles()
 
-                // built off the frame: the cards show at once
-                Loader {
-                    anchors.fill: parent
-                    asynchronous: true
-                    sourceComponent: Component {
-                        MiniScreen {
-                            id: screen
-                            PanelsSchematic {
-                                anchors.fill: parent
-                                backdrop: false
-                                barOpacity: screen.barOpacity
-                                panels: root.previewOf(card.modelData.id)
-                                showWindows: false
-                                selected: -1
-                                unit: Math.round(width * 0.075)
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    objectName: "card:" + modelData.id
+                    width: root.strip ? root.stripWidth : root.cardWidth
+                    previewHeight: root.strip ? root.fillHeight : Math.round(width * 0.4)
+                    inset: root.strip
+                    selected: root.current === modelData.id
+                    title: I18n.t(modelData.label)
+                    onClicked: SettingsStore.set("bar.layout.style", modelData.id)
+
+                    // built off the frame: the cards show at once
+                    Loader {
+                        anchors.fill: parent
+                        asynchronous: true
+                        sourceComponent: Component {
+                            MiniScreen {
+                                id: screen
+                                PanelsSchematic {
+                                    anchors.fill: parent
+                                    backdrop: false
+                                    barOpacity: screen.barOpacity
+                                    panels: root.previewOf(card.modelData.id)
+                                    showWindows: false
+                                    selected: -1
+                                    unit: Math.round(width * 0.075)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

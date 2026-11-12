@@ -79,7 +79,7 @@ var category = {
     "description": "prefs.cat.layout.desc",
     "stage": "OpensStage",
     "hero": { "hint": "prefs.layout.hero_hint" },
-    "row": ["hosts"],
+    "row": ["hosts", "hosts2"],
     "keywords": "layout host spotlight sheet side panel notch launcher dashboard where open center edge preview bar dock parts",
     "sections": [
         {
@@ -132,7 +132,13 @@ var category = {
                     "label": "prefs.layout.aiquick_host",
                     "description": "prefs.layout.aiquick_host.desc",
                     "keywords": "ai quick ask host card floating spotlight notch island"
-                },
+                }
+            ]
+        },
+        {
+            "id": "hosts2",
+            "title": "prefs.layout.section.more_panels",
+            "entries": [
                 {
                     "key": "layout.panels.host",
                     "type": "selector",

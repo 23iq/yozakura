@@ -12,7 +12,9 @@ import qs.modules.components.kit
 // the accent and the title takes the active weight and a check. Keyboard:
 // Tab focus with the kit FocusRing, Space / Enter pick. The same in every
 // visual language (the picture is the box). `subtitle` is a second caption
-// line for the rare card whose picture cannot say it.
+// line for the rare card whose picture cannot say it. `inset`: the title
+// sits inside the picture on a gradient (a strip of pictures in a card of
+// the page row), no caption under it.
 Item {
     id: card
 
@@ -21,13 +23,14 @@ Item {
     property string subtitle: ""
     property string icon: ""
     property real previewHeight: 96
+    property bool inset: false
     default property alias preview: previewArea.data
     readonly property bool hovered: area.containsMouse
     readonly property real radius: Look.radius("control", Space.controlL)
     signal clicked
 
     implicitWidth: Space.px(180)
-    implicitHeight: card.previewHeight + Space.s + caption.implicitHeight
+    implicitHeight: card.inset ? card.previewHeight : card.previewHeight + Space.s + caption.implicitHeight
     activeFocusOnTab: true
     Keys.onSpacePressed: clicked()
     Keys.onReturnPressed: clicked()
@@ -69,6 +72,38 @@ Item {
             layer.smooth: true
         }
 
+        // inset title: on a gradient at the bottom of the picture
+        Mark {
+            visible: card.inset
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: Math.min(parent.height, insetTitle.implicitHeight + Space.l * 2)
+            radius: card.radius
+            gradient: Gradient {
+                GradientStop {
+                    position: 0
+                    color: "transparent"
+                }
+                GradientStop {
+                    position: 1
+                    color: Qt.alpha(Colors.shadow, 0.75)
+                }
+            }
+            KitText {
+                id: insetTitle
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Space.s
+                width: Math.min(implicitWidth, parent.width - Space.s * 2)
+                role: "secondary"
+                color: Qt.rgba(1, 1, 1, card.selected ? 1 : 0.85)
+                font.weight: card.selected ? Look.activeLabelWeight : Look.labelWeight
+                text: card.title
+                elide: Text.ElideRight
+            }
+        }
+
         // The edge: a hairline at rest, the accent ring when selected.
         Mark {
             anchors.fill: parent
@@ -95,6 +130,7 @@ Item {
 
     Row {
         id: caption
+        visible: !card.inset
         anchors.top: frame.bottom
         anchors.topMargin: Space.s
         x: Space.xs

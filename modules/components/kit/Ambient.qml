@@ -56,7 +56,7 @@ Item {
             blurEnabled: true
             blur: 1
             blurMax: 48
-            saturation: 0.1
+            saturation: 0.35
         }
         Behavior on opacity {
             enabled: Motion.glide.duration > 0
@@ -84,7 +84,7 @@ Item {
         anchors.fill: parent
         radius: 0
         visible: !root.plain
-        color: Qt.alpha(Colors.background, 0.5)
+        color: Qt.alpha(Colors.background, 0.5 - 0.28 * root.strength)
     }
     Mark {
         anchors.fill: parent
@@ -93,7 +93,7 @@ Item {
         gradient: Gradient {
             GradientStop {
                 position: 0
-                color: Qt.alpha(Colors.background, 0.55)
+                color: Qt.alpha(Colors.background, 0.4)
             }
             GradientStop {
                 position: 0.35
@@ -105,7 +105,7 @@ Item {
             }
             GradientStop {
                 position: 1
-                color: Qt.alpha(Colors.background, 0.85)
+                color: Qt.alpha(Colors.background, 0.65)
             }
         }
     }
@@ -117,7 +117,7 @@ Item {
             orientation: Gradient.Horizontal
             GradientStop {
                 position: 0
-                color: Qt.alpha(Colors.background, 0.6)
+                color: Qt.alpha(Colors.background, 0.45)
             }
             GradientStop {
                 position: 0.25
@@ -129,7 +129,7 @@ Item {
             }
             GradientStop {
                 position: 1
-                color: Qt.alpha(Colors.background, 0.6)
+                color: Qt.alpha(Colors.background, 0.45)
             }
         }
     }

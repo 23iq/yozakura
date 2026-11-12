@@ -12,6 +12,8 @@ var EDITORS = {
     "BarLayoutEditor": "editors/BarLayoutEditor.qml",
     "PanelsEditor": "editors/PanelsEditor.qml",
     "PanelList": "editors/PanelList.qml",
+    "PanelShapeCards": "editors/PanelShapeCards.qml",
+    "PanelModulesCard": "editors/PanelModulesCard.qml",
     "BarSizeCards": "editors/BarSizeCards.qml",
     "NumeralCards": "editors/NumeralCards.qml",
     "IndicatorCards": "editors/IndicatorCards.qml",

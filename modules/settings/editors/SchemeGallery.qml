@@ -21,10 +21,13 @@ Item {
     readonly property string preset: SettingsStore.get("wallpaper.activeColorPreset") || ""
     readonly property string mode: Config.theme.lightMode ? "light" : "dark"
     readonly property var presets: GlobalStates.wallpaperManager ? (GlobalStates.wallpaperManager.colorPresets || []) : []
-    readonly property int columns: Math.max(2, Math.min(4, Math.floor((width + Space.m) / 170)))
-    readonly property real cardWidth: (width - grid.columnSpacing * (columns - 1)) / columns
+    // a strip of swatch cards in a card of the page row (its height)
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int columns: root.strip ? Math.max(1, root.schemes.length) : Math.max(2, Math.min(4, Math.floor((width + Space.m) / 170)))
+    readonly property real cardWidth: root.strip ? Math.max(Space.px(96), (root.fillHeight - Space.xl) * 1.3) : (width - grid.columnSpacing * (columns - 1)) / columns
 
-    implicitHeight: column.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : column.implicitHeight
 
     Component.onCompleted: SchemePreviews.refresh()
 
@@ -42,29 +45,41 @@ Item {
             color: SchemePreviews.failed ? Colors.error : Type.muted
         }
 
-        Grid {
-            id: grid
+        Flickable {
+            id: stripFlick
+            objectName: "pictureStrip"
             width: parent.width
-            columns: root.columns
-            rowSpacing: Space.l
-            columnSpacing: Space.l
+            height: grid.height
+            contentWidth: grid.width
+            interactive: root.strip && contentWidth > width
+            clip: root.strip
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.HorizontalFlick
 
-            Repeater {
-                model: root.schemes
+            Grid {
+                id: grid
+                width: root.strip ? implicitWidth : stripFlick.width
+                columns: root.columns
+                rowSpacing: Space.l
+                columnSpacing: root.strip ? Space.m : Space.l
 
-                delegate: ChoiceCard {
-                    id: card
-                    required property string modelData
-                    readonly property var pal: SchemePreviews.palette(modelData, root.mode)
-                    width: root.cardWidth
-                    previewHeight: Space.controlL + Space.s
-                    selected: !root.preset && root.current === modelData
-                    title: I18n.t("wallpapers." + modelData.replace(/-/g, "_"))
-                    onClicked: SettingsStore.set("wallpaper.matugenScheme", modelData)
+                Repeater {
+                    model: root.schemes
 
-                    SchemeSwatch {
-                        anchors.fill: parent
-                        colorMap: card.pal
+                    delegate: ChoiceCard {
+                        id: card
+                        required property string modelData
+                        readonly property var pal: SchemePreviews.palette(modelData, root.mode)
+                        width: root.cardWidth
+                        previewHeight: root.strip ? Math.max(Space.controlM, root.fillHeight - Space.xl) : Space.controlL + Space.s
+                        selected: !root.preset && root.current === modelData
+                        title: I18n.t("wallpapers." + modelData.replace(/-/g, "_"))
+                        onClicked: SettingsStore.set("wallpaper.matugenScheme", modelData)
+
+                        SchemeSwatch {
+                            anchors.fill: parent
+                            colorMap: card.pal
+                        }
                     }
                 }
             }
@@ -74,7 +89,7 @@ Item {
         Column {
             width: parent.width
             spacing: Space.s
-            visible: root.presets.length > 0
+            visible: root.presets.length > 0 && !root.strip
 
             SectionLabel {
                 width: parent.width

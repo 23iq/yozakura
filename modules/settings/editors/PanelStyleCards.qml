@@ -13,10 +13,17 @@ Item {
     id: root
 
     property var panel: null
-    readonly property int columns: Math.max(2, Math.min(4, Math.floor(width / 180)))
+    // A strip (in a card of the page row, SettingRow.fillHeight): one
+    // horizontal row of equal pictures with the title inside, scrolling
+    // sideways with an edge fade when they do not fit.
+    property real fillHeight: 0
+    readonly property bool strip: root.fillHeight > 0
+    readonly property int stripCount: PanelStyles.STYLES.filter(s => !s.hidden).length
+    readonly property real stripWidth: Math.max(root.fillHeight * 1.3, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property int columns: root.strip ? root.stripCount : Math.max(2, Math.min(4, Math.floor(width / 180)))
     signal picked(string style)
 
-    implicitHeight: grid.implicitHeight
+    implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight
 
     function previewOf(style) {
         if (!panel)
@@ -30,34 +37,51 @@ Item {
         return [p];
     }
 
-    Grid {
-        id: grid
+    Flickable {
+        id: stripFlick
+        objectName: "pictureStrip"
         width: parent.width
-        columns: root.columns
-        spacing: Space.m
+        height: grid.height
+        contentWidth: grid.width
+        interactive: root.strip && contentWidth > width
+        clip: root.strip
+        boundsBehavior: Flickable.StopAtBounds
+        flickableDirection: Flickable.HorizontalFlick
 
-        Repeater {
-            model: PanelStyles.STYLES.filter(s => !s.hidden)
-            delegate: ChoiceCard {
-                id: card
-                required property var modelData
-                width: (grid.width - grid.spacing * (root.columns - 1)) / root.columns
-                previewHeight: Math.round(width * 9 / 16) - 8
-                selected: root.panel !== null && root.panel.style === modelData.id
-                icon: modelData.icon
-                title: I18n.t(modelData.label)
-                subtitle: I18n.t(modelData.desc)
-                onClicked: root.picked(modelData.id)
+        Grid {
+            id: grid
+            width: root.strip ? implicitWidth : stripFlick.width
+            columns: root.columns
+            spacing: Space.m
 
-                PanelsSchematic {
-                    anchors.fill: parent
-                    panels: root.previewOf(card.modelData.id)
-                    showWindows: false
-                    selected: -1
-                    // Exaggerated so the style reads at card size
-                    unit: Math.max(8, Math.round(width * 0.075))
+            Repeater {
+                model: PanelStyles.STYLES.filter(s => !s.hidden)
+                delegate: ChoiceCard {
+                    id: card
+                    required property var modelData
+                    width: root.strip ? root.stripWidth : (grid.width - grid.spacing * (root.columns - 1)) / root.columns
+                    previewHeight: root.strip ? root.fillHeight : Math.round(width * 9 / 16) - 8
+                    inset: root.strip
+                    selected: root.panel !== null && root.panel.style === modelData.id
+                    icon: modelData.icon
+                    title: I18n.t(modelData.label)
+                    subtitle: I18n.t(modelData.desc)
+                    onClicked: root.picked(modelData.id)
+
+                    PanelsSchematic {
+                        anchors.fill: parent
+                        panels: root.previewOf(card.modelData.id)
+                        showWindows: false
+                        selected: -1
+                        // Exaggerated so the style reads at card size
+                        unit: Math.max(8, Math.round(width * 0.075))
+                    }
                 }
             }
         }
+    }
+    StripFade {
+        flick: stripFlick
+        visible: root.strip
     }
 }

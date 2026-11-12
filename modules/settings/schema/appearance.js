@@ -18,7 +18,7 @@ var category = {
     "hero": {
         "right": ["theme.tintIcons", "theme.signatures.brushHighlight", "theme.signatures.petals"]
     },
-    "row": ["mode", "tune", "palette"],
+    "row": ["mode", "language", "palette", "tune"],
     "keywords": "theme look style colors fonts dark light",
     "sections": [
         {
@@ -33,7 +33,13 @@ var category = {
                     "label": "prefs.appearance.mode",
                     "description": "prefs.appearance.mode.desc",
                     "keywords": "dark light oled amoled black night day"
-                },
+                }
+            ]
+        },
+        {
+            "id": "language",
+            "title": "prefs.appearance.language",
+            "entries": [
                 {
                     "key": "theme.language",
                     "type": "selector",
@@ -71,7 +77,13 @@ var category = {
                     "label": "settings.theme.tint_icons",
                     "description": "prefs.appearance.tint_icons.desc",
                     "keywords": "icons monochrome tint color"
-                },
+                }
+            ]
+        },
+        {
+            "id": "accents",
+            "title": "prefs.appearance.progress_role",
+            "entries": [
                 {
                     "key": "theme.progressRole",
                     "type": "selector",

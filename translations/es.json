@@ -4501,9 +4501,9 @@
   "prefs.home.gaps": "Huecos %1 px",
   "prefs.home.sub.launcher": "Apps, archivos y cálculos",
   "prefs.home.sub.dashboard": "Widgets y pestañas",
-  "prefs.home.sub.desktop": "Escritorio y vista general",
+  "prefs.home.sub.desktop": "Widgets, vista",
   "prefs.home.sub.keys": "Distribuciones y atajos",
-  "prefs.home.sub.displays": "Monitores y escala",
+  "prefs.home.sub.displays": "Monitores, escala",
   "prefs.home.sub.assistant": "Modelos y proveedores",
   "prefs.home.sub.system": "Idioma y actualizaciones",
   "prefs.home.sub.wallpaper": "Tus fondos",
@@ -4527,7 +4527,7 @@
   "prefs.home.profile.power-saver": "Ahorro",
   "prefs.home.profile.balanced": "Equilibrado",
   "prefs.home.profile.performance": "Rendimiento",
-  "prefs.home.sub.apps": "Terminal, extras, mods",
+  "prefs.home.sub.apps": "Terminal, mods",
   "prefs.home.sub.network": "Wi-Fi y Bluetooth",
   "prefs.bar.size": "Tamaño",
   "prefs.bar.section.edge_frame": "Borde y marco",
@@ -4540,5 +4540,10 @@
   "prefs.undo.surface_moved": "Movido",
   "prefs.lockscreen.hero_hint": "Haz clic en la mitad superior o inferior para mover el campo de contraseña",
   "prefs.notif.hero_hint": "Con avisos en esquina, haz clic en una esquina para moverlos",
-  "prefs.undo.field_moved": "Campo de contraseña movido"
+  "prefs.undo.field_moved": "Campo de contraseña movido",
+  "prefs.page.more": "Más · %1",
+  "prefs.lockscreen.section.tone": "Tono",
+  "prefs.notif.section.where": "Dónde",
+  "prefs.layout.section.more_panels": "Paneles y hojas",
+  "prefs.bar.add_module": "Añadir"
 }
