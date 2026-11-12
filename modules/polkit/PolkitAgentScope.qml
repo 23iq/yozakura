@@ -17,7 +17,11 @@ import qs.modules.services
 //   show an action somebody (or a script) asked for while the user was
 //   away, out of its context, the moment they unlock; a cancel ends the
 //   caller at once with "not authorized" and the user starts it again. The
-//   dialog is never drawn while the lock screen is up.
+//   dialog is never drawn while the lock screen is up. Only the shell's own
+//   lock screen is seen (GlobalStates.lockscreenVisible): under an external
+//   locker (hyprlock, swaylock) the request stays pending behind the lock
+//   and the dialog shows after unlocking; neither the daemon nor yozd
+//   tracks logind's LockedHint today.
 // - Screen hotplug: the dialog lives on its screen's delegate; when that
 //   output goes, it opens again on the focused one (the typed text is
 //   dropped with the window). With no output at all it waits, unplaced,
