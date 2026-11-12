@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.Notifications
 import qs.modules.services
 import qs.modules.globals
@@ -11,6 +10,7 @@ import qs.config
 import "../notifications/NotificationPolicy.js" as Policy
 import "../notifications/NotifyRequest.js" as NotifyRequest
 import "NotificationImage.js" as NotificationImage
+import "NotificationHistory.js" as NotificationHistory
 
 Singleton {
     id: root
@@ -92,27 +92,6 @@ Singleton {
                 timer = null;
             }
         }
-    }
-
-    function notifToJSON(notif) {
-        return {
-            "id": notif.id,
-            "actions": notif.actions,
-            "appIcon": notif.appIcon,
-            "appName": notif.appName,
-            "desktopEntry": notif.desktopEntry,
-            "body": notif.body,
-            "image": notif.image,
-            "summary": notif.summary,
-            "time": notif.time,
-            "urgency": notif.urgency,
-            "historyPriority": notif.historyPriority,
-            "replaceKey": notif.replaceKey,
-            "actionData": notif.actionData,
-            "cachedAppIcon": notif.cachedAppIcon,
-            "cachedImage": notif.cachedImage,
-            "isCached": notif.isCached
-        };
     }
 
     component NotifTimer: Timer {
@@ -229,11 +208,13 @@ Singleton {
         NotifTimer {}
     }
 
-    FileView {
-        id: notifFileView
-        // QUICKSHELL-GIT: path: Quickshell.cachePath("notifications.json")
+    // Debounced, compact saves; flushed on destruction
+    NotificationHistoryFile {
+        id: historyFile
         path: Brand.cacheDir + "/notifications.json"
-        onLoaded: loadNotifications()
+        // At most 5 per app + summary, compact
+        serialize: () => NotificationHistory.serialize(root.list)
+        onLoaded: root.loadNotifications()
     }
 
     // A popup's hide step after its timeout animation (one deadline per id)
@@ -269,10 +250,6 @@ Singleton {
         }
     }
 
-    function stringifyList(list) {
-        return JSON.stringify(list.map(notif => notifToJSON(notif)), null, 2);
-    }
-
     function jsonToNotif(json) {
         return notifComponent.createObject(root, {
             "id": json.id,
@@ -300,37 +277,20 @@ Singleton {
     }
 
     function saveNotifications() {
-        // Limitar notificaciones almacenadas a 5 por summary para evitar almacenamiento excesivo
-        const limitedList = limitNotificationsPerSummary(root.list);
-        notifFileView.setText(stringifyList(limitedList));
+        historyFile.save();
     }
 
-    function limitNotificationsPerSummary(notifications) {
-        var groups = {};
-
-        notifications.forEach(notif => {
-            const key = notif.appName + '|' + (notif.summary || '');
-            if (!groups[key]) {
-                groups[key] = [];
-            }
-            groups[key].push(notif);
-        });
-
-        const limitedNotifications = [];
-        for (const key in groups) {
-            const group = groups[key];
-            group.sort((a, b) => b.time - a.time);
-            limitedNotifications.push(...group.slice(0, 5));
-        }
-
-        return limitedNotifications;
-    }
-
+    // Once: a later reload must not replace the list (and idOffset) under
+    // the notifications that arrived since.
+    property bool historyLoaded: false
     function loadNotifications() {
+        if (root.historyLoaded)
+            return;
         try {
-            const data = JSON.parse(notifFileView.text());
+            const data = JSON.parse(historyFile.text());
             const before = root.list.slice();
             root.list = data.map(jsonToNotif);
+            root.historyLoaded = true;
             root.retire(before);
             // Set idOffset to max id + 1
             let maxId = 0;
@@ -343,8 +303,6 @@ Singleton {
             root.idOffset = maxId + 1;
         } catch (e) {
             console.log("No saved notifications or error loading:", e);
-            root.list = [];
-            root.idOffset = 0;
         }
     }
 
@@ -797,6 +755,6 @@ Singleton {
         interval: 2000
         running: false
         repeat: false
-        onTriggered: notifFileView.reload()
+        onTriggered: historyFile.reload()
     }
 }
