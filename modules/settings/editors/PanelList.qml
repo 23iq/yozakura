@@ -81,13 +81,19 @@ Column {
         }
     }
 
+    // one bar per edge: with every edge taken, nothing to add
+    readonly property bool canAdd: PanelsModel.freeEdges(root.panels, "classic").length > 0
+
     Card {
         objectName: "panelListAdd"
         width: root.width
         padding: Space.m
-        interactive: true
+        interactive: root.canAdd
+        opacity: root.canAdd ? 1 : 0.5
         fill: false
         onClicked: {
+            if (!root.canAdd)
+                return;
             SettingsStore.transaction("prefs.undo.bar_added", () => SettingsStore.set("bar.panels", PanelsModel.addPanel(root.panels, "classic")));
             SettingsStore.selectedPanel = root.panels.length - 1;
         }
@@ -109,7 +115,7 @@ Column {
             KitText {
                 anchors.verticalCenter: parent.verticalCenter
                 role: "body"
-                text: I18n.t("prefs.bar.add_bar")
+                text: I18n.t(root.canAdd ? "prefs.bar.add_bar" : "prefs.bar.add_bar_full")
             }
         }
     }

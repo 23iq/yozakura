@@ -125,6 +125,27 @@ var PAGES = {
     "Sound": { "file": "connect/ConnectPage.qml", "props": { "panel": "AudioMixerPanel.qml" } }
 };
 
+// Home tile scenes (HomeTile, loaded by URL once home has shown), by
+// destination id.
+var SCENES = {
+    "layout": "home/LayoutScene.qml",
+    "wallpaper": "home/WallpaperScene.qml",
+    "lockscreen": "home/LockScene.qml",
+    "look": "home/LookScene.qml",
+    "notifications": "home/NotifScene.qml",
+    "presets": "home/PresetsScene.qml",
+    "launcher": "home/LauncherScene.qml",
+    "dashboard": "home/DashboardScene.qml",
+    "assistant": "home/AssistantScene.qml",
+    "keys": "home/KeysScene.qml",
+    "displays": "home/DisplaysScene.qml",
+    "windows": "home/WindowsScene.qml"
+};
+
+function scene(id) {
+    return SCENES[id] || "";
+}
+
 function stage(name) {
     return STAGES[name] || "";
 }

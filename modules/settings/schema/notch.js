@@ -11,11 +11,26 @@ var category = {
     "keywords": "notch island dynamic activities visualizer media panels",
     "stage": "IslandStage",
     "hero": {
-        "right": ["notch.keepHidden", "notch.disableHoverExpansion"],
+        "right": ["notch.enabled", "notch.keepHidden", "notch.disableHoverExpansion"],
         "hint": "prefs.notch.hero_hint"
     },
     "row": ["notch", "media", "activities"],
     "sections": [
+        {
+            // the island itself on / off (beside the stage, hero.right): the
+            // other island rows wait for it
+            "id": "island",
+            "title": "prefs.notch.section.notch",
+            "entries": [
+                {
+                    "key": "notch.enabled",
+                    "type": "toggle",
+                    "label": "prefs.notch.enabled",
+                    "description": "prefs.notch.enabled.desc",
+                    "keywords": "island notch show hide on off enable disable"
+                }
+            ]
+        },
         {
             "id": "notch",
             "title": "prefs.notch.section.notch",
@@ -309,8 +324,8 @@ var category = {
     ]
 };
 
-// The notch and media sections only matter while the notch is on (turned on
-// and off in the Layout page); activities and timers also work in the bar.
+// The notch and media sections only matter while the notch is on (the switch
+// beside the Island stage); activities and timers also work in the bar.
 category.sections.forEach(function (section) {
     if (section.id !== "notch" && section.id !== "media")
         return;

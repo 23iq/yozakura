@@ -46,6 +46,19 @@ Item {
     // The style being pictured (index into LockStyles.styles); past the
     // end: all done.
     property int building: 0
+    // A capture cannot happen while the window is hidden (grabToImage
+    // refuses, or its callback waits for a frame that never comes): the
+    // picture in progress pauses and is taken again once it shows.
+    property bool stalled: false
+    readonly property bool canGrab: root.visible && root.Window.window !== null && root.Window.window.visible
+    onCanGrabChanged: {
+        if (root.canGrab && root.stalled) {
+            root.stalled = false;
+            const b = root.building;
+            root.building = -1;
+            Qt.callLater(() => root.building = b);
+        }
+    }
     // What the pictures show: a change pictures them again.
     readonly property string look: JSON.stringify([root.wallpaper, SettingsStore.get("lockscreen.tone"), SettingsStore.get("lockscreen.position"), SettingsStore.get("lockscreen.showMedia"), SettingsStore.get("lockscreen.showStatus"), SettingsStore.get("theme.lightMode")])
     onLookChanged: root.building = 0
@@ -130,11 +143,17 @@ Item {
                                     root.building++;
                                     return;
                                 }
-                                (liveView.item as Item).grabToImage(result => {
+                                if (!root.canGrab) {
+                                    root.stalled = true;
+                                    return;
+                                }
+                                const ok = (liveView.item as Item).grabToImage(result => {
                                     shot.grabbed = result;
                                     if (shot.live)
                                         root.building++;
                                 }, Qt.size(Math.max(1, shot.width * 2), Math.max(1, shot.height * 2)));
+                                if (!ok)
+                                    root.stalled = true;
                             }
                         }
                     }

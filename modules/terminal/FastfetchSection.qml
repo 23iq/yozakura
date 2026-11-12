@@ -74,10 +74,13 @@ Column {
             return;
         }
         const look = FetchModel.presetOnTurnOn(root.preset, !!(root.greeting && root.greeting.ownConfig));
-        if (look !== root.preset)
-            SettingsStore.set("terminal.fastfetchPreset", look);
         TerminalLookService.allowGreetingShells();
-        SettingsStore.set("terminal.greeting", "fastfetch");
+        // the look and the greeting: one undo step
+        SettingsStore.transaction("prefs.term.section.greeting", () => {
+            if (look !== root.preset)
+                SettingsStore.set("terminal.fastfetchPreset", look);
+            SettingsStore.set("terminal.greeting", "fastfetch");
+        });
         if (!TerminalLookService.fastfetchInstalled)
             TerminalLookService.installFastfetch();
     }

@@ -7152,18 +7152,17 @@
       "x-file": "config/notch.json",
       "properties": {
         "enabled": {
-          "title": "Enabled",
+          "title": "Show the island",
           "type": "boolean",
           "default": true,
+          "description": "The island at the top or bottom of the screen; off, its panels open elsewhere.",
           "x-settings": {
-            "category": "layout",
-            "section": "parts",
-            "label": "prefs.layout.builder",
-            "entry": "layout.builder",
-            "entryTitle": "Bar, notch and dock",
-            "keywords": "layout builder bar notch dock edge drag move hide show disable style align composable parts corner pills"
-          },
-          "description": "Show the notch at rest. Off, its live activities move to the bar (or to corner pills without a bar) and it only appears while it shows a view."
+            "category": "notch",
+            "section": "island",
+            "label": "prefs.notch.enabled",
+            "control": "toggle",
+            "keywords": "island notch show hide on off enable disable"
+          }
         },
         "position": {
           "title": "Island edge",

@@ -116,6 +116,25 @@ check(env.wait_page(win), "bar (several bars): page built")
 fits("bar (several bars)")
 h.eval(win, "SettingsStore.set('bar.panels', [])")
 
+# the island turned off (a preset, the CLI): its switch is beside the
+# stage, the waiting cards stay in the row and say so
+h.eval(win, "SettingsStore.set('notch.enabled', false)")
+h.eval(shell, 'select("notch")')
+check(env.wait_page(win), "island off: page built")
+QTest.qWait(200)
+on = json.loads(h.eval(win, """JSON.stringify((function() {
+    var sw = null, waiting = 0;
+    walk(w.contentItem, x => {
+        if (String(x.objectName) === "settingRow:notch.enabled" && x.visible) sw = x;
+        if (String(x.objectName) === "sectionWaiting" && x.visible) waiting++;
+    });
+    return { "switch": sw !== null, "waiting": waiting };
+})())"""))
+check(on["switch"], "island off: the Show the island switch is on the page")
+check(on["waiting"] > 0, "island off: the waiting cards say so instead of vanishing")
+h.eval(win, "SettingsStore.set('notch.enabled', true)")
+fits("notch (island off and on again)")
+
 if failures:
     print(f"settings-fit: {len(failures)} failure(s)")
     h.exit(1)

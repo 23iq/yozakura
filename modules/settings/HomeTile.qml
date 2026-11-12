@@ -7,6 +7,7 @@ import qs.modules.services
 import qs.modules.components.kit
 import qs.modules.settings.store
 import "HomeStatus.js" as HomeStatus
+import "Registry.js" as Registry
 
 // One destination on the home bento: a kit Card that is a small live
 // scene of what it opens, drawn from real state (home/<Scene>.qml: the
@@ -30,20 +31,7 @@ Card {
     readonly property bool picture: ["layout", "wallpaper", "lockscreen"].indexOf(tile.kind) >= 0
     // a short wide tile: the scene beside the name, not above it
     readonly property bool side: (destination.h || 4) <= 3
-    readonly property string sceneFile: ({
-            "layout": "LayoutScene",
-            "wallpaper": "WallpaperScene",
-            "lockscreen": "LockScene",
-            "look": "LookScene",
-            "notifications": "NotifScene",
-            "presets": "PresetsScene",
-            "launcher": "LauncherScene",
-            "dashboard": "DashboardScene",
-            "assistant": "AssistantScene",
-            "keys": "KeysScene",
-            "displays": "DisplaysScene",
-            "windows": "WindowsScene"
-        })[tile.kind] || ""
+    readonly property string sceneFile: Registry.scene(tile.kind)
     readonly property string status: tile.live ? HomeStatus.line(tile.destination.id, {
         "get": k => SettingsStore.get(k),
         "tr": k => I18n.t(k),
@@ -74,7 +62,7 @@ Card {
         }
         function load() {
             if (scene.active && !scene.item)
-                scene.setSource(Qt.resolvedUrl("home/" + tile.sceneFile + ".qml"), {
+                scene.setSource(Qt.resolvedUrl(tile.sceneFile), {
                     "tile": tile
                 });
         }

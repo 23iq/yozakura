@@ -119,3 +119,16 @@ test('every tile has a live status line in every language', () => {
     values['dock.enabled'] = false;
     assert.equal(HomeStatus.line('layout', ctx), '2 bars · island');
 });
+
+test('every home tile scene is registered by its full path (the audit sees it) and exists', () => {
+    const fs = require('node:fs');
+    const Registry = loadLibrary(path.join(dir, 'Registry.js'));
+    for (const g of Categories.home()) {
+        const f = Registry.scene(g.id);
+        assert.ok(f, `${g.id} has a scene`);
+        assert.ok(fs.existsSync(path.join(dir, f)), f);
+    }
+    const files = fs.readdirSync(path.join(dir, 'home')).filter(f => f.endsWith('Scene.qml'));
+    const listed = Object.values(Registry.SCENES).map(f => f.replace('home/', ''));
+    assert.deepEqual(files.sort(), listed.sort());
+});

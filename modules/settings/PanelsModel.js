@@ -54,16 +54,23 @@ function uniqueId(panels, base) {
     return base + "-" + n;
 }
 
-// A new panel on the first edge no panel uses yet, with a useful default
-// per style.
-function addPanel(panels, style) {
+// The edges a new panel of `style` could take (not used by a panel yet).
+function freeEdges(panels, style) {
     var used = panels.map(function (p) {
         return p.edge;
     });
-    var meta = PanelStyles.get(style || "classic");
-    var edge = meta.edges.filter(function (e) {
+    return PanelStyles.get(style || "classic").edges.filter(function (e) {
         return used.indexOf(e) === -1;
-    })[0] || meta.edges[0];
+    });
+}
+
+// A new panel on the first edge no panel uses yet, with a useful default
+// per style. Every edge taken: the panels unchanged (one bar per edge).
+function addPanel(panels, style) {
+    var meta = PanelStyles.get(style || "classic");
+    var edge = freeEdges(panels, style)[0];
+    if (!edge)
+        return serialize(panels);
     var groups = {
         "start": [],
         "center": [],

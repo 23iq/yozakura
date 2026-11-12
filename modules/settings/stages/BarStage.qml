@@ -18,11 +18,15 @@ import "../SchemaUtil.js" as SchemaUtil
 Stage {
     id: stage
 
-    readonly property var panels: PanelsModel.panelsOf({
-        "position": SchemaUtil.plain(SettingsStore.get("bar.position")) || "top",
-        "layout": SchemaUtil.plain(SettingsStore.get("bar.layout")) || {},
-        "panels": SchemaUtil.plain(SettingsStore.get("bar.panels")) || []
-    })
+    readonly property var barConfig: ({
+            "position": SchemaUtil.plain(SettingsStore.get("bar.position")) || "top",
+            "layout": SchemaUtil.plain(SettingsStore.get("bar.layout")) || {},
+            "panels": SchemaUtil.plain(SettingsStore.get("bar.panels")) || []
+        })
+    readonly property var panels: PanelsModel.panelsOf(stage.barConfig)
+    // the single legacy bar (bar.position) or explicit panels (bar.panels,
+    // even just one: then bar.position is ignored)
+    readonly property bool legacy: PanelsModel.isLegacy(stage.barConfig)
     readonly property bool several: stage.panels.length > 1
     readonly property int current: Math.max(0, Math.min(SettingsStore.selectedPanel, stage.panels.length - 1))
     readonly property string currentEdge: stage.panels[stage.current] ? stage.panels[stage.current].edge : "top"
@@ -30,12 +34,14 @@ Stage {
     // Move the bar (the picked one) to `edge`; a bar already there is
     // picked instead.
     function moveTo(edge) {
-        if (stage.several) {
+        if (!stage.legacy) {
             const there = stage.panels.findIndex(p => p.edge === edge);
-            if (there >= 0) {
+            if (there >= 0 && there !== stage.current) {
                 SettingsStore.selectedPanel = there;
                 return;
             }
+            if (there === stage.current)
+                return;
             SettingsStore.transaction("prefs.undo.bar_moved", () => SettingsStore.set("bar.panels", PanelsModel.setField(stage.panels, stage.current, "edge", edge)));
         } else {
             SettingsStore.transaction("prefs.undo.bar_moved", () => SettingsStore.set("bar.position", edge));

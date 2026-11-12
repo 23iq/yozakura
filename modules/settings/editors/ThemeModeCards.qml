@@ -13,6 +13,7 @@ import qs.modules.components.kit
 // wallpaper + scheme produce in that mode (SchemePreviews).
 Item {
     id: root
+    objectName: "themeModeCards"
 
     property var entry
     readonly property bool light: !!SettingsStore.get("theme.lightMode")
@@ -32,11 +33,14 @@ Item {
 
     Component.onCompleted: SchemePreviews.refresh()
 
+    // One undo step for the pair (Light -> OLED -> undo is Light again).
     function choose(id) {
-        SettingsStore.set("theme.lightMode", id === "light");
-        // Light ignores OLED: the preference is kept for the way back.
-        if (id !== "light")
-            SettingsStore.set("theme.oledMode", id === "oled");
+        SettingsStore.transaction("prefs.appearance.mode", () => {
+            SettingsStore.set("theme.lightMode", id === "light");
+            // Light ignores OLED: the preference is kept for the way back.
+            if (id !== "light")
+                SettingsStore.set("theme.oledMode", id === "oled");
+        });
     }
 
     // Palette for a mode; null = the live Colors (already that mode).

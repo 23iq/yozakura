@@ -171,3 +171,39 @@ test('inverted toggles are toggles', () => {
     for (const e of inverted)
         assert.equal(e.type, 'toggle', e.key);
 });
+
+test('a window row only waits on keys some window row edits (nothing becomes unreachable)', () => {
+    const edited = new Set();
+    for (const c of Categories.categories)
+        for (const s of c.sections || [])
+            for (const e of s.entries || [])
+                if (SchemaUtil.inWindow(e, s))
+                    [e.key].concat(e.keys || []).filter(Boolean).forEach(k => edited.add(k));
+    const covered = k => {
+        for (let q = k; q; q = q.lastIndexOf('.') > 0 ? q.slice(0, q.lastIndexOf('.')) : '')
+            if (edited.has(q))
+                return true;
+        return false;
+    };
+    const keysOf = (c, out) => {
+        if (!c)
+            return out;
+        if (Array.isArray(c))
+            c.forEach(x => keysOf(x, out));
+        else {
+            if (c.key)
+                out.push(c.key);
+            (c.all || []).concat(c.any || []).forEach(x => keysOf(x, out));
+            keysOf(c.not, out);
+        }
+        return out;
+    };
+    for (const c of Categories.categories)
+        for (const s of c.sections || [])
+            for (const e of s.entries || []) {
+                if (!SchemaUtil.inWindow(e, s))
+                    continue;
+                for (const k of keysOf(e.visibleWhen, []))
+                    assert.ok(covered(k), `${c.id} ${e.key || e.id} waits on ${k}, which no window row edits`);
+            }
+});

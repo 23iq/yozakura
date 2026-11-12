@@ -25,6 +25,9 @@ Card {
     readonly property string sectionId: section.id
     readonly property var entries: (section.entries || []).filter(e => SchemaUtil.inWindow(e, section) && sectionRoot.exclude.indexOf(e.key || e.id) < 0)
     readonly property bool shown: sectionRoot.entries.length > 0 && SettingsStore.sectionShown(section)
+    // A row card whose rows all wait (the thing is turned off): it stays and
+    // says so instead of vanishing from the row.
+    readonly property bool waiting: sectionRoot.fixed && sectionRoot.entries.length > 0 && !sectionRoot.shown
     // one setting: its value beside the heading, no label of its own
     readonly property var visibleEntries: sectionRoot.entries.filter(e => SettingsStore.visible(e))
     readonly property var single: sectionRoot.visibleEntries.length === 1 ? sectionRoot.visibleEntries[0] : null
@@ -54,7 +57,7 @@ Card {
     }
 
     objectName: "settingsSection:" + sectionId
-    visible: sectionRoot.shown && !sectionRoot.pending && !sectionRoot.suppressed
+    visible: (sectionRoot.shown || sectionRoot.waiting) && !sectionRoot.pending && !sectionRoot.suppressed
     padding: Look.boxPadding + Space.s
     spacing: Space.s
 
@@ -81,6 +84,15 @@ Card {
             role: "secondary"
             text: sectionRoot.value
         }
+    }
+
+    KitText {
+        objectName: "sectionWaiting"
+        visible: sectionRoot.waiting
+        width: sectionRoot.contentWidth
+        role: "secondary"
+        wrapMode: Text.WordWrap
+        text: I18n.t("prefs.page.card_off")
     }
 
     Item {
