@@ -12,8 +12,9 @@ import "JsonUtil.js" as JsonUtil
 FileView {
     id: file
 
-    // The Config singleton: configDir, presetDir, the derived pauseAutoSave,
-    // autoSaveDelay (ms, optional) and configReloaded(name) (optional).
+    // The Config singleton: configDir, presetDir, autoSavePausedFor(name)
+    // (or the derived pauseAutoSave for every domain), autoSaveDelay (ms,
+    // optional) and configReloaded(name) (optional).
     required property var store
     required property string name
     required property var defaults
@@ -106,8 +107,17 @@ FileView {
         }
     }
     onAdapterUpdated: {
-        if (file.ready && !file.broken && !file.reloading && !file.store.pauseAutoSave)
+        if (file.ready && !file.broken && !file.reloading && !file.paused())
             file.scheduleWrite();
+    }
+
+    // The store pauses per domain when it can (Config.autoSavePausedFor:
+    // only staged domains wait for Apply), else all of them at once.
+    function paused() {
+        const s = file.store;
+        if (typeof s.autoSavePausedFor === "function")
+            return !!s.autoSavePausedFor(file.name);
+        return !!s.pauseAutoSave;
     }
 
     function autoSaveDelay() {
@@ -123,7 +133,7 @@ FileView {
     }
 
     function autoSave() {
-        if (file.ready && !file.broken && !file.store.pauseAutoSave)
+        if (file.ready && !file.broken && !file.paused())
             file.writeAdapter();
     }
 
