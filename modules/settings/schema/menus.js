@@ -9,6 +9,9 @@ var category = {
     "title": "prefs.cat.menus",
     "description": "prefs.cat.menus.desc",
     "keywords": "popup menu tooltip open animation tail gap",
+    "stage": "OpensStage",
+    "hero": { "hint": "prefs.layout.hero_hint" },
+    "row": ["menus", "popups"],
     "sections": [
     {
         "id": "menus",

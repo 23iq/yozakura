@@ -94,5 +94,7 @@ var category = {
     "title": "prefs.cat.osd",
     "description": "prefs.cat.osd.desc",
     "keywords": "osd on-screen display volume brightness level indicator popup island",
+    "stage": "OpensStage",
+    "row": ["osd"],
     "sections": sections
 };

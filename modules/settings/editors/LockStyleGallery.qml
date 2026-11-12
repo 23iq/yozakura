@@ -29,7 +29,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: LockStyles.styles.length
-    readonly property real stripWidth: Math.max(root.fillHeight * 1.6, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property real stripWidth: Math.max(Space.px(88), (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
     readonly property int columns: root.strip ? root.stripCount : width < 560 ? 1 : (width < 920 ? 2 : 3)
     readonly property var manager: GlobalStates.wallpaperManager
     readonly property string wallpaper: {

@@ -26,7 +26,7 @@ Item {
     property real fillHeight: 0
     readonly property bool strip: root.fillHeight > 0
     readonly property int stripCount: 3
-    readonly property real stripWidth: Math.max(root.fillHeight * 1.5, (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
+    readonly property real stripWidth: Math.max(Space.px(88), (root.width - Space.m * (root.stripCount - 1)) / Math.max(1, root.stripCount))
     readonly property int columns: root.strip ? root.stripCount : width < 520 ? 1 : 3
 
     implicitHeight: root.strip ? root.fillHeight : grid.implicitHeight

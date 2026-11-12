@@ -63,7 +63,10 @@ FocusScope {
     readonly property bool modified: SettingsStore.isModified(entry)
     readonly property bool resettable: SchemaUtil.isResettable(entry)
     readonly property bool narrow: width < Space.px(560)
-    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || ((narrow && (type === "slider" || type === "macro" || type === "text")) || (width < Space.px(440) && type === "selector" && (entry.options || []).length <= 4)))
+    // about how wide an inline segmented of this selector is (stack it when
+    // it would not fit beside the label)
+    readonly property real selectorWidth: type === "selector" ? (entry.options || []).reduce((w, o) => w + I18n.t(o.label).length * Space.px(7) + Space.px(44), 0) : 0
+    readonly property bool stacked: row.usable && (type === "custom" || type === "color-role" || type === "list" || type === "path" || type === "screens" || type === "multiselect" || (type === "selector" && entry.display === "cards") || ((narrow && (type === "slider" || type === "macro" || type === "text")) || (type === "selector" && (entry.options || []).length <= 4 && row.selectorWidth > width - Space.px(170))))
     readonly property bool highlighted: SettingsStore.highlightedEntry !== "" && SettingsStore.highlightedEntry === entryId
     readonly property bool hovered: hover.hovered
     readonly property var value: entry.key ? SettingsStore.get(entry.key) : undefined
